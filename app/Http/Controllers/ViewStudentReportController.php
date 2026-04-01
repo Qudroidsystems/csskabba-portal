@@ -1267,6 +1267,64 @@ class ViewStudentReportController extends Controller
     }
 }
 
+
+public function debugStudentScores(Request $request)
+{
+    try {
+        $studentId = $request->input('student_id');
+        $schoolclassid = $request->input('schoolclassid');
+        $sessionid = $request->input('sessionid');
+        $termid = $request->input('termid');
+
+        if (!$studentId || !$schoolclassid || !$sessionid || !$termid) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Missing required parameters'
+            ], 400);
+        }
+
+        // Check if broadsheet records exist
+        $broadsheetRecords = DB::table('broadsheet_records')
+            ->where('student_id', $studentId)
+            ->where('schoolclass_id', $schoolclassid)
+            ->where('session_id', $sessionid)
+            ->get();
+
+        // Check if broadsheets exist
+        $broadsheets = DB::table('broadsheets')
+            ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
+            ->where('broadsheet_records.student_id', $studentId)
+            ->where('broadsheet_records.schoolclass_id', $schoolclassid)
+            ->where('broadsheet_records.session_id', $sessionid)
+            ->where('broadsheets.term_id', $termid)
+            ->select('broadsheets.*', 'broadsheet_records.subject_id')
+            ->get();
+
+        // Get subjects for these scores
+        $subjectIds = $broadsheets->pluck('subject_id')->unique()->toArray();
+        $subjects = DB::table('subject')->whereIn('id', $subjectIds)->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'broadsheet_records' => $broadsheetRecords,
+                'broadsheets_count' => $broadsheets->count(),
+                'broadsheets' => $broadsheets,
+                'subjects' => $subjects,
+                'student_id' => $studentId,
+                'schoolclassid' => $schoolclassid,
+                'sessionid' => $sessionid,
+                'termid' => $termid
+            ]
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ], 500);
+    }
+}
     public function getColumnOptions(Request $request)
     {
         Log::info('Getting column options', ['request' => $request->all()]);

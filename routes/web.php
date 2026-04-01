@@ -596,4 +596,6 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
     Route::post('/admin/exams/{exam}/pause', [ExamPauseController::class, 'pause'])->name('admin.exams.pause');
     Route::post('/admin/exams/{exam}/resume', [ExamPauseController::class, 'resume'])->name('admin.exams.resume');
     Route::get('/api/exams/{exam}/status', [ExamPauseController::class, 'status'])->name('api.exams.status');
+
+    Route::get('/debug-student-scores', [ViewStudentReportController::class, 'debugStudentScores']);
 });
