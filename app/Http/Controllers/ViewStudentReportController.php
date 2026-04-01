@@ -981,7 +981,7 @@ class ViewStudentReportController extends Controller
     //     }
     // }
 
-    private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
+private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
 {
     try {
         Log::channel('pdf')->info('========== START getStudentResultData ==========', [
@@ -1000,6 +1000,99 @@ class ViewStudentReportController extends Controller
                 'termid' => $termid
             ]);
             return [];
+        }
+
+        // ========== DEBUG: Check if student exists in studentclass ==========
+        $studentInClass = Studentclass::where('studentId', $id)
+            ->where('schoolclassid', $schoolclassid)
+            ->where('sessionid', $sessionid)
+            ->first();
+
+        Log::channel('pdf')->info('DEBUG: Student enrollment check', [
+            'student_id' => $id,
+            'schoolclassid' => $schoolclassid,
+            'sessionid' => $sessionid,
+            'is_enrolled' => !is_null($studentInClass),
+            'enrollment_data' => $studentInClass ? $studentInClass->toArray() : null
+        ]);
+
+        // ========== DEBUG: Check if broadsheet_records exist ==========
+        $broadsheetRecordsExist = DB::table('broadsheet_records')
+            ->where('student_id', $id)
+            ->where('schoolclass_id', $schoolclassid)
+            ->where('session_id', $sessionid)
+            ->exists();
+
+        Log::channel('pdf')->info('DEBUG: Broadsheet records check', [
+            'student_id' => $id,
+            'schoolclass_id' => $schoolclassid,
+            'session_id' => $sessionid,
+            'records_exist' => $broadsheetRecordsExist
+        ]);
+
+        if ($broadsheetRecordsExist) {
+            $recordCount = DB::table('broadsheet_records')
+                ->where('student_id', $id)
+                ->where('schoolclass_id', $schoolclassid)
+                ->where('session_id', $sessionid)
+                ->count();
+
+            Log::channel('pdf')->info('DEBUG: Broadsheet records count', [
+                'count' => $recordCount,
+                'sample_ids' => DB::table('broadsheet_records')
+                    ->where('student_id', $id)
+                    ->where('schoolclass_id', $schoolclassid)
+                    ->where('session_id', $sessionid)
+                    ->limit(5)
+                    ->pluck('id')
+                    ->toArray()
+            ]);
+        }
+
+        // ========== DEBUG: Check if broadsheets exist for this term ==========
+        $broadsheetsExist = DB::table('broadsheets')
+            ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
+            ->where('broadsheet_records.student_id', $id)
+            ->where('broadsheet_records.schoolclass_id', $schoolclassid)
+            ->where('broadsheet_records.session_id', $sessionid)
+            ->where('broadsheets.term_id', $termid)
+            ->exists();
+
+        Log::channel('pdf')->info('DEBUG: Broadsheets for term check', [
+            'student_id' => $id,
+            'term_id' => $termid,
+            'broadsheets_exist' => $broadsheetsExist
+        ]);
+
+        if ($broadsheetsExist) {
+            $broadsheetCount = DB::table('broadsheets')
+                ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
+                ->where('broadsheet_records.student_id', $id)
+                ->where('broadsheet_records.schoolclass_id', $schoolclassid)
+                ->where('broadsheet_records.session_id', $sessionid)
+                ->where('broadsheets.term_id', $termid)
+                ->count();
+
+            Log::channel('pdf')->info('DEBUG: Broadsheets count for term', [
+                'count' => $broadsheetCount,
+                'term_id' => $termid
+            ]);
+
+            // Get sample of broadsheets with subjects
+            $sampleBroadsheets = DB::table('broadsheets')
+                ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
+                ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
+                ->where('broadsheet_records.student_id', $id)
+                ->where('broadsheet_records.schoolclass_id', $schoolclassid)
+                ->where('broadsheet_records.session_id', $sessionid)
+                ->where('broadsheets.term_id', $termid)
+                ->select('subject.subject', 'broadsheets.total', 'broadsheets.cum', 'broadsheets.grade')
+                ->limit(5)
+                ->get();
+
+            Log::channel('pdf')->info('DEBUG: Sample broadsheet data', [
+                'sample' => $sampleBroadsheets->toArray()
+            ]);
         }
 
         // Fetch student basic info
@@ -1025,7 +1118,20 @@ class ViewStudentReportController extends Controller
             return [];
         }
 
+        Log::channel('pdf')->info('DEBUG: Student info retrieved', [
+            'student_id' => $id,
+            'student_name' => $students->first()->fname . ' ' . $students->first()->lastname,
+            'admission_no' => $students->first()->admissionNo
+        ]);
+
         $schoolclass = Schoolclass::with(['arms', 'classcategories'])->find($schoolclassid);
+
+        Log::channel('pdf')->info('DEBUG: School class info', [
+            'schoolclassid' => $schoolclassid,
+            'class_found' => !is_null($schoolclass),
+            'class_name' => $schoolclass ? $schoolclass->schoolclass : 'Not found',
+            'has_categories' => $schoolclass ? $schoolclass->classcategories->isNotEmpty() : false
+        ]);
 
         $assessments = collect();
         $isSenior = false;
@@ -1033,6 +1139,11 @@ class ViewStudentReportController extends Controller
         if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
             $categoryIds = $schoolclass->classcategories->pluck('id');
             $isSenior = $schoolclass->classcategories->first()->is_senior ?? false;
+
+            Log::channel('pdf')->info('DEBUG: Class categories', [
+                'category_ids' => $categoryIds->toArray(),
+                'is_senior' => $isSenior
+            ]);
 
             try {
                 if (class_exists(\App\Models\Assessment::class)) {
@@ -1054,7 +1165,7 @@ class ViewStudentReportController extends Controller
             }
         }
 
-        // Fetch scores - REMOVE THE RETRY LOGIC THAT MIGHT BE CAUSING ISSUES
+        // ========== MAIN SCORES QUERY ==========
         $scores = Broadsheets::where('broadsheet_records.student_id', $id)
             ->where('broadsheets.term_id', $termid)
             ->where('broadsheet_records.session_id', $sessionid)
@@ -1077,11 +1188,81 @@ class ViewStudentReportController extends Controller
                 'broadsheets.vettedstatus',
             ])->get();
 
-        Log::debug('Broadsheet scores fetched', [
+        Log::channel('pdf')->info('========== SCORES QUERY RESULT ==========', [
             'student_id' => $id,
             'scores_count' => $scores->count(),
-            'subject_names' => $scores->pluck('subject_name')->toArray()
+            'scores_is_empty' => $scores->isEmpty(),
+            'subject_names' => $scores->pluck('subject_name')->toArray(),
+            'subject_ids' => $scores->pluck('subject_id')->toArray(),
+            'totals' => $scores->pluck('total')->toArray(),
+            'cums' => $scores->pluck('cum')->toArray(),
+            'grades' => $scores->pluck('grade')->toArray()
         ]);
+
+        // If scores are empty, try to find why with more detailed debugging
+        if ($scores->isEmpty()) {
+            Log::channel('pdf')->warning('SCORES ARE EMPTY - Running detailed debug', [
+                'student_id' => $id,
+                'schoolclassid' => $schoolclassid,
+                'sessionid' => $sessionid,
+                'termid' => $termid
+            ]);
+
+            // Check if there are any broadsheet_records for this student in any term
+            $anyRecords = DB::table('broadsheet_records')
+                ->where('student_id', $id)
+                ->where('schoolclass_id', $schoolclassid)
+                ->where('session_id', $sessionid)
+                ->exists();
+
+            Log::channel('pdf')->info('DEBUG: Any broadsheet records for student in this class/session', [
+                'exists' => $anyRecords
+            ]);
+
+            if ($anyRecords) {
+                // Get all terms that have scores for this student
+                $availableTerms = DB::table('broadsheets')
+                    ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
+                    ->where('broadsheet_records.student_id', $id)
+                    ->where('broadsheet_records.schoolclass_id', $schoolclassid)
+                    ->where('broadsheet_records.session_id', $sessionid)
+                    ->select('broadsheets.term_id')
+                    ->distinct()
+                    ->pluck('term_id')
+                    ->toArray();
+
+                Log::channel('pdf')->info('DEBUG: Available terms for this student', [
+                    'available_terms' => $availableTerms,
+                    'requested_term' => $termid,
+                    'term_matches' => in_array($termid, $availableTerms)
+                ]);
+
+                // If the requested term doesn't have scores, check what terms do
+                if (!in_array($termid, $availableTerms)) {
+                    $sampleScores = DB::table('broadsheets')
+                        ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
+                        ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
+                        ->where('broadsheet_records.student_id', $id)
+                        ->where('broadsheet_records.schoolclass_id', $schoolclassid)
+                        ->where('broadsheet_records.session_id', $sessionid)
+                        ->where('broadsheets.term_id', $availableTerms[0] ?? 0)
+                        ->select('subject.subject', 'broadsheets.total', 'broadsheets.cum')
+                        ->limit(3)
+                        ->get();
+
+                    Log::channel('pdf')->info('DEBUG: Sample scores from first available term', [
+                        'term_id' => $availableTerms[0] ?? 'none',
+                        'sample' => $sampleScores->toArray()
+                    ]);
+                }
+            } else {
+                Log::channel('pdf')->error('DEBUG: No broadsheet records found at all for this student in this class/session', [
+                    'student_id' => $id,
+                    'schoolclassid' => $schoolclassid,
+                    'sessionid' => $sessionid
+                ]);
+            }
+        }
 
         // Load assessment scores for each subject
         foreach ($scores as $score) {
@@ -1124,7 +1305,7 @@ class ViewStudentReportController extends Controller
 
         // Calculate GPA data
         $gpaData = [];
-        if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
+        if ($schoolclass && $schoolclass->classcategories->isNotEmpty() && $scores->isNotEmpty()) {
             try {
                 $gpaData = $this->computeOverallGPAAndCGPAForStudent(
                     $id,
@@ -1152,6 +1333,12 @@ class ViewStudentReportController extends Controller
                     'calculated_gpa' => 0.0,
                 ];
             }
+        } else {
+            Log::channel('pdf')->warning('Skipping GPA calculation', [
+                'has_schoolclass' => !is_null($schoolclass),
+                'has_categories' => $schoolclass ? $schoolclass->classcategories->isNotEmpty() : false,
+                'scores_not_empty' => $scores->isNotEmpty()
+            ]);
         }
 
         // Fetch personality profile
@@ -1176,6 +1363,13 @@ class ViewStudentReportController extends Controller
         $numberOfStudents = Studentclass::where('schoolclassid', $schoolclassid)
             ->where('sessionid', $sessionid)
             ->count();
+
+        Log::channel('pdf')->info('DEBUG: Additional data', [
+            'studentpp_count' => $studentpp->count(),
+            'schoolsession_found' => !is_null($schoolsession),
+            'schoolterm_found' => !is_null($schoolterm),
+            'number_of_students' => $numberOfStudents
+        ]);
 
         // Get school information
         $schoolInfo = SchoolInformation::first();
@@ -1251,7 +1445,11 @@ class ViewStudentReportController extends Controller
         Log::channel('pdf')->info('========== END getStudentResultData ==========', [
             'student_id' => $id,
             'scores_count' => $scores ? $scores->count() : 0,
-            'has_scores' => $scores && $scores->isNotEmpty()
+            'has_scores' => $scores && $scores->isNotEmpty(),
+            'has_assessments' => $assessments->isNotEmpty(),
+            'has_gpa_data' => !empty($gpaData),
+            'has_school_info' => !is_null($schoolInfo),
+            'result_keys' => array_keys($result)
         ]);
 
         return $result;
@@ -1261,12 +1459,12 @@ class ViewStudentReportController extends Controller
             'error_message' => $e->getMessage(),
             'error_file' => $e->getFile(),
             'error_line' => $e->getLine(),
-            'error_trace' => $e->getTraceAsString()
+            'error_trace' => $e->getTraceAsString(),
+            'timestamp' => now()->toDateTimeString()
         ]);
         return [];
     }
 }
-
 
 public function debugStudentScores(Request $request)
 {
