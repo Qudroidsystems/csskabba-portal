@@ -1003,7 +1003,7 @@
                                  Mirrors the sample report: dark navy row with fraction
                                  in the Total column and % in the Average column.
                             ══════════════════════════════════════════════════════════ --}}
-                            @if(!empty($totals) && $studentData['scores']->isNotEmpty())
+                            {{-- @if(!empty($totals) && $studentData['scores']->isNotEmpty()) --}}
 
                             {{-- Dark navy row --}}
                             <tr class="totals-row">
@@ -1065,7 +1065,7 @@
                                 </td>
                             </tr>
 
-                            @endif
+                            {{-- @endif --}}
                             {{-- ── End Totals Row ── --}}
 
                         </tbody>
