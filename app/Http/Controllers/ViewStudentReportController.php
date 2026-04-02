@@ -605,6 +605,37 @@ class ViewStudentReportController extends Controller
                 'total_attempts' => $attempts + 1,
             ]);
 
+            // -------------------------------------------------------
+            // TOTALS SUMMARY: obtained, obtainable, percentage
+            // Each subject is scored out of 100 (matching the sample
+            // report: 17 subjects × 100 = 1700 obtainable).
+            // -------------------------------------------------------
+            $totalObtained   = 0;
+            $totalObtainable = 0;
+
+            if ($scores && $scores->isNotEmpty()) {
+                foreach ($scores as $score) {
+                    if ($score->total !== null && is_numeric($score->total)) {
+                        $totalObtained += (float) $score->total;
+                    }
+                    // Each subject is out of 100
+                    $totalObtainable += 100;
+                }
+            }
+
+            $totalPercentage = $totalObtainable > 0
+                ? round(($totalObtained / $totalObtainable) * 100, 1)
+                : 0;
+
+            $totalsSummary = [
+                'obtained'    => round($totalObtained, 1),
+                'obtainable'  => $totalObtainable,
+                'percentage'  => $totalPercentage,
+            ];
+
+            Log::info('Totals summary computed', array_merge(['student_id' => $id], $totalsSummary));
+            // -------------------------------------------------------
+
             $gpaData = [];
             if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
                 try {
@@ -710,6 +741,7 @@ class ViewStudentReportController extends Controller
                 'assessments'          => $assessments,
                 'compulsorySubjects'   => $compulsorySubjects,
                 'gpa_data'             => $gpaData,
+                'totals_summary'       => $totalsSummary,   // ← NEW
             ];
 
             Log::channel('pdf')->info('========== END getStudentResultData ==========', [
@@ -1652,6 +1684,7 @@ class ViewStudentReportController extends Controller
                 'has_scores'        => isset($studentData['scores']) && !$studentData['scores']->isEmpty(),
                 'student_count'     => $studentData['students']->count() ?? 0,
                 'scores_count'      => $studentData['scores']->count() ?? 0,
+                'totals_summary'    => $studentData['totals_summary'] ?? [],
                 'server_info'       => [
                     'storage_writable'   => is_writable(storage_path()),
                     'php_version'        => PHP_VERSION,

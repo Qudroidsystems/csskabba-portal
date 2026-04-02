@@ -83,11 +83,11 @@
             line-height: 1.2;
         }
 
-       .school-logo {
+        .school-logo {
             width: 80px;
-            height: 100px;  /* Fixed height - no typo this time! */
-           border: 2px solid #47b492;
-           border-radius: 8px;
+            height: 100px;
+            border: 2px solid #47b492;
+            border-radius: 8px;
             background: white;
             padding: 2px;
             overflow: hidden;
@@ -99,7 +99,7 @@
         .school-logo img {
             width: 100%;
             height: 100%;
-            object-fit: contain;  /* Scales down to fit without stretching */
+            object-fit: contain;
             object-position: center;
             display: block;
         }
@@ -147,7 +147,6 @@
             display: block;
         }
 
-        /* Horizontal School Header Styles */
         .school-header-horizontal {
             display: flex;
             flex-direction: column;
@@ -196,7 +195,6 @@
             padding: 1px 0;
         }
 
-        /* NEW IMPROVED STUDENT INFO SECTION */
         .student-info-section {
             margin-bottom: 6px;
         }
@@ -309,6 +307,52 @@
             font-weight: 900;
         }
 
+        /* ============================================================
+           TOTALS ROW — dark navy background, white text, fraction style
+           ============================================================ */
+        .totals-row td {
+            background: #0d1a3d !important;
+            color: #ffffff !important;
+            border: 1px solid #000000 !important;
+            font-weight: 900 !important;
+            font-size: 9px !important;
+            text-align: center;
+            padding: 4px 3px;
+        }
+
+        .totals-fraction {
+            display: inline-block;
+            text-align: center;
+            font-size: 8px;
+            font-weight: 900;
+            line-height: 1.1;
+        }
+
+        .totals-fraction .t-num {
+            display: block;
+            border-bottom: 1.5px solid #ffffff;
+            padding: 0 4px 1px 4px;
+        }
+
+        .totals-fraction .t-den {
+            display: block;
+            padding: 1px 4px 0 4px;
+        }
+
+        /* Full-width percentage summary band */
+        .totals-summary-row td {
+            background: #1e3a5f !important;
+            color: #ffffff !important;
+            border: 1px solid #000000 !important;
+            font-weight: 800 !important;
+            font-size: 9px !important;
+            text-align: center;
+            padding: 5px 4px;
+            letter-spacing: 0.4px;
+        }
+
+        /* ============================================================ */
+
         .remarks-table {
             width: 100%;
             border: 2px solid #000000;
@@ -370,7 +414,6 @@
             margin-top: 6px;
         }
 
-        /* Promotion status styles */
         .promotion-status {
             font-weight: 900;
             margin-left: 5px;
@@ -416,8 +459,7 @@
         .col-cgpa { width: 50px; }
         .col-compulsory { width: 60px; }
         .col-vetted { width: 80px; }
-        
-        /* For printing */
+
         @media print {
             body {
                 background: white;
@@ -432,7 +474,7 @@
                 page-break-after: always;
                 box-shadow: none;
             }
-            
+
             .student-section:last-child {
                 page-break-after: avoid;
             }
@@ -446,11 +488,11 @@
                 grid-template-columns: repeat(3, 1fr);
                 gap: 6px 12px;
             }
-            
+
             .school-detail-label {
                 font-size: 7px;
             }
-            
+
             .school-detail-content {
                 font-size: 8px;
             }
@@ -460,64 +502,81 @@
 <body>
     @php
         $selectedColumns = $metadata['selected_columns'] ?? [];
-        $defaultColumns = ['sn', 'admission_no', 'name', 'total', 'bf', 'cum', 'grade', 'position', 'class_average', 'gpa', 'cgpa', 'vetted_status'];
-        $columnsToShow = !empty($selectedColumns) ? $selectedColumns : $defaultColumns;
-        
-        // Count visible columns
-        $visibleColumnCount = 0;
-        if (in_array('sn', $columnsToShow)) $visibleColumnCount++;
-        if (in_array('admission_no', $columnsToShow)) $visibleColumnCount++;
-        if (in_array('name', $columnsToShow)) $visibleColumnCount++;
-        
-        // Count assessment columns
+        $defaultColumns  = ['sn', 'admission_no', 'name', 'total', 'bf', 'cum', 'grade', 'position', 'class_average', 'gpa', 'cgpa', 'vetted_status'];
+        $columnsToShow   = !empty($selectedColumns) ? $selectedColumns : $defaultColumns;
+
+        // Count base visible columns (non-assessment, non-score)
+        $baseVisibleCount = 0;
+        if (in_array('sn', $columnsToShow))           $baseVisibleCount++;
+        if (in_array('admission_no', $columnsToShow)) $baseVisibleCount++;
+        if (in_array('name', $columnsToShow))          $baseVisibleCount++;
+
         $assessmentColumnsCount = 0;
     @endphp
 
     @foreach ($allStudentData as $index => $studentData)
         @php
-            $schoolInfo = $studentData['schoolInfo'] ?? null;
-            $student = $studentData['students'] && $studentData['students']->isNotEmpty() ? $studentData['students']->first() : null;
+            $schoolInfo  = $studentData['schoolInfo'] ?? null;
+            $student     = $studentData['students'] && $studentData['students']->isNotEmpty()
+                            ? $studentData['students']->first()
+                            : null;
             $assessments = $studentData['assessments'] ?? collect();
-            $gpaData = $studentData['gpa_data'] ?? [];
-            
-            // Recalculate assessment columns for this student
+            $gpaData     = $studentData['gpa_data'] ?? [];
+            $totals      = $studentData['totals_summary'] ?? [];
+
+            // Recalculate assessment columns count for this student
             $assessmentColumnsCount = 0;
             foreach ($assessments as $assessment) {
                 if (in_array($assessment->id, $columnsToShow) || in_array('all_assessments', $columnsToShow)) {
                     $assessmentColumnsCount++;
                 }
             }
-            $currentVisibleColumnCount = $visibleColumnCount + $assessmentColumnsCount;
-            
-            // Add other columns
-            $otherColumns = ['total', 'bf', 'cum', 'grade', 'position', 'class_average', 
-                            'num_subjects', 'total_grade_points', 'gpa', 'calculated_gpa', 
-                            'gpa_grade', 'cgpa', 'compulsory_flag', 'vetted_status'];
-            foreach ($otherColumns as $col) {
+
+            // Full visible column count (used for colspan calculations)
+            $currentVisibleColumnCount = $baseVisibleCount + $assessmentColumnsCount;
+            $otherScoreCols = ['total', 'bf', 'cum', 'grade', 'position', 'class_average',
+                               'num_subjects', 'total_grade_points', 'gpa', 'calculated_gpa',
+                               'gpa_grade', 'cgpa', 'compulsory_flag', 'vetted_status'];
+            foreach ($otherScoreCols as $col) {
                 if (in_array($col, $columnsToShow)) $currentVisibleColumnCount++;
             }
+
+            // Colspan for the "TOTAL" label cell (everything up to and including the Total column header)
+            $totalLabelColspan = $baseVisibleCount + $assessmentColumnsCount;
+
+            // Colspan for "TOTAL" label cell in GPA summary row
+            // (same columns before 'total', but we want it right-aligned so we span everything
+            //  before 'num_subjects')
+            $gpaSummaryLabelColspan = $baseVisibleCount + $assessmentColumnsCount;
+            if (in_array('total', $columnsToShow))         $gpaSummaryLabelColspan++;
+            if (in_array('bf', $columnsToShow))            $gpaSummaryLabelColspan++;
+            if (in_array('cum', $columnsToShow))           $gpaSummaryLabelColspan++;
+            if (in_array('grade', $columnsToShow))         $gpaSummaryLabelColspan++;
+            if (in_array('position', $columnsToShow))      $gpaSummaryLabelColspan++;
+            if (in_array('class_average', $columnsToShow)) $gpaSummaryLabelColspan++;
         @endphp
-        
+
         <div class="student-section">
             <div class="student-section-inner">
-                <!-- Header Section -->
+
+                <!-- ═══════════════ HEADER ═══════════════ -->
                 <div class="header">
                     <table class="header-table">
                         <tr>
                             <td width="25%">
                                 <div class="school-logo">
                                     @php
-                                        $hasLogo = false;
-                                        $logoSrc = '';
-                                        
-                                        if(!empty($studentData['school_logo_base64'])) {
+                                        $hasLogo  = false;
+                                        $logoSrc  = '';
+
+                                        if (!empty($studentData['school_logo_base64'])) {
                                             $logoSrc = $studentData['school_logo_base64'];
                                             $hasLogo = true;
                                         }
-                                        
-                                        if(!$hasLogo) {
+
+                                        if (!$hasLogo) {
                                             $schoolName = $schoolInfo->school_name ?? 'School';
-                                            $logoSrc = 'data:image/svg+xml;base64,' . base64_encode('
+                                            $logoSrc    = 'data:image/svg+xml;base64,' . base64_encode('
                                                 <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
                                                     <rect width="100" height="100" fill="#f8f9fa" stroke="#dee2e6" stroke-width="2"/>
                                                     <circle cx="50" cy="40" r="15" fill="#6c757d" opacity="0.5"/>
@@ -529,45 +588,36 @@
                                             ');
                                         }
                                     @endphp
-                                    
                                     <img class="header-img" src="{{ $logoSrc }}" alt="School Logo">
                                 </div>
                             </td>
-                          
+
                             <td width="50%" style="padding-left: 10px; vertical-align: middle;">
-                                    <!-- Compact & Bold School Header – Exactly like your sample -->
-                                    <div style="
-                                        font-family: 'Arial Black', 'Helvetica Bold', sans-serif;
-                                        font-weight: 900;
-                                        color: #000;
-                                        line-height: 1.35;
-                                        text-align: left;
-                                    ">
-                                        <div style="
-                                            font-size: 22px; 
-                                            letter-spacing: 1.2px; 
-                                            margin-bottom: 4px;
-                                            color: #1e293b;
-                                        ">
-                                            {{ $schoolInfo->school_name ?? 'EXCELLENCE INTERNATIONAL COLLEGE' }}
-                                        </div>
-
-                                        <div style="font-size: 12px;">
-                                            <strong style="color: #1e40af;">Motto:</strong> 
-                                            <span style="margin-left: 6px;">{{ $schoolInfo->school_motto ?? 'Knowledge & Character' }}</span>
-                                        </div>
-
-                                        <div style="font-size: 12px;">
-                                            <strong style="color: #1e40af;">Address:</strong> 
-                                            <span style="margin-left: 6px;">{{ $schoolInfo->school_address ?? '12 Adeola Odeku, Victoria Island, Lagos' }}</span>
-                                        </div>
-
-                                        <div style="font-size: 12px;">
-                                            <strong style="color: #1e40af;">Phone:</strong> 
-                                            <span style="margin-left: 6px;">{{ $schoolInfo->school_phone ?? '0803 123 4567' }}</span>
-                                        </div>
+                                <div style="
+                                    font-family: 'Arial Black', 'Helvetica Bold', sans-serif;
+                                    font-weight: 900;
+                                    color: #000;
+                                    line-height: 1.35;
+                                    text-align: left;
+                                ">
+                                    <div style="font-size: 22px; letter-spacing: 1.2px; margin-bottom: 4px; color: #1e293b;">
+                                        {{ $schoolInfo->school_name ?? 'EXCELLENCE INTERNATIONAL COLLEGE' }}
                                     </div>
-                                </td>
+                                    <div style="font-size: 12px;">
+                                        <strong style="color: #1e40af;">Motto:</strong>
+                                        <span style="margin-left: 6px;">{{ $schoolInfo->school_motto ?? 'Knowledge & Character' }}</span>
+                                    </div>
+                                    <div style="font-size: 12px;">
+                                        <strong style="color: #1e40af;">Address:</strong>
+                                        <span style="margin-left: 6px;">{{ $schoolInfo->school_address ?? '12 Adeola Odeku, Victoria Island, Lagos' }}</span>
+                                    </div>
+                                    <div style="font-size: 12px;">
+                                        <strong style="color: #1e40af;">Phone:</strong>
+                                        <span style="margin-left: 6px;">{{ $schoolInfo->school_phone ?? '0803 123 4567' }}</span>
+                                    </div>
+                                </div>
+                            </td>
+
                             <td width="25%">
                                 @if(in_array('picture', $columnsToShow))
                                 <div class="photo-frame">
@@ -581,99 +631,101 @@
                             </td>
                         </tr>
                     </table>
+
                     <div class="header-divider"></div>
                     <div class="header-divider2"></div>
-                    <div class="report-title">{{ strtoupper($metadata['term']) }} {{ strtoupper($metadata['session']) }} ACADEMIC SESSION TERMINAL PROGRESS REPORT</div>
+                    <div class="report-title">
+                        {{ strtoupper($metadata['term']) }} {{ strtoupper($metadata['session']) }} ACADEMIC SESSION TERMINAL PROGRESS REPORT
+                    </div>
                 </div>
 
-                <!-- Student Information Section -->
+                <!-- ═══════════════ STUDENT INFO ═══════════════ -->
                 @if ($studentData['students'] && $studentData['students']->isNotEmpty())
-                    @php 
-                        $profile = $studentData['studentpp'] && $studentData['studentpp']->isNotEmpty() ? $studentData['studentpp']->first() : null;
+                    @php
+                        $profile = $studentData['studentpp'] && $studentData['studentpp']->isNotEmpty()
+                                    ? $studentData['studentpp']->first()
+                                    : null;
                     @endphp
-                    
-                    
-                 <!-- IMPROVED: Horizontal Inline Student Information (No Breaking, Bigger Text) -->
-<div class="student-info-section" style="
-    padding: 12px 14px; 
-    background: linear-gradient(to bottom, #f0f7ff 0%, #ffffff 100%); 
-    border: 2px solid #2aa886; 
-    border-radius: 8px; 
-    margin-bottom: 10px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-">
-    <div style="
-        font-size: 12.5px; 
-        line-height: 1.6; 
-        display: flex; 
-        flex-wrap: wrap; 
-        gap: 16px 24px; 
-        align-items: center; 
-        font-weight: 700; 
-        color: #1e293b;
-    ">
-        <!-- Each item is wrapped in nowrap to prevent label/value split -->
-        <span style="white-space: nowrap;">
-            <span style="color: #1e40af; font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px;">Name:</span>
-            <strong style="color: #000; margin-left: 6px; font-size: 13.5px;">
-                {{ strtoupper($student->lastname ?? '') }} {{ $student->fname ?? '' }} {{ $student->othername ?? '' }}
-            </strong>
-        </span>
 
-        <span style="white-space: nowrap;">
-            <span style="color: #1e40af; font-size: 11px; text-transform: uppercase;">Session:</span>
-            <strong style="color: #000; margin-left: 6px;">{{ $studentData['schoolsession']->session ?? '—' }}</strong>
-        </span>
+                    <div class="student-info-section" style="
+                        padding: 12px 14px;
+                        background: linear-gradient(to bottom, #f0f7ff 0%, #ffffff 100%);
+                        border: 2px solid #2aa886;
+                        border-radius: 8px;
+                        margin-bottom: 10px;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                    ">
+                        <div style="
+                            font-size: 12.5px;
+                            line-height: 1.6;
+                            display: flex;
+                            flex-wrap: wrap;
+                            gap: 16px 24px;
+                            align-items: center;
+                            font-weight: 700;
+                            color: #1e293b;
+                        ">
+                            <span style="white-space: nowrap;">
+                                <span style="color: #1e40af; font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px;">Name:</span>
+                                <strong style="color: #000; margin-left: 6px; font-size: 13.5px;">
+                                    {{ strtoupper($student->lastname ?? '') }} {{ $student->fname ?? '' }} {{ $student->othername ?? '' }}
+                                </strong>
+                            </span>
 
-        <span style="white-space: nowrap;">
-            <span style="color: #1e40af; font-size: 11px; text-transform: uppercase;">Term:</span>
-            <strong style="color: #000; margin-left: 6px;">{{ $studentData['schoolterm']->term ?? '—' }}</strong>
-        </span>
+                            <span style="white-space: nowrap;">
+                                <span style="color: #1e40af; font-size: 11px; text-transform: uppercase;">Session:</span>
+                                <strong style="color: #000; margin-left: 6px;">{{ $studentData['schoolsession']->session ?? '—' }}</strong>
+                            </span>
 
-        <span style="white-space: nowrap;">
-            <span style="color: #1e40af; font-size: 11px; text-transform: uppercase;">Class:</span>
-            <strong style="color: #000; margin-left: 6px;">
-                {{ $studentData['schoolclass']->schoolclass ?? '' }} {{ $studentData['schoolclass']->arms->arm ?? '' }}
-            </strong>
-        </span>
+                            <span style="white-space: nowrap;">
+                                <span style="color: #1e40af; font-size: 11px; text-transform: uppercase;">Term:</span>
+                                <strong style="color: #000; margin-left: 6px;">{{ $studentData['schoolterm']->term ?? '—' }}</strong>
+                            </span>
 
-        <span style="white-space: nowrap;">
-            <span style="color: #1e40af; font-size: 11px; text-transform: uppercase;">Adm No:</span>
-            <strong style="color: #000; margin-left: 6px; font-weight: 900;">
-                {{ $student->admissionNo ?? '—' }}
-            </strong>
-        </span>
+                            <span style="white-space: nowrap;">
+                                <span style="color: #1e40af; font-size: 11px; text-transform: uppercase;">Class:</span>
+                                <strong style="color: #000; margin-left: 6px;">
+                                    {{ $studentData['schoolclass']->schoolclass ?? '' }} {{ $studentData['schoolclass']->arms->arm ?? '' }}
+                                </strong>
+                            </span>
 
-        @if(in_array('gender', $columnsToShow))
-        <span style="white-space: nowrap;">
-            <span style="color: #1e40af; font-size: 11px; text-transform: uppercase;">Sex:</span>
-            <strong style="color: #000; margin-left: 6px;">{{ $student->gender ?? '—' }}</strong>
-        </span>
-        @endif
+                            <span style="white-space: nowrap;">
+                                <span style="color: #1e40af; font-size: 11px; text-transform: uppercase;">Adm No:</span>
+                                <strong style="color: #000; margin-left: 6px; font-weight: 900;">
+                                    {{ $student->admissionNo ?? '—' }}
+                                </strong>
+                            </span>
 
-        @if(in_array('dob', $columnsToShow))
-        <span style="white-space: nowrap;">
-            <span style="color: #1e40af; font-size: 11px; text-transform: uppercase;">DOB:</span>
-            <strong style="color: #000; margin-left: 6px;">
-                {{ $student->dateofbirth ? \Carbon\Carbon::parse($student->dateofbirth)->format('jS M, Y') : '—' }}
-            </strong>
-        </span>
-        @endif
+                            @if(in_array('gender', $columnsToShow))
+                            <span style="white-space: nowrap;">
+                                <span style="color: #1e40af; font-size: 11px; text-transform: uppercase;">Sex:</span>
+                                <strong style="color: #000; margin-left: 6px;">{{ $student->gender ?? '—' }}</strong>
+                            </span>
+                            @endif
 
-        <span style="white-space: nowrap;">
-            <span style="color: #1e40af; font-size: 11px; text-transform: uppercase;">School Opened:</span>
-            <strong style="color: #000; margin-left: 6px;">
-                {{ $schoolInfo->date_school_opened ? \Carbon\Carbon::parse($schoolInfo->date_school_opened)->format('jS M, Y') : '—' }}
-            </strong>
-        </span>
+                            @if(in_array('dob', $columnsToShow))
+                            <span style="white-space: nowrap;">
+                                <span style="color: #1e40af; font-size: 11px; text-transform: uppercase;">DOB:</span>
+                                <strong style="color: #000; margin-left: 6px;">
+                                    {{ $student->dateofbirth ? \Carbon\Carbon::parse($student->dateofbirth)->format('jS M, Y') : '—' }}
+                                </strong>
+                            </span>
+                            @endif
 
-        <span style="white-space: nowrap;">
-            <span style="color: #1e40af; font-size: 11px; text-transform: uppercase;">No. in Class:</span>
-            <strong style="color: #000; margin-left: 6px;">{{ $studentData['numberOfStudents'] ?? '—' }}</strong>
-        </span>
-    </div>
-</div> 
-                                        
+                            <span style="white-space: nowrap;">
+                                <span style="color: #1e40af; font-size: 11px; text-transform: uppercase;">School Opened:</span>
+                                <strong style="color: #000; margin-left: 6px;">
+                                    {{ $schoolInfo->date_school_opened ? \Carbon\Carbon::parse($schoolInfo->date_school_opened)->format('jS M, Y') : '—' }}
+                                </strong>
+                            </span>
+
+                            <span style="white-space: nowrap;">
+                                <span style="color: #1e40af; font-size: 11px; text-transform: uppercase;">No. in Class:</span>
+                                <strong style="color: #000; margin-left: 6px;">{{ $studentData['numberOfStudents'] ?? '—' }}</strong>
+                            </span>
+                        </div>
+                    </div>
+
                 @else
                     <div class="student-info-section">
                         <div class="info-item">
@@ -682,7 +734,7 @@
                     </div>
                 @endif
 
-                <!-- Results Table with Dynamic Columns -->
+                <!-- ═══════════════ RESULTS TABLE ═══════════════ -->
                 <div class="result-table">
                     <table>
                         <thead>
@@ -690,97 +742,98 @@
                                 @if(in_array('sn', $columnsToShow))
                                 <th class="col-sn">S/N</th>
                                 @endif
-                                
+
                                 @if(in_array('admission_no', $columnsToShow))
                                 <th class="col-admissionno">Adm No</th>
                                 @endif
-                                
+
                                 @if(in_array('name', $columnsToShow))
                                 <th class="col-name">Subject</th>
                                 @endif
-                                
-                               @foreach ($assessments as $assessment)
+
+                                @foreach ($assessments as $assessment)
                                     @if(in_array($assessment->id, $columnsToShow) || in_array('all_assessments', $columnsToShow))
                                     <th class="col-assessment assessment-header" style="font-size: 7.5px; line-height: 1.2;">
-                                        {{ $assessment->name }}
-                                        <br>
-                                        <small style="font-weight: bold; color: #ffffff;font-size: 7.5px; " >({{ $assessment->max_score }})</small>
+                                        {{ $assessment->name }}<br>
+                                        <small style="font-weight: bold; color: #ffffff; font-size: 7.5px;">({{ $assessment->max_score }})</small>
                                     </th>
                                     @endif
                                 @endforeach
-                                
+
                                 @if(in_array('total', $columnsToShow))
                                 <th class="col-total">Total</th>
                                 @endif
-                                
+
                                 @if(in_array('bf', $columnsToShow))
                                 <th class="col-bf">BF</th>
                                 @endif
-                                
+
                                 @if(in_array('cum', $columnsToShow))
                                 <th class="col-cum">Cum</th>
                                 @endif
-                                
+
                                 @if(in_array('grade', $columnsToShow))
                                 <th class="col-grade">Grade</th>
                                 @endif
-                                
+
                                 @if(in_array('position', $columnsToShow))
                                 <th class="col-position">Pos</th>
                                 @endif
-                                
+
                                 @if(in_array('class_average', $columnsToShow))
                                 <th class="col-class-average">Avg</th>
                                 @endif
-                                
+
                                 @if(in_array('num_subjects', $columnsToShow))
                                 <th class="col-num-subjects">Subj</th>
                                 @endif
-                                
+
                                 @if(in_array('total_grade_points', $columnsToShow))
                                 <th class="col-total-grade-points">TGP</th>
                                 @endif
-                                
+
                                 @if(in_array('gpa', $columnsToShow))
                                 <th class="col-gpa">GPA</th>
                                 @endif
-                                
+
                                 @if(in_array('calculated_gpa', $columnsToShow))
                                 <th class="col-calculated-gpa">Calc</th>
                                 @endif
-                                
+
                                 @if(in_array('gpa_grade', $columnsToShow))
                                 <th class="col-gpa-grade">Grd</th>
                                 @endif
-                                
+
                                 @if(in_array('cgpa', $columnsToShow))
                                 <th class="col-cgpa">CGPA</th>
                                 @endif
-                                
+
                                 @if(in_array('compulsory_flag', $columnsToShow))
                                 <th class="col-compulsory">Comp</th>
                                 @endif
-                                
+
                                 @if(in_array('vetted_status', $columnsToShow))
                                 <th class="col-vetted">Vetted</th>
                                 @endif
                             </tr>
                         </thead>
+
                         <tbody>
+                            {{-- ── Subject score rows ── --}}
                             @forelse ($studentData['scores'] as $scoreIndex => $score)
                                 <tr>
                                     @if(in_array('sn', $columnsToShow))
                                     <td class="col-sn">{{ $scoreIndex + 1 }}</td>
                                     @endif
-                                    
+
                                     @if(in_array('admission_no', $columnsToShow))
                                     <td class="col-admissionno">{{ $student->admissionNo ?? '-' }}</td>
                                     @endif
-                                    
+
                                     @if(in_array('name', $columnsToShow))
                                     <td class="col-name subject-name">{{ $score->subject_name ?? 'NO INFO' }}</td>
                                     @endif
-                                    
+
                                     @foreach ($assessments as $assessment)
                                         @if(in_array($assessment->id, $columnsToShow) || in_array('all_assessments', $columnsToShow))
                                         @php
@@ -796,96 +849,82 @@
                                         </td>
                                         @endif
                                     @endforeach
-                                    
+
                                     @if(in_array('total', $columnsToShow))
                                     <td class="col-total @if ($score->total < 50 && is_numeric($score->total)) highlight-red @endif">
                                         {{ $score->total ? number_format($score->total, 1) : '-' }}
                                     </td>
                                     @endif
-                                    
+
                                     @if(in_array('bf', $columnsToShow))
                                     <td class="col-bf @if ($score->bf < 50 && is_numeric($score->bf)) highlight-red @endif">
                                         {{ $score->bf ? number_format($score->bf, 1) : '-' }}
                                     </td>
                                     @endif
-                                    
+
                                     @if(in_array('cum', $columnsToShow))
                                     <td class="col-cum @if ($score->cum < 50 && is_numeric($score->cum)) highlight-red @endif">
                                         {{ $score->cum ? number_format($score->cum, 1) : '-' }}
                                     </td>
                                     @endif
-                                    
+
                                     @if(in_array('grade', $columnsToShow))
                                     <td class="col-grade @if (in_array($score->grade ?? '', ['F', 'F9', 'E', 'E8'])) highlight-red @endif">
                                         {{ $score->grade ?? '-' }}
                                     </td>
                                     @endif
-                                    
+
                                     @if(in_array('position', $columnsToShow))
                                     <td class="col-position">{{ $score->position ?? '-' }}</td>
                                     @endif
-                                    
+
                                     @if(in_array('class_average', $columnsToShow))
                                     <td class="col-class-average">{{ $score->class_average ? number_format($score->class_average, 1) : '-' }}</td>
                                     @endif
-                                    
+
                                     @if(in_array('num_subjects', $columnsToShow))
-                                    <td class="col-num-subjects">
-                                        {{ $gpaData['num_subjects'] ?? '-' }}
-                                    </td>
+                                    <td class="col-num-subjects">{{ $gpaData['num_subjects'] ?? '-' }}</td>
                                     @endif
-                                    
+
                                     @if(in_array('total_grade_points', $columnsToShow))
                                     <td class="col-total-grade-points">
                                         {{ $gpaData['total_grade_points'] ? number_format($gpaData['total_grade_points'], 1) : '-' }}
                                     </td>
                                     @endif
-                                    
+
                                     @if(in_array('gpa', $columnsToShow))
                                     <td class="col-gpa">
                                         {{ $gpaData['gpa'] ? number_format($gpaData['gpa'], 2) : '-' }}
                                     </td>
                                     @endif
-                                    
+
                                     @if(in_array('calculated_gpa', $columnsToShow))
                                     <td class="col-calculated-gpa">
                                         {{ $gpaData['calculated_gpa'] ? number_format($gpaData['calculated_gpa'], 2) : '-' }}
                                     </td>
                                     @endif
-                                    
+
                                     @if(in_array('gpa_grade', $columnsToShow))
-                                    <td class="col-gpa-grade">
-                                        {{ $gpaData['gpa_grade'] ?? '-' }}
-                                    </td>
+                                    <td class="col-gpa-grade">{{ $gpaData['gpa_grade'] ?? '-' }}</td>
                                     @endif
-                                    
+
                                     @if(in_array('cgpa', $columnsToShow))
                                     <td class="col-cgpa">
                                         {{ $gpaData['cgpa'] ? number_format($gpaData['cgpa'], 2) : '-' }}
                                     </td>
                                     @endif
-                                    
+
                                     @if(in_array('compulsory_flag', $columnsToShow))
                                     <td class="col-compulsory">
-                                        @if($score->is_compulsory ?? false)
-                                            ✓
-                                        @else
-                                            -
-                                        @endif
+                                        {{ ($score->is_compulsory ?? false) ? '✓' : '-' }}
                                     </td>
                                     @endif
-                                    
+
                                     @if(in_array('vetted_status', $columnsToShow))
                                     <td class="col-vetted">
                                         @php
-                                            $vettedStatus = $score->vettedstatus ?? '2';
-                                            if ($vettedStatus === '1') {
-                                                echo '✓';
-                                            } elseif ($vettedStatus === '0') {
-                                                echo '✗';
-                                            } else {
-                                                echo '...';
-                                            }
+                                            $vs = $score->vettedstatus ?? '2';
+                                            echo $vs === '1' ? '✓' : ($vs === '0' ? '✗' : '...');
                                         @endphp
                                     </td>
                                     @endif
@@ -895,85 +934,145 @@
                                     <td colspan="{{ $currentVisibleColumnCount }}" style="text-align: center;">No scores available.</td>
                                 </tr>
                             @endforelse
-                            
-                            <!-- GPA Summary Row -->
+
+                            {{-- ══════════════════════════════════════════════════════════
+                                 GPA SUMMARY ROW
+                                 Only shown when any GPA column is selected
+                            ══════════════════════════════════════════════════════════ --}}
                             @if($studentData['scores']->isNotEmpty() && (
-                                in_array('num_subjects', $columnsToShow) || 
-                                in_array('total_grade_points', $columnsToShow) || 
-                                in_array('gpa', $columnsToShow) || 
-                                in_array('calculated_gpa', $columnsToShow) || 
-                                in_array('gpa_grade', $columnsToShow) || 
+                                in_array('num_subjects', $columnsToShow) ||
+                                in_array('total_grade_points', $columnsToShow) ||
+                                in_array('gpa', $columnsToShow) ||
+                                in_array('calculated_gpa', $columnsToShow) ||
+                                in_array('gpa_grade', $columnsToShow) ||
                                 in_array('cgpa', $columnsToShow)
                             ))
                             <tr style="background-color: #f3f4f6; font-weight: bold;">
-                                @php
-                                    $summaryColspan = 0;
-                                    if (in_array('sn', $columnsToShow)) $summaryColspan++;
-                                    if (in_array('admission_no', $columnsToShow)) $summaryColspan++;
-                                    if (in_array('name', $columnsToShow)) $summaryColspan++;
-                                    $summaryColspan += $assessmentColumnsCount;
-                                    if (in_array('total', $columnsToShow)) $summaryColspan++;
-                                    if (in_array('bf', $columnsToShow)) $summaryColspan++;
-                                    if (in_array('cum', $columnsToShow)) $summaryColspan++;
-                                    if (in_array('grade', $columnsToShow)) $summaryColspan++;
-                                    if (in_array('position', $columnsToShow)) $summaryColspan++;
-                                    if (in_array('class_average', $columnsToShow)) $summaryColspan++;
-                                @endphp
-                                
-                                <td colspan="{{ $summaryColspan }}" style="text-align: right; padding-right: 10px;">
+                                <td colspan="{{ $gpaSummaryLabelColspan }}" style="text-align: right; padding-right: 10px; border: 1px solid #000;">
                                     GPA Summary:
                                 </td>
-                                
+
                                 @if(in_array('num_subjects', $columnsToShow))
-                                <td class="col-num-subjects">
+                                <td class="col-num-subjects" style="border: 1px solid #000; text-align: center;">
                                     {{ $gpaData['num_subjects'] ?? '-' }}
                                 </td>
                                 @endif
-                                
+
                                 @if(in_array('total_grade_points', $columnsToShow))
-                                <td class="col-total-grade-points">
+                                <td class="col-total-grade-points" style="border: 1px solid #000; text-align: center;">
                                     {{ $gpaData['total_grade_points'] ? number_format($gpaData['total_grade_points'], 1) : '-' }}
                                 </td>
                                 @endif
-                                
+
                                 @if(in_array('gpa', $columnsToShow))
-                                <td class="col-gpa">
+                                <td class="col-gpa" style="border: 1px solid #000; text-align: center;">
                                     {{ $gpaData['gpa'] ? number_format($gpaData['gpa'], 2) : '-' }}
                                 </td>
                                 @endif
-                                
+
                                 @if(in_array('calculated_gpa', $columnsToShow))
-                                <td class="col-calculated-gpa">
+                                <td class="col-calculated-gpa" style="border: 1px solid #000; text-align: center;">
                                     {{ $gpaData['calculated_gpa'] ? number_format($gpaData['calculated_gpa'], 2) : '-' }}
                                 </td>
                                 @endif
-                                
+
                                 @if(in_array('gpa_grade', $columnsToShow))
-                                <td class="col-gpa-grade">
+                                <td class="col-gpa-grade" style="border: 1px solid #000; text-align: center;">
                                     {{ $gpaData['gpa_grade'] ?? '-' }}
                                 </td>
                                 @endif
-                                
+
                                 @if(in_array('cgpa', $columnsToShow))
-                                <td class="col-cgpa">
+                                <td class="col-cgpa" style="border: 1px solid #000; text-align: center;">
                                     {{ $gpaData['cgpa'] ? number_format($gpaData['cgpa'], 2) : '-' }}
                                 </td>
                                 @endif
-                                
+
                                 @if(in_array('compulsory_flag', $columnsToShow))
-                                <td class="col-compulsory"></td>
+                                <td style="border: 1px solid #000;"></td>
                                 @endif
-                                
+
                                 @if(in_array('vetted_status', $columnsToShow))
-                                <td class="col-vetted"></td>
+                                <td style="border: 1px solid #000;"></td>
                                 @endif
                             </tr>
                             @endif
+
+                            {{-- ══════════════════════════════════════════════════════════
+                                 TOTALS ROW — Obtained / Obtainable / % Obtained
+                                 Mirrors the sample report: dark navy row with fraction
+                                 in the Total column and % in the Average column.
+                            ══════════════════════════════════════════════════════════ --}}
+                            @if(!empty($totals) && $studentData['scores']->isNotEmpty())
+
+                            {{-- Dark navy row --}}
+                            <tr class="totals-row">
+                                {{-- Label spans all columns up to (but not including) Total --}}
+                                <td colspan="{{ $totalLabelColspan }}"
+                                    style="text-align: right; padding-right: 10px; font-size: 9px; letter-spacing: 0.4px;">
+                                    TOTAL
+                                </td>
+
+                                @if(in_array('total', $columnsToShow))
+                                <td class="col-total">
+                                    {{-- Fraction: Obtained over Obtainable --}}
+                                    <div class="totals-fraction">
+                                        <span class="t-num">{{ number_format($totals['obtained'], 1) }}</span>
+                                        <span class="t-den">{{ $totals['obtainable'] }}</span>
+                                    </div>
+                                </td>
+                                @endif
+
+                                @if(in_array('bf', $columnsToShow))
+                                <td class="col-bf"></td>
+                                @endif
+
+                                @if(in_array('cum', $columnsToShow))
+                                <td class="col-cum"></td>
+                                @endif
+
+                                @if(in_array('grade', $columnsToShow))
+                                <td class="col-grade"></td>
+                                @endif
+
+                                @if(in_array('position', $columnsToShow))
+                                <td class="col-position"></td>
+                                @endif
+
+                                @if(in_array('class_average', $columnsToShow))
+                                {{-- % Obtained sits in the class-average column --}}
+                                <td class="col-class-average" style="font-size: 10px; font-weight: 900;">
+                                    {{ $totals['percentage'] }}%
+                                </td>
+                                @endif
+
+                                {{-- GPA / other trailing columns --}}
+                                @foreach(['num_subjects','total_grade_points','gpa','calculated_gpa','gpa_grade','cgpa','compulsory_flag','vetted_status'] as $trailingCol)
+                                    @if(in_array($trailingCol, $columnsToShow))
+                                    <td></td>
+                                    @endif
+                                @endforeach
+                            </tr>
+
+                            {{-- Full-width percentage summary band --}}
+                            <tr class="totals-summary-row">
+                                <td colspan="{{ $currentVisibleColumnCount }}">
+                                    TOTAL OBTAINED: {{ number_format($totals['obtained'], 1) }}
+                                    &nbsp;&nbsp;|&nbsp;&nbsp;
+                                    TOTAL OBTAINABLE: {{ $totals['obtainable'] }}
+                                    &nbsp;&nbsp;|&nbsp;&nbsp;
+                                    % OBTAINED: {{ $totals['percentage'] }}%
+                                </td>
+                            </tr>
+
+                            @endif
+                            {{-- ── End Totals Row ── --}}
+
                         </tbody>
                     </table>
                 </div>
 
-                <!-- Remarks Section -->
+                <!-- ═══════════════ REMARKS ═══════════════ -->
                 <table class="remarks-table">
                     <tbody>
                         <tr>
@@ -988,11 +1087,11 @@
                                 <div>
                                     <span class="text-space-on-dots">
                                         @if(!empty($gpaData))
-                                        <strong>GPA:</strong> {{ number_format($gpaData['gpa'] ?? 0, 2) }} 
-                                        ({{ $gpaData['gpa_grade'] ?? '-' }}) |
-                                        <strong>CGPA:</strong> {{ number_format($gpaData['cgpa'] ?? 0, 2) }}
+                                            <strong>GPA:</strong> {{ number_format($gpaData['gpa'] ?? 0, 2) }}
+                                            ({{ $gpaData['gpa_grade'] ?? '-' }}) |
+                                            <strong>CGPA:</strong> {{ number_format($gpaData['cgpa'] ?? 0, 2) }}
                                         @else
-                                        GPA/CGPA data not available
+                                            GPA/CGPA data not available
                                         @endif
                                     </span>
                                 </div>
@@ -1011,10 +1110,10 @@
                                     <span class="text-space-on-dots">
                                         {{ $profile ? ($profile->principalscomment ?? 'NO INFO') : 'NO INFO' }}
                                         @php
-                                            $status = $studentData['promotionStatusValue'] ?? null;
+                                            $status      = $studentData['promotionStatusValue'] ?? null;
                                             $statusUpper = strtoupper(trim($status ?? ''));
                                             $statusClass = 'promotion-default';
-                                            
+
                                             if (str_contains($statusUpper, 'PROMOTED') && !str_contains($statusUpper, 'TRIAL')) {
                                                 $statusClass = 'promotion-promoted';
                                             } elseif (str_contains($statusUpper, 'TRIAL') || str_contains($statusUpper, 'PROMOTED ON TRIAL')) {
@@ -1024,7 +1123,7 @@
                                             } elseif (str_contains($statusUpper, 'PRINCIPAL') || str_contains($statusUpper, 'PARENTS')) {
                                                 $statusClass = 'promotion-parents';
                                             }
-                                            
+
                                             $statusText = $status ?? 'Not applicable for this term';
                                         @endphp
                                         <br>
@@ -1038,13 +1137,13 @@
                     </tbody>
                 </table>
 
-                <!-- Footer Section -->
+                <!-- ═══════════════ FOOTER ═══════════════ -->
                 <div class="footer-section">
                     <table class="footer-layout-table">
                         <tr>
                             <td>
                                 <span class="font-bold">Issued: </span>
-                                <span class="text-dot-space2"> {{ now()->format('jS F, Y') }}</span>
+                                <span class="text-dot-space2">{{ now()->format('jS F, Y') }}</span>
                                 <span class="font-bold">Collected by:</span>
                                 <span>.......................................</span>
                             </td>
@@ -1054,8 +1153,10 @@
                                 <span class="font-bold text-primary">Next Term Begins:</span>
                                 <span class="text-dot-space2">
                                     @php
-                                        $nextTermBegins = $schoolInfo->date_next_term_begins ?? null;
-                                        $formattedNextTermBegins = $nextTermBegins ? \Carbon\Carbon::parse($nextTermBegins)->format('jS F, Y') : '........................';
+                                        $nextTermBegins         = $schoolInfo->date_next_term_begins ?? null;
+                                        $formattedNextTermBegins = $nextTermBegins
+                                            ? \Carbon\Carbon::parse($nextTermBegins)->format('jS F, Y')
+                                            : '........................';
                                     @endphp
                                     {{ $formattedNextTermBegins }}
                                 </span>
@@ -1064,6 +1165,7 @@
                     </table>
                     <div class="powered-by">Powered by Qudroid Systems</div>
                 </div>
+
             </div>
         </div>
     @endforeach
