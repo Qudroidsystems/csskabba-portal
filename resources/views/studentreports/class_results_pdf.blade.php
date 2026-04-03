@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Class Results - Adjusted UI</title>
+    <title>Student Terminal Report - Claret Secondary School Kabba</title>
     <style>
         * {
             margin: 0;
@@ -22,24 +22,6 @@
         }
 
         /* WATERMARK - "ORIGINAL COPY" */
-        body::before {
-            content: "";
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-image: repeating-linear-gradient(
-                45deg,
-                rgba(0,0,0,0.03) 0px,
-                rgba(0,0,0,0.03) 2px,
-                transparent 2px,
-                transparent 8px
-            );
-            pointer-events: none;
-            z-index: 999;
-        }
-
         .watermark-text {
             position: fixed;
             top: 50%;
@@ -47,7 +29,7 @@
             transform: translate(-50%, -50%) rotate(-25deg);
             font-size: 80px;
             font-weight: 900;
-            color: rgba(0, 0, 0, 0.08);
+            color: rgba(0, 0, 0, 0.06);
             font-family: 'Arial Black', sans-serif;
             letter-spacing: 8px;
             white-space: nowrap;
@@ -77,7 +59,7 @@
             page-break-after: avoid;
         }
 
-        /* Larger logo and photo */
+        /* School logo container - larger and properly aligned */
         .school-logo {
             width: 100px;
             height: 110px;
@@ -89,16 +71,21 @@
             text-align: center;
             margin: 0 auto;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .school-logo img {
-            width: 100%;
-            height: 100%;
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
             object-fit: contain;
-            object-position: center;
             display: block;
         }
 
+        /* Student photo frame - fixed to keep image inside border */
         .photo-frame {
             border: 2px solid #47b492;
             border-radius: 8px;
@@ -109,18 +96,25 @@
             margin: 0 auto;
             text-align: center;
             overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .photo-frame img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
+            height: auto;
+            object-fit: contain;
             display: block;
         }
 
         .header-img {
-            width: 100%;
+            width: auto;
             height: auto;
+            max-width: 100%;
+            max-height: 100%;
         }
 
         .header-divider {
@@ -141,10 +135,11 @@
             background: #111827;
             color: white;
             padding: 8px 16px;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 700;
             text-align: center;
             margin: 8px 0;
+            letter-spacing: 0.5px;
         }
 
         .header {
@@ -160,7 +155,7 @@
             padding: 0;
         }
 
-        /* Student info bar - clean with | separators and adm no on new line */
+        /* Student info bar - clean with | separators */
         .student-info-bar {
             background: linear-gradient(to bottom, #f0f7ff 0%, #ffffff 100%);
             border: 2px solid #2aa886;
@@ -285,7 +280,7 @@
             padding: 1px 4px 0 4px;
         }
 
-        /* NEW: White background, black text for totals summary row */
+        /* White background, black text for totals summary row */
         .totals-summary-row td {
             background: #ffffff !important;
             color: #000000 !important;
@@ -297,7 +292,7 @@
             letter-spacing: 0.3px;
         }
 
-        /* Remarks Table - simplified: only Class Teacher's Remark */
+        /* Remarks Table - two columns: Class Teacher & Principal */
         .remarks-table {
             width: 100%;
             border: 2px solid #000000;
@@ -310,6 +305,7 @@
             padding: 10px;
             background: white;
             vertical-align: top;
+            width: 50%;
         }
 
         .remarks-table .h6 {
@@ -362,31 +358,11 @@
             margin-top: 6px;
         }
 
-        .promotion-status {
-            font-weight: 900;
-            margin-left: 5px;
-            font-size: 10px;
+        .text-dot-space2 {
+            border-bottom: 1px dotted #666;
             display: inline-block;
-        }
-
-        .promotion-promoted {
-            color: #1e40af;
-            font-weight: 900;
-        }
-
-        .promotion-repeat {
-            color: #dc2626;
-            font-weight: 900;
-        }
-
-        .promotion-parents {
-            color: #dc2626;
-            font-weight: 900;
-        }
-
-        .promotion-default {
-            color: #6b7280;
-            font-weight: 900;
+            min-width: 120px;
+            font-weight: bold;
         }
 
         .col-sn { width: 30px; }
@@ -430,9 +406,6 @@
                 color: rgba(0, 0, 0, 0.1);
                 print-color-adjust: exact;
                 -webkit-print-color-adjust: exact;
-            }
-            body::before {
-                content: none;
             }
         }
     </style>
@@ -505,14 +478,14 @@
                                         $hasLogo = true;
                                     }
                                     if (!$hasLogo) {
-                                        $schoolName = $schoolInfo->school_name ?? 'School';
+                                        $schoolName = $schoolInfo->school_name ?? 'Claret Secondary School Kabba';
                                         $logoSrc    = 'data:image/svg+xml;base64,' . base64_encode('
                                             <svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
-                                                <rect width="100" height="100" fill="#f8f9fa" stroke="#dee2e6" stroke-width="2"/>
-                                                <circle cx="50" cy="40" r="15" fill="#6c757d" opacity="0.5"/>
-                                                <rect x="35" y="60" width="30" height="20" fill="#6c757d" opacity="0.5" rx="3"/>
-                                                <text x="50" y="95" text-anchor="middle" fill="#495057" font-family="Arial" font-size="8">
-                                                    ' . htmlspecialchars(substr($schoolName, 0, 15)) . '
+                                                <rect width="100" height="100" fill="#f8f9fa" stroke="#47b492" stroke-width="2"/>
+                                                <circle cx="50" cy="40" r="15" fill="#47b492" opacity="0.6"/>
+                                                <rect x="35" y="60" width="30" height="20" fill="#47b492" opacity="0.6" rx="3"/>
+                                                <text x="50" y="95" text-anchor="middle" fill="#1e40af" font-family="Arial" font-size="8" font-weight="bold">
+                                                    CLARET
                                                 </text>
                                             </svg>
                                         ');
@@ -523,20 +496,20 @@
                         </td>
                         <td width="50%" style="padding-left: 10px; vertical-align: middle;">
                             <div style="font-family: 'Arial Black', 'Helvetica Bold', sans-serif; font-weight: 900; color: #000; line-height: 1.2; text-align: left;">
-                                <div style="font-size: 24px; letter-spacing: 1px; margin-bottom: 6px; color: #1e293b; white-space: nowrap;">
+                                <div style="font-size: 22px; letter-spacing: 1px; margin-bottom: 6px; color: #1e293b; white-space: nowrap;">
                                     CLARET SECONDARY SCHOOL KABBA
                                 </div>
-                                <div style="font-size: 11px;">
+                                <div style="font-size: 10px;">
                                     <strong style="color: #1e40af;">Motto:</strong>
-                                    <span style="margin-left: 6px;">{{ $schoolInfo->school_motto ?? 'Knowledge & Character' }}</span>
+                                    <span style="margin-left: 6px;">{{ $schoolInfo->school_motto ?? 'KNOWLEDGE AND VIRTUE' }}</span>
                                 </div>
-                                <div style="font-size: 11px;">
+                                <div style="font-size: 10px;">
                                     <strong style="color: #1e40af;">Address:</strong>
-                                    <span style="margin-left: 6px;">{{ $schoolInfo->school_address ?? '12 Adeola Odeku, Victoria Island, Lagos' }}</span>
+                                    <span style="margin-left: 6px;">{{ $schoolInfo->school_address ?? 'No. 1, Claret Avenue, Iludun Quarters, Olle Road, Kabba, Kogi State, Nigeria' }}</span>
                                 </div>
-                                <div style="font-size: 11px;">
+                                <div style="font-size: 10px;">
                                     <strong style="color: #1e40af;">Phone:</strong>
-                                    <span style="margin-left: 6px;">{{ $schoolInfo->school_phone ?? '0803 123 4567' }}</span>
+                                    <span style="margin-left: 6px;">{{ $schoolInfo->school_phone ?? '08136663185' }}</span>
                                 </div>
                             </div>
                         </td>
@@ -546,7 +519,7 @@
                                 @if(!empty($studentData['student_image_base64']))
                                     <img src="{{ $studentData['student_image_base64'] }}" alt="{{ $student->fname ?? 'Student' }}'s picture">
                                 @else
-                                    <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==" alt="Default Photo">
+                                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23e2e8f0'/%3E%3Ccircle cx='50' cy='40' r='20' fill='%2394a3b8'/%3E%3Crect x='35' y='65' width='30' height='25' fill='%2394a3b8' rx='4'/%3E%3Ctext x='50' y='95' text-anchor='middle' fill='%23475569' font-size='8'%3EPHOTO%3C/text%3E%3C/svg%3E" alt="Default Photo">
                                 @endif
                             </div>
                             @endif
@@ -560,7 +533,7 @@
                 </div>
             </div>
 
-            <!-- STUDENT INFO BAR: with white space and |, ADM NO on next line -->
+            <!-- STUDENT INFO BAR -->
             @if ($studentData['students'] && $studentData['students']->isNotEmpty())
                 @php
                     $profile = $studentData['studentpp'] && $studentData['studentpp']->isNotEmpty()
@@ -601,8 +574,8 @@
                     </div>
                 </div>
             @else
-                <div class="student-info-section">
-                    <div class="info-item"><span class="info-label">No student data available.</span></div>
+                <div class="student-info-bar">
+                    <div class="info-line"><span class="info-bar-item">No student data available.</span></div>
                 </div>
             @endif
 
@@ -696,14 +669,20 @@
                 </table>
             </div>
 
-            <!-- REMARKS: Only Class Teacher's Remark (removed Overall Performance & Guidance & Principal) -->
+            <!-- REMARKS: Two columns - Class Teacher's Remark (left) and Principal's Remark (right) -->
             <table class="remarks-table">
                 <tbody>
                     <tr>
-                        <td width="100%">
+                        <td width="50%">
                             <div class="h6">Class Teacher's Remark</div>
                             <div style="font-size: 12px; font-weight: 500; min-height: 40px;">
                                 {{ $profile ? ($profile->classteachercomment ?? 'NO INFO') : 'NO INFO' }}
+                            </div>
+                        </td>
+                        <td width="50%">
+                            <div class="h6">Principal's Remark</div>
+                            <div style="font-size: 12px; font-weight: 500; min-height: 40px;">
+                                {{ $profile ? ($profile->principalscomment ?? 'NO INFO') : 'NO INFO' }}
                             </div>
                         </td>
                     </tr>
