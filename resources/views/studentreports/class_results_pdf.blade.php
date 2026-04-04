@@ -143,7 +143,7 @@
             margin: 0 2px;
         }
 
-        /* DUAL-COLUMN LAYOUT - ZERO GAP + DYNAMIC HEIGHT MATCH */
+        /* DUAL-COLUMN LAYOUT - ZERO GAP */
         .dual-layout-table {
             width: 100%;
             border-collapse: collapse;
@@ -154,7 +154,6 @@
         .dual-layout-table td.academic-cell {
             vertical-align: top;
             padding: 0;
-            min-height: 360px;           /* This makes academic section match psychomotor height */
         }
         .dual-layout-table td.psycho-cell {
             vertical-align: top;
@@ -214,7 +213,7 @@
         .col-position { width: 36px; }
         .col-class-average { width: 39px; }
 
-        /* FULL-WIDTH TOTAL SUMMARY */
+        /* FULL-WIDTH TOTAL SUMMARY (moved outside the table) */
         .totals-summary {
             width: 98%;
             background: #0d1a3d;
@@ -520,7 +519,7 @@
         <!-- DUAL-COLUMN LAYOUT -->
         <table class="dual-layout-table">
             <tr>
-                <!-- LEFT: ACADEMIC RESULTS (dynamic height) -->
+                <!-- LEFT: ACADEMIC RESULTS -->
                 <td class="academic-cell">
                     <div class="result-table">
                         <table>
@@ -578,6 +577,24 @@
                                     <td colspan="{{ $currentVisibleColumnCount }}" style="text-align:center;">No scores available.</td>
                                 </tr>
                                 @endforelse
+
+                                <!-- Small TOTAL row inside table -->
+                                {{-- <tr class="totals-row" style="background:#0d1a3d;color:#ffffff;font-weight:900;">
+                                    <td colspan="{{ $totalLabelColspan }}" style="text-align:right;padding-right:5px;">TOTAL</td>
+                                    @if(in_array('total', $columnsToShow))
+                                        <td>
+                                            <div class="totals-fraction" style="display:inline-block;text-align:center;font-size:6.5px;line-height:1;">
+                                                <span class="t-num" style="display:block;border-bottom:1px solid #fff;padding:0 2px 1px;">{{ number_format($totals['obtained'], 1) }}</span>
+                                                <span class="t-den">{{ $totals['obtainable'] }}</span>
+                                            </div>
+                                        </td>
+                                    @endif
+                                    @if(in_array('bf', $columnsToShow)) <td></td> @endif
+                                    @if(in_array('cum', $columnsToShow)) <td></td> @endif
+                                    @if(in_array('grade', $columnsToShow)) <td></td> @endif
+                                    @if(in_array('position', $columnsToShow)) <td></td> @endif
+                                    @if(in_array('class_average', $columnsToShow)) <td>{{ $totals['percentage'] }}%</td> @endif
+                                </tr> --}}
                             </tbody>
                         </table>
                     </div>
@@ -613,7 +630,7 @@
             </tr>
         </table>
 
-        <!-- FULL-WIDTH TOTAL SUMMARY -->
+        <!-- FULL-WIDTH TOTAL SUMMARY (no longer inside the table) -->
         <div class="totals-summary">
             TOTAL OBTAINED: {{ number_format($totals['obtained'], 1) }}&nbsp;&nbsp;|&nbsp;&nbsp;TOTAL OBTAINABLE: {{ $totals['obtainable'] }}&nbsp;&nbsp;|&nbsp;&nbsp;% OBTAINED: {{ $totals['percentage'] }}%
         </div>
