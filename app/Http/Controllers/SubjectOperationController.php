@@ -588,93 +588,105 @@ class SubjectOperationController extends Controller
     /**
      * Get archived registrations for the Unregistered History modal.
      */
-    public function getArchivedRegistrations(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'class_id'   => ['required', 'integer', 'exists:schoolclass,id'],
-            'session_id' => ['required', 'integer', 'exists:schoolsession,id'],
-            'term_id'    => ['nullable', 'integer', 'exists:schoolterm,id'],
-            'search'     => ['nullable', 'string', 'max:255'],
-        ]);
+  public function getArchivedRegistrations(Request $request): JsonResponse
+{
+    $validated = $request->validate([
+        'class_id' => ['required', 'integer', 'exists:schoolclass,id'],
+        'session_id' => ['required', 'integer', 'exists:schoolsession,id'],
+        'term_id' => ['nullable', 'integer', 'exists:schoolterm,id'],
+    ]);
 
-        try {
-            $query = SubjectUnregistrationArchive::query()
-                ->where('subject_unregistration_archive.status', SubjectUnregistrationArchive::STATUS_ARCHIVED)
-                ->where('subject_unregistration_archive.sessionid', $validated['session_id'])
-                ->where('subject_unregistration_archive.schoolclassid', $validated['class_id'])
-                ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'subject_unregistration_archive.studentid')
-                ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-                ->leftJoin('subjectclass', 'subjectclass.id', '=', 'subject_unregistration_archive.subjectclassid')
-                ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
-                ->leftJoin('subject', 'subject.id', '=', 'subject_unregistration_archive.subjectid')
-                ->leftJoin('users as staff', 'staff.id', '=', 'subject_unregistration_archive.staffid')
-                ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subject_unregistration_archive.termid')
-                ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subject_unregistration_archive.sessionid')
-                ->leftJoin('schoolclass', 'schoolclass.id', '=', 'subject_unregistration_archive.schoolclassid')
-                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-                ->leftJoin('users as actor', 'actor.id', '=', 'subject_unregistration_archive.unregistered_by')
-                ->select([
-                    'subject_unregistration_archive.id as archive_id',
-                    'subject_unregistration_archive.studentid',
-                    'subject_unregistration_archive.subjectclassid',
-                    'subject_unregistration_archive.staffid',
-                    'subject_unregistration_archive.termid',
-                    'subject_unregistration_archive.sessionid',
-                    'subject_unregistration_archive.subjectid',
-                    'subject_unregistration_archive.schoolclassid',
-                    'subject_unregistration_archive.broadsheet_record_id',
-                    'subject_unregistration_archive.unregistered_at',
-                    'studentRegistration.admissionno',
-                    'studentRegistration.firstname',
-                    'studentRegistration.lastname',
-                    'studentRegistration.othername',
-                    'studentRegistration.gender',
-                    'studentpicture.picture',
-                    'subject.subject as subjectname',
-                    'subject.subject_code as subjectcode',
-                    'staff.name as staffname',
-                    'schoolterm.term as termname',
-                    'schoolsession.session as sessionname',
-                    'schoolclass.schoolclass as class_name',
-                    'schoolarm.arm as arm_name',
-                    'actor.name as unregistered_by_name',
-                ]);
+    try {
+        $search = $request->input('search');
 
-            if (!empty($validated['term_id'])) {
-                $query->where('subject_unregistration_archive.termid', $validated['term_id']);
-            }
-
-            if (!empty($validated['search'])) {
-                $searchTerm = '%' . $validated['search'] . '%';
-                $query->where(function($q) use ($searchTerm) {
-                    $q->where('studentRegistration.firstname', 'like', $searchTerm)
-                      ->orWhere('studentRegistration.lastname', 'like', $searchTerm)
-                      ->orWhere('studentRegistration.admissionno', 'like', $searchTerm)
-                      ->orWhere('subject.subject', 'like', $searchTerm);
-                });
-            }
-
-            $query->orderBy('subject_unregistration_archive.unregistered_at', 'desc');
-
-            $perPage  = (int) $request->input('per_page', 50);
-            $archived = $query->paginate($perPage);
-
-            return response()->json([
-                'success' => true,
-                'data'    => $archived->items(),
-                'meta'    => [
-                    'current_page' => $archived->currentPage(),
-                    'last_page'    => $archived->lastPage(),
-                    'total'        => $archived->total(),
-                    'per_page'     => $archived->perPage(),
-                ],
+        $query = SubjectUnregistrationArchive::query()
+            ->where('subject_unregistration_archive.status', SubjectUnregistrationArchive::STATUS_ARCHIVED)
+            ->where('subject_unregistration_archive.sessionid', $validated['session_id'])
+            ->where('subject_unregistration_archive.schoolclassid', $validated['class_id'])
+            // Student info
+            ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'subject_unregistration_archive.studentid')
+            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+            // Subject info
+            ->leftJoin('subjectclass', 'subjectclass.id', '=', 'subject_unregistration_archive.subjectclassid')
+            ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
+            ->leftJoin('subject', 'subject.id', '=', 'subject_unregistration_archive.subjectid')
+            // Staff (teacher)
+            ->leftJoin('users as staff', 'staff.id', '=', 'subject_unregistration_archive.staffid')
+            // Term & session labels
+            ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subject_unregistration_archive.termid')
+            ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subject_unregistration_archive.sessionid')
+            // Class
+            ->leftJoin('schoolclass', 'schoolclass.id', '=', 'subject_unregistration_archive.schoolclassid')
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            // Who unregistered
+            ->leftJoin('users as actor', 'actor.id', '=', 'subject_unregistration_archive.unregistered_by')
+            ->select([
+                'subject_unregistration_archive.id as archive_id',
+                'subject_unregistration_archive.studentid',
+                'subject_unregistration_archive.subjectclassid',
+                'subject_unregistration_archive.staffid',
+                'subject_unregistration_archive.termid',
+                'subject_unregistration_archive.sessionid',
+                'subject_unregistration_archive.subjectid',
+                'subject_unregistration_archive.schoolclassid',
+                'subject_unregistration_archive.broadsheet_record_id',
+                'subject_unregistration_archive.unregistered_at',
+                // Student
+                'studentRegistration.admissionno',
+                'studentRegistration.firstname',
+                'studentRegistration.lastname',
+                'studentRegistration.othername',
+                'studentRegistration.gender',
+                'studentpicture.picture',
+                // Subject
+                'subject.subject as subjectname',
+                'subject.subject_code as subjectcode',
+                // Teacher
+                'staff.name as staffname',
+                // Term / session / class
+                'schoolterm.term as termname',
+                'schoolsession.session as sessionname',
+                'schoolclass.schoolclass as class_name',
+                'schoolarm.arm as arm_name',
+                // Actor
+                'actor.name as unregistered_by_name',
             ]);
 
-        } catch (\Exception $e) {
-            Log::error('Error fetching archived registrations', ['error' => $e->getMessage()]);
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        if (!empty($validated['term_id'])) {
+            $query->where('subject_unregistration_archive.termid', $validated['term_id']);
         }
+
+        // Server-side search (matches your JS logic)
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where(DB::raw('CONCAT(studentRegistration.firstname, " ", studentRegistration.lastname)'), 'like', "%{$search}%")
+                    ->orWhere('studentRegistration.admissionno', 'like', "%{$search}%")
+                    ->orWhere('subject.subject', 'like', "%{$search}%");
+            });
+        }
+
+        $query->orderBy('subject_unregistration_archive.unregistered_at', 'desc');
+
+        $perPage = (int) $request->input('per_page', 50);
+        $archived = $query->paginate($perPage);
+
+        return response()->json([
+            'success' => true,
+            'data' => $archived->items(),
+            'meta' => [
+                'current_page' => $archived->currentPage(),
+                'last_page' => $archived->lastPage(),
+                'total' => $archived->total(),
+                'per_page' => $archived->perPage(),
+            ],
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Error fetching archived registrations', ['error' => $e->getMessage()]);
+        return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
     }
+}
+
+
 
     /**
      * Get registered classes with teacher names.
