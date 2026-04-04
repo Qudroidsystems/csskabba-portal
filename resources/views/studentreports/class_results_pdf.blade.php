@@ -9,7 +9,6 @@
             padding: 0;
             box-sizing: border-box;
         }
-
         body {
             font-family: 'Times New Roman', Times, serif;
             font-size: 9.5px;
@@ -20,7 +19,6 @@
             text-align: center;
             position: relative;
         }
-
         /* WATERMARK */
         .watermark-text {
             position: fixed;
@@ -39,7 +37,6 @@
             width: 100%;
             text-align: center;
         }
-
         .student-section {
             width: 190mm;
             page-break-after: always;
@@ -52,11 +49,9 @@
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
             z-index: 1;
         }
-
         .student-section:last-child {
             page-break-after: avoid;
         }
-
         .school-logo {
             width: 72px;
             height: 85px;
@@ -94,7 +89,6 @@
             max-height: 100%;
             object-fit: contain;
         }
-
         .header-divider {
             width: 100%;
             height: 2px;
@@ -120,7 +114,6 @@
             vertical-align: middle;
             padding: 0 2px;
         }
-
         .student-info-bar {
             background: linear-gradient(to bottom, #f0f7ff 0%, #ffffff 100%);
             border: 2px solid #2aa886;
@@ -149,47 +142,40 @@
             color: #94a3b8;
             margin: 0 2px;
         }
-
-        /* =========================================================
-           ULTRA-WIDE ACADEMIC SECTION — NO GAP
-           Table-based layout: left cell uses remaining space (width: auto)
-           Right cell fixed at 150px. Absolutely no gap between them.
-           Padding/margin zeroed out on the table cells.
-        ========================================================= */
+        /* =====================================================
+           CORE FIX: DUAL-COLUMN LAYOUT (PDF-safe)
+           Academic table now stretches FULLY to touch the Psychomotor panel
+           with ZERO gap.
+           ===================================================== */
         .dual-layout-table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 8px;
             page-break-inside: avoid;
-            /* remove any default spacing */
-            border-spacing: 0;
         }
-        /* Left cell: academic results — takes all available width, zero padding on right */
+
+        /* LEFT: Academic results — now fully expanded with no right padding */
         .dual-layout-table td.academic-cell {
             vertical-align: top;
-            padding: 0;
-            padding-right: 0;   /* explicitly no right padding — no gap */
-            width: auto;        /* fluid width, consumes all leftover space */
+            padding: 0;                    /* Removed padding-right: 6px; */
         }
-        /* Right cell: psychomotor panel — fixed width, no left padding, touches left cell edge */
+
+        /* RIGHT: Psychomotor — fixed width */
         .dual-layout-table td.psycho-cell {
             vertical-align: top;
             padding: 0;
-            padding-left: 0;    /* ensure no extra gap */
-            width: 150px;       /* solid width for psychomotor block */
-            min-width: 150px;
+            width: 148px;
+            min-width: 148px;
         }
-        /* optional: the psychomotor container itself has its own inner padding, but no margin */
+
+        /* PSYCHOMOTOR PANEL */
         .psychomotor-container {
-            width: 100%;
+            width: 148px;
             background: #fef9e6;
             border: 2px solid #c0a86a;
             border-radius: 8px;
             padding: 0 4px 4px 4px;
-            margin-left: 0;
         }
-
-        /* PSYCHOMOTOR PANEL */
         .psychomotor-title {
             background: #2c3e4e;
             color: white;
@@ -247,31 +233,26 @@
             color: #4a5b6e;
             line-height: 1.2;
         }
-
-        /* ACADEMIC TABLE - FULL WIDTH (NO GAP) */
-        .result-table {
-            width: 100%;
-        }
+        /* ACADEMIC TABLE */
         .result-table table {
             width: 100%;
             border: 2px solid #000000;
             border-collapse: collapse;
             font-size: 7.8px;
-            table-layout: auto; /* auto layout helps columns stretch naturally */
+            table-layout: fixed;
         }
         .result-table thead th {
             background: #0d1a3d;
             color: white;
             font-weight: 800;
             border: 1px solid #000000;
-            padding: 3px 2px;
+            padding: 3px 1px;
             font-size: 6.8px;
             overflow: hidden;
-            text-align: center;
         }
         .result-table tbody td {
             border: 1px solid #000000;
-            padding: 2px 2px;
+            padding: 2px 1px;
             text-align: center;
             font-size: 7.5px;
             background: white;
@@ -282,8 +263,7 @@
             text-align: left;
             font-weight: 700;
             font-size: 7.5px;
-            padding-left: 4px;
-            padding-right: 4px;
+            padding-left: 3px;
             word-break: break-word;
             white-space: normal;
         }
@@ -296,7 +276,7 @@
             color: #ffffff !important;
             font-weight: 900 !important;
             font-size: 7.5px !important;
-            padding: 2px 2px;
+            padding: 2px 1px;
         }
         .totals-fraction {
             display: inline-block;
@@ -314,28 +294,20 @@
             color: #000000 !important;
             font-weight: 800 !important;
             font-size: 7.5px !important;
-            padding: 3px 4px;
+            padding: 3px 2px;
             white-space: normal;
         }
-
-        /* Column widths for academic table — using percentages to fill available space */
-        .result-table th.col-sn           { width: 4%; }
-        .result-table th.col-admissionno  { width: 9%; }
-        .result-table th.col-name         { width: 24%; }   /* subject column wider */
-        .result-table th.col-assessment   { width: 6%; }
-        .result-table th.col-total        { width: 7%; }
-        .result-table th.col-bf           { width: 6%; }
-        .result-table th.col-cum          { width: 7%; }
-        .result-table th.col-grade        { width: 6%; }
-        .result-table th.col-position     { width: 6%; }
-        .result-table th.col-class-average{ width: 7%; }
-
-        /* dynamic adjustments: ensure no overflow */
-        .result-table th, .result-table td {
-            white-space: normal;
-            word-break: break-word;
-        }
-
+        /* Column widths for academic table */
+        .col-sn { width: 18px; }
+        .col-admissionno { width: 60px; }
+        .col-name { width: 100px; }
+        .col-assessment { width: 26px; }
+        .col-total { width: 32px; }
+        .col-bf { width: 26px; }
+        .col-cum { width: 32px; }
+        .col-grade { width: 26px; }
+        .col-position { width: 28px; }
+        .col-class-average{ width: 30px; }
         /* Remarks table */
         .remarks-table {
             width: 100%;
@@ -358,7 +330,6 @@
             border-bottom: 1px solid #ccc;
             display: inline-block;
         }
-
         /* Footer */
         .footer-section {
             background: #f1f5f9;
@@ -382,7 +353,6 @@
             font-size: 8px;
             margin-top: 2px;
         }
-
         @media print {
             body {
                 background: white;
@@ -404,38 +374,28 @@
             .dual-layout-table {
                 page-break-inside: avoid;
             }
-            /* ensure no gap in print */
-            .dual-layout-table td.academic-cell,
-            .dual-layout-table td.psycho-cell {
-                padding: 0 !important;
-                margin: 0 !important;
-            }
         }
     </style>
 </head>
 <body>
 <div class="watermark-text">ORIGINAL COPY</div>
-
 @php
     $selectedColumns = $metadata['selected_columns'] ?? [];
-    $defaultColumns  = ['sn', 'admission_no', 'name', 'total', 'bf', 'cum', 'grade', 'position', 'class_average'];
-    $columnsToShow   = !empty($selectedColumns) ? $selectedColumns : $defaultColumns;
-
+    $defaultColumns = ['sn', 'admission_no', 'name', 'total', 'bf', 'cum', 'grade', 'position', 'class_average'];
+    $columnsToShow = !empty($selectedColumns) ? $selectedColumns : $defaultColumns;
     $baseVisibleCount = 0;
-    if (in_array('sn', $columnsToShow))           $baseVisibleCount++;
+    if (in_array('sn', $columnsToShow)) $baseVisibleCount++;
     if (in_array('admission_no', $columnsToShow)) $baseVisibleCount++;
-    if (in_array('name', $columnsToShow))          $baseVisibleCount++;
+    if (in_array('name', $columnsToShow)) $baseVisibleCount++;
 @endphp
-
 @foreach ($allStudentData as $index => $studentData)
     @php
-        $schoolInfo  = $studentData['schoolInfo'] ?? null;
-        $student     = $studentData['students'] && $studentData['students']->isNotEmpty()
+        $schoolInfo = $studentData['schoolInfo'] ?? null;
+        $student = $studentData['students'] && $studentData['students']->isNotEmpty()
                         ? $studentData['students']->first()
                         : null;
         $assessments = $studentData['assessments'] ?? collect();
-        $totals      = $studentData['totals_summary'] ?? [];
-
+        $totals = $studentData['totals_summary'] ?? [];
         $psychomotorSkills = [
             'Handwriting', 'Sports', 'Musical Skills', 'Participation', 'Punctuality',
             'Concern for Others', 'Relationship(Students)', 'Relationship(Staff)',
@@ -449,9 +409,8 @@
             'Listening', 'Organizational', 'Self Control', 'Perseverance', 'Initiative'
         ];
         $psychomotorObtainable = count($psychomotorSkills) * 5;
-
         if (isset($studentData['psychomotor_scores']) && is_array($studentData['psychomotor_scores'])) {
-            $psychomotorScores   = $studentData['psychomotor_scores'];
+            $psychomotorScores = $studentData['psychomotor_scores'];
             $psychomotorObtained = array_sum($psychomotorScores);
         } else {
             $sampleScores = [
@@ -467,7 +426,6 @@
             }
             $psychomotorObtained = array_sum($psychomotorScores);
         }
-
         $assessmentColumnsCount = 0;
         foreach ($assessments as $assessment) {
             if (in_array($assessment->id, $columnsToShow) || in_array('all_assessments', $columnsToShow)) {
@@ -480,17 +438,15 @@
             if (in_array($col, $columnsToShow)) $currentVisibleColumnCount++;
         }
         $totalLabelColspan = $baseVisibleCount + $assessmentColumnsCount;
-        if (in_array('total',         $columnsToShow)) $totalLabelColspan++;
-        if (in_array('bf',            $columnsToShow)) $totalLabelColspan++;
-        if (in_array('cum',           $columnsToShow)) $totalLabelColspan++;
-        if (in_array('grade',         $columnsToShow)) $totalLabelColspan++;
-        if (in_array('position',      $columnsToShow)) $totalLabelColspan++;
+        if (in_array('total', $columnsToShow)) $totalLabelColspan++;
+        if (in_array('bf', $columnsToShow)) $totalLabelColspan++;
+        if (in_array('cum', $columnsToShow)) $totalLabelColspan++;
+        if (in_array('grade', $columnsToShow)) $totalLabelColspan++;
+        if (in_array('position', $columnsToShow)) $totalLabelColspan++;
         if (in_array('class_average', $columnsToShow)) $totalLabelColspan++;
     @endphp
-
     <div class="student-section">
-
-        <!-- HEADER -->
+        <!-- ── HEADER ── -->
         <table class="header-table" style="width:100%">
             <tr>
                 <td width="20%">
@@ -525,21 +481,19 @@
                     @endif
                 </td>
             </tr>
-        瞄
-
+        </table>
         <div class="header-divider"></div>
         <div class="header-divider2"></div>
         <div class="report-title">
             {{ strtoupper($metadata['term'] ?? 'SECOND TERM') }} {{ strtoupper($metadata['session'] ?? '2025/2026') }} ACADEMIC SESSION TERMINAL PROGRESS REPORT
         </div>
-
-        <!-- STUDENT INFO BAR -->
+        <!-- ── STUDENT INFO BAR ── -->
         @if ($studentData['students'] && $studentData['students']->isNotEmpty())
             @php
-                $profile   = $studentData['studentpp'] && $studentData['studentpp']->isNotEmpty() ? $studentData['studentpp']->first() : null;
-                $fullName  = strtoupper($student->lastname ?? '') . ' ' . ($student->fname ?? '') . ' ' . ($student->othername ?? '');
-                $admNo     = $student->admissionNo ?? '—';
-                $classVal  = ($studentData['schoolclass']->schoolclass ?? '') . ' ' . ($studentData['schoolclass']->arms->arm ?? '');
+                $profile = $studentData['studentpp'] && $studentData['studentpp']->isNotEmpty() ? $studentData['studentpp']->first() : null;
+                $fullName = strtoupper($student->lastname ?? '') . ' ' . ($student->fname ?? '') . ' ' . ($student->othername ?? '');
+                $admNo = $student->admissionNo ?? '—';
+                $classVal = ($studentData['schoolclass']->schoolclass ?? '') . ' ' . ($studentData['schoolclass']->arms->arm ?? '');
                 $schoolOpened = $schoolInfo->date_school_opened
                     ? \Carbon\Carbon::parse($schoolInfo->date_school_opened)->format('jS M, Y')
                     : '—';
@@ -570,23 +524,22 @@
         @else
             <div class="student-info-bar"><div class="info-line">No student data available.</div></div>
         @endif
-
-        <!-- ══════════════════════════════════════════════════════════════════════════
-             DUAL-COLUMN LAYOUT — ZERO GAP, ACADEMIC SECTION EXPANDS TO FILL REMAINING SPACE
-             Left cell: academic results (auto width) — pushes psychomotor to the very right edge
-             Right cell: fixed width 150px, no left padding, no margin
-        ══════════════════════════════════════════════════════════════════════════ -->
-        <table class="dual-layout-table" cellspacing="0" cellpadding="0">
+        <!-- ══════════════════════════════════════════════════════
+             DUAL-COLUMN LAYOUT: TABLE-BASED (PDF-safe)
+             Left cell → academic results (now 100% width, no gap)
+             Right cell → psychomotor panel (148px fixed)
+             ══════════════════════════════════════════════════════ -->
+        <table class="dual-layout-table">
             <tr>
-                <!-- LEFT: ACADEMIC RESULTS — FULLY STRETCHED -->
+                <!-- LEFT: ACADEMIC RESULTS (now touches psychomotor with zero gap) -->
                 <td class="academic-cell">
                     <div class="result-table">
                         <table>
                             <thead>
                                 <tr>
-                                    @if(in_array('sn',           $columnsToShow)) <th class="col-sn">S/N</th> @endif
+                                    @if(in_array('sn', $columnsToShow)) <th class="col-sn">S/N</th> @endif
                                     @if(in_array('admission_no', $columnsToShow)) <th class="col-admissionno">Adm No</th> @endif
-                                    @if(in_array('name',         $columnsToShow)) <th class="col-name">Subject</th> @endif
+                                    @if(in_array('name', $columnsToShow)) <th class="col-name">Subject</th> @endif
                                     @foreach ($assessments as $assessment)
                                         @if(in_array($assessment->id, $columnsToShow) || in_array('all_assessments', $columnsToShow))
                                             <th class="col-assessment">
@@ -595,20 +548,20 @@
                                             </th>
                                         @endif
                                     @endforeach
-                                    @if(in_array('total',         $columnsToShow)) <th class="col-total">Total</th> @endif
-                                    @if(in_array('bf',            $columnsToShow)) <th class="col-bf">BF</th> @endif
-                                    @if(in_array('cum',           $columnsToShow)) <th class="col-cum">Cum</th> @endif
-                                    @if(in_array('grade',         $columnsToShow)) <th class="col-grade">Grade</th> @endif
-                                    @if(in_array('position',      $columnsToShow)) <th class="col-position">Pos</th> @endif
+                                    @if(in_array('total', $columnsToShow)) <th class="col-total">Total</th> @endif
+                                    @if(in_array('bf', $columnsToShow)) <th class="col-bf">BF</th> @endif
+                                    @if(in_array('cum', $columnsToShow)) <th class="col-cum">Cum</th> @endif
+                                    @if(in_array('grade', $columnsToShow)) <th class="col-grade">Grade</th> @endif
+                                    @if(in_array('position', $columnsToShow)) <th class="col-position">Pos</th> @endif
                                     @if(in_array('class_average', $columnsToShow)) <th class="col-class-average">Avg</th> @endif
                                 </tr>
                             </thead>
                             <tbody>
                                 @forelse ($studentData['scores'] as $scoreIndex => $score)
                                 <tr>
-                                    @if(in_array('sn',           $columnsToShow)) <td>{{ $scoreIndex + 1 }}</td> @endif
+                                    @if(in_array('sn', $columnsToShow)) <td>{{ $scoreIndex + 1 }}</td> @endif
                                     @if(in_array('admission_no', $columnsToShow)) <td>{{ $student->admissionNo ?? '-' }}</td> @endif
-                                    @if(in_array('name',         $columnsToShow)) <td class="subject-name">{{ $score->subject_name ?? 'NO INFO' }}</td> @endif
+                                    @if(in_array('name', $columnsToShow)) <td class="subject-name">{{ $score->subject_name ?? 'NO INFO' }}</td> @endif
                                     @foreach ($assessments as $assessment)
                                         @if(in_array($assessment->id, $columnsToShow) || in_array('all_assessments', $columnsToShow))
                                             @php
@@ -624,10 +577,10 @@
                                             </td>
                                         @endif
                                     @endforeach
-                                    @if(in_array('total',    $columnsToShow)) <td @if($score->total < 50) class="highlight-red" @endif>{{ $score->total ? number_format($score->total, 1) : '-' }}</td> @endif
-                                    @if(in_array('bf',       $columnsToShow)) <td>{{ $score->bf  ? number_format($score->bf,  1) : '-' }}</td> @endif
-                                    @if(in_array('cum',      $columnsToShow)) <td>{{ $score->cum ? number_format($score->cum, 1) : '-' }}</td> @endif
-                                    @if(in_array('grade',    $columnsToShow)) <td @if(in_array($score->grade ?? '', ['F','F9','E','E8'])) class="highlight-red" @endif>{{ $score->grade ?? '-' }}</td> @endif
+                                    @if(in_array('total', $columnsToShow)) <td @if($score->total < 50) class="highlight-red" @endif>{{ $score->total ? number_format($score->total, 1) : '-' }}</td> @endif
+                                    @if(in_array('bf', $columnsToShow)) <td>{{ $score->bf ? number_format($score->bf, 1) : '-' }}</td> @endif
+                                    @if(in_array('cum', $columnsToShow)) <td>{{ $score->cum ? number_format($score->cum, 1) : '-' }}</td> @endif
+                                    @if(in_array('grade', $columnsToShow)) <td @if(in_array($score->grade ?? '', ['F','F9','E','E8'])) class="highlight-red" @endif>{{ $score->grade ?? '-' }}</td> @endif
                                     @if(in_array('position', $columnsToShow)) <td>{{ $score->position ?? '-' }}</td> @endif
                                     @if(in_array('class_average', $columnsToShow)) <td>{{ $score->class_average ? number_format($score->class_average, 1) : '-' }}</td> @endif
                                 </tr>
@@ -636,7 +589,6 @@
                                     <td colspan="{{ $currentVisibleColumnCount }}" style="text-align:center;">No scores available.</td>
                                 </tr>
                                 @endforelse
-
                                 <!-- Totals row -->
                                 <tr class="totals-row">
                                     <td colspan="{{ $totalLabelColspan }}" style="text-align:right;padding-right:5px;">TOTAL</td>
@@ -648,13 +600,12 @@
                                             </div>
                                         </td>
                                     @endif
-                                    @if(in_array('bf',            $columnsToShow)) <td></td> @endif
-                                    @if(in_array('cum',           $columnsToShow)) <td></td> @endif
-                                    @if(in_array('grade',         $columnsToShow)) <td></td> @endif
-                                    @if(in_array('position',      $columnsToShow)) <td></td> @endif
+                                    @if(in_array('bf', $columnsToShow)) <td></td> @endif
+                                    @if(in_array('cum', $columnsToShow)) <td></td> @endif
+                                    @if(in_array('grade', $columnsToShow)) <td></td> @endif
+                                    @if(in_array('position', $columnsToShow)) <td></td> @endif
                                     @if(in_array('class_average', $columnsToShow)) <td>{{ $totals['percentage'] }}%</td> @endif
                                 </tr>
-
                                 <!-- Summary row -->
                                 <tr class="totals-summary-row">
                                     <td colspan="{{ $currentVisibleColumnCount }}">
@@ -665,8 +616,7 @@
                         </table>
                     </div>
                 </td>
-
-                <!-- RIGHT: PSYCHOMOTOR PANEL — fixed width, directly adjacent to academic table -->
+                <!-- RIGHT: PSYCHOMOTOR PANEL -->
                 <td class="psycho-cell">
                     <div class="psychomotor-container">
                         <div class="psychomotor-title">PSYCHOMOTOR &amp; AFFECTIVE</div>
@@ -695,8 +645,8 @@
                 </td>
             </tr>
         </table>
-
-        <!-- REMARKS TABLE -->
+        <!-- ══ end dual-column layout ══ -->
+        <!-- ── REMARKS ── -->
         <table class="remarks-table">
             <tbody>
                 <tr>
@@ -711,8 +661,7 @@
                 </tr>
             </tbody>
         </table>
-
-        <!-- FOOTER SECTION -->
+        <!-- ── FOOTER ── -->
         <div class="footer-section">
             <table class="footer-layout-table" style="width:100%">
                 <tr>
@@ -738,9 +687,7 @@
             </table>
             <div class="powered-by">Powered by Qudroid Systems</div>
         </div>
-
-    </div><!-- end .student-section -->
+    </div>{{-- end .student-section --}}
 @endforeach
-
 </body>
 </html>
