@@ -68,4 +68,13 @@ class SubjectUnregistrationArchive extends Model
     {
         return $query->where('status', self::STATUS_ARCHIVED);
     }
+
+
+    /**
+     * Get the user/staff associated with this teacher assignment
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'staffid');
+    }
 }

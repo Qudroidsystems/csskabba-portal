@@ -9,6 +9,7 @@ use App\Models\Student;
 use App\Models\Subjectclass;
 use App\Models\SubjectRegistrationStatus;
 use App\Models\SubjectUnregistrationArchive;
+use App\Models\SubjectTeacher;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -17,11 +18,12 @@ use Illuminate\Support\Facades\Validator;
 
 class SubjectOperationController extends Controller
 {
-     public function __construct()
+    public function __construct()
     {
-        $this->middleware('permission:View subject-operation|Create subject-operation|Update subject-operation|Delete subject-operation', ['only' => ['index', 'subjectinfo', 'getRegisteredClasses', 'getArchivedRegistrations']]);
-        $this->middleware('permission:Create subject-operation', ['only' => ['store', 'restoreRegistration']]);
-        $this->middleware('permission:Delete subject-operation', ['only' => ['destroy', 'permanentlyDeleteArchive', 'permanentlyDeleteArchiveBatch']]);
+        $this->middleware('permission:View subject registration', ['only' => ['index', 'getRegisteredClasses', 'subjectinfo', 'getArchivedRegistrations']]);
+        $this->middleware('permission:Create subject registration', ['only' => ['store', 'batchRegister']]);
+        $this->middleware('permission:Delete subject registration', ['only' => ['destroy', 'permanentlyDeleteArchive', 'permanentlyDeleteArchiveBatch']]);
+        $this->middleware('permission:Restore subject registration', ['only' => ['restoreRegistration']]);
     }
 
     /**
@@ -79,19 +81,25 @@ class SubjectOperationController extends Controller
             ->orderBy('studentRegistration.created_at', 'desc')
             ->paginate(15);
 
-        // Get subject teachers (for display)
-        $subjectTeachers = Subjectclass::with(['subject', 'teacher', 'schoolClass.armRelation'])
-            ->where('status', 'Active')
+        // Get subject teachers (for display) - Using SubjectTeacher model
+        $subjectTeachers = SubjectTeacher::with(['subject', 'user', 'subjectclass'])
+            ->whereHas('subjectclass', function($q) {
+                $q->where('status', 'Active');
+            })
             ->get()
-            ->map(function($subjectClass) {
+            ->map(function($subjectTeacher) {
+                // Get the subjectclass record
+                $subjectClass = $subjectTeacher->subjectclass;
+
                 return (object)[
-                    'subjectclassid' => $subjectClass->id,
-                    'subjectname' => $subjectClass->subject->subjectname ?? '',
-                    'staffname' => $subjectClass->teacher->name ?? 'Not Assigned',
-                    'userid' => $subjectClass->teacher_id,
-                    'termid' => $subjectClass->termid,
+                    'subjectclassid' => $subjectClass ? $subjectClass->id : null,
+                    'subjectname' => $subjectTeacher->subject->subjectname ?? '',
+                    'staffname' => $subjectTeacher->user->name ?? 'Not Assigned',
+                    'userid' => $subjectTeacher->staffid,
+                    'termid' => $subjectTeacher->termid,
                 ];
-            });
+            })
+            ->filter(); // Remove null entries
 
         return view('subjectoperation.index', compact(
             'pagetitle',
@@ -261,19 +269,17 @@ class SubjectOperationController extends Controller
 
             DB::commit();
 
-            // Refresh the page to show updated data
-            $redirectUrl = route('subjects.index') . '?' . http_build_query([
-                'class_id' => $request->session()->get('last_class_id', 'ALL'),
-                'session_id' => $request->sessionid,
-            ]);
+            // Store the last used class id in session
+            if ($request->has('class_id')) {
+                session(['last_class_id' => $request->class_id]);
+            }
 
             return response()->json([
                 'success' => true,
                 'message' => "Registered {$successCount} subject(s) successfully. Failed: {$failedCount}",
                 'success_count' => $successCount,
                 'failed_count' => $failedCount,
-                'errors' => $errors,
-                'redirect' => $redirectUrl
+                'errors' => $errors
             ]);
 
         } catch (\Exception $e) {
@@ -331,14 +337,14 @@ class SubjectOperationController extends Controller
                             $subjectClassModel = Subjectclass::with(['subject', 'schoolClass'])->find($subjectClass['subjectclassid']);
                             $student = Student::find($studentId);
 
-                            // Create archive record using your model
+                            // Create archive record
                             SubjectUnregistrationArchive::create([
                                 'studentid' => $studentId,
                                 'subjectclassid' => $subjectClass['subjectclassid'],
-                                'staffid' => $subjectClass['staffid'] ?? $subjectClassModel->teacher_id ?? null,
+                                'staffid' => $subjectClass['staffid'] ?? null,
                                 'termid' => $subjectClass['termid'],
                                 'sessionid' => $request->sessionid,
-                                'subjectid' => $subjectClassModel->subject_id ?? null,
+                                'subjectid' => $subjectClassModel->subjectid ?? null,
                                 'schoolclassid' => $subjectClassModel->schoolclassid ?? null,
                                 'unregistered_by' => auth()->id(),
                                 'status' => SubjectUnregistrationArchive::STATUS_ARCHIVED,
@@ -362,19 +368,12 @@ class SubjectOperationController extends Controller
 
             DB::commit();
 
-            // Refresh the page
-            $redirectUrl = route('subjects.index') . '?' . http_build_query([
-                'class_id' => $request->session()->get('last_class_id', 'ALL'),
-                'session_id' => $request->sessionid,
-            ]);
-
             return response()->json([
                 'success' => true,
                 'message' => "Unregistered {$successCount} subject(s) successfully. Failed: {$failedCount}",
                 'success_count' => $successCount,
                 'failed_count' => $failedCount,
-                'errors' => $errors,
-                'redirect' => $redirectUrl
+                'errors' => $errors
             ]);
 
         } catch (\Exception $e) {
@@ -393,7 +392,7 @@ class SubjectOperationController extends Controller
     public function subjectinfo($id, $schoolclassid, $termid, $sessionid)
     {
         try {
-            $subjectClass = Subjectclass::with(['subject', 'teacher', 'schoolClass.armRelation'])
+            $subjectClass = Subjectclass::with(['subject', 'subjectTeacher.user', 'schoolClass.armRelation'])
                 ->where('id', $id)
                 ->where('schoolclassid', $schoolclassid)
                 ->first();
@@ -403,6 +402,12 @@ class SubjectOperationController extends Controller
                     'success' => false,
                     'message' => 'Subject not found'
                 ], 404);
+            }
+
+            // Get teacher name through subjectTeacher relationship
+            $teacherName = 'Not Assigned';
+            if ($subjectClass->subjectTeacher && $subjectClass->subjectTeacher->user) {
+                $teacherName = $subjectClass->subjectTeacher->user->name;
             }
 
             // Get registered students count
@@ -417,7 +422,7 @@ class SubjectOperationController extends Controller
                 'data' => [
                     'subject_name' => $subjectClass->subject->subjectname ?? '',
                     'subject_code' => $subjectClass->subject->subjectcode ?? '',
-                    'teacher_name' => $subjectClass->teacher->name ?? 'Not Assigned',
+                    'teacher_name' => $teacherName,
                     'class_name' => $subjectClass->schoolClass->schoolclass ?? '',
                     'arm_name' => $subjectClass->schoolClass->armRelation->arm ?? '',
                     'registered_students' => $registeredCount,
@@ -439,27 +444,35 @@ class SubjectOperationController extends Controller
     public function getSubjectTeachers(Request $request)
     {
         try {
-            $subjectTeachers = Subjectclass::with(['subject', 'teacher', 'schoolClass.armRelation'])
-                ->where('status', 'Active')
-                ->when($request->class_id, function($q) use ($request) {
-                    $q->where('schoolclassid', $request->class_id);
-                })
-                ->when($request->term_id, function($q) use ($request) {
-                    $q->where('termid', $request->term_id);
-                })
-                ->get()
-                ->map(function($subjectClass) {
-                    return [
-                        'id' => $subjectClass->id,
-                        'subject_name' => $subjectClass->subject->subjectname ?? '',
-                        'subject_code' => $subjectClass->subject->subjectcode ?? '',
-                        'teacher_name' => $subjectClass->teacher->name ?? 'Not Assigned',
-                        'teacher_id' => $subjectClass->teacher_id,
-                        'class_name' => $subjectClass->schoolClass->schoolclass ?? '',
-                        'arm_name' => $subjectClass->schoolClass->armRelation->arm ?? '',
-                        'term_id' => $subjectClass->termid,
-                    ];
+            $query = SubjectTeacher::with(['subject', 'user', 'subjectclass'])
+                ->whereHas('subjectclass', function($q) {
+                    $q->where('status', 'Active');
                 });
+
+            if ($request->class_id) {
+                $query->whereHas('subjectclass', function($q) use ($request) {
+                    $q->where('schoolclassid', $request->class_id);
+                });
+            }
+
+            if ($request->term_id) {
+                $query->where('termid', $request->term_id);
+            }
+
+            $subjectTeachers = $query->get()->map(function($subjectTeacher) {
+                $subjectClass = $subjectTeacher->subjectclass;
+
+                return [
+                    'id' => $subjectClass ? $subjectClass->id : null,
+                    'subject_name' => $subjectTeacher->subject->subjectname ?? '',
+                    'subject_code' => $subjectTeacher->subject->subjectcode ?? '',
+                    'teacher_name' => $subjectTeacher->user->name ?? 'Not Assigned',
+                    'teacher_id' => $subjectTeacher->staffid,
+                    'class_name' => $subjectClass && $subjectClass->schoolClass ? $subjectClass->schoolClass->schoolclass : '',
+                    'arm_name' => $subjectClass && $subjectClass->schoolClass && $subjectClass->schoolClass->armRelation ? $subjectClass->schoolClass->armRelation->arm : '',
+                    'term_id' => $subjectTeacher->termid,
+                ];
+            })->filter();
 
             return response()->json([
                 'success' => true,
@@ -498,7 +511,7 @@ class SubjectOperationController extends Controller
                     $q->where('schoolclassid', $classId);
                 },
                 'subjectClass.subject',
-                'subjectClass.teacher',
+                'subjectClass.subjectTeacher.user',
                 'subjectClass.schoolClass.armRelation',
                 'term'
             ])
@@ -515,21 +528,19 @@ class SubjectOperationController extends Controller
                 // Group by subject to avoid duplicates
                 $subjects = $termRegs->groupBy('subjectclassid')->map(function($subjectRegs, $subjectClassId) use ($includeTeachers) {
                     $firstReg = $subjectRegs->first();
-                    $subjectData = [
+                    $teacherName = 'Not Assigned';
+
+                    if ($includeTeachers && $firstReg->subjectClass && $firstReg->subjectClass->subjectTeacher) {
+                        $teacherName = $firstReg->subjectClass->subjectTeacher->user->name ?? 'Not Assigned';
+                    }
+
+                    return [
                         'subject_id' => $subjectClassId,
                         'subject_name' => $firstReg->subjectClass->subject->subjectname ?? 'Unknown',
                         'subject_code' => $firstReg->subjectClass->subject->subjectcode ?? '',
                         'student_count' => $subjectRegs->count(),
+                        'teacher_name' => $teacherName,
                     ];
-
-                    if ($includeTeachers && $firstReg->subjectClass->teacher) {
-                        $subjectData['teacher_name'] = $firstReg->subjectClass->teacher->name;
-                        $subjectData['teacher_id'] = $firstReg->subjectClass->teacher_id;
-                    } else {
-                        $subjectData['teacher_name'] = 'Not Assigned';
-                    }
-
-                    return $subjectData;
                 })->values();
 
                 return [
@@ -584,6 +595,7 @@ class SubjectOperationController extends Controller
             $query = SubjectUnregistrationArchive::with([
                 'student',
                 'subjectclass.subject',
+                'subjectclass.subjectTeacher.user',
                 'staff',
                 'term',
                 'session',
@@ -609,6 +621,16 @@ class SubjectOperationController extends Controller
                 ->paginate($perPage, ['*'], 'page', $page);
 
             $formattedData = $archives->map(function($archive) {
+                // Get teacher name through the relationship chain
+                $teacherName = 'System';
+                if ($archive->subjectclass && $archive->subjectclass->subjectTeacher && $archive->subjectclass->subjectTeacher->user) {
+                    $teacherName = $archive->subjectclass->subjectTeacher->user->name;
+                } elseif ($archive->staff) {
+                    $teacherName = $archive->staff->name;
+                } elseif ($archive->unregisteredBy) {
+                    $teacherName = $archive->unregisteredBy->name;
+                }
+
                 return [
                     'archive_id' => $archive->id,
                     'student_id' => $archive->studentid,
@@ -617,7 +639,7 @@ class SubjectOperationController extends Controller
                     'admissionno' => $archive->student->admissionNo ?? '',
                     'subjectname' => $archive->subjectclass->subject->subjectname ?? '',
                     'subjectcode' => $archive->subjectclass->subject->subjectcode ?? '',
-                    'staffname' => $archive->staff->name ?? $archive->unregisteredBy->name ?? 'System',
+                    'staffname' => $teacherName,
                     'termname' => $archive->term->term ?? '',
                     'unregistered_at' => $archive->unregistered_at,
                     'unregistered_by_name' => $archive->unregisteredBy->name ?? 'System',
@@ -696,7 +718,7 @@ class SubjectOperationController extends Controller
                         $restoredCount++;
                     }
 
-                    // Update archive status or delete it
+                    // Update archive status
                     $archive->status = SubjectUnregistrationArchive::STATUS_RESTORED;
                     $archive->actioned_at = now();
                     $archive->save();
