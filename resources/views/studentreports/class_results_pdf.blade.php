@@ -215,7 +215,7 @@
 
         /* FULL-WIDTH TOTAL SUMMARY (moved outside the table) */
         .totals-summary {
-            width: 80%;
+            width: 90%;
             background: #0d1a3d;
             color: #ffffff;
             font-weight: 900;
