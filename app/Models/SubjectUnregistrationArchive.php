@@ -2,7 +2,10 @@
 
 namespace App\Models;
 
+use App\Models\Schoolsession;
+use App\Models\Schoolterm;
 use App\Models\Subjectclass;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
