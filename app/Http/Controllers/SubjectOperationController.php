@@ -20,10 +20,9 @@ class SubjectOperationController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:View subject registration', ['only' => ['index', 'getRegisteredClasses', 'subjectinfo', 'getArchivedRegistrations']]);
-        $this->middleware('permission:Create subject registration', ['only' => ['store', 'batchRegister']]);
-        $this->middleware('permission:Delete subject registration', ['only' => ['destroy', 'permanentlyDeleteArchive', 'permanentlyDeleteArchiveBatch']]);
-        $this->middleware('permission:Restore subject registration', ['only' => ['restoreRegistration']]);
+        $this->middleware('permission:View subject-operation|Create subject-operation|Update subject-operation|Delete subject-operation', ['only' => ['index', 'subjectinfo', 'getRegisteredClasses', 'getArchivedRegistrations']]);
+        $this->middleware('permission:Create subject-operation', ['only' => ['store', 'restoreRegistration']]);
+        $this->middleware('permission:Delete subject-operation', ['only' => ['destroy', 'permanentlyDeleteArchive', 'permanentlyDeleteArchiveBatch']]);
     }
 
     /**
