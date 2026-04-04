@@ -493,7 +493,7 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
 
     // DELETE permanently delete a single archive record
     Route::delete('/subjectoperation/archive/{archiveId}', [SubjectOperationController::class, 'permanentlyDeleteArchive'])->name('subjectoperation.archive.delete');
-//  Route::resource('subjectoperation', SubjectOperationController::class);
+ Route::resource('subjectoperation', SubjectOperationController::class);
 
 
 
