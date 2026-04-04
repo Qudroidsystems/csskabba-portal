@@ -143,9 +143,8 @@
             margin: 0 2px;
         }
         /* =====================================================
-           CORE FIX: DUAL-COLUMN LAYOUT (PDF-safe)
-           Academic table now stretches FULLY to touch the Psychomotor panel
-           with ZERO gap.
+           DUAL-COLUMN LAYOUT (PDF-safe)
+           Academic table stretches fully to Psychomotor (zero gap)
            ===================================================== */
         .dual-layout-table {
             width: 100%;
@@ -154,13 +153,11 @@
             page-break-inside: avoid;
         }
 
-        /* LEFT: Academic results — now fully expanded with no right padding */
         .dual-layout-table td.academic-cell {
             vertical-align: top;
-            padding: 0;                    /* Removed padding-right: 6px; */
+            padding: 0;
         }
 
-        /* RIGHT: Psychomotor — fixed width */
         .dual-layout-table td.psycho-cell {
             vertical-align: top;
             padding: 0;
@@ -233,7 +230,8 @@
             color: #4a5b6e;
             line-height: 1.2;
         }
-        /* ACADEMIC TABLE */
+
+        /* ACADEMIC TABLE - WIDER COLUMNS AS REQUESTED */
         .result-table table {
             width: 100%;
             border: 2px solid #000000;
@@ -263,7 +261,7 @@
             text-align: left;
             font-weight: 700;
             font-size: 7.5px;
-            padding-left: 3px;
+            padding-left: 4px;
             word-break: break-word;
             white-space: normal;
         }
@@ -297,17 +295,19 @@
             padding: 3px 2px;
             white-space: normal;
         }
-        /* Column widths for academic table */
-        .col-sn { width: 18px; }
-        .col-admissionno { width: 60px; }
-        .col-name { width: 100px; }
-        .col-assessment { width: 26px; }
-        .col-total { width: 32px; }
-        .col-bf { width: 26px; }
-        .col-cum { width: 32px; }
-        .col-grade { width: 26px; }
-        .col-position { width: 28px; }
-        .col-class-average{ width: 30px; }
+
+        /* UPDATED WIDER COLUMN WIDTHS */
+        .col-sn { width: 28px; }                    /* S/N */
+        .col-admissionno { width: 78px; }           /* Adm No */
+        .col-name { width: 165px; }                 /* Subject - significantly wider */
+        .col-assessment { width: 39px; }            /* CA 1 (20.00), CA 2 (20.00), EXAM (60.00) */
+        .col-total { width: 46px; }                 /* Total */
+        .col-bf { width: 36px; }                    /* BF */
+        .col-cum { width: 42px; }                   /* Cum */
+        .col-grade { width: 36px; }                 /* Grade */
+        .col-position { width: 36px; }              /* Pos */
+        .col-class-average { width: 39px; }         /* Av */
+
         /* Remarks table */
         .remarks-table {
             width: 100%;
@@ -446,7 +446,7 @@
         if (in_array('class_average', $columnsToShow)) $totalLabelColspan++;
     @endphp
     <div class="student-section">
-        <!-- ── HEADER ── -->
+        <!-- HEADER -->
         <table class="header-table" style="width:100%">
             <tr>
                 <td width="20%">
@@ -487,7 +487,8 @@
         <div class="report-title">
             {{ strtoupper($metadata['term'] ?? 'SECOND TERM') }} {{ strtoupper($metadata['session'] ?? '2025/2026') }} ACADEMIC SESSION TERMINAL PROGRESS REPORT
         </div>
-        <!-- ── STUDENT INFO BAR ── -->
+
+        <!-- STUDENT INFO BAR -->
         @if ($studentData['students'] && $studentData['students']->isNotEmpty())
             @php
                 $profile = $studentData['studentpp'] && $studentData['studentpp']->isNotEmpty() ? $studentData['studentpp']->first() : null;
@@ -524,14 +525,11 @@
         @else
             <div class="student-info-bar"><div class="info-line">No student data available.</div></div>
         @endif
-        <!-- ══════════════════════════════════════════════════════
-             DUAL-COLUMN LAYOUT: TABLE-BASED (PDF-safe)
-             Left cell → academic results (now 100% width, no gap)
-             Right cell → psychomotor panel (148px fixed)
-             ══════════════════════════════════════════════════════ -->
+
+        <!-- DUAL-COLUMN LAYOUT -->
         <table class="dual-layout-table">
             <tr>
-                <!-- LEFT: ACADEMIC RESULTS (now touches psychomotor with zero gap) -->
+                <!-- LEFT: ACADEMIC RESULTS (wider columns) -->
                 <td class="academic-cell">
                     <div class="result-table">
                         <table>
@@ -553,7 +551,7 @@
                                     @if(in_array('cum', $columnsToShow)) <th class="col-cum">Cum</th> @endif
                                     @if(in_array('grade', $columnsToShow)) <th class="col-grade">Grade</th> @endif
                                     @if(in_array('position', $columnsToShow)) <th class="col-position">Pos</th> @endif
-                                    @if(in_array('class_average', $columnsToShow)) <th class="col-class-average">Avg</th> @endif
+                                    @if(in_array('class_average', $columnsToShow)) <th class="col-class-average">Av</th> @endif
                                 </tr>
                             </thead>
                             <tbody>
@@ -645,8 +643,8 @@
                 </td>
             </tr>
         </table>
-        <!-- ══ end dual-column layout ══ -->
-        <!-- ── REMARKS ── -->
+
+        <!-- REMARKS -->
         <table class="remarks-table">
             <tbody>
                 <tr>
@@ -661,7 +659,8 @@
                 </tr>
             </tbody>
         </table>
-        <!-- ── FOOTER ── -->
+
+        <!-- FOOTER -->
         <div class="footer-section">
             <table class="footer-layout-table" style="width:100%">
                 <tr>
@@ -687,7 +686,7 @@
             </table>
             <div class="powered-by">Powered by Qudroid Systems</div>
         </div>
-    </div>{{-- end .student-section --}}
+    </div>
 @endforeach
 </body>
 </html>
