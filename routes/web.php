@@ -462,12 +462,7 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
     //         ->name('permanentlyDeleteArchive');
     // });
 
-    <?php
-// ============================================================================
-// YOUR INITIAL ROUTES WITH ARCHIVE MANAGEMENT ADDED
-// ============================================================================
 
-use App\Http\Controllers\SubjectOperationController;
 
 Route::resource('subjectoperation', SubjectOperationController::class);
 Route::get('/subjects', [SubjectOperationController::class, 'index'])->name('subjects.index');
