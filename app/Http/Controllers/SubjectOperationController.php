@@ -679,7 +679,7 @@ class SubjectOperationController extends Controller
     /**
      * Get registered classes with teacher names.
      */
-    public function registeredClasses(Request $request): JsonResponse
+    public function getRegisteredClasses(Request $request): JsonResponse
     {
         try {
             $validated = $request->validate([
