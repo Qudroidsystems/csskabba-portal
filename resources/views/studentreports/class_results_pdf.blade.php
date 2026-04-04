@@ -142,13 +142,15 @@
             color: #94a3b8;
             margin: 0 2px;
         }
+
         /* =====================================================
-           DUAL-COLUMN LAYOUT (PDF-safe)
-           Academic table stretches fully to Psychomotor (zero gap)
+           DUAL-COLUMN LAYOUT - FIXED GAP ISSUE
+           Academic table now forces full expansion to touch Psychomotor
            ===================================================== */
         .dual-layout-table {
             width: 100%;
             border-collapse: collapse;
+            border-spacing: 0;           /* removes any hidden spacing between cells */
             margin-bottom: 8px;
             page-break-inside: avoid;
         }
@@ -231,13 +233,13 @@
             line-height: 1.2;
         }
 
-        /* ACADEMIC TABLE - WIDER COLUMNS AS REQUESTED */
+        /* ACADEMIC TABLE - NOW EXPANDS FULLY (this fixes the gap) */
         .result-table table {
             width: 100%;
             border: 2px solid #000000;
             border-collapse: collapse;
             font-size: 7.8px;
-            table-layout: fixed;
+            table-layout: auto;           /* CHANGED TO AUTO → forces full width expansion */
         }
         .result-table thead th {
             background: #0d1a3d;
@@ -261,7 +263,7 @@
             text-align: left;
             font-weight: 700;
             font-size: 7.5px;
-            padding-left: 4px;
+            padding-left: 5px;
             word-break: break-word;
             white-space: normal;
         }
@@ -296,17 +298,17 @@
             white-space: normal;
         }
 
-        /* UPDATED WIDER COLUMN WIDTHS */
-        .col-sn { width: 28px; }                    /* S/N */
-        .col-admissionno { width: 78px; }           /* Adm No */
-        .col-name { width: 700px; }                 /* Subject - significantly wider */
-        .col-assessment { width: 39px; }            /* CA 1 (20.00), CA 2 (20.00), EXAM (60.00) */
-        .col-total { width: 46px; }                 /* Total */
-        .col-bf { width: 36px; }                    /* BF */
-        .col-cum { width: 42px; }                   /* Cum */
-        .col-grade { width: 36px; }                 /* Grade */
-        .col-position { width: 36px; }              /* Pos */
-        .col-class-average { width: 39px; }         /* Av */
+        /* Column widths (now act as minimum/preferred widths) */
+        .col-sn { width: 28px; }
+        .col-admissionno { width: 78px; }
+        .col-name { width: 195px; }                 /* Subject remains very wide */
+        .col-assessment { width: 39px; }
+        .col-total { width: 46px; }
+        .col-bf { width: 36px; }
+        .col-cum { width: 42px; }
+        .col-grade { width: 36px; }
+        .col-position { width: 36px; }
+        .col-class-average { width: 39px; }
 
         /* Remarks table */
         .remarks-table {
@@ -529,7 +531,7 @@
         <!-- DUAL-COLUMN LAYOUT -->
         <table class="dual-layout-table">
             <tr>
-                <!-- LEFT: ACADEMIC RESULTS (wider columns) -->
+                <!-- LEFT: ACADEMIC RESULTS (now forces full width) -->
                 <td class="academic-cell">
                     <div class="result-table">
                         <table>
