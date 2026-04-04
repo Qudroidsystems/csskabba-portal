@@ -35,10 +35,9 @@ class SubjectOperationController extends Controller
         $this->middleware('permission:Delete subject-operation', ['only' => ['destroy', 'permanentlyDeleteArchive', 'permanentlyDeleteArchiveBatch']]);
     }
 
-    // =========================================================================
-    // INDEX
-    // =========================================================================
-
+    /**
+     * Display a list of students for subject registration with filters.
+     */
     public function index(Request $request): \Illuminate\View\View
     {
         $pagetitle = "Subject Operation Management";
@@ -49,10 +48,6 @@ class SubjectOperationController extends Controller
             ->get();
         $schoolterms    = Schoolterm::all();
         $schoolsessions = Schoolsession::all();
-
-        $staffs = User::whereHas('roles', function ($q) {
-            $q->where('name', '!=', 'Student');
-        })->get(['users.id as userid', 'users.name as name', 'users.avatar as avatar']);
 
         $students        = null;
         $subjectTeachers = null;
@@ -139,183 +134,198 @@ class SubjectOperationController extends Controller
         ));
     }
 
-    // =========================================================================
-    // REGISTERED CLASSES (with teacher names and badges)
-    // =========================================================================
-
-    public function getRegisteredClasses(Request $request): JsonResponse
+    /**
+     * Display subject information for a specific student.
+     */
+    public function subjectinfo(Request $request, $id, $schoolclassid, $termid, $sessionid): \Illuminate\View\View|\Illuminate\Http\JsonResponse
     {
+        $current = "Current";
+
         try {
-            $validated = $request->validate([
-                'class_id'   => ['required', 'integer', 'exists:schoolclass,id'],
-                'session_id' => ['required', 'integer', 'exists:schoolsession,id'],
-                'term_id'    => ['nullable', 'integer', 'exists:schoolterm,id'],
-            ]);
+            $pagetitle   = "Subject Operation Management";
+            $studentdata = Student::where('id', $id)->get();
+            if ($studentdata->isEmpty()) {
+                return response()->json(['success' => false, 'message' => 'Student not found'], 404);
+            }
 
-            DB::statement('SET SESSION group_concat_max_len = 1000000');
+            $studentpic = Studentpicture::where('studentid', $id)->select(['studentid', 'picture as avatar'])->get();
 
-            // Get all terms for this session
-            $terms = Schoolterm::all();
+            $subjectclass = Subjectclass::query()
+                ->where('subjectclass.schoolclassid', $schoolclassid)
+                ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
+                ->leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
+                ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
+                ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subjectteacher.sessionid')
+                ->where('schoolterm.id', 2)
+                ->where('schoolsession.id', $sessionid)
+                ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
+                ->leftJoin('staffbioinfo', 'staffbioinfo.userid', '=', 'users.id')
+                ->leftJoin('staffpicture', 'staffpicture.staffid', '=', 'users.id')
+                ->groupBy([
+                    'subject.id', 'users.id', 'staffbioinfo.title', 'users.name',
+                    'staffpicture.picture', 'subject.subject', 'subject.subject_code',
+                    'subjectclass.id', 'schoolterm.term', 'schoolterm.id',
+                    'schoolsession.session', 'schoolsession.id',
+                ])
+                ->select([
+                    'subject.id as subjectid', 'staffbioinfo.title', 'users.name',
+                    'staffpicture.picture as picture', 'subject.subject',
+                    'users.id as staffid', 'subject.subject_code as subjectcode',
+                    'subjectclass.id as subjectclassid', 'schoolterm.term',
+                    'schoolterm.id as termid', 'schoolsession.session',
+                    'schoolsession.id as sessionid',
+                ])
+                ->get();
 
-            $results = [];
-
-            foreach ($terms as $term) {
-                // Get subject teachers for this class, session, and term
-                $subjectTeachers = SubjectTeacher::query()
-                    ->join('subjectclass', 'subjectclass.subjectteacherid', '=', 'subjectteacher.id')
-                    ->join('subject', 'subject.id', '=', 'subjectteacher.subjectid')
-                    ->join('users', 'users.id', '=', 'subjectteacher.staffid')
-                    ->where('subjectclass.schoolclassid', $validated['class_id'])
-                    ->where('subjectteacher.sessionid', $validated['session_id'])
-                    ->where('subjectteacher.termid', $term->id)
-                    ->select([
-                        'subjectteacher.id',
-                        'subjectteacher.staffid',
-                        'users.name as teacher_name',
-                        'subject.id as subject_id',
-                        'subject.subject as subject_name',
-                        'subjectclass.id as subjectclass_id',
-                    ])
-                    ->get();
-
-                if ($subjectTeachers->isEmpty()) {
-                    continue;
-                }
-
-                // Get registered students count for this term
-                $studentCount = SubjectRegistrationStatus::query()
-                    ->whereIn('subjectclassid', $subjectTeachers->pluck('subjectclass_id'))
-                    ->where('sessionid', $validated['session_id'])
-                    ->where('termid', $term->id)
-                    ->distinct('studentid')
-                    ->count('studentid');
-
-                $subjects = $subjectTeachers->pluck('subject_name')->unique()->filter()->implode(', ');
-                $teachers = $subjectTeachers->pluck('teacher_name')->unique()->filter()->implode(', ');
-                $subjectCount = $subjectTeachers->pluck('subject_id')->unique()->count();
-
-                $results[] = (object)[
-                    'class_id' => $validated['class_id'],
-                    'class_name' => Schoolclass::find($validated['class_id'])->schoolclass ?? 'Unknown',
-                    'arm_name' => Schoolclass::find($validated['class_id'])->armName->arm ?? 'None',
-                    'session_name' => Schoolsession::find($validated['session_id'])->session ?? 'Unknown',
-                    'term_name' => $term->term,
-                    'student_count' => $studentCount,
-                    'subject_count' => $subjectCount,
-                    'subjects' => $subjects ?: 'None',
-                    'teachers' => $teachers ?: 'None',
-                    'teacher_count' => $subjectTeachers->pluck('staffid')->unique()->count(),
+            $subjectRegistrations = [];
+            foreach ($subjectclass as $sc) {
+                $subjectRegistrations[$sc->subjectid][$sc->staffid] = [
+                    'subjectclassid' => $sc->subjectclassid,
+                    'status' => StudentSubjectRecord::where([
+                        'studentId'      => $id,
+                        'subjectclassid' => $sc->subjectclassid,
+                        'staffid'        => $sc->staffid,
+                        'session'        => $sessionid,
+                    ])->exists()
+                        ? ['status' => 'Registered', 'broadsheetid' => SubjectRegistrationStatus::where([
+                            'studentid'      => $id,
+                            'subjectclassid' => $sc->subjectclassid,
+                            'staffid'        => $sc->staffid,
+                        ])->value('broadsheetid')]
+                        : ['status' => 'Not Registered', 'broadsheetid' => null],
                 ];
             }
 
-            return response()->json(['success' => true, 'data' => $results]);
+            $totalreg = Subjectclass::where('subjectclass.schoolclassid', $schoolclassid)
+                ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
+                ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
+                ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subjectteacher.sessionid')
+                ->where('schoolterm.id', 2)
+                ->where('schoolsession.id', $sessionid)
+                ->distinct('subjectteacher.subjectid')
+                ->count('subjectteacher.subjectid');
 
-        } catch (ValidationException $e) {
-            return response()->json(['success' => false, 'message' => 'Invalid parameters.', 'errors' => $e->errors()], 422);
-        } catch (\Exception $e) {
-            Log::error('Error fetching registered classes', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            $regcount = StudentSubjectRecord::where('student_subject_register_record.studentId', $id)
+                ->leftJoin('subjectclass', 'subjectclass.id', '=', 'student_subject_register_record.subjectclassid')
+                ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
+                ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
+                ->leftJoin('schoolsession', 'schoolsession.id', '=', 'student_subject_register_record.session')
+                ->where('schoolterm.id', 2)
+                ->where('schoolsession.status', $current)
+                ->count();
+
+            $noregcount = $totalreg - $regcount;
+
+            $classname = Schoolclass::where('schoolclass.id', $schoolclassid)
+                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+                ->select(['schoolclass.id', 'schoolclass.schoolclass as schoolclass', 'schoolarm.arm as arm'])
+                ->get();
+
+            $terms = Schoolterm::all();
+
+            return view('subjectoperation.subjectinfo', compact(
+                'studentpic', 'classname', 'subjectclass', 'subjectRegistrations',
+                'studentdata', 'id', 'termid', 'sessionid', 'totalreg',
+                'regcount', 'noregcount', 'pagetitle', 'terms'
+            ));
+
+        } catch (\Exception $error) {
+            Log::error('Error fetching subject info', [
+                'student_id'   => $id,
+                'schoolclassid'=> $schoolclassid,
+                'error'        => $error->getMessage(),
+                'trace'        => $error->getTraceAsString(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to fetch subject information: ' . $error->getMessage(),
+            ], 500);
         }
     }
 
-    // =========================================================================
-    // GET ARCHIVED REGISTRATIONS
-    // =========================================================================
+    /**
+     * Get subject teachers via AJAX.
+     */
+    public function getSubjectTeachers(Request $request)
+    {
+        if (!$request->ajax()) {
+            return response()->json(['error' => 'Invalid request'], 400);
+        }
 
-    public function getArchivedRegistrations(Request $request): JsonResponse
+        $classId   = $request->input('class_id');
+        $termId    = $request->input('term_id');
+        $sessionId = $request->input('session_id');
+
+        if (!$classId || !$termId || !$sessionId ||
+            $classId === 'ALL' || $termId === 'ALL' || $sessionId === 'ALL') {
+            return response()->json(['error' => 'Missing required parameters'], 400);
+        }
+
+        $subjectTeachers = SubjectTeacher::leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
+            ->leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
+            ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
+            ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subjectteacher.sessionid')
+            ->leftJoin('subjectclass', 'subjectclass.subjectteacherid', '=', 'subjectteacher.id')
+            ->leftJoin('schoolclass', 'schoolclass.id', '=', 'subjectclass.schoolclassid')
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->where('subjectteacher.termid', $termId)
+            ->where('subjectteacher.sessionid', $sessionId)
+            ->where('subjectclass.schoolclassid', $classId)
+            ->select([
+                'subjectteacher.id as id',
+                'subjectclass.id as subjectclassid',
+                'users.id as userid',
+                'users.name as staffname',
+                'users.avatar as avatar',
+                'subject.id as subjectid',
+                'subject.subject as subjectname',
+                'subject.subject_code as subjectcode',
+                'schoolterm.id as termid',
+                'schoolterm.term as termname',
+                'schoolsession.id as sessionid',
+                'schoolsession.session as sessionname',
+                'schoolclass.schoolclass as class_name',
+                'schoolarm.arm as arm_name',
+            ])
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data'    => $subjectTeachers,
+            'count'   => $subjectTeachers->count(),
+        ]);
+    }
+
+    /**
+     * Store a newly created subject registration for one or multiple students.
+     */
+    public function store(Request $request): array
     {
         $validated = $request->validate([
-            'class_id'   => ['required', 'integer', 'exists:schoolclass,id'],
-            'session_id' => ['required', 'integer', 'exists:schoolsession,id'],
-            'term_id'    => ['nullable', 'integer', 'exists:schoolterm,id'],
-            'search'     => ['nullable', 'string', 'max:255'],
-            'per_page'   => ['nullable', 'integer', 'in:20,50,100,150'],
+            'studentid'      => ['required', 'array'],
+            'studentid.*'    => ['required', 'exists:studentRegistration,id'],
+            'subjectclassid' => ['required', 'exists:subjectclass,id'],
+            'staffid'        => ['required', 'exists:users,id'],
+            'termid'         => ['required', 'exists:schoolterm,id'],
+            'sessionid'      => ['required', 'exists:schoolsession,id'],
         ]);
 
-        try {
-            $perPage = $request->input('per_page', 50);
+        $studentCount       = count($validated['studentid']);
+        $batchThreshold     = 50;
+        $largeDatasetThreshold = 500;
 
-            $query = SubjectUnregistrationArchive::query()
-                ->where('subject_unregistration_archive.status', SubjectUnregistrationArchive::STATUS_ARCHIVED)
-                ->where('subject_unregistration_archive.sessionid', $validated['session_id'])
-                ->where('subject_unregistration_archive.schoolclassid', $validated['class_id'])
-                ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'subject_unregistration_archive.studentid')
-                ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-                ->leftJoin('subjectclass', 'subjectclass.id', '=', 'subject_unregistration_archive.subjectclassid')
-                ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
-                ->leftJoin('subject', 'subject.id', '=', 'subject_unregistration_archive.subjectid')
-                ->leftJoin('users as staff', 'staff.id', '=', 'subject_unregistration_archive.staffid')
-                ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subject_unregistration_archive.termid')
-                ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subject_unregistration_archive.sessionid')
-                ->leftJoin('schoolclass', 'schoolclass.id', '=', 'subject_unregistration_archive.schoolclassid')
-                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-                ->leftJoin('users as actor', 'actor.id', '=', 'subject_unregistration_archive.unregistered_by')
-                ->select([
-                    'subject_unregistration_archive.id as archive_id',
-                    'subject_unregistration_archive.studentid',
-                    'subject_unregistration_archive.subjectclassid',
-                    'subject_unregistration_archive.staffid',
-                    'subject_unregistration_archive.termid',
-                    'subject_unregistration_archive.sessionid',
-                    'subject_unregistration_archive.subjectid',
-                    'subject_unregistration_archive.schoolclassid',
-                    'subject_unregistration_archive.broadsheet_record_id',
-                    'subject_unregistration_archive.unregistered_at',
-                    'studentRegistration.admissionno',
-                    'studentRegistration.firstname',
-                    'studentRegistration.lastname',
-                    'studentRegistration.othername',
-                    'studentRegistration.gender',
-                    'studentpicture.picture',
-                    'subject.subject as subjectname',
-                    'subject.subject_code as subjectcode',
-                    'staff.name as staffname',
-                    'schoolterm.term as termname',
-                    'schoolsession.session as sessionname',
-                    'schoolclass.schoolclass as class_name',
-                    'schoolarm.arm as arm_name',
-                    'actor.name as unregistered_by_name',
-                ]);
-
-            if (!empty($validated['term_id'])) {
-                $query->where('subject_unregistration_archive.termid', $validated['term_id']);
-            }
-
-            if (!empty($validated['search'])) {
-                $searchTerm = '%' . $validated['search'] . '%';
-                $query->where(function($q) use ($searchTerm) {
-                    $q->where('studentRegistration.firstname', 'like', $searchTerm)
-                      ->orWhere('studentRegistration.lastname', 'like', $searchTerm)
-                      ->orWhere('studentRegistration.admissionno', 'like', $searchTerm)
-                      ->orWhere('subject.subject', 'like', $searchTerm);
-                });
-            }
-
-            $query->orderBy('subject_unregistration_archive.unregistered_at', 'desc');
-
-            $archived = $query->paginate($perPage);
-
-            return response()->json([
-                'success' => true,
-                'data'    => $archived->items(),
-                'meta'    => [
-                    'current_page' => $archived->currentPage(),
-                    'last_page'    => $archived->lastPage(),
-                    'total'        => $archived->total(),
-                    'per_page'     => $archived->perPage(),
-                ],
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Error fetching archived registrations', ['error' => $e->getMessage()]);
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        if ($studentCount <= $batchThreshold) {
+            return $this->processIndividually($validated);
+        } elseif ($studentCount <= $largeDatasetThreshold) {
+            return $this->processBatch($validated);
+        } else {
+            return $this->processLargeDataset($validated);
         }
     }
 
-    // =========================================================================
-    // BATCH REGISTER
-    // =========================================================================
-
+    /**
+     * Batch register students for multiple subjects.
+     */
     public function batchRegister(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -351,6 +361,7 @@ class SubjectOperationController extends Controller
                         'subjectclassid' => $subject['subjectclassid'],
                         'termid'         => $subject['termid'],
                         'message'        => $response['message'] ?? 'Error',
+                        'details'        => $response['errors'] ?? [],
                     ];
                 }
                 $results[] = $response;
@@ -360,7 +371,7 @@ class SubjectOperationController extends Controller
 
             return response()->json([
                 'success'       => empty($errors),
-                'message'       => $successCount . ' student(s) registered successfully.',
+                'message'       => "Successfully registered {$successCount} student(s).",
                 'results'       => $results,
                 'error_details' => $errors,
                 'success_count' => $successCount,
@@ -376,10 +387,9 @@ class SubjectOperationController extends Controller
         }
     }
 
-    // =========================================================================
-    // DESTROY (UNREGISTER)
-    // =========================================================================
-
+    /**
+     * Unregister students (soft-archives before hard delete).
+     */
     public function destroy(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -525,10 +535,19 @@ class SubjectOperationController extends Controller
                     ->where('staffid', $staffid)
                     ->delete();
 
+                Log::info('Unregistered subjects for students', [
+                    'subjectclassid'  => $subjectclassid,
+                    'termid'          => $termid,
+                    'sessionid'       => $sessionid,
+                    'student_count'   => count($studentsToProcess),
+                    'archived_count'  => count($archiveRows),
+                ]);
+
                 $results[] = [
                     'subjectclassid'       => $subjectclassid,
                     'termid'               => $termid,
                     'message'              => 'Successfully unregistered ' . count($studentsToProcess) . ' students',
+                    'students_unregistered'=> $studentsToProcess,
                 ];
             }
 
@@ -549,7 +568,7 @@ class SubjectOperationController extends Controller
 
             return response()->json([
                 'success'       => empty($errors),
-                'message'       => "Successfully unregistered {$successCount} student(s).",
+                'message'       => "Successfully unregistered {$successCount} student(s) from " . count($validated['subjectclasses']) . " subject(s).",
                 'results'       => $results,
                 'error_details' => $errors,
                 'success_count' => $successCount,
@@ -566,10 +585,154 @@ class SubjectOperationController extends Controller
         }
     }
 
-    // =========================================================================
-    // RESTORE REGISTRATION
-    // =========================================================================
+    /**
+     * Get archived registrations for the Unregistered History modal.
+     */
+    public function getArchivedRegistrations(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'class_id'   => ['required', 'integer', 'exists:schoolclass,id'],
+            'session_id' => ['required', 'integer', 'exists:schoolsession,id'],
+            'term_id'    => ['nullable', 'integer', 'exists:schoolterm,id'],
+            'search'     => ['nullable', 'string', 'max:255'],
+        ]);
 
+        try {
+            $query = SubjectUnregistrationArchive::query()
+                ->where('subject_unregistration_archive.status', SubjectUnregistrationArchive::STATUS_ARCHIVED)
+                ->where('subject_unregistration_archive.sessionid', $validated['session_id'])
+                ->where('subject_unregistration_archive.schoolclassid', $validated['class_id'])
+                ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'subject_unregistration_archive.studentid')
+                ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+                ->leftJoin('subjectclass', 'subjectclass.id', '=', 'subject_unregistration_archive.subjectclassid')
+                ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
+                ->leftJoin('subject', 'subject.id', '=', 'subject_unregistration_archive.subjectid')
+                ->leftJoin('users as staff', 'staff.id', '=', 'subject_unregistration_archive.staffid')
+                ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subject_unregistration_archive.termid')
+                ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subject_unregistration_archive.sessionid')
+                ->leftJoin('schoolclass', 'schoolclass.id', '=', 'subject_unregistration_archive.schoolclassid')
+                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+                ->leftJoin('users as actor', 'actor.id', '=', 'subject_unregistration_archive.unregistered_by')
+                ->select([
+                    'subject_unregistration_archive.id as archive_id',
+                    'subject_unregistration_archive.studentid',
+                    'subject_unregistration_archive.subjectclassid',
+                    'subject_unregistration_archive.staffid',
+                    'subject_unregistration_archive.termid',
+                    'subject_unregistration_archive.sessionid',
+                    'subject_unregistration_archive.subjectid',
+                    'subject_unregistration_archive.schoolclassid',
+                    'subject_unregistration_archive.broadsheet_record_id',
+                    'subject_unregistration_archive.unregistered_at',
+                    'studentRegistration.admissionno',
+                    'studentRegistration.firstname',
+                    'studentRegistration.lastname',
+                    'studentRegistration.othername',
+                    'studentRegistration.gender',
+                    'studentpicture.picture',
+                    'subject.subject as subjectname',
+                    'subject.subject_code as subjectcode',
+                    'staff.name as staffname',
+                    'schoolterm.term as termname',
+                    'schoolsession.session as sessionname',
+                    'schoolclass.schoolclass as class_name',
+                    'schoolarm.arm as arm_name',
+                    'actor.name as unregistered_by_name',
+                ]);
+
+            if (!empty($validated['term_id'])) {
+                $query->where('subject_unregistration_archive.termid', $validated['term_id']);
+            }
+
+            if (!empty($validated['search'])) {
+                $searchTerm = '%' . $validated['search'] . '%';
+                $query->where(function($q) use ($searchTerm) {
+                    $q->where('studentRegistration.firstname', 'like', $searchTerm)
+                      ->orWhere('studentRegistration.lastname', 'like', $searchTerm)
+                      ->orWhere('studentRegistration.admissionno', 'like', $searchTerm)
+                      ->orWhere('subject.subject', 'like', $searchTerm);
+                });
+            }
+
+            $query->orderBy('subject_unregistration_archive.unregistered_at', 'desc');
+
+            $perPage  = (int) $request->input('per_page', 50);
+            $archived = $query->paginate($perPage);
+
+            return response()->json([
+                'success' => true,
+                'data'    => $archived->items(),
+                'meta'    => [
+                    'current_page' => $archived->currentPage(),
+                    'last_page'    => $archived->lastPage(),
+                    'total'        => $archived->total(),
+                    'per_page'     => $archived->perPage(),
+                ],
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error fetching archived registrations', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Get registered classes with teacher names.
+     */
+    public function registeredClasses(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'class_id'   => ['required', 'integer', 'exists:schoolclass,id'],
+                'session_id' => ['required', 'integer', 'exists:schoolsession,id'],
+                'term_id'    => ['nullable', 'integer', 'exists:schoolterm,id'],
+            ]);
+
+            DB::statement('SET SESSION group_concat_max_len = 1000000');
+
+            $query = SubjectRegistrationStatus::query()
+                ->join('subjectclass', 'subjectclass.id', '=', 'subject_registration_status.subjectclassid')
+                ->join('schoolclass', 'schoolclass.id', '=', 'subjectclass.schoolclassid')
+                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+                ->join('schoolsession', 'schoolsession.id', '=', 'subject_registration_status.sessionid')
+                ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subject_registration_status.termid')
+                ->leftJoin('broadsheet', 'broadsheet.id', '=', 'subject_registration_status.broadsheetid')
+                ->leftJoin('subject', 'subject.id', '=', 'broadsheet.subjectid')
+                ->leftJoin('users as teachers', 'teachers.id', '=', 'subject_registration_status.staffid')
+                ->where('subjectclass.schoolclassid', $validated['class_id'])
+                ->where('subject_registration_status.sessionid', $validated['session_id'])
+                ->when($validated['term_id'], fn($q, $t) => $q->where('subject_registration_status.termid', $t))
+                ->groupBy([
+                    'schoolclass.id', 'schoolarm.id', 'schoolsession.id', 'schoolterm.id',
+                    'schoolclass.schoolclass', 'schoolarm.arm', 'schoolsession.session', 'schoolterm.term',
+                ])
+                ->select([
+                    'schoolclass.id as class_id',
+                    'schoolclass.schoolclass as class_name',
+                    DB::raw('COALESCE(schoolarm.arm, "None") as arm_name'),
+                    DB::raw('COALESCE(schoolsession.session, "Unknown") as session_name'),
+                    DB::raw('COALESCE(schoolterm.term, "Unknown") as term_name'),
+                    DB::raw('COUNT(DISTINCT subject_registration_status.studentid) as student_count'),
+                    DB::raw('COUNT(DISTINCT subject_registration_status.subjectclassid) as subject_count'),
+                    DB::raw('COALESCE(GROUP_CONCAT(DISTINCT subject.subject ORDER BY subject.subject SEPARATOR ", "), "None") as subjects'),
+                    DB::raw('COALESCE(GROUP_CONCAT(DISTINCT teachers.name ORDER BY teachers.name SEPARATOR ", "), "None") as teachers'),
+                ]);
+
+            $classes = $query->get();
+
+            return response()->json(['success' => true, 'data' => $classes]);
+
+        } catch (ValidationException $e) {
+            return response()->json(['success' => false, 'message' => 'Invalid parameters.', 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            Log::error('Error fetching registered classes', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Restore archived registrations.
+     */
     public function restoreRegistration(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -647,10 +810,39 @@ class SubjectOperationController extends Controller
         }
     }
 
-    // =========================================================================
-    // PERMANENTLY DELETE ARCHIVE (BATCH)
-    // =========================================================================
+    /**
+     * Permanently delete a single archive record.
+     */
+    public function permanentlyDeleteArchive(Request $request, int $archiveId): JsonResponse
+    {
+        try {
+            $archive = SubjectUnregistrationArchive::where('id', $archiveId)
+                ->where('status', SubjectUnregistrationArchive::STATUS_ARCHIVED)
+                ->firstOrFail();
 
+            $archive->update([
+                'status'      => SubjectUnregistrationArchive::STATUS_PERMANENTLY_DELETED,
+                'actioned_at' => now(),
+            ]);
+
+            $archive->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Archive record permanently deleted.',
+            ]);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['success' => false, 'message' => 'Record not found.'], 404);
+        } catch (\Exception $e) {
+            Log::error('Permanent delete failed', ['archive_id' => $archiveId, 'error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Permanently delete multiple archive records.
+     */
     public function permanentlyDeleteArchiveBatch(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -704,11 +896,15 @@ class SubjectOperationController extends Controller
             $studentsToProcess = array_diff($validated['studentid'], $existingRegistrations);
             $skippedCount      = count($existingRegistrations);
 
+            foreach ($existingRegistrations as $existingStudentId) {
+                $errors[] = "Student ID {$existingStudentId} is already registered";
+            }
+
             if (empty($studentsToProcess)) {
                 DB::rollBack();
                 return [
                     'success'       => false,
-                    'message'       => 'All students are already registered.',
+                    'message'       => 'All students are already registered for this subject.',
                     'errors'        => $errors,
                     'skipped_count' => $skippedCount,
                     'success_count' => 0,
@@ -775,6 +971,116 @@ class SubjectOperationController extends Controller
         }
     }
 
+    private function processBatch(array $validated): array
+    {
+        try {
+            DB::beginTransaction();
+
+            $subjectclass  = Subjectclass::findOrFail($validated['subjectclassid']);
+            $subjectId     = $subjectclass->subjectid;
+            $schoolclassId = $subjectclass->schoolclassid;
+            $now           = now();
+
+            $existingRegistrations = SubjectRegistrationStatus::where([
+                'subjectclassid' => $validated['subjectclassid'],
+                'termid'         => $validated['termid'],
+                'sessionid'      => $validated['sessionid'],
+            ])->whereIn('studentid', $validated['studentid'])
+                ->pluck('studentid')
+                ->toArray();
+
+            $studentsToProcess = array_diff($validated['studentid'], $existingRegistrations);
+            $skippedCount      = count($existingRegistrations);
+
+            if (empty($studentsToProcess)) {
+                DB::rollBack();
+                return ['success' => false, 'message' => 'All students are already registered.', 'skipped_count' => $skippedCount, 'success_count' => 0];
+            }
+
+            $broadsheetRecords     = [];
+            $broadsheetRecordsMock = [];
+
+            foreach ($studentsToProcess as $studentId) {
+                $broadsheetRecords[]     = ['student_id' => $studentId, 'subject_id' => $subjectId, 'schoolclass_id' => $schoolclassId, 'session_id' => $validated['sessionid'], 'created_at' => $now, 'updated_at' => $now];
+                $broadsheetRecordsMock[] = ['student_id' => $studentId, 'subject_id' => $subjectId, 'schoolclass_id' => $schoolclassId, 'session_id' => $validated['sessionid'], 'created_at' => $now, 'updated_at' => $now];
+            }
+
+            BroadsheetRecord::insertOrIgnore($broadsheetRecords);
+            BroadsheetRecordMock::insertOrIgnore($broadsheetRecordsMock);
+
+            $createdRecords     = BroadsheetRecord::where(['subject_id' => $subjectId, 'schoolclass_id' => $schoolclassId, 'session_id' => $validated['sessionid']])->whereIn('student_id', $studentsToProcess)->get()->keyBy('student_id');
+            $createdRecordsMock = BroadsheetRecordMock::where(['subject_id' => $subjectId, 'schoolclass_id' => $schoolclassId, 'session_id' => $validated['sessionid']])->whereIn('student_id', $studentsToProcess)->get()->keyBy('student_id');
+
+            $this->bulkCreateDependentRecords($createdRecords, $createdRecordsMock, $studentsToProcess, $validated, $now);
+
+            DB::commit();
+
+            return ['success' => true, 'message' => count($studentsToProcess) . ' students registered', 'method' => 'batch', 'success_count' => count($studentsToProcess), 'skipped_count' => $skippedCount];
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return ['success' => false, 'message' => 'Batch processing failed: ' . $e->getMessage(), 'errors' => [$e->getMessage()], 'success_count' => 0];
+        }
+    }
+
+    private function processLargeDataset(array $validated): array
+    {
+        try {
+            DB::beginTransaction();
+
+            $subjectclass  = Subjectclass::findOrFail($validated['subjectclassid']);
+            $subjectId     = $subjectclass->subjectid;
+            $schoolclassId = $subjectclass->schoolclassid;
+            $chunkSize     = 200;
+            $totalProcessed = 0;
+            $totalSkipped   = 0;
+            $chunks         = array_chunk($validated['studentid'], $chunkSize);
+
+            foreach ($chunks as $studentChunk) {
+                $existingInChunk = SubjectRegistrationStatus::where([
+                    'subjectclassid' => $validated['subjectclassid'],
+                    'termid'         => $validated['termid'],
+                    'sessionid'      => $validated['sessionid'],
+                ])->whereIn('studentid', $studentChunk)->pluck('studentid')->toArray();
+
+                $studentsToProcess = array_diff($studentChunk, $existingInChunk);
+                $totalSkipped     += count($existingInChunk);
+
+                if (!empty($studentsToProcess)) {
+                    $this->processChunk($studentsToProcess, $validated, $subjectId, $schoolclassId);
+                    $totalProcessed += count($studentsToProcess);
+                }
+            }
+
+            DB::commit();
+            return ['success' => true, 'message' => "{$totalProcessed} students registered", 'method' => 'large_dataset', 'success_count' => $totalProcessed, 'skipped_count' => $totalSkipped];
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return ['success' => false, 'message' => 'Large dataset processing failed: ' . $e->getMessage(), 'errors' => [$e->getMessage()], 'success_count' => 0];
+        }
+    }
+
+    private function processChunk(array $students, array $validated, int $subjectId, int $schoolclassId): void
+    {
+        $now = now();
+
+        $broadsheetRecords     = [];
+        $broadsheetRecordsMock = [];
+        foreach ($students as $studentId) {
+            $broadsheetRecords[]     = ['student_id' => $studentId, 'subject_id' => $subjectId, 'schoolclass_id' => $schoolclassId, 'session_id' => $validated['sessionid'], 'created_at' => $now, 'updated_at' => $now];
+            $broadsheetRecordsMock[] = ['student_id' => $studentId, 'subject_id' => $subjectId, 'schoolclass_id' => $schoolclassId, 'session_id' => $validated['sessionid'], 'created_at' => $now, 'updated_at' => $now];
+        }
+
+        BroadsheetRecord::insertOrIgnore($broadsheetRecords);
+        BroadsheetRecordMock::insertOrIgnore($broadsheetRecordsMock);
+
+        $createdRecords     = BroadsheetRecord::where(['subject_id' => $subjectId, 'schoolclass_id' => $schoolclassId, 'session_id' => $validated['sessionid']])->whereIn('student_id', $students)->get()->keyBy('student_id');
+        $createdRecordsMock = BroadsheetRecordMock::where(['subject_id' => $subjectId, 'schoolclass_id' => $schoolclassId, 'session_id' => $validated['sessionid']])->whereIn('student_id', $students)->get()->keyBy('student_id');
+
+        $this->bulkCreateDependentRecords($createdRecords, $createdRecordsMock, $students, $validated, $now);
+    }
+
     private function createDependentRecords(int $recordId, int $recordMockId, int $studentId, array $validated): void
     {
         $broadsheet = Broadsheets::firstOrCreate([
@@ -829,6 +1135,79 @@ class SubjectOperationController extends Controller
             }
         } catch (\Exception $e) {
             Log::error('Failed to create assessment scores', ['broadsheet_id' => $broadsheetId, 'error' => $e->getMessage()]);
+        }
+    }
+
+    private function bulkCreateDependentRecords($createdRecords, $createdRecordsMock, array $students, array $validated, $now): void
+    {
+        $broadsheets         = [];
+        $broadsheetsMock     = [];
+        $subjectRegistrations = [];
+        $studentSubjectRecords = [];
+
+        foreach ($students as $studentId) {
+            $record     = $createdRecords->get($studentId);
+            $recordMock = $createdRecordsMock->get($studentId);
+            if (!$record || !$recordMock) continue;
+
+            $broadsheets[]          = ['broadsheet_record_id' => $record->id, 'term_id' => $validated['termid'], 'subjectclass_id' => $validated['subjectclassid'], 'staff_id' => $validated['staffid'], 'created_at' => $now, 'updated_at' => $now];
+            $broadsheetsMock[]      = ['broadsheet_records_mock_id' => $recordMock->id, 'term_id' => $validated['termid'], 'subjectclass_id' => $validated['subjectclassid'], 'staff_id' => $validated['staffid'], 'created_at' => $now, 'updated_at' => $now];
+            $subjectRegistrations[] = ['studentid' => $studentId, 'subjectclassid' => $validated['subjectclassid'], 'staffid' => $validated['staffid'], 'termid' => $validated['termid'], 'sessionid' => $validated['sessionid'], 'broadsheetid' => $record->id, 'Status' => 1, 'created_at' => $now, 'updated_at' => $now];
+            $studentSubjectRecords[]= ['studentId' => $studentId, 'subjectclassid' => $validated['subjectclassid'], 'staffid' => $validated['staffid'], 'session' => $validated['sessionid'], 'created_at' => $now, 'updated_at' => $now];
+        }
+
+        if (!empty($broadsheets))          Broadsheets::insertOrIgnore($broadsheets);
+        if (!empty($broadsheetsMock))      BroadsheetsMock::insertOrIgnore($broadsheetsMock);
+        if (!empty($subjectRegistrations)) SubjectRegistrationStatus::insertOrIgnore($subjectRegistrations);
+        if (!empty($studentSubjectRecords)) StudentSubjectRecord::insertOrIgnore($studentSubjectRecords);
+
+        $recordIds = collect($students)->map(fn($sid) => $createdRecords->get($sid)?->id)->filter()->toArray();
+        if (empty($recordIds)) return;
+
+        $createdBroadsheets = Broadsheets::whereIn('broadsheet_record_id', $recordIds)
+            ->where('term_id', $validated['termid'])
+            ->where('subjectclass_id', $validated['subjectclassid'])
+            ->get();
+
+        $this->bulkCreateAssessmentScoresForBroadsheets($createdBroadsheets, $validated['subjectclassid'], $now);
+    }
+
+    private function bulkCreateAssessmentScoresForBroadsheets($broadsheets, int $subjectclassId, $now): void
+    {
+        try {
+            if ($broadsheets->isEmpty()) return;
+
+            $subjectclass = Subjectclass::with(['schoolClass.classcategories'])->find($subjectclassId);
+            if (!$subjectclass || !$subjectclass->schoolClass) return;
+
+            $categoryIds = $subjectclass->schoolClass->classcategories->pluck('id');
+            if ($categoryIds->isEmpty()) return;
+
+            $assessments = DB::table('assessments')->whereIn('classcategory_id', $categoryIds)->distinct()->get(['id']);
+            if ($assessments->isEmpty()) return;
+
+            $assessmentScores    = [];
+            $subAssessmentScores = [];
+
+            foreach ($broadsheets as $broadsheet) {
+                foreach ($assessments as $assessment) {
+                    $assessmentScores[] = ['broadsheet_id' => $broadsheet->id, 'assessment_id' => $assessment->id, 'score' => 0.00, 'created_at' => $now, 'updated_at' => $now];
+                }
+            }
+            if (!empty($assessmentScores)) BroadsheetAssessmentScore::insertOrIgnore($assessmentScores);
+
+            $assessmentIds  = $assessments->pluck('id')->toArray();
+            $subAssessments = DB::table('sub_assessments')->whereIn('assessment_id', $assessmentIds)->get(['id', 'assessment_id']);
+
+            foreach ($broadsheets as $broadsheet) {
+                foreach ($subAssessments as $subAssessment) {
+                    $subAssessmentScores[] = ['broadsheet_id' => $broadsheet->id, 'sub_assessment_id' => $subAssessment->id, 'assessment_id' => $subAssessment->assessment_id, 'score' => 0.00, 'created_at' => $now, 'updated_at' => $now];
+                }
+            }
+            if (!empty($subAssessmentScores)) BroadsheetSubAssessmentScore::insertOrIgnore($subAssessmentScores);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to bulk create assessment scores', ['error' => $e->getMessage()]);
         }
     }
 }

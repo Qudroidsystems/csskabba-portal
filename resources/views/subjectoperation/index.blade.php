@@ -1,1213 +1,736 @@
-<?php
-
-namespace App\Http\Controllers;
-
-use App\Models\User;
-use App\Models\Student;
-use App\Models\Schoolterm;
-use App\Models\Broadsheets;
-use App\Models\Schoolclass;
-use App\Models\Subjectclass;
-use Illuminate\Http\Request;
-use App\Models\Schoolsession;
-use App\Models\Studentpicture;
-use App\Models\SubjectTeacher;
-use App\Models\BroadsheetsMock;
-use App\Models\BroadsheetRecord;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use App\Models\BroadsheetRecordMock;
-use App\Models\StudentSubjectRecord;
-use App\Models\SubjectRegistrationStatus;
-use App\Models\BroadsheetAssessmentScore;
-use App\Models\SubjectUnregistrationArchive;
-use App\Models\BroadsheetSubAssessmentScore;
-use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Auth;
-
-class SubjectOperationController extends Controller
-{
-    public function __construct()
-    {
-        $this->middleware('permission:View subject-operation|Create subject-operation|Update subject-operation|Delete subject-operation', ['only' => ['index', 'subjectinfo', 'getRegisteredClasses', 'getArchivedRegistrations']]);
-        $this->middleware('permission:Create subject-operation', ['only' => ['store', 'restoreRegistration']]);
-        $this->middleware('permission:Delete subject-operation', ['only' => ['destroy', 'permanentlyDeleteArchive', 'permanentlyDeleteArchiveBatch']]);
-    }
-
-    /**
-     * Display a list of students for subject registration with filters.
-     */
-    public function index(Request $request): \Illuminate\View\View
-    {
-        $pagetitle = "Subject Operation Management";
-
-        $schoolclass = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->select(['schoolclass.id as id', 'schoolarm.arm as schoolarm', 'schoolclass.schoolclass as schoolclass'])
-            ->orderBy('schoolclass.schoolclass')
-            ->get();
-        $schoolterms    = Schoolterm::all();
-        $schoolsessions = Schoolsession::all();
-
-        $students        = null;
-        $subjectTeachers = null;
-
-        if ($request->filled(['class_id', 'session_id']) &&
-            $request->input('class_id') !== 'ALL' &&
-            $request->input('session_id') !== 'ALL') {
-
-            $subjectTeachers = SubjectTeacher::leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
-                ->leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
-                ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
-                ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subjectteacher.sessionid')
-                ->leftJoin('subjectclass', 'subjectclass.subjectteacherid', '=', 'subjectteacher.id')
-                ->leftJoin('schoolclass', 'schoolclass.id', '=', 'subjectclass.schoolclassid')
-                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-                ->where('subjectteacher.sessionid', $request->input('session_id'))
-                ->where('subjectclass.schoolclassid', $request->input('class_id'))
-                ->select([
-                    'subjectteacher.id as id',
-                    'subjectclass.id as subjectclassid',
-                    'users.id as userid',
-                    'users.name as staffname',
-                    'users.avatar as avatar',
-                    'subject.id as subjectid',
-                    'subject.subject as subjectname',
-                    'subject.subject_code as subjectcode',
-                    'schoolterm.id as termid',
-                    'schoolterm.term as termname',
-                    'schoolsession.id as sessionid',
-                    'schoolsession.session as sessionname',
-                    'schoolclass.schoolclass as class_name',
-                    'schoolarm.arm as arm_name',
-                    'subjectteacher.updated_at',
-                ])
-                ->get();
-
-            $query = Student::leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-                ->leftJoin('studentclass', 'studentclass.studentid', '=', 'studentRegistration.id')
-                ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
-                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm');
-
-            if ($search = $request->input('search')) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('studentRegistration.admissionno', 'like', "%{$search}%")
-                        ->orWhere('studentRegistration.firstname', 'like', "%{$search}%")
-                        ->orWhere('studentRegistration.lastname', 'like', "%{$search}%");
-                });
-            }
-
-            if ($gender = $request->input('gender')) {
-                if ($gender !== 'ALL') {
-                    $query->where('studentRegistration.gender', $gender);
-                }
-            }
-
-            if ($admissionNo = $request->input('admissionno')) {
-                if ($admissionNo !== 'ALL') {
-                    $query->where('studentRegistration.admissionno', $admissionNo);
-                }
-            }
-
-            $query->where('studentclass.schoolclassid', $request->input('class_id'))
-                ->where('studentclass.sessionid', $request->input('session_id'));
-
-            $students = $query->select([
-                'studentRegistration.id as id',
-                'studentRegistration.admissionno as admissionno',
-                'studentRegistration.firstname',
-                'studentRegistration.lastname',
-                'studentRegistration.othername',
-                'studentRegistration.gender',
-                'studentRegistration.updated_at',
-                'studentpicture.picture',
-                'studentclass.studentid as studentid',
-                'studentclass.schoolclassid as schoolclassid',
-                'studentclass.sessionid',
-                'schoolclass.schoolclass as class_name',
-                'schoolarm.arm as arm_name',
-            ])->paginate(100)->appends($request->query());
-        }
-
-        return view('subjectoperation.index', compact(
-            'students', 'subjectTeachers', 'pagetitle', 'schoolclass', 'schoolterms', 'schoolsessions'
-        ));
-    }
-
-    /**
-     * Display subject information for a specific student.
-     */
-    public function subjectinfo(Request $request, $id, $schoolclassid, $termid, $sessionid): \Illuminate\View\View|\Illuminate\Http\JsonResponse
-    {
-        $current = "Current";
-
-        try {
-            $pagetitle   = "Subject Operation Management";
-            $studentdata = Student::where('id', $id)->get();
-            if ($studentdata->isEmpty()) {
-                return response()->json(['success' => false, 'message' => 'Student not found'], 404);
-            }
-
-            $studentpic = Studentpicture::where('studentid', $id)->select(['studentid', 'picture as avatar'])->get();
-
-            $subjectclass = Subjectclass::query()
-                ->where('subjectclass.schoolclassid', $schoolclassid)
-                ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
-                ->leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
-                ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
-                ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subjectteacher.sessionid')
-                ->where('schoolterm.id', 2)
-                ->where('schoolsession.id', $sessionid)
-                ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
-                ->leftJoin('staffbioinfo', 'staffbioinfo.userid', '=', 'users.id')
-                ->leftJoin('staffpicture', 'staffpicture.staffid', '=', 'users.id')
-                ->groupBy([
-                    'subject.id', 'users.id', 'staffbioinfo.title', 'users.name',
-                    'staffpicture.picture', 'subject.subject', 'subject.subject_code',
-                    'subjectclass.id', 'schoolterm.term', 'schoolterm.id',
-                    'schoolsession.session', 'schoolsession.id',
-                ])
-                ->select([
-                    'subject.id as subjectid', 'staffbioinfo.title', 'users.name',
-                    'staffpicture.picture as picture', 'subject.subject',
-                    'users.id as staffid', 'subject.subject_code as subjectcode',
-                    'subjectclass.id as subjectclassid', 'schoolterm.term',
-                    'schoolterm.id as termid', 'schoolsession.session',
-                    'schoolsession.id as sessionid',
-                ])
-                ->get();
-
-            $subjectRegistrations = [];
-            foreach ($subjectclass as $sc) {
-                $subjectRegistrations[$sc->subjectid][$sc->staffid] = [
-                    'subjectclassid' => $sc->subjectclassid,
-                    'status' => StudentSubjectRecord::where([
-                        'studentId'      => $id,
-                        'subjectclassid' => $sc->subjectclassid,
-                        'staffid'        => $sc->staffid,
-                        'session'        => $sessionid,
-                    ])->exists()
-                        ? ['status' => 'Registered', 'broadsheetid' => SubjectRegistrationStatus::where([
-                            'studentid'      => $id,
-                            'subjectclassid' => $sc->subjectclassid,
-                            'staffid'        => $sc->staffid,
-                        ])->value('broadsheetid')]
-                        : ['status' => 'Not Registered', 'broadsheetid' => null],
-                ];
-            }
-
-            $totalreg = Subjectclass::where('subjectclass.schoolclassid', $schoolclassid)
-                ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
-                ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
-                ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subjectteacher.sessionid')
-                ->where('schoolterm.id', 2)
-                ->where('schoolsession.id', $sessionid)
-                ->distinct('subjectteacher.subjectid')
-                ->count('subjectteacher.subjectid');
-
-            $regcount = StudentSubjectRecord::where('student_subject_register_record.studentId', $id)
-                ->leftJoin('subjectclass', 'subjectclass.id', '=', 'student_subject_register_record.subjectclassid')
-                ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
-                ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
-                ->leftJoin('schoolsession', 'schoolsession.id', '=', 'student_subject_register_record.session')
-                ->where('schoolterm.id', 2)
-                ->where('schoolsession.status', $current)
-                ->count();
-
-            $noregcount = $totalreg - $regcount;
-
-            $classname = Schoolclass::where('schoolclass.id', $schoolclassid)
-                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-                ->select(['schoolclass.id', 'schoolclass.schoolclass as schoolclass', 'schoolarm.arm as arm'])
-                ->get();
-
-            $terms = Schoolterm::all();
-
-            return view('subjectoperation.subjectinfo', compact(
-                'studentpic', 'classname', 'subjectclass', 'subjectRegistrations',
-                'studentdata', 'id', 'termid', 'sessionid', 'totalreg',
-                'regcount', 'noregcount', 'pagetitle', 'terms'
-            ));
-
-        } catch (\Exception $error) {
-            Log::error('Error fetching subject info', [
-                'student_id'   => $id,
-                'schoolclassid'=> $schoolclassid,
-                'error'        => $error->getMessage(),
-                'trace'        => $error->getTraceAsString(),
-            ]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to fetch subject information: ' . $error->getMessage(),
-            ], 500);
-        }
-    }
-
-    /**
-     * Get subject teachers via AJAX.
-     */
-    public function getSubjectTeachers(Request $request)
-    {
-        if (!$request->ajax()) {
-            return response()->json(['error' => 'Invalid request'], 400);
-        }
-
-        $classId   = $request->input('class_id');
-        $termId    = $request->input('term_id');
-        $sessionId = $request->input('session_id');
-
-        if (!$classId || !$termId || !$sessionId ||
-            $classId === 'ALL' || $termId === 'ALL' || $sessionId === 'ALL') {
-            return response()->json(['error' => 'Missing required parameters'], 400);
-        }
-
-        $subjectTeachers = SubjectTeacher::leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
-            ->leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
-            ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
-            ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subjectteacher.sessionid')
-            ->leftJoin('subjectclass', 'subjectclass.subjectteacherid', '=', 'subjectteacher.id')
-            ->leftJoin('schoolclass', 'schoolclass.id', '=', 'subjectclass.schoolclassid')
-            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->where('subjectteacher.termid', $termId)
-            ->where('subjectteacher.sessionid', $sessionId)
-            ->where('subjectclass.schoolclassid', $classId)
-            ->select([
-                'subjectteacher.id as id',
-                'subjectclass.id as subjectclassid',
-                'users.id as userid',
-                'users.name as staffname',
-                'users.avatar as avatar',
-                'subject.id as subjectid',
-                'subject.subject as subjectname',
-                'subject.subject_code as subjectcode',
-                'schoolterm.id as termid',
-                'schoolterm.term as termname',
-                'schoolsession.id as sessionid',
-                'schoolsession.session as sessionname',
-                'schoolclass.schoolclass as class_name',
-                'schoolarm.arm as arm_name',
-            ])
-            ->get();
-
-        return response()->json([
-            'success' => true,
-            'data'    => $subjectTeachers,
-            'count'   => $subjectTeachers->count(),
-        ]);
-    }
-
-    /**
-     * Store a newly created subject registration for one or multiple students.
-     */
-    public function store(Request $request): array
-    {
-        $validated = $request->validate([
-            'studentid'      => ['required', 'array'],
-            'studentid.*'    => ['required', 'exists:studentRegistration,id'],
-            'subjectclassid' => ['required', 'exists:subjectclass,id'],
-            'staffid'        => ['required', 'exists:users,id'],
-            'termid'         => ['required', 'exists:schoolterm,id'],
-            'sessionid'      => ['required', 'exists:schoolsession,id'],
-        ]);
-
-        $studentCount       = count($validated['studentid']);
-        $batchThreshold     = 50;
-        $largeDatasetThreshold = 500;
-
-        if ($studentCount <= $batchThreshold) {
-            return $this->processIndividually($validated);
-        } elseif ($studentCount <= $largeDatasetThreshold) {
-            return $this->processBatch($validated);
-        } else {
-            return $this->processLargeDataset($validated);
-        }
-    }
-
-    /**
-     * Batch register students for multiple subjects.
-     */
-    public function batchRegister(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'studentids'                      => ['required', 'array'],
-            'studentids.*'                    => ['required', 'exists:studentRegistration,id'],
-            'subjectclasses'                  => ['required', 'array'],
-            'subjectclasses.*.subjectclassid' => ['required', 'exists:subjectclass,id'],
-            'subjectclasses.*.staffid'        => ['required', 'exists:users,id'],
-            'subjectclasses.*.termid'         => ['required', 'exists:schoolterm,id'],
-            'sessionid'                       => ['required', 'exists:schoolsession,id'],
-        ]);
-
-        $results      = [];
-        $errors       = [];
-        $successCount = 0;
-
-        try {
-            DB::beginTransaction();
-
-            foreach ($validated['subjectclasses'] as $subject) {
-                $response = $this->processIndividually([
-                    'studentid'      => $validated['studentids'],
-                    'subjectclassid' => $subject['subjectclassid'],
-                    'staffid'        => $subject['staffid'],
-                    'termid'         => $subject['termid'],
-                    'sessionid'      => $validated['sessionid'],
-                ]);
-
-                if ($response['success']) {
-                    $successCount += $response['success_count'];
-                } else {
-                    $errors[] = [
-                        'subjectclassid' => $subject['subjectclassid'],
-                        'termid'         => $subject['termid'],
-                        'message'        => $response['message'] ?? 'Error',
-                        'details'        => $response['errors'] ?? [],
-                    ];
-                }
-                $results[] = $response;
-            }
-
-            DB::commit();
-
-            return response()->json([
-                'success'       => empty($errors),
-                'message'       => "Successfully registered {$successCount} student(s).",
-                'results'       => $results,
-                'error_details' => $errors,
-                'success_count' => $successCount,
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Batch registration failed', ['error' => $e->getMessage()]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Batch registration failed: ' . $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    /**
-     * Unregister students (soft-archives before hard delete).
-     */
-    public function destroy(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'studentids'                      => ['required', 'array'],
-            'studentids.*'                    => ['required', 'exists:studentRegistration,id'],
-            'subjectclasses'                  => ['required', 'array'],
-            'subjectclasses.*.subjectclassid' => ['required', 'exists:subjectclass,id'],
-            'subjectclasses.*.staffid'        => ['required', 'exists:users,id'],
-            'subjectclasses.*.termid'         => ['required', 'exists:schoolterm,id'],
-            'sessionid'                       => ['required', 'exists:schoolsession,id'],
-        ]);
-
-        $results             = [];
-        $errors              = [];
-        $unregisteredStudents = [];
-        $skippedCount        = 0;
-        $unregisteredById    = Auth::id();
-
-        try {
-            DB::beginTransaction();
-
-            foreach ($validated['subjectclasses'] as $subject) {
-                $subjectclassid = $subject['subjectclassid'];
-                $staffid        = $subject['staffid'];
-                $termid         = $subject['termid'];
-                $sessionid      = $validated['sessionid'];
-
-                $subjectclass  = Subjectclass::findOrFail($subjectclassid);
-                $subjectId     = $subjectclass->subjectid;
-                $schoolclassId = $subjectclass->schoolclassid;
-
-                $existingRegistrations = SubjectRegistrationStatus::where([
-                    'subjectclassid' => $subjectclassid,
-                    'termid'         => $termid,
-                    'sessionid'      => $sessionid,
-                    'staffid'        => $staffid,
-                ])->whereIn('studentid', $validated['studentids'])
-                    ->get()
-                    ->keyBy('studentid');
-
-                $studentsToProcess = array_intersect(
-                    $validated['studentids'],
-                    $existingRegistrations->keys()->toArray()
-                );
-                $skippedCount += count(array_diff($validated['studentids'], $studentsToProcess));
-
-                if (empty($studentsToProcess)) {
-                    $errors[] = [
-                        'subjectclassid' => $subjectclassid,
-                        'termid'         => $termid,
-                        'message'        => 'No students are registered for this subject.',
-                    ];
-                    continue;
-                }
-
-                $unregisteredStudents = array_unique(array_merge($unregisteredStudents, $studentsToProcess));
-
-                $broadsheetRecordIds = $existingRegistrations->pluck('broadsheetid')->filter()->toArray();
-
-                $archiveRows = [];
-                $now         = now();
-                foreach ($studentsToProcess as $studentId) {
-                    $reg = $existingRegistrations->get($studentId);
-                    $archiveRows[] = [
-                        'studentid'           => $studentId,
-                        'subjectclassid'      => $subjectclassid,
-                        'staffid'             => $staffid,
-                        'termid'              => $termid,
-                        'sessionid'           => $sessionid,
-                        'subjectid'           => $subjectId,
-                        'schoolclassid'       => $schoolclassId,
-                        'broadsheet_record_id'=> $reg?->broadsheetid,
-                        'unregistered_by'     => $unregisteredById,
-                        'status'              => SubjectUnregistrationArchive::STATUS_ARCHIVED,
-                        'unregistered_at'     => $now,
-                        'created_at'          => $now,
-                        'updated_at'          => $now,
-                    ];
-                }
-                SubjectUnregistrationArchive::insertOrIgnore($archiveRows);
-
-                $broadsheetSheetIds = Broadsheets::whereIn('broadsheet_record_id', $broadsheetRecordIds)
-                    ->where('term_id', $termid)
-                    ->where('subjectclass_id', $subjectclassid)
-                    ->pluck('id');
-
-                if ($broadsheetSheetIds->isNotEmpty()) {
-                    BroadsheetAssessmentScore::whereIn('broadsheet_id', $broadsheetSheetIds)->delete();
-                    BroadsheetSubAssessmentScore::whereIn('broadsheet_id', $broadsheetSheetIds)->delete();
-                }
-
-                $mockRecordIds = BroadsheetRecordMock::whereIn('student_id', $studentsToProcess)
-                    ->where('subject_id', $subjectId)
-                    ->where('schoolclass_id', $schoolclassId)
-                    ->where('session_id', $sessionid)
-                    ->pluck('id');
-
-                if ($mockRecordIds->isNotEmpty()) {
-                    BroadsheetsMock::whereIn('broadsheet_records_mock_id', $mockRecordIds)
-                        ->where('subjectclass_id', $subjectclassid)
-                        ->where('term_id', $termid)
-                        ->where('staff_id', $staffid)
-                        ->delete();
-                }
-
-                Broadsheets::whereIn('broadsheet_record_id', $broadsheetRecordIds)
-                    ->where('term_id', $termid)
-                    ->where('subjectclass_id', $subjectclassid)
-                    ->delete();
-
-                $orphanedRecordIds = collect($broadsheetRecordIds)->filter(function ($recordId) {
-                    return Broadsheets::where('broadsheet_record_id', $recordId)->doesntExist();
-                })->toArray();
-
-                if (!empty($orphanedRecordIds)) {
-                    BroadsheetRecord::whereIn('id', $orphanedRecordIds)->delete();
-                }
-
-                if ($mockRecordIds->isNotEmpty()) {
-                    $orphanedMockIds = BroadsheetRecordMock::whereIn('id', $mockRecordIds)
-                        ->get()
-                        ->filter(function ($mock) {
-                            return BroadsheetsMock::where('broadsheet_records_mock_id', $mock->id)->doesntExist();
-                        })
-                        ->pluck('id')
-                        ->toArray();
-
-                    if (!empty($orphanedMockIds)) {
-                        BroadsheetRecordMock::whereIn('id', $orphanedMockIds)->delete();
-                    }
-                }
-
-                StudentSubjectRecord::whereIn('studentId', $studentsToProcess)
-                    ->where('subjectclassid', $subjectclassid)
-                    ->where('staffid', $staffid)
-                    ->where('session', $sessionid)
-                    ->delete();
-
-                SubjectRegistrationStatus::whereIn('studentid', $studentsToProcess)
-                    ->where('subjectclassid', $subjectclassid)
-                    ->where('termid', $termid)
-                    ->where('sessionid', $sessionid)
-                    ->where('staffid', $staffid)
-                    ->delete();
-
-                Log::info('Unregistered subjects for students', [
-                    'subjectclassid'  => $subjectclassid,
-                    'termid'          => $termid,
-                    'sessionid'       => $sessionid,
-                    'student_count'   => count($studentsToProcess),
-                    'archived_count'  => count($archiveRows),
-                ]);
-
-                $results[] = [
-                    'subjectclassid'       => $subjectclassid,
-                    'termid'               => $termid,
-                    'message'              => 'Successfully unregistered ' . count($studentsToProcess) . ' students',
-                    'students_unregistered'=> $studentsToProcess,
-                ];
-            }
-
-            $successCount = count($unregisteredStudents);
-
-            if ($successCount === 0 && !empty($errors)) {
-                DB::rollBack();
-                return response()->json([
-                    'success'       => false,
-                    'message'       => 'No students were unregistered.',
-                    'error_details' => $errors,
-                    'success_count' => 0,
-                    'skipped_count' => $skippedCount,
-                ], 422);
-            }
-
-            DB::commit();
-
-            return response()->json([
-                'success'       => empty($errors),
-                'message'       => "Successfully unregistered {$successCount} student(s) from " . count($validated['subjectclasses']) . " subject(s).",
-                'results'       => $results,
-                'error_details' => $errors,
-                'success_count' => $successCount,
-                'skipped_count' => $skippedCount,
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Batch unregistration failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Batch unregistration failed: ' . $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    /**
-     * Get archived registrations for the Unregistered History modal.
-     */
-    public function getArchivedRegistrations(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'class_id'   => ['required', 'integer', 'exists:schoolclass,id'],
-            'session_id' => ['required', 'integer', 'exists:schoolsession,id'],
-            'term_id'    => ['nullable', 'integer', 'exists:schoolterm,id'],
-            'search'     => ['nullable', 'string', 'max:255'],
-        ]);
-
-        try {
-            $query = SubjectUnregistrationArchive::query()
-                ->where('subject_unregistration_archive.status', SubjectUnregistrationArchive::STATUS_ARCHIVED)
-                ->where('subject_unregistration_archive.sessionid', $validated['session_id'])
-                ->where('subject_unregistration_archive.schoolclassid', $validated['class_id'])
-                ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'subject_unregistration_archive.studentid')
-                ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-                ->leftJoin('subjectclass', 'subjectclass.id', '=', 'subject_unregistration_archive.subjectclassid')
-                ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
-                ->leftJoin('subject', 'subject.id', '=', 'subject_unregistration_archive.subjectid')
-                ->leftJoin('users as staff', 'staff.id', '=', 'subject_unregistration_archive.staffid')
-                ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subject_unregistration_archive.termid')
-                ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subject_unregistration_archive.sessionid')
-                ->leftJoin('schoolclass', 'schoolclass.id', '=', 'subject_unregistration_archive.schoolclassid')
-                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-                ->leftJoin('users as actor', 'actor.id', '=', 'subject_unregistration_archive.unregistered_by')
-                ->select([
-                    'subject_unregistration_archive.id as archive_id',
-                    'subject_unregistration_archive.studentid',
-                    'subject_unregistration_archive.subjectclassid',
-                    'subject_unregistration_archive.staffid',
-                    'subject_unregistration_archive.termid',
-                    'subject_unregistration_archive.sessionid',
-                    'subject_unregistration_archive.subjectid',
-                    'subject_unregistration_archive.schoolclassid',
-                    'subject_unregistration_archive.broadsheet_record_id',
-                    'subject_unregistration_archive.unregistered_at',
-                    'studentRegistration.admissionno',
-                    'studentRegistration.firstname',
-                    'studentRegistration.lastname',
-                    'studentRegistration.othername',
-                    'studentRegistration.gender',
-                    'studentpicture.picture',
-                    'subject.subject as subjectname',
-                    'subject.subject_code as subjectcode',
-                    'staff.name as staffname',
-                    'schoolterm.term as termname',
-                    'schoolsession.session as sessionname',
-                    'schoolclass.schoolclass as class_name',
-                    'schoolarm.arm as arm_name',
-                    'actor.name as unregistered_by_name',
-                ]);
-
-            if (!empty($validated['term_id'])) {
-                $query->where('subject_unregistration_archive.termid', $validated['term_id']);
-            }
-
-            if (!empty($validated['search'])) {
-                $searchTerm = '%' . $validated['search'] . '%';
-                $query->where(function($q) use ($searchTerm) {
-                    $q->where('studentRegistration.firstname', 'like', $searchTerm)
-                      ->orWhere('studentRegistration.lastname', 'like', $searchTerm)
-                      ->orWhere('studentRegistration.admissionno', 'like', $searchTerm)
-                      ->orWhere('subject.subject', 'like', $searchTerm);
-                });
-            }
-
-            $query->orderBy('subject_unregistration_archive.unregistered_at', 'desc');
-
-            $perPage  = (int) $request->input('per_page', 50);
-            $archived = $query->paginate($perPage);
-
-            return response()->json([
-                'success' => true,
-                'data'    => $archived->items(),
-                'meta'    => [
-                    'current_page' => $archived->currentPage(),
-                    'last_page'    => $archived->lastPage(),
-                    'total'        => $archived->total(),
-                    'per_page'     => $archived->perPage(),
-                ],
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Error fetching archived registrations', ['error' => $e->getMessage()]);
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
-    }
-
-    /**
-     * Get registered classes with teacher names.
-     */
-    public function registeredClasses(Request $request): JsonResponse
-    {
-        try {
-            $validated = $request->validate([
-                'class_id'   => ['required', 'integer', 'exists:schoolclass,id'],
-                'session_id' => ['required', 'integer', 'exists:schoolsession,id'],
-                'term_id'    => ['nullable', 'integer', 'exists:schoolterm,id'],
-            ]);
-
-            DB::statement('SET SESSION group_concat_max_len = 1000000');
-
-            $query = SubjectRegistrationStatus::query()
-                ->join('subjectclass', 'subjectclass.id', '=', 'subject_registration_status.subjectclassid')
-                ->join('schoolclass', 'schoolclass.id', '=', 'subjectclass.schoolclassid')
-                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-                ->join('schoolsession', 'schoolsession.id', '=', 'subject_registration_status.sessionid')
-                ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subject_registration_status.termid')
-                ->leftJoin('broadsheet', 'broadsheet.id', '=', 'subject_registration_status.broadsheetid')
-                ->leftJoin('subject', 'subject.id', '=', 'broadsheet.subjectid')
-                ->leftJoin('users as teachers', 'teachers.id', '=', 'subject_registration_status.staffid')
-                ->where('subjectclass.schoolclassid', $validated['class_id'])
-                ->where('subject_registration_status.sessionid', $validated['session_id'])
-                ->when($validated['term_id'], fn($q, $t) => $q->where('subject_registration_status.termid', $t))
-                ->groupBy([
-                    'schoolclass.id', 'schoolarm.id', 'schoolsession.id', 'schoolterm.id',
-                    'schoolclass.schoolclass', 'schoolarm.arm', 'schoolsession.session', 'schoolterm.term',
-                ])
-                ->select([
-                    'schoolclass.id as class_id',
-                    'schoolclass.schoolclass as class_name',
-                    DB::raw('COALESCE(schoolarm.arm, "None") as arm_name'),
-                    DB::raw('COALESCE(schoolsession.session, "Unknown") as session_name'),
-                    DB::raw('COALESCE(schoolterm.term, "Unknown") as term_name'),
-                    DB::raw('COUNT(DISTINCT subject_registration_status.studentid) as student_count'),
-                    DB::raw('COUNT(DISTINCT subject_registration_status.subjectclassid) as subject_count'),
-                    DB::raw('COALESCE(GROUP_CONCAT(DISTINCT subject.subject ORDER BY subject.subject SEPARATOR ", "), "None") as subjects'),
-                    DB::raw('COALESCE(GROUP_CONCAT(DISTINCT teachers.name ORDER BY teachers.name SEPARATOR ", "), "None") as teachers'),
-                ]);
-
-            $classes = $query->get();
-
-            return response()->json(['success' => true, 'data' => $classes]);
-
-        } catch (ValidationException $e) {
-            return response()->json(['success' => false, 'message' => 'Invalid parameters.', 'errors' => $e->errors()], 422);
-        } catch (\Exception $e) {
-            Log::error('Error fetching registered classes', ['error' => $e->getMessage()]);
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
-    }
-
-    /**
-     * Restore archived registrations.
-     */
-    public function restoreRegistration(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'archive_ids'   => ['required', 'array'],
-            'archive_ids.*' => ['required', 'integer', 'exists:subject_unregistration_archive,id'],
-        ]);
-
-        try {
-            DB::beginTransaction();
-
-            $archives = SubjectUnregistrationArchive::whereIn('id', $validated['archive_ids'])
-                ->where('status', SubjectUnregistrationArchive::STATUS_ARCHIVED)
-                ->get();
-
-            if ($archives->isEmpty()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No valid archived records found.',
-                ], 422);
-            }
-
-            $groups = $archives->groupBy(function ($row) {
-                return $row->subjectclassid . '_' . $row->termid . '_' . $row->sessionid . '_' . $row->staffid;
-            });
-
-            $totalRestored = 0;
-            $errors        = [];
-
-            foreach ($groups as $groupKey => $groupArchives) {
-                $first      = $groupArchives->first();
-                $studentIds = $groupArchives->pluck('studentid')->unique()->toArray();
-
-                $result = $this->processIndividually([
-                    'studentid'      => $studentIds,
-                    'subjectclassid' => $first->subjectclassid,
-                    'staffid'        => $first->staffid,
-                    'termid'         => $first->termid,
-                    'sessionid'      => $first->sessionid,
-                ]);
-
-                if ($result['success'] || ($result['skipped_count'] ?? 0) > 0) {
-                    SubjectUnregistrationArchive::whereIn('id', $groupArchives->pluck('id')->toArray())
-                        ->update([
-                            'status'      => SubjectUnregistrationArchive::STATUS_RESTORED,
-                            'actioned_at' => now(),
-                            'updated_at'  => now(),
-                        ]);
-
-                    $totalRestored += $result['success_count'] ?? 0;
-                } else {
-                    $errors[] = [
-                        'subjectclassid' => $first->subjectclassid,
-                        'termid'         => $first->termid,
-                        'message'        => $result['message'] ?? 'Unknown error',
-                    ];
-                }
-            }
-
-            DB::commit();
-
-            return response()->json([
-                'success'       => empty($errors),
-                'message'       => "Successfully restored {$totalRestored} registration(s).",
-                'total_restored'=> $totalRestored,
-                'errors'        => $errors,
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Restore registration failed', ['error' => $e->getMessage()]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Restore failed: ' . $e->getMessage(),
-            ], 500);
-        }
-    }
-
-    /**
-     * Permanently delete a single archive record.
-     */
-    public function permanentlyDeleteArchive(Request $request, int $archiveId): JsonResponse
-    {
-        try {
-            $archive = SubjectUnregistrationArchive::where('id', $archiveId)
-                ->where('status', SubjectUnregistrationArchive::STATUS_ARCHIVED)
-                ->firstOrFail();
-
-            $archive->update([
-                'status'      => SubjectUnregistrationArchive::STATUS_PERMANENTLY_DELETED,
-                'actioned_at' => now(),
-            ]);
-
-            $archive->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Archive record permanently deleted.',
-            ]);
-
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json(['success' => false, 'message' => 'Record not found.'], 404);
-        } catch (\Exception $e) {
-            Log::error('Permanent delete failed', ['archive_id' => $archiveId, 'error' => $e->getMessage()]);
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
-    }
-
-    /**
-     * Permanently delete multiple archive records.
-     */
-    public function permanentlyDeleteArchiveBatch(Request $request): JsonResponse
-    {
-        $validated = $request->validate([
-            'archive_ids'   => ['required', 'array'],
-            'archive_ids.*' => ['required', 'integer'],
-        ]);
-
-        try {
-            $deleted = SubjectUnregistrationArchive::whereIn('id', $validated['archive_ids'])
-                ->where('status', SubjectUnregistrationArchive::STATUS_ARCHIVED)
-                ->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => "{$deleted} archive record(s) permanently deleted.",
-                'deleted' => $deleted,
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Batch permanent delete failed', ['error' => $e->getMessage()]);
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
-    }
-
-    // =========================================================================
-    // PRIVATE PROCESSING HELPERS
-    // =========================================================================
-
-    private function processIndividually(array $validated): array
-    {
-        $results      = [];
-        $successCount = 0;
-        $errors       = [];
-        $skippedCount = 0;
-
-        try {
-            DB::beginTransaction();
-
-            $subjectclass  = Subjectclass::findOrFail($validated['subjectclassid']);
-            $subjectId     = $subjectclass->subjectid;
-            $schoolclassId = $subjectclass->schoolclassid;
-
-            $existingRegistrations = SubjectRegistrationStatus::where([
-                'subjectclassid' => $validated['subjectclassid'],
-                'termid'         => $validated['termid'],
-                'sessionid'      => $validated['sessionid'],
-            ])->whereIn('studentid', $validated['studentid'])
-                ->pluck('studentid')
-                ->toArray();
-
-            $studentsToProcess = array_diff($validated['studentid'], $existingRegistrations);
-            $skippedCount      = count($existingRegistrations);
-
-            foreach ($existingRegistrations as $existingStudentId) {
-                $errors[] = "Student ID {$existingStudentId} is already registered";
-            }
-
-            if (empty($studentsToProcess)) {
-                DB::rollBack();
-                return [
-                    'success'       => false,
-                    'message'       => 'All students are already registered for this subject.',
-                    'errors'        => $errors,
-                    'skipped_count' => $skippedCount,
-                    'success_count' => 0,
-                ];
-            }
-
-            foreach ($studentsToProcess as $studentId) {
-                try {
-                    $record = BroadsheetRecord::firstOrCreate([
-                        'student_id'     => $studentId,
-                        'subject_id'     => $subjectId,
-                        'schoolclass_id' => $schoolclassId,
-                        'session_id'     => $validated['sessionid'],
-                    ]);
-
-                    $recordmock = BroadsheetRecordMock::firstOrCreate([
-                        'student_id'     => $studentId,
-                        'subject_id'     => $subjectId,
-                        'schoolclass_id' => $schoolclassId,
-                        'session_id'     => $validated['sessionid'],
-                    ]);
-
-                    $this->createDependentRecords($record->id, $recordmock->id, $studentId, $validated);
-                    $successCount++;
-                    $results[] = "Successfully registered student ID {$studentId}";
-
-                } catch (\Exception $e) {
-                    Log::error("Error processing student {$studentId}", ['error' => $e->getMessage()]);
-                    $errors[] = "Failed to register student ID {$studentId}: " . $e->getMessage();
-                }
-            }
-
-            if ($successCount > 0) {
-                DB::commit();
-                return [
-                    'success'       => true,
-                    'message'       => "{$successCount} students registered successfully",
-                    'method'        => 'individual',
-                    'results'       => $results,
-                    'errors'        => $errors,
-                    'success_count' => $successCount,
-                    'skipped_count' => $skippedCount,
-                ];
-            }
-
-            DB::rollBack();
-            return [
-                'success'       => false,
-                'message'       => 'No students were registered.',
-                'errors'        => $errors,
-                'skipped_count' => $skippedCount,
-                'success_count' => 0,
-            ];
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Individual processing error', ['error' => $e->getMessage()]);
-            return [
-                'success'       => false,
-                'message'       => 'Processing failed: ' . $e->getMessage(),
-                'errors'        => [$e->getMessage()],
-                'success_count' => 0,
-            ];
-        }
-    }
-
-    private function processBatch(array $validated): array
-    {
-        try {
-            DB::beginTransaction();
-
-            $subjectclass  = Subjectclass::findOrFail($validated['subjectclassid']);
-            $subjectId     = $subjectclass->subjectid;
-            $schoolclassId = $subjectclass->schoolclassid;
-            $now           = now();
-
-            $existingRegistrations = SubjectRegistrationStatus::where([
-                'subjectclassid' => $validated['subjectclassid'],
-                'termid'         => $validated['termid'],
-                'sessionid'      => $validated['sessionid'],
-            ])->whereIn('studentid', $validated['studentid'])
-                ->pluck('studentid')
-                ->toArray();
-
-            $studentsToProcess = array_diff($validated['studentid'], $existingRegistrations);
-            $skippedCount      = count($existingRegistrations);
-
-            if (empty($studentsToProcess)) {
-                DB::rollBack();
-                return ['success' => false, 'message' => 'All students are already registered.', 'skipped_count' => $skippedCount, 'success_count' => 0];
-            }
-
-            $broadsheetRecords     = [];
-            $broadsheetRecordsMock = [];
-
-            foreach ($studentsToProcess as $studentId) {
-                $broadsheetRecords[]     = ['student_id' => $studentId, 'subject_id' => $subjectId, 'schoolclass_id' => $schoolclassId, 'session_id' => $validated['sessionid'], 'created_at' => $now, 'updated_at' => $now];
-                $broadsheetRecordsMock[] = ['student_id' => $studentId, 'subject_id' => $subjectId, 'schoolclass_id' => $schoolclassId, 'session_id' => $validated['sessionid'], 'created_at' => $now, 'updated_at' => $now];
-            }
-
-            BroadsheetRecord::insertOrIgnore($broadsheetRecords);
-            BroadsheetRecordMock::insertOrIgnore($broadsheetRecordsMock);
-
-            $createdRecords     = BroadsheetRecord::where(['subject_id' => $subjectId, 'schoolclass_id' => $schoolclassId, 'session_id' => $validated['sessionid']])->whereIn('student_id', $studentsToProcess)->get()->keyBy('student_id');
-            $createdRecordsMock = BroadsheetRecordMock::where(['subject_id' => $subjectId, 'schoolclass_id' => $schoolclassId, 'session_id' => $validated['sessionid']])->whereIn('student_id', $studentsToProcess)->get()->keyBy('student_id');
-
-            $this->bulkCreateDependentRecords($createdRecords, $createdRecordsMock, $studentsToProcess, $validated, $now);
-
-            DB::commit();
-
-            return ['success' => true, 'message' => count($studentsToProcess) . ' students registered', 'method' => 'batch', 'success_count' => count($studentsToProcess), 'skipped_count' => $skippedCount];
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return ['success' => false, 'message' => 'Batch processing failed: ' . $e->getMessage(), 'errors' => [$e->getMessage()], 'success_count' => 0];
-        }
-    }
-
-    private function processLargeDataset(array $validated): array
-    {
-        try {
-            DB::beginTransaction();
-
-            $subjectclass  = Subjectclass::findOrFail($validated['subjectclassid']);
-            $subjectId     = $subjectclass->subjectid;
-            $schoolclassId = $subjectclass->schoolclassid;
-            $chunkSize     = 200;
-            $totalProcessed = 0;
-            $totalSkipped   = 0;
-            $chunks         = array_chunk($validated['studentid'], $chunkSize);
-
-            foreach ($chunks as $studentChunk) {
-                $existingInChunk = SubjectRegistrationStatus::where([
-                    'subjectclassid' => $validated['subjectclassid'],
-                    'termid'         => $validated['termid'],
-                    'sessionid'      => $validated['sessionid'],
-                ])->whereIn('studentid', $studentChunk)->pluck('studentid')->toArray();
-
-                $studentsToProcess = array_diff($studentChunk, $existingInChunk);
-                $totalSkipped     += count($existingInChunk);
-
-                if (!empty($studentsToProcess)) {
-                    $this->processChunk($studentsToProcess, $validated, $subjectId, $schoolclassId);
-                    $totalProcessed += count($studentsToProcess);
-                }
-            }
-
-            DB::commit();
-            return ['success' => true, 'message' => "{$totalProcessed} students registered", 'method' => 'large_dataset', 'success_count' => $totalProcessed, 'skipped_count' => $totalSkipped];
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return ['success' => false, 'message' => 'Large dataset processing failed: ' . $e->getMessage(), 'errors' => [$e->getMessage()], 'success_count' => 0];
-        }
-    }
-
-    private function processChunk(array $students, array $validated, int $subjectId, int $schoolclassId): void
-    {
-        $now = now();
-
-        $broadsheetRecords     = [];
-        $broadsheetRecordsMock = [];
-        foreach ($students as $studentId) {
-            $broadsheetRecords[]     = ['student_id' => $studentId, 'subject_id' => $subjectId, 'schoolclass_id' => $schoolclassId, 'session_id' => $validated['sessionid'], 'created_at' => $now, 'updated_at' => $now];
-            $broadsheetRecordsMock[] = ['student_id' => $studentId, 'subject_id' => $subjectId, 'schoolclass_id' => $schoolclassId, 'session_id' => $validated['sessionid'], 'created_at' => $now, 'updated_at' => $now];
-        }
-
-        BroadsheetRecord::insertOrIgnore($broadsheetRecords);
-        BroadsheetRecordMock::insertOrIgnore($broadsheetRecordsMock);
-
-        $createdRecords     = BroadsheetRecord::where(['subject_id' => $subjectId, 'schoolclass_id' => $schoolclassId, 'session_id' => $validated['sessionid']])->whereIn('student_id', $students)->get()->keyBy('student_id');
-        $createdRecordsMock = BroadsheetRecordMock::where(['subject_id' => $subjectId, 'schoolclass_id' => $schoolclassId, 'session_id' => $validated['sessionid']])->whereIn('student_id', $students)->get()->keyBy('student_id');
-
-        $this->bulkCreateDependentRecords($createdRecords, $createdRecordsMock, $students, $validated, $now);
-    }
-
-    private function createDependentRecords(int $recordId, int $recordMockId, int $studentId, array $validated): void
-    {
-        $broadsheet = Broadsheets::firstOrCreate([
-            'broadsheet_record_id' => $recordId,
-            'term_id'              => $validated['termid'],
-            'subjectclass_id'      => $validated['subjectclassid'],
-        ], ['staff_id' => $validated['staffid']]);
-
-        BroadsheetsMock::firstOrCreate([
-            'broadsheet_records_mock_id' => $recordMockId,
-            'term_id'                    => $validated['termid'],
-            'subjectclass_id'            => $validated['subjectclassid'],
-        ], ['staff_id' => $validated['staffid']]);
-
-        SubjectRegistrationStatus::firstOrCreate([
-            'studentid'      => $studentId,
-            'subjectclassid' => $validated['subjectclassid'],
-            'termid'         => $validated['termid'],
-            'sessionid'      => $validated['sessionid'],
-            'staffid'        => $validated['staffid'],
-        ], ['broadsheetid' => $recordId, 'Status' => 1]);
-
-        StudentSubjectRecord::firstOrCreate([
-            'studentId'      => $studentId,
-            'subjectclassid' => $validated['subjectclassid'],
-            'staffid'        => $validated['staffid'],
-            'session'        => $validated['sessionid'],
-        ]);
-
-        $this->createAssessmentScores($broadsheet->id, $validated['subjectclassid']);
-    }
-
-    private function createAssessmentScores(int $broadsheetId, int $subjectclassId): void
-    {
-        try {
-            $subjectclass = Subjectclass::with(['schoolClass.classcategories'])->find($subjectclassId);
-            if (!$subjectclass || !$subjectclass->schoolClass) return;
-
-            $categoryIds = $subjectclass->schoolClass->classcategories->pluck('id');
-            if ($categoryIds->isEmpty()) return;
-
-            $assessments = DB::table('assessments')->whereIn('classcategory_id', $categoryIds)->distinct()->get(['id', 'name', 'classcategory_id']);
-            if ($assessments->isEmpty()) return;
-
-            foreach ($assessments as $assessment) {
-                BroadsheetAssessmentScore::firstOrCreate(['broadsheet_id' => $broadsheetId, 'assessment_id' => $assessment->id], ['score' => 0.00]);
-
-                $subAssessments = DB::table('sub_assessments')->where('assessment_id', $assessment->id)->pluck('id');
-                foreach ($subAssessments as $subAssessmentId) {
-                    BroadsheetSubAssessmentScore::firstOrCreate(['broadsheet_id' => $broadsheetId, 'sub_assessment_id' => $subAssessmentId, 'assessment_id' => $assessment->id], ['score' => 0.00]);
-                }
-            }
-        } catch (\Exception $e) {
-            Log::error('Failed to create assessment scores', ['broadsheet_id' => $broadsheetId, 'error' => $e->getMessage()]);
-        }
-    }
-
-    private function bulkCreateDependentRecords($createdRecords, $createdRecordsMock, array $students, array $validated, $now): void
-    {
-        $broadsheets         = [];
-        $broadsheetsMock     = [];
-        $subjectRegistrations = [];
-        $studentSubjectRecords = [];
-
-        foreach ($students as $studentId) {
-            $record     = $createdRecords->get($studentId);
-            $recordMock = $createdRecordsMock->get($studentId);
-            if (!$record || !$recordMock) continue;
-
-            $broadsheets[]          = ['broadsheet_record_id' => $record->id, 'term_id' => $validated['termid'], 'subjectclass_id' => $validated['subjectclassid'], 'staff_id' => $validated['staffid'], 'created_at' => $now, 'updated_at' => $now];
-            $broadsheetsMock[]      = ['broadsheet_records_mock_id' => $recordMock->id, 'term_id' => $validated['termid'], 'subjectclass_id' => $validated['subjectclassid'], 'staff_id' => $validated['staffid'], 'created_at' => $now, 'updated_at' => $now];
-            $subjectRegistrations[] = ['studentid' => $studentId, 'subjectclassid' => $validated['subjectclassid'], 'staffid' => $validated['staffid'], 'termid' => $validated['termid'], 'sessionid' => $validated['sessionid'], 'broadsheetid' => $record->id, 'Status' => 1, 'created_at' => $now, 'updated_at' => $now];
-            $studentSubjectRecords[]= ['studentId' => $studentId, 'subjectclassid' => $validated['subjectclassid'], 'staffid' => $validated['staffid'], 'session' => $validated['sessionid'], 'created_at' => $now, 'updated_at' => $now];
-        }
-
-        if (!empty($broadsheets))          Broadsheets::insertOrIgnore($broadsheets);
-        if (!empty($broadsheetsMock))      BroadsheetsMock::insertOrIgnore($broadsheetsMock);
-        if (!empty($subjectRegistrations)) SubjectRegistrationStatus::insertOrIgnore($subjectRegistrations);
-        if (!empty($studentSubjectRecords)) StudentSubjectRecord::insertOrIgnore($studentSubjectRecords);
-
-        $recordIds = collect($students)->map(fn($sid) => $createdRecords->get($sid)?->id)->filter()->toArray();
-        if (empty($recordIds)) return;
-
-        $createdBroadsheets = Broadsheets::whereIn('broadsheet_record_id', $recordIds)
-            ->where('term_id', $validated['termid'])
-            ->where('subjectclass_id', $validated['subjectclassid'])
-            ->get();
-
-        $this->bulkCreateAssessmentScoresForBroadsheets($createdBroadsheets, $validated['subjectclassid'], $now);
-    }
-
-    private function bulkCreateAssessmentScoresForBroadsheets($broadsheets, int $subjectclassId, $now): void
-    {
-        try {
-            if ($broadsheets->isEmpty()) return;
-
-            $subjectclass = Subjectclass::with(['schoolClass.classcategories'])->find($subjectclassId);
-            if (!$subjectclass || !$subjectclass->schoolClass) return;
-
-            $categoryIds = $subjectclass->schoolClass->classcategories->pluck('id');
-            if ($categoryIds->isEmpty()) return;
-
-            $assessments = DB::table('assessments')->whereIn('classcategory_id', $categoryIds)->distinct()->get(['id']);
-            if ($assessments->isEmpty()) return;
-
-            $assessmentScores    = [];
-            $subAssessmentScores = [];
-
-            foreach ($broadsheets as $broadsheet) {
-                foreach ($assessments as $assessment) {
-                    $assessmentScores[] = ['broadsheet_id' => $broadsheet->id, 'assessment_id' => $assessment->id, 'score' => 0.00, 'created_at' => $now, 'updated_at' => $now];
-                }
-            }
-            if (!empty($assessmentScores)) BroadsheetAssessmentScore::insertOrIgnore($assessmentScores);
-
-            $assessmentIds  = $assessments->pluck('id')->toArray();
-            $subAssessments = DB::table('sub_assessments')->whereIn('assessment_id', $assessmentIds)->get(['id', 'assessment_id']);
-
-            foreach ($broadsheets as $broadsheet) {
-                foreach ($subAssessments as $subAssessment) {
-                    $subAssessmentScores[] = ['broadsheet_id' => $broadsheet->id, 'sub_assessment_id' => $subAssessment->id, 'assessment_id' => $subAssessment->assessment_id, 'score' => 0.00, 'created_at' => $now, 'updated_at' => $now];
-                }
-            }
-            if (!empty($subAssessmentScores)) BroadsheetSubAssessmentScore::insertOrIgnore($subAssessmentScores);
-
-        } catch (\Exception $e) {
-            Log::error('Failed to bulk create assessment scores', ['error' => $e->getMessage()]);
-        }
-    }
+@extends('layouts.master')
+
+@section('content')
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                        <h4 class="mb-sm-0">Subject Registration</h4>
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="{{ route('subjects.index') }}">Student Management</a></li>
+                                <li class="breadcrumb-item active">Subject Registration</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="subjectList">
+                {{-- Class & Session Filter --}}
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-xxl-4 col-sm-6">
+                                        <select class="form-control" id="idclass">
+                                            <option value="ALL">Select Class</option>
+                                            @foreach ($schoolclass as $class)
+                                                <option value="{{ $class->id }}">{{ $class->schoolclass }} {{ $class->schoolarm }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-xxl-4 col-sm-6">
+                                        <select class="form-control" id="idsession">
+                                            <option value="ALL">Select Session</option>
+                                            @foreach ($schoolsessions as $session)
+                                                <option value="{{ $session->id }}">{{ $session->session }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-xxl-2 col-sm-6">
+                                        <button type="button" class="btn btn-secondary w-100" onclick="filterData();">
+                                            <i class="bi bi-funnel align-baseline me-1"></i> Search
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Subject Teachers Card --}}
+                <div class="row" id="subjectTeachersCard">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-header d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h5 class="card-title mb-0">
+                                        Subject Teachers
+                                        <span class="badge bg-primary-subtle text-primary ms-1" id="subjectTeacherCount">0</span>
+                                    </h5>
+                                </div>
+                                <div class="flex-shrink-0">
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="selectAllSubjects();">Select All</button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm ms-2" onclick="deselectAllSubjects();">Deselect All</button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="alert alert-info">
+                                    <i class="ri-information-line me-2"></i>
+                                    Select the subjects you want to register or unregister students for.
+                                </div>
+                                <div id="subjectTeachersContainer">
+                                    @foreach ($schoolterms as $term)
+                                        @if ($subjectTeachers && $subjectTeachers->where('termid', $term->id)->isNotEmpty())
+                                            <h6 class="mt-3">{{ $term->term }}</h6>
+                                            <div class="row">
+                                                @foreach ($subjectTeachers->where('termid', $term->id) as $teacher)
+                                                    <div class="col-md-4">
+                                                        <div class="form-check mb-2">
+                                                            <input class="form-check-input subject-checkbox" type="checkbox"
+                                                                id="subject-{{ $teacher->subjectclassid }}"
+                                                                data-subjectclassid="{{ $teacher->subjectclassid }}"
+                                                                data-staffid="{{ $teacher->userid }}"
+                                                                data-termid="{{ $teacher->termid }}" checked>
+                                                            <label class="form-check-label" for="subject-{{ $teacher->subjectclassid }}">
+                                                                {{ $teacher->subjectname }} ({{ $teacher->staffname }})
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
+                                            </div>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Student Filters --}}
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-xxl-4">
+                                        <div class="search-box">
+                                            <input type="text" class="form-control search" placeholder="Search students">
+                                            <i class="ri-search-line search-icon"></i>
+                                        </div>
+                                    </div>
+                                    <div class="col-xxl-3 col-sm-6">
+                                        <select class="form-control" id="idgender">
+                                            <option value="ALL">Select Gender</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-xxl-3 col-sm-6">
+                                        <select class="form-control" id="idadmission">
+                                            <option value="ALL">Select Admission No</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-xxl-2 col-sm-6">
+                                        <button type="button" class="btn btn-secondary w-100" onclick="filterData();">
+                                            <i class="bi bi-funnel align-baseline me-1"></i> Filters
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Students Table --}}
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card">
+                            <div class="card-header d-flex align-items-center">
+                                <div class="flex-grow-1">
+                                    <h5 class="card-title mb-0">
+                                        Students
+                                        <span class="badge bg-dark-subtle text-dark ms-1" id="studentcount">{{ $students ? $students->total() : 0 }}</span>
+                                    </h5>
+                                </div>
+                                <div class="flex-shrink-0 d-flex align-items-center gap-2 flex-wrap">
+                                    <button type="button" class="btn btn-primary d-none" id="register-selected-btn"
+                                        onclick="registerSelectedStudentsBatch();">
+                                        <i class="ri-user-add-line me-1"></i> Register Selected
+                                    </button>
+                                    <button type="button" class="btn btn-danger d-none" id="unregister-selected-btn"
+                                        onclick="unregisterSelectedStudentsBatch();">
+                                        <i class="ri-user-unfollow-line me-1"></i> Unregister Selected
+                                    </button>
+                                    <div class="spinner-border text-primary d-none" id="register-loading-spinner" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#registeredClassesModal">
+                                        <i class="ri-eye-line me-1"></i> View Registered
+                                    </button>
+                                    <button type="button" class="btn btn-warning" onclick="openArchivedModal();">
+                                        <i class="ri-archive-line me-1"></i> Unregistered History
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-centered align-middle table-nowrap mb-0">
+                                        <thead class="table-active">
+                                            <tr>
+                                                <th style="width: 40px;">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="checkAll">
+                                                    </div>
+                                                </th>
+                                                <th>#</th>
+                                                <th>Admission No</th>
+                                                <th>Student Name</th>
+                                                <th>Class</th>
+                                                <th>Gender</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="studentTableBody">
+                                            @if($students && $students->count())
+                                                @foreach($students as $key => $student)
+                                                <tr>
+                                                    <td>
+                                                        <div class="form-check">
+                                                            <input class="form-check-input chk_child" type="checkbox" name="chk_child" value="{{ $student->id }}">
+                                                        </div>
+                                                    </td>
+                                                    <td class="id" data-id="{{ $student->id }}">{{ $students->firstItem() + $key }}</td>
+                                                    <td><code>{{ $student->admissionno }}</code></td>
+                                                    <td>
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <img src="{{ asset('storage/student_avatars/'.$student->picture) }}"
+                                                                 class="rounded-circle" width="35" height="35"
+                                                                 onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'">
+                                                            <span class="fw-medium">{{ $student->lastname }} {{ $student->firstname }} {{ $student->othername }}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td>{{ $student->class_name ?? '' }} {{ $student->arm_name ?? '' }}</td>
+                                                    <td>
+                                                        <span class="badge bg-{{ $student->gender == 'Male' ? 'info' : 'danger' }}-subtle text-{{ $student->gender == 'Male' ? 'info' : 'danger' }}">
+                                                            {{ $student->gender }}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <button type="button" class="btn btn-sm btn-primary view-image" data-image="{{ asset('storage/student_avatars/'.$student->picture) }}">
+                                                            <i class="ri-image-line"></i>
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                                @endforeach
+                                            @else
+                                                <tr>
+                                                    <td colspan="7" class="text-center py-4 text-muted">
+                                                        <i class="ri-inbox-line ri-2x mb-2 d-block"></i>
+                                                        No students found. Please select a class and session.
+                                                    </td>
+                                                </tr>
+                                            @endif
+                                        </tbody>
+                                    </table>
+                                    <div class="d-flex justify-content-end mt-3">
+                                        {{ $students ? $students->links('pagination::bootstrap-5') : '' }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- MODAL: Registered Classes --}}
+                <div class="modal fade" id="registeredClassesModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                        <div class="modal-content">
+                            <div class="modal-header bg-primary text-white">
+                                <h5 class="modal-title">
+                                    <i class="ri-graduation-cap-line me-2"></i>Registered Classes Overview
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body p-0">
+                                <div id="registeredClassesContent">
+                                    <div class="text-center py-5">
+                                        <div class="spinner-border text-primary mb-3"></div>
+                                        <p class="text-muted">Loading registered classes...</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="modal-footer bg-light">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- MODAL: Unregistered History --}}
+                <div class="modal fade" id="archivedModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                        <div class="modal-content">
+                            <div class="modal-header bg-warning">
+                                <h5 class="modal-title text-dark">
+                                    <i class="ri-archive-line me-2"></i>Unregistered History
+                                </h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body p-0">
+                                <div class="p-3 border-bottom bg-light">
+                                    <div class="row g-2 align-items-center">
+                                        <div class="col-md-4">
+                                            <div class="search-box">
+                                                <input type="text" class="form-control" id="archiveSearch" placeholder="Search...">
+                                                <i class="ri-search-line search-icon"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <select class="form-select" id="archiveTermFilter">
+                                                <option value="">All Terms</option>
+                                                @foreach($schoolterms as $term)
+                                                    <option value="{{ $term->id }}">{{ $term->term }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <select class="form-select" id="archivePerPage">
+                                                <option value="20">20 per page</option>
+                                                <option value="50" selected>50 per page</option>
+                                                <option value="100">100 per page</option>
+                                                <option value="150">150 per page</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="d-flex gap-2 justify-content-end">
+                                                <button class="btn btn-sm btn-outline-secondary" onclick="loadArchivedPage(1);">
+                                                    <i class="ri-refresh-line me-1"></i> Refresh
+                                                </button>
+                                                <button class="btn btn-sm btn-success d-none" id="restoreSelectedBtn" onclick="restoreSelected();">
+                                                    <i class="ri-restart-line me-1"></i> Restore
+                                                </button>
+                                                <button class="btn btn-sm btn-danger d-none" id="deleteSelectedBtn" onclick="permanentDeleteSelected();">
+                                                    <i class="ri-delete-bin-line me-1"></i> Delete
+                                                </button>
+                                                <div class="spinner-border spinner-border-sm text-warning d-none" id="archiveSpinner"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0">
+                                        <thead class="table-warning sticky-top">
+                                            <tr>
+                                                <th style="width: 40px;">
+                                                    <div class="form-check mb-0">
+                                                        <input class="form-check-input" type="checkbox" id="archiveCheckAll">
+                                                    </div>
+                                                </th>
+                                                <th>Student</th>
+                                                <th>Admission No</th>
+                                                <th>Subject</th>
+                                                <th>Teacher</th>
+                                                <th>Term</th>
+                                                <th>Unregistered Date</th>
+                                                <th>Unregistered By</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="archiveTableBody">
+                                            <tr><td colspan="9" class="text-center py-5 text-muted">Select a class and session first.15ne</td></tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center p-3 border-top bg-light">
+                                    <small class="text-muted" id="archiveMeta"></small>
+                                    <div id="archivePagination" class="d-flex gap-1"></div>
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <small class="text-muted me-auto">
+                                    <i class="ri-information-line me-1"></i>
+                                    Restored records are re-registered. Permanently deleted records cannot be recovered.
+                                </small>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Image View Modal --}}
+                <div class="modal fade" id="imageViewModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title">Student Image</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body text-center">
+                                <img id="enlargedImage" src="" alt="Student Image" class="img-fluid">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection
+
+@section('styles')
+<style>
+.modal-xl { --bs-modal-width: 1200px; }
+.sticky-top { position: sticky; top: 0; z-index: 10; }
+.search-box { position: relative; }
+.search-box .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #6c757d; }
+.search-box .form-control { padding-left: 38px; }
+.bg-primary-subtle { background-color: rgba(13, 110, 253, 0.1); color: #0d6efd; }
+.bg-success-subtle { background-color: rgba(25, 135, 84, 0.1); color: #198754; }
+.bg-info-subtle { background-color: rgba(13, 202, 240, 0.1); color: #0dcaf0; }
+.bg-warning-subtle { background-color: rgba(255, 193, 7, 0.1); color: #ffc107; }
+.bg-danger-subtle { background-color: rgba(220, 53, 69, 0.1); color: #dc3545; }
+.bg-secondary-subtle { background-color: rgba(108, 117, 125, 0.1); color: #6c757d; }
+</style>
+@endsection
+
+@section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+// ============================================================================
+// CONFIGURATION
+// ============================================================================
+const ROUTES = {
+    batchRegister: '{{ route("subjectregistration.batch") }}',
+    destroy: '{{ route("subjectregistration.destroy") }}',
+    getRegistered: '{{ route("subjects.registered-classes") }}',
+    getArchived: '{{ route("subjectoperation.archived") }}',
+    restore: '{{ route("subjectoperation.restore") }}',
+    permanentDelete: '{{ route("subjectoperation.archive.batch-delete") }}',
+    index: '{{ route("subjects.index") }}',
+};
+const CSRF = '{{ csrf_token() }}';
+
+let archiveCurrentPage = 1;
+let archivePerPage = 50;
+let archiveMeta = {};
+let archiveSearchTimer = null;
+
+// ============================================================================
+// SWEETALERT HELPERS
+// ============================================================================
+function showSuccess(message, emoji = '🎉') {
+    Swal.fire({ icon: 'success', title: `${emoji} Success!`, text: message, confirmButtonColor: '#28a745' });
 }
+
+function showError(message, emoji = '😞') {
+    Swal.fire({ icon: 'error', title: `${emoji} Error!`, text: message, confirmButtonColor: '#dc3545' });
+}
+
+function showWarning(message, emoji = '⚠️') {
+    Swal.fire({ icon: 'warning', title: `${emoji} Warning!`, text: message, confirmButtonColor: '#ffc107' });
+}
+
+async function showConfirm(title, message, confirmText = 'Yes, proceed!') {
+    const result = await Swal.fire({
+        title, text: message, icon: 'question', showCancelButton: true,
+        confirmButtonColor: '#3085d6', cancelButtonColor: '#d33',
+        confirmButtonText: confirmText, cancelButtonText: 'Cancel'
+    });
+    return result.isConfirmed;
+}
+
+// ============================================================================
+// INITIALIZATION
+// ============================================================================
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('registeredClassesModal')?.addEventListener('show.bs.modal', loadRegisteredClasses);
+    document.getElementById('archivePerPage')?.addEventListener('change', () => loadArchivedPage(1));
+    document.getElementById('archiveSearch')?.addEventListener('input', function() {
+        clearTimeout(archiveSearchTimer);
+        archiveSearchTimer = setTimeout(() => loadArchivedPage(1), 400);
+    });
+    document.getElementById('archiveTermFilter')?.addEventListener('change', () => loadArchivedPage(1));
+
+    document.querySelectorAll('.view-image').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.getElementById('enlargedImage').src = this.dataset.image;
+            new bootstrap.Modal(document.getElementById('imageViewModal')).show();
+        });
+    });
+
+    document.getElementById('checkAll')?.addEventListener('change', function() {
+        document.querySelectorAll('#studentTableBody .chk_child').forEach(cb => cb.checked = this.checked);
+        toggleBatchButtons();
+    });
+
+    document.querySelectorAll('.subject-checkbox').forEach(cb => cb.addEventListener('change', updateSubjectCount));
+    updateSubjectCount();
+});
+
+function updateSubjectCount() {
+    document.getElementById('subjectTeacherCount').textContent = document.querySelectorAll('.subject-checkbox:checked').length;
+}
+
+function selectAllSubjects() { document.querySelectorAll('.subject-checkbox').forEach(cb => cb.checked = true); updateSubjectCount(); }
+function deselectAllSubjects() { document.querySelectorAll('.subject-checkbox').forEach(cb => cb.checked = false); updateSubjectCount(); }
+function toggleBatchButtons() {
+    let hasChecked = document.querySelectorAll('#studentTableBody .chk_child:checked').length > 0;
+    document.getElementById('register-selected-btn')?.classList.toggle('d-none', !hasChecked);
+    document.getElementById('unregister-selected-btn')?.classList.toggle('d-none', !hasChecked);
+}
+function getSelectedStudentIds() {
+    return [...document.querySelectorAll('#studentTableBody .chk_child:checked')].map(cb => parseInt(cb.closest('tr').querySelector('.id').dataset.id));
+}
+function getSelectedSubjectClasses() {
+    return [...document.querySelectorAll('.subject-checkbox:checked')].map(cb => ({
+        subjectclassid: parseInt(cb.dataset.subjectclassid), staffid: parseInt(cb.dataset.staffid), termid: parseInt(cb.dataset.termid)
+    }));
+}
+function filterData() {
+    let params = new URLSearchParams({
+        class_id: document.getElementById('idclass').value, session_id: document.getElementById('idsession').value,
+        search: document.querySelector('.search')?.value ?? '', gender: document.getElementById('idgender').value,
+        admissionno: document.getElementById('idadmission').value
+    });
+    window.location.href = ROUTES.index + '?' + params.toString();
+}
+
+// ============================================================================
+// REGISTER / UNREGISTER
+// ============================================================================
+async function registerSelectedStudentsBatch() {
+    let studentIds = getSelectedStudentIds(), subjectClasses = getSelectedSubjectClasses(), sessionId = document.getElementById('idsession').value;
+    if (!studentIds.length) return showWarning('Please select at least one student.', '📝');
+    if (!subjectClasses.length) return showWarning('Please select at least one subject.', '📚');
+    if (sessionId === 'ALL') return showWarning('Please select a session.', '📅');
+    if (!await showConfirm('Confirm Registration', `Register ${studentIds.length} student(s) for ${subjectClasses.length} subject(s)?`, 'Yes, Register!')) return;
+
+    document.getElementById('register-loading-spinner')?.classList.remove('d-none');
+    try {
+        let res = await apiFetch(ROUTES.batchRegister, 'POST', { studentids: studentIds, subjectclasses: subjectClasses, sessionid: parseInt(sessionId) });
+        if (res.success) { showSuccess(res.message || 'Registration completed!', '🎉'); setTimeout(() => window.location.reload(), 1500); }
+        else showError(res.message || 'Registration failed.', '😞');
+    } catch(err) { showError('Registration failed: ' + err.message, '😭'); }
+    finally { document.getElementById('register-loading-spinner')?.classList.add('d-none'); }
+}
+
+async function unregisterSelectedStudentsBatch() {
+    let studentIds = getSelectedStudentIds(), subjectClasses = getSelectedSubjectClasses(), sessionId = document.getElementById('idsession').value;
+    if (!studentIds.length) return showWarning('Please select at least one student.', '📝');
+    if (!subjectClasses.length) return showWarning('Please select at least one subject.', '📚');
+    if (sessionId === 'ALL') return showWarning('Please select a session.', '📅');
+    if (!await showConfirm('Confirm Unregistration', `Unregister ${studentIds.length} student(s) from ${subjectClasses.length} subject(s)?`, 'Yes, Unregister!')) return;
+
+    document.getElementById('register-loading-spinner')?.classList.remove('d-none');
+    try {
+        let res = await apiFetch(ROUTES.destroy, 'DELETE', { studentids: studentIds, subjectclasses: subjectClasses, sessionid: parseInt(sessionId) });
+        if (res.success) { showSuccess(res.message || 'Unregistration completed!', '🗑️'); setTimeout(() => window.location.reload(), 1500); }
+        else showError(res.message || 'Unregistration failed.', '😞');
+    } catch(err) { showError('Unregistration failed: ' + err.message, '😭'); }
+    finally { document.getElementById('register-loading-spinner')?.classList.add('d-none'); }
+}
+
+// ============================================================================
+// REGISTERED CLASSES MODAL
+// ============================================================================
+async function loadRegisteredClasses() {
+    let classId = document.getElementById('idclass').value, sessionId = document.getElementById('idsession').value;
+    let container = document.getElementById('registeredClassesContent');
+
+    if (!classId || classId === 'ALL' || !sessionId || sessionId === 'ALL') {
+        container.innerHTML = `<div class="text-center py-5"><i class="ri-error-warning-line ri-3x text-warning mb-3"></i><p>Please select a specific class and session.</p></div>`;
+        return;
+    }
+
+    container.innerHTML = `<div class="text-center py-5"><div class="spinner-border text-primary mb-3"></div><p>Loading...</p></div>`;
+
+    try {
+        let res = await fetch(ROUTES.getRegistered + '?class_id=' + classId + '&session_id=' + sessionId, {
+            headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
+        });
+        let data = await res.json();
+
+        if (!data.success || !data.data.length) {
+            container.innerHTML = `<div class="text-center py-5"><i class="ri-inbox-line ri-3x text-muted mb-3"></i><p>No registered classes found.</p></div>`;
+            return;
+        }
+
+        let html = `<div class="table-responsive"><table class="table table-hover mb-0"><thead class="table-primary"><tr>
+            <th>#</th><th>Class & Arm</th><th>Session</th><th>Term</th><th class="text-center">Students</th><th class="text-center">Subjects</th><th>Subjects List</th><th>Teachers</th>
+        </tr></thead><tbody>`;
+
+        data.data.forEach((row, idx) => {
+            let termColor = row.term_name === 'First Term' ? 'success' : (row.term_name === 'Second Term' ? 'warning' : 'info');
+            let subjectsList = row.subjects && row.subjects !== 'None' ? row.subjects.split(', ').map(s => `<span class="badge bg-primary-subtle text-primary me-1 mb-1">${escapeHtml(s)}</span>`).join('') : '<span class="text-muted">None</span>';
+            let teachersList = row.teachers && row.teachers !== 'None' ? row.teachers.split(', ').map(t => `<span class="badge bg-secondary-subtle text-secondary me-1 mb-1"><i class="ri-user-star-line me-1"></i>${escapeHtml(t)}</span>`).join('') : '<span class="text-warning">No teachers assigned</span>';
+
+            html += `<tr>
+                <td class="fw-bold">${idx + 1}</td>
+                <td><i class="ri-group-line me-2 text-primary"></i>${escapeHtml(row.class_name)} ${row.arm_name && row.arm_name !== 'None' ? '/ ' + escapeHtml(row.arm_name) : ''}</td>
+                <td><span class="badge bg-dark-subtle text-dark">${escapeHtml(row.session_name)}</span></td>
+                <td><span class="badge bg-${termColor}-subtle text-${termColor}">${escapeHtml(row.term_name)}</span></td>
+                <td class="text-center"><span class="badge bg-primary rounded-pill fs-6 px-3">${row.student_count}</span></td>
+                <td class="text-center"><span class="badge bg-info rounded-pill fs-6 px-3">${row.subject_count}</span></td>
+                <td style="min-width: 250px;">${subjectsList}</td>
+                <td style="min-width: 200px;">${teachersList}</td>
+            </tr>`;
+        });
+
+        html += `</tbody></table></div><div class="p-3 bg-light border-top"><small class="text-muted">Total ${data.data.length} class(es) with registered subjects</small></div>`;
+        container.innerHTML = html;
+    } catch(err) { container.innerHTML = `<div class="alert alert-danger m-3">Error: ${err.message}</div>`; }
+}
+
+// ============================================================================
+// ARCHIVE MODAL
+// ============================================================================
+function openArchivedModal() {
+    let classId = document.getElementById('idclass').value, sessionId = document.getElementById('idsession').value;
+    if (classId === 'ALL' || sessionId === 'ALL') return showWarning('Please select a class and session first.', '🔍');
+    archiveCurrentPage = 1; archivePerPage = parseInt(document.getElementById('archivePerPage').value);
+    new bootstrap.Modal(document.getElementById('archivedModal')).show();
+    loadArchivedPage(1);
+}
+
+async function loadArchivedPage(page) {
+    archiveCurrentPage = page; archivePerPage = parseInt(document.getElementById('archivePerPage').value);
+    let classId = document.getElementById('idclass').value, sessionId = document.getElementById('idsession').value;
+    let termId = document.getElementById('archiveTermFilter').value, search = document.getElementById('archiveSearch').value.trim();
+
+    let spinner = document.getElementById('archiveSpinner'), tbody = document.getElementById('archiveTableBody');
+    spinner.classList.remove('d-none');
+    tbody.innerHTML = `<tr><td colspan="9" class="text-center py-5"><div class="spinner-border spinner-border-sm text-warning me-2"></div> Loading...</td></tr>`;
+
+    try {
+        let params = new URLSearchParams({ class_id: classId, session_id: sessionId, page, per_page: archivePerPage });
+        if (termId) params.set('term_id', termId);
+        if (search) params.set('search', search);
+
+        let res = await fetch(ROUTES.getArchived + '?' + params.toString(), {
+            headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
+        });
+        let data = await res.json();
+
+        if (!data.success) { tbody.innerHTML = `<tr><td colspan="9" class="text-center text-danger">${data.message}</td></tr>`; return; }
+
+        archiveMeta = data.meta;
+        renderArchiveRows(data.data);
+        renderArchivePagination(data.meta);
+        document.getElementById('archiveMeta').textContent = `Showing ${(data.meta.current_page-1)*data.meta.per_page+1}–${Math.min(data.meta.current_page*data.meta.per_page, data.meta.total)} of ${data.meta.total} records`;
+    } catch(err) { tbody.innerHTML = `<tr><td colspan="9" class="text-center text-danger">Error: ${err.message}</td></tr>`; }
+    finally { spinner.classList.add('d-none'); }
+}
+
+function renderArchiveRows(rows) {
+    let tbody = document.getElementById('archiveTableBody');
+    if (!rows.length) {
+        tbody.innerHTML = `<tr><td colspan="9" class="text-center py-5 text-muted"><i class="ri-inbox-line ri-2x mb-2 d-block"></i>No archived records found.</td></tr>`;
+        return;
+    }
+
+    let html = '';
+    rows.forEach(row => {
+        let studentName = `${row.lastname ?? ''} ${row.firstname ?? ''} ${row.othername ?? ''}`.trim();
+        let unregDate = row.unregistered_at ? new Date(row.unregistered_at).toLocaleDateString('en-GB') : '—';
+
+        html += `<tr data-archive-id="${row.archive_id}">
+            <td><div class="form-check"><input class="form-check-input archive-chk" type="checkbox" value="${row.archive_id}"></div></td>
+            <td><div class="d-flex align-items-center gap-2"><img src="{{ asset('storage/student_avatars/') }}/${row.picture || 'unnamed.jpg'}" class="rounded-circle" width="35" height="35" onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'"><span class="fw-medium">${escapeHtml(studentName)}</span></div></td>
+            <td><code>${escapeHtml(row.admissionno || '—')}</code></td>
+            <td><span class="badge bg-primary-subtle text-primary">${escapeHtml(row.subjectname || '—')}</span></td>
+            <td>${escapeHtml(row.staffname || '—')}</td>
+            <td><span class="badge bg-info-subtle text-info">${escapeHtml(row.termname || '—')}</span></td>
+            <td><small>${unregDate}</small></td>
+            <td><small>${escapeHtml(row.unregistered_by_name || '—')}</small></td>
+            <td><div class="btn-group btn-group-sm"><button class="btn btn-outline-success" onclick="restoreSingle(${row.archive_id})"><i class="ri-refresh-line"></i></button><button class="btn btn-outline-danger" onclick="permanentDeleteSingle(${row.archive_id}, this)"><i class="ri-delete-bin-line"></i></button></div></td>
+        </tr>`;
+    });
+    tbody.innerHTML = html;
+
+    document.getElementById('archiveCheckAll').checked = false;
+    document.getElementById('archiveCheckAll').onchange = (e) => document.querySelectorAll('.archive-chk').forEach(cb => cb.checked = e.target.checked);
+    document.querySelectorAll('.archive-chk').forEach(cb => cb.onchange = () => {
+        let anyChecked = document.querySelectorAll('.archive-chk:checked').length > 0;
+        document.getElementById('restoreSelectedBtn')?.classList.toggle('d-none', !anyChecked);
+        document.getElementById('deleteSelectedBtn')?.classList.toggle('d-none', !anyChecked);
+    });
+}
+
+function renderArchivePagination(meta) {
+    let container = document.getElementById('archivePagination');
+    if (!meta || meta.last_page <= 1) { container.innerHTML = ''; return; }
+    let html = `<button class="btn btn-sm btn-outline-secondary" onclick="loadArchivedPage(1)" ${meta.current_page === 1 ? 'disabled' : ''}>«</button>`;
+    html += `<button class="btn btn-sm btn-outline-secondary" onclick="loadArchivedPage(${meta.current_page - 1})" ${meta.current_page === 1 ? 'disabled' : ''}>‹</button>`;
+    for (let i = 1; i <= meta.last_page; i++) {
+        if (i === 1 || i === meta.last_page || (i >= meta.current_page - 2 && i <= meta.current_page + 2)) {
+            html += `<button class="btn btn-sm ${i === meta.current_page ? 'btn-warning' : 'btn-outline-secondary'}" onclick="loadArchivedPage(${i})">${i}</button>`;
+        } else if (i === meta.current_page - 3 || i === meta.current_page + 3) {
+            html += `<span class="btn btn-sm btn-outline-secondary disabled">…</span>`;
+        }
+    }
+    html += `<button class="btn btn-sm btn-outline-secondary" onclick="loadArchivedPage(${meta.current_page + 1})" ${meta.current_page === meta.last_page ? 'disabled' : ''}>›</button>`;
+    html += `<button class="btn btn-sm btn-outline-secondary" onclick="loadArchivedPage(${meta.last_page})" ${meta.current_page === meta.last_page ? 'disabled' : ''}>»</button>`;
+    container.innerHTML = html;
+}
+
+async function restoreSingle(archiveId) {
+    if (!await showConfirm('Restore Registration', 'Restore this registration?', 'Yes, Restore!')) return;
+    let spinner = document.getElementById('archiveSpinner');
+    spinner.classList.remove('d-none');
+    try {
+        let res = await apiFetch(ROUTES.restore, 'POST', { archive_ids: [archiveId] });
+        if (res.success) { showSuccess('Registration restored!', '🔄'); loadArchivedPage(archiveCurrentPage); }
+        else showError(res.message || 'Restore failed.', '😞');
+    } catch(err) { showError('Restore failed: ' + err.message, '😭'); }
+    finally { spinner.classList.add('d-none'); }
+}
+
+async function restoreSelected() {
+    let ids = [...document.querySelectorAll('.archive-chk:checked')].map(cb => parseInt(cb.value));
+    if (!ids.length) return;
+    if (!await showConfirm('Batch Restore', `Restore ${ids.length} registration(s)?`, 'Yes, Restore All!')) return;
+    let spinner = document.getElementById('archiveSpinner');
+    spinner.classList.remove('d-none');
+    try {
+        let res = await apiFetch(ROUTES.restore, 'POST', { archive_ids: ids });
+        if (res.success) { showSuccess(res.message || `${res.total_restored} restored!`, '🔄'); loadArchivedPage(archiveCurrentPage); }
+        else showError(res.message || 'Restore failed.', '😞');
+    } catch(err) { showError('Restore failed: ' + err.message, '😭'); }
+    finally { spinner.classList.add('d-none'); }
+}
+
+async function permanentDeleteSingle(archiveId, btn) {
+    if (!await showConfirm('Permanent Deletion', 'This CANNOT be undone!', 'Yes, Delete!')) return;
+    btn.disabled = true;
+    try {
+        let res = await apiFetch(ROUTES.permanentDelete, 'DELETE', { archive_ids: [archiveId] });
+        if (res.success) { showSuccess('Deleted permanently.', '🗑️'); loadArchivedPage(archiveCurrentPage); }
+        else showError(res.message || 'Delete failed.', '😞');
+    } catch(err) { showError('Delete failed: ' + err.message, '😭'); btn.disabled = false; }
+}
+
+async function permanentDeleteSelected() {
+    let ids = [...document.querySelectorAll('.archive-chk:checked')].map(cb => parseInt(cb.value));
+    if (!ids.length) return;
+    if (!await showConfirm('Permanent Deletion', `Delete ${ids.length} record(s)? This CANNOT be undone.`, 'Yes, Delete All!')) return;
+    let spinner = document.getElementById('archiveSpinner');
+    spinner.classList.remove('d-none');
+    try {
+        let res = await apiFetch(ROUTES.permanentDelete, 'DELETE', { archive_ids: ids });
+        if (res.success) { showSuccess(res.message || `${res.deleted} deleted.`, '🗑️'); loadArchivedPage(archiveCurrentPage); }
+        else showError(res.message || 'Delete failed.', '😞');
+    } catch(err) { showError('Delete failed: ' + err.message, '😭'); }
+    finally { spinner.classList.add('d-none'); }
+}
+
+async function apiFetch(url, method, body) {
+    let res = await fetch(url, {
+        method, headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
+        body: JSON.stringify(body)
+    });
+    let data = await res.json();
+    if (!res.ok && !data.success) throw new Error(data.message || `HTTP ${res.status}`);
+    return data;
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
+}
+</script>
+@endsection
