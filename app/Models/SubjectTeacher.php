@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\Schoolsession;
+use App\Models\Schoolterm;
+use App\Models\Subjectclass;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -19,9 +22,9 @@ class SubjectTeacher extends Model
         'sessionid'
 
     ];
-    
+
     public function schoolsession() {
-        return $this->belongsTo(SchoolSession::class, 'sessionid');
+        return $this->belongsTo(Schoolsession::class, 'sessionid');
     }
 
 
@@ -39,7 +42,7 @@ class SubjectTeacher extends Model
     // Add this missing relationship
     public function subjectclass()
     {
-        return $this->hasOne(SubjectClass::class, 'subjectteacherid');
+        return $this->hasOne(Subjectclass::class, 'subjectteacherid');
     }
 
     // Other existing relationships
@@ -62,4 +65,5 @@ class SubjectTeacher extends Model
     {
         return $this->belongsTo(User::class, 'staffid');
     }
+
 }
