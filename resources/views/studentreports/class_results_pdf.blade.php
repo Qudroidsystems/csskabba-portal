@@ -579,7 +579,7 @@
                                 @endforelse
 
                                 <!-- Small TOTAL row inside table -->
-                                <tr class="totals-row" style="background:#0d1a3d;color:#ffffff;font-weight:900;">
+                                {{-- <tr class="totals-row" style="background:#0d1a3d;color:#ffffff;font-weight:900;">
                                     <td colspan="{{ $totalLabelColspan }}" style="text-align:right;padding-right:5px;">TOTAL</td>
                                     @if(in_array('total', $columnsToShow))
                                         <td>
@@ -594,7 +594,7 @@
                                     @if(in_array('grade', $columnsToShow)) <td></td> @endif
                                     @if(in_array('position', $columnsToShow)) <td></td> @endif
                                     @if(in_array('class_average', $columnsToShow)) <td>{{ $totals['percentage'] }}%</td> @endif
-                                </tr>
+                                </tr> --}}
                             </tbody>
                         </table>
                     </div>
