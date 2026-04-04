@@ -83,7 +83,7 @@ class SubjectOperationController extends Controller
         // Get subject teachers (for display) - Using SubjectTeacher model
         $subjectTeachers = SubjectTeacher::with(['subject', 'user', 'subjectclass'])
             ->whereHas('subjectclass', function($q) {
-                $q->where('status', 'Active');
+                // $q->where('status', 'Active');
             })
             ->get()
             ->map(function($subjectTeacher) {
