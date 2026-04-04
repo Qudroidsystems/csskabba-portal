@@ -7,6 +7,7 @@ use App\Models\Schoolsession;
 use App\Models\Schoolterm;
 use App\Models\Student;
 use App\Models\Subjectclass;
+use App\Models\SubjectRegistrationArchive;
 use App\Models\SubjectRegistrationStatus;
 use App\Models\SubjectUnregistrationArchive;
 use App\Models\User;
@@ -19,10 +20,9 @@ class SubjectOperationController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:View subject registration', ['only' => ['index', 'getRegisteredClasses', 'subjectinfo', 'getArchivedRegistrations']]);
+        $this->middleware('permission:View subject registration', ['only' => ['index', 'getRegisteredClasses', 'subjectinfo']]);
         $this->middleware('permission:Create subject registration', ['only' => ['store', 'batchRegister']]);
-        $this->middleware('permission:Delete subject registration', ['only' => ['destroy', 'permanentlyDeleteArchive', 'permanentlyDeleteArchiveBatch']]);
-        $this->middleware('permission:Restore subject registration', ['only' => ['restoreRegistration']]);
+        $this->middleware('permission:Delete subject registration', ['only' => ['destroy']]);
     }
 
     /**
@@ -34,7 +34,7 @@ class SubjectOperationController extends Controller
 
         // Get all school classes with arms
         $schoolclass = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->selectRaw("schoolclass.id, CONCAT(schoolclass.schoolclass, ' - ', schoolarm.arm) as class_display, schoolclass.schoolclass, schoolarm.arm")
+            ->selectRaw("schoolclass.id, CONCAT(schoolclass.schoolclass, ' - ', schoolarm.arm) as class_display")
             ->orderBy('schoolclass.schoolclass')
             ->get();
 
@@ -251,30 +251,23 @@ class SubjectOperationController extends Controller
                             $successCount++;
                         } else {
                             $failedCount++;
-                            $errors[] = "Student already registered for subject";
+                            $errors[] = "Student {$studentId} already registered for subject {$subjectClass['subjectclassid']}";
                         }
                     } catch (\Exception $e) {
                         $failedCount++;
-                        $errors[] = "Error: " . $e->getMessage();
+                        $errors[] = "Error registering student {$studentId}: " . $e->getMessage();
                     }
                 }
             }
 
             DB::commit();
 
-            // Refresh the page to show updated data
-            $redirectUrl = route('subjects.index') . '?' . http_build_query([
-                'class_id' => $request->session()->get('last_class_id', 'ALL'),
-                'session_id' => $request->sessionid,
-            ]);
-
             return response()->json([
                 'success' => true,
                 'message' => "Registered {$successCount} subject(s) successfully. Failed: {$failedCount}",
                 'success_count' => $successCount,
                 'failed_count' => $failedCount,
-                'errors' => $errors,
-                'redirect' => $redirectUrl
+                'errors' => $errors
             ]);
 
         } catch (\Exception $e) {
@@ -288,7 +281,7 @@ class SubjectOperationController extends Controller
     }
 
     /**
-     * Unregister/destroy subject registrations and move to archive
+     * Unregister/destroy subject registrations
      */
     public function destroy(Request $request)
     {
@@ -328,23 +321,21 @@ class SubjectOperationController extends Controller
                         ])->first();
 
                         if ($registration) {
-                            // Get subject class details for archive
-                            $subjectClassModel = Subjectclass::with(['subject', 'schoolClass'])->find($subjectClass['subjectclassid']);
+                            // Get class info for archive
+                            $subjectClassModel = Subjectclass::find($subjectClass['subjectclassid']);
                             $student = Student::find($studentId);
 
-                            // Create archive record using your model
-                            SubjectUnregistrationArchive::create([
-                                'studentid' => $studentId,
-                                'subjectclassid' => $subjectClass['subjectclassid'],
-                                'staffid' => $subjectClass['staffid'] ?? $subjectClassModel->teacher_id ?? null,
-                                'termid' => $subjectClass['termid'],
-                                'sessionid' => $request->sessionid,
-                                'subjectid' => $subjectClassModel->subject_id ?? null,
-                                'schoolclassid' => $subjectClassModel->schoolclassid ?? null,
+                            // Create archive record
+                            SubjectRegistrationArchive::create([
+                                'student_id' => $studentId,
+                                'subject_class_id' => $subjectClass['subjectclassid'],
+                                'class_id' => $subjectClassModel->schoolclassid ?? null,
+                                'term_id' => $subjectClass['termid'],
+                                'session_id' => $request->sessionid,
                                 'unregistered_by' => auth()->id(),
-                                'status' => SubjectUnregistrationArchive::STATUS_ARCHIVED,
                                 'unregistered_at' => now(),
-                                'actioned_at' => now(),
+                                'student_admission_no' => $student->admissionNo ?? null,
+                                'student_name' => ($student->lastname ?? '') . ' ' . ($student->firstname ?? ''),
                             ]);
 
                             // Delete the registration
@@ -352,30 +343,23 @@ class SubjectOperationController extends Controller
                             $successCount++;
                         } else {
                             $failedCount++;
-                            $errors[] = "Registration not found";
+                            $errors[] = "Registration not found for student {$studentId}";
                         }
                     } catch (\Exception $e) {
                         $failedCount++;
-                        $errors[] = "Error: " . $e->getMessage();
+                        $errors[] = "Error unregistering student {$studentId}: " . $e->getMessage();
                     }
                 }
             }
 
             DB::commit();
 
-            // Refresh the page
-            $redirectUrl = route('subjects.index') . '?' . http_build_query([
-                'class_id' => $request->session()->get('last_class_id', 'ALL'),
-                'session_id' => $request->sessionid,
-            ]);
-
             return response()->json([
                 'success' => true,
                 'message' => "Unregistered {$successCount} subject(s) successfully. Failed: {$failedCount}",
                 'success_count' => $successCount,
                 'failed_count' => $failedCount,
-                'errors' => $errors,
-                'redirect' => $redirectUrl
+                'errors' => $errors
             ]);
 
         } catch (\Exception $e) {
@@ -493,7 +477,7 @@ class SubjectOperationController extends Controller
                 ]);
             }
 
-            // Get all registrations grouped by term and subject
+            // Get all registrations grouped by term
             $registrations = SubjectRegistrationStatus::with([
                 'subjectClass' => function($q) use ($classId) {
                     $q->where('schoolclassid', $classId);
@@ -509,7 +493,7 @@ class SubjectOperationController extends Controller
             })
             ->get();
 
-            // Group by term and subject
+            // Group by term
             $grouped = $registrations->groupBy('termid')->map(function($termRegs, $termId) use ($includeTeachers) {
                 $term = Schoolterm::find($termId);
 
@@ -557,7 +541,7 @@ class SubjectOperationController extends Controller
     }
 
     /**
-     * Get archived registrations from SubjectUnregistrationArchive
+     * Get archived registrations for the modal
      */
     public function getArchivedRegistrations(Request $request)
     {
@@ -582,27 +566,25 @@ class SubjectOperationController extends Controller
                 ]);
             }
 
-            $query = SubjectUnregistrationArchive::with([
+            $query = SubjectRegistrationArchive::with([
                 'student',
-                'subjectclass.subject',
-                'staff',
+                'subjectClass.subject',
+                'teacher',
                 'term',
                 'session',
                 'unregisteredBy'
             ])
-            ->where('schoolclassid', $classId)
-            ->where('sessionid', $sessionId)
-            ->where('status', SubjectUnregistrationArchive::STATUS_ARCHIVED);
+            ->where('class_id', $classId)
+            ->where('session_id', $sessionId);
 
             if ($termId && $termId !== '') {
-                $query->where('termid', $termId);
+                $query->where('term_id', $termId);
             }
 
             if ($search) {
-                $query->whereHas('student', function($q) use ($search) {
-                    $q->where('firstname', 'LIKE', "%{$search}%")
-                      ->orWhere('lastname', 'LIKE', "%{$search}%")
-                      ->orWhere('admissionNo', 'LIKE', "%{$search}%");
+                $query->where(function($q) use ($search) {
+                    $q->where('student_name', 'LIKE', "%{$search}%")
+                      ->orWhere('student_admission_no', 'LIKE', "%{$search}%");
                 });
             }
 
@@ -612,13 +594,13 @@ class SubjectOperationController extends Controller
             $formattedData = $archives->map(function($archive) {
                 return [
                     'archive_id' => $archive->id,
-                    'student_id' => $archive->studentid,
+                    'student_id' => $archive->student_id,
                     'firstname' => $archive->student->firstname ?? '',
                     'lastname' => $archive->student->lastname ?? '',
-                    'admissionno' => $archive->student->admissionNo ?? '',
-                    'subjectname' => $archive->subjectclass->subject->subjectname ?? '',
-                    'subjectcode' => $archive->subjectclass->subject->subjectcode ?? '',
-                    'staffname' => $archive->staff->name ?? $archive->unregisteredBy->name ?? 'System',
+                    'admissionno' => $archive->student_admission_no ?? $archive->student->admissionNo ?? '',
+                    'subjectname' => $archive->subjectClass->subject->subjectname ?? '',
+                    'subjectcode' => $archive->subjectClass->subject->subjectcode ?? '',
+                    'staffname' => $archive->teacher->name ?? $archive->unregisteredBy->name ?? 'System',
                     'termname' => $archive->term->term ?? '',
                     'unregistered_at' => $archive->unregistered_at,
                     'unregistered_by_name' => $archive->unregisteredBy->name ?? 'System',
@@ -654,7 +636,7 @@ class SubjectOperationController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'archive_ids' => 'required|array',
-                'archive_ids.*' => 'exists:subject_unregistration_archive,id'
+                'archive_ids.*' => 'exists:subject_registration_archives,id'
             ]);
 
             if ($validator->fails()) {
@@ -672,23 +654,23 @@ class SubjectOperationController extends Controller
 
             foreach ($request->archive_ids as $archiveId) {
                 try {
-                    $archive = SubjectUnregistrationArchive::findOrFail($archiveId);
+                    $archive = SubjectRegistrationArchive::findOrFail($archiveId);
 
                     // Check if registration already exists
                     $exists = SubjectRegistrationStatus::where([
-                        'studentId' => $archive->studentid,
-                        'subjectclassid' => $archive->subjectclassid,
-                        'sessionid' => $archive->sessionid,
-                        'termid' => $archive->termid,
+                        'studentId' => $archive->student_id,
+                        'subjectclassid' => $archive->subject_class_id,
+                        'sessionid' => $archive->session_id,
+                        'termid' => $archive->term_id,
                     ])->exists();
 
                     if (!$exists) {
                         // Restore the registration
                         SubjectRegistrationStatus::create([
-                            'studentId' => $archive->studentid,
-                            'subjectclassid' => $archive->subjectclassid,
-                            'sessionid' => $archive->sessionid,
-                            'termid' => $archive->termid,
+                            'studentId' => $archive->student_id,
+                            'subjectclassid' => $archive->subject_class_id,
+                            'sessionid' => $archive->session_id,
+                            'termid' => $archive->term_id,
                             'status' => 'registered',
                             'registered_by' => auth()->id(),
                             'registered_at' => now(),
@@ -697,10 +679,8 @@ class SubjectOperationController extends Controller
                         $restoredCount++;
                     }
 
-                    // Update archive status or delete it
-                    $archive->status = SubjectUnregistrationArchive::STATUS_RESTORED;
-                    $archive->actioned_at = now();
-                    $archive->save();
+                    // Delete the archive record
+                    $archive->delete();
 
                 } catch (\Exception $e) {
                     $errors[] = "Archive ID {$archiveId}: " . $e->getMessage();
@@ -734,7 +714,7 @@ class SubjectOperationController extends Controller
         try {
             $validator = Validator::make($request->all(), [
                 'archive_ids' => 'required|array',
-                'archive_ids.*' => 'exists:subject_unregistration_archive,id'
+                'archive_ids.*' => 'exists:subject_registration_archives,id'
             ]);
 
             if ($validator->fails()) {
@@ -745,21 +725,7 @@ class SubjectOperationController extends Controller
                 ], 422);
             }
 
-            DB::beginTransaction();
-
-            $deletedCount = 0;
-            foreach ($request->archive_ids as $archiveId) {
-                $archive = SubjectUnregistrationArchive::find($archiveId);
-                if ($archive) {
-                    $archive->status = SubjectUnregistrationArchive::STATUS_PERMANENTLY_DELETED;
-                    $archive->actioned_at = now();
-                    $archive->save();
-                    $archive->delete(); // Hard delete
-                    $deletedCount++;
-                }
-            }
-
-            DB::commit();
+            $deletedCount = SubjectRegistrationArchive::whereIn('id', $request->archive_ids)->delete();
 
             return response()->json([
                 'success' => true,
@@ -768,7 +734,6 @@ class SubjectOperationController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error('Error deleting archive records: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
@@ -783,15 +748,8 @@ class SubjectOperationController extends Controller
     public function permanentlyDeleteArchive($archiveId)
     {
         try {
-            DB::beginTransaction();
-
             $archive = SubjectUnregistrationArchive::findOrFail($archiveId);
-            $archive->status = SubjectUnregistrationArchive::STATUS_PERMANENTLY_DELETED;
-            $archive->actioned_at = now();
-            $archive->save();
-            $archive->delete(); // Hard delete
-
-            DB::commit();
+            $archive->delete();
 
             return response()->json([
                 'success' => true,
@@ -799,7 +757,6 @@ class SubjectOperationController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error('Error deleting archive record: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
