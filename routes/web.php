@@ -494,6 +494,9 @@ Route::delete('/subjectoperation/archive/batch-delete', [SubjectOperationControl
 // DELETE permanently delete a single archive record
 Route::delete('/subjectoperation/archive/{archiveId}', [SubjectOperationController::class, 'permanentlyDeleteArchive'])->name('subjectoperation.archive.delete');
 
+
+
+
     Route::get('/viewresults/{id}/{schoolclassid}/{sessid}/{termid}', [StudentResultsController::class, 'viewresults']);
 
 

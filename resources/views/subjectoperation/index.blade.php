@@ -358,13 +358,13 @@
 // GLOBALS
 // ============================================================================
 const ROUTES = {
-    batchRegister   : '{{ route("subjectoperation.batchRegister") }}',
-    destroy         : '{{ route("subjectoperation.destroy") }}',
-    getRegistered   : '{{ route("subjectoperation.getRegisteredClasses") }}',
-    getArchived     : '{{ route("subjectoperation.getArchivedRegistrations") }}',
-    restore         : '{{ route("subjectoperation.restoreRegistration") }}',
-    permanentDelete : '{{ route("subjectoperation.permanentlyDeleteArchiveBatch") }}',
-    index           : '{{ route("subjectoperation.index") }}',
+    batchRegister   : '{{ route("subjectregistration.batch") }}',
+    destroy         : '{{ route("subjectregistration.destroy") }}',
+    getRegistered   : '{{ route("subjects.registered-classes") }}',
+    getArchived     : '{{ route("subjectoperation.archived") }}',
+    restore         : '{{ route("subjectoperation.restore") }}',
+    permanentDelete : '{{ route("subjectoperation.archive.batch-delete") }}',
+    index           : '{{ route("subjects.index") }}',
 };
 const CSRF = '{{ csrf_token() }}';
 
