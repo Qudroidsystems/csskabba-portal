@@ -11,7 +11,7 @@
         }
         body {
             font-family: 'Times New Roman', Times, serif;
-            font-size: 10px;                    /* Overall text slightly bigger */
+            font-size: 9.5px;
             line-height: 1.3;
             color: #000;
             background: #f5f5f5;
@@ -105,7 +105,7 @@
             background: #111827;
             color: white;
             padding: 4px 6px;
-            font-size: 12px;                    /* Bigger title */
+            font-size: 11px;
             font-weight: 700;
             text-align: center;
             margin: 5px 0;
@@ -120,7 +120,7 @@
             border-radius: 6px;
             padding: 5px 10px;
             margin-bottom: 8px;
-            font-size: 9px;                     /* Bigger student info */
+            font-size: 8.5px;
         }
         .info-line {
             display: flex;
@@ -131,7 +131,7 @@
         }
         .info-bar-label {
             color: #1e40af;
-            font-size: 8.5px;
+            font-size: 8px;
             font-weight: 700;
         }
         .info-bar-value {
@@ -150,47 +150,41 @@
             border-spacing: 0;
             margin-bottom: 8px;
             page-break-inside: avoid;
-            height: 100%;                       /* Forces row to take full available height */
-        }
-        .dual-layout-table tr {
-            height: 100%;                       /* Makes both cells the same height dynamically */
         }
         .dual-layout-table td.academic-cell {
             vertical-align: top;
             padding: 0;
-            height: 100%;                       /* Academic cell stretches to match psychomotor */
+            min-height: 360px;           /* This makes academic section match psychomotor height */
         }
         .dual-layout-table td.psycho-cell {
             vertical-align: top;
             padding: 0;
             width: 148px;
             min-width: 148px;
-            height: 100%;
         }
 
-        /* ACADEMIC TABLE - Bigger text + dynamic height */
+        /* ACADEMIC TABLE */
         .result-table table {
             width: 100%;
             border: 2px solid #000000;
             border-collapse: collapse;
-            font-size: 8.2px;                   /* BIGGER TEXT as requested */
+            font-size: 7.8px;
             table-layout: auto;
-            min-height: 100%;                   /* Fills the full cell height */
         }
         .result-table thead th {
             background: #0d1a3d;
             color: white;
             font-weight: 800;
             border: 1px solid #000000;
-            padding: 4px 2px;
-            font-size: 7.2px;
+            padding: 3px 1px;
+            font-size: 6.8px;
             overflow: hidden;
         }
         .result-table tbody td {
             border: 1px solid #000000;
-            padding: 3px 2px;
+            padding: 2px 1px;
             text-align: center;
-            font-size: 8.2px;                   /* BIGGER TEXT */
+            font-size: 7.5px;
             background: white;
             font-weight: 600;
             overflow: hidden;
@@ -198,8 +192,8 @@
         .result-table tbody td.subject-name {
             text-align: left;
             font-weight: 700;
-            font-size: 8.2px;
-            padding-left: 6px;
+            font-size: 7.5px;
+            padding-left: 5px;
             word-break: break-word;
             white-space: normal;
         }
@@ -208,7 +202,7 @@
             font-weight: 900;
         }
 
-        /* Column widths (kept your latest 130px for Subject) */
+        /* Column widths */
         .col-sn { width: 28px; }
         .col-admissionno { width: 78px; }
         .col-name { width: 130px; }
@@ -220,14 +214,14 @@
         .col-position { width: 36px; }
         .col-class-average { width: 39px; }
 
-        /* FULL-WIDTH TOTAL SUMMARY - Bigger text */
+        /* FULL-WIDTH TOTAL SUMMARY */
         .totals-summary {
-            width: 100%;
+            width: 98%;
             background: #0d1a3d;
             color: #ffffff;
             font-weight: 900;
-            font-size: 8.5px;                   /* BIGGER TEXT */
-            padding: 5px 10px;
+            font-size: 7.5px;
+            padding: 4px 8px;
             border: 2px solid #000000;
             border-top: none;
             text-align: center;
@@ -241,15 +235,14 @@
             border: 2px solid #c0a86a;
             border-radius: 8px;
             padding: 0 4px 4px 4px;
-            height: 100%;                       /* Matches academic cell height */
         }
         .psychomotor-title {
             background: #2c3e4e;
             color: white;
             text-align: center;
             font-weight: 800;
-            font-size: 9px;                     /* Slightly bigger */
-            padding: 4px 2px;
+            font-size: 8.5px;
+            padding: 3px 2px;
             margin: 0 -4px 5px -4px;
             border-radius: 6px 6px 0 0;
             letter-spacing: 0.3px;
@@ -257,26 +250,26 @@
         .psycho-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 7.5px;                   /* Slightly bigger */
+            font-size: 7.2px;
             table-layout: fixed;
         }
         .psycho-table th,
         .psycho-table td {
             border: 1px solid #b78d4a;
-            padding: 3px 2px;
+            padding: 2px 2px;
             word-break: break-word;
         }
         .psycho-table th {
             background: #e9d6b0;
             font-weight: 800;
-            font-size: 7.2px;
-            padding: 4px 2px;
+            font-size: 7px;
+            padding: 3px 1px;
         }
         .psycho-table td:first-child {
             width: 72%;
             font-weight: 600;
             background: #fff7e8;
-            padding-left: 4px;
+            padding-left: 3px;
         }
         .psycho-table td:last-child {
             width: 28%;
@@ -286,15 +279,15 @@
         .psycho-totals-row td {
             background: #e9d6b0;
             font-weight: 900;
-            font-size: 7.8px;
+            font-size: 7.5px;
         }
         .psycho-obtainable-row td {
             background: #faf0dd;
-            font-size: 7px;
+            font-size: 6.8px;
             text-align: center;
         }
         .psycho-note {
-            font-size: 6.5px;
+            font-size: 6px;
             text-align: center;
             margin-top: 4px;
             color: #4a5b6e;
@@ -310,16 +303,16 @@
         }
         .remarks-table td {
             border: 1px solid #000000;
-            padding: 6px 8px;
+            padding: 5px 6px;
             background: white;
             vertical-align: top;
             width: 50%;
-            font-size: 9px;                     /* Bigger remarks text */
+            font-size: 8.5px;
         }
         .remarks-table .h6 {
             font-weight: 700;
-            margin-bottom: 4px;
-            font-size: 9.5px;
+            margin-bottom: 3px;
+            font-size: 9px;
             border-bottom: 1px solid #ccc;
             display: inline-block;
         }
@@ -327,25 +320,25 @@
         /* Footer */
         .footer-section {
             background: #f1f5f9;
-            padding: 5px 6px;
+            padding: 4px 5px;
             border: 1px solid #cbd5e1;
             text-align: center;
-            margin-top: 6px;
-            font-size: 8px;
+            margin-top: 5px;
+            font-size: 7.5px;
         }
         .footer-layout-table td {
-            padding: 3px;
-            font-size: 8px;
+            padding: 2px;
+            font-size: 7.5px;
         }
         .text-dot-space2 {
             border-bottom: 1px dotted #666;
             display: inline-block;
-            min-width: 110px;
+            min-width: 90px;
             font-weight: bold;
         }
         .powered-by {
-            font-size: 8.5px;
-            margin-top: 3px;
+            font-size: 8px;
+            margin-top: 2px;
         }
 
         @media print {
@@ -461,10 +454,10 @@
                 </td>
                 <td width="60%" style="padding-left:6px;">
                     <div style="font-family:'Arial Black',sans-serif;font-weight:900;line-height:1.2;">
-                        <div style="font-size:17px;letter-spacing:0.3px;">CLARET SECONDARY SCHOOL KABBA</div>
-                        <div style="font-size:8px;"><strong>Motto:</strong> {{ $schoolInfo->school_motto ?? 'KNOWLEDGE AND VIRTUE' }}</div>
-                        <div style="font-size:8px;"><strong>Address:</strong> {{ $schoolInfo->school_address ?? 'No. 1, Claret Avenue, Kabba, Kogi State' }}</div>
-                        <div style="font-size:8px;"><strong>Phone:</strong> {{ $schoolInfo->school_phone ?? '08136663185' }}</div>
+                        <div style="font-size:16px;letter-spacing:0.3px;">CLARET SECONDARY SCHOOL KABBA</div>
+                        <div style="font-size:7.5px;"><strong>Motto:</strong> {{ $schoolInfo->school_motto ?? 'KNOWLEDGE AND VIRTUE' }}</div>
+                        <div style="font-size:7.5px;"><strong>Address:</strong> {{ $schoolInfo->school_address ?? 'No. 1, Claret Avenue, Kabba, Kogi State' }}</div>
+                        <div style="font-size:7.5px;"><strong>Phone:</strong> {{ $schoolInfo->school_phone ?? '08136663185' }}</div>
                     </div>
                 </td>
                 <td width="20%">
@@ -524,10 +517,10 @@
             <div class="student-info-bar"><div class="info-line">No student data available.</div></div>
         @endif
 
-        <!-- DUAL-COLUMN LAYOUT (heights now match dynamically) -->
+        <!-- DUAL-COLUMN LAYOUT -->
         <table class="dual-layout-table">
             <tr>
-                <!-- LEFT: ACADEMIC RESULTS -->
+                <!-- LEFT: ACADEMIC RESULTS (dynamic height) -->
                 <td class="academic-cell">
                     <div class="result-table">
                         <table>
@@ -540,7 +533,7 @@
                                         @if(in_array($assessment->id, $columnsToShow) || in_array('all_assessments', $columnsToShow))
                                             <th class="col-assessment">
                                                 {{ $assessment->name }}<br>
-                                                <span style="font-size:6px;">({{ $assessment->max_score }})</span>
+                                                <span style="font-size:5.5px;">({{ $assessment->max_score }})</span>
                                             </th>
                                         @endif
                                     @endforeach
@@ -631,11 +624,11 @@
                 <tr>
                     <td width="50%">
                         <div class="h6">Class Teacher's Remark</div>
-                        <div style="font-size:9px;">{{ $profile ? ($profile->classteachercomment ?? 'NO INFO') : 'NO INFO' }}</div>
+                        <div style="font-size:8.5px;">{{ $profile ? ($profile->classteachercomment ?? 'NO INFO') : 'NO INFO' }}</div>
                     </td>
                     <td width="50%">
                         <div class="h6">Principal's Remark</div>
-                        <div style="font-size:9px;">{{ $profile ? ($profile->principalscomment ?? 'NO INFO') : 'NO INFO' }}</div>
+                        <div style="font-size:8.5px;">{{ $profile ? ($profile->principalscomment ?? 'NO INFO') : 'NO INFO' }}</div>
                     </td>
                 </tr>
             </tbody>
