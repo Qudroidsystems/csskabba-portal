@@ -16,6 +16,7 @@
                     </div>
                 </div>
             </div>
+
             @if ($errors->any())
                 <div class="alert alert-danger">
                     <strong>Error!</strong> There were some problems with your input.<br>
@@ -26,12 +27,14 @@
                     </ul>
                 </div>
             @endif
+
             @if (session('status'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
                     {{ session('status') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
-            @endif>
+            @endif
+
             <div id="subjectList">
                 {{-- ── Class & Session Filter ── --}}
                 <div class="row">
@@ -65,6 +68,7 @@
                         </div>
                     </div>
                 </div>
+
                 {{-- ── Subject Teachers Card ── --}}
                 <div class="row" id="subjectTeachersCard">
                     <div class="col-lg-12">
@@ -113,6 +117,7 @@
                         </div>
                     </div>
                 </div>
+
                 {{-- ── Student Filters ── --}}
                 <div class="row">
                     <div class="col-lg-12">
@@ -147,6 +152,7 @@
                         </div>
                     </div>
                 </div>
+
                 {{-- ── Students Table ── --}}
                 <div class="row">
                     <div class="col-lg-12">
@@ -209,66 +215,67 @@
                         </div>
                     </div>
                 </div>
+
                 {{-- ══════════════════════════════════════════════════════════ --}}
-                {{-- MODAL: Registered Classes (Improved UI + Teacher Names) --}}
+                {{-- UPDATED MODAL: Registered Classes (wider + Teachers column + professional UI) --}}
                 {{-- ══════════════════════════════════════════════════════════ --}}
                 <div class="modal fade" id="registeredClassesModal" tabindex="-1" aria-labelledby="registeredClassesModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-xl">
-                        <div class="modal-content">
-                            <div class="modal-header border-0 bg-primary-subtle">
-                                <h5 class="modal-title" id="registeredClassesModalLabel">
-                                    <i class="ri-eye-line me-2"></i>Registered Classes Overview
+                        <div class="modal-content shadow-lg border-0">
+                            <div class="modal-header bg-primary-subtle border-0">
+                                <h5 class="modal-title d-flex align-items-center" id="registeredClassesModalLabel">
+                                    <i class="ri-eye-line me-2"></i>
+                                    Registered Classes Overview
                                 </h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body p-0">
                                 <div id="registeredClassesContent" class="p-4">
-                                    <div class="text-center text-muted py-5">
-                                        <i class="ri-loader-4-line ri-3x mb-3 text-primary"></i>
-                                        <p class="mb-0">Loading registered classes...</p>
-                                    </div>
+                                    <!-- Populated dynamically via JavaScript -->
                                 </div>
                             </div>
-                            <div class="modal-footer border-0">
+                            <div class="modal-footer border-0 bg-light">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                             </div>
                         </div>
                     </div>
                 </div>
+
                 {{-- ══════════════════════════════════════════════════════════ --}}
-                {{-- MODAL: Unregistered History (Wider + Per-page selector) --}}
+                {{-- UPDATED MODAL: Unregistered History (wider + Per-Page selector) --}}
                 {{-- ══════════════════════════════════════════════════════════ --}}
                 <div class="modal fade" id="archivedModal" tabindex="-1" aria-labelledby="archivedModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-xl modal-dialog-scrollable">
-                        <div class="modal-content">
-                            <div class="modal-header bg-warning-subtle">
-                                <h5 class="modal-title" id="archivedModalLabel">
+                        <div class="modal-content shadow-lg border-0">
+                            <div class="modal-header bg-warning-subtle border-0">
+                                <h5 class="modal-title d-flex align-items-center" id="archivedModalLabel">
                                     <i class="ri-archive-line me-2"></i>Unregistered History
                                 </h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body p-0">
-                                {{-- Toolbar --}}
+                                {{-- Toolbar with Per-Page selector --}}
                                 <div class="p-3 border-bottom bg-light d-flex align-items-center flex-wrap gap-3">
                                     <div class="flex-grow-1">
                                         <input type="text" class="form-control form-control-sm" id="archiveSearch"
                                             placeholder="Search student name or admission no..." style="max-width:320px;">
                                     </div>
                                     <div class="d-flex align-items-center gap-2 flex-wrap">
-                                        {{-- Term filter --}}
                                         <select class="form-select form-select-sm" id="archiveTermFilter" style="width:auto;">
                                             <option value="">All Terms</option>
                                             @foreach($schoolterms as $term)
                                                 <option value="{{ $term->id }}">{{ $term->term }}</option>
                                             @endforeach
                                         </select>
-                                        {{-- Per-page selector --}}
+
+                                        {{-- Per-Page selector --}}
                                         <select class="form-select form-select-sm" id="archivePerPage" style="width:auto;">
                                             <option value="20">20 per page</option>
                                             <option value="50" selected>50 per page</option>
                                             <option value="100">100 per page</option>
                                             <option value="150">150 per page</option>
                                         </select>
+
                                         <button class="btn btn-sm btn-outline-secondary" onclick="loadArchivedPage(1);">
                                             <i class="ri-refresh-line"></i> Refresh
                                         </button>
@@ -281,6 +288,7 @@
                                         <div class="spinner-border spinner-border-sm text-warning d-none" id="archiveSpinner" role="status"></div>
                                     </div>
                                 </div>
+
                                 {{-- Table --}}
                                 <div class="table-responsive">
                                     <table class="table table-sm table-hover align-middle mb-0">
@@ -310,13 +318,14 @@
                                         </tbody>
                                     </table>
                                 </div>
+
                                 {{-- Pagination --}}
                                 <div class="d-flex justify-content-between align-items-center p-3 border-top" id="archivePaginationWrap">
                                     <small class="text-muted" id="archiveMeta"></small>
                                     <div id="archivePagination" class="d-flex gap-1"></div>
                                 </div>
                             </div>
-                            <div class="modal-footer">
+                            <div class="modal-footer border-0 bg-light">
                                 <small class="text-muted me-auto">
                                     <i class="ri-information-line me-1"></i>
                                     Restored records are re-registered. Permanently deleted records cannot be recovered.
@@ -326,7 +335,8 @@
                         </div>
                     </div>
                 </div>
-                {{-- Image View Modal --}}
+
+                {{-- Image View Modal (unchanged) --}}
                 <div id="imageViewModal" class="modal fade" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered modal-lg">
                         <div class="modal-content">
@@ -361,12 +371,14 @@ const ROUTES = {
     index : '{{ route("subjects.index") }}',
 };
 const CSRF = '{{ csrf_token() }}';
+
 // Archive state
 let archiveCurrentPage = 1;
 let archiveMeta = {};
 let archiveSearchTimer = null;
+
 // ============================================================================
-// IMAGE MODAL
+// IMAGE MODAL + AUTO LOAD
 // ============================================================================
 document.addEventListener('DOMContentLoaded', function () {
     const imgModal = document.getElementById('imageViewModal');
@@ -381,12 +393,13 @@ document.addEventListener('DOMContentLoaded', function () {
     // Load registered classes when that modal opens
     document.getElementById('registeredClassesModal')?.addEventListener('show.bs.modal', loadRegisteredClasses);
 
-    // Archive per-page listener
-    document.getElementById('archivePerPage')?.addEventListener('change', () => {
-        archiveCurrentPage = 1;
-        loadArchivedPage(1);
-    });
+    // NEW: Per-Page selector for archive modal
+    const perPageSelect = document.getElementById('archivePerPage');
+    if (perPageSelect) {
+        perPageSelect.addEventListener('change', () => loadArchivedPage(1));
+    }
 });
+
 // ============================================================================
 // FILTER / SEARCH
 // ============================================================================
@@ -405,14 +418,17 @@ function filterData() {
     });
     window.location.href = ROUTES.index + '?' + params.toString();
 }
+
 function selectAllSubjects() {
     document.querySelectorAll('.subject-checkbox').forEach(cb => cb.checked = true);
     updateSubjectCount();
 }
+
 function deselectAllSubjects() {
     document.querySelectorAll('.subject-checkbox').forEach(cb => cb.checked = false);
     updateSubjectCount();
 }
+
 function updateSubjectCount() {
     const count = document.querySelectorAll('.subject-checkbox:checked').length;
     document.getElementById('subjectTeacherCount').textContent = count;
@@ -421,6 +437,7 @@ document.querySelectorAll('.subject-checkbox').forEach(cb => {
     cb.addEventListener('change', updateSubjectCount);
 });
 updateSubjectCount();
+
 // ============================================================================
 // CHECK ALL STUDENTS
 // ============================================================================
@@ -438,6 +455,7 @@ function toggleBatchButtons() {
     document.getElementById('register-selected-btn')?.classList.toggle('d-none', !anyChecked);
     document.getElementById('unregister-selected-btn')?.classList.toggle('d-none', !anyChecked);
 }
+
 // ============================================================================
 // GET SELECTED STUDENT IDS
 // ============================================================================
@@ -445,6 +463,7 @@ function getSelectedStudentIds() {
     return [...document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked')]
         .map(cb => parseInt(cb.closest('tr').querySelector('.id').dataset.id));
 }
+
 // ============================================================================
 // GET SELECTED SUBJECT CLASSES
 // ============================================================================
@@ -455,6 +474,7 @@ function getSelectedSubjectClasses() {
         termid : parseInt(cb.dataset.termid),
     }));
 }
+
 // ============================================================================
 // REGISTER BATCH
 // ============================================================================
@@ -480,6 +500,7 @@ async function registerSelectedStudentsBatch() {
         setSpinner(false);
     }
 }
+
 // ============================================================================
 // UNREGISTER BATCH
 // ============================================================================
@@ -508,25 +529,29 @@ async function unregisterSelectedStudentsBatch() {
         setSpinner(false);
     }
 }
+
 // ============================================================================
-// REGISTERED CLASSES MODAL (with Teacher Names)
+// REGISTERED CLASSES MODAL (UPDATED - wider + Teachers column)
 // ============================================================================
 async function loadRegisteredClasses() {
     const classId = document.getElementById('idclass').value;
     const sessionId = document.getElementById('idsession').value;
     const container = document.getElementById('registeredClassesContent');
-    container.innerHTML = `<div class="text-center py-5"><div class="spinner-border text-primary ri-3x"></div><p class="mt-3 text-muted">Loading registered classes...</p></div>`;
+    container.innerHTML = `<div class="text-center py-5"><div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div><p class="mt-3 text-muted">Loading registered classes...</p></div>`;
+
     try {
         const params = new URLSearchParams({ class_id: classId, session_id: sessionId });
         const res = await fetch(ROUTES.getRegistered + '?' + params.toString(), {
             headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
         });
         const data = await res.json();
+
         if (!data.success || !data.data.length) {
             container.innerHTML = `<div class="text-center py-5 text-muted"><i class="ri-inbox-line ri-4x mb-3"></i><p>No registered classes found for the selected filters.</p></div>`;
             return;
         }
-        let html = `<div class="table-responsive"><table class="table table-hover table-bordered table-sm align-middle">
+
+        let html = `<div class="table-responsive"><table class="table table-striped table-hover table-bordered table-sm mb-0">
             <thead class="table-light">
                 <tr>
                     <th>Class</th>
@@ -538,23 +563,26 @@ async function loadRegisteredClasses() {
                     <th>Subject Names</th>
                 </tr>
             </thead><tbody>`;
+
         data.data.forEach(row => {
             html += `<tr>
-                <td><strong>${row.class_name ?? ''} ${row.arm_name ?? ''}</strong></td>
+                <td class="fw-medium">${row.class_name ?? ''} ${row.arm_name ?? ''}</td>
                 <td>${row.session_name ?? ''}</td>
-                <td>${row.term_name ?? ''}</td>
-                <td><span class="badge bg-primary rounded-pill px-3">${row.student_count}</span></td>
-                <td><span class="badge bg-secondary rounded-pill px-3">${row.subject_count}</span></td>
-                <td><small class="text-primary">${row.teachers ?? '—'}</small></td>
-                <td><small class="text-muted">${row.subjects ?? ''}</small></td>
+                <td><span class="badge bg-warning-subtle text-warning">${row.term_name ?? ''}</span></td>
+                <td><span class="badge bg-primary">${row.student_count}</span></td>
+                <td><span class="badge bg-secondary">${row.subject_count}</span></td>
+                <td><small class="text-muted">${row.teachers ?? '—'}</small></td>
+                <td><small class="text-primary">${row.subjects ?? ''}</small></td>
             </tr>`;
         });
+
         html += `</tbody></table></div>`;
         container.innerHTML = html;
     } catch (err) {
-        container.innerHTML = `<div class="alert alert-danger mx-3">Failed to load registered classes: ${err.message}</div>`;
+        container.innerHTML = `<div class="alert alert-danger mx-4">Failed to load registered classes: ${err.message}</div>`;
     }
 }
+
 // ============================================================================
 // ARCHIVE MODAL — OPEN
 // ============================================================================
@@ -570,8 +598,9 @@ function openArchivedModal() {
     modal.show();
     loadArchivedPage(1);
 }
+
 // ============================================================================
-// ARCHIVE MODAL — LOAD PAGE (now supports per-page selector + server-side search)
+// ARCHIVE MODAL — LOAD PAGE (UPDATED with per-page support)
 // ============================================================================
 async function loadArchivedPage(page) {
     archiveCurrentPage = page;
@@ -579,7 +608,8 @@ async function loadArchivedPage(page) {
     const sessionId = document.getElementById('idsession').value;
     const termId = document.getElementById('archiveTermFilter').value;
     const search = document.getElementById('archiveSearch').value.trim();
-    const perPage = parseInt(document.getElementById('archivePerPage')?.value) || 50;
+    const perPageEl = document.getElementById('archivePerPage');
+    const perPage = perPageEl ? parseInt(perPageEl.value) : 50;
 
     if (classId === 'ALL' || sessionId === 'ALL') return;
 
@@ -604,12 +634,13 @@ async function loadArchivedPage(page) {
             headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
         });
         const data = await res.json();
+
         if (!data.success) {
             tbody.innerHTML = `<tr><td colspan="9" class="text-center text-danger py-3">${data.message}</td></tr>`;
             return;
         }
         archiveMeta = data.meta;
-        renderArchiveRows(data.data);           // ← server already filtered
+        renderArchiveRows(data.data, search);
         renderArchivePagination(data.meta);
         updateArchiveMeta(data.meta);
     } catch (err) {
@@ -618,11 +649,20 @@ async function loadArchivedPage(page) {
         spinner.classList.add('d-none');
     }
 }
+
 // ============================================================================
-// ARCHIVE MODAL — RENDER ROWS (client-side filter removed — server handles search)
+// ARCHIVE MODAL — RENDER ROWS
 // ============================================================================
-function renderArchiveRows(rows) {
+function renderArchiveRows(rows, search) {
     const tbody = document.getElementById('archiveTableBody');
+    if (search) {
+        const q = search.toLowerCase();
+        rows = rows.filter(r =>
+            (r.firstname + ' ' + r.lastname).toLowerCase().includes(q) ||
+            (r.admissionno ?? '').toLowerCase().includes(q) ||
+            (r.subjectname ?? '').toLowerCase().includes(q)
+        );
+    }
     if (!rows.length) {
         tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">No archived records found.</td></tr>`;
         updateArchiveToolbar(false);
@@ -673,7 +713,7 @@ function renderArchiveRows(rows) {
         </tr>`;
     });
     tbody.innerHTML = html;
-    // Check-all binding
+
     document.getElementById('archiveCheckAll').checked = false;
     document.getElementById('archiveCheckAll').addEventListener('change', function () {
         document.querySelectorAll('.archive-chk').forEach(cb => cb.checked = this.checked);
@@ -683,6 +723,7 @@ function renderArchiveRows(rows) {
         cb.addEventListener('change', toggleArchiveBatchButtons);
     });
 }
+
 // ============================================================================
 // ARCHIVE — PAGINATION RENDER
 // ============================================================================
@@ -690,7 +731,6 @@ function renderArchivePagination(meta) {
     const container = document.getElementById('archivePagination');
     if (!meta || meta.last_page <= 1) { container.innerHTML = ''; return; }
     let html = '';
-    // Previous
     html += `<button class="btn btn-sm btn-outline-secondary ${meta.current_page === 1 ? 'disabled' : ''}"
         onclick="loadArchivedPage(${meta.current_page - 1})">‹</button>`;
     const delta = 3;
@@ -702,11 +742,11 @@ function renderArchivePagination(meta) {
             html += `<span class="btn btn-sm btn-outline-secondary disabled">…</span>`;
         }
     }
-    // Next
     html += `<button class="btn btn-sm btn-outline-secondary ${meta.current_page === meta.last_page ? 'disabled' : ''}"
         onclick="loadArchivedPage(${meta.current_page + 1})">›</button>`;
     container.innerHTML = html;
 }
+
 function updateArchiveMeta(meta) {
     const el = document.getElementById('archiveMeta');
     if (!meta) { el.textContent = ''; return; }
@@ -714,14 +754,17 @@ function updateArchiveMeta(meta) {
     const to = Math.min(meta.current_page * meta.per_page, meta.total);
     el.textContent = `Showing ${from}–${to} of ${meta.total} records`;
 }
+
 function updateArchiveToolbar(hasRows) {
     toggleArchiveBatchButtons();
 }
+
 function toggleArchiveBatchButtons() {
     const anyChecked = document.querySelectorAll('.archive-chk:checked').length > 0;
     document.getElementById('restoreSelectedBtn')?.classList.toggle('d-none', !anyChecked);
     document.getElementById('deleteSelectedBtn')?.classList.toggle('d-none', !anyChecked);
 }
+
 // ============================================================================
 // ARCHIVE — SEARCH (debounced)
 // ============================================================================
@@ -730,6 +773,7 @@ document.getElementById('archiveSearch')?.addEventListener('input', function () 
     archiveSearchTimer = setTimeout(() => loadArchivedPage(1), 400);
 });
 document.getElementById('archiveTermFilter')?.addEventListener('change', () => loadArchivedPage(1));
+
 // ============================================================================
 // RESTORE — SINGLE
 // ============================================================================
@@ -747,6 +791,7 @@ async function restoreSingle(archiveId) {
         spinner.classList.add('d-none');
     }
 }
+
 // ============================================================================
 // RESTORE — BATCH
 // ============================================================================
@@ -766,6 +811,7 @@ async function restoreSelected() {
         spinner.classList.add('d-none');
     }
 }
+
 // ============================================================================
 // PERMANENT DELETE — SINGLE
 // ============================================================================
@@ -786,6 +832,7 @@ async function permanentDeleteSingle(archiveId, btn) {
         btn.disabled = false;
     }
 }
+
 // ============================================================================
 // PERMANENT DELETE — BATCH
 // ============================================================================
@@ -805,6 +852,7 @@ async function permanentDeleteSelected() {
         spinner.classList.add('d-none');
     }
 }
+
 function updateArchiveEmpty() {
     const tbody = document.getElementById('archiveTableBody');
     if (!tbody.querySelector('tr[data-archive-id]')) {
@@ -813,12 +861,14 @@ function updateArchiveEmpty() {
         document.getElementById('deleteSelectedBtn')?.classList.add('d-none');
     }
 }
+
 // ============================================================================
 // SPINNER HELPER
 // ============================================================================
 function setSpinner(on) {
     document.getElementById('register-loading-spinner')?.classList.toggle('d-none', !on);
 }
+
 // ============================================================================
 // FETCH HELPER
 // ============================================================================
@@ -838,29 +888,33 @@ async function apiFetch(url, method, body) {
     }
     return data;
 }
+
 // ============================================================================
-// TOAST HELPER (with big emoji feedback as requested)
+// TOAST HELPER (UPDATED with big smiling / unhappy emojis)
 // ============================================================================
 function showToast(message, type = 'info') {
-    // Remove existing toasts
     document.querySelectorAll('.sop-toast').forEach(t => t.remove());
-    const colorMap = { success: 'bg-success', danger: 'bg-danger', warning: 'bg-warning text-dark', info: 'bg-info text-dark' };
+    const emojiMap = {
+        success: '😊',
+        danger: '😞',
+        warning: '😕',
+        info: 'ℹ️'
+    };
+    const emoji = emojiMap[type] || 'ℹ️';
+    const colorMap = {
+        success: 'bg-success',
+        danger: 'bg-danger',
+        warning: 'bg-warning text-dark',
+        info: 'bg-info text-dark'
+    };
     const bg = colorMap[type] || 'bg-secondary';
-
-    // Emoji feedback
-    let emoji = '';
-    if (type === 'success') emoji = '😊 ';
-    else if (type === 'danger') emoji = '😢 ';
-    else if (type === 'warning') emoji = '😟 ';
-    else if (type === 'info') emoji = 'ℹ️ ';
-
     const toast = document.createElement('div');
     toast.className = `toast sop-toast align-items-center text-white border-0 show ${bg}`;
-    toast.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:9999;min-width:320px;max-width:460px;';
+    toast.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:9999;min-width:320px;max-width:420px;';
     toast.setAttribute('role', 'alert');
     toast.innerHTML = `
         <div class="d-flex">
-            <div class="toast-body">${emoji}${message}</div>
+            <div class="toast-body fs-5">${emoji} ${message}</div>
             <button type="button" class="btn-close btn-close-white me-2 m-auto" onclick="this.closest('.toast').remove()"></button>
         </div>`;
     document.body.appendChild(toast);
