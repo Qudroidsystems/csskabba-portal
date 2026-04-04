@@ -29,13 +29,6 @@
                 </div>
             @endif
 
-            @if (session('status'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('status') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
-
             <div id="subjectList">
                 {{-- ── Class & Session Filter ── --}}
                 <div class="row">
@@ -218,38 +211,44 @@
                 </div>
 
                 {{-- ══════════════════════════════════════════════════════════ --}}
-                {{-- MODAL: Registered Classes                                  --}}
+                {{-- MODAL: Registered Classes (Wider & Improved UI)              --}}
                 {{-- ══════════════════════════════════════════════════════════ --}}
                 <div class="modal fade" id="registeredClassesModal" tabindex="-1" aria-labelledby="registeredClassesModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-lg">
+                    <div class="modal-dialog modal-xl modal-dialog-scrollable">
                         <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title" id="registeredClassesModalLabel">Registered Classes</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <div class="modal-header bg-primary text-white">
+                                <h5 class="modal-title" id="registeredClassesModalLabel">
+                                    <i class="ri-graduation-cap-line me-2"></i>Registered Classes Overview
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
-                            <div class="modal-body">
+                            <div class="modal-body p-0">
                                 <div id="registeredClassesContent">
-                                    <div class="text-center text-muted py-4">
-                                        <i class="ri-loader-4-line ri-2x mb-2"></i>
-                                        <p>Loading...</p>
+                                    <div class="text-center py-5">
+                                        <div class="spinner-border text-primary mb-3" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                        <p class="text-muted">Loading registered classes...</p>
                                     </div>
                                 </div>
                             </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <div class="modal-footer bg-light">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    <i class="ri-close-line me-1"></i>Close
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {{-- ══════════════════════════════════════════════════════════ --}}
-                {{-- MODAL: Unregistered History (Archive)                      --}}
+                {{-- MODAL: Unregistered History (Archive with Per-Page Selector) --}}
                 {{-- ══════════════════════════════════════════════════════════ --}}
                 <div class="modal fade" id="archivedModal" tabindex="-1" aria-labelledby="archivedModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-xl modal-dialog-scrollable">
                         <div class="modal-content">
-                            <div class="modal-header bg-warning-subtle">
-                                <h5 class="modal-title" id="archivedModalLabel">
+                            <div class="modal-header bg-warning">
+                                <h5 class="modal-title text-dark" id="archivedModalLabel">
                                     <i class="ri-archive-line me-2"></i>Unregistered History
                                 </h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -257,55 +256,72 @@
                             <div class="modal-body p-0">
 
                                 {{-- Toolbar --}}
-                                <div class="p-3 border-bottom bg-light d-flex align-items-center flex-wrap gap-2">
-                                    <div class="flex-grow-1">
-                                        <input type="text" class="form-control form-control-sm" id="archiveSearch"
-                                            placeholder="Search student name or admission no..." style="max-width:280px;">
-                                    </div>
-                                    <div class="d-flex align-items-center gap-2 flex-wrap">
-                                        {{-- Term filter (populated from schoolterms) --}}
-                                        <select class="form-select form-select-sm" id="archiveTermFilter" style="width:auto;">
-                                            <option value="">All Terms</option>
-                                            @foreach($schoolterms as $term)
-                                                <option value="{{ $term->id }}">{{ $term->term }}</option>
-                                            @endforeach
-                                        </select>
-                                        <button class="btn btn-sm btn-outline-secondary" onclick="loadArchivedPage(1);">
-                                            <i class="ri-refresh-line"></i> Refresh
-                                        </button>
-                                        <button class="btn btn-sm btn-success d-none" id="restoreSelectedBtn" onclick="restoreSelected();">
-                                            <i class="ri-refresh-line me-1"></i> Restore Selected
-                                        </button>
-                                        <button class="btn btn-sm btn-danger d-none" id="deleteSelectedBtn" onclick="permanentDeleteSelected();">
-                                            <i class="ri-delete-bin-line me-1"></i> Delete Selected
-                                        </button>
-                                        <div class="spinner-border spinner-border-sm text-warning d-none" id="archiveSpinner" role="status"></div>
+                                <div class="p-3 border-bottom bg-light">
+                                    <div class="row g-2 align-items-center">
+                                        <div class="col-md-4">
+                                            <div class="search-box">
+                                                <input type="text" class="form-control" id="archiveSearch"
+                                                    placeholder="Search student name, admission no or subject...">
+                                                <i class="ri-search-line search-icon"></i>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <select class="form-select" id="archiveTermFilter">
+                                                <option value="">All Terms</option>
+                                                @foreach($schoolterms as $term)
+                                                    <option value="{{ $term->id }}">{{ $term->term }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <select class="form-select" id="archivePerPage">
+                                                <option value="20">20 per page</option>
+                                                <option value="50" selected>50 per page</option>
+                                                <option value="100">100 per page</option>
+                                                <option value="150">150 per page</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="d-flex gap-2 justify-content-end">
+                                                <button class="btn btn-sm btn-outline-secondary" onclick="loadArchivedPage(1);">
+                                                    <i class="ri-refresh-line me-1"></i> Refresh
+                                                </button>
+                                                <button class="btn btn-sm btn-success d-none" id="restoreSelectedBtn" onclick="restoreSelected();">
+                                                    <i class="ri-restart-line me-1"></i> Restore Selected
+                                                </button>
+                                                <button class="btn btn-sm btn-danger d-none" id="deleteSelectedBtn" onclick="permanentDeleteSelected();">
+                                                    <i class="ri-delete-bin-line me-1"></i> Delete Selected
+                                                </button>
+                                                <div class="spinner-border spinner-border-sm text-warning d-none" id="archiveSpinner" role="status"></div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
                                 {{-- Table --}}
                                 <div class="table-responsive">
-                                    <table class="table table-sm table-hover align-middle mb-0">
+                                    <table class="table table-hover align-middle mb-0">
                                         <thead class="table-warning sticky-top">
                                             <tr>
-                                                <th style="width:36px;">
+                                                <th style="width: 40px;">
                                                     <div class="form-check mb-0">
                                                         <input class="form-check-input" type="checkbox" id="archiveCheckAll">
                                                     </div>
                                                 </th>
                                                 <th>Student</th>
-                                                <th>Adm. No</th>
+                                                <th>Admission No</th>
                                                 <th>Subject</th>
                                                 <th>Teacher</th>
                                                 <th>Term</th>
-                                                <th>Unregistered</th>
-                                                <th>By</th>
-                                                <th style="width:120px;">Actions</th>
+                                                <th>Unregistered Date</th>
+                                                <th>Unregistered By</th>
+                                                <th style="width: 100px;">Actions</th>
                                             </tr>
                                         </thead>
                                         <tbody id="archiveTableBody">
                                             <tr>
-                                                <td colspan="9" class="text-center text-muted py-4">
+                                                <td colspan="9" class="text-center text-muted py-5">
+                                                    <i class="ri-inbox-line ri-2x mb-2 d-block"></i>
                                                     Select a class and session first, then open this panel.
                                                 </td>
                                             </tr>
@@ -314,7 +330,7 @@
                                 </div>
 
                                 {{-- Pagination --}}
-                                <div class="d-flex justify-content-between align-items-center p-3 border-top" id="archivePaginationWrap">
+                                <div class="d-flex justify-content-between align-items-center p-3 border-top bg-light">
                                     <small class="text-muted" id="archiveMeta"></small>
                                     <div id="archivePagination" class="d-flex gap-1"></div>
                                 </div>
@@ -324,7 +340,9 @@
                                     <i class="ri-information-line me-1"></i>
                                     Restored records are re-registered. Permanently deleted records cannot be recovered.
                                 </small>
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    <i class="ri-close-line me-1"></i>Close
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -352,6 +370,83 @@
 </div>
 @endsection
 
+<style>
+/* Modal enhancements */
+.modal-xl {
+    --bs-modal-width: 1200px;
+}
+
+.modal-header .btn-close {
+    filter: brightness(0) invert(1);
+}
+
+.sticky-top {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+/* Table enhancements */
+.table th {
+    font-weight: 600;
+    border-bottom-width: 2px;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+    cursor: pointer;
+}
+
+/* Badge styles */
+.badge {
+    font-weight: 500;
+    padding: 0.35em 0.65em;
+}
+
+.bg-primary-subtle {
+    background-color: rgba(13, 110, 253, 0.1);
+    color: #0d6efd;
+}
+
+.bg-info-subtle {
+    background-color: rgba(13, 202, 240, 0.1);
+    color: #0dcaf0;
+}
+
+.bg-warning-subtle {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+}
+
+/* Search box enhancement */
+.search-box {
+    position: relative;
+}
+
+.search-box .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+}
+
+.search-box .form-control {
+    padding-left: 38px;
+}
+
+/* Button group enhancements */
+.btn-group-sm > .btn {
+    padding: 0.25rem 0.5rem;
+}
+
+/* Animation for row deletion */
+tr {
+    transition: opacity 0.3s ease;
+}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
 // ============================================================================
@@ -370,8 +465,74 @@ const CSRF = '{{ csrf_token() }}';
 
 // Archive state
 let archiveCurrentPage = 1;
-let archiveMeta        = {};
+let archivePerPage = 50;
+let archiveMeta = {};
 let archiveSearchTimer = null;
+
+// ============================================================================
+// SWEETALERT HELPER WITH EMOJIS
+// ============================================================================
+function showSweetAlert(type, title, message, emoji = null) {
+    const config = {
+        icon: type,
+        title: title,
+        text: message,
+        confirmButtonColor: '#3085d6',
+        confirmButtonText: 'OK'
+    };
+
+    // Add emoji to title if provided
+    if (emoji) {
+        config.title = `${emoji} ${title}`;
+    }
+
+    // Customize based on type
+    if (type === 'success') {
+        config.confirmButtonColor = '#28a745';
+        if (!emoji) config.title = '😊 ' + title;
+    } else if (type === 'error') {
+        config.confirmButtonColor = '#dc3545';
+        if (!emoji) config.title = '😞 ' + title;
+    } else if (type === 'warning') {
+        config.confirmButtonColor = '#ffc107';
+        if (!emoji) config.title = '⚠️ ' + title;
+    } else if (type === 'info') {
+        if (!emoji) config.title = 'ℹ️ ' + title;
+    }
+
+    return Swal.fire(config);
+}
+
+function showSuccessAlert(message, emoji = '😊') {
+    return showSweetAlert('success', 'Success!', message, emoji);
+}
+
+function showErrorAlert(message, emoji = '😞') {
+    return showSweetAlert('error', 'Error!', message, emoji);
+}
+
+function showWarningAlert(message, emoji = '⚠️') {
+    return showSweetAlert('warning', 'Warning!', message, emoji);
+}
+
+function showInfoAlert(message, emoji = 'ℹ️') {
+    return showSweetAlert('info', 'Information', message, emoji);
+}
+
+// Confirmation dialog
+async function showConfirmDialog(title, message, confirmText = 'Yes, proceed!') {
+    const result = await Swal.fire({
+        title: title,
+        text: message,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: confirmText,
+        cancelButtonText: 'Cancel'
+    });
+    return result.isConfirmed;
+}
 
 // ============================================================================
 // IMAGE MODAL
@@ -389,6 +550,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Load registered classes when that modal opens
     document.getElementById('registeredClassesModal')?.addEventListener('show.bs.modal', loadRegisteredClasses);
+
+    // Per-page change listener
+    document.getElementById('archivePerPage')?.addEventListener('change', function() {
+        loadArchivedPage(1);
+    });
 });
 
 // ============================================================================
@@ -479,11 +645,26 @@ async function registerSelectedStudentsBatch() {
     const subjectClasses = getSelectedSubjectClasses();
     const sessionId      = document.getElementById('idsession').value;
 
-    if (!studentIds.length) return showToast('Please select at least one student.', 'warning');
-    if (!subjectClasses.length) return showToast('Please select at least one subject.', 'warning');
-    if (sessionId === 'ALL') return showToast('Please select a session.', 'warning');
+    if (!studentIds.length) {
+        await showWarningAlert('Please select at least one student.', '📝');
+        return;
+    }
+    if (!subjectClasses.length) {
+        await showWarningAlert('Please select at least one subject.', '📚');
+        return;
+    }
+    if (sessionId === 'ALL') {
+        await showWarningAlert('Please select a session.', '📅');
+        return;
+    }
 
-    if (!confirm(`Register ${studentIds.length} student(s) for ${subjectClasses.length} subject(s)?`)) return;
+    const confirmed = await showConfirmDialog(
+        'Confirm Registration',
+        `Register ${studentIds.length} student(s) for ${subjectClasses.length} subject(s)?`,
+        'Yes, Register!'
+    );
+
+    if (!confirmed) return;
 
     setSpinner(true);
 
@@ -494,9 +675,15 @@ async function registerSelectedStudentsBatch() {
             sessionid     : parseInt(sessionId),
         });
 
-        showToast(res.message || 'Registration complete.', res.success ? 'success' : 'warning');
+        if (res.success) {
+            await showSuccessAlert(res.message || 'Registration completed successfully!', '🎉');
+            // Refresh the page to show updated data
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            await showErrorAlert(res.message || 'Registration failed.', '😞');
+        }
     } catch (err) {
-        showToast('Registration failed: ' + err.message, 'danger');
+        await showErrorAlert('Registration failed: ' + err.message, '😭');
     } finally {
         setSpinner(false);
     }
@@ -510,11 +697,26 @@ async function unregisterSelectedStudentsBatch() {
     const subjectClasses = getSelectedSubjectClasses();
     const sessionId      = document.getElementById('idsession').value;
 
-    if (!studentIds.length) return showToast('Please select at least one student.', 'warning');
-    if (!subjectClasses.length) return showToast('Please select at least one subject.', 'warning');
-    if (sessionId === 'ALL') return showToast('Please select a session.', 'warning');
+    if (!studentIds.length) {
+        await showWarningAlert('Please select at least one student.', '📝');
+        return;
+    }
+    if (!subjectClasses.length) {
+        await showWarningAlert('Please select at least one subject.', '📚');
+        return;
+    }
+    if (sessionId === 'ALL') {
+        await showWarningAlert('Please select a session.', '📅');
+        return;
+    }
 
-    if (!confirm(`Unregister ${studentIds.length} student(s) from ${subjectClasses.length} subject(s)?\n\nThis will be saved to the unregistration history and can be restored.`)) return;
+    const confirmed = await showConfirmDialog(
+        '⚠️ Confirm Unregistration',
+        `Unregister ${studentIds.length} student(s) from ${subjectClasses.length} subject(s)?\n\nThis will be saved to the unregistration history and can be restored.`,
+        'Yes, Unregister!'
+    );
+
+    if (!confirmed) return;
 
     setSpinner(true);
 
@@ -525,12 +727,14 @@ async function unregisterSelectedStudentsBatch() {
             sessionid     : parseInt(sessionId),
         });
 
-        showToast(res.message || 'Unregistration complete.', res.success ? 'success' : 'warning');
-        if (res.success || res.success_count > 0) {
-            showToast('Records saved to Unregistered History — you can restore them anytime.', 'info');
+        if (res.success) {
+            await showSuccessAlert(res.message || 'Unregistration completed successfully!', '🗑️');
+            setTimeout(() => window.location.reload(), 1500);
+        } else {
+            await showErrorAlert(res.message || 'Unregistration failed.', '😞');
         }
     } catch (err) {
-        showToast('Unregistration failed: ' + err.message, 'danger');
+        await showErrorAlert('Unregistration failed: ' + err.message, '😭');
     } finally {
         setSpinner(false);
     }
@@ -544,7 +748,12 @@ async function loadRegisteredClasses() {
     const sessionId = document.getElementById('idsession').value;
     const container = document.getElementById('registeredClassesContent');
 
-    container.innerHTML = `<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>`;
+    container.innerHTML = `<div class="text-center py-5">
+        <div class="spinner-border text-primary mb-3" role="status">
+            <span class="visually-hidden">Loading...</span>
+        </div>
+        <p class="text-muted">Loading registered classes...</p>
+    </div>`;
 
     try {
         const params = new URLSearchParams({ class_id: classId, session_id: sessionId });
@@ -554,31 +763,57 @@ async function loadRegisteredClasses() {
         const data = await res.json();
 
         if (!data.success || !data.data.length) {
-            container.innerHTML = `<p class="text-muted text-center py-3">No registered classes found for the selected filters.</p>`;
+            container.innerHTML = `<div class="text-center py-5">
+                <i class="ri-inbox-line ri-3x text-muted mb-3 d-block"></i>
+                <p class="text-muted">No registered classes found for the selected filters.</p>
+            </div>`;
             return;
         }
 
-        let html = `<div class="table-responsive"><table class="table table-bordered table-sm">
-            <thead class="table-light">
-                <tr><th>Class</th><th>Session</th><th>Term</th><th>Students</th><th>Subjects</th><th>Subject Names</th></tr>
-            </thead><tbody>`;
+        let html = `<div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-primary">
+                    <tr>
+                        <th>Class</th>
+                        <th>Session</th>
+                        <th>Term</th>
+                        <th class="text-center">Students</th>
+                        <th class="text-center">Subjects</th>
+                        <th>Subjects List</th>
+                        <th>Teachers</th>
+                    </tr>
+                </thead>
+                <tbody>`;
 
         data.data.forEach(row => {
             html += `<tr>
-                <td>${row.class_name ?? ''} ${row.arm_name ?? ''}</td>
-                <td>${row.session_name ?? ''}</td>
-                <td>${row.term_name ?? ''}</td>
-                <td><span class="badge bg-primary">${row.student_count}</span></td>
-                <td><span class="badge bg-secondary">${row.subject_count}</span></td>
-                <td><small>${row.subjects ?? ''}</small></td>
+                <td class="fw-medium">
+                    <i class="ri-group-line me-1 text-primary"></i>
+                    ${escapeHtml(row.class_name ?? '')} ${escapeHtml(row.arm_name ?? '')}
+                </td>
+                <td>${escapeHtml(row.session_name ?? '')}</td>
+                <td><span class="badge bg-info-subtle text-info">${escapeHtml(row.term_name ?? '')}</span></td>
+                <td class="text-center"><span class="badge bg-primary rounded-pill">${row.student_count}</span></td>
+                <td class="text-center"><span class="badge bg-secondary rounded-pill">${row.subject_count}</span></td>
+                <td><small class="text-muted">${escapeHtml(row.subjects ?? 'None')}</small></td>
+                <td><small><i class="ri-user-star-line me-1 text-warning"></i>${escapeHtml(row.teachers ?? 'None')}</small></td>
             </tr>`;
         });
 
-        html += `</tbody></table></div>`;
+        html += `</tbody>
+            </table>
+        </div>
+        <div class="p-3 bg-light border-top">
+            <small class="text-muted">
+                <i class="ri-information-line me-1"></i>
+                Total ${data.data.length} class(es) with registered subjects
+            </small>
+        </div>`;
+
         container.innerHTML = html;
 
     } catch (err) {
-        container.innerHTML = `<div class="alert alert-danger">Failed to load: ${err.message}</div>`;
+        container.innerHTML = `<div class="alert alert-danger m-3">Failed to load: ${err.message}</div>`;
     }
 }
 
@@ -590,11 +825,12 @@ function openArchivedModal() {
     const sessionId = document.getElementById('idsession').value;
 
     if (classId === 'ALL' || sessionId === 'ALL') {
-        showToast('Please select a class and session first.', 'warning');
+        showWarningAlert('Please select a class and session first.', '🔍');
         return;
     }
 
     archiveCurrentPage = 1;
+    archivePerPage = parseInt(document.getElementById('archivePerPage').value);
     const modal = new bootstrap.Modal(document.getElementById('archivedModal'));
     modal.show();
     loadArchivedPage(1);
@@ -605,6 +841,7 @@ function openArchivedModal() {
 // ============================================================================
 async function loadArchivedPage(page) {
     archiveCurrentPage = page;
+    archivePerPage = parseInt(document.getElementById('archivePerPage').value);
 
     const classId   = document.getElementById('idclass').value;
     const sessionId = document.getElementById('idsession').value;
@@ -617,7 +854,7 @@ async function loadArchivedPage(page) {
     const tbody   = document.getElementById('archiveTableBody');
 
     spinner.classList.remove('d-none');
-    tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4">
+    tbody.innerHTML = `<tr><td colspan="9" class="text-center py-5">
         <div class="spinner-border spinner-border-sm text-warning me-2"></div> Loading...
     </td></tr>`;
 
@@ -626,10 +863,10 @@ async function loadArchivedPage(page) {
             class_id  : classId,
             session_id: sessionId,
             page,
-            per_page  : 50,
+            per_page  : archivePerPage,
         });
         if (termId)  params.set('term_id', termId);
-        if (search)  params.set('search', search);  // handled server-side if you add it; filtered client-side below
+        if (search)  params.set('search', search);
 
         const res  = await fetch(ROUTES.getArchived + '?' + params.toString(), {
             headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
@@ -642,7 +879,7 @@ async function loadArchivedPage(page) {
         }
 
         archiveMeta = data.meta;
-        renderArchiveRows(data.data, search);
+        renderArchiveRows(data.data);
         renderArchivePagination(data.meta);
         updateArchiveMeta(data.meta);
 
@@ -656,21 +893,14 @@ async function loadArchivedPage(page) {
 // ============================================================================
 // ARCHIVE MODAL — RENDER ROWS
 // ============================================================================
-function renderArchiveRows(rows, search) {
+function renderArchiveRows(rows) {
     const tbody = document.getElementById('archiveTableBody');
 
-    // Client-side search filter
-    if (search) {
-        const q = search.toLowerCase();
-        rows = rows.filter(r =>
-            (r.firstname + ' ' + r.lastname).toLowerCase().includes(q) ||
-            (r.admissionno ?? '').toLowerCase().includes(q) ||
-            (r.subjectname ?? '').toLowerCase().includes(q)
-        );
-    }
-
     if (!rows.length) {
-        tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">No archived records found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-5">
+            <i class="ri-inbox-line ri-2x mb-2 d-block"></i>
+            No archived records found.
+        </td></tr>`;
         updateArchiveToolbar(false);
         return;
     }
@@ -681,7 +911,7 @@ function renderArchiveRows(rows, search) {
     rows.forEach(row => {
         const studentName = `${row.lastname ?? ''} ${row.firstname ?? ''} ${row.othername ?? ''}`.trim();
         const unregDate   = row.unregistered_at
-            ? new Date(row.unregistered_at).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })
+            ? new Date(row.unregistered_at).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })
             : '—';
 
         html += `<tr data-archive-id="${row.archive_id}">
@@ -693,27 +923,30 @@ function renderArchiveRows(rows, search) {
             <td>
                 <div class="d-flex align-items-center gap-2">
                     <img src="{{ asset('storage/student_avatars/') }}/${row.picture ? row.picture.split('/').pop() : 'unnamed.jpg'}"
-                         class="rounded-circle" style="width:32px;height:32px;object-fit:cover;"
+                         class="rounded-circle" style="width:36px;height:36px;object-fit:cover;"
                          onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'">
-                    <span class="fw-medium">${studentName}</span>
+                    <div>
+                        <div class="fw-medium">${escapeHtml(studentName)}</div>
+                        <small class="text-muted">${row.gender || 'N/A'}</small>
+                    </div>
                 </div>
             </td>
-            <td>${row.admissionno ?? '—'}</td>
+            <td><code>${escapeHtml(row.admissionno ?? '—')}</code></td>
             <td>
-                <span class="badge bg-primary-subtle text-primary">${row.subjectname ?? '—'}</span>
-                <small class="text-muted d-block">${row.subjectcode ?? ''}</small>
+                <span class="badge bg-primary-subtle text-primary">${escapeHtml(row.subjectname ?? '—')}</span>
+                <small class="text-muted d-block">${escapeHtml(row.subjectcode ?? '')}</small>
             </td>
-            <td>${row.staffname ?? '—'}</td>
-            <td><span class="badge bg-warning-subtle text-warning-emphasis">${row.termname ?? '—'}</span></td>
+            <td>${escapeHtml(row.staffname ?? '—')}</td>
+            <td><span class="badge bg-info-subtle text-info">${escapeHtml(row.termname ?? '—')}</span></td>
             <td><small>${unregDate}</small></td>
-            <td><small>${row.unregistered_by_name ?? '—'}</small></td>
+            <td><small>${escapeHtml(row.unregistered_by_name ?? '—')}</small></td>
             <td>
-                <div class="d-flex gap-1">
-                    <button class="btn btn-xs btn-success py-0 px-2" title="Restore this registration"
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-success" title="Restore this registration"
                         onclick="restoreSingle(${row.archive_id})">
                         <i class="ri-refresh-line"></i>
                     </button>
-                    <button class="btn btn-xs btn-danger py-0 px-2" title="Permanently delete"
+                    <button class="btn btn-outline-danger" title="Permanently delete"
                         onclick="permanentDeleteSingle(${row.archive_id}, this)">
                         <i class="ri-delete-bin-line"></i>
                     </button>
@@ -724,15 +957,23 @@ function renderArchiveRows(rows, search) {
 
     tbody.innerHTML = html;
 
-    // Check-all binding inside modal
-    document.getElementById('archiveCheckAll').checked = false;
-    document.getElementById('archiveCheckAll').addEventListener('change', function () {
-        document.querySelectorAll('.archive-chk').forEach(cb => cb.checked = this.checked);
-        toggleArchiveBatchButtons();
-    });
+    // Re-bind check-all event
+    const checkAll = document.getElementById('archiveCheckAll');
+    if (checkAll) {
+        checkAll.checked = false;
+        checkAll.removeEventListener('change', handleArchiveCheckAll);
+        checkAll.addEventListener('change', handleArchiveCheckAll);
+    }
+
     document.querySelectorAll('.archive-chk').forEach(cb => {
+        cb.removeEventListener('change', toggleArchiveBatchButtons);
         cb.addEventListener('change', toggleArchiveBatchButtons);
     });
+}
+
+function handleArchiveCheckAll(e) {
+    document.querySelectorAll('.archive-chk').forEach(cb => cb.checked = e.target.checked);
+    toggleArchiveBatchButtons();
 }
 
 // ============================================================================
@@ -740,27 +981,57 @@ function renderArchiveRows(rows, search) {
 // ============================================================================
 function renderArchivePagination(meta) {
     const container = document.getElementById('archivePagination');
-    if (!meta || meta.last_page <= 1) { container.innerHTML = ''; return; }
+    if (!meta || meta.last_page <= 1) {
+        container.innerHTML = '';
+        return;
+    }
 
     let html = '';
+
+    // First page
+    html += `<button class="btn btn-sm btn-outline-secondary ${meta.current_page === 1 ? 'disabled' : ''}"
+        onclick="loadArchivedPage(1)">«</button>`;
+
     // Previous
     html += `<button class="btn btn-sm btn-outline-secondary ${meta.current_page === 1 ? 'disabled' : ''}"
         onclick="loadArchivedPage(${meta.current_page - 1})">‹</button>`;
 
-    // Page numbers (show up to 7 around current)
-    const delta = 3;
-    for (let p = 1; p <= meta.last_page; p++) {
-        if (p === 1 || p === meta.last_page || (p >= meta.current_page - delta && p <= meta.current_page + delta)) {
+    // Page numbers
+    const delta = 2;
+    const range = [];
+    for (let i = 1; i <= meta.last_page; i++) {
+        if (i === 1 || i === meta.last_page ||
+            (i >= meta.current_page - delta && i <= meta.current_page + delta)) {
+            range.push(i);
+        } else if (i === meta.current_page - delta - 1 || i === meta.current_page + delta + 1) {
+            range.push('...');
+        }
+    }
+
+    // Remove duplicates
+    const uniqueRange = [];
+    for (let i = 0; i < range.length; i++) {
+        if (range[i] !== range[i - 1]) {
+            uniqueRange.push(range[i]);
+        }
+    }
+
+    for (const p of uniqueRange) {
+        if (p === '...') {
+            html += `<span class="btn btn-sm btn-outline-secondary disabled">…</span>`;
+        } else {
             html += `<button class="btn btn-sm ${p === meta.current_page ? 'btn-warning' : 'btn-outline-secondary'}"
                 onclick="loadArchivedPage(${p})">${p}</button>`;
-        } else if (p === meta.current_page - delta - 1 || p === meta.current_page + delta + 1) {
-            html += `<span class="btn btn-sm btn-outline-secondary disabled">…</span>`;
         }
     }
 
     // Next
     html += `<button class="btn btn-sm btn-outline-secondary ${meta.current_page === meta.last_page ? 'disabled' : ''}"
         onclick="loadArchivedPage(${meta.current_page + 1})">›</button>`;
+
+    // Last page
+    html += `<button class="btn btn-sm btn-outline-secondary ${meta.current_page === meta.last_page ? 'disabled' : ''}"
+        onclick="loadArchivedPage(${meta.last_page})">»</button>`;
 
     container.innerHTML = html;
 }
@@ -774,7 +1045,6 @@ function updateArchiveMeta(meta) {
 }
 
 function updateArchiveToolbar(hasRows) {
-    // batch buttons are toggled by checkbox state; just ensure they start hidden
     toggleArchiveBatchButtons();
 }
 
@@ -798,17 +1068,28 @@ document.getElementById('archiveTermFilter')?.addEventListener('change', () => l
 // RESTORE — SINGLE
 // ============================================================================
 async function restoreSingle(archiveId) {
-    if (!confirm('Restore this registration? The student will be re-registered for this subject.')) return;
+    const confirmed = await showConfirmDialog(
+        'Restore Registration',
+        'Restore this registration? The student will be re-registered for this subject.',
+        'Yes, Restore!'
+    );
+
+    if (!confirmed) return;
 
     const spinner = document.getElementById('archiveSpinner');
     spinner.classList.remove('d-none');
 
     try {
         const res = await apiFetch(ROUTES.restore, 'POST', { archive_ids: [archiveId] });
-        showToast(res.message || 'Restored.', res.success ? 'success' : 'warning');
-        if (res.success) loadArchivedPage(archiveCurrentPage);
+
+        if (res.success) {
+            await showSuccessAlert(res.message || 'Registration restored successfully!', '🔄');
+            loadArchivedPage(archiveCurrentPage);
+        } else {
+            await showErrorAlert(res.message || 'Restore failed.', '😞');
+        }
     } catch (err) {
-        showToast('Restore failed: ' + err.message, 'danger');
+        await showErrorAlert('Restore failed: ' + err.message, '😭');
     } finally {
         spinner.classList.add('d-none');
     }
@@ -821,17 +1102,28 @@ async function restoreSelected() {
     const ids = [...document.querySelectorAll('.archive-chk:checked')].map(cb => parseInt(cb.value));
     if (!ids.length) return;
 
-    if (!confirm(`Restore ${ids.length} registration(s)?`)) return;
+    const confirmed = await showConfirmDialog(
+        'Batch Restore',
+        `Restore ${ids.length} registration(s)?`,
+        'Yes, Restore All!'
+    );
+
+    if (!confirmed) return;
 
     const spinner = document.getElementById('archiveSpinner');
     spinner.classList.remove('d-none');
 
     try {
         const res = await apiFetch(ROUTES.restore, 'POST', { archive_ids: ids });
-        showToast(res.message || 'Restored.', res.success ? 'success' : 'warning');
-        if (res.success || res.total_restored > 0) loadArchivedPage(archiveCurrentPage);
+
+        if (res.success) {
+            await showSuccessAlert(res.message || `${res.total_restored} registration(s) restored successfully!`, '🔄');
+            loadArchivedPage(archiveCurrentPage);
+        } else {
+            await showErrorAlert(res.message || 'Restore failed.', '😞');
+        }
     } catch (err) {
-        showToast('Restore failed: ' + err.message, 'danger');
+        await showErrorAlert('Restore failed: ' + err.message, '😭');
     } finally {
         spinner.classList.add('d-none');
     }
@@ -841,20 +1133,30 @@ async function restoreSelected() {
 // PERMANENT DELETE — SINGLE
 // ============================================================================
 async function permanentDeleteSingle(archiveId, btn) {
-    if (!confirm('Permanently delete this archive record? This cannot be undone.')) return;
+    const confirmed = await showConfirmDialog(
+        '⚠️ Permanent Deletion',
+        'Permanently delete this archive record? This CANNOT be undone.',
+        'Yes, Delete Permanently!'
+    );
+
+    if (!confirmed) return;
 
     btn.disabled = true;
     try {
         const res = await apiFetch(ROUTES.permanentDelete, 'DELETE', { archive_ids: [archiveId] });
-        showToast(res.message || 'Deleted.', res.success ? 'success' : 'danger');
+
         if (res.success) {
+            await showSuccessAlert(res.message || 'Record permanently deleted.', '🗑️');
             const row = btn.closest('tr');
             row.style.transition = 'opacity .3s';
             row.style.opacity = '0';
             setTimeout(() => { row.remove(); updateArchiveEmpty(); }, 300);
+        } else {
+            await showErrorAlert(res.message || 'Delete failed.', '😞');
+            btn.disabled = false;
         }
     } catch (err) {
-        showToast('Delete failed: ' + err.message, 'danger');
+        await showErrorAlert('Delete failed: ' + err.message, '😭');
         btn.disabled = false;
     }
 }
@@ -866,17 +1168,28 @@ async function permanentDeleteSelected() {
     const ids = [...document.querySelectorAll('.archive-chk:checked')].map(cb => parseInt(cb.value));
     if (!ids.length) return;
 
-    if (!confirm(`Permanently delete ${ids.length} archive record(s)? This CANNOT be undone.`)) return;
+    const confirmed = await showConfirmDialog(
+        '⚠️ Permanent Deletion',
+        `Permanently delete ${ids.length} archive record(s)? This CANNOT be undone.`,
+        'Yes, Delete All Permanently!'
+    );
+
+    if (!confirmed) return;
 
     const spinner = document.getElementById('archiveSpinner');
     spinner.classList.remove('d-none');
 
     try {
         const res = await apiFetch(ROUTES.permanentDelete, 'DELETE', { archive_ids: ids });
-        showToast(res.message || 'Deleted.', res.success ? 'success' : 'danger');
-        if (res.success) loadArchivedPage(archiveCurrentPage);
+
+        if (res.success) {
+            await showSuccessAlert(res.message || `${res.deleted} record(s) permanently deleted.`, '🗑️');
+            loadArchivedPage(archiveCurrentPage);
+        } else {
+            await showErrorAlert(res.message || 'Delete failed.', '😞');
+        }
     } catch (err) {
-        showToast('Delete failed: ' + err.message, 'danger');
+        await showErrorAlert('Delete failed: ' + err.message, '😭');
     } finally {
         spinner.classList.add('d-none');
     }
@@ -920,26 +1233,15 @@ async function apiFetch(url, method, body) {
 }
 
 // ============================================================================
-// TOAST HELPER
+// ESCAPE HTML HELPER
 // ============================================================================
-function showToast(message, type = 'info') {
-    // Remove existing toasts
-    document.querySelectorAll('.sop-toast').forEach(t => t.remove());
-
-    const colorMap = { success: 'bg-success', danger: 'bg-danger', warning: 'bg-warning text-dark', info: 'bg-info text-dark' };
-    const bg = colorMap[type] || 'bg-secondary';
-
-    const toast = document.createElement('div');
-    toast.className = `toast sop-toast align-items-center text-white border-0 show ${bg}`;
-    toast.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:9999;min-width:280px;max-width:420px;';
-    toast.setAttribute('role', 'alert');
-    toast.innerHTML = `
-        <div class="d-flex">
-            <div class="toast-body">${message}</div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" onclick="this.closest('.toast').remove()"></button>
-        </div>`;
-
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 5000);
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
 }
 </script>
