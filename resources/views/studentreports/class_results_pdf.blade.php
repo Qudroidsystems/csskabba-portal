@@ -12,16 +12,16 @@
 
         body {
             font-family: 'Times New Roman', Times, serif;
-            font-size: 10px; /* REDUCED BASE FONT */
-            line-height: 1.35;
+            font-size: 9.5px;
+            line-height: 1.3;
             color: #000;
             background: #f5f5f5;
-            padding: 10mm 0;
+            padding: 8mm 0;
             text-align: center;
             position: relative;
         }
 
-        /* WATERMARK */
+        /* WATERMARK - "ORIGINAL COPY" */
         .watermark-text {
             position: fixed;
             top: 50%;
@@ -47,7 +47,7 @@
             background: #ffffff;
             border: 3px double #000000;
             margin: 0 auto 20px auto;
-            padding: 10px 10px;
+            padding: 8px 10px;
             position: relative;
             text-align: left;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -59,10 +59,10 @@
             page-break-after: avoid;
         }
 
-        /* Logo & photo frames */
+        /* Logo & photo frames - compact */
         .school-logo {
-            width: 85px;
-            height: 95px;
+            width: 75px;
+            height: 85px;
             border: 2px solid #47b492;
             border-radius: 6px;
             background: white;
@@ -84,8 +84,8 @@
             border-radius: 6px;
             background: white;
             padding: 3px;
-            width: 85px;
-            height: 95px;
+            width: 75px;
+            height: 85px;
             margin: 0 auto;
             display: flex;
             align-items: center;
@@ -102,7 +102,7 @@
             width: 100%;
             height: 2px;
             background: #1e40af;
-            margin: 4px 0;
+            margin: 3px 0;
         }
         .header-divider2 {
             width: 100%;
@@ -113,36 +113,36 @@
         .report-title {
             background: #111827;
             color: white;
-            padding: 5px 8px;
-            font-size: 12px;
+            padding: 4px 6px;
+            font-size: 11px;
             font-weight: 700;
             text-align: center;
-            margin: 6px 0;
+            margin: 5px 0;
         }
         .header-table td {
             vertical-align: middle;
             padding: 0 2px;
         }
 
-        /* Student info bar - more compact */
+        /* Student info bar - compact */
         .student-info-bar {
             background: linear-gradient(to bottom, #f0f7ff 0%, #ffffff 100%);
-            border: 2px solid #2aa886;
-            border-radius: 8px;
-            padding: 6px 12px;
+            border: 1.5px solid #2aa886;
+            border-radius: 6px;
+            padding: 5px 10px;
             margin-bottom: 8px;
-            font-size: 9.5px;
+            font-size: 8.5px;
         }
         .info-line {
             display: flex;
             flex-wrap: wrap;
             align-items: baseline;
-            gap: 8px 15px;
-            margin-bottom: 4px;
+            gap: 6px 12px;
+            margin-bottom: 3px;
         }
         .info-bar-label {
             color: #1e40af;
-            font-size: 9px;
+            font-size: 8px;
             font-weight: 700;
         }
         .info-bar-value {
@@ -154,26 +154,28 @@
             margin: 0 2px;
         }
 
-        /* FLEX LAYOUT: academic + psychomotor SIDE BY SIDE (guaranteed no overflow) */
+        /* FLEX LAYOUT: academic + psychomotor side by side - ensure no wrap */
         .results-dual-layout {
             display: flex;
-            gap: 12px;
-            margin-bottom: 10px;
+            gap: 10px;
+            margin-bottom: 8px;
             flex-wrap: nowrap;
             align-items: stretch;
         }
         .academic-results-container {
-            flex: 2.5;
-            min-width: 0; /* crucial for table shrink */
+            flex: 2.8;
+            min-width: 0;
             overflow-x: auto;
         }
+        /* PSYCHOMOTOR CONTAINER - NARROW & COMPACT */
         .psychomotor-container {
-            flex: 1.2;
-            min-width: 165px;
+            flex: 0.9;
+            min-width: 140px;
+            max-width: 155px;
             background: #fef9e6;
             border: 2px solid #c0a86a;
-            border-radius: 10px;
-            padding: 5px 6px;
+            border-radius: 8px;
+            padding: 4px 5px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.05);
         }
         .psychomotor-title {
@@ -181,74 +183,91 @@
             color: white;
             text-align: center;
             font-weight: 800;
-            font-size: 10px;
-            padding: 5px 2px;
-            margin: -5px -6px 6px -6px;
-            border-radius: 7px 7px 0 0;
-            letter-spacing: 0.5px;
+            font-size: 9px;
+            padding: 4px 2px;
+            margin: -4px -5px 5px -5px;
+            border-radius: 6px 6px 0 0;
+            letter-spacing: 0.3px;
         }
 
-        /* Psychomotor table - more compact */
+        /* PSYCHOMOTOR TABLE - EXTREMELY COMPACT, NARROW COLUMNS */
         .psycho-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 8.5px;
+            font-size: 7.2px;
+            line-height: 1.2;
         }
         .psycho-table th, .psycho-table td {
             border: 1px solid #b78d4a;
-            padding: 3px 3px;
+            padding: 2px 2px;
         }
         .psycho-table th {
             background: #e9d6b0;
             font-weight: 800;
-            font-size: 8px;
+            font-size: 7px;
+            padding: 3px 1px;
         }
         .psycho-label {
             font-weight: 600;
             background: #fff7e8;
+            padding: 2px 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 85px;
+        }
+        .psycho-score-cell {
+            text-align: center;
+            font-weight: bold;
+            width: 28px;
+            padding: 2px 1px;
         }
         .psycho-totals-row td {
             background: #e9d6b0;
             font-weight: 900;
+            font-size: 7.5px;
         }
         .psycho-obtainable-row td {
             background: #faf0dd;
-            font-size: 8px;
-        }
-        .psycho-note {
             font-size: 7px;
             text-align: center;
-            margin-top: 5px;
+        }
+        .psycho-note {
+            font-size: 6px;
+            text-align: center;
+            margin-top: 4px;
             color: #4a5b6e;
+            line-height: 1.2;
         }
 
-        /* ACADEMIC TABLE - COMPACT (smaller font, tighter padding) */
+        /* ACADEMIC TABLE - more compact */
         .result-table table {
             width: 100%;
             border: 2px solid #000000;
             border-collapse: collapse;
-            font-size: 8px;
+            font-size: 7.8px;
         }
         .result-table thead th {
             background: #0d1a3d;
             color: white;
             font-weight: 800;
             border: 1px solid #000000;
-            padding: 4px 2px;
-            font-size: 7px;
+            padding: 3px 1px;
+            font-size: 6.5px;
         }
         .result-table tbody td {
             border: 1px solid #000000;
-            padding: 3px 2px;
+            padding: 2px 1px;
             text-align: center;
-            font-size: 8px;
+            font-size: 7.5px;
             background: white;
             font-weight: 600;
         }
         .result-table tbody td.subject-name {
             text-align: left;
             font-weight: 700;
-            font-size: 8px;
+            font-size: 7.5px;
+            padding-left: 3px;
         }
         .highlight-red {
             color: #dc2626;
@@ -258,13 +277,13 @@
             background: #0d1a3d !important;
             color: #ffffff !important;
             font-weight: 900 !important;
-            font-size: 8px !important;
-            padding: 3px 2px;
+            font-size: 7.5px !important;
+            padding: 2px 1px;
         }
         .totals-fraction {
             display: inline-block;
             text-align: center;
-            font-size: 7px;
+            font-size: 6.5px;
             line-height: 1;
         }
         .totals-fraction .t-num {
@@ -276,11 +295,11 @@
             background: #ffffff !important;
             color: #000000 !important;
             font-weight: 800 !important;
-            font-size: 8px !important;
-            padding: 4px 2px;
+            font-size: 7.5px !important;
+            padding: 3px 2px;
         }
 
-        /* Remarks table */
+        /* Remarks table - compact */
         .remarks-table {
             width: 100%;
             border: 2px solid #000000;
@@ -289,16 +308,16 @@
         }
         .remarks-table td {
             border: 1px solid #000000;
-            padding: 6px 8px;
+            padding: 5px 6px;
             background: white;
             vertical-align: top;
             width: 50%;
-            font-size: 9px;
+            font-size: 8.5px;
         }
         .remarks-table .h6 {
             font-weight: 700;
-            margin-bottom: 4px;
-            font-size: 10px;
+            margin-bottom: 3px;
+            font-size: 9px;
             border-bottom: 1px solid #ccc;
             display: inline-block;
         }
@@ -306,38 +325,38 @@
         /* Footer */
         .footer-section {
             background: #f1f5f9;
-            padding: 5px 6px;
+            padding: 4px 5px;
             border: 1px solid #cbd5e1;
             text-align: center;
-            margin-top: 6px;
-            font-size: 8px;
+            margin-top: 5px;
+            font-size: 7.5px;
         }
         .footer-layout-table td {
-            padding: 2px;
-            font-size: 8px;
+            padding: 1px;
+            font-size: 7.5px;
         }
         .text-dot-space2 {
             border-bottom: 1px dotted #666;
             display: inline-block;
-            min-width: 100px;
+            min-width: 90px;
             font-weight: bold;
         }
         .powered-by {
-            font-size: 9px;
-            margin-top: 3px;
+            font-size: 8px;
+            margin-top: 2px;
         }
 
-        /* column width helpers */
-        .col-sn { width: 25px; }
-        .col-admissionno { width: 70px; }
-        .col-name { width: 120px; }
-        .col-assessment { width: 32px; }
-        .col-total { width: 40px; }
-        .col-bf { width: 32px; }
-        .col-cum { width: 40px; }
-        .col-grade { width: 32px; }
-        .col-position { width: 35px; }
-        .col-class-average { width: 38px; }
+        /* column width helpers for academic */
+        .col-sn { width: 22px; }
+        .col-admissionno { width: 60px; }
+        .col-name { width: 100px; }
+        .col-assessment { width: 28px; }
+        .col-total { width: 35px; }
+        .col-bf { width: 28px; }
+        .col-cum { width: 35px; }
+        .col-grade { width: 28px; }
+        .col-position { width: 30px; }
+        .col-class-average { width: 32px; }
 
         @media print {
             body {
@@ -348,7 +367,7 @@
                 width: 190mm;
                 max-height: 287mm;
                 margin: 0 auto;
-                padding: 8px;
+                padding: 6px;
                 page-break-after: always;
                 box-shadow: none;
             }
@@ -364,6 +383,11 @@
             }
             .psychomotor-container {
                 break-inside: avoid;
+                max-width: 145px;
+            }
+            .psycho-label {
+                white-space: normal;
+                word-break: keep-all;
             }
         }
     </style>
@@ -392,28 +416,27 @@
         $gpaData     = $studentData['gpa_data'] ?? [];
         $totals      = $studentData['totals_summary'] ?? [];
 
-        // Psychomotor skills - based on official PDF sample (18 skills as shown in file: 5+13 =18)
+        // Psychomotor skills list (exactly 18 skills as per official report)
         $psychomotorSkills = [
-            'Handwriting', 'Sports', 'Musical Skills', 'Participation in Class', 'Punctuality',
-            'Concern for Others', 'Relationship with Students', 'Relationship with Staff',
-            'Courtesy', 'Neatness', 'Honesty', 'Team Spirit', 'Leadership Skills',
-            'Listening Skills', 'Organizational Ability', 'Self Control', 'Perseverance', 'Initiative'
+            'Handwriting', 'Sports', 'Musical Skills', 'Participation', 'Punctuality',
+            'Concern for Others', 'Rel. with Students', 'Rel. with Staff',
+            'Courtesy', 'Neatness', 'Honesty', 'Team Spirit', 'Leadership',
+            'Listening Skills', 'Organization', 'Self Control', 'Perseverance', 'Initiative'
         ];
-        $psychomotorObtainable = count($psychomotorSkills) * 5; // 18*5 = 90
+        $psychomotorObtainable = count($psychomotorSkills) * 5; // 90
 
-        // retrieve or generate psychomotor scores (real data from DB or demo)
+        // retrieve or generate psychomotor scores (realistic values from PDF sample)
         if (isset($studentData['psychomotor_scores']) && is_array($studentData['psychomotor_scores'])) {
             $psychomotorScores = $studentData['psychomotor_scores'];
             $psychomotorObtained = array_sum($psychomotorScores);
         } else {
-            // Use realistic values based on sample PDF (similar to your uploaded file)
-            // Hardcoded from your PDF example to match typical report:
+            // Realistic scores based on typical report (matching your PDF)
             $sampleScores = [
-                'Handwriting'=>4, 'Sports'=>3, 'Musical Skills'=>3, 'Participation in Class'=>3,
-                'Punctuality'=>4, 'Concern for Others'=>5, 'Relationship with Students'=>4,
-                'Relationship with Staff'=>4, 'Courtesy'=>5, 'Neatness'=>3, 'Honesty'=>5,
-                'Team Spirit'=>4, 'Leadership Skills'=>5, 'Listening Skills'=>3,
-                'Organizational Ability'=>4, 'Self Control'=>4, 'Perseverance'=>5, 'Initiative'=>4
+                'Handwriting'=>4, 'Sports'=>3, 'Musical Skills'=>3, 'Participation'=>3,
+                'Punctuality'=>4, 'Concern for Others'=>5, 'Rel. with Students'=>4,
+                'Rel. with Staff'=>4, 'Courtesy'=>5, 'Neatness'=>3, 'Honesty'=>5,
+                'Team Spirit'=>4, 'Leadership'=>5, 'Listening Skills'=>3,
+                'Organization'=>4, 'Self Control'=>4, 'Perseverance'=>5, 'Initiative'=>4
             ];
             $psychomotorScores = [];
             foreach ($psychomotorSkills as $skill) {
@@ -449,34 +472,34 @@
             <div class="header">
                 <table class="header-table" style="width:100%">
                     <tr>
-                        <td width="22%">
+                        <td width="20%">
                             <div class="school-logo">
                                 @php
                                     $logoSrc  = '';
                                     if (!empty($studentData['school_logo_base64'])) {
                                         $logoSrc = $studentData['school_logo_base64'];
                                     } else {
-                                        $logoSrc = 'data:image/svg+xml;base64,' . base64_encode('<svg xmlns="http://www.w3.org/2000/svg" width="85" height="95" viewBox="0 0 100 100"><rect width="100" height="100" fill="#f8f9fa" stroke="#47b492" stroke-width="2"/><circle cx="50" cy="40" r="15" fill="#47b492" opacity="0.6"/><rect x="35" y="60" width="30" height="20" fill="#47b492" opacity="0.6" rx="3"/><text x="50" y="95" text-anchor="middle" fill="#1e40af" font-size="8" font-weight="bold">CLARET</text></svg>');
+                                        $logoSrc = 'data:image/svg+xml;base64,' . base64_encode('<svg xmlns="http://www.w3.org/2000/svg" width="75" height="85" viewBox="0 0 100 100"><rect width="100" height="100" fill="#f8f9fa" stroke="#47b492" stroke-width="2"/><circle cx="50" cy="40" r="15" fill="#47b492" opacity="0.6"/><rect x="35" y="60" width="30" height="20" fill="#47b492" opacity="0.6" rx="3"/><text x="50" y="95" text-anchor="middle" fill="#1e40af" font-size="8" font-weight="bold">CLARET</text></svg>');
                                     }
                                 @endphp
                                 <img class="header-img" src="{{ $logoSrc }}" alt="School Logo">
                             </div>
                         </td>
-                        <td width="56%" style="padding-left: 8px;">
+                        <td width="60%" style="padding-left: 6px;">
                             <div style="font-family: 'Arial Black', sans-serif; font-weight: 900; line-height: 1.2;">
-                                <div style="font-size: 18px; letter-spacing: 0.5px; margin-bottom: 3px;">CLARET SECONDARY SCHOOL KABBA</div>
-                                <div style="font-size: 8px;"><strong>Motto:</strong> {{ $schoolInfo->school_motto ?? 'KNOWLEDGE AND VIRTUE' }}</div>
-                                <div style="font-size: 8px;"><strong>Address:</strong> {{ $schoolInfo->school_address ?? 'No. 1, Claret Avenue, Iludun Quarters, Olle Road, Kabba, Kogi State' }}</div>
-                                <div style="font-size: 8px;"><strong>Phone:</strong> {{ $schoolInfo->school_phone ?? '08136663185' }}</div>
+                                <div style="font-size: 16px; letter-spacing: 0.5px; margin-bottom: 2px;">CLARET SECONDARY SCHOOL KABBA</div>
+                                <div style="font-size: 7.5px;"><strong>Motto:</strong> {{ $schoolInfo->school_motto ?? 'KNOWLEDGE AND VIRTUE' }}</div>
+                                <div style="font-size: 7.5px;"><strong>Address:</strong> {{ $schoolInfo->school_address ?? 'No. 1, Claret Avenue, Iludun Quarters, Kabba, Kogi State' }}</div>
+                                <div style="font-size: 7.5px;"><strong>Phone:</strong> {{ $schoolInfo->school_phone ?? '08136663185' }}</div>
                             </div>
                         </td>
-                        <td width="22%">
+                        <td width="20%">
                             @if(in_array('picture', $columnsToShow))
                             <div class="photo-frame">
                                 @if(!empty($studentData['student_image_base64']))
                                     <img src="{{ $studentData['student_image_base64'] }}" alt="Student">
                                 @else
-                                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='85' height='95' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23e2e8f0'/%3E%3Ccircle cx='50' cy='40' r='20' fill='%2394a3b8'/%3E%3Crect x='35' y='65' width='30' height='25' fill='%2394a3b8' rx='4'/%3E%3Ctext x='50' y='95' text-anchor='middle' fill='%23475569' font-size='8'%3EPHOTO%3C/text%3E%3C/svg%3E" alt="Default">
+                                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='75' height='85' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23e2e8f0'/%3E%3Ccircle cx='50' cy='40' r='20' fill='%2394a3b8'/%3E%3Crect x='35' y='65' width='30' height='25' fill='%2394a3b8' rx='4'/%3E%3Ctext x='50' y='95' text-anchor='middle' fill='%23475569' font-size='8'%3EPHOTO%3C/text%3E%3C/svg%3E" alt="Default">
                                 @endif
                             </div>
                             @endif
@@ -523,7 +546,7 @@
                 <div class="student-info-bar"><div class="info-line">No student data available.</div></div>
             @endif
 
-            <!-- SIDE BY SIDE LAYOUT: ACADEMIC (LEFT) + PSYCHOMOTOR (RIGHT) -->
+            <!-- SIDE BY SIDE LAYOUT: ACADEMIC + PSYCHOMOTOR (NARROW COLUMNS) -->
             <div class="results-dual-layout">
                 <!-- ACADEMIC TABLE -->
                 <div class="academic-results-container">
@@ -536,7 +559,7 @@
                                     @if(in_array('name', $columnsToShow)) <th class="col-name">Subject</th> @endif
                                     @foreach ($assessments as $assessment)
                                         @if(in_array($assessment->id, $columnsToShow) || in_array('all_assessments', $columnsToShow))
-                                        <th class="col-assessment">{{ $assessment->name }}<br><span style="font-size:6px;">({{ $assessment->max_score }})</span></th>
+                                        <th class="col-assessment">{{ $assessment->name }}<br><span style="font-size:5.5px;">({{ $assessment->max_score }})</span></th>
                                         @endif
                                     @endforeach
                                     @if(in_array('total', $columnsToShow)) <th class="col-total">Total</th> @endif
@@ -598,18 +621,18 @@
                     </div>
                 </div>
 
-                <!-- PSYCHOMOTOR & AFFECTIVE TABLE (RIGHT SIDE - FITS WITHOUT BREAKING) -->
+                <!-- PSYCHOMOTOR & AFFECTIVE TABLE - NARROWED, COMPACT, NO OVERFLOW -->
                 <div class="psychomotor-container">
-                    <div class="psychomotor-title">PSYCHOMOTOR & AFFECTIVE SKILLS</div>
+                    <div class="psychomotor-title">PSYCHOMOTOR & AFFECTIVE</div>
                     <table class="psycho-table">
                         <thead>
-                            <tr><th>Skills</th><th>Score (0-5)</th></tr>
+                            <tr><th style="width:75%">Skills</th><th style="width:25%">Score</th></tr>
                         </thead>
                         <tbody>
                             @foreach($psychomotorSkills as $skill)
                             <tr>
-                                <td class="psycho-label">{{ $skill }}</td>
-                                <td style="text-align: center; font-weight: bold;">{{ $psychomotorScores[$skill] ?? '-' }}</td>
+                                <td class="psycho-label" title="{{ $skill }}">{{ $skill }}</td>
+                                <td class="psycho-score-cell">{{ $psychomotorScores[$skill] ?? '-' }}</td>
                             </tr>
                             @endforeach
                             <tr class="psycho-totals-row">
@@ -617,11 +640,11 @@
                                 <td style="text-align: center; font-weight: 900;">{{ $psychomotorObtained }}</td>
                             </tr>
                             <tr class="psycho-obtainable-row">
-                                <td colspan="2" style="text-align: center;">Max Obtainable: {{ $psychomotorObtainable }}</td>
+                                <td colspan="2">Max Obtainable: {{ $psychomotorObtainable }}</td>
                             </tr>
                         </tbody>
                     </table>
-                    <div class="psycho-note">(5=Excellent, 4=Very Good, 3=Good, 2=Fair, 1=Needs Improvement)</div>
+                    <div class="psycho-note">5=Excellent, 4=V.Good, 3=Good, 2=Fair, 1=Needs Imp.</div>
                 </div>
             </div>
 
@@ -629,8 +652,8 @@
             <table class="remarks-table">
                 <tbody>
                     <tr>
-                        <td width="50%"><div class="h6">Class Teacher's Remark</div><div style="font-size: 9px; font-weight: 500;">{{ $profile ? ($profile->classteachercomment ?? 'NO INFO') : 'NO INFO' }}</div></td>
-                        <td width="50%"><div class="h6">Principal's Remark</div><div style="font-size: 9px; font-weight: 500;">{{ $profile ? ($profile->principalscomment ?? 'NO INFO') : 'NO INFO' }}</div></td>
+                        <td width="50%"><div class="h6">Class Teacher's Remark</div><div style="font-size: 8.5px; font-weight: 500;">{{ $profile ? ($profile->classteachercomment ?? 'NO INFO') : 'NO INFO' }}</div></td>
+                        <td width="50%"><div class="h6">Principal's Remark</div><div style="font-size: 8.5px; font-weight: 500;">{{ $profile ? ($profile->principalscomment ?? 'NO INFO') : 'NO INFO' }}</div></td>
                     </tr>
                 </tbody>
             </table>
@@ -638,8 +661,12 @@
             <!-- FOOTER -->
             <div class="footer-section">
                 <table class="footer-layout-table" style="width:100%">
-                    <tr><td><span class="font-bold">Issued: </span><span class="text-dot-space2">{{ now()->format('jS F, Y') }}</span><span class="font-bold"> Collected by:</span><span>.......................................</span></td></tr>
-                    <tr><td><span class="font-bold text-primary">Next Term Begins:</span><span class="text-dot-space2">@php $nextTermBegins = $schoolInfo->date_next_term_begins ?? null; $formattedNextTermBegins = $nextTermBegins ? \Carbon\Carbon::parse($nextTermBegins)->format('jS F, Y') : '........................'; @endphp {{ $formattedNextTermBegins }}</span></td></tr>
+                    <tr>
+                        <td><span class="font-bold">Issued: </span><span class="text-dot-space2">{{ now()->format('jS F, Y') }}</span><span class="font-bold"> Collected by:</span><span>.......................................</span></td>
+                    </tr>
+                    <tr>
+                        <td><span class="font-bold text-primary">Next Term Begins:</span><span class="text-dot-space2">@php $nextTermBegins = $schoolInfo->date_next_term_begins ?? null; $formattedNextTermBegins = $nextTermBegins ? \Carbon\Carbon::parse($nextTermBegins)->format('jS F, Y') : '........................'; @endphp {{ $formattedNextTermBegins }}</span></td>
+                    </tr>
                 </table>
                 <div class="powered-by">Powered by Qudroid Systems</div>
             </div>
