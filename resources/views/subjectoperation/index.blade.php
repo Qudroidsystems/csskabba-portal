@@ -1,4 +1,6 @@
+{{-- resources/views/subjectoperation/index.blade.php --}}
 @extends('layouts.master')
+
 @section('content')
 <div class="main-content">
     <div class="page-content">
@@ -217,65 +219,69 @@
                 </div>
 
                 {{-- ══════════════════════════════════════════════════════════ --}}
-                {{-- UPDATED MODAL: Registered Classes (wider + Teachers column + professional UI) --}}
+                {{-- MODAL: Registered Classes (Wider & Professional)            --}}
                 {{-- ══════════════════════════════════════════════════════════ --}}
                 <div class="modal fade" id="registeredClassesModal" tabindex="-1" aria-labelledby="registeredClassesModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-xl">
-                        <div class="modal-content shadow-lg border-0">
-                            <div class="modal-header bg-primary-subtle border-0">
-                                <h5 class="modal-title d-flex align-items-center" id="registeredClassesModalLabel">
-                                    <i class="ri-eye-line me-2"></i>
-                                    Registered Classes Overview
+                    <div class="modal-dialog modal-xl modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header bg-gradient-primary text-white">
+                                <h5 class="modal-title" id="registeredClassesModalLabel">
+                                    <i class="ri-graduation-cap-line me-2"></i>Registered Classes Overview
                                 </h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
-                            <div class="modal-body p-0">
-                                <div id="registeredClassesContent" class="p-4">
-                                    <!-- Populated dynamically via JavaScript -->
+                            <div class="modal-body">
+                                <div id="registeredClassesContent">
+                                    <div class="text-center text-muted py-5">
+                                        <i class="ri-loader-4-line ri-3x mb-3 text-primary"></i>
+                                        <p class="mb-0">Loading registration data...</p>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="modal-footer border-0 bg-light">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            <div class="modal-footer bg-light">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                    <i class="ri-close-line me-1"></i>Close
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 {{-- ══════════════════════════════════════════════════════════ --}}
-                {{-- UPDATED MODAL: Unregistered History (wider + Per-Page selector) --}}
+                {{-- MODAL: Unregistered History (Wider + Pagination Controls)   --}}
                 {{-- ══════════════════════════════════════════════════════════ --}}
                 <div class="modal fade" id="archivedModal" tabindex="-1" aria-labelledby="archivedModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-xl modal-dialog-scrollable">
-                        <div class="modal-content shadow-lg border-0">
-                            <div class="modal-header bg-warning-subtle border-0">
-                                <h5 class="modal-title d-flex align-items-center" id="archivedModalLabel">
+                        <div class="modal-content">
+                            <div class="modal-header bg-warning">
+                                <h5 class="modal-title text-dark" id="archivedModalLabel">
                                     <i class="ri-archive-line me-2"></i>Unregistered History
                                 </h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body p-0">
-                                {{-- Toolbar with Per-Page selector --}}
-                                <div class="p-3 border-bottom bg-light d-flex align-items-center flex-wrap gap-3">
+
+                                {{-- Toolbar --}}
+                                <div class="p-3 border-bottom bg-light d-flex align-items-center flex-wrap gap-2">
                                     <div class="flex-grow-1">
                                         <input type="text" class="form-control form-control-sm" id="archiveSearch"
-                                            placeholder="Search student name or admission no..." style="max-width:320px;">
+                                            placeholder="Search student name or admission no..." style="max-width:280px;">
                                     </div>
                                     <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        {{-- Term filter (populated from schoolterms) --}}
                                         <select class="form-select form-select-sm" id="archiveTermFilter" style="width:auto;">
                                             <option value="">All Terms</option>
                                             @foreach($schoolterms as $term)
                                                 <option value="{{ $term->id }}">{{ $term->term }}</option>
                                             @endforeach
                                         </select>
-
-                                        {{-- Per-Page selector --}}
+                                        {{-- Per Page Selector --}}
                                         <select class="form-select form-select-sm" id="archivePerPage" style="width:auto;">
                                             <option value="20">20 per page</option>
                                             <option value="50" selected>50 per page</option>
                                             <option value="100">100 per page</option>
                                             <option value="150">150 per page</option>
                                         </select>
-
                                         <button class="btn btn-sm btn-outline-secondary" onclick="loadArchivedPage(1);">
                                             <i class="ri-refresh-line"></i> Refresh
                                         </button>
@@ -325,7 +331,7 @@
                                     <div id="archivePagination" class="d-flex gap-1"></div>
                                 </div>
                             </div>
-                            <div class="modal-footer border-0 bg-light">
+                            <div class="modal-footer">
                                 <small class="text-muted me-auto">
                                     <i class="ri-information-line me-1"></i>
                                     Restored records are re-registered. Permanently deleted records cannot be recovered.
@@ -336,7 +342,7 @@
                     </div>
                 </div>
 
-                {{-- Image View Modal (unchanged) --}}
+                {{-- Image View Modal --}}
                 <div id="imageViewModal" class="modal fade" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered modal-lg">
                         <div class="modal-content">
@@ -351,34 +357,58 @@
                         </div>
                     </div>
                 </div>
+
             </div>{{-- /subjectList --}}
         </div>
     </div>
 </div>
 @endsection
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 // ============================================================================
 // GLOBALS
 // ============================================================================
 const ROUTES = {
-    batchRegister : '{{ route("subjectregistration.batch") }}',
-    destroy : '{{ route("subjectregistration.destroy") }}',
-    getRegistered : '{{ route("subjects.registered-classes") }}',
-    getArchived : '{{ route("subjectoperation.archived") }}',
-    restore : '{{ route("subjectoperation.restore") }}',
+    batchRegister   : '{{ route("subjectregistration.batch") }}',
+    destroy         : '{{ route("subjectregistration.destroy") }}',
+    getRegistered   : '{{ route("subjects.registered-classes") }}',
+    getArchived     : '{{ route("subjectoperation.archived") }}',
+    restore         : '{{ route("subjectoperation.restore") }}',
     permanentDelete : '{{ route("subjectoperation.archive.batch-delete") }}',
-    index : '{{ route("subjects.index") }}',
+    index           : '{{ route("subjects.index") }}',
 };
 const CSRF = '{{ csrf_token() }}';
 
 // Archive state
 let archiveCurrentPage = 1;
-let archiveMeta = {};
+let archiveMeta        = {};
 let archiveSearchTimer = null;
 
 // ============================================================================
-// IMAGE MODAL + AUTO LOAD
+// SWEET ALERT HELPER
+// ============================================================================
+function showSweetAlert(title, message, type, success = true) {
+    let icon = success ? 'success' : 'error';
+    let customIcon = success ? '🎉' : '😞';
+
+    Swal.fire({
+        title: title,
+        html: `<div class="d-flex align-items-center justify-content-center gap-2">
+                <span style="font-size: 2rem;">${customIcon}</span>
+                <span>${message}</span>
+               </div>`,
+        icon: icon,
+        confirmButtonColor: success ? '#28a745' : '#dc3545',
+        confirmButtonText: success ? 'Great!' : 'Okay',
+        timer: success ? 3000 : 5000,
+        showConfirmButton: true,
+        backdrop: true
+    });
+}
+
+// ============================================================================
+// IMAGE MODAL
 // ============================================================================
 document.addEventListener('DOMContentLoaded', function () {
     const imgModal = document.getElementById('imageViewModal');
@@ -387,35 +417,37 @@ document.addEventListener('DOMContentLoaded', function () {
             const btn = event.relatedTarget;
             const src = btn?.getAttribute('data-image');
             const img = imgModal.querySelector('#enlargedImage');
-            img.src = src || '{{ asset("storage/student_avatars/unnamed.jpg") }}';
+            img.src   = src || '{{ asset("storage/student_avatars/unnamed.jpg") }}';
         });
     }
+
     // Load registered classes when that modal opens
     document.getElementById('registeredClassesModal')?.addEventListener('show.bs.modal', loadRegisteredClasses);
 
-    // NEW: Per-Page selector for archive modal
-    const perPageSelect = document.getElementById('archivePerPage');
-    if (perPageSelect) {
-        perPageSelect.addEventListener('change', () => loadArchivedPage(1));
-    }
+    // Per page change listener
+    document.getElementById('archivePerPage')?.addEventListener('change', function() {
+        loadArchivedPage(1);
+    });
 });
 
 // ============================================================================
 // FILTER / SEARCH
 // ============================================================================
 function filterData() {
-    const classId = document.getElementById('idclass').value;
+    const classId   = document.getElementById('idclass').value;
     const sessionId = document.getElementById('idsession').value;
-    const search = document.querySelector('.search')?.value ?? '';
-    const gender = document.getElementById('idgender').value;
+    const search    = document.querySelector('.search')?.value ?? '';
+    const gender    = document.getElementById('idgender').value;
     const admission = document.getElementById('idadmission').value;
+
     const params = new URLSearchParams({
-        class_id : classId,
+        class_id  : classId,
         session_id: sessionId,
         search,
         gender,
         admissionno: admission,
     });
+
     window.location.href = ROUTES.index + '?' + params.toString();
 }
 
@@ -433,6 +465,7 @@ function updateSubjectCount() {
     const count = document.querySelectorAll('.subject-checkbox:checked').length;
     document.getElementById('subjectTeacherCount').textContent = count;
 }
+
 document.querySelectorAll('.subject-checkbox').forEach(cb => {
     cb.addEventListener('change', updateSubjectCount);
 });
@@ -447,9 +480,11 @@ document.getElementById('checkAll')?.addEventListener('change', function () {
     });
     toggleBatchButtons();
 });
+
 document.addEventListener('change', function (e) {
     if (e.target?.name === 'chk_child') toggleBatchButtons();
 });
+
 function toggleBatchButtons() {
     const anyChecked = document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked').length > 0;
     document.getElementById('register-selected-btn')?.classList.toggle('d-none', !anyChecked);
@@ -470,8 +505,8 @@ function getSelectedStudentIds() {
 function getSelectedSubjectClasses() {
     return [...document.querySelectorAll('.subject-checkbox:checked')].map(cb => ({
         subjectclassid: parseInt(cb.dataset.subjectclassid),
-        staffid : parseInt(cb.dataset.staffid),
-        termid : parseInt(cb.dataset.termid),
+        staffid       : parseInt(cb.dataset.staffid),
+        termid        : parseInt(cb.dataset.termid),
     }));
 }
 
@@ -479,23 +514,56 @@ function getSelectedSubjectClasses() {
 // REGISTER BATCH
 // ============================================================================
 async function registerSelectedStudentsBatch() {
-    const studentIds = getSelectedStudentIds();
+    const studentIds     = getSelectedStudentIds();
     const subjectClasses = getSelectedSubjectClasses();
-    const sessionId = document.getElementById('idsession').value;
-    if (!studentIds.length) return showToast('Please select at least one student.', 'warning');
-    if (!subjectClasses.length) return showToast('Please select at least one subject.', 'warning');
-    if (sessionId === 'ALL') return showToast('Please select a session.', 'warning');
-    if (!confirm(`Register ${studentIds.length} student(s) for ${subjectClasses.length} subject(s)?`)) return;
+    const sessionId      = document.getElementById('idsession').value;
+
+    if (!studentIds.length) {
+        showSweetAlert('No Students Selected', 'Please select at least one student.', 'warning', false);
+        return;
+    }
+    if (!subjectClasses.length) {
+        showSweetAlert('No Subjects Selected', 'Please select at least one subject.', 'warning', false);
+        return;
+    }
+    if (sessionId === 'ALL') {
+        showSweetAlert('Session Required', 'Please select a session.', 'warning', false);
+        return;
+    }
+
+    const confirmResult = await Swal.fire({
+        title: 'Confirm Registration',
+        html: `<div class="text-center">
+                <span style="font-size: 3rem;">📚</span>
+                <p class="mt-2">Register <strong>${studentIds.length}</strong> student(s) for <strong>${subjectClasses.length}</strong> subject(s)?</p>
+               </div>`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#28a745',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, register!',
+        cancelButtonText: 'Cancel'
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
     setSpinner(true);
+
     try {
-        const res = await apiFetch(ROUTES.batchRegister, 'POST', {
-            studentids : studentIds,
+        const res  = await apiFetch(ROUTES.batchRegister, 'POST', {
+            studentids    : studentIds,
             subjectclasses: subjectClasses,
-            sessionid : parseInt(sessionId),
+            sessionid     : parseInt(sessionId),
         });
-        showToast(res.message || 'Registration complete.', res.success ? 'success' : 'warning');
+
+        if (res.success) {
+            showSweetAlert('Registration Successful!', res.message || `${studentIds.length} student(s) registered successfully.`, 'success', true);
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            showSweetAlert('Registration Failed', res.message || 'Some students could not be registered.', 'error', false);
+        }
     } catch (err) {
-        showToast('Registration failed: ' + err.message, 'danger');
+        showSweetAlert('Error', 'Registration failed: ' + err.message, 'error', false);
     } finally {
         setSpinner(false);
     }
@@ -505,81 +573,135 @@ async function registerSelectedStudentsBatch() {
 // UNREGISTER BATCH
 // ============================================================================
 async function unregisterSelectedStudentsBatch() {
-    const studentIds = getSelectedStudentIds();
+    const studentIds     = getSelectedStudentIds();
     const subjectClasses = getSelectedSubjectClasses();
-    const sessionId = document.getElementById('idsession').value;
-    if (!studentIds.length) return showToast('Please select at least one student.', 'warning');
-    if (!subjectClasses.length) return showToast('Please select at least one subject.', 'warning');
-    if (sessionId === 'ALL') return showToast('Please select a session.', 'warning');
-    if (!confirm(`Unregister ${studentIds.length} student(s) from ${subjectClasses.length} subject(s)?\n\nThis will be saved to the unregistration history and can be restored.`)) return;
+    const sessionId      = document.getElementById('idsession').value;
+
+    if (!studentIds.length) {
+        showSweetAlert('No Students Selected', 'Please select at least one student.', 'warning', false);
+        return;
+    }
+    if (!subjectClasses.length) {
+        showSweetAlert('No Subjects Selected', 'Please select at least one subject.', 'warning', false);
+        return;
+    }
+    if (sessionId === 'ALL') {
+        showSweetAlert('Session Required', 'Please select a session.', 'warning', false);
+        return;
+    }
+
+    const confirmResult = await Swal.fire({
+        title: 'Confirm Unregistration',
+        html: `<div class="text-center">
+                <span style="font-size: 3rem;">⚠️</span>
+                <p class="mt-2">Unregister <strong>${studentIds.length}</strong> student(s) from <strong>${subjectClasses.length}</strong> subject(s)?</p>
+                <p class="text-danger small">This will be saved to the unregistration history and can be restored.</p>
+               </div>`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, unregister!',
+        cancelButtonText: 'Cancel'
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
     setSpinner(true);
+
     try {
         const res = await apiFetch(ROUTES.destroy, 'DELETE', {
-            studentids : studentIds,
+            studentids    : studentIds,
             subjectclasses: subjectClasses,
-            sessionid : parseInt(sessionId),
+            sessionid     : parseInt(sessionId),
         });
-        showToast(res.message || 'Unregistration complete.', res.success ? 'success' : 'warning');
+
         if (res.success || res.success_count > 0) {
-            showToast('Records saved to Unregistered History — you can restore them anytime.', 'info');
+            showSweetAlert('Unregistration Complete', res.message || `${res.success_count} student(s) unregistered.`, 'success', true);
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            showSweetAlert('Unregistration Failed', res.message || 'No students were unregistered.', 'error', false);
         }
     } catch (err) {
-        showToast('Unregistration failed: ' + err.message, 'danger');
+        showSweetAlert('Error', 'Unregistration failed: ' + err.message, 'error', false);
     } finally {
         setSpinner(false);
     }
 }
 
 // ============================================================================
-// REGISTERED CLASSES MODAL (UPDATED - wider + Teachers column)
+// REGISTERED CLASSES MODAL (Improved with Teacher Names)
 // ============================================================================
 async function loadRegisteredClasses() {
-    const classId = document.getElementById('idclass').value;
+    const classId   = document.getElementById('idclass').value;
     const sessionId = document.getElementById('idsession').value;
     const container = document.getElementById('registeredClassesContent');
-    container.innerHTML = `<div class="text-center py-5"><div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div><p class="mt-3 text-muted">Loading registered classes...</p></div>`;
+
+    container.innerHTML = `<div class="text-center py-5"><div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div><p class="mt-2">Loading registration data...</p></div>`;
 
     try {
         const params = new URLSearchParams({ class_id: classId, session_id: sessionId });
-        const res = await fetch(ROUTES.getRegistered + '?' + params.toString(), {
+        const res    = await fetch(ROUTES.getRegistered + '?' + params.toString(), {
             headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
         });
         const data = await res.json();
 
         if (!data.success || !data.data.length) {
-            container.innerHTML = `<div class="text-center py-5 text-muted"><i class="ri-inbox-line ri-4x mb-3"></i><p>No registered classes found for the selected filters.</p></div>`;
+            container.innerHTML = `
+                <div class="text-center py-5">
+                    <i class="ri-information-line ri-3x text-muted"></i>
+                    <p class="text-muted mt-2">No registered classes found for the selected filters.</p>
+                </div>`;
             return;
         }
 
-        let html = `<div class="table-responsive"><table class="table table-striped table-hover table-bordered table-sm mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th>Class</th>
-                    <th>Session</th>
-                    <th>Term</th>
-                    <th>Students</th>
-                    <th>Subjects</th>
-                    <th>Teachers</th>
-                    <th>Subject Names</th>
-                </tr>
-            </thead><tbody>`;
+        let html = `<div class="table-responsive">
+            <table class="table table-bordered table-hover align-middle">
+                <thead class="table-light">
+                    <tr class="bg-gradient">
+                        <th class="fw-semibold"><i class="ri-group-line me-1"></i> Class</th>
+                        <th class="fw-semibold"><i class="ri-calendar-line me-1"></i> Session</th>
+                        <th class="fw-semibold"><i class="ri-time-line me-1"></i> Term</th>
+                        <th class="fw-semibold"><i class="ri-user-line me-1"></i> Students</th>
+                        <th class="fw-semibold"><i class="ri-book-open-line me-1"></i> Subjects</th>
+                        <th class="fw-semibold"><i class="ri-user-star-line me-1"></i> Teachers</th>
+                        <th class="fw-semibold">Subject Names</th>
+                    </tr>
+                </thead>
+                <tbody>`;
 
         data.data.forEach(row => {
+            // Format teachers display with badges
+            let teachersHtml = '';
+            if (row.teachers && row.teachers !== 'None') {
+                const teacherList = row.teachers.split(', ');
+                teachersHtml = teacherList.map(t => `<span class="badge bg-info-subtle text-info me-1 mb-1">${t}</span>`).join('');
+            } else {
+                teachersHtml = '<span class="text-muted">—</span>';
+            }
+
             html += `<tr>
                 <td class="fw-medium">${row.class_name ?? ''} ${row.arm_name ?? ''}</td>
                 <td>${row.session_name ?? ''}</td>
-                <td><span class="badge bg-warning-subtle text-warning">${row.term_name ?? ''}</span></td>
-                <td><span class="badge bg-primary">${row.student_count}</span></td>
-                <td><span class="badge bg-secondary">${row.subject_count}</span></td>
-                <td><small class="text-muted">${row.teachers ?? '—'}</small></td>
-                <td><small class="text-primary">${row.subjects ?? ''}</small></td>
+                <td><span class="badge bg-secondary-subtle text-secondary">${row.term_name ?? ''}</span></td>
+                <td><span class="badge bg-primary rounded-pill">${row.student_count}</span></td>
+                <td><span class="badge bg-secondary rounded-pill">${row.subject_count}</span></td>
+                <td>${teachersHtml}</td>
+                <td><small class="text-muted">${row.subjects ?? '—'}</small></td>
             </tr>`;
         });
 
-        html += `</tbody></table></div>`;
+        html += `</tbody>
+            </table>
+            <div class="alert alert-info mt-3">
+                <i class="ri-information-line me-2"></i>
+                Total Registered Classes: <strong>${data.data.length}</strong> | Total Students: <strong>${data.data.reduce((sum, row) => sum + row.student_count, 0)}</strong>
+            </div>
+        </div>`;
         container.innerHTML = html;
+
     } catch (err) {
-        container.innerHTML = `<div class="alert alert-danger mx-4">Failed to load registered classes: ${err.message}</div>`;
+        container.innerHTML = `<div class="alert alert-danger m-3">Failed to load data: ${err.message}</div>`;
     }
 }
 
@@ -587,12 +709,14 @@ async function loadRegisteredClasses() {
 // ARCHIVE MODAL — OPEN
 // ============================================================================
 function openArchivedModal() {
-    const classId = document.getElementById('idclass').value;
+    const classId   = document.getElementById('idclass').value;
     const sessionId = document.getElementById('idsession').value;
+
     if (classId === 'ALL' || sessionId === 'ALL') {
-        showToast('Please select a class and session first.', 'warning');
+        showSweetAlert('Selection Required', 'Please select a class and session first.', 'warning', false);
         return;
     }
+
     archiveCurrentPage = 1;
     const modal = new bootstrap.Modal(document.getElementById('archivedModal'));
     modal.show();
@@ -600,21 +724,22 @@ function openArchivedModal() {
 }
 
 // ============================================================================
-// ARCHIVE MODAL — LOAD PAGE (UPDATED with per-page support)
+// ARCHIVE MODAL — LOAD PAGE
 // ============================================================================
 async function loadArchivedPage(page) {
     archiveCurrentPage = page;
-    const classId = document.getElementById('idclass').value;
+
+    const classId   = document.getElementById('idclass').value;
     const sessionId = document.getElementById('idsession').value;
-    const termId = document.getElementById('archiveTermFilter').value;
-    const search = document.getElementById('archiveSearch').value.trim();
-    const perPageEl = document.getElementById('archivePerPage');
-    const perPage = perPageEl ? parseInt(perPageEl.value) : 50;
+    const termId    = document.getElementById('archiveTermFilter').value;
+    const search    = document.getElementById('archiveSearch').value.trim();
+    const perPage   = document.getElementById('archivePerPage').value;
 
     if (classId === 'ALL' || sessionId === 'ALL') return;
 
     const spinner = document.getElementById('archiveSpinner');
-    const tbody = document.getElementById('archiveTableBody');
+    const tbody   = document.getElementById('archiveTableBody');
+
     spinner.classList.remove('d-none');
     tbody.innerHTML = `<tr><td colspan="9" class="text-center py-4">
         <div class="spinner-border spinner-border-sm text-warning me-2"></div> Loading...
@@ -622,15 +747,15 @@ async function loadArchivedPage(page) {
 
     try {
         const params = new URLSearchParams({
-            class_id : classId,
+            class_id  : classId,
             session_id: sessionId,
             page,
-            per_page : perPage,
+            per_page  : perPage,
         });
-        if (termId) params.set('term_id', termId);
-        if (search) params.set('search', search);
+        if (termId)  params.set('term_id', termId);
+        if (search)  params.set('search', search);
 
-        const res = await fetch(ROUTES.getArchived + '?' + params.toString(), {
+        const res  = await fetch(ROUTES.getArchived + '?' + params.toString(), {
             headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
         });
         const data = await res.json();
@@ -639,10 +764,12 @@ async function loadArchivedPage(page) {
             tbody.innerHTML = `<tr><td colspan="9" class="text-center text-danger py-3">${data.message}</td></tr>`;
             return;
         }
+
         archiveMeta = data.meta;
-        renderArchiveRows(data.data, search);
+        renderArchiveRows(data.data);
         renderArchivePagination(data.meta);
         updateArchiveMeta(data.meta);
+
     } catch (err) {
         tbody.innerHTML = `<tr><td colspan="9" class="text-center text-danger py-3">Error: ${err.message}</td></tr>`;
     } finally {
@@ -653,28 +780,24 @@ async function loadArchivedPage(page) {
 // ============================================================================
 // ARCHIVE MODAL — RENDER ROWS
 // ============================================================================
-function renderArchiveRows(rows, search) {
+function renderArchiveRows(rows) {
     const tbody = document.getElementById('archiveTableBody');
-    if (search) {
-        const q = search.toLowerCase();
-        rows = rows.filter(r =>
-            (r.firstname + ' ' + r.lastname).toLowerCase().includes(q) ||
-            (r.admissionno ?? '').toLowerCase().includes(q) ||
-            (r.subjectname ?? '').toLowerCase().includes(q)
-        );
-    }
+
     if (!rows.length) {
         tbody.innerHTML = `<tr><td colspan="9" class="text-center text-muted py-4">No archived records found.</td></tr>`;
         updateArchiveToolbar(false);
         return;
     }
+
     updateArchiveToolbar(true);
+
     let html = '';
     rows.forEach(row => {
         const studentName = `${row.lastname ?? ''} ${row.firstname ?? ''} ${row.othername ?? ''}`.trim();
-        const unregDate = row.unregistered_at
+        const unregDate   = row.unregistered_at
             ? new Date(row.unregistered_at).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })
             : '—';
+
         html += `<tr data-archive-id="${row.archive_id}">
             <td>
                 <div class="form-check mb-0">
@@ -686,18 +809,18 @@ function renderArchiveRows(rows, search) {
                     <img src="{{ asset('storage/student_avatars/') }}/${row.picture ? row.picture.split('/').pop() : 'unnamed.jpg'}"
                          class="rounded-circle" style="width:32px;height:32px;object-fit:cover;"
                          onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'">
-                    <span class="fw-medium">${studentName}</span>
+                    <span class="fw-medium">${escapeHtml(studentName)}</span>
                 </div>
             </td>
-            <td>${row.admissionno ?? '—'}</td>
+            <td>${escapeHtml(row.admissionno ?? '—')}</td>
             <td>
-                <span class="badge bg-primary-subtle text-primary">${row.subjectname ?? '—'}</span>
-                <small class="text-muted d-block">${row.subjectcode ?? ''}</small>
+                <span class="badge bg-primary-subtle text-primary">${escapeHtml(row.subjectname ?? '—')}</span>
+                <small class="text-muted d-block">${escapeHtml(row.subjectcode ?? '')}</small>
             </td>
-            <td>${row.staffname ?? '—'}</td>
-            <td><span class="badge bg-warning-subtle text-warning-emphasis">${row.termname ?? '—'}</span></td>
+            <td>${escapeHtml(row.staffname ?? '—')}</td>
+            <td><span class="badge bg-warning-subtle text-warning-emphasis">${escapeHtml(row.termname ?? '—')}</span></td>
             <td><small>${unregDate}</small></td>
-            <td><small>${row.unregistered_by_name ?? '—'}</small></td>
+            <td><small>${escapeHtml(row.unregistered_by_name ?? '—')}</small></td>
             <td>
                 <div class="d-flex gap-1">
                     <button class="btn btn-xs btn-success py-0 px-2" title="Restore this registration"
@@ -712,15 +835,33 @@ function renderArchiveRows(rows, search) {
             </td>
         </tr>`;
     });
+
     tbody.innerHTML = html;
 
+    // Check-all binding inside modal
     document.getElementById('archiveCheckAll').checked = false;
-    document.getElementById('archiveCheckAll').addEventListener('change', function () {
-        document.querySelectorAll('.archive-chk').forEach(cb => cb.checked = this.checked);
-        toggleArchiveBatchButtons();
-    });
+    document.getElementById('archiveCheckAll').removeEventListener('change', handleArchiveCheckAll);
+    document.getElementById('archiveCheckAll').addEventListener('change', handleArchiveCheckAll);
+
     document.querySelectorAll('.archive-chk').forEach(cb => {
+        cb.removeEventListener('change', toggleArchiveBatchButtons);
         cb.addEventListener('change', toggleArchiveBatchButtons);
+    });
+}
+
+function handleArchiveCheckAll(e) {
+    document.querySelectorAll('.archive-chk').forEach(cb => cb.checked = e.target.checked);
+    toggleArchiveBatchButtons();
+}
+
+// Simple escape helper to prevent XSS
+function escapeHtml(str) {
+    if (!str) return str;
+    return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
     });
 }
 
@@ -730,9 +871,13 @@ function renderArchiveRows(rows, search) {
 function renderArchivePagination(meta) {
     const container = document.getElementById('archivePagination');
     if (!meta || meta.last_page <= 1) { container.innerHTML = ''; return; }
+
     let html = '';
+    // Previous
     html += `<button class="btn btn-sm btn-outline-secondary ${meta.current_page === 1 ? 'disabled' : ''}"
         onclick="loadArchivedPage(${meta.current_page - 1})">‹</button>`;
+
+    // Page numbers (show up to 7 around current)
     const delta = 3;
     for (let p = 1; p <= meta.last_page; p++) {
         if (p === 1 || p === meta.last_page || (p >= meta.current_page - delta && p <= meta.current_page + delta)) {
@@ -742,8 +887,11 @@ function renderArchivePagination(meta) {
             html += `<span class="btn btn-sm btn-outline-secondary disabled">…</span>`;
         }
     }
+
+    // Next
     html += `<button class="btn btn-sm btn-outline-secondary ${meta.current_page === meta.last_page ? 'disabled' : ''}"
         onclick="loadArchivedPage(${meta.current_page + 1})">›</button>`;
+
     container.innerHTML = html;
 }
 
@@ -751,7 +899,7 @@ function updateArchiveMeta(meta) {
     const el = document.getElementById('archiveMeta');
     if (!meta) { el.textContent = ''; return; }
     const from = (meta.current_page - 1) * meta.per_page + 1;
-    const to = Math.min(meta.current_page * meta.per_page, meta.total);
+    const to   = Math.min(meta.current_page * meta.per_page, meta.total);
     el.textContent = `Showing ${from}–${to} of ${meta.total} records`;
 }
 
@@ -772,21 +920,37 @@ document.getElementById('archiveSearch')?.addEventListener('input', function () 
     clearTimeout(archiveSearchTimer);
     archiveSearchTimer = setTimeout(() => loadArchivedPage(1), 400);
 });
+
 document.getElementById('archiveTermFilter')?.addEventListener('change', () => loadArchivedPage(1));
 
 // ============================================================================
 // RESTORE — SINGLE
 // ============================================================================
 async function restoreSingle(archiveId) {
-    if (!confirm('Restore this registration? The student will be re-registered for this subject.')) return;
+    const confirmResult = await Swal.fire({
+        title: 'Restore Registration?',
+        html: '<p>This student will be re-registered for this subject.</p>',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#28a745',
+        confirmButtonText: 'Yes, restore!'
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
     const spinner = document.getElementById('archiveSpinner');
     spinner.classList.remove('d-none');
+
     try {
         const res = await apiFetch(ROUTES.restore, 'POST', { archive_ids: [archiveId] });
-        showToast(res.message || 'Restored.', res.success ? 'success' : 'warning');
-        if (res.success) loadArchivedPage(archiveCurrentPage);
+        if (res.success) {
+            showSweetAlert('Restored!', res.message || 'Registration restored successfully.', 'success', true);
+            loadArchivedPage(archiveCurrentPage);
+        } else {
+            showSweetAlert('Restore Failed', res.message || 'Could not restore registration.', 'error', false);
+        }
     } catch (err) {
-        showToast('Restore failed: ' + err.message, 'danger');
+        showSweetAlert('Error', 'Restore failed: ' + err.message, 'error', false);
     } finally {
         spinner.classList.add('d-none');
     }
@@ -798,15 +962,31 @@ async function restoreSingle(archiveId) {
 async function restoreSelected() {
     const ids = [...document.querySelectorAll('.archive-chk:checked')].map(cb => parseInt(cb.value));
     if (!ids.length) return;
-    if (!confirm(`Restore ${ids.length} registration(s)?`)) return;
+
+    const confirmResult = await Swal.fire({
+        title: 'Restore Selected?',
+        html: `<p>Restore <strong>${ids.length}</strong> registration(s)?</p>`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#28a745',
+        confirmButtonText: 'Yes, restore all'
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
     const spinner = document.getElementById('archiveSpinner');
     spinner.classList.remove('d-none');
+
     try {
         const res = await apiFetch(ROUTES.restore, 'POST', { archive_ids: ids });
-        showToast(res.message || 'Restored.', res.success ? 'success' : 'warning');
-        if (res.success || res.total_restored > 0) loadArchivedPage(archiveCurrentPage);
+        if (res.success || res.total_restored > 0) {
+            showSweetAlert('Restored!', `${res.total_restored || ids.length} registration(s) restored.`, 'success', true);
+            loadArchivedPage(archiveCurrentPage);
+        } else {
+            showSweetAlert('Restore Failed', res.message || 'Could not restore registrations.', 'error', false);
+        }
     } catch (err) {
-        showToast('Restore failed: ' + err.message, 'danger');
+        showSweetAlert('Error', 'Restore failed: ' + err.message, 'error', false);
     } finally {
         spinner.classList.add('d-none');
     }
@@ -816,19 +996,32 @@ async function restoreSelected() {
 // PERMANENT DELETE — SINGLE
 // ============================================================================
 async function permanentDeleteSingle(archiveId, btn) {
-    if (!confirm('Permanently delete this archive record? This cannot be undone.')) return;
+    const confirmResult = await Swal.fire({
+        title: 'Permanently Delete?',
+        html: '<p class="text-danger">This action cannot be undone. The record will be permanently removed.</p>',
+        icon: 'error',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        confirmButtonText: 'Yes, delete permanently'
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
     btn.disabled = true;
     try {
         const res = await apiFetch(ROUTES.permanentDelete, 'DELETE', { archive_ids: [archiveId] });
-        showToast(res.message || 'Deleted.', res.success ? 'success' : 'danger');
         if (res.success) {
+            showSweetAlert('Deleted', 'Record permanently deleted.', 'success', false);
             const row = btn.closest('tr');
             row.style.transition = 'opacity .3s';
             row.style.opacity = '0';
             setTimeout(() => { row.remove(); updateArchiveEmpty(); }, 300);
+        } else {
+            showSweetAlert('Delete Failed', res.message || 'Could not delete record.', 'error', false);
+            btn.disabled = false;
         }
     } catch (err) {
-        showToast('Delete failed: ' + err.message, 'danger');
+        showSweetAlert('Error', 'Delete failed: ' + err.message, 'error', false);
         btn.disabled = false;
     }
 }
@@ -839,15 +1032,31 @@ async function permanentDeleteSingle(archiveId, btn) {
 async function permanentDeleteSelected() {
     const ids = [...document.querySelectorAll('.archive-chk:checked')].map(cb => parseInt(cb.value));
     if (!ids.length) return;
-    if (!confirm(`Permanently delete ${ids.length} archive record(s)? This CANNOT be undone.`)) return;
+
+    const confirmResult = await Swal.fire({
+        title: 'Permanently Delete Selected?',
+        html: `<p class="text-danger">You are about to permanently delete <strong>${ids.length}</strong> record(s). This CANNOT be undone.</p>`,
+        icon: 'error',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        confirmButtonText: 'Yes, delete permanently'
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
     const spinner = document.getElementById('archiveSpinner');
     spinner.classList.remove('d-none');
+
     try {
         const res = await apiFetch(ROUTES.permanentDelete, 'DELETE', { archive_ids: ids });
-        showToast(res.message || 'Deleted.', res.success ? 'success' : 'danger');
-        if (res.success) loadArchivedPage(archiveCurrentPage);
+        if (res.success) {
+            showSweetAlert('Deleted', `${res.deleted || ids.length} record(s) permanently deleted.`, 'success', false);
+            loadArchivedPage(archiveCurrentPage);
+        } else {
+            showSweetAlert('Delete Failed', res.message || 'Could not delete records.', 'error', false);
+        }
     } catch (err) {
-        showToast('Delete failed: ' + err.message, 'danger');
+        showSweetAlert('Error', 'Delete failed: ' + err.message, 'error', false);
     } finally {
         spinner.classList.add('d-none');
     }
@@ -877,47 +1086,16 @@ async function apiFetch(url, method, body) {
         method,
         headers: {
             'Content-Type' : 'application/json',
-            'Accept' : 'application/json',
+            'Accept'       : 'application/json',
             'X-CSRF-TOKEN' : CSRF,
         },
         body: JSON.stringify(body),
     });
+
     const data = await res.json();
     if (!res.ok && !data.success) {
         throw new Error(data.message || `HTTP ${res.status}`);
     }
     return data;
-}
-
-// ============================================================================
-// TOAST HELPER (UPDATED with big smiling / unhappy emojis)
-// ============================================================================
-function showToast(message, type = 'info') {
-    document.querySelectorAll('.sop-toast').forEach(t => t.remove());
-    const emojiMap = {
-        success: '😊',
-        danger: '😞',
-        warning: '😕',
-        info: 'ℹ️'
-    };
-    const emoji = emojiMap[type] || 'ℹ️';
-    const colorMap = {
-        success: 'bg-success',
-        danger: 'bg-danger',
-        warning: 'bg-warning text-dark',
-        info: 'bg-info text-dark'
-    };
-    const bg = colorMap[type] || 'bg-secondary';
-    const toast = document.createElement('div');
-    toast.className = `toast sop-toast align-items-center text-white border-0 show ${bg}`;
-    toast.style.cssText = 'position:fixed;top:1rem;right:1rem;z-index:9999;min-width:320px;max-width:420px;';
-    toast.setAttribute('role', 'alert');
-    toast.innerHTML = `
-        <div class="d-flex">
-            <div class="toast-body fs-5">${emoji} ${message}</div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" onclick="this.closest('.toast').remove()"></button>
-        </div>`;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 5000);
 }
 </script>

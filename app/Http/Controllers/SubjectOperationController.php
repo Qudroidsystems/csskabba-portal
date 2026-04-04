@@ -21,8 +21,8 @@ use App\Models\BroadsheetRecordMock;
 use App\Models\StudentSubjectRecord;
 use App\Models\SubjectRegistrationStatus;
 use App\Models\BroadsheetAssessmentScore;
-use App\Models\SubjectUnregistrationArchive;
 use App\Models\BroadsheetSubAssessmentScore;
+use App\Models\SubjectUnregistrationArchive;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Auth;
 
@@ -35,10 +35,14 @@ class SubjectOperationController extends Controller
         $this->middleware('permission:Delete subject-operation', ['only' => ['destroy', 'permanentlyDeleteArchive', 'permanentlyDeleteArchiveBatch']]);
     }
 
+    // =========================================================================
+    // INDEX
+    // =========================================================================
+
     /**
      * Display a list of students for subject registration with filters.
      */
-    public function index(Request $request): \Illuminate\View\View
+    public function index(Request $request): \Illuminate\View\View|\Illuminate\Http\Response
     {
         $pagetitle = "Subject Operation Management";
 
@@ -48,6 +52,10 @@ class SubjectOperationController extends Controller
             ->get();
         $schoolterms    = Schoolterm::all();
         $schoolsessions = Schoolsession::all();
+
+        $staffs = User::whereHas('roles', function ($q) {
+            $q->where('name', '!=', 'Student');
+        })->get(['users.id as userid', 'users.name as name', 'users.avatar as avatar']);
 
         $students        = null;
         $subjectTeachers = null;
@@ -133,6 +141,10 @@ class SubjectOperationController extends Controller
             'students', 'subjectTeachers', 'pagetitle', 'schoolclass', 'schoolterms', 'schoolsessions'
         ));
     }
+
+    // =========================================================================
+    // SUBJECT INFO
+    // =========================================================================
 
     /**
      * Display subject information for a specific student.
@@ -243,9 +255,10 @@ class SubjectOperationController extends Controller
         }
     }
 
-    /**
-     * Get subject teachers via AJAX.
-     */
+    // =========================================================================
+    // SUBJECT TEACHERS AJAX
+    // =========================================================================
+
     public function getSubjectTeachers(Request $request)
     {
         if (!$request->ajax()) {
@@ -296,6 +309,10 @@ class SubjectOperationController extends Controller
         ]);
     }
 
+    // =========================================================================
+    // STORE (REGISTER)
+    // =========================================================================
+
     /**
      * Store a newly created subject registration for one or multiple students.
      */
@@ -323,9 +340,10 @@ class SubjectOperationController extends Controller
         }
     }
 
-    /**
-     * Batch register students for multiple subjects.
-     */
+    // =========================================================================
+    // BATCH REGISTER
+    // =========================================================================
+
     public function batchRegister(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -371,10 +389,9 @@ class SubjectOperationController extends Controller
 
             return response()->json([
                 'success'       => empty($errors),
-                'message'       => "Successfully registered {$successCount} student(s).",
+                'message'       => 'Batch registration completed.',
                 'results'       => $results,
                 'error_details' => $errors,
-                'success_count' => $successCount,
             ]);
 
         } catch (\Exception $e) {
@@ -387,9 +404,10 @@ class SubjectOperationController extends Controller
         }
     }
 
-    /**
-     * Unregister students (soft-archives before hard delete).
-     */
+    // =========================================================================
+    // DESTROY (UNREGISTER — now soft-archives before hard delete)
+    // =========================================================================
+
     public function destroy(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -421,6 +439,7 @@ class SubjectOperationController extends Controller
                 $subjectId     = $subjectclass->subjectid;
                 $schoolclassId = $subjectclass->schoolclassid;
 
+                // Find existing registrations for this subject/term/session/staff
                 $existingRegistrations = SubjectRegistrationStatus::where([
                     'subjectclassid' => $subjectclassid,
                     'termid'         => $termid,
@@ -447,8 +466,10 @@ class SubjectOperationController extends Controller
 
                 $unregisteredStudents = array_unique(array_merge($unregisteredStudents, $studentsToProcess));
 
+                // ── 1. Collect broadsheet record IDs (from SubjectRegistrationStatus) ──
                 $broadsheetRecordIds = $existingRegistrations->pluck('broadsheetid')->filter()->toArray();
 
+                // ── 2. Write archive records BEFORE deleting anything ──
                 $archiveRows = [];
                 $now         = now();
                 foreach ($studentsToProcess as $studentId) {
@@ -469,18 +490,22 @@ class SubjectOperationController extends Controller
                         'updated_at'          => $now,
                     ];
                 }
+                // insertOrIgnore prevents duplicate archive entries if somehow called twice
                 SubjectUnregistrationArchive::insertOrIgnore($archiveRows);
 
+                // ── 3. Get Broadsheets IDs (term-specific) ──
                 $broadsheetSheetIds = Broadsheets::whereIn('broadsheet_record_id', $broadsheetRecordIds)
                     ->where('term_id', $termid)
                     ->where('subjectclass_id', $subjectclassid)
                     ->pluck('id');
 
+                // ── 4. Delete assessment scores (term-specific via broadsheet) ──
                 if ($broadsheetSheetIds->isNotEmpty()) {
                     BroadsheetAssessmentScore::whereIn('broadsheet_id', $broadsheetSheetIds)->delete();
                     BroadsheetSubAssessmentScore::whereIn('broadsheet_id', $broadsheetSheetIds)->delete();
                 }
 
+                // ── 5. Delete BroadsheetsMock for this term only ──
                 $mockRecordIds = BroadsheetRecordMock::whereIn('student_id', $studentsToProcess)
                     ->where('subject_id', $subjectId)
                     ->where('schoolclass_id', $schoolclassId)
@@ -495,11 +520,13 @@ class SubjectOperationController extends Controller
                         ->delete();
                 }
 
+                // ── 6. Delete Broadsheets for this term only ──
                 Broadsheets::whereIn('broadsheet_record_id', $broadsheetRecordIds)
                     ->where('term_id', $termid)
                     ->where('subjectclass_id', $subjectclassid)
                     ->delete();
 
+                // ── 7. KEY FIX: Only delete BroadsheetRecord if no other term references it ──
                 $orphanedRecordIds = collect($broadsheetRecordIds)->filter(function ($recordId) {
                     return Broadsheets::where('broadsheet_record_id', $recordId)->doesntExist();
                 })->toArray();
@@ -508,6 +535,7 @@ class SubjectOperationController extends Controller
                     BroadsheetRecord::whereIn('id', $orphanedRecordIds)->delete();
                 }
 
+                // ── 8. KEY FIX: Only delete BroadsheetRecordMock if no other term references it ──
                 if ($mockRecordIds->isNotEmpty()) {
                     $orphanedMockIds = BroadsheetRecordMock::whereIn('id', $mockRecordIds)
                         ->get()
@@ -522,12 +550,14 @@ class SubjectOperationController extends Controller
                     }
                 }
 
+                // ── 9. Delete StudentSubjectRecord ──
                 StudentSubjectRecord::whereIn('studentId', $studentsToProcess)
                     ->where('subjectclassid', $subjectclassid)
                     ->where('staffid', $staffid)
                     ->where('session', $sessionid)
                     ->delete();
 
+                // ── 10. Delete SubjectRegistrationStatus for this term only ──
                 SubjectRegistrationStatus::whereIn('studentid', $studentsToProcess)
                     ->where('subjectclassid', $subjectclassid)
                     ->where('termid', $termid)
@@ -585,8 +615,13 @@ class SubjectOperationController extends Controller
         }
     }
 
+    // =========================================================================
+    // GET ARCHIVED REGISTRATIONS
+    // =========================================================================
+
     /**
-     * Get archived registrations for the Unregistered History modal.
+     * Return paginated archive records for a given class/session/term.
+     * Called via AJAX from the "Unregistered History" modal.
      */
     public function getArchivedRegistrations(Request $request): JsonResponse
     {
@@ -594,24 +629,32 @@ class SubjectOperationController extends Controller
             'class_id'   => ['required', 'integer', 'exists:schoolclass,id'],
             'session_id' => ['required', 'integer', 'exists:schoolsession,id'],
             'term_id'    => ['nullable', 'integer', 'exists:schoolterm,id'],
-            'search'     => ['nullable', 'string', 'max:255'],
+            'per_page'   => ['nullable', 'integer', 'in:20,50,100,150'],
         ]);
 
         try {
+            $perPage = $request->input('per_page', 50);
+
             $query = SubjectUnregistrationArchive::query()
                 ->where('subject_unregistration_archive.status', SubjectUnregistrationArchive::STATUS_ARCHIVED)
                 ->where('subject_unregistration_archive.sessionid', $validated['session_id'])
                 ->where('subject_unregistration_archive.schoolclassid', $validated['class_id'])
+                // Student info
                 ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'subject_unregistration_archive.studentid')
                 ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+                // Subject info via subjectclass → subjectteacher → subject
                 ->leftJoin('subjectclass', 'subjectclass.id', '=', 'subject_unregistration_archive.subjectclassid')
                 ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
                 ->leftJoin('subject', 'subject.id', '=', 'subject_unregistration_archive.subjectid')
+                // Staff (teacher)
                 ->leftJoin('users as staff', 'staff.id', '=', 'subject_unregistration_archive.staffid')
+                // Term & session labels
                 ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subject_unregistration_archive.termid')
                 ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subject_unregistration_archive.sessionid')
+                // Class
                 ->leftJoin('schoolclass', 'schoolclass.id', '=', 'subject_unregistration_archive.schoolclassid')
                 ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+                // Who unregistered
                 ->leftJoin('users as actor', 'actor.id', '=', 'subject_unregistration_archive.unregistered_by')
                 ->select([
                     'subject_unregistration_archive.id as archive_id',
@@ -624,19 +667,24 @@ class SubjectOperationController extends Controller
                     'subject_unregistration_archive.schoolclassid',
                     'subject_unregistration_archive.broadsheet_record_id',
                     'subject_unregistration_archive.unregistered_at',
+                    // Student
                     'studentRegistration.admissionno',
                     'studentRegistration.firstname',
                     'studentRegistration.lastname',
                     'studentRegistration.othername',
                     'studentRegistration.gender',
                     'studentpicture.picture',
+                    // Subject
                     'subject.subject as subjectname',
                     'subject.subject_code as subjectcode',
+                    // Teacher
                     'staff.name as staffname',
+                    // Term / session / class
                     'schoolterm.term as termname',
                     'schoolsession.session as sessionname',
                     'schoolclass.schoolclass as class_name',
                     'schoolarm.arm as arm_name',
+                    // Actor
                     'actor.name as unregistered_by_name',
                 ]);
 
@@ -644,19 +692,18 @@ class SubjectOperationController extends Controller
                 $query->where('subject_unregistration_archive.termid', $validated['term_id']);
             }
 
-            if (!empty($validated['search'])) {
-                $searchTerm = '%' . $validated['search'] . '%';
-                $query->where(function($q) use ($searchTerm) {
-                    $q->where('studentRegistration.firstname', 'like', $searchTerm)
-                      ->orWhere('studentRegistration.lastname', 'like', $searchTerm)
-                      ->orWhere('studentRegistration.admissionno', 'like', $searchTerm)
-                      ->orWhere('subject.subject', 'like', $searchTerm);
+            if ($search = $request->input('search')) {
+                $query->where(function($q) use ($search) {
+                    $q->where('studentRegistration.firstname', 'like', "%{$search}%")
+                      ->orWhere('studentRegistration.lastname', 'like', "%{$search}%")
+                      ->orWhere('studentRegistration.admissionno', 'like', "%{$search}%")
+                      ->orWhere('subject.subject', 'like', "%{$search}%");
                 });
             }
 
+            // Group by student+subject so we can show one row per combination
             $query->orderBy('subject_unregistration_archive.unregistered_at', 'desc');
 
-            $perPage  = (int) $request->input('per_page', 50);
             $archived = $query->paginate($perPage);
 
             return response()->json([
@@ -676,62 +723,13 @@ class SubjectOperationController extends Controller
         }
     }
 
-    /**
-     * Get registered classes with teacher names.
-     */
-    public function getRegisteredClasses(Request $request): JsonResponse
-    {
-        try {
-            $validated = $request->validate([
-                'class_id'   => ['required', 'integer', 'exists:schoolclass,id'],
-                'session_id' => ['required', 'integer', 'exists:schoolsession,id'],
-                'term_id'    => ['nullable', 'integer', 'exists:schoolterm,id'],
-            ]);
-
-            DB::statement('SET SESSION group_concat_max_len = 1000000');
-
-            $query = SubjectRegistrationStatus::query()
-                ->join('subjectclass', 'subjectclass.id', '=', 'subject_registration_status.subjectclassid')
-                ->join('schoolclass', 'schoolclass.id', '=', 'subjectclass.schoolclassid')
-                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-                ->join('schoolsession', 'schoolsession.id', '=', 'subject_registration_status.sessionid')
-                ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subject_registration_status.termid')
-                ->leftJoin('broadsheet', 'broadsheet.id', '=', 'subject_registration_status.broadsheetid')
-                ->leftJoin('subject', 'subject.id', '=', 'broadsheet.subjectid')
-                ->leftJoin('users as teachers', 'teachers.id', '=', 'subject_registration_status.staffid')
-                ->where('subjectclass.schoolclassid', $validated['class_id'])
-                ->where('subject_registration_status.sessionid', $validated['session_id'])
-                ->when($validated['term_id'], fn($q, $t) => $q->where('subject_registration_status.termid', $t))
-                ->groupBy([
-                    'schoolclass.id', 'schoolarm.id', 'schoolsession.id', 'schoolterm.id',
-                    'schoolclass.schoolclass', 'schoolarm.arm', 'schoolsession.session', 'schoolterm.term',
-                ])
-                ->select([
-                    'schoolclass.id as class_id',
-                    'schoolclass.schoolclass as class_name',
-                    DB::raw('COALESCE(schoolarm.arm, "None") as arm_name'),
-                    DB::raw('COALESCE(schoolsession.session, "Unknown") as session_name'),
-                    DB::raw('COALESCE(schoolterm.term, "Unknown") as term_name'),
-                    DB::raw('COUNT(DISTINCT subject_registration_status.studentid) as student_count'),
-                    DB::raw('COUNT(DISTINCT subject_registration_status.subjectclassid) as subject_count'),
-                    DB::raw('COALESCE(GROUP_CONCAT(DISTINCT subject.subject ORDER BY subject.subject SEPARATOR ", "), "None") as subjects'),
-                    DB::raw('COALESCE(GROUP_CONCAT(DISTINCT teachers.name ORDER BY teachers.name SEPARATOR ", "), "None") as teachers'),
-                ]);
-
-            $classes = $query->get();
-
-            return response()->json(['success' => true, 'data' => $classes]);
-
-        } catch (ValidationException $e) {
-            return response()->json(['success' => false, 'message' => 'Invalid parameters.', 'errors' => $e->errors()], 422);
-        } catch (\Exception $e) {
-            Log::error('Error fetching registered classes', ['error' => $e->getMessage()]);
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
-        }
-    }
+    // =========================================================================
+    // RESTORE
+    // =========================================================================
 
     /**
-     * Restore archived registrations.
+     * Restore one or more archive records — re-registers the students.
+     * Accepts: { archive_ids: [1,2,3] }
      */
     public function restoreRegistration(Request $request): JsonResponse
     {
@@ -743,6 +741,8 @@ class SubjectOperationController extends Controller
         try {
             DB::beginTransaction();
 
+            // Load archive records grouped by subjectclassid+termid+sessionid+staffid
+            // so we can call processIndividually once per subject group
             $archives = SubjectUnregistrationArchive::whereIn('id', $validated['archive_ids'])
                 ->where('status', SubjectUnregistrationArchive::STATUS_ARCHIVED)
                 ->get();
@@ -750,10 +750,11 @@ class SubjectOperationController extends Controller
             if ($archives->isEmpty()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No valid archived records found.',
+                    'message' => 'No valid archived records found. They may have already been restored or permanently deleted.',
                 ], 422);
             }
 
+            // Group by the subject+term+session+staff combination
             $groups = $archives->groupBy(function ($row) {
                 return $row->subjectclassid . '_' . $row->termid . '_' . $row->sessionid . '_' . $row->staffid;
             });
@@ -774,6 +775,7 @@ class SubjectOperationController extends Controller
                 ]);
 
                 if ($result['success'] || ($result['skipped_count'] ?? 0) > 0) {
+                    // Mark archive records as restored
                     SubjectUnregistrationArchive::whereIn('id', $groupArchives->pluck('id')->toArray())
                         ->update([
                             'status'      => SubjectUnregistrationArchive::STATUS_RESTORED,
@@ -802,7 +804,7 @@ class SubjectOperationController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Restore registration failed', ['error' => $e->getMessage()]);
+            Log::error('Restore registration failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Restore failed: ' . $e->getMessage(),
@@ -810,8 +812,13 @@ class SubjectOperationController extends Controller
         }
     }
 
+    // =========================================================================
+    // PERMANENTLY DELETE SINGLE ARCHIVE RECORD
+    // =========================================================================
+
     /**
-     * Permanently delete a single archive record.
+     * Permanently delete a single archive record (just the archive row — data was
+     * already hard-deleted during unregistration).
      */
     public function permanentlyDeleteArchive(Request $request, int $archiveId): JsonResponse
     {
@@ -825,6 +832,7 @@ class SubjectOperationController extends Controller
                 'actioned_at' => now(),
             ]);
 
+            // Actually remove the archive row
             $archive->delete();
 
             return response()->json([
@@ -833,15 +841,20 @@ class SubjectOperationController extends Controller
             ]);
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            return response()->json(['success' => false, 'message' => 'Record not found.'], 404);
+            return response()->json(['success' => false, 'message' => 'Record not found or already actioned.'], 404);
         } catch (\Exception $e) {
             Log::error('Permanent delete failed', ['archive_id' => $archiveId, 'error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
 
+    // =========================================================================
+    // PERMANENTLY DELETE BATCH
+    // =========================================================================
+
     /**
-     * Permanently delete multiple archive records.
+     * Permanently delete multiple archive records at once.
+     * Accepts: { archive_ids: [1,2,3] }
      */
     public function permanentlyDeleteArchiveBatch(Request $request): JsonResponse
     {
@@ -863,6 +876,115 @@ class SubjectOperationController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Batch permanent delete failed', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    // =========================================================================
+    // REGISTERED CLASSES (Improved with Teacher Names)
+    // =========================================================================
+
+    public function registeredClasses(Request $request): JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'class_id'   => ['required', 'integer', 'exists:schoolclass,id'],
+                'session_id' => ['required', 'integer', 'exists:schoolsession,id'],
+                'term_id'    => ['nullable', 'integer', 'exists:schoolterm,id'],
+            ]);
+
+            DB::statement('SET SESSION group_concat_max_len = 1000000');
+
+            $query = SubjectRegistrationStatus::query()
+                ->join('subjectclass', 'subjectclass.id', '=', 'subject_registration_status.subjectclassid')
+                ->join('schoolclass', 'schoolclass.id', '=', 'subjectclass.schoolclassid')
+                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+                ->join('schoolsession', 'schoolsession.id', '=', 'subject_registration_status.sessionid')
+                ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subject_registration_status.termid')
+                ->leftJoin('broadsheet', 'broadsheet.id', '=', 'subject_registration_status.broadsheetid')
+                ->leftJoin('subject', 'subject.id', '=', 'broadsheet.subjectid')
+                ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
+                ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
+                ->where('subjectclass.schoolclassid', $validated['class_id'])
+                ->where('subject_registration_status.sessionid', $validated['session_id'])
+                ->when($validated['term_id'], fn($q, $t) => $q->where('subject_registration_status.termid', $t))
+                ->groupBy([
+                    'schoolclass.id', 'schoolarm.id', 'schoolsession.id', 'schoolterm.id',
+                    'schoolclass.schoolclass', 'schoolarm.arm', 'schoolsession.session', 'schoolterm.term',
+                ])
+                ->select([
+                    'schoolclass.id as class_id',
+                    'schoolclass.schoolclass as class_name',
+                    DB::raw('COALESCE(schoolarm.arm, "None") as arm_name'),
+                    DB::raw('COALESCE(schoolsession.session, "Unknown") as session_name'),
+                    DB::raw('COALESCE(schoolterm.term, "Unknown") as term_name'),
+                    DB::raw('COUNT(DISTINCT subject_registration_status.studentid) as student_count'),
+                    DB::raw('COUNT(DISTINCT subject_registration_status.subjectclassid) as subject_count'),
+                    DB::raw('COALESCE(GROUP_CONCAT(DISTINCT subject.subject ORDER BY subject.subject SEPARATOR ", "), "None") as subjects'),
+                    DB::raw('COALESCE(GROUP_CONCAT(DISTINCT users.name ORDER BY users.name SEPARATOR ", "), "None") as teachers'),
+                ]);
+
+            $classes = $query->get();
+
+            return response()->json(['success' => true, 'data' => $classes]);
+
+        } catch (ValidationException $e) {
+            return response()->json(['success' => false, 'message' => 'Invalid parameters.', 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            Log::error('Error fetching registered classes', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    public function getRegisteredClasses(Request $request): JsonResponse
+    {
+        try {
+            $classId   = $request->input('class_id');
+            $sessionId = $request->input('session_id');
+            $termId    = $request->input('term_id');
+
+            $query = Subjectclass::query()
+                ->leftJoin('schoolclass', 'schoolclass.id', '=', 'subjectclass.schoolclassid')
+                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+                ->leftJoin('student_subject_register_record', 'student_subject_register_record.subjectclassid', '=', 'subjectclass.id')
+                ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
+                ->leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
+                ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subjectteacher.sessionid')
+                ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
+                ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
+                ->whereNotNull('student_subject_register_record.studentId');
+
+            if ($classId && $classId !== 'ALL') {
+                $query->where('subjectclass.schoolclassid', $classId);
+            }
+            if ($sessionId && $sessionId !== 'ALL') {
+                $query->where('subjectteacher.sessionid', $sessionId);
+            }
+            if ($termId && $termId !== 'ALL') {
+                $query->where('subjectteacher.termid', $termId);
+            }
+
+            $registeredClasses = $query->select([
+                'schoolclass.id as class_id',
+                'schoolclass.schoolclass as class_name',
+                'schoolarm.arm as arm_name',
+                'schoolsession.session as session_name',
+                'schoolterm.term as term_name',
+                DB::raw('COUNT(DISTINCT student_subject_register_record.studentId) as student_count'),
+                DB::raw('COUNT(DISTINCT subject.id) as subject_count'),
+                DB::raw('GROUP_CONCAT(DISTINCT subject.subject ORDER BY subject.subject SEPARATOR ", ") as subjects'),
+                DB::raw('GROUP_CONCAT(DISTINCT users.name ORDER BY users.name SEPARATOR ", ") as teachers'),
+            ])
+                ->groupBy([
+                    'schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm',
+                    'schoolsession.session', 'schoolterm.term',
+                ])
+                ->get();
+
+            return response()->json(['success' => true, 'data' => $registeredClasses], 200);
+
+        } catch (\Exception $e) {
+            Log::error("Error fetching registered classes: {$e->getMessage()}");
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
