@@ -572,6 +572,32 @@
                                     @if(in_array('position', $columnsToShow)) <td>{{ $score->position ?? '-' }}</td> @endif
                                     @if(in_array('class_average', $columnsToShow)) <td>{{ $score->class_average ? number_format($score->class_average, 1) : '-' }}</td> @endif
                                 </tr>
+                                  <tr>
+                                    @if(in_array('sn', $columnsToShow)) <td>{{ $scoreIndex + 1 }}</td> @endif
+                                    @if(in_array('admission_no', $columnsToShow)) <td>{{ $student->admissionNo ?? '-' }}</td> @endif
+                                    @if(in_array('name', $columnsToShow)) <td class="subject-name">{{ $score->subject_name ?? 'NO INFO' }}</td> @endif
+                                    @foreach ($assessments as $assessment)
+                                        @if(in_array($assessment->id, $columnsToShow) || in_array('all_assessments', $columnsToShow))
+                                            @php
+                                                $assessmentScore = 0;
+                                                if (isset($score->assessment_scores)) {
+                                                    $found = $score->assessment_scores->firstWhere('assessment_id', $assessment->id);
+                                                    $assessmentScore = $found ? $found->score : 0;
+                                                }
+                                                $isLow = $assessmentScore < ($assessment->max_score * 0.5);
+                                            @endphp
+                                            <td @if($isLow && is_numeric($assessmentScore)) class="highlight-red" @endif>
+                                                {{ $assessmentScore ? number_format($assessmentScore, 0) : '-' }}
+                                            </td>
+                                        @endif
+                                    @endforeach
+                                    @if(in_array('total', $columnsToShow)) <td @if($score->total < 50) class="highlight-red" @endif>{{ $score->total ? number_format($score->total, 1) : '-' }}</td> @endif
+                                    @if(in_array('bf', $columnsToShow)) <td>{{ $score->bf ? number_format($score->bf, 1) : '-' }}</td> @endif
+                                    @if(in_array('cum', $columnsToShow)) <td>{{ $score->cum ? number_format($score->cum, 1) : '-' }}</td> @endif
+                                    @if(in_array('grade', $columnsToShow)) <td @if(in_array($score->grade ?? '', ['F','F9','E','E8'])) class="highlight-red" @endif>{{ $score->grade ?? '-' }}</td> @endif
+                                    @if(in_array('position', $columnsToShow)) <td>{{ $score->position ?? '-' }}</td> @endif
+                                    @if(in_array('class_average', $columnsToShow)) <td>{{ $score->class_average ? number_format($score->class_average, 1) : '-' }}</td> @endif
+                                </tr>
                                 @empty
                                 <tr>
                                     <td colspan="{{ $currentVisibleColumnCount }}" style="text-align:center;">No scores available.</td>
