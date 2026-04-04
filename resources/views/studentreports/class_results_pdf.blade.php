@@ -143,13 +143,16 @@
             margin: 0 2px;
         }
 
-        /* DUAL-COLUMN LAYOUT - ZERO GAP */
+        /* DUAL-COLUMN LAYOUT - ZERO GAP + FIXED EQUAL HEIGHT */
         .dual-layout-table {
             width: 100%;
             border-collapse: collapse;
             border-spacing: 0;
             margin-bottom: 8px;
             page-break-inside: avoid;
+        }
+        .dual-layout-table tr {
+            height: 420px; /* FIXED HEIGHT - both academic and psychomotor now same height */
         }
         .dual-layout-table td.academic-cell {
             vertical-align: top;
@@ -162,9 +165,10 @@
             min-width: 148px;
         }
 
-        /* ACADEMIC TABLE */
+        /* ACADEMIC TABLE - fills the fixed height */
         .result-table table {
             width: 100%;
+            height: 100% !important; /* forces table to fill the fixed cell height */
             border: 2px solid #000000;
             border-collapse: collapse;
             font-size: 7.8px;
@@ -213,7 +217,7 @@
         .col-position { width: 36px; }
         .col-class-average { width: 39px; }
 
-        /* FULL-WIDTH TOTAL SUMMARY (moved outside the table) */
+        /* FULL-WIDTH TOTAL SUMMARY */
         .totals-summary {
             width: 98%;
             background: #0d1a3d;
@@ -234,6 +238,7 @@
             border: 2px solid #c0a86a;
             border-radius: 8px;
             padding: 0 4px 4px 4px;
+            height: 100%; /* fills the fixed tr height */
         }
         .psychomotor-title {
             background: #2c3e4e;
@@ -516,7 +521,7 @@
             <div class="student-info-bar"><div class="info-line">No student data available.</div></div>
         @endif
 
-        <!-- DUAL-COLUMN LAYOUT -->
+        <!-- DUAL-COLUMN LAYOUT (Fixed equal height) -->
         <table class="dual-layout-table">
             <tr>
                 <!-- LEFT: ACADEMIC RESULTS -->
@@ -577,24 +582,6 @@
                                     <td colspan="{{ $currentVisibleColumnCount }}" style="text-align:center;">No scores available.</td>
                                 </tr>
                                 @endforelse
-
-                                <!-- Small TOTAL row inside table -->
-                                {{-- <tr class="totals-row" style="background:#0d1a3d;color:#ffffff;font-weight:900;">
-                                    <td colspan="{{ $totalLabelColspan }}" style="text-align:right;padding-right:5px;">TOTAL</td>
-                                    @if(in_array('total', $columnsToShow))
-                                        <td>
-                                            <div class="totals-fraction" style="display:inline-block;text-align:center;font-size:6.5px;line-height:1;">
-                                                <span class="t-num" style="display:block;border-bottom:1px solid #fff;padding:0 2px 1px;">{{ number_format($totals['obtained'], 1) }}</span>
-                                                <span class="t-den">{{ $totals['obtainable'] }}</span>
-                                            </div>
-                                        </td>
-                                    @endif
-                                    @if(in_array('bf', $columnsToShow)) <td></td> @endif
-                                    @if(in_array('cum', $columnsToShow)) <td></td> @endif
-                                    @if(in_array('grade', $columnsToShow)) <td></td> @endif
-                                    @if(in_array('position', $columnsToShow)) <td></td> @endif
-                                    @if(in_array('class_average', $columnsToShow)) <td>{{ $totals['percentage'] }}%</td> @endif
-                                </tr> --}}
                             </tbody>
                         </table>
                     </div>
@@ -630,7 +617,7 @@
             </tr>
         </table>
 
-        <!-- FULL-WIDTH TOTAL SUMMARY (no longer inside the table) -->
+        <!-- FULL-WIDTH TOTAL SUMMARY -->
         <div class="totals-summary">
             TOTAL OBTAINED: {{ number_format($totals['obtained'], 1) }}&nbsp;&nbsp;|&nbsp;&nbsp;TOTAL OBTAINABLE: {{ $totals['obtainable'] }}&nbsp;&nbsp;|&nbsp;&nbsp;% OBTAINED: {{ $totals['percentage'] }}%
         </div>
