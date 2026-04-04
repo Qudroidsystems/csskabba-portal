@@ -82,7 +82,7 @@ class SubjectOperationController extends Controller
 
         // Get subject teachers (for display) - FIXED RELATIONSHIP
         $subjectTeachers = Subjectclass::with(['subject', 'subjectTeacher.user', 'schoolClass.armRelation'])
-            ->where('status', 'Active')
+            // ->where('status', 'Active')
             ->get()
             ->map(function($subjectClass) {
                 // Get teacher name from subjectTeacher relationship
