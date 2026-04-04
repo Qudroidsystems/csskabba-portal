@@ -81,7 +81,7 @@ class SubjectOperationController extends Controller
 
         // Get subject teachers (for display)
         $subjectTeachers = Subjectclass::with(['subject', 'teacher', 'schoolClass.armRelation'])
-            ->where('status', 'Active')
+            // ->where('status', 'Active')
             ->get()
             ->map(function($subjectClass) {
                 return (object)[
