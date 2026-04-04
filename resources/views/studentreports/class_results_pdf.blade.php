@@ -204,7 +204,7 @@
         /* Column widths */
         .col-sn { width: 28px; }
         .col-admissionno { width: 78px; }
-        .col-name { width: 195px; }
+        .col-name { width: 130px; }
         .col-assessment { width: 39px; }
         .col-total { width: 46px; }
         .col-bf { width: 36px; }
@@ -215,7 +215,7 @@
 
         /* FULL-WIDTH TOTAL SUMMARY (moved outside the table) */
         .totals-summary {
-            width: 100%;
+            width: 80%;
             background: #0d1a3d;
             color: #ffffff;
             font-weight: 900;
