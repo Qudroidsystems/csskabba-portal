@@ -572,7 +572,7 @@
                                     @if(in_array('position', $columnsToShow)) <td>{{ $score->position ?? '-' }}</td> @endif
                                     @if(in_array('class_average', $columnsToShow)) <td>{{ $score->class_average ? number_format($score->class_average, 1) : '-' }}</td> @endif
                                 </tr>
-                                  <tr>
+                                 <tr>
                                     @if(in_array('sn', $columnsToShow)) <td>{{ $scoreIndex + 1 }}</td> @endif
                                     @if(in_array('admission_no', $columnsToShow)) <td>{{ $student->admissionNo ?? '-' }}</td> @endif
                                     @if(in_array('name', $columnsToShow)) <td class="subject-name">{{ $score->subject_name ?? 'NO INFO' }}</td> @endif
