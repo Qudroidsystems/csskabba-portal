@@ -11,7 +11,7 @@
         }
         body {
             font-family: 'Times New Roman', Times, serif;
-            font-size: 9.5px;
+            font-size: 10px;                    /* Overall text slightly bigger */
             line-height: 1.3;
             color: #000;
             background: #f5f5f5;
@@ -105,7 +105,7 @@
             background: #111827;
             color: white;
             padding: 4px 6px;
-            font-size: 11px;
+            font-size: 12px;                    /* Bigger title */
             font-weight: 700;
             text-align: center;
             margin: 5px 0;
@@ -120,7 +120,7 @@
             border-radius: 6px;
             padding: 5px 10px;
             margin-bottom: 8px;
-            font-size: 8.5px;
+            font-size: 9px;                     /* Bigger student info */
         }
         .info-line {
             display: flex;
@@ -131,7 +131,7 @@
         }
         .info-bar-label {
             color: #1e40af;
-            font-size: 8px;
+            font-size: 8.5px;
             font-weight: 700;
         }
         .info-bar-value {
@@ -143,47 +143,54 @@
             margin: 0 2px;
         }
 
-        /* DUAL-COLUMN LAYOUT - ZERO GAP */
+        /* DUAL-COLUMN LAYOUT - ZERO GAP + DYNAMIC HEIGHT MATCH */
         .dual-layout-table {
             width: 100%;
             border-collapse: collapse;
             border-spacing: 0;
             margin-bottom: 8px;
             page-break-inside: avoid;
+            height: 100%;                       /* Forces row to take full available height */
+        }
+        .dual-layout-table tr {
+            height: 100%;                       /* Makes both cells the same height dynamically */
         }
         .dual-layout-table td.academic-cell {
             vertical-align: top;
             padding: 0;
+            height: 100%;                       /* Academic cell stretches to match psychomotor */
         }
         .dual-layout-table td.psycho-cell {
             vertical-align: top;
             padding: 0;
             width: 148px;
             min-width: 148px;
+            height: 100%;
         }
 
-        /* ACADEMIC TABLE */
+        /* ACADEMIC TABLE - Bigger text + dynamic height */
         .result-table table {
             width: 100%;
             border: 2px solid #000000;
             border-collapse: collapse;
-            font-size: 7.8px;
+            font-size: 8.2px;                   /* BIGGER TEXT as requested */
             table-layout: auto;
+            min-height: 100%;                   /* Fills the full cell height */
         }
         .result-table thead th {
             background: #0d1a3d;
             color: white;
             font-weight: 800;
             border: 1px solid #000000;
-            padding: 3px 1px;
-            font-size: 6.8px;
+            padding: 4px 2px;
+            font-size: 7.2px;
             overflow: hidden;
         }
         .result-table tbody td {
             border: 1px solid #000000;
-            padding: 2px 1px;
+            padding: 3px 2px;
             text-align: center;
-            font-size: 7.5px;
+            font-size: 8.2px;                   /* BIGGER TEXT */
             background: white;
             font-weight: 600;
             overflow: hidden;
@@ -191,8 +198,8 @@
         .result-table tbody td.subject-name {
             text-align: left;
             font-weight: 700;
-            font-size: 7.5px;
-            padding-left: 5px;
+            font-size: 8.2px;
+            padding-left: 6px;
             word-break: break-word;
             white-space: normal;
         }
@@ -201,7 +208,7 @@
             font-weight: 900;
         }
 
-        /* Column widths */
+        /* Column widths (kept your latest 130px for Subject) */
         .col-sn { width: 28px; }
         .col-admissionno { width: 78px; }
         .col-name { width: 130px; }
@@ -213,14 +220,14 @@
         .col-position { width: 36px; }
         .col-class-average { width: 39px; }
 
-        /* FULL-WIDTH TOTAL SUMMARY (moved outside the table) */
+        /* FULL-WIDTH TOTAL SUMMARY - Bigger text */
         .totals-summary {
-            width: 98%;
+            width: 100%;
             background: #0d1a3d;
             color: #ffffff;
             font-weight: 900;
-            font-size: 7.5px;
-            padding: 4px 8px;
+            font-size: 8.5px;                   /* BIGGER TEXT */
+            padding: 5px 10px;
             border: 2px solid #000000;
             border-top: none;
             text-align: center;
@@ -234,14 +241,15 @@
             border: 2px solid #c0a86a;
             border-radius: 8px;
             padding: 0 4px 4px 4px;
+            height: 100%;                       /* Matches academic cell height */
         }
         .psychomotor-title {
             background: #2c3e4e;
             color: white;
             text-align: center;
             font-weight: 800;
-            font-size: 8.5px;
-            padding: 3px 2px;
+            font-size: 9px;                     /* Slightly bigger */
+            padding: 4px 2px;
             margin: 0 -4px 5px -4px;
             border-radius: 6px 6px 0 0;
             letter-spacing: 0.3px;
@@ -249,26 +257,26 @@
         .psycho-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 7.2px;
+            font-size: 7.5px;                   /* Slightly bigger */
             table-layout: fixed;
         }
         .psycho-table th,
         .psycho-table td {
             border: 1px solid #b78d4a;
-            padding: 2px 2px;
+            padding: 3px 2px;
             word-break: break-word;
         }
         .psycho-table th {
             background: #e9d6b0;
             font-weight: 800;
-            font-size: 7px;
-            padding: 3px 1px;
+            font-size: 7.2px;
+            padding: 4px 2px;
         }
         .psycho-table td:first-child {
             width: 72%;
             font-weight: 600;
             background: #fff7e8;
-            padding-left: 3px;
+            padding-left: 4px;
         }
         .psycho-table td:last-child {
             width: 28%;
@@ -278,15 +286,15 @@
         .psycho-totals-row td {
             background: #e9d6b0;
             font-weight: 900;
-            font-size: 7.5px;
+            font-size: 7.8px;
         }
         .psycho-obtainable-row td {
             background: #faf0dd;
-            font-size: 6.8px;
+            font-size: 7px;
             text-align: center;
         }
         .psycho-note {
-            font-size: 6px;
+            font-size: 6.5px;
             text-align: center;
             margin-top: 4px;
             color: #4a5b6e;
@@ -302,16 +310,16 @@
         }
         .remarks-table td {
             border: 1px solid #000000;
-            padding: 5px 6px;
+            padding: 6px 8px;
             background: white;
             vertical-align: top;
             width: 50%;
-            font-size: 8.5px;
+            font-size: 9px;                     /* Bigger remarks text */
         }
         .remarks-table .h6 {
             font-weight: 700;
-            margin-bottom: 3px;
-            font-size: 9px;
+            margin-bottom: 4px;
+            font-size: 9.5px;
             border-bottom: 1px solid #ccc;
             display: inline-block;
         }
@@ -319,25 +327,25 @@
         /* Footer */
         .footer-section {
             background: #f1f5f9;
-            padding: 4px 5px;
+            padding: 5px 6px;
             border: 1px solid #cbd5e1;
             text-align: center;
-            margin-top: 5px;
-            font-size: 7.5px;
+            margin-top: 6px;
+            font-size: 8px;
         }
         .footer-layout-table td {
-            padding: 2px;
-            font-size: 7.5px;
+            padding: 3px;
+            font-size: 8px;
         }
         .text-dot-space2 {
             border-bottom: 1px dotted #666;
             display: inline-block;
-            min-width: 90px;
+            min-width: 110px;
             font-weight: bold;
         }
         .powered-by {
-            font-size: 8px;
-            margin-top: 2px;
+            font-size: 8.5px;
+            margin-top: 3px;
         }
 
         @media print {
@@ -453,10 +461,10 @@
                 </td>
                 <td width="60%" style="padding-left:6px;">
                     <div style="font-family:'Arial Black',sans-serif;font-weight:900;line-height:1.2;">
-                        <div style="font-size:16px;letter-spacing:0.3px;">CLARET SECONDARY SCHOOL KABBA</div>
-                        <div style="font-size:7.5px;"><strong>Motto:</strong> {{ $schoolInfo->school_motto ?? 'KNOWLEDGE AND VIRTUE' }}</div>
-                        <div style="font-size:7.5px;"><strong>Address:</strong> {{ $schoolInfo->school_address ?? 'No. 1, Claret Avenue, Kabba, Kogi State' }}</div>
-                        <div style="font-size:7.5px;"><strong>Phone:</strong> {{ $schoolInfo->school_phone ?? '08136663185' }}</div>
+                        <div style="font-size:17px;letter-spacing:0.3px;">CLARET SECONDARY SCHOOL KABBA</div>
+                        <div style="font-size:8px;"><strong>Motto:</strong> {{ $schoolInfo->school_motto ?? 'KNOWLEDGE AND VIRTUE' }}</div>
+                        <div style="font-size:8px;"><strong>Address:</strong> {{ $schoolInfo->school_address ?? 'No. 1, Claret Avenue, Kabba, Kogi State' }}</div>
+                        <div style="font-size:8px;"><strong>Phone:</strong> {{ $schoolInfo->school_phone ?? '08136663185' }}</div>
                     </div>
                 </td>
                 <td width="20%">
@@ -516,7 +524,7 @@
             <div class="student-info-bar"><div class="info-line">No student data available.</div></div>
         @endif
 
-        <!-- DUAL-COLUMN LAYOUT -->
+        <!-- DUAL-COLUMN LAYOUT (heights now match dynamically) -->
         <table class="dual-layout-table">
             <tr>
                 <!-- LEFT: ACADEMIC RESULTS -->
@@ -532,7 +540,7 @@
                                         @if(in_array($assessment->id, $columnsToShow) || in_array('all_assessments', $columnsToShow))
                                             <th class="col-assessment">
                                                 {{ $assessment->name }}<br>
-                                                <span style="font-size:5.5px;">({{ $assessment->max_score }})</span>
+                                                <span style="font-size:6px;">({{ $assessment->max_score }})</span>
                                             </th>
                                         @endif
                                     @endforeach
@@ -577,24 +585,6 @@
                                     <td colspan="{{ $currentVisibleColumnCount }}" style="text-align:center;">No scores available.</td>
                                 </tr>
                                 @endforelse
-
-                                <!-- Small TOTAL row inside table -->
-                                {{-- <tr class="totals-row" style="background:#0d1a3d;color:#ffffff;font-weight:900;">
-                                    <td colspan="{{ $totalLabelColspan }}" style="text-align:right;padding-right:5px;">TOTAL</td>
-                                    @if(in_array('total', $columnsToShow))
-                                        <td>
-                                            <div class="totals-fraction" style="display:inline-block;text-align:center;font-size:6.5px;line-height:1;">
-                                                <span class="t-num" style="display:block;border-bottom:1px solid #fff;padding:0 2px 1px;">{{ number_format($totals['obtained'], 1) }}</span>
-                                                <span class="t-den">{{ $totals['obtainable'] }}</span>
-                                            </div>
-                                        </td>
-                                    @endif
-                                    @if(in_array('bf', $columnsToShow)) <td></td> @endif
-                                    @if(in_array('cum', $columnsToShow)) <td></td> @endif
-                                    @if(in_array('grade', $columnsToShow)) <td></td> @endif
-                                    @if(in_array('position', $columnsToShow)) <td></td> @endif
-                                    @if(in_array('class_average', $columnsToShow)) <td>{{ $totals['percentage'] }}%</td> @endif
-                                </tr> --}}
                             </tbody>
                         </table>
                     </div>
@@ -630,7 +620,7 @@
             </tr>
         </table>
 
-        <!-- FULL-WIDTH TOTAL SUMMARY (no longer inside the table) -->
+        <!-- FULL-WIDTH TOTAL SUMMARY -->
         <div class="totals-summary">
             TOTAL OBTAINED: {{ number_format($totals['obtained'], 1) }}&nbsp;&nbsp;|&nbsp;&nbsp;TOTAL OBTAINABLE: {{ $totals['obtainable'] }}&nbsp;&nbsp;|&nbsp;&nbsp;% OBTAINED: {{ $totals['percentage'] }}%
         </div>
@@ -641,11 +631,11 @@
                 <tr>
                     <td width="50%">
                         <div class="h6">Class Teacher's Remark</div>
-                        <div style="font-size:8.5px;">{{ $profile ? ($profile->classteachercomment ?? 'NO INFO') : 'NO INFO' }}</div>
+                        <div style="font-size:9px;">{{ $profile ? ($profile->classteachercomment ?? 'NO INFO') : 'NO INFO' }}</div>
                     </td>
                     <td width="50%">
                         <div class="h6">Principal's Remark</div>
-                        <div style="font-size:8.5px;">{{ $profile ? ($profile->principalscomment ?? 'NO INFO') : 'NO INFO' }}</div>
+                        <div style="font-size:9px;">{{ $profile ? ($profile->principalscomment ?? 'NO INFO') : 'NO INFO' }}</div>
                     </td>
                 </tr>
             </tbody>
