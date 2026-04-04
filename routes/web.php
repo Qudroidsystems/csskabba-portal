@@ -462,12 +462,8 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
     //         ->name('permanentlyDeleteArchive');
     // });
 
-    <?php
-// ============================================================================
-// ADD THESE ROUTES TO YOUR web.php (inside your auth/permission middleware group)
-// ============================================================================
 
-use App\Http\Controllers\SubjectOperationController;
+
 
 Route::prefix('subject-operation')->name('subjectoperation.')->middleware(['auth'])->group(function () {
 
