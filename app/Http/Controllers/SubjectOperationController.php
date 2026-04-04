@@ -880,8 +880,8 @@ class SubjectOperationController extends Controller
         }
     }
 
-    // =========================================================================
-    // REGISTERED CLASSES (Improved with Teacher Names)
+     // =========================================================================
+    // REGISTERED CLASSES (Improved with Teacher Names & Pictures)
     // =========================================================================
 
     public function registeredClasses(Request $request): JsonResponse
@@ -905,6 +905,7 @@ class SubjectOperationController extends Controller
                 ->leftJoin('subject', 'subject.id', '=', 'broadsheet.subjectid')
                 ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
                 ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
+                ->leftJoin('staffpicture', 'staffpicture.staffid', '=', 'users.id')
                 ->where('subjectclass.schoolclassid', $validated['class_id'])
                 ->where('subject_registration_status.sessionid', $validated['session_id'])
                 ->when($validated['term_id'], fn($q, $t) => $q->where('subject_registration_status.termid', $t))
@@ -921,12 +922,45 @@ class SubjectOperationController extends Controller
                     DB::raw('COUNT(DISTINCT subject_registration_status.studentid) as student_count'),
                     DB::raw('COUNT(DISTINCT subject_registration_status.subjectclassid) as subject_count'),
                     DB::raw('COALESCE(GROUP_CONCAT(DISTINCT subject.subject ORDER BY subject.subject SEPARATOR ", "), "None") as subjects'),
-                    DB::raw('COALESCE(GROUP_CONCAT(DISTINCT users.name ORDER BY users.name SEPARATOR ", "), "None") as teachers'),
+                    DB::raw('COALESCE(GROUP_CONCAT(DISTINCT CONCAT(users.id, "|||", users.name, "|||", COALESCE(staffpicture.picture, "")) ORDER BY users.name SEPARATOR ";;;"), "") as teachers_data'),
                 ]);
 
             $classes = $query->get();
 
-            return response()->json(['success' => true, 'data' => $classes]);
+            // Process teacher data to include pictures
+            $processedData = [];
+            foreach ($classes as $class) {
+                $teachersData = [];
+                if ($class->teachers_data && $class->teachers_data !== '') {
+                    $teacherEntries = explode(';;;', $class->teachers_data);
+                    foreach ($teacherEntries as $entry) {
+                        if ($entry) {
+                            $parts = explode('|||', $entry);
+                            if (count($parts) >= 2) {
+                                $teachersData[] = [
+                                    'id' => $parts[0],
+                                    'name' => $parts[1],
+                                    'picture' => $parts[2] ?? null,
+                                ];
+                            }
+                        }
+                    }
+                }
+
+                $processedData[] = [
+                    'class_id' => $class->class_id,
+                    'class_name' => $class->class_name,
+                    'arm_name' => $class->arm_name,
+                    'session_name' => $class->session_name,
+                    'term_name' => $class->term_name,
+                    'student_count' => $class->student_count,
+                    'subject_count' => $class->subject_count,
+                    'subjects' => $class->subjects,
+                    'teachers' => $teachersData,
+                ];
+            }
+
+            return response()->json(['success' => true, 'data' => $processedData]);
 
         } catch (ValidationException $e) {
             return response()->json(['success' => false, 'message' => 'Invalid parameters.', 'errors' => $e->errors()], 422);
