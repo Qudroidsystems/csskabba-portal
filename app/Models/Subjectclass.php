@@ -14,9 +14,12 @@ class Subjectclass extends Model
         'schoolclassid',
         'subjectid',
         'subjectteacherid',
-
+        'termid',
+        'sessionid',
+        'status',
     ];
-     /**
+
+    /**
      * Get the subject teacher associated with the subject class.
      */
     public function subjectTeacher()
@@ -39,7 +42,7 @@ class Subjectclass extends Model
     {
         return $this->belongsTo(Subject::class, 'subjectid', 'id');
     }
-   
+
     public function term()
     {
         return $this->belongsTo(Schoolterm::class, 'termid');
@@ -54,8 +57,4 @@ class Subjectclass extends Model
     {
         return $this->belongsTo(User::class, 'staffid');
     }
-
-
-
-
 }
