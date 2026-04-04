@@ -416,21 +416,51 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
 
 
 
-    Route::resource('subjectoperation', SubjectOperationController::class);
-    Route::get('/subjects', [SubjectOperationController::class, 'index'])->name('subjects.index');
+    // Route::resource('subjectoperation', SubjectOperationController::class);
+    // Route::get('/subjects', [SubjectOperationController::class, 'index'])->name('subjects.index');
 
-    Route::post('/subjectregistration', [SubjectOperationController::class, 'store'])->name('subjects.store');
-    Route::get('/subjectoperation/subjectinfo/{id}/{schoolclassid}/{termid}/{sessionid}', [SubjectOperationController::class, 'subjectinfo'])->name('subjects.subjectinfo');
+    // Route::post('/subjectregistration', [SubjectOperationController::class, 'store'])->name('subjects.store');
+    // Route::get('/subjectoperation/subjectinfo/{id}/{schoolclassid}/{termid}/{sessionid}', [SubjectOperationController::class, 'subjectinfo'])->name('subjects.subjectinfo');
 
-    Route::delete('/subjects/registered-classes', [SubjectOperationController::class, 'destroy'])->name('subjects.destroy');
-    Route::get('/subjects/registered-classes', [SubjectOperationController::class, 'getRegisteredClasses'])->name('subjects.registered-classes');
-    // Route for batch unregistration
-    Route::post('/subjectregistration/destroy', [SubjectOperationController::class, 'destroy'])->name('subjectregistration.destroy');
+    // Route::delete('/subjects/registered-classes', [SubjectOperationController::class, 'destroy'])->name('subjects.destroy');
+    // Route::get('/subjects/registered-classes', [SubjectOperationController::class, 'getRegisteredClasses'])->name('subjects.registered-classes');
+    // // Route for batch unregistration
+    // Route::post('/subjectregistration/destroy', [SubjectOperationController::class, 'destroy'])->name('subjectregistration.destroy');
 
-    // Add (or update) your route for the batch endpoint:
-    Route::post('/subjectregistration/batch', [SubjectOperationController::class, 'batchRegister'])->name('subjectregistration.batch');
+    // // Add (or update) your route for the batch endpoint:
+    // Route::post('/subjectregistration/batch', [SubjectOperationController::class, 'batchRegister'])->name('subjectregistration.batch');
 
+    Route::prefix('subject-operation')->name('subjectoperation.')->middleware(['auth'])->group(function () {
 
+        // Existing routes
+        Route::get('/',                  [SubjectOperationController::class, 'index'])              ->name('index');
+        Route::post('/store',            [SubjectOperationController::class, 'store'])              ->name('store');
+        Route::post('/batch-register',   [SubjectOperationController::class, 'batchRegister'])      ->name('batchRegister');
+        Route::delete('/destroy',        [SubjectOperationController::class, 'destroy'])            ->name('destroy');
+        Route::get('/subject-info/{id}/{schoolclassid}/{termid}/{sessionid}',
+                                        [SubjectOperationController::class, 'subjectinfo'])        ->name('subjectinfo');
+        Route::get('/subject-teachers',  [SubjectOperationController::class, 'getSubjectTeachers'])->name('getSubjectTeachers');
+        Route::get('/registered-classes',[SubjectOperationController::class, 'getRegisteredClasses'])->name('getRegisteredClasses');
+        Route::get('/registered-info',   [SubjectOperationController::class, 'registeredClasses']) ->name('registeredClasses');
+
+        // ── NEW: Archive / Restore / Permanent Delete ──────────────────────────
+
+        // GET archived (unregistered) records — paginated, filterable
+        Route::get('/archived',          [SubjectOperationController::class, 'getArchivedRegistrations'])
+            ->name('getArchivedRegistrations');
+
+        // POST restore one or many archive records
+        Route::post('/restore',          [SubjectOperationController::class, 'restoreRegistration'])
+            ->name('restoreRegistration');
+
+        // DELETE permanently delete a batch of archive records
+        Route::delete('/archive/batch-delete', [SubjectOperationController::class, 'permanentlyDeleteArchiveBatch'])
+            ->name('permanentlyDeleteArchiveBatch');
+
+        // DELETE permanently delete a single archive record
+        Route::delete('/archive/{archiveId}',  [SubjectOperationController::class, 'permanentlyDeleteArchive'])
+            ->name('permanentlyDeleteArchive');
+    });
 
     Route::get('/viewresults/{id}/{schoolclassid}/{sessid}/{termid}', [StudentResultsController::class, 'viewresults']);
 
