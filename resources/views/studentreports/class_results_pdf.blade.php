@@ -299,7 +299,7 @@
         /* UPDATED WIDER COLUMN WIDTHS */
         .col-sn { width: 28px; }                    /* S/N */
         .col-admissionno { width: 78px; }           /* Adm No */
-        .col-name { width: 300px; }                 /* Subject - significantly wider */
+        .col-name { width: 700px; }                 /* Subject - significantly wider */
         .col-assessment { width: 39px; }            /* CA 1 (20.00), CA 2 (20.00), EXAM (60.00) */
         .col-total { width: 46px; }                 /* Total */
         .col-bf { width: 36px; }                    /* BF */
