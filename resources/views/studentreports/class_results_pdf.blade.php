@@ -143,28 +143,88 @@
             margin: 0 2px;
         }
 
-        /* =====================================================
-           DUAL-COLUMN LAYOUT - FIXED GAP ISSUE
-           Academic table now forces full expansion to touch Psychomotor
-           ===================================================== */
+        /* DUAL-COLUMN LAYOUT - ZERO GAP */
         .dual-layout-table {
             width: 100%;
             border-collapse: collapse;
-            border-spacing: 0;           /* removes any hidden spacing between cells */
+            border-spacing: 0;
             margin-bottom: 8px;
             page-break-inside: avoid;
         }
-
         .dual-layout-table td.academic-cell {
             vertical-align: top;
             padding: 0;
         }
-
         .dual-layout-table td.psycho-cell {
             vertical-align: top;
             padding: 0;
             width: 148px;
             min-width: 148px;
+        }
+
+        /* ACADEMIC TABLE */
+        .result-table table {
+            width: 100%;
+            border: 2px solid #000000;
+            border-collapse: collapse;
+            font-size: 7.8px;
+            table-layout: auto;
+        }
+        .result-table thead th {
+            background: #0d1a3d;
+            color: white;
+            font-weight: 800;
+            border: 1px solid #000000;
+            padding: 3px 1px;
+            font-size: 6.8px;
+            overflow: hidden;
+        }
+        .result-table tbody td {
+            border: 1px solid #000000;
+            padding: 2px 1px;
+            text-align: center;
+            font-size: 7.5px;
+            background: white;
+            font-weight: 600;
+            overflow: hidden;
+        }
+        .result-table tbody td.subject-name {
+            text-align: left;
+            font-weight: 700;
+            font-size: 7.5px;
+            padding-left: 5px;
+            word-break: break-word;
+            white-space: normal;
+        }
+        .highlight-red {
+            color: #dc2626;
+            font-weight: 900;
+        }
+
+        /* Column widths */
+        .col-sn { width: 28px; }
+        .col-admissionno { width: 78px; }
+        .col-name { width: 195px; }
+        .col-assessment { width: 39px; }
+        .col-total { width: 46px; }
+        .col-bf { width: 36px; }
+        .col-cum { width: 42px; }
+        .col-grade { width: 36px; }
+        .col-position { width: 36px; }
+        .col-class-average { width: 39px; }
+
+        /* FULL-WIDTH TOTAL SUMMARY (moved outside the table) */
+        .totals-summary {
+            width: 100%;
+            background: #0d1a3d;
+            color: #ffffff;
+            font-weight: 900;
+            font-size: 7.5px;
+            padding: 4px 8px;
+            border: 2px solid #000000;
+            border-top: none;
+            text-align: center;
+            margin-bottom: 8px;
         }
 
         /* PSYCHOMOTOR PANEL */
@@ -233,83 +293,6 @@
             line-height: 1.2;
         }
 
-        /* ACADEMIC TABLE - NOW EXPANDS FULLY (this fixes the gap) */
-        .result-table table {
-            width: 100%;
-            border: 2px solid #000000;
-            border-collapse: collapse;
-            font-size: 7.8px;
-            table-layout: auto;           /* CHANGED TO AUTO → forces full width expansion */
-        }
-        .result-table thead th {
-            background: #0d1a3d;
-            color: white;
-            font-weight: 800;
-            border: 1px solid #000000;
-            padding: 3px 1px;
-            font-size: 6.8px;
-            overflow: hidden;
-        }
-        .result-table tbody td {
-            border: 1px solid #000000;
-            padding: 2px 1px;
-            text-align: center;
-            font-size: 7.5px;
-            background: white;
-            font-weight: 600;
-            overflow: hidden;
-        }
-        .result-table tbody td.subject-name {
-            text-align: left;
-            font-weight: 700;
-            font-size: 7.5px;
-            padding-left: 5px;
-            word-break: break-word;
-            white-space: normal;
-        }
-        .highlight-red {
-            color: #dc2626;
-            font-weight: 900;
-        }
-        .totals-row td {
-            background: #0d1a3d !important;
-            color: #ffffff !important;
-            font-weight: 900 !important;
-            font-size: 7.5px !important;
-            padding: 2px 1px;
-        }
-        .totals-fraction {
-            display: inline-block;
-            text-align: center;
-            font-size: 6.5px;
-            line-height: 1;
-        }
-        .totals-fraction .t-num {
-            display: block;
-            border-bottom: 1px solid white;
-            padding: 0 2px 1px;
-        }
-        .totals-summary-row td {
-            background: #ffffff !important;
-            color: #000000 !important;
-            font-weight: 800 !important;
-            font-size: 7.5px !important;
-            padding: 3px 2px;
-            white-space: normal;
-        }
-
-        /* Column widths (now act as minimum/preferred widths) */
-        .col-sn { width: 28px; }
-        .col-admissionno { width: 78px; }
-        .col-name { width: 195px; }                 /* Subject remains very wide */
-        .col-assessment { width: 39px; }
-        .col-total { width: 46px; }
-        .col-bf { width: 36px; }
-        .col-cum { width: 42px; }
-        .col-grade { width: 36px; }
-        .col-position { width: 36px; }
-        .col-class-average { width: 39px; }
-
         /* Remarks table */
         .remarks-table {
             width: 100%;
@@ -332,6 +315,7 @@
             border-bottom: 1px solid #ccc;
             display: inline-block;
         }
+
         /* Footer */
         .footer-section {
             background: #f1f5f9;
@@ -355,6 +339,7 @@
             font-size: 8px;
             margin-top: 2px;
         }
+
         @media print {
             body {
                 background: white;
@@ -381,6 +366,7 @@
 </head>
 <body>
 <div class="watermark-text">ORIGINAL COPY</div>
+
 @php
     $selectedColumns = $metadata['selected_columns'] ?? [];
     $defaultColumns = ['sn', 'admission_no', 'name', 'total', 'bf', 'cum', 'grade', 'position', 'class_average'];
@@ -390,6 +376,7 @@
     if (in_array('admission_no', $columnsToShow)) $baseVisibleCount++;
     if (in_array('name', $columnsToShow)) $baseVisibleCount++;
 @endphp
+
 @foreach ($allStudentData as $index => $studentData)
     @php
         $schoolInfo = $studentData['schoolInfo'] ?? null;
@@ -447,6 +434,7 @@
         if (in_array('position', $columnsToShow)) $totalLabelColspan++;
         if (in_array('class_average', $columnsToShow)) $totalLabelColspan++;
     @endphp
+
     <div class="student-section">
         <!-- HEADER -->
         <table class="header-table" style="width:100%">
@@ -531,7 +519,7 @@
         <!-- DUAL-COLUMN LAYOUT -->
         <table class="dual-layout-table">
             <tr>
-                <!-- LEFT: ACADEMIC RESULTS (now forces full width) -->
+                <!-- LEFT: ACADEMIC RESULTS -->
                 <td class="academic-cell">
                     <div class="result-table">
                         <table>
@@ -589,13 +577,14 @@
                                     <td colspan="{{ $currentVisibleColumnCount }}" style="text-align:center;">No scores available.</td>
                                 </tr>
                                 @endforelse
-                                <!-- Totals row -->
-                                <tr class="totals-row">
+
+                                <!-- Small TOTAL row inside table -->
+                                <tr class="totals-row" style="background:#0d1a3d;color:#ffffff;font-weight:900;">
                                     <td colspan="{{ $totalLabelColspan }}" style="text-align:right;padding-right:5px;">TOTAL</td>
                                     @if(in_array('total', $columnsToShow))
                                         <td>
-                                            <div class="totals-fraction">
-                                                <span class="t-num">{{ number_format($totals['obtained'], 1) }}</span>
+                                            <div class="totals-fraction" style="display:inline-block;text-align:center;font-size:6.5px;line-height:1;">
+                                                <span class="t-num" style="display:block;border-bottom:1px solid #fff;padding:0 2px 1px;">{{ number_format($totals['obtained'], 1) }}</span>
                                                 <span class="t-den">{{ $totals['obtainable'] }}</span>
                                             </div>
                                         </td>
@@ -606,17 +595,12 @@
                                     @if(in_array('position', $columnsToShow)) <td></td> @endif
                                     @if(in_array('class_average', $columnsToShow)) <td>{{ $totals['percentage'] }}%</td> @endif
                                 </tr>
-                                <!-- Summary row -->
-                                <tr class="totals-summary-row">
-                                    <td colspan="{{ $currentVisibleColumnCount }}">
-                                        TOTAL OBTAINED: {{ number_format($totals['obtained'], 1) }}&nbsp;&nbsp;|&nbsp;&nbsp;TOTAL OBTAINABLE: {{ $totals['obtainable'] }}&nbsp;&nbsp;|&nbsp;&nbsp;% OBTAINED: {{ $totals['percentage'] }}%
-                                    </td>
-                                </tr>
                             </tbody>
                         </table>
                     </div>
                 </td>
-                <!-- RIGHT: PSYCHOMOTOR PANEL -->
+
+                <!-- RIGHT: PSYCHOMOTOR -->
                 <td class="psycho-cell">
                     <div class="psychomotor-container">
                         <div class="psychomotor-title">PSYCHOMOTOR &amp; AFFECTIVE</div>
@@ -645,6 +629,11 @@
                 </td>
             </tr>
         </table>
+
+        <!-- FULL-WIDTH TOTAL SUMMARY (no longer inside the table) -->
+        <div class="totals-summary">
+            TOTAL OBTAINED: {{ number_format($totals['obtained'], 1) }}&nbsp;&nbsp;|&nbsp;&nbsp;TOTAL OBTAINABLE: {{ $totals['obtainable'] }}&nbsp;&nbsp;|&nbsp;&nbsp;% OBTAINED: {{ $totals['percentage'] }}%
+        </div>
 
         <!-- REMARKS -->
         <table class="remarks-table">
