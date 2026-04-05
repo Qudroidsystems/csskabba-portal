@@ -498,7 +498,7 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
 
 
 
-<?php
+
 
 // ============================================================================
 // ADD THIS ROUTE to your existing routes (alongside the others)
