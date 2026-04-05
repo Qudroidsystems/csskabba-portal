@@ -443,6 +443,7 @@
 @endsection
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
 // ============================================================================
 // GLOBALS
@@ -485,37 +486,6 @@ function showSweetAlert(title, message, type, success = true) {
         timer: success ? 3000 : 5000,
         showConfirmButton: true,
     });
-}
-
-// ============================================================================
-// API FETCH HELPER - FIXED FOR DELETE WITH BODY
-// ============================================================================
-async function apiFetch(url, method, body) {
-    const options = {
-        method: method,
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-            'X-CSRF-TOKEN': CSRF,
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-    };
-
-    // Add body for POST, PUT, PATCH, DELETE
-    if (body && (method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE')) {
-        options.body = JSON.stringify(body);
-    }
-
-    console.log(`${method} request to ${url}:`, options.body ? JSON.parse(options.body) : 'No body');
-
-    const res = await fetch(url, options);
-    const data = await res.json();
-
-    if (!res.ok && !data.success) {
-        throw new Error(data.message || `HTTP ${res.status}`);
-    }
-
-    return data;
 }
 
 // ============================================================================
@@ -623,18 +593,39 @@ async function registerSelectedStudentsBatch() {
 
     setSpinner(true);
     try {
-        const res = await apiFetch(ROUTES.batchRegister, 'POST', {
-            studentids: studentIds,
-            subjectclasses: subjectClasses,
-            sessionid: parseInt(sessionId)
+        const response = await axios({
+            method: 'POST',
+            url: ROUTES.batchRegister,
+            data: {
+                studentids: studentIds,
+                subjectclasses: subjectClasses,
+                sessionid: parseInt(sessionId)
+            },
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': CSRF,
+                'Accept': 'application/json'
+            }
         });
+
+        const res = response.data;
         if (res.success) {
             showSweetAlert('Registration Successful!', res.message, 'success', true);
             setTimeout(() => location.reload(), 2000);
+        } else {
+            showSweetAlert('Registration Failed', res.message || 'Some students could not be registered.', 'error', false);
         }
-        else showSweetAlert('Registration Failed', res.message || 'Some students could not be registered.', 'error', false);
     } catch (err) {
-        showSweetAlert('Error', 'Registration failed: ' + err.message, 'error', false);
+        console.error('Registration error:', err);
+        let errorMessage = 'Registration failed: ';
+        if (err.response && err.response.data && err.response.data.message) {
+            errorMessage += err.response.data.message;
+        } else if (err.message) {
+            errorMessage += err.message;
+        } else {
+            errorMessage += 'Unknown error occurred';
+        }
+        showSweetAlert('Error', errorMessage, 'error', false);
     } finally { setSpinner(false); }
 }
 
@@ -724,10 +715,21 @@ async function proceedUnregister() {
             snapshot_notes: notes
         };
 
-        console.log('Sending unregister payload:', JSON.stringify(payload, null, 2));
+        console.log('Sending unregister payload:', payload);
 
-        const res = await apiFetch(ROUTES.destroy, 'DELETE', payload);
+        // Using Axios for DELETE request with body
+        const response = await axios({
+            method: 'DELETE',
+            url: ROUTES.destroy,
+            data: payload,
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': CSRF,
+                'Accept': 'application/json'
+            }
+        });
 
+        const res = response.data;
         console.log('Unregister response:', res);
 
         if (res.success || (res.success_count && res.success_count > 0)) {
@@ -742,7 +744,25 @@ async function proceedUnregister() {
         }
     } catch (err) {
         console.error('Unregistration error:', err);
-        showSweetAlert('Error', 'Unregistration failed: ' + err.message, 'error', false);
+        let errorMessage = 'Unregistration failed: ';
+
+        if (err.response && err.response.data) {
+            const errorData = err.response.data;
+            if (errorData.message) {
+                errorMessage += errorData.message;
+            } else if (errorData.errors) {
+                const errors = Object.values(errorData.errors).flat();
+                errorMessage += errors.join(', ');
+            } else {
+                errorMessage += 'Server validation error';
+            }
+        } else if (err.message) {
+            errorMessage += err.message;
+        } else {
+            errorMessage += 'Unknown error occurred';
+        }
+
+        showSweetAlert('Error', errorMessage, 'error', false);
     } finally {
         setSpinner(false);
     }
@@ -803,7 +823,7 @@ async function loadRegisteredClasses() {
                 <td class="text-center"><span class="badge bg-success rounded-pill px-3 py-2">${row.subject_count}</span></td>
                 <td>${teachersHtml}</td>
                 <td><small class="text-muted">${escapeHtml(row.subjects)}</small></td>
-            </tr>`;
+             </tr>`;
         });
 
         html += `</tbody></table></div>`;
@@ -1104,7 +1124,7 @@ function renderSnapshotDetailTable(rows, assessmentHeaders) {
             <td>${escapeHtml(row.admissionno ?? '—')}</td>
             <td><span class="badge ${row.gender === 'Male' ? 'bg-info-subtle text-info' : 'bg-pink-subtle text-pink'}">${escapeHtml(row.gender ?? '—')}</span></td>
             ${scoresCells}
-        </tr>`;
+         </tr>`;
     });
 
     document.getElementById('snapshotDetailBody').innerHTML = html || '<tr><td colspan="10" class="text-center text-muted py-4">No students found.</td></tr>';
@@ -1151,7 +1171,18 @@ async function doRestore(archiveIds, label) {
     spinner?.classList.remove('d-none');
 
     try {
-        const res = await apiFetch(ROUTES.restore, 'POST', { archive_ids: archiveIds });
+        const response = await axios({
+            method: 'POST',
+            url: ROUTES.restore,
+            data: { archive_ids: archiveIds },
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': CSRF,
+                'Accept': 'application/json'
+            }
+        });
+
+        const res = response.data;
         if (res.success || res.total_restored > 0) {
             showSweetAlert('Restored!', `${res.total_restored || archiveIds.length} registration(s) restored with original scores.`, 'success', true);
             bootstrap.Modal.getInstance(document.getElementById('snapshotDetailModal'))?.hide();
@@ -1160,7 +1191,8 @@ async function doRestore(archiveIds, label) {
             showSweetAlert('Restore Failed', res.message || 'Could not restore.', 'error', false);
         }
     } catch (err) {
-        showSweetAlert('Error', 'Restore failed: ' + err.message, 'error', false);
+        console.error('Restore error:', err);
+        showSweetAlert('Error', 'Restore failed: ' + (err.response?.data?.message || err.message), 'error', false);
     } finally {
         spinner?.classList.add('d-none');
     }
@@ -1196,8 +1228,18 @@ async function restoreSingleSnapshot(metaEncoded) {
         }
 
         const ids = detailData.rows.map(r => r.archive_id);
-        const res = await apiFetch(ROUTES.restore, 'POST', { archive_ids: ids });
+        const response = await axios({
+            method: 'POST',
+            url: ROUTES.restore,
+            data: { archive_ids: ids },
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': CSRF,
+                'Accept': 'application/json'
+            }
+        });
 
+        const res = response.data;
         if (res.success || res.total_restored > 0) {
             showSweetAlert('Restored!', `${res.total_restored || ids.length} registration(s) restored.`, 'success', true);
             loadArchivedPage(archiveCurrentPage);
@@ -1205,6 +1247,7 @@ async function restoreSingleSnapshot(metaEncoded) {
             showSweetAlert('Restore Failed', res.message, 'error', false);
         }
     } catch (err) {
+        console.error('Restore error:', err);
         showSweetAlert('Error', err.message, 'error', false);
     } finally {
         spinner?.classList.add('d-none');
@@ -1244,8 +1287,18 @@ async function deleteSnapshotGroup(metaEncoded) {
         }
 
         const ids = detailData.rows.map(r => r.archive_id);
-        const res = await apiFetch(ROUTES.permanentDelete, 'DELETE', { archive_ids: ids });
+        const response = await axios({
+            method: 'DELETE',
+            url: ROUTES.permanentDelete,
+            data: { archive_ids: ids },
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': CSRF,
+                'Accept': 'application/json'
+            }
+        });
 
+        const res = response.data;
         if (res.success) {
             showSweetAlert('Deleted', `${res.deleted || ids.length} record(s) permanently deleted.`, 'success', false);
             loadArchivedPage(archiveCurrentPage);
@@ -1253,6 +1306,7 @@ async function deleteSnapshotGroup(metaEncoded) {
             showSweetAlert('Delete Failed', res.message, 'error', false);
         }
     } catch (err) {
+        console.error('Delete error:', err);
         showSweetAlert('Error', err.message, 'error', false);
     } finally {
         spinner?.classList.add('d-none');
@@ -1274,7 +1328,18 @@ async function deleteDetailSelected() {
     spinner?.classList.remove('d-none');
 
     try {
-        const res = await apiFetch(ROUTES.permanentDelete, 'DELETE', { archive_ids: ids });
+        const response = await axios({
+            method: 'DELETE',
+            url: ROUTES.permanentDelete,
+            data: { archive_ids: ids },
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': CSRF,
+                'Accept': 'application/json'
+            }
+        });
+
+        const res = response.data;
         if (res.success) {
             showSweetAlert('Deleted', `${res.deleted || ids.length} record(s) permanently deleted.`, 'success', false);
             bootstrap.Modal.getInstance(document.getElementById('snapshotDetailModal'))?.hide();
@@ -1283,7 +1348,8 @@ async function deleteDetailSelected() {
             showSweetAlert('Delete Failed', res.message, 'error', false);
         }
     } catch (err) {
-        showSweetAlert('Error', err.message, 'error', false);
+        console.error('Delete error:', err);
+        showSweetAlert('Error', 'Delete failed: ' + (err.response?.data?.message || err.message), 'error', false);
     } finally {
         spinner?.classList.add('d-none');
     }
