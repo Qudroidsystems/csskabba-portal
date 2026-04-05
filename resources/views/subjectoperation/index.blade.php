@@ -651,6 +651,11 @@ async function registerSelectedStudentsBatch() {
     }
 }
 
+
+
+
+
+
 // ============================================================================
 // OPEN UNREGISTER MODAL
 // ============================================================================
@@ -659,27 +664,45 @@ function openUnregisterModal() {
     const subjectClasses = getSelectedSubjectClasses();
     const sessionId = document.getElementById('idsession').value;
 
-    if (!studentIds.length) return showSweetAlert('No Students Selected', 'Please select at least one student.', 'warning', false);
-    if (!subjectClasses.length) return showSweetAlert('No Subjects Selected', 'Please select at least one subject.', 'warning', false);
-    if (sessionId === 'ALL') return showSweetAlert('Session Required', 'Please select a session.', 'warning', false);
+    if (!studentIds.length) {
+        return showSweetAlert('No Students Selected', 'Please select at least one student.', 'warning', false);
+    }
+    if (!subjectClasses.length) {
+        return showSweetAlert('No Subjects Selected', 'Please select at least one subject.', 'warning', false);
+    }
+    if (sessionId === 'ALL' || !sessionId) {
+        return showSweetAlert('Session Required', 'Please select a session.', 'warning', false);
+    }
 
     // Populate summary pills
     document.getElementById('snapshotStudentCount').textContent = `${studentIds.length} student${studentIds.length !== 1 ? 's' : ''}`;
     document.getElementById('snapshotSubjectCount').textContent = `${subjectClasses.length} subject${subjectClasses.length !== 1 ? 's' : ''}`;
 
-    // Reset & suggest name
+    // Reset form
     const nameInput = document.getElementById('snapshotNameInput');
     nameInput.value = '';
     nameInput.classList.remove('is-invalid');
     document.getElementById('snapshotNotesInput').value = '';
     document.getElementById('snapshotNotesCount').textContent = '0';
 
+    // Suggest default name
     const now = new Date();
     const dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     nameInput.value = `Unregistration — ${dateStr}`;
 
-    new bootstrap.Modal(document.getElementById('snapshotNameModal')).show();
+    // === FIXED MODAL OPENING ===
+    const modalEl = document.getElementById('snapshotNameModal');
+    if (modalEl) {
+        let modal = bootstrap.Modal.getInstance(modalEl);
+        if (!modal) {
+            modal = new bootstrap.Modal(modalEl, { backdrop: true, keyboard: true });
+        }
+        modal.show();
+    } else {
+        console.error('Snapshot modal element not found in DOM!');
+    }
 }
+
 
 // ============================================================================
 // PROCEED UNREGISTER - FIXED (This solves the "snapshot name required" error)
