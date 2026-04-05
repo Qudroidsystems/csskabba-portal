@@ -178,7 +178,7 @@
 
         .psycho-cell {
             vertical-align: top;
-            padding: 0;
+            padding: 0 0 0 6px;
             width: 148px;
             min-width: 148px;
             background: #fef9e6;
@@ -234,52 +234,6 @@
             font-weight: 900;
         }
 
-        /* Column widths */
-        .col-sn { width: 28px; }
-        .col-admissionno { width: 78px; }
-        .col-name { width: 130px; }
-        .col-assessment { width: 39px; }
-        .col-total { width: 46px; }
-        .col-bf { width: 36px; }
-        .col-cum { width: 42px; }
-        .col-grade { width: 36px; }
-        .col-position { width: 36px; }
-        .col-class-average { width: 39px; }
-
-        /* ========== INDEPENDENT TOTALS ROW (DIV based, no table constraints) ========== */
-        .independent-totals {
-            background: linear-gradient(135deg, #0d1a3d 0%, #1e3a5f 100%);
-            color: white;
-            padding: 6px 10px;
-            margin: 6px 0 8px 0;
-            border-radius: 6px;
-            font-weight: 900;
-            font-size: 8.5px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            border: 1px solid #ffd700;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        .independent-totals-item {
-            background: rgba(255,255,255,0.15);
-            padding: 4px 10px;
-            border-radius: 20px;
-            letter-spacing: 0.3px;
-        }
-        .independent-totals-item span:first-child {
-            font-weight: normal;
-            opacity: 0.9;
-        }
-        .independent-totals-item span:last-child {
-            font-weight: 900;
-            font-size: 9px;
-            margin-left: 6px;
-            color: #ffd966;
-        }
-
         /* Grade interpretation section */
         .grade-interpretation {
             background: #fefce8;
@@ -315,6 +269,60 @@
             padding: 5px 6px;
             font-size: 6.5px;
             text-align: center;
+        }
+
+        /* Column widths */
+        .col-sn { width: 28px; }
+        .col-admissionno { width: 78px; }
+        .col-name { width: 130px; }
+        .col-assessment { width: 39px; }
+        .col-total { width: 46px; }
+        .col-bf { width: 36px; }
+        .col-cum { width: 42px; }
+        .col-grade { width: 36px; }
+        .col-position { width: 36px; }
+        .col-class-average { width: 39px; }
+
+        /* ========== INDEPENDENT TOTALS SUMMARY ROW ========== */
+        /* This sits OUTSIDE the dual-layout-table, full-width, no constraints */
+        .totals-summary-bar {
+            width: 100%;
+            background: #0d1a3d;
+            color: #ffffff;
+            font-weight: 900;
+            font-size: 9px;
+            padding: 6px 10px;
+            border: 2px solid #000000;
+            text-align: center;
+            margin-top: 6px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0;
+            letter-spacing: 0.3px;
+        }
+
+        .totals-summary-bar .tsb-item {
+            padding: 0 14px;
+            border-right: 1px solid rgba(255,255,255,0.35);
+        }
+        .totals-summary-bar .tsb-item:last-child {
+            border-right: none;
+        }
+        .totals-summary-bar .tsb-label {
+            font-size: 7px;
+            font-weight: 700;
+            opacity: 0.75;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: block;
+        }
+        .totals-summary-bar .tsb-value {
+            font-size: 11px;
+            font-weight: 900;
+            display: block;
+            margin-top: 1px;
         }
 
         /* ========== PSYCHOMOTOR PANEL ========== */
@@ -454,71 +462,33 @@
         .grade-F { color: #dc2626; font-weight: 900; }
 
         /* POSITION BADGES */
-        .position-1 {
-            background: gold;
-            color: black;
-            font-weight: 900;
-            border-radius: 2px;
-        }
-        .position-2 {
-            background: silver;
-            color: black;
-            font-weight: 900;
-        }
-        .position-3 {
-            background: #cd7f32;
-            color: white;
-            font-weight: 900;
-        }
+        .position-1 { background: gold; color: black; font-weight: 900; border-radius: 2px; }
+        .position-2 { background: silver; color: black; font-weight: 900; }
+        .position-3 { background: #cd7f32; color: white; font-weight: 900; }
 
-        /* ========== BEAUTIFUL BOLD STAMP OVERLAY ========== */
-        .official-stamp {
+        /* ========== BOLD STAMP OVERLAY — print-safe ========== */
+        .stamp-overlay {
             position: absolute;
-            bottom: 70px;
-            right: 100px;
-            width: 130px;
-            height: 130px;
-            z-index: 15;
+            bottom: 95px;
+            right: 110px;
+            width: 115px;
+            height: 115px;
+            opacity: 0.55;          /* Much more visible than 0.18 */
+            z-index: 10;
             pointer-events: none;
-            opacity: 0.75;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
-        .stamp-svg {
+        .stamp-overlay img {
             width: 100%;
             height: 100%;
-            filter: drop-shadow(2px 2px 3px rgba(0,0,0,0.2));
+            object-fit: contain;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
-        .stamp-circle {
-            fill: none;
-            stroke: #8B0000;
-            stroke-width: 3.5;
-            stroke-dasharray: 8 6;
-        }
-        .stamp-inner-circle {
-            fill: none;
-            stroke: #8B0000;
-            stroke-width: 1.8;
-        }
-        .stamp-text-main {
-            font-family: 'Times New Roman', serif;
-            font-weight: 900;
-            fill: #8B0000;
-            font-size: 11px;
-            letter-spacing: 1px;
-        }
-        .stamp-text-sub {
-            font-family: 'Times New Roman', serif;
-            font-weight: bold;
-            fill: #a52a1a;
-            font-size: 8px;
-        }
-        .stamp-date {
-            font-family: 'Times New Roman', serif;
-            fill: #6b1a0a;
-            font-size: 6.5px;
-            font-weight: bold;
-        }
-        .stamp-star {
-            fill: #c62828;
+        .stamp-overlay svg {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
 
         @media print {
@@ -537,20 +507,20 @@
                 position: fixed;
                 font-size: 55px;
                 color: rgba(0, 0, 0, 0.07);
-                print-color-adjust: exact;
                 -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
             }
             .dual-layout-table {
                 page-break-inside: avoid;
             }
-            .official-stamp {
-                opacity: 0.85;
-                print-color-adjust: exact;
+            .stamp-overlay {
+                opacity: 0.55;
                 -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
             }
-            .independent-totals {
-                print-color-adjust: exact;
+            .totals-summary-bar {
                 -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
             }
         }
     </style>
@@ -577,7 +547,6 @@
         $assessments = $studentData['assessments'] ?? collect();
         $totals = $studentData['totals_summary'] ?? [];
 
-        // Psychomotor skills
         $psychomotorSkills = [
             'Handwriting', 'Sports', 'Musical Skills', 'Participation', 'Punctuality',
             'Concern for Others', 'Relationship(Students)', 'Relationship(Staff)',
@@ -621,13 +590,6 @@
         foreach ($otherScoreCols as $col) {
             if (in_array($col, $columnsToShow)) $currentVisibleColumnCount++;
         }
-        $totalLabelColspan = $baseVisibleCount + $assessmentColumnsCount;
-        if (in_array('total', $columnsToShow)) $totalLabelColspan++;
-        if (in_array('bf', $columnsToShow)) $totalLabelColspan++;
-        if (in_array('cum', $columnsToShow)) $totalLabelColspan++;
-        if (in_array('grade', $columnsToShow)) $totalLabelColspan++;
-        if (in_array('position', $columnsToShow)) $totalLabelColspan++;
-        if (in_array('class_average', $columnsToShow)) $totalLabelColspan++;
 
         $minPsychomotorRows = 18;
         $currentAcademicRows = count($studentData['scores'] ?? []);
@@ -635,22 +597,54 @@
     @endphp
 
     <div class="student-section">
-        <!-- BEAUTIFUL BOLD OFFICIAL STAMP OVERLAY -->
-        <div class="official-stamp">
-            <svg class="stamp-svg" viewBox="0 0 130 130" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="65" cy="65" r="58" class="stamp-circle" />
-                <circle cx="65" cy="65" r="52" class="stamp-inner-circle" />
-                <!-- Star at top -->
-                <polygon points="65,12 68,22 78,22 70,29 73,39 65,33 57,39 60,29 52,22 62,22" class="stamp-star" />
-                <text x="65" y="48" text-anchor="middle" class="stamp-text-main">CLARET SCHOOL</text>
-                <text x="65" y="60" text-anchor="middle" class="stamp-text-sub">SECONDARY KABBA</text>
-                <text x="65" y="72" text-anchor="middle" class="stamp-text-sub">OFFICIAL SEAL</text>
-                <text x="65" y="86" text-anchor="middle" class="stamp-date">{{ now()->format('d/m/Y') }}</text>
-                <line x1="35" y1="95" x2="95" y2="95" stroke="#8B0000" stroke-width="1.5" />
-                <text x="65" y="108" text-anchor="middle" class="stamp-text-sub" font-size="7">PRINCIPAL</text>
-                <!-- small dots decoration -->
-                <circle cx="65" cy="65" r="45" fill="none" stroke="#8B0000" stroke-width="0.8" stroke-dasharray="3 3" />
-            </svg>
+
+        <!-- ========== BOLD STAMP OVERLAY ========== -->
+        <!-- Uses inline SVG so it ALWAYS renders in PDFs — no external file dependency -->
+        <div class="stamp-overlay">
+            @php
+                $stampPath = public_path('stamp.png');
+                $stampExists = file_exists($stampPath);
+            @endphp
+            @if($stampExists)
+                <img src="{{ public_path('stamp.png') }}" alt="School Stamp">
+            @else
+                <!-- Bold, print-safe inline SVG stamp -->
+                <svg width="115" height="115" viewBox="0 0 115 115"
+                     fill="none" xmlns="http://www.w3.org/2000/svg"
+                     style="-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+                    <!-- Outer double ring -->
+                    <circle cx="57.5" cy="57.5" r="53" stroke="#8B0000" stroke-width="4" fill="none"/>
+                    <circle cx="57.5" cy="57.5" r="47" stroke="#8B0000" stroke-width="1.5" fill="none"/>
+                    <!-- Inner fill -->
+                    <circle cx="57.5" cy="57.5" r="46" fill="#fff5f5" fill-opacity="0.6"/>
+                    <!-- Top arc text: CLARET SECONDARY SCHOOL -->
+                    <path id="topArc" d="M 14,57.5 A 43.5,43.5 0 0,1 101,57.5" fill="none"/>
+                    <text font-size="8.5" font-weight="900" font-family="Arial Black,Arial,sans-serif"
+                          fill="#8B0000" letter-spacing="1.5">
+                        <textPath href="#topArc" startOffset="8%">CLARET SECONDARY SCHOOL</textPath>
+                    </text>
+                    <!-- Bottom arc text: KABBA · KOGI STATE -->
+                    <path id="bottomArc" d="M 14,57.5 A 43.5,43.5 0 0,0 101,57.5" fill="none"/>
+                    <text font-size="8" font-weight="800" font-family="Arial,sans-serif"
+                          fill="#8B0000" letter-spacing="1">
+                        <textPath href="#bottomArc" startOffset="18%">KABBA · KOGI STATE</textPath>
+                    </text>
+                    <!-- Centre cross / star divider -->
+                    <line x1="57.5" y1="22" x2="57.5" y2="33" stroke="#8B0000" stroke-width="2.5"/>
+                    <line x1="57.5" y1="82" x2="57.5" y2="93" stroke="#8B0000" stroke-width="2.5"/>
+                    <!-- Centre emblem lines -->
+                    <text x="57.5" y="52" text-anchor="middle" fill="#8B0000"
+                          font-size="11" font-weight="900" font-family="Arial Black,Arial,sans-serif">CLARET</text>
+                    <line x1="28" y1="55.5" x2="87" y2="55.5" stroke="#8B0000" stroke-width="1.5"/>
+                    <text x="57.5" y="66" text-anchor="middle" fill="#8B0000"
+                          font-size="9" font-weight="800" font-family="Arial,sans-serif">SEC. SCH.</text>
+                    <text x="57.5" y="78" text-anchor="middle" fill="#8B0000"
+                          font-size="8.5" font-weight="700" font-family="Arial,sans-serif">KABBA</text>
+                    <!-- Small star decorations -->
+                    <text x="20" y="60" text-anchor="middle" fill="#8B0000" font-size="9">✦</text>
+                    <text x="95" y="60" text-anchor="middle" fill="#8B0000" font-size="9">✦</text>
+                </svg>
+            @endif
         </div>
 
         <!-- HEADER -->
@@ -733,7 +727,7 @@
             <div class="student-info-bar"><div class="info-line">No student data available.</div></div>
         @endif
 
-        <!-- DUAL-COLUMN LAYOUT -->
+        <!-- DUAL-COLUMN LAYOUT (academic + psychomotor ONLY — no totals row here) -->
         <table class="dual-layout-table">
             <tr>
                 <!-- LEFT: ACADEMIC RESULTS -->
@@ -881,28 +875,33 @@
                         </table>
                         <div class="psycho-note">5=Excellent 4=Very Good 3=Good 2=Fair 1=Needs Improvement</div>
                     </div>
-                    <!-- PSYCHOMOTOR INTERPRETATION -->
+                    <!-- PSYCHOMOTOR INTERPRETATION directly under psychomotor panel -->
                     <div class="psycho-interpretation">
                         <strong>Scale:</strong> 5-Excellent | 4-Very Good | 3-Good | 2-Fair | 1-Needs Improvement
                     </div>
                 </td>
             </tr>
         </table>
+        <!-- END DUAL-COLUMN LAYOUT -->
 
-        <!-- INDEPENDENT TOTALS ROW (DIV based, no table constraints - prevents psychomotor shift) -->
-        <div class="independent-totals">
-            <div class="independent-totals-item"><span>📊 TOTAL OBTAINED:</span> <span>{{ number_format($totals['obtained'], 1) }} / {{ $totals['obtainable'] }}</span></div>
-            <div class="independent-totals-item"><span>📈 PERCENTAGE:</span> <span>{{ $totals['percentage'] }}%</span></div>
-            <div class="independent-totals-item"><span>🏆 GRADE AVG:</span> <span>
-                @php
-                    $pct = $totals['percentage'] ?? 0;
-                    if ($pct >= 75) echo 'A (Excellent)';
-                    elseif ($pct >= 65) echo 'B (Very Good)';
-                    elseif ($pct >= 55) echo 'C (Good)';
-                    elseif ($pct >= 45) echo 'D (Pass)';
-                    else echo 'F (Fail)';
-                @endphp
-            </span></div>
+        <!-- ========================================================
+             INDEPENDENT TOTALS SUMMARY BAR
+             Sits OUTSIDE the dual-layout-table — full 100% width,
+             no table constraints, psychomotor panel is unaffected.
+             ======================================================== -->
+        <div class="totals-summary-bar">
+            <div class="tsb-item">
+                <span class="tsb-label">Total Obtained</span>
+                <span class="tsb-value">{{ number_format($totals['obtained'], 1) }}</span>
+            </div>
+            <div class="tsb-item">
+                <span class="tsb-label">Total Obtainable</span>
+                <span class="tsb-value">{{ $totals['obtainable'] }}</span>
+            </div>
+            <div class="tsb-item">
+                <span class="tsb-label">% Score</span>
+                <span class="tsb-value">{{ $totals['percentage'] }}%</span>
+            </div>
         </div>
 
         <!-- REMARKS -->
