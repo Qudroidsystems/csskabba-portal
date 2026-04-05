@@ -415,18 +415,38 @@
                                 </div>
 
                                 {{-- Toolbar --}}
-                                <div class="px-3 pt-3 pb-2 d-flex align-items-center gap-2 flex-wrap border-bottom">
-                                    <button class="btn btn-sm btn-success" id="detailRestoreAllBtn" onclick="restoreEntireSnapshot();">
-                                        <i class="ri-refresh-line me-1"></i> Restore All
-                                    </button>
-                                    <button class="btn btn-sm btn-success d-none" id="detailRestoreSelectedBtn" onclick="restoreDetailSelected();">
-                                        <i class="ri-refresh-line me-1"></i> Restore Selected
-                                    </button>
-                                    <button class="btn btn-sm btn-danger d-none" id="detailDeleteSelectedBtn" onclick="deleteDetailSelected();">
-                                        <i class="ri-delete-bin-line me-1"></i> Delete Selected
-                                    </button>
-                                    <div class="spinner-border spinner-border-sm text-primary d-none ms-1" id="detailSpinner" role="status"></div>
-                                    <span class="text-muted small ms-auto" id="detailStudentMeta"></span>
+                                <div class="px-3 pt-3 pb-2 border-bottom">
+                                    {{-- Row 1: search --}}
+                                    <div class="mb-2">
+                                        <div class="input-group input-group-sm" style="max-width:340px;">
+                                            <span class="input-group-text bg-white border-end-0">
+                                                <i class="ri-search-line text-muted"></i>
+                                            </span>
+                                            <input type="text" class="form-control border-start-0 ps-0"
+                                                id="detailSearchInput"
+                                                placeholder="Search by name or admission no…"
+                                                oninput="filterDetailRows(this.value);">
+                                            <button class="btn btn-outline-secondary" type="button"
+                                                onclick="document.getElementById('detailSearchInput').value='';filterDetailRows('');"
+                                                title="Clear search">
+                                                <i class="ri-close-line"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {{-- Row 2: action buttons + meta --}}
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        <button class="btn btn-sm btn-success" id="detailRestoreAllBtn" onclick="restoreEntireSnapshot();">
+                                            <i class="ri-refresh-line me-1"></i> Restore All
+                                        </button>
+                                        <button class="btn btn-sm btn-success d-none" id="detailRestoreSelectedBtn" onclick="restoreDetailSelected();">
+                                            <i class="ri-refresh-line me-1"></i> Restore Selected
+                                        </button>
+                                        <button class="btn btn-sm btn-danger d-none" id="detailDeleteSelectedBtn" onclick="deleteDetailSelected();">
+                                            <i class="ri-delete-bin-line me-1"></i> Delete Selected
+                                        </button>
+                                        <div class="spinner-border spinner-border-sm text-primary d-none ms-1" id="detailSpinner" role="status"></div>
+                                        <span class="text-muted small ms-auto" id="detailStudentMeta"></span>
+                                    </div>
                                 </div>
 
                                 {{-- Table --}}
@@ -669,10 +689,11 @@ function openUnregisterModal() {
     document.getElementById('snapshotNotesInput').value = '';
     document.getElementById('snapshotNotesCount').textContent = '0';
 
-    // Suggest a default name
-    const now = new Date();
+    // Suggest a default name with date + time
+    const now     = new Date();
     const dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-    nameInput.value = `Unregistration — ${dateStr}`;
+    const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    nameInput.value = `Unregistration — ${dateStr} ${timeStr}`;
 
     new bootstrap.Modal(document.getElementById('snapshotNameModal')).show();
 }
@@ -1000,6 +1021,11 @@ async function openSnapshotDetail(metaEncoded) {
     document.getElementById('snapshotDetailTitle').textContent   = currentSnapshotMeta.snapshot_name;
     document.getElementById('snapshotDetailSubtitle').textContent = '';
     document.getElementById('snapshotNotesBanner')?.classList.add('d-none');
+
+    // Reset search
+    const searchInput = document.getElementById('detailSearchInput');
+    if (searchInput) searchInput.value = '';
+
     document.getElementById('snapshotDetailBody').innerHTML =
         '<tr><td colspan="10" class="text-center py-4"><div class="spinner-border spinner-border-sm me-2"></div>Loading students…</td></tr>';
 
@@ -1067,10 +1093,16 @@ function renderSnapshotDetailTable(rows, assessmentHeaders) {
     // Build body rows
     let html = '';
     rows.forEach(row => {
-        const name = [row.lastname, row.firstname, row.othername].filter(Boolean).join(' ');
-        const pic  = row.picture
-            ? `${AVATAR_URL}/student_avatars/${row.picture.split('/').pop()}`
+        const name    = [row.lastname, row.firstname, row.othername].filter(Boolean).join(' ');
+        const picFile = row.picture ? row.picture.split('/').pop() : null;
+        const pic     = picFile
+            ? `${AVATAR_URL}/student_avatars/${picFile}`
             : `${AVATAR_URL}/student_avatars/unnamed.jpg`;
+
+        // Gender: solid blue for Male, solid pink/rose for Female — always high contrast
+        const genderBadge = row.gender === 'Female'
+            ? `<span class="badge text-white" style="background:#e84393;">${escapeHtml(row.gender)}</span>`
+            : `<span class="badge text-white" style="background:#1a6fd4;">${escapeHtml(row.gender ?? '—')}</span>`;
 
         let scoresCells = '';
         let total       = 0;
@@ -1084,17 +1116,20 @@ function renderSnapshotDetailTable(rows, assessmentHeaders) {
 
         scoresCells += `<td class="text-center fw-bold ${total > 0 ? 'text-success' : 'text-muted'}">${total > 0 ? total.toFixed(1) : '—'}</td>`;
 
-        html += `<tr data-archive-id="${row.archive_id}">
+        // Store searchable text as data attribute for client-side filtering
+        const searchKey = `${name} ${row.admissionno ?? ''}`.toLowerCase();
+
+        html += `<tr data-archive-id="${row.archive_id}" data-search="${escapeHtml(searchKey)}">
             <td><div class="form-check mb-0"><input class="form-check-input detail-chk" type="checkbox" value="${row.archive_id}"></div></td>
             <td>
                 <div class="d-flex align-items-center gap-2">
-                    <img src="${pic}" class="rounded-circle" style="width:32px;height:32px;object-fit:cover;"
+                    <img src="${pic}" class="rounded-circle" style="width:34px;height:34px;object-fit:cover;border:2px solid #e9ecef;"
                          onerror="this.src='${AVATAR_URL}/student_avatars/unnamed.jpg'">
                     <span class="fw-medium">${escapeHtml(name)}</span>
                 </div>
             </td>
-            <td>${escapeHtml(row.admissionno ?? '—')}</td>
-            <td><span class="badge ${row.gender === 'Male' ? 'bg-info-subtle text-info' : 'bg-pink-subtle text-pink'}">${escapeHtml(row.gender ?? '—')}</span></td>
+            <td class="text-muted small">${escapeHtml(row.admissionno ?? '—')}</td>
+            <td>${genderBadge}</td>
             ${scoresCells}
         </tr>`;
     });
@@ -1115,6 +1150,28 @@ function toggleDetailButtons() {
     const any = document.querySelectorAll('.detail-chk:checked').length > 0;
     document.getElementById('detailRestoreSelectedBtn')?.classList.toggle('d-none', !any);
     document.getElementById('detailDeleteSelectedBtn')?.classList.toggle('d-none', !any);
+}
+
+// Client-side search filter for the snapshot detail table
+function filterDetailRows(query) {
+    const q     = query.toLowerCase().trim();
+    const rows  = document.querySelectorAll('#snapshotDetailBody tr[data-search]');
+    let visible = 0;
+
+    rows.forEach(tr => {
+        const match = !q || tr.dataset.search.includes(q);
+        tr.style.display = match ? '' : 'none';
+        if (match) visible++;
+    });
+
+    // Update the meta count to show filtered vs total
+    const total = currentSnapshotRows.length;
+    const meta  = document.getElementById('detailStudentMeta');
+    if (meta) {
+        meta.textContent = q
+            ? `${visible} of ${total} student${total !== 1 ? 's' : ''} shown`
+            : `${total} student${total !== 1 ? 's' : ''} in this snapshot`;
+    }
 }
 
 // ============================================================================
