@@ -9,6 +9,7 @@
             padding: 0;
             box-sizing: border-box;
         }
+
         body {
             font-family: 'Times New Roman', Times, serif;
             font-size: 9.5px;
@@ -19,6 +20,7 @@
             text-align: center;
             position: relative;
         }
+
         /* WATERMARK */
         .watermark-text {
             position: fixed;
@@ -37,6 +39,8 @@
             width: 100%;
             text-align: center;
         }
+
+        /* MAIN CARD */
         .student-section {
             width: 190mm;
             page-break-after: always;
@@ -49,9 +53,12 @@
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
             z-index: 1;
         }
+
         .student-section:last-child {
             page-break-after: avoid;
         }
+
+        /* SCHOOL LOGO & PHOTO */
         .school-logo {
             width: 72px;
             height: 85px;
@@ -66,11 +73,13 @@
             align-items: center;
             justify-content: center;
         }
+
         .school-logo img {
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
         }
+
         .photo-frame {
             border: 2px solid #47b492;
             border-radius: 6px;
@@ -84,23 +93,27 @@
             justify-content: center;
             overflow: hidden;
         }
+
         .photo-frame img {
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
         }
+
         .header-divider {
             width: 100%;
             height: 2px;
             background: #1e40af;
             margin: 3px 0;
         }
+
         .header-divider2 {
             width: 100%;
             height: 1px;
             background: #64748b;
             margin: 2px 0;
         }
+
         .report-title {
             background: #111827;
             color: white;
@@ -110,10 +123,7 @@
             text-align: center;
             margin: 5px 0;
         }
-        .header-table td {
-            vertical-align: middle;
-            padding: 0 2px;
-        }
+
         .student-info-bar {
             background: linear-gradient(to bottom, #f0f7ff 0%, #ffffff 100%);
             border: 2px solid #2aa886;
@@ -122,6 +132,7 @@
             margin-bottom: 8px;
             font-size: 8.5px;
         }
+
         .info-line {
             display: flex;
             flex-wrap: wrap;
@@ -129,21 +140,24 @@
             gap: 6px 12px;
             margin-bottom: 3px;
         }
+
         .info-bar-label {
             color: #1e40af;
             font-size: 8px;
             font-weight: 700;
         }
+
         .info-bar-value {
             font-weight: 900;
             margin-left: 2px;
         }
+
         .separator {
             color: #94a3b8;
             margin: 0 2px;
         }
 
-        /* DUAL-COLUMN LAYOUT - FIXED EQUAL HEIGHT (NO DISTORTION) */
+        /* ========== FIXED DUAL LAYOUT - NO HEIGHT FORCING ========== */
         .dual-layout-table {
             width: 100%;
             border-collapse: collapse;
@@ -151,23 +165,26 @@
             margin-bottom: 8px;
             page-break-inside: avoid;
         }
+
         .dual-layout-table tr {
-            height: auto;  /* REMOVED FIXED HEIGHT */
+            height: auto;  /* REMOVED fixed height: now flexible */
         }
-        .dual-layout-table td.academic-cell {
+
+        .academic-cell {
             vertical-align: top;
             padding: 0;
             background: #ffffff;
         }
-        .dual-layout-table td.psycho-cell {
+
+        .psycho-cell {
             vertical-align: top;
             padding: 0;
             width: 148px;
             min-width: 148px;
-            background: #fef9e6;
+            background: #fef9e6;  /* match psychomotor background */
         }
 
-        /* Prevent breaking between columns */
+        /* Prevent page breaking inside columns */
         .dual-layout-table,
         .dual-layout-table tr,
         .academic-cell,
@@ -175,7 +192,7 @@
             page-break-inside: avoid;
         }
 
-        /* ACADEMIC TABLE - NORMALIZED ROW HEIGHT */
+        /* ========== ACADEMIC TABLE - NO HEIGHT HACKS ========== */
         .result-table table {
             width: 100%;
             border: 2px solid #000000;
@@ -183,6 +200,7 @@
             font-size: 7.8px;
             table-layout: auto;
         }
+
         .result-table thead th {
             background: #0d1a3d;
             color: white;
@@ -190,8 +208,8 @@
             border: 1px solid #000000;
             padding: 3px 1px;
             font-size: 6.8px;
-            overflow: hidden;
         }
+
         .result-table tbody td {
             border: 1px solid #000000;
             padding: 2px 1px;
@@ -199,10 +217,10 @@
             font-size: 7.5px;
             background: white;
             font-weight: 600;
-            overflow: hidden;
-            height: 16px;      /* FIXED ROW HEIGHT */
+            height: 16px;   /* consistent row height */
             line-height: 16px;
         }
+
         .result-table tbody td.subject-name {
             text-align: left;
             font-weight: 700;
@@ -211,6 +229,7 @@
             word-break: break-word;
             white-space: normal;
         }
+
         .highlight-red {
             color: #dc2626;
             font-weight: 900;
@@ -242,14 +261,16 @@
             margin-bottom: 8px;
         }
 
-        /* PSYCHOMOTOR PANEL - NO FORCED HEIGHT */
+        /* ========== PSYCHOMOTOR PANEL - NO FORCED HEIGHT ========== */
         .psychomotor-container {
             width: 148px;
             background: #fef9e6;
             border: 2px solid #c0a86a;
             border-radius: 8px;
             padding: 0 4px 4px 4px;
+            /* height removed to avoid distortion */
         }
+
         .psychomotor-title {
             background: #2c3e4e;
             color: white;
@@ -261,47 +282,55 @@
             border-radius: 6px 6px 0 0;
             letter-spacing: 0.3px;
         }
+
         .psycho-table {
             width: 100%;
             border-collapse: collapse;
             font-size: 7.2px;
             table-layout: fixed;
         }
+
         .psycho-table th,
         .psycho-table td {
             border: 1px solid #b78d4a;
             padding: 2px 2px;
             word-break: break-word;
-            height: 16px;      /* FIXED ROW HEIGHT */
+            height: 16px;       /* consistent row height matching academic */
             line-height: 16px;
         }
+
         .psycho-table th {
             background: #e9d6b0;
             font-weight: 800;
             font-size: 7px;
             padding: 3px 1px;
         }
+
         .psycho-table td:first-child {
             width: 72%;
             font-weight: 600;
             background: #fff7e8;
             padding-left: 3px;
         }
+
         .psycho-table td:last-child {
             width: 28%;
             text-align: center;
             font-weight: bold;
         }
+
         .psycho-totals-row td {
             background: #e9d6b0;
             font-weight: 900;
             font-size: 7.5px;
         }
+
         .psycho-obtainable-row td {
             background: #faf0dd;
             font-size: 6.8px;
             text-align: center;
         }
+
         .psycho-note {
             font-size: 6px;
             text-align: center;
@@ -310,18 +339,6 @@
             line-height: 1.2;
         }
 
-        /* GRADE COLOR SYSTEM */
-        .grade-A { color: #16a34a; font-weight: 900; }
-        .grade-B { color: #2563eb; font-weight: 900; }
-        .grade-C { color: #ca8a04; font-weight: 900; }
-        .grade-D { color: #ea580c; font-weight: 900; }
-        .grade-F { color: #dc2626; font-weight: 900; }
-
-        /* POSITION BADGES */
-        .position-1 { background: gold; font-weight: 900; color: black; text-align: center; border-radius: 2px; }
-        .position-2 { background: silver; font-weight: 900; color: black; text-align: center; border-radius: 2px; }
-        .position-3 { background: #cd7f32; font-weight: 900; color: white; text-align: center; border-radius: 2px; }
-
         /* Remarks table */
         .remarks-table {
             width: 100%;
@@ -329,6 +346,7 @@
             border-collapse: collapse;
             margin-bottom: 4px;
         }
+
         .remarks-table td {
             border: 1px solid #000000;
             padding: 5px 6px;
@@ -337,6 +355,7 @@
             width: 50%;
             font-size: 8.5px;
         }
+
         .remarks-table .h6 {
             font-weight: 700;
             margin-bottom: 3px;
@@ -353,31 +372,58 @@
             text-align: center;
             margin-top: 5px;
             font-size: 7.5px;
-            position: relative;
         }
+
         .footer-layout-table td {
             padding: 2px;
             font-size: 7.5px;
         }
+
         .text-dot-space2 {
             border-bottom: 1px dotted #666;
             display: inline-block;
             min-width: 90px;
             font-weight: bold;
         }
+
         .powered-by {
             font-size: 8px;
             margin-top: 2px;
         }
 
-        /* SCHOOL STAMP OVERLAY */
+        /* GRADE COLOR SYSTEM */
+        .grade-A { color: #16a34a; font-weight: 900; }
+        .grade-B { color: #2563eb; font-weight: 900; }
+        .grade-C { color: #ca8a04; font-weight: 900; }
+        .grade-D { color: #ea580c; font-weight: 900; }
+        .grade-F { color: #dc2626; font-weight: 900; }
+
+        /* POSITION BADGES */
+        .position-1 {
+            background: gold;
+            color: black;
+            font-weight: 900;
+            border-radius: 2px;
+        }
+        .position-2 {
+            background: silver;
+            color: black;
+            font-weight: 900;
+        }
+        .position-3 {
+            background: #cd7f32;
+            color: white;
+            font-weight: 900;
+        }
+
+        /* STAMP OVERLAY (official look) */
         .stamp-overlay {
             position: absolute;
-            bottom: 70px;
-            right: 100px;
+            bottom: 90px;
+            right: 120px;
             width: 110px;
             height: 110px;
-            opacity: 0.15;
+            opacity: 0.18;
             z-index: 10;
             pointer-events: none;
         }
@@ -408,6 +454,9 @@
             .dual-layout-table {
                 page-break-inside: avoid;
             }
+            .stamp-overlay {
+                opacity: 0.2;
+            }
         }
     </style>
 </head>
@@ -432,6 +481,8 @@
                         : null;
         $assessments = $studentData['assessments'] ?? collect();
         $totals = $studentData['totals_summary'] ?? [];
+
+        // Psychomotor skills lists (full and display-friendly)
         $psychomotorSkills = [
             'Handwriting', 'Sports', 'Musical Skills', 'Participation', 'Punctuality',
             'Concern for Others', 'Relationship(Students)', 'Relationship(Staff)',
@@ -444,6 +495,7 @@
             'Courtesy', 'Neatness', 'Honesty', 'Team Spirit', 'Leadership',
             'Listening', 'Organizational', 'Self Control', 'Perseverance', 'Initiative'
         ];
+
         $psychomotorObtainable = count($psychomotorSkills) * 5;
         if (isset($studentData['psychomotor_scores']) && is_array($studentData['psychomotor_scores'])) {
             $psychomotorScores = $studentData['psychomotor_scores'];
@@ -462,6 +514,7 @@
             }
             $psychomotorObtained = array_sum($psychomotorScores);
         }
+
         $assessmentColumnsCount = 0;
         foreach ($assessments as $assessment) {
             if (in_array($assessment->id, $columnsToShow) || in_array('all_assessments', $columnsToShow)) {
@@ -480,12 +533,32 @@
         if (in_array('grade', $columnsToShow)) $totalLabelColspan++;
         if (in_array('position', $columnsToShow)) $totalLabelColspan++;
         if (in_array('class_average', $columnsToShow)) $totalLabelColspan++;
+
+        // Fixed minimum rows to match psychomotor (18 rows)
+        $minPsychomotorRows = 18;
+        $currentAcademicRows = count($studentData['scores'] ?? []);
+        $remainingRowsNeeded = max(0, $minPsychomotorRows - $currentAcademicRows);
     @endphp
 
     <div class="student-section">
-        <!-- SCHOOL STAMP OVERLAY -->
+        <!-- OFFICIAL SCHOOL STAMP OVERLAY (transparent) -->
         <div class="stamp-overlay">
-            <img src="{{ public_path('stamp.png') }}" alt="School Stamp">
+            @php
+                $stampPath = public_path('stamp.png');
+                $stampExists = file_exists($stampPath);
+            @endphp
+            @if($stampExists)
+                <img src="{{ public_path('stamp.png') }}" alt="School Stamp">
+            @else
+                <!-- Fallback SVG stamp if no image uploaded -->
+                <svg width="110" height="110" viewBox="0 0 110 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="55" cy="55" r="48" stroke="#8B0000" stroke-width="3" fill="none" stroke-dasharray="6 4"/>
+                    <text x="55" y="40" text-anchor="middle" fill="#8B0000" font-size="10" font-weight="bold">CLARET</text>
+                    <text x="55" y="55" text-anchor="middle" fill="#8B0000" font-size="9">SECONDARY</text>
+                    <text x="55" y="70" text-anchor="middle" fill="#8B0000" font-size="9">SCHOOL</text>
+                    <text x="55" y="88" text-anchor="middle" fill="#8B0000" font-size="7">KABBA</text>
+                </svg>
+            @endif
         </div>
 
         <!-- HEADER -->
@@ -568,7 +641,7 @@
             <div class="student-info-bar"><div class="info-line">No student data available.</div></div>
         @endif
 
-        <!-- DUAL-COLUMN LAYOUT (Fixed equal height - NO DISTORTION) -->
+        <!-- DUAL-COLUMN LAYOUT (Fixed with NO forced heights, row balancing) -->
         <table class="dual-layout-table">
             <tr>
                 <!-- LEFT: ACADEMIC RESULTS -->
@@ -598,99 +671,93 @@
                             </thead>
                             <tbody>
                                 @forelse ($studentData['scores'] as $scoreIndex => $score)
-                                    <tr>
-                                        @if(in_array('sn', $columnsToShow)) <td>{{ $scoreIndex + 1 }}</td> @endif
-                                        @if(in_array('admission_no', $columnsToShow)) <td>{{ $student->admissionNo ?? '-' }}</td> @endif
-                                        @if(in_array('name', $columnsToShow)) <td class="subject-name">{{ $score->subject_name ?? 'NO INFO' }}</td> @endif
-                                        @foreach ($assessments as $assessment)
-                                            @if(in_array($assessment->id, $columnsToShow) || in_array('all_assessments', $columnsToShow))
-                                                @php
-                                                    $assessmentScore = 0;
-                                                    if (isset($score->assessment_scores)) {
-                                                        $found = $score->assessment_scores->firstWhere('assessment_id', $assessment->id);
-                                                        $assessmentScore = $found ? $found->score : 0;
-                                                    }
-                                                    $isLow = $assessmentScore < ($assessment->max_score * 0.5);
-                                                @endphp
-                                                <td @if($isLow && is_numeric($assessmentScore)) class="highlight-red" @endif>
-                                                    {{ $assessmentScore ? number_format($assessmentScore, 0) : '-' }}
-                                                </td>
-                                            @endif
-                                        @endforeach
-                                        @if(in_array('total', $columnsToShow)) <td @if($score->total < 50) class="highlight-red" @endif>{{ $score->total ? number_format($score->total, 1) : '-' }}</td> @endif
-                                        @if(in_array('bf', $columnsToShow)) <td>{{ $score->bf ? number_format($score->bf, 1) : '-' }}</td> @endif
-                                        @if(in_array('cum', $columnsToShow)) <td>{{ $score->cum ? number_format($score->cum, 1) : '-' }}</td> @endif
-
-                                        {{-- GRADE WITH COLOR --}}
-                                        @if(in_array('grade', $columnsToShow))
+                                <tr>
+                                    @if(in_array('sn', $columnsToShow)) <td>{{ $scoreIndex + 1 }}</td> @endif
+                                    @if(in_array('admission_no', $columnsToShow)) <td>{{ $student->admissionNo ?? '-' }}</td> @endif
+                                    @if(in_array('name', $columnsToShow)) <td class="subject-name">{{ $score->subject_name ?? 'NO INFO' }}</td> @endif
+                                    @foreach ($assessments as $assessment)
+                                        @if(in_array($assessment->id, $columnsToShow) || in_array('all_assessments', $columnsToShow))
                                             @php
-                                                $grade = strtoupper($score->grade ?? '-');
-                                                $gradeClass = match(true) {
-                                                    str_starts_with($grade, 'A') => 'grade-A',
-                                                    str_starts_with($grade, 'B') => 'grade-B',
-                                                    str_starts_with($grade, 'C') => 'grade-C',
-                                                    str_starts_with($grade, 'D') => 'grade-D',
-                                                    default => 'grade-F'
-                                                };
+                                                $assessmentScore = 0;
+                                                if (isset($score->assessment_scores)) {
+                                                    $found = $score->assessment_scores->firstWhere('assessment_id', $assessment->id);
+                                                    $assessmentScore = $found ? $found->score : 0;
+                                                }
+                                                $isLow = $assessmentScore < ($assessment->max_score * 0.5);
                                             @endphp
-                                            <td class="{{ $gradeClass }}">{{ $grade }}</td>
+                                            <td @if($isLow && is_numeric($assessmentScore)) class="highlight-red" @endif>
+                                                {{ $assessmentScore ? number_format($assessmentScore, 0) : '-' }}
+                                            </td>
                                         @endif
+                                    @endforeach
+                                    @if(in_array('total', $columnsToShow)) <td @if($score->total < 50) class="highlight-red" @endif>{{ $score->total ? number_format($score->total, 1) : '-' }}</td> @endif
+                                    @if(in_array('bf', $columnsToShow)) <td>{{ $score->bf ? number_format($score->bf, 1) : '-' }}</td> @endif
+                                    @if(in_array('cum', $columnsToShow)) <td>{{ $score->cum ? number_format($score->cum, 1) : '-' }}</td> @endif
 
-                                        {{-- POSITION WITH BADGE --}}
-                                        @if(in_array('position', $columnsToShow))
-                                            @php
-                                                $pos = (int) ($score->position ?? 0);
-                                                $posClass = match($pos) {
-                                                    1 => 'position-1',
-                                                    2 => 'position-2',
-                                                    3 => 'position-3',
-                                                    default => ''
-                                                };
-                                            @endphp
-                                            <td class="{{ $posClass }}">{{ $score->position ?? '-' }}</td>
-                                        @endif
+                                    <!-- Grade with color -->
+                                    @if(in_array('grade', $columnsToShow))
+                                        @php
+                                            $gradeRaw = $score->grade ?? '-';
+                                            $gradeUpper = strtoupper($gradeRaw);
+                                            $gradeClass = match(true) {
+                                                str_starts_with($gradeUpper, 'A') => 'grade-A',
+                                                str_starts_with($gradeUpper, 'B') => 'grade-B',
+                                                str_starts_with($gradeUpper, 'C') => 'grade-C',
+                                                str_starts_with($gradeUpper, 'D') => 'grade-D',
+                                                default => 'grade-F'
+                                            };
+                                        @endphp
+                                        <td class="{{ $gradeClass }}">{{ $gradeRaw }}</td>
+                                    @endif
 
-                                        @if(in_array('class_average', $columnsToShow)) <td>{{ $score->class_average ? number_format($score->class_average, 1) : '-' }}</td> @endif
-                                    </tr>
+                                    <!-- Position with badges -->
+                                    @if(in_array('position', $columnsToShow))
+                                        @php
+                                            $posVal = $score->position ?? '-';
+                                            $posClass = '';
+                                            if (is_numeric($posVal)) {
+                                                $posInt = (int)$posVal;
+                                                if ($posInt === 1) $posClass = 'position-1';
+                                                elseif ($posInt === 2) $posClass = 'position-2';
+                                                elseif ($posInt === 3) $posClass = 'position-3';
+                                            }
+                                        @endphp
+                                        <td class="{{ $posClass }}">{{ $posVal }}</td>
+                                    @endif
+
+                                    @if(in_array('class_average', $columnsToShow)) <td>{{ $score->class_average ? number_format($score->class_average, 1) : '-' }}</td> @endif
+                                </tr>
                                 @empty
-                                    <tr>
-                                        <td colspan="{{ $currentVisibleColumnCount }}" style="text-align:center;">No scores available.</td>
-                                    </tr>
+                                <tr>
+                                    <td colspan="{{ $currentVisibleColumnCount }}" style="text-align:center;">No scores available.</td>
+                                </tr>
                                 @endforelse
 
-                                {{-- ROW BALANCING FIX - Ensures both columns have same number of rows --}}
-                                @php
-                                    $minRows = 18; // Matches psychomotor rows count
-                                    $currentRows = count($studentData['scores']);
-                                    $remainingRows = $minRows - $currentRows;
-                                @endphp
-
-                                @if($remainingRows > 0)
-                                    @for($i = 0; $i < $remainingRows; $i++)
-                                        <tr>
-                                            @if(in_array('sn', $columnsToShow)) <td>&nbsp;</td> @endif
-                                            @if(in_array('admission_no', $columnsToShow)) <td>&nbsp;</td> @endif
-                                            @if(in_array('name', $columnsToShow)) <td>&nbsp;</td> @endif
-                                            @foreach ($assessments as $assessment)
-                                                @if(in_array($assessment->id, $columnsToShow) || in_array('all_assessments', $columnsToShow))
-                                                    <td>&nbsp;</td>
-                                                @endif
-                                            @endforeach
-                                            @if(in_array('total', $columnsToShow)) <td>&nbsp;</td> @endif
-                                            @if(in_array('bf', $columnsToShow)) <td>&nbsp;</td> @endif
-                                            @if(in_array('cum', $columnsToShow)) <td>&nbsp;</td> @endif
-                                            @if(in_array('grade', $columnsToShow)) <td>&nbsp;</td> @endif
-                                            @if(in_array('position', $columnsToShow)) <td>&nbsp;</td> @endif
-                                            @if(in_array('class_average', $columnsToShow)) <td>&nbsp;</td> @endif
-                                        </tr>
-                                    @endfor
-                                @endif
+                                <!-- ROW BALANCING TRICK: Add empty rows to match psychomotor row count (18) -->
+                                @for($i = 0; $i < $remainingRowsNeeded; $i++)
+                                    <tr>
+                                        @if(in_array('sn', $columnsToShow)) <td>&nbsp;</td> @endif
+                                        @if(in_array('admission_no', $columnsToShow)) <td>&nbsp;</td> @endif
+                                        @if(in_array('name', $columnsToShow)) <td>&nbsp;</td> @endif
+                                        @foreach ($assessments as $assessment)
+                                            @if(in_array($assessment->id, $columnsToShow) || in_array('all_assessments', $columnsToShow))
+                                                <td>&nbsp;</td>
+                                            @endif
+                                        @endforeach
+                                        @if(in_array('total', $columnsToShow)) <td>&nbsp;</td> @endif
+                                        @if(in_array('bf', $columnsToShow)) <td>&nbsp;</td> @endif
+                                        @if(in_array('cum', $columnsToShow)) <td>&nbsp;</td> @endif
+                                        @if(in_array('grade', $columnsToShow)) <td>&nbsp;</td> @endif
+                                        @if(in_array('position', $columnsToShow)) <td>&nbsp;</td> @endif
+                                        @if(in_array('class_average', $columnsToShow)) <td>&nbsp;</td> @endif
+                                    </tr>
+                                @endfor
                             </tbody>
                         </table>
                     </div>
                 </td>
 
-                <!-- RIGHT: PSYCHOMOTOR -->
+                <!-- RIGHT: PSYCHOMOTOR (stable, equal visual) -->
                 <td class="psycho-cell">
                     <div class="psychomotor-container">
                         <div class="psychomotor-title">PSYCHOMOTOR &amp; AFFECTIVE</div>
