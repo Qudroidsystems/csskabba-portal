@@ -410,10 +410,16 @@ class SubjectOperationController extends Controller
             'subjectclasses.*.staffid'        => ['required', 'exists:users,id'],
             'subjectclasses.*.termid'         => ['required', 'exists:schoolterm,id'],
             'sessionid'                       => ['required', 'exists:schoolsession,id'],
-            // Snapshot metadata — supplied by the "Name this snapshot" modal
-            'snapshot_name'                   => ['required', 'string', 'max:191'],
+            // Snapshot metadata — supplied by the "Name this snapshot" modal.
+            // Nullable so legacy/direct API calls don't break; a default is applied below.
+            'snapshot_name'                   => ['nullable', 'string', 'max:191'],
             'snapshot_notes'                  => ['nullable', 'string', 'max:1000'],
         ]);
+
+        // Guarantee every archive row always has a meaningful snapshot name.
+        if (empty($validated['snapshot_name'])) {
+            $validated['snapshot_name'] = 'Unregistration — ' . now()->format('d M Y H:i');
+        }
 
         $results              = [];
         $errors               = [];
