@@ -229,7 +229,7 @@
                                     </h5>
                                     <p class="text-white-50 small mb-0">Give this snapshot a name so you can find it later.</p>
                                 </div>
-                                <button type="button" class="btn-close btn-close-white ms-3" data-bs-dismiss="modal" aria-label="Close"></button>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body p-4">
                                 <div class="d-flex gap-2 flex-wrap mb-4" id="snapshotSummaryPills">
@@ -373,7 +373,7 @@
                                     <h5 class="modal-title text-white fw-semibold" id="snapshotDetailTitle">Snapshot Detail</h5>
                                     <p class="text-white-50 small mb-0" id="snapshotDetailSubtitle"></p>
                                 </div>
-                                <button type="button" class="btn-close btn-close-white ms-3" data-bs-dismiss="modal" aria-label="Close"></button>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body p-0">
                                 <div id="snapshotNotesBanner" class="alert alert-info d-flex gap-2 align-items-start m-3 mb-0 d-none">
@@ -488,22 +488,25 @@ function showSweetAlert(title, message, type, success = true) {
 }
 
 // ============================================================================
-// API FETCH HELPER
+// API FETCH HELPER - FIXED FOR DELETE WITH BODY
 // ============================================================================
 async function apiFetch(url, method, body) {
     const options = {
-        method,
+        method: method,
         headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            'X-CSRF-TOKEN': CSRF
+            'X-CSRF-TOKEN': CSRF,
+            'X-Requested-With': 'XMLHttpRequest'
         }
     };
 
-    // Add body for methods that support it
+    // Add body for POST, PUT, PATCH, DELETE
     if (body && (method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE')) {
         options.body = JSON.stringify(body);
     }
+
+    console.log(`${method} request to ${url}:`, options.body ? JSON.parse(options.body) : 'No body');
 
     const res = await fetch(url, options);
     const data = await res.json();
@@ -677,6 +680,7 @@ async function proceedUnregister() {
 
     if (!name) {
         nameInput.classList.add('is-invalid');
+        nameInput.focus();
         return;
     }
     nameInput.classList.remove('is-invalid');
@@ -700,13 +704,14 @@ async function proceedUnregister() {
     }
 
     // Close the naming modal
-    const modal = bootstrap.Modal.getInstance(document.getElementById('snapshotNameModal'));
+    const modalElement = document.getElementById('snapshotNameModal');
+    const modal = bootstrap.Modal.getInstance(modalElement);
     if (modal) modal.hide();
 
     setSpinner(true);
 
     try {
-        // Prepare the request payload
+        // Prepare the request payload - EXACT structure expected by backend
         const payload = {
             studentids: studentIds,
             subjectclasses: subjectClasses.map(sc => ({
@@ -719,7 +724,11 @@ async function proceedUnregister() {
             snapshot_notes: notes
         };
 
+        console.log('Sending unregister payload:', JSON.stringify(payload, null, 2));
+
         const res = await apiFetch(ROUTES.destroy, 'DELETE', payload);
+
+        console.log('Unregister response:', res);
 
         if (res.success || (res.success_count && res.success_count > 0)) {
             showSweetAlert(
@@ -772,7 +781,7 @@ async function loadRegisteredClasses() {
                 <th class="fw-semibold py-3 text-center">Subjects</th>
                 <th class="fw-semibold py-3">Teachers</th>
                 <th class="fw-semibold py-3">Subjects List</th>
-            </tr></thead><tbody>`;
+             brow</thead><tbody>`;
 
         data.data.forEach((row, i) => {
             let teachersHtml = '<span class="text-muted">—</span>';
@@ -794,7 +803,7 @@ async function loadRegisteredClasses() {
                 <td class="text-center"><span class="badge bg-success rounded-pill px-3 py-2">${row.subject_count}</span></td>
                 <td>${teachersHtml}</td>
                 <td><small class="text-muted">${escapeHtml(row.subjects)}</small></td>
-             </tr>`;
+            </tr>`;
         });
 
         html += `</tbody></table></div>`;
@@ -1046,7 +1055,7 @@ async function openSnapshotDetail(metaEncoded) {
 
     } catch (err) {
         document.getElementById('snapshotDetailBody').innerHTML =
-            `<td><td colspan="10" class="text-center text-danger py-4">Error: ${err.message}</td></tr>`;
+            `<tr><td colspan="10" class="text-center text-danger py-4">Error: ${err.message}</td></tr>`;
     }
 }
 
@@ -1095,7 +1104,7 @@ function renderSnapshotDetailTable(rows, assessmentHeaders) {
             <td>${escapeHtml(row.admissionno ?? '—')}</td>
             <td><span class="badge ${row.gender === 'Male' ? 'bg-info-subtle text-info' : 'bg-pink-subtle text-pink'}">${escapeHtml(row.gender ?? '—')}</span></td>
             ${scoresCells}
-         </tr>`;
+        </tr>`;
     });
 
     document.getElementById('snapshotDetailBody').innerHTML = html || '<tr><td colspan="10" class="text-center text-muted py-4">No students found.</td></tr>';
