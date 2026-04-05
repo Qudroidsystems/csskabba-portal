@@ -162,12 +162,12 @@
             width: 100%;
             border-collapse: collapse;
             border-spacing: 0;
-            margin-bottom: 0;
+            margin-bottom: 8px;
             page-break-inside: avoid;
         }
 
         .dual-layout-table tr {
-            height: auto;
+            height: auto;  /* REMOVED fixed height: now flexible */
         }
 
         .academic-cell {
@@ -181,9 +181,10 @@
             padding: 0;
             width: 148px;
             min-width: 148px;
-            background: #fef9e6;
+            background: #fef9e6;  /* match psychomotor background */
         }
 
+        /* Prevent page breaking inside columns */
         .dual-layout-table,
         .dual-layout-table tr,
         .academic-cell,
@@ -191,7 +192,7 @@
             page-break-inside: avoid;
         }
 
-        /* ========== ACADEMIC TABLE ========== */
+        /* ========== ACADEMIC TABLE - NO HEIGHT HACKS ========== */
         .result-table table {
             width: 100%;
             border: 2px solid #000000;
@@ -216,7 +217,7 @@
             font-size: 7.5px;
             background: white;
             font-weight: 600;
-            height: 16px;
+            height: 16px;   /* consistent row height */
             line-height: 16px;
         }
 
@@ -232,66 +233,6 @@
         .highlight-red {
             color: #dc2626;
             font-weight: 900;
-        }
-
-        /* Totals row inside academic table */
-        .totals-row td {
-            background: #e9eef3 !important;
-            font-weight: 900 !important;
-            border-top: 2px solid #000000;
-        }
-
-        .totals-fraction {
-            display: inline-block;
-            text-align: center;
-        }
-
-        .totals-fraction .t-num {
-            font-weight: 900;
-            font-size: 8px;
-        }
-
-        .totals-fraction .t-den {
-            font-size: 7px;
-            font-weight: normal;
-            margin-left: 1px;
-        }
-
-        /* Grade interpretation section */
-        .grade-interpretation {
-            background: #fefce8;
-            border: 1px solid #ca8a04;
-            border-top: none;
-            padding: 5px 6px;
-            font-size: 7px;
-            line-height: 1.3;
-            margin-top: 0;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            gap: 4px;
-        }
-
-        .grade-interpretation-item {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            margin-right: 8px;
-        }
-
-        .grade-sample {
-            width: 18px;
-            font-weight: 900;
-            display: inline-block;
-        }
-
-        .psycho-interpretation {
-            background: #fef9e6;
-            border: 1px solid #c0a86a;
-            border-top: none;
-            padding: 5px 6px;
-            font-size: 6.5px;
-            text-align: center;
         }
 
         /* Column widths */
@@ -317,17 +258,17 @@
             border: 2px solid #000000;
             border-top: none;
             text-align: center;
-            margin-top: 0;
             margin-bottom: 8px;
         }
 
-        /* ========== PSYCHOMOTOR PANEL ========== */
+        /* ========== PSYCHOMOTOR PANEL - NO FORCED HEIGHT ========== */
         .psychomotor-container {
             width: 148px;
             background: #fef9e6;
             border: 2px solid #c0a86a;
             border-radius: 8px;
             padding: 0 4px 4px 4px;
+            /* height removed to avoid distortion */
         }
 
         .psychomotor-title {
@@ -354,7 +295,7 @@
             border: 1px solid #b78d4a;
             padding: 2px 2px;
             word-break: break-word;
-            height: 16px;
+            height: 16px;       /* consistent row height matching academic */
             line-height: 16px;
         }
 
@@ -475,7 +416,7 @@
             font-weight: 900;
         }
 
-        /* STAMP OVERLAY */
+        /* STAMP OVERLAY (official look) */
         .stamp-overlay {
             position: absolute;
             bottom: 90px;
@@ -541,7 +482,7 @@
         $assessments = $studentData['assessments'] ?? collect();
         $totals = $studentData['totals_summary'] ?? [];
 
-        // Psychomotor skills lists
+        // Psychomotor skills lists (full and display-friendly)
         $psychomotorSkills = [
             'Handwriting', 'Sports', 'Musical Skills', 'Participation', 'Punctuality',
             'Concern for Others', 'Relationship(Students)', 'Relationship(Staff)',
@@ -593,13 +534,14 @@
         if (in_array('position', $columnsToShow)) $totalLabelColspan++;
         if (in_array('class_average', $columnsToShow)) $totalLabelColspan++;
 
+        // Fixed minimum rows to match psychomotor (18 rows)
         $minPsychomotorRows = 18;
         $currentAcademicRows = count($studentData['scores'] ?? []);
         $remainingRowsNeeded = max(0, $minPsychomotorRows - $currentAcademicRows);
     @endphp
 
     <div class="student-section">
-        <!-- OFFICIAL SCHOOL STAMP OVERLAY -->
+        <!-- OFFICIAL SCHOOL STAMP OVERLAY (transparent) -->
         <div class="stamp-overlay">
             @php
                 $stampPath = public_path('stamp.png');
@@ -608,6 +550,7 @@
             @if($stampExists)
                 <img src="{{ public_path('stamp.png') }}" alt="School Stamp">
             @else
+                <!-- Fallback SVG stamp if no image uploaded -->
                 <svg width="110" height="110" viewBox="0 0 110 110" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <circle cx="55" cy="55" r="48" stroke="#8B0000" stroke-width="3" fill="none" stroke-dasharray="6 4"/>
                     <text x="55" y="40" text-anchor="middle" fill="#8B0000" font-size="10" font-weight="bold">CLARET</text>
@@ -698,7 +641,7 @@
             <div class="student-info-bar"><div class="info-line">No student data available.</div></div>
         @endif
 
-        <!-- DUAL-COLUMN LAYOUT -->
+        <!-- DUAL-COLUMN LAYOUT (Fixed with NO forced heights, row balancing) -->
         <table class="dual-layout-table">
             <tr>
                 <!-- LEFT: ACADEMIC RESULTS -->
@@ -751,6 +694,7 @@
                                     @if(in_array('bf', $columnsToShow)) <td>{{ $score->bf ? number_format($score->bf, 1) : '-' }}</td> @endif
                                     @if(in_array('cum', $columnsToShow)) <td>{{ $score->cum ? number_format($score->cum, 1) : '-' }}</td> @endif
 
+                                    <!-- Grade with color -->
                                     @if(in_array('grade', $columnsToShow))
                                         @php
                                             $gradeRaw = $score->grade ?? '-';
@@ -766,6 +710,7 @@
                                         <td class="{{ $gradeClass }}">{{ $gradeRaw }}</td>
                                     @endif
 
+                                    <!-- Position with badges -->
                                     @if(in_array('position', $columnsToShow))
                                         @php
                                             $posVal = $score->position ?? '-';
@@ -788,7 +733,7 @@
                                 </tr>
                                 @endforelse
 
-                                <!-- Row balancing empty rows -->
+                                <!-- ROW BALANCING TRICK: Add empty rows to match psychomotor row count (18) -->
                                 @for($i = 0; $i < $remainingRowsNeeded; $i++)
                                     <tr>
                                         @if(in_array('sn', $columnsToShow)) <td>&nbsp;</td> @endif
@@ -807,33 +752,12 @@
                                         @if(in_array('class_average', $columnsToShow)) <td>&nbsp;</td> @endif
                                     </tr>
                                 @endfor
-
-                                <!-- TOTALS ROW -->
-                                <tr class="totals-row">
-                                    <td colspan="{{ $totalLabelColspan }}" style="text-align: right; padding-right: 5px; font-weight: 900;">TOTAL</td>
-                                    @if(in_array('total', $columnsToShow))
-                                    <td class="col-total"><div class="totals-fraction"><span class="t-num">{{ number_format($totals['obtained'], 1) }}</span><span class="t-den">/{{ $totals['obtainable'] }}</span></div></td>
-                                    @endif
-                                    @if(in_array('bf', $columnsToShow)) <td class="col-bf">—</td> @endif
-                                    @if(in_array('cum', $columnsToShow)) <td class="col-cum">—</td> @endif
-                                    @if(in_array('grade', $columnsToShow)) <td class="col-grade">—</td> @endif
-                                    @if(in_array('position', $columnsToShow)) <td class="col-position">—</td> @endif
-                                    @if(in_array('class_average', $columnsToShow)) <td class="col-class-average">{{ $totals['percentage'] }}%</td> @endif
-                                </tr>
                             </tbody>
                         </table>
                     </div>
-                    <!-- GRADE INTERPRETATION (Academic) - directly under academic table -->
-                    <div class="grade-interpretation">
-                        <div class="grade-interpretation-item"><span class="grade-sample grade-A">A</span> 75-100% (Excellent)</div>
-                        <div class="grade-interpretation-item"><span class="grade-sample grade-B">B</span> 65-74% (Very Good)</div>
-                        <div class="grade-interpretation-item"><span class="grade-sample grade-C">C</span> 55-64% (Good)</div>
-                        <div class="grade-interpretation-item"><span class="grade-sample grade-D">D</span> 45-54% (Pass)</div>
-                        <div class="grade-interpretation-item"><span class="grade-sample grade-F">F</span> 0-44% (Fail)</div>
-                    </div>
                 </td>
 
-                <!-- RIGHT: PSYCHOMOTOR -->
+                <!-- RIGHT: PSYCHOMOTOR (stable, equal visual) -->
                 <td class="psycho-cell">
                     <div class="psychomotor-container">
                         <div class="psychomotor-title">PSYCHOMOTOR &amp; AFFECTIVE</div>
@@ -857,11 +781,7 @@
                                 </tr>
                             </tbody>
                         </table>
-                        <div class="psycho-note">5=Excellent 4=Very Good 3=Good 2=Fair 1=Needs Improvement</div>
-                    </div>
-                    <!-- PSYCHOMOTOR INTERPRETATION directly under psychomotor panel -->
-                    <div class="psycho-interpretation">
-                        <strong>Scale:</strong> 5-Excellent | 4-Very Good | 3-Good | 2-Fair | 1-Needs Improvement
+                        <div class="psycho-note">5=Excellent ... 1=Needs Improvement</div>
                     </div>
                 </td>
             </tr>
