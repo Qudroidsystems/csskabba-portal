@@ -178,7 +178,7 @@
 
         .psycho-cell {
             vertical-align: top;
-            padding: 0 0 0 6px;
+            padding: 0;
             width: 148px;
             min-width: 148px;
             background: #fef9e6;
@@ -234,6 +234,29 @@
             font-weight: 900;
         }
 
+        /* Totals row inside academic table */
+        .totals-row td {
+            background: #e9eef3 !important;
+            font-weight: 900 !important;
+            border-top: 2px solid #000000;
+        }
+
+        .totals-fraction {
+            display: inline-block;
+            text-align: center;
+        }
+
+        .totals-fraction .t-num {
+            font-weight: 900;
+            font-size: 8px;
+        }
+
+        .totals-fraction .t-den {
+            font-size: 7px;
+            font-weight: normal;
+            margin-left: 1px;
+        }
+
         /* Grade interpretation section */
         .grade-interpretation {
             background: #fefce8;
@@ -283,46 +306,19 @@
         .col-position { width: 36px; }
         .col-class-average { width: 39px; }
 
-        /* ========== INDEPENDENT TOTALS SUMMARY ROW ========== */
-        /* This sits OUTSIDE the dual-layout-table, full-width, no constraints */
-        .totals-summary-bar {
-            width: 100%;
+        /* FULL-WIDTH TOTAL SUMMARY */
+        .totals-summary {
+            width: 98%;
             background: #0d1a3d;
             color: #ffffff;
             font-weight: 900;
-            font-size: 9px;
-            padding: 6px 10px;
+            font-size: 7.5px;
+            padding: 4px 8px;
             border: 2px solid #000000;
+            border-top: none;
             text-align: center;
-            margin-top: 6px;
+            margin-top: 0;
             margin-bottom: 8px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 0;
-            letter-spacing: 0.3px;
-        }
-
-        .totals-summary-bar .tsb-item {
-            padding: 0 14px;
-            border-right: 1px solid rgba(255,255,255,0.35);
-        }
-        .totals-summary-bar .tsb-item:last-child {
-            border-right: none;
-        }
-        .totals-summary-bar .tsb-label {
-            font-size: 7px;
-            font-weight: 700;
-            opacity: 0.75;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            display: block;
-        }
-        .totals-summary-bar .tsb-value {
-            font-size: 11px;
-            font-weight: 900;
-            display: block;
-            margin-top: 1px;
         }
 
         /* ========== PSYCHOMOTOR PANEL ========== */
@@ -462,33 +458,38 @@
         .grade-F { color: #dc2626; font-weight: 900; }
 
         /* POSITION BADGES */
-        .position-1 { background: gold; color: black; font-weight: 900; border-radius: 2px; }
-        .position-2 { background: silver; color: black; font-weight: 900; }
-        .position-3 { background: #cd7f32; color: white; font-weight: 900; }
+        .position-1 {
+            background: gold;
+            color: black;
+            font-weight: 900;
+            border-radius: 2px;
+        }
+        .position-2 {
+            background: silver;
+            color: black;
+            font-weight: 900;
+        }
+        .position-3 {
+            background: #cd7f32;
+            color: white;
+            font-weight: 900;
+        }
 
-        /* ========== BOLD STAMP OVERLAY — print-safe ========== */
+        /* STAMP OVERLAY */
         .stamp-overlay {
             position: absolute;
-            bottom: 95px;
-            right: 110px;
-            width: 115px;
-            height: 115px;
-            opacity: 0.55;          /* Much more visible than 0.18 */
+            bottom: 90px;
+            right: 120px;
+            width: 110px;
+            height: 110px;
+            opacity: 0.18;
             z-index: 10;
             pointer-events: none;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
         }
         .stamp-overlay img {
             width: 100%;
             height: 100%;
             object-fit: contain;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-        }
-        .stamp-overlay svg {
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
         }
 
         @media print {
@@ -507,20 +508,13 @@
                 position: fixed;
                 font-size: 55px;
                 color: rgba(0, 0, 0, 0.07);
-                -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
             }
             .dual-layout-table {
                 page-break-inside: avoid;
             }
             .stamp-overlay {
-                opacity: 0.55;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            .totals-summary-bar {
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
+                opacity: 0.2;
             }
         }
     </style>
@@ -547,6 +541,7 @@
         $assessments = $studentData['assessments'] ?? collect();
         $totals = $studentData['totals_summary'] ?? [];
 
+        // Psychomotor skills lists
         $psychomotorSkills = [
             'Handwriting', 'Sports', 'Musical Skills', 'Participation', 'Punctuality',
             'Concern for Others', 'Relationship(Students)', 'Relationship(Staff)',
@@ -590,6 +585,13 @@
         foreach ($otherScoreCols as $col) {
             if (in_array($col, $columnsToShow)) $currentVisibleColumnCount++;
         }
+        $totalLabelColspan = $baseVisibleCount + $assessmentColumnsCount;
+        if (in_array('total', $columnsToShow)) $totalLabelColspan++;
+        if (in_array('bf', $columnsToShow)) $totalLabelColspan++;
+        if (in_array('cum', $columnsToShow)) $totalLabelColspan++;
+        if (in_array('grade', $columnsToShow)) $totalLabelColspan++;
+        if (in_array('position', $columnsToShow)) $totalLabelColspan++;
+        if (in_array('class_average', $columnsToShow)) $totalLabelColspan++;
 
         $minPsychomotorRows = 18;
         $currentAcademicRows = count($studentData['scores'] ?? []);
@@ -597,9 +599,7 @@
     @endphp
 
     <div class="student-section">
-
-        <!-- ========== BOLD STAMP OVERLAY ========== -->
-        <!-- Uses inline SVG so it ALWAYS renders in PDFs — no external file dependency -->
+        <!-- OFFICIAL SCHOOL STAMP OVERLAY -->
         <div class="stamp-overlay">
             @php
                 $stampPath = public_path('stamp.png');
@@ -608,41 +608,12 @@
             @if($stampExists)
                 <img src="{{ public_path('stamp.png') }}" alt="School Stamp">
             @else
-                <!-- Bold, print-safe inline SVG stamp -->
-                <svg width="115" height="115" viewBox="0 0 115 115"
-                     fill="none" xmlns="http://www.w3.org/2000/svg"
-                     style="-webkit-print-color-adjust:exact;print-color-adjust:exact;">
-                    <!-- Outer double ring -->
-                    <circle cx="57.5" cy="57.5" r="53" stroke="#8B0000" stroke-width="4" fill="none"/>
-                    <circle cx="57.5" cy="57.5" r="47" stroke="#8B0000" stroke-width="1.5" fill="none"/>
-                    <!-- Inner fill -->
-                    <circle cx="57.5" cy="57.5" r="46" fill="#fff5f5" fill-opacity="0.6"/>
-                    <!-- Top arc text: CLARET SECONDARY SCHOOL -->
-                    <path id="topArc" d="M 14,57.5 A 43.5,43.5 0 0,1 101,57.5" fill="none"/>
-                    <text font-size="8.5" font-weight="900" font-family="Arial Black,Arial,sans-serif"
-                          fill="#8B0000" letter-spacing="1.5">
-                        <textPath href="#topArc" startOffset="8%">CLARET SECONDARY SCHOOL</textPath>
-                    </text>
-                    <!-- Bottom arc text: KABBA · KOGI STATE -->
-                    <path id="bottomArc" d="M 14,57.5 A 43.5,43.5 0 0,0 101,57.5" fill="none"/>
-                    <text font-size="8" font-weight="800" font-family="Arial,sans-serif"
-                          fill="#8B0000" letter-spacing="1">
-                        <textPath href="#bottomArc" startOffset="18%">KABBA · KOGI STATE</textPath>
-                    </text>
-                    <!-- Centre cross / star divider -->
-                    <line x1="57.5" y1="22" x2="57.5" y2="33" stroke="#8B0000" stroke-width="2.5"/>
-                    <line x1="57.5" y1="82" x2="57.5" y2="93" stroke="#8B0000" stroke-width="2.5"/>
-                    <!-- Centre emblem lines -->
-                    <text x="57.5" y="52" text-anchor="middle" fill="#8B0000"
-                          font-size="11" font-weight="900" font-family="Arial Black,Arial,sans-serif">CLARET</text>
-                    <line x1="28" y1="55.5" x2="87" y2="55.5" stroke="#8B0000" stroke-width="1.5"/>
-                    <text x="57.5" y="66" text-anchor="middle" fill="#8B0000"
-                          font-size="9" font-weight="800" font-family="Arial,sans-serif">SEC. SCH.</text>
-                    <text x="57.5" y="78" text-anchor="middle" fill="#8B0000"
-                          font-size="8.5" font-weight="700" font-family="Arial,sans-serif">KABBA</text>
-                    <!-- Small star decorations -->
-                    <text x="20" y="60" text-anchor="middle" fill="#8B0000" font-size="9">✦</text>
-                    <text x="95" y="60" text-anchor="middle" fill="#8B0000" font-size="9">✦</text>
+                <svg width="110" height="110" viewBox="0 0 110 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="55" cy="55" r="48" stroke="#8B0000" stroke-width="3" fill="none" stroke-dasharray="6 4"/>
+                    <text x="55" y="40" text-anchor="middle" fill="#8B0000" font-size="10" font-weight="bold">CLARET</text>
+                    <text x="55" y="55" text-anchor="middle" fill="#8B0000" font-size="9">SECONDARY</text>
+                    <text x="55" y="70" text-anchor="middle" fill="#8B0000" font-size="9">SCHOOL</text>
+                    <text x="55" y="88" text-anchor="middle" fill="#8B0000" font-size="7">KABBA</text>
                 </svg>
             @endif
         </div>
@@ -727,7 +698,7 @@
             <div class="student-info-bar"><div class="info-line">No student data available.</div></div>
         @endif
 
-        <!-- DUAL-COLUMN LAYOUT (academic + psychomotor ONLY — no totals row here) -->
+        <!-- DUAL-COLUMN LAYOUT -->
         <table class="dual-layout-table">
             <tr>
                 <!-- LEFT: ACADEMIC RESULTS -->
@@ -836,10 +807,23 @@
                                         @if(in_array('class_average', $columnsToShow)) <td>&nbsp;</td> @endif
                                     </tr>
                                 @endfor
+
+                                <!-- TOTALS ROW -->
+                                <tr class="totals-row">
+                                    <td colspan="{{ $totalLabelColspan }}" style="text-align: right; padding-right: 5px; font-weight: 900;">TOTAL</td>
+                                    @if(in_array('total', $columnsToShow))
+                                    <td class="col-total"><div class="totals-fraction"><span class="t-num">{{ number_format($totals['obtained'], 1) }}</span><span class="t-den">/{{ $totals['obtainable'] }}</span></div></td>
+                                    @endif
+                                    @if(in_array('bf', $columnsToShow)) <td class="col-bf">—</td> @endif
+                                    @if(in_array('cum', $columnsToShow)) <td class="col-cum">—</td> @endif
+                                    @if(in_array('grade', $columnsToShow)) <td class="col-grade">—</td> @endif
+                                    @if(in_array('position', $columnsToShow)) <td class="col-position">—</td> @endif
+                                    @if(in_array('class_average', $columnsToShow)) <td class="col-class-average">{{ $totals['percentage'] }}%</td> @endif
+                                </tr>
                             </tbody>
                         </table>
                     </div>
-                    <!-- GRADE INTERPRETATION (Academic) -->
+                    <!-- GRADE INTERPRETATION (Academic) - directly under academic table -->
                     <div class="grade-interpretation">
                         <div class="grade-interpretation-item"><span class="grade-sample grade-A">A</span> 75-100% (Excellent)</div>
                         <div class="grade-interpretation-item"><span class="grade-sample grade-B">B</span> 65-74% (Very Good)</div>
@@ -882,26 +866,10 @@
                 </td>
             </tr>
         </table>
-        <!-- END DUAL-COLUMN LAYOUT -->
 
-        <!-- ========================================================
-             INDEPENDENT TOTALS SUMMARY BAR
-             Sits OUTSIDE the dual-layout-table — full 100% width,
-             no table constraints, psychomotor panel is unaffected.
-             ======================================================== -->
-        <div class="totals-summary-bar">
-            <div class="tsb-item">
-                <span class="tsb-label">Total Obtained</span>
-                <span class="tsb-value">{{ number_format($totals['obtained'], 1) }}</span>
-            </div>
-            <div class="tsb-item">
-                <span class="tsb-label">Total Obtainable</span>
-                <span class="tsb-value">{{ $totals['obtainable'] }}</span>
-            </div>
-            <div class="tsb-item">
-                <span class="tsb-label">% Score</span>
-                <span class="tsb-value">{{ $totals['percentage'] }}%</span>
-            </div>
+        <!-- FULL-WIDTH TOTAL SUMMARY -->
+        <div class="totals-summary">
+            TOTAL OBTAINED: {{ number_format($totals['obtained'], 1) }}&nbsp;&nbsp;|&nbsp;&nbsp;TOTAL OBTAINABLE: {{ $totals['obtainable'] }}&nbsp;&nbsp;|&nbsp;&nbsp;% OBTAINED: {{ $totals['percentage'] }}%
         </div>
 
         <!-- REMARKS -->
