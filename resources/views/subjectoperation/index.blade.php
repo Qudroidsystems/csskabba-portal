@@ -171,7 +171,6 @@
                                         onclick="registerSelectedStudentsBatch();" aria-label="Register selected students">
                                         Register Selected
                                     </button>
-                                    {{-- Unregister now opens the snapshot-naming modal first --}}
                                     <button type="button" class="btn btn-danger d-none" id="unregister-selected-btn"
                                         onclick="openUnregisterModal();" aria-label="Unregister selected students">
                                         Unregister Selected
@@ -219,14 +218,10 @@
                     </div>
                 </div>
 
-                {{-- ══════════════════════════════════════════════════════════ --}}
-                {{-- MODAL: Snapshot Name — shown BEFORE unregistration         --}}
-                {{-- ══════════════════════════════════════════════════════════ --}}
+                {{-- MODAL: Snapshot Name — shown BEFORE unregistration --}}
                 <div class="modal fade" id="snapshotNameModal" tabindex="-1" aria-labelledby="snapshotNameModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered" style="max-width:520px;">
                         <div class="modal-content border-0 shadow-lg overflow-hidden">
-
-                            {{-- Header --}}
                             <div class="modal-header border-0 pb-0" style="background:linear-gradient(135deg,#f5576c 0%,#f093fb 100%);">
                                 <div class="py-1">
                                     <h5 class="modal-title text-white fw-semibold" id="snapshotNameModalLabel">
@@ -236,16 +231,11 @@
                                 </div>
                                 <button type="button" class="btn-close btn-close-white ms-3" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
-
-                            {{-- Body --}}
                             <div class="modal-body p-4">
-
-                                {{-- Summary pills --}}
                                 <div class="d-flex gap-2 flex-wrap mb-4" id="snapshotSummaryPills">
                                     <span class="badge rounded-pill bg-danger-subtle text-danger px-3 py-2" id="snapshotStudentCount"></span>
                                     <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis px-3 py-2" id="snapshotSubjectCount"></span>
                                 </div>
-
                                 <div class="mb-3">
                                     <label class="form-label fw-semibold" for="snapshotNameInput">
                                         Snapshot Name <span class="text-danger">*</span>
@@ -259,7 +249,6 @@
                                         A descriptive name helps staff identify this batch when restoring it later.
                                     </div>
                                 </div>
-
                                 <div class="mb-1">
                                     <label class="form-label fw-semibold" for="snapshotNotesInput">Notes <span class="text-muted fw-normal">(optional)</span></label>
                                     <textarea class="form-control" id="snapshotNotesInput" rows="3"
@@ -269,8 +258,6 @@
                                         <span id="snapshotNotesCount">0</span>/1000
                                     </div>
                                 </div>
-
-                                {{-- Warning box --}}
                                 <div class="alert alert-warning d-flex gap-2 align-items-start mt-3 mb-0 py-2">
                                     <i class="ri-error-warning-line fs-5 flex-shrink-0"></i>
                                     <div class="small">
@@ -278,8 +265,6 @@
                                     </div>
                                 </div>
                             </div>
-
-                            {{-- Footer --}}
                             <div class="modal-footer border-0 pt-0 px-4 pb-4">
                                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                                 <button type="button" class="btn btn-danger px-4" id="confirmUnregisterBtn" onclick="proceedUnregister();">
@@ -290,9 +275,7 @@
                     </div>
                 </div>
 
-                {{-- ══════════════════════════════════════════════════════════ --}}
-                {{-- MODAL: Registered Classes                                  --}}
-                {{-- ══════════════════════════════════════════════════════════ --}}
+                {{-- MODAL: Registered Classes --}}
                 <div class="modal fade" id="registeredClassesModal" tabindex="-1" aria-labelledby="registeredClassesModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-xl modal-dialog-centered">
                         <div class="modal-content border-0 shadow-lg">
@@ -319,9 +302,7 @@
                     </div>
                 </div>
 
-                {{-- ══════════════════════════════════════════════════════════ --}}
-                {{-- MODAL: Unregistered History (snapshot list)                --}}
-                {{-- ══════════════════════════════════════════════════════════ --}}
+                {{-- MODAL: Unregistered History (snapshot list) --}}
                 <div class="modal fade" id="archivedModal" tabindex="-1" aria-labelledby="archivedModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-xl modal-dialog-scrollable">
                         <div class="modal-content border-0 shadow-lg">
@@ -332,8 +313,6 @@
                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body p-0">
-
-                                {{-- Toolbar --}}
                                 <div class="p-3 border-bottom bg-light d-flex align-items-center flex-wrap gap-2">
                                     <div class="flex-grow-1">
                                         <input type="text" class="form-control form-control-sm" id="archiveSearch"
@@ -364,15 +343,11 @@
                                         <div class="spinner-border spinner-border-sm text-warning d-none" id="archiveSpinner" role="status"></div>
                                     </div>
                                 </div>
-
-                                {{-- Snapshot cards --}}
                                 <div class="p-3" id="snapshotCardsContainer">
                                     <div class="text-center text-muted py-4">
                                         Select a class and session first, then open this panel.
                                     </div>
                                 </div>
-
-                                {{-- Pagination --}}
                                 <div class="d-flex justify-content-between align-items-center px-3 py-2 border-top" id="archivePaginationWrap">
                                     <small class="text-muted" id="archiveMeta"></small>
                                     <div id="archivePagination" class="d-flex gap-1"></div>
@@ -389,14 +364,10 @@
                     </div>
                 </div>
 
-                {{-- ══════════════════════════════════════════════════════════ --}}
-                {{-- MODAL: Snapshot Detail (students + scores inside a snapshot) --}}
-                {{-- ══════════════════════════════════════════════════════════ --}}
+                {{-- MODAL: Snapshot Detail --}}
                 <div class="modal fade" id="snapshotDetailModal" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog modal-xl modal-dialog-scrollable">
                         <div class="modal-content border-0 shadow-lg">
-
-                            {{-- Header (dynamically filled) --}}
                             <div class="modal-header border-0" style="background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%);">
                                 <div>
                                     <h5 class="modal-title text-white fw-semibold" id="snapshotDetailTitle">Snapshot Detail</h5>
@@ -404,17 +375,11 @@
                                 </div>
                                 <button type="button" class="btn-close btn-close-white ms-3" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
-
-                            {{-- Body --}}
                             <div class="modal-body p-0">
-
-                                {{-- Notes banner (shown only if snapshot has notes) --}}
                                 <div id="snapshotNotesBanner" class="alert alert-info d-flex gap-2 align-items-start m-3 mb-0 d-none">
                                     <i class="ri-sticky-note-line fs-5 flex-shrink-0"></i>
                                     <div id="snapshotNotesText" class="small"></div>
                                 </div>
-
-                                {{-- Toolbar --}}
                                 <div class="px-3 pt-3 pb-2 d-flex align-items-center gap-2 flex-wrap border-bottom">
                                     <button class="btn btn-sm btn-success" id="detailRestoreAllBtn" onclick="restoreEntireSnapshot();">
                                         <i class="ri-refresh-line me-1"></i> Restore All
@@ -428,8 +393,6 @@
                                     <div class="spinner-border spinner-border-sm text-primary d-none ms-1" id="detailSpinner" role="status"></div>
                                     <span class="text-muted small ms-auto" id="detailStudentMeta"></span>
                                 </div>
-
-                                {{-- Table --}}
                                 <div class="table-responsive">
                                     <table class="table table-sm table-hover align-middle mb-0">
                                         <thead class="table-light sticky-top">
@@ -442,7 +405,6 @@
                                                 <th>Student</th>
                                                 <th>Adm. No</th>
                                                 <th>Gender</th>
-                                                {{-- Assessment columns injected by JS --}}
                                             </tr>
                                         </thead>
                                         <tbody id="snapshotDetailBody">
@@ -451,7 +413,6 @@
                                     </table>
                                 </div>
                             </div>
-
                             <div class="modal-footer bg-light">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                             </div>
@@ -505,8 +466,8 @@ let archiveMeta        = {};
 let archiveSearchTimer = null;
 
 // Current snapshot being viewed in the detail modal
-let currentSnapshotMeta = null;   // { snapshot_name, subjectclassid, termid, sessionid, staffid }
-let currentSnapshotRows = [];     // all rows loaded in detail modal
+let currentSnapshotMeta = null;
+let currentSnapshotRows = [];
 
 // ============================================================================
 // SWEET ALERT HELPER
@@ -524,6 +485,34 @@ function showSweetAlert(title, message, type, success = true) {
         timer: success ? 3000 : 5000,
         showConfirmButton: true,
     });
+}
+
+// ============================================================================
+// API FETCH HELPER
+// ============================================================================
+async function apiFetch(url, method, body) {
+    const options = {
+        method,
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+            'X-CSRF-TOKEN': CSRF
+        }
+    };
+
+    // Add body for methods that support it
+    if (body && (method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE')) {
+        options.body = JSON.stringify(body);
+    }
+
+    const res = await fetch(url, options);
+    const data = await res.json();
+
+    if (!res.ok && !data.success) {
+        throw new Error(data.message || `HTTP ${res.status}`);
+    }
+
+    return data;
 }
 
 // ============================================================================
@@ -565,8 +554,12 @@ function filterData() {
 function selectAllSubjects()   { document.querySelectorAll('.subject-checkbox').forEach(cb => cb.checked = true);  updateSubjectCount(); }
 function deselectAllSubjects() { document.querySelectorAll('.subject-checkbox').forEach(cb => cb.checked = false); updateSubjectCount(); }
 function updateSubjectCount()  { document.getElementById('subjectTeacherCount').textContent = document.querySelectorAll('.subject-checkbox:checked').length; }
-document.querySelectorAll('.subject-checkbox').forEach(cb => cb.addEventListener('change', updateSubjectCount));
-updateSubjectCount();
+
+// Initialize subject count
+if (document.querySelectorAll('.subject-checkbox').length) {
+    document.querySelectorAll('.subject-checkbox').forEach(cb => cb.addEventListener('change', updateSubjectCount));
+    updateSubjectCount();
+}
 
 // ============================================================================
 // CHECK ALL STUDENTS
@@ -600,17 +593,6 @@ function getSelectedSubjectClasses() {
 }
 function setSpinner(on) { document.getElementById('register-loading-spinner')?.classList.toggle('d-none', !on); }
 
-async function apiFetch(url, method, body) {
-    const res  = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
-        body: JSON.stringify(body),
-    });
-    const data = await res.json();
-    if (!res.ok && !data.success) throw new Error(data.message || `HTTP ${res.status}`);
-    return data;
-}
-
 function escapeHtml(str) {
     if (!str) return str ?? '';
     return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
@@ -638,8 +620,15 @@ async function registerSelectedStudentsBatch() {
 
     setSpinner(true);
     try {
-        const res = await apiFetch(ROUTES.batchRegister, 'POST', { studentids: studentIds, subjectclasses: subjectClasses, sessionid: parseInt(sessionId) });
-        if (res.success) { showSweetAlert('Registration Successful!', res.message, 'success', true); setTimeout(() => location.reload(), 2000); }
+        const res = await apiFetch(ROUTES.batchRegister, 'POST', {
+            studentids: studentIds,
+            subjectclasses: subjectClasses,
+            sessionid: parseInt(sessionId)
+        });
+        if (res.success) {
+            showSweetAlert('Registration Successful!', res.message, 'success', true);
+            setTimeout(() => location.reload(), 2000);
+        }
         else showSweetAlert('Registration Failed', res.message || 'Some students could not be registered.', 'error', false);
     } catch (err) {
         showSweetAlert('Error', 'Registration failed: ' + err.message, 'error', false);
@@ -684,6 +673,7 @@ async function proceedUnregister() {
     const nameInput  = document.getElementById('snapshotNameInput');
     const notesInput = document.getElementById('snapshotNotesInput');
     const name       = nameInput.value.trim();
+    const notes      = notesInput.value.trim() || null;
 
     if (!name) {
         nameInput.classList.add('is-invalid');
@@ -695,23 +685,46 @@ async function proceedUnregister() {
     const subjectClasses = getSelectedSubjectClasses();
     const sessionId      = document.getElementById('idsession').value;
 
+    // Validate selections
+    if (!studentIds.length) {
+        showSweetAlert('No Students Selected', 'Please select at least one student.', 'warning', false);
+        return;
+    }
+    if (!subjectClasses.length) {
+        showSweetAlert('No Subjects Selected', 'Please select at least one subject.', 'warning', false);
+        return;
+    }
+    if (sessionId === 'ALL') {
+        showSweetAlert('Session Required', 'Please select a session.', 'warning', false);
+        return;
+    }
+
     // Close the naming modal
-    bootstrap.Modal.getInstance(document.getElementById('snapshotNameModal'))?.hide();
+    const modal = bootstrap.Modal.getInstance(document.getElementById('snapshotNameModal'));
+    if (modal) modal.hide();
 
     setSpinner(true);
-    try {
-        const res = await apiFetch(ROUTES.destroy, 'DELETE', {
-            studentids    : studentIds,
-            subjectclasses: subjectClasses,
-            sessionid     : parseInt(sessionId),
-            snapshot_name : name,
-            snapshot_notes: notesInput.value.trim() || null,
-        });
 
-        if (res.success || res.success_count > 0) {
+    try {
+        // Prepare the request payload
+        const payload = {
+            studentids: studentIds,
+            subjectclasses: subjectClasses.map(sc => ({
+                subjectclassid: sc.subjectclassid,
+                staffid: sc.staffid,
+                termid: sc.termid
+            })),
+            sessionid: parseInt(sessionId),
+            snapshot_name: name,
+            snapshot_notes: notes
+        };
+
+        const res = await apiFetch(ROUTES.destroy, 'DELETE', payload);
+
+        if (res.success || (res.success_count && res.success_count > 0)) {
             showSweetAlert(
                 'Unregistration Complete',
-                `${res.success_count} student(s) unregistered.<br><small class="text-muted">Snapshot saved as "<strong>${escapeHtml(name)}</strong>"</small>`,
+                `${res.success_count || studentIds.length} student(s) unregistered.<br><small class="text-muted">Snapshot saved as "<strong>${escapeHtml(name)}</strong>"</small>`,
                 'success', true
             );
             setTimeout(() => location.reload(), 2500);
@@ -719,8 +732,11 @@ async function proceedUnregister() {
             showSweetAlert('Unregistration Failed', res.message || 'No students were unregistered.', 'error', false);
         }
     } catch (err) {
+        console.error('Unregistration error:', err);
         showSweetAlert('Error', 'Unregistration failed: ' + err.message, 'error', false);
-    } finally { setSpinner(false); }
+    } finally {
+        setSpinner(false);
+    }
 }
 
 // ============================================================================
@@ -778,7 +794,7 @@ async function loadRegisteredClasses() {
                 <td class="text-center"><span class="badge bg-success rounded-pill px-3 py-2">${row.subject_count}</span></td>
                 <td>${teachersHtml}</td>
                 <td><small class="text-muted">${escapeHtml(row.subjects)}</small></td>
-            </tr>`;
+             </tr>`;
         });
 
         html += `</tbody></table></div>`;
@@ -846,7 +862,6 @@ async function loadArchivedPage(page) {
     }
 }
 
-// ── Render snapshot cards ────────────────────────────────────────────────────
 function renderSnapshotCards(rows) {
     const container = document.getElementById('snapshotCardsContainer');
     const restoreBtn = document.getElementById('restoreSelectedBtn');
@@ -862,7 +877,6 @@ function renderSnapshotCards(rows) {
     restoreBtn?.classList.add('d-none');
     deleteBtn?.classList.add('d-none');
 
-    // Group rows by snapshot_name to create "batch" cards
     const groups = {};
     rows.forEach(row => {
         const key = `${row.snapshot_name}__${row.subjectclassid}__${row.termid}`;
@@ -907,7 +921,6 @@ function renderSnapshotCards(rows) {
                  onmouseenter="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.12)';"
                  onmouseleave="this.style.transform='';this.style.boxShadow='';">
                 <div class="card-body">
-                    {{-- Header --}}
                     <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
                         <div class="flex-grow-1 min-w-0">
                             <h6 class="fw-semibold mb-0 text-truncate" title="${escapeHtml(group.snapshot_name)}">
@@ -921,14 +934,8 @@ function renderSnapshotCards(rows) {
                             </span>
                         </div>
                     </div>
-
-                    {{-- Notes --}}
                     ${group.snapshot_notes ? `<p class="text-muted small fst-italic mb-2" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">"${escapeHtml(group.snapshot_notes)}"</p>` : ''}
-
-                    {{-- Subject pills --}}
                     <div class="mb-2">${subjectPills}</div>
-
-                    {{-- Footer meta --}}
                     <div class="d-flex justify-content-between align-items-center mt-auto pt-1 border-top">
                         <small class="text-muted">
                             <i class="ri-user-star-line me-1"></i>${escapeHtml(group.staffname ?? '—')}
@@ -938,8 +945,6 @@ function renderSnapshotCards(rows) {
                         </small>
                     </div>
                 </div>
-
-                {{-- Card actions bar --}}
                 <div class="card-footer bg-light border-0 d-flex gap-2 py-2">
                     <button class="btn btn-sm btn-outline-primary flex-grow-1" onclick="event.stopPropagation();openSnapshotDetail('${metaEncoded}');">
                         <i class="ri-eye-line me-1"></i> View
@@ -959,7 +964,6 @@ function renderSnapshotCards(rows) {
     container.innerHTML = html;
 }
 
-// ── Pagination helpers ────────────────────────────────────────────────────────
 function renderArchivePagination(meta) {
     const container = document.getElementById('archivePagination');
     if (!meta || meta.last_page <= 1) { container.innerHTML = ''; return; }
@@ -1003,7 +1007,6 @@ async function openSnapshotDetail(metaEncoded) {
     document.getElementById('snapshotDetailBody').innerHTML =
         '<tr><td colspan="10" class="text-center py-4"><div class="spinner-border spinner-border-sm me-2"></div>Loading students…</td></tr>';
 
-    // Hide per-row selection buttons until loaded
     document.getElementById('detailRestoreSelectedBtn')?.classList.add('d-none');
     document.getElementById('detailDeleteSelectedBtn')?.classList.add('d-none');
 
@@ -1030,7 +1033,6 @@ async function openSnapshotDetail(metaEncoded) {
 
         currentSnapshotRows = data.rows;
 
-        // Show notes banner
         if (data.snapshot_notes) {
             const banner = document.getElementById('snapshotNotesBanner');
             banner?.classList.remove('d-none');
@@ -1044,14 +1046,12 @@ async function openSnapshotDetail(metaEncoded) {
 
     } catch (err) {
         document.getElementById('snapshotDetailBody').innerHTML =
-            `<tr><td colspan="10" class="text-center text-danger py-4">Error: ${err.message}</td></tr>`;
+            `<td><td colspan="10" class="text-center text-danger py-4">Error: ${err.message}</td></tr>`;
     }
 }
 
 function renderSnapshotDetailTable(rows, assessmentHeaders) {
-    // Build dynamic header columns
     const headerRow = document.getElementById('snapshotDetailHeaderRow');
-    // Remove old dynamic columns (leave first 4: checkbox, student, adm, gender)
     while (headerRow.cells.length > 4) headerRow.deleteCell(headerRow.cells.length - 1);
 
     (assessmentHeaders || []).forEach(a => {
@@ -1064,7 +1064,6 @@ function renderSnapshotDetailTable(rows, assessmentHeaders) {
     th.textContent = 'Total';
     headerRow.appendChild(th);
 
-    // Build body rows
     let html = '';
     rows.forEach(row => {
         const name = [row.lastname, row.firstname, row.othername].filter(Boolean).join(' ');
@@ -1096,12 +1095,11 @@ function renderSnapshotDetailTable(rows, assessmentHeaders) {
             <td>${escapeHtml(row.admissionno ?? '—')}</td>
             <td><span class="badge ${row.gender === 'Male' ? 'bg-info-subtle text-info' : 'bg-pink-subtle text-pink'}">${escapeHtml(row.gender ?? '—')}</span></td>
             ${scoresCells}
-        </tr>`;
+         </tr>`;
     });
 
     document.getElementById('snapshotDetailBody').innerHTML = html || '<tr><td colspan="10" class="text-center text-muted py-4">No students found.</td></tr>';
 
-    // Wire up checkboxes
     document.getElementById('detailCheckAll')?.addEventListener('change', function () {
         document.querySelectorAll('.detail-chk').forEach(cb => cb.checked = this.checked);
         toggleDetailButtons();
@@ -1118,7 +1116,7 @@ function toggleDetailButtons() {
 }
 
 // ============================================================================
-// RESTORE — from snapshot detail modal
+// RESTORE FUNCTIONS
 // ============================================================================
 async function restoreEntireSnapshot() {
     if (!currentSnapshotRows.length) return;
@@ -1159,7 +1157,6 @@ async function doRestore(archiveIds, label) {
     }
 }
 
-// ── Restore from card button (entire snapshot group) ─────────────────────────
 async function restoreSingleSnapshot(metaEncoded) {
     const meta = JSON.parse(decodeURIComponent(metaEncoded));
 
@@ -1174,7 +1171,6 @@ async function restoreSingleSnapshot(metaEncoded) {
     spinner?.classList.remove('d-none');
 
     try {
-        // Load the archive_ids for this snapshot group first
         const params = new URLSearchParams({
             snapshot_name  : meta.snapshot_name,
             subjectclassid : meta.subjectclassid,
@@ -1206,7 +1202,9 @@ async function restoreSingleSnapshot(metaEncoded) {
     }
 }
 
-// ── Delete entire snapshot group ─────────────────────────────────────────────
+// ============================================================================
+// DELETE FUNCTIONS
+// ============================================================================
 async function deleteSnapshotGroup(metaEncoded) {
     const meta = JSON.parse(decodeURIComponent(metaEncoded));
 
@@ -1252,7 +1250,6 @@ async function deleteSnapshotGroup(metaEncoded) {
     }
 }
 
-// ── Delete selected from detail modal ────────────────────────────────────────
 async function deleteDetailSelected() {
     const ids = [...document.querySelectorAll('.detail-chk:checked')].map(cb => parseInt(cb.value));
     if (!ids.length) return;
@@ -1283,7 +1280,7 @@ async function deleteDetailSelected() {
     }
 }
 
-// Stubs for the top-level restore/delete buttons in archive modal (kept for UI symmetry)
-async function restoreSelected()       { /* snapshot-level restore now via cards */ }
-async function permanentDeleteSelected() { /* snapshot-level delete now via cards */ }
+// Stub functions for UI consistency
+async function restoreSelected() {}
+async function permanentDeleteSelected() {}
 </script>
