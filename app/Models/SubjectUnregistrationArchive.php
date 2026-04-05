@@ -8,6 +8,7 @@ use App\Models\Subjectclass;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class SubjectUnregistrationArchive extends Model
 {
@@ -23,6 +24,8 @@ class SubjectUnregistrationArchive extends Model
         'schoolclassid',
         'broadsheet_record_id',
         'unregistered_by',
+        'snapshot_name',
+        'snapshot_notes',
         'status',
         'unregistered_at',
         'actioned_at',
@@ -33,10 +36,12 @@ class SubjectUnregistrationArchive extends Model
         'actioned_at'     => 'datetime',
     ];
 
-    // Status constants
+    // ── Status constants ─────────────────────────────────────────────────────
     const STATUS_ARCHIVED            = 'archived';
     const STATUS_RESTORED            = 'restored';
     const STATUS_PERMANENTLY_DELETED = 'permanently_deleted';
+
+    // ── Relationships ────────────────────────────────────────────────────────
 
     public function student(): BelongsTo
     {
@@ -68,16 +73,24 @@ class SubjectUnregistrationArchive extends Model
         return $this->belongsTo(User::class, 'unregistered_by');
     }
 
+    /**
+     * Score snapshots captured at unregistration time.
+     */
+    public function scoreSnapshots(): HasMany
+    {
+        return $this->hasMany(ArchiveScoreSnapshot::class, 'archive_id');
+    }
+
+    // ── Scopes ───────────────────────────────────────────────────────────────
+
     public function scopeArchived($query)
     {
         return $query->where('status', self::STATUS_ARCHIVED);
     }
 
+    // ── Alias (kept for backwards compat) ────────────────────────────────────
 
-    /**
-     * Get the user/staff associated with this teacher assignment
-     */
-    public function user()
+    public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'staffid');
     }
