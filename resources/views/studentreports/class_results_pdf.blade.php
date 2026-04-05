@@ -234,27 +234,50 @@
             font-weight: 900;
         }
 
-        /* Totals row inside academic table */
-        .totals-row td {
-            background: #e9eef3 !important;
-            font-weight: 900 !important;
-            border-top: 2px solid #000000;
-        }
+        /* Column widths */
+        .col-sn { width: 28px; }
+        .col-admissionno { width: 78px; }
+        .col-name { width: 130px; }
+        .col-assessment { width: 39px; }
+        .col-total { width: 46px; }
+        .col-bf { width: 36px; }
+        .col-cum { width: 42px; }
+        .col-grade { width: 36px; }
+        .col-position { width: 36px; }
+        .col-class-average { width: 39px; }
 
-        .totals-fraction {
-            display: inline-block;
-            text-align: center;
-        }
-
-        .totals-fraction .t-num {
+        /* ========== INDEPENDENT TOTALS ROW (DIV based, no table constraints) ========== */
+        .independent-totals {
+            background: linear-gradient(135deg, #0d1a3d 0%, #1e3a5f 100%);
+            color: white;
+            padding: 6px 10px;
+            margin: 6px 0 8px 0;
+            border-radius: 6px;
             font-weight: 900;
-            font-size: 8px;
+            font-size: 8.5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            border: 1px solid #ffd700;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
-
-        .totals-fraction .t-den {
-            font-size: 7px;
+        .independent-totals-item {
+            background: rgba(255,255,255,0.15);
+            padding: 4px 10px;
+            border-radius: 20px;
+            letter-spacing: 0.3px;
+        }
+        .independent-totals-item span:first-child {
             font-weight: normal;
-            margin-left: 1px;
+            opacity: 0.9;
+        }
+        .independent-totals-item span:last-child {
+            font-weight: 900;
+            font-size: 9px;
+            margin-left: 6px;
+            color: #ffd966;
         }
 
         /* Grade interpretation section */
@@ -292,33 +315,6 @@
             padding: 5px 6px;
             font-size: 6.5px;
             text-align: center;
-        }
-
-        /* Column widths */
-        .col-sn { width: 28px; }
-        .col-admissionno { width: 78px; }
-        .col-name { width: 130px; }
-        .col-assessment { width: 39px; }
-        .col-total { width: 46px; }
-        .col-bf { width: 36px; }
-        .col-cum { width: 42px; }
-        .col-grade { width: 36px; }
-        .col-position { width: 36px; }
-        .col-class-average { width: 39px; }
-
-        /* FULL-WIDTH TOTAL SUMMARY */
-        .totals-summary {
-            width: 98%;
-            background: #0d1a3d;
-            color: #ffffff;
-            font-weight: 900;
-            font-size: 7.5px;
-            padding: 4px 8px;
-            border: 2px solid #000000;
-            border-top: none;
-            text-align: center;
-            margin-top: 0;
-            margin-bottom: 8px;
         }
 
         /* ========== PSYCHOMOTOR PANEL ========== */
@@ -475,21 +471,54 @@
             font-weight: 900;
         }
 
-        /* STAMP OVERLAY */
-        .stamp-overlay {
+        /* ========== BEAUTIFUL BOLD STAMP OVERLAY ========== */
+        .official-stamp {
             position: absolute;
-            bottom: 90px;
-            right: 120px;
-            width: 110px;
-            height: 110px;
-            opacity: 0.18;
-            z-index: 10;
+            bottom: 70px;
+            right: 100px;
+            width: 130px;
+            height: 130px;
+            z-index: 15;
             pointer-events: none;
+            opacity: 0.75;
         }
-        .stamp-overlay img {
+        .stamp-svg {
             width: 100%;
             height: 100%;
-            object-fit: contain;
+            filter: drop-shadow(2px 2px 3px rgba(0,0,0,0.2));
+        }
+        .stamp-circle {
+            fill: none;
+            stroke: #8B0000;
+            stroke-width: 3.5;
+            stroke-dasharray: 8 6;
+        }
+        .stamp-inner-circle {
+            fill: none;
+            stroke: #8B0000;
+            stroke-width: 1.8;
+        }
+        .stamp-text-main {
+            font-family: 'Times New Roman', serif;
+            font-weight: 900;
+            fill: #8B0000;
+            font-size: 11px;
+            letter-spacing: 1px;
+        }
+        .stamp-text-sub {
+            font-family: 'Times New Roman', serif;
+            font-weight: bold;
+            fill: #a52a1a;
+            font-size: 8px;
+        }
+        .stamp-date {
+            font-family: 'Times New Roman', serif;
+            fill: #6b1a0a;
+            font-size: 6.5px;
+            font-weight: bold;
+        }
+        .stamp-star {
+            fill: #c62828;
         }
 
         @media print {
@@ -509,12 +538,19 @@
                 font-size: 55px;
                 color: rgba(0, 0, 0, 0.07);
                 print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
             }
             .dual-layout-table {
                 page-break-inside: avoid;
             }
-            .stamp-overlay {
-                opacity: 0.2;
+            .official-stamp {
+                opacity: 0.85;
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
+            }
+            .independent-totals {
+                print-color-adjust: exact;
+                -webkit-print-color-adjust: exact;
             }
         }
     </style>
@@ -541,7 +577,7 @@
         $assessments = $studentData['assessments'] ?? collect();
         $totals = $studentData['totals_summary'] ?? [];
 
-        // Psychomotor skills lists
+        // Psychomotor skills
         $psychomotorSkills = [
             'Handwriting', 'Sports', 'Musical Skills', 'Participation', 'Punctuality',
             'Concern for Others', 'Relationship(Students)', 'Relationship(Staff)',
@@ -599,23 +635,22 @@
     @endphp
 
     <div class="student-section">
-        <!-- OFFICIAL SCHOOL STAMP OVERLAY -->
-        <div class="stamp-overlay">
-            @php
-                $stampPath = public_path('stamp.png');
-                $stampExists = file_exists($stampPath);
-            @endphp
-            @if($stampExists)
-                <img src="{{ public_path('stamp.png') }}" alt="School Stamp">
-            @else
-                <svg width="110" height="110" viewBox="0 0 110 110" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="55" cy="55" r="48" stroke="#8B0000" stroke-width="3" fill="none" stroke-dasharray="6 4"/>
-                    <text x="55" y="40" text-anchor="middle" fill="#8B0000" font-size="10" font-weight="bold">CLARET</text>
-                    <text x="55" y="55" text-anchor="middle" fill="#8B0000" font-size="9">SECONDARY</text>
-                    <text x="55" y="70" text-anchor="middle" fill="#8B0000" font-size="9">SCHOOL</text>
-                    <text x="55" y="88" text-anchor="middle" fill="#8B0000" font-size="7">KABBA</text>
-                </svg>
-            @endif
+        <!-- BEAUTIFUL BOLD OFFICIAL STAMP OVERLAY -->
+        <div class="official-stamp">
+            <svg class="stamp-svg" viewBox="0 0 130 130" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="65" cy="65" r="58" class="stamp-circle" />
+                <circle cx="65" cy="65" r="52" class="stamp-inner-circle" />
+                <!-- Star at top -->
+                <polygon points="65,12 68,22 78,22 70,29 73,39 65,33 57,39 60,29 52,22 62,22" class="stamp-star" />
+                <text x="65" y="48" text-anchor="middle" class="stamp-text-main">CLARET SCHOOL</text>
+                <text x="65" y="60" text-anchor="middle" class="stamp-text-sub">SECONDARY KABBA</text>
+                <text x="65" y="72" text-anchor="middle" class="stamp-text-sub">OFFICIAL SEAL</text>
+                <text x="65" y="86" text-anchor="middle" class="stamp-date">{{ now()->format('d/m/Y') }}</text>
+                <line x1="35" y1="95" x2="95" y2="95" stroke="#8B0000" stroke-width="1.5" />
+                <text x="65" y="108" text-anchor="middle" class="stamp-text-sub" font-size="7">PRINCIPAL</text>
+                <!-- small dots decoration -->
+                <circle cx="65" cy="65" r="45" fill="none" stroke="#8B0000" stroke-width="0.8" stroke-dasharray="3 3" />
+            </svg>
         </div>
 
         <!-- HEADER -->
@@ -807,23 +842,10 @@
                                         @if(in_array('class_average', $columnsToShow)) <td>&nbsp;</td> @endif
                                     </tr>
                                 @endfor
-
-                                <!-- TOTALS ROW -->
-                                <tr class="totals-row">
-                                    <td colspan="{{ $totalLabelColspan }}" style="text-align: right; padding-right: 5px; font-weight: 900;">TOTAL</td>
-                                    @if(in_array('total', $columnsToShow))
-                                    <td class="col-total"><div class="totals-fraction"><span class="t-num">{{ number_format($totals['obtained'], 1) }}</span><span class="t-den">/{{ $totals['obtainable'] }}</span></div></td>
-                                    @endif
-                                    @if(in_array('bf', $columnsToShow)) <td class="col-bf">—</td> @endif
-                                    @if(in_array('cum', $columnsToShow)) <td class="col-cum">—</td> @endif
-                                    @if(in_array('grade', $columnsToShow)) <td class="col-grade">—</td> @endif
-                                    @if(in_array('position', $columnsToShow)) <td class="col-position">—</td> @endif
-                                    @if(in_array('class_average', $columnsToShow)) <td class="col-class-average">{{ $totals['percentage'] }}%</td> @endif
-                                </tr>
                             </tbody>
                         </table>
                     </div>
-                    <!-- GRADE INTERPRETATION (Academic) - directly under academic table -->
+                    <!-- GRADE INTERPRETATION (Academic) -->
                     <div class="grade-interpretation">
                         <div class="grade-interpretation-item"><span class="grade-sample grade-A">A</span> 75-100% (Excellent)</div>
                         <div class="grade-interpretation-item"><span class="grade-sample grade-B">B</span> 65-74% (Very Good)</div>
@@ -859,7 +881,7 @@
                         </table>
                         <div class="psycho-note">5=Excellent 4=Very Good 3=Good 2=Fair 1=Needs Improvement</div>
                     </div>
-                    <!-- PSYCHOMOTOR INTERPRETATION directly under psychomotor panel -->
+                    <!-- PSYCHOMOTOR INTERPRETATION -->
                     <div class="psycho-interpretation">
                         <strong>Scale:</strong> 5-Excellent | 4-Very Good | 3-Good | 2-Fair | 1-Needs Improvement
                     </div>
@@ -867,9 +889,20 @@
             </tr>
         </table>
 
-        <!-- FULL-WIDTH TOTAL SUMMARY -->
-        <div class="totals-summary">
-            TOTAL OBTAINED: {{ number_format($totals['obtained'], 1) }}&nbsp;&nbsp;|&nbsp;&nbsp;TOTAL OBTAINABLE: {{ $totals['obtainable'] }}&nbsp;&nbsp;|&nbsp;&nbsp;% OBTAINED: {{ $totals['percentage'] }}%
+        <!-- INDEPENDENT TOTALS ROW (DIV based, no table constraints - prevents psychomotor shift) -->
+        <div class="independent-totals">
+            <div class="independent-totals-item"><span>📊 TOTAL OBTAINED:</span> <span>{{ number_format($totals['obtained'], 1) }} / {{ $totals['obtainable'] }}</span></div>
+            <div class="independent-totals-item"><span>📈 PERCENTAGE:</span> <span>{{ $totals['percentage'] }}%</span></div>
+            <div class="independent-totals-item"><span>🏆 GRADE AVG:</span> <span>
+                @php
+                    $pct = $totals['percentage'] ?? 0;
+                    if ($pct >= 75) echo 'A (Excellent)';
+                    elseif ($pct >= 65) echo 'B (Very Good)';
+                    elseif ($pct >= 55) echo 'C (Good)';
+                    elseif ($pct >= 45) echo 'D (Pass)';
+                    else echo 'F (Fail)';
+                @endphp
+            </span></div>
         </div>
 
         <!-- REMARKS -->
