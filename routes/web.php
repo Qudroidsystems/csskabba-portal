@@ -314,8 +314,7 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
     Route::post('/subjectscoresheet/grade-preview', [MyScoreSheetController::class, 'calculateGradePreview'])->name('subjectscoresheet.grade-preview');
     Route::post('subjectscoresheet/bulk-update', [MyScoreSheetController::class, 'bulkUpdateScores'])->name('subjectscoresheet.bulk-update');
     Route::get('/subjectscoresheet/import-progress', [MyScoreSheetController::class, 'importProgress'])->name('subjectscoresheet.import_progress');
-    // Add this route to your routes file (web.php)
-    Route::get('scoresheet/download-marks-sheet', [MyScoreSheetController::class, 'downloadMarksSheet'])->name('scoresheet.download-marks-sheet');
+
     Route::post('/studentreports/column-options', [ViewStudentReportController::class, 'getColumnOptions'])->name('studentreports.column-options');
 
     // Mock Scoresheet Routes
