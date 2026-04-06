@@ -2,7 +2,9 @@
 
 namespace App\Exports;
 
+use App\Models\Assessment;
 use App\Models\Broadsheets;
+use App\Models\Schoolclass;
 use App\Models\SchoolInformation;
 use Illuminate\Contracts\View\View;
 use Maatwebsite\Excel\Concerns\Exportable;
@@ -22,28 +24,33 @@ class RecordsheetExport implements FromView, ShouldAutoSize, WithStyles, WithEve
     protected $termId;
     protected $sessionId;
     protected $staffId;
+    protected $assessments;
 
     public function __construct($schoolclassId, $subjectclassId, $termId, $sessionId, $staffId)
     {
-        $this->schoolclassId = $schoolclassId;
+        $this->schoolclassId  = $schoolclassId;
         $this->subjectclassId = $subjectclassId;
-        $this->termId = $termId;
-        $this->sessionId = $sessionId;
-        $this->staffId = $staffId;
+        $this->termId         = $termId;
+        $this->sessionId      = $sessionId;
+        $this->staffId        = $staffId;
+
+        // Load dynamic assessments once for reuse in view + styles
+        $schoolclass = Schoolclass::with('classcategories')->find($schoolclassId);
+        $this->assessments = collect();
+        if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
+            $categoryIds = $schoolclass->classcategories->pluck('id');
+            $this->assessments = Assessment::whereIn('classcategory_id', $categoryIds)
+                ->orderBy('id')
+                ->get();
+        }
     }
 
     public function view(): View
     {
-        // Use constructor parameters instead of session
-        $subjectclass_id = $this->subjectclassId;
-        $staff_id = $this->staffId;
-        $term_id = $this->termId;
-        $session_id = $this->sessionId;
-
-        // Fetch broadsheets
-        $broadsheets = Broadsheets::where('broadsheets.subjectclass_id', $subjectclass_id)
-            ->where('broadsheets.staff_id', $staff_id)
-            ->where('broadsheets.term_id', $term_id)
+        $broadsheets = Broadsheets::where('broadsheets.subjectclass_id', $this->subjectclassId)
+            ->where('broadsheets.staff_id', $this->staffId)
+            ->where('broadsheets.term_id', $this->termId)
+            ->with('assessmentScores')
             ->leftJoin('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
             ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'broadsheet_records.student_id')
             ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
@@ -55,81 +62,46 @@ class RecordsheetExport implements FromView, ShouldAutoSize, WithStyles, WithEve
             ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
             ->leftJoin('schoolterm', 'schoolterm.id', '=', 'broadsheets.term_id')
             ->leftJoin('schoolsession', 'schoolsession.id', '=', 'broadsheet_records.session_id')
-            ->where('broadsheet_records.session_id', $session_id)
+            ->where('broadsheet_records.session_id', $this->sessionId)
+            ->orderBy('studentRegistration.lastname')
+            ->orderBy('studentRegistration.firstname')
             ->get([
                 'broadsheets.id',
                 'studentRegistration.admissionNO as admissionno',
                 'studentRegistration.firstname as fname',
                 'studentRegistration.lastname as lname',
                 'studentRegistration.othername as mname',
-                'subject.subject',
-                'subject.subject_code',
-                'schoolclass.schoolclass',
-                'schoolarm.arm',
-                'schoolterm.term',
-                'schoolsession.session',
-                'subjectclass.id as subjectclid',
-                'broadsheets.staff_id',
-                'broadsheets.term_id',
-                'broadsheet_records.session_id as sessionid',
-                'users.name as staffname',
+                'subject.subject', 'subject.subject_code',
+                'schoolclass.schoolclass', 'schoolarm.arm',
+                'schoolterm.term', 'schoolsession.session',
+                'subjectclass.id as subjectclid', 'broadsheets.staff_id', 'broadsheets.term_id',
+                'broadsheet_records.session_id as sessionid', 'users.name as staffname',
                 'studentpicture.picture',
-                'broadsheets.ca1',
-                'broadsheets.ca2',
-                'broadsheets.ca3',
-                'broadsheets.exam',
-                'broadsheets.total',
-                'broadsheets.grade',
-                'broadsheets.subject_position_class as position',
-                'broadsheets.remark',
-            ])->sortBy('lastname');
+                'broadsheets.total', 'broadsheets.bf', 'broadsheets.cum',
+                'broadsheets.grade', 'broadsheets.subject_position_class as position',
+                'broadsheets.remark', 'broadsheets.avg', 'broadsheets.cmin', 'broadsheets.cmax',
+            ]);
 
-        // Fetch active school information
         $school = SchoolInformation::getActiveSchool();
 
-        return view('exports.studentscoresheet', compact('broadsheets', 'school'));
+        return view('exports.studentscoresheet', [
+            'broadsheets' => $broadsheets,
+            'assessments' => $this->assessments,
+            'school'      => $school,
+        ]);
     }
 
     public function styles(Worksheet $sheet)
     {
-        // Bold headers for school info and table headers
-        $sheet->getStyle('A1:P1')->getFont()->setBold(true); // School Name
-        $sheet->getStyle('A2:P2')->getFont()->setBold(true); // Address
-        $sheet->getStyle('A3:P3')->getFont()->setBold(true); // Contact & Motto
-        $sheet->getStyle('A6:P6')->getFont()->setBold(true); // Table Headers
+        // Header rows bold
+        $lastCol = chr(ord('A') + 2 + $this->assessments->count() + 4); // sn+adm+name + assessments + total+bf+cum+grade+pos+remark
+        $sheet->getStyle("A1:{$lastCol}1")->getFont()->setBold(true);
+        $sheet->getStyle("A2:{$lastCol}2")->getFont()->setBold(true);
+        $sheet->getStyle("A3:{$lastCol}3")->getFont()->setBold(true);
+        $sheet->getStyle("A6:{$lastCol}6")->getFont()->setBold(true);
 
-        // Merge cells for school info
-        $sheet->mergeCells('A1:P1');
-        $sheet->mergeCells('A2:P2');
-        $sheet->mergeCells('A3:P3');
-        $sheet->mergeCells('A4:P4'); // Subject, Class, Term, Session
-        $sheet->mergeCells('A5:P5'); // Empty row for spacing
-
-        // Center align school info
-        $sheet->getStyle('A1:A4')->getAlignment()->setHorizontal(\PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER);
-
-        // Protect sheet with password
-        $sheet->getProtection()->setPassword(env('EXCEL_PROTECTION_PASSWORD', 'password'));
-        $sheet->getProtection()->setSheet(true);
-
-        // Use constructor parameters instead of session
-        $broadsheets_count = Broadsheets::where('broadsheets.subjectclass_id', $this->subjectclassId)
-            ->where('broadsheets.staff_id', $this->staffId)
-            ->where('broadsheets.term_id', $this->termId)
-            ->leftJoin('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
-            ->where('broadsheet_records.session_id', $this->sessionId)
-            ->count();
-
-        // Unlock score input columns (D, E, F, H for CA1, CA2, CA3, EXAM)
-        for ($i = 7; $i <= $broadsheets_count + 6; $i++) { // Start from row 7 due to 5 header rows
-            $sheet->getStyle("D{$i}:F{$i}")->getProtection()->setLocked(\PhpOffice\PhpSpreadsheet\Style\Protection::PROTECTION_UNPROTECTED);
-            $sheet->getStyle("H{$i}")->getProtection()->setLocked(\PhpOffice\PhpSpreadsheet\Style\Protection::PROTECTION_UNPROTECTED);
-        }
-
-        // Hide unnecessary columns (L, M, N, O, P for BROADSHEETID, STAFFID, etc.)
-        // foreach (['L', 'M', 'N', 'O', 'P'] as $column) {
-        //     $sheet->getColumnDimension($column)->setVisible(false)->setWidth(0);
-        // }
+        // Freeze pane
+        $sheet->freezePane('A7');
 
         return [];
     }
@@ -138,7 +110,6 @@ class RecordsheetExport implements FromView, ShouldAutoSize, WithStyles, WithEve
     {
         return [
             AfterSheet::class => function (AfterSheet $event) {
-                // Freeze pane below header rows (row 6)
                 $event->sheet->getDelegate()->freezePane('A7');
             },
         ];
