@@ -293,12 +293,12 @@
                     <button class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#columnVisibilityModal">
                         <i class="ri-eye-line me-1"></i>Columns
                     </button>
-                    <a href="{{ route('scoresheet.download-marks-sheet') }}" class="btn btn-sm btn-warning" id="downloadMarksSheet">
+                    <button class="btn btn-sm btn-warning" id="downloadMarksSheet">
                         <i class="ri-file-pdf-line me-1"></i>Marks Sheet
-                    </a>
-                    <a href="{{ route('subjectscoresheet.export') }}" class="btn btn-sm btn-success" id="downloadExcel">
+                    </button>
+                    <button class="btn btn-sm btn-success" id="downloadExcel">
                         <i class="ri-download-line me-1"></i>Export Excel
-                    </a>
+                    </button>
                     <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#importModal">
                         <i class="ri-upload-line me-1"></i>Import
                     </button>
@@ -381,7 +381,7 @@
                             <td class="col-name name" data-name="{{ strtolower(($broadsheet->lname ?? '') . ' ' . ($broadsheet->fname ?? '') . ' ' . ($broadsheet->mname ?? '')) }}">
                                 <div class="d-flex align-items-center gap-2">
                                     <img src="{{ $broadsheet->picture ? asset('storage/student_avatars/' . basename($broadsheet->picture)) : asset('storage/student_avatars/unnamed.jpg') }}"
-                                         class="rounded-circle" style="width:34px;height:34px;object-fit:cover;border:2px solid var(--ss-border);"
+                                         class="rounded-circle student-image" style="width:34px;height:34px;object-fit:cover;border:2px solid var(--ss-border);"
                                          data-bs-toggle="modal" data-bs-target="#imageViewModal"
                                          data-image="{{ $broadsheet->picture ? asset('storage/student_avatars/' . basename($broadsheet->picture)) : asset('storage/student_avatars/unnamed.jpg') }}"
                                          onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}';"
@@ -413,26 +413,26 @@
                                 <td colspan="4" class="col-no-assessments text-center text-muted">-</td>
                             @endforelse
 
-                            <td class="col-total text-center">
+                            <td class="col-total text-center total-display">
                                 <span class="badge bg-primary" data-total="{{ $rowTotal }}">{{ number_format($rowTotal, 1) }}</span>
                             </td>
-                            <td class="col-bf text-center">
+                            <td class="col-bf text-center bf-display">
                                 <span class="badge bg-secondary-subtle text-secondary">{{ number_format($broadsheet->bf ?? 0, 1) }}</span>
                             </td>
-                            <td class="col-cum text-center">
+                            <td class="col-cum text-center cum-display">
                                 @php $cum = $broadsheet->cum ?? 0; $cumColor = $cum >= 70 ? 'success' : ($cum >= 50 ? 'info' : ($cum >= 40 ? 'warning' : 'danger')); @endphp
                                 <span class="badge bg-{{ $cumColor }}-subtle text-{{ $cumColor }} fw-bold" style="font-size:12px;">{{ number_format($cum, 1) }}</span>
                             </td>
-                            <td class="col-gpa text-center">
+                            <td class="col-gpa text-center gpa-display">
                                 <span class="badge bg-warning-subtle text-warning fw-semibold">{{ number_format($broadsheet->gpa ?? 0, 2) }}</span>
                             </td>
-                            <td class="col-cgpa text-center">
+                            <td class="col-cgpa text-center cgpa-display">
                                 <span class="badge bg-dark-subtle text-dark">{{ number_format($broadsheet->cgpa ?? 0, 2) }}</span>
                             </td>
-                            <td class="col-grade text-center fw-bold" style="font-size:13px;color:{{ $gradeColors[$broadsheet->grade ?? 'F'] ?? '#6b7280' }};">
-                                {{ $broadsheet->grade ?? '-' }}
+                            <td class="col-grade text-center grade-display fw-bold" style="font-size:13px;color:{{ $gradeColors[$broadsheet->grade ?? 'F'] ?? '#6b7280' }};">
+                                <span>{{ $broadsheet->grade ?? '-' }}</span>
                             </td>
-                            <td class="col-position text-center">
+                            <td class="col-position text-center position-display">
                                 <span class="badge" style="background:var(--ss-primary);">
                                     {{ $broadsheet->position ? $broadsheet->position . \App\Helpers\OrdinalHelper::getOrdinalSuffix($broadsheet->position) : '-' }}
                                 </span>
@@ -455,7 +455,7 @@
                         </tr>
                     @endforelse
                 </tbody>
-            </table>
+             </table>
             </div>
 
             {{-- Bulk action toolbar --}}
@@ -557,7 +557,7 @@
                         </div>
                         <div class="d-flex justify-content-end gap-2">
                             <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary"><i class="ri-upload-line me-1"></i>Upload</button>
+                            <button type="submit" class="btn btn-primary" id="importSubmit"><i class="ri-upload-line me-1"></i>Upload</button>
                         </div>
                     </form>
                 </div>
@@ -581,292 +581,54 @@
 </div>{{-- page-content --}}
 </div>{{-- main-content --}}
 
+{{-- Progress containers for downloads (hidden by default) --}}
+<div id="downloadProgressContainer" style="display: none; position: fixed; bottom: 20px; right: 20px; z-index: 9999; width: 300px;" class="card shadow">
+    <div class="card-body py-2">
+        <div class="d-flex align-items-center gap-2">
+            <div class="spinner-border spinner-border-sm text-primary"></div>
+            <div class="flex-grow-1">
+                <div class="small text-muted mb-1">Downloading...</div>
+                <div class="progress" style="height: 4px;">
+                    <div id="downloadProgressBar" class="progress-bar bg-primary" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="importLoader" style="display: none; position: fixed; bottom: 20px; right: 20px; z-index: 9999; width: 300px;" class="card shadow">
+    <div class="card-body py-2">
+        <div class="d-flex align-items-center gap-2">
+            <div class="spinner-border spinner-border-sm text-primary"></div>
+            <div class="flex-grow-1">
+                <div class="small text-muted mb-1">Uploading...</div>
+                <div class="progress" style="height: 4px;">
+                    <div id="uploadProgressBar" class="progress-bar bg-primary" style="width: 0%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-// ── CSRF meta ─────────────────────────────────────────────────────────────────
-if (!document.querySelector('meta[name="csrf-token"]')) {
-    const m = document.createElement('meta'); m.name = 'csrf-token';
-    m.content = '{{ csrf_token() }}'; document.head.appendChild(m);
-}
-
-const CSRF    = document.querySelector('meta[name="csrf-token"]').content;
-const ROUTES  = {
-    singleUpdate: '{{ route("subjectscoresheet.single-update") }}',
-    bulkUpdate  : '{{ route("subjectscoresheet.bulk-update") }}',
-    destroy     : '{{ route("subjectscoresheet.destroy", ["id" => "__ID__"]) }}',
-};
-window.term_id        = {{ session('term_id') ?? 'null' }};
-window.session_id     = {{ session('session_id') ?? 'null' }};
-window.subjectclass_id= {{ session('subjectclass_id') ?? 'null' }};
-window.schoolclass_id = {{ session('schoolclass_id') ?? 'null' }};
-window.staff_id       = {{ session('staff_id') ?? 'null' }};
-
-document.addEventListener('DOMContentLoaded', function () {
-
-    // ── Tooltips ──────────────────────────────────────────────────────────────
-    document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => new bootstrap.Tooltip(el));
-
-    // ── Image modal ───────────────────────────────────────────────────────────
-    document.getElementById('imageViewModal')?.addEventListener('show.bs.modal', function(e) {
-        const src = e.relatedTarget?.dataset?.image || e.relatedTarget?.getAttribute('data-image');
-        document.getElementById('enlargedImage').src = src || '{{ asset("storage/student_avatars/unnamed.jpg") }}';
-    });
-    // Also handle click on img tags (not data-bs-toggle targets)
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('student-image') || e.target.closest('[data-image]')) {
-            const el  = e.target.classList.contains('student-image') ? e.target : e.target.closest('[data-image]');
-            const src = el.getAttribute('data-image');
-            if (src) document.getElementById('enlargedImage').src = src;
-        }
-    });
-
-    // ── Column visibility ─────────────────────────────────────────────────────
-    document.querySelectorAll('.col-toggle').forEach(cb => {
-        cb.addEventListener('change', function() {
-            const cls = this.dataset.col;
-            document.querySelectorAll(`th.${cls}, td.${cls}`).forEach(el => {
-                el.style.display = this.checked ? '' : 'none';
-            });
-        });
-    });
-
-    // ── Search ────────────────────────────────────────────────────────────────
-    let tableRows = () => document.querySelectorAll('#scoresheetTableBody tr[data-id]');
-    const noDataAlert = document.getElementById('noDataAlert');
-    const scoreCount  = document.getElementById('scoreCount');
-
-    function applySearch() {
-        const q = (document.getElementById('searchInput')?.value ?? '').trim().toLowerCase();
-        let vis = 0;
-        tableRows().forEach(row => {
-            const adm  = (row.querySelector('.admissionno')?.dataset?.admissionno ?? '').toLowerCase();
-            const name = (row.querySelector('.name')?.dataset?.name ?? '').toLowerCase();
-            const show = !q || adm.includes(q) || name.includes(q);
-            row.style.display = show ? '' : 'none';
-            if (show) vis++;
-        });
-        if (scoreCount) scoreCount.textContent = vis;
-        if (noDataAlert) noDataAlert.style.display = vis === 0 ? 'block' : 'none';
-    }
-
-    document.getElementById('searchInput')?.addEventListener('input', applySearch);
-    document.getElementById('clearSearch')?.addEventListener('click', function() {
-        if (document.getElementById('searchInput')) document.getElementById('searchInput').value = '';
-        applySearch();
-    });
-
-    // ── Check-all ─────────────────────────────────────────────────────────────
-    document.getElementById('checkAll')?.addEventListener('change', function() {
-        document.querySelectorAll('.score-checkbox').forEach(cb => cb.checked = this.checked);
-    });
-    document.addEventListener('change', function(e) {
-        if (e.target.classList.contains('score-checkbox')) {
-            const all    = document.querySelectorAll('.score-checkbox');
-            const checked= document.querySelectorAll('.score-checkbox:checked');
-            const ca     = document.getElementById('checkAll');
-            if (ca) { ca.checked = checked.length === all.length && all.length > 0; ca.indeterminate = checked.length > 0 && checked.length < all.length; }
-        }
-    });
-
-    document.getElementById('selectAllScores')?.addEventListener('click', () => {
-        document.getElementById('checkAll').checked = true;
-        document.querySelectorAll('.score-checkbox').forEach(cb => cb.checked = true);
-    });
-    document.getElementById('clearAllScores')?.addEventListener('click', () => {
-        document.getElementById('checkAll').checked = false;
-        document.querySelectorAll('.score-checkbox').forEach(cb => cb.checked = false);
-    });
-
-    // ── Score input helpers ───────────────────────────────────────────────────
-
-    function updateRowTotal(row) {
-        let sum = 0;
-        row.querySelectorAll('.score-input').forEach(inp => sum += parseFloat(inp.value) || 0);
-        const span = row.querySelector('.col-total span');
-        if (span) { span.textContent = fmtNum(sum, 1); span.dataset.total = sum; }
-    }
-
-    function validateInput(input) {
-        const max = parseFloat(input.dataset.max) || 0;
-        const val = parseFloat(input.value) || 0;
-        if (val > max) { input.classList.add('is-invalid'); return false; }
-        input.classList.remove('is-invalid'); return true;
-    }
-
-    // ── FIX: highlight existing value on focus ────────────────────────────────
-    document.querySelectorAll('.score-input').forEach(input => {
-        // Select all text when user clicks/tabs into the field
-        input.addEventListener('focus', function() { this.select(); });
-
-        input.addEventListener('input', function() {
-            validateInput(this);
-            updateRowTotal(this.closest('tr'));
-        });
-
-        input.addEventListener('blur', function() {
-            validateInput(this);
-            updateRowTotal(this.closest('tr'));
-            const orig = parseFloat(this.dataset.original) || 0;
-            const curr = parseFloat(this.value) || 0;
-            if (Math.abs(curr - orig) > 0.001) {
-                this.dataset.original = this.value;
-                saveIndividualScore(this);
-            }
-        });
-
-        input.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                const row = this.closest('tr');
-                if (!document.querySelectorAll('.score-input.is-invalid').length) {
-                    saveIndividualScore(this);
-                }
-                // Move to next score input
-                const inputs = Array.from(document.querySelectorAll('.score-input'));
-                const idx    = inputs.indexOf(this);
-                if (idx < inputs.length - 1) inputs[idx + 1].focus();
-            }
-        });
-    });
-
-    // ── Individual save ───────────────────────────────────────────────────────
-    function saveIndividualScore(input) {
-        const rowId   = input.dataset.id;
-        const fieldId = parseInt(input.dataset.field);
-        const score   = parseFloat(input.value) || 0;
-        const row     = input.closest('tr');
-        const totSpan = row.querySelector('.col-total span');
-        const total   = totSpan ? parseFloat(totSpan.dataset.total) || 0 : 0;
-
-        // Visual indicator: saving
-        input.classList.add('is-saved');
-        setTimeout(() => input.classList.remove('is-saved'), 2000);
-
-        fetch(ROUTES.singleUpdate, {
-            method : 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
-            body   : JSON.stringify({
-                broadsheet_id: rowId, assessment_id: fieldId, score, is_sub: false,
-                raw_total: total, term_id: window.term_id, session_id: window.session_id,
-                subjectclass_id: window.subjectclass_id, schoolclass_id: window.schoolclass_id, staff_id: window.staff_id
-            })
-        })
-        .then(r => r.json())   // always parse — don't rely on r.ok before parsing
-        .then(data => {
-            if (!data.success) {
-                // Server returned an error payload — show it but don't crash
-                showToast(data.message || 'Could not save score.', 'warning');
-                return;
-            }
-            // Update displayed values
-            const d = data.data;
-            const update = (cls, val, fmt) => { const el = row.querySelector(`.${cls} span`); if (el && val != null) el.textContent = fmtNum(val, fmt ?? 1); };
-            update('col-cum',  d.cum,  1);
-            update('col-gpa',  d.gpa,  2);
-            update('col-cgpa', d.cgpa, 2);
-            update('col-bf',   d.bf,   1);
-            if (row.querySelector('.col-grade')) row.querySelector('.col-grade').textContent = d.grade ?? '';
-        })
-        .catch(err => {
-            // Network-level error (offline, timeout) — show minimal toast, don't alert
-            console.warn('saveIndividualScore network error:', err.message);
-            showToast('Network issue — score may not have saved. Check your connection.', 'danger');
-        });
-    }
-
-    // ── Bulk save ─────────────────────────────────────────────────────────────
-    document.getElementById('bulkUpdateScores')?.addEventListener('click', function() {
-        const invalid = document.querySelectorAll('.score-input.is-invalid').length;
-        if (invalid) {
-            Swal.fire({ icon: 'warning', title: 'Invalid Scores', text: `${invalid} score(s) exceed the maximum. Please correct them.` });
-            return;
-        }
-        document.querySelectorAll('#scoresheetTableBody tr[data-id]').forEach(row => updateRowTotal(row));
-
-        const scores = [];
-        document.querySelectorAll('#scoresheetTableBody tr[data-id]').forEach(row => {
-            const assessments = {};
-            row.querySelectorAll('.score-input').forEach(inp => { assessments[inp.dataset.field] = parseFloat(inp.value) || 0; });
-            const totSpan = row.querySelector('.col-total span');
-            scores.push({ id: row.dataset.id, assessments, raw_total: totSpan ? parseFloat(totSpan.dataset.total) || 0 : 0 });
-        });
-
-        if (!scores.length) return;
-
-        const prog = document.getElementById('progressContainer');
-        const bar  = document.getElementById('saveProgressBar');
-        if (prog) prog.style.display = 'block';
-        let w = 0; const iv = setInterval(() => { w = Math.min(w + 8, 90); if (bar) bar.style.width = w + '%'; }, 150);
-
-        fetch(ROUTES.bulkUpdate, {
-            method : 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
-            body   : JSON.stringify({ scores, term_id: window.term_id, session_id: window.session_id,
-                subjectclass_id: window.subjectclass_id, staff_id: window.staff_id, schoolclass_id: window.schoolclass_id, is_sub: false })
-        })
-        .then(r => r.json())
-        .then(data => {
-            clearInterval(iv); if (prog) prog.style.display = 'none';
-            if (data.success) {
-                Swal.fire({ icon: 'success', title: 'Saved!', text: data.message, timer: 2000, showConfirmButton: false }).then(() => location.reload());
-            } else {
-                Swal.fire({ icon: 'error', title: 'Error', text: data.message || 'Could not save scores.' });
-            }
-        })
-        .catch(err => {
-            clearInterval(iv); if (prog) prog.style.display = 'none';
-            Swal.fire({ icon: 'error', title: 'Network Error', text: 'Please check your connection and try again.' });
-        });
-    });
-
-    // ── Delete selected ───────────────────────────────────────────────────────
-    document.getElementById('deleteSelectedScoresBtn')?.addEventListener('click', function() {
-        const ids = Array.from(document.querySelectorAll('.score-checkbox:checked')).map(cb => cb.dataset.id);
-        if (!ids.length) { Swal.fire({ icon: 'warning', title: 'No Selection', text: 'Select rows to delete.' }); return; }
-
-        Swal.fire({ title: 'Delete selected scores?', text: 'This cannot be undone.', icon: 'warning',
-            showCancelButton: true, confirmButtonColor: '#dc2626', confirmButtonText: 'Yes, delete' })
-        .then(r => {
-            if (!r.isConfirmed) return;
-            Promise.all(ids.map(id =>
-                fetch(ROUTES.destroy.replace('__ID__', id), { method: 'DELETE', headers: { 'X-CSRF-TOKEN': CSRF } }).then(r => r.json())
-            )).then(results => {
-                let deleted = 0;
-                results.forEach((res, i) => { if (res.success) { document.querySelector(`tr[data-id="${ids[i]}"]`)?.remove(); deleted++; } });
-                Swal.fire({ icon: 'success', title: `${deleted} deleted`, timer: 1500, showConfirmButton: false });
-                if (!document.querySelectorAll('#scoresheetTableBody tr[data-id]').length) location.reload();
-            });
-        });
-    });
-
-    // ── Keyboard shortcut Ctrl+S ──────────────────────────────────────────────
-    document.addEventListener('keydown', function(e) {
-        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-            e.preventDefault();
-            document.getElementById('bulkUpdateScores')?.click();
-        }
-    });
-});
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function fmtNum(n, d) { return parseFloat(n).toFixed(d ?? 1); }
-
-function showToast(msg, type = 'info') {
-    // Minimal non-blocking toast (Bootstrap toast)
-    const id = 'toast_' + Date.now();
-    const colors = { success: '#16a34a', warning: '#d97706', danger: '#dc2626', info: '#2563eb' };
-    const html = `<div id="${id}" class="toast align-items-center border-0 text-white show" role="alert"
-        style="position:fixed;bottom:20px;right:20px;z-index:9999;background:${colors[type]};min-width:260px;">
-        <div class="d-flex p-3"><div class="me-auto">${msg}</div>
-        <button type="button" class="btn-close btn-close-white ms-2" onclick="this.closest('.toast').remove()"></button></div></div>`;
-    document.body.insertAdjacentHTML('beforeend', html);
-    setTimeout(() => document.getElementById(id)?.remove(), 4500);
-}
-
-// Include SweetAlert2 if needed
-if (typeof Swal === 'undefined') {
-    const s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
-    document.head.appendChild(s);
-}
+    // Routes configuration
+    window.routes = {
+        bulkUpdate: '{{ route("subjectscoresheet.bulk-update") }}',
+        export: '{{ route("subjectscoresheet.export") }}',
+        downloadMarksSheet: '{{ route("scoresheet.download-marks-sheet") }}',
+        import: '{{ route("subjectscoresheet.import") }}',
+        gradePreview: '{{ route("subjectscoresheet.grade-preview") }}',
+        singleUpdate: '{{ route("subjectscoresheet.single-update") }}'
+    };
+    window.is_senior = {{ isset($is_senior) && $is_senior ? 'true' : 'false' }};
+    window.term_id = {{ session('term_id') ?? 'null' }};
+    window.session_id = {{ session('session_id') ?? 'null' }};
+    window.subjectclass_id = {{ session('subjectclass_id') ?? 'null' }};
+    window.schoolclass_id = {{ session('schoolclass_id') ?? 'null' }};
+    window.staff_id = {{ session('staff_id') ?? 'null' }};
+    window.broadsheets = @json($broadsheets);
 </script>
+
+{{-- <script src="{{ asset('js/subjectscoresheet-list.init.js') }}"></script> --}}
+
 @endsection
