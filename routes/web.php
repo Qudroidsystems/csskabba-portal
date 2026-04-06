@@ -302,39 +302,20 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
     Route::post('/reports/generate', [StudentResultsController::class, 'generateReport'])->name('reports.generate');
 
 
-    // // Terminal Scoresheet Routes
-    // // Route::resource('subjectscoresheet', MyScoreSheetController::class);
-    // Route::get('subjectscoresheet/{schoolclassid}/{subjectclassid}/{staffid}/{termid}/{sessionid}', [MyScoreSheetController::class, 'subjectscoresheet'])->name('subjectscoresheet');
-    // Route::get('subjectscoresheet/edit/{id}', [MyScoreSheetController::class, 'edit'])->name('subjectscoresheet.edit');
-    // Route::put('subjectscoresheet/update/{id}', [MyScoreSheetController::class, 'update'])->name('subjectscoresheet.update');
-    // Route::delete('subjectscoresheet/delete/{id}', [MyScoreSheetController::class, 'destroy'])->name('subjectscoresheet.destroy');
-    // Route::get('subjectscoresheet/export', [MyScoreSheetController::class, 'export'])->name('subjectscoresheet.export');
-    // Route::post('subjectscoresheet/import', [MyScoreSheetController::class, 'import'])->name('subjectscoresheet.import');
-    // Route::get('/subjectscoresheet/results', [MyScoreSheetController::class, 'results'])->name('subjectscoresheet.results');
-    // Route::post('/subjectscoresheet/grade-preview', [MyScoreSheetController::class, 'calculateGradePreview'])->name('subjectscoresheet.grade-preview');
-    // Route::post('subjectscoresheet/bulk-update', [MyScoreSheetController::class, 'bulkUpdateScores'])->name('subjectscoresheet.bulk-update');
-    // Route::get('/subjectscoresheet/import-progress', [MyScoreSheetController::class, 'importProgress'])->name('subjectscoresheet.import_progress');
-    // // Add this route to your routes file (web.php)
-    // Route::get('scoresheet/download-marks-sheet', [MyScoreSheetController::class, 'downloadMarksSheet'])->name('scoresheet.download-marks-sheet');
-
-
-    // Add these routes to your existing routes file
-Route::prefix('subjectscoresheet')->group(function () {
-    Route::get('/{schoolclassid}/{subjectclassid}/{staffid}/{termid}/{sessionid}', [MyScoreSheetController::class, 'subjectscoresheet'])->name('subjectscoresheet');
-    Route::get('/edit/{id}', [MyScoreSheetController::class, 'edit'])->name('subjectscoresheet.edit');
-    Route::put('/update/{id}', [MyScoreSheetController::class, 'update'])->name('subjectscoresheet.update');
-    Route::delete('/delete/{id}', [MyScoreSheetController::class, 'destroy'])->name('subjectscoresheet.destroy');
-    Route::get('/export', [MyScoreSheetController::class, 'export'])->name('subjectscoresheet.export');
-    Route::post('/import', [MyScoreSheetController::class, 'import'])->name('subjectscoresheet.import');
-    Route::get('/import-progress', [MyScoreSheetController::class, 'importProgress'])->name('subjectscoresheet.import_progress');
-    Route::get('/results', [MyScoreSheetController::class, 'results'])->name('subjectscoresheet.results');
-    Route::post('/grade-preview', [MyScoreSheetController::class, 'calculateGradePreview'])->name('subjectscoresheet.grade-preview');
-    Route::post('/bulk-update', [MyScoreSheetController::class, 'bulkUpdateScores'])->name('subjectscoresheet.bulk-update');
-    Route::post('/single-update', [MyScoreSheetController::class, 'singleUpdateScore'])->name('subjectscoresheet.single-update');
-});
-
-// Add this route for marks sheet download
-Route::get('/scoresheet/download-marks-sheet', [MyScoreSheetController::class, 'downloadMarksSheet'])->name('scoresheet.download-marks-sheet');
+    // Terminal Scoresheet Routes
+    // Route::resource('subjectscoresheet', MyScoreSheetController::class);
+    Route::get('subjectscoresheet/{schoolclassid}/{subjectclassid}/{staffid}/{termid}/{sessionid}', [MyScoreSheetController::class, 'subjectscoresheet'])->name('subjectscoresheet');
+    Route::get('subjectscoresheet/edit/{id}', [MyScoreSheetController::class, 'edit'])->name('subjectscoresheet.edit');
+    Route::put('subjectscoresheet/update/{id}', [MyScoreSheetController::class, 'update'])->name('subjectscoresheet.update');
+    Route::delete('subjectscoresheet/delete/{id}', [MyScoreSheetController::class, 'destroy'])->name('subjectscoresheet.destroy');
+    Route::get('subjectscoresheet/export', [MyScoreSheetController::class, 'export'])->name('subjectscoresheet.export');
+    Route::post('subjectscoresheet/import', [MyScoreSheetController::class, 'import'])->name('subjectscoresheet.import');
+    Route::get('/subjectscoresheet/results', [MyScoreSheetController::class, 'results'])->name('subjectscoresheet.results');
+    Route::post('/subjectscoresheet/grade-preview', [MyScoreSheetController::class, 'calculateGradePreview'])->name('subjectscoresheet.grade-preview');
+    Route::post('subjectscoresheet/bulk-update', [MyScoreSheetController::class, 'bulkUpdateScores'])->name('subjectscoresheet.bulk-update');
+    Route::get('/subjectscoresheet/import-progress', [MyScoreSheetController::class, 'importProgress'])->name('subjectscoresheet.import_progress');
+    // Add this route to your routes file (web.php)
+    Route::get('scoresheet/download-marks-sheet', [MyScoreSheetController::class, 'downloadMarksSheet'])->name('scoresheet.download-marks-sheet');
     Route::post('/studentreports/column-options', [ViewStudentReportController::class, 'getColumnOptions'])->name('studentreports.column-options');
 
     // Mock Scoresheet Routes
