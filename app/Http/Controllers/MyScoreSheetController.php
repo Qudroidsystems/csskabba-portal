@@ -206,28 +206,11 @@ class MyScoreSheetController extends Controller
         $schoolclassid  = session('schoolclass_id');
 
         if (!$subjectclassid || !$staffid || !$termid || !$sessionid || !$schoolclassid) {
-            if (request()->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Missing session data. Please open the scoresheet first.'
-                ], 400);
-            }
             return back()->with('error', 'Missing session data. Please open the scoresheet first.');
         }
 
-        try {
-            $export = new MarksSheetExport($subjectclassid, $staffid, $termid, $sessionid, $schoolclassid);
-            return $export->download();
-        } catch (\Exception $e) {
-            Log::error('Marks sheet download failed', ['error' => $e->getMessage()]);
-            if (request()->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to generate marks sheet: ' . $e->getMessage()
-                ], 500);
-            }
-            return back()->with('error', 'Failed to generate marks sheet.');
-        }
+        $export = new MarksSheetExport($subjectclassid, $staffid, $termid, $sessionid, $schoolclassid);
+        return $export->download();
     }
 
     // =========================================================================
@@ -243,30 +226,13 @@ class MyScoreSheetController extends Controller
         $staffId        = session('staff_id');
 
         if (!$schoolclassId || !$subjectclassId || !$termId || !$sessionId || !$staffId) {
-            if (request()->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Missing session data. Please open the scoresheet first.'
-                ], 400);
-            }
             return back()->with('error', 'Missing session data. Please open the scoresheet first.');
         }
 
-        try {
-            return Excel::download(
-                new RecordsheetExport($schoolclassId, $subjectclassId, $termId, $sessionId, $staffId),
-                'scoresheet_' . date('Y-m-d_H-i-s') . '.xlsx'
-            );
-        } catch (\Exception $e) {
-            Log::error('Excel export failed', ['error' => $e->getMessage()]);
-            if (request()->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to export: ' . $e->getMessage()
-                ], 500);
-            }
-            return back()->with('error', 'Failed to export scoresheet.');
-        }
+        return Excel::download(
+            new RecordsheetExport($schoolclassId, $subjectclassId, $termId, $sessionId, $staffId),
+            'scoresheet_' . date('Y-m-d_H-i-s') . '.xlsx'
+        );
     }
 
     // =========================================================================
@@ -295,44 +261,14 @@ class MyScoreSheetController extends Controller
 
             $failures = $importer->getFailures();
             if (!empty($failures)) {
-                if ($request->ajax()) {
-                    return response()->json([
-                        'success' => true,
-                        'message' => count($failures) . ' row(s) had issues during import.',
-                        'failures' => $failures
-                    ]);
-                }
                 return back()->with('warning', count($failures) . ' row(s) had issues during import.');
             }
 
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Scores imported successfully!'
-                ]);
-            }
             return back()->with('success', 'Scores imported successfully!');
         } catch (\Exception $e) {
             Log::error('Import failed', ['error' => $e->getMessage()]);
-            if ($request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Import failed: ' . $e->getMessage()
-                ], 500);
-            }
             return back()->with('error', 'Import failed: ' . $e->getMessage());
         }
-    }
-
-    public function importProgress()
-    {
-        // You can implement session-based progress tracking here
-        // For now, return a simple response
-        return response()->json([
-            'status' => 'completed',
-            'progress' => 100,
-            'message' => 'Import completed'
-        ]);
     }
 
     // =========================================================================
@@ -363,17 +299,7 @@ class MyScoreSheetController extends Controller
             }
 
             $broadsheet = Broadsheets::findOrFail($broadsheetId);
-
-            // FIX: Check if broadsheetRecord exists
-            $broadsheetRecord = BroadsheetRecord::find($broadsheet->broadSheet_record_id);
-            if (!$broadsheetRecord) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Broadsheet record not found for this score.',
-                ], 200);
-            }
-
-            $model = $isSub ? SubAssessment::findOrFail($subAssessmentId) : Assessment::findOrFail($assessmentId);
+            $model      = $isSub ? SubAssessment::findOrFail($subAssessmentId) : Assessment::findOrFail($assessmentId);
 
             if ($score > $model->max_score) {
                 return response()->json([
@@ -382,18 +308,10 @@ class MyScoreSheetController extends Controller
                 ], 422);
             }
 
+            $broadsheetRecord = BroadsheetRecord::find($broadsheet->broadSheet_record_id);
             $schoolclassId    = $broadsheetRecord->schoolclass_id ?? 0;
             $termId           = $broadsheet->term_id;
             $sessionId        = $broadsheetRecord->session_id;
-
-            // FIX: Check if session_id exists
-            if (!$sessionId) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Session ID not found for this record.',
-                ], 200);
-            }
-
             $schoolclass      = Schoolclass::with('classcategories')->find($schoolclassId);
             $isSenior         = $schoolclass && $schoolclass->classcategories->isNotEmpty()
                 ? $schoolclass->classcategories->first()->is_senior ?? false : false;
@@ -465,6 +383,7 @@ class MyScoreSheetController extends Controller
             return response()->json(['success' => false, 'message' => 'Validation failed.', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             Log::error('singleUpdateScore error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            // Return success=false but with HTTP 200 so the JS doesn't hit the network error catch
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to save score: ' . $e->getMessage(),
@@ -921,6 +840,7 @@ class MyScoreSheetController extends Controller
             ->leftJoin('schoolterm', 'schoolterm.id', '=', 'broadsheets.term_id')
             ->leftJoin('schoolsession', 'schoolsession.id', '=', 'broadsheet_records.session_id')
             ->where('broadsheet_records.session_id', $sessionId)
+            // ── Sort ascending by surname then first name ──────────────────
             ->orderBy('studentRegistration.lastname', 'asc')
             ->orderBy('studentRegistration.firstname', 'asc');
 
@@ -954,6 +874,7 @@ class MyScoreSheetController extends Controller
             'broadsheets.remark',
             'broadsheets.vettedstatus',
         ]);
+        // Note: removed the ->sortBy('lastname') call — ordering is now done in SQL above
     }
 
     protected function getSubassessmentBroadsheets($staffId, $termId, $sessionId, $schoolClassId = null, $subjectClassId = null, $subassessmentId = null)
