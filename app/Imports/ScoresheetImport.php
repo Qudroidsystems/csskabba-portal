@@ -107,7 +107,7 @@ class ScoresheetImport implements ToCollection, WithHeadingRow, SkipsOnFailure
     {
         // Get admission number - try different possible column names
         $admissionNo = null;
-        $possibleColumns = ['admission_no', 'admissionno', 'admission', 'adm_no', 'student_id', 'Admission No', 'AdmissionNO'];
+        $possibleColumns = ['admission_no', 'admissionno', 'admission', 'adm_no', 'student_id', 'Admission No', 'AdmissionNO', 'ADMISSION NO'];
 
         foreach ($possibleColumns as $col) {
             if (isset($row[$col]) && !empty($row[$col])) {
@@ -322,13 +322,13 @@ class ScoresheetImport implements ToCollection, WithHeadingRow, SkipsOnFailure
     }
 
     /**
-     * Validate Excel file metadata/structure
+     * Validate Excel file structure
      */
-    public function validateExcelMetadata($filePath)
+    public function validateExcelFile($file)
     {
         try {
-            // Load the Excel file to check structure
-            $rows = $this->toCollection($filePath);
+            // Read the file directly
+            $rows = $this->toCollection($file);
 
             if ($rows->isEmpty()) {
                 throw new \Exception('The Excel file is empty.');
@@ -337,40 +337,61 @@ class ScoresheetImport implements ToCollection, WithHeadingRow, SkipsOnFailure
             $firstRow = $rows->first();
             $headers = array_keys($firstRow->toArray());
 
+            // Log headers for debugging
+            Log::info('Excel headers found: ' . json_encode($headers));
+            Log::info('Expected assessments: ' . json_encode($this->assessments->pluck('name')->toArray()));
+
             // Check if there's at least one assessment column
             $hasAssessmentColumn = false;
+            $foundAssessments = [];
+
             foreach ($this->assessments as $assessment) {
                 foreach ($headers as $header) {
                     if (strcasecmp(trim($header), $assessment->name) === 0) {
                         $hasAssessmentColumn = true;
-                        break 2;
+                        $foundAssessments[] = $assessment->name;
+                        break;
                     }
                 }
             }
 
             if (!$hasAssessmentColumn && $this->assessments->isNotEmpty()) {
                 $assessmentNames = $this->assessments->pluck('name')->implode(', ');
-                throw new \Exception("Excel file must contain at least one assessment column. Expected columns: {$assessmentNames}");
+                throw new \Exception("Excel file must contain at least one assessment column. Expected columns: {$assessmentNames}. Found headers: " . implode(', ', $headers));
             }
 
             // Check for admission number column
             $hasAdmissionColumn = false;
-            $admissionColumns = ['admission_no', 'admissionno', 'admission', 'adm_no', 'student_id', 'Admission No'];
+            $admissionColumns = ['admission_no', 'admissionno', 'admission', 'adm_no', 'student_id', 'Admission No', 'AdmissionNO', 'ADMISSION NO'];
+            $foundAdmissionColumn = null;
+
             foreach ($headers as $header) {
-                if (in_array(strtolower(trim($header)), $admissionColumns)) {
+                if (in_array(strtolower(trim($header)), array_map('strtolower', $admissionColumns))) {
                     $hasAdmissionColumn = true;
+                    $foundAdmissionColumn = $header;
                     break;
                 }
             }
 
             if (!$hasAdmissionColumn) {
-                throw new \Exception('Excel file must contain an admission number column (admission_no, admissionno, admission, or adm_no).');
+                throw new \Exception('Excel file must contain an admission number column. Expected column names: ' . implode(', ', $admissionColumns) . '. Found headers: ' . implode(', ', $headers));
             }
+
+            Log::info('Excel validation passed. Found admission column: ' . $foundAdmissionColumn . ', Assessments: ' . implode(', ', $foundAssessments));
 
             return true;
 
         } catch (\Exception $e) {
+            Log::error('Excel validation failed: ' . $e->getMessage());
             throw new \Exception('Excel validation failed: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Validate Excel file metadata/structure (alias for backward compatibility)
+     */
+    public function validateExcelMetadata($filePath)
+    {
+        return $this->validateExcelFile($filePath);
     }
 }

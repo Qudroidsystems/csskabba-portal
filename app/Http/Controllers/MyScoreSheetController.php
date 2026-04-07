@@ -335,133 +335,140 @@ class MyScoreSheetController extends Controller
     //     }
     // }
 
-    public function import(Request $request)
-    {
+public function import(Request $request)
+{
+    try {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls'
+        ]);
+
+        $importData = [
+            'subjectclass_id' => $request->input('subjectclass_id', session('subjectclass_id')),
+            'staff_id'        => $request->input('staff_id', session('staff_id')),
+            'term_id'         => $request->input('term_id', session('term_id')),
+            'session_id'      => $request->input('session_id', session('session_id')),
+            'schoolclass_id'  => $request->input('schoolclass_id', session('schoolclass_id')),
+        ];
+
+        // Validate required data
+        if (empty($importData['subjectclass_id']) || empty($importData['staff_id'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Missing session data. Please refresh the page and try again.'
+            ], 422);
+        }
+
+        // Set initial progress
+        session(['import_progress' => 10, 'import_status' => 'processing', 'import_message' => 'Validating file...']);
+
+        $file = $request->file('file');
+
+        // Validate file extension
+        $extension = $file->getClientOriginalExtension();
+        if (!in_array(strtolower($extension), ['xlsx', 'xls'])) {
+            throw new \Exception('Invalid file type. Please upload an Excel file (.xlsx or .xls)');
+        }
+
+        session(['import_progress' => 20, 'import_message' => 'Reading file...']);
+
+        // Store the file temporarily
+        $path = $file->store('temp');
+        $fullPath = storage_path('app/' . $path);
+
+        session(['import_progress' => 30, 'import_message' => 'Validating Excel structure...']);
+
+        // Create importer instance
+        $importer = new ScoresheetImport($importData);
+
+        // Validate the file structure (pass the file directly, not the path)
         try {
-            $request->validate([
-                'file' => 'required|file|mimes:xlsx,xls'
-            ]);
-
-            $importData = [
-                'subjectclass_id' => $request->input('subjectclass_id', session('subjectclass_id')),
-                'staff_id'        => $request->input('staff_id', session('staff_id')),
-                'term_id'         => $request->input('term_id', session('term_id')),
-                'session_id'      => $request->input('session_id', session('session_id')),
-                'schoolclass_id'  => $request->input('schoolclass_id', session('schoolclass_id')),
-            ];
-
-            // Validate required data
-            if (empty($importData['subjectclass_id']) || empty($importData['staff_id'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Missing session data. Please refresh the page and try again.'
-                ], 422);
-            }
-
-            // Set initial progress
-            session(['import_progress' => 10, 'import_status' => 'processing', 'import_message' => 'Validating file...']);
-
-            $importer = new ScoresheetImport($importData);
-
-            if (!$request->hasFile('file')) {
-                throw new \Exception('No file uploaded');
-            }
-
-            $file = $request->file('file');
-
-            // Validate file extension
-            $extension = $file->getClientOriginalExtension();
-            if (!in_array(strtolower($extension), ['xlsx', 'xls'])) {
-                throw new \Exception('Invalid file type. Please upload an Excel file (.xlsx or .xls)');
-            }
-
-            session(['import_progress' => 20, 'import_message' => 'Reading file...']);
-
-            $path = $file->store('temp');
-            $fullPath = storage_path('app/' . $path);
-
-            session(['import_progress' => 30, 'import_message' => 'Validating Excel structure...']);
-
-            try {
-                $importer->validateExcelMetadata($fullPath);
-            } catch (\Exception $e) {
-                Storage::delete($path);
-                return response()->json([
-                    'success' => false,
-                    'message' => $e->getMessage()
-                ], 422);
-            }
-
-            session(['import_progress' => 40, 'import_message' => 'Importing scores...']);
-
-            Excel::import($importer, $file);
-
+            // Use the uploaded file directly for validation
+            $importer->validateExcelFile($file);
+        } catch (\Exception $e) {
             Storage::delete($path);
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
+        }
 
-            $failures = $importer->getFailures();
-            $successCount = $importer->getSuccessCount();
+        session(['import_progress' => 40, 'import_message' => 'Importing scores...']);
 
-            // Clear session progress
-            session()->forget(['import_progress', 'import_status', 'import_message']);
+        // Import the file
+        Excel::import($importer, $file);
 
-            // Get updated broadsheets
-            $broadsheets = $this->getBroadsheets(
-                $importData['staff_id'],
-                $importData['term_id'],
-                $importData['session_id'],
-                $importData['schoolclass_id'],
-                $importData['subjectclass_id']
-            );
+        // Delete temp file
+        Storage::delete($path);
 
-            if ($successCount === 0 && !empty($failures)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Import failed. No records were imported.',
-                    'errors' => $failures
-                ], 422);
-            }
+        $failures = $importer->getFailures();
+        $successCount = $importer->getSuccessCount();
 
-            if (!empty($failures)) {
-                return response()->json([
-                    'success' => true,
-                    'warning' => true,
-                    'message' => "Imported {$successCount} record(s) with " . count($failures) . " warning(s).",
-                    'failures' => $failures,
-                    'data' => ['broadsheets' => $broadsheets]
-                ]);
-            }
+        // Clear session progress
+        session()->forget(['import_progress', 'import_status', 'import_message']);
 
+        // Get updated broadsheets
+        $broadsheets = $this->getBroadsheets(
+            $importData['staff_id'],
+            $importData['term_id'],
+            $importData['session_id'],
+            $importData['schoolclass_id'],
+            $importData['subjectclass_id']
+        );
+
+        if ($successCount === 0 && !empty($failures)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Import failed. No records were imported.',
+                'errors' => $failures
+            ], 422);
+        }
+
+        if (!empty($failures)) {
             return response()->json([
                 'success' => true,
-                'message' => "Successfully imported {$successCount} score(s)!",
+                'warning' => true,
+                'message' => "Imported {$successCount} record(s) with " . count($failures) . " warning(s).",
+                'failures' => $failures,
                 'data' => ['broadsheets' => $broadsheets]
             ]);
-
-        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
-            $failures = $e->failures();
-            $errorMessages = [];
-            foreach ($failures as $failure) {
-                $errorMessages[] = "Row {$failure->row()}: {$failure->errors()[0]}";
-            }
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed: ' . implode(', ', array_slice($errorMessages, 0, 5)),
-                'errors' => $errorMessages
-            ], 422);
-
-        } catch (\Exception $e) {
-            Log::error('Import failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-
-            // Clear session progress on error
-            session()->forget(['import_progress', 'import_status', 'import_message']);
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Import failed: ' . $e->getMessage()
-            ], 500);
         }
+
+        return response()->json([
+            'success' => true,
+            'message' => "Successfully imported {$successCount} score(s)!",
+            'data' => ['broadsheets' => $broadsheets]
+        ]);
+
+    } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+        $failures = $e->failures();
+        $errorMessages = [];
+        foreach ($failures as $failure) {
+            $errorMessages[] = "Row {$failure->row()}: {$failure->errors()[0]}";
+        }
+
+        session()->forget(['import_progress', 'import_status', 'import_message']);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed: ' . implode(', ', array_slice($errorMessages, 0, 5)),
+            'errors' => $errorMessages
+        ], 422);
+
+    } catch (\Exception $e) {
+        Log::error('Import failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+
+        // Clear session progress on error
+        session()->forget(['import_progress', 'import_status', 'import_message']);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Import failed: ' . $e->getMessage()
+        ], 500);
     }
+}
+
+
+
     // =========================================================================
     // SINGLE UPDATE SCORE
     // =========================================================================
