@@ -159,12 +159,16 @@ class BroadsheetController extends Controller
     // BUILD BROADSHEET DATA
     // =========================================================================
 
+
+
+
+
     private function buildBroadsheetData(
-            int $schoolclassid,
-            int $sessionid,
-            int $termid,
-            array $selectedColumns = []
-        ): array {
+    int $schoolclassid,
+    int $sessionid,
+    int $termid,
+    array $selectedColumns = []
+): array {
     // ── School & class meta ───────────────────────────────────────────────
     $schoolInfo  = SchoolInformation::getActiveSchool() ?? new \stdClass();
 
@@ -186,16 +190,14 @@ class BroadsheetController extends Controller
             ->get();
     }
 
-    // ── Get subjects using RAW QUERY (This fixes the 'sessionid' error) ─────
-    // We join through subjectteacher because subjectclass has no sessionid/termid
+    // ── Get subjects using RAW QUERY (Fixed - removed st.userid) ───────────
     $subjectsMap = [];
 
     $subjectClasses = DB::table('subjectclass as sc')
         ->join('subjectteacher as st', 'st.id', '=', 'sc.subjectteacherid')
         ->join('subject', 'subject.id', '=', 'sc.subjectid')
         ->where('sc.schoolclassid', $schoolclassid)
-        // Do NOT filter by sessionid or termid on subjectclass (columns don't exist)
-        // You can add filter on subjectteacher if needed:
+        // You can uncomment these if subjectteacher has sessionid/termid and you want to filter
         // ->where('st.sessionid', $sessionid)
         // ->where('st.termid', $termid)
         ->select([
@@ -203,8 +205,8 @@ class BroadsheetController extends Controller
             'subject.subject as subject_name',
             'subject.subject_code',
             'sc.subjectteacherid',
-            'st.userid',
-            'st.staffid'
+            'st.staffid'                    // Only staffid exists
+            // Removed st.userid because it doesn't exist
         ])
         ->distinct()
         ->get();
@@ -215,6 +217,7 @@ class BroadsheetController extends Controller
             'subject_name'     => $sc->subject_name,
             'subject_code'     => $sc->subject_code ?? '',
             'subjectteacherid' => $sc->subjectteacherid,
+            'staffid'          => $sc->staffid,
         ];
     }
 
@@ -224,7 +227,24 @@ class BroadsheetController extends Controller
         ->pluck('studentId')
         ->toArray();
 
-    // ── All broadsheet rows for this class/session/term ───────────────────
+    if (empty($studentIds)) {
+        // Return empty data if no students
+        return [
+            'schoolInfo'       => $schoolInfo,
+            'schoolclass'      => $schoolclass,
+            'schoolsession'    => $schoolsession,
+            'schoolterm'       => $schoolterm,
+            'assessments'      => $assessments,
+            'subjects'         => $subjectsMap,
+            'studentRows'      => [],
+            'subjectStats'     => [],
+            'selectedColumns'  => $selectedColumns,
+            'totalStudents'    => 0,
+            'generatedAt'      => now()->format('d M Y, H:i'),
+        ];
+    }
+
+    // ── All broadsheet rows ───────────────────────────────────────────────
     $broadsheets = Broadsheets::whereIn('broadsheet_records.student_id', $studentIds)
         ->where('broadsheets.term_id', $termid)
         ->where('broadsheet_records.session_id', $sessionid)
@@ -264,14 +284,13 @@ class BroadsheetController extends Controller
         ->get()
         ->groupBy('broadsheet_id');
 
-    // ── Pivot: student_id → subject_id → row data ─────────────────────────
+    // ── Pivot data: student → subject ──────────────────────────────────────
     $studentSubjectMap = [];
 
     foreach ($broadsheets as $row) {
         $sid = $row->student_id;
         $sub = $row->subject_id;
 
-        // Ensure subject exists in our map
         if (!isset($subjectsMap[$sub])) {
             $subjectsMap[$sub] = [
                 'subject_id'   => $sub,
@@ -281,7 +300,7 @@ class BroadsheetController extends Controller
         }
 
         $assessmentScoreRow = $assessmentScoresAll->get($row->broadsheet_id, collect());
-        $assessmentData     = [];
+        $assessmentData = [];
         foreach ($assessments as $a) {
             $score = $assessmentScoreRow->firstWhere('assessment_id', $a->id);
             $assessmentData[$a->id] = $score ? (float)$score->score : 0;
@@ -299,7 +318,7 @@ class BroadsheetController extends Controller
         ];
     }
 
-    // ── Build student summary rows ─────────────────────────────────────────
+    // ── Build final student rows with GPA ──────────────────────────────────
     $studentInfo = Studentclass::where('schoolclassid', $schoolclassid)
         ->where('sessionid', $sessionid)
         ->join('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
@@ -317,22 +336,21 @@ class BroadsheetController extends Controller
         ->orderBy('studentRegistration.firstname')
         ->get();
 
-    // Compute per-student GPA/CGPA
     $studentRows = [];
     foreach ($studentInfo as $stu) {
-        $sid        = $stu->id;
-        $subScores  = $studentSubjectMap[$sid] ?? [];
+        $sid       = $stu->id;
+        $subScores = $studentSubjectMap[$sid] ?? [];
 
-        $cumValues  = collect($subScores)->pluck('cum')->filter(fn($v) => $v > 0);
-        $totalCum   = $cumValues->sum();
-        $numSubjects= $cumValues->count();
+        $cumValues   = collect($subScores)->pluck('cum')->filter(fn($v) => $v > 0);
+        $totalCum    = $cumValues->sum();
+        $numSubjects = $cumValues->count();
 
-        // GPA calculation
         $totalValues = collect($subScores)->pluck('total')->filter(fn($v) => $v > 0);
         $gradePoints = $totalValues->map(fn($s) => $this->getGradePoint($s));
-        $gpa         = $gradePoints->count() > 0 ? round($gradePoints->avg(), 2) : 0.0;
-        $cgpa        = $gpa;
-        $gpaGrade    = $this->getGpaGrade($gpa);
+
+        $gpa      = $gradePoints->count() > 0 ? round($gradePoints->avg(), 2) : 0.0;
+        $cgpa     = $gpa;
+        $gpaGrade = $this->getGpaGrade($gpa);
 
         $studentRows[$sid] = [
             'id'                 => $sid,
@@ -353,7 +371,7 @@ class BroadsheetController extends Controller
         ];
     }
 
-    // ── Class-level stats per subject ─────────────────────────────────────
+    // ── Subject statistics ────────────────────────────────────────────────
     $subjectStats = [];
     foreach ($subjectsMap as $sub => $subInfo) {
         $allTotals = collect($studentRows)
@@ -369,7 +387,7 @@ class BroadsheetController extends Controller
         ];
     }
 
-    // Sort subjects alphabetically
+    // Sort subjects by name
     uasort($subjectsMap, fn($a, $b) => strcmp($a['subject_name'], $b['subject_name']));
 
     return [
@@ -386,6 +404,9 @@ class BroadsheetController extends Controller
         'generatedAt'      => now()->format('d M Y, H:i'),
     ];
 }
+
+
+
 
     // =========================================================================
     // EXPORT PDF
