@@ -43,14 +43,14 @@ class Subjectclass extends Model
         return $this->belongsTo(Subject::class, 'subjectid', 'id');
     }
 
-    public function term()
+   public function session()
     {
-        return $this->belongsTo(Schoolterm::class, 'termid');
+        return $this->belongsTo(Schoolsession::class, 'sessionid', 'id');
     }
 
-    public function session()
+    public function term()
     {
-        return $this->belongsTo(Schoolsession::class, 'sessionid');
+        return $this->belongsTo(Schoolterm::class, 'termid', 'id');
     }
 
     public function staff()
