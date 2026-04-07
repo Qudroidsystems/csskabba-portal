@@ -22,6 +22,7 @@
         .instructions { background: #fffbe6; border-left: 4px solid #f59e0b; padding: 8px 12px;
             margin-bottom: 14px; border-radius: 0 4px 4px 0; font-size: 10px; }
         .instructions strong { color: #b45309; display: block; margin-bottom: 4px; font-size: 11px; }
+        .instructions ul { margin-left: 20px; }
         .instructions li { margin-bottom: 2px; }
         table.marks { width: 100%; border-collapse: collapse; font-size: 10.5px; }
         .marks th, .marks td { border: 1px solid #aab8cc; padding: 5px 4px; text-align: center; vertical-align: middle; }
@@ -41,10 +42,10 @@
 </head>
 <body>
 
-{{-- ── Header ── --}}
+{{-- Header --}}
 <div class="header">
     @if($school && $school->school_logo)
-        <img src="{{ $school->logo_url }}" alt="Logo" class="school-logo">
+        <img src="{{ public_path('storage/' . $school->school_logo) }}" alt="Logo" class="school-logo">
     @endif
     <div class="school-name">{{ $school->school_name ?? 'School Name' }}</div>
     @if($school)
@@ -62,7 +63,7 @@
     <div class="info-row">
         <div class="info-cell"><span class="info-label">Subject:</span> {{ $classInfo->subject }} ({{ $classInfo->subject_code }})</div>
         <div class="info-cell"><span class="info-label">Class:</span> {{ $classInfo->schoolclass }} {{ $classInfo->arm }}</div>
-        <div class="info-cell"><span class="info-label">Teacher:</span> {{ $classInfo->teacher_name }}</div>
+        <div class="info-cell"><span class="info-label">Teacher:</span> {{ $classInfo->staff_id ? 'Staff ID: ' . $classInfo->staff_id : 'Not Assigned' }}</div>
         <div class="info-cell"><span class="info-label">Term:</span> {{ $classInfo->term }}</div>
         <div class="info-cell"><span class="info-label">Session:</span> {{ $classInfo->session }}</div>
         <div class="info-cell"><span class="info-label">Date:</span> {{ date('d M Y') }}</div>

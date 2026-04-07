@@ -24,6 +24,7 @@ use App\Exports\MockRecordsheetExport;
 use Illuminate\Support\Facades\Storage;
 use App\Models\BroadsheetAssessmentScore;
 use App\Models\BroadsheetSubAssessmentScore;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class MyScoreSheetController extends Controller
 {
@@ -194,23 +195,74 @@ class MyScoreSheetController extends Controller
     }
 
     // =========================================================================
-    // DOWNLOAD MARKS SHEET (dynamic assessments)
+    // DOWNLOAD MARKS SHEET (PDF)
     // =========================================================================
 
-    public function downloadMarksSheet()
+    public function downloadMarksSheet(Request $request)
     {
-        $subjectclassid = session('subjectclass_id');
-        $staffid        = session('staff_id');
-        $termid         = session('term_id');
-        $sessionid      = session('session_id');
-        $schoolclassid  = session('schoolclass_id');
+        try {
+            // Get parameters from request or session
+            $subjectclassid = $request->input('subjectclass_id', session('subjectclass_id'));
+            $staffid        = $request->input('staff_id', session('staff_id'));
+            $termid         = $request->input('term_id', session('term_id'));
+            $sessionid      = $request->input('session_id', session('session_id'));
+            $schoolclassid  = $request->input('schoolclass_id', session('schoolclass_id'));
 
-        if (!$subjectclassid || !$staffid || !$termid || !$sessionid || !$schoolclassid) {
-            return back()->with('error', 'Missing session data. Please open the scoresheet first.');
+            // Validate required parameters
+            if (!$subjectclassid || !$staffid || !$termid || !$sessionid || !$schoolclassid) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Missing session data. Please open the scoresheet first.'
+                ], 400);
+            }
+
+            // Get the data needed for the marks sheet
+            $broadsheets = $this->getBroadsheets($staffid, $termid, $sessionid, $schoolclassid, $subjectclassid);
+
+            if ($broadsheets->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No students found for this subject.'
+                ], 404);
+            }
+
+            // Get schoolclass and assessments
+            $schoolclass = Schoolclass::with('classcategories')->find($schoolclassid);
+            $assessments = collect();
+
+            if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
+                $categoryIds = $schoolclass->classcategories->pluck('id');
+                $assessments = Assessment::whereIn('classcategory_id', $categoryIds)
+                    ->with('subAssessments')
+                    ->orderBy('id')
+                    ->get();
+            }
+
+            // Get class info for the header
+            $classInfo = $broadsheets->first();
+
+            // Get school info (adjust the model name as needed)
+            $school = \App\Models\School::first();
+
+            // Generate PDF using DomPDF
+            $pdf = Pdf::loadView('subjectscoresheet.marksheet', [
+                'broadsheets' => $broadsheets,
+                'assessments' => $assessments,
+                'classInfo' => $classInfo,
+                'school' => $school
+            ]);
+
+            $pdf->setPaper('a4', 'landscape');
+
+            return $pdf->download('marks-sheet-' . date('Y-m-d') . '.pdf');
+
+        } catch (\Exception $e) {
+            Log::error('Marks sheet download error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate marks sheet: ' . $e->getMessage()
+            ], 500);
         }
-
-        $export = new MarksSheetExport($subjectclassid, $staffid, $termid, $sessionid, $schoolclassid);
-        return $export->download();
     }
 
     // =========================================================================
@@ -272,7 +324,7 @@ class MyScoreSheetController extends Controller
     }
 
     // =========================================================================
-    // SINGLE UPDATE SCORE  — fixed to always return valid JSON
+    // SINGLE UPDATE SCORE
     // =========================================================================
 
     public function singleUpdateScore(Request $request)
@@ -308,11 +360,9 @@ class MyScoreSheetController extends Controller
                 ], 422);
             }
 
-            // Try both possible FK column name spellings (mixed-case vs lowercase)
             $fkValue          = $broadsheet->broadSheet_record_id ?? $broadsheet->broadsheet_record_id;
             $broadsheetRecord = BroadsheetRecord::find($fkValue);
 
-            // Fall back to values the client sent (always present when the scoresheet is open)
             $schoolclassId = $broadsheetRecord?->schoolclass_id
                 ?? (int)($request->input('schoolclass_id') ?: session('schoolclass_id'))
                 ?: 0;
@@ -401,7 +451,6 @@ class MyScoreSheetController extends Controller
             return response()->json(['success' => false, 'message' => 'Validation failed.', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             Log::error('singleUpdateScore error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            // Return success=false but with HTTP 200 so the JS doesn't hit the network error catch
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to save score: ' . $e->getMessage(),
@@ -858,7 +907,6 @@ class MyScoreSheetController extends Controller
             ->leftJoin('schoolterm', 'schoolterm.id', '=', 'broadsheets.term_id')
             ->leftJoin('schoolsession', 'schoolsession.id', '=', 'broadsheet_records.session_id')
             ->where('broadsheet_records.session_id', $sessionId)
-            // ── Sort ascending by surname then first name ──────────────────
             ->orderBy('studentRegistration.lastname', 'asc')
             ->orderBy('studentRegistration.firstname', 'asc');
 
@@ -892,7 +940,6 @@ class MyScoreSheetController extends Controller
             'broadsheets.remark',
             'broadsheets.vettedstatus',
         ]);
-        // Note: removed the ->sortBy('lastname') call — ordering is now done in SQL above
     }
 
     protected function getSubassessmentBroadsheets($staffId, $termId, $sessionId, $schoolClassId = null, $subjectClassId = null, $subassessmentId = null)
