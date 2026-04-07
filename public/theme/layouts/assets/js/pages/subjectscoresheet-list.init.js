@@ -880,7 +880,7 @@ function downloadMarksSheet() {
 }
 
 // Handle bulk upload with server-side progress
-// Handle bulk upload with server-side progress
+
 function handleBulkUpload() {
     const importForm = document.getElementById('importForm');
     const importSubmit = document.getElementById('importSubmit');
@@ -931,18 +931,14 @@ function handleBulkUpload() {
         .then(response => {
             uploadProgressBar.style.width = '100%';
 
-            if (response.data.success && response.data.data?.broadsheets) {
-                // Update the broadsheets data
-                window.broadsheets = response.data.data.broadsheets;
-                ensureBroadsheetsArray();
-
-                // Refresh the table
-                window.location.reload();
+            if (response.data.success && response.data.data) {
+                // Update the table with new data without page refresh
+                updateTableWithImportedData(response.data.data);
 
                 Swal.fire({
                     icon: 'success',
                     title: 'Uploaded!',
-                    text: response.data.message || 'Scores imported successfully!',
+                    text: response.data.message,
                     timer: 2000,
                     showConfirmButton: false
                 });
@@ -954,13 +950,24 @@ function handleBulkUpload() {
                     if (modalInstance) modalInstance.hide();
                 }
             } else if (response.data.warning) {
+                // Update table even with warnings
+                if (response.data.data) {
+                    updateTableWithImportedData(response.data.data);
+                }
+
                 Swal.fire({
                     icon: 'warning',
                     title: 'Partial Success',
                     text: response.data.message,
                     showConfirmButton: true
                 });
-                window.location.reload();
+
+                // Close modal
+                const importModal = document.getElementById('importModal');
+                if (importModal) {
+                    const modalInstance = bootstrap.Modal.getInstance(importModal);
+                    if (modalInstance) modalInstance.hide();
+                }
             } else {
                 Swal.fire({
                     icon: 'error',
@@ -1001,6 +1008,179 @@ function handleBulkUpload() {
         });
     });
 }
+
+// Function to update table with imported data without page refresh
+function updateTableWithImportedData(data) {
+    if (data.broadsheets) {
+        window.broadsheets = data.broadsheets;
+        ensureBroadsheetsArray();
+
+        // Refresh the table UI
+        refreshScoresheetTable(data.broadsheets, data.assessments);
+
+        // Update positions
+        forceUpdatePositions();
+
+        // Update score count
+        const scoreCount = document.getElementById('scoreCount');
+        if (scoreCount) scoreCount.textContent = window.broadsheets.length;
+
+        // Show/hide no data alert
+        const noDataAlert = document.getElementById('noDataAlert');
+        if (noDataAlert) noDataAlert.style.display = window.broadsheets.length ? 'none' : 'block';
+    }
+}
+
+// Function to refresh the table with new data
+function refreshScoresheetTable(broadsheets, assessments) {
+    const tbody = document.getElementById('scoresheetTableBody');
+    if (!tbody) return;
+
+    // Clear existing rows
+    tbody.innerHTML = '';
+
+    if (!broadsheets || broadsheets.length === 0) {
+        tbody.innerHTML = '<tr id="noDataRow"><td colspan="' + (3 + (assessments ? assessments.length : 0) + 6) + '" class="text-center py-4 text-muted"><i class="ri-inbox-line ri-2x d-block mb-2"></i>No scores available.</td></tr>';
+        return;
+    }
+
+    // Rebuild table rows
+    broadsheets.forEach((student, index) => {
+        const row = createTableRow(student, index, assessments);
+        tbody.appendChild(row);
+    });
+
+    // Re-initialize event listeners for new inputs
+    reinitializeScoreInputs();
+}
+
+// Function to create a table row
+function createTableRow(student, index, assessments) {
+    const tr = document.createElement('tr');
+    tr.setAttribute('data-id', student.id);
+
+    const vClass = student.grade === 'A' ? 'row-vetted' : 'row-not-vetted';
+    tr.className = vClass;
+
+    // Build row HTML
+    let html = `
+        <td class="col-checkbox">
+            <div class="form-check mb-0">
+                <input class="form-check-input score-checkbox" type="checkbox" data-id="${student.id}">
+            </div>
+        </td>
+        <td class="col-sn sn fw-medium">${index + 1}</td>
+        <td class="col-admissionno admissionno" data-admissionno="${student.admissionno}">
+            <span class="text-muted small">${student.admissionno || '-'}</span>
+        </td>
+        <td class="col-name name" data-name="${(student.lname || '') + ' ' + (student.fname || '')}">
+            <div class="d-flex align-items-center gap-2">
+                <div style="width:34px;height:34px;background:#e0e0e0;border-radius:50%;display:flex;align-items:center;justify-content:center;">📷</div>
+                <div>
+                    <span class="fw-semibold d-block" style="font-size:12.5px;">${student.lname || ''}, ${student.fname || ''}</span>
+                    ${student.mname ? `<span class="text-muted small">${student.mname}</span>` : ''}
+                </div>
+            </div>
+        </td>
+    `;
+
+    // Add assessment score inputs
+    if (assessments && assessments.length) {
+        assessments.forEach(assessment => {
+            const scoreObj = student.assessment_scores?.find(s => s.assessment_id == assessment.id);
+            const scoreValue = scoreObj ? scoreObj.score : 0;
+            html += `
+                <td class="col-assessment-${assessment.id} assessment-col text-center">
+                    <input type="number"
+                           class="score-input"
+                           data-field="${assessment.id}"
+                           data-max="${assessment.max_score}"
+                           data-id="${student.id}"
+                           data-original="${scoreValue}"
+                           value="${scoreValue}"
+                           min="0" max="${assessment.max_score}" step="0.1">
+                </td>
+            `;
+        });
+    }
+
+    html += `
+        <td class="col-total text-center">
+            <span class="badge bg-primary" data-total="${student.total || 0}">${(student.total || 0).toFixed(1)}</span>
+        </td>
+        <td class="col-bf text-center">
+            <span class="badge bg-secondary-subtle text-secondary">${(student.bf || 0).toFixed(2)}</span>
+        </td>
+        <td class="col-cum text-center">
+            <span class="badge bg-${student.cum >= 70 ? 'success' : (student.cum >= 50 ? 'info' : (student.cum >= 40 ? 'warning' : 'danger'))}-subtle text-${student.cum >= 70 ? 'success' : (student.cum >= 50 ? 'info' : (student.cum >= 40 ? 'warning' : 'danger'))} fw-bold" style="font-size:12px;">${(student.cum || 0).toFixed(1)}</span>
+        </td>
+        <td class="col-gpa text-center">
+            <span class="badge bg-warning-subtle text-warning fw-semibold">${(student.gpa || 0).toFixed(2)}</span>
+        </td>
+        <td class="col-cgpa text-center">
+            <span class="badge bg-dark-subtle text-dark">${(student.cgpa || 0).toFixed(2)}</span>
+        </td>
+        <td class="col-grade text-center fw-bold" style="font-size:13px;">${student.grade || '-'}</td>
+        <td class="col-position text-center">
+            <span class="badge" style="background:var(--ss-primary);">${student.position ? student.position + getOrdinalSuffix(student.position) : '-'}</span>
+        </td>
+        <td class="col-vetted text-center">
+            <span class="badge bg-warning-subtle text-warning"><i class="ri-time-line me-1"></i>Pending</span>
+        </td>
+    `;
+
+    tr.innerHTML = html;
+    return tr;
+}
+
+// Reinitialize score input event listeners
+function reinitializeScoreInputs() {
+    document.querySelectorAll('.score-input').forEach(input => {
+        // Remove old listeners by cloning and replacing
+        const newInput = input.cloneNode(true);
+        input.parentNode.replaceChild(newInput, input);
+
+        newInput.addEventListener('focus', function() { this.select(); });
+        newInput.addEventListener('input', function() {
+            validateInput(this);
+            updateRowTotal(this.closest('tr'));
+        });
+        newInput.addEventListener('blur', function() {
+            validateInput(this);
+            updateRowTotal(this.closest('tr'));
+            const orig = parseFloat(this.dataset.original) || 0;
+            const curr = parseFloat(this.value) || 0;
+            if (Math.abs(curr - orig) > 0.001) {
+                this.dataset.original = this.value;
+                saveIndividualScore(this);
+            }
+        });
+        newInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                saveIndividualScore(this);
+                const inputs = Array.from(document.querySelectorAll('.score-input'));
+                const idx = inputs.indexOf(this);
+                if (idx < inputs.length - 1) inputs[idx + 1].focus();
+            }
+        });
+    });
+}
+
+// Helper function for ordinal suffix
+function getOrdinalSuffix(position) {
+    if (!position || isNaN(position)) return '-';
+    position = parseInt(position);
+    if (position % 100 >= 11 && position % 100 <= 13) return position + 'th';
+    switch (position % 10) {
+        case 1: return position + 'st';
+        case 2: return position + 'nd';
+        case 3: return position + 'rd';
+        default: return position + 'th';
+    }
+}
+
+
 // Bulk actions and modal initialization
 function initializeBulkActions() {
     const bulkUpdateScores = document.getElementById('bulkUpdateScores');

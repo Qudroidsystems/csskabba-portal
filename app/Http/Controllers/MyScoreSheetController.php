@@ -280,25 +280,45 @@ class MyScoreSheetController extends Controller
     // =========================================================================
     // EXPORT (Excel, dynamic)
     // =========================================================================
+public function export(Request $request)
+{
+    $schoolclassId  = session('schoolclass_id');
+    $subjectclassId = session('subjectclass_id');
+    $termId         = session('term_id');
+    $sessionId      = session('session_id');
+    $staffId        = session('staff_id');
 
-    public function export()
-    {
-        $schoolclassId  = session('schoolclass_id');
-        $subjectclassId = session('subjectclass_id');
-        $termId         = session('term_id');
-        $sessionId      = session('session_id');
-        $staffId        = session('staff_id');
-
-        if (!$schoolclassId || !$subjectclassId || !$termId || !$sessionId || !$staffId) {
-            return back()->with('error', 'Missing session data. Please open the scoresheet first.');
-        }
-
-        return Excel::download(
-            new RecordsheetExport($schoolclassId, $subjectclassId, $termId, $sessionId, $staffId),
-            'scoresheet_' . date('Y-m-d_H-i-s') . '.xlsx'
-        );
+    if (!$schoolclassId || !$subjectclassId || !$termId || !$sessionId || !$staffId) {
+        return back()->with('error', 'Missing session data. Please open the scoresheet first.');
     }
 
+    // Get password from request or use default
+    $password = $request->input('password', env('EXCEL_PASSWORD', null));
+
+    // Get subject, class, term, session for filename
+    $subjectClass = Subjectclass::find($subjectclassId);
+    $schoolclass = Schoolclass::find($schoolclassId);
+    $term = SchoolTerm::find($termId);
+    $session = SchoolSession::find($sessionId);
+
+    $subjectName = $subjectClass && $subjectClass->subject ? $subjectClass->subject->subject : 'subject';
+    $className = $schoolclass ? $schoolclass->schoolclass : 'class';
+    $termName = $term ? $term->term : 'term';
+    $sessionName = $session ? $session->session : 'session';
+
+    // Clean up names for filename
+    $subjectName = preg_replace('/[^a-zA-Z0-9-]/', '_', $subjectName);
+    $className = preg_replace('/[^a-zA-Z0-9-]/', '_', $className);
+    $termName = preg_replace('/[^a-zA-Z0-9-]/', '_', $termName);
+    $sessionName = preg_replace('/[^a-zA-Z0-9-]/', '_', $sessionName);
+
+    $filename = "{$subjectName}_{$className}_{$termName}_{$sessionName}_scoresheet.xlsx";
+
+    return Excel::download(
+        new RecordsheetExport($schoolclassId, $subjectclassId, $termId, $sessionId, $staffId, $password),
+        $filename
+    );
+}
     // =========================================================================
     // IMPORT
     // =========================================================================
@@ -339,7 +359,8 @@ public function import(Request $request)
 {
     try {
         $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls'
+            'file' => 'required|file|mimes:xlsx,xls',
+            'password' => 'nullable|string' // Add password validation
         ]);
 
         $importData = [
@@ -358,16 +379,17 @@ public function import(Request $request)
             ], 422);
         }
 
-        // Set initial progress
-        session(['import_progress' => 10, 'import_status' => 'processing', 'import_message' => 'Validating file...']);
-
+        // Verify teacher password if provided in file
         $file = $request->file('file');
 
-        // Validate file extension
-        $extension = $file->getClientOriginalExtension();
-        if (!in_array(strtolower($extension), ['xlsx', 'xls'])) {
-            throw new \Exception('Invalid file type. Please upload an Excel file (.xlsx or .xls)');
-        }
+        // Check if file has password protection (you'll need to implement this in export)
+        $this->verifyFilePassword($file, $request->input('password'));
+
+        // Validate file metadata (school, class, term, session)
+        $this->validateFileMetadata($file, $importData);
+
+        // Set initial progress
+        session(['import_progress' => 10, 'import_status' => 'processing', 'import_message' => 'Validating file...']);
 
         session(['import_progress' => 20, 'import_message' => 'Reading file...']);
 
@@ -406,6 +428,17 @@ public function import(Request $request)
             $importData['subjectclass_id']
         );
 
+        // Get assessments for the response
+        $schoolclass = Schoolclass::with('classcategories')->find($importData['schoolclass_id']);
+        $assessments = collect();
+        if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
+            $categoryIds = $schoolclass->classcategories->pluck('id');
+            $assessments = Assessment::whereIn('classcategory_id', $categoryIds)
+                ->with('subAssessments')
+                ->orderBy('id')
+                ->get();
+        }
+
         if ($successCount === 0 && !empty($failures)) {
             return response()->json([
                 'success' => false,
@@ -414,41 +447,26 @@ public function import(Request $request)
             ], 422);
         }
 
-        if (!empty($failures)) {
-            return response()->json([
-                'success' => true,
-                'warning' => true,
-                'message' => "Imported {$successCount} record(s) with " . count($failures) . " warning(s).",
-                'failures' => $failures,
-                'data' => ['broadsheets' => $broadsheets]
-            ]);
-        }
-
-        return response()->json([
+        $responseData = [
             'success' => true,
             'message' => "Successfully imported {$successCount} score(s)!",
-            'data' => ['broadsheets' => $broadsheets]
-        ]);
+            'data' => [
+                'broadsheets' => $broadsheets,
+                'assessments' => $assessments
+            ]
+        ];
 
-    } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
-        $failures = $e->failures();
-        $errorMessages = [];
-        foreach ($failures as $failure) {
-            $errorMessages[] = "Row {$failure->row()}: {$failure->errors()[0]}";
+        if (!empty($failures)) {
+            $responseData['warning'] = true;
+            $responseData['message'] = "Imported {$successCount} record(s) with " . count($failures) . " warning(s).";
+            $responseData['failures'] = $failures;
         }
 
-        session()->forget(['import_progress', 'import_status', 'import_message']);
-
-        return response()->json([
-            'success' => false,
-            'message' => 'Validation failed: ' . implode(', ', array_slice($errorMessages, 0, 5)),
-            'errors' => $errorMessages
-        ], 422);
+        return response()->json($responseData);
 
     } catch (\Exception $e) {
         Log::error('Import failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
 
-        // Clear session progress on error
         session()->forget(['import_progress', 'import_status', 'import_message']);
 
         return response()->json([
@@ -456,6 +474,84 @@ public function import(Request $request)
             'message' => 'Import failed: ' . $e->getMessage()
         ], 500);
     }
+}
+
+/**
+ * Verify file password (implement based on your encryption method)
+ */
+protected function verifyFilePassword($file, $providedPassword)
+{
+    // You can implement password protection in the export
+    // For now, just check if password is required
+    $requiredPassword = env('EXCEL_PASSWORD', null);
+    if ($requiredPassword && $providedPassword !== $requiredPassword) {
+        throw new \Exception('Invalid password. Please enter the correct password to open this file.');
+    }
+    return true;
+}
+
+/**
+ * Validate file metadata to ensure it matches the current session
+ */
+protected function validateFileMetadata($file, $importData)
+{
+    // Read the first few rows to extract metadata
+    $rows = Excel::toArray(new \stdClass(), $file);
+    if (empty($rows) || empty($rows[0])) {
+        throw new \Exception('Could not read file metadata.');
+    }
+
+    $firstRows = array_slice($rows[0], 0, 10);
+    $metadata = [];
+
+    foreach ($firstRows as $row) {
+        if (isset($row[0]) && is_string($row[0])) {
+            $rowText = $row[0];
+            if (strpos($rowText, 'Subject:') !== false) {
+                preg_match('/Subject:\s*([^\|]+)/', $rowText, $matches);
+                $metadata['subject'] = trim($matches[1] ?? '');
+            }
+            if (strpos($rowText, 'Class:') !== false) {
+                preg_match('/Class:\s*([^\|]+)/', $rowText, $matches);
+                $metadata['class'] = trim($matches[1] ?? '');
+            }
+            if (strpos($rowText, 'Term:') !== false) {
+                preg_match('/Term:\s*([^\|]+)/', $rowText, $matches);
+                $metadata['term'] = trim($matches[1] ?? '');
+            }
+            if (strpos($rowText, 'Session:') !== false) {
+                preg_match('/Session:\s*([^\|]+)/', $rowText, $matches);
+                $metadata['session'] = trim($matches[1] ?? '');
+            }
+        }
+    }
+
+    // Get current session data
+    $subjectClass = Subjectclass::find($importData['subjectclass_id']);
+    $schoolclass = Schoolclass::find($importData['schoolclass_id']);
+    $term = \App\Models\SchoolTerm::find($importData['term_id']);
+    $session = \App\Models\SchoolSession::find($importData['session_id']);
+
+    // Compare metadata
+    $errors = [];
+    if ($metadata['subject'] && $subjectClass && stripos($metadata['subject'], $subjectClass->subject->subject ?? '') === false) {
+        $errors[] = "Subject mismatch. Expected: {$subjectClass->subject->subject}, Found: {$metadata['subject']}";
+    }
+    if ($metadata['class'] && $schoolclass && stripos($metadata['class'], $schoolclass->schoolclass) === false) {
+        $errors[] = "Class mismatch. Expected: {$schoolclass->schoolclass}, Found: {$metadata['class']}";
+    }
+    if ($metadata['term'] && $term && stripos($metadata['term'], $term->term) === false) {
+        $errors[] = "Term mismatch. Expected: {$term->term}, Found: {$metadata['term']}";
+    }
+    if ($metadata['session'] && $session && stripos($metadata['session'], $session->session) === false) {
+        $errors[] = "Session mismatch. Expected: {$session->session}, Found: {$metadata['session']}";
+    }
+
+    if (!empty($errors)) {
+        throw new \Exception('File validation failed: ' . implode(', ', $errors));
+    }
+
+    return true;
 }
 
 

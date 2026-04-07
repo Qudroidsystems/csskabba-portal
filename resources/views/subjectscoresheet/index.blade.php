@@ -555,10 +555,10 @@
                     <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="alert alert-info"><i class="ri-information-line me-2"></i>
+                    <div class="alert alert-info">
+                        <i class="ri-information-line me-2"></i>
                         Upload the Excel file exported from this scoresheet. Assessment columns are matched automatically by header name.
                     </div>
-                    {{-- importForm, importSubmit, importLoader, uploadProgressBar are all required by subjectscoresheet.init.js --}}
                     <form action="{{ route('subjectscoresheet.import') }}" method="POST" enctype="multipart/form-data" id="importForm">
                         @csrf
                         <input type="hidden" name="schoolclass_id" value="{{ session('schoolclass_id') }}">
@@ -566,22 +566,31 @@
                         <input type="hidden" name="staff_id" value="{{ session('staff_id') }}">
                         <input type="hidden" name="term_id" value="{{ session('term_id') }}">
                         <input type="hidden" name="session_id" value="{{ session('session_id') }}">
+
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Excel File (.xlsx)</label>
                             <input type="file" name="file" class="form-control" accept=".xlsx,.xls" required>
+                            <small class="text-muted">Only upload files exported from this system</small>
                         </div>
-                        {{-- Upload progress (required by init.js) --}}
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">File Password (if protected)</label>
+                            <input type="password" name="password" class="form-control" placeholder="Enter file password">
+                            <small class="text-muted">Required if the Excel file is password protected</small>
+                        </div>
+
                         <div id="importLoader" style="display:none;" class="mb-3">
                             <div class="d-flex align-items-center gap-3 p-2 rounded-3" style="background:#f0fdf4;">
                                 <div class="spinner-border spinner-border-sm text-success"></div>
                                 <div class="flex-grow-1">
-                                    <div style="font-size:12px;margin-bottom:3px;">Uploading…</div>
+                                    <div style="font-size:12px;margin-bottom:3px;">Uploading...</div>
                                     <div class="progress" style="height:5px;">
                                         <div class="progress-bar progress-bar-animated bg-success" id="uploadProgressBar" style="width:0%"></div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+
                         <div class="d-flex justify-content-end gap-2">
                             <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                             <button type="submit" class="btn btn-primary" id="importSubmit">
