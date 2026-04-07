@@ -371,21 +371,15 @@ public function import(Request $request)
 
         session(['import_progress' => 20, 'import_message' => 'Reading file...']);
 
-        // Store the file temporarily
-        $path = $file->store('temp');
-        $fullPath = storage_path('app/' . $path);
-
-        session(['import_progress' => 30, 'import_message' => 'Validating Excel structure...']);
-
         // Create importer instance
         $importer = new ScoresheetImport($importData);
 
-        // Validate the file structure (pass the file directly, not the path)
+        session(['import_progress' => 30, 'import_message' => 'Validating Excel structure...']);
+
+        // Validate the file structure
         try {
-            // Use the uploaded file directly for validation
             $importer->validateExcelFile($file);
         } catch (\Exception $e) {
-            Storage::delete($path);
             return response()->json([
                 'success' => false,
                 'message' => $e->getMessage()
@@ -396,9 +390,6 @@ public function import(Request $request)
 
         // Import the file
         Excel::import($importer, $file);
-
-        // Delete temp file
-        Storage::delete($path);
 
         $failures = $importer->getFailures();
         $successCount = $importer->getSuccessCount();
@@ -466,7 +457,6 @@ public function import(Request $request)
         ], 500);
     }
 }
-
 
 
     // =========================================================================
