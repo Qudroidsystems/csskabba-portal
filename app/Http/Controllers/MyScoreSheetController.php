@@ -370,12 +370,13 @@ class MyScoreSheetController extends Controller
     //     }
     // }
 
-public function import(Request $request)
+
+
+    public function import(Request $request)
 {
     try {
         $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls',
-            'password' => 'nullable|string' // Add password validation
+            'file' => 'required|file|mimes:xlsx,xls'
         ]);
 
         $importData = [
@@ -394,18 +395,9 @@ public function import(Request $request)
             ], 422);
         }
 
-        // Verify teacher password if provided in file
         $file = $request->file('file');
 
-        // Check if file has password protection (you'll need to implement this in export)
-        $this->verifyFilePassword($file, $request->input('password'));
-
-        // Validate file metadata (school, class, term, session)
-        $this->validateFileMetadata($file, $importData);
-
-        // Set initial progress
         session(['import_progress' => 10, 'import_status' => 'processing', 'import_message' => 'Validating file...']);
-
         session(['import_progress' => 20, 'import_message' => 'Reading file...']);
 
         // Create importer instance
@@ -413,7 +405,6 @@ public function import(Request $request)
 
         session(['import_progress' => 30, 'import_message' => 'Validating Excel structure...']);
 
-        // Validate the file structure
         try {
             $importer->validateExcelFile($file);
         } catch (\Exception $e) {
@@ -434,7 +425,7 @@ public function import(Request $request)
         // Clear session progress
         session()->forget(['import_progress', 'import_status', 'import_message']);
 
-        // Get updated broadsheets
+        // Get UPDATED broadsheets after import
         $broadsheets = $this->getBroadsheets(
             $importData['staff_id'],
             $importData['term_id'],
@@ -454,6 +445,9 @@ public function import(Request $request)
                 ->get();
         }
 
+        // Format the response data
+        $formattedBroadsheets = $this->formatBroadsheetsForResponse($broadsheets, $assessments);
+
         if ($successCount === 0 && !empty($failures)) {
             return response()->json([
                 'success' => false,
@@ -466,7 +460,7 @@ public function import(Request $request)
             'success' => true,
             'message' => "Successfully imported {$successCount} score(s)!",
             'data' => [
-                'broadsheets' => $broadsheets,
+                'broadsheets' => $formattedBroadsheets,
                 'assessments' => $assessments
             ]
         ];
@@ -490,6 +484,44 @@ public function import(Request $request)
         ], 500);
     }
 }
+
+/**
+ * Format broadsheets for JSON response
+ */
+protected function formatBroadsheetsForResponse($broadsheets, $assessments)
+{
+    $formatted = [];
+    foreach ($broadsheets as $broadsheet) {
+        $assessmentScores = [];
+        foreach ($assessments as $assessment) {
+            $scoreObj = $broadsheet->assessmentScores->where('assessment_id', $assessment->id)->first();
+            $assessmentScores[] = [
+                'assessment_id' => $assessment->id,
+                'assessment_name' => $assessment->name,
+                'max_score' => $assessment->max_score,
+                'score' => $scoreObj ? floatval($scoreObj->score) : 0
+            ];
+        }
+
+        $formatted[] = [
+            'id' => $broadsheet->id,
+            'admissionno' => $broadsheet->admissionno,
+            'fname' => $broadsheet->fname,
+            'lname' => $broadsheet->lname,
+            'mname' => $broadsheet->mname,
+            'total' => floatval($broadsheet->total),
+            'bf' => floatval($broadsheet->bf),
+            'cum' => floatval($broadsheet->cum),
+            'grade' => $broadsheet->grade,
+            'position' => $broadsheet->position,
+            'remark' => $broadsheet->remark,
+            'assessment_scores' => $assessmentScores
+        ];
+    }
+    return $formatted;
+}
+
+
 
 /**
  * Verify file password (implement based on your encryption method)

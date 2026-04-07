@@ -910,7 +910,7 @@ function downloadMarksSheet() {
 }
 
 // Handle bulk upload with server-side progress
-
+// Handle bulk upload with server-side progress and NO page refresh
 function handleBulkUpload() {
     const importForm = document.getElementById('importForm');
     const importSubmit = document.getElementById('importSubmit');
@@ -962,12 +962,18 @@ function handleBulkUpload() {
             uploadProgressBar.style.width = '100%';
 
             if (response.data.success && response.data.data) {
-                // Update the table with new data without page refresh
+                // Update the table with new data WITHOUT page refresh
                 updateTableWithImportedData(response.data.data);
+
+                // Update window.broadsheets for future operations
+                if (response.data.data.broadsheets) {
+                    window.broadsheets = response.data.data.broadsheets;
+                    ensureBroadsheetsArray();
+                }
 
                 Swal.fire({
                     icon: 'success',
-                    title: 'Uploaded!',
+                    title: 'Imported Successfully!',
                     text: response.data.message,
                     timer: 2000,
                     showConfirmButton: false
@@ -983,6 +989,10 @@ function handleBulkUpload() {
                 // Update table even with warnings
                 if (response.data.data) {
                     updateTableWithImportedData(response.data.data);
+                    if (response.data.data.broadsheets) {
+                        window.broadsheets = response.data.data.broadsheets;
+                        ensureBroadsheetsArray();
+                    }
                 }
 
                 Swal.fire({
@@ -992,7 +1002,6 @@ function handleBulkUpload() {
                     showConfirmButton: true
                 });
 
-                // Close modal
                 const importModal = document.getElementById('importModal');
                 if (importModal) {
                     const modalInstance = bootstrap.Modal.getInstance(importModal);
@@ -1001,7 +1010,7 @@ function handleBulkUpload() {
             } else {
                 Swal.fire({
                     icon: 'error',
-                    title: 'Upload Failed',
+                    title: 'Import Failed',
                     text: response.data.message || 'Server did not return updated scores.',
                     showConfirmButton: true
                 });
@@ -1023,7 +1032,7 @@ function handleBulkUpload() {
             console.error('Upload error:', error);
             Swal.fire({
                 icon: 'error',
-                title: 'Upload Failed',
+                title: 'Import Failed',
                 text: errorMessage,
                 showConfirmButton: true
             });
@@ -1034,10 +1043,317 @@ function handleBulkUpload() {
                 uploadProgressBar.style.width = '0%';
                 importSubmit.disabled = false;
                 importSubmit.innerHTML = originalBtnContent || '<i class="ri-upload-line me-1"></i>Upload';
+
+                // Reset file input
+                fileInput.value = '';
             }, 1000);
         });
     });
 }
+
+// Function to update table with imported data without page refresh
+function updateTableWithImportedData(data) {
+    if (!data.broadsheets || data.broadsheets.length === 0) {
+        // Show empty state
+        const tbody = document.getElementById('scoresheetTableBody');
+        if (tbody) {
+            const assessmentCount = data.assessments ? data.assessments.length : 0;
+            tbody.innerHTML = `<tr id="noDataRow">
+                <td colspan="${3 + assessmentCount + 6}" class="text-center py-4 text-muted">
+                    <i class="ri-inbox-line ri-2x d-block mb-2"></i>No scores available.
+                </td>
+            </tr>`;
+        }
+
+        const noDataAlert = document.getElementById('noDataAlert');
+        if (noDataAlert) noDataAlert.style.display = 'block';
+
+        const scoreCount = document.getElementById('scoreCount');
+        if (scoreCount) scoreCount.textContent = '0';
+
+        return;
+    }
+
+    // Refresh the table UI
+    refreshScoresheetTable(data.broadsheets, data.assessments);
+
+    // Update positions
+    if (typeof forceUpdatePositions === 'function') {
+        forceUpdatePositions();
+    }
+
+    // Update score count
+    const scoreCount = document.getElementById('scoreCount');
+    if (scoreCount) scoreCount.textContent = data.broadsheets.length;
+
+    // Hide no data alert
+    const noDataAlert = document.getElementById('noDataAlert');
+    if (noDataAlert) noDataAlert.style.display = 'none';
+
+    // Show success indicator
+    showToast('Scores imported successfully!', 'success');
+}
+
+// Function to refresh the table with new data
+function refreshScoresheetTable(broadsheets, assessments) {
+    const tbody = document.getElementById('scoresheetTableBody');
+    if (!tbody) return;
+
+    // Clear existing rows
+    tbody.innerHTML = '';
+
+    // Rebuild table rows
+    broadsheets.forEach((student, index) => {
+        const row = createTableRow(student, index, assessments);
+        tbody.appendChild(row);
+    });
+
+    // Re-initialize event listeners for new inputs
+    reinitializeScoreInputs();
+
+    // Re-initialize checkboxes
+    reinitializeCheckboxes();
+}
+
+// Function to create a table row
+function createTableRow(student, index, assessments) {
+    const tr = document.createElement('tr');
+    tr.setAttribute('data-id', student.id);
+
+    // Determine row class based on grade or vetted status
+    let rowClass = '';
+    if (student.grade === 'A' || student.grade === 'A1') {
+        rowClass = 'row-vetted';
+    } else if (student.grade === 'F' || student.grade === 'F9') {
+        rowClass = 'row-not-vetted';
+    } else {
+        rowClass = 'row-pending';
+    }
+    tr.className = rowClass;
+
+    // Get cum for color calculation
+    const cum = student.cum || 0;
+    let cumColorClass = '';
+    let cumTextColor = '';
+    if (cum >= 70) {
+        cumColorClass = 'bg-success-subtle';
+        cumTextColor = 'text-success';
+    } else if (cum >= 50) {
+        cumColorClass = 'bg-info-subtle';
+        cumTextColor = 'text-info';
+    } else if (cum >= 40) {
+        cumColorClass = 'bg-warning-subtle';
+        cumTextColor = 'text-warning';
+    } else {
+        cumColorClass = 'bg-danger-subtle';
+        cumTextColor = 'text-danger';
+    }
+
+    // Get position with ordinal suffix
+    let positionText = '-';
+    if (student.position && student.position !== null) {
+        positionText = student.position + getOrdinalSuffix(student.position);
+    }
+
+    // Build row HTML
+    let html = `
+        <td class="col-checkbox">
+            <div class="form-check mb-0">
+                <input class="form-check-input score-checkbox" type="checkbox" data-id="${student.id}">
+            </div>
+        </td>
+        <td class="col-sn sn fw-medium">${index + 1}</td>
+        <td class="col-admissionno admissionno" data-admissionno="${student.admissionno || ''}">
+            <span class="text-muted small">${student.admissionno || '-'}</span>
+        </td>
+        <td class="col-name name" data-name="${((student.lname || '') + ' ' + (student.fname || '')).toLowerCase()}">
+            <div class="d-flex align-items-center gap-2">
+                <div style="width:34px;height:34px;background:#e0e0e0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;">📷</div>
+                <div>
+                    <span class="fw-semibold d-block" style="font-size:12.5px;">${student.lname || ''}, ${student.fname || ''}</span>
+                    ${student.mname ? `<span class="text-muted small">${student.mname}</span>` : ''}
+                </div>
+            </div>
+        </td>
+    `;
+
+    // Add assessment score inputs
+    if (assessments && assessments.length) {
+        assessments.forEach(assessment => {
+            let scoreValue = 0;
+            if (student.assessment_scores) {
+                const scoreObj = student.assessment_scores.find(s => s.assessment_id == assessment.id);
+                if (scoreObj) scoreValue = scoreObj.score;
+            }
+            html += `
+                <td class="col-assessment-${assessment.id} assessment-col text-center">
+                    <input type="number"
+                           class="score-input"
+                           data-field="${assessment.id}"
+                           data-max="${assessment.max_score}"
+                           data-id="${student.id}"
+                           data-original="${scoreValue}"
+                           value="${scoreValue}"
+                           min="0" max="${assessment.max_score}" step="0.1"
+                           style="width:72px;min-width:72px;height:36px;padding:4px 6px;border:1.5px solid #e2e8f0;border-radius:6px;font-size:13px;text-align:center;">
+                    </td>
+            `;
+        });
+    }
+
+    // Calculate total from assessment scores
+    let total = student.total || 0;
+    if (student.assessment_scores) {
+        total = student.assessment_scores.reduce((sum, s) => sum + s.score, 0);
+    }
+
+    html += `
+        <td class="col-total text-center">
+            <span class="badge bg-primary" data-total="${total}">${total.toFixed(1)}</span>
+        </td>
+        <td class="col-bf text-center">
+            <span class="badge bg-secondary-subtle text-secondary">${(student.bf || 0).toFixed(2)}</span>
+        </td>
+        <td class="col-cum text-center">
+            <span class="badge ${cumColorClass} ${cumTextColor} fw-bold" style="font-size:12px;">${cum.toFixed(1)}</span>
+        </td>
+        <td class="col-gpa text-center">
+            <span class="badge bg-warning-subtle text-warning fw-semibold">${(student.gpa || 0).toFixed(2)}</span>
+        </td>
+        <td class="col-cgpa text-center">
+            <span class="badge bg-dark-subtle text-dark">${(student.cgpa || 0).toFixed(2)}</span>
+        </td>
+        <td class="col-grade text-center fw-bold" style="font-size:13px;">${student.grade || '-'}</td>
+        <td class="col-position text-center">
+            <span class="badge" style="background:var(--ss-primary);">${positionText}</span>
+        </td>
+        <td class="col-vetted text-center">
+            <span class="badge bg-warning-subtle text-warning"><i class="ri-time-line me-1"></i>Pending</span>
+        </td>
+    `;
+
+    tr.innerHTML = html;
+    return tr;
+}
+
+// Reinitialize score input event listeners
+function reinitializeScoreInputs() {
+    document.querySelectorAll('.score-input').forEach(input => {
+        // Remove old listeners by cloning and replacing
+        const newInput = input.cloneNode(true);
+        input.parentNode.replaceChild(newInput, input);
+
+        newInput.addEventListener('focus', function() {
+            this.select();
+        });
+
+        newInput.addEventListener('input', function() {
+            validateInput(this);
+            const row = this.closest('tr');
+            if (row && typeof updateRowTotal === 'function') {
+                updateRowTotal(row);
+            }
+        });
+
+        newInput.addEventListener('blur', function() {
+            validateInput(this);
+            const row = this.closest('tr');
+            if (row && typeof updateRowTotal === 'function') {
+                updateRowTotal(row);
+            }
+            const orig = parseFloat(this.dataset.original) || 0;
+            const curr = parseFloat(this.value) || 0;
+            if (Math.abs(curr - orig) > 0.001) {
+                this.dataset.original = this.value;
+                if (typeof saveIndividualScore === 'function') {
+                    saveIndividualScore(this);
+                }
+            }
+        });
+
+        newInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                if (typeof saveIndividualScore === 'function') {
+                    saveIndividualScore(this);
+                }
+                const inputs = Array.from(document.querySelectorAll('.score-input'));
+                const idx = inputs.indexOf(this);
+                if (idx < inputs.length - 1) inputs[idx + 1].focus();
+            }
+        });
+    });
+}
+
+// Reinitialize checkboxes
+function reinitializeCheckboxes() {
+    const checkAll = document.getElementById('checkAll');
+    if (checkAll) {
+        const newCheckAll = checkAll.cloneNode(true);
+        checkAll.parentNode.replaceChild(newCheckAll, checkAll);
+
+        newCheckAll.addEventListener('change', function() {
+            document.querySelectorAll('.score-checkbox').forEach(cb => {
+                cb.checked = this.checked;
+            });
+        });
+    }
+
+    document.querySelectorAll('.score-checkbox').forEach(checkbox => {
+        const newCheckbox = checkbox.cloneNode(true);
+        checkbox.parentNode.replaceChild(newCheckbox, checkbox);
+    });
+}
+
+// Helper function for ordinal suffix
+function getOrdinalSuffix(position) {
+    if (!position || isNaN(position)) return '-';
+    position = parseInt(position);
+    if (position % 100 >= 11 && position % 100 <= 13) return position + 'th';
+    switch (position % 10) {
+        case 1: return position + 'st';
+        case 2: return position + 'nd';
+        case 3: return position + 'rd';
+        default: return position + 'th';
+    }
+}
+
+// Helper function to validate input
+function validateInput(input) {
+    const max = parseFloat(input.dataset.max) || 0;
+    const val = parseFloat(input.value) || 0;
+    if (val > max) {
+        input.classList.add('is-invalid');
+        return false;
+    }
+    input.classList.remove('is-invalid');
+    return true;
+}
+
+// Helper function to show toast message
+function showToast(message, type = 'info') {
+    const toastHtml = `
+        <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050">
+            <div class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-autohide="true" data-bs-delay="3000">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    $('body').append(toastHtml);
+    const toast = new bootstrap.Toast($('.toast').last()[0]);
+    toast.show();
+
+    setTimeout(() => {
+        $('.toast').last().remove();
+    }, 3000);
+}
+
 
 // Function to update table with imported data without page refresh
 function updateTableWithImportedData(data) {
