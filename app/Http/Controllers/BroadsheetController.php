@@ -123,6 +123,7 @@ class BroadsheetController extends Controller
     {
         $schoolclassid = $request->input('schoolclassid');
         $sessionid     = $request->input('sessionid');
+        $termid        = $request->input('termid');
 
         if (!$schoolclassid || !$sessionid) {
             return response()->json(['success' => false, 'message' => 'Missing parameters'], 400);
@@ -144,10 +145,29 @@ class BroadsheetController extends Controller
             ->orderBy('studentRegistration.firstname')
             ->get();
 
+        // Get subject count and assessment count for this class
+        $subjectCount = 0;
+        $assessmentCount = 0;
+
+        $schoolclass = Schoolclass::with('classcategories')->find($schoolclassid);
+        if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
+            $categoryIds = $schoolclass->classcategories->pluck('id');
+
+            // Get subjects count
+            $subjectCount = DB::table('subject')
+                ->whereIn('classcategory_id', $categoryIds)
+                ->count();
+
+            // Get assessments count
+            $assessmentCount = Assessment::whereIn('classcategory_id', $categoryIds)->count();
+        }
+
         return response()->json([
             'success' => true,
             'count'   => $students->count(),
             'students'=> $students,
+            'subject_count' => $subjectCount,
+            'assessment_count' => $assessmentCount,
         ]);
     }
 
@@ -381,7 +401,7 @@ class BroadsheetController extends Controller
             // Fix image paths for PDF
             $data['school_logo_base64'] = $this->getLogoBase64($data['schoolInfo']);
 
-            // Use Dompdf's native paper size strings - SIMPLER AND ERROR-FREE
+            // Use Dompdf's native paper size strings
             $paperString = $paperSize;
             if ($orientation === 'landscape') {
                 $paperString = $paperSize . '-landscape';
@@ -390,10 +410,27 @@ class BroadsheetController extends Controller
             $pdf = Pdf::loadView('broadsheet.pdf', $data)
                 ->setPaper($paperString);
 
+            // Build filename with safe characters only
             $className   = ($data['schoolclass']->schoolclass ?? 'Class') . ' ' . ($data['schoolclass']->arm_name ?? '');
             $sessionName = $data['schoolsession']->session ?? '';
             $termName    = $data['schoolterm']->term ?? 'Term';
-            $filename    = 'Broadsheet_' . preg_replace('/\s+/', '_', trim($className)) . '_' . $sessionName . '_' . $termName . '.pdf';
+
+            // Remove/replace invalid filename characters
+            $cleanClassName = preg_replace('/[\/\\\\:*?"<>|]/', '_', trim($className));
+            $cleanSession = preg_replace('/[\/\\\\:*?"<>|]/', '_', trim($sessionName));
+            $cleanTerm = preg_replace('/[\/\\\\:*?"<>|]/', '_', trim($termName));
+
+            // Also remove any remaining special characters
+            $cleanClassName = preg_replace('/[^A-Za-z0-9_\- ]/', '', $cleanClassName);
+            $cleanSession = preg_replace('/[^A-Za-z0-9_\- ]/', '', $cleanSession);
+            $cleanTerm = preg_replace('/[^A-Za-z0-9_\- ]/', '', $cleanTerm);
+
+            $filename = 'Broadsheet_' . $cleanClassName . '_' . $cleanSession . '_' . $cleanTerm . '.pdf';
+
+            // Fallback filename if still empty
+            if (strlen($filename) < 15) {
+                $filename = 'Broadsheet_' . date('Y-m-d_H-i-s') . '.pdf';
+            }
 
             return $pdf->download($filename);
 
@@ -429,7 +466,20 @@ class BroadsheetController extends Controller
             $className   = ($data['schoolclass']->schoolclass ?? 'Class') . ' ' . ($data['schoolclass']->arm_name ?? '');
             $sessionName = $data['schoolsession']->session ?? '';
             $termName    = $data['schoolterm']->term ?? 'Term';
-            $filename    = 'Broadsheet_' . preg_replace('/\s+/', '_', trim($className)) . '_' . $sessionName . '_' . $termName . '.xlsx';
+
+            // Clean filename for Excel as well
+            $cleanClassName = preg_replace('/[\/\\\\:*?"<>|]/', '_', trim($className));
+            $cleanSession = preg_replace('/[\/\\\\:*?"<>|]/', '_', trim($sessionName));
+            $cleanTerm = preg_replace('/[\/\\\\:*?"<>|]/', '_', trim($termName));
+            $cleanClassName = preg_replace('/[^A-Za-z0-9_\- ]/', '', $cleanClassName);
+            $cleanSession = preg_replace('/[^A-Za-z0-9_\- ]/', '', $cleanSession);
+            $cleanTerm = preg_replace('/[^A-Za-z0-9_\- ]/', '', $cleanTerm);
+
+            $filename = 'Broadsheet_' . $cleanClassName . '_' . $cleanSession . '_' . $cleanTerm . '.xlsx';
+
+            if (strlen($filename) < 15) {
+                $filename = 'Broadsheet_' . date('Y-m-d_H-i-s') . '.xlsx';
+            }
 
             return Excel::download(new \App\Exports\BroadsheetExport($data), $filename);
 

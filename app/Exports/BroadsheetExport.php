@@ -29,7 +29,10 @@ class BroadsheetExport implements FromArray, WithStyles, ShouldAutoSize, WithEve
         $arm     = $this->data['schoolclass']->arm_name ?? '';
         $session = $this->data['schoolsession']->session ?? '';
         $term    = $this->data['schoolterm']->term ?? '';
-        return substr(trim("{$class} {$arm} {$session} {$term}"), 0, 31);
+        $title = trim("{$class} {$arm} {$session} {$term}");
+        // Remove invalid characters for sheet name (max 31 chars)
+        $title = preg_replace('/[\/\\\\:*?"<>|]/', '_', $title);
+        return substr($title, 0, 31);
     }
 
     public function array(): array
@@ -104,7 +107,10 @@ class BroadsheetExport implements FromArray, WithStyles, ShouldAutoSize, WithEve
         $rows[] = $headerRow1;
 
         // ── Sub-header row (assessment names + score labels) ──────────────────
-        $headerRow2 = ['', '', ''];
+        $headerRow2 = [];
+        $headerRow2[] = ''; // SN
+        if ($showAdmNo)  $headerRow2[] = '';
+        if ($showName)   $headerRow2[] = '';
         if ($showGender) $headerRow2[] = '';
 
         foreach ($subjects as $subInfo) {
@@ -158,6 +164,8 @@ class BroadsheetExport implements FromArray, WithStyles, ShouldAutoSize, WithEve
         // ── Stats footer ──────────────────────────────────────────────────────
         $rows[] = [];
         $statsRow = ['', 'CLASS AVERAGE', ''];
+        if ($showGender) $statsRow[] = '';
+
         foreach ($subjects as $subId => $subInfo) {
             $stats = $this->data['subjectStats'][$subId] ?? [];
             foreach ($assessments as $a) {

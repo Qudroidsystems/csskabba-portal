@@ -657,25 +657,34 @@ function checkAndLoadPreview() {
     if (!classId || !sessionId || !termId) {
         document.getElementById('studentPreview').classList.remove('visible');
         loadBtn.disabled = true;
+        document.getElementById('previewCount').textContent = '0';
+        document.getElementById('previewSubjects').textContent = '-';
+        document.getElementById('previewAssessments').textContent = '-';
         return;
     }
 
-    // Fetch student preview
+    // Fetch student preview with subject and assessment counts
     fetch(ROUTES.studentPreview, {
         method : 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
-        body   : JSON.stringify({ schoolclassid: classId, sessionid: sessionId }),
+        body   : JSON.stringify({ schoolclassid: classId, sessionid: sessionId, termid: termId }),
     })
     .then(r => r.json())
     .then(data => {
         if (data.success) {
             studentCount = data.count;
             document.getElementById('previewCount').textContent = data.count;
+            document.getElementById('previewSubjects').textContent = data.subject_count || '-';
+            document.getElementById('previewAssessments').textContent = data.assessment_count || '-';
             document.getElementById('studentPreview').classList.add('visible');
             loadBtn.disabled = data.count === 0;
         }
     })
-    .catch(() => {});
+    .catch(err => {
+        console.error('Preview error:', err);
+        document.getElementById('previewSubjects').textContent = 'Error';
+        document.getElementById('previewAssessments').textContent = 'Error';
+    });
 }
 
 // ── Open column modal ─────────────────────────────────────────────────────────
@@ -722,10 +731,11 @@ function openColumnModal() {
         document.getElementById('colModalForm').style.display   = 'block';
         updatePdfLabel();
 
-        // Set preview assessment count
+        // Set assessment and subject counts
         const asmCount = Object.keys(data.columns.assessments || {}).length;
+        const subjectCount = Object.keys(data.columns.scores || {}).length;
         document.getElementById('previewAssessments').textContent = asmCount;
-        document.getElementById('previewSubjects').textContent    = '—';
+        document.getElementById('previewSubjects').textContent = subjectCount;
     })
     .catch(err => {
         Swal.fire({ icon: 'error', title: 'Error', text: err.message });
