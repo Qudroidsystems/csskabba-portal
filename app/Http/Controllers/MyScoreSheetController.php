@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Assessment;
 use App\Models\Broadsheets;
 use App\Models\Schoolclass;
+use App\Models\SchoolInformation;
 use App\Models\Subjectclass;
 use Illuminate\Http\Request;
 use App\Models\SubAssessment;
@@ -242,7 +243,7 @@ class MyScoreSheetController extends Controller
             $classInfo = $broadsheets->first();
 
             // Get school info (adjust the model name as needed)
-            $school = \App\Models\School::first();
+            $school = SchoolInformation::first();
 
             // Generate PDF using DomPDF
             $pdf = Pdf::loadView('subjectscoresheet.marksheet', [
