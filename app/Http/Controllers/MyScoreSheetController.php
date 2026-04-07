@@ -297,10 +297,10 @@ class MyScoreSheetController extends Controller
     }
 
     // Get the actual names for filename
-    $subjectClass = \App\Models\Subjectclass::with('subject')->find($subjectclassId);
-    $schoolclass = \App\Models\Schoolclass::find($schoolclassId);
-    $term = \App\Models\SchoolTerm::find($termId);
-    $session = \App\Models\SchoolSession::find($sessionId);
+    $subjectClass = Subjectclass::with('subject')->find($subjectclassId);
+    $schoolclass = Schoolclass::find($schoolclassId);
+    $term = Schoolterm::find($termId);
+    $session = Schoolsession::find($sessionId);
 
     // Get the actual values
     $subjectName = $subjectClass && $subjectClass->subject ? $subjectClass->subject->subject : 'subject';
