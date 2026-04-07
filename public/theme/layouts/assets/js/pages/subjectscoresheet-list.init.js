@@ -245,7 +245,7 @@ function forceUpdatePositions() {
         return;
     }
 
-    const hasValidServerPositions = window.broadsheets.some(b => 
+    const hasValidServerPositions = window.broadsheets.some(b =>
         b.position !== null && b.position !== undefined && !isNaN(b.position) && b.position > 0
     );
 
@@ -265,8 +265,8 @@ function forceUpdatePositions() {
             if (row) {
                 const positionDisplay = row.querySelector('.position-display span');
                 if (positionDisplay) {
-                    const positionText = (broadsheet.position && !isNaN(broadsheet.position) && broadsheet.position > 0) 
-                        ? getOrdinalSuffix(broadsheet.position) 
+                    const positionText = (broadsheet.position && !isNaN(broadsheet.position) && broadsheet.position > 0)
+                        ? getOrdinalSuffix(broadsheet.position)
                         : '-';
                     positionDisplay.textContent = positionText;
                     positionDisplay.classList.remove('bg-warning');
@@ -396,8 +396,8 @@ function bulkSaveAllScores() {
             input.classList.add('is-invalid');
             const broadsheet = window.broadsheets.find(b => String(b.id) === String(id));
             const studentName = broadsheet ? `${broadsheet.lname || ''} ${broadsheet.fname || ''}`.trim() || 'Unknown' : 'Unknown';
-            invalidInputs.push({ 
-                input, 
+            invalidInputs.push({
+                input,
                 error: `Invalid score for ${studentName} (${broadsheet?.admissionno || 'Unknown'}): ${field.toUpperCase()} must be between 0 and 100`
             });
             return;
@@ -880,6 +880,7 @@ function downloadMarksSheet() {
 }
 
 // Handle bulk upload with server-side progress
+// Handle bulk upload with server-side progress
 function handleBulkUpload() {
     const importForm = document.getElementById('importForm');
     const importSubmit = document.getElementById('importSubmit');
@@ -889,171 +890,78 @@ function handleBulkUpload() {
 
     if (!importForm || !importSubmit || !importLoader || !uploadProgressBar) {
         console.error('Upload elements not found in DOM');
-        Swal.fire({
-            icon: 'error',
-            title: 'Upload Failed',
-            text: 'Required elements are missing. Check console for details.',
-            showConfirmButton: true
-        });
         return;
     }
 
     importForm.addEventListener('submit', function (e) {
         e.preventDefault();
+
+        const fileInput = document.querySelector('input[name="file"]');
+        if (!fileInput.files.length) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'No File Selected',
+                text: 'Please select an Excel file to upload.',
+                showConfirmButton: true
+            });
+            return;
+        }
+
         const formData = new FormData(importForm);
         importSubmit.disabled = true;
         importSubmit.innerHTML = '<i class="ri-loader-4-line sync-icon"></i> Uploading...';
         importLoader.style.display = 'block';
         uploadProgressBar.style.width = '10%';
 
-        // Start polling for progress
-        const progressInterval = setInterval(() => {
-            axios.get('/subjectscoresheet/import-progress', {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
-            .then(response => {
-                const { status, progress, message } = response.data;
-                console.log(`Import progress: ${progress}% - ${message}`);
-                uploadProgressBar.style.width = `${progress}%`;
-                if (status === 'completed' || status === 'error') {
-                    clearInterval(progressInterval);
-                    if (status === 'error') {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Upload Failed',
-                            text: message,
-                            showConfirmButton: true
-                        });
-                        importLoader.style.display = 'none';
-                        uploadProgressBar.style.width = '0%';
-                        importSubmit.disabled = false;
-                        importSubmit.innerHTML = originalBtnContent || 'Upload';
-                    }
-                }
-            })
-            .catch(error => {
-                console.error('Progress fetch error:', error);
-                clearInterval(progressInterval);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Progress Fetch Failed',
-                    text: 'Failed to fetch upload progress. Check console for details.',
-                    showConfirmButton: true
-                });
-                importLoader.style.display = 'none';
-                uploadProgressBar.style.width = '0%';
-                importSubmit.disabled = false;
-                importSubmit.innerHTML = originalBtnContent || 'Upload';
-            });
-        }, 1000);
-
+        // Make the AJAX request
         axios.post(window.routes?.import || '/subjectscoresheet/import', formData, {
             headers: {
                 'X-Requested-With': 'XMLHttpRequest',
                 'Content-Type': 'multipart/form-data'
             },
-            timeout: 60000
+            timeout: 60000,
+            onUploadProgress: progressEvent => {
+                if (progressEvent.lengthComputable) {
+                    const percentComplete = (progressEvent.loaded / progressEvent.total) * 100;
+                    uploadProgressBar.style.width = `${percentComplete}%`;
+                    console.log(`Upload progress: ${percentComplete.toFixed(2)}%`);
+                }
+            }
         })
         .then(response => {
-            clearInterval(progressInterval);
             uploadProgressBar.style.width = '100%';
-            if (response.data.success && response.data.data?.broadsheets) {
-                console.log('handleBulkUpload: Server response', response.data.data.broadsheets.map(b => ({
-                    id: b.id,
-                    admissionno: b.admissionno,
-                    ca1: b.ca1,
-                    ca2: b.ca2,
-                    ca3: b.ca3,
-                    exam: b.exam,
-                    total: b.total,
-                    bf: b.bf,
-                    cum: b.cum,
-                    grade: b.grade,
-                    position: b.position
-                })));
 
+            if (response.data.success && response.data.data?.broadsheets) {
+                // Update the broadsheets data
                 window.broadsheets = response.data.data.broadsheets;
                 ensureBroadsheetsArray();
 
-                window.broadsheets.forEach(broadsheet => {
-                    const row = document.querySelector(`tr:has(input[data-id="${broadsheet.id}"])`);
-                    if (row) {
-                        ['ca1', 'ca2', 'ca3', 'exam'].forEach(field => {
-                            const input = row.querySelector(`input[data-field="${field}"]`);
-                            if (input) {
-                                input.value = broadsheet[field] !== null && broadsheet[field] !== undefined ? broadsheet[field] : '';
-                                input.classList.add('is-valid');
-                            }
-                        });
-                        const totalDisplay = row.querySelector('.total-display span');
-                        if (totalDisplay) {
-                            totalDisplay.textContent = parseFloat(broadsheet.total || 0).toFixed(1);
-                            totalDisplay.classList.add('bg-warning');
-                            setTimeout(() => totalDisplay.classList.remove('bg-warning'), 500);
-                        }
-                        const bfDisplay = row.querySelector('.bf-display span');
-                        if (bfDisplay) {
-                            bfDisplay.textContent = parseFloat(broadsheet.bf || 0).toFixed(2);
-                        }
-                        const cumDisplay = row.querySelector('.cum-display span');
-                        if (cumDisplay) {
-                            cumDisplay.textContent = parseFloat(broadsheet.cum || 0).toFixed(2);
-                            totalDisplay.classList.add('bg-warning');
-                            setTimeout(() => cumDisplay.classList.remove('bg-warning'), 500);
-                        }
-                        const gradeDisplay = row.querySelector('.grade-display span');
-                        if (gradeDisplay) {
-                            gradeDisplay.textContent = broadsheet.grade || '-';
-                            gradeDisplay.classList.add('bg-warning');
-                            setTimeout(() => gradeDisplay.classList.remove('bg-warning'), 500);
-                        }
-                        const positionDisplay = row.querySelector('.position-display span');
-                        if (positionDisplay) {
-                            positionDisplay.textContent = broadsheet.position ? getOrdinalSuffix(broadsheet.position) : '-';
-                            positionDisplay.classList.add('bg-info');
-                        }
-                        const image = row.querySelector('.student-image');
-                        if (image && broadsheet.picture) {
-                            const existingPicture = image.dataset.picture || 'none';
-                            const newPicture = broadsheet.picture || existingPicture;
-                            const picture = normalizePicturePath(newPicture);
-                            const imageUrl = `/storage/student_avatars/${picture}`;
-                            image.src = imageUrl;
-                            image.dataset.image = imageUrl;
-                            image.dataset.picture = newPicture;
-                            image.onerror = () => {
-                                image.src = DEFAULT_IMAGE;
-                                image.dataset.image = DEFAULT_IMAGE;
-                                image.dataset.picture = 'none';
-                                console.log(`Image failed to load for admissionno: ${broadsheet.admissionno || 'unknown'}, picture: ${newPicture}, attempted URL: ${imageUrl}`);
-                            };
-                        }
-                    }
-                });
-
-                forceUpdatePositions();
-                const scoreCount = document.getElementById('scoreCount');
-                if (scoreCount) scoreCount.textContent = window.broadsheets.length;
-                const noDataAlert = document.getElementById('noDataAlert');
-                if (noDataAlert) noDataAlert.style.display = window.broadsheets.length ? 'none' : 'block';
+                // Refresh the table
+                window.location.reload();
 
                 Swal.fire({
                     icon: 'success',
                     title: 'Uploaded!',
-                    text: response.data.message || `Successfully uploaded scores for ${window.broadsheets.length} students.`,
+                    text: response.data.message || 'Scores imported successfully!',
                     timer: 2000,
                     showConfirmButton: false
                 });
 
+                // Close modal
                 const importModal = document.getElementById('importModal');
                 if (importModal) {
                     const modalInstance = bootstrap.Modal.getInstance(importModal);
                     if (modalInstance) modalInstance.hide();
                 }
+            } else if (response.data.warning) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Partial Success',
+                    text: response.data.message,
+                    showConfirmButton: true
+                });
+                window.location.reload();
             } else {
-                console.error('handleBulkUpload: Invalid server response', response.data);
                 Swal.fire({
                     icon: 'error',
                     title: 'Upload Failed',
@@ -1063,9 +971,18 @@ function handleBulkUpload() {
             }
         })
         .catch(error => {
-            clearInterval(progressInterval);
-            let errorMessage = 'Failed to upload scores. Check console for details.';
-            if (error.response) errorMessage = error.response.data.message || errorMessage;
+            let errorMessage = 'Failed to upload scores.';
+
+            if (error.response && error.response.data) {
+                if (typeof error.response.data === 'object') {
+                    errorMessage = error.response.data.message || errorMessage;
+                } else {
+                    errorMessage = error.response.statusText || errorMessage;
+                }
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+
             console.error('Upload error:', error);
             Swal.fire({
                 icon: 'error',
@@ -1079,12 +996,11 @@ function handleBulkUpload() {
                 importLoader.style.display = 'none';
                 uploadProgressBar.style.width = '0%';
                 importSubmit.disabled = false;
-                importSubmit.innerHTML = originalBtnContent || 'Upload';
+                importSubmit.innerHTML = originalBtnContent || '<i class="ri-upload-line me-1"></i>Upload';
             }, 1000);
         });
     });
 }
-
 // Bulk actions and modal initialization
 function initializeBulkActions() {
     const bulkUpdateScores = document.getElementById('bulkUpdateScores');
