@@ -2,30 +2,32 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Assessment;
-use App\Models\Broadsheets;
-use App\Models\Schoolclass;
-use App\Models\SchoolInformation;
-use App\Models\Subjectclass;
-use Illuminate\Http\Request;
-use App\Models\SubAssessment;
-use App\Models\BroadsheetsMock;
-use App\Models\PromotionStatus;
-use App\Models\BroadsheetRecord;
 use App\Exports\MarksSheetExport;
-use App\Imports\ScoresheetImport;
-use App\Exports\RecordsheetExport;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
-use App\Http\Controllers\Controller;
-use App\Models\BroadsheetRecordMock;
-use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\MockMarksSheetExport;
 use App\Exports\MockRecordsheetExport;
-use Illuminate\Support\Facades\Storage;
+use App\Exports\RecordsheetExport;
+use App\Http\Controllers\Controller;
+use App\Imports\ScoresheetImport;
+use App\Models\Assessment;
 use App\Models\BroadsheetAssessmentScore;
+use App\Models\BroadsheetRecord;
+use App\Models\BroadsheetRecordMock;
+use App\Models\Broadsheets;
+use App\Models\BroadsheetsMock;
 use App\Models\BroadsheetSubAssessmentScore;
+use App\Models\PromotionStatus;
+use App\Models\Schoolclass;
+use App\Models\SchoolInformation;
+use App\Models\Schoolsession;
+use App\Models\Schoolterm;
+use App\Models\SubAssessment;
+use App\Models\Subjectclass;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
 
 class MyScoreSheetController extends Controller
 {
@@ -298,8 +300,8 @@ public function export(Request $request)
     // Get subject, class, term, session for filename
     $subjectClass = Subjectclass::find($subjectclassId);
     $schoolclass = Schoolclass::find($schoolclassId);
-    $term = SchoolTerm::find($termId);
-    $session = SchoolSession::find($sessionId);
+    $term = Schoolterm::find($termId);
+    $session = Schoolsession::find($sessionId);
 
     $subjectName = $subjectClass && $subjectClass->subject ? $subjectClass->subject->subject : 'subject';
     $className = $schoolclass ? $schoolclass->schoolclass : 'class';
