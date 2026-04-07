@@ -160,215 +160,232 @@ class BroadsheetController extends Controller
     // =========================================================================
 
     private function buildBroadsheetData(
-        int $schoolclassid,
-        int $sessionid,
-        int $termid,
-        array $selectedColumns = []
-    ): array {
-        // ── School & class meta ───────────────────────────────────────────────
-        $schoolInfo  = SchoolInformation::getActiveSchool() ?? new \stdClass();
-        $schoolclass = Schoolclass::with(['classcategories'])
-            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->select(['schoolclass.*', 'schoolarm.arm as arm_name'])
-            ->where('schoolclass.id', $schoolclassid)
-            ->first();
+            int $schoolclassid,
+            int $sessionid,
+            int $termid,
+            array $selectedColumns = []
+        ): array {
+    // ── School & class meta ───────────────────────────────────────────────
+    $schoolInfo  = SchoolInformation::getActiveSchool() ?? new \stdClass();
 
-        $schoolsession = Schoolsession::find($sessionid);
-        $schoolterm    = Schoolterm::find($termid);
+    $schoolclass = Schoolclass::with('classcategories')
+        ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+        ->select(['schoolclass.*', 'schoolarm.arm as arm_name'])
+        ->where('schoolclass.id', $schoolclassid)
+        ->first();
 
-        // ── Dynamic assessments ────────────────────────────────────────────────
-        $assessments = collect();
-        if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
-            $categoryIds = $schoolclass->classcategories->pluck('id');
-            $assessments = Assessment::whereIn('classcategory_id', $categoryIds)
-                ->orderBy('id')
-                ->get();
-        }
+    $schoolsession = Schoolsession::find($sessionid);
+    $schoolterm    = Schoolterm::find($termid);
 
-        // ── Get subjects for this class/session from subjectclass table ────────
-        $subjectsMap = [];
-        $subjectClasses = Subjectclass::where('schoolclassid', $schoolclassid)
-            ->where('sessionid', $sessionid)
-            ->with('subject')
+    // ── Dynamic assessments ────────────────────────────────────────────────
+    $assessments = collect();
+    if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
+        $categoryIds = $schoolclass->classcategories->pluck('id');
+        $assessments = Assessment::whereIn('classcategory_id', $categoryIds)
+            ->orderBy('id')
             ->get();
+    }
 
-        foreach ($subjectClasses as $sc) {
-            if ($sc->subject) {
-                $subjectsMap[$sc->subjectid] = [
-                    'subject_id'   => $sc->subjectid,
-                    'subject_name' => $sc->subject->subject,
-                    'subject_code' => $sc->subject->subject_code ?? '',
-                ];
-            }
-        }
+    // ── Get subjects using RAW QUERY (This fixes the 'sessionid' error) ─────
+    // We join through subjectteacher because subjectclass has no sessionid/termid
+    $subjectsMap = [];
 
-        // ── All students in this class/session ────────────────────────────────
-        $studentIds = Studentclass::where('schoolclassid', $schoolclassid)
-            ->where('sessionid', $sessionid)
-            ->pluck('studentId')
-            ->toArray();
+    $subjectClasses = DB::table('subjectclass as sc')
+        ->join('subjectteacher as st', 'st.id', '=', 'sc.subjectteacherid')
+        ->join('subject', 'subject.id', '=', 'sc.subjectid')
+        ->where('sc.schoolclassid', $schoolclassid)
+        // Do NOT filter by sessionid or termid on subjectclass (columns don't exist)
+        // You can add filter on subjectteacher if needed:
+        // ->where('st.sessionid', $sessionid)
+        // ->where('st.termid', $termid)
+        ->select([
+            'sc.subjectid',
+            'subject.subject as subject_name',
+            'subject.subject_code',
+            'sc.subjectteacherid',
+            'st.userid',
+            'st.staffid'
+        ])
+        ->distinct()
+        ->get();
 
-        // ── All broadsheet rows for this class/session/term ───────────────────
-        $broadsheets = Broadsheets::whereIn('broadsheet_records.student_id', $studentIds)
-            ->where('broadsheets.term_id', $termid)
-            ->where('broadsheet_records.session_id', $sessionid)
-            ->where('broadsheet_records.schoolclass_id', $schoolclassid)
-            ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
-            ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
-            ->join('studentRegistration', 'studentRegistration.id', '=', 'broadsheet_records.student_id')
-            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-            ->select([
-                'broadsheets.id as broadsheet_id',
-                'broadsheet_records.student_id',
-                'broadsheet_records.subject_id',
-                'subject.subject as subject_name',
-                'subject.subject_code',
-                'studentRegistration.admissionNo as admissionno',
-                'studentRegistration.firstname',
-                'studentRegistration.lastname',
-                'studentRegistration.gender',
-                'studentpicture.picture',
-                'broadsheets.total',
-                'broadsheets.bf',
-                'broadsheets.cum',
-                'broadsheets.grade',
-                'broadsheets.remark',
-                'broadsheets.subject_position_class as position',
-                'broadsheets.avg as class_average',
-                'broadsheets.vettedstatus',
-            ])
-            ->orderBy('studentRegistration.lastname')
-            ->orderBy('studentRegistration.firstname')
-            ->orderBy('subject.subject')
-            ->get();
-
-        // ── Load assessment scores for each broadsheet row ────────────────────
-        $broadsheetIds = $broadsheets->pluck('broadsheet_id')->unique()->toArray();
-        $assessmentScoresAll = BroadsheetAssessmentScore::whereIn('broadsheet_id', $broadsheetIds)
-            ->get()
-            ->groupBy('broadsheet_id');
-
-        // ── Pivot: student_id → subject_id → row data ─────────────────────────
-        $studentSubjectMap = [];
-
-        foreach ($broadsheets as $row) {
-            $sid = $row->student_id;
-            $sub = $row->subject_id;
-
-            if (!isset($subjectsMap[$sub])) {
-                $subjectsMap[$sub] = [
-                    'subject_id'   => $sub,
-                    'subject_name' => $row->subject_name,
-                    'subject_code' => $row->subject_code,
-                ];
-            }
-
-            $assessmentScoreRow = $assessmentScoresAll->get($row->broadsheet_id, collect());
-            $assessmentData     = [];
-            foreach ($assessments as $a) {
-                $score = $assessmentScoreRow->firstWhere('assessment_id', $a->id);
-                $assessmentData[$a->id] = $score ? (float)$score->score : 0;
-            }
-
-            $studentSubjectMap[$sid][$sub] = [
-                'total'         => (float)($row->total ?? 0),
-                'bf'            => (float)($row->bf ?? 0),
-                'cum'           => (float)($row->cum ?? 0),
-                'grade'         => $row->grade ?? '-',
-                'remark'        => $row->remark ?? '-',
-                'position'      => $row->position ?? '-',
-                'class_average' => (float)($row->class_average ?? 0),
-                'assessments'   => $assessmentData,
-            ];
-        }
-
-        // ── Build student summary rows ─────────────────────────────────────────
-        $studentInfo = Studentclass::where('schoolclassid', $schoolclassid)
-            ->where('sessionid', $sessionid)
-            ->join('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
-            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-            ->select([
-                'studentRegistration.id as id',
-                'studentRegistration.admissionNo as admissionno',
-                'studentRegistration.firstname',
-                'studentRegistration.lastname',
-                'studentRegistration.gender',
-                'studentRegistration.dateofbirth',
-                'studentpicture.picture',
-            ])
-            ->orderBy('studentRegistration.lastname')
-            ->orderBy('studentRegistration.firstname')
-            ->get();
-
-        // Compute per-student GPA/CGPA
-        $studentRows = [];
-        foreach ($studentInfo as $stu) {
-            $sid        = $stu->id;
-            $subScores  = $studentSubjectMap[$sid] ?? [];
-            $cumValues  = collect($subScores)->pluck('cum')->filter(fn($v) => $v > 0);
-            $totalCum   = $cumValues->sum();
-            $numSubjects= $cumValues->count();
-            $classAvg   = $numSubjects > 0 ? round($totalCum / $numSubjects, 1) : 0;
-
-            // GPA from total scores
-            $totalValues = collect($subScores)->pluck('total')->filter(fn($v) => $v > 0);
-            $gradePoints = $totalValues->map(fn($s) => $this->getGradePoint($s));
-            $gpa         = $gradePoints->count() > 0 ? round($gradePoints->avg(), 2) : 0.0;
-            $cgpa        = $gpa; // simplified; full CGPA would require cross-session data
-            $gpaGrade    = $this->getGpaGrade($gpa);
-
-            $studentRows[$sid] = [
-                'id'                 => $sid,
-                'admissionno'        => $stu->admissionno,
-                'firstname'          => $stu->firstname,
-                'lastname'           => $stu->lastname,
-                'gender'             => $stu->gender,
-                'dateofbirth'        => $stu->dateofbirth,
-                'picture'            => $stu->picture,
-                'subjects'           => $subScores,
-                'total_cum'          => round($totalCum, 1),
-                'num_subjects'       => $numSubjects,
-                'class_average'      => $classAvg,
-                'gpa'                => $gpa,
-                'cgpa'               => $cgpa,
-                'gpa_grade'          => $gpaGrade,
-                'total_grade_points' => round($gradePoints->sum(), 1),
-            ];
-        }
-
-        // ── Class-level stats per subject ─────────────────────────────────────
-        $subjectStats = [];
-        foreach ($subjectsMap as $sub => $subInfo) {
-            $allTotals = collect($studentRows)
-                ->pluck("subjects.{$sub}.total")
-                ->filter(fn($v) => $v !== null && $v > 0);
-
-            $subjectStats[$sub] = [
-                'avg'     => $allTotals->count() > 0 ? round($allTotals->avg(), 1) : 0,
-                'highest' => $allTotals->count() > 0 ? $allTotals->max() : 0,
-                'lowest'  => $allTotals->count() > 0 ? $allTotals->min() : 0,
-                'passed'  => $allTotals->filter(fn($v) => $v >= 40)->count(),
-                'failed'  => $allTotals->filter(fn($v) => $v < 40)->count(),
-            ];
-        }
-
-        // Alphabetical subjects
-        uasort($subjectsMap, fn($a, $b) => strcmp($a['subject_name'], $b['subject_name']));
-
-        return [
-            'schoolInfo'       => $schoolInfo,
-            'schoolclass'      => $schoolclass,
-            'schoolsession'    => $schoolsession,
-            'schoolterm'       => $schoolterm,
-            'assessments'      => $assessments,
-            'subjects'         => $subjectsMap,
-            'studentRows'      => array_values($studentRows),
-            'subjectStats'     => $subjectStats,
-            'selectedColumns'  => $selectedColumns,
-            'totalStudents'    => count($studentRows),
-            'generatedAt'      => now()->format('d M Y, H:i'),
+    foreach ($subjectClasses as $sc) {
+        $subjectsMap[$sc->subjectid] = [
+            'subject_id'       => $sc->subjectid,
+            'subject_name'     => $sc->subject_name,
+            'subject_code'     => $sc->subject_code ?? '',
+            'subjectteacherid' => $sc->subjectteacherid,
         ];
     }
+
+    // ── All students in this class/session ────────────────────────────────
+    $studentIds = Studentclass::where('schoolclassid', $schoolclassid)
+        ->where('sessionid', $sessionid)
+        ->pluck('studentId')
+        ->toArray();
+
+    // ── All broadsheet rows for this class/session/term ───────────────────
+    $broadsheets = Broadsheets::whereIn('broadsheet_records.student_id', $studentIds)
+        ->where('broadsheets.term_id', $termid)
+        ->where('broadsheet_records.session_id', $sessionid)
+        ->where('broadsheet_records.schoolclass_id', $schoolclassid)
+        ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
+        ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
+        ->join('studentRegistration', 'studentRegistration.id', '=', 'broadsheet_records.student_id')
+        ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+        ->select([
+            'broadsheets.id as broadsheet_id',
+            'broadsheet_records.student_id',
+            'broadsheet_records.subject_id',
+            'subject.subject as subject_name',
+            'subject.subject_code',
+            'studentRegistration.admissionNo as admissionno',
+            'studentRegistration.firstname',
+            'studentRegistration.lastname',
+            'studentRegistration.gender',
+            'studentpicture.picture',
+            'broadsheets.total',
+            'broadsheets.bf',
+            'broadsheets.cum',
+            'broadsheets.grade',
+            'broadsheets.remark',
+            'broadsheets.subject_position_class as position',
+            'broadsheets.avg as class_average',
+            'broadsheets.vettedstatus',
+        ])
+        ->orderBy('studentRegistration.lastname')
+        ->orderBy('studentRegistration.firstname')
+        ->orderBy('subject.subject')
+        ->get();
+
+    // ── Load assessment scores ─────────────────────────────────────────────
+    $broadsheetIds = $broadsheets->pluck('broadsheet_id')->unique()->toArray();
+    $assessmentScoresAll = BroadsheetAssessmentScore::whereIn('broadsheet_id', $broadsheetIds)
+        ->get()
+        ->groupBy('broadsheet_id');
+
+    // ── Pivot: student_id → subject_id → row data ─────────────────────────
+    $studentSubjectMap = [];
+
+    foreach ($broadsheets as $row) {
+        $sid = $row->student_id;
+        $sub = $row->subject_id;
+
+        // Ensure subject exists in our map
+        if (!isset($subjectsMap[$sub])) {
+            $subjectsMap[$sub] = [
+                'subject_id'   => $sub,
+                'subject_name' => $row->subject_name,
+                'subject_code' => $row->subject_code ?? '',
+            ];
+        }
+
+        $assessmentScoreRow = $assessmentScoresAll->get($row->broadsheet_id, collect());
+        $assessmentData     = [];
+        foreach ($assessments as $a) {
+            $score = $assessmentScoreRow->firstWhere('assessment_id', $a->id);
+            $assessmentData[$a->id] = $score ? (float)$score->score : 0;
+        }
+
+        $studentSubjectMap[$sid][$sub] = [
+            'total'         => (float)($row->total ?? 0),
+            'bf'            => (float)($row->bf ?? 0),
+            'cum'           => (float)($row->cum ?? 0),
+            'grade'         => $row->grade ?? '-',
+            'remark'        => $row->remark ?? '-',
+            'position'      => $row->position ?? '-',
+            'class_average' => (float)($row->class_average ?? 0),
+            'assessments'   => $assessmentData,
+        ];
+    }
+
+    // ── Build student summary rows ─────────────────────────────────────────
+    $studentInfo = Studentclass::where('schoolclassid', $schoolclassid)
+        ->where('sessionid', $sessionid)
+        ->join('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
+        ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+        ->select([
+            'studentRegistration.id as id',
+            'studentRegistration.admissionNo as admissionno',
+            'studentRegistration.firstname',
+            'studentRegistration.lastname',
+            'studentRegistration.gender',
+            'studentRegistration.dateofbirth',
+            'studentpicture.picture',
+        ])
+        ->orderBy('studentRegistration.lastname')
+        ->orderBy('studentRegistration.firstname')
+        ->get();
+
+    // Compute per-student GPA/CGPA
+    $studentRows = [];
+    foreach ($studentInfo as $stu) {
+        $sid        = $stu->id;
+        $subScores  = $studentSubjectMap[$sid] ?? [];
+
+        $cumValues  = collect($subScores)->pluck('cum')->filter(fn($v) => $v > 0);
+        $totalCum   = $cumValues->sum();
+        $numSubjects= $cumValues->count();
+
+        // GPA calculation
+        $totalValues = collect($subScores)->pluck('total')->filter(fn($v) => $v > 0);
+        $gradePoints = $totalValues->map(fn($s) => $this->getGradePoint($s));
+        $gpa         = $gradePoints->count() > 0 ? round($gradePoints->avg(), 2) : 0.0;
+        $cgpa        = $gpa;
+        $gpaGrade    = $this->getGpaGrade($gpa);
+
+        $studentRows[$sid] = [
+            'id'                 => $sid,
+            'admissionno'        => $stu->admissionno,
+            'firstname'          => $stu->firstname,
+            'lastname'           => $stu->lastname,
+            'gender'             => $stu->gender,
+            'dateofbirth'        => $stu->dateofbirth,
+            'picture'            => $stu->picture,
+            'subjects'           => $subScores,
+            'total_cum'          => round($totalCum, 1),
+            'num_subjects'       => $numSubjects,
+            'class_average'      => $numSubjects > 0 ? round($totalCum / $numSubjects, 1) : 0,
+            'gpa'                => $gpa,
+            'cgpa'               => $cgpa,
+            'gpa_grade'          => $gpaGrade,
+            'total_grade_points' => round($gradePoints->sum(), 1),
+        ];
+    }
+
+    // ── Class-level stats per subject ─────────────────────────────────────
+    $subjectStats = [];
+    foreach ($subjectsMap as $sub => $subInfo) {
+        $allTotals = collect($studentRows)
+            ->pluck("subjects.{$sub}.total")
+            ->filter(fn($v) => $v !== null && $v > 0);
+
+        $subjectStats[$sub] = [
+            'avg'     => $allTotals->count() > 0 ? round($allTotals->avg(), 1) : 0,
+            'highest' => $allTotals->count() > 0 ? $allTotals->max() : 0,
+            'lowest'  => $allTotals->count() > 0 ? $allTotals->min() : 0,
+            'passed'  => $allTotals->filter(fn($v) => $v >= 40)->count(),
+            'failed'  => $allTotals->filter(fn($v) => $v < 40)->count(),
+        ];
+    }
+
+    // Sort subjects alphabetically
+    uasort($subjectsMap, fn($a, $b) => strcmp($a['subject_name'], $b['subject_name']));
+
+    return [
+        'schoolInfo'       => $schoolInfo,
+        'schoolclass'      => $schoolclass,
+        'schoolsession'    => $schoolsession,
+        'schoolterm'       => $schoolterm,
+        'assessments'      => $assessments,
+        'subjects'         => $subjectsMap,
+        'studentRows'      => array_values($studentRows),
+        'subjectStats'     => $subjectStats,
+        'selectedColumns'  => $selectedColumns,
+        'totalStudents'    => count($studentRows),
+        'generatedAt'      => now()->format('d M Y, H:i'),
+    ];
+}
 
     // =========================================================================
     // EXPORT PDF
