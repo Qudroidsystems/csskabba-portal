@@ -63,7 +63,7 @@
     <div class="info-row">
         <div class="info-cell"><span class="info-label">Subject:</span> {{ $classInfo->subject }} ({{ $classInfo->subject_code }})</div>
         <div class="info-cell"><span class="info-label">Class:</span> {{ $classInfo->schoolclass }} {{ $classInfo->arm }}</div>
-        <div class="info-cell"><span class="info-label">Teacher:</span> {{ $classInfo->staff_id ? 'Staff ID: ' . $classInfo->staff_id : 'Not Assigned' }}</div>
+        <div class="info-cell"><span class="info-label">Teacher:</span> {{ $teacherName }}</div>
         <div class="info-cell"><span class="info-label">Term:</span> {{ $classInfo->term }}</div>
         <div class="info-cell"><span class="info-label">Session:</span> {{ $classInfo->session }}</div>
         <div class="info-cell"><span class="info-label">Date:</span> {{ date('d M Y') }}</div>

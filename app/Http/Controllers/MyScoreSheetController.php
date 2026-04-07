@@ -227,6 +227,14 @@ class MyScoreSheetController extends Controller
                 ], 404);
             }
 
+            // Get teacher name
+                    $teacherName = '';
+                    if ($staffid) {
+                        $teacher = \App\Models\User::find($staffid);
+                        if ($teacher) {
+                            $teacherName = $teacher->name ?? $teacher->firstname . ' ' . $teacher->lastname;
+                        }
+                    }
             // Get schoolclass and assessments
             $schoolclass = Schoolclass::with('classcategories')->find($schoolclassid);
             $assessments = collect();
@@ -239,6 +247,8 @@ class MyScoreSheetController extends Controller
                     ->get();
             }
 
+
+
             // Get class info for the header
             $classInfo = $broadsheets->first();
 
@@ -250,7 +260,8 @@ class MyScoreSheetController extends Controller
                 'broadsheets' => $broadsheets,
                 'assessments' => $assessments,
                 'classInfo' => $classInfo,
-                'school' => $school
+                'school' => $school,
+                'teacherName'=>$teacherName
             ]);
 
             $pdf->setPaper('a4', 'landscape');
