@@ -255,8 +255,8 @@ class MyScoreSheetController extends Controller
         $school = null;
 
         // Try to get from School model
-        if (class_exists('\App\Models\School')) {
-            $school = \App\Models\School::first();
+        if (class_exists('\App\Models\SchoolSchoolInformation')) {
+            $school = SchoolInformation::first();
         }
 
         // If no school found, create a default object with your school details
