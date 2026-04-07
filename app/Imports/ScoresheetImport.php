@@ -30,6 +30,8 @@ class ScoresheetImport implements ToCollection, SkipsOnFailure, WithStartRow
     protected $subjectId = null;
     protected $startRow = 1;
     protected $headerRowFound = false;
+    protected $admissionColumnIndex = -1;
+    protected $assessmentColumnMap = [];
 
     public function __construct(array $importData)
     {
@@ -83,40 +85,48 @@ class ScoresheetImport implements ToCollection, SkipsOnFailure, WithStartRow
 
         Log::info('Total rows in file: ' . $rows->count());
 
-        // Find where the data starts (look for "Admission No" in column B)
-        $dataStartRow = -1;
-        $headerRow = null;
+        // Find the header row (contains "Admission No" in any column)
+        $headerRowIndex = -1;
+        $headerRowValues = null;
 
         foreach ($rows as $index => $row) {
             $rowArray = is_array($row) ? $row : $row->toArray();
             $rowValues = array_values($rowArray);
 
-            // Check if this row has "Admission No" in column 2 (index 1)
-            if (isset($rowValues[1]) && is_string($rowValues[1]) && stripos($rowValues[1], 'Admission') !== false) {
-                $dataStartRow = $index + 2; // Data starts after header row
-                $headerRow = $rowValues;
-                $this->headerRowFound = true;
-                Log::info("Found header row at index: {$index} (Row " . ($index + 1) . ")");
-                Log::info("Header row values: " . json_encode($rowValues));
-                break;
+            // Look for "Admission No" in any column of this row
+            foreach ($rowValues as $colIndex => $value) {
+                if (is_string($value) && preg_match('/admission|adm\s*no|student\s*id/i', $value)) {
+                    $headerRowIndex = $index;
+                    $headerRowValues = $rowValues;
+                    $this->admissionColumnIndex = $colIndex;
+                    $this->headerRowFound = true;
+                    Log::info("Found header row at index: {$index} (Row " . ($index + 1) . ")");
+                    Log::info("Admission column found at index: {$colIndex}");
+                    Log::info("Header row values: " . json_encode($rowValues));
+                    break 2;
+                }
             }
         }
 
         if (!$this->headerRowFound) {
             $this->failures[] = [
                 'row' => 0,
-                'errors' => ['Could not find header row with "Admission No" in column B.']
+                'errors' => ['Could not find header row with "Admission No" in any column. Please ensure your file has a column named "Admission No".']
             ];
             return;
         }
 
+        // Build assessment column mapping from header row
+        $this->buildAssessmentColumnMap($headerRowValues);
+
         // Set start row to the row after header
-        $this->startRow = $dataStartRow;
+        $this->startRow = $headerRowIndex + 2;
 
         // Get only data rows (starting from after header)
-        $dataRows = $rows->slice($dataStartRow - 1);
+        $dataRows = $rows->slice($headerRowIndex + 1);
 
         Log::info('Data rows to process: ' . $dataRows->count());
+        Log::info('Start row set to: ' . $this->startRow);
 
         DB::beginTransaction();
 
@@ -127,8 +137,8 @@ class ScoresheetImport implements ToCollection, SkipsOnFailure, WithStartRow
 
                 // Skip completely empty rows
                 $isEmpty = true;
-                for ($i = 0; $i < min(3, count($rowValues)); $i++) {
-                    if (!empty($rowValues[$i]) && $rowValues[$i] !== null && $rowValues[$i] !== '') {
+                foreach ($rowValues as $value) {
+                    if (!empty($value) && $value !== null && $value !== '') {
                         $isEmpty = false;
                         break;
                     }
@@ -139,19 +149,21 @@ class ScoresheetImport implements ToCollection, SkipsOnFailure, WithStartRow
                 }
 
                 // Check if admission number is empty
-                if (!isset($rowValues[1]) || empty($rowValues[1])) {
-                    Log::warning("Skipping row with no admission number at row " . ($dataStartRow + $index));
+                if ($this->admissionColumnIndex === -1 ||
+                    !isset($rowValues[$this->admissionColumnIndex]) ||
+                    empty($rowValues[$this->admissionColumnIndex])) {
+                    Log::warning("Skipping row with no admission number at row " . ($this->startRow + $index));
                     continue;
                 }
 
                 try {
-                    $this->processRow($rowValues, $dataStartRow + $index);
+                    $this->processRow($rowValues, $this->startRow + $index);
                 } catch (\Exception $e) {
                     $this->failures[] = [
-                        'row' => $dataStartRow + $index,
+                        'row' => $this->startRow + $index,
                         'errors' => [$e->getMessage()]
                     ];
-                    Log::error("Import row error at row " . ($dataStartRow + $index) . ": " . $e->getMessage());
+                    Log::error("Import row error at row " . ($this->startRow + $index) . ": " . $e->getMessage());
                 }
             }
 
@@ -174,25 +186,48 @@ class ScoresheetImport implements ToCollection, SkipsOnFailure, WithStartRow
     }
 
     /**
+     * Build the assessment column mapping from the header row
+     */
+    protected function buildAssessmentColumnMap($headerValues)
+    {
+        foreach ($headerValues as $colIndex => $headerText) {
+            // Skip the admission column
+            if ($colIndex == $this->admissionColumnIndex) {
+                continue;
+            }
+
+            if (empty($headerText) || !is_string($headerText)) {
+                continue;
+            }
+
+            // Extract assessment name (remove max score in parentheses if present)
+            // Example: "CA 1 (20.00)" -> "CA 1"
+            $assessmentName = trim($headerText);
+            $assessmentName = preg_replace('/\s*\([^)]*\)/', '', $assessmentName);
+            $assessmentName = trim($assessmentName);
+
+            // Find matching assessment in the system
+            foreach ($this->assessments as $assessment) {
+                if (strcasecmp($assessment->name, $assessmentName) === 0) {
+                    $this->assessmentColumnMap[$assessment->id] = $colIndex;
+                    Log::info("Mapped assessment '{$assessment->name}' (ID: {$assessment->id}) to column index {$colIndex} (Header: '{$headerText}')");
+                    break;
+                }
+            }
+        }
+
+        Log::info('Final assessment column mapping: ' . json_encode($this->assessmentColumnMap));
+    }
+
+    /**
      * Process a single row
-     * Based on the Excel structure:
-     * Index 0: S/N
-     * Index 1: Admission No
-     * Index 2: Student Name
-     * Index 3: CA 1
-     * Index 4: CA 2
-     * Index 5: EXAM
-     * Index 6: Total
-     * Index 7: BF
-     * Index 8: Cum
-     * Index 9: Grade
-     * Index 10: Position
-     * Index 11: Remark
      */
     protected function processRow($rowValues, $rowNumber)
     {
-        // Get admission number from column index 1
-        $admissionNo = isset($rowValues[1]) ? trim($rowValues[1]) : null;
+        // Get admission number
+        $admissionNo = isset($rowValues[$this->admissionColumnIndex])
+            ? trim($rowValues[$this->admissionColumnIndex])
+            : null;
 
         if (!$admissionNo) {
             throw new \Exception("Admission number is required.");
@@ -231,25 +266,18 @@ class ScoresheetImport implements ToCollection, SkipsOnFailure, WithStartRow
             'term_id' => $this->importData['term_id'],
         ]);
 
-        // Get scores from columns
-        $ca1Score = isset($rowValues[3]) && $rowValues[3] !== '' ? floatval($rowValues[3]) : 0;
-        $ca2Score = isset($rowValues[4]) && $rowValues[4] !== '' ? floatval($rowValues[4]) : 0;
-        $examScore = isset($rowValues[5]) && $rowValues[5] !== '' ? floatval($rowValues[5]) : 0;
-
-        Log::info("Scores for {$admissionNo}: CA1={$ca1Score}, CA2={$ca2Score}, EXAM={$examScore}");
-
-        // Process assessment scores
+        // Process assessment scores using the dynamic column mapping
         $totalScore = 0;
 
         foreach ($this->assessments as $assessment) {
             $score = 0;
+            $columnIndex = $this->assessmentColumnMap[$assessment->id] ?? null;
 
-            if (strcasecmp($assessment->name, 'CA 1') === 0) {
-                $score = $ca1Score;
-            } elseif (strcasecmp($assessment->name, 'CA 2') === 0) {
-                $score = $ca2Score;
-            } elseif (strcasecmp($assessment->name, 'EXAM') === 0) {
-                $score = $examScore;
+            if ($columnIndex !== null && isset($rowValues[$columnIndex])) {
+                $scoreValue = $rowValues[$columnIndex];
+                if ($scoreValue !== null && $scoreValue !== '') {
+                    $score = floatval($scoreValue);
+                }
             }
 
             $maxScore = floatval($assessment->max_score);
@@ -263,15 +291,13 @@ class ScoresheetImport implements ToCollection, SkipsOnFailure, WithStartRow
             }
 
             // Save assessment score
-            if ($broadsheet->id) {
-                BroadsheetAssessmentScore::updateOrCreate(
-                    [
-                        'broadsheet_id' => $broadsheet->id,
-                        'assessment_id' => $assessment->id,
-                    ],
-                    ['score' => $score]
-                );
-            }
+            BroadsheetAssessmentScore::updateOrCreate(
+                [
+                    'broadsheet_id' => $broadsheet->id ?? 0,
+                    'assessment_id' => $assessment->id,
+                ],
+                ['score' => $score]
+            );
 
             $totalScore += $score;
         }
@@ -419,21 +445,23 @@ class ScoresheetImport implements ToCollection, SkipsOnFailure, WithStartRow
                 throw new \Exception('The Excel file is empty.');
             }
 
-            // Look for header row with "Admission No"
+            // Look for header row with "Admission No" in any column
             $foundHeader = false;
             foreach ($rows as $index => $row) {
                 $rowArray = is_array($row) ? $row : $row->toArray();
                 $rowValues = array_values($rowArray);
 
-                if (isset($rowValues[1]) && is_string($rowValues[1]) && stripos($rowValues[1], 'Admission') !== false) {
-                    $foundHeader = true;
-                    Log::info("Found header row at line: " . ($index + 1));
-                    break;
+                foreach ($rowValues as $value) {
+                    if (is_string($value) && preg_match('/admission|adm\s*no|student\s*id/i', $value)) {
+                        $foundHeader = true;
+                        Log::info("Found header row at line: " . ($index + 1));
+                        break 2;
+                    }
                 }
             }
 
             if (!$foundHeader) {
-                throw new \Exception('Could not find header row with "Admission No" in column B.');
+                throw new \Exception('Could not find header row with "Admission No" in any column. Please ensure your file has a column named "Admission No".');
             }
 
             Log::info('Excel validation passed.');
