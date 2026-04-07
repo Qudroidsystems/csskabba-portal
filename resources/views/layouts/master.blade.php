@@ -194,6 +194,9 @@
     @if (Route::is('studentmockreports.*'))
             @include('layouts.pages-assets.css.studentreport-list-css')
     @endif
+    @if (Route::is('broadsheet.*'))
+            @include('layouts.pages-assets.css.studentreport-list-css')
+    @endif
 
     @if (Route::is('subjectoperation.*'))
         @include('layouts.pages-assets.css.subjectoperation-list-css')
@@ -643,6 +646,12 @@
                        @can('View student-report')
                            <li class="nav-item">
                             <a href="{{ route('studentreports.index') }}" class="nav-link" data-key="t-products">Terminal Result Reports</a>
+                        </li>
+                       @endcan
+
+                       @can('View student-report')
+                           <li class="nav-item">
+                            <a href="{{ route('broadsheet.index') }}" class="nav-link" data-key="t-products">Terminal Result Broadsheet</a>
                         </li>
                        @endcan
 {{--
@@ -2370,6 +2379,10 @@
 
        @if (Route::is('studentreports.*'))
           @include('layouts.pages-assets.js.studentreport-list-js')
+      @endif
+
+       @if (Route::is('broadsheet.*'))
+            @include('layouts.pages-assets.js.studentreport-list-js')
       @endif
 
       @if (Route::is('studentmockreports.*'))
