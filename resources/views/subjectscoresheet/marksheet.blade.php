@@ -16,7 +16,7 @@
             background: #fff;
             color: #222;
             margin: 0;
-            padding: 20px;
+            padding: 0;
         }
 
         /* First Page - Header and Instructions */
@@ -26,7 +26,7 @@
 
         .header {
             text-align: center;
-            padding: 10px 20px 14px 20px;
+            padding: 20px 20px 14px 20px;
             border-bottom: 2px solid #1a3c6e;
             margin-bottom: 14px;
         }
@@ -35,7 +35,6 @@
             width: 80px;
             height: auto;
             margin-bottom: 6px;
-            display: inline-block;
         }
 
         .school-name {
@@ -92,23 +91,21 @@
             font-size: 11px;
         }
 
-        .info-row {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-            align-items: center;
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
         }
 
         .info-item {
-            flex: 1;
-            padding: 5px 10px;
-            white-space: nowrap;
+            padding: 3px 0;
         }
 
         .info-label {
             font-weight: 700;
             color: #1a3c6e;
-            margin-right: 5px;
+            display: inline-block;
+            min-width: 70px;
         }
 
         .info-value {
@@ -139,6 +136,14 @@
         .instructions li {
             margin-bottom: 4px;
             line-height: 1.4;
+        }
+
+        .assessment-max {
+            display: inline-block;
+            background: #e8f0fe;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin: 5px 0;
         }
 
         /* Table Styles - Starts on new page */
@@ -184,34 +189,11 @@
         .marks td.name-col {
             text-align: left;
             padding-left: 8px;
-            min-width: 180px;
-        }
-
-        .student-info {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .student-avatar {
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 1px solid #ccc;
-        }
-
-        .student-details {
-            flex: 1;
-        }
-
-        .student-name {
-            font-weight: 600;
-            font-size: 10.5px;
+            min-width: 160px;
         }
 
         .marks td.score-col {
-            min-width: 55px;
+            min-width: 50px;
         }
 
         .marks tfoot td {
@@ -226,10 +208,6 @@
             justify-content: space-around;
             margin-top: 50px;
             margin-bottom: 30px;
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
         }
 
         .sig {
@@ -260,7 +238,7 @@
             body {
                 font-size: 10px;
                 margin: 0;
-                padding: 10px;
+                padding: 0;
             }
 
             .first-page {
@@ -276,11 +254,6 @@
                 bottom: 0;
                 width: 100%;
             }
-
-            .student-avatar {
-                print-color-adjust: exact;
-                -webkit-print-color-adjust: exact;
-            }
         }
     </style>
 </head>
@@ -291,26 +264,23 @@
 
     {{-- School Header --}}
     <div class="header">
-        @if($school && $school->school_logo && file_exists(public_path('storage/' . $school->school_logo)))
+        @if($school && $school->school_logo)
             <img src="{{ public_path('storage/' . $school->school_logo) }}" alt="Logo" class="school-logo">
         @else
-            {{-- Try alternative logo paths --}}
-            @if(file_exists(public_path('images/logo.png')))
-                <img src="{{ public_path('images/logo.png') }}" alt="Logo" class="school-logo">
-            @elseif(file_exists(public_path('img/logo.png')))
-                <img src="{{ public_path('img/logo.png') }}" alt="Logo" class="school-logo">
-            @elseif(file_exists(public_path('assets/images/logo.png')))
-                <img src="{{ public_path('assets/images/logo.png') }}" alt="Logo" class="school-logo">
-            @else
-                <div style="width:80px; height:80px; margin:0 auto 6px auto; background:#1a3c6e; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-size:12px;">Logo</div>
-            @endif
+            <div style="width:80px; height:80px; margin:0 auto 6px auto; background:#f0f0f0; border-radius:50%;"></div>
         @endif
         <div class="school-name">{{ $school->school_name ?? 'CLARET SECONDARY SCHOOL KABBA' }}</div>
         <div class="school-details">{{ $school->school_address ?? 'No. 1, Claret Avenue, Iludun Quarters, Olle Road, Kabba, Kogi State, Nigeria' }}</div>
-        <div class="school-details">
-            Tel: {{ $school->school_phone ?? '08136663185' }} |
-            Email: {{ $school->school_email ?? 'claretsecschools@yahoo.com' }}
-        </div>
+        @if($school && $school->school_phone)
+            <div class="school-details">Tel: {{ $school->school_phone }}</div>
+        @else
+            <div class="school-details">Tel: 08136663185</div>
+        @endif
+        @if($school && $school->school_email)
+            <div class="school-details">Email: {{ $school->school_email }}</div>
+        @else
+            <div class="school-details">Email: claretsecschools@yahoo.com</div>
+        @endif
         <div class="school-motto">"{{ $school->school_motto ?? 'KNOWLEDGE AND VIRTUE' }}"</div>
     </div>
 
@@ -318,10 +288,10 @@
         <span class="doc-title">STUDENT MARKS SHEET</span>
     </div>
 
-    {{-- Class Information - Horizontal Layout --}}
+    {{-- Class Information --}}
     @if($classInfo)
     <div class="class-info">
-        <div class="info-row">
+        <div class="info-grid">
             <div class="info-item">
                 <span class="info-label">Subject:</span>
                 <span class="info-value">{{ $classInfo->subject }} ({{ $classInfo->subject_code }})</span>
@@ -332,7 +302,7 @@
             </div>
             <div class="info-item">
                 <span class="info-label">Teacher:</span>
-                <span class="info-value">{{ $teacherName ?: 'Staff ID: ' . $staffId }}</span>
+                <span class="info-value">Staff ID: {{ $classInfo->staff_id ?? '1' }}</span>
             </div>
             <div class="info-item">
                 <span class="info-label">Term:</span>
@@ -379,7 +349,7 @@
             <tr>
                 <th style="width:35px;">S/N</th>
                 <th style="min-width:100px;">Adm. No</th>
-                <th style="min-width:200px;">Student Name & Photo</th>
+                <th style="min-width:160px;">Student Name</th>
                 @foreach($assessments as $assessment)
                     <th class="score-col">
                         {{ $assessment->name }}<br>
@@ -394,36 +364,13 @@
         </thead>
         <tbody>
             @forelse($broadsheets as $index => $student)
-                @php
-                    // Get student picture path
-                    $picturePath = null;
-                    if (isset($student->picture) && $student->picture) {
-                        $picturePath = 'storage/student_avatars/' . basename($student->picture);
-                    } elseif (isset($student->student_picture) && $student->student_picture) {
-                        $picturePath = 'storage/student_avatars/' . basename($student->student_picture);
-                    }
-
-                    // Check if file exists
-                    $hasPicture = $picturePath && file_exists(public_path($picturePath));
-                @endphp
                 <tr>
                     <td>{{ $index + 1 }}</td>
                     <td>{{ $student->admissionno ?? '-' }}</td>
                     <td class="name-col">
-                        <div class="student-info">
-                            @if($hasPicture)
-                                <img src="{{ public_path($picturePath) }}" class="student-avatar" alt="Photo">
-                            @else
-                                <div style="width:30px; height:30px; background:#e0e0e0; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:12px;">📷</div>
-                            @endif
-                            <div class="student-details">
-                                <div class="student-name">
-                                    <strong>{{ $student->lname ?? '' }}</strong>
-                                    {{ $student->fname ?? '' }}
-                                    {{ $student->mname ?? '' }}
-                                </div>
-                            </div>
-                        </div>
+                        <strong>{{ $student->lname ?? '' }}</strong>
+                        {{ $student->fname ?? '' }}
+                        {{ $student->mname ?? '' }}
                     </td>
                     @foreach($assessments as $assessment)
                         {{-- Blank cell — teacher fills in score on paper --}}
@@ -460,17 +407,14 @@
         <div class="sig">
             <div class="sig-line">Subject Teacher</div>
             <div style="font-size:9px; margin-top:5px;">Name: _________________</div>
-            <div style="font-size:9px;">Sign: _________________</div>
         </div>
         <div class="sig">
             <div class="sig-line">H.O.D</div>
             <div style="font-size:9px; margin-top:5px;">Name: _________________</div>
-            <div style="font-size:9px;">Sign: _________________</div>
         </div>
         <div class="sig">
             <div class="sig-line">Principal</div>
             <div style="font-size:9px; margin-top:5px;">Name: _________________</div>
-            <div style="font-size:9px;">Sign: _________________</div>
         </div>
         <div class="sig">
             <div class="sig-line">Date</div>
@@ -479,7 +423,7 @@
     </div>
 
     <div class="page-number">
-        Page {PAGE_NUM} of {PAGE_COUNT}
+        Page {{-- Auto-generated by browser --}}
     </div>
 </div>
 
