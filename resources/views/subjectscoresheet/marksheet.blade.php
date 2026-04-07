@@ -45,7 +45,7 @@
 {{-- Header --}}
 <div class="header">
     @if($school && $school->school_logo)
-        <img src="{{ public_path('storage/app/public/shoool_logos' . $school->school_logo) }}" alt="Logo" class="school-logo">
+        <img src="{{ public_path('storage/' . $school->school_logo) }}" alt="Logo" class="school-logo">
     @endif
     <div class="school-name">{{ $school->school_name ?? 'School Name' }}</div>
     @if($school)

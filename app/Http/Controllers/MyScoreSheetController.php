@@ -199,111 +199,73 @@ class MyScoreSheetController extends Controller
     // DOWNLOAD MARKS SHEET (PDF)
     // =========================================================================
 
- public function downloadMarksSheet(Request $request)
-{
-    try {
-        // Get parameters from request or session
-        $subjectclassid = $request->input('subjectclass_id', session('subjectclass_id'));
-        $staffid        = $request->input('staff_id', session('staff_id'));
-        $termid         = $request->input('term_id', session('term_id'));
-        $sessionid      = $request->input('session_id', session('session_id'));
-        $schoolclassid  = $request->input('schoolclass_id', session('schoolclass_id'));
+    public function downloadMarksSheet(Request $request)
+    {
+        try {
+            // Get parameters from request or session
+            $subjectclassid = $request->input('subjectclass_id', session('subjectclass_id'));
+            $staffid        = $request->input('staff_id', session('staff_id'));
+            $termid         = $request->input('term_id', session('term_id'));
+            $sessionid      = $request->input('session_id', session('session_id'));
+            $schoolclassid  = $request->input('schoolclass_id', session('schoolclass_id'));
 
-        // Validate required parameters
-        if (!$subjectclassid || !$staffid || !$termid || !$sessionid || !$schoolclassid) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Missing session data. Please open the scoresheet first.'
-            ], 400);
-        }
-
-        // Get the data needed for the marks sheet
-        $broadsheets = $this->getBroadsheets($staffid, $termid, $sessionid, $schoolclassid, $subjectclassid);
-
-        if ($broadsheets->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No students found for this subject.'
-            ], 404);
-        }
-
-        // Get schoolclass and assessments
-        $schoolclass = Schoolclass::with('classcategories')->find($schoolclassid);
-        $assessments = collect();
-
-        if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
-            $categoryIds = $schoolclass->classcategories->pluck('id');
-            $assessments = Assessment::whereIn('classcategory_id', $categoryIds)
-                ->with('subAssessments')
-                ->orderBy('id')
-                ->get();
-        }
-
-        // Get class info for the header
-        $classInfo = $broadsheets->first();
-
-        // Get teacher name
-        $teacherName = '';
-        if ($staffid) {
-            $teacher = \App\Models\User::find($staffid);
-            if ($teacher) {
-                $teacherName = $teacher->name ?? $teacher->firstname . ' ' . $teacher->lastname;
+            // Validate required parameters
+            if (!$subjectclassid || !$staffid || !$termid || !$sessionid || !$schoolclassid) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Missing session data. Please open the scoresheet first.'
+                ], 400);
             }
-        }
 
-        // Get school info - try multiple possible models/tables
-        $school = null;
+            // Get the data needed for the marks sheet
+            $broadsheets = $this->getBroadsheets($staffid, $termid, $sessionid, $schoolclassid, $subjectclassid);
 
-        // Try to get from School model
-        if (class_exists('\App\Models\SchoolSchoolInformation')) {
+            if ($broadsheets->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No students found for this subject.'
+                ], 404);
+            }
+
+            // Get schoolclass and assessments
+            $schoolclass = Schoolclass::with('classcategories')->find($schoolclassid);
+            $assessments = collect();
+
+            if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
+                $categoryIds = $schoolclass->classcategories->pluck('id');
+                $assessments = Assessment::whereIn('classcategory_id', $categoryIds)
+                    ->with('subAssessments')
+                    ->orderBy('id')
+                    ->get();
+            }
+
+            // Get class info for the header
+            $classInfo = $broadsheets->first();
+
+            // Get school info (adjust the model name as needed)
             $school = SchoolInformation::first();
+
+            // Generate PDF using DomPDF
+            $pdf = Pdf::loadView('subjectscoresheet.marksheet', [
+                'broadsheets' => $broadsheets,
+                'assessments' => $assessments,
+                'classInfo' => $classInfo,
+                'school' => $school
+            ]);
+
+            $pdf->setPaper('a4', 'landscape');
+
+            return $pdf->download('marks-sheet-' . date('Y-m-d') . '.pdf');
+
+        } catch (\Exception $e) {
+            Log::error('Marks sheet download error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to generate marks sheet: ' . $e->getMessage()
+            ], 500);
         }
-
-        // If no school found, create a default object with your school details
-        if (!$school) {
-            $school = new \stdClass();
-            $school->school_name = 'CLARET SECONDARY SCHOOL KABBA';
-            $school->school_address = 'No. 1, Claret Avenue, Iludun Quarters, Olle Road, Kabba, Kogi State, Nigeria';
-            $school->school_phone = '08136663185';
-            $school->school_email = 'claretsecschools@yahoo.com';
-            $school->school_motto = 'KNOWLEDGE AND VIRTUE';
-            $school->school_logo = null;
-        }
-
-        // Generate PDF using DomPDF
-        $pdf = Pdf::loadView('subjectscoresheet.marksheet', [
-            'broadsheets' => $broadsheets,
-            'assessments' => $assessments,
-            'classInfo' => $classInfo,
-            'school' => $school,
-            'teacherName' => $teacherName,
-            'staffId' => $staffid,
-            'termid' => $termid,
-            'sessionid' => $sessionid,
-            'schoolclassid' => $schoolclassid,
-            'subjectclassid' => $subjectclassid
-        ]);
-
-        $pdf->setPaper('a4', 'landscape');
-
-        // Set PDF options for better rendering
-        $pdf->setOptions([
-            'defaultFont' => 'sans-serif',
-            'isHtml5ParserEnabled' => true,
-            'isRemoteEnabled' => true,
-            'isPhpEnabled' => true,
-        ]);
-
-        return $pdf->download('marks-sheet-' . date('Y-m-d') . '.pdf');
-
-    } catch (\Exception $e) {
-        \Log::error('Marks sheet download error: ' . $e->getMessage());
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to generate marks sheet: ' . $e->getMessage()
-        ], 500);
     }
-}
+
     // =========================================================================
     // EXPORT (Excel, dynamic)
     // =========================================================================
