@@ -531,8 +531,8 @@ protected function validateFileMetadata($file, $importData)
     // Get current session data
     $subjectClass = Subjectclass::find($importData['subjectclass_id']);
     $schoolclass = Schoolclass::find($importData['schoolclass_id']);
-    $term = \App\Models\SchoolTerm::find($importData['term_id']);
-    $session = \App\Models\SchoolSession::find($importData['session_id']);
+    $term = Schoolterm::find($importData['term_id']);
+    $session = Schoolsession::find($importData['session_id']);
 
     // Compare metadata
     $errors = [];
