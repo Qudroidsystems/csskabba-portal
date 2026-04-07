@@ -124,6 +124,7 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 10.5px;
+            margin-bottom: 30px;
         }
 
         .marks th, .marks td {
@@ -164,33 +165,52 @@
             font-size: 10px;
         }
 
-        /* Footer - All signatures on the same line */
+        /* Footer Styles - Same line layout */
         .footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-top: 50px;
-            margin-bottom: 20px;
+            width: 100%;
+            background: #f0f4fa;
+            border: 1px solid #c5d3e8;
+            padding: 8px 12px;
+            margin: 10px 0;
+            border-radius: 6px;
+            font-size: 10.5px;
+        }
+
+        .footer-row {
+            display: table;
             width: 100%;
         }
 
-        .sig {
+        .footer-cell {
+            display: table-cell;
             text-align: center;
-            flex: 1;
-            margin: 0 5px;
+            padding: 2px 12px;
+            border-right: 1px solid #c5d3e8;
+        }
+
+        .footer-cell:last-child {
+            border-right: none;
         }
 
         .sig-line {
             border-top: 1px solid #333;
-            margin-top: 36px;
-            padding-top: 4px;
+            margin-top: 30px;
+            padding-top: 6px;
             font-size: 10px;
+            font-weight: 600;
+        }
+
+        .sig-title {
+            font-weight: 700;
+            color: #1a3c6e;
+            margin-bottom: 5px;
         }
 
         .sig-name {
             font-size: 9px;
-            margin-top: 5px;
             color: #555;
+            margin-top: 5px;
+            font-style: italic;
         }
 
         .badge-vetted {
@@ -221,8 +241,8 @@
             }
 
             .footer {
-                position: relative;
-                bottom: 0;
+                position: fixed;
+                bottom: 20px;
                 width: 100%;
             }
         }
@@ -345,26 +365,29 @@
         @endif
     </table>
 
-    {{-- Footer Signatures - All on the same line --}}
+    {{-- Footer Signatures - Same line layout --}}
     <div class="footer">
-        <div class="sig">
-            <div class="sig-line">Subject Teacher</div>
-            <div class="sig-name">Name: _________________</div>
-            <div class="sig-name">Sign: _________________</div>
-        </div>
-        <div class="sig">
-            <div class="sig-line">H.O.D</div>
-            <div class="sig-name">Name: _________________</div>
-            <div class="sig-name">Sign: _________________</div>
-        </div>
-        <div class="sig">
-            <div class="sig-line">Principal</div>
-            <div class="sig-name">Name: _________________</div>
-            <div class="sig-name">Sign: _________________</div>
-        </div>
-        <div class="sig">
-            <div class="sig-line">Date</div>
-            <div class="sig-name">____/____/________</div>
+        <div class="footer-row">
+            <div class="footer-cell">
+                <div class="sig-title">Subject Teacher</div>
+                <div class="sig-line"></div>
+                <div class="sig-name">Name: _________________</div>
+            </div>
+            <div class="footer-cell">
+                <div class="sig-title">H.O.D</div>
+                <div class="sig-line"></div>
+                <div class="sig-name">Name: _________________</div>
+            </div>
+            <div class="footer-cell">
+                <div class="sig-title">Principal</div>
+                <div class="sig-line"></div>
+                <div class="sig-name">Name: _________________</div>
+            </div>
+            <div class="footer-cell">
+                <div class="sig-title">Date</div>
+                <div class="sig-line"></div>
+                <div class="sig-name">____/____/________</div>
+            </div>
         </div>
     </div>
 
