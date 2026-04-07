@@ -42,7 +42,7 @@ class SubjectTeacher extends Model
     // Add this missing relationship
     public function subjectclass()
     {
-        return $this->hasOne(Subjectclass::class, 'subjectteacherid');
+        return $this->hasOne(Subjectclass::class, 'subjectteacherid','id');
     }
 
     // Other existing relationships
