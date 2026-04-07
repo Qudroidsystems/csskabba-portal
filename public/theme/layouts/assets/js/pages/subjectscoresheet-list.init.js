@@ -735,11 +735,10 @@ function downloadExcel() {
     const originalBtnContent = downloadExcelButton?.innerHTML;
 
     if (!downloadExcelButton || !downloadProgressContainer || !downloadProgressBar) {
-        console.error('Download elements not found in DOM');
         Swal.fire({
             icon: 'error',
             title: 'Download Failed',
-            text: 'Required elements are missing. Check console for details.',
+            text: 'Required elements are missing.',
             showConfirmButton: true
         });
         return;
@@ -750,7 +749,6 @@ function downloadExcel() {
     downloadProgressContainer.style.display = 'block';
     downloadProgressBar.style.width = '10%';
 
-    // Simply download without asking for password
     axios.get(window.routes?.export || '/subjectscoresheet/export', {
         responseType: 'blob',
         headers: {
@@ -768,7 +766,6 @@ function downloadExcel() {
     .then(response => {
         downloadProgressBar.style.width = '100%';
 
-        // Get filename from Content-Disposition header
         let filename = 'scoresheet.xlsx';
         const contentDisposition = response.headers['content-disposition'];
         if (contentDisposition) {
@@ -787,7 +784,6 @@ function downloadExcel() {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
 
-        // Show success message (optionally show the password)
         Swal.fire({
             icon: 'success',
             title: 'Downloaded!',
@@ -818,7 +814,6 @@ function downloadExcel() {
             reader.readAsText(error.response.data);
         } else {
             errorMessage = error.message || errorMessage;
-            console.error('Download error:', error);
             Swal.fire({
                 icon: 'error',
                 title: 'Download Failed',
@@ -836,6 +831,8 @@ function downloadExcel() {
         }, 1000);
     });
 }
+
+
 // Download Marks Sheet with progress
 function downloadMarksSheet() {
     const downloadMarksSheetButton = document.getElementById('downloadMarksSheet');

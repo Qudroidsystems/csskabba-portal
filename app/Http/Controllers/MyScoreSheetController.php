@@ -282,6 +282,8 @@ class MyScoreSheetController extends Controller
     // =========================================================================
     // EXPORT (Excel, dynamic)
     // =========================================================================
+
+
     public function export(Request $request)
 {
     $schoolclassId  = session('schoolclass_id');
@@ -295,15 +297,15 @@ class MyScoreSheetController extends Controller
     }
 
     // Get the actual names for filename
-    $subjectClass = Subjectclass::with('subject')->find($subjectclassId);
-    $schoolclass = Schoolclass::find($schoolclassId);
-    $term = Schoolterm::find($termId);
-    $session = Schoolsession::find($sessionId);
+    $subjectClass = \App\Models\Subjectclass::with('subject')->find($subjectclassId);
+    $schoolclass = \App\Models\Schoolclass::find($schoolclassId);
+    $term = \App\Models\SchoolTerm::find($termId);
+    $session = \App\Models\SchoolSession::find($sessionId);
 
     // Get the actual values
     $subjectName = $subjectClass && $subjectClass->subject ? $subjectClass->subject->subject : 'subject';
     $className = $schoolclass ? $schoolclass->schoolclass : 'class';
-    $arm = $schoolclass && $schoolclass->arm ? $schoolclass->arm : '';
+    $arm = $schoolclass && $schoolclass->arm_name ? $schoolclass->arm_name : '';
     $termName = $term ? $term->term : 'term';
     $sessionName = $session ? $session->session : 'session';
 
@@ -314,22 +316,24 @@ class MyScoreSheetController extends Controller
     $termName = preg_replace('/[^a-zA-Z0-9-]/', '_', $termName);
     $sessionName = preg_replace('/[^a-zA-Z0-9-]/', '_', $sessionName);
 
-    // Build filename
+    // Build filename: subject_class_arm_term_session_scoresheet.xlsx
     $filename = "{$subjectName}_{$className}";
     if ($arm && $arm !== '_') {
         $filename .= "_{$arm}";
     }
     $filename .= "_{$termName}_{$sessionName}_scoresheet.xlsx";
 
-    // Create export instance
     $export = new RecordsheetExport($schoolclassId, $subjectclassId, $termId, $sessionId, $staffId);
-
-    // Get the password to show to teacher (optional - can be shown in success message)
     $password = $export->getPassword();
 
-    // Download the file
+    // Store password in session to optionally show to teacher
+    session(['last_export_password' => $password]);
+
     return Excel::download($export, $filename);
 }
+
+
+
     // =========================================================================
     // IMPORT
     // =========================================================================
