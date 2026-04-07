@@ -1,60 +1,61 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
+use \App\Http\Controllers\SchoolInformationController;
+use App\Http\Controllers\Admin\ExamPauseController;
+use App\Http\Controllers\AnalysisController;
+use App\Http\Controllers\BiodataController;
+use App\Http\Controllers\BroadsheetController;
 use App\Http\Controllers\CBTController;
+use App\Http\Controllers\ClassBroadsheetController;
+use App\Http\Controllers\ClasscategoryController;
+use App\Http\Controllers\ClassOperationController;
+use App\Http\Controllers\ClassTeacherController;
+use App\Http\Controllers\CompulsorySubjectClassController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExamController;
 use App\Http\Controllers\HomeController;
-use App\Http\Controllers\RoleController;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\StaffController;
-use App\Http\Controllers\ParentController;
-use App\Http\Controllers\ResultController;
-use App\Http\Controllers\BiodataController;
-use App\Http\Controllers\MyClassController;
-use App\Http\Controllers\StudentController;
-use App\Http\Controllers\SubjectController;
-use App\Http\Controllers\AnalysisController;
-use App\Http\Controllers\OverviewController;
-use App\Http\Controllers\QuestionController;
-use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\JobStatusController;
-use App\Http\Controllers\MySubjectController;
-use App\Http\Controllers\SchoolArmController;
-use App\Http\Controllers\PermissionController;
-use App\Http\Controllers\SchoolBillController;
-use App\Http\Controllers\SchooltermController;
-use App\Http\Controllers\SchoolClassController;
-use App\Http\Controllers\SchoolHouseController;
-use App\Http\Controllers\ViewStudentController;
-use App\Http\Controllers\ClassTeacherController;
+use App\Http\Controllers\MockSubjectVettingController;
+use App\Http\Controllers\MyClassController;
+use App\Http\Controllers\MyMockSubjectVettingsController;
+use App\Http\Controllers\MyPrincipalsCommentController;
 use App\Http\Controllers\MyresultroomController;
 use App\Http\Controllers\MyScoreSheetController;
-use App\Http\Controllers\StudentHouseController;
-use App\Http\Controllers\SubjectClassController;
-use App\Http\Controllers\ClasscategoryController;
+use App\Http\Controllers\MySubjectController;
+use App\Http\Controllers\MySubjectVettingsController;
+use App\Http\Controllers\OverviewController;
+use App\Http\Controllers\ParentController;
+use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\PrincipalsCommentController;
+use App\Http\Controllers\QuestionController;
+use App\Http\Controllers\ResultController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\SchoolArmController;
+use App\Http\Controllers\SchoolBillController;
+use App\Http\Controllers\SchoolBillTermSessionController;
+use App\Http\Controllers\SchoolClassController;
+use App\Http\Controllers\SchoolHouseController;
 use App\Http\Controllers\SchoolPaymentController;
 use App\Http\Controllers\SchoolsessionController;
-use App\Http\Controllers\ClassOperationController;
+use App\Http\Controllers\SchooltermController;
+use App\Http\Controllers\StaffController;
+use App\Http\Controllers\StaffImageUploadController;
+use App\Http\Controllers\StudentAssessmentController;
+use App\Http\Controllers\StudentController;
+use App\Http\Controllers\StudentHouseController;
+use App\Http\Controllers\StudentImageUploadController;
+use App\Http\Controllers\StudentpersonalityprofileController;
 use App\Http\Controllers\StudentResultsController;
+use App\Http\Controllers\SubjectClassController;
+use App\Http\Controllers\SubjectController;
+use App\Http\Controllers\SubjectOperationController;
 use App\Http\Controllers\SubjectTeacherController;
 use App\Http\Controllers\SubjectVettingController;
-use App\Http\Controllers\Admin\ExamPauseController;
-use App\Http\Controllers\ClassBroadsheetController;
-use App\Http\Controllers\StaffImageUploadController;
-use App\Http\Controllers\SubjectOperationController;
-use App\Http\Controllers\MySubjectVettingsController;
-use App\Http\Controllers\PrincipalsCommentController;
-use App\Http\Controllers\StudentAssessmentController;
-use App\Http\Controllers\ViewStudentReportController;
-use \App\Http\Controllers\SchoolInformationController;
-use App\Http\Controllers\MockSubjectVettingController;
-use App\Http\Controllers\StudentImageUploadController;
-use App\Http\Controllers\MyPrincipalsCommentController;
-use App\Http\Controllers\MyMockSubjectVettingsController;
-use App\Http\Controllers\SchoolBillTermSessionController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\ViewStudentController;
 use App\Http\Controllers\ViewStudentMockReportController;
-use App\Http\Controllers\CompulsorySubjectClassController;
-use App\Http\Controllers\StudentpersonalityprofileController;
+use App\Http\Controllers\ViewStudentReportController;
+use Illuminate\Support\Facades\Route;
 
 
 
@@ -736,4 +737,21 @@ Route::resource('subjectoperation', SubjectOperationController::class);
     Route::get('/api/exams/{exam}/status', [ExamPauseController::class, 'status'])->name('api.exams.status');
 
     Route::get('/debug-student-scores', [ViewStudentReportController::class, 'debugStudentScores']);
+
+
+    Route::prefix('broadsheet')->name('broadsheet.')->group(function () {
+
+        // Index page — select class / session / term
+        Route::get('/',  [BroadsheetController::class, 'index'])->name('index');
+
+        // AJAX: get column options for the chosen class
+        Route::post('/column-options',  [BroadsheetController::class, 'getColumnOptions'])->name('column-options');
+
+        // AJAX: get student preview count for the chosen class+session
+        Route::post('/student-preview', [BroadsheetController::class, 'getStudentPreview'])->name('student-preview');
+
+        // Export
+        Route::post('/export/pdf',   [BroadsheetController::class, 'exportPdf'])->name('export.pdf');
+        Route::post('/export/excel', [BroadsheetController::class, 'exportExcel'])->name('export.excel');
+    });
 });

@@ -1,0 +1,522 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Exception;
+use App\Models\Student;
+use App\Models\Assessment;
+use App\Models\Broadsheets;
+use App\Models\Schoolclass;
+use App\Models\Studentclass;
+use Illuminate\Http\Request;
+use App\Models\Schoolsession;
+use App\Models\Schoolterm;
+use App\Models\SchoolInformation;
+use App\Models\BroadsheetAssessmentScore;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\View\View;
+
+class BroadsheetController extends Controller
+{
+    public function __construct()
+    {
+        $this->middleware('permission:View student-report');
+    }
+
+    // =========================================================================
+    // INDEX
+    // =========================================================================
+
+    public function index(Request $request): View|JsonResponse
+    {
+        $pagetitle      = 'Class Broadsheet Generator';
+        $schoolclasses  = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->select(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm'])
+            ->orderBy('schoolclass.schoolclass')
+            ->get();
+        $schoolsessions = Schoolsession::orderByDesc('id')->get();
+        $schoolterms    = Schoolterm::all();
+
+        return view('broadsheet.index', compact(
+            'pagetitle', 'schoolclasses', 'schoolsessions', 'schoolterms'
+        ));
+    }
+
+    // =========================================================================
+    // GET COLUMN OPTIONS (AJAX)
+    // =========================================================================
+
+    public function getColumnOptions(Request $request): JsonResponse
+    {
+        $schoolclassid = $request->input('schoolclassid');
+        $sessionid     = $request->input('sessionid');
+        $termid        = $request->input('termid');
+
+        if (!$schoolclassid || !$sessionid || !$termid) {
+            return response()->json(['success' => false, 'message' => 'Missing parameters'], 400);
+        }
+
+        $schoolclass = Schoolclass::with('classcategories')->find($schoolclassid);
+        $assessments = collect();
+
+        if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
+            $categoryIds = $schoolclass->classcategories->pluck('id');
+            $assessments = Assessment::whereIn('classcategory_id', $categoryIds)
+                ->with('subAssessments')
+                ->orderBy('id')
+                ->get();
+        }
+
+        $columns = [
+            'student_info' => [
+                'sn'           => ['label' => 'SN',           'default' => true],
+                'admission_no' => ['label' => 'Admission No', 'default' => true],
+                'name'         => ['label' => 'Student Name', 'default' => true],
+                'gender'       => ['label' => 'Gender',       'default' => false],
+            ],
+            'assessments' => [],
+            'scores' => [
+                'total'         => ['label' => 'Total',      'default' => true],
+                'bf'            => ['label' => 'BF',         'default' => true],
+                'cum'           => ['label' => 'Cum',        'default' => true],
+                'grade'         => ['label' => 'Grade',      'default' => true],
+                'position'      => ['label' => 'Position',   'default' => true],
+                'class_average' => ['label' => 'Class Avg',  'default' => true],
+                'remark'        => ['label' => 'Remark',     'default' => false],
+            ],
+            'gpa_metrics' => [
+                'gpa'                => ['label' => 'GPA',          'default' => true],
+                'cgpa'               => ['label' => 'CGPA',         'default' => false],
+                'gpa_grade'          => ['label' => 'GPA Grade',    'default' => false],
+                'num_subjects'       => ['label' => 'No. Subjects', 'default' => false],
+                'total_grade_points' => ['label' => 'Total GP',     'default' => false],
+            ],
+        ];
+
+        foreach ($assessments as $a) {
+            $columns['assessments']['assessment_' . $a->id] = [
+                'label'               => $a->name . ' (' . $a->max_score . ')',
+                'default'             => true,
+                'assessment_id'       => $a->id,
+                'max_score'           => $a->max_score,
+                'has_sub_assessments' => $a->subAssessments->isNotEmpty(),
+            ];
+        }
+
+        return response()->json([
+            'success'     => true,
+            'columns'     => $columns,
+            'is_senior'   => $schoolclass && $schoolclass->classcategories->isNotEmpty()
+                ? ($schoolclass->classcategories->first()->is_senior ?? false) : false,
+        ]);
+    }
+
+    // =========================================================================
+    // GET STUDENT PREVIEW (AJAX)
+    // =========================================================================
+
+    public function getStudentPreview(Request $request): JsonResponse
+    {
+        $schoolclassid = $request->input('schoolclassid');
+        $sessionid     = $request->input('sessionid');
+
+        if (!$schoolclassid || !$sessionid) {
+            return response()->json(['success' => false, 'message' => 'Missing parameters'], 400);
+        }
+
+        $students = Studentclass::where('schoolclassid', $schoolclassid)
+            ->where('sessionid', $sessionid)
+            ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
+            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+            ->select([
+                'studentRegistration.id as id',
+                'studentRegistration.admissionNo as admissionno',
+                'studentRegistration.firstname',
+                'studentRegistration.lastname',
+                'studentRegistration.gender',
+                'studentpicture.picture',
+            ])
+            ->orderBy('studentRegistration.lastname')
+            ->orderBy('studentRegistration.firstname')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'count'   => $students->count(),
+            'students'=> $students,
+        ]);
+    }
+
+    // =========================================================================
+    // BUILD BROADSHEET DATA
+    // =========================================================================
+
+    private function buildBroadsheetData(
+        int $schoolclassid,
+        int $sessionid,
+        int $termid,
+        array $selectedColumns = []
+    ): array {
+        // ── School & class meta ───────────────────────────────────────────────
+        $schoolInfo  = SchoolInformation::getActiveSchool() ?? new \stdClass();
+        $schoolclass = Schoolclass::with(['classcategories'])
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->select(['schoolclass.*', 'schoolarm.arm as arm_name'])
+            ->where('schoolclass.id', $schoolclassid)
+            ->first();
+
+        $schoolsession = Schoolsession::find($sessionid);
+        $schoolterm    = Schoolterm::find($termid);
+
+        // ── Dynamic assessments ────────────────────────────────────────────────
+        $assessments = collect();
+        if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
+            $categoryIds = $schoolclass->classcategories->pluck('id');
+            $assessments = Assessment::whereIn('classcategory_id', $categoryIds)
+                ->orderBy('id')
+                ->get();
+        }
+
+        // ── All students in this class/session ────────────────────────────────
+        $studentIds = Studentclass::where('schoolclassid', $schoolclassid)
+            ->where('sessionid', $sessionid)
+            ->pluck('studentId')
+            ->toArray();
+
+        // ── All broadsheet rows for this class/session/term ───────────────────
+        $broadsheets = Broadsheets::whereIn('broadsheet_records.student_id', $studentIds)
+            ->where('broadsheets.term_id', $termid)
+            ->where('broadsheet_records.session_id', $sessionid)
+            ->where('broadsheet_records.schoolclass_id', $schoolclassid)
+            ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
+            ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
+            ->join('studentRegistration', 'studentRegistration.id', '=', 'broadsheet_records.student_id')
+            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+            ->select([
+                'broadsheets.id as broadsheet_id',
+                'broadsheet_records.student_id',
+                'broadsheet_records.subject_id',
+                'subject.subject as subject_name',
+                'subject.subject_code',
+                'studentRegistration.admissionNo as admissionno',
+                'studentRegistration.firstname',
+                'studentRegistration.lastname',
+                'studentRegistration.gender',
+                'studentpicture.picture',
+                'broadsheets.total',
+                'broadsheets.bf',
+                'broadsheets.cum',
+                'broadsheets.grade',
+                'broadsheets.remark',
+                'broadsheets.subject_position_class as position',
+                'broadsheets.avg as class_average',
+                'broadsheets.vettedstatus',
+            ])
+            ->orderBy('studentRegistration.lastname')
+            ->orderBy('studentRegistration.firstname')
+            ->orderBy('subject.subject')
+            ->get();
+
+        // ── Load assessment scores for each broadsheet row ────────────────────
+        $broadsheetIds = $broadsheets->pluck('broadsheet_id')->unique()->toArray();
+        $assessmentScoresAll = BroadsheetAssessmentScore::whereIn('broadsheet_id', $broadsheetIds)
+            ->get()
+            ->groupBy('broadsheet_id');
+
+        // ── Pivot: student_id → subject_id → row data ─────────────────────────
+        $studentSubjectMap = [];
+        $subjectsMap       = [];  // subject_id → subject info
+
+        foreach ($broadsheets as $row) {
+            $sid = $row->student_id;
+            $sub = $row->subject_id;
+
+            $subjectsMap[$sub] = [
+                'subject_id'   => $sub,
+                'subject_name' => $row->subject_name,
+                'subject_code' => $row->subject_code,
+            ];
+
+            $assessmentScoreRow = $assessmentScoresAll->get($row->broadsheet_id, collect());
+            $assessmentData     = [];
+            foreach ($assessments as $a) {
+                $score = $assessmentScoreRow->firstWhere('assessment_id', $a->id);
+                $assessmentData[$a->id] = $score ? (float)$score->score : 0;
+            }
+
+            $studentSubjectMap[$sid][$sub] = [
+                'total'         => (float)($row->total ?? 0),
+                'bf'            => (float)($row->bf ?? 0),
+                'cum'           => (float)($row->cum ?? 0),
+                'grade'         => $row->grade ?? '-',
+                'remark'        => $row->remark ?? '-',
+                'position'      => $row->position ?? '-',
+                'class_average' => (float)($row->class_average ?? 0),
+                'assessments'   => $assessmentData,
+            ];
+        }
+
+        // ── Build student summary rows ─────────────────────────────────────────
+        $studentInfo = Studentclass::where('schoolclassid', $schoolclassid)
+            ->where('sessionid', $sessionid)
+            ->join('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
+            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+            ->select([
+                'studentRegistration.id as id',
+                'studentRegistration.admissionNo as admissionno',
+                'studentRegistration.firstname',
+                'studentRegistration.lastname',
+                'studentRegistration.gender',
+                'studentRegistration.dateofbirth',
+                'studentpicture.picture',
+            ])
+            ->orderBy('studentRegistration.lastname')
+            ->orderBy('studentRegistration.firstname')
+            ->get();
+
+        // Compute per-student GPA/CGPA
+        $studentRows = [];
+        foreach ($studentInfo as $stu) {
+            $sid        = $stu->id;
+            $subScores  = $studentSubjectMap[$sid] ?? [];
+            $cumValues  = collect($subScores)->pluck('cum')->filter(fn($v) => $v > 0);
+            $totalCum   = $cumValues->sum();
+            $numSubjects= $cumValues->count();
+            $classAvg   = $numSubjects > 0 ? round($totalCum / $numSubjects, 1) : 0;
+
+            // GPA from total scores
+            $totalValues = collect($subScores)->pluck('total')->filter(fn($v) => $v > 0);
+            $gradePoints = $totalValues->map(fn($s) => $this->getGradePoint($s));
+            $gpa         = $gradePoints->count() > 0 ? round($gradePoints->avg(), 2) : 0.0;
+            $cgpa        = $gpa; // simplified; full CGPA would require cross-session data
+            $gpaGrade    = $this->getGpaGrade($gpa);
+
+            $studentRows[$sid] = [
+                'id'                 => $sid,
+                'admissionno'        => $stu->admissionno,
+                'firstname'          => $stu->firstname,
+                'lastname'           => $stu->lastname,
+                'gender'             => $stu->gender,
+                'dateofbirth'        => $stu->dateofbirth,
+                'picture'            => $stu->picture,
+                'subjects'           => $subScores,
+                'total_cum'          => round($totalCum, 1),
+                'num_subjects'       => $numSubjects,
+                'class_average'      => $classAvg,
+                'gpa'                => $gpa,
+                'cgpa'               => $cgpa,
+                'gpa_grade'          => $gpaGrade,
+                'total_grade_points' => round($gradePoints->sum(), 1),
+            ];
+        }
+
+        // ── Class-level stats per subject ─────────────────────────────────────
+        $subjectStats = [];
+        foreach ($subjectsMap as $sub => $subInfo) {
+            $allTotals = collect($studentRows)
+                ->pluck("subjects.{$sub}.total")
+                ->filter(fn($v) => $v !== null && $v > 0);
+
+            $subjectStats[$sub] = [
+                'avg'     => $allTotals->count() > 0 ? round($allTotals->avg(), 1) : 0,
+                'highest' => $allTotals->count() > 0 ? $allTotals->max() : 0,
+                'lowest'  => $allTotals->count() > 0 ? $allTotals->min() : 0,
+                'passed'  => $allTotals->filter(fn($v) => $v >= 40)->count(),
+                'failed'  => $allTotals->filter(fn($v) => $v < 40)->count(),
+            ];
+        }
+
+        // Alphabetical subjects
+        uasort($subjectsMap, fn($a, $b) => strcmp($a['subject_name'], $b['subject_name']));
+
+        return [
+            'schoolInfo'       => $schoolInfo,
+            'schoolclass'      => $schoolclass,
+            'schoolsession'    => $schoolsession,
+            'schoolterm'       => $schoolterm,
+            'assessments'      => $assessments,
+            'subjects'         => $subjectsMap,
+            'studentRows'      => array_values($studentRows),
+            'subjectStats'     => $subjectStats,
+            'selectedColumns'  => $selectedColumns,
+            'totalStudents'    => count($studentRows),
+            'generatedAt'      => now()->format('d M Y, H:i'),
+        ];
+    }
+
+    // =========================================================================
+    // EXPORT PDF
+    // =========================================================================
+
+    public function exportPdf(Request $request)
+    {
+        try {
+            ini_set('max_execution_time', 600);
+            ini_set('memory_limit', '1024M');
+
+            $validated = $request->validate([
+                'schoolclassid'   => 'required|integer|exists:schoolclass,id',
+                'sessionid'       => 'required|integer|exists:schoolsession,id',
+                'termid'          => 'required|integer',
+                'selectedColumns' => 'nullable|array',
+                'paper_size'      => 'nullable|in:A1,A2,A3,A4',
+                'orientation'     => 'nullable|in:portrait,landscape',
+            ]);
+
+            $paperSize      = $request->input('paper_size', 'A3');
+            $orientation    = $request->input('orientation', 'landscape');
+            $selectedColumns= $request->input('selectedColumns', []);
+
+            $data = $this->buildBroadsheetData(
+                $validated['schoolclassid'],
+                $validated['sessionid'],
+                $validated['termid'],
+                $selectedColumns
+            );
+
+            // Fix image paths for PDF
+            $data['school_logo_base64'] = $this->getLogoBase64($data['schoolInfo']);
+
+            $paperDimensions = [
+                'A4' => [841.89, 595.28],
+                'A3' => [1190.55, 841.89],
+                'A2' => [1683.78, 1190.55],
+                'A1' => [2383.94, 1683.78],
+            ];
+            [$w, $h] = $paperDimensions[$paperSize] ?? $paperDimensions['A3'];
+            if ($orientation === 'landscape') [$w, $h] = [$h, $w];
+
+            $pdf = Pdf::loadView('broadsheet.pdf', $data)
+                ->setPaper([$w, $h], $orientation === 'portrait' ? 'portrait' : 'landscape')
+                ->setOptions([
+                    'dpi'                     => 96,
+                    'defaultFont'             => 'DejaVu Sans',
+                    'isRemoteEnabled'         => false,
+                    'isHtml5ParserEnabled'    => true,
+                    'isFontSubsettingEnabled' => true,
+                    'isPhpEnabled'            => false,
+                ]);
+
+            $className   = ($data['schoolclass']->schoolclass ?? 'Class') . ' ' . ($data['schoolclass']->arm_name ?? '');
+            $sessionName = $data['schoolsession']->session ?? '';
+            $termName    = $data['schoolterm']->term ?? 'Term';
+            $filename    = 'Broadsheet_' . preg_replace('/\s+/', '_', trim($className)) . '_' . $sessionName . '_' . $termName . '.pdf';
+
+            return $pdf->download($filename);
+
+        } catch (\Exception $e) {
+            Log::error('Broadsheet PDF export error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
+        }
+    }
+
+    // =========================================================================
+    // EXPORT EXCEL
+    // =========================================================================
+
+    public function exportExcel(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'schoolclassid'   => 'required|integer|exists:schoolclass,id',
+                'sessionid'       => 'required|integer|exists:schoolsession,id',
+                'termid'          => 'required|integer',
+                'selectedColumns' => 'nullable|array',
+            ]);
+
+            $selectedColumns = $request->input('selectedColumns', []);
+
+            $data = $this->buildBroadsheetData(
+                $validated['schoolclassid'],
+                $validated['sessionid'],
+                $validated['termid'],
+                $selectedColumns
+            );
+
+            $className   = ($data['schoolclass']->schoolclass ?? 'Class') . ' ' . ($data['schoolclass']->arm_name ?? '');
+            $sessionName = $data['schoolsession']->session ?? '';
+            $termName    = $data['schoolterm']->term ?? 'Term';
+            $filename    = 'Broadsheet_' . preg_replace('/\s+/', '_', trim($className)) . '_' . $sessionName . '_' . $termName . '.xlsx';
+
+            return Excel::download(new \App\Exports\BroadsheetExport($data), $filename);
+
+        } catch (\Exception $e) {
+            Log::error('Broadsheet Excel export error', ['error' => $e->getMessage()]);
+            return back()->with('error', 'Failed to generate Excel: ' . $e->getMessage());
+        }
+    }
+
+    // =========================================================================
+    // HELPERS
+    // =========================================================================
+
+    private function getGradePoint(float $score): float
+    {
+        if ($score >= 75) return 5.0;
+        if ($score >= 70) return 4.5;
+        if ($score >= 65) return 4.0;
+        if ($score >= 60) return 3.5;
+        if ($score >= 55) return 3.0;
+        if ($score >= 50) return 2.5;
+        if ($score >= 45) return 2.0;
+        if ($score >= 40) return 1.0;
+        return 0.0;
+    }
+
+    private function getGpaGrade(float $gpa): string
+    {
+        if ($gpa >= 4.5) return 'A1';
+        if ($gpa >= 4.0) return 'B2';
+        if ($gpa >= 3.5) return 'B3';
+        if ($gpa >= 3.0) return 'C4';
+        if ($gpa >= 2.5) return 'C5';
+        if ($gpa >= 2.0) return 'C6';
+        if ($gpa >= 1.5) return 'D7';
+        if ($gpa >= 1.0) return 'E8';
+        return 'F9';
+    }
+
+    private function getLogoBase64($schoolInfo): string
+    {
+        $placeholder = 'data:image/svg+xml;base64,' . base64_encode(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
+                <rect width="80" height="80" rx="40" fill="#1e3a5f"/>
+                <text x="40" y="45" text-anchor="middle" fill="white" font-family="Arial" font-size="14" font-weight="bold">SCH</text>
+            </svg>'
+        );
+
+        if (!$schoolInfo || empty($schoolInfo->school_logo)) return $placeholder;
+
+        $paths = [
+            storage_path('app/public/' . $schoolInfo->school_logo),
+            public_path('storage/' . $schoolInfo->school_logo),
+            public_path($schoolInfo->school_logo),
+        ];
+
+        foreach ($paths as $path) {
+            if (file_exists($path) && filesize($path) > 100) {
+                $mime = mime_content_type($path) ?: 'image/jpeg';
+                return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($path));
+            }
+        }
+
+        return $placeholder;
+    }
+
+    private function calculateGrade(float $score): string
+    {
+        if ($score >= 75) return 'A1';
+        if ($score >= 70) return 'B2';
+        if ($score >= 65) return 'B3';
+        if ($score >= 60) return 'C4';
+        if ($score >= 55) return 'C5';
+        if ($score >= 50) return 'C6';
+        if ($score >= 45) return 'D7';
+        if ($score >= 40) return 'E8';
+        return 'F9';
+    }
+}
