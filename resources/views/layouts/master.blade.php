@@ -195,7 +195,7 @@
             @include('layouts.pages-assets.css.studentreport-list-css')
     @endif
     @if (Route::is('broadsheet.*'))
-            @include('layouts.pages-assets.css.studentreport-list-css')
+            @include('layouts.pages-assets.css.broadsheet-list-css')
     @endif
 
     @if (Route::is('subjectoperation.*'))
