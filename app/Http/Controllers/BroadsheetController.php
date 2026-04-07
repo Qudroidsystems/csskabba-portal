@@ -349,7 +349,7 @@ class BroadsheetController extends Controller
     }
 
     // =========================================================================
-    // EXPORT PDF
+    // EXPORT PDF (FIXED)
     // =========================================================================
 
     public function exportPdf(Request $request)
@@ -381,25 +381,14 @@ class BroadsheetController extends Controller
             // Fix image paths for PDF
             $data['school_logo_base64'] = $this->getLogoBase64($data['schoolInfo']);
 
-            $paperDimensions = [
-                'A4' => [841.89, 595.28],
-                'A3' => [1190.55, 841.89],
-                'A2' => [1683.78, 1190.55],
-                'A1' => [2383.94, 1683.78],
-            ];
-            [$w, $h] = $paperDimensions[$paperSize] ?? $paperDimensions['A3'];
-            if ($orientation === 'landscape') [$w, $h] = [$h, $w];
+            // Use Dompdf's native paper size strings - SIMPLER AND ERROR-FREE
+            $paperString = $paperSize;
+            if ($orientation === 'landscape') {
+                $paperString = $paperSize . '-landscape';
+            }
 
             $pdf = Pdf::loadView('broadsheet.pdf', $data)
-                ->setPaper([$w, $h], $orientation === 'portrait' ? 'portrait' : 'landscape')
-                ->setOptions([
-                    'dpi'                     => 96,
-                    'defaultFont'             => 'DejaVu Sans',
-                    'isRemoteEnabled'         => false,
-                    'isHtml5ParserEnabled'    => true,
-                    'isFontSubsettingEnabled' => true,
-                    'isPhpEnabled'            => false,
-                ]);
+                ->setPaper($paperString);
 
             $className   = ($data['schoolclass']->schoolclass ?? 'Class') . ' ' . ($data['schoolclass']->arm_name ?? '');
             $sessionName = $data['schoolsession']->session ?? '';
