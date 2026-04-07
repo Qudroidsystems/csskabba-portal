@@ -8,17 +8,17 @@ use App\Models\BroadsheetAssessmentScore;
 use App\Models\StudentRegistration;
 use App\Models\Assessment;
 use App\Models\Schoolclass;
+use App\Models\Subjectclass;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Maatwebsite\Excel\Concerns\WithValidation;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Maatwebsite\Excel\Concerns\Importable;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
-class ScoresheetImport implements ToCollection, WithHeadingRow, WithValidation, SkipsOnFailure
+class ScoresheetImport implements ToCollection, WithHeadingRow, SkipsOnFailure
 {
     use Importable, SkipsFailures;
 
@@ -27,21 +27,32 @@ class ScoresheetImport implements ToCollection, WithHeadingRow, WithValidation, 
     protected $failures = [];
     protected $assessments = [];
     protected $schoolclass = null;
+    protected $subjectId = null;
 
     public function __construct(array $importData)
     {
         $this->importData = $importData;
 
-        // Load assessments for this class
-        if (!empty($importData['schoolclass_id'])) {
-            $this->schoolclass = Schoolclass::with('classcategories')->find($importData['schoolclass_id']);
-            if ($this->schoolclass && $this->schoolclass->classcategories->isNotEmpty()) {
-                $categoryIds = $this->schoolclass->classcategories->pluck('id');
-                $this->assessments = Assessment::whereIn('classcategory_id', $categoryIds)
-                    ->orderBy('id')
-                    ->get()
-                    ->keyBy('name'); // Key by assessment name for easy lookup
+        try {
+            // Load assessments for this class
+            if (!empty($importData['schoolclass_id'])) {
+                $this->schoolclass = Schoolclass::with('classcategories')->find($importData['schoolclass_id']);
+                if ($this->schoolclass && $this->schoolclass->classcategories->isNotEmpty()) {
+                    $categoryIds = $this->schoolclass->classcategories->pluck('id');
+                    $this->assessments = Assessment::whereIn('classcategory_id', $categoryIds)
+                        ->orderBy('id')
+                        ->get();
+                }
             }
+
+            // Get subject ID
+            if (!empty($importData['subjectclass_id'])) {
+                $subjectClass = Subjectclass::find($importData['subjectclass_id']);
+                $this->subjectId = $subjectClass ? $subjectClass->subjectid : null;
+            }
+        } catch (\Exception $e) {
+            Log::error('ScoresheetImport constructor error: ' . $e->getMessage());
+            throw $e;
         }
     }
 
@@ -75,6 +86,9 @@ class ScoresheetImport implements ToCollection, WithHeadingRow, WithValidation, 
 
             DB::commit();
 
+            // Update progress
+            session(['import_progress' => 100, 'import_status' => 'completed', 'import_message' => 'Import completed!']);
+
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Import transaction failed: ' . $e->getMessage());
@@ -82,6 +96,7 @@ class ScoresheetImport implements ToCollection, WithHeadingRow, WithValidation, 
                 'row' => 0,
                 'errors' => ['Transaction failed: ' . $e->getMessage()]
             ];
+            session(['import_progress' => 0, 'import_status' => 'error', 'import_message' => $e->getMessage()]);
         }
     }
 
@@ -91,15 +106,18 @@ class ScoresheetImport implements ToCollection, WithHeadingRow, WithValidation, 
     protected function processRow($row, $rowNumber)
     {
         // Get admission number - try different possible column names
-        $admissionNo = $row['admission_no'] ??
-                      $row['admissionno'] ??
-                      $row['admission'] ??
-                      $row['adm_no'] ??
-                      $row['student_id'] ??
-                      null;
+        $admissionNo = null;
+        $possibleColumns = ['admission_no', 'admissionno', 'admission', 'adm_no', 'student_id', 'Admission No', 'AdmissionNO'];
+
+        foreach ($possibleColumns as $col) {
+            if (isset($row[$col]) && !empty($row[$col])) {
+                $admissionNo = trim($row[$col]);
+                break;
+            }
+        }
 
         if (!$admissionNo) {
-            throw new \Exception("Admission number is required.");
+            throw new \Exception("Admission number is required. Please ensure your Excel has a column named 'admission_no' or 'admissionno'.");
         }
 
         // Find student by admission number
@@ -108,14 +126,14 @@ class ScoresheetImport implements ToCollection, WithHeadingRow, WithValidation, 
             ->first();
 
         if (!$student) {
-            throw new \Exception("Student with admission number '{$admissionNo}' not found.");
+            throw new \Exception("Student with admission number '{$admissionNo}' not found in the system.");
         }
 
         // Find or create broadsheet record
         $broadsheetRecord = BroadsheetRecord::firstOrCreate(
             [
                 'student_id' => $student->id,
-                'subject_id' => $this->getSubjectId(),
+                'subject_id' => $this->subjectId,
                 'schoolclass_id' => $this->importData['schoolclass_id'],
                 'session_id' => $this->importData['session_id'],
             ],
@@ -135,6 +153,8 @@ class ScoresheetImport implements ToCollection, WithHeadingRow, WithValidation, 
 
         // Process assessment scores
         $totalScore = 0;
+        $scoresUpdated = 0;
+
         foreach ($this->assessments as $assessment) {
             // Look for column with assessment name (case insensitive)
             $scoreValue = null;
@@ -147,35 +167,42 @@ class ScoresheetImport implements ToCollection, WithHeadingRow, WithValidation, 
 
             if ($scoreValue !== null && $scoreValue !== '') {
                 $score = floatval($scoreValue);
-                $maxScore = $assessment->max_score;
+                $maxScore = floatval($assessment->max_score);
 
                 if ($score > $maxScore) {
-                    throw new \Exception("Score for {$assessment->name} ({$score}) exceeds maximum ({$maxScore})");
+                    throw new \Exception("Score for {$assessment->name} ({$score}) exceeds maximum ({$maxScore}) for student {$admissionNo}");
+                }
+
+                if ($score < 0) {
+                    throw new \Exception("Score for {$assessment->name} ({$score}) cannot be negative for student {$admissionNo}");
                 }
 
                 // Save assessment score
-                BroadsheetAssessmentScore::updateOrCreate(
-                    [
-                        'broadsheet_id' => $broadsheet->id ?? null,
-                        'assessment_id' => $assessment->id,
-                    ],
-                    ['score' => $score]
-                );
+                if ($broadsheet->id) {
+                    BroadsheetAssessmentScore::updateOrCreate(
+                        [
+                            'broadsheet_id' => $broadsheet->id,
+                            'assessment_id' => $assessment->id,
+                        ],
+                        ['score' => $score]
+                    );
+                }
 
                 $totalScore += $score;
+                $scoresUpdated++;
             }
         }
 
         // Calculate totals
-        $bf = $this->getPreviousTermCum($student->id, $this->getSubjectId(), $this->importData['term_id'], $this->importData['session_id']);
-        $cum = $this->importData['term_id'] == 1 ? $totalScore : round(($totalScore + $bf) / 2, 2);
+        $bf = $this->getPreviousTermCum($student->id, $this->subjectId, $this->importData['term_id'], $this->importData['session_id']);
+        $cum = $this->importData['term_id'] == 1 ? round($totalScore, 2) : round(($totalScore + $bf) / 2, 2);
         $grade = $this->calculateGrade($cum);
         $remark = $this->getRemark($grade);
 
         // Save broadsheet
         $broadsheet->fill([
-            'total' => $totalScore,
-            'bf' => $bf,
+            'total' => round($totalScore, 2),
+            'bf' => round($bf, 2),
             'cum' => $cum,
             'grade' => $grade,
             'remark' => $remark,
@@ -184,27 +211,12 @@ class ScoresheetImport implements ToCollection, WithHeadingRow, WithValidation, 
 
         $broadsheet->save();
 
-        // If this is a new broadsheet, associate it with the record
-        if (!$broadsheet->wasRecentlyCreated && $broadsheet->wasChanged()) {
-            // Updated existing
-        }
-
         $this->successCount++;
-    }
 
-    /**
-     * Get subject ID from subjectclass
-     */
-    protected function getSubjectId()
-    {
-        static $subjectId = null;
-
-        if ($subjectId === null) {
-            $subjectClass = \App\Models\Subjectclass::find($this->importData['subjectclass_id']);
-            $subjectId = $subjectClass ? $subjectClass->subjectid : null;
+        // Update progress periodically
+        if ($this->successCount % 10 == 0) {
+            session(['import_progress' => min(60 + ($this->successCount / 100) * 30, 95)]);
         }
-
-        return $subjectId;
     }
 
     /**
@@ -214,14 +226,19 @@ class ScoresheetImport implements ToCollection, WithHeadingRow, WithValidation, 
     {
         if ($termId == 1) return 0;
 
-        $prev = Broadsheets::where('broadsheet_records.student_id', $studentId)
-            ->where('broadsheet_records.subject_id', $subjectId)
-            ->where('broadsheets.term_id', $termId - 1)
-            ->where('broadsheet_records.session_id', $sessionId)
-            ->leftJoin('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
-            ->value('broadsheets.cum');
+        try {
+            $prev = Broadsheets::where('broadsheet_records.student_id', $studentId)
+                ->where('broadsheet_records.subject_id', $subjectId)
+                ->where('broadsheets.term_id', $termId - 1)
+                ->where('broadsheet_records.session_id', $sessionId)
+                ->leftJoin('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
+                ->value('broadsheets.cum');
 
-        return $prev ? round($prev, 2) : 0;
+            return $prev ? round(floatval($prev), 2) : 0;
+        } catch (\Exception $e) {
+            Log::warning('Error getting previous term cum: ' . $e->getMessage());
+            return 0;
+        }
     }
 
     /**
@@ -229,26 +246,30 @@ class ScoresheetImport implements ToCollection, WithHeadingRow, WithValidation, 
      */
     protected function calculateGrade($score)
     {
-        if ($this->schoolclass && $this->schoolclass->classcategories->isNotEmpty()) {
-            $isSenior = $this->schoolclass->classcategories->first()->is_senior ?? false;
+        try {
+            if ($this->schoolclass && $this->schoolclass->classcategories->isNotEmpty()) {
+                $isSenior = $this->schoolclass->classcategories->first()->is_senior ?? false;
 
-            if ($isSenior) {
-                if ($score >= 75) return 'A1';
-                if ($score >= 70) return 'B2';
-                if ($score >= 65) return 'B3';
-                if ($score >= 60) return 'C4';
-                if ($score >= 55) return 'C5';
-                if ($score >= 50) return 'C6';
-                if ($score >= 45) return 'D7';
-                if ($score >= 40) return 'E8';
-                return 'F9';
-            } else {
-                if ($score >= 70) return 'A';
-                if ($score >= 60) return 'B';
-                if ($score >= 50) return 'C';
-                if ($score >= 40) return 'D';
-                return 'F';
+                if ($isSenior) {
+                    if ($score >= 75) return 'A1';
+                    if ($score >= 70) return 'B2';
+                    if ($score >= 65) return 'B3';
+                    if ($score >= 60) return 'C4';
+                    if ($score >= 55) return 'C5';
+                    if ($score >= 50) return 'C6';
+                    if ($score >= 45) return 'D7';
+                    if ($score >= 40) return 'E8';
+                    return 'F9';
+                } else {
+                    if ($score >= 70) return 'A';
+                    if ($score >= 60) return 'B';
+                    if ($score >= 50) return 'C';
+                    if ($score >= 40) return 'D';
+                    return 'F';
+                }
             }
+        } catch (\Exception $e) {
+            Log::warning('Error calculating grade: ' . $e->getMessage());
         }
 
         // Default grading
@@ -264,36 +285,24 @@ class ScoresheetImport implements ToCollection, WithHeadingRow, WithValidation, 
      */
     protected function getRemark($grade)
     {
-        return match($grade) {
-            'A', 'A1' => 'Excellent',
-            'B', 'B2', 'B3' => 'Very Good',
-            'C', 'C4', 'C5', 'C6' => 'Good',
-            'D', 'D7', 'E8' => 'Pass',
-            default => 'Fail',
-        };
-    }
-
-    /**
-     * Validation rules
-     */
-    public function rules(): array
-    {
-        return [
-            'admission_no' => 'nullable|string',
-            'admissionno' => 'nullable|string',
-            'admission' => 'nullable|string',
-            'adm_no' => 'nullable|string',
+        $remarks = [
+            'A' => 'Excellent',
+            'A1' => 'Excellent',
+            'B' => 'Very Good',
+            'B2' => 'Very Good',
+            'B3' => 'Very Good',
+            'C' => 'Good',
+            'C4' => 'Good',
+            'C5' => 'Good',
+            'C6' => 'Good',
+            'D' => 'Pass',
+            'D7' => 'Pass',
+            'E8' => 'Pass',
+            'F' => 'Fail',
+            'F9' => 'Fail',
         ];
-    }
 
-    /**
-     * Custom validation messages
-     */
-    public function customValidationMessages()
-    {
-        return [
-            'admission_no.required' => 'Admission number is required for each student.',
-        ];
+        return $remarks[$grade] ?? 'Pass';
     }
 
     /**
@@ -346,7 +355,7 @@ class ScoresheetImport implements ToCollection, WithHeadingRow, WithValidation, 
 
             // Check for admission number column
             $hasAdmissionColumn = false;
-            $admissionColumns = ['admission_no', 'admissionno', 'admission', 'adm_no', 'student_id'];
+            $admissionColumns = ['admission_no', 'admissionno', 'admission', 'adm_no', 'student_id', 'Admission No'];
             foreach ($headers as $header) {
                 if (in_array(strtolower(trim($header)), $admissionColumns)) {
                     $hasAdmissionColumn = true;
