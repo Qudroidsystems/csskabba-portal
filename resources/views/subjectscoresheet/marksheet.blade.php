@@ -4,11 +4,7 @@
     <meta charset="utf-8">
     <title>Student Marks Sheet</title>
     <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
@@ -16,7 +12,6 @@
             font-size: 11px;
             background: #fff;
             color: #222;
-            margin: 0;
         }
 
         /* First page content */
@@ -24,24 +19,10 @@
             page-break-after: avoid;
         }
 
-        /* Table container */
+        /* Table container - forces new page */
         .table-container {
+            page-break-before: always;
             margin-top: 0;
-            position: relative;
-            min-height: 100vh;
-        }
-
-        /* Wrapper for table content */
-        .table-content {
-            width: 100%;
-        }
-
-        /* Footer wrapper - ensures signatures stay at bottom */
-        .footer-wrapper {
-            margin-top: 50px;
-            width: 100%;
-            position: relative;
-            bottom: 0;
         }
 
         .header {
@@ -90,32 +71,28 @@
         }
 
         .class-info {
-            display: flex;
-            flex-wrap: wrap;
+            display: table;
             width: 100%;
             background: #f0f4fa;
             border: 1px solid #c5d3e8;
-            padding: 10px 15px;
+            padding: 8px 12px;
             margin: 10px 0;
             border-radius: 6px;
             font-size: 10.5px;
-            justify-content: space-between;
         }
 
-        .info-item {
-            flex: 1;
-            white-space: nowrap;
-            padding: 0 5px;
+        .info-row {
+            display: table-row;
+        }
+
+        .info-cell {
+            display: table-cell;
+            padding: 2px 12px 2px 0;
         }
 
         .info-label {
             font-weight: 700;
             color: #1a3c6e;
-            margin-right: 5px;
-        }
-
-        .info-value {
-            color: #333;
         }
 
         .instructions {
@@ -147,12 +124,11 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 10.5px;
-            margin-bottom: 0;
         }
 
         .marks th, .marks td {
             border: 1px solid #aab8cc;
-            padding: 6px 4px;
+            padding: 5px 4px;
             text-align: center;
             vertical-align: middle;
         }
@@ -186,42 +162,35 @@
             background: #e8f0fe;
             font-weight: 700;
             font-size: 10px;
-            padding: 8px;
         }
 
-        /* Footer Signatures - Horizontal Line */
-        .signatures {
+        /* Footer - All signatures on the same line */
+        .footer {
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
+            margin-top: 50px;
+            margin-bottom: 20px;
             width: 100%;
-            margin: 60px 0 20px 0;
-            page-break-inside: avoid;
         }
 
-        .signature-item {
+        .sig {
             text-align: center;
             flex: 1;
-            margin: 0 8px;
+            margin: 0 5px;
         }
 
-        .signature-line {
-            border-top: 1px solid #000;
-            margin-top: 30px;
-            padding-top: 5px;
+        .sig-line {
+            border-top: 1px solid #333;
+            margin-top: 36px;
+            padding-top: 4px;
             font-size: 10px;
-            font-weight: 600;
         }
 
-        .signature-details {
-            margin-top: 8px;
+        .sig-name {
             font-size: 9px;
-            color: #555;
-        }
-
-        .signature-name {
             margin-top: 5px;
-            font-size: 9px;
+            color: #555;
         }
 
         .badge-vetted {
@@ -237,28 +206,24 @@
             page-break-before: always;
         }
 
-        /* Print styles */
+        /* Ensure footer stays within page */
         @media print {
             body {
                 font-size: 10px;
-                margin: 0;
-                padding: 10px;
             }
 
             .first-page {
                 page-break-after: avoid;
             }
 
-            .signatures {
-                position: relative;
-                bottom: 0;
-                margin-top: 80px;
-                page-break-inside: avoid;
+            .table-container {
+                page-break-before: always;
             }
 
-            .footer-wrapper {
+            .footer {
                 position: relative;
                 bottom: 0;
+                width: 100%;
             }
         }
     </style>
@@ -270,19 +235,15 @@
 
     {{-- Header --}}
     <div class="header">
-        @if($school && $school->school_logo && file_exists(public_path('storage/' . $school->school_logo)))
+        @if($school && $school->school_logo)
             <img src="{{ public_path('storage/' . $school->school_logo) }}" alt="Logo" class="school-logo">
         @endif
-        <div class="school-name">{{ $school->school_name ?? 'CLARET SECONDARY SCHOOL KABBA' }}</div>
+        <div class="school-name">{{ $school->school_name ?? 'School Name' }}</div>
         @if($school)
             @if($school->school_address)<div class="school-details">{{ $school->school_address }}</div>@endif
             @if($school->school_phone)<div class="school-details">Tel: {{ $school->school_phone }}</div>@endif
             @if($school->school_email)<div class="school-details">Email: {{ $school->school_email }}</div>@endif
             @if($school->school_motto)<div class="school-details"><em>"{{ $school->school_motto }}"</em></div>@endif
-        @else
-            <div class="school-details">No. 1, Claret Avenue, Iludun Quarters, Olle Road, Kabba, Kogi State, Nigeria</div>
-            <div class="school-details">Tel: 08136663185 | Email: claretsecschools@yahoo.com</div>
-            <div class="school-details"><em>"KNOWLEDGE AND VIRTUE"</em></div>
         @endif
     </div>
 
@@ -292,12 +253,14 @@
 
     @if($classInfo)
     <div class="class-info">
-        <div class="info-item"><span class="info-label">Subject:</span> <span class="info-value">{{ $classInfo->subject }} ({{ $classInfo->subject_code }})</span></div>
-        <div class="info-item"><span class="info-label">Class:</span> <span class="info-value">{{ $classInfo->schoolclass }} {{ $classInfo->arm }}</span></div>
-        <div class="info-item"><span class="info-label">Teacher:</span> <span class="info-value">{{ $teacherName ?? 'Staff ID: ' . ($staffId ?? 'N/A') }}</span></div>
-        <div class="info-item"><span class="info-label">Term:</span> <span class="info-value">{{ $classInfo->term ?? 'First Term' }}</span></div>
-        <div class="info-item"><span class="info-label">Session:</span> <span class="info-value">{{ $classInfo->session ?? '2025/2026' }}</span></div>
-        <div class="info-item"><span class="info-label">Date:</span> <span class="info-value">{{ date('d M Y') }}</span></div>
+        <div class="info-row">
+            <div class="info-cell"><span class="info-label">Subject:</span> {{ $classInfo->subject }} ({{ $classInfo->subject_code }})</div>
+            <div class="info-cell"><span class="info-label">Class:</span> {{ $classInfo->schoolclass }} {{ $classInfo->arm }}</div>
+            <div class="info-cell"><span class="info-label">Teacher:</span> {{ $teacherName ?? 'Staff ID: ' . ($staffId ?? 'N/A') }}</div>
+            <div class="info-cell"><span class="info-label">Term:</span> {{ $classInfo->term ?? 'First Term' }}</div>
+            <div class="info-cell"><span class="info-label">Session:</span> {{ $classInfo->session ?? '2025/2026' }}</div>
+            <div class="info-cell"><span class="info-label">Date:</span> {{ date('d M Y') }}</div>
+        </div>
     </div>
 
     <div class="instructions">
@@ -321,99 +284,87 @@
 
 </div>
 
-{{-- TABLE CONTAINER --}}
+{{-- SECOND PAGE AND BEYOND: Students Table and Footer --}}
 <div class="table-container">
-    <div class="table-content">
-        <table class="marks">
-            <thead>
-                <tr>
-                    <th style="width:35px;">S/N</th>
-                    <th style="min-width:100px;">Adm. No</th>
-                    <th style="min-width:160px;">Student Name</th>
-                    @foreach($assessments as $assessment)
-                        <th class="score-col">
-                            {{ $assessment->name }}<br>
-                            <small style="font-weight:normal;font-size:9px;">({{ number_format($assessment->max_score, 2) }})</small>
-                        </th>
-                    @endforeach
-                    <th class="score-col" style="background:#163275;">
-                        Total<br>
-                        <small style="font-weight:normal;font-size:9px;">({{ number_format($assessments->sum('max_score'), 2) }})</small>
+
+    <table class="marks">
+        <thead>
+            <tr>
+                <th style="width:30px;">S/N</th>
+                <th style="min-width:90px;">Adm. No</th>
+                <th style="min-width:150px;">Student Name</th>
+                @foreach($assessments as $assessment)
+                    <th class="score-col">
+                        {{ $assessment->name }}<br>
+                        <small style="font-weight:normal;font-size:9px;">({{ number_format($assessment->max_score, 2) }})</small>
                     </th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($broadsheets as $index => $student)
-                    <tr>
-                        <td>{{ $index + 1 }}</td>
-                        <td>{{ $student->admissionno ?? '-' }}</td>
-                        <td class="name-col">
-                            <strong>{{ $student->lname ?? '' }}</strong>
-                            {{ $student->fname ?? '' }}
-                            {{ $student->mname ?? '' }}
-                        </td>
-                        @foreach($assessments as $assessment)
-                            <td class="score-col"></td>
-                        @endforeach
-                        <td class="score-col"></td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="{{ 3 + $assessments->count() + 1 }}" style="text-align:center;padding:12px;">
-                            No students found.
-                        </td>
-                    </tr>
-                @endforelse
-            </tbody>
-            @if($broadsheets->isNotEmpty())
-            <tfoot>
+                @endforeach
+                <th class="score-col" style="background:#163275;">
+                    Total<br>
+                    <small style="font-weight:normal;font-size:9px;">({{ number_format($assessments->sum('max_score'), 2) }})</small>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($broadsheets as $index => $student)
                 <tr>
-                    <td colspan="3" style="text-align:right;font-style:italic;">
-                        Total Students: {{ $broadsheets->count() }}
+                    <td>{{ $index + 1 }}</td>
+                    <td>{{ $student->admissionno ?? '-' }}</td>
+                    <td class="name-col">
+                        <strong>{{ $student->lname ?? '' }}</strong>
+                        {{ $student->fname ?? '' }}
+                        {{ $student->mname ?? '' }}
                     </td>
                     @foreach($assessments as $assessment)
-                        <td></td>
+                        {{-- Blank cell — teacher fills in score on paper --}}
+                        <td class="score-col"></td>
                     @endforeach
-                    <td></td>
+                    {{-- Blank total --}}
+                    <td class="score-col"></td>
                 </tr>
-            </tfoot>
-            @endif
-        </table>
-    </div>
+            @empty
+                <tr>
+                    <td colspan="{{ 3 + $assessments->count() + 1 }}" style="text-align:center;padding:12px;">
+                        No students found.
+                    </td>
+                </tr>
+            @endforelse
+        </tbody>
+        @if($broadsheets->isNotEmpty())
+        <tfoot>
+            <tr>
+                <td colspan="3" style="text-align:right;font-style:italic;">
+                    Total Students: {{ $broadsheets->count() }}
+                </td>
+                @foreach($assessments as $assessment)
+                    <td></td>
+                @endforeach
+                <td></td>
+            </tr>
+        </tfoot>
+        @endif
+    </table>
 
-    {{-- SIGNATURES - HORIZONTAL LINE --}}
-    <div class="footer-wrapper">
-        <div class="signatures">
-            <div class="signature-item">
-                <div class="signature-line">Subject Teacher</div>
-                <div class="signature-details">
-                    <div>Name: _________________</div>
-                    <div>Sign: _________________</div>
-                    <div>Date: _________________</div>
-                </div>
-            </div>
-            <div class="signature-item">
-                <div class="signature-line">H.O.D</div>
-                <div class="signature-details">
-                    <div>Name: _________________</div>
-                    <div>Sign: _________________</div>
-                    <div>Date: _________________</div>
-                </div>
-            </div>
-            <div class="signature-item">
-                <div class="signature-line">Principal</div>
-                <div class="signature-details">
-                    <div>Name: _________________</div>
-                    <div>Sign: _________________</div>
-                    <div>Date: _________________</div>
-                </div>
-            </div>
-            <div class="signature-item">
-                <div class="signature-line">Date</div>
-                <div class="signature-details">
-                    <div>____/____/________</div>
-                </div>
-            </div>
+    {{-- Footer Signatures - All on the same line --}}
+    <div class="footer">
+        <div class="sig">
+            <div class="sig-line">Subject Teacher</div>
+            <div class="sig-name">Name: _________________</div>
+            <div class="sig-name">Sign: _________________</div>
+        </div>
+        <div class="sig">
+            <div class="sig-line">H.O.D</div>
+            <div class="sig-name">Name: _________________</div>
+            <div class="sig-name">Sign: _________________</div>
+        </div>
+        <div class="sig">
+            <div class="sig-line">Principal</div>
+            <div class="sig-name">Name: _________________</div>
+            <div class="sig-name">Sign: _________________</div>
+        </div>
+        <div class="sig">
+            <div class="sig-line">Date</div>
+            <div class="sig-name">____/____/________</div>
         </div>
     </div>
 
