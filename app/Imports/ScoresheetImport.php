@@ -2,20 +2,21 @@
 
 namespace App\Imports;
 
-use App\Models\Broadsheets;
-use App\Models\BroadsheetRecord;
-use App\Models\BroadsheetAssessmentScore;
-use App\Models\StudentRegistration;
 use App\Models\Assessment;
+use App\Models\BroadsheetAssessmentScore;
+use App\Models\BroadsheetRecord;
+use App\Models\Broadsheets;
 use App\Models\Schoolclass;
+use App\Models\Student;
+use App\Models\StudentRegistration;
 use App\Models\Subjectclass;
 use Illuminate\Support\Collection;
-use Maatwebsite\Excel\Concerns\ToCollection;
-use Maatwebsite\Excel\Concerns\SkipsOnFailure;
-use Maatwebsite\Excel\Concerns\SkipsFailures;
-use Maatwebsite\Excel\Concerns\Importable;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Concerns\Importable;
+use Maatwebsite\Excel\Concerns\SkipsFailures;
+use Maatwebsite\Excel\Concerns\SkipsOnFailure;
+use Maatwebsite\Excel\Concerns\ToCollection;
 
 class ScoresheetImport implements ToCollection, SkipsOnFailure
 {
@@ -235,7 +236,7 @@ class ScoresheetImport implements ToCollection, SkipsOnFailure
         Log::info("Processing: {$admissionNo} at row {$rowNumber}");
 
         // Find student
-        $student = StudentRegistration::where('admissionNO', $admissionNo)
+        $student = Student::where('admissionNO', $admissionNo)
             ->orWhere('admissionno', $admissionNo)
             ->first();
 
