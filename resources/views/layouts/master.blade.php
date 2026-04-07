@@ -194,7 +194,7 @@
     @if (Route::is('studentmockreports.*'))
             @include('layouts.pages-assets.css.studentreport-list-css')
     @endif
-    @if (Route::is('broadsheet.*'))
+    @if (Route::is('broadsheet*'))
             @include('layouts.pages-assets.css.broadsheet-list-css')
     @endif
 
