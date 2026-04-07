@@ -15,10 +15,11 @@ use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\SkipsOnFailure;
 use Maatwebsite\Excel\Concerns\SkipsFailures;
 use Maatwebsite\Excel\Concerns\Importable;
+use Maatwebsite\Excel\Concerns\WithStartRow;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
-class ScoresheetImport implements ToCollection, WithHeadingRow, SkipsOnFailure
+class ScoresheetImport implements ToCollection, WithHeadingRow, SkipsOnFailure, WithStartRow
 {
     use Importable, SkipsFailures;
 
@@ -28,6 +29,7 @@ class ScoresheetImport implements ToCollection, WithHeadingRow, SkipsOnFailure
     protected $assessments = [];
     protected $schoolclass = null;
     protected $subjectId = null;
+    protected $headerRow = null;
 
     public function __construct(array $importData)
     {
@@ -57,6 +59,14 @@ class ScoresheetImport implements ToCollection, WithHeadingRow, SkipsOnFailure
     }
 
     /**
+     * Start from row 1 (header row)
+     */
+    public function startRow(): int
+    {
+        return 1;
+    }
+
+    /**
      * Process the Excel collection
      */
     public function collection(Collection $rows)
@@ -69,34 +79,89 @@ class ScoresheetImport implements ToCollection, WithHeadingRow, SkipsOnFailure
             return;
         }
 
-        DB::beginTransaction();
+        // Get the first row as headers
+        $firstRow = $rows->first();
+        $headers = [];
 
-        try {
-            foreach ($rows as $index => $row) {
-                try {
-                    $this->processRow($row, $index + 2); // +2 because row 1 is header
-                } catch (\Exception $e) {
-                    $this->failures[] = [
-                        'row' => $index + 2,
-                        'errors' => [$e->getMessage()]
-                    ];
-                    Log::error("Import row error: " . $e->getMessage(), ['row' => $index + 2]);
-                }
+        // Check if the first row contains actual headers (strings) or numeric indexes
+        foreach ($firstRow as $key => $value) {
+            // If the key is numeric, we need to use the cell values as headers
+            if (is_numeric($key)) {
+                $headers[] = trim($value);
+            } else {
+                $headers[] = $key;
+            }
+        }
+
+        // If headers are numeric (0,1,2...), use the first row values as headers
+        $hasNumericHeaders = true;
+        foreach ($headers as $header) {
+            if (!is_numeric($header) && $header !== null && $header !== '') {
+                $hasNumericHeaders = false;
+                break;
+            }
+        }
+
+        if ($hasNumericHeaders) {
+            // The first row contains the actual headers as values
+            $actualHeaders = [];
+            foreach ($firstRow as $value) {
+                $actualHeaders[] = trim($value);
             }
 
-            DB::commit();
+            // Remove the header row from data rows
+            $dataRows = $rows->slice(1);
 
-            // Update progress
-            session(['import_progress' => 100, 'import_status' => 'completed', 'import_message' => 'Import completed!']);
+            // Process each data row
+            foreach ($dataRows as $index => $row) {
+                try {
+                    // Convert indexed row to associative array using headers
+                    $associativeRow = [];
+                    foreach ($actualHeaders as $idx => $header) {
+                        if ($header && $header !== '') {
+                            $associativeRow[$header] = $row[$idx] ?? null;
+                        }
+                    }
+                    $this->processRow($associativeRow, $index + 3); // +3 because row 1 is headers, row 2 is start of data
+                } catch (\Exception $e) {
+                    $this->failures[] = [
+                        'row' => $index + 3,
+                        'errors' => [$e->getMessage()]
+                    ];
+                    Log::error("Import row error: " . $e->getMessage(), ['row' => $index + 3]);
+                }
+            }
+        } else {
+            // Headers are already in the keys, process all rows
+            DB::beginTransaction();
 
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Import transaction failed: ' . $e->getMessage());
-            $this->failures[] = [
-                'row' => 0,
-                'errors' => ['Transaction failed: ' . $e->getMessage()]
-            ];
-            session(['import_progress' => 0, 'import_status' => 'error', 'import_message' => $e->getMessage()]);
+            try {
+                foreach ($rows as $index => $row) {
+                    try {
+                        $this->processRow($row, $index + 2);
+                    } catch (\Exception $e) {
+                        $this->failures[] = [
+                            'row' => $index + 2,
+                            'errors' => [$e->getMessage()]
+                        ];
+                        Log::error("Import row error: " . $e->getMessage(), ['row' => $index + 2]);
+                    }
+                }
+
+                DB::commit();
+
+                // Update progress
+                session(['import_progress' => 100, 'import_status' => 'completed', 'import_message' => 'Import completed!']);
+
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error('Import transaction failed: ' . $e->getMessage());
+                $this->failures[] = [
+                    'row' => 0,
+                    'errors' => ['Transaction failed: ' . $e->getMessage()]
+                ];
+                session(['import_progress' => 0, 'import_status' => 'error', 'import_message' => $e->getMessage()]);
+            }
         }
     }
 
@@ -107,12 +172,24 @@ class ScoresheetImport implements ToCollection, WithHeadingRow, SkipsOnFailure
     {
         // Get admission number - try different possible column names
         $admissionNo = null;
-        $possibleColumns = ['admission_no', 'admissionno', 'admission', 'adm_no', 'student_id', 'Admission No', 'AdmissionNO', 'ADMISSION NO'];
+        $possibleColumns = ['admission_no', 'admissionno', 'admission', 'adm_no', 'student_id', 'Admission No', 'AdmissionNO', 'ADMISSION NO', 'Adm No', 'Adm. No'];
 
         foreach ($possibleColumns as $col) {
             if (isset($row[$col]) && !empty($row[$col])) {
                 $admissionNo = trim($row[$col]);
                 break;
+            }
+        }
+
+        // Also check case-insensitive
+        if (!$admissionNo) {
+            foreach ($row as $key => $value) {
+                foreach ($possibleColumns as $col) {
+                    if (strcasecmp(trim($key), $col) === 0 && !empty($value)) {
+                        $admissionNo = trim($value);
+                        break 2;
+                    }
+                }
             }
         }
 
@@ -153,7 +230,6 @@ class ScoresheetImport implements ToCollection, WithHeadingRow, SkipsOnFailure
 
         // Process assessment scores
         $totalScore = 0;
-        $scoresUpdated = 0;
 
         foreach ($this->assessments as $assessment) {
             // Look for column with assessment name (case insensitive)
@@ -189,7 +265,6 @@ class ScoresheetImport implements ToCollection, WithHeadingRow, SkipsOnFailure
                 }
 
                 $totalScore += $score;
-                $scoresUpdated++;
             }
         }
 
@@ -335,9 +410,15 @@ class ScoresheetImport implements ToCollection, WithHeadingRow, SkipsOnFailure
             }
 
             $firstRow = $rows->first();
-            $headers = array_keys($firstRow->toArray());
 
-            // Log headers for debugging
+            // Get headers from the first row values
+            $headers = [];
+            foreach ($firstRow as $value) {
+                if ($value !== null && trim($value) !== '') {
+                    $headers[] = trim($value);
+                }
+            }
+
             Log::info('Excel headers found: ' . json_encode($headers));
             Log::info('Expected assessments: ' . json_encode($this->assessments->pluck('name')->toArray()));
 
@@ -362,14 +443,16 @@ class ScoresheetImport implements ToCollection, WithHeadingRow, SkipsOnFailure
 
             // Check for admission number column
             $hasAdmissionColumn = false;
-            $admissionColumns = ['admission_no', 'admissionno', 'admission', 'adm_no', 'student_id', 'Admission No', 'AdmissionNO', 'ADMISSION NO'];
+            $admissionColumns = ['admission_no', 'admissionno', 'admission', 'adm_no', 'student_id', 'Admission No', 'AdmissionNO', 'ADMISSION NO', 'Adm No', 'Adm. No'];
             $foundAdmissionColumn = null;
 
             foreach ($headers as $header) {
-                if (in_array(strtolower(trim($header)), array_map('strtolower', $admissionColumns))) {
-                    $hasAdmissionColumn = true;
-                    $foundAdmissionColumn = $header;
-                    break;
+                foreach ($admissionColumns as $admissionCol) {
+                    if (strcasecmp(trim($header), $admissionCol) === 0) {
+                        $hasAdmissionColumn = true;
+                        $foundAdmissionColumn = $header;
+                        break 2;
+                    }
                 }
             }
 
