@@ -13,6 +13,7 @@ use App\Models\Schoolsession;
 use App\Models\Schoolterm;
 use App\Models\SchoolInformation;
 use App\Models\BroadsheetAssessmentScore;
+use App\Models\Subjectclass;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\JsonResponse;
@@ -112,6 +113,8 @@ class BroadsheetController extends Controller
             'columns'     => $columns,
             'is_senior'   => $schoolclass && $schoolclass->classcategories->isNotEmpty()
                 ? ($schoolclass->classcategories->first()->is_senior ?? false) : false,
+            'subject_count' => count($columns['scores']),
+            'assessment_count' => count($columns['assessments']),
         ]);
     }
 
@@ -145,29 +148,10 @@ class BroadsheetController extends Controller
             ->orderBy('studentRegistration.firstname')
             ->get();
 
-        // Get subject count and assessment count for this class
-        $subjectCount = 0;
-        $assessmentCount = 0;
-
-        $schoolclass = Schoolclass::with('classcategories')->find($schoolclassid);
-        if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
-            $categoryIds = $schoolclass->classcategories->pluck('id');
-
-            // Get subjects count
-            $subjectCount = DB::table('subject')
-                ->whereIn('classcategory_id', $categoryIds)
-                ->count();
-
-            // Get assessments count
-            $assessmentCount = Assessment::whereIn('classcategory_id', $categoryIds)->count();
-        }
-
         return response()->json([
             'success' => true,
             'count'   => $students->count(),
             'students'=> $students,
-            'subject_count' => $subjectCount,
-            'assessment_count' => $assessmentCount,
         ]);
     }
 
@@ -199,6 +183,23 @@ class BroadsheetController extends Controller
             $assessments = Assessment::whereIn('classcategory_id', $categoryIds)
                 ->orderBy('id')
                 ->get();
+        }
+
+        // ── Get subjects for this class/session from subjectclass table ────────
+        $subjectsMap = [];
+        $subjectClasses = Subjectclass::where('schoolclassid', $schoolclassid)
+            ->where('sessionid', $sessionid)
+            ->with('subject')
+            ->get();
+
+        foreach ($subjectClasses as $sc) {
+            if ($sc->subject) {
+                $subjectsMap[$sc->subjectid] = [
+                    'subject_id'   => $sc->subjectid,
+                    'subject_name' => $sc->subject->subject,
+                    'subject_code' => $sc->subject->subject_code ?? '',
+                ];
+            }
         }
 
         // ── All students in this class/session ────────────────────────────────
@@ -249,17 +250,18 @@ class BroadsheetController extends Controller
 
         // ── Pivot: student_id → subject_id → row data ─────────────────────────
         $studentSubjectMap = [];
-        $subjectsMap       = [];  // subject_id → subject info
 
         foreach ($broadsheets as $row) {
             $sid = $row->student_id;
             $sub = $row->subject_id;
 
-            $subjectsMap[$sub] = [
-                'subject_id'   => $sub,
-                'subject_name' => $row->subject_name,
-                'subject_code' => $row->subject_code,
-            ];
+            if (!isset($subjectsMap[$sub])) {
+                $subjectsMap[$sub] = [
+                    'subject_id'   => $sub,
+                    'subject_name' => $row->subject_name,
+                    'subject_code' => $row->subject_code,
+                ];
+            }
 
             $assessmentScoreRow = $assessmentScoresAll->get($row->broadsheet_id, collect());
             $assessmentData     = [];
@@ -369,7 +371,7 @@ class BroadsheetController extends Controller
     }
 
     // =========================================================================
-    // EXPORT PDF (FIXED)
+    // EXPORT PDF
     // =========================================================================
 
     public function exportPdf(Request $request)
