@@ -412,74 +412,69 @@ class BroadsheetController extends Controller
     // EXPORT PDF
     // =========================================================================
 
-    public function exportPdf(Request $request)
-    {
-        try {
-            ini_set('max_execution_time', 600);
-            ini_set('memory_limit', '1024M');
+   public function exportPdf(Request $request)
+{
+    try {
+        ini_set('max_execution_time', 600);
+        ini_set('memory_limit', '1024M');
 
-            $validated = $request->validate([
-                'schoolclassid'   => 'required|integer|exists:schoolclass,id',
-                'sessionid'       => 'required|integer|exists:schoolsession,id',
-                'termid'          => 'required|integer',
-                'selectedColumns' => 'nullable|array',
-                'paper_size'      => 'nullable|in:A1,A2,A3,A4',
-                'orientation'     => 'nullable|in:portrait,landscape',
-            ]);
+        $validated = $request->validate([
+            'schoolclassid'   => 'required|integer|exists:schoolclass,id',
+            'sessionid'       => 'required|integer|exists:schoolsession,id',
+            'termid'          => 'required|integer',
+            'selectedColumns' => 'nullable|array',
+            'paper_size'      => 'nullable|in:A1,A2,A3,A4',
+            'orientation'     => 'nullable|in:portrait,landscape',
+        ]);
 
-            $paperSize      = $request->input('paper_size', 'A3');
-            $orientation    = $request->input('orientation', 'landscape');
-            $selectedColumns= $request->input('selectedColumns', []);
+        $paperSize      = $request->input('paper_size', 'A3');
+        $orientation    = $request->input('orientation', 'landscape');
+        $selectedColumns= $request->input('selectedColumns', []);
 
-            $data = $this->buildBroadsheetData(
-                $validated['schoolclassid'],
-                $validated['sessionid'],
-                $validated['termid'],
-                $selectedColumns
-            );
+        $data = $this->buildBroadsheetData(
+            $validated['schoolclassid'],
+            $validated['sessionid'],
+            $validated['termid'],
+            $selectedColumns
+        );
 
-            // Fix image paths for PDF
-            $data['school_logo_base64'] = $this->getLogoBase64($data['schoolInfo']);
+        // Fix logo for PDF
+        $data['school_logo_base64'] = $this->getLogoBase64($data['schoolInfo']);
 
-            // Use Dompdf's native paper size strings
-            $paperString = $paperSize;
-            if ($orientation === 'landscape') {
-                $paperString = $paperSize . '-landscape';
-            }
-
-            $pdf = Pdf::loadView('broadsheet.pdf', $data)
-                ->setPaper($paperString);
-
-            // Build filename with safe characters only
-            $className   = ($data['schoolclass']->schoolclass ?? 'Class') . ' ' . ($data['schoolclass']->arm_name ?? '');
-            $sessionName = $data['schoolsession']->session ?? '';
-            $termName    = $data['schoolterm']->term ?? 'Term';
-
-            // Remove/replace invalid filename characters
-            $cleanClassName = preg_replace('/[\/\\\\:*?"<>|]/', '_', trim($className));
-            $cleanSession = preg_replace('/[\/\\\\:*?"<>|]/', '_', trim($sessionName));
-            $cleanTerm = preg_replace('/[\/\\\\:*?"<>|]/', '_', trim($termName));
-
-            // Also remove any remaining special characters
-            $cleanClassName = preg_replace('/[^A-Za-z0-9_\- ]/', '', $cleanClassName);
-            $cleanSession = preg_replace('/[^A-Za-z0-9_\- ]/', '', $cleanSession);
-            $cleanTerm = preg_replace('/[^A-Za-z0-9_\- ]/', '', $cleanTerm);
-
-            $filename = 'Broadsheet_' . $cleanClassName . '_' . $cleanSession . '_' . $cleanTerm . '.pdf';
-
-            // Fallback filename if still empty
-            if (strlen($filename) < 15) {
-                $filename = 'Broadsheet_' . date('Y-m-d_H-i-s') . '.pdf';
-            }
-
-            return $pdf->download($filename);
-
-        } catch (\Exception $e) {
-            Log::error('Broadsheet PDF export error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            return back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
+        // Determine paper size and orientation
+        $paperString = $paperSize;
+        if ($orientation === 'landscape') {
+            $paperString .= '-landscape';
         }
-    }
 
+        $pdf = Pdf::loadView('broadsheet.pdf', $data)
+            ->setPaper($paperString)
+            ->setOption('isHtml5ParserEnabled', true)
+            ->setOption('isRemoteEnabled', true);
+
+        // Build clean filename
+        $className   = ($data['schoolclass']->schoolclass ?? 'Class') . ' ' . ($data['schoolclass']->arm_name ?? '');
+        $sessionName = $data['schoolsession']->session ?? '';
+        $termName    = $data['schoolterm']->term ?? 'Term';
+
+        $cleanClassName = preg_replace('/[^A-Za-z0-9_\- ]/', '_', trim($className));
+        $cleanSession   = preg_replace('/[^A-Za-z0-9_\- ]/', '_', trim($sessionName));
+        $cleanTerm      = preg_replace('/[^A-Za-z0-9_\- ]/', '_', trim($termName));
+
+        $filename = 'Broadsheet_' . $cleanClassName . '_' . $cleanSession . '_' . $cleanTerm . '.pdf';
+
+        // IMPORTANT: This makes it open in the browser instead of downloading
+        return $pdf->stream($filename);
+
+    } catch (\Exception $e) {
+        Log::error('Broadsheet PDF export error', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
+    }
+}
     // =========================================================================
     // EXPORT EXCEL
     // =========================================================================
