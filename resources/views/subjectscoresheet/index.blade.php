@@ -293,13 +293,14 @@
                     <button class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#columnVisibilityModal">
                         <i class="ri-eye-line me-1"></i>Columns
                     </button>
-                    <a href="{{ route('scoresheet.download-marks-sheet') }}" class="btn btn-sm btn-warning" id="downloadMarksSheet">
+                    {{-- These IDs are required by subjectscoresheet.init.js --}}
+                    <button type="button" class="btn btn-sm btn-warning" id="downloadMarksSheet">
                         <i class="ri-file-pdf-line me-1"></i>Marks Sheet
-                    </a>
-                    <a href="{{ route('subjectscoresheet.export') }}" class="btn btn-sm btn-success" id="downloadExcel">
+                    </button>
+                    <button type="button" class="btn btn-sm btn-success" id="downloadExcel">
                         <i class="ri-download-line me-1"></i>Export Excel
-                    </a>
-                    <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#importModal">
+                    </button>
+                    <button class="btn btn-sm btn-info" id="importBtn" data-bs-toggle="modal" data-bs-target="#importModal">
                         <i class="ri-upload-line me-1"></i>Import
                     </button>
                 @endif
@@ -311,6 +312,17 @@
             {{-- No data alert --}}
             <div class="alert alert-info text-center m-3 mb-0" id="noDataAlert" style="display:{{ $broadsheets->isEmpty() ? 'block' : 'none' }};">
                 <i class="ri-information-line me-2"></i>No scores available. Import scores or register students for this subject.
+            </div>
+
+            {{-- Download progress (required by subjectscoresheet.init.js) --}}
+            <div id="downloadProgressContainer" style="display:none;" class="px-3 pt-3">
+                <div class="d-flex align-items-center gap-3 p-3 rounded-3" style="background:#fefce8;">
+                    <div class="spinner-border spinner-border-sm text-warning"></div>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold mb-1" style="font-size:13px;">Downloading…</div>
+                        <div class="progress" style="height:5px;"><div class="progress-bar progress-bar-animated bg-warning" id="downloadProgressBar" style="width:0%"></div></div>
+                    </div>
+                </div>
             </div>
 
             {{-- Save progress bar --}}
@@ -543,7 +555,10 @@
                     <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="alert alert-info"><i class="ri-information-line me-2"></i>Upload the Excel file exported from this scoresheet. Column order and headers must match.</div>
+                    <div class="alert alert-info"><i class="ri-information-line me-2"></i>
+                        Upload the Excel file exported from this scoresheet. Assessment columns are matched automatically by header name.
+                    </div>
+                    {{-- importForm, importSubmit, importLoader, uploadProgressBar are all required by subjectscoresheet.init.js --}}
                     <form action="{{ route('subjectscoresheet.import') }}" method="POST" enctype="multipart/form-data" id="importForm">
                         @csrf
                         <input type="hidden" name="schoolclass_id" value="{{ session('schoolclass_id') }}">
@@ -555,9 +570,23 @@
                             <label class="form-label fw-semibold">Excel File (.xlsx)</label>
                             <input type="file" name="file" class="form-control" accept=".xlsx,.xls" required>
                         </div>
+                        {{-- Upload progress (required by init.js) --}}
+                        <div id="importLoader" style="display:none;" class="mb-3">
+                            <div class="d-flex align-items-center gap-3 p-2 rounded-3" style="background:#f0fdf4;">
+                                <div class="spinner-border spinner-border-sm text-success"></div>
+                                <div class="flex-grow-1">
+                                    <div style="font-size:12px;margin-bottom:3px;">Uploading…</div>
+                                    <div class="progress" style="height:5px;">
+                                        <div class="progress-bar progress-bar-animated bg-success" id="uploadProgressBar" style="width:0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="d-flex justify-content-end gap-2">
                             <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary"><i class="ri-upload-line me-1"></i>Upload</button>
+                            <button type="submit" class="btn btn-primary" id="importSubmit">
+                                <i class="ri-upload-line me-1"></i>Upload
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -588,17 +617,34 @@ if (!document.querySelector('meta[name="csrf-token"]')) {
     m.content = '{{ csrf_token() }}'; document.head.appendChild(m);
 }
 
-const CSRF    = document.querySelector('meta[name="csrf-token"]').content;
-const ROUTES  = {
+const CSRF = document.querySelector('meta[name="csrf-token"]').content;
+
+// ROUTES used by inline JS below
+const ROUTES = {
     singleUpdate: '{{ route("subjectscoresheet.single-update") }}',
     bulkUpdate  : '{{ route("subjectscoresheet.bulk-update") }}',
     destroy     : '{{ route("subjectscoresheet.destroy", ["id" => "__ID__"]) }}',
 };
-window.term_id        = {{ session('term_id') ?? 'null' }};
-window.session_id     = {{ session('session_id') ?? 'null' }};
-window.subjectclass_id= {{ session('subjectclass_id') ?? 'null' }};
-window.schoolclass_id = {{ session('schoolclass_id') ?? 'null' }};
-window.staff_id       = {{ session('staff_id') ?? 'null' }};
+
+// window.routes is used by subjectscoresheet.init.js — keep both in sync
+window.routes = {
+    singleUpdate     : '{{ route("subjectscoresheet.single-update") }}',
+    bulkUpdate       : '{{ route("subjectscoresheet.bulk-update") }}',
+    destroy          : '{{ route("subjectscoresheet.destroy", ["id" => "__ID__"]) }}',
+    results          : '{{ route("subjectscoresheet.results") }}',
+    export           : '{{ route("subjectscoresheet.export") }}',
+    import           : '{{ route("subjectscoresheet.import") }}',
+    downloadMarksSheet: '{{ route("scoresheet.download-marks-sheet") }}',
+    gradePreview     : '{{ route("subjectscoresheet.grade-preview") }}',
+};
+
+window.term_id         = {{ session('term_id')         ?? 'null' }};
+window.session_id      = {{ session('session_id')      ?? 'null' }};
+window.subjectclass_id = {{ session('subjectclass_id') ?? 'null' }};
+window.schoolclass_id  = {{ session('schoolclass_id')  ?? 'null' }};
+window.staff_id        = {{ session('staff_id')        ?? 'null' }};
+window.is_senior       = {{ $is_senior ?? false ? 'true' : 'false' }};
+window.broadsheets     = @json($broadsheets ?? []);
 
 document.addEventListener('DOMContentLoaded', function () {
 

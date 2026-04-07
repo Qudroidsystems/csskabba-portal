@@ -308,15 +308,32 @@ class MyScoreSheetController extends Controller
                 ], 422);
             }
 
-            $broadsheetRecord = BroadsheetRecord::find($broadsheet->broadSheet_record_id);
-            $schoolclassId    = $broadsheetRecord->schoolclass_id ?? 0;
-            $termId           = $broadsheet->term_id;
-            $sessionId        = $broadsheetRecord->session_id;
-            $schoolclass      = Schoolclass::with('classcategories')->find($schoolclassId);
-            $isSenior         = $schoolclass && $schoolclass->classcategories->isNotEmpty()
+            // Try both possible FK column name spellings (mixed-case vs lowercase)
+            $fkValue          = $broadsheet->broadSheet_record_id ?? $broadsheet->broadsheet_record_id;
+            $broadsheetRecord = BroadsheetRecord::find($fkValue);
+
+            // Fall back to values the client sent (always present when the scoresheet is open)
+            $schoolclassId = $broadsheetRecord?->schoolclass_id
+                ?? (int)($request->input('schoolclass_id') ?: session('schoolclass_id'))
+                ?: 0;
+
+            $sessionId = $broadsheetRecord?->session_id
+                ?? $request->input('session_id')
+                ?? session('session_id');
+
+            if (!$sessionId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Session context missing — please reload the scoresheet and try again.',
+                ], 200);
+            }
+
+            $termId      = $broadsheet->term_id ?? session('term_id');
+            $schoolclass = Schoolclass::with('classcategories')->find($schoolclassId);
+            $isSenior    = $schoolclass && $schoolclass->classcategories->isNotEmpty()
                 ? $schoolclass->classcategories->first()->is_senior ?? false : false;
 
-            DB::transaction(function () use ($broadsheetId, $assessmentId, $score, $broadsheet, $isSub, $subAssessmentId, $broadsheetRecord, $schoolclass) {
+            DB::transaction(function () use ($broadsheetId, $assessmentId, $score, $broadsheet, $isSub, $subAssessmentId, $broadsheetRecord, $schoolclass, $sessionId) {
                 if ($isSub) {
                     BroadsheetSubAssessmentScore::updateOrCreate(
                         ['broadsheet_id' => $broadsheetId, 'sub_assessment_id' => $subAssessmentId, 'assessment_id' => $assessmentId],
@@ -346,14 +363,15 @@ class MyScoreSheetController extends Controller
                     $assessments = Assessment::whereIn('classcategory_id', $categoryIds)->with('subAssessments')->get();
                 }
                 $broadsheet->load(['assessmentScores', 'subAssessmentScores']);
-                $this->computeDynamicTotals(collect([$broadsheet]), $assessments, $schoolclass, $broadsheet->term_id, $broadsheetRecord->session_id);
+                $this->computeDynamicTotals(collect([$broadsheet]), $assessments, $schoolclass, $broadsheet->term_id, $sessionId);
             });
 
             $this->updateClassMetrics($broadsheet->subjectclass_id, $broadsheet->staff_id, $termId, $sessionId);
             $this->updateSubjectPositions($broadsheet->subjectclass_id, $broadsheet->staff_id, $termId, $sessionId);
             $this->updateClassPositions($schoolclassId, $termId, $sessionId);
 
-            $gpaCgpaData     = $this->computeOverallForStudent($broadsheet->student_id ?? $broadsheetRecord->student_id, $schoolclass, $termId, $sessionId, $isSenior);
+            $studentId       = $broadsheetRecord?->student_id ?? DB::table('broadsheet_records')->where('id', $fkValue ?? 0)->value('student_id') ?? 0;
+            $gpaCgpaData     = $this->computeOverallForStudent($studentId, $schoolclass, $termId, $sessionId, $isSenior);
             $gpa             = round($gpaCgpaData['gpa'], 2);
             $cgpa            = round($gpaCgpaData['cgpa'], 2);
             $gpa_grade       = $gpaCgpaData['gpa_grade'] ?? 'F';
