@@ -164,16 +164,20 @@
             font-size: 10px;
         }
 
+        /* Footer - All signatures on the same line */
         .footer {
             display: flex;
-            justify-content: space-around;
-            margin-top: 36px;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 50px;
             margin-bottom: 20px;
+            width: 100%;
         }
 
         .sig {
             text-align: center;
-            width: 150px;
+            flex: 1;
+            margin: 0 5px;
         }
 
         .sig-line {
@@ -181,6 +185,12 @@
             margin-top: 36px;
             padding-top: 4px;
             font-size: 10px;
+        }
+
+        .sig-name {
+            font-size: 9px;
+            margin-top: 5px;
+            color: #555;
         }
 
         .badge-vetted {
@@ -211,8 +221,8 @@
             }
 
             .footer {
-                position: fixed;
-                bottom: 20px;
+                position: relative;
+                bottom: 0;
                 width: 100%;
             }
         }
@@ -335,11 +345,27 @@
         @endif
     </table>
 
+    {{-- Footer Signatures - All on the same line --}}
     <div class="footer">
-        <div class="sig"><div class="sig-line">Subject Teacher</div></div>
-        <div class="sig"><div class="sig-line">H.O.D</div></div>
-        <div class="sig"><div class="sig-line">Principal</div></div>
-        <div class="sig"><div class="sig-line">Date</div></div>
+        <div class="sig">
+            <div class="sig-line">Subject Teacher</div>
+            <div class="sig-name">Name: _________________</div>
+            <div class="sig-name">Sign: _________________</div>
+        </div>
+        <div class="sig">
+            <div class="sig-line">H.O.D</div>
+            <div class="sig-name">Name: _________________</div>
+            <div class="sig-name">Sign: _________________</div>
+        </div>
+        <div class="sig">
+            <div class="sig-line">Principal</div>
+            <div class="sig-name">Name: _________________</div>
+            <div class="sig-name">Sign: _________________</div>
+        </div>
+        <div class="sig">
+            <div class="sig-line">Date</div>
+            <div class="sig-name">____/____/________</div>
+        </div>
     </div>
 
 </div>
