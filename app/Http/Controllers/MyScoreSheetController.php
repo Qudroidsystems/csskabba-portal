@@ -282,7 +282,7 @@ class MyScoreSheetController extends Controller
     // =========================================================================
     // EXPORT (Excel, dynamic)
     // =========================================================================
-public function export(Request $request)
+    public function export(Request $request)
 {
     $schoolclassId  = session('schoolclass_id');
     $subjectclassId = session('subjectclass_id');
@@ -294,32 +294,41 @@ public function export(Request $request)
         return back()->with('error', 'Missing session data. Please open the scoresheet first.');
     }
 
-    // Get password from request or use default
-    $password = $request->input('password', env('EXCEL_PASSWORD', null));
-
-    // Get subject, class, term, session for filename
-    $subjectClass = Subjectclass::find($subjectclassId);
+    // Get the actual names for filename
+    $subjectClass = Subjectclass::with('subject')->find($subjectclassId);
     $schoolclass = Schoolclass::find($schoolclassId);
     $term = Schoolterm::find($termId);
     $session = Schoolsession::find($sessionId);
 
+    // Get the actual values
     $subjectName = $subjectClass && $subjectClass->subject ? $subjectClass->subject->subject : 'subject';
     $className = $schoolclass ? $schoolclass->schoolclass : 'class';
+    $arm = $schoolclass && $schoolclass->arm ? $schoolclass->arm : '';
     $termName = $term ? $term->term : 'term';
     $sessionName = $session ? $session->session : 'session';
 
     // Clean up names for filename
     $subjectName = preg_replace('/[^a-zA-Z0-9-]/', '_', $subjectName);
     $className = preg_replace('/[^a-zA-Z0-9-]/', '_', $className);
+    $arm = preg_replace('/[^a-zA-Z0-9-]/', '_', $arm);
     $termName = preg_replace('/[^a-zA-Z0-9-]/', '_', $termName);
     $sessionName = preg_replace('/[^a-zA-Z0-9-]/', '_', $sessionName);
 
-    $filename = "{$subjectName}_{$className}_{$termName}_{$sessionName}_scoresheet.xlsx";
+    // Build filename
+    $filename = "{$subjectName}_{$className}";
+    if ($arm && $arm !== '_') {
+        $filename .= "_{$arm}";
+    }
+    $filename .= "_{$termName}_{$sessionName}_scoresheet.xlsx";
 
-    return Excel::download(
-        new RecordsheetExport($schoolclassId, $subjectclassId, $termId, $sessionId, $staffId, $password),
-        $filename
-    );
+    // Create export instance
+    $export = new RecordsheetExport($schoolclassId, $subjectclassId, $termId, $sessionId, $staffId);
+
+    // Get the password to show to teacher (optional - can be shown in success message)
+    $password = $export->getPassword();
+
+    // Download the file
+    return Excel::download($export, $filename);
 }
     // =========================================================================
     // IMPORT

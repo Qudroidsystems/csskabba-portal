@@ -17,6 +17,7 @@ use Maatwebsite\Excel\Concerns\WithEvents;
 use Maatwebsite\Excel\Concerns\WithProperties;
 use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Events\AfterSheet;
+use PhpOffice\PhpSpreadsheet\Reader\IReadFilter;
 use PhpOffice\PhpSpreadsheet\Style\Protection;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
@@ -32,16 +33,19 @@ class RecordsheetExport implements FromView, ShouldAutoSize, WithStyles, WithEve
     protected $assessments;
     protected $password;
 
-    public function __construct($schoolclassId, $subjectclassId, $termId, $sessionId, $staffId, $password = null)
+    public function __construct($schoolclassId, $subjectclassId, $termId, $sessionId, $staffId)
     {
         $this->schoolclassId  = $schoolclassId;
         $this->subjectclassId = $subjectclassId;
         $this->termId         = $termId;
         $this->sessionId      = $sessionId;
         $this->staffId        = $staffId;
-        $this->password       = $password;
 
-        // Load dynamic assessments once for reuse in view + styles
+        // Use a fixed password or generate one based on teacher/session
+        // This password will be required to OPEN the Excel file
+        $this->password = $this->generateFilePassword();
+
+        // Load dynamic assessments
         $schoolclass = Schoolclass::with('classcategories')->find($schoolclassId);
         $this->assessments = collect();
         if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
@@ -50,6 +54,33 @@ class RecordsheetExport implements FromView, ShouldAutoSize, WithStyles, WithEve
                 ->orderBy('id')
                 ->get();
         }
+    }
+
+    /**
+     * Generate a password for the Excel file
+     * You can customize this logic
+     */
+    protected function generateFilePassword()
+    {
+        // Option 1: Use a fixed school-wide password
+        // return env('EXCEL_OPEN_PASSWORD', 'ClaretSchool2024!');
+
+        // Option 2: Generate password based on subject, class, term, session
+        $subjectClass = \App\Models\Subjectclass::find($this->subjectclassId);
+        $schoolclass = \App\Models\Schoolclass::find($this->schoolclassId);
+        $term = \App\Models\SchoolTerm::find($this->termId);
+        $session = \App\Models\SchoolSession::find($this->sessionId);
+
+        $subjectCode = $subjectClass && $subjectClass->subject ? $subjectClass->subject->subject_code : 'SUBJ';
+        $className = $schoolclass ? $schoolclass->schoolclass : 'CLASS';
+        $termName = $term ? substr($term->term, 0, 3) : 'TRM';
+        $sessionYear = $session ? $session->session : date('Y');
+
+        // Generate password: e.g., "CDN_JSS1_1ST_2025"
+        $password = strtoupper($subjectCode . '_' . $className . '_' . $termName . '_' . $sessionYear);
+        $password = preg_replace('/[^A-Z0-9_]/', '', $password);
+
+        return $password;
     }
 
     public function view(): View
@@ -100,7 +131,6 @@ class RecordsheetExport implements FromView, ShouldAutoSize, WithStyles, WithEve
 
     public function properties(): array
     {
-        // Get subject, class, term, session for filename
         $subjectClass = Subjectclass::find($this->subjectclassId);
         $schoolclass = Schoolclass::find($this->schoolclassId);
         $term = Schoolterm::find($this->termId);
@@ -111,46 +141,34 @@ class RecordsheetExport implements FromView, ShouldAutoSize, WithStyles, WithEve
         $termName = $term ? $term->term : 'term';
         $sessionName = $session ? $session->session : 'session';
 
-        // Clean up names for filename
-        $subjectName = preg_replace('/[^a-zA-Z0-9-]/', '_', $subjectName);
-        $className = preg_replace('/[^a-zA-Z0-9-]/', '_', $className);
-        $termName = preg_replace('/[^a-zA-Z0-9-]/', '_', $termName);
-        $sessionName = preg_replace('/[^a-zA-Z0-9-]/', '_', $sessionName);
-
         return [
             'creator'        => auth()->user()->name ?? 'Teacher',
             'lastModifiedBy' => auth()->user()->name ?? 'Teacher',
             'title'          => "{$subjectName}_{$className}_{$termName}_{$sessionName}_Scoresheet",
-            'description'    => "Scoresheet for {$subjectName} - {$className} - {$termName} - {$sessionName}",
+            'description'    => "Password protected scoresheet for {$subjectName} - {$className} - {$termName} - {$sessionName}",
             'subject'        => $subjectName,
-            'keywords'       => 'scoresheet,marks,excel,export',
+            'keywords'       => 'scoresheet,marks,excel,export,password_protected',
             'category'       => 'Education',
-            'manager'        => 'School Administrator',
-            'company'        => 'School Management System',
         ];
     }
 
     public function styles(Worksheet $sheet)
     {
-        // Lock all cells by default
-        $sheet->getProtection()->setSheet(true);
-
         // Get the last column letter
-        $lastCol = chr(ord('A') + 2 + $this->assessments->count() + 4);
+        $lastCol = chr(ord('A') + 2 + $this->assessments->count() + 6);
 
-        // Lock all cells in the data area (rows 7 and below, assessment columns only)
-        // Unlock only the assessment score cells (columns D, E, F for data rows)
-        $assessmentColumns = ['D', 'E', 'F']; // Adjust based on your structure
-
-        // First, lock the entire sheet
+        // Unlock assessment score cells only
+        // First, lock all cells
         $sheet->getStyle('A1:' . $lastCol . '1000')->getProtection()->setLocked(Protection::PROTECTION_PROTECTED);
 
-        // Then unlock only the assessment score cells in data rows
-        foreach ($assessmentColumns as $col) {
-            $sheet->getStyle($col . '7:' . $col . '1000')->getProtection()->setLocked(Protection::PROTECTION_UNPROTECTED);
+        // Unlock only the assessment score columns (columns D, E, F etc. for data rows)
+        $assessmentStartCol = 3; // D column (index 3)
+        for ($i = 0; $i < $this->assessments->count(); $i++) {
+            $colLetter = chr(ord('D') + $i);
+            $sheet->getStyle($colLetter . '7:' . $colLetter . '1000')->getProtection()->setLocked(Protection::PROTECTION_UNPROTECTED);
         }
 
-        // Header rows styling
+        // Apply bold styling to headers
         $sheet->getStyle("A1:{$lastCol}1")->getFont()->setBold(true);
         $sheet->getStyle("A2:{$lastCol}2")->getFont()->setBold(true);
         $sheet->getStyle("A3:{$lastCol}3")->getFont()->setBold(true);
@@ -166,13 +184,29 @@ class RecordsheetExport implements FromView, ShouldAutoSize, WithStyles, WithEve
     {
         return [
             AfterSheet::class => function (AfterSheet $event) {
-                $event->sheet->getDelegate()->freezePane('A7');
+                $sheet = $event->sheet->getDelegate();
+                $sheet->freezePane('A7');
 
-                // Set password protection if provided
-                if ($this->password) {
-                    $event->sheet->getDelegate()->getProtection()->setPassword($this->password);
-                }
+                // Enable sheet protection with password
+                // This prevents editing of locked cells
+                $sheet->getProtection()->setSheet(true);
+                $sheet->getProtection()->setPassword($this->password);
+
+                // Also protect the workbook structure with the same password
+                // This prompts for password when opening the file
+                $spreadsheet = $event->sheet->getDelegate()->getParent();
+                $spreadsheet->getSecurity()->setLockWindows(true);
+                $spreadsheet->getSecurity()->setLockStructure(true);
+                $spreadsheet->getSecurity()->setWorkbookPassword($this->password);
             },
         ];
+    }
+
+    /**
+     * Get the password (for display if needed)
+     */
+    public function getPassword()
+    {
+        return $this->password;
     }
 }

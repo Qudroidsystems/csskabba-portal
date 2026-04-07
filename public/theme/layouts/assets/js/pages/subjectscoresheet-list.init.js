@@ -746,63 +746,96 @@ function downloadExcel() {
     }
 
     downloadExcelButton.disabled = true;
-    downloadExcelButton.innerHTML = '<i class="ri-loader-4-line sync-icon"></i> Downloading...';
+    downloadExcelButton.innerHTML = '<i class="ri-loader-4-line sync-icon"></i> Generating...';
     downloadProgressContainer.style.display = 'block';
     downloadProgressBar.style.width = '10%';
 
+    // Simply download without asking for password
     axios.get(window.routes?.export || '/subjectscoresheet/export', {
         responseType: 'blob',
         headers: {
-            'X-Requested-With': 'XMLHttpRequest'
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
         },
         timeout: 30000,
         onDownloadProgress: progressEvent => {
             if (progressEvent.lengthComputable) {
                 const percentComplete = (progressEvent.loaded / progressEvent.total) * 100;
                 downloadProgressBar.style.width = `${percentComplete}%`;
-                console.log(`Download progress: ${percentComplete.toFixed(2)}%`);
             }
         }
     })
     .then(response => {
         downloadProgressBar.style.width = '100%';
-        const url = window.URL.createObjectURL(new Blob([response.data]));
+
+        // Get filename from Content-Disposition header
+        let filename = 'scoresheet.xlsx';
+        const contentDisposition = response.headers['content-disposition'];
+        if (contentDisposition) {
+            const match = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+            if (match && match[1]) {
+                filename = match[1].replace(/['"]/g, '');
+            }
+        }
+
+        const url = window.URL.createObjectURL(new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }));
         const link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', 'scoresheet.xlsx');
+        link.setAttribute('download', filename);
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
+
+        // Show success message (optionally show the password)
         Swal.fire({
             icon: 'success',
             title: 'Downloaded!',
-            text: 'Excel file downloaded successfully.',
-            timer: 2000,
+            html: 'Excel file downloaded successfully.<br><small>The file is password protected. Contact the administrator for the password.</small>',
+            timer: 3000,
             showConfirmButton: false
         });
     })
     .catch(error => {
-        let errorMessage = 'Failed to download Excel file. Check console for details.';
-        if (error.response) errorMessage = error.response.data.message || errorMessage;
-        console.error('Download error:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Download Failed',
-            text: errorMessage,
-            showConfirmButton: true
-        });
+        let errorMessage = 'Failed to download Excel file.';
+
+        if (error.response && error.response.data) {
+            const reader = new FileReader();
+            reader.onload = function() {
+                try {
+                    const errorData = JSON.parse(reader.result);
+                    errorMessage = errorData.message || errorMessage;
+                } catch(e) {
+                    errorMessage = error.response.statusText || errorMessage;
+                }
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Download Failed',
+                    text: errorMessage,
+                    showConfirmButton: true
+                });
+            };
+            reader.readAsText(error.response.data);
+        } else {
+            errorMessage = error.message || errorMessage;
+            console.error('Download error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Download Failed',
+                text: errorMessage,
+                showConfirmButton: true
+            });
+        }
     })
     .finally(() => {
         setTimeout(() => {
             downloadProgressContainer.style.display = 'none';
             downloadProgressBar.style.width = '0%';
             downloadExcelButton.disabled = false;
-            downloadExcelButton.innerHTML = originalBtnContent || '<i class="ri-download-line me-1"></i> Download Excel';
+            downloadExcelButton.innerHTML = originalBtnContent || '<i class="ri-download-line me-1"></i> Export Excel';
         }, 1000);
     });
 }
-
 // Download Marks Sheet with progress
 function downloadMarksSheet() {
     const downloadMarksSheetButton = document.getElementById('downloadMarksSheet');
