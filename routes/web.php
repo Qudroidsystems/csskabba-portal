@@ -13,6 +13,7 @@ use App\Http\Controllers\ClassTeacherController;
 use App\Http\Controllers\CompulsorySubjectClassController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExamController;
+use App\Http\Controllers\ExamTimetableController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\JobStatusController;
 use App\Http\Controllers\MockSubjectVettingController;
@@ -30,6 +31,7 @@ use App\Http\Controllers\PrincipalsCommentController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\ResultController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\RoomController;
 use App\Http\Controllers\SchoolArmController;
 use App\Http\Controllers\SchoolBillController;
 use App\Http\Controllers\SchoolBillTermSessionController;
@@ -757,24 +759,6 @@ Route::resource('subjectoperation', SubjectOperationController::class);
     });
 
 
-
-
-<?php
-// routes/web.php - Add these to your existing routes
-
-Route::group(['middleware' => ['auth']], function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::post('roles/bulk-remove-users', [RoleController::class, 'bulkRemoveUsers'])->name('roles.bulkremoveusers');
-    Route::get('/roles/{role}/users', [RoleController::class, 'getRoleUsers'])->name('roles.users');
-    Route::resource('roles', RoleController::class);
-    Route::resource('users', UserController::class);
-    Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
-    Route::get('/users/all', [UserController::class, 'allUsers'])->name('users.all');
-    Route::get('/users/paginate', [UserController::class, 'paginate'])->name('users.paginate');
-    Route::get('/user/overview/{id}', [UserController::class, 'show'])->name('users.overview');
-    Route::get('/users/roles', [UserController::class, 'roles']);
-    Route::resource('permissions', PermissionController::class);
-
     // =========================================================================
     // TIMETABLE MANAGEMENT ROUTES
     // =========================================================================
@@ -876,24 +860,24 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/schedule', [TimetableReportController::class, 'schedule'])->name('schedule');
     });
 
-    // =========================================================================
-    // TIMETABLE API ROUTES (for AJAX calls)
-    // =========================================================================
+    // // =========================================================================
+    // // TIMETABLE API ROUTES (for AJAX calls)
+    // // =========================================================================
 
-    Route::prefix('api/timetable')->name('api.timetable.')->group(function () {
-        // Teacher API endpoints
-        Route::get('/my-timetable', [TimetableApiController::class, 'getMyTimetable'])->name('my-timetable');
-        Route::get('/today-schedule', [TimetableApiController::class, 'getTodaySchedule'])->name('today-schedule');
-        Route::get('/upcoming-classes', [TimetableApiController::class, 'getUpcomingClasses'])->name('upcoming-classes');
-        Route::post('/mark-attendance', [TimetableApiController::class, 'markAttendance'])->name('mark-attendance');
+    // Route::prefix('api/timetable')->name('api.timetable.')->group(function () {
+    //     // Teacher API endpoints
+    //     Route::get('/my-timetable', [TimetableApiController::class, 'getMyTimetable'])->name('my-timetable');
+    //     Route::get('/today-schedule', [TimetableApiController::class, 'getTodaySchedule'])->name('today-schedule');
+    //     Route::get('/upcoming-classes', [TimetableApiController::class, 'getUpcomingClasses'])->name('upcoming-classes');
+    //     Route::post('/mark-attendance', [TimetableApiController::class, 'markAttendance'])->name('mark-attendance');
 
-        // Student/Parent API endpoints
-        Route::get('/class-timetable/{classId}', [TimetableApiController::class, 'getClassTimetable'])->name('class-timetable');
-        Route::get('/child-timetable/{studentId}', [TimetableApiController::class, 'getChildTimetable'])->name('child-timetable');
+    //     // Student/Parent API endpoints
+    //     Route::get('/class-timetable/{classId}', [TimetableApiController::class, 'getClassTimetable'])->name('class-timetable');
+    //     Route::get('/child-timetable/{studentId}', [TimetableApiController::class, 'getChildTimetable'])->name('child-timetable');
 
-        // Notification endpoints
-        Route::get('/notifications', [TimetableApiController::class, 'getNotifications'])->name('notifications');
-        Route::post('/notifications/mark-read', [TimetableApiController::class, 'markNotificationsRead'])->name('notifications.mark-read');
-    });
-});
+    //     // Notification endpoints
+    //     Route::get('/notifications', [TimetableApiController::class, 'getNotifications'])->name('notifications');
+    //     Route::post('/notifications/mark-read', [TimetableApiController::class, 'markNotificationsRead'])->name('notifications.mark-read');
+    // });
+
 });
