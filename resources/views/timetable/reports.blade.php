@@ -171,9 +171,18 @@
 </div>
 
 
+
 <script>
     let currentReportData = null;
     let currentReportId = null;
+
+    // Define routes using url() for routes with parameters
+    const REPORT_ROUTES = {
+        generate: '{{ route("timetable.reports.generate") }}',
+        download: '{{ url("/timetable-reports/download") }}',
+        show: '{{ url("/timetable-reports") }}',
+        destroy: '{{ url("/timetable-reports") }}'
+    };
 
     function generateReport() {
         const reportType = document.getElementById('reportType').value;
@@ -188,11 +197,12 @@
             didOpen: () => { Swal.showLoading(); }
         });
 
-        fetch('{{ route("timetable.reports.generate") }}', {
+        fetch(REPORT_ROUTES.generate, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
             },
             body: JSON.stringify({
                 report_type: reportType,
@@ -210,10 +220,9 @@
                 currentReportId = data.report?.id;
 
                 if (format === 'csv') {
-                    // For CSV, download directly
-                    window.location.href = `{{ route("timetable.reports.download", "") }}/${data.report.id}`;
+                    // FIXED: Use url() helper instead of route()
+                    window.location.href = REPORT_ROUTES.download + '/' + data.report.id;
                 } else {
-                    // Show preview
                     displayReportPreview(data.data, reportType);
                     document.getElementById('reportPreview').style.display = 'block';
                 }
@@ -237,7 +246,6 @@
             return;
         }
 
-        // Get headers from first item
         const headers = Object.keys(data[0]);
 
         let html = '<table class="table table-bordered table-hover">';
@@ -265,14 +273,15 @@
 
     function downloadReport() {
         if (currentReportId) {
-            window.location.href = `{{ route("timetable.reports.download", "") }}/${currentReportId}`;
+            // FIXED: Use url() helper instead of route()
+            window.location.href = REPORT_ROUTES.download + '/' + currentReportId;
         } else {
-            generateReport(); // This will trigger download if format is CSV
+            generateReport();
         }
     }
 
     function viewSavedReport(id) {
-        fetch(`{{ route("timetable.reports.show", "") }}/${id}`)
+        fetch(REPORT_ROUTES.show + '/' + id)
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
@@ -286,7 +295,8 @@
     }
 
     function downloadSavedReport(id) {
-        window.location.href = `{{ route("timetable.reports.download", "") }}/${id}`;
+        // FIXED: Use url() helper instead of route()
+        window.location.href = REPORT_ROUTES.download + '/' + id;
     }
 
     function deleteReport(id) {
@@ -299,9 +309,12 @@
             confirmButtonText: 'Yes, delete it!'
         }).then((result) => {
             if (result.isConfirmed) {
-                fetch(`{{ route("timetable.reports.destroy", "") }}/${id}`, {
+                fetch(REPORT_ROUTES.destroy + '/' + id, {
                     method: 'DELETE',
-                    headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    }
                 })
                 .then(res => res.json())
                 .then(data => {
@@ -316,4 +329,5 @@
         });
     }
 </script>
+
 @endsection
