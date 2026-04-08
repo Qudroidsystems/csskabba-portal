@@ -51,6 +51,7 @@ use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\SubjectOperationController;
 use App\Http\Controllers\SubjectTeacherController;
 use App\Http\Controllers\SubjectVettingController;
+use App\Http\Controllers\TimetableController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ViewStudentController;
 use App\Http\Controllers\ViewStudentMockReportController;
@@ -754,4 +755,35 @@ Route::resource('subjectoperation', SubjectOperationController::class);
         Route::post('/export/pdf',   [BroadsheetController::class, 'exportPdf'])->name('export.pdf');
         Route::post('/export/excel', [BroadsheetController::class, 'exportExcel'])->name('export.excel');
     });
+
+
+
+
+
+// Timetable Routes
+Route::prefix('timetable')->name('timetable.')->group(function () {
+    // Admin routes
+    Route::get('/', [TimetableController::class, 'index'])->name('index');
+    Route::get('/teacher', [TimetableController::class, 'teacherView'])->name('teacher');
+
+    // AJAX endpoints
+    Route::post('/setup', [TimetableController::class, 'setup'])->name('setup');
+    Route::get('/get-setting/{settingId}', [TimetableController::class, 'getSetting'])->name('get-setting');
+    Route::post('/save-settings', [TimetableController::class, 'saveSettings'])->name('save-settings');
+    Route::post('/save-constraints', [TimetableController::class, 'saveConstraints'])->name('save-constraints');
+    Route::post('/auto-generate', [TimetableController::class, 'autoGenerate'])->name('auto-generate');
+    Route::get('/get-grid/{settingId}', [TimetableController::class, 'getGrid'])->name('get-grid');
+    Route::post('/save-slot', [TimetableController::class, 'saveSlot'])->name('save-slot');
+    Route::post('/bulk-update', [TimetableController::class, 'bulkUpdateSlots'])->name('bulk-update');
+    Route::get('/check-conflicts/{settingId}', [TimetableController::class, 'checkConflicts'])->name('check-conflicts');
+    Route::post('/send-notifications', [TimetableController::class, 'sendNotifications'])->name('send-notifications');
+    Route::get('/export/{settingId}', [TimetableController::class, 'export'])->name('export');
+    Route::delete('/delete-setting/{settingId}', [TimetableController::class, 'deleteSetting'])->name('delete-setting');
+    Route::post('/clone-setting', [TimetableController::class, 'cloneSetting'])->name('clone-setting');
+    Route::get('/class-subjects', [TimetableController::class, 'getClassSubjects'])->name('class-subjects');
+
+    // Teacher availability
+    Route::post('/teacher-availability', [TimetableController::class, 'saveTeacherAvailability'])->name('teacher-availability');
+    Route::get('/teacher-availability/{teacherId}', [TimetableController::class, 'getTeacherAvailability'])->name('get-teacher-availability');
+});
 });
