@@ -619,7 +619,7 @@
 
                             @can('View timetable reports')
                                 <li class="nav-item">
-                                    <a href="{{ route('timetable.reports') }}" class="nav-link" data-key="t-reports">
+                                    <a href="{{ route('timetable.reports.index') }}" class="nav-link" data-key="t-reports">
                                         <i class="ph-chart-bar"></i> Timetable Reports
                                     </a>
                                 </li>

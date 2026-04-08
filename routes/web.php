@@ -862,6 +862,8 @@ Route::resource('subjectoperation', SubjectOperationController::class);
         Route::post('/schedule', [TimetableReportController::class, 'schedule'])->name('schedule');
     });
 
+
+
     // // =========================================================================
     // // TIMETABLE API ROUTES (for AJAX calls)
     // // =========================================================================
