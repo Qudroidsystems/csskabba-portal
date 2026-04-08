@@ -473,6 +473,7 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     // ============================================================================
     // GLOBALS
@@ -485,25 +486,30 @@
     let availableSubjects = [];
     let allTeachers = [];
 
-
-
+    // FIXED: Remove trailing slashes from URLs
     const ROUTES = {
         setup: '{{ route("timetable.setup") }}',
-        getSetting: '{{ url("/timetable/get-setting") }}/',
+        getSetting: '{{ route("timetable.get-setting", ["settingId" => ""]) }}',
         saveSettings: '{{ route("timetable.save-settings") }}',
         saveConstraints: '{{ route("timetable.save-constraints") }}',
         autoGenerate: '{{ route("timetable.auto-generate") }}',
-        getGrid: '{{ url("/timetable/get-grid") }}/',
+        getGrid: '{{ route("timetable.get-grid", ["settingId" => ""]) }}',
         saveSlot: '{{ route("timetable.save-slot") }}',
-        checkConflicts: '{{ url("/timetable/check-conflicts") }}/',
+        checkConflicts: '{{ route("timetable.check-conflicts", ["settingId" => ""]) }}',
         sendNotifications: '{{ route("timetable.send-notifications") }}',
-        export: '{{ url("/timetable/export") }}/',
-        deleteSetting: '{{ url("/timetable/delete-setting") }}/',
+        export: '{{ route("timetable.export", ["settingId" => ""]) }}',
+        deleteSetting: '{{ route("timetable.delete-setting", ["settingId" => ""]) }}',
         cloneSetting: '{{ route("timetable.clone-setting") }}',
         getClassSubjects: '{{ route("timetable.class-subjects") }}',
     };
 
     const CSRF = '{{ csrf_token() }}';
+
+    // Helper function to build URLs
+    function buildUrl(baseUrl, id) {
+        let cleanUrl = baseUrl.replace(/\/$/, '');
+        return cleanUrl + '/' + id;
+    }
 
     // ============================================================================
     // LOAD / CREATE SETTING
@@ -530,7 +536,8 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': CSRF
+                    'X-CSRF-TOKEN': CSRF,
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify({
                     schoolclass_id: classId,
@@ -558,7 +565,20 @@
         showLoading();
 
         try {
-            const response = await fetch(`${ROUTES.getSetting}/${settingId}`);
+            const getSettingUrl = buildUrl(ROUTES.getSetting, settingId);
+            console.log('Fetching URL:', getSettingUrl);
+
+            const response = await fetch(getSettingUrl, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': CSRF
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
             const data = await response.json();
 
             if (data.success) {
@@ -583,7 +603,6 @@
                 if (currentSetting.periods && currentSetting.periods.length > 0) {
                     loadPeriodsIntoTable(currentSetting.periods);
                 } else {
-                    // Default periods
                     const defaultPeriods = [
                         { name: 'Period 1', type: 'lesson' },
                         { name: 'Period 2', type: 'lesson' },
@@ -612,7 +631,7 @@
                 throw new Error(data.message || 'Failed to load setting');
             }
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Error loading setting:', error);
             Swal.fire('Error', 'Failed to load timetable: ' + error.message, 'error');
         } finally {
             hideLoading();
@@ -630,33 +649,58 @@
             addPeriodRow(period.name, period.type, index + 1);
         });
 
-        // Add at least one row if empty
         if (periods.length === 0) {
             addPeriodRow('Period 1', 'lesson', 1);
         }
     }
 
     function addPeriodRow(name = '', type = 'lesson', order = null) {
-        const template = document.getElementById('periodRowTemplate');
-        const newRow = template.cloneNode(true);
-        newRow.removeAttribute('id');
-        newRow.style.display = '';
+        const tbody = document.getElementById('periodsBody');
+        const row = document.createElement('tr');
 
-        const orderCell = newRow.querySelector('.period-order');
-        const nameInput = newRow.querySelector('.period-name');
-        const typeSelect = newRow.querySelector('.period-type');
-
+        const orderCell = document.createElement('td');
+        orderCell.className = 'period-order';
         if (order) {
             orderCell.textContent = order;
         } else {
-            const rows = document.querySelectorAll('#periodsBody tr:not(#periodRowTemplate)');
+            const rows = document.querySelectorAll('#periodsBody tr');
             orderCell.textContent = rows.length + 1;
         }
+        row.appendChild(orderCell);
 
+        const nameCell = document.createElement('td');
+        const nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.className = 'form-control form-control-sm period-name';
+        nameInput.placeholder = 'e.g., Period 1';
         nameInput.value = name;
-        typeSelect.value = type;
+        nameCell.appendChild(nameInput);
+        row.appendChild(nameCell);
 
-        document.getElementById('periodsBody').appendChild(newRow);
+        const typeCell = document.createElement('td');
+        const typeSelect = document.createElement('select');
+        typeSelect.className = 'form-select form-select-sm period-type';
+        typeSelect.innerHTML = `
+            <option value="lesson" ${type === 'lesson' ? 'selected' : ''}>Lesson</option>
+            <option value="short_break" ${type === 'short_break' ? 'selected' : ''}>Short Break</option>
+            <option value="long_break" ${type === 'long_break' ? 'selected' : ''}>Long Break</option>
+            <option value="assembly" ${type === 'assembly' ? 'selected' : ''}>Assembly</option>
+            <option value="free" ${type === 'free' ? 'selected' : ''}>Free Period</option>
+        `;
+        typeCell.appendChild(typeSelect);
+        row.appendChild(typeCell);
+
+        const actionCell = document.createElement('td');
+        actionCell.className = 'text-center';
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'btn btn-sm btn-danger remove-period';
+        removeBtn.innerHTML = '<i class="ri-delete-bin-line"></i>';
+        removeBtn.onclick = function() { removePeriodRow(this); };
+        actionCell.appendChild(removeBtn);
+        row.appendChild(actionCell);
+
+        tbody.appendChild(row);
         reorderPeriods();
     }
 
@@ -667,20 +711,27 @@
     }
 
     function reorderPeriods() {
-        const rows = document.querySelectorAll('#periodsBody tr:not(#periodRowTemplate)');
+        const rows = document.querySelectorAll('#periodsBody tr');
         rows.forEach((row, idx) => {
-            row.querySelector('.period-order').textContent = idx + 1;
+            const orderCell = row.querySelector('.period-order');
+            if (orderCell) {
+                orderCell.textContent = idx + 1;
+            }
         });
     }
 
     function getPeriodsFromTable() {
         const periods = [];
-        const rows = document.querySelectorAll('#periodsBody tr:not(#periodRowTemplate)');
+        const rows = document.querySelectorAll('#periodsBody tr');
         rows.forEach(row => {
-            periods.push({
-                name: row.querySelector('.period-name').value,
-                type: row.querySelector('.period-type').value
-            });
+            const nameInput = row.querySelector('.period-name');
+            const typeSelect = row.querySelector('.period-type');
+            if (nameInput && typeSelect) {
+                periods.push({
+                    name: nameInput.value,
+                    type: typeSelect.value
+                });
+            }
         });
         return periods;
     }
@@ -720,7 +771,8 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': CSRF
+                    'X-CSRF-TOKEN': CSRF,
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify(data)
             });
@@ -747,13 +799,6 @@
         const tbody = document.getElementById('constraintsBody');
         tbody.innerHTML = '';
 
-        // Group subjects by teacher for dropdown
-        const subjectOptions = availableSubjects.map(subj =>
-            `<option value="${subj.subject_id}" data-teacher-id="${subj.teacher_id}" data-teacher-name="${subj.teacher_name}">
-                ${subj.subject_name} (${subj.teacher_name})
-            </option>`
-        ).join('');
-
         if (availableSubjects.length === 0) {
             tbody.innerHTML = `
                 <tr>
@@ -766,7 +811,6 @@
             return;
         }
 
-        // If no constraints, create default for each subject
         const constraintsMap = new Map();
         constraints.forEach(c => {
             constraintsMap.set(c.subject_id, c);
@@ -784,20 +828,20 @@
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>
-                    ${subj.subject_name}
+                    ${escapeHtml(subj.subject_name)}
                     <input type="hidden" class="constraint-subject-id" value="${subj.subject_id}">
                 </td>
-                <td>${subj.teacher_name}</td>
+                <td>${escapeHtml(subj.teacher_name)}</td>
                 <td>
                     <input type="number" class="form-control form-control-sm periods-per-week"
-                            value="${periodsPerWeek}" min="1" max="10" style="width: 80px;">
+                           value="${periodsPerWeek}" min="1" max="10" style="width: 80px;">
                 </td>
                 <td class="text-center">
                     <input type="checkbox" class="allow-double" ${allowDouble ? 'checked' : ''}>
                 </td>
                 <td>
                     <input type="number" class="form-control form-control-sm max-double"
-                            value="${maxDouble}" min="0" max="5" style="width: 80px;" ${!allowDouble ? 'disabled' : ''}>
+                           value="${maxDouble}" min="0" max="5" style="width: 80px;" ${!allowDouble ? 'disabled' : ''}>
                 </td>
                 <td>
                     <select class="form-select form-select-sm preferred-days" multiple size="3" style="min-width: 120px;">
@@ -815,7 +859,6 @@
                 </td>
             `;
 
-            // Enable/disable max double based on allow double checkbox
             const allowDoubleCheckbox = row.querySelector('.allow-double');
             const maxDoubleInput = row.querySelector('.max-double');
             allowDoubleCheckbox.addEventListener('change', () => {
@@ -873,7 +916,8 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': CSRF
+                    'X-CSRF-TOKEN': CSRF,
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify({
                     setting_id: currentSettingId,
@@ -905,7 +949,19 @@
         container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Loading timetable...</p></div>';
 
         try {
-            const response = await fetch(`${ROUTES.getGrid}/${currentSettingId}`);
+            const getGridUrl = buildUrl(ROUTES.getGrid, currentSettingId);
+
+            const response = await fetch(getGridUrl, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': CSRF
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
             const data = await response.json();
 
             if (data.success) {
@@ -919,7 +975,7 @@
                 throw new Error(data.message || 'Failed to load grid');
             }
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Error loading grid:', error);
             container.innerHTML = `<div class="alert alert-danger">Failed to load timetable: ${error.message}</div>`;
         }
     }
@@ -937,7 +993,7 @@
                 <thead class="table-dark">
                     <tr>
                         <th style="width: 120px">Period / Time</th>
-                        ${currentDays.map(day => `<th class="text-center">${day}</th>`).join('')}
+                        ${currentDays.map(day => `<th class="text-center">${escapeHtml(day)}</th>`).join('')}
                     </tr>
                 </thead>
                 <tbody>
@@ -959,19 +1015,6 @@
                 const isFree = slot?.is_free || (!slot?.subject_id && !slot?.teacher_id);
                 const cellClass = isFree ? 'bg-light' : (slot?.is_double ? 'bg-primary-subtle' : '');
 
-                let tooltipContent = '';
-                if (slot && !isFree) {
-                    tooltipContent = `
-                        <div class="tooltip-timetable">
-                            <strong>${escapeHtml(slot.subject || '—')}</strong><br>
-                            <small>Teacher: ${escapeHtml(slot.teacher || '—')}</small>
-                            ${slot.room ? `<br><small>Room: ${escapeHtml(slot.room)}</small>` : ''}
-                        </div>
-                    `;
-                } else {
-                    tooltipContent = '<div class="tooltip-timetable">Free Period</div>';
-                }
-
                 html += `
                     <td class="timetable-cell ${cellClass}"
                         data-period-id="${period.id}"
@@ -986,17 +1029,15 @@
                         data-is-double="${slot?.is_double || false}"
                         data-is-free="${isFree}"
                         style="cursor: pointer; vertical-align: middle;"
-                        onclick="openEditSlotModal(${period.id}, '${day}')"
-                        title="${escapeHtml(slot?.subject || 'Free Period')} - ${escapeHtml(slot?.teacher || 'No Teacher')}">
+                        onclick="openEditSlotModal(${period.id}, '${day}')">
                         <div class="d-flex flex-column align-items-center">
                 `;
 
                 if (slot && !isFree) {
-                    // Show teacher picture if available
                     if (slot.teacher_picture) {
                         html += `
                             <img src="${slot.teacher_picture}" class="rounded-circle mb-1"
-                                    style="width: 40px; height: 40px; object-fit: cover; border: 2px solid #667eea;">
+                                 style="width: 40px; height: 40px; object-fit: cover; border: 2px solid #667eea;">
                         `;
                     } else {
                         html += `<i class="ri-user-line ri-2x text-muted mb-1"></i>`;
@@ -1028,22 +1069,11 @@
         `;
 
         container.innerHTML = html;
-
-        // Add tooltip initialization
-        initializeTooltips();
     }
 
-    function initializeTooltips() {
-        // Initialize Bootstrap tooltips for teacher pictures
-        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-        tooltipTriggerList.map(function (tooltipTriggerEl) {
-            return new bootstrap.Tooltip(tooltipTriggerEl, {
-                html: true,
-                placement: 'top'
-            });
-        });
-    }
-
+    // ============================================================================
+    // EDIT SLOT MODAL
+    // ============================================================================
     function openEditSlotModal(periodId, day) {
         const period = currentPeriods.find(p => p.id == periodId);
         if (!period) return;
@@ -1067,7 +1097,7 @@
             const selected = slot.subject_id == subj.subject_id;
             subjectSelect.innerHTML += `
                 <option value="${subj.subject_id}" data-teacher-id="${subj.teacher_id}" data-teacher-name="${subj.teacher_name}" ${selected ? 'selected' : ''}>
-                    ${subj.subject_name} (${subj.teacher_name})
+                    ${escapeHtml(subj.subject_name)} (${escapeHtml(subj.teacher_name)})
                 </option>
             `;
         });
@@ -1091,7 +1121,7 @@
             const selected = slot.teacher_id == teacher.id;
             teacherSelect.innerHTML += `
                 <option value="${teacher.id}" data-teacher-picture="${teacher.picture || ''}" ${selected ? 'selected' : ''}>
-                    ${teacher.name}
+                    ${escapeHtml(teacher.name)}
                 </option>
             `;
         });
@@ -1100,8 +1130,6 @@
         subjectSelect.onchange = function() {
             const selectedOption = subjectSelect.options[subjectSelect.selectedIndex];
             const teacherId = selectedOption.dataset.teacherId;
-            const teacherName = selectedOption.dataset.teacherName;
-
             if (teacherId) {
                 teacherSelect.value = teacherId;
             }
@@ -1138,7 +1166,8 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': CSRF
+                    'X-CSRF-TOKEN': CSRF,
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify(data)
             });
@@ -1188,7 +1217,8 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': CSRF
+                            'X-CSRF-TOKEN': CSRF,
+                            'Accept': 'application/json'
                         },
                         body: JSON.stringify({ setting_id: currentSettingId })
                     });
@@ -1214,10 +1244,27 @@
     // CONFLICTS
     // ============================================================================
     async function checkConflicts() {
+        if (!currentSettingId) {
+            Swal.fire('Error', 'No timetable loaded', 'error');
+            return;
+        }
+
         showLoading();
 
         try {
-            const response = await fetch(`${ROUTES.checkConflicts}/${currentSettingId}`);
+            const checkConflictsUrl = buildUrl(ROUTES.checkConflicts, currentSettingId);
+
+            const response = await fetch(checkConflictsUrl, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': CSRF
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+
             const data = await response.json();
 
             if (data.success) {
@@ -1264,7 +1311,6 @@
                                             and
                                             <span class="badge bg-primary">${escapeHtml(conflict.class_b || 'Class B')}</span>
                                         </p>
-                                        ${conflict.subject_a ? `<p class="mb-0 small">Subjects: ${escapeHtml(conflict.subject_a)} / ${escapeHtml(conflict.subject_b)}</p>` : ''}
                                     </div>
                                 </div>
                             </div>
@@ -1278,7 +1324,7 @@
                 throw new Error(data.message || 'Failed to check conflicts');
             }
         } catch (error) {
-            console.error('Error:', error);
+            console.error('Error checking conflicts:', error);
             Swal.fire('Error', 'Failed to check conflicts: ' + error.message, 'error');
         } finally {
             hideLoading();
@@ -1305,7 +1351,8 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': CSRF
+                            'X-CSRF-TOKEN': CSRF,
+                            'Accept': 'application/json'
                         },
                         body: JSON.stringify({
                             setting_id: currentSettingId,
@@ -1333,7 +1380,12 @@
     // EXPORT
     // ============================================================================
     function exportTimetable(format) {
-        window.location.href = `${ROUTES.export}/${currentSettingId}?format=${format}`;
+        if (!currentSettingId) {
+            Swal.fire('Error', 'No timetable loaded', 'error');
+            return;
+        }
+        const exportUrl = buildUrl(ROUTES.export, currentSettingId) + '?format=' + format;
+        window.location.href = exportUrl;
     }
 
     // ============================================================================
@@ -1352,10 +1404,13 @@
                 showLoading();
 
                 try {
-                    const response = await fetch(`${ROUTES.deleteSetting}/${settingId}`, {
+                    const deleteUrl = buildUrl(ROUTES.deleteSetting, settingId);
+
+                    const response = await fetch(deleteUrl, {
                         method: 'DELETE',
                         headers: {
-                            'X-CSRF-TOKEN': CSRF
+                            'X-CSRF-TOKEN': CSRF,
+                            'Accept': 'application/json'
                         }
                     });
 
@@ -1418,7 +1473,8 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': CSRF
+                            'X-CSRF-TOKEN': CSRF,
+                            'Accept': 'application/json'
                         },
                         body: JSON.stringify({
                             setting_id: settingId,
