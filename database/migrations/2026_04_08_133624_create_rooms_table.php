@@ -14,7 +14,7 @@ return new class extends Migration
             $table->string('room_name', 100);
             $table->enum('type', ['classroom', 'laboratory', 'auditorium', 'library', 'sports', 'other'])->default('classroom');
             $table->integer('capacity')->default(30);
-            $table->json('facilities')->nullable();
+            $table->json('facilities')->nullable(); // Remove default
             $table->string('building', 100)->nullable();
             $table->string('floor', 50)->nullable();
             $table->boolean('is_active')->default(true);

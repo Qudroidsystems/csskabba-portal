@@ -15,9 +15,9 @@ return new class extends Migration
             $table->unsignedSmallInteger('periods_per_week')->default(2);
             $table->boolean('allow_double_period')->default(false);
             $table->unsignedSmallInteger('max_double_periods_per_week')->default(1);
-            $table->json('preferred_days')->nullable();
-            $table->json('avoid_days')->nullable();
-            $table->json('preferred_periods')->nullable();
+            $table->json('preferred_days')->nullable(); // Remove default
+            $table->json('avoid_days')->nullable(); // Remove default
+            $table->json('preferred_periods')->nullable(); // Remove default
             $table->boolean('is_compulsory')->default(true);
             $table->timestamps();
 

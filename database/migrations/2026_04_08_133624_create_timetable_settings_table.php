@@ -20,7 +20,7 @@ return new class extends Migration
             $table->unsignedSmallInteger('short_break_duration_minutes')->default(20);
             $table->unsignedSmallInteger('long_break_duration_minutes')->default(40);
             $table->boolean('is_active')->default(true);
-            $table->json('active_days')->default('["Monday","Tuesday","Wednesday","Thursday","Friday"]');
+            $table->json('active_days')->nullable(); // Remove default value, use nullable instead
             $table->timestamps();
 
             $table->index(['schoolclass_id', 'session_id', 'term_id']);

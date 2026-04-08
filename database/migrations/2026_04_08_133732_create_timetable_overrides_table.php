@@ -6,9 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('timetable_overrides', function (Blueprint $table) {
@@ -19,13 +16,9 @@ return new class extends Migration
             $table->string('title', 200);
             $table->text('description')->nullable();
 
-            // Modified schedule for that day (JSON stored)
-            $table->json('modified_slots')->nullable(); // Stores array of slot modifications
-
-            // Alternative: completely different schedule for the day
-            $table->json('custom_schedule')->nullable(); // Alternative schedule definition
-
-            // Which periods are affected
+            // Modified schedule for that day (JSON stored) - NO DEFAULT VALUES
+            $table->json('modified_slots')->nullable();
+            $table->json('custom_schedule')->nullable();
             $table->json('affected_periods')->nullable();
 
             // Cancellation info
@@ -49,9 +42,9 @@ return new class extends Migration
             $table->unsignedBigInteger('updated_by')->nullable();
 
             $table->timestamps();
-            $table->softDeletes(); // Allow soft deletion of overrides
+            $table->softDeletes();
 
-            // Indexes for performance
+            // Indexes
             $table->index(['setting_id', 'override_date']);
             $table->index(['override_date', 'status']);
             $table->index(['override_type', 'status']);
@@ -80,9 +73,6 @@ return new class extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('timetable_overrides');
