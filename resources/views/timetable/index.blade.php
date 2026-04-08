@@ -488,19 +488,22 @@
 
     // FIXED: Remove trailing slashes from URLs
     const ROUTES = {
+        // Use route() for routes WITHOUT parameters
         setup: '{{ route("timetable.setup") }}',
-        getSetting: '{{ route("timetable.get-setting", ["settingId" => ""]) }}',
         saveSettings: '{{ route("timetable.save-settings") }}',
         saveConstraints: '{{ route("timetable.save-constraints") }}',
         autoGenerate: '{{ route("timetable.auto-generate") }}',
-        getGrid: '{{ route("timetable.get-grid", ["settingId" => ""]) }}',
         saveSlot: '{{ route("timetable.save-slot") }}',
-        checkConflicts: '{{ route("timetable.check-conflicts", ["settingId" => ""]) }}',
         sendNotifications: '{{ route("timetable.send-notifications") }}',
-        export: '{{ route("timetable.export", ["settingId" => ""]) }}',
-        deleteSetting: '{{ route("timetable.delete-setting", ["settingId" => ""]) }}',
         cloneSetting: '{{ route("timetable.clone-setting") }}',
         getClassSubjects: '{{ route("timetable.class-subjects") }}',
+
+        // Use url() for routes WITH parameters (to avoid missing parameter error)
+        getSetting: '{{ url("/timetable/get-setting") }}',
+        getGrid: '{{ url("/timetable/get-grid") }}',
+        checkConflicts: '{{ url("/timetable/check-conflicts") }}',
+        export: '{{ url("/timetable/export") }}',
+        deleteSetting: '{{ url("/timetable/delete-setting") }}',
     };
 
     const CSRF = '{{ csrf_token() }}';
