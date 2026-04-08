@@ -20,9 +20,9 @@ class TimetableReportController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:View timetable reports', ['only' => ['index', 'show', 'download']]);
-        $this->middleware('permission:Generate timetable reports', ['only' => ['generate', 'schedule']]);
-        $this->middleware('permission:Delete timetable reports', ['only' => ['destroy']]);
+    //     $this->middleware('permission:View timetable reports', ['only' => ['index', 'show', 'download']]);
+    //     $this->middleware('permission:Generate timetable reports', ['only' => ['generate', 'schedule']]);
+    //     $this->middleware('permission:Delete timetable reports', ['only' => ['destroy']]);
     }
 
     public function index()
