@@ -485,18 +485,20 @@
     let availableSubjects = [];
     let allTeachers = [];
 
+
+
     const ROUTES = {
         setup: '{{ route("timetable.setup") }}',
-        getSetting: '{{ route("timetable.get-setting", "") }}',
+        getSetting: '{{ url("/timetable/get-setting") }}/',
         saveSettings: '{{ route("timetable.save-settings") }}',
         saveConstraints: '{{ route("timetable.save-constraints") }}',
         autoGenerate: '{{ route("timetable.auto-generate") }}',
-        getGrid: '{{ route("timetable.get-grid", "") }}',
+        getGrid: '{{ url("/timetable/get-grid") }}/',
         saveSlot: '{{ route("timetable.save-slot") }}',
-        checkConflicts: '{{ route("timetable.check-conflicts", "") }}',
+        checkConflicts: '{{ url("/timetable/check-conflicts") }}/',
         sendNotifications: '{{ route("timetable.send-notifications") }}',
-        export: '{{ route("timetable.export", "") }}',
-        deleteSetting: '{{ route("timetable.delete-setting", "") }}',
+        export: '{{ url("/timetable/export") }}/',
+        deleteSetting: '{{ url("/timetable/delete-setting") }}/',
         cloneSetting: '{{ route("timetable.clone-setting") }}',
         getClassSubjects: '{{ route("timetable.class-subjects") }}',
     };
