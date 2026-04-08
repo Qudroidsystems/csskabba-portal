@@ -288,6 +288,9 @@
     @if (Route::is('mymocksubjectvettings.*'))
         @include('layouts.pages-assets.css.mymocksubjectvettings-list-css')
     @endif
+    @if (Route::is('timetable.*'))
+        @include('layouts.pages-assets.css.timetable-list-css')
+    @endif
 </head>
 
 <body>
@@ -2538,9 +2541,12 @@
       @endif
 
       @if (Route::is('mymocksubjectvettings.*'))
-            @include('layouts.pages-assets.js.mymocksubjectvetting-list-js')
+            @include('layouts.pages-assets.js.timetable-list-js')
       @endif
 
+      @if (Route::is('timetable.*'))
+            @include('layouts.pages-assets.js.timetable-list-js')
+      @endif
       </body>
 
       </html>
