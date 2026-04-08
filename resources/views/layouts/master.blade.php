@@ -585,6 +585,66 @@
             </li>
             @endif
 
+            {{-- Timetable Management Menu --}}
+            @if(auth()->user()->can('View timetable') || auth()->user()->can('View my timetable'))
+                <li class="nav-item">
+                    <a href="#sidebartimetable" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebartimetable">
+                        <i class="ph-calendar"></i> <span data-key="t-timetable">Timetable Management</span>
+                    </a>
+                    <div class="collapse menu-dropdown" id="sidebartimetable">
+                        <ul class="nav nav-sm flex-column">
+                            @can('View timetable')
+                                <li class="nav-item">
+                                    <a href="{{ route('timetable.index') }}" class="nav-link" data-key="t-admin-timetable">
+                                        <i class="ph-gear"></i> Admin Timetable
+                                    </a>
+                                </li>
+                            @endcan
+
+                            @can('View my timetable')
+                                <li class="nav-item">
+                                    <a href="{{ route('timetable.teacher') }}" class="nav-link" data-key="t-my-timetable">
+                                        <i class="ph-user"></i> My Timetable
+                                    </a>
+                                </li>
+                            @endcan
+
+                            @can('View rooms')
+                                <li class="nav-item">
+                                    <a href="{{ route('rooms.index') }}" class="nav-link" data-key="t-rooms">
+                                        <i class="ph-door"></i> Room Management
+                                    </a>
+                                </li>
+                            @endcan
+
+                            @can('View timetable reports')
+                                <li class="nav-item">
+                                    <a href="{{ route('timetable.reports') }}" class="nav-link" data-key="t-reports">
+                                        <i class="ph-chart-bar"></i> Timetable Reports
+                                    </a>
+                                </li>
+                            @endcan
+
+                            @can('View exam timetable')
+                                <li class="nav-item">
+                                    <a href="{{ route('exam-timetable.index') }}" class="nav-link" data-key="t-exam">
+                                        <i class="ph-exam"></i> Exam Timetable
+                                    </a>
+                                </li>
+                            @endcan
+
+                            @can('View holidays')
+                                <li class="nav-item">
+                                    <a href="{{ route('holidays.index') }}" class="nav-link" data-key="t-holidays">
+                                        <i class="ph-calendar-blank"></i> Holidays
+                                    </a>
+                                </li>
+                            @endcan
+                        </ul>
+                    </div>
+                </li>
+            @endif
+
             @if(auth()->user()->can('View my-class') || auth()->user()->can('View my-subject') || auth()->user()->can('View my-subject-vettings') || auth()->user()->can('View my-mock-subject-vettings') || auth()->user()->can('View myresult-room') || auth()->user()->can('View student-report')
              || auth()->user()->can('View student-mock-report')|| auth()->user()->can('View my-principals-comment'))
             <li class="menu-title"><i class="ph-folder-open"></i> <span data-key="t-apps">CLASSES & RECORDS</span></li>

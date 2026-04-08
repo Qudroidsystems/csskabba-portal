@@ -34,6 +34,45 @@ class TimetableController extends Controller
     const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
     const DAYS_MAP = ['Monday' => 1, 'Tuesday' => 2, 'Wednesday' => 3, 'Thursday' => 4, 'Friday' => 5];
 
+    /**
+     * Constructor with permission middleware
+     * Following your existing permission pattern
+     */
+    public function __construct()
+    {
+        // Timetable View Permissions
+        $this->middleware('permission:View timetable|Create timetable|Edit timetable|Delete timetable|Generate timetable', ['only' => ['index', 'getSetting', 'getGrid']]);
+        $this->middleware('permission:Create timetable', ['only' => ['setup', 'saveSettings']]);
+        $this->middleware('permission:Edit timetable', ['only' => ['saveSlot', 'bulkUpdateSlots', 'cloneSetting']]);
+        $this->middleware('permission:Delete timetable', ['only' => ['deleteSetting']]);
+        $this->middleware('permission:Generate timetable', ['only' => ['autoGenerate']]);
+
+        // Teacher View Permission
+        $this->middleware('permission:View my timetable', ['only' => ['teacherView']]);
+
+        // Timetable Management Permissions
+        $this->middleware('permission:Manage timetable settings', ['only' => ['saveSettings']]);
+        $this->middleware('permission:Manage timetable constraints', ['only' => ['saveConstraints']]);
+
+        // Report Permissions
+        $this->middleware('permission:View timetable reports', ['only' => ['workloadDashboard', 'generateAnalytics']]);
+        $this->middleware('permission:Export timetable', ['only' => ['export']]);
+
+        // Substitute Permissions
+        $this->middleware('permission:Request substitute', ['only' => ['requestSubstitute']]);
+        $this->middleware('permission:Approve substitute', ['only' => ['approveSubstitute']]);
+        $this->middleware('permission:View substitute requests', ['only' => ['getSubstituteRequests']]);
+
+        // Teacher Availability Permission
+        $this->middleware('permission:Manage teacher availability', ['only' => ['saveTeacherAvailability', 'getTeacherAvailability']]);
+
+        // Conflict Check Permission
+        $this->middleware('permission:Check timetable conflicts', ['only' => ['checkConflicts']]);
+
+        // Notification Permission
+        $this->middleware('permission:Send timetable notifications', ['only' => ['sendNotifications']]);
+    }
+
     // =========================================================================
     // INDEX — Admin Overview
     // =========================================================================
@@ -378,16 +417,14 @@ class TimetableController extends Controller
             TimetableSlot::where('setting_id', $setting->id)->delete();
 
             // Build weighted slot pool
-            $slotPool = $this->buildWeightedSlotPool($days, $lessonPeriods, $constraints, $subjectTeachers, $teacherAvailability);
+            $slotPool = $this->buildWeightedSlotPool($days, $lessonPeriods);
 
             // Track allocations
-            $subjectCount = [];
             $teacherDaySlot = [];
             $teacherDayPeriodCount = [];
             $placed = [];
-            $doublePeriodsPlaced = [];
 
-            // Sort requirements by priority (periods_per_week DESC, compulsory first)
+            // Sort requirements by priority
             $requirements = $constraints->sortByDesc(function ($c) {
                 return ($c->is_compulsory ? 100 : 0) + $c->periods_per_week;
             })->values();
@@ -401,9 +438,7 @@ class TimetableController extends Controller
                 $preferPeriods = $constraint->preferred_periods ?? [];
                 $avoidDays = $constraint->avoid_days ?? [];
 
-                $placed[$subjectId] = 0;
                 $doubleCount = 0;
-
                 $teacherEntry = $subjectTeachers->get($subjectId)?->first();
                 $teacherId = $teacherEntry?->staffid;
 
@@ -434,10 +469,6 @@ class TimetableController extends Controller
                     if (in_array($day, $preferDays)) $score += 10;
                     if (in_array($day, $avoidDays)) $score -= 10;
                     if (in_array((string)$periodOrder, $preferPeriods)) $score += 5;
-
-                    // Prefer spreading subjects across days
-                    $currentDayCount = $teacherDayPeriodCount[$teacherId][$day] ?? 0;
-                    if ($currentDayCount < 2) $score += 3;
 
                     $scoredSlots[] = ['slot' => $slot, 'score' => $score, 'key' => $key];
                 }
@@ -474,7 +505,7 @@ class TimetableController extends Controller
                     }
                     $placedThisSubject++;
 
-                    // Try double period on next consecutive lesson period
+                    // Try double period
                     if ($allowDouble && $doubleCount < $maxDouble && $placedThisSubject < $needed) {
                         $nextPeriod = $this->getNextLessonPeriod($lessonPeriods, $periodId);
                         if ($nextPeriod) {
@@ -530,7 +561,7 @@ class TimetableController extends Controller
         }
     }
 
-    private function buildWeightedSlotPool($days, $lessonPeriods, $constraints, $subjectTeachers, $teacherAvailability): array
+    private function buildWeightedSlotPool($days, $lessonPeriods): array
     {
         $pool = [];
         foreach ($days as $day) {
@@ -546,7 +577,7 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // GET TIMETABLE GRID (with teacher pictures for tooltips)
+    // GET TIMETABLE GRID
     // =========================================================================
 
     public function getGrid(int $settingId): JsonResponse
@@ -648,7 +679,7 @@ class TimetableController extends Controller
         // Log the change
         $this->logTimetableChange(Auth::id(), 'update', 'TimetableSlot', $slot->id);
 
-        // Send notification if this is a change to an existing teacher's slot
+        // Send notification if this is a change
         if ($slot->wasChanged('teacher_id') && $slot->teacher_id) {
             $this->scheduleNotification($slot->teacher_id, $slot->id, 'change_alert');
         }
@@ -738,7 +769,6 @@ class TimetableController extends Controller
         $setting = TimetableSetting::with(['slots.teacher', 'slots.teacher.staffPicture', 'slots.subject', 'slots.period', 'schoolclass', 'session', 'term'])
             ->findOrFail($validated['setting_id']);
 
-        // Group slots by teacher
         $byTeacher = $setting->slots->whereNotNull('teacher_id')->groupBy('teacher_id');
         $sent = 0;
 
@@ -770,7 +800,6 @@ class TimetableController extends Controller
             try {
                 Mail::to($teacher->email)->send(new TimetableNotificationMail($notifData));
 
-                // Log notification
                 foreach ($teacherSlots as $slot) {
                     TimetableNotification::create([
                         'teacher_id' => $teacherId,
@@ -797,32 +826,6 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // SCHEDULE NOTIFICATION FOR SPECIFIC TEACHER
-    // =========================================================================
-
-    private function scheduleNotification(int $teacherId, int $slotId, string $type): void
-    {
-        $teacher = User::find($teacherId);
-        if (!$teacher || !$teacher->email) return;
-
-        $slot = TimetableSlot::with(['period', 'subject'])->find($slotId);
-
-        TimetableNotification::create([
-            'teacher_id' => $teacherId,
-            'slot_id' => $slotId,
-            'type' => $type,
-            'email' => $teacher->email,
-            'scheduled_at' => now(),
-            'status' => 'pending',
-            'payload' => json_encode([
-                'day' => $slot->day,
-                'period' => $slot->period?->name,
-                'subject' => $slot->subject?->subject,
-            ]),
-        ]);
-    }
-
-    // =========================================================================
     // CONFLICT CHECKER
     // =========================================================================
 
@@ -833,7 +836,6 @@ class TimetableController extends Controller
             ->with(['period', 'subject', 'setting.schoolclass', 'teacher'])
             ->get();
 
-        // Find teacher double-booked at same time on same day
         $conflicts = [];
         $teacherSlotMap = [];
 
@@ -859,43 +861,6 @@ class TimetableController extends Controller
             }
         }
 
-        // Cross-setting check
-        $currentSetting = TimetableSetting::find($settingId);
-        if ($currentSetting) {
-            $allSettingIds = TimetableSetting::where('session_id', $currentSetting->session_id)
-                ->where('id', '!=', $settingId)
-                ->pluck('id')
-                ->toArray();
-
-            if (count($allSettingIds) > 0) {
-                $allSlots = TimetableSlot::whereIn('setting_id', $allSettingIds)
-                    ->whereNotNull('teacher_id')
-                    ->with(['period', 'subject', 'setting.schoolclass', 'teacher'])
-                    ->get();
-
-                $allTeacherSlotMap = [];
-                foreach ($allSlots as $s) {
-                    $k = $s->teacher_id . '_' . $s->day . '_' . $s->period_id;
-                    if (isset($allTeacherSlotMap[$k]) && $allTeacherSlotMap[$k]->setting_id !== $s->setting_id) {
-                        $conflicts[] = [
-                            'type' => 'cross_class_conflict',
-                            'day' => $s->day,
-                            'period' => $s->period?->name,
-                            'period_time' => $s->period?->getDurationLabel(),
-                            'teacher' => $s->teacher?->name,
-                            'teacher_picture' => $s->teacher && $s->teacher->staffPicture
-                                ? asset('storage/staff_avatars/' . $s->teacher->staffPicture->picture)
-                                : null,
-                            'class_a' => $allTeacherSlotMap[$k]->setting?->schoolclass?->schoolclass,
-                            'class_b' => $s->setting?->schoolclass?->schoolclass,
-                        ];
-                    } else {
-                        $allTeacherSlotMap[$k] = $s;
-                    }
-                }
-            }
-        }
-
         return response()->json([
             'success' => true,
             'conflicts' => $conflicts,
@@ -904,7 +869,7 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // EXPORT TIMETABLE (CSV/PDF)
+    // EXPORT TIMETABLE
     // =========================================================================
 
     public function export(Request $request, int $settingId)
@@ -931,14 +896,12 @@ class TimetableController extends Controller
             $filename = "timetable_{$setting->schoolclass->schoolclass}_{$setting->session->session}.csv";
             $handle = fopen('php://temp', 'w+');
 
-            // Header row
             $header = ['Period', 'Time'];
             foreach ($days as $day) {
                 $header[] = $day;
             }
             fputcsv($handle, $header);
 
-            // Data rows
             foreach ($periods as $period) {
                 $row = [
                     $period->name,
@@ -996,14 +959,12 @@ class TimetableController extends Controller
             $newSetting->term_id = $validated['new_term_id'] ?? $oldSetting->term_id;
             $newSetting->save();
 
-            // Clone periods
             foreach ($oldSetting->periods as $period) {
                 $newPeriod = $period->replicate();
                 $newPeriod->setting_id = $newSetting->id;
                 $newPeriod->save();
             }
 
-            // Clone constraints
             foreach ($oldSetting->constraints as $constraint) {
                 $newConstraint = $constraint->replicate();
                 $newConstraint->setting_id = $newSetting->id;
@@ -1016,6 +977,122 @@ class TimetableController extends Controller
             DB::rollBack();
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
+    }
+
+    // =========================================================================
+    // SUBSTITUTE REQUESTS
+    // =========================================================================
+
+    public function requestSubstitute(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'slot_id' => 'required|exists:timetable_slots,id',
+            'substitute_teacher_id' => 'required|exists:users,id',
+            'reason' => 'required|string|max:500',
+            'assignment_date' => 'required|date|after_or_equal:today',
+        ]);
+
+        $slot = TimetableSlot::findOrFail($validated['slot_id']);
+
+        if ($slot->teacher_id != Auth::id()) {
+            return response()->json(['success' => false, 'message' => 'You can only request substitutes for your own classes'], 403);
+        }
+
+        $substitute = SubstituteAssignment::create([
+            'original_teacher_id' => Auth::id(),
+            'substitute_teacher_id' => $validated['substitute_teacher_id'],
+            'slot_id' => $slot->id,
+            'assignment_date' => $validated['assignment_date'],
+            'reason' => $validated['reason'],
+            'status' => 'pending',
+        ]);
+
+        return response()->json(['success' => true, 'substitute' => $substitute]);
+    }
+
+    public function approveSubstitute(Request $request, int $substituteId): JsonResponse
+    {
+        $substitute = SubstituteAssignment::findOrFail($substituteId);
+
+        if (!Auth::user()->can('Approve substitute')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        $substitute->update([
+            'status' => 'approved',
+            'approved_by' => Auth::id(),
+            'approved_at' => now(),
+        ]);
+
+        $slot = $substitute->slot;
+        $slot->update([
+            'teacher_id' => $substitute->substitute_teacher_id,
+            'notes' => ($slot->notes ? $slot->notes . "\n" : '') .
+                       "[SUBSTITUTE] Original: {$substitute->originalTeacher->name}, Date: {$substitute->assignment_date}",
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function getSubstituteRequests(Request $request): JsonResponse
+    {
+        $query = SubstituteAssignment::with(['originalTeacher', 'substituteTeacher', 'slot.period', 'slot.subject'])
+            ->when($request->status, fn($q) => $q->where('status', $request->status))
+            ->when($request->date, fn($q) => $q->whereDate('assignment_date', $request->date))
+            ->orderBy('created_at', 'desc');
+
+        $requests = $query->paginate($request->per_page ?? 20);
+
+        return response()->json(['success' => true, 'requests' => $requests]);
+    }
+
+    // =========================================================================
+    // WORKLOAD DASHBOARD
+    // =========================================================================
+
+    public function workloadDashboard(Request $request): JsonResponse
+    {
+        $sessionId = $request->session_id ?? Schoolsession::where('status', 'Current')->value('id');
+
+        $teachers = User::whereHas('roles', fn($q) => $q->where('name', 'teacher'))->get();
+
+        $workloadData = [];
+        foreach ($teachers as $teacher) {
+            $periodsCount = TimetableSlot::where('teacher_id', $teacher->id)
+                ->whereHas('setting', fn($q) => $q->where('session_id', $sessionId))
+                ->count();
+
+            $classes = TimetableSlot::where('teacher_id', $teacher->id)
+                ->whereHas('setting', fn($q) => $q->where('session_id', $sessionId))
+                ->with('setting.schoolclass')
+                ->get()
+                ->pluck('setting.schoolclass.schoolclass')
+                ->unique()
+                ->values();
+
+            $subjects = TimetableSlot::where('teacher_id', $teacher->id)
+                ->whereHas('setting', fn($q) => $q->where('session_id', $sessionId))
+                ->with('subject')
+                ->get()
+                ->pluck('subject.subject')
+                ->filter()
+                ->unique()
+                ->values();
+
+            $workloadData[] = [
+                'teacher_id' => $teacher->id,
+                'teacher_name' => $teacher->name,
+                'teacher_picture' => $teacher->staffPicture ? asset('storage/staff_avatars/' . $teacher->staffPicture->picture) : null,
+                'periods_assigned' => $periodsCount,
+                'classes_taught' => $classes,
+                'subjects_taught' => $subjects,
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'workload' => $workloadData,
+        ]);
     }
 
     // =========================================================================
@@ -1087,6 +1164,28 @@ class TimetableController extends Controller
         return $summary;
     }
 
+    private function scheduleNotification(int $teacherId, int $slotId, string $type): void
+    {
+        $teacher = User::find($teacherId);
+        if (!$teacher || !$teacher->email) return;
+
+        $slot = TimetableSlot::with(['period', 'subject'])->find($slotId);
+
+        TimetableNotification::create([
+            'teacher_id' => $teacherId,
+            'slot_id' => $slotId,
+            'type' => $type,
+            'email' => $teacher->email,
+            'scheduled_at' => now(),
+            'status' => 'pending',
+            'payload' => json_encode([
+                'day' => $slot->day,
+                'period' => $slot->period?->name,
+                'subject' => $slot->subject?->subject,
+            ]),
+        ]);
+    }
+
     private function logTimetableChange(int $userId, string $action, string $modelType, ?int $modelId, $oldValues = null, $newValues = null): void
     {
         DB::table('timetable_audit_logs')->insert([
@@ -1101,282 +1200,4 @@ class TimetableController extends Controller
             'updated_at' => now(),
         ]);
     }
-
-
-    // Add to TimetableController.php
-
-// Request substitute
-public function requestSubstitute(Request $request): JsonResponse
-{
-    $validated = $request->validate([
-        'slot_id' => 'required|exists:timetable_slots,id',
-        'substitute_teacher_id' => 'required|exists:users,id',
-        'reason' => 'required|string|max:500',
-        'assignment_date' => 'required|date|after_or_equal:today',
-    ]);
-
-    $slot = TimetableSlot::findOrFail($validated['slot_id']);
-
-    // Check if teacher owns this slot
-    if ($slot->teacher_id != Auth::id()) {
-        return response()->json(['success' => false, 'message' => 'You can only request substitutes for your own classes'], 403);
-    }
-
-    // Check if substitute is available
-    $isAvailable = $this->checkTeacherAvailability(
-        $validated['substitute_teacher_id'],
-        $slot->day,
-        $slot->period->start_time,
-        $slot->period->end_time,
-        $validated['assignment_date']
-    );
-
-    if (!$isAvailable) {
-        return response()->json(['success' => false, 'message' => 'Substitute teacher is not available at this time'], 422);
-    }
-
-    $substitute = SubstituteAssignment::create([
-        'original_teacher_id' => Auth::id(),
-        'substitute_teacher_id' => $validated['substitute_teacher_id'],
-        'slot_id' => $slot->id,
-        'assignment_date' => $validated['assignment_date'],
-        'reason' => $validated['reason'],
-        'status' => 'pending',
-    ]);
-
-    // Send notification to admin for approval
-    $this->sendSubstituteRequestNotification($substitute);
-
-    return response()->json(['success' => true, 'substitute' => $substitute]);
-}
-
-// Approve substitute
-public function approveSubstitute(Request $request, int $substituteId): JsonResponse
-{
-    $substitute = SubstituteAssignment::findOrFail($substituteId);
-
-    // Check admin permission
-    if (!Auth::user()->hasRole('admin')) {
-        return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
-    }
-
-    $substitute->update([
-        'status' => 'approved',
-        'approved_by' => Auth::id(),
-        'approved_at' => now(),
-    ]);
-
-    // Update the actual slot temporarily
-    $slot = $substitute->slot;
-
-    // Store original teacher in metadata
-    $slot->update([
-        'teacher_id' => $substitute->substitute_teacher_id,
-        'notes' => ($slot->notes ? $slot->notes . "\n" : '') .
-                   "[SUBSTITUTE] Original: {$substitute->originalTeacher->name}, Date: {$substitute->assignment_date}",
-    ]);
-
-    // Notify both teachers
-    $this->sendSubstituteApprovalNotification($substitute);
-
-    return response()->json(['success' => true]);
-}
-
-// Get substitute requests for admin
-public function getSubstituteRequests(Request $request): JsonResponse
-{
-    $query = SubstituteAssignment::with(['originalTeacher', 'substituteTeacher', 'slot.period', 'slot.subject'])
-        ->when($request->status, fn($q) => $q->where('status', $request->status))
-        ->when($request->date, fn($q) => $q->whereDate('assignment_date', $request->date))
-        ->orderBy('created_at', 'desc');
-
-    $requests = $query->paginate($request->per_page ?? 20);
-
-    return response()->json(['success' => true, 'requests' => $requests]);
-}
-
-
-// Add to TimetableController.php
-
-public function workloadDashboard(Request $request): JsonResponse
-{
-    $sessionId = $request->session_id ?? Schoolsession::where('status', 'Current')->value('id');
-    $termId = $request->term_id ?? Schoolterm::where('status', true)->value('id');
-
-    // Get all teachers with their workload
-    $teachers = User::whereHas('roles', fn($q) => $q->where('name', 'teacher'))
-        ->with(['workloadSetting'])
-        ->get();
-
-    $workloadData = [];
-
-    foreach ($teachers as $teacher) {
-        // Count periods assigned
-        $periodsCount = TimetableSlot::where('teacher_id', $teacher->id)
-            ->whereHas('setting', fn($q) => $q->where('session_id', $sessionId)->where('term_id', $termId))
-            ->count();
-
-        // Get classes taught
-        $classes = TimetableSlot::where('teacher_id', $teacher->id)
-            ->whereHas('setting', fn($q) => $q->where('session_id', $sessionId))
-            ->with('setting.schoolclass')
-            ->get()
-            ->pluck('setting.schoolclass.schoolclass')
-            ->unique()
-            ->values();
-
-        // Get subjects taught
-        $subjects = TimetableSlot::where('teacher_id', $teacher->id)
-            ->whereHas('setting', fn($q) => $q->where('session_id', $sessionId))
-            ->with('subject')
-            ->get()
-            ->pluck('subject.subject')
-            ->filter()
-            ->unique()
-            ->values();
-
-        $workloadData[] = [
-            'teacher_id' => $teacher->id,
-            'teacher_name' => $teacher->name,
-            'teacher_picture' => $teacher->staffPicture ? asset('storage/staff_avatars/' . $teacher->staffPicture->picture) : null,
-            'periods_assigned' => $periodsCount,
-            'max_periods_allowed' => $teacher->workloadSetting->max_periods_per_week ?? 30,
-            'utilization_percentage' => $teacher->workloadSetting ?
-                round(($periodsCount / $teacher->workloadSetting->max_periods_per_week) * 100) : 0,
-            'classes_taught' => $classes,
-            'subjects_taught' => $subjects,
-            'status' => $this->getWorkloadStatus($periodsCount, $teacher->workloadSetting),
-        ];
-    }
-
-    // Calculate overall statistics
-    $stats = [
-        'total_teachers' => $teachers->count(),
-        'total_periods_assigned' => collect($workloadData)->sum('periods_assigned'),
-        'average_utilization' => collect($workloadData)->avg('utilization_percentage'),
-        'overloaded_teachers' => collect($workloadData)->where('status', 'overloaded')->count(),
-        'underutilized_teachers' => collect($workloadData)->where('status', 'underutilized')->count(),
-    ];
-
-    return response()->json([
-        'success' => true,
-        'workload' => $workloadData,
-        'statistics' => $stats,
-    ]);
-}
-
-private function getWorkloadStatus($periodsCount, $setting)
-{
-    if (!$setting) return 'not_configured';
-
-    $max = $setting->max_periods_per_week;
-    if ($periodsCount > $max) return 'overloaded';
-    if ($periodsCount < $max * 0.6) return 'underutilized';
-    return 'optimal';
-}
-
-
-// Add to TimetableController.php
-
-public function generateAnalytics(Request $request): JsonResponse
-{
-    $type = $request->type;
-    $sessionId = $request->session_id;
-    $termId = $request->term_id;
-
-    switch ($type) {
-        case 'teacher_utilization':
-            $data = $this->getTeacherUtilizationReport($sessionId, $termId);
-            break;
-        case 'room_utilization':
-            $data = $this->getRoomUtilizationReport($sessionId, $termId);
-            break;
-        case 'class_distribution':
-            $data = $this->getClassDistributionReport($sessionId, $termId);
-            break;
-        case 'conflict_analysis':
-            $data = $this->getConflictAnalysisReport($sessionId, $termId);
-            break;
-        default:
-            return response()->json(['success' => false, 'message' => 'Invalid report type'], 422);
-    }
-
-    // Save report
-    $report = TimetableReport::create([
-        'report_name' => ucfirst(str_replace('_', ' ', $type)) . ' Report - ' . now()->format('Y-m-d H:i'),
-        'report_type' => $type,
-        'session_id' => $sessionId,
-        'term_id' => $termId,
-        'filters' => $request->all(),
-        'data' => $data,
-        'generated_by' => Auth::id(),
-    ]);
-
-    return response()->json([
-        'success' => true,
-        'report' => $report,
-        'data' => $data,
-    ]);
-}
-
-private function getTeacherUtilizationReport($sessionId, $termId): array
-{
-    $teachers = User::whereHas('roles', fn($q) => $q->where('name', 'teacher'))->get();
-
-    $report = [];
-    foreach ($teachers as $teacher) {
-        $slots = TimetableSlot::where('teacher_id', $teacher->id)
-            ->whereHas('setting', fn($q) => $q->where('session_id', $sessionId))
-            ->with(['period', 'subject', 'setting.schoolclass'])
-            ->get();
-
-        $dailyDistribution = [];
-        foreach (TimetableController::DAYS as $day) {
-            $dailyDistribution[$day] = $slots->where('day', $day)->count();
-        }
-
-        $report[] = [
-            'teacher_name' => $teacher->name,
-            'total_periods' => $slots->count(),
-            'daily_distribution' => $dailyDistribution,
-            'subjects_taught' => $slots->pluck('subject.subject')->unique()->values(),
-            'classes_taught' => $slots->pluck('setting.schoolclass.schoolclass')->unique()->values(),
-            'peak_day' => array_search(max($dailyDistribution), $dailyDistribution),
-        ];
-    }
-
-    return $report;
-}
-
-private function getRoomUtilizationReport($sessionId, $termId): array
-{
-    $rooms = Room::where('is_active', true)->get();
-
-    $report = [];
-    foreach ($rooms as $room) {
-        $bookings = TimetableSlot::where('room_id', $room->id)
-            ->whereHas('setting', fn($q) => $q->where('session_id', $sessionId))
-            ->get();
-
-        $utilizationByDay = [];
-        foreach (TimetableController::DAYS as $day) {
-            $dayBookings = $bookings->where('day', $day);
-            $utilizationByDay[$day] = [
-                'count' => $dayBookings->count(),
-                'percentage' => round(($dayBookings->count() / 8) * 100), // Assuming 8 periods max
-            ];
-        }
-
-        $report[] = [
-            'room_name' => $room->room_name,
-            'room_code' => $room->room_code,
-            'capacity' => $room->capacity,
-            'total_bookings' => $bookings->count(),
-            'utilization_by_day' => $utilizationByDay,
-            'average_utilization' => collect($utilizationByDay)->avg('percentage'),
-        ];
-    }
-
-    return $report;
-}
 }

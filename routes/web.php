@@ -759,31 +759,141 @@ Route::resource('subjectoperation', SubjectOperationController::class);
 
 
 
+<?php
+// routes/web.php - Add these to your existing routes
 
-// Timetable Routes
-Route::prefix('timetable')->name('timetable.')->group(function () {
-    // Admin routes
-    Route::get('/', [TimetableController::class, 'index'])->name('index');
-    Route::get('/teacher', [TimetableController::class, 'teacherView'])->name('teacher');
+Route::group(['middleware' => ['auth']], function () {
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+    Route::post('roles/bulk-remove-users', [RoleController::class, 'bulkRemoveUsers'])->name('roles.bulkremoveusers');
+    Route::get('/roles/{role}/users', [RoleController::class, 'getRoleUsers'])->name('roles.users');
+    Route::resource('roles', RoleController::class);
+    Route::resource('users', UserController::class);
+    Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
+    Route::get('/users/all', [UserController::class, 'allUsers'])->name('users.all');
+    Route::get('/users/paginate', [UserController::class, 'paginate'])->name('users.paginate');
+    Route::get('/user/overview/{id}', [UserController::class, 'show'])->name('users.overview');
+    Route::get('/users/roles', [UserController::class, 'roles']);
+    Route::resource('permissions', PermissionController::class);
 
-    // AJAX endpoints
-    Route::post('/setup', [TimetableController::class, 'setup'])->name('setup');
-    Route::get('/get-setting/{settingId}', [TimetableController::class, 'getSetting'])->name('get-setting');
-    Route::post('/save-settings', [TimetableController::class, 'saveSettings'])->name('save-settings');
-    Route::post('/save-constraints', [TimetableController::class, 'saveConstraints'])->name('save-constraints');
-    Route::post('/auto-generate', [TimetableController::class, 'autoGenerate'])->name('auto-generate');
-    Route::get('/get-grid/{settingId}', [TimetableController::class, 'getGrid'])->name('get-grid');
-    Route::post('/save-slot', [TimetableController::class, 'saveSlot'])->name('save-slot');
-    Route::post('/bulk-update', [TimetableController::class, 'bulkUpdateSlots'])->name('bulk-update');
-    Route::get('/check-conflicts/{settingId}', [TimetableController::class, 'checkConflicts'])->name('check-conflicts');
-    Route::post('/send-notifications', [TimetableController::class, 'sendNotifications'])->name('send-notifications');
-    Route::get('/export/{settingId}', [TimetableController::class, 'export'])->name('export');
-    Route::delete('/delete-setting/{settingId}', [TimetableController::class, 'deleteSetting'])->name('delete-setting');
-    Route::post('/clone-setting', [TimetableController::class, 'cloneSetting'])->name('clone-setting');
-    Route::get('/class-subjects', [TimetableController::class, 'getClassSubjects'])->name('class-subjects');
+    // =========================================================================
+    // TIMETABLE MANAGEMENT ROUTES
+    // =========================================================================
 
-    // Teacher availability
-    Route::post('/teacher-availability', [TimetableController::class, 'saveTeacherAvailability'])->name('teacher-availability');
-    Route::get('/teacher-availability/{teacherId}', [TimetableController::class, 'getTeacherAvailability'])->name('get-teacher-availability');
+    // Main Timetable Routes
+    Route::prefix('timetable')->name('timetable.')->group(function () {
+
+        // Admin Timetable Views
+        Route::get('/', [TimetableController::class, 'index'])->name('index');
+        Route::get('/teacher', [TimetableController::class, 'teacherView'])->name('teacher');
+
+        // AJAX Endpoints for Timetable Management
+        Route::post('/setup', [TimetableController::class, 'setup'])->name('setup');
+        Route::get('/get-setting/{settingId}', [TimetableController::class, 'getSetting'])->name('get-setting');
+        Route::post('/save-settings', [TimetableController::class, 'saveSettings'])->name('save-settings');
+        Route::post('/save-constraints', [TimetableController::class, 'saveConstraints'])->name('save-constraints');
+        Route::post('/auto-generate', [TimetableController::class, 'autoGenerate'])->name('auto-generate');
+        Route::get('/get-grid/{settingId}', [TimetableController::class, 'getGrid'])->name('get-grid');
+        Route::post('/save-slot', [TimetableController::class, 'saveSlot'])->name('save-slot');
+        Route::post('/bulk-update', [TimetableController::class, 'bulkUpdateSlots'])->name('bulk-update');
+        Route::get('/check-conflicts/{settingId}', [TimetableController::class, 'checkConflicts'])->name('check-conflicts');
+        Route::post('/send-notifications', [TimetableController::class, 'sendNotifications'])->name('send-notifications');
+        Route::get('/export/{settingId}', [TimetableController::class, 'export'])->name('export');
+        Route::delete('/delete-setting/{settingId}', [TimetableController::class, 'deleteSetting'])->name('delete-setting');
+        Route::post('/clone-setting', [TimetableController::class, 'cloneSetting'])->name('clone-setting');
+
+        // Subject & Teacher Management
+        Route::get('/class-subjects', [TimetableController::class, 'getClassSubjects'])->name('class-subjects');
+
+        // Teacher Availability
+        Route::post('/teacher-availability', [TimetableController::class, 'saveTeacherAvailability'])->name('teacher-availability');
+        Route::get('/teacher-availability/{teacherId}', [TimetableController::class, 'getTeacherAvailability'])->name('get-teacher-availability');
+
+        // Substitute Management
+        Route::post('/request-substitute', [TimetableController::class, 'requestSubstitute'])->name('request-substitute');
+        Route::post('/approve-substitute/{substituteId}', [TimetableController::class, 'approveSubstitute'])->name('approve-substitute');
+        Route::get('/substitute-requests', [TimetableController::class, 'getSubstituteRequests'])->name('substitute-requests');
+
+        // Workload Dashboard
+        Route::get('/workload-dashboard', [TimetableController::class, 'workloadDashboard'])->name('workload-dashboard');
+
+        // Analytics & Reports
+        Route::post('/generate-analytics', [TimetableController::class, 'generateAnalytics'])->name('generate-analytics');
+    });
+
+    // =========================================================================
+    // ROOM MANAGEMENT ROUTES
+    // =========================================================================
+
+    Route::prefix('rooms')->name('rooms.')->group(function () {
+        Route::get('/', [RoomController::class, 'index'])->name('index');
+        Route::post('/', [RoomController::class, 'store'])->name('store');
+        Route::get('/{room}', [RoomController::class, 'show'])->name('show');
+        Route::put('/{room}', [RoomController::class, 'update'])->name('update');
+        Route::delete('/{room}', [RoomController::class, 'destroy'])->name('destroy');
+        Route::post('/{room}/book', [RoomController::class, 'book'])->name('book');
+        Route::get('/availability/check', [RoomController::class, 'checkAvailability'])->name('check-availability');
+    });
+
+    // =========================================================================
+    // EXAM TIMETABLE ROUTES
+    // =========================================================================
+
+    Route::prefix('exam-timetable')->name('exam-timetable.')->group(function () {
+        Route::get('/', [ExamTimetableController::class, 'index'])->name('index');
+        Route::post('/', [ExamTimetableController::class, 'store'])->name('store');
+        Route::get('/{examTimetable}', [ExamTimetableController::class, 'show'])->name('show');
+        Route::put('/{examTimetable}', [ExamTimetableController::class, 'update'])->name('update');
+        Route::delete('/{examTimetable}', [ExamTimetableController::class, 'destroy'])->name('destroy');
+        Route::post('/{examTimetable}/slots', [ExamTimetableController::class, 'addSlot'])->name('add-slot');
+        Route::delete('/slots/{slot}', [ExamTimetableController::class, 'removeSlot'])->name('remove-slot');
+        Route::post('/{examTimetable}/publish', [ExamTimetableController::class, 'publish'])->name('publish');
+        Route::get('/{examTimetable}/export', [ExamTimetableController::class, 'export'])->name('export');
+    });
+
+    // =========================================================================
+    // HOLIDAY MANAGEMENT ROUTES
+    // =========================================================================
+
+    Route::prefix('holidays')->name('holidays.')->group(function () {
+        Route::get('/', [HolidayController::class, 'index'])->name('index');
+        Route::post('/', [HolidayController::class, 'store'])->name('store');
+        Route::get('/{holiday}', [HolidayController::class, 'show'])->name('show');
+        Route::put('/{holiday}', [HolidayController::class, 'update'])->name('update');
+        Route::delete('/{holiday}', [HolidayController::class, 'destroy'])->name('destroy');
+        Route::post('/{holiday}/apply', [HolidayController::class, 'applyToTimetable'])->name('apply');
+    });
+
+    // =========================================================================
+    // TIMETABLE REPORTS ROUTES
+    // =========================================================================
+
+    Route::prefix('timetable-reports')->name('timetable.reports.')->group(function () {
+        Route::get('/', [TimetableReportController::class, 'index'])->name('index');
+        Route::post('/generate', [TimetableReportController::class, 'generate'])->name('generate');
+        Route::get('/{report}', [TimetableReportController::class, 'show'])->name('show');
+        Route::get('/download/{report}', [TimetableReportController::class, 'download'])->name('download');
+        Route::delete('/{report}', [TimetableReportController::class, 'destroy'])->name('destroy');
+        Route::post('/schedule', [TimetableReportController::class, 'schedule'])->name('schedule');
+    });
+
+    // =========================================================================
+    // TIMETABLE API ROUTES (for AJAX calls)
+    // =========================================================================
+
+    Route::prefix('api/timetable')->name('api.timetable.')->group(function () {
+        // Teacher API endpoints
+        Route::get('/my-timetable', [TimetableApiController::class, 'getMyTimetable'])->name('my-timetable');
+        Route::get('/today-schedule', [TimetableApiController::class, 'getTodaySchedule'])->name('today-schedule');
+        Route::get('/upcoming-classes', [TimetableApiController::class, 'getUpcomingClasses'])->name('upcoming-classes');
+        Route::post('/mark-attendance', [TimetableApiController::class, 'markAttendance'])->name('mark-attendance');
+
+        // Student/Parent API endpoints
+        Route::get('/class-timetable/{classId}', [TimetableApiController::class, 'getClassTimetable'])->name('class-timetable');
+        Route::get('/child-timetable/{studentId}', [TimetableApiController::class, 'getChildTimetable'])->name('child-timetable');
+
+        // Notification endpoints
+        Route::get('/notifications', [TimetableApiController::class, 'getNotifications'])->name('notifications');
+        Route::post('/notifications/mark-read', [TimetableApiController::class, 'markNotificationsRead'])->name('notifications.mark-read');
+    });
 });
 });

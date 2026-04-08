@@ -73,10 +73,12 @@ class DatabaseSeeder extends Seeder
             QuestionPermissionTableSeeder::class,
             CBTExamPermissionTableSeeder::class,
             ParentPermissionTableSeeder::class,
-        
-         
+               // Add Timetable permissions
+            TimetablePermissionTableSeeder::class,
 
-           
+
+
+
             // Add more seeders as needed
         ]);
     }
