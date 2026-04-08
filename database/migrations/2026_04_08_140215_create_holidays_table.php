@@ -20,24 +20,11 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Holiday timetable overrides
-        Schema::create('timetable_overrides', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('setting_id');
-            $table->date('override_date');
-            $table->json('modified_slots')->nullable(); // Store modified schedule for that day
-            $table->text('reason')->nullable();
-            $table->unsignedBigInteger('created_by');
-            $table->timestamps();
 
-            $table->foreign('setting_id')->references('id')->on('timetable_settings')->onDelete('cascade');
-            $table->foreign('created_by')->references('id')->on('users')->onDelete('cascade');
-        });
     }
 
     public function down()
     {
-        Schema::dropIfExists('timetable_overrides');
         Schema::dropIfExists('holidays');
     }
 };
