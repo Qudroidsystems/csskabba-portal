@@ -284,7 +284,6 @@
 </div>
 @endsection
 
-@push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
 <script>
 let currentSettingId=null,currentSetting=null,currentPeriods=[],currentGrid={},currentDays=[],availableSubjects=[],allTeachers=[];
@@ -576,4 +575,4 @@ async function cloneSetting(settingId){
  }catch(e){Swal.fire('Error',e.message,'error');}finally{hideLoading();}
 }
 </script>
-@endpush
+
