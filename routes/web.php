@@ -557,7 +557,7 @@ Route::post('/subjectoperation/restore', [SubjectOperationController::class, 're
 
 Route::delete('/subjectoperation/archive/batch-delete', [SubjectOperationController::class, 'permanentlyDeleteArchiveBatch'])->name('subjectoperation.archive.batch-delete');
 Route::delete('/subjectoperation/archive/{archiveId}', [SubjectOperationController::class, 'permanentlyDeleteArchive'])->name('subjectoperation.archive.delete');
-
+Route::get('/school-information/get', [SubjectOperationController::class, 'getSchoolInformation'])->name('school.information.get');
 Route::resource('subjectoperation', SubjectOperationController::class);
 
 
