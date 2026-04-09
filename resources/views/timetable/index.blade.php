@@ -54,7 +54,10 @@
        <select class="form-select" id="classSelect">
         <option value="">— Select Class —</option>
         @foreach ($schoolclasses as $class)
-        <option value="{{ $class->id }}">{{ $class->schoolclass }} {{ $class->arm }}</option>
+        <option value="{{ $class->id }}">
+         {{ $class->schoolclass }}
+         @if($class->arm) {{ $class->arm }} @endif
+        </option>
         @endforeach
        </select>
       </div>
@@ -96,12 +99,25 @@
      <div class="table-responsive">
       <table class="table table-hover align-middle mb-0">
        <thead class="table-light">
-        <tr><th>Class</th><th>Session</th><th>Term</th><th>Updated</th><th>Status</th><th style="width:200px">Actions</th></tr>
+        <tr>
+         <th>Class & Arm</th>
+         <th>Session</th>
+         <th>Term</th>
+         <th>Updated</th>
+         <th>Status</th>
+         <th style="width:200px">Actions</th>
+        </tr>
        </thead>
        <tbody>
         @foreach($settings as $setting)
         <tr>
-         <td class="fw-semibold"><i class="ri-school-line text-primary me-2"></i>{{ $setting->schoolclass->schoolclass ?? 'N/A' }}</td>
+         <td class="fw-semibold">
+          <i class="ri-school-line text-primary me-2"></i>
+          {{ $setting->schoolclass->schoolclass ?? 'N/A' }}
+          @if($setting->schoolclass && $setting->schoolclass->arm)
+           <span class="badge bg-info">{{ $setting->schoolclass->arm }}</span>
+          @endif
+         </td>
          <td>{{ $setting->session->session ?? 'N/A' }}</td>
          <td>{{ $setting->term->term ?? 'All Terms' }}</td>
          <td class="text-muted small">{{ $setting->updated_at->format('d M Y, H:i') }}</td>
@@ -112,8 +128,8 @@
           <button class="btn btn-sm btn-outline-secondary me-1" onclick="exportTimetable({{ $setting->id }},'pdf')" title="PDF"><i class="ri-file-pdf-line"></i></button>
           <button class="btn btn-sm btn-outline-success me-1" onclick="exportTimetable({{ $setting->id }},'csv')" title="CSV"><i class="ri-file-excel-line"></i></button>
           <button class="btn btn-sm btn-outline-danger" onclick="deleteSetting({{ $setting->id }})" title="Delete"><i class="ri-delete-bin-line"></i></button>
-          </td>
-         </tr>
+         </td>
+        </tr>
         @endforeach
        </tbody>
       </table>
@@ -179,12 +195,21 @@
            <div class="card-body p-0">
             <div class="table-responsive">
              <table class="table table-sm table-bordered mb-0">
-              <thead class="table-light"><tr><th style="width:32px">#</th><th>Name</th><th>Type</th><th style="width:44px"></th></tr></thead>
+              <thead class="table-light">
+                <tr>
+                 <th style="width:32px">#</th>
+                 <th>Name</th>
+                 <th>Type</th>
+                 <th style="width:44px"></th>
+                </tr>
+              </thead>
               <tbody id="periodsBody"></tbody>
              </table>
             </div>
            </div>
-           <div class="card-footer"><button class="btn btn-success btn-sm" onclick="saveSettings()"><i class="ri-save-line me-1"></i>Save Settings</button></div>
+           <div class="card-footer">
+            <button class="btn btn-success btn-sm" onclick="saveSettings()"><i class="ri-save-line me-1"></i>Save Settings</button>
+           </div>
           </div>
          </div>
         </div>
@@ -202,10 +227,15 @@
         <div class="table-responsive">
          <table class="table table-bordered table-sm align-middle">
           <thead class="table-light">
-           <tr>
-            <th>Subject</th><th>Teacher</th><th style="width:80px">Periods/wk</th>
-            <th style="width:70px">Double</th><th style="width:80px">Max Dbl</th>
-            <th>Prefer Days</th><th>Avoid Days</th><th style="width:80px">Required</th>
+            <tr>
+             <th>Subject</th>
+             <th>Teacher</th>
+             <th style="width:80px">Periods/wk</th>
+             <th style="width:70px">Double</th>
+             <th style="width:80px">Max Dbl</th>
+             <th>Prefer Days</th>
+             <th>Avoid Days</th>
+             <th style="width:80px">Required</th>
             </tr>
           </thead>
           <tbody id="constraintsBody"></tbody>
@@ -225,7 +255,10 @@
          <small class="text-muted"><i class="ri-information-line me-1"></i>Click any cell to edit</small>
         </div>
         <div id="timetableGridContainer">
-         <div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Loading…</p></div>
+         <div class="text-center py-5">
+          <div class="spinner-border text-primary"></div>
+          <p class="mt-2 text-muted">Loading…</p>
+         </div>
         </div>
        </div>
 
@@ -408,7 +441,9 @@ async function loadSetting(settingId) {
    currentSettingId = settingId;
    availableSubjects = d.available_subjects || [];
 
-   const cls = d.setting.schoolclass?.schoolclass || '';
+   const className = d.setting.schoolclass?.schoolclass || '';
+   const classArm = d.setting.schoolclass?.arm || '';
+   const cls = className + (classArm ? ' ' + classArm : '');
    const ses = d.setting.session?.session || '';
    const trm = d.setting.term?.term ? '/' + d.setting.term.term : '';
    document.getElementById('editorTitle').textContent = `${cls} — ${ses}${trm}`;
@@ -669,7 +704,7 @@ function renderTimetableGrid() {
    }
    html += `</div></td>`;
   });
-  html += `</tr>`;
+  html += `<tr>`;
  });
 
  html += `</tbody></table></div>`;
