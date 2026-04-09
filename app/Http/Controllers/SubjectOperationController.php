@@ -144,6 +144,9 @@ class SubjectOperationController extends Controller
     // =========================================================================
     // SUBJECT INFO
     // =========================================================================
+// =========================================================================
+    // SUBJECT INFO  — FIXED: was hardcoding termid=2, now uses $termid param
+    // =========================================================================
 
     public function subjectinfo(Request $request, $id, $schoolclassid, $termid, $sessionid): \Illuminate\View\View|\Illuminate\Http\JsonResponse
     {
@@ -164,7 +167,7 @@ class SubjectOperationController extends Controller
                 ->leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
                 ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
                 ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subjectteacher.sessionid')
-                ->where('schoolterm.id', 2)
+                ->where('schoolterm.id', $termid)           // FIX: was hardcoded as 2
                 ->where('schoolsession.id', $sessionid)
                 ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
                 ->leftJoin('staffbioinfo', 'staffbioinfo.userid', '=', 'users.id')
@@ -204,11 +207,12 @@ class SubjectOperationController extends Controller
                 ];
             }
 
+            // FIX: was hardcoded as 2 for both totalreg and regcount
             $totalreg = Subjectclass::where('subjectclass.schoolclassid', $schoolclassid)
                 ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
                 ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
                 ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subjectteacher.sessionid')
-                ->where('schoolterm.id', 2)
+                ->where('schoolterm.id', $termid)           // FIX: was hardcoded as 2
                 ->where('schoolsession.id', $sessionid)
                 ->distinct('subjectteacher.subjectid')
                 ->count('subjectteacher.subjectid');
@@ -218,7 +222,7 @@ class SubjectOperationController extends Controller
                 ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
                 ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
                 ->leftJoin('schoolsession', 'schoolsession.id', '=', 'student_subject_register_record.session')
-                ->where('schoolterm.id', 2)
+                ->where('schoolterm.id', $termid)           // FIX: was hardcoded as 2
                 ->where('schoolsession.status', $current)
                 ->count();
 
@@ -241,6 +245,7 @@ class SubjectOperationController extends Controller
             Log::error('Error fetching subject info', [
                 'student_id'    => $id,
                 'schoolclassid' => $schoolclassid,
+                'termid'        => $termid,
                 'error'         => $error->getMessage(),
                 'trace'         => $error->getTraceAsString(),
             ]);
@@ -251,6 +256,7 @@ class SubjectOperationController extends Controller
         }
     }
 
+    
     // =========================================================================
     // GET SUBJECT TEACHERS AJAX
     // =========================================================================
