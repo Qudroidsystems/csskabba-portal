@@ -89,6 +89,7 @@ class SubjectOperationController extends Controller
                     'schoolarm.arm as arm_name',
                     'subjectteacher.updated_at',
                 ])
+                ->orderBy('subject.subject')
                 ->get();
 
             $query = Student::leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
@@ -158,13 +159,14 @@ class SubjectOperationController extends Controller
 
             $studentpic = Studentpicture::where('studentid', $id)->select(['studentid', 'picture as avatar'])->get();
 
+            // FIXED: use $termid instead of hardcoded value
             $subjectclass = Subjectclass::query()
                 ->where('subjectclass.schoolclassid', $schoolclassid)
                 ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
                 ->leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
                 ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
                 ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subjectteacher.sessionid')
-                ->where('schoolterm.id', 2)
+                ->where('schoolterm.id', $termid)
                 ->where('schoolsession.id', $sessionid)
                 ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
                 ->leftJoin('staffbioinfo', 'staffbioinfo.userid', '=', 'users.id')
@@ -183,6 +185,7 @@ class SubjectOperationController extends Controller
                     'schoolterm.id as termid', 'schoolsession.session',
                     'schoolsession.id as sessionid',
                 ])
+                ->orderBy('subject.subject')
                 ->get();
 
             $subjectRegistrations = [];
@@ -204,21 +207,23 @@ class SubjectOperationController extends Controller
                 ];
             }
 
+            // FIXED: use $termid instead of hardcoded value
             $totalreg = Subjectclass::where('subjectclass.schoolclassid', $schoolclassid)
                 ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
                 ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
                 ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subjectteacher.sessionid')
-                ->where('schoolterm.id', 2)
+                ->where('schoolterm.id', $termid)
                 ->where('schoolsession.id', $sessionid)
                 ->distinct('subjectteacher.subjectid')
                 ->count('subjectteacher.subjectid');
 
+            // FIXED: use $termid instead of hardcoded value
             $regcount = StudentSubjectRecord::where('student_subject_register_record.studentId', $id)
                 ->leftJoin('subjectclass', 'subjectclass.id', '=', 'student_subject_register_record.subjectclassid')
                 ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
                 ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
                 ->leftJoin('schoolsession', 'schoolsession.id', '=', 'student_subject_register_record.session')
-                ->where('schoolterm.id', 2)
+                ->where('schoolterm.id', $termid)
                 ->where('schoolsession.status', $current)
                 ->count();
 
@@ -296,6 +301,7 @@ class SubjectOperationController extends Controller
                 'schoolclass.schoolclass as class_name',
                 'schoolarm.arm as arm_name',
             ])
+            ->orderBy('subject.subject')
             ->get();
 
         return response()->json([
@@ -323,7 +329,7 @@ class SubjectOperationController extends Controller
     }
 
     // =========================================================================
-    // REGISTERED CLASSES (ENHANCED with subjects_teachers)
+    // REGISTERED CLASSES — alphabetical subjects with per-term counts & teachers
     // =========================================================================
 
     public function registeredClasses(Request $request): JsonResponse
@@ -337,109 +343,125 @@ class SubjectOperationController extends Controller
 
             DB::statement('SET SESSION group_concat_max_len = 1000000');
 
-            // Get all registered classes with their subjects and teachers
-            $query = SubjectRegistrationStatus::query()
-                ->join('subjectclass', 'subjectclass.id', '=', 'subject_registration_status.subjectclassid')
-                ->join('schoolclass', 'schoolclass.id', '=', 'subjectclass.schoolclassid')
-                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-                ->join('schoolsession', 'schoolsession.id', '=', 'subject_registration_status.sessionid')
-                ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subject_registration_status.termid')
-                ->leftJoin('broadsheet', 'broadsheet.id', '=', 'subject_registration_status.broadsheetid')
-                ->leftJoin('subject', 'subject.id', '=', 'broadsheet.subjectid')
-                ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
-                ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
-                ->leftJoin('staffpicture', 'staffpicture.staffid', '=', 'users.id')
-                ->where('subjectclass.schoolclassid', $validated['class_id'])
-                ->where('subject_registration_status.sessionid', $validated['session_id'])
-                ->when($validated['term_id'] ?? null, fn($q, $t) => $q->where('subject_registration_status.termid', $t))
-                ->groupBy([
-                    'schoolclass.id', 'schoolarm.id', 'schoolsession.id', 'schoolterm.id',
-                    'schoolclass.schoolclass', 'schoolarm.arm', 'schoolsession.session', 'schoolterm.term',
-                ]);
+            // Get class information
+            $classInfo = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+                ->where('schoolclass.id', $validated['class_id'])
+                ->select([
+                    'schoolclass.id as class_id',
+                    'schoolclass.schoolclass as class_name',
+                    'schoolarm.arm as arm_name',
+                ])
+                ->first();
 
-            $classes = $query->select([
-                'schoolclass.id as class_id',
-                'schoolclass.schoolclass as class_name',
-                DB::raw('COALESCE(schoolarm.arm, "None") as arm_name'),
-                DB::raw('COALESCE(schoolsession.session, "Unknown") as session_name'),
-                DB::raw('COALESCE(schoolterm.term, "Unknown") as term_name'),
-                DB::raw('COUNT(DISTINCT subject_registration_status.studentid) as student_count'),
-                DB::raw('COUNT(DISTINCT subject.id) as subject_count'),
-                DB::raw('GROUP_CONCAT(DISTINCT CONCAT(subject.id, "|||", subject.subject, "|||", COALESCE(subject.subject_code, ""), "|||", COALESCE(users.id, ""), "|||", COALESCE(users.name, ""), "|||", COALESCE(staffpicture.picture, "")) ORDER BY subject.subject ASC SEPARATOR "###") as subjects_teachers_raw'),
-            ])->get();
+            // Get session info
+            $sessionInfo = Schoolsession::find($validated['session_id']);
 
-            // Get student counts per subject
-            $studentCountsBySubject = $this->getStudentCountsBySubject(
-                $validated['class_id'],
-                $validated['session_id'],
-                $validated['term_id'] ?? null
-            );
+            // Get all terms for this session (or specific term if provided)
+            $terms = !empty($validated['term_id'])
+                ? Schoolterm::where('id', $validated['term_id'])->get()
+                : Schoolterm::all();
 
             $processedData = [];
 
-            foreach ($classes as $class) {
-                // Parse subjects with their teachers
+            foreach ($terms as $term) {
+                // Get subjects for this specific term with their teachers, ordered alphabetically
+                $subjectRecords = Subjectclass::query()
+                    ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
+                    ->leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
+                    ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
+                    ->leftJoin('staffpicture', 'staffpicture.staffid', '=', 'users.id')
+                    ->where('subjectclass.schoolclassid', $validated['class_id'])
+                    ->where('subjectteacher.sessionid', $validated['session_id'])
+                    ->where('subjectteacher.termid', $term->id)
+                    ->whereNotNull('subject.id')
+                    ->select([
+                        'subject.id as subject_id',
+                        'subject.subject as subject_name',
+                        'subject.subject_code as subject_code',
+                        'users.id as teacher_id',
+                        'users.name as teacher_name',
+                        'staffpicture.picture as teacher_picture',
+                    ])
+                    ->orderBy('subject.subject', 'asc')
+                    ->get();
+
+                // Group subjects with their teachers
                 $subjectsWithTeachers = [];
+                foreach ($subjectRecords as $record) {
+                    $subjectKey = $record->subject_id;
 
-                if ($class->subjects_teachers_raw && $class->subjects_teachers_raw !== '') {
-                    $subjectEntries = explode('###', $class->subjects_teachers_raw);
-                    foreach ($subjectEntries as $entry) {
-                        if ($entry) {
-                            $parts = explode('|||', $entry);
-                            if (count($parts) >= 3) {
-                                $subjectId = $parts[0];
-                                $subjectName = $parts[1];
-                                $subjectCode = $parts[2] ?? '';
-                                $teacherId = $parts[3] ?? '';
-                                $teacherName = $parts[4] ?? '';
-                                $teacherPicture = $parts[5] ?? '';
+                    if (!isset($subjectsWithTeachers[$subjectKey])) {
+                        $subjectsWithTeachers[$subjectKey] = [
+                            'id'            => $record->subject_id,
+                            'name'          => $record->subject_name,
+                            'code'          => $record->subject_code,
+                            'teachers'      => [],
+                            'student_count' => 0,
+                        ];
+                    }
 
-                                // Find or create subject entry
-                                $subjectKey = $subjectId;
-                                if (!isset($subjectsWithTeachers[$subjectKey])) {
-                                    $subjectsWithTeachers[$subjectKey] = [
-                                        'id' => $subjectId,
-                                        'name' => $subjectName,
-                                        'code' => $subjectCode,
-                                        'teachers' => [],
-                                        'student_count' => $studentCountsBySubject[$subjectId] ?? 0,
-                                    ];
-                                }
-
-                                if ($teacherId && $teacherName) {
-                                    // Avoid duplicate teachers
-                                    $teacherExists = false;
-                                    foreach ($subjectsWithTeachers[$subjectKey]['teachers'] as $existingTeacher) {
-                                        if ($existingTeacher['id'] == $teacherId) {
-                                            $teacherExists = true;
-                                            break;
-                                        }
-                                    }
-                                    if (!$teacherExists) {
-                                        $subjectsWithTeachers[$subjectKey]['teachers'][] = [
-                                            'id' => $teacherId,
-                                            'name' => $teacherName,
-                                            'picture' => $teacherPicture,
-                                        ];
-                                    }
-                                }
+                    // Add teacher if exists and not already added
+                    if ($record->teacher_id && $record->teacher_name) {
+                        $teacherExists = false;
+                        foreach ($subjectsWithTeachers[$subjectKey]['teachers'] as $existingTeacher) {
+                            if ($existingTeacher['id'] == $record->teacher_id) {
+                                $teacherExists = true;
+                                break;
                             }
+                        }
+                        if (!$teacherExists) {
+                            $subjectsWithTeachers[$subjectKey]['teachers'][] = [
+                                'id'      => $record->teacher_id,
+                                'name'    => $record->teacher_name,
+                                'picture' => $record->teacher_picture,
+                            ];
                         }
                     }
                 }
 
-                // Sort subjects alphabetically by name
-                $subjectsWithTeachers = collect($subjectsWithTeachers)->sortBy('name')->values()->toArray();
+                // Get student counts per subject for this specific term
+                $studentCounts = SubjectRegistrationStatus::query()
+                    ->join('subjectclass', 'subjectclass.id', '=', 'subject_registration_status.subjectclassid')
+                    ->join('broadsheet', 'broadsheet.id', '=', 'subject_registration_status.broadsheetid')
+                    ->join('subject', 'subject.id', '=', 'broadsheet.subjectid')
+                    ->where('subjectclass.schoolclassid', $validated['class_id'])
+                    ->where('subject_registration_status.sessionid', $validated['session_id'])
+                    ->where('subject_registration_status.termid', $term->id)
+                    ->select([
+                        'subject.id as subject_id',
+                        DB::raw('COUNT(DISTINCT subject_registration_status.studentid) as student_count'),
+                    ])
+                    ->groupBy('subject.id')
+                    ->get()
+                    ->pluck('student_count', 'subject_id')
+                    ->toArray();
+
+                // Apply per-subject student counts
+                foreach ($subjectsWithTeachers as $key => $subject) {
+                    $subjectsWithTeachers[$key]['student_count'] = $studentCounts[$subject['id']] ?? 0;
+                }
+
+                // Convert to indexed array (preserves alphabetical order from query)
+                $subjectsWithTeachers = array_values($subjectsWithTeachers);
+
+                // Get total unique students registered in ANY subject for this term/class/session
+                $totalStudents = SubjectRegistrationStatus::query()
+                    ->join('subjectclass', 'subjectclass.id', '=', 'subject_registration_status.subjectclassid')
+                    ->where('subjectclass.schoolclassid', $validated['class_id'])
+                    ->where('subject_registration_status.sessionid', $validated['session_id'])
+                    ->where('subject_registration_status.termid', $term->id)
+                    ->distinct('subject_registration_status.studentid')
+                    ->count();
 
                 $processedData[] = [
-                    'class_id'      => $class->class_id,
-                    'class_name'    => $class->class_name,
-                    'arm_name'      => $class->arm_name,
-                    'session_name'  => $class->session_name,
-                    'term_name'     => $class->term_name,
-                    'student_count' => $class->student_count,
-                    'subject_count' => $class->subject_count,
-                    'subjects'      => implode(', ', array_column($subjectsWithTeachers, 'name')),
+                    'class_id'        => $classInfo->class_id ?? null,
+                    'class_name'      => $classInfo->class_name ?? 'N/A',
+                    'arm_name'        => $classInfo->arm_name ?? 'N/A',
+                    'session_name'    => $sessionInfo->session ?? 'N/A',
+                    'term_name'       => $term->term,
+                    'term_id'         => $term->id,
+                    'student_count'   => $totalStudents,
+                    'subject_count'   => count($subjectsWithTeachers),
                     'subjects_teachers' => $subjectsWithTeachers,
                 ];
             }
@@ -449,35 +471,9 @@ class SubjectOperationController extends Controller
         } catch (ValidationException $e) {
             return response()->json(['success' => false, 'message' => 'Invalid parameters.', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
-            Log::error('Error fetching registered classes', ['error' => $e->getMessage()]);
+            Log::error('Error fetching registered classes', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
-    }
-
-    /**
-     * Get student counts per subject for a class and session
-     */
-    private function getStudentCountsBySubject(int $classId, int $sessionId, ?int $termId = null): array
-    {
-        $query = SubjectRegistrationStatus::query()
-            ->join('subjectclass', 'subjectclass.id', '=', 'subject_registration_status.subjectclassid')
-            ->join('broadsheet', 'broadsheet.id', '=', 'subject_registration_status.broadsheetid')
-            ->join('subject', 'subject.id', '=', 'broadsheet.subjectid')
-            ->where('subjectclass.schoolclassid', $classId)
-            ->where('subject_registration_status.sessionid', $sessionId);
-
-        if ($termId) {
-            $query->where('subject_registration_status.termid', $termId);
-        }
-
-        $results = $query->select([
-            'subject.id as subject_id',
-            DB::raw('COUNT(DISTINCT subject_registration_status.studentid) as student_count')
-        ])
-        ->groupBy('subject.id')
-        ->get();
-
-        return $results->pluck('student_count', 'subject_id')->toArray();
     }
 
     // =========================================================================
@@ -538,7 +534,7 @@ class SubjectOperationController extends Controller
     }
 
     // =========================================================================
-    // STORE (REGISTER) - Individual
+    // STORE (REGISTER) — Individual
     // =========================================================================
 
     public function store(Request $request): array
@@ -1008,21 +1004,19 @@ class SubjectOperationController extends Controller
                 $scores = $scoreSnapshots->get($row->archive_id, collect());
 
                 return [
-                    'archive_id'      => $row->archive_id,
-                    'studentid'       => $row->studentid,
-                    'admissionno'     => $row->admissionno,
-                    'firstname'       => $row->firstname,
-                    'lastname'        => $row->lastname,
-                    'othername'       => $row->othername,
-                    'gender'          => $row->gender,
-                    'picture'         => $row->picture,
-                    'snapshot_name'   => $row->snapshot_name,
-                    'snapshot_notes'  => $row->snapshot_notes,
-                    'unregistered_at' => $row->unregistered_at,
-                    'assessment_scores'     => $scores->where('score_type', ArchiveScoreSnapshot::TYPE_ASSESSMENT)
-                        ->values()->toArray(),
-                    'sub_assessment_scores' => $scores->where('score_type', ArchiveScoreSnapshot::TYPE_SUB_ASSESSMENT)
-                        ->values()->toArray(),
+                    'archive_id'            => $row->archive_id,
+                    'studentid'             => $row->studentid,
+                    'admissionno'           => $row->admissionno,
+                    'firstname'             => $row->firstname,
+                    'lastname'              => $row->lastname,
+                    'othername'             => $row->othername,
+                    'gender'                => $row->gender,
+                    'picture'               => $row->picture,
+                    'snapshot_name'         => $row->snapshot_name,
+                    'snapshot_notes'        => $row->snapshot_notes,
+                    'unregistered_at'       => $row->unregistered_at,
+                    'assessment_scores'     => $scores->where('score_type', ArchiveScoreSnapshot::TYPE_ASSESSMENT)->values()->toArray(),
+                    'sub_assessment_scores' => $scores->where('score_type', ArchiveScoreSnapshot::TYPE_SUB_ASSESSMENT)->values()->toArray(),
                 ];
             });
 
@@ -1039,12 +1033,12 @@ class SubjectOperationController extends Controller
             }
 
             return response()->json([
-                'success'             => true,
-                'rows'                => $rows,
-                'assessment_headers'  => $assessmentHeaders->values(),
-                'snapshot_name'       => $archives->first()->snapshot_name,
-                'snapshot_notes'      => $archives->first()->snapshot_notes,
-                'total_students'      => $archives->count(),
+                'success'            => true,
+                'rows'               => $rows,
+                'assessment_headers' => $assessmentHeaders->values(),
+                'snapshot_name'      => $archives->first()->snapshot_name,
+                'snapshot_notes'     => $archives->first()->snapshot_notes,
+                'total_students'     => $archives->count(),
             ]);
 
         } catch (\Exception $e) {
@@ -1515,7 +1509,12 @@ class SubjectOperationController extends Controller
 
             if (empty($studentsToProcess)) {
                 DB::rollBack();
-                return ['success' => false, 'message' => 'All students are already registered.', 'skipped_count' => $skippedCount, 'success_count' => 0];
+                return [
+                    'success'       => false,
+                    'message'       => 'All students are already registered.',
+                    'skipped_count' => $skippedCount,
+                    'success_count' => 0,
+                ];
             }
 
             $broadsheetRecords     = [];
@@ -1536,11 +1535,22 @@ class SubjectOperationController extends Controller
 
             DB::commit();
 
-            return ['success' => true, 'message' => count($studentsToProcess) . ' students registered', 'method' => 'batch', 'success_count' => count($studentsToProcess), 'skipped_count' => $skippedCount];
+            return [
+                'success'       => true,
+                'message'       => count($studentsToProcess) . ' students registered',
+                'method'        => 'batch',
+                'success_count' => count($studentsToProcess),
+                'skipped_count' => $skippedCount,
+            ];
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return ['success' => false, 'message' => 'Batch processing failed: ' . $e->getMessage(), 'errors' => [$e->getMessage()], 'success_count' => 0];
+            return [
+                'success'       => false,
+                'message'       => 'Batch processing failed: ' . $e->getMessage(),
+                'errors'        => [$e->getMessage()],
+                'success_count' => 0,
+            ];
         }
     }
 
@@ -1574,11 +1584,22 @@ class SubjectOperationController extends Controller
             }
 
             DB::commit();
-            return ['success' => true, 'message' => "{$totalProcessed} students registered", 'method' => 'large_dataset', 'success_count' => $totalProcessed, 'skipped_count' => $totalSkipped];
+            return [
+                'success'       => true,
+                'message'       => "{$totalProcessed} students registered",
+                'method'        => 'large_dataset',
+                'success_count' => $totalProcessed,
+                'skipped_count' => $totalSkipped,
+            ];
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return ['success' => false, 'message' => 'Large dataset processing failed: ' . $e->getMessage(), 'errors' => [$e->getMessage()], 'success_count' => 0];
+            return [
+                'success'       => false,
+                'message'       => 'Large dataset processing failed: ' . $e->getMessage(),
+                'errors'        => [$e->getMessage()],
+                'success_count' => 0,
+            ];
         }
     }
 
@@ -1647,11 +1668,17 @@ class SubjectOperationController extends Controller
             if ($assessments->isEmpty()) return;
 
             foreach ($assessments as $assessment) {
-                BroadsheetAssessmentScore::firstOrCreate(['broadsheet_id' => $broadsheetId, 'assessment_id' => $assessment->id], ['score' => 0.00]);
+                BroadsheetAssessmentScore::firstOrCreate(
+                    ['broadsheet_id' => $broadsheetId, 'assessment_id' => $assessment->id],
+                    ['score' => 0.00]
+                );
 
                 $subAssessments = DB::table('sub_assessments')->where('assessment_id', $assessment->id)->pluck('id');
                 foreach ($subAssessments as $subAssessmentId) {
-                    BroadsheetSubAssessmentScore::firstOrCreate(['broadsheet_id' => $broadsheetId, 'sub_assessment_id' => $subAssessmentId, 'assessment_id' => $assessment->id], ['score' => 0.00]);
+                    BroadsheetSubAssessmentScore::firstOrCreate(
+                        ['broadsheet_id' => $broadsheetId, 'sub_assessment_id' => $subAssessmentId, 'assessment_id' => $assessment->id],
+                        ['score' => 0.00]
+                    );
                 }
             }
         } catch (\Exception $e) {

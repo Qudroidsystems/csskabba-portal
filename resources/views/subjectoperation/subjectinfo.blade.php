@@ -5,12 +5,14 @@
 <div class="main-content">
     <div class="page-content">
         <div class="container-fluid">
+
             <div class="row">
                 <div class="col-12">
                     <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                        <h4 class="mb-sm-0">
-                            <i class="ri-book-open-line me-2"></i>
-                            Subject Information for {{ $studentdata->first()->firstname ?? '' }} {{ $studentdata->first()->lastname ?? '' }}
+                        <h4 class="mb-sm-0 fw-semibold">
+                            <i class="ri-book-open-line me-2 text-primary"></i>
+                            Subject Information
+                            <span class="text-muted fw-normal fs-6 ms-2">— {{ $studentdata->first()->firstname ?? '' }} {{ $studentdata->first()->lastname ?? '' }}</span>
                         </h4>
                         <div class="page-title-right">
                             <ol class="breadcrumb m-0">
@@ -22,85 +24,152 @@
                 </div>
             </div>
 
-            {{-- Student Profile Card --}}
             <div class="row">
+
+                {{-- ── Student Profile Card ─────────────────────────────────── --}}
                 <div class="col-lg-4">
-                    <div class="card">
-                        <div class="card-body text-center">
+                    <div class="card border-0 shadow-sm" style="border-radius:16px;overflow:hidden;">
+                        <div class="text-center p-4" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);">
                             @php
                                 $avatarPath = !empty($studentpic->first()->avatar)
                                     ? asset('storage/student_avatars/' . $studentpic->first()->avatar)
                                     : asset('storage/student_avatars/unnamed.jpg');
                             @endphp
-                            <img src="{{ $avatarPath }}"
-                                 class="rounded-circle img-thumbnail mb-3"
-                                 style="width: 150px; height: 150px; object-fit: cover;"
-                                 onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'">
-                            <h4 class="mb-1">{{ $studentdata->first()->firstname ?? '' }} {{ $studentdata->first()->lastname ?? '' }}</h4>
-                            <p class="text-muted">
-                                <i class="ri-id-card-line me-1"></i>
-                                Admission No: <strong>{{ $studentdata->first()->admissionno ?? 'N/A' }}</strong>
-                            </p>
-                            <p class="text-muted">
-                                <i class="ri-gender-line me-1"></i>
-                                Gender: <strong>{{ $studentdata->first()->gender ?? 'N/A' }}</strong>
-                            </p>
-                            <hr>
-                            <div class="row">
-                                <div class="col-6">
-                                    <div class="border rounded-3 p-2">
-                                        <h5 class="text-success mb-0">{{ $regcount ?? 0 }}</h5>
-                                        <small class="text-muted">Registered</small>
+                            <div class="mb-3" style="position:relative;display:inline-block;">
+                                <img src="{{ $avatarPath }}"
+                                     class="rounded-circle border border-4 border-white shadow"
+                                     style="width:110px;height:110px;object-fit:cover;"
+                                     onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'">
+                                <span class="position-absolute bottom-0 end-0 rounded-circle bg-white d-flex align-items-center justify-content-center shadow-sm"
+                                      style="width:28px;height:28px;">
+                                    <i class="ri-user-line text-primary" style="font-size:13px;"></i>
+                                </span>
+                            </div>
+                            <h5 class="text-white fw-bold mb-1">{{ $studentdata->first()->firstname ?? '' }} {{ $studentdata->first()->lastname ?? '' }}</h5>
+                            <div class="d-flex justify-content-center gap-2 flex-wrap mt-2">
+                                <span class="badge px-3 py-2 rounded-pill" style="background:rgba(255,255,255,0.2);color:#fff;font-size:11px;">
+                                    <i class="ri-id-card-line me-1"></i>{{ $studentdata->first()->admissionno ?? 'N/A' }}
+                                </span>
+                                <span class="badge px-3 py-2 rounded-pill" style="background:rgba(255,255,255,0.2);color:#fff;font-size:11px;">
+                                    <i class="ri-gender-line me-1"></i>{{ $studentdata->first()->gender ?? 'N/A' }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <div class="card-body p-3">
+                            {{-- Registration Summary --}}
+                            <div class="row g-2 mb-3">
+                                <div class="col-4">
+                                    <div class="text-center p-2 rounded-3 border" style="background:#f0f4ff;">
+                                        <div class="fw-bold text-primary fs-5 lh-1 mb-1">{{ $totalreg ?? 0 }}</div>
+                                        <small class="text-muted" style="font-size:10px;">Total</small>
                                     </div>
                                 </div>
-                                <div class="col-6">
-                                    <div class="border rounded-3 p-2">
-                                        <h5 class="text-danger mb-0">{{ $noregcount ?? 0 }}</h5>
-                                        <small class="text-muted">Unregistered</small>
+                                <div class="col-4">
+                                    <div class="text-center p-2 rounded-3 border" style="background:#f0fdf4;">
+                                        <div class="fw-bold text-success fs-5 lh-1 mb-1">{{ $regcount ?? 0 }}</div>
+                                        <small class="text-muted" style="font-size:10px;">Registered</small>
                                     </div>
+                                </div>
+                                <div class="col-4">
+                                    <div class="text-center p-2 rounded-3 border" style="background:#fff5f5;">
+                                        <div class="fw-bold text-danger fs-5 lh-1 mb-1">{{ $noregcount ?? 0 }}</div>
+                                        <small class="text-muted" style="font-size:10px;">Unregistered</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Progress Bar --}}
+                            @php $percentage = $totalreg > 0 ? ($regcount / $totalreg) * 100 : 0; @endphp
+                            <div>
+                                <div class="d-flex justify-content-between mb-1">
+                                    <small class="text-muted fw-medium">Registration Progress</small>
+                                    <small class="fw-semibold text-primary">{{ number_format($percentage, 1) }}%</small>
+                                </div>
+                                <div class="progress rounded-pill" style="height:8px;background:#e0e7ff;">
+                                    <div class="progress-bar rounded-pill"
+                                         style="width:{{ $percentage }}%;background:linear-gradient(90deg,#667eea,#764ba2);"
+                                         role="progressbar"></div>
+                                </div>
+                            </div>
+
+                            {{-- Class / Term info --}}
+                            <hr class="my-3">
+                            <div class="small text-muted">
+                                <div class="mb-1">
+                                    <i class="ri-school-line me-2 text-primary"></i>
+                                    <strong>Class:</strong>
+                                    @if($classname->isNotEmpty())
+                                        {{ $classname->first()->schoolclass }} {{ $classname->first()->arm }}
+                                    @else
+                                        Unknown Class
+                                    @endif
+                                </div>
+                                <div>
+                                    <i class="ri-calendar-2-line me-2 text-primary"></i>
+                                    <strong>Term:</strong>
+                                    {{ $subjectclass->isNotEmpty() ? $subjectclass->first()->term : 'N/A' }}
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
+                {{-- ── Subjects Table ───────────────────────────────────────── --}}
                 <div class="col-lg-8">
-                    <div class="card">
-                        <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                            <h5 class="card-title text-white mb-0">
-                                <i class="ri-graduation-cap-line me-2"></i>
-                                Subjects for
-                                @if($classname->isNotEmpty())
-                                    {{ $classname->first()->schoolclass ?? '' }} {{ $classname->first()->arm ?? '' }}
-                                @else
-                                    Unknown Class
-                                @endif
-                                <span class="badge bg-light text-dark ms-2">
-                                    Term: {{ $subjectclass->isNotEmpty() ? $subjectclass->first()->term : 'N/A' }}
-                                </span>
-                            </h5>
+                    <div class="card border-0 shadow-sm" style="border-radius:16px;overflow:hidden;">
+                        <div class="card-header border-0 px-4 py-3" style="background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 60%,#7c3aed 100%);">
+                            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                                         style="width:40px;height:40px;background:rgba(255,255,255,0.15);">
+                                        <i class="ri-graduation-cap-line text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="text-white fw-bold mb-0">Subjects for
+                                            @if($classname->isNotEmpty())
+                                                {{ $classname->first()->schoolclass }} {{ $classname->first()->arm }}
+                                            @else
+                                                Unknown Class
+                                            @endif
+                                        </h6>
+                                        <small class="text-white opacity-75">
+                                            Term: {{ $subjectclass->isNotEmpty() ? $subjectclass->first()->term : 'N/A' }}
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <span class="badge px-3 py-2 rounded-pill" style="background:rgba(255,255,255,0.2);color:#fff;">
+                                        <i class="ri-book-open-line me-1"></i>{{ $totalreg ?? 0 }} Subjects
+                                    </span>
+                                </div>
+                            </div>
                         </div>
-                        <div class="card-body">
+
+                        <div class="card-body p-0">
                             <div class="table-responsive">
-                                <table class="table table-bordered table-hover align-middle">
-                                    <thead class="table-light">
+                                <table class="table table-hover align-middle mb-0" style="font-size:0.875rem;">
+                                    <thead style="background:#f0f4ff;">
                                         <tr>
-                                            <th><i class="ri-book-line me-1"></i> Subject</th>
-                                            <th><i class="ri-user-star-line me-1"></i> Teacher</th>
-                                            <th><i class="ri-checkbox-circle-line me-1"></i> Status</th>
-                                            <th><i class="ri-calendar-line me-1"></i> Term</th>
-                                            <th><i class="ri-calendar-event-line me-1"></i> Session</th>
+                                            <th class="ps-3" width="40">#</th>
+                                            <th><i class="ri-book-line me-1 text-primary"></i>Subject</th>
+                                            <th><i class="ri-user-star-line me-1 text-primary"></i>Teacher</th>
+                                            <th><i class="ri-checkbox-circle-line me-1 text-primary"></i>Status</th>
+                                            <th><i class="ri-calendar-line me-1 text-primary"></i>Term</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @forelse ($subjectclass as $sc)
-                                            <tr class="subject-class-row"
-                                                data-subjectclassid="{{ $sc->subjectclassid ?? '' }}"
-                                                data-staffid="{{ $sc->staffid ?? '' }}">
-                                                <td class="fw-medium">
-                                                    <i class="ri-book-2-line text-primary me-2"></i>
-                                                    {{ $sc->subject ?? 'N/A' }}
-                                                    <br>
+                                        @forelse ($subjectclass as $index => $sc)
+                                            @php
+                                                $status = isset($subjectRegistrations[$sc->subjectid][$sc->staffid]['status']['status'])
+                                                    ? $subjectRegistrations[$sc->subjectid][$sc->staffid]['status']['status']
+                                                    : 'Not Registered';
+                                                $isReg = $status === 'Registered';
+                                            @endphp
+                                            <tr>
+                                                <td class="ps-3 text-muted small">{{ $index + 1 }}</td>
+                                                <td>
+                                                    <div class="fw-semibold">{{ $sc->subject ?? 'N/A' }}</div>
                                                     <small class="text-muted">{{ $sc->subjectcode ?? '' }}</small>
                                                 </td>
                                                 <td>
@@ -111,42 +180,35 @@
                                                                 : asset('storage/staff_avatars/default.png');
                                                         @endphp
                                                         <img src="{{ $teacherPic }}"
-                                                             class="rounded-circle"
-                                                             style="width: 35px; height: 35px; object-fit: cover;"
+                                                             class="rounded-circle border"
+                                                             style="width:30px;height:30px;object-fit:cover;"
                                                              onerror="this.src='{{ asset('storage/staff_avatars/default.png') }}'">
                                                         <div>
-                                                            <div class="fw-medium">{{ $sc->title ?? '' }} {{ $sc->name ?? '' }}</div>
-                                                            <small class="text-muted">Teacher</small>
+                                                            <div class="fw-medium small">{{ $sc->title ?? '' }} {{ $sc->name ?? '' }}</div>
                                                         </div>
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    @php
-                                                        $status = isset($subjectRegistrations[$sc->subjectid][$sc->staffid]['status']['status'])
-                                                            ? $subjectRegistrations[$sc->subjectid][$sc->staffid]['status']['status']
-                                                            : 'Not Registered';
-                                                    @endphp
-                                                    @if($status === 'Registered')
-                                                        <span class="badge bg-success rounded-pill px-3 py-2">
-                                                            <i class="ri-check-line me-1"></i> {{ $status }}
+                                                    @if($isReg)
+                                                        <span class="badge rounded-pill px-3 py-2" style="background:#dcfce7;color:#166534;font-size:11px;">
+                                                            <i class="ri-check-line me-1"></i>Registered
                                                         </span>
                                                     @else
-                                                        <span class="badge bg-danger rounded-pill px-3 py-2">
-                                                            <i class="ri-close-line me-1"></i> {{ $status }}
+                                                        <span class="badge rounded-pill px-3 py-2" style="background:#fee2e2;color:#991b1b;font-size:11px;">
+                                                            <i class="ri-close-line me-1"></i>Not Registered
                                                         </span>
                                                     @endif
                                                 </td>
                                                 <td>
-                                                    <span class="badge bg-info-subtle text-info">{{ $sc->term ?? 'N/A' }}</span>
-                                                </td>
-                                                <td>
-                                                    <span class="badge bg-secondary-subtle text-secondary">{{ $sc->session ?? 'N/A' }}</span>
+                                                    <span class="badge rounded-pill px-3" style="background:#e0e7ff;color:#3730a3;font-size:11px;">
+                                                        {{ $sc->term ?? 'N/A' }}
+                                                    </span>
                                                 </td>
                                             </tr>
                                         @empty
                                             <tr>
                                                 <td colspan="5" class="text-center text-muted py-5">
-                                                    <i class="ri-information-line ri-2x mb-2 d-block"></i>
+                                                    <i class="ri-information-line ri-2x mb-2 d-block text-primary opacity-50"></i>
                                                     No subjects found for this class, term, and session.
                                                 </td>
                                             </tr>
@@ -154,69 +216,12 @@
                                     </tbody>
                                 </table>
                             </div>
-
-                            {{-- Summary Statistics --}}
-                            <div class="row mt-4">
-                                <div class="col-md-4">
-                                    <div class="card bg-primary bg-opacity-10 border-0">
-                                        <div class="card-body text-center py-3">
-                                            <h3 class="text-primary mb-0">{{ $totalreg ?? 0 }}</h3>
-                                            <small class="text-muted">Total Subjects</small>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="card bg-success bg-opacity-10 border-0">
-                                        <div class="card-body text-center py-3">
-                                            <h3 class="text-success mb-0">{{ $regcount ?? 0 }}</h3>
-                                            <small class="text-muted">Registered Subjects</small>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="card bg-danger bg-opacity-10 border-0">
-                                        <div class="card-body text-center py-3">
-                                            <h3 class="text-danger mb-0">{{ $noregcount ?? 0 }}</h3>
-                                            <small class="text-muted">Unregistered Subjects</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {{-- Progress Bar --}}
-                            @php
-                                $percentage = $totalreg > 0 ? ($regcount / $totalreg) * 100 : 0;
-                            @endphp
-                            <div class="mt-3">
-                                <div class="d-flex justify-content-between mb-1">
-                                    <small>Registration Progress</small>
-                                    <small>{{ number_format($percentage, 1) }}%</small>
-                                </div>
-                                <div class="progress" style="height: 10px;">
-                                    <div class="progress-bar bg-success"
-                                         style="width: {{ $percentage }}%;"
-                                         role="progressbar"></div>
-                                </div>
-                            </div>
                         </div>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>
 </div>
 @endsection
-<script>
-    // Add any additional JavaScript for the subject info page if needed
-    document.addEventListener('DOMContentLoaded', function() {
-        // You can add row click handlers or other interactions here
-        const rows = document.querySelectorAll('.subject-class-row');
-        rows.forEach(row => {
-            row.addEventListener('click', function() {
-                // Optional: Add functionality when clicking on a subject row
-                console.log('Subject clicked:', this.dataset.subjectclassid);
-            });
-        });
-    });
-</script>
-
