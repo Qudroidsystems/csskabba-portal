@@ -58,11 +58,10 @@ class RoomController extends Controller
 
     public function show(int $id): JsonResponse
     {
-        $room = Room::with(['bookings' => function($q) {
+        $room = Room::with(['bookings' => function ($q) {
             $q->where('date', '>=', now())->orderBy('date');
         }])->findOrFail($id);
 
-        // Get current week's timetable for this room
         $currentWeekSlots = TimetableSlot::where('room_id', $id)
             ->with(['period', 'subject', 'teacher', 'setting.schoolclass'])
             ->get();
@@ -103,10 +102,14 @@ class RoomController extends Controller
     {
         $room = Room::findOrFail($id);
 
-        // Check if room is being used
         $isUsed = TimetableSlot::where('room_id', $id)->exists();
         if ($isUsed) {
-            return response()->json(['success' => false, 'message' => 'Cannot delete room that is currently in use'], 422);
+            return response()->json(['success' => false, 'message' => 'Cannot delete room that is currently in use in a timetable'], 422);
+        }
+
+        $hasFutureBookings = RoomBooking::where('room_id', $id)->where('date', '>=', now()->toDateString())->exists();
+        if ($hasFutureBookings) {
+            return response()->json(['success' => false, 'message' => 'Cannot delete room with upcoming bookings'], 422);
         }
 
         $room->delete();
@@ -124,7 +127,6 @@ class RoomController extends Controller
             'recurring_type' => 'in:none,weekly,biweekly',
         ]);
 
-        // Check availability
         $isAvailable = $this->checkRoomAvailability(
             $validated['room_id'],
             $validated['date'],
@@ -149,6 +151,22 @@ class RoomController extends Controller
         return response()->json(['success' => true, 'booking' => $booking, 'message' => 'Room booked successfully']);
     }
 
+    public function cancelBooking(int $bookingId): JsonResponse
+    {
+        $booking = RoomBooking::findOrFail($bookingId);
+
+        if ($booking->booked_by !== Auth::id() && !Auth::user()->can('Manage room bookings')) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+
+        if ($booking->date < now()->toDateString()) {
+            return response()->json(['success' => false, 'message' => 'Cannot cancel a past booking'], 422);
+        }
+
+        $booking->delete();
+        return response()->json(['success' => true, 'message' => 'Booking cancelled successfully']);
+    }
+
     public function checkAvailability(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -168,28 +186,36 @@ class RoomController extends Controller
         return response()->json(['success' => true, 'available' => $isAvailable]);
     }
 
-    private function checkRoomAvailability($roomId, $date, $startTime, $endTime): bool
+    /**
+     * Check if a room is free during a given time window on a given date.
+     *
+     * Overlap condition (standard interval intersection):
+     *   existing.start_time < new.end_time AND existing.end_time > new.start_time
+     *
+     * This correctly catches all partial and full overlaps, which the original
+     * BETWEEN-only logic missed (e.g. a booking that fully contained the new slot).
+     */
+    private function checkRoomAvailability(string|int $roomId, string $date, string $startTime, string $endTime): bool
     {
         $dayOfWeek = date('l', strtotime($date));
 
-        // Check timetable slots
+        // Check against recurring timetable slots (joined with timetable_periods for times)
         $timetableConflict = TimetableSlot::where('room_id', $roomId)
             ->where('day', $dayOfWeek)
-            ->where(function($q) use ($startTime, $endTime) {
-                $q->whereBetween('start_time', [$startTime, $endTime])
-                  ->orWhereBetween('end_time', [$startTime, $endTime]);
+            ->whereHas('period', function ($q) use ($startTime, $endTime) {
+                // Overlap: period.start < new.end AND period.end > new.start
+                $q->where('start_time', '<', $endTime)
+                  ->where('end_time', '>', $startTime);
             })
             ->exists();
 
         if ($timetableConflict) return false;
 
-        // Check one-off bookings
+        // Check against one-off bookings
         $bookingConflict = RoomBooking::where('room_id', $roomId)
             ->where('date', $date)
-            ->where(function($q) use ($startTime, $endTime) {
-                $q->whereBetween('start_time', [$startTime, $endTime])
-                  ->orWhereBetween('end_time', [$startTime, $endTime]);
-            })
+            ->where('start_time', '<', $endTime)
+            ->where('end_time', '>', $startTime)
             ->exists();
 
         return !$bookingConflict;

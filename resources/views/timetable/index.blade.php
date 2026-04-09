@@ -1,1560 +1,578 @@
 {{-- resources/views/timetable/index.blade.php --}}
 @extends('layouts.master')
 
-@section('content')
-<div class="main-content">
-    <div class="page-content">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-12">
-                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                        <h4 class="mb-sm-0">
-                            <i class="ri-calendar-todo-line me-2"></i>Timetable Management
-                        </h4>
-                        <div class="page-title-right">
-                            <ol class="breadcrumb m-0">
-                                <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
-                                <li class="breadcrumb-item active">Timetable</li>
-                            </ol>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            @if ($errors->any())
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="ri-error-warning-line me-2"></i>
-                    <strong>Error!</strong> There were some problems with your input.
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    <ul class="mt-2 mb-0">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
-            @if (session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <i class="ri-checkbox-circle-line me-2"></i>
-                    {{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
-
-            {{-- Class & Session Selection --}}
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="row g-3 align-items-end">
-                                <div class="col-xxl-3 col-sm-6">
-                                    <label class="form-label">Select Class</label>
-                                    <select class="form-select" id="classSelect">
-                                        <option value="">-- Select Class --</option>
-                                        @foreach ($schoolclasses as $class)
-                                            <option value="{{ $class->id }}">
-                                                {{ $class->schoolclass }} {{ $class->arm }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-xxl-3 col-sm-6">
-                                    <label class="form-label">Select Session</label>
-                                    <select class="form-select" id="sessionSelect">
-                                        <option value="">-- Select Session --</option>
-                                        @foreach ($schoolsessions as $session)
-                                            <option value="{{ $session->id }}">{{ $session->session }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-xxl-3 col-sm-6">
-                                    <label class="form-label">Select Term (Optional)</label>
-                                    <select class="form-select" id="termSelect">
-                                        <option value="">All Terms</option>
-                                        @foreach ($schoolterms as $term)
-                                            <option value="{{ $term->id }}">{{ $term->term }}</option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-xxl-3 col-sm-6">
-                                    <button class="btn btn-primary w-100" onclick="loadOrCreateSetting()">
-                                        <i class="ri-settings-4-line me-2"></i>Load / Create Timetable
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {{-- Existing Settings Summary --}}
-            @if($settings->count() > 0)
-            <div class="row">
-                <div class="col-lg-12">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="card-title mb-0">
-                                <i class="ri-history-line me-2"></i>Existing Timetables
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle">
-                                    <thead class="table-light">
-                                        <tr>
-                                            <th>Class</th>
-                                            <th>Session</th>
-                                            <th>Term</th>
-                                            <th>Last Updated</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach($settings as $setting)
-                                        <tr>
-                                            <td class="fw-medium">
-                                                <i class="ri-school-line text-primary me-2"></i>
-                                                {{ $setting->schoolclass->schoolclass ?? 'N/A' }}
-                                            </td>
-                                            <td>{{ $setting->session->session ?? 'N/A' }}</td>
-                                            <td>{{ $setting->term->term ?? 'All Terms' }}</td>
-                                            <td>{{ $setting->updated_at->format('d M Y, H:i') }}</td>
-                                            <td>
-                                                <span class="badge bg-success-subtle text-success">
-                                                    <i class="ri-checkbox-circle-line me-1"></i>Active
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <button class="btn btn-sm btn-outline-primary"
-                                                        onclick="loadSetting({{ $setting->id }})"
-                                                        title="Edit Timetable">
-                                                    <i class="ri-edit-line"></i>
-                                                </button>
-                                                <button class="btn btn-sm btn-outline-info"
-                                                        onclick="cloneSetting({{ $setting->id }})"
-                                                        title="Clone Timetable">
-                                                    <i class="ri-file-copy-line"></i>
-                                                </button>
-                                                <button class="btn btn-sm btn-outline-danger"
-                                                        onclick="deleteSetting({{ $setting->id }})"
-                                                        title="Delete Timetable">
-                                                    <i class="ri-delete-bin-line"></i>
-                                                </button>
-                                            </td>
-                                        </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            @endif
-
-            {{-- Main Timetable Editor (Hidden until setting loaded) --}}
-            <div id="timetableEditor" style="display: none;">
-                {{-- Tabs --}}
-                <div class="row">
-                    <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <ul class="nav nav-tabs nav-tabs-custom mb-4" role="tablist">
-                                    <li class="nav-item">
-                                        <a class="nav-link active" data-bs-toggle="tab" href="#periodsTab" role="tab">
-                                            <i class="ri-time-line me-2"></i>Periods & Settings
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" data-bs-toggle="tab" href="#constraintsTab" role="tab">
-                                            <i class="ri-bar-chart-2-line me-2"></i>Subject Constraints
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" data-bs-toggle="tab" href="#timetableGridTab" role="tab">
-                                            <i class="ri-table-line me-2"></i>Timetable Grid
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" data-bs-toggle="tab" href="#conflictsTab" role="tab">
-                                            <i class="ri-alert-line me-2"></i>Conflicts
-                                        </a>
-                                    </li>
-                                </ul>
-
-                                <div class="tab-content">
-                                    {{-- Periods & Settings Tab --}}
-                                    <div class="tab-pane active" id="periodsTab" role="tabpanel">
-                                        <div class="row">
-                                            <div class="col-md-6">
-                                                <div class="card border">
-                                                    <div class="card-header bg-light">
-                                                        <h6 class="card-title mb-0">
-                                                            <i class="ri-settings-4-line me-2"></i>School Day Settings
-                                                        </h6>
-                                                    </div>
-                                                    <div class="card-body">
-                                                        <div class="row g-3">
-                                                            <div class="col-md-6">
-                                                                <label class="form-label">School Day Start</label>
-                                                                <input type="time" class="form-control" id="schoolDayStart">
-                                                            </div>
-                                                            <div class="col-md-6">
-                                                                <label class="form-label">School Day End</label>
-                                                                <input type="time" class="form-control" id="schoolDayEnd">
-                                                            </div>
-                                                            <div class="col-md-6">
-                                                                <label class="form-label">Period Duration (min)</label>
-                                                                <input type="number" class="form-control" id="periodDuration" min="20" max="90">
-                                                            </div>
-                                                            <div class="col-md-6">
-                                                                <label class="form-label">Short Break (min)</label>
-                                                                <input type="number" class="form-control" id="shortBreakDuration" min="5" max="60">
-                                                            </div>
-                                                            <div class="col-md-6">
-                                                                <label class="form-label">Long Break (min)</label>
-                                                                <input type="number" class="form-control" id="longBreakDuration" min="10" max="90">
-                                                            </div>
-                                                            <div class="col-md-12">
-                                                                <label class="form-label">Active Days</label>
-                                                                <div class="d-flex flex-wrap gap-3">
-                                                                    @foreach(['Monday','Tuesday','Wednesday','Thursday','Friday'] as $day)
-                                                                    <div class="form-check">
-                                                                        <input class="form-check-input active-day-checkbox" type="checkbox" value="{{ $day }}" id="day_{{ $day }}">
-                                                                        <label class="form-check-label" for="day_{{ $day }}">{{ $day }}</label>
-                                                                    </div>
-                                                                    @endforeach
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="card border">
-                                                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                                                        <h6 class="card-title mb-0">
-                                                            <i class="ri-list-check-2-line me-2"></i>Periods
-                                                        </h6>
-                                                        <button type="button" class="btn btn-sm btn-primary" onclick="addPeriodRow()">
-                                                            <i class="ri-add-line me-1"></i>Add Period
-                                                        </button>
-                                                    </div>
-                                                    <div class="card-body">
-                                                        <div class="table-responsive">
-                                                            <table class="table table-sm table-bordered" id="periodsTable">
-                                                                <thead class="table-light">
-                                                                    <tr>
-                                                                        <th style="width: 40px">#</th>
-                                                                        <th>Period Name</th>
-                                                                        <th>Type</th>
-                                                                        <th style="width: 80px"></th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody id="periodsBody">
-                                                                    <tr id="periodRowTemplate" style="display: none;">
-                                                                        <td class="period-order"></td>
-                                                                        <td><input type="text" class="form-control form-control-sm period-name" placeholder="e.g., Period 1"></td>
-                                                                        <td>
-                                                                            <select class="form-select form-select-sm period-type">
-                                                                                <option value="lesson">Lesson</option>
-                                                                                <option value="short_break">Short Break</option>
-                                                                                <option value="long_break">Long Break</option>
-                                                                                <option value="assembly">Assembly</option>
-                                                                                <option value="free">Free Period</option>
-                                                                            </select>
-                                                                        </td>
-                                                                        <td class="text-center">
-                                                                            <button type="button" class="btn btn-sm btn-danger remove-period" onclick="removePeriodRow(this)">
-                                                                                <i class="ri-delete-bin-line"></i>
-                                                                            </button>
-                                                                        </td>
-                                                                    </tr>
-                                                                </tbody>
-                                                            </table>
-                                                        </div>
-                                                        <div class="mt-3">
-                                                            <button class="btn btn-success" onclick="saveSettings()">
-                                                                <i class="ri-save-line me-2"></i>Save Settings
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {{-- Constraints Tab --}}
-                                    <div class="tab-pane" id="constraintsTab" role="tabpanel">
-                                        <div class="card border">
-                                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                                                <h6 class="card-title mb-0">
-                                                    <i class="ri-bar-chart-2-line me-2"></i>Subject Constraints
-                                                </h6>
-                                                <div>
-                                                    <button class="btn btn-sm btn-success me-2" onclick="saveConstraints()">
-                                                        <i class="ri-save-line me-1"></i>Save Constraints
-                                                    </button>
-                                                    <button class="btn btn-sm btn-primary" onclick="generateTimetable()">
-                                                        <i class="ri-magic-line me-1"></i>Auto-Generate Timetable
-                                                    </button>
-                                                </div>
-                                            </div>
-                                            <div class="card-body">
-                                                <div class="table-responsive">
-                                                    <table class="table table-bordered" id="constraintsTable">
-                                                        <thead class="table-light">
-                                                            <tr>
-                                                                <th>Subject</th>
-                                                                <th>Teacher</th>
-                                                                <th>Periods/Week</th>
-                                                                <th>Allow Double</th>
-                                                                <th>Max Double/Week</th>
-                                                                <th>Preferred Days</th>
-                                                                <th>Avoid Days</th>
-                                                                <th>Compulsory</th>
-                                                            </tr>
-                                                        </thead>
-                                                        <tbody id="constraintsBody">
-                                                        </tbody>
-                                                    </table>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {{-- Timetable Grid Tab --}}
-                                    <div class="tab-pane" id="timetableGridTab" role="tabpanel">
-                                        <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <div>
-                                                <button class="btn btn-success" onclick="saveAllSlots()">
-                                                    <i class="ri-save-line me-2"></i>Save All Changes
-                                                </button>
-                                                <button class="btn btn-info ms-2" onclick="exportTimetable('csv')">
-                                                    <i class="ri-download-line me-2"></i>Export CSV
-                                                </button>
-                                                <button class="btn btn-warning ms-2" onclick="sendNotifications()">
-                                                    <i class="ri-mail-send-line me-2"></i>Send Notifications
-                                                </button>
-                                            </div>
-                                            <div class="text-muted">
-                                                <small><i class="ri-information-line me-1"></i>Click on any cell to edit</small>
-                                            </div>
-                                        </div>
-                                        <div class="table-responsive" id="timetableGridContainer">
-                                            <div class="text-center py-5">
-                                                <div class="spinner-border text-primary" role="status"></div>
-                                                <p class="mt-2">Loading timetable...</p>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {{-- Conflicts Tab --}}
-                                    <div class="tab-pane" id="conflictsTab" role="tabpanel">
-                                        <div class="card border">
-                                            <div class="card-header bg-light">
-                                                <h6 class="card-title mb-0">
-                                                    <i class="ri-alert-line me-2"></i>Conflict Checker
-                                                </h6>
-                                            </div>
-                                            <div class="card-body">
-                                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                                    <button class="btn btn-primary" onclick="checkConflicts()">
-                                                        <i class="ri-refresh-line me-2"></i>Check Conflicts
-                                                    </button>
-                                                    <span id="conflictBadge"></span>
-                                                </div>
-                                                <div id="conflictsList" class="mt-3">
-                                                    <div class="text-center text-muted py-4">
-                                                        <i class="ri-check-line ri-3x text-success"></i>
-                                                        <p>Click "Check Conflicts" to verify teacher availability</p>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-{{-- Edit Slot Modal with Teacher Picture Tooltip --}}
-<div class="modal fade" id="editSlotModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                <h5 class="modal-title text-white">
-                    <i class="ri-edit-box-line me-2"></i>Edit Timetable Slot
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <input type="hidden" id="editSlotSettingId">
-                <input type="hidden" id="editSlotPeriodId">
-                <input type="hidden" id="editSlotDay">
-
-                <div class="mb-3">
-                    <label class="form-label">Period</label>
-                    <input type="text" class="form-control" id="editSlotPeriodName" readonly>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Day</label>
-                    <input type="text" class="form-control" id="editSlotDayName" readonly>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Subject</label>
-                    <select class="form-select" id="editSlotSubject">
-                        <option value="">-- Free Period --</option>
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Teacher</label>
-                    <select class="form-select" id="editSlotTeacher">
-                        <option value="">-- No Teacher --</option>
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Room / Venue</label>
-                    <input type="text" class="form-control" id="editSlotRoom" placeholder="e.g., Room 101, Lab A">
-                </div>
-
-                <div class="mb-3">
-                                    <label class="form-label">Notes</label>
-                                    <textarea class="form-control" id="editSlotNotes" rows="2" placeholder="Additional notes..."></textarea>
-                                </div>
-
-                                <div class="form-check mb-3">
-                                    <input class="form-check-input" type="checkbox" id="editSlotIsDouble">
-                                    <label class="form-check-label" for="editSlotIsDouble">
-                                        Double Period (consecutive)
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-primary" onclick="saveSlot()">
-                                    <i class="ri-save-line me-2"></i>Save Changes
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Confirmation Modal --}}
-                <div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Confirm Action</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body" id="confirmModalBody">
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-primary" id="confirmModalBtn">Confirm</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-@endsection
-
-
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script>
-    // ============================================================================
-    // GLOBALS
-    // ============================================================================
-    let currentSettingId = null;
-    let currentSetting = null;
-    let currentPeriods = [];
-    let currentGrid = {};
-    let currentDays = [];
-    let availableSubjects = [];
-    let allTeachers = [];
-
-    // FIXED: Remove trailing slashes from URLs
-    const ROUTES = {
-        // Use route() for routes WITHOUT parameters
-        setup: '{{ route("timetable.setup") }}',
-        saveSettings: '{{ route("timetable.save-settings") }}',
-        saveConstraints: '{{ route("timetable.save-constraints") }}',
-        autoGenerate: '{{ route("timetable.auto-generate") }}',
-        saveSlot: '{{ route("timetable.save-slot") }}',
-        sendNotifications: '{{ route("timetable.send-notifications") }}',
-        cloneSetting: '{{ route("timetable.clone-setting") }}',
-        getClassSubjects: '{{ route("timetable.class-subjects") }}',
-
-        // Use url() for routes WITH parameters (to avoid missing parameter error)
-        getSetting: '{{ url("/timetable/get-setting") }}',
-        getGrid: '{{ url("/timetable/get-grid") }}',
-        checkConflicts: '{{ url("/timetable/check-conflicts") }}',
-        export: '{{ url("/timetable/export") }}',
-        deleteSetting: '{{ url("/timetable/delete-setting") }}',
-    };
-
-    const CSRF = '{{ csrf_token() }}';
-
-    // Helper function to build URLs
-    function buildUrl(baseUrl, id) {
-        let cleanUrl = baseUrl.replace(/\/$/, '');
-        return cleanUrl + '/' + id;
-    }
-
-    // ============================================================================
-    // LOAD / CREATE SETTING
-    // ============================================================================
-    async function loadOrCreateSetting() {
-        const classId = document.getElementById('classSelect').value;
-        const sessionId = document.getElementById('sessionSelect').value;
-        const termId = document.getElementById('termSelect').value;
-
-        if (!classId || !sessionId) {
-            Swal.fire({
-                title: 'Selection Required',
-                text: 'Please select both a class and a session.',
-                icon: 'warning',
-                confirmButtonColor: '#3085d6'
-            });
-            return;
-        }
-
-        showLoading();
-
-        try {
-            const response = await fetch(ROUTES.setup, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': CSRF,
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    schoolclass_id: classId,
-                    session_id: sessionId,
-                    term_id: termId || null
-                })
-            });
-
-            const data = await response.json();
-            if (data.success) {
-                currentSettingId = data.setting_id;
-                await loadSetting(currentSettingId);
-            } else {
-                throw new Error(data.message || 'Failed to load setting');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            Swal.fire('Error', 'Failed to load timetable setting: ' + error.message, 'error');
-        } finally {
-            hideLoading();
-        }
-    }
-
-    async function loadSetting(settingId) {
-        showLoading();
-
-        try {
-            const getSettingUrl = buildUrl(ROUTES.getSetting, settingId);
-            console.log('Fetching URL:', getSettingUrl);
-
-            const response = await fetch(getSettingUrl, {
-                headers: {
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': CSRF
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-
-            const data = await response.json();
-
-            if (data.success) {
-                currentSetting = data.setting;
-                currentSettingId = settingId;
-                availableSubjects = data.available_subjects || [];
-
-                // Populate settings form
-                document.getElementById('schoolDayStart').value = currentSetting.school_day_start?.slice(0,5) || '08:00';
-                document.getElementById('schoolDayEnd').value = currentSetting.school_day_end?.slice(0,5) || '14:30';
-                document.getElementById('periodDuration').value = currentSetting.period_duration_minutes || 40;
-                document.getElementById('shortBreakDuration').value = currentSetting.short_break_duration_minutes || 20;
-                document.getElementById('longBreakDuration').value = currentSetting.long_break_duration_minutes || 40;
-
-                // Active days
-                const activeDays = currentSetting.active_days || ['Monday','Tuesday','Wednesday','Thursday','Friday'];
-                document.querySelectorAll('.active-day-checkbox').forEach(cb => {
-                    cb.checked = activeDays.includes(cb.value);
-                });
-
-                // Load periods
-                if (currentSetting.periods && currentSetting.periods.length > 0) {
-                    loadPeriodsIntoTable(currentSetting.periods);
-                } else {
-                    const defaultPeriods = [
-                        { name: 'Period 1', type: 'lesson' },
-                        { name: 'Period 2', type: 'lesson' },
-                        { name: 'Short Break', type: 'short_break' },
-                        { name: 'Period 3', type: 'lesson' },
-                        { name: 'Period 4', type: 'lesson' },
-                        { name: 'Long Break', type: 'long_break' },
-                        { name: 'Period 5', type: 'lesson' },
-                        { name: 'Period 6', type: 'lesson' }
-                    ];
-                    loadPeriodsIntoTable(defaultPeriods);
-                }
-
-                // Load constraints
-                loadConstraintsIntoTable(currentSetting.constraints || []);
-
-                // Load timetable grid
-                await loadTimetableGrid();
-
-                // Show editor
-                document.getElementById('timetableEditor').style.display = 'block';
-
-                // Scroll to editor
-                document.getElementById('timetableEditor').scrollIntoView({ behavior: 'smooth' });
-            } else {
-                throw new Error(data.message || 'Failed to load setting');
-            }
-        } catch (error) {
-            console.error('Error loading setting:', error);
-            Swal.fire('Error', 'Failed to load timetable: ' + error.message, 'error');
-        } finally {
-            hideLoading();
-        }
-    }
-
-    // ============================================================================
-    // PERIODS MANAGEMENT
-    // ============================================================================
-    function loadPeriodsIntoTable(periods) {
-        const tbody = document.getElementById('periodsBody');
-        tbody.innerHTML = '';
-
-        periods.forEach((period, index) => {
-            addPeriodRow(period.name, period.type, index + 1);
-        });
-
-        if (periods.length === 0) {
-            addPeriodRow('Period 1', 'lesson', 1);
-        }
-    }
-
-    function addPeriodRow(name = '', type = 'lesson', order = null) {
-        const tbody = document.getElementById('periodsBody');
-        const row = document.createElement('tr');
-
-        const orderCell = document.createElement('td');
-        orderCell.className = 'period-order';
-        if (order) {
-            orderCell.textContent = order;
-        } else {
-            const rows = document.querySelectorAll('#periodsBody tr');
-            orderCell.textContent = rows.length + 1;
-        }
-        row.appendChild(orderCell);
-
-        const nameCell = document.createElement('td');
-        const nameInput = document.createElement('input');
-        nameInput.type = 'text';
-        nameInput.className = 'form-control form-control-sm period-name';
-        nameInput.placeholder = 'e.g., Period 1';
-        nameInput.value = name;
-        nameCell.appendChild(nameInput);
-        row.appendChild(nameCell);
-
-        const typeCell = document.createElement('td');
-        const typeSelect = document.createElement('select');
-        typeSelect.className = 'form-select form-select-sm period-type';
-        typeSelect.innerHTML = `
-            <option value="lesson" ${type === 'lesson' ? 'selected' : ''}>Lesson</option>
-            <option value="short_break" ${type === 'short_break' ? 'selected' : ''}>Short Break</option>
-            <option value="long_break" ${type === 'long_break' ? 'selected' : ''}>Long Break</option>
-            <option value="assembly" ${type === 'assembly' ? 'selected' : ''}>Assembly</option>
-            <option value="free" ${type === 'free' ? 'selected' : ''}>Free Period</option>
-        `;
-        typeCell.appendChild(typeSelect);
-        row.appendChild(typeCell);
-
-        const actionCell = document.createElement('td');
-        actionCell.className = 'text-center';
-        const removeBtn = document.createElement('button');
-        removeBtn.type = 'button';
-        removeBtn.className = 'btn btn-sm btn-danger remove-period';
-        removeBtn.innerHTML = '<i class="ri-delete-bin-line"></i>';
-        removeBtn.onclick = function() { removePeriodRow(this); };
-        actionCell.appendChild(removeBtn);
-        row.appendChild(actionCell);
-
-        tbody.appendChild(row);
-        reorderPeriods();
-    }
-
-    function removePeriodRow(btn) {
-        const row = btn.closest('tr');
-        row.remove();
-        reorderPeriods();
-    }
-
-    function reorderPeriods() {
-        const rows = document.querySelectorAll('#periodsBody tr');
-        rows.forEach((row, idx) => {
-            const orderCell = row.querySelector('.period-order');
-            if (orderCell) {
-                orderCell.textContent = idx + 1;
-            }
-        });
-    }
-
-    function getPeriodsFromTable() {
-        const periods = [];
-        const rows = document.querySelectorAll('#periodsBody tr');
-        rows.forEach(row => {
-            const nameInput = row.querySelector('.period-name');
-            const typeSelect = row.querySelector('.period-type');
-            if (nameInput && typeSelect) {
-                periods.push({
-                    name: nameInput.value,
-                    type: typeSelect.value
-                });
-            }
-        });
-        return periods;
-    }
-
-    async function saveSettings() {
-        const periods = getPeriodsFromTable();
-        if (periods.length === 0) {
-            Swal.fire('Error', 'Please add at least one period.', 'error');
-            return;
-        }
-
-        const activeDays = [];
-        document.querySelectorAll('.active-day-checkbox:checked').forEach(cb => {
-            activeDays.push(cb.value);
-        });
-
-        if (activeDays.length === 0) {
-            Swal.fire('Error', 'Please select at least one active day.', 'error');
-            return;
-        }
-
-        const data = {
-            setting_id: currentSettingId,
-            school_day_start: document.getElementById('schoolDayStart').value,
-            school_day_end: document.getElementById('schoolDayEnd').value,
-            period_duration_minutes: parseInt(document.getElementById('periodDuration').value),
-            short_break_duration_minutes: parseInt(document.getElementById('shortBreakDuration').value),
-            long_break_duration_minutes: parseInt(document.getElementById('longBreakDuration').value),
-            active_days: activeDays,
-            periods: periods
-        };
-
-        showLoading();
-
-        try {
-            const response = await fetch(ROUTES.saveSettings, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': CSRF,
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(data)
-            });
-
-            const result = await response.json();
-            if (result.success) {
-                Swal.fire('Success', 'Settings saved successfully!', 'success');
-                await loadSetting(currentSettingId);
-            } else {
-                throw new Error(result.message || 'Failed to save settings');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            Swal.fire('Error', 'Failed to save settings: ' + error.message, 'error');
-        } finally {
-            hideLoading();
-        }
-    }
-
-    // ============================================================================
-    // CONSTRAINTS MANAGEMENT
-    // ============================================================================
-    function loadConstraintsIntoTable(constraints) {
-        const tbody = document.getElementById('constraintsBody');
-        tbody.innerHTML = '';
-
-        if (availableSubjects.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="8" class="text-center text-muted py-4">
-                        <i class="ri-information-line ri-2x d-block mb-2"></i>
-                        No subjects assigned to this class. Please assign subjects first.
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-
-        const constraintsMap = new Map();
-        constraints.forEach(c => {
-            constraintsMap.set(c.subject_id, c);
-        });
-
-        availableSubjects.forEach(subj => {
-            const constraint = constraintsMap.get(subj.subject_id);
-            const periodsPerWeek = constraint?.periods_per_week || 2;
-            const allowDouble = constraint?.allow_double_period || false;
-            const maxDouble = constraint?.max_double_periods_per_week || 1;
-            const preferredDays = constraint?.preferred_days || [];
-            const avoidDays = constraint?.avoid_days || [];
-            const isCompulsory = constraint?.is_compulsory !== false;
-
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>
-                    ${escapeHtml(subj.subject_name)}
-                    <input type="hidden" class="constraint-subject-id" value="${subj.subject_id}">
-                </td>
-                <td>${escapeHtml(subj.teacher_name)}</td>
-                <td>
-                    <input type="number" class="form-control form-control-sm periods-per-week"
-                           value="${periodsPerWeek}" min="1" max="10" style="width: 80px;">
-                </td>
-                <td class="text-center">
-                    <input type="checkbox" class="allow-double" ${allowDouble ? 'checked' : ''}>
-                </td>
-                <td>
-                    <input type="number" class="form-control form-control-sm max-double"
-                           value="${maxDouble}" min="0" max="5" style="width: 80px;" ${!allowDouble ? 'disabled' : ''}>
-                </td>
-                <td>
-                    <select class="form-select form-select-sm preferred-days" multiple size="3" style="min-width: 120px;">
-                        ${generateDayOptions(preferredDays)}
-                    </select>
-                    <small class="text-muted">Ctrl+Click to select multiple</small>
-                </td>
-                <td>
-                    <select class="form-select form-select-sm avoid-days" multiple size="3" style="min-width: 120px;">
-                        ${generateDayOptions(avoidDays)}
-                    </select>
-                </td>
-                <td class="text-center">
-                    <input type="checkbox" class="is-compulsory" ${isCompulsory ? 'checked' : ''}>
-                </td>
-            `;
-
-            const allowDoubleCheckbox = row.querySelector('.allow-double');
-            const maxDoubleInput = row.querySelector('.max-double');
-            allowDoubleCheckbox.addEventListener('change', () => {
-                maxDoubleInput.disabled = !allowDoubleCheckbox.checked;
-            });
-
-            tbody.appendChild(row);
-        });
-    }
-
-    function generateDayOptions(selectedDays = []) {
-        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-        return days.map(day =>
-            `<option value="${day}" ${selectedDays.includes(day) ? 'selected' : ''}>${day}</option>`
-        ).join('');
-    }
-
-    function getConstraintsFromTable() {
-        const constraints = [];
-        const rows = document.querySelectorAll('#constraintsBody tr');
-
-        rows.forEach(row => {
-            const subjectId = row.querySelector('.constraint-subject-id')?.value;
-            if (!subjectId) return;
-
-            const preferredDaysSelect = row.querySelector('.preferred-days');
-            const avoidDaysSelect = row.querySelector('.avoid-days');
-
-            constraints.push({
-                subject_id: parseInt(subjectId),
-                periods_per_week: parseInt(row.querySelector('.periods-per-week').value),
-                allow_double: row.querySelector('.allow-double').checked,
-                max_double: parseInt(row.querySelector('.max-double').value),
-                preferred_days: preferredDaysSelect ? Array.from(preferredDaysSelect.selectedOptions).map(opt => opt.value) : [],
-                avoid_days: avoidDaysSelect ? Array.from(avoidDaysSelect.selectedOptions).map(opt => opt.value) : [],
-                is_compulsory: row.querySelector('.is-compulsory').checked
-            });
-        });
-
-        return constraints;
-    }
-
-    async function saveConstraints() {
-        const constraints = getConstraintsFromTable();
-
-        if (constraints.length === 0) {
-            Swal.fire('Error', 'No constraints to save.', 'error');
-            return;
-        }
-
-        showLoading();
-
-        try {
-            const response = await fetch(ROUTES.saveConstraints, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': CSRF,
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    setting_id: currentSettingId,
-                    constraints: constraints
-                })
-            });
-
-            const result = await response.json();
-            if (result.success) {
-                Swal.fire('Success', 'Constraints saved successfully!', 'success');
-            } else {
-                throw new Error(result.message || 'Failed to save constraints');
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            Swal.fire('Error', 'Failed to save constraints: ' + error.message, 'error');
-        } finally {
-            hideLoading();
-        }
-    }
-
-    // ============================================================================
-    // TIMETABLE GRID
-    // ============================================================================
-    async function loadTimetableGrid() {
-        if (!currentSettingId) return;
-
-        const container = document.getElementById('timetableGridContainer');
-        container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-2">Loading timetable...</p></div>';
-
-        try {
-            const getGridUrl = buildUrl(ROUTES.getGrid, currentSettingId);
-
-            const response = await fetch(getGridUrl, {
-                headers: {
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': CSRF
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-
-            const data = await response.json();
-
-            if (data.success) {
-                currentPeriods = data.periods;
-                currentGrid = data.grid;
-                currentDays = data.days;
-                allTeachers = data.teachers || [];
-
-                renderTimetableGrid();
-            } else {
-                throw new Error(data.message || 'Failed to load grid');
-            }
-        } catch (error) {
-            console.error('Error loading grid:', error);
-            container.innerHTML = `<div class="alert alert-danger">Failed to load timetable: ${error.message}</div>`;
-        }
-    }
-
-    function renderTimetableGrid() {
-        const container = document.getElementById('timetableGridContainer');
-
-        if (!currentPeriods.length || !currentDays.length) {
-            container.innerHTML = '<div class="alert alert-warning">No periods or days configured. Please save settings first.</div>';
-            return;
-        }
-
-        let html = `
-            <table class="table table-bordered timetable-grid">
-                <thead class="table-dark">
-                    <tr>
-                        <th style="width: 120px">Period / Time</th>
-                        ${currentDays.map(day => `<th class="text-center">${escapeHtml(day)}</th>`).join('')}
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-
-        currentPeriods.forEach(period => {
-            const isBreak = period.is_break;
-            const rowClass = isBreak ? 'table-warning' : '';
-
-            html += `<tr class="${rowClass}" data-period-id="${period.id}" data-period-order="${period.order}">
-                <td class="fw-semibold" style="background: #f8f9fa;">
-                    <div>${escapeHtml(period.name)}</div>
-                    <small class="text-muted">${period.start_time} - ${period.end_time}</small>
-                    ${period.is_break ? `<span class="badge bg-warning mt-1">Break</span>` : ''}
-                </td>`;
-
-            currentDays.forEach(day => {
-                const slot = currentGrid[period.id]?.[day] || null;
-                const isFree = slot?.is_free || (!slot?.subject_id && !slot?.teacher_id);
-                const cellClass = isFree ? 'bg-light' : (slot?.is_double ? 'bg-primary-subtle' : '');
-
-                html += `
-                    <td class="timetable-cell ${cellClass}"
-                        data-period-id="${period.id}"
-                        data-day="${day}"
-                        data-subject-id="${slot?.subject_id || ''}"
-                        data-teacher-id="${slot?.teacher_id || ''}"
-                        data-teacher="${escapeHtml(slot?.teacher || '')}"
-                        data-teacher-picture="${slot?.teacher_picture || ''}"
-                        data-subject="${escapeHtml(slot?.subject || '')}"
-                        data-room="${escapeHtml(slot?.room || '')}"
-                        data-notes="${escapeHtml(slot?.notes || '')}"
-                        data-is-double="${slot?.is_double || false}"
-                        data-is-free="${isFree}"
-                        style="cursor: pointer; vertical-align: middle;"
-                        onclick="openEditSlotModal(${period.id}, '${day}')">
-                        <div class="d-flex flex-column align-items-center">
-                `;
-
-                if (slot && !isFree) {
-                    if (slot.teacher_picture) {
-                        html += `
-                            <img src="${slot.teacher_picture}" class="rounded-circle mb-1"
-                                 style="width: 40px; height: 40px; object-fit: cover; border: 2px solid #667eea;">
-                        `;
-                    } else {
-                        html += `<i class="ri-user-line ri-2x text-muted mb-1"></i>`;
-                    }
-                    html += `
-                        <span class="fw-semibold small">${escapeHtml(slot.subject_code || slot.subject || '—')}</span>
-                        <small class="text-muted">${escapeHtml(slot.teacher?.split(' ')[0] || '—')}</small>
-                        ${slot.room ? `<small class="text-muted"><i class="ri-door-line"></i> ${escapeHtml(slot.room)}</small>` : ''}
-                    `;
-                } else {
-                    html += `
-                        <i class="ri-time-line ri-2x text-muted mb-1"></i>
-                        <span class="text-muted">Free</span>
-                    `;
-                }
-
-                html += `
-                        </div>
-                    </td>
-                `;
-            });
-
-            html += `</tr>`;
-        });
-
-        html += `
-                </tbody>
-            </table>
-        `;
-
-        container.innerHTML = html;
-    }
-
-    // ============================================================================
-    // EDIT SLOT MODAL
-    // ============================================================================
-    function openEditSlotModal(periodId, day) {
-        const period = currentPeriods.find(p => p.id == periodId);
-        if (!period) return;
-
-        const slot = currentGrid[periodId]?.[day] || {};
-
-        document.getElementById('editSlotSettingId').value = currentSettingId;
-        document.getElementById('editSlotPeriodId').value = periodId;
-        document.getElementById('editSlotDay').value = day;
-        document.getElementById('editSlotPeriodName').value = period.name;
-        document.getElementById('editSlotDayName').value = day;
-        document.getElementById('editSlotRoom').value = slot.room || '';
-        document.getElementById('editSlotNotes').value = slot.notes || '';
-        document.getElementById('editSlotIsDouble').checked = slot.is_double || false;
-
-        // Populate subjects dropdown
-        const subjectSelect = document.getElementById('editSlotSubject');
-        subjectSelect.innerHTML = '<option value="">-- Free Period --</option>';
-
-        availableSubjects.forEach(subj => {
-            const selected = slot.subject_id == subj.subject_id;
-            subjectSelect.innerHTML += `
-                <option value="${subj.subject_id}" data-teacher-id="${subj.teacher_id}" data-teacher-name="${subj.teacher_name}" ${selected ? 'selected' : ''}>
-                    ${escapeHtml(subj.subject_name)} (${escapeHtml(subj.teacher_name)})
-                </option>
-            `;
-        });
-
-        // Populate teachers dropdown
-        const teacherSelect = document.getElementById('editSlotTeacher');
-        teacherSelect.innerHTML = '<option value="">-- No Teacher --</option>';
-
-        const uniqueTeachers = new Map();
-        availableSubjects.forEach(subj => {
-            if (subj.teacher_id && !uniqueTeachers.has(subj.teacher_id)) {
-                uniqueTeachers.set(subj.teacher_id, {
-                    id: subj.teacher_id,
-                    name: subj.teacher_name,
-                    picture: subj.teacher_picture
-                });
-            }
-        });
-
-        uniqueTeachers.forEach(teacher => {
-            const selected = slot.teacher_id == teacher.id;
-            teacherSelect.innerHTML += `
-                <option value="${teacher.id}" data-teacher-picture="${teacher.picture || ''}" ${selected ? 'selected' : ''}>
-                    ${escapeHtml(teacher.name)}
-                </option>
-            `;
-        });
-
-        // When subject changes, update teacher
-        subjectSelect.onchange = function() {
-            const selectedOption = subjectSelect.options[subjectSelect.selectedIndex];
-            const teacherId = selectedOption.dataset.teacherId;
-            if (teacherId) {
-                teacherSelect.value = teacherId;
-            }
-        };
-
-        new bootstrap.Modal(document.getElementById('editSlotModal')).show();
-    }
-
-    async function saveSlot() {
-        const periodId = document.getElementById('editSlotPeriodId').value;
-        const day = document.getElementById('editSlotDay').value;
-        const subjectId = document.getElementById('editSlotSubject').value;
-        const teacherId = document.getElementById('editSlotTeacher').value;
-        const room = document.getElementById('editSlotRoom').value;
-        const notes = document.getElementById('editSlotNotes').value;
-        const isDouble = document.getElementById('editSlotIsDouble').checked;
-
-        const data = {
-            setting_id: currentSettingId,
-            period_id: periodId,
-            day: day,
-            subject_id: subjectId || null,
-            teacher_id: teacherId || null,
-            room: room,
-            notes: notes,
-            is_double: isDouble,
-            is_free: !subjectId
-        };
-
-        showLoading();
-
-        try {
-            const response = await fetch(ROUTES.saveSlot, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': CSRF,
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(data)
-            });
-
-            const result = await response.json();
-            if (result.success) {
-                bootstrap.Modal.getInstance(document.getElementById('editSlotModal')).hide();
-                await loadTimetableGrid();
-                Swal.fire('Success', 'Slot saved successfully!', 'success');
-            } else {
-                if (result.conflict) {
-                    Swal.fire('Conflict Detected', result.message, 'warning');
-                } else {
-                    throw new Error(result.message || 'Failed to save slot');
-                }
-            }
-        } catch (error) {
-            console.error('Error:', error);
-            Swal.fire('Error', 'Failed to save slot: ' + error.message, 'error');
-        } finally {
-            hideLoading();
-        }
-    }
-
-    async function saveAllSlots() {
-        Swal.fire('Info', 'Individual slots are saved automatically when you edit them.', 'info');
-    }
-
-    // ============================================================================
-    // AUTO GENERATE
-    // ============================================================================
-    async function generateTimetable() {
-        Swal.fire({
-            title: 'Auto-Generate Timetable?',
-            html: 'This will clear the existing timetable and generate a new one based on your constraints.<br><strong>This action cannot be undone!</strong>',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes, generate it!'
-        }).then(async (result) => {
-            if (result.isConfirmed) {
-                showLoading();
-
-                try {
-                    const response = await fetch(ROUTES.autoGenerate, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': CSRF,
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({ setting_id: currentSettingId })
-                    });
-
-                    const data = await response.json();
-                    if (data.success) {
-                        await loadTimetableGrid();
-                        Swal.fire('Success', 'Timetable generated successfully!', 'success');
-                    } else {
-                        throw new Error(data.message || 'Generation failed');
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    Swal.fire('Error', 'Failed to generate timetable: ' + error.message, 'error');
-                } finally {
-                    hideLoading();
-                }
-            }
-        });
-    }
-
-    // ============================================================================
-    // CONFLICTS
-    // ============================================================================
-    async function checkConflicts() {
-        if (!currentSettingId) {
-            Swal.fire('Error', 'No timetable loaded', 'error');
-            return;
-        }
-
-        showLoading();
-
-        try {
-            const checkConflictsUrl = buildUrl(ROUTES.checkConflicts, currentSettingId);
-
-            const response = await fetch(checkConflictsUrl, {
-                headers: {
-                    'Accept': 'application/json',
-                    'X-CSRF-TOKEN': CSRF
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-
-            const data = await response.json();
-
-            if (data.success) {
-                const container = document.getElementById('conflictsList');
-                const badge = document.getElementById('conflictBadge');
-
-                if (data.conflict_count === 0) {
-                    badge.innerHTML = '<span class="badge bg-success">✓ No Conflicts</span>';
-                    container.innerHTML = `
-                        <div class="alert alert-success">
-                            <i class="ri-checkbox-circle-line me-2"></i>
-                            No conflicts found! All teachers are properly scheduled.
-                        </div>
-                    `;
-                } else {
-                    badge.innerHTML = `<span class="badge bg-danger">⚠ ${data.conflict_count} Conflict(s)</span>`;
-
-                    let conflictsHtml = `
-                        <div class="alert alert-warning">
-                            <i class="ri-alert-line me-2"></i>
-                            Found ${data.conflict_count} conflict(s) that need attention.
-                        </div>
-                        <div class="list-group">
-                    `;
-
-                    data.conflicts.forEach(conflict => {
-                        conflictsHtml += `
-                            <div class="list-group-item">
-                                <div class="d-flex align-items-center gap-3">
-                                    ${conflict.teacher_picture ?
-                                        `<img src="${conflict.teacher_picture}" class="rounded-circle" style="width: 48px; height: 48px; object-fit: cover;">` :
-                                        `<div class="bg-secondary rounded-circle d-flex align-items-center justify-content-center" style="width: 48px; height: 48px;">
-                                            <i class="ri-user-line text-white ri-xl"></i>
-                                        </div>`
-                                    }
-                                    <div class="flex-grow-1">
-                                        <h6 class="mb-1">${escapeHtml(conflict.teacher)}</h6>
-                                        <p class="mb-1 text-muted">
-                                            <strong>${conflict.day}</strong> • ${conflict.period} (${conflict.period_time || ''})
-                                        </p>
-                                        <p class="mb-0 small">
-                                            Conflict between:
-                                            <span class="badge bg-primary">${escapeHtml(conflict.class_a || 'Class A')}</span>
-                                            and
-                                            <span class="badge bg-primary">${escapeHtml(conflict.class_b || 'Class B')}</span>
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    });
-
-                    conflictsHtml += `</div>`;
-                    container.innerHTML = conflictsHtml;
-                }
-            } else {
-                throw new Error(data.message || 'Failed to check conflicts');
-            }
-        } catch (error) {
-            console.error('Error checking conflicts:', error);
-            Swal.fire('Error', 'Failed to check conflicts: ' + error.message, 'error');
-        } finally {
-            hideLoading();
-        }
-    }
-
-    // ============================================================================
-    // NOTIFICATIONS
-    // ============================================================================
-    async function sendNotifications() {
-        Swal.fire({
-            title: 'Send Notifications',
-            text: 'Send timetable notifications to all teachers?',
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            confirmButtonText: 'Yes, send now!'
-        }).then(async (result) => {
-            if (result.isConfirmed) {
-                showLoading();
-
-                try {
-                    const response = await fetch(ROUTES.sendNotifications, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': CSRF,
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            setting_id: currentSettingId,
-                            type: 'weekly_preview'
-                        })
-                    });
-
-                    const data = await response.json();
-                    if (data.success) {
-                        Swal.fire('Success', data.message, 'success');
-                    } else {
-                        throw new Error(data.message || 'Failed to send notifications');
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    Swal.fire('Error', 'Failed to send notifications: ' + error.message, 'error');
-                } finally {
-                    hideLoading();
-                }
-            }
-        });
-    }
-
-    // ============================================================================
-    // EXPORT
-    // ============================================================================
-    function exportTimetable(format) {
-        if (!currentSettingId) {
-            Swal.fire('Error', 'No timetable loaded', 'error');
-            return;
-        }
-        const exportUrl = buildUrl(ROUTES.export, currentSettingId) + '?format=' + format;
-        window.location.href = exportUrl;
-    }
-
-    // ============================================================================
-    // DELETE / CLONE
-    // ============================================================================
-    async function deleteSetting(settingId) {
-        Swal.fire({
-            title: 'Delete Timetable?',
-            text: 'This action cannot be undone!',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            confirmButtonText: 'Yes, delete it!'
-        }).then(async (result) => {
-            if (result.isConfirmed) {
-                showLoading();
-
-                try {
-                    const deleteUrl = buildUrl(ROUTES.deleteSetting, settingId);
-
-                    const response = await fetch(deleteUrl, {
-                        method: 'DELETE',
-                        headers: {
-                            'X-CSRF-TOKEN': CSRF,
-                            'Accept': 'application/json'
-                        }
-                    });
-
-                    const data = await response.json();
-                    if (data.success) {
-                        Swal.fire('Deleted!', 'Timetable has been deleted.', 'success');
-                        location.reload();
-                    } else {
-                        throw new Error(data.message || 'Failed to delete');
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    Swal.fire('Error', 'Failed to delete: ' + error.message, 'error');
-                } finally {
-                    hideLoading();
-                }
-            }
-        });
-    }
-
-    async function cloneSetting(settingId) {
-        Swal.fire({
-            title: 'Clone Timetable',
-            html: `
-                <div class="text-start">
-                    <div class="mb-3">
-                        <label class="form-label">New Session (Optional)</label>
-                        <select id="cloneSessionId" class="form-select">
-                            <option value="">Same Session</option>
-                            @foreach($schoolsessions as $session)
-                            <option value="{{ $session->id }}">{{ $session->session }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">New Term (Optional)</label>
-                        <select id="cloneTermId" class="form-select">
-                            <option value="">Same Term</option>
-                            @foreach($schoolterms as $term)
-                            <option value="{{ $term->id }}">{{ $term->term }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-            `,
-            showCancelButton: true,
-            confirmButtonText: 'Clone',
-            preConfirm: () => {
-                return {
-                    new_session_id: document.getElementById('cloneSessionId').value,
-                    new_term_id: document.getElementById('cloneTermId').value
-                };
-            }
-        }).then(async (result) => {
-            if (result.isConfirmed) {
-                showLoading();
-
-                try {
-                    const response = await fetch(ROUTES.cloneSetting, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': CSRF,
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            setting_id: settingId,
-                            new_session_id: result.value.new_session_id || null,
-                            new_term_id: result.value.new_term_id || null
-                        })
-                    });
-
-                    const data = await response.json();
-                    if (data.success) {
-                        Swal.fire('Cloned!', 'Timetable has been cloned successfully.', 'success');
-                        location.reload();
-                    } else {
-                        throw new Error(data.message || 'Failed to clone');
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    Swal.fire('Error', 'Failed to clone: ' + error.message, 'error');
-                } finally {
-                    hideLoading();
-                }
-            }
-        });
-    }
-
-    // ============================================================================
-    // UTILITIES
-    // ============================================================================
-    function escapeHtml(str) {
-        if (!str) return '';
-        return String(str).replace(/[&<>"']/g, function(m) {
-            if (m === '&') return '&amp;';
-            if (m === '<') return '&lt;';
-            if (m === '>') return '&gt;';
-            if (m === '"') return '&quot;';
-            if (m === "'") return '&#039;';
-            return m;
-        });
-    }
-
-    function showLoading() {
-        Swal.fire({
-            title: 'Processing...',
-            text: 'Please wait',
-            allowOutsideClick: false,
-            allowEscapeKey: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
-    }
-
-    function hideLoading() {
-        Swal.close();
-    }
-</script>
 
 <style>
-    .timetable-grid td {
-        vertical-align: middle;
-        transition: all 0.2s ease;
-    }
-    .timetable-cell {
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-    .timetable-cell:hover {
-        background-color: rgba(102, 126, 234, 0.1) !important;
-        transform: scale(1.02);
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    .tooltip-timetable {
-        font-size: 12px;
-        line-height: 1.4;
-    }
-    .timetable-grid .bg-primary-subtle {
-        background-color: rgba(102, 126, 234, 0.15);
-    }
+.tt-cell { cursor:pointer; transition:background 0.15s; vertical-align:middle; }
+.tt-cell:hover { background:rgba(102,126,234,0.07) !important; }
+.tt-cell-inner { display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px 4px; min-height:68px; justify-content:center; }
+.tt-subj { font-weight:600; font-size:12px; color:#1a1a2e; text-align:center; line-height:1.2; }
+.tt-tchr { font-size:11px; color:#666; text-align:center; }
+.tt-room { font-size:10px; color:#aaa; }
+.tt-avatar { width:30px; height:30px; border-radius:50%; object-fit:cover; border:2px solid #667eea; margin-bottom:2px; }
+.tt-free { color:#ddd; }
+.tt-head th { background:#1a1a2e; color:#fff; font-size:12px; font-weight:500; padding:10px 8px; white-space:nowrap; }
+.tt-period-col { background:#f8f9fa; font-weight:600; font-size:11px; min-width:88px; vertical-align:middle; }
+.tt-break-row td { background:#fffbeb !important; }
+.conflict-card { display:flex; align-items:center; gap:12px; padding:12px; border:1px solid #fdd8cc; border-radius:8px; background:#fff9f7; margin-bottom:8px; }
+.nav-tabs-custom .nav-link { color:#555; font-size:13px; }
+.nav-tabs-custom .nav-link.active { color:#667eea; border-bottom:2px solid #667eea; font-weight:500; }
 </style>
+
+
+@section('content')
+<div class="main-content">
+ <div class="page-content">
+  <div class="container-fluid">
+
+   <div class="row">
+    <div class="col-12">
+     <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+      <h4 class="mb-sm-0"><i class="ri-calendar-todo-line me-2"></i>Timetable Management</h4>
+      <ol class="breadcrumb m-0">
+       <li class="breadcrumb-item"><a href="{{ route('dashboard') }}">Dashboard</a></li>
+       <li class="breadcrumb-item active">Timetable</li>
+      </ol>
+     </div>
+    </div>
+   </div>
+
+   @if($errors->any())
+   <div class="alert alert-danger alert-dismissible fade show">
+    <strong>Error!</strong> {{ $errors->first() }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+   </div>
+   @endif
+
+   {{-- Selection --}}
+   <div class="card">
+    <div class="card-body py-3">
+     <div class="row g-3 align-items-end">
+      <div class="col-xxl-3 col-sm-6">
+       <label class="form-label fw-semibold">Class</label>
+       <select class="form-select" id="classSelect">
+        <option value="">— Select Class —</option>
+        @foreach ($schoolclasses as $class)
+        <option value="{{ $class->id }}">{{ $class->schoolclass }} {{ $class->arm }}</option>
+        @endforeach
+       </select>
+      </div>
+      <div class="col-xxl-3 col-sm-6">
+       <label class="form-label fw-semibold">Session</label>
+       <select class="form-select" id="sessionSelect">
+        <option value="">— Select Session —</option>
+        @foreach ($schoolsessions as $s)
+        <option value="{{ $s->id }}">{{ $s->session }}</option>
+        @endforeach
+       </select>
+      </div>
+      <div class="col-xxl-3 col-sm-6">
+       <label class="form-label fw-semibold">Term <small class="text-muted fw-normal">(optional)</small></label>
+       <select class="form-select" id="termSelect">
+        <option value="">All Terms</option>
+        @foreach ($schoolterms as $t)
+        <option value="{{ $t->id }}">{{ $t->term }}</option>
+        @endforeach
+       </select>
+      </div>
+      <div class="col-xxl-3 col-sm-6">
+       <button class="btn btn-primary w-100" onclick="loadOrCreateSetting()">
+        <i class="ri-settings-4-line me-2"></i>Load / Create
+       </button>
+      </div>
+     </div>
+    </div>
+   </div>
+
+   {{-- Existing timetables --}}
+   @if($settings->count())
+   <div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+     <h5 class="card-title mb-0"><i class="ri-history-line me-2"></i>Existing Timetables</h5>
+     <span class="badge bg-primary-subtle text-primary">{{ $settings->count() }} active</span>
+    </div>
+    <div class="card-body p-0">
+     <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+       <thead class="table-light">
+        <tr><th>Class</th><th>Session</th><th>Term</th><th>Updated</th><th>Status</th><th style="width:200px">Actions</th></tr>
+       </thead>
+       <tbody>
+        @foreach($settings as $setting)
+        <tr>
+         <td class="fw-semibold"><i class="ri-school-line text-primary me-2"></i>{{ $setting->schoolclass->schoolclass ?? 'N/A' }}</td>
+         <td>{{ $setting->session->session ?? 'N/A' }}</td>
+         <td>{{ $setting->term->term ?? 'All Terms' }}</td>
+         <td class="text-muted small">{{ $setting->updated_at->format('d M Y, H:i') }}</td>
+         <td><span class="badge bg-success-subtle text-success">Active</span></td>
+         <td>
+          <button class="btn btn-sm btn-outline-primary me-1" onclick="loadSetting({{ $setting->id }})" title="Edit"><i class="ri-edit-line"></i></button>
+          <button class="btn btn-sm btn-outline-info me-1" onclick="cloneSetting({{ $setting->id }})" title="Clone"><i class="ri-file-copy-line"></i></button>
+          <button class="btn btn-sm btn-outline-secondary me-1" onclick="exportTimetable({{ $setting->id }},'pdf')" title="PDF"><i class="ri-file-pdf-line"></i></button>
+          <button class="btn btn-sm btn-outline-success me-1" onclick="exportTimetable({{ $setting->id }},'csv')" title="CSV"><i class="ri-file-excel-line"></i></button>
+          <button class="btn btn-sm btn-outline-danger" onclick="deleteSetting({{ $setting->id }})" title="Delete"><i class="ri-delete-bin-line"></i></button>
+         </td>
+        </tr>
+        @endforeach
+       </tbody>
+      </table>
+     </div>
+    </div>
+   </div>
+   @endif
+
+   {{-- Editor --}}
+   <div id="timetableEditor" style="display:none;">
+    <div class="card">
+     <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+       <div id="editorTitle" class="fw-semibold text-primary fs-6"></div>
+       <button class="btn btn-sm btn-outline-secondary" onclick="document.getElementById('timetableEditor').style.display='none'">
+        <i class="ri-close-line me-1"></i>Close
+       </button>
+      </div>
+
+      <ul class="nav nav-tabs nav-tabs-custom mb-4" role="tablist">
+       <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#periodsTab"><i class="ri-time-line me-1"></i>Periods</a></li>
+       <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#constraintsTab"><i class="ri-bar-chart-2-line me-1"></i>Constraints</a></li>
+       <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#timetableGridTab"><i class="ri-table-line me-1"></i>Grid</a></li>
+       <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#conflictsTab"><i class="ri-alert-line me-1"></i>Conflicts</a></li>
+      </ul>
+
+      <div class="tab-content">
+
+       {{-- PERIODS --}}
+       <div class="tab-pane active" id="periodsTab">
+        <div class="row g-4">
+         <div class="col-md-6">
+          <div class="card border">
+           <div class="card-header bg-light"><h6 class="mb-0">School Day Settings</h6></div>
+           <div class="card-body">
+            <div class="row g-3">
+             <div class="col-6"><label class="form-label">Start</label><input type="time" class="form-control" id="schoolDayStart"></div>
+             <div class="col-6"><label class="form-label">End</label><input type="time" class="form-control" id="schoolDayEnd"></div>
+             <div class="col-4"><label class="form-label">Period (min)</label><input type="number" class="form-control" id="periodDuration" min="20" max="90"></div>
+             <div class="col-4"><label class="form-label">Short break</label><input type="number" class="form-control" id="shortBreakDuration" min="5" max="60"></div>
+             <div class="col-4"><label class="form-label">Long break</label><input type="number" class="form-control" id="longBreakDuration" min="10" max="90"></div>
+             <div class="col-12">
+              <label class="form-label">Active Days</label>
+              <div class="d-flex flex-wrap gap-3">
+               @foreach(['Monday','Tuesday','Wednesday','Thursday','Friday'] as $day)
+               <div class="form-check">
+                <input class="form-check-input active-day-checkbox" type="checkbox" value="{{ $day }}" id="day_{{ $day }}">
+                <label class="form-check-label" for="day_{{ $day }}">{{ $day }}</label>
+               </div>
+               @endforeach
+              </div>
+             </div>
+            </div>
+           </div>
+          </div>
+         </div>
+         <div class="col-md-6">
+          <div class="card border">
+           <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">Periods</h6>
+            <button class="btn btn-sm btn-primary" onclick="addPeriodRow()"><i class="ri-add-line me-1"></i>Add</button>
+           </div>
+           <div class="card-body p-0">
+            <table class="table table-sm table-bordered mb-0">
+             <thead class="table-light"><tr><th style="width:32px">#</th><th>Name</th><th>Type</th><th style="width:44px"></th></tr></thead>
+             <tbody id="periodsBody"></tbody>
+            </table>
+           </div>
+           <div class="card-footer"><button class="btn btn-success btn-sm" onclick="saveSettings()"><i class="ri-save-line me-1"></i>Save Settings</button></div>
+          </div>
+         </div>
+        </div>
+       </div>
+
+       {{-- CONSTRAINTS --}}
+       <div class="tab-pane" id="constraintsTab">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+         <h6 class="mb-0">Subject Constraints</h6>
+         <div class="d-flex gap-2">
+          <button class="btn btn-sm btn-success" onclick="saveConstraints()"><i class="ri-save-line me-1"></i>Save</button>
+          <button class="btn btn-sm btn-primary" onclick="generateTimetable()"><i class="ri-magic-line me-1"></i>Auto-Generate</button>
+         </div>
+        </div>
+        <div class="table-responsive">
+         <table class="table table-bordered table-sm align-middle">
+          <thead class="table-light">
+           <tr>
+            <th>Subject</th><th>Teacher</th><th style="width:80px">Periods/wk</th>
+            <th style="width:70px">Double</th><th style="width:80px">Max Dbl</th>
+            <th>Prefer Days</th><th>Avoid Days</th><th style="width:80px">Required</th>
+           </tr>
+          </thead>
+          <tbody id="constraintsBody"></tbody>
+         </table>
+        </div>
+       </div>
+
+       {{-- GRID --}}
+       <div class="tab-pane" id="timetableGridTab">
+        <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+         <div class="d-flex gap-2 flex-wrap">
+          <button class="btn btn-sm btn-outline-primary" onclick="loadTimetableGrid()"><i class="ri-refresh-line me-1"></i>Reload</button>
+          <button class="btn btn-sm btn-outline-secondary" onclick="exportTimetable(currentSettingId,'pdf')"><i class="ri-file-pdf-line me-1"></i>PDF</button>
+          <button class="btn btn-sm btn-outline-success" onclick="exportTimetable(currentSettingId,'csv')"><i class="ri-file-excel-line me-1"></i>CSV</button>
+          <button class="btn btn-sm btn-outline-warning" onclick="sendNotifications()"><i class="ri-mail-send-line me-1"></i>Notify</button>
+         </div>
+         <small class="text-muted"><i class="ri-information-line me-1"></i>Click any cell to edit</small>
+        </div>
+        <div id="timetableGridContainer">
+         <div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Loading…</p></div>
+        </div>
+       </div>
+
+       {{-- CONFLICTS --}}
+       <div class="tab-pane" id="conflictsTab">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+         <button class="btn btn-primary btn-sm" onclick="checkConflicts()"><i class="ri-refresh-line me-1"></i>Check Conflicts</button>
+         <span id="conflictBadge"></span>
+        </div>
+        <div id="conflictsList">
+         <div class="text-center text-muted py-5">
+          <i class="ri-shield-check-line ri-3x d-block mb-2 text-success"></i>
+          Click "Check Conflicts" to verify the schedule.
+         </div>
+        </div>
+       </div>
+
+      </div>{{-- /tab-content --}}
+     </div>
+    </div>
+   </div>{{-- /timetableEditor --}}
+
+  </div>
+ </div>
+</div>
+
+{{-- Edit Slot Modal --}}
+<div class="modal fade" id="editSlotModal" tabindex="-1" aria-hidden="true">
+ <div class="modal-dialog modal-dialog-centered">
+  <div class="modal-content">
+   <div class="modal-header" style="background:linear-gradient(135deg,#667eea,#764ba2);">
+    <h5 class="modal-title text-white"><i class="ri-edit-box-line me-2"></i>Edit Slot</h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+   </div>
+   <div class="modal-body">
+    <input type="hidden" id="editSlotSettingId">
+    <input type="hidden" id="editSlotPeriodId">
+    <input type="hidden" id="editSlotDay">
+    <div class="row g-3 mb-3">
+     <div class="col-6"><label class="form-label">Period</label><input type="text" class="form-control" id="editSlotPeriodName" readonly></div>
+     <div class="col-6"><label class="form-label">Day</label><input type="text" class="form-control" id="editSlotDayName" readonly></div>
+    </div>
+    <div class="mb-3"><label class="form-label">Subject</label><select class="form-select" id="editSlotSubject"><option value="">— Free Period —</option></select></div>
+    <div class="mb-3"><label class="form-label">Teacher</label><select class="form-select" id="editSlotTeacher"><option value="">— No Teacher —</option></select></div>
+    <div class="row g-3">
+     <div class="col-7"><label class="form-label">Room</label><input type="text" class="form-control" id="editSlotRoom" placeholder="e.g. Room 101"></div>
+     <div class="col-5 d-flex align-items-end pb-1">
+      <div class="form-check"><input class="form-check-input" type="checkbox" id="editSlotIsDouble"><label class="form-check-label" for="editSlotIsDouble">Double Period</label></div>
+     </div>
+    </div>
+    <div class="mt-3"><label class="form-label">Notes</label><textarea class="form-control" id="editSlotNotes" rows="2" placeholder="Optional…"></textarea></div>
+   </div>
+   <div class="modal-footer">
+    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+    <button type="button" class="btn btn-primary" onclick="saveSlot()"><i class="ri-save-line me-1"></i>Save</button>
+   </div>
+  </div>
+ </div>
+</div>
+@endsection
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.js"></script>
+<script>
+let currentSettingId=null,currentSetting=null,currentPeriods=[],currentGrid={},currentDays=[],availableSubjects=[],allTeachers=[];
+
+const ROUTES={
+ setup:'{{ route("timetable.setup") }}',saveSettings:'{{ route("timetable.save-settings") }}',
+ saveConstraints:'{{ route("timetable.save-constraints") }}',autoGenerate:'{{ route("timetable.auto-generate") }}',
+ saveSlot:'{{ route("timetable.save-slot") }}',sendNotifications:'{{ route("timetable.send-notifications") }}',
+ cloneSetting:'{{ route("timetable.clone-setting") }}',getSetting:'{{ url("/timetable/get-setting") }}',
+ getGrid:'{{ url("/timetable/get-grid") }}',checkConflicts:'{{ url("/timetable/check-conflicts") }}',
+ export:'{{ url("/timetable/export") }}',deleteSetting:'{{ url("/timetable/delete-setting") }}',
+};
+const CSRF='{{ csrf_token() }}';
+const esc=str=>!str?'':String(str).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+const buildUrl=(base,id)=>base.replace(/\/$/,'')+'/'+id;
+const post=(url,body)=>fetch(url,{method:'POST',headers:{'Content-Type':'application/json','X-CSRF-TOKEN':CSRF,'Accept':'application/json'},body:JSON.stringify(body)});
+const get=(url)=>fetch(url,{headers:{'Accept':'application/json','X-CSRF-TOKEN':CSRF}});
+const showLoading=()=>Swal.fire({title:'Please wait…',allowOutsideClick:false,allowEscapeKey:false,didOpen:()=>Swal.showLoading()});
+const hideLoading=()=>Swal.close();
+
+async function loadOrCreateSetting(){
+ const classId=document.getElementById('classSelect').value;
+ const sessionId=document.getElementById('sessionSelect').value;
+ const termId=document.getElementById('termSelect').value;
+ if(!classId||!sessionId)return Swal.fire({title:'Required',text:'Select a class and session.',icon:'warning',confirmButtonColor:'#667eea'});
+ showLoading();
+ try{
+  const r=await post(ROUTES.setup,{schoolclass_id:classId,session_id:sessionId,term_id:termId||null});
+  const d=await r.json();
+  if(d.success){currentSettingId=d.setting_id;await loadSetting(currentSettingId);}
+  else throw new Error(d.message);
+ }catch(e){Swal.fire('Error',e.message,'error');}finally{hideLoading();}
+}
+
+async function loadSetting(settingId){
+ showLoading();
+ try{
+  const r=await get(buildUrl(ROUTES.getSetting,settingId));
+  if(!r.ok)throw new Error(`HTTP ${r.status}`);
+  const d=await r.json();
+  if(d.success){
+   currentSetting=d.setting;currentSettingId=settingId;availableSubjects=d.available_subjects||[];
+   const cls=d.setting.schoolclass?.schoolclass||'',ses=d.setting.session?.session||'',trm=d.setting.term?.term?'/'+d.setting.term.term:'';
+   document.getElementById('editorTitle').textContent=`${cls} — ${ses}${trm}`;
+   document.getElementById('schoolDayStart').value=(currentSetting.school_day_start||'08:00').slice(0,5);
+   document.getElementById('schoolDayEnd').value=(currentSetting.school_day_end||'14:30').slice(0,5);
+   document.getElementById('periodDuration').value=currentSetting.period_duration_minutes||40;
+   document.getElementById('shortBreakDuration').value=currentSetting.short_break_duration_minutes||20;
+   document.getElementById('longBreakDuration').value=currentSetting.long_break_duration_minutes||40;
+   const days=currentSetting.active_days||['Monday','Tuesday','Wednesday','Thursday','Friday'];
+   document.querySelectorAll('.active-day-checkbox').forEach(cb=>{cb.checked=days.includes(cb.value);});
+   loadPeriodsIntoTable(currentSetting.periods?.length?currentSetting.periods:[
+    {name:'Period 1',type:'lesson'},{name:'Period 2',type:'lesson'},{name:'Short Break',type:'short_break'},
+    {name:'Period 3',type:'lesson'},{name:'Period 4',type:'lesson'},{name:'Long Break',type:'long_break'},
+    {name:'Period 5',type:'lesson'},{name:'Period 6',type:'lesson'},
+   ]);
+   loadConstraintsIntoTable(currentSetting.constraints||[]);
+   await loadTimetableGrid();
+   document.getElementById('timetableEditor').style.display='block';
+   document.getElementById('timetableEditor').scrollIntoView({behavior:'smooth'});
+  }else throw new Error(d.message);
+ }catch(e){Swal.fire('Error','Failed: '+e.message,'error');}finally{hideLoading();}
+}
+
+function loadPeriodsIntoTable(periods){document.getElementById('periodsBody').innerHTML='';periods.forEach((p,i)=>addPeriodRow(p.name,p.type,i+1));}
+
+function addPeriodRow(name='',type='lesson',order=null){
+ const tbody=document.getElementById('periodsBody');
+ const n=order||(tbody.querySelectorAll('tr').length+1);
+ const tr=document.createElement('tr');
+ tr.innerHTML=`<td class="period-order text-center">${n}</td>
+  <td><input type="text" class="form-control form-control-sm period-name" placeholder="Period name" value="${esc(name)}"></td>
+  <td><select class="form-select form-select-sm period-type">
+   <option value="lesson" ${type==='lesson'?'selected':''}>Lesson</option>
+   <option value="short_break" ${type==='short_break'?'selected':''}>Short Break</option>
+   <option value="long_break" ${type==='long_break'?'selected':''}>Long Break</option>
+   <option value="assembly" ${type==='assembly'?'selected':''}>Assembly</option>
+   <option value="free" ${type==='free'?'selected':''}>Free</option>
+  </select></td>
+  <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger px-2" onclick="removePeriodRow(this)"><i class="ri-delete-bin-line"></i></button></td>`;
+ tbody.appendChild(tr);
+}
+
+function removePeriodRow(btn){btn.closest('tr').remove();reorderPeriods();}
+function reorderPeriods(){document.querySelectorAll('#periodsBody tr').forEach((r,i)=>{const c=r.querySelector('.period-order');if(c)c.textContent=i+1;});}
+function getPeriodsFromTable(){return[...document.querySelectorAll('#periodsBody tr')].map(r=>({name:r.querySelector('.period-name')?.value||'',type:r.querySelector('.period-type')?.value||'lesson'})).filter(p=>p.name);}
+
+async function saveSettings(){
+ const periods=getPeriodsFromTable();
+ const activeDays=[...document.querySelectorAll('.active-day-checkbox:checked')].map(cb=>cb.value);
+ if(!periods.length)return Swal.fire('Error','Add at least one period.','error');
+ if(!activeDays.length)return Swal.fire('Error','Select at least one day.','error');
+ showLoading();
+ try{
+  const r=await post(ROUTES.saveSettings,{setting_id:currentSettingId,school_day_start:document.getElementById('schoolDayStart').value,school_day_end:document.getElementById('schoolDayEnd').value,period_duration_minutes:parseInt(document.getElementById('periodDuration').value),short_break_duration_minutes:parseInt(document.getElementById('shortBreakDuration').value),long_break_duration_minutes:parseInt(document.getElementById('longBreakDuration').value),active_days:activeDays,periods});
+  const result=await r.json();
+  if(result.success){Swal.fire({title:'Saved',icon:'success',timer:1500,showConfirmButton:false});await loadSetting(currentSettingId);}
+  else throw new Error(result.message);
+ }catch(e){Swal.fire('Error',e.message,'error');}finally{hideLoading();}
+}
+
+function loadConstraintsIntoTable(constraints){
+ const tbody=document.getElementById('constraintsBody');tbody.innerHTML='';
+ if(!availableSubjects.length){tbody.innerHTML='<tr><td colspan="8" class="text-center text-muted py-4">No subjects assigned to this class.</td></tr>';return;}
+ const cMap=new Map(constraints.map(c=>[c.subject_id,c]));
+ availableSubjects.forEach(subj=>{
+  const c=cMap.get(subj.subject_id);
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td>${esc(subj.subject_name)}<input type="hidden" class="constraint-subject-id" value="${subj.subject_id}"></td>
+   <td class="text-muted small">${esc(subj.teacher_name)}</td>
+   <td><input type="number" class="form-control form-control-sm periods-per-week" value="${c?.periods_per_week||2}" min="1" max="10"></td>
+   <td class="text-center"><input type="checkbox" class="form-check-input allow-double" ${c?.allow_double_period?'checked':''}></td>
+   <td><input type="number" class="form-control form-control-sm max-double" value="${c?.max_double_periods_per_week||1}" min="0" max="5" ${!c?.allow_double_period?'disabled':''}></td>
+   <td><select class="form-select form-select-sm preferred-days" multiple size="3">${genDays(c?.preferred_days||[])}</select></td>
+   <td><select class="form-select form-select-sm avoid-days" multiple size="3">${genDays(c?.avoid_days||[])}</select></td>
+   <td class="text-center"><input type="checkbox" class="form-check-input is-compulsory" ${c?.is_compulsory!==false?'checked':''}></td>`;
+  tr.querySelector('.allow-double').addEventListener('change',function(){tr.querySelector('.max-double').disabled=!this.checked;});
+  tbody.appendChild(tr);
+ });
+}
+
+function genDays(sel=[]){return['Monday','Tuesday','Wednesday','Thursday','Friday'].map(d=>`<option value="${d}" ${sel.includes(d)?'selected':''}>${d}</option>`).join('');}
+
+function getConstraintsFromTable(){
+ return[...document.querySelectorAll('#constraintsBody tr')].map(row=>{
+  const sid=row.querySelector('.constraint-subject-id')?.value;if(!sid)return null;
+  return{subject_id:parseInt(sid),periods_per_week:parseInt(row.querySelector('.periods-per-week').value),allow_double:row.querySelector('.allow-double').checked,max_double:parseInt(row.querySelector('.max-double').value),preferred_days:[...row.querySelector('.preferred-days').selectedOptions].map(o=>o.value),avoid_days:[...row.querySelector('.avoid-days').selectedOptions].map(o=>o.value),is_compulsory:row.querySelector('.is-compulsory').checked};
+ }).filter(Boolean);
+}
+
+async function saveConstraints(){
+ const constraints=getConstraintsFromTable();
+ if(!constraints.length)return Swal.fire('Error','No constraints to save.','error');
+ showLoading();
+ try{
+  const r=await post(ROUTES.saveConstraints,{setting_id:currentSettingId,constraints});
+  const result=await r.json();
+  if(result.success)Swal.fire({title:'Saved',icon:'success',timer:1500,showConfirmButton:false});
+  else throw new Error(result.message);
+ }catch(e){Swal.fire('Error',e.message,'error');}finally{hideLoading();}
+}
+
+async function loadTimetableGrid(){
+ if(!currentSettingId)return;
+ const c=document.getElementById('timetableGridContainer');
+ c.innerHTML='<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Loading…</p></div>';
+ try{
+  const r=await get(buildUrl(ROUTES.getGrid,currentSettingId));
+  if(!r.ok)throw new Error(`HTTP ${r.status}`);
+  const d=await r.json();
+  if(d.success){currentPeriods=d.periods;currentGrid=d.grid;currentDays=d.days;allTeachers=d.teachers||[];renderTimetableGrid();}
+  else throw new Error(d.message);
+ }catch(e){c.innerHTML=`<div class="alert alert-danger">Failed: ${esc(e.message)}</div>`;}
+}
+
+function renderTimetableGrid(){
+ const c=document.getElementById('timetableGridContainer');
+ if(!currentPeriods.length||!currentDays.length){c.innerHTML='<div class="alert alert-warning">Save settings first to configure periods.</div>';return;}
+ let html=`<div class="table-responsive"><table class="table table-bordered table-sm mb-0" style="table-layout:fixed;">
+  <thead><tr class="tt-head"><th style="width:96px;">Period/Time</th>${currentDays.map(d=>`<th class="text-center">${esc(d)}</th>`).join('')}</tr></thead><tbody>`;
+ currentPeriods.forEach(period=>{
+  const isBreak=period.is_break;
+  html+=`<tr ${isBreak?'class="tt-break-row"':''} data-period-id="${period.id}">
+   <td class="tt-period-col"><div style="font-size:11px;font-weight:600;">${esc(period.name)}</div><div style="font-size:10px;color:#888;">${period.start_time}–${period.end_time}</div>${isBreak?'<span class="badge bg-warning-subtle text-warning" style="font-size:9px;">break</span>':''}</td>`;
+  currentDays.forEach(day=>{
+   const slot=currentGrid[period.id]?.[day]||null;
+   const isFree=!slot?.subject_id;
+   if(isBreak){html+=`<td class="text-center"><small class="text-muted">—</small></td>`;return;}
+   html+=`<td class="tt-cell ${isFree?'tt-free':''}" data-period-id="${period.id}" data-day="${esc(day)}" onclick="openEditSlotModal(${period.id},'${esc(day)}')" title="${isFree?'Click to assign':'Click to edit'}">
+    <div class="tt-cell-inner">`;
+   if(slot&&!isFree){
+    if(slot.teacher_picture)html+=`<img src="${slot.teacher_picture}" class="tt-avatar" alt="">`;
+    html+=`<span class="tt-subj">${esc(slot.subject_code||slot.subject||'—')}</span>
+           <span class="tt-tchr">${esc((slot.teacher||'').split(' ')[0])}</span>`;
+    if(slot.room)html+=`<span class="tt-room"><i class="ri-door-line"></i> ${esc(slot.room)}</span>`;
+    if(slot.is_double)html+=`<span class="badge bg-primary-subtle text-primary" style="font-size:9px;">×2</span>`;
+   }else{html+=`<span style="color:#ddd;font-size:20px;line-height:1;">+</span>`;}
+   html+=`</div></td>`;
+  });
+  html+=`</tr>`;
+ });
+ html+=`</tbody></table></div>`;
+ c.innerHTML=html;
+}
+
+function openEditSlotModal(periodId,day){
+ const period=currentPeriods.find(p=>p.id==periodId);if(!period)return;
+ const slot=currentGrid[periodId]?.[day]||{};
+ document.getElementById('editSlotSettingId').value=currentSettingId;
+ document.getElementById('editSlotPeriodId').value=periodId;
+ document.getElementById('editSlotDay').value=day;
+ document.getElementById('editSlotPeriodName').value=period.name;
+ document.getElementById('editSlotDayName').value=day;
+ document.getElementById('editSlotRoom').value=slot.room||'';
+ document.getElementById('editSlotNotes').value=slot.notes||'';
+ document.getElementById('editSlotIsDouble').checked=slot.is_double||false;
+ const ss=document.getElementById('editSlotSubject');
+ ss.innerHTML='<option value="">— Free Period —</option>';
+ availableSubjects.forEach(subj=>{const opt=document.createElement('option');opt.value=subj.subject_id;opt.dataset.teacherId=subj.teacher_id;opt.textContent=`${subj.subject_name} (${subj.teacher_name})`;if(slot.subject_id==subj.subject_id)opt.selected=true;ss.appendChild(opt);});
+ const ts=document.getElementById('editSlotTeacher');
+ ts.innerHTML='<option value="">— No Teacher —</option>';
+ const seen=new Set();
+ availableSubjects.forEach(subj=>{if(subj.teacher_id&&!seen.has(subj.teacher_id)){seen.add(subj.teacher_id);const opt=document.createElement('option');opt.value=subj.teacher_id;opt.textContent=subj.teacher_name;if(slot.teacher_id==subj.teacher_id)opt.selected=true;ts.appendChild(opt);}});
+ ss.onchange=function(){const sel=ss.options[ss.selectedIndex];if(sel?.dataset.teacherId)ts.value=sel.dataset.teacherId;};
+ new bootstrap.Modal(document.getElementById('editSlotModal')).show();
+}
+
+async function saveSlot(){
+ const payload={setting_id:currentSettingId,period_id:document.getElementById('editSlotPeriodId').value,day:document.getElementById('editSlotDay').value,subject_id:document.getElementById('editSlotSubject').value||null,teacher_id:document.getElementById('editSlotTeacher').value||null,room:document.getElementById('editSlotRoom').value,notes:document.getElementById('editSlotNotes').value,is_double:document.getElementById('editSlotIsDouble').checked,is_free:!document.getElementById('editSlotSubject').value};
+ showLoading();
+ try{
+  const r=await post(ROUTES.saveSlot,payload);const result=await r.json();
+  if(result.success){bootstrap.Modal.getInstance(document.getElementById('editSlotModal')).hide();await loadTimetableGrid();Swal.fire({title:'Saved',icon:'success',timer:1000,showConfirmButton:false});}
+  else if(result.conflict)Swal.fire('Conflict',result.message,'warning');
+  else throw new Error(result.message);
+ }catch(e){Swal.fire('Error',e.message,'error');}finally{hideLoading();}
+}
+
+async function generateTimetable(){
+ const{isConfirmed}=await Swal.fire({title:'Auto-Generate?',html:'Clears and rebuilds from constraints.<br><strong>Cannot be undone.</strong>',icon:'warning',showCancelButton:true,confirmButtonColor:'#667eea',cancelButtonColor:'#d33',confirmButtonText:'Generate'});
+ if(!isConfirmed)return;
+ showLoading();
+ try{
+  const r=await post(ROUTES.autoGenerate,{setting_id:currentSettingId});const d=await r.json();
+  if(d.success){await loadTimetableGrid();document.querySelector('[href="#timetableGridTab"]').click();Swal.fire({title:'Generated!',icon:'success',timer:1500,showConfirmButton:false});}
+  else throw new Error(d.message);
+ }catch(e){Swal.fire('Error',e.message,'error');}finally{hideLoading();}
+}
+
+async function checkConflicts(){
+ if(!currentSettingId)return Swal.fire('Error','No timetable loaded.','error');
+ showLoading();
+ try{
+  const r=await get(buildUrl(ROUTES.checkConflicts,currentSettingId));if(!r.ok)throw new Error(`HTTP ${r.status}`);
+  const d=await r.json();const ctr=document.getElementById('conflictsList');const badge=document.getElementById('conflictBadge');
+  if(d.conflict_count===0){badge.innerHTML='<span class="badge bg-success">✓ No conflicts</span>';ctr.innerHTML='<div class="alert alert-success"><i class="ri-checkbox-circle-line me-2"></i>No conflicts found!</div>';}
+  else{
+   badge.innerHTML=`<span class="badge bg-danger">⚠ ${d.conflict_count} conflict(s)</span>`;
+   let html=`<div class="alert alert-warning mb-3">${d.conflict_count} conflict(s) require attention.</div>`;
+   d.conflicts.forEach(c=>{
+    const av=c.teacher_picture?`<img src="${c.teacher_picture}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;">`:`<div style="width:44px;height:44px;border-radius:50%;background:#eee;display:flex;align-items:center;justify-content:center;"><i class="ri-user-line"></i></div>`;
+    html+=`<div class="conflict-card">${av}<div><div class="fw-semibold">${esc(c.teacher)}</div><div class="small text-muted">${esc(c.day)} · ${esc(c.period)} (${esc(c.period_time)})</div><div class="small mt-1"><span class="badge bg-primary-subtle text-primary me-1">${esc(c.class_a)}</span>vs<span class="badge bg-primary-subtle text-primary ms-1">${esc(c.class_b)}</span></div></div></div>`;
+   });
+   ctr.innerHTML=html;
+  }
+ }catch(e){Swal.fire('Error',e.message,'error');}finally{hideLoading();}
+}
+
+function exportTimetable(settingId,format){if(!settingId)return Swal.fire('Error','No timetable selected.','error');window.open(buildUrl(ROUTES.export,settingId)+'?format='+format,'_blank');}
+
+async function sendNotifications(){
+ const{isConfirmed}=await Swal.fire({title:'Send Notifications',text:'Email timetable to all assigned teachers?',icon:'question',showCancelButton:true,confirmButtonColor:'#667eea',confirmButtonText:'Send'});
+ if(!isConfirmed)return;
+ showLoading();
+ try{
+  const r=await post(ROUTES.sendNotifications,{setting_id:currentSettingId,type:'weekly_preview'});const d=await r.json();
+  if(d.success)Swal.fire('Sent!',d.message,'success');else throw new Error(d.message);
+ }catch(e){Swal.fire('Error',e.message,'error');}finally{hideLoading();}
+}
+
+async function deleteSetting(settingId){
+ const{isConfirmed}=await Swal.fire({title:'Delete Timetable?',text:'Cannot be undone.',icon:'warning',showCancelButton:true,confirmButtonColor:'#d33',confirmButtonText:'Delete'});
+ if(!isConfirmed)return;
+ showLoading();
+ try{
+  const r=await fetch(buildUrl(ROUTES.deleteSetting,settingId),{method:'DELETE',headers:{'X-CSRF-TOKEN':CSRF,'Accept':'application/json'}});
+  const d=await r.json();
+  if(d.success)Swal.fire('Deleted!','','success').then(()=>location.reload());else throw new Error(d.message);
+ }catch(e){Swal.fire('Error',e.message,'error');}finally{hideLoading();}
+}
+
+async function cloneSetting(settingId){
+ const{isConfirmed,value}=await Swal.fire({
+  title:'Clone Timetable',
+  html:`<div class="text-start"><div class="mb-3"><label class="form-label">New Session</label>
+   <select id="sCloneSession" class="form-select form-select-sm"><option value="">Same Session</option>
+   @foreach($schoolsessions as $s)<option value="{{ $s->id }}">{{ $s->session }}</option>@endforeach</select></div>
+   <div><label class="form-label">New Term</label>
+   <select id="sCloneTerm" class="form-select form-select-sm"><option value="">Same Term</option>
+   @foreach($schoolterms as $t)<option value="{{ $t->id }}">{{ $t->term }}</option>@endforeach</select></div></div>`,
+  showCancelButton:true,confirmButtonColor:'#667eea',confirmButtonText:'Clone',
+  preConfirm:()=>({new_session_id:document.getElementById('sCloneSession').value||null,new_term_id:document.getElementById('sCloneTerm').value||null})
+ });
+ if(!isConfirmed)return;
+ showLoading();
+ try{
+  const r=await post(ROUTES.cloneSetting,{setting_id:settingId,...value});const d=await r.json();
+  if(d.success)Swal.fire('Cloned!','','success').then(()=>location.reload());else throw new Error(d.message);
+ }catch(e){Swal.fire('Error',e.message,'error');}finally{hideLoading();}
+}
+</script>
 

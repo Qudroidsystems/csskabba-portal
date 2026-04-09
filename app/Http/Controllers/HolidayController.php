@@ -31,6 +31,16 @@ class HolidayController extends Controller
         return view('holidays.index', compact('pagetitle', 'holidays', 'upcomingHolidays'));
     }
 
+    /**
+     * GET /holidays/{id}
+     * Returns a single holiday record as JSON (used by the edit modal).
+     */
+    public function show(int $id): JsonResponse
+    {
+        $holiday = Holiday::findOrFail($id);
+        return response()->json(['success' => true, 'holiday' => $holiday]);
+    }
+
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -47,8 +57,7 @@ class HolidayController extends Controller
 
             $holiday = Holiday::create($validated);
 
-            // If affects timetable, create overrides for all active timetables
-            if ($validated['affects_timetable']) {
+            if ($validated['affects_timetable'] ?? false) {
                 $this->createHolidayOverrides($holiday);
             }
 
@@ -76,7 +85,7 @@ class HolidayController extends Controller
         try {
             DB::beginTransaction();
 
-            // Remove old overrides
+            // Remove old overrides for this holiday's date range
             TimetableOverride::where('override_date', '>=', $holiday->start_date)
                 ->where('override_date', '<=', $holiday->end_date)
                 ->where('override_type', 'holiday')
@@ -84,8 +93,7 @@ class HolidayController extends Controller
 
             $holiday->update($validated);
 
-            // Create new overrides
-            if ($validated['affects_timetable']) {
+            if ($validated['affects_timetable'] ?? false) {
                 $this->createHolidayOverrides($holiday);
             }
 
@@ -101,7 +109,6 @@ class HolidayController extends Controller
     {
         $holiday = Holiday::findOrFail($id);
 
-        // Remove associated overrides
         TimetableOverride::where('override_date', '>=', $holiday->start_date)
             ->where('override_date', '<=', $holiday->end_date)
             ->where('override_type', 'holiday')
@@ -119,11 +126,11 @@ class HolidayController extends Controller
             $this->createHolidayOverrides($holiday);
             return response()->json(['success' => true, 'message' => 'Holiday applied to all timetables']);
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Failed to apply holiday'], 500);
+            return response()->json(['success' => false, 'message' => 'Failed to apply holiday: ' . $e->getMessage()], 500);
         }
     }
 
-    private function createHolidayOverrides($holiday)
+    private function createHolidayOverrides($holiday): void
     {
         $startDate = Carbon::parse($holiday->start_date);
         $endDate = Carbon::parse($holiday->end_date);
@@ -132,28 +139,32 @@ class HolidayController extends Controller
         $settings = TimetableSetting::where('is_active', true)->get();
 
         while ($currentDate <= $endDate) {
-            foreach ($settings as $setting) {
-                $dayOfWeek = $currentDate->format('l');
+            $dayOfWeek = $currentDate->format('l');
 
-                // Only create override if day is in active days
-                if (in_array($dayOfWeek, $setting->active_days ?? TimetableController::DAYS)) {
-                    TimetableOverride::updateOrCreate(
-                        [
-                            'setting_id' => $setting->id,
-                            'override_date' => $currentDate->toDateString(),
-                        ],
-                        [
-                            'override_type' => 'holiday',
-                            'title' => $holiday->name,
-                            'description' => $holiday->description,
-                            'cancel_all_classes' => true,
-                            'cancellation_reason' => $holiday->name,
-                            'status' => 'approved',
-                            'created_by' => Auth::id(),
-                        ]
-                    );
+            foreach ($settings as $setting) {
+                $activeDays = $setting->active_days ?? TimetableController::DAYS;
+                if (!in_array($dayOfWeek, $activeDays)) {
+                    $currentDate->addDay();
+                    continue;
                 }
+
+                TimetableOverride::updateOrCreate(
+                    [
+                        'setting_id' => $setting->id,
+                        'override_date' => $currentDate->toDateString(),
+                    ],
+                    [
+                        'override_type' => 'holiday',
+                        'title' => $holiday->name,
+                        'description' => $holiday->description,
+                        'cancel_all_classes' => true,
+                        'cancellation_reason' => $holiday->name,
+                        'status' => 'approved',
+                        'created_by' => Auth::id(),
+                    ]
+                );
             }
+
             $currentDate->addDay();
         }
     }

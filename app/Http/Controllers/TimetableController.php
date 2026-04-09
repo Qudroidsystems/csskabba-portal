@@ -34,47 +34,28 @@ class TimetableController extends Controller
     const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
     const DAYS_MAP = ['Monday' => 1, 'Tuesday' => 2, 'Wednesday' => 3, 'Thursday' => 4, 'Friday' => 5];
 
-    /**
-     * Constructor with permission middleware
-     * Following your existing permission pattern
-     */
     public function __construct()
     {
-        // Timetable View Permissions
         $this->middleware('permission:View timetable|Create timetable|Edit timetable|Delete timetable|Generate timetable', ['only' => ['index', 'getSetting', 'getGrid']]);
         $this->middleware('permission:Create timetable', ['only' => ['setup', 'saveSettings']]);
         $this->middleware('permission:Edit timetable', ['only' => ['saveSlot', 'bulkUpdateSlots', 'cloneSetting']]);
         $this->middleware('permission:Delete timetable', ['only' => ['deleteSetting']]);
         $this->middleware('permission:Generate timetable', ['only' => ['autoGenerate']]);
-
-        // Teacher View Permission
         $this->middleware('permission:View my timetable', ['only' => ['teacherView']]);
-
-        // Timetable Management Permissions
         $this->middleware('permission:Manage timetable settings', ['only' => ['saveSettings']]);
         $this->middleware('permission:Manage timetable constraints', ['only' => ['saveConstraints']]);
-
-        // Report Permissions
         $this->middleware('permission:View timetable reports', ['only' => ['workloadDashboard', 'generateAnalytics']]);
         $this->middleware('permission:Export timetable', ['only' => ['export']]);
-
-        // Substitute Permissions
         $this->middleware('permission:Request substitute', ['only' => ['requestSubstitute']]);
         $this->middleware('permission:Approve substitute', ['only' => ['approveSubstitute']]);
         $this->middleware('permission:View substitute requests', ['only' => ['getSubstituteRequests']]);
-
-        // Teacher Availability Permission
         $this->middleware('permission:Manage teacher availability', ['only' => ['saveTeacherAvailability', 'getTeacherAvailability']]);
-
-        // Conflict Check Permission
         $this->middleware('permission:Check timetable conflicts', ['only' => ['checkConflicts']]);
-
-        // Notification Permission
         $this->middleware('permission:Send timetable notifications', ['only' => ['sendNotifications']]);
     }
 
     // =========================================================================
-    // INDEX — Admin Overview
+    // INDEX
     // =========================================================================
 
     public function index()
@@ -89,7 +70,6 @@ class TimetableController extends Controller
         $schoolsessions = Schoolsession::orderByDesc('id')->get();
         $schoolterms = Schoolterm::all();
 
-        // Get subjects with teachers for dropdowns
         $subjectsWithTeachers = SubjectTeacher::with(['subject', 'staff'])
             ->get()
             ->map(fn($st) => [
@@ -110,7 +90,7 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // TEACHER VIEW — Shows their own timetable
+    // TEACHER VIEW
     // =========================================================================
 
     public function teacherView(Request $request)
@@ -128,14 +108,12 @@ class TimetableController extends Controller
             $termId = Schoolterm::latest('id')->value('id');
         }
 
-        // Get teacher's picture
         $teacherPicture = null;
         $teacher = User::with('staffPicture')->find($teacherId);
         if ($teacher && $teacher->staffPicture) {
             $teacherPicture = asset('storage/staff_avatars/' . $teacher->staffPicture->picture);
         }
 
-        // Get slots for this teacher
         $slots = TimetableSlot::where('teacher_id', $teacherId)
             ->whereHas('setting', fn($q) => $q->where('session_id', $sessionId)->where('is_active', true))
             ->with(['period', 'subject', 'setting.schoolclass', 'setting.term'])
@@ -151,17 +129,57 @@ class TimetableController extends Controller
         $sessions = Schoolsession::orderByDesc('id')->get();
         $terms = Schoolterm::all();
 
+        // Get available substitute teachers (other teachers not busy at same time)
+        $availableSubstitutes = User::whereHas('roles', fn($q) => $q->where('name', 'teacher'))
+            ->where('id', '!=', $teacherId)
+            ->select('id', 'name', 'email')
+            ->get();
+
         $upcomingSlots = $this->getUpcomingSlots($teacherId, $sessionId);
         $weeklySummary = $this->getWeeklySummary($teacherId, $sessionId);
 
         return view('timetable.teacher', compact(
             'pagetitle', 'slots', 'days', 'allPeriods', 'sessions', 'terms',
-            'sessionId', 'termId', 'upcomingSlots', 'weeklySummary', 'teacherPicture'
+            'sessionId', 'termId', 'upcomingSlots', 'weeklySummary',
+            'teacherPicture', 'availableSubstitutes'
         ));
     }
 
     // =========================================================================
-    // SETUP — Creates or loads settings for a class
+    // AVAILABLE SUBSTITUTES API (fixes missing route)
+    // =========================================================================
+
+    public function getAvailableSubstitutes(Request $request): JsonResponse
+    {
+        $slotId = $request->input('slot_id');
+
+        if (!$slotId) {
+            return response()->json(['teachers' => []]);
+        }
+
+        $slot = TimetableSlot::with('period')->find($slotId);
+        if (!$slot) {
+            return response()->json(['teachers' => []]);
+        }
+
+        // Find teachers who are NOT already assigned at the same day+period
+        $busyTeacherIds = TimetableSlot::where('day', $slot->day)
+            ->where('period_id', $slot->period_id)
+            ->whereNotNull('teacher_id')
+            ->where('id', '!=', $slot->id)
+            ->pluck('teacher_id');
+
+        $teachers = User::whereHas('roles', fn($q) => $q->where('name', 'teacher'))
+            ->whereNotIn('id', $busyTeacherIds)
+            ->where('id', '!=', $slot->teacher_id)
+            ->select('id', 'name', 'email')
+            ->get();
+
+        return response()->json(['teachers' => $teachers]);
+    }
+
+    // =========================================================================
+    // SETUP
     // =========================================================================
 
     public function setup(Request $request): JsonResponse
@@ -202,7 +220,6 @@ class TimetableController extends Controller
             'term'
         ])->findOrFail($settingId);
 
-        // Get available subjects for this class
         $availableSubjects = SubjectTeacher::where('sessionid', $setting->session_id)
             ->whereHas('subjectclass', fn($q) => $q->where('schoolclassid', $setting->schoolclass_id))
             ->with(['subject', 'staff'])
@@ -223,7 +240,7 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // SAVE SETTINGS + AUTO-BUILD PERIODS
+    // SAVE SETTINGS
     // =========================================================================
 
     public function saveSettings(Request $request): JsonResponse
@@ -254,7 +271,6 @@ class TimetableController extends Controller
                 'active_days' => $validated['active_days'],
             ]);
 
-            // Rebuild periods
             TimetablePeriod::where('setting_id', $setting->id)->delete();
             $start = Carbon::createFromFormat('H:i', $validated['school_day_start']);
             $order = 0;
@@ -349,10 +365,7 @@ class TimetableController extends Controller
 
         foreach ($validated['availability'] as $avail) {
             TeacherAvailability::updateOrCreate(
-                [
-                    'teacher_id' => $validated['teacher_id'],
-                    'day' => $avail['day'],
-                ],
+                ['teacher_id' => $validated['teacher_id'], 'day' => $avail['day']],
                 [
                     'start_time' => $avail['start_time'],
                     'end_time' => $avail['end_time'],
@@ -375,7 +388,7 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // SMART AUTO-GENERATE TIMETABLE
+    // AUTO-GENERATE
     // =========================================================================
 
     public function autoGenerate(Request $request): JsonResponse
@@ -392,7 +405,6 @@ class TimetableController extends Controller
             $days = $setting->active_days ?? self::DAYS;
             $constraints = $setting->constraints->keyBy('subject_id');
 
-            // Get teachers for this class
             $classId = $setting->schoolclass_id;
             $sessionId = $setting->session_id;
 
@@ -402,7 +414,6 @@ class TimetableController extends Controller
                 ->get()
                 ->groupBy('subjectid');
 
-            // Get teacher availability
             $teacherAvailability = [];
             foreach ($subjectTeachers as $subjectId => $teachers) {
                 foreach ($teachers as $teacher) {
@@ -413,18 +424,13 @@ class TimetableController extends Controller
                 }
             }
 
-            // Clear existing slots
             TimetableSlot::where('setting_id', $setting->id)->delete();
 
-            // Build weighted slot pool
             $slotPool = $this->buildWeightedSlotPool($days, $lessonPeriods);
-
-            // Track allocations
             $teacherDaySlot = [];
             $teacherDayPeriodCount = [];
             $placed = [];
 
-            // Sort requirements by priority
             $requirements = $constraints->sortByDesc(function ($c) {
                 return ($c->is_compulsory ? 100 : 0) + $c->periods_per_week;
             })->values();
@@ -442,7 +448,6 @@ class TimetableController extends Controller
                 $teacherEntry = $subjectTeachers->get($subjectId)?->first();
                 $teacherId = $teacherEntry?->staffid;
 
-                // Score each slot for this subject
                 $scoredSlots = [];
                 foreach ($slotPool as $slot) {
                     $day = $slot['day'];
@@ -452,19 +457,16 @@ class TimetableController extends Controller
 
                     if (isset($placed[$key])) continue;
 
-                    // Check teacher availability
                     if ($teacherId && isset($teacherAvailability[$teacherId])) {
                         $avail = $teacherAvailability[$teacherId]->firstWhere('day', $day);
                         if ($avail && !$avail->is_available) continue;
                     }
 
-                    // Check teacher conflict
                     if ($teacherId) {
                         $teacherDaySlot[$teacherId][$day] ??= [];
                         if (in_array($periodId, $teacherDaySlot[$teacherId][$day])) continue;
                     }
 
-                    // Calculate score
                     $score = 0;
                     if (in_array($day, $preferDays)) $score += 10;
                     if (in_array($day, $avoidDays)) $score -= 10;
@@ -473,7 +475,6 @@ class TimetableController extends Controller
                     $scoredSlots[] = ['slot' => $slot, 'score' => $score, 'key' => $key];
                 }
 
-                // Sort by score descending
                 usort($scoredSlots, fn($a, $b) => $b['score'] - $a['score']);
 
                 $placedThisSubject = 0;
@@ -487,7 +488,6 @@ class TimetableController extends Controller
 
                     if (isset($placed[$key])) continue;
 
-                    // Place the slot
                     TimetableSlot::create([
                         'setting_id' => $setting->id,
                         'period_id' => $periodId,
@@ -505,7 +505,6 @@ class TimetableController extends Controller
                     }
                     $placedThisSubject++;
 
-                    // Try double period
                     if ($allowDouble && $doubleCount < $maxDouble && $placedThisSubject < $needed) {
                         $nextPeriod = $this->getNextLessonPeriod($lessonPeriods, $periodId);
                         if ($nextPeriod) {
@@ -536,7 +535,6 @@ class TimetableController extends Controller
                 }
             }
 
-            // Mark remaining lesson slots as free
             foreach ($slotPool as $slot) {
                 $key = $slot['day'] . '_' . $slot['period_id'];
                 if (!isset($placed[$key])) {
@@ -577,7 +575,7 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // GET TIMETABLE GRID
+    // GET GRID
     // =========================================================================
 
     public function getGrid(int $settingId): JsonResponse
@@ -588,7 +586,6 @@ class TimetableController extends Controller
             ->with(['subject', 'teacher', 'teacher.staffPicture', 'period'])
             ->get();
 
-        // Build grid with teacher pictures
         $grid = [];
         foreach ($slots as $slot) {
             $teacherPicture = null;
@@ -612,7 +609,6 @@ class TimetableController extends Controller
             ];
         }
 
-        // Get all teachers with their pictures for tooltips
         $allTeachers = User::whereHas('roles', fn($q) => $q->where('name', 'teacher'))
             ->with('staffPicture')
             ->get()
@@ -634,7 +630,7 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // SAVE SINGLE SLOT
+    // SAVE SLOT
     // =========================================================================
 
     public function saveSlot(Request $request): JsonResponse
@@ -651,7 +647,6 @@ class TimetableController extends Controller
             'notes' => 'nullable|string|max:191',
         ]);
 
-        // Check teacher conflict
         if (!empty($validated['teacher_id'])) {
             $conflict = TimetableSlot::where('period_id', $validated['period_id'])
                 ->where('day', $validated['day'])
@@ -676,10 +671,8 @@ class TimetableController extends Controller
             array_merge($validated, ['is_free' => empty($validated['subject_id'])])
         );
 
-        // Log the change
         $this->logTimetableChange(Auth::id(), 'update', 'TimetableSlot', $slot->id);
 
-        // Send notification if this is a change
         if ($slot->wasChanged('teacher_id') && $slot->teacher_id) {
             $this->scheduleNotification($slot->teacher_id, $slot->id, 'change_alert');
         }
@@ -727,7 +720,7 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // GET SUBJECTS FOR A CLASS
+    // GET CLASS SUBJECTS
     // =========================================================================
 
     public function getClassSubjects(Request $request): JsonResponse
@@ -766,8 +759,10 @@ class TimetableController extends Controller
             'type' => 'required|in:daily_summary,weekly_preview,change_alert',
         ]);
 
-        $setting = TimetableSetting::with(['slots.teacher', 'slots.teacher.staffPicture', 'slots.subject', 'slots.period', 'schoolclass', 'session', 'term'])
-            ->findOrFail($validated['setting_id']);
+        $setting = TimetableSetting::with([
+            'slots.teacher', 'slots.teacher.staffPicture',
+            'slots.subject', 'slots.period', 'schoolclass', 'session', 'term'
+        ])->findOrFail($validated['setting_id']);
 
         $byTeacher = $setting->slots->whereNotNull('teacher_id')->groupBy('teacher_id');
         $sent = 0;
@@ -789,7 +784,7 @@ class TimetableController extends Controller
                 'slots' => $teacherSlots->map(fn($s) => [
                     'day' => $s->day,
                     'period' => $s->period?->name,
-                    'time' => $s->period?->getDurationLabel(),
+                    'time' => $s->period?->start_time . ' - ' . $s->period?->end_time,
                     'subject' => $s->subject?->subject,
                     'room' => $s->room,
                 ])->toArray(),
@@ -833,7 +828,7 @@ class TimetableController extends Controller
     {
         $slots = TimetableSlot::where('setting_id', $settingId)
             ->whereNotNull('teacher_id')
-            ->with(['period', 'subject', 'setting.schoolclass', 'teacher'])
+            ->with(['period', 'subject', 'setting.schoolclass', 'teacher', 'teacher.staffPicture'])
             ->get();
 
         $conflicts = [];
@@ -842,15 +837,17 @@ class TimetableController extends Controller
         foreach ($slots as $slot) {
             $key = $slot->teacher_id . '_' . $slot->day . '_' . $slot->period_id;
             if (isset($teacherSlotMap[$key])) {
+                $teacherPicture = null;
+                if ($slot->teacher && $slot->teacher->staffPicture) {
+                    $teacherPicture = asset('storage/staff_avatars/' . $slot->teacher->staffPicture->picture);
+                }
                 $conflicts[] = [
                     'type' => 'teacher_conflict',
                     'day' => $slot->day,
                     'period' => $slot->period?->name,
-                    'period_time' => $slot->period?->getDurationLabel(),
+                    'period_time' => ($slot->period?->start_time ?? '') . ' - ' . ($slot->period?->end_time ?? ''),
                     'teacher' => $slot->teacher?->name,
-                    'teacher_picture' => $slot->teacher && $slot->teacher->staffPicture
-                        ? asset('storage/staff_avatars/' . $slot->teacher->staffPicture->picture)
-                        : null,
+                    'teacher_picture' => $teacherPicture,
                     'subject_a' => $teacherSlotMap[$key]->subject?->subject,
                     'subject_b' => $slot->subject?->subject,
                     'class_a' => $teacherSlotMap[$key]->setting?->schoolclass?->schoolclass,
@@ -869,7 +866,7 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // EXPORT TIMETABLE
+    // EXPORT — CSV and PDF
     // =========================================================================
 
     public function export(Request $request, int $settingId)
@@ -891,39 +888,168 @@ class TimetableController extends Controller
 
         $days = $setting->active_days ?? self::DAYS;
         $periods = $setting->periods;
+        $className = $setting->schoolclass->schoolclass ?? 'Class';
+        $sessionName = $setting->session->session ?? 'Session';
+        $termName = $setting->term?->term ?? 'All Terms';
 
-        if ($format === 'csv') {
-            $filename = "timetable_{$setting->schoolclass->schoolclass}_{$setting->session->session}.csv";
-            $handle = fopen('php://temp', 'w+');
+        if ($format === 'pdf') {
+            return $this->exportToPdf($setting, $periods, $days, $grid, $className, $sessionName, $termName);
+        }
 
-            $header = ['Period', 'Time'];
+        // Default: CSV
+        $filename = "timetable_{$className}_{$sessionName}.csv";
+        $handle = fopen('php://temp', 'w+');
+
+        // School info header
+        fputcsv($handle, ['SCHOOL TIMETABLE']);
+        fputcsv($handle, ['Class:', $className, 'Session:', $sessionName, 'Term:', $termName]);
+        fputcsv($handle, ['Generated:', now()->format('d M Y H:i')]);
+        fputcsv($handle, []);
+
+        $header = ['Period', 'Time'];
+        foreach ($days as $day) {
+            $header[] = $day;
+        }
+        fputcsv($handle, $header);
+
+        foreach ($periods as $period) {
+            $row = [
+                $period->name,
+                $period->start_time . ' - ' . $period->end_time,
+            ];
             foreach ($days as $day) {
-                $header[] = $day;
+                $slot = $grid[$period->id][$day] ?? ['subject' => '—', 'teacher' => '—'];
+                $row[] = $slot['subject'] . ' / ' . $slot['teacher'];
             }
-            fputcsv($handle, $header);
+            fputcsv($handle, $row);
+        }
 
-            foreach ($periods as $period) {
-                $row = [
-                    $period->name,
-                    $period->start_time . '-' . $period->end_time,
-                ];
-                foreach ($days as $day) {
-                    $slot = $grid[$period->id][$day] ?? ['subject' => '—', 'teacher' => '—'];
-                    $row[] = $slot['subject'] . "\n" . $slot['teacher'];
-                }
-                fputcsv($handle, $row);
-            }
+        rewind($handle);
+        $csv = stream_get_contents($handle);
+        fclose($handle);
 
-            rewind($handle);
-            $csv = stream_get_contents($handle);
-            fclose($handle);
+        return response($csv, 200)
+            ->header('Content-Type', 'text/csv')
+            ->header('Content-Disposition', "attachment; filename=\"{$filename}\"");
+    }
 
-            return response($csv, 200)
-                ->header('Content-Type', 'text/csv')
+    /**
+     * Generate a clean HTML-based PDF using DomPDF (or Snappy/MPDF if installed).
+     * Falls back to a clean printable HTML page if no PDF library is available.
+     */
+    private function exportToPdf($setting, $periods, $days, $grid, $className, $sessionName, $termName)
+    {
+        $html = $this->buildTimetableHtml($setting, $periods, $days, $grid, $className, $sessionName, $termName);
+
+        // Try DomPDF (laravel-dompdf package)
+        if (class_exists(\Barryvdh\DomPDF\Facade\Pdf::class)) {
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadHTML($html)
+                ->setPaper('a4', 'landscape');
+            $filename = "timetable_{$className}_{$sessionName}.pdf";
+            return $pdf->download($filename);
+        }
+
+        // Try Snappy (knp-snappy package)
+        if (class_exists(\Knp\Snappy\Pdf::class)) {
+            $snappy = app('snappy.pdf.html');
+            $filename = "timetable_{$className}_{$sessionName}.pdf";
+            return response($snappy->getOutputFromHtml($html), 200)
+                ->header('Content-Type', 'application/pdf')
                 ->header('Content-Disposition', "attachment; filename=\"{$filename}\"");
         }
 
-        return response()->json(['success' => false, 'message' => 'PDF export coming soon'], 501);
+        // Fallback: return as a printable HTML page
+        return response($html, 200)
+            ->header('Content-Type', 'text/html');
+    }
+
+    private function buildTimetableHtml($setting, $periods, $days, $grid, $className, $sessionName, $termName): string
+    {
+        $colCount = count($days) + 2; // period + time + days
+        $colWidth = round(100 / $colCount, 2);
+
+        $dayHeaders = '';
+        foreach ($days as $day) {
+            $dayHeaders .= "<th style='background:#1a1a2e;color:#fff;padding:8px 4px;text-align:center;font-size:11px;'>" . htmlspecialchars($day) . "</th>";
+        }
+
+        $rows = '';
+        foreach ($periods as $period) {
+            $isBreak = $period->is_break;
+            $bgColor = $isBreak ? '#fff8e1' : '#ffffff';
+            $cells = '';
+            foreach ($days as $day) {
+                $slot = $grid[$period->id][$day] ?? null;
+                $subject = $slot['subject'] ?? '—';
+                $teacher = $slot['teacher'] ?? '';
+                $isFree = ($subject === 'FREE' || $subject === '—') && !$teacher;
+
+                if ($isBreak) {
+                    $cells .= "<td style='text-align:center;color:#888;font-size:10px;padding:6px 2px;'>Break</td>";
+                } elseif ($isFree) {
+                    $cells .= "<td style='text-align:center;color:#ccc;font-size:10px;padding:6px 2px;'>—</td>";
+                } else {
+                    $cells .= "<td style='text-align:center;padding:5px 3px;vertical-align:middle;'>
+                        <div style='font-weight:600;font-size:10px;color:#1a1a2e;'>" . htmlspecialchars($subject) . "</div>
+                        <div style='font-size:9px;color:#555;margin-top:2px;'>" . htmlspecialchars($teacher) . "</div>
+                    </td>";
+                }
+            }
+
+            $rows .= "<tr style='background:{$bgColor};border-bottom:1px solid #e8e8e8;'>
+                <td style='font-weight:600;font-size:10px;padding:6px 6px;white-space:nowrap;color:#1a1a2e;'>" . htmlspecialchars($period->name) . "</td>
+                <td style='font-size:9px;color:#666;padding:6px 4px;white-space:nowrap;'>" . htmlspecialchars($period->start_time . ' - ' . $period->end_time) . "</td>
+                {$cells}
+            </tr>";
+        }
+
+        return "<!DOCTYPE html>
+<html lang='en'>
+<head>
+<meta charset='UTF-8'>
+<meta name='viewport' content='width=device-width, initial-scale=1'>
+<title>Timetable - {$className}</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'DejaVu Sans', Arial, sans-serif; font-size: 12px; color: #333; background: #fff; }
+  .header { text-align: center; padding: 16px; border-bottom: 3px solid #1a1a2e; margin-bottom: 16px; }
+  .header h1 { font-size: 18px; color: #1a1a2e; margin-bottom: 4px; }
+  .header .meta { font-size: 11px; color: #555; }
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  th, td { border: 1px solid #ddd; vertical-align: middle; }
+  th { font-weight: 600; }
+  .footer { margin-top: 16px; text-align: right; font-size: 9px; color: #aaa; }
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .no-print { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div class='header'>
+    <h1>Class Timetable — " . htmlspecialchars($className) . "</h1>
+    <div class='meta'>Session: " . htmlspecialchars($sessionName) . " &nbsp;|&nbsp; Term: " . htmlspecialchars($termName) . " &nbsp;|&nbsp; Generated: " . now()->format('d M Y') . "</div>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th style='background:#1a1a2e;color:#fff;padding:8px 6px;font-size:11px;width:80px;'>Period</th>
+        <th style='background:#1a1a2e;color:#fff;padding:8px 4px;font-size:11px;width:80px;'>Time</th>
+        {$dayHeaders}
+      </tr>
+    </thead>
+    <tbody>
+      {$rows}
+    </tbody>
+  </table>
+  <div class='footer'>Printed on " . now()->format('d M Y H:i') . "</div>
+  <script>
+    if (typeof window !== 'undefined' && !window.location.search.includes('pdf')) {
+      window.onload = function() { window.print(); }
+    }
+  </script>
+</body>
+</html>";
     }
 
     // =========================================================================
@@ -959,16 +1085,29 @@ class TimetableController extends Controller
             $newSetting->term_id = $validated['new_term_id'] ?? $oldSetting->term_id;
             $newSetting->save();
 
+            // Map old period IDs to new ones for slot cloning
+            $periodMap = [];
             foreach ($oldSetting->periods as $period) {
                 $newPeriod = $period->replicate();
                 $newPeriod->setting_id = $newSetting->id;
                 $newPeriod->save();
+                $periodMap[$period->id] = $newPeriod->id;
             }
 
             foreach ($oldSetting->constraints as $constraint) {
                 $newConstraint = $constraint->replicate();
                 $newConstraint->setting_id = $newSetting->id;
                 $newConstraint->save();
+            }
+
+            // Clone slots with remapped period IDs
+            foreach ($oldSetting->slots as $slot) {
+                if (isset($periodMap[$slot->period_id])) {
+                    $newSlot = $slot->replicate();
+                    $newSlot->setting_id = $newSetting->id;
+                    $newSlot->period_id = $periodMap[$slot->period_id];
+                    $newSlot->save();
+                }
             }
 
             DB::commit();
@@ -998,9 +1137,32 @@ class TimetableController extends Controller
             return response()->json(['success' => false, 'message' => 'You can only request substitutes for your own classes'], 403);
         }
 
+        // Check substitute isn't already busy at that slot/date
+        $substituteId = $validated['substitute_teacher_id'];
+        $dayOfWeek = Carbon::parse($validated['assignment_date'])->format('l');
+
+        if ($dayOfWeek !== $slot->day) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Assignment date must fall on a ' . $slot->day,
+            ], 422);
+        }
+
+        $alreadyBusy = TimetableSlot::where('teacher_id', $substituteId)
+            ->where('period_id', $slot->period_id)
+            ->where('day', $slot->day)
+            ->exists();
+
+        if ($alreadyBusy) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Selected substitute teacher is already teaching at this time.',
+            ], 422);
+        }
+
         $substitute = SubstituteAssignment::create([
             'original_teacher_id' => Auth::id(),
-            'substitute_teacher_id' => $validated['substitute_teacher_id'],
+            'substitute_teacher_id' => $substituteId,
             'slot_id' => $slot->id,
             'assignment_date' => $validated['assignment_date'],
             'reason' => $validated['reason'],
@@ -1025,10 +1187,11 @@ class TimetableController extends Controller
         ]);
 
         $slot = $substitute->slot;
+        $originalTeacherName = $substitute->originalTeacher->name ?? 'Unknown';
         $slot->update([
             'teacher_id' => $substitute->substitute_teacher_id,
             'notes' => ($slot->notes ? $slot->notes . "\n" : '') .
-                       "[SUBSTITUTE] Original: {$substitute->originalTeacher->name}, Date: {$substitute->assignment_date}",
+                       "[SUBSTITUTE] Original: {$originalTeacherName}, Date: {$substitute->assignment_date}",
         ]);
 
         return response()->json(['success' => true]);
@@ -1096,6 +1259,58 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
+    // GENERATE ANALYTICS (was missing from original)
+    // =========================================================================
+
+    public function generateAnalytics(Request $request): JsonResponse
+    {
+        $sessionId = $request->session_id ?? Schoolsession::where('status', 'Current')->value('id');
+
+        $totalSlots = TimetableSlot::whereHas('setting', fn($q) => $q->where('session_id', $sessionId))->count();
+        $filledSlots = TimetableSlot::whereHas('setting', fn($q) => $q->where('session_id', $sessionId))
+            ->whereNotNull('subject_id')->count();
+        $freeSlots = $totalSlots - $filledSlots;
+        $completionRate = $totalSlots > 0 ? round(($filledSlots / $totalSlots) * 100, 1) : 0;
+
+        $teacherCount = TimetableSlot::whereHas('setting', fn($q) => $q->where('session_id', $sessionId))
+            ->whereNotNull('teacher_id')
+            ->distinct('teacher_id')
+            ->count('teacher_id');
+
+        $subjectDistribution = TimetableSlot::whereHas('setting', fn($q) => $q->where('session_id', $sessionId))
+            ->whereNotNull('subject_id')
+            ->with('subject')
+            ->get()
+            ->groupBy('subject_id')
+            ->map(fn($group) => [
+                'subject' => $group->first()->subject?->subject ?? 'Unknown',
+                'count' => $group->count(),
+            ])
+            ->values();
+
+        $dayDistribution = [];
+        foreach (self::DAYS as $day) {
+            $dayDistribution[$day] = TimetableSlot::whereHas('setting', fn($q) => $q->where('session_id', $sessionId))
+                ->where('day', $day)
+                ->whereNotNull('subject_id')
+                ->count();
+        }
+
+        return response()->json([
+            'success' => true,
+            'analytics' => [
+                'total_slots' => $totalSlots,
+                'filled_slots' => $filledSlots,
+                'free_slots' => $freeSlots,
+                'completion_rate' => $completionRate,
+                'active_teachers' => $teacherCount,
+                'subject_distribution' => $subjectDistribution,
+                'day_distribution' => $dayDistribution,
+            ],
+        ]);
+    }
+
+    // =========================================================================
     // HELPERS
     // =========================================================================
 
@@ -1125,8 +1340,12 @@ class TimetableController extends Controller
 
         return $slots
             ->filter(function ($slot) use ($now) {
-                $slotTime = Carbon::createFromFormat('H:i:s', $slot->period->start_time);
-                return $slotTime->greaterThan($now) || $slotTime->equalTo($now);
+                try {
+                    $slotTime = Carbon::createFromFormat('H:i:s', $slot->period->start_time);
+                    return $slotTime->greaterThan($now) || $slotTime->equalTo($now);
+                } catch (\Exception $e) {
+                    return false;
+                }
             })
             ->sortBy(fn($s) => ($dayMap[strtolower($s->day)] ?? 0) >= $todayIndex
                 ? ($dayMap[strtolower($s->day)] ?? 0)
@@ -1170,6 +1389,7 @@ class TimetableController extends Controller
         if (!$teacher || !$teacher->email) return;
 
         $slot = TimetableSlot::with(['period', 'subject'])->find($slotId);
+        if (!$slot) return;
 
         TimetableNotification::create([
             'teacher_id' => $teacherId,
@@ -1188,16 +1408,20 @@ class TimetableController extends Controller
 
     private function logTimetableChange(int $userId, string $action, string $modelType, ?int $modelId, $oldValues = null, $newValues = null): void
     {
-        DB::table('timetable_audit_logs')->insert([
-            'user_id' => $userId,
-            'action' => $action,
-            'model_type' => $modelType,
-            'model_id' => $modelId,
-            'old_values' => $oldValues ? json_encode($oldValues) : null,
-            'new_values' => $newValues ? json_encode($newValues) : null,
-            'ip_address' => request()->ip(),
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        try {
+            DB::table('timetable_audit_logs')->insert([
+                'user_id' => $userId,
+                'action' => $action,
+                'model_type' => $modelType,
+                'model_id' => $modelId,
+                'old_values' => $oldValues ? json_encode($oldValues) : null,
+                'new_values' => $newValues ? json_encode($newValues) : null,
+                'ip_address' => request()->ip(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } catch (\Exception $e) {
+            Log::warning('Audit log insert failed', ['error' => $e->getMessage()]);
+        }
     }
 }
