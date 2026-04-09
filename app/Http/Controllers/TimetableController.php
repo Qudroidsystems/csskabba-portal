@@ -32,9 +32,7 @@ use Illuminate\Support\Facades\Mail;
 
 class TimetableController extends Controller
 {
-
-
-     const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+    const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
     const DAYS_MAP = ['Monday' => 1, 'Tuesday' => 2, 'Wednesday' => 3, 'Thursday' => 4, 'Friday' => 5];
 
     const DAY_COLORS = [
@@ -71,6 +69,27 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
+    // HELPER: Resolve arm name from schoolclass relationship
+    // =========================================================================
+    private function resolveArmName($schoolclass): string
+    {
+        if (!$schoolclass) return '';
+        $arm = $schoolclass->arm;
+        if (!$arm) return '';
+        // If it's a related model object with an 'arm' attribute
+        if (is_object($arm) && isset($arm->arm)) return ' ' . $arm->arm;
+        // If it's just a string (already resolved)
+        if (is_string($arm)) return ' ' . $arm;
+        return '';
+    }
+
+    private function getClassName($schoolclass): string
+    {
+        if (!$schoolclass) return 'Unknown Class';
+        return ($schoolclass->schoolclass ?? '') . $this->resolveArmName($schoolclass);
+    }
+
+    // =========================================================================
     // INDEX
     // =========================================================================
 
@@ -95,9 +114,17 @@ class TimetableController extends Controller
                 'teacher_name' => $st->staff->name ?? 'Unknown',
             ]);
 
-        $settings = TimetableSetting::with(['schoolclass.arm', 'session', 'term', 'creator'])
-            ->where('is_active', true)
-            ->orderByDesc('updated_at')
+        // Load settings with arm join so arm name is always available
+        $settings = TimetableSetting::with(['session', 'term', 'creator', 'updater'])
+            ->join('schoolclass', 'schoolclass.id', '=', 'timetable_settings.schoolclass_id')
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->select([
+                'timetable_settings.*',
+                'schoolclass.schoolclass as class_name',
+                'schoolarm.arm as arm_name',
+            ])
+            ->where('timetable_settings.is_active', true)
+            ->orderByDesc('timetable_settings.updated_at')
             ->get();
 
         return view('timetable.index', compact(
@@ -106,13 +133,13 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // GET SETTING (Updated with term info for subject dropdown)
+    // GET SETTING
     // =========================================================================
 
     public function getSetting(int $settingId): JsonResponse
     {
         $setting = TimetableSetting::with([
-            'periods', 'constraints.subject', 'schoolclass', 'session', 'term'
+            'periods', 'constraints.subject', 'schoolclass.arm', 'session', 'term'
         ])->findOrFail($settingId);
 
         $availableSubjects = SubjectTeacher::where('sessionid', $setting->session_id)
@@ -137,7 +164,7 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // GET GRID (Updated with arm info)
+    // GET GRID
     // =========================================================================
 
     public function getGrid(int $settingId): JsonResponse
@@ -201,12 +228,7 @@ class TimetableController extends Controller
                 ),
             ]);
 
-        // Get class name with arm
-        $className = $setting->schoolclass->schoolclass ?? 'Class';
-        if ($setting->schoolclass?->arm) {
-            $armName = is_object($setting->schoolclass->arm) ? $setting->schoolclass->arm->arm : $setting->schoolclass->arm;
-            $className .= ' ' . $armName;
-        }
+        $className = $this->getClassName($setting->schoolclass);
 
         return response()->json([
             'success'    => true,
@@ -221,14 +243,14 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // EXPORT CLASS TIMETABLE (Updated with school details and orientation)
+    // EXPORT CLASS TIMETABLE
     // =========================================================================
 
     public function export(Request $request, int $settingId)
     {
-        $format     = $request->input('format', 'csv');
-        $orientation = $request->input('orientation', 'horizontal'); // horizontal or vertical
-        $setting    = TimetableSetting::with(['periods', 'schoolclass.arm', 'session', 'term'])->findOrFail($settingId);
+        $format      = $request->input('format', 'csv');
+        $orientation = $request->input('orientation', 'horizontal');
+        $setting     = TimetableSetting::with(['periods', 'schoolclass.arm', 'session', 'term'])->findOrFail($settingId);
 
         $slots = TimetableSlot::where('setting_id', $settingId)->with(['subject', 'teacher', 'period', 'room'])->get();
 
@@ -253,14 +275,7 @@ class TimetableController extends Controller
 
         $days        = $setting->active_days ?? self::DAYS;
         $periods     = $setting->periods;
-
-        // Get class name with arm
-        $className = $setting->schoolclass->schoolclass ?? 'Class';
-        if ($setting->schoolclass?->arm) {
-            $armName = is_object($setting->schoolclass->arm) ? $setting->schoolclass->arm->arm : $setting->schoolclass->arm;
-            $className .= ' ' . $armName;
-        }
-
+        $className   = $this->getClassName($setting->schoolclass);
         $sessionName = $setting->session->session ?? 'Session';
         $termName    = $setting->term?->term ?? 'All Terms';
 
@@ -271,13 +286,13 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // EXPORT WHOLE SCHOOL TIMETABLE (New Feature)
+    // EXPORT WHOLE SCHOOL TIMETABLE
     // =========================================================================
 
     public function exportWholeSchool(Request $request)
     {
-        $sessionId = $request->input('session_id');
-        $termId    = $request->input('term_id');
+        $sessionId   = $request->input('session_id');
+        $termId      = $request->input('term_id');
         $orientation = $request->input('orientation', 'horizontal');
 
         if (!$sessionId) {
@@ -311,11 +326,7 @@ class TimetableController extends Controller
                 ];
             }
 
-            $className = $setting->schoolclass->schoolclass ?? 'Class';
-            if ($setting->schoolclass?->arm) {
-                $armName = is_object($setting->schoolclass->arm) ? $setting->schoolclass->arm->arm : $setting->schoolclass->arm;
-                $className .= ' ' . $armName;
-            }
+            $className = $this->getClassName($setting->schoolclass);
 
             $allTimetables[] = [
                 'class_name' => $className,
@@ -326,7 +337,7 @@ class TimetableController extends Controller
         }
 
         $session = Schoolsession::find($sessionId);
-        $term = $termId ? Schoolterm::find($termId) : null;
+        $term    = $termId ? Schoolterm::find($termId) : null;
 
         return $this->exportWholeSchoolPdf($allTimetables, $schoolInfo, $session, $term, $orientation);
     }
@@ -370,13 +381,13 @@ class TimetableController extends Controller
 
     private function exportPdf($setting, $periods, $days, $grid, $subjectColors, $className, $sessionName, $termName, $orientation = 'horizontal')
     {
-        $schoolInfo = SchoolInformation::getActiveSchool();
-        $schoolName = $schoolInfo?->school_name ?? config('app.school_name', config('app.name', 'School'));
-        $schoolLogo = $schoolInfo?->getLogoWithFallbackAttribute();
+        $schoolInfo    = SchoolInformation::getActiveSchool();
+        $schoolName    = $schoolInfo?->school_name ?? config('app.school_name', config('app.name', 'School'));
+        $schoolLogo    = $schoolInfo?->getLogoWithFallbackAttribute();
         $schoolAddress = $schoolInfo?->school_address ?? '';
-        $schoolPhone = $schoolInfo?->school_phone ?? '';
-        $schoolEmail = $schoolInfo?->school_email ?? '';
-        $schoolMotto = $schoolInfo?->school_motto ?? '';
+        $schoolPhone   = $schoolInfo?->school_phone ?? '';
+        $schoolEmail   = $schoolInfo?->school_email ?? '';
+        $schoolMotto   = $schoolInfo?->school_motto ?? '';
 
         $generatedAt = now()->format('d F Y, H:i');
         $generatedBy = Auth::user()->name;
@@ -394,35 +405,767 @@ class TimetableController extends Controller
         return $this->exportPdfHorizontal($periods, $days, $grid, $subjectColorCss, $className, $sessionName, $termName, $schoolName, $schoolLogo, $schoolAddress, $schoolPhone, $schoolEmail, $schoolMotto, $generatedAt, $generatedBy);
     }
 
+
+    <?php
+
+// Add/modify these methods in your TimetableController.php
+
+private function buildSchoolHeaderHtml(string $schoolName, ?string $schoolLogo, string $schoolAddress, string $schoolPhone, string $schoolEmail, string $schoolMotto): string
+{
+    $logoHtml = $schoolLogo
+        ? '<img src="' . $schoolLogo . '" class="school-logo" alt="School Logo">'
+        : '<div class="school-logo-placeholder">🏫</div>';
+
+    $eName    = htmlspecialchars($schoolName);
+    $eMotto   = htmlspecialchars($schoolMotto);
+    $eAddress = htmlspecialchars($schoolAddress);
+    $ePhone   = htmlspecialchars($schoolPhone);
+    $eEmail   = htmlspecialchars($schoolEmail);
+
+    return <<<HTML
+<div class="school-header">
+    <div class="school-logo-wrap">
+        {$logoHtml}
+    </div>
+    <div class="school-info">
+        <div class="school-name">{$eName}</div>
+        <div class="school-motto">{$eMotto}</div>
+        <div class="school-contact">
+            <div class="contact-address">{$eAddress}</div>
+            <div class="contact-details">
+                <span class="contact-item"><span class="contact-icon">📞</span> {$ePhone}</span>
+                <span class="contact-item"><span class="contact-icon">✉️</span> {$eEmail}</span>
+            </div>
+        </div>
+    </div>
+</div>
+HTML;
+}
+
+private function getSharedPdfCss(): string
+{
+    return <<<CSS
+@page {
+    size: A4 landscape;
+    margin: 12mm 10mm;
+}
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+body {
+    font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    font-size: 10px;
+    color: #1a1a2e;
+    background: #fff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+/* ── School Header - Centered Logo ── */
+.school-header {
+    text-align: center;
+    padding-bottom: 16px;
+    margin-bottom: 16px;
+    border-bottom: 2px solid #e0e7ff;
+    position: relative;
+}
+.school-header::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 25%;
+    width: 50%;
+    height: 2px;
+    background: linear-gradient(90deg, #1565C0, #6A1B9A, #1565C0);
+}
+.school-logo-wrap {
+    margin-bottom: 12px;
+}
+.school-logo {
+    height: 80px;
+    width: auto;
+    max-width: 200px;
+    object-fit: contain;
+    display: inline-block;
+}
+.school-logo-placeholder {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #1565C0, #6A1B9A);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 42px;
+    color: white;
+    box-shadow: 0 4px 15px rgba(21,101,192,0.3);
+}
+.school-name {
+    font-size: 22px;
+    font-weight: 800;
+    color: #1565C0;
+    letter-spacing: 0.5px;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+}
+.school-motto {
+    font-size: 11px;
+    color: #6A1B9A;
+    font-style: italic;
+    margin-bottom: 8px;
+    letter-spacing: 0.3px;
+}
+.school-contact {
+    font-size: 8.5px;
+    color: #555;
+}
+.contact-address {
+    margin-bottom: 4px;
+    color: #444;
+}
+.contact-details {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+.contact-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.contact-icon {
+    font-size: 9px;
+    opacity: 0.8;
+}
+
+/* ── Document Titles ── */
+.doc-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: #1a1a2e;
+    text-align: center;
+    margin: 12px 0 5px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
+.doc-title::before,
+.doc-title::after {
+    content: '✦';
+    font-size: 12px;
+    color: #1565C0;
+    margin: 0 12px;
+    opacity: 0.6;
+}
+.doc-meta {
+    font-size: 10px;
+    color: #666;
+    text-align: center;
+    margin-bottom: 18px;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed #ddd;
+}
+
+/* ── Class Section Headers for Whole School ── */
+.class-section {
+    margin-bottom: 35px;
+    page-break-inside: avoid;
+}
+.class-title {
+    font-size: 14px;
+    font-weight: 800;
+    color: #1565C0;
+    margin: 20px 0 12px;
+    padding: 8px 15px;
+    background: linear-gradient(135deg, #f0f4ff 0%, #e8edf5 100%);
+    border-left: 5px solid #1565C0;
+    border-radius: 0 8px 8px 0;
+    display: inline-block;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* ── Table Styles ── */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+th, td {
+    border: 1px solid #e2e8f0;
+    vertical-align: middle;
+    padding: 8px 6px;
+}
+
+/* ── Period Header Column ── */
+.period-header {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    text-align: center;
+    width: 80px;
+}
+.period-header .pname {
+    font-weight: 800;
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.period-header .ptime-small {
+    font-size: 7px;
+    opacity: 0.8;
+    margin-top: 2px;
+    font-family: monospace;
+}
+
+/* ── Day Headers (Horizontal Layout) ── */
+.day-header {
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    text-align: center;
+    padding: 10px 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.day-header.monday { background: linear-gradient(135deg, #1565C0, #0d47a1); }
+.day-header.tuesday { background: linear-gradient(135deg, #6A1B9A, #4a0072); }
+.day-header.wednesday { background: linear-gradient(135deg, #1B5E20, #0a3d12); }
+.day-header.thursday { background: linear-gradient(135deg, #E65100, #bf360c); }
+.day-header.friday { background: linear-gradient(135deg, #880E4F, #4a0024); }
+
+/* ── Period Label Cell ── */
+.period-cell {
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    text-align: center;
+    font-weight: 600;
+}
+.pname {
+    font-weight: 800;
+    font-size: 10px;
+    color: #1e293b;
+}
+.ptime {
+    font-size: 8px;
+    color: #64748b;
+    margin-top: 2px;
+    font-family: monospace;
+}
+
+/* ── Day Cell (Vertical Layout) ── */
+.day-cell {
+    font-weight: 800;
+    text-align: center;
+    width: 70px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* ── Slot Cells ── */
+.slot-cell {
+    text-align: center;
+    padding: 8px 4px;
+    background: #fff;
+    transition: background 0.2s;
+}
+.slot-cell:hover {
+    background: #f8fafc;
+}
+.sname {
+    font-weight: 800;
+    font-size: 10px;
+    color: #1e293b;
+    margin-bottom: 3px;
+}
+.scode {
+    font-size: 7px;
+    color: #6c757d;
+    font-style: italic;
+    margin-bottom: 2px;
+}
+.tname {
+    font-size: 8px;
+    color: #4b5563;
+    margin-bottom: 2px;
+}
+.room {
+    font-size: 7px;
+    color: #059669;
+    margin-top: 2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    background: #ecfdf5;
+    padding: 1px 4px;
+    border-radius: 4px;
+}
+
+/* ── Break & Free Cells ── */
+.break-row td {
+    height: 20px;
+}
+.break-cell {
+    background: linear-gradient(135deg, #fffbeb, #fef3c7) !important;
+    text-align: center;
+}
+.break-lbl {
+    font-size: 8px;
+    color: #d97706;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+}
+.free-cell {
+    background: #f9fafb !important;
+    text-align: center;
+}
+.free-lbl {
+    font-size: 8px;
+    color: #9ca3af;
+    font-style: italic;
+}
+
+/* ── Subject Color Variations ── */
+.slot-cell.subj-bg {
+    background: rgba(59,130,246,0.05);
+}
+
+/* ── Footer ── */
+.footer {
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    font-size: 7px;
+    color: #94a3b8;
+    text-align: center;
+}
+.footer-left, .footer-center, .footer-right {
+    flex: 1;
+}
+.footer-center {
+    text-align: center;
+}
+.footer-right {
+    text-align: right;
+}
+
+/* ── Print Button ── */
+.print-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #1565C0, #0d47a1);
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 40px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 700;
+    z-index: 999;
+    box-shadow: 0 4px 15px rgba(21,101,192,0.4);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.print-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(21,101,192,0.5);
+}
+@media print {
+    .print-btn {
+        display: none !important;
+    }
+    .class-section {
+        page-break-inside: avoid;
+    }
+}
+CSS;
+}
+
+// Update the exportWholeSchoolPdf method with better styling
+private function exportWholeSchoolPdf($allTimetables, $schoolInfo, $session, $term, $orientation = 'horizontal')
+{
+    $schoolName    = $schoolInfo?->school_name ?? config('app.school_name', config('app.name', 'School'));
+    $schoolLogo    = $schoolInfo?->getLogoWithFallbackAttribute();
+    $schoolAddress = $schoolInfo?->school_address ?? '';
+    $schoolPhone   = $schoolInfo?->school_phone ?? '';
+    $schoolEmail   = $schoolInfo?->school_email ?? '';
+    $schoolMotto   = $schoolInfo?->school_motto ?? '';
+
+    $generatedAt = now()->format('d F Y, H:i');
+    $generatedBy = Auth::user()->name;
+    $sessionName = $session->session ?? 'Current Session';
+    $termName    = $term?->term ?? 'All Terms';
+
+    $headerHtml  = $this->buildSchoolHeaderHtml($schoolName, $schoolLogo, $schoolAddress, $schoolPhone, $schoolEmail, $schoolMotto);
+    $sharedCss   = $this->getSharedPdfCss();
+    $eSession    = htmlspecialchars($sessionName);
+    $eTerm       = htmlspecialchars($termName);
+    $eGenAt      = htmlspecialchars($generatedAt);
+    $eGenBy      = htmlspecialchars($generatedBy);
+
+    $timetablesHtml = '';
+    foreach ($allTimetables as $index => $tt) {
+        $pageBreak   = $index > 0 ? 'page-break-before: avoid;' : '';
+        $eClassName  = htmlspecialchars($tt['class_name']);
+
+        if ($orientation === 'vertical') {
+            $colPct = round(85 / max(count($tt['periods']), 1), 2);
+            $periodHeaders = '';
+            foreach ($tt['periods'] as $period) {
+                $periodHeaders .= '<th class="period-header" style="width:' . $colPct . '%">'
+                    . '<div class="pname">' . htmlspecialchars($period->name) . '</div>'
+                    . '<div class="ptime-small">' . htmlspecialchars($period->start_time . '–' . $period->end_time) . '</div>'
+                    . '</th>';
+            }
+            $tableRows = '';
+            foreach ($tt['days'] as $day) {
+                $dayClass = strtolower($day);
+                $tableRows .= '<tr>';
+                $tableRows .= '<td class="day-cell" style="background: linear-gradient(135deg, ' . self::DAY_COLORS[$day] . ', ' . self::DAY_COLORS[$day] . 'cc); color:#fff;">' . htmlspecialchars($day) . '</td>';
+                foreach ($tt['periods'] as $period) {
+                    $slot   = $tt['grid'][$period->id][$day] ?? null;
+                    $isFree = !$slot || $slot['subject'] === '—';
+                    if ($period->is_break ?? false) {
+                        $tableRows .= '<td class="break-cell"><span class="break-lbl">☕ BREAK</span></td>';
+                    } elseif ($isFree) {
+                        $tableRows .= '<td class="free-cell"><span class="free-lbl">— FREE —</span></td>';
+                    } else {
+                        $tableRows .= '<td class="slot-cell">'
+                            . '<div class="sname">' . htmlspecialchars($slot['subject'] ?? '—') . '</div>'
+                            . '<div class="tname">' . htmlspecialchars($slot['teacher'] ?? '—') . '</div>'
+                            . (!empty($slot['room']) ? '<div class="room">📍 ' . htmlspecialchars($slot['room']) . '</div>' : '')
+                            . '</td>';
+                    }
+                }
+                $tableRows .= '</tr>';
+            }
+            $timetablesHtml .= '<div class="class-section" style="' . $pageBreak . '">'
+                . '<div class="class-title">📖 ' . $eClassName . '</div>'
+                . '<table><thead><tr><th class="period-header" style="width:70px">DAY / PERIOD</th>' . $periodHeaders . '</tr></thead>'
+                . '<tbody>' . $tableRows . '</tbody></table>'
+                . '</div>';
+        } else {
+            $colPct = round(85 / max(count($tt['days']), 1), 2);
+            $dayHeaders = '';
+            foreach ($tt['days'] as $day) {
+                $dayClass = strtolower($day);
+                $dayHeaders .= '<th class="day-header ' . $dayClass . '" style="width:' . $colPct . '%">' . htmlspecialchars($day) . '</th>';
+            }
+            $tableRows = '';
+            foreach ($tt['periods'] as $period) {
+                $isBreak = $period->is_break ?? false;
+                $rowCls  = $isBreak ? ' class="break-row"' : '';
+                $tableRows .= '<tr' . $rowCls . '>';
+                $tableRows .= '<td class="period-cell"><div class="pname">' . htmlspecialchars($period->name) . '</div>'
+                    . '<div class="ptime">' . htmlspecialchars($period->start_time . ' – ' . $period->end_time) . '</div></td>';
+                foreach ($tt['days'] as $day) {
+                    $slot   = $tt['grid'][$period->id][$day] ?? null;
+                    $isFree = !$slot || $slot['subject'] === '—';
+                    if ($isBreak) {
+                        $tableRows .= '<td class="break-cell"><span class="break-lbl">☕ BREAK</span></td>';
+                    } elseif ($isFree) {
+                        $tableRows .= '<td class="free-cell"><span class="free-lbl">— FREE —</span></td>';
+                    } else {
+                        $tableRows .= '<td class="slot-cell">'
+                            . '<div class="sname">' . htmlspecialchars($slot['subject'] ?? '—') . '</div>'
+                            . '<div class="tname">' . htmlspecialchars($slot['teacher'] ?? '—') . '</div>'
+                            . (!empty($slot['room']) ? '<div class="room">📍 ' . htmlspecialchars($slot['room']) . '</div>' : '')
+                            . '</td>';
+                    }
+                }
+                $tableRows .= '</tr>';
+            }
+            $timetablesHtml .= '<div class="class-section" style="' . $pageBreak . '">'
+                . '<div class="class-title">📖 ' . $eClassName . '</div>'
+                . '<table><thead><tr><th class="period-header" style="width:85px">PERIOD</th>' . $dayHeaders . '</tr></thead>'
+                . '<tbody>' . $tableRows . '</tbody></table>'
+                . '</div>';
+        }
+    }
+
+    $html = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">'
+        . '<title>Whole School Timetable - ' . $eSession . '</title>'
+        . '<style>' . $sharedCss . '</style>'
+        . '</head><body>'
+        . '<button class="print-btn" onclick="window.print()"><span>🖨️</span> Print / Save as PDF</button>'
+        . $headerHtml
+        . '<div class="doc-title">WHOLE SCHOOL TIMETABLE</div>'
+        . '<div class="doc-meta">📅 ' . $eSession . ' • ' . $eTerm . '</div>'
+        . $timetablesHtml
+        . '<div class="footer">'
+        . '<div class="footer-left">Generated: ' . $eGenAt . '</div>'
+        . '<div class="footer-center">Generated by: ' . $eGenBy . '</div>'
+        . '<div class="footer-right">☕ Break | ▯ Free period</div>'
+        . '</div>'
+        . '</body></html>';
+
+    return response($html, 200)
+        ->header('Content-Type', 'text/html; charset=UTF-8')
+        ->header('Content-Disposition', 'inline; filename="whole_school_timetable_' . $eSession . '.pdf"');
+}
+
+// Also update the exportPdfHorizontal method with better styling
+private function exportPdfHorizontal($periods, $days, $grid, $subjectColorCss, $className, $sessionName, $termName, $schoolName, $schoolLogo, $schoolAddress, $schoolPhone, $schoolEmail, $schoolMotto, $generatedAt, $generatedBy)
+{
+    $colPct = round(85 / max(count($days), 1), 2);
+    $dayHeaders = '';
+    foreach ($days as $day) {
+        $dayClass = strtolower($day);
+        $hc = self::DAY_COLORS[$day] ?? '#333';
+        $dayHeaders .= '<th class="day-header ' . $dayClass . '" style="background: linear-gradient(135deg, ' . $hc . ', ' . $hc . 'dd); width:' . $colPct . '%">' . htmlspecialchars($day) . '</th>';
+    }
+
+    $tableRows = '';
+    foreach ($periods as $period) {
+        $isBreak = $period->is_break ?? false;
+        $rowCls  = $isBreak ? ' class="break-row"' : '';
+        $tableRows .= '<tr' . $rowCls . '>';
+        $tableRows .= '<td class="period-cell"><div class="pname">' . htmlspecialchars($period->name) . '</div>'
+                    . '<div class="ptime">' . htmlspecialchars($period->start_time . ' – ' . $period->end_time) . '</div></td>';
+
+        foreach ($days as $day) {
+            $slot   = $grid[$period->id][$day] ?? null;
+            $isFree = !$slot || ($slot['is_free'] ?? false) || $slot['subject'] === '—';
+
+            if ($isBreak) {
+                $tableRows .= '<td class="break-cell"><span class="break-lbl">☕ BREAK</span></td>';
+            } elseif ($isFree) {
+                $tableRows .= '<td class="free-cell"><span class="free-lbl">— FREE —</span></td>';
+            } else {
+                $tableRows .= '<td class="slot-cell">'
+                    . '<div class="sname">' . htmlspecialchars($slot['subject'] ?? '—') . '</div>'
+                    . (!empty($slot['subject_code']) ? '<div class="scode">' . htmlspecialchars($slot['subject_code']) . '</div>' : '')
+                    . '<div class="tname">👨‍🏫 ' . htmlspecialchars($slot['teacher'] ?? '—') . '</div>'
+                    . (!empty($slot['room']) ? '<div class="room">📍 ' . htmlspecialchars($slot['room']) . '</div>' : '')
+                    . '</td>';
+            }
+        }
+        $tableRows .= '</tr>';
+    }
+
+    $sharedCss   = $this->getSharedPdfCss();
+    $headerHtml  = $this->buildSchoolHeaderHtml($schoolName, $schoolLogo, $schoolAddress, $schoolPhone, $schoolEmail, $schoolMotto);
+    $eClassName  = htmlspecialchars($className);
+    $eSession    = htmlspecialchars($sessionName);
+    $eTerm       = htmlspecialchars($termName);
+    $eGenAt      = htmlspecialchars($generatedAt);
+    $eGenBy      = htmlspecialchars($generatedBy);
+
+    $html = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">'
+        . '<title>Timetable — ' . $eClassName . '</title>'
+        . '<style>' . $sharedCss . "\n" . $subjectColorCss . '</style>'
+        . '</head><body>'
+        . '<button class="print-btn" onclick="window.print()"><span>🖨️</span> Print / Save PDF</button>'
+        . $headerHtml
+        . '<div class="doc-title">CLASS TIMETABLE</div>'
+        . '<div class="doc-meta">📖 ' . $eClassName . ' • 📅 ' . $eSession . ' • ' . $eTerm . '</div>'
+        . '<table><thead><tr><th class="period-header" style="width:90px">PERIOD</th>' . $dayHeaders . '</tr></thead>'
+        . '<tbody>' . $tableRows . '</tbody></table>'
+        . '<div class="footer">'
+        . '<div class="footer-left">Generated: ' . $eGenAt . '</div>'
+        . '<div class="footer-center">Generated by: ' . $eGenBy . '</div>'
+        . '<div class="footer-right">☕ Break | ▯ Free period</div>'
+        . '</div>'
+        . '</body></html>';
+
+    return response($html, 200)->header('Content-Type', 'text/html; charset=UTF-8');
+}
+
+    private function getSharedPdfCss(): string
+    {
+        return <<<CSS
+@page { size: A4 landscape; margin: 10mm 8mm; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 10px;
+    color: #1a1a2e;
+    background: #fff;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+
+/* ── School header: logo centred, info centred ── */
+.school-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding-bottom: 10px;
+    border-bottom: 3px solid #1565C0;
+    margin-bottom: 14px;
+}
+.school-logo-wrap {
+    margin-bottom: 8px;
+}
+.school-logo {
+    height: 70px;
+    width: auto;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto;
+}
+.school-logo-placeholder {
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, #1565C0, #6A1B9A);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 34px;
+    color: white;
+    margin: 0 auto;
+}
+.school-info { width: 100%; }
+.school-name {
+    font-size: 20px;
+    font-weight: 800;
+    color: #1565C0;
+    letter-spacing: .3px;
+    margin-bottom: 3px;
+    text-transform: uppercase;
+}
+.school-motto {
+    font-size: 10px;
+    color: #555;
+    font-style: italic;
+    margin-bottom: 4px;
+}
+.school-contact {
+    font-size: 8.5px;
+    color: #666;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 3px;
+}
+.contact-item { display: flex; align-items: center; gap: 3px; }
+.contact-icon { opacity: .7; }
+
+/* ── Titles ── */
+.doc-title {
+    font-size: 15px;
+    font-weight: 800;
+    color: #1a1a2e;
+    text-align: center;
+    margin: 10px 0 3px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+.doc-meta {
+    font-size: 9px;
+    color: #666;
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+/* ── Table base ── */
+table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+th, td { border: 1px solid #dde1e7; vertical-align: middle; padding: 5px 6px; }
+
+/* ── Period header column ── */
+.period-header {
+    background: #1a1a2e;
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    text-align: center;
+    width: 80px;
+}
+.period-header .pname { font-weight: 700; font-size: 9px; }
+.period-header .ptime-small { font-size: 7px; opacity: .75; margin-top: 2px; }
+
+/* ── Day headers ── */
+.day-header { color: #fff; font-size: 11px; font-weight: 700; text-align: center; }
+
+/* ── Period label cell ── */
+.period-cell { background: #f0f2f5; text-align: center; }
+.pname  { font-weight: 700; font-size: 9px; color: #1a1a2e; }
+.ptime  { font-size: 7.5px; color: #666; margin-top: 1px; }
+
+/* ── Day cell (vertical layout) ── */
+.day-cell { font-weight: 700; text-align: center; width: 65px; font-size: 10px; }
+
+/* ── Slot cells ── */
+.slot-cell { text-align: center; padding: 6px 4px; }
+.sname  { font-weight: 700; font-size: 10px; color: #1a1a2e; margin-bottom: 2px; }
+.scode  { font-size: 7px; color: #555; font-style: italic; margin-bottom: 2px; }
+.tname  { font-size: 8px; color: #444; }
+.room   { font-size: 7px; color: #666; margin-top: 2px; }
+
+/* ── Break & free ── */
+.break-row td { height: 20px; }
+.break-cell { background: #FFF8E1 !important; text-align: center; }
+.break-lbl  { font-size: 8px; color: #F57F17; font-style: italic; font-weight: 700; }
+.free-cell  { background: #fafafa !important; text-align: center; }
+.free-lbl   { font-size: 8px; color: #c0c0c0; }
+
+/* ── Footer ── */
+.footer {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    padding-top: 6px;
+    border-top: 1px solid #dde1e7;
+    font-size: 7px;
+    color: #888;
+}
+
+/* ── Print button ── */
+.print-btn {
+    position: fixed; top: 14px; right: 14px;
+    background: #1565C0; color: #fff;
+    border: none; padding: 9px 20px;
+    border-radius: 7px; cursor: pointer;
+    font-size: 13px; font-weight: 700;
+    z-index: 999; box-shadow: 0 3px 12px rgba(21,101,192,.35);
+}
+.print-btn:hover { background: #0D47A1; }
+@media print { .print-btn { display: none !important; } }
+CSS;
+    }
+
     private function exportPdfHorizontal($periods, $days, $grid, $subjectColorCss, $className, $sessionName, $termName, $schoolName, $schoolLogo, $schoolAddress, $schoolPhone, $schoolEmail, $schoolMotto, $generatedAt, $generatedBy)
     {
-        $dayHeaders = '';
         $colPct = round(80 / max(count($days), 1), 2);
+        $dayHeaders = '';
         foreach ($days as $day) {
             $hc = self::DAY_COLORS[$day] ?? '#333';
-            $dayHeaders .= "<th class=\"day-header\" style=\"background:{$hc};width:{$colPct}%\">" . htmlspecialchars($day) . "</th>";
+            $dayHeaders .= '<th class="day-header" style="background:' . $hc . ';width:' . $colPct . '%">' . htmlspecialchars($day) . '</th>';
         }
 
         $tableRows = '';
         foreach ($periods as $period) {
             $isBreak = $period->is_break ?? false;
-            $rowCls = $isBreak ? ' class="break-row"' : '';
-            $tableRows .= "<tr{$rowCls}>";
-            $tableRows .= '<td class="period-cell"><div class="pname">' . htmlspecialchars($period->name)
-                . '</div><div class="ptime">' . htmlspecialchars($period->start_time . ' – ' . $period->end_time) . '</div></td>';
+            $rowCls  = $isBreak ? ' class="break-row"' : '';
+            $tableRows .= '<tr' . $rowCls . '>';
+            $tableRows .= '<td class="period-cell"><div class="pname">' . htmlspecialchars($period->name) . '</div>'
+                        . '<div class="ptime">' . htmlspecialchars($period->start_time . ' – ' . $period->end_time) . '</div></td>';
 
             foreach ($days as $day) {
-                $slot = $grid[$period->id][$day] ?? null;
+                $slot  = $grid[$period->id][$day] ?? null;
                 $isFree = !$slot || ($slot['is_free'] ?? false) || $slot['subject'] === '—';
-                $sid = $slot['subject_id'] ?? null;
-                $ccls = ($sid && isset($subjectColorCss)) ? " subj-{$sid}" : '';
+                $sid   = $slot['subject_id'] ?? null;
+                $ccls  = ($sid && $subjectColorCss) ? ' subj-' . $sid : '';
 
                 if ($isBreak) {
-                    $tableRows .= '<td class="break-cell"><span class="break-lbl">Break</span></td>';
+                    $tableRows .= '<td class="break-cell"><span class="break-lbl">☕ Break</span></td>';
                 } elseif ($isFree) {
                     $tableRows .= '<td class="free-cell"><span class="free-lbl">Free</span></td>';
                 } else {
-                    $tableRows .= "<td class=\"slot-cell{$ccls}\">"
+                    $tableRows .= '<td class="slot-cell' . $ccls . '">'
                         . '<div class="sname">' . htmlspecialchars($slot['subject'] ?? '—') . '</div>'
                         . (!empty($slot['subject_code']) ? '<div class="scode">' . htmlspecialchars($slot['subject_code']) . '</div>' : '')
                         . '<div class="tname">' . htmlspecialchars($slot['teacher'] ?? '—') . '</div>'
@@ -433,174 +1176,57 @@ class TimetableController extends Controller
             $tableRows .= '</tr>';
         }
 
-        $logoHtml = $schoolLogo ? '<img src="' . $schoolLogo . '" class="school-logo" alt="School Logo">' : '<div class="school-logo-placeholder">🏫</div>';
+        $sharedCss   = $this->getSharedPdfCss();
+        $headerHtml  = $this->buildSchoolHeaderHtml($schoolName, $schoolLogo, $schoolAddress, $schoolPhone, $schoolEmail, $schoolMotto);
+        $eClassName  = htmlspecialchars($className);
+        $eSession    = htmlspecialchars($sessionName);
+        $eTerm       = htmlspecialchars($termName);
+        $eGenAt      = htmlspecialchars($generatedAt);
+        $eGenBy      = htmlspecialchars($generatedBy);
 
-        $html = <<<HTML
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Timetable — {$className}</title>
-<style>
-@page {
-    size: A4 landscape;
-    margin: 10mm 8mm;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',Arial,sans-serif;font-size:10px;color:#1a1a2e;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.school-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-bottom: 8px;
-    border-bottom: 3px solid #1565C0;
-    margin-bottom: 12px;
-}
-.school-logo {
-    height: 60px;
-    width: auto;
-    object-fit: contain;
-}
-.school-logo-placeholder {
-    width: 60px;
-    height: 60px;
-    background: linear-gradient(135deg, #1565C0, #6A1B9A);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 30px;
-    color: white;
-}
-.school-info {
-    text-align: center;
-    flex: 1;
-}
-.school-name {
-    font-size: 18px;
-    font-weight: 700;
-    color: #1565C0;
-    margin-bottom: 4px;
-}
-.school-motto {
-    font-size: 10px;
-    color: #666;
-    font-style: italic;
-}
-.school-contact {
-    font-size: 8px;
-    color: #888;
-    margin-top: 4px;
-}
-.ttitle {
-    font-size: 14px;
-    font-weight: 700;
-    color: #222;
-    text-align: center;
-    margin: 8px 0 4px;
-}
-.tmeta {
-    font-size: 9px;
-    color: #666;
-    text-align: center;
-}
-.ginfo {
-    font-size: 7px;
-    color: #999;
-    text-align: right;
-    margin-top: 4px;
-}
-table{width:100%;border-collapse:collapse;table-layout:fixed}
-th,td{border:1px solid #dde1e7;vertical-align:middle;padding:4px 5px}
-.period-header{background:#1a1a2e;color:#fff;font-size:10px;font-weight:600;text-align:center;width:80px}
-.day-header{color:#fff;font-size:11px;font-weight:700;text-align:center}
-.period-cell{background:#f0f2f5;text-align:center;width:80px}
-.pname{font-weight:700;font-size:9px;color:#1a1a2e}
-.ptime{font-size:8px;color:#666;margin-top:1px}
-.slot-cell{text-align:center;padding:6px 4px}
-.sname{font-weight:700;font-size:10px;color:#1a1a2e;margin-bottom:1px}
-.scode{font-size:7px;color:#555;font-style:italic;margin-bottom:2px}
-.tname{font-size:8px;color:#444}
-.room{font-size:7px;color:#666;margin-top:2px}
-.break-row td{height:20px}
-.break-cell{background:#FFF8E1!important;text-align:center}
-.break-lbl{font-size:8px;color:#F57F17;font-style:italic;font-weight:600}
-.free-cell{background:#fafafa!important;text-align:center}
-.free-lbl{font-size:8px;color:#bbb}
-.footer{
-    margin-top: 10px;
-    display: flex;
-    justify-content: space-between;
-    padding-top: 6px;
-    border-top: 1px solid #dde1e7;
-    font-size: 7px;
-    color: #888;
-}
-.print-btn{position:fixed;top:12px;right:12px;background:#1565C0;color:#fff;border:none;padding:8px 18px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;z-index:999}
-.print-btn:hover{background:#0D47A1}
-@media print{.print-btn{display:none!important}}
-{$subjectColorCss}
-</style>
-</head>
-<body>
-<button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
-
-<div class="school-header">
-    {$logoHtml}
-    <div class="school-info">
-        <div class="school-name">" . htmlspecialchars($schoolName) . "</div>
-        <div class="school-motto">" . htmlspecialchars($schoolMotto) . "</div>
-        <div class="school-contact">" . htmlspecialchars($schoolAddress) . " | ☎ " . htmlspecialchars($schoolPhone) . " | ✉ " . htmlspecialchars($schoolEmail) . "</div>
-    </div>
-    <div style="width: 60px;"></div>
-</div>
-
-<div class="ttitle">CLASS TIMETABLE — " . htmlspecialchars($className) . "</div>
-<div class="tmeta">" . htmlspecialchars($sessionName) . " • " . htmlspecialchars($termName) . "</div>
-
-<table>
-    <thead>
-        <tr><th class="period-header">PERIOD</th>{$dayHeaders}</tr>
-    </thead>
-    <tbody>{$tableRows}</tbody>
-</table>
-
-<div class="footer">
-    <span>Generated: {$generatedAt} by {$generatedBy}</span>
-    <span>☕ Break | ▯ Free period</span>
-    <span>Powered by School Management System</span>
-</div>
-</body>
-</html>
-HTML;
+        $html = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">'
+            . '<title>Timetable — ' . $eClassName . '</title>'
+            . '<style>' . $sharedCss . "\n" . $subjectColorCss . '</style>'
+            . '</head><body>'
+            . '<button class="print-btn" onclick="window.print()">🖨️ Print / Save PDF</button>'
+            . $headerHtml
+            . '<div class="doc-title">CLASS TIMETABLE — ' . $eClassName . '</div>'
+            . '<div class="doc-meta">' . $eSession . ' &nbsp;•&nbsp; ' . $eTerm . '</div>'
+            . '<table><thead><tr><th class="period-header">PERIOD</th>' . $dayHeaders . '</tr></thead>'
+            . '<tbody>' . $tableRows . '</tbody></table>'
+            . '<div class="footer">'
+            . '<span>Generated: ' . $eGenAt . ' by ' . $eGenBy . '</span>'
+            . '<span>☕ Break &nbsp;|&nbsp; ▯ Free period</span>'
+            . '<span>Powered by School Management System</span>'
+            . '</div>'
+            . '</body></html>';
 
         return response($html, 200)->header('Content-Type', 'text/html; charset=UTF-8');
     }
 
     private function exportPdfVertical($periods, $days, $grid, $subjectColorCss, $className, $sessionName, $termName, $schoolName, $schoolLogo, $schoolAddress, $schoolPhone, $schoolEmail, $schoolMotto, $generatedAt, $generatedBy)
     {
-        // Vertical orientation: Days as rows, Periods as columns
-        $periodHeaders = '';
         $colPct = round(80 / max(count($periods), 1), 2);
+        $periodHeaders = '';
         foreach ($periods as $period) {
-            $periodHeaders .= "<th class=\"period-header\" style=\"width:{$colPct}%\">"
+            $periodHeaders .= '<th class="period-header" style="width:' . $colPct . '%">'
                 . '<div class="pname">' . htmlspecialchars($period->name) . '</div>'
-                . '<div class="ptime-small">' . htmlspecialchars($period->start_time . '-' . $period->end_time) . '</div>'
-                . "</th>";
+                . '<div class="ptime-small">' . htmlspecialchars($period->start_time . '–' . $period->end_time) . '</div>'
+                . '</th>';
         }
 
         $tableRows = '';
         foreach ($days as $day) {
             $hc = self::DAY_COLORS[$day] ?? '#333';
-            $tableRows .= "<tr>";
-            $tableRows .= "<td class=\"day-cell\" style=\"background:{$hc};color:#fff;font-weight:700;text-align:center\">" . htmlspecialchars($day) . "</td>";
+            $tableRows .= '<tr>'
+                . '<td class="day-cell" style="background:' . $hc . ';color:#fff">' . htmlspecialchars($day) . '</td>';
 
             foreach ($periods as $period) {
-                $slot = $grid[$period->id][$day] ?? null;
+                $slot   = $grid[$period->id][$day] ?? null;
                 $isFree = !$slot || ($slot['is_free'] ?? false) || $slot['subject'] === '—';
 
                 if ($period->is_break ?? false) {
-                    $tableRows .= '<td class="break-cell"><span class="break-lbl">Break</span></td>';
+                    $tableRows .= '<td class="break-cell"><span class="break-lbl">☕ Break</span></td>';
                 } elseif ($isFree) {
                     $tableRows .= '<td class="free-cell"><span class="free-lbl">Free</span></td>';
                 } else {
@@ -614,463 +1240,174 @@ HTML;
             $tableRows .= '</tr>';
         }
 
-        $logoHtml = $schoolLogo ? '<img src="' . $schoolLogo . '" class="school-logo" alt="School Logo">' : '<div class="school-logo-placeholder">🏫</div>';
+        $sharedCss  = $this->getSharedPdfCss();
+        $headerHtml = $this->buildSchoolHeaderHtml($schoolName, $schoolLogo, $schoolAddress, $schoolPhone, $schoolEmail, $schoolMotto);
+        $eClassName = htmlspecialchars($className);
+        $eSession   = htmlspecialchars($sessionName);
+        $eTerm      = htmlspecialchars($termName);
+        $eGenAt     = htmlspecialchars($generatedAt);
+        $eGenBy     = htmlspecialchars($generatedBy);
 
-        $html = <<<HTML
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Timetable — {$className}</title>
-<style>
-@page {
-    size: A4 landscape;
-    margin: 10mm 8mm;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',Arial,sans-serif;font-size:10px;color:#1a1a2e;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.school-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-bottom: 8px;
-    border-bottom: 3px solid #1565C0;
-    margin-bottom: 12px;
-}
-.school-logo {
-    height: 60px;
-    width: auto;
-    object-fit: contain;
-}
-.school-logo-placeholder {
-    width: 60px;
-    height: 60px;
-    background: linear-gradient(135deg, #1565C0, #6A1B9A);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 30px;
-    color: white;
-}
-.school-info {
-    text-align: center;
-    flex: 1;
-}
-.school-name {
-    font-size: 18px;
-    font-weight: 700;
-    color: #1565C0;
-    margin-bottom: 4px;
-}
-.school-motto {
-    font-size: 10px;
-    color: #666;
-    font-style: italic;
-}
-.school-contact {
-    font-size: 8px;
-    color: #888;
-    margin-top: 4px;
-}
-.ttitle {
-    font-size: 14px;
-    font-weight: 700;
-    color: #222;
-    text-align: center;
-    margin: 8px 0 4px;
-}
-.tmeta {
-    font-size: 9px;
-    color: #666;
-    text-align: center;
-}
-.ginfo {
-    font-size: 7px;
-    color: #999;
-    text-align: right;
-    margin-top: 4px;
-}
-table{width:100%;border-collapse:collapse;table-layout:fixed}
-th,td{border:1px solid #dde1e7;vertical-align:middle;padding:6px 5px}
-.period-header {
-    background: #1a1a2e;
-    color: #fff;
-    font-size: 9px;
-    font-weight: 600;
-    text-align: center;
-    padding: 6px 4px;
-}
-.period-header .pname { font-weight: 700; font-size: 9px; }
-.period-header .ptime-small { font-size: 7px; opacity: 0.8; margin-top: 2px; }
-.day-cell {
-    font-weight: 700;
-    text-align: center;
-    width: 70px;
-}
-.slot-cell{text-align:center;padding:6px 4px}
-.sname{font-weight:700;font-size:10px;color:#1a1a2e;margin-bottom:2px}
-.tname{font-size:8px;color:#444}
-.room{font-size:7px;color:#666;margin-top:2px}
-.break-cell{background:#FFF8E1!important;text-align:center}
-.break-lbl{font-size:8px;color:#F57F17;font-style:italic;font-weight:600}
-.free-cell{background:#fafafa!important;text-align:center}
-.free-lbl{font-size:8px;color:#bbb}
-.footer{
-    margin-top: 10px;
-    display: flex;
-    justify-content: space-between;
-    padding-top: 6px;
-    border-top: 1px solid #dde1e7;
-    font-size: 7px;
-    color: #888;
-}
-.print-btn{position:fixed;top:12px;right:12px;background:#1565C0;color:#fff;border:none;padding:8px 18px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;z-index:999}
-.print-btn:hover{background:#0D47A1}
-@media print{.print-btn{display:none!important}}
-</style>
-</head>
-<body>
-<button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
-
-<div class="school-header">
-    {$logoHtml}
-    <div class="school-info">
-        <div class="school-name">" . htmlspecialchars($schoolName) . "</div>
-        <div class="school-motto">" . htmlspecialchars($schoolMotto) . "</div>
-        <div class="school-contact">" . htmlspecialchars($schoolAddress) . " | ☎ " . htmlspecialchars($schoolPhone) . " | ✉ " . htmlspecialchars($schoolEmail) . "</div>
-    </div>
-    <div style="width: 60px;"></div>
-</div>
-
-<div class="ttitle">CLASS TIMETABLE — " . htmlspecialchars($className) . "</div>
-<div class="tmeta">" . htmlspecialchars($sessionName) . " • " . htmlspecialchars($termName) . "</div>
-
-<table>
-    <thead>
-        <tr><th class="period-header">DAY / PERIOD</th>{$periodHeaders}</tr>
-    </thead>
-    <tbody>{$tableRows}</tbody>
-</table>
-
-<div class="footer">
-    <span>Generated: {$generatedAt} by {$generatedBy}</span>
-    <span>☕ Break | ▯ Free period</span>
-    <span>Powered by School Management System</span>
-</div>
-</body>
-</html>
-HTML;
+        $html = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">'
+            . '<title>Timetable — ' . $eClassName . '</title>'
+            . '<style>' . $sharedCss . "\n" . $subjectColorCss . '</style>'
+            . '</head><body>'
+            . '<button class="print-btn" onclick="window.print()">🖨️ Print / Save PDF</button>'
+            . $headerHtml
+            . '<div class="doc-title">CLASS TIMETABLE — ' . $eClassName . '</div>'
+            . '<div class="doc-meta">' . $eSession . ' &nbsp;•&nbsp; ' . $eTerm . '</div>'
+            . '<table><thead><tr><th class="period-header" style="width:65px">DAY / PERIOD</th>' . $periodHeaders . '</tr></thead>'
+            . '<tbody>' . $tableRows . '</tbody></table>'
+            . '<div class="footer">'
+            . '<span>Generated: ' . $eGenAt . ' by ' . $eGenBy . '</span>'
+            . '<span>☕ Break &nbsp;|&nbsp; ▯ Free period</span>'
+            . '<span>Powered by School Management System</span>'
+            . '</div>'
+            . '</body></html>';
 
         return response($html, 200)->header('Content-Type', 'text/html; charset=UTF-8');
     }
 
     private function exportWholeSchoolPdf($allTimetables, $schoolInfo, $session, $term, $orientation = 'horizontal')
     {
-        $schoolName = $schoolInfo?->school_name ?? config('app.school_name', config('app.name', 'School'));
-        $schoolLogo = $schoolInfo?->getLogoWithFallbackAttribute();
+        $schoolName    = $schoolInfo?->school_name ?? config('app.school_name', config('app.name', 'School'));
+        $schoolLogo    = $schoolInfo?->getLogoWithFallbackAttribute();
         $schoolAddress = $schoolInfo?->school_address ?? '';
-        $schoolPhone = $schoolInfo?->school_phone ?? '';
-        $schoolEmail = $schoolInfo?->school_email ?? '';
-        $schoolMotto = $schoolInfo?->school_motto ?? '';
+        $schoolPhone   = $schoolInfo?->school_phone ?? '';
+        $schoolEmail   = $schoolInfo?->school_email ?? '';
+        $schoolMotto   = $schoolInfo?->school_motto ?? '';
 
         $generatedAt = now()->format('d F Y, H:i');
         $generatedBy = Auth::user()->name;
         $sessionName = $session->session ?? 'Current Session';
-        $termName = $term?->term ?? 'All Terms';
+        $termName    = $term?->term ?? 'All Terms';
 
-        $logoHtml = $schoolLogo ? '<img src="' . $schoolLogo . '" class="school-logo" alt="School Logo">' : '<div class="school-logo-placeholder">🏫</div>';
+        $headerHtml  = $this->buildSchoolHeaderHtml($schoolName, $schoolLogo, $schoolAddress, $schoolPhone, $schoolEmail, $schoolMotto);
+        $sharedCss   = $this->getSharedPdfCss();
+        $eSession    = htmlspecialchars($sessionName);
+        $eTerm       = htmlspecialchars($termName);
+        $eGenAt      = htmlspecialchars($generatedAt);
+        $eGenBy      = htmlspecialchars($generatedBy);
 
-        $timetablesHtml = '';
-        foreach ($allTimetables as $index => $tt) {
-            $pageBreak = $index > 0 ? 'page-break-before: always;' : '';
-
-            if ($orientation === 'vertical') {
-                // Vertical orientation for whole school
-                $periodHeaders = '';
-                $colPct = round(80 / max(count($tt['periods']), 1), 2);
-                foreach ($tt['periods'] as $period) {
-                    $isBreakPeriod = $period->is_break ?? false;
-                    $periodHeaders .= "<th class=\"period-header\" style=\"width:{$colPct}%\">"
-                        . '<div class="pname">' . htmlspecialchars($period->name) . '</div>'
-                        . '<div class="ptime-small">' . htmlspecialchars($period->start_time . '-' . $period->end_time) . '</div>'
-                        . "</th>";
-                }
-
-                $tableRows = '';
-                foreach ($tt['days'] as $day) {
-                    $hc = self::DAY_COLORS[$day] ?? '#333';
-                    $tableRows .= "<tr>";
-                    $tableRows .= "<td class=\"day-cell\" style=\"background:{$hc};color:#fff;font-weight:700;text-align:center\">" . htmlspecialchars($day) . "</td>";
-
-                    foreach ($tt['periods'] as $period) {
-                        $slot = $tt['grid'][$period->id][$day] ?? null;
-                        $isFree = !$slot || $slot['subject'] === '—';
-
-                        if ($period->is_break ?? false) {
-                            $tableRows .= '<td class="break-cell"><span class="break-lbl">Break</span></td>';
-                        } elseif ($isFree) {
-                            $tableRows .= '<td class="free-cell"><span class="free-lbl">Free</span></td>';
-                        } else {
-                            $tableRows .= '<td class="slot-cell">'
-                                . '<div class="sname">' . htmlspecialchars($slot['subject'] ?? '—') . '</div>'
-                                . '<div class="tname">' . htmlspecialchars($slot['teacher'] ?? '—') . '</div>'
-                                . (!empty($slot['room']) ? '<div class="room">📍 ' . htmlspecialchars($slot['room']) . '</div>' : '')
-                                . '</td>';
-                        }
-                    }
-                    $tableRows .= '</tr>';
-                }
-
-                $timetablesHtml .= <<<HTML
-<div style="{$pageBreak} margin-bottom: 30px;">
-    <div class="class-title">{$tt['class_name']}</div>
-    <table class="timetable-table">
-        <thead>
-            <tr><th class="period-header">DAY / PERIOD</th>{$periodHeaders}</thead>
-        </thead>
-        <tbody>{$tableRows}</tbody>
-    </table>
-</div>
-HTML;
-            } else {
-                // Horizontal orientation for whole school
-                $dayHeaders = '';
-                $colPct = round(80 / max(count($tt['days']), 1), 2);
-                foreach ($tt['days'] as $day) {
-                    $hc = self::DAY_COLORS[$day] ?? '#333';
-                    $dayHeaders .= "<th class=\"day-header\" style=\"background:{$hc};width:{$colPct}%\">" . htmlspecialchars($day) . "</th>";
-                }
-
-                $tableRows = '';
-                foreach ($tt['periods'] as $period) {
-                    $isBreak = $period->is_break ?? false;
-                    $rowCls = $isBreak ? ' class="break-row"' : '';
-                    $tableRows .= "<tr{$rowCls}>";
-                    $tableRows .= '<td class="period-cell"><div class="pname">' . htmlspecialchars($period->name)
-                        . '</div><div class="ptime">' . htmlspecialchars($period->start_time . ' – ' . $period->end_time) . '</div></td>';
-
-                    foreach ($tt['days'] as $day) {
-                        $slot = $tt['grid'][$period->id][$day] ?? null;
-                        $isFree = !$slot || $slot['subject'] === '—';
-
-                        if ($isBreak) {
-                            $tableRows .= '<td class="break-cell"><span class="break-lbl">Break</span></td>';
-                        } elseif ($isFree) {
-                            $tableRows .= '<td class="free-cell"><span class="free-lbl">Free</span></td>';
-                        } else {
-                            $tableRows .= '<td class="slot-cell">'
-                                . '<div class="sname">' . htmlspecialchars($slot['subject'] ?? '—') . '</div>'
-                                . '<div class="tname">' . htmlspecialchars($slot['teacher'] ?? '—') . '</div>'
-                                . (!empty($slot['room']) ? '<div class="room">📍 ' . htmlspecialchars($slot['room']) . '</div>' : '')
-                                . '</td>';
-                        }
-                    }
-                    $tableRows .= '</tr>';
-                }
-
-                $timetablesHtml .= <<<HTML
-<div style="{$pageBreak} margin-bottom: 30px;">
-    <div class="class-title">{$tt['class_name']}</div>
-    <table class="timetable-table">
-        <thead>
-            <tr><th class="period-header">PERIOD</th>{$dayHeaders}</thead>
-        </thead>
-        <tbody>{$tableRows}</tbody>
-    </table>
-</div>
-HTML;
-            }
-        }
-
-        $orientationClass = $orientation === 'vertical' ? 'orientation-vertical' : 'orientation-horizontal';
-
-        $html = <<<HTML
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Whole School Timetable - {$sessionName}</title>
-<style>
-@page {
-    size: A4 landscape;
-    margin: 10mm 8mm;
-}
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'Segoe UI',Arial,sans-serif;font-size:9px;color:#1a1a2e;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.school-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-bottom: 8px;
-    border-bottom: 3px solid #1565C0;
-    margin-bottom: 12px;
-}
-.school-logo {
-    height: 60px;
-    width: auto;
-    object-fit: contain;
-}
-.school-logo-placeholder {
-    width: 60px;
-    height: 60px;
-    background: linear-gradient(135deg, #1565C0, #6A1B9A);
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 30px;
-    color: white;
-}
-.school-info {
-    text-align: center;
-    flex: 1;
-}
-.school-name {
-    font-size: 18px;
-    font-weight: 700;
-    color: #1565C0;
-    margin-bottom: 4px;
-}
-.school-motto {
-    font-size: 10px;
-    color: #666;
-    font-style: italic;
-}
-.school-contact {
-    font-size: 8px;
-    color: #888;
-    margin-top: 4px;
-}
-.main-title {
-    font-size: 16px;
-    font-weight: 700;
-    color: #222;
-    text-align: center;
-    margin: 8px 0 4px;
-}
-.sub-title {
-    font-size: 11px;
-    color: #666;
-    text-align: center;
-    margin-bottom: 16px;
+        $extraCss = <<<CSS
+.class-section {
+    margin-bottom: 28px;
 }
 .class-title {
     font-size: 13px;
-    font-weight: 700;
+    font-weight: 800;
     color: #1565C0;
     margin: 16px 0 8px;
-    padding-left: 8px;
+    padding: 5px 10px;
+    background: linear-gradient(135deg, #EFF6FF, #F5F3FF);
     border-left: 4px solid #1565C0;
+    border-radius: 0 6px 6px 0;
+    display: inline-block;
 }
-.ginfo {
-    font-size: 7px;
-    color: #999;
-    text-align: right;
-    margin-top: 4px;
-}
-.timetable-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-bottom: 20px;
-}
-th, td {
-    border: 1px solid #dde1e7;
-    vertical-align: middle;
-    padding: 4px 5px;
-}
-.period-header {
-    background: #1a1a2e;
-    color: #fff;
-    font-size: 8px;
-    font-weight: 600;
-    text-align: center;
-}
-.period-header .pname { font-weight: 700; font-size: 8px; }
-.period-header .ptime-small { font-size: 6px; opacity: 0.8; margin-top: 2px; }
-.day-header {
-    color: #fff;
-    font-size: 9px;
-    font-weight: 700;
-    text-align: center;
-}
-.period-cell {
-    background: #f0f2f5;
-    text-align: center;
-    width: 70px;
-}
-.pname { font-weight: 700; font-size: 8px; color: #1a1a2e; }
-.ptime { font-size: 7px; color: #666; margin-top: 1px; }
-.slot-cell { text-align: center; padding: 4px 3px; }
-.sname { font-weight: 700; font-size: 9px; color: #1a1a2e; margin-bottom: 1px; }
-.tname { font-size: 7px; color: #444; }
-.room { font-size: 6px; color: #666; margin-top: 1px; }
-.day-cell {
-    font-weight: 700;
-    text-align: center;
-    width: 60px;
-}
-.break-row td { height: 18px; }
-.break-cell { background: #FFF8E1!important; text-align: center; }
-.break-lbl { font-size: 7px; color: #F57F17; font-style: italic; font-weight: 600; }
-.free-cell { background: #fafafa!important; text-align: center; }
-.free-lbl { font-size: 7px; color: #bbb; }
-.footer {
-    margin-top: 10px;
-    display: flex;
-    justify-content: space-between;
-    padding-top: 6px;
-    border-top: 1px solid #dde1e7;
-    font-size: 7px;
-    color: #888;
-}
-.print-btn {
-    position: fixed;
-    top: 12px;
-    right: 12px;
-    background: #1565C0;
-    color: #fff;
-    border: none;
-    padding: 8px 18px;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 13px;
-    font-weight: 600;
-    z-index: 999;
-}
-.print-btn:hover { background: #0D47A1; }
-@media print { .print-btn { display: none!important; } }
-</style>
-</head>
-<body>
-<button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
+CSS;
 
-<div class="school-header">
-    {$logoHtml}
-    <div class="school-info">
-        <div class="school-name">" . htmlspecialchars($schoolName) . "</div>
-        <div class="school-motto">" . htmlspecialchars($schoolMotto) . "</div>
-        <div class="school-contact">" . htmlspecialchars($schoolAddress) . " | ☎ " . htmlspecialchars($schoolPhone) . " | ✉ " . htmlspecialchars($schoolEmail) . "</div>
-    </div>
-    <div style="width: 60px;"></div>
-</div>
+        $timetablesHtml = '';
+        foreach ($allTimetables as $index => $tt) {
+            $pageBreak   = $index > 0 ? 'page-break-before: always;' : '';
+            $eClassName  = htmlspecialchars($tt['class_name']);
 
-<div class="main-title">WHOLE SCHOOL TIMETABLE</div>
-<div class="sub-title">" . htmlspecialchars($sessionName) . " • " . htmlspecialchars($termName) . "</div>
+            if ($orientation === 'vertical') {
+                $colPct = round(80 / max(count($tt['periods']), 1), 2);
+                $periodHeaders = '';
+                foreach ($tt['periods'] as $period) {
+                    $periodHeaders .= '<th class="period-header" style="width:' . $colPct . '%">'
+                        . '<div class="pname">' . htmlspecialchars($period->name) . '</div>'
+                        . '<div class="ptime-small">' . htmlspecialchars($period->start_time . '–' . $period->end_time) . '</div>'
+                        . '</th>';
+                }
+                $tableRows = '';
+                foreach ($tt['days'] as $day) {
+                    $hc = self::DAY_COLORS[$day] ?? '#333';
+                    $tableRows .= '<tr><td class="day-cell" style="background:' . $hc . ';color:#fff">' . htmlspecialchars($day) . '</td>';
+                    foreach ($tt['periods'] as $period) {
+                        $slot   = $tt['grid'][$period->id][$day] ?? null;
+                        $isFree = !$slot || $slot['subject'] === '—';
+                        if ($period->is_break ?? false) {
+                            $tableRows .= '<td class="break-cell"><span class="break-lbl">☕ Break</span></td>';
+                        } elseif ($isFree) {
+                            $tableRows .= '<td class="free-cell"><span class="free-lbl">Free</span></td>';
+                        } else {
+                            $tableRows .= '<td class="slot-cell">'
+                                . '<div class="sname">' . htmlspecialchars($slot['subject'] ?? '—') . '</div>'
+                                . '<div class="tname">' . htmlspecialchars($slot['teacher'] ?? '—') . '</div>'
+                                . (!empty($slot['room']) ? '<div class="room">📍 ' . htmlspecialchars($slot['room']) . '</div>' : '')
+                                . '</td>';
+                        }
+                    }
+                    $tableRows .= '</tr>';
+                }
+                $timetablesHtml .= '<div class="class-section" style="' . $pageBreak . '">'
+                    . '<div class="class-title">' . $eClassName . '</div>'
+                    . '<table><thead><tr><th class="period-header" style="width:65px">DAY / PERIOD</th>' . $periodHeaders . '</tr></thead>'
+                    . '<tbody>' . $tableRows . '</tbody></table>'
+                    . '</div>';
+            } else {
+                $colPct = round(80 / max(count($tt['days']), 1), 2);
+                $dayHeaders = '';
+                foreach ($tt['days'] as $day) {
+                    $hc = self::DAY_COLORS[$day] ?? '#333';
+                    $dayHeaders .= '<th class="day-header" style="background:' . $hc . ';width:' . $colPct . '%">' . htmlspecialchars($day) . '</th>';
+                }
+                $tableRows = '';
+                foreach ($tt['periods'] as $period) {
+                    $isBreak = $period->is_break ?? false;
+                    $rowCls  = $isBreak ? ' class="break-row"' : '';
+                    $tableRows .= '<tr' . $rowCls . '>'
+                        . '<td class="period-cell"><div class="pname">' . htmlspecialchars($period->name) . '</div>'
+                        . '<div class="ptime">' . htmlspecialchars($period->start_time . ' – ' . $period->end_time) . '</div></td>';
+                    foreach ($tt['days'] as $day) {
+                        $slot   = $tt['grid'][$period->id][$day] ?? null;
+                        $isFree = !$slot || $slot['subject'] === '—';
+                        if ($isBreak) {
+                            $tableRows .= '<td class="break-cell"><span class="break-lbl">☕ Break</span></td>';
+                        } elseif ($isFree) {
+                            $tableRows .= '<td class="free-cell"><span class="free-lbl">Free</span></td>';
+                        } else {
+                            $tableRows .= '<td class="slot-cell">'
+                                . '<div class="sname">' . htmlspecialchars($slot['subject'] ?? '—') . '</div>'
+                                . '<div class="tname">' . htmlspecialchars($slot['teacher'] ?? '—') . '</div>'
+                                . (!empty($slot['room']) ? '<div class="room">📍 ' . htmlspecialchars($slot['room']) . '</div>' : '')
+                                . '</td>';
+                        }
+                    }
+                    $tableRows .= '</tr>';
+                }
+                $timetablesHtml .= '<div class="class-section" style="' . $pageBreak . '">'
+                    . '<div class="class-title">' . $eClassName . '</div>'
+                    . '<table><thead><tr><th class="period-header">PERIOD</th>' . $dayHeaders . '</tr></thead>'
+                    . '<tbody>' . $tableRows . '</tbody></table>'
+                    . '</div>';
+            }
+        }
 
-{$timetablesHtml}
-
-<div class="footer">
-    <span>Generated: {$generatedAt} by {$generatedBy}</span>
-    <span>☕ Break | ▯ Free period</span>
-    <span>Powered by School Management System</span>
-</div>
-</body>
-</html>
-HTML;
+        $html = '<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">'
+            . '<title>Whole School Timetable - ' . $eSession . '</title>'
+            . '<style>' . $sharedCss . "\n" . $extraCss . '</style>'
+            . '</head><body>'
+            . '<button class="print-btn" onclick="window.print()">🖨️ Print / Save PDF</button>'
+            . $headerHtml
+            . '<div class="doc-title">WHOLE SCHOOL TIMETABLE</div>'
+            . '<div class="doc-meta">' . $eSession . ' &nbsp;•&nbsp; ' . $eTerm . '</div>'
+            . $timetablesHtml
+            . '<div class="footer">'
+            . '<span>Generated: ' . $eGenAt . ' by ' . $eGenBy . '</span>'
+            . '<span>☕ Break &nbsp;|&nbsp; ▯ Free period</span>'
+            . '<span>Powered by School Management System</span>'
+            . '</div>'
+            . '</body></html>';
 
         return response($html, 200)->header('Content-Type', 'text/html; charset=UTF-8');
     }
+
+    // =========================================================================
+    // TEACHER VIEW
+    // =========================================================================
+
     public function teacherView(Request $request)
     {
         $teacherId = Auth::id();
@@ -1101,10 +1438,10 @@ HTML;
             TimetableSetting::where('session_id', $sessionId)->pluck('id')
         )->orderBy('order')->get()->unique('order');
 
-        $sessions       = Schoolsession::orderByDesc('id')->get();
-        $terms          = Schoolterm::all();
-        $upcomingSlots  = $this->getUpcomingSlots($teacherId, $sessionId);
-        $weeklySummary  = $this->getWeeklySummary($teacherId, $sessionId);
+        $sessions      = Schoolsession::orderByDesc('id')->get();
+        $terms         = Schoolterm::all();
+        $upcomingSlots = $this->getUpcomingSlots($teacherId, $sessionId);
+        $weeklySummary = $this->getWeeklySummary($teacherId, $sessionId);
 
         return view('timetable.teacher', compact(
             'pagetitle', 'slots', 'days', 'allPeriods', 'sessions', 'terms',
@@ -1127,70 +1464,61 @@ HTML;
         $setting = TimetableSetting::firstOrCreate(
             array_filter($validated),
             [
-                'school_day_start'              => '08:00',
-                'school_day_end'                => '14:30',
-                'period_duration_minutes'       => 40,
-                'short_break_duration_minutes'  => 20,
-                'long_break_duration_minutes'   => 40,
-                'is_active'                     => true,
-                'active_days'                   => self::DAYS,
-                'created_by'                    => Auth::id(),  // Add this line
-                'updated_by'                    => Auth::id(),  // Add this line
+                'school_day_start'             => '08:00',
+                'school_day_end'               => '14:30',
+                'period_duration_minutes'      => 40,
+                'short_break_duration_minutes' => 20,
+                'long_break_duration_minutes'  => 40,
+                'is_active'                    => true,
+                'active_days'                  => self::DAYS,
+                'created_by'                   => Auth::id(),
+                'updated_by'                   => Auth::id(),
             ]
         );
 
         return response()->json(['success' => true, 'setting_id' => $setting->id, 'setting' => $setting]);
     }
 
-
     // =========================================================================
     // SAVE SETTINGS + AUTO-BUILD PERIODS
-    // =========================================================================
-
-   // =========================================================================
-    // SAVE SETTINGS + AUTO-BUILD PERIODS (with created_by tracking)
     // =========================================================================
 
     public function saveSettings(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'setting_id'                    => 'required|exists:timetable_settings,id',
-            'school_day_start'              => 'required|date_format:H:i',
-            'school_day_end'                => 'required|date_format:H:i',
-            'period_duration_minutes'       => 'required|integer|min:20|max:90',
-            'short_break_duration_minutes'  => 'required|integer|min:5|max:60',
-            'long_break_duration_minutes'   => 'required|integer|min:10|max:90',
-            'active_days'                   => 'required|array|min:1',
-            'periods'                       => 'required|array|min:1',
-            'periods.*.name'                => 'required|string|max:60',
-            'periods.*.type'                => 'required|in:lesson,short_break,long_break,assembly,free',
+            'setting_id'                   => 'required|exists:timetable_settings,id',
+            'school_day_start'             => 'required|date_format:H:i',
+            'school_day_end'               => 'required|date_format:H:i',
+            'period_duration_minutes'      => 'required|integer|min:20|max:90',
+            'short_break_duration_minutes' => 'required|integer|min:5|max:60',
+            'long_break_duration_minutes'  => 'required|integer|min:10|max:90',
+            'active_days'                  => 'required|array|min:1',
+            'periods'                      => 'required|array|min:1',
+            'periods.*.name'               => 'required|string|max:60',
+            'periods.*.type'               => 'required|in:lesson,short_break,long_break,assembly,free',
         ]);
 
         try {
             DB::beginTransaction();
 
             $setting = TimetableSetting::findOrFail($validated['setting_id']);
-
-            // Check if this is a new setting (no periods yet) to set created_by
-            $isNew = $setting->periods()->count() === 0;
+            $isNew   = $setting->periods()->count() === 0;
 
             $setting->update([
-                'school_day_start'              => $validated['school_day_start'],
-                'school_day_end'                => $validated['school_day_end'],
-                'period_duration_minutes'       => $validated['period_duration_minutes'],
-                'short_break_duration_minutes'  => $validated['short_break_duration_minutes'],
-                'long_break_duration_minutes'   => $validated['long_break_duration_minutes'],
-                'active_days'                   => $validated['active_days'],
-                'updated_by'                    => Auth::id(), // Track who updated
+                'school_day_start'             => $validated['school_day_start'],
+                'school_day_end'               => $validated['school_day_end'],
+                'period_duration_minutes'      => $validated['period_duration_minutes'],
+                'short_break_duration_minutes' => $validated['short_break_duration_minutes'],
+                'long_break_duration_minutes'  => $validated['long_break_duration_minutes'],
+                'active_days'                  => $validated['active_days'],
+                'updated_by'                   => Auth::id(),
             ]);
 
-            // Set created_by only if it's a new setting
             if ($isNew && !$setting->created_by) {
                 $setting->created_by = Auth::id();
-                $setting->saveQuietly(); // Save without triggering events
+                $setting->saveQuietly();
             }
 
-            // Delete existing periods
             TimetablePeriod::where('setting_id', $setting->id)->delete();
 
             $start = Carbon::createFromFormat('H:i', $validated['school_day_start']);
@@ -1203,9 +1531,7 @@ HTML;
                     'long_break'  => $validated['long_break_duration_minutes'],
                     default       => $validated['period_duration_minutes'],
                 };
-
                 $end = (clone $start)->addMinutes($duration);
-
                 TimetablePeriod::create([
                     'setting_id'       => $setting->id,
                     'order'            => $order,
@@ -1216,13 +1542,10 @@ HTML;
                     'duration_minutes' => $duration,
                     'is_break'         => in_array($p['type'], ['short_break', 'long_break', 'assembly']),
                 ]);
-
                 $start = $end;
             }
 
             DB::commit();
-
-            // Log the change
             $this->logTimetableChange(Auth::id(), 'update', 'TimetableSetting', $setting->id, null, $setting->fresh()->toArray());
 
             return response()->json(['success' => true, 'setting' => $setting->load('periods')]);
@@ -1241,31 +1564,31 @@ HTML;
     public function saveConstraints(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'setting_id'                          => 'required|exists:timetable_settings,id',
-            'constraints'                         => 'required|array',
-            'constraints.*.subject_id'            => 'required|exists:subject,id',
-            'constraints.*.periods_per_week'      => 'required|integer|min:1|max:10',
-            'constraints.*.allow_double'          => 'boolean',
-            'constraints.*.max_double'            => 'integer|min:0|max:5',
-            'constraints.*.preferred_days'        => 'nullable|array',
-            'constraints.*.avoid_days'            => 'nullable|array',
-            'constraints.*.preferred_periods'     => 'nullable|array',
-            'constraints.*.is_compulsory'         => 'boolean',
+            'setting_id'                      => 'required|exists:timetable_settings,id',
+            'constraints'                     => 'required|array',
+            'constraints.*.subject_id'        => 'required|exists:subject,id',
+            'constraints.*.periods_per_week'  => 'required|integer|min:1|max:10',
+            'constraints.*.allow_double'      => 'boolean',
+            'constraints.*.max_double'        => 'integer|min:0|max:5',
+            'constraints.*.preferred_days'    => 'nullable|array',
+            'constraints.*.avoid_days'        => 'nullable|array',
+            'constraints.*.preferred_periods' => 'nullable|array',
+            'constraints.*.is_compulsory'     => 'boolean',
         ]);
 
         DB::transaction(function () use ($validated) {
             TimetableConstraint::where('setting_id', $validated['setting_id'])->delete();
             foreach ($validated['constraints'] as $c) {
                 TimetableConstraint::create([
-                    'setting_id'                    => $validated['setting_id'],
-                    'subject_id'                    => $c['subject_id'],
-                    'periods_per_week'              => $c['periods_per_week'],
-                    'allow_double_period'           => $c['allow_double'] ?? false,
-                    'max_double_periods_per_week'   => $c['max_double'] ?? 1,
-                    'preferred_days'                => $c['preferred_days'] ?? null,
-                    'avoid_days'                    => $c['avoid_days'] ?? null,
-                    'preferred_periods'             => $c['preferred_periods'] ?? null,
-                    'is_compulsory'                 => $c['is_compulsory'] ?? true,
+                    'setting_id'                  => $validated['setting_id'],
+                    'subject_id'                  => $c['subject_id'],
+                    'periods_per_week'             => $c['periods_per_week'],
+                    'allow_double_period'          => $c['allow_double'] ?? false,
+                    'max_double_periods_per_week'  => $c['max_double'] ?? 1,
+                    'preferred_days'               => $c['preferred_days'] ?? null,
+                    'avoid_days'                   => $c['avoid_days'] ?? null,
+                    'preferred_periods'            => $c['preferred_periods'] ?? null,
+                    'is_compulsory'                => $c['is_compulsory'] ?? true,
                 ]);
             }
         });
@@ -1280,12 +1603,12 @@ HTML;
     public function saveTeacherAvailability(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'teacher_id'                    => 'required|exists:users,id',
-            'availability'                  => 'required|array',
-            'availability.*.day'            => 'required|in:Monday,Tuesday,Wednesday,Thursday,Friday',
-            'availability.*.start_time'     => 'required|date_format:H:i',
-            'availability.*.end_time'       => 'required|date_format:H:i|after:start_time',
-            'availability.*.is_available'   => 'boolean',
+            'teacher_id'                  => 'required|exists:users,id',
+            'availability'                => 'required|array',
+            'availability.*.day'          => 'required|in:Monday,Tuesday,Wednesday,Thursday,Friday',
+            'availability.*.start_time'   => 'required|date_format:H:i',
+            'availability.*.end_time'     => 'required|date_format:H:i|after:start_time',
+            'availability.*.is_available' => 'boolean',
         ]);
 
         foreach ($validated['availability'] as $avail) {
@@ -1319,7 +1642,7 @@ HTML;
         try {
             DB::beginTransaction();
 
-            $setting      = TimetableSetting::with(['periods', 'constraints.subject'])->findOrFail($validated['setting_id']);
+            $setting       = TimetableSetting::with(['periods', 'constraints.subject'])->findOrFail($validated['setting_id']);
             $lessonPeriods = $setting->periods->where('type', 'lesson')->values();
             $days          = $setting->active_days ?? self::DAYS;
             $constraints   = $setting->constraints->keyBy('subject_id');
@@ -1343,21 +1666,21 @@ HTML;
 
             TimetableSlot::where('setting_id', $setting->id)->delete();
 
-            $slotPool   = $this->buildWeightedSlotPool($days, $lessonPeriods);
+            $slotPool       = $this->buildWeightedSlotPool($days, $lessonPeriods);
             $teacherDaySlot = [];
-            $placed = [];
+            $placed         = [];
 
             $requirements = $constraints->sortByDesc(fn($c) => ($c->is_compulsory ? 100 : 0) + $c->periods_per_week)->values();
 
             foreach ($requirements as $constraint) {
-                $subjectId   = $constraint->subject_id;
-                $needed      = $constraint->periods_per_week;
-                $allowDouble = $constraint->allow_double_period;
-                $maxDouble   = $constraint->max_double_periods_per_week;
-                $preferDays  = $constraint->preferred_days ?? [];
-                $avoidDays   = $constraint->avoid_days ?? [];
+                $subjectId     = $constraint->subject_id;
+                $needed        = $constraint->periods_per_week;
+                $allowDouble   = $constraint->allow_double_period;
+                $maxDouble     = $constraint->max_double_periods_per_week;
+                $preferDays    = $constraint->preferred_days ?? [];
+                $avoidDays     = $constraint->avoid_days ?? [];
                 $preferPeriods = $constraint->preferred_periods ?? [];
-                $doubleCount = 0;
+                $doubleCount   = 0;
 
                 $teacherEntry = $subjectTeachers->get($subjectId)?->first();
                 $teacherId    = $teacherEntry?->staffid;
@@ -1393,7 +1716,6 @@ HTML;
                 $placedThisSubject = 0;
                 foreach ($scoredSlots as $scored) {
                     if ($placedThisSubject >= $needed) break;
-
                     $slot     = $scored['slot'];
                     $day      = $slot['day'];
                     $periodId = $slot['period_id'];
@@ -1412,15 +1734,13 @@ HTML;
                     ]);
 
                     $placed[$key] = $subjectId;
-                    if ($teacherId) {
-                        $teacherDaySlot[$teacherId][$day][] = $periodId;
-                    }
+                    if ($teacherId) $teacherDaySlot[$teacherId][$day][] = $periodId;
                     $placedThisSubject++;
 
                     if ($allowDouble && $doubleCount < $maxDouble && $placedThisSubject < $needed) {
                         $nextPeriod = $this->getNextLessonPeriod($lessonPeriods, $periodId);
                         if ($nextPeriod) {
-                            $nextKey        = $day . '_' . $nextPeriod->id;
+                            $nextKey         = $day . '_' . $nextPeriod->id;
                             $teacherConflict = $teacherId && in_array($nextPeriod->id, $teacherDaySlot[$teacherId][$day] ?? []);
                             if (!isset($placed[$nextKey]) && !$teacherConflict) {
                                 TimetableSlot::create([
@@ -1433,9 +1753,7 @@ HTML;
                                     'is_free'    => false,
                                 ]);
                                 $placed[$nextKey] = $subjectId;
-                                if ($teacherId) {
-                                    $teacherDaySlot[$teacherId][$day][] = $nextPeriod->id;
-                                }
+                                if ($teacherId) $teacherDaySlot[$teacherId][$day][] = $nextPeriod->id;
                                 $placedThisSubject++;
                                 $doubleCount++;
                             }
@@ -1479,10 +1797,8 @@ HTML;
         return $pool;
     }
 
-
-
     // =========================================================================
-    // SAVE SLOT — FIXED with room_id
+    // SAVE SLOT
     // =========================================================================
 
     public function saveSlot(Request $request): JsonResponse
@@ -1499,58 +1815,55 @@ HTML;
             'notes'      => 'nullable|string|max:191',
         ]);
 
-        // Check cross-class teacher conflict within the same session
         if (!empty($validated['teacher_id'])) {
-            $sessionId = TimetableSetting::where('id', $validated['setting_id'])->value('session_id');
+            $settingRow = TimetableSetting::where('id', $validated['setting_id'])->first();
+            $sessionId  = $settingRow?->session_id;
+            $termId     = $settingRow?->term_id;
 
             $conflict = TimetableSlot::where('period_id', $validated['period_id'])
                 ->where('day', $validated['day'])
                 ->where('teacher_id', $validated['teacher_id'])
                 ->where('setting_id', '!=', $validated['setting_id'])
-                ->whereHas('setting', fn($q) => $q->where('session_id', $sessionId)->where('is_active', true))
+                ->whereHas('setting', function ($q) use ($sessionId, $termId) {
+                    $q->where('session_id', $sessionId)
+                      ->where('is_active', true)
+                      ->when($termId, fn($q2) => $q2->where('term_id', $termId));
+                })
                 ->exists();
 
             if ($conflict) {
                 return response()->json([
                     'success'  => false,
-                    'message'  => 'This teacher is already assigned to another class at this time.',
+                    'message'  => 'This teacher is already assigned to another class at this time in the same session/term.',
                     'conflict' => true,
                 ], 422);
             }
         }
 
-        $whereClause = [
-            'setting_id' => $validated['setting_id'],
-            'period_id'  => $validated['period_id'],
-            'day'        => $validated['day'],
-        ];
+        $slot = TimetableSlot::updateOrCreate(
+            [
+                'setting_id' => $validated['setting_id'],
+                'period_id'  => $validated['period_id'],
+                'day'        => $validated['day'],
+            ],
+            [
+                'subject_id' => $validated['subject_id'] ?? null,
+                'teacher_id' => $validated['teacher_id'] ?? null,
+                'room_id'    => $validated['room_id'] ?? null,
+                'notes'      => $validated['notes'] ?? null,
+                'is_double'  => $validated['is_double'] ?? false,
+                'is_free'    => empty($validated['subject_id']),
+            ]
+        );
 
-        $updateData = [
-            'subject_id' => $validated['subject_id'] ?? null,
-            'teacher_id' => $validated['teacher_id'] ?? null,
-            'room_id'    => $validated['room_id'] ?? null,
-            'notes'      => $validated['notes'] ?? null,
-            'is_double'  => $validated['is_double'] ?? false,
-            'is_free'    => empty($validated['subject_id']),
-        ];
+        try { $this->logTimetableChange(Auth::id(), 'update', 'TimetableSlot', $slot->id); }
+        catch (\Exception $e) { Log::warning('Timetable audit log failed: ' . $e->getMessage()); }
 
-        $slot = TimetableSlot::updateOrCreate($whereClause, $updateData);
-
-        // Audit log
-        try {
-            $this->logTimetableChange(Auth::id(), 'update', 'TimetableSlot', $slot->id);
-        } catch (\Exception $e) {
-            Log::warning('Timetable audit log failed: ' . $e->getMessage());
-        }
-
-        // Notification
         try {
             if ($slot->wasChanged('teacher_id') && $slot->teacher_id) {
                 $this->scheduleNotification($slot->teacher_id, $slot->id, 'change_alert');
             }
-        } catch (\Exception $e) {
-            Log::warning('Timetable schedule notification failed: ' . $e->getMessage());
-        }
+        } catch (\Exception $e) { Log::warning('Timetable schedule notification failed: ' . $e->getMessage()); }
 
         return response()->json(['success' => true, 'slot' => $slot->load(['subject', 'teacher', 'room'])]);
     }
@@ -1562,12 +1875,12 @@ HTML;
     public function bulkUpdateSlots(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'setting_id'              => 'required|exists:timetable_settings,id',
-            'updates'                 => 'required|array',
-            'updates.*.period_id'     => 'required|exists:timetable_periods,id',
-            'updates.*.day'           => 'required|in:Monday,Tuesday,Wednesday,Thursday,Friday',
-            'updates.*.subject_id'    => 'nullable|exists:subject,id',
-            'updates.*.teacher_id'    => 'nullable|exists:users,id',
+            'setting_id'           => 'required|exists:timetable_settings,id',
+            'updates'              => 'required|array',
+            'updates.*.period_id'  => 'required|exists:timetable_periods,id',
+            'updates.*.day'        => 'required|in:Monday,Tuesday,Wednesday,Thursday,Friday',
+            'updates.*.subject_id' => 'nullable|exists:subject,id',
+            'updates.*.teacher_id' => 'nullable|exists:users,id',
         ]);
 
         DB::beginTransaction();
@@ -1654,7 +1967,6 @@ HTML;
 
             try {
                 Mail::to($teacher->email)->send(new TimetableNotificationMail($notifData));
-
                 foreach ($teacherSlots as $slot) {
                     TimetableNotification::create([
                         'teacher_id'   => $teacherId,
@@ -1677,14 +1989,19 @@ HTML;
     }
 
     // =========================================================================
-    // CONFLICT CHECKER
+    // CONFLICT CHECKER — now filters by same session AND term
     // =========================================================================
 
     public function checkConflicts(int $settingId): JsonResponse
     {
         $setting = TimetableSetting::findOrFail($settingId);
 
-        $slots = TimetableSlot::whereHas('setting', fn($q) => $q->where('session_id', $setting->session_id)->where('is_active', true))
+        // Build the query scoped to same session AND same term (if term is set)
+        $slots = TimetableSlot::whereHas('setting', function ($q) use ($setting) {
+                $q->where('session_id', $setting->session_id)
+                  ->where('is_active', true)
+                  ->when($setting->term_id, fn($q2) => $q2->where('term_id', $setting->term_id));
+            })
             ->whereNotNull('teacher_id')
             ->with(['period', 'subject', 'setting.schoolclass', 'teacher', 'teacher.staffPicture'])
             ->get();
@@ -1695,31 +2012,34 @@ HTML;
         foreach ($slots as $slot) {
             $key = $slot->teacher_id . '_' . $slot->day . '_' . $slot->period_id;
             if (isset($teacherSlotMap[$key])) {
+                $other = $teacherSlotMap[$key];
                 $conflicts[] = [
                     'type'            => 'teacher_conflict',
                     'day'             => $slot->day,
                     'period'          => $slot->period?->name,
                     'period_time'     => $slot->period ? ($slot->period->start_time . ' – ' . $slot->period->end_time) : '',
                     'teacher'         => $slot->teacher?->name,
+                    'teacher_id'      => $slot->teacher_id,
                     'teacher_picture' => $slot->teacher && $slot->teacher->staffPicture
                         ? asset('storage/staff_avatars/' . $slot->teacher->staffPicture->picture) : null,
-                    'subject_a'       => $teacherSlotMap[$key]->subject?->subject,
+                    'subject_a'       => $other->subject?->subject,
                     'subject_b'       => $slot->subject?->subject,
-                    'class_a'         => $teacherSlotMap[$key]->setting?->schoolclass?->schoolclass,
-                    'class_b'         => $slot->setting?->schoolclass?->schoolclass,
+                    'class_a'         => $this->getClassName($other->setting?->schoolclass),
+                    'class_b'         => $this->getClassName($slot->setting?->schoolclass),
+                    'setting_a_id'    => $other->setting_id,
+                    'setting_b_id'    => $slot->setting_id,
                 ];
             } else {
                 $teacherSlotMap[$key] = $slot;
             }
         }
 
-        return response()->json(['success' => true, 'conflicts' => $conflicts, 'conflict_count' => count($conflicts)]);
+        return response()->json([
+            'success'        => true,
+            'conflicts'      => $conflicts,
+            'conflict_count' => count($conflicts),
+        ]);
     }
-
-
-
-
-
 
     // =========================================================================
     // DELETE SETTING
@@ -1728,11 +2048,8 @@ HTML;
     public function deleteSetting(int $settingId): JsonResponse
     {
         $setting = TimetableSetting::findOrFail($settingId);
-        try {
-            $this->logTimetableChange(Auth::id(), 'delete', 'TimetableSetting', $settingId, null, $setting->toArray());
-        } catch (\Exception $e) {
-            Log::warning('Audit log failed on delete: ' . $e->getMessage());
-        }
+        try { $this->logTimetableChange(Auth::id(), 'delete', 'TimetableSetting', $settingId, null, $setting->toArray()); }
+        catch (\Exception $e) { Log::warning('Audit log failed on delete: ' . $e->getMessage()); }
         $setting->delete();
         return response()->json(['success' => true]);
     }
@@ -1795,10 +2112,10 @@ HTML;
     public function requestSubstitute(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'slot_id'                => 'required|exists:timetable_slots,id',
-            'substitute_teacher_id'  => 'required|exists:users,id',
-            'reason'                 => 'required|string|max:500',
-            'assignment_date'        => 'required|date|after_or_equal:today',
+            'slot_id'               => 'required|exists:timetable_slots,id',
+            'substitute_teacher_id' => 'required|exists:users,id',
+            'reason'                => 'required|string|max:500',
+            'assignment_date'       => 'required|date|after_or_equal:today',
         ]);
 
         $slot = TimetableSlot::findOrFail($validated['slot_id']);
@@ -1807,12 +2124,12 @@ HTML;
         }
 
         $substitute = SubstituteAssignment::create([
-            'original_teacher_id'    => Auth::id(),
-            'substitute_teacher_id'  => $validated['substitute_teacher_id'],
-            'slot_id'                => $slot->id,
-            'assignment_date'        => $validated['assignment_date'],
-            'reason'                 => $validated['reason'],
-            'status'                 => 'pending',
+            'original_teacher_id'   => Auth::id(),
+            'substitute_teacher_id' => $validated['substitute_teacher_id'],
+            'slot_id'               => $slot->id,
+            'assignment_date'       => $validated['assignment_date'],
+            'reason'                => $validated['reason'],
+            'status'                => 'pending',
         ]);
 
         return response()->json(['success' => true, 'substitute' => $substitute]);
@@ -1831,7 +2148,7 @@ HTML;
         $originalName = $substitute->originalTeacher->name ?? 'Unknown';
         $slot->update([
             'teacher_id' => $substitute->substitute_teacher_id,
-            'notes' => ($slot->notes ? $slot->notes . "\n" : '') . "[SUBSTITUTE] Original: {$originalName}, Date: {$substitute->assignment_date}",
+            'notes'      => ($slot->notes ? $slot->notes . "\n" : '') . "[SUBSTITUTE] Original: {$originalName}, Date: {$substitute->assignment_date}",
         ]);
 
         return response()->json(['success' => true]);
@@ -1845,7 +2162,7 @@ HTML;
             ->orderBy('created_at', 'desc')
             ->paginate($request->per_page ?? 20);
 
-        return response()->json(['success' => true, 'requests' => $requests]);
+        return response()->json(['success' => $requests]);
     }
 
     // =========================================================================
@@ -1871,13 +2188,13 @@ HTML;
             }
 
             $workloadData[] = [
-                'teacher_id'        => $teacher->id,
-                'teacher_name'      => $teacher->name,
-                'teacher_picture'   => $teacher->staffPicture ? asset('storage/staff_avatars/' . $teacher->staffPicture->picture) : null,
-                'periods_assigned'  => $slots->count(),
-                'classes_taught'    => $slots->pluck('setting.schoolclass.schoolclass')->filter()->unique()->values(),
-                'subjects_taught'   => $slots->pluck('subject.subject')->filter()->unique()->values(),
-                'daily_load'        => $dailyLoad,
+                'teacher_id'       => $teacher->id,
+                'teacher_name'     => $teacher->name,
+                'teacher_picture'  => $teacher->staffPicture ? asset('storage/staff_avatars/' . $teacher->staffPicture->picture) : null,
+                'periods_assigned' => $slots->count(),
+                'classes_taught'   => $slots->pluck('setting.schoolclass.schoolclass')->filter()->unique()->values(),
+                'subjects_taught'  => $slots->pluck('subject.subject')->filter()->unique()->values(),
+                'daily_load'       => $dailyLoad,
             ];
         }
 
@@ -1916,9 +2233,8 @@ HTML;
         return $slots
             ->filter(function ($slot) use ($now, $today) {
                 if (strtolower($slot->day) === $today) {
-                    try {
-                        return Carbon::createFromFormat('H:i:s', $slot->period->start_time)->greaterThan($now);
-                    } catch (\Exception $e) { return true; }
+                    try { return Carbon::createFromFormat('H:i:s', $slot->period->start_time)->greaterThan($now); }
+                    catch (\Exception $e) { return true; }
                 }
                 return true;
             })
@@ -1974,10 +2290,10 @@ HTML;
             'scheduled_at' => now(),
             'status'       => 'pending',
             'payload'      => json_encode([
-                'day' => $slot->day,
-                'period' => $slot->period?->name,
+                'day'     => $slot->day,
+                'period'  => $slot->period?->name,
                 'subject' => $slot->subject?->subject,
-                'room' => $slot->room?->room_name,
+                'room'    => $slot->room?->room_name,
             ]),
         ]);
     }
