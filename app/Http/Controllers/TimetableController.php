@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Mail\TimetableNotificationMail;
 use App\Models\Room;
 use App\Models\Schoolclass;
+use App\Models\SchoolInformation;
 use App\Models\Schoolsession;
 use App\Models\Schoolterm;
 use App\Models\Subject;
