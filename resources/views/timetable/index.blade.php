@@ -250,7 +250,7 @@
 .conflict-avatar-ph i { color: #EF4444; }
 
 /* ── Export buttons ───────────────────────────────── */
-.export-group { display: flex; gap: 8px; }
+.export-group { display: flex; gap: 8px; align-items: center; }
 
 /* ── Responsive ───────────────────────────────────── */
 @media (max-width: 768px) {
@@ -297,6 +297,9 @@
             <a href="{{ route('timetable.teacher') }}" class="btn btn-light btn-sm">
                 <i class="ri-user-line me-1"></i>My Timetable
             </a>
+            <button class="btn btn-outline-light btn-sm" onclick="openWholeSchoolExportModal()">
+                <i class="ri-school-line me-1"></i>Whole School Timetable
+            </button>
             <a href="{{ route('timetable.reports.index') }}" class="btn btn-outline-light btn-sm">
                 <i class="ri-bar-chart-2-line me-1"></i>Reports
             </a>
@@ -391,6 +394,10 @@
                                 @if($setting->term) <span class="mx-1">·</span><span>{{ $setting->term->term }}</span> @endif
                                 <span class="mx-1">·</span>
                                 <span class="text-muted">Updated {{ $setting->updated_at->diffForHumans() }}</span>
+                                @if($setting->creator)
+                                    <span class="mx-1">·</span>
+                                    <span class="text-muted">by {{ $setting->creator->name }}</span>
+                                @endif
                             </div>
                         </div>
                         <div class="sc-actions" onclick="event.stopPropagation()">
@@ -574,6 +581,10 @@
                             <p class="text-muted mb-0" style="font-size:13px">Click any cell to assign a subject and teacher.</p>
                         </div>
                         <div class="export-group">
+                            <select id="exportOrientation" class="form-select form-select-sm" style="width: auto;">
+                                <option value="horizontal">Horizontal Layout (Days as columns)</option>
+                                <option value="vertical">Vertical Layout (Days as rows)</option>
+                            </select>
                             <button class="btn btn-sm btn-outline-secondary" onclick="loadTimetableGrid()">
                                 <i class="ri-refresh-line me-1"></i>Refresh
                             </button>
@@ -703,6 +714,52 @@
     </div>
 </div>
 
+{{-- Whole School Export Modal --}}
+<div class="modal fade" id="wholeSchoolExportModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius:14px;overflow:hidden">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="ri-school-line me-2"></i>Export Whole School Timetable</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-3" style="font-size:13px">Export timetables for all classes in the selected session and term.</p>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Session <span class="text-danger">*</span></label>
+                    <select class="form-select" id="wholeSchoolSessionId">
+                        <option value="">— Select Session —</option>
+                        @foreach($schoolsessions as $session)
+                        <option value="{{ $session->id }}">{{ $session->session }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Term <span class="text-muted fw-normal">(optional)</span></label>
+                    <select class="form-select" id="wholeSchoolTermId">
+                        <option value="">All Terms</option>
+                        @foreach($schoolterms as $term)
+                        <option value="{{ $term->id }}">{{ $term->term }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Orientation</label>
+                    <select class="form-select" id="wholeSchoolOrientation">
+                        <option value="horizontal">Horizontal Layout (Days as columns, Periods as rows)</option>
+                        <option value="vertical">Vertical Layout (Days as rows, Periods as columns)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-primary" onclick="exportWholeSchoolTimetable()">
+                    <i class="ri-file-pdf-line me-2"></i>Export PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 {{-- Clone modal --}}
 <div class="modal fade" id="cloneModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
@@ -787,6 +844,7 @@ const ROUTES = {
     checkConflicts:    '{{ url("/timetable/check-conflicts") }}',
     export:            '{{ url("/timetable/export") }}',
     deleteSetting:     '{{ url("/timetable/delete-setting") }}',
+    exportWholeSchool: '{{ route("timetable.export-whole-school") }}',
 };
 const CSRF = '{{ csrf_token() }}';
 
@@ -1214,11 +1272,12 @@ function openSlotModal(periodId, day) {
         avatarDiv.innerHTML = `<i class="ri-user-line text-white ri-xl"></i>`;
     }
 
-    // Subject dropdown
+    // Subject dropdown with term info
     const subjectSel = document.getElementById('editSlotSubject');
     subjectSel.innerHTML = '<option value="">— Free Period —</option>';
     availableSubjects.forEach(s => {
-        const opt = new Option(`${s.subject_name} (${s.teacher_name})`, s.subject_id);
+        const termText = s.term_name ? ` - ${s.term_name}` : '';
+        const opt = new Option(`${s.subject_name} (${s.teacher_name})${termText}`, s.subject_id);
         opt.dataset.teacherId   = s.teacher_id;
         opt.dataset.teacherName = s.teacher_name;
         opt.selected = (slot.subject_id == s.subject_id);
@@ -1376,9 +1435,34 @@ async function sendNotifications() {
 // ============================================================================
 function exportTimetable(format) {
     if (!currentSettingId) return Swal.fire('Error', 'No timetable loaded.', 'error');
-    const exportUrl = url(ROUTES.export, currentSettingId) + '?format=' + format;
+    const orientation = document.getElementById('exportOrientation')?.value || 'horizontal';
+    const exportUrl = url(ROUTES.export, currentSettingId) + '?format=' + format + '&orientation=' + orientation;
     if (format === 'pdf') { window.open(exportUrl, '_blank'); }
     else { window.location.href = exportUrl; }
+}
+
+// ============================================================================
+// WHOLE SCHOOL EXPORT
+// ============================================================================
+function openWholeSchoolExportModal() {
+    new bootstrap.Modal(document.getElementById('wholeSchoolExportModal')).show();
+}
+
+async function exportWholeSchoolTimetable() {
+    const sessionId = document.getElementById('wholeSchoolSessionId').value;
+    const termId = document.getElementById('wholeSchoolTermId').value;
+    const orientation = document.getElementById('wholeSchoolOrientation').value;
+
+    if (!sessionId) {
+        return Swal.fire('Error', 'Please select a session.', 'error');
+    }
+
+    const exportUrl = ROUTES.exportWholeSchool +
+        '?session_id=' + sessionId +
+        '&term_id=' + (termId || '') +
+        '&orientation=' + orientation;
+
+    window.open(exportUrl, '_blank');
 }
 
 // ============================================================================

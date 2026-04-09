@@ -810,11 +810,14 @@ Route::prefix('timetable')->name('timetable.')->group(function () {
     // AJAX — Dashboard & analytics
     Route::get('/workload-dashboard', [TimetableController::class, 'workloadDashboard'])->name('workload-dashboard');
     Route::post('/generate-analytics', [TimetableController::class, 'generateAnalytics'])->name('generate-analytics');
+
+    Route::get('/timetable/export-whole-school', [TimetableController::class, 'exportWholeSchool'])->name('timetable.export-whole-school');
+
 });
 
 
 
-
+// Add these routes to your web.php file
 
 // =========================================================================
 // ROOM MANAGEMENT ROUTES
