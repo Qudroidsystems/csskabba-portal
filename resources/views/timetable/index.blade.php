@@ -3,85 +3,83 @@
 
 @push('styles')
 <style>
-/* Improved Grid Styles */
+/* Improved Grid Styles - Smaller text for better fit */
 .timetable-wrapper {
     overflow-x: auto;
     position: relative;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
 .tt-cell {
     cursor: pointer;
     transition: all 0.2s ease;
     vertical-align: middle;
-    min-width: 100px;
+    min-width: 90px;
 }
 
 .tt-cell:hover {
-    background: linear-gradient(135deg, rgba(102,126,234,0.1) 0%, rgba(118,75,162,0.1) 100%) !important;
-    transform: scale(1.02);
+    background: rgba(102,126,234,0.1) !important;
 }
 
 .tt-cell-inner {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
-    padding: 8px 4px;
-    min-height: 80px;
+    gap: 3px;
+    padding: 6px 3px;
+    min-height: 70px;
     justify-content: center;
 }
 
 .tt-subj {
-    font-weight: 700;
-    font-size: 13px;
+    font-weight: 600;
+    font-size: 11px;
     color: #1a1a2e;
     text-align: center;
     line-height: 1.2;
     background: #e0e7ff;
-    padding: 2px 8px;
-    border-radius: 20px;
+    padding: 2px 6px;
+    border-radius: 12px;
     display: inline-block;
 }
 
 .tt-tchr {
-    font-size: 11px;
+    font-size: 10px;
     color: #475569;
     text-align: center;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 3px;
 }
 
 .tt-room {
-    font-size: 10px;
+    font-size: 9px;
     color: #64748b;
     background: #f1f5f9;
-    padding: 2px 6px;
-    border-radius: 10px;
+    padding: 1px 4px;
+    border-radius: 8px;
 }
 
 .tt-avatar {
-    width: 32px;
-    height: 32px;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
     object-fit: cover;
-    border: 2px solid #667eea;
+    border: 1px solid #667eea;
     margin-bottom: 2px;
 }
 
 .tt-free {
     background: #f8fafc;
-    color: #94a3b8;
 }
 
 .tt-head th {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    background: #1a1a2e;
     color: #fff;
-    font-size: 13px;
-    font-weight: 600;
-    padding: 12px 8px;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 8px 6px;
     white-space: nowrap;
     position: sticky;
     top: 0;
@@ -90,17 +88,17 @@
 
 .tt-period-col {
     background: #f8fafc;
-    font-weight: 700;
-    font-size: 12px;
-    min-width: 100px;
+    font-weight: 600;
+    font-size: 10px;
+    min-width: 85px;
     vertical-align: middle;
-    border-right: 2px solid #e2e8f0;
+    border-right: 1px solid #e2e8f0;
 }
 
 .tt-period-time {
-    font-size: 10px;
+    font-size: 9px;
     color: #64748b;
-    margin-top: 4px;
+    margin-top: 3px;
     font-weight: normal;
 }
 
@@ -111,17 +109,17 @@
 .tt-break-cell {
     text-align: center;
     color: #b45309;
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 500;
-    padding: 20px 8px;
+    padding: 15px 4px;
 }
 
 .tt-double-badge {
-    font-size: 9px;
+    font-size: 8px;
     background: #dcfce7;
     color: #166534;
-    padding: 2px 6px;
-    border-radius: 10px;
+    padding: 1px 4px;
+    border-radius: 8px;
     font-weight: 600;
 }
 
@@ -129,22 +127,16 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px;
-    border-left: 4px solid #ef4444;
-    border-radius: 8px;
+    padding: 10px;
+    border-left: 3px solid #ef4444;
+    border-radius: 6px;
     background: #fef2f2;
     margin-bottom: 8px;
-    transition: all 0.2s ease;
-}
-
-.conflict-card:hover {
-    background: #fee2e2;
-    transform: translateX(4px);
 }
 
 .nav-tabs-custom .nav-link {
     color: #555;
-    font-size: 13px;
+    font-size: 12px;
 }
 
 .nav-tabs-custom .nav-link.active {
@@ -153,11 +145,11 @@
     font-weight: 500;
 }
 
-/* Class Arm Badge */
+/* Class Arm Badge - Convert number to letter */
 .class-arm-badge {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #667eea;
     color: white;
-    padding: 2px 10px;
+    padding: 2px 8px;
     border-radius: 20px;
     font-size: 11px;
     margin-left: 8px;
@@ -168,6 +160,17 @@
 .class-full-name {
     font-weight: 600;
     color: #1e293b;
+}
+
+/* Table text size fix */
+.table td, .table th {
+    font-size: 12px;
+    padding: 8px;
+}
+
+.btn-sm {
+    font-size: 11px;
+    padding: 4px 8px;
 }
 
 /* Loading Animation */
@@ -183,11 +186,11 @@
 /* Responsive */
 @media (max-width: 768px) {
     .tt-period-col {
-        min-width: 80px;
-        font-size: 10px;
+        min-width: 70px;
+        font-size: 9px;
     }
     .tt-subj {
-        font-size: 11px;
+        font-size: 10px;
     }
     .tt-tchr {
         font-size: 9px;
@@ -290,7 +293,17 @@
           <i class="ri-school-line text-primary me-2"></i>
           <span class="class-full-name">{{ $setting->schoolclass->schoolclass ?? 'N/A' }}</span>
           @if($setting->schoolclass && $setting->schoolclass->arm)
-           <span class="class-arm-badge">{{ $setting->schoolclass->arm }}</span>
+           @php
+            // Convert arm number to letter (1=A, 2=B, 3=C, 4=D, 5=E, etc.)
+            $armLetter = '';
+            $armNum = is_numeric($setting->schoolclass->arm) ? (int)$setting->schoolclass->arm : 0;
+            if($armNum >= 1 && $armNum <= 26) {
+                $armLetter = chr(64 + $armNum);
+            } else {
+                $armLetter = $setting->schoolclass->arm;
+            }
+           @endphp
+           <span class="class-arm-badge">{{ $armLetter }}</span>
           @endif
          </td>
          <td>{{ $setting->session->session ?? 'N/A' }}</td>
@@ -471,7 +484,7 @@
    </div>
    <div class="modal-footer">
     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-    <button type="button" class="btn btn-primary" onclick="saveSlot()"><i class="ri-save-line me-1"></i>Save</button>
+    <button type="button" class="btn btn-primary" id="saveSlotBtn"><i class="ri-save-line me-1"></i>Save</button>
    </div>
   </div>
  </div>
@@ -520,9 +533,16 @@ async function loadSetting(settingId){
   const d=await r.json();
   if(d.success){
    currentSetting=d.setting;currentSettingId=settingId;availableSubjects=d.available_subjects||[];
-   // Improved class display with arm
+   // Improved class display with arm letter
    const className=d.setting.schoolclass?.schoolclass||'';
-   const classArm=d.setting.schoolclass?.arm||'';
+   let classArm=d.setting.schoolclass?.arm||'';
+   // Convert arm number to letter
+   if(classArm && !isNaN(classArm)){
+    const armNum=parseInt(classArm);
+    if(armNum>=1 && armNum<=26){
+     classArm=String.fromCharCode(64+armNum);
+    }
+   }
    const cls=className+(classArm?' - '+classArm:'');
    const ses=d.setting.session?.session||'';
    const trm=d.setting.term?.term?' / '+d.setting.term.term:'';
@@ -646,11 +666,11 @@ function renderTimetableGrid(){
  currentPeriods.forEach(period=>{
   const isBreak=period.is_break;
   html+=`<tr ${isBreak?'class="tt-break-row"':''} data-period-id="${period.id}">
-   <td class="tt-period-col"><div style="font-weight:700;font-size:12px;">${esc(period.name)}</div><div class="tt-period-time">${period.start_time} – ${period.end_time}</div>${isBreak?'<span class="badge bg-warning mt-1" style="font-size:9px;">break</span>':''}</td>`;
+   <td class="tt-period-col"><div style="font-weight:700;font-size:11px;">${esc(period.name)}</div><div class="tt-period-time">${period.start_time} – ${period.end_time}</div>${isBreak?'<span class="badge bg-warning mt-1" style="font-size:8px;">break</span>':''}</td>`;
   currentDays.forEach(day=>{
    const slot=currentGrid[period.id]?.[day]||null;
    const isFree=!slot?.subject_id;
-   if(isBreak){html+=`<td class="tt-break-cell text-center"><small class="text-muted">— Break —</small></td>`;return;}
+   if(isBreak){html+=`<td class="tt-break-cell text-center"><small>— Break —</small></td>`;return;}
    html+=`<td class="tt-cell ${isFree?'tt-free':''}" data-period-id="${period.id}" data-day="${esc(day)}" onclick="openEditSlotModal(${period.id},'${esc(day)}')" title="${isFree?'Click to assign a subject':'Click to edit this slot'}">
     <div class="tt-cell-inner">`;
    if(slot&&!isFree){
@@ -658,8 +678,8 @@ function renderTimetableGrid(){
     html+=`<span class="tt-subj">${esc(slot.subject_code||slot.subject||'—')}</span>
            <span class="tt-tchr"><i class="ri-user-line"></i> ${esc((slot.teacher||'').split(' ')[0])}</span>`;
     if(slot.room)html+=`<span class="tt-room"><i class="ri-door-line"></i> ${esc(slot.room)}</span>`;
-    if(slot.is_double)html+=`<span class="tt-double-badge"><i class="ri-repeat-line"></i> Double</span>`;
-   }else{html+=`<span style="color:#94a3b8;font-size:24px;line-height:1;">+</span><span style="font-size:10px;color:#94a3b8;">Assign</span>`;}
+    if(slot.is_double)html+=`<span class="tt-double-badge">Double</span>`;
+   }else{html+=`<span style="color:#94a3b8;font-size:20px;">+</span><span style="font-size:9px;color:#94a3b8;">Assign</span>`;}
    html+=`</div></td>`;
   });
   html+=`<tr>`;
@@ -687,30 +707,68 @@ function openEditSlotModal(periodId,day){
  const seen=new Set();
  availableSubjects.forEach(subj=>{if(subj.teacher_id&&!seen.has(subj.teacher_id)){seen.add(subj.teacher_id);const opt=document.createElement('option');opt.value=subj.teacher_id;opt.textContent=subj.teacher_name;if(slot.teacher_id==subj.teacher_id)opt.selected=true;ts.appendChild(opt);}});
  ss.onchange=function(){const sel=ss.options[ss.selectedIndex];if(sel?.dataset.teacherId)ts.value=sel.dataset.teacherId;};
+ // Remove any existing event listener and add new one
+ const saveBtn = document.getElementById('saveSlotBtn');
+ const newSaveBtn = saveBtn.cloneNode(true);
+ saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+ newSaveBtn.onclick = saveSlot;
  new bootstrap.Modal(document.getElementById('editSlotModal')).show();
 }
 
 async function saveSlot(){
- const payload={setting_id:currentSettingId,period_id:document.getElementById('editSlotPeriodId').value,day:document.getElementById('editSlotDay').value,subject_id:document.getElementById('editSlotSubject').value||null,teacher_id:document.getElementById('editSlotTeacher').value||null,room:document.getElementById('editSlotRoom').value,notes:document.getElementById('editSlotNotes').value,is_double:document.getElementById('editSlotIsDouble').checked,is_free:!document.getElementById('editSlotSubject').value};
+ console.log('Save slot called');
+ const subjectId = document.getElementById('editSlotSubject').value;
+ const teacherId = document.getElementById('editSlotTeacher').value;
+ const periodId = document.getElementById('editSlotPeriodId').value;
+ const day = document.getElementById('editSlotDay').value;
+ const room = document.getElementById('editSlotRoom').value;
+ const notes = document.getElementById('editSlotNotes').value;
+ const isDouble = document.getElementById('editSlotIsDouble').checked;
+
+ const payload={
+  setting_id: currentSettingId,
+  period_id: periodId,
+  day: day,
+  subject_id: subjectId || null,
+  teacher_id: teacherId || null,
+  room: room,
+  notes: notes,
+  is_double: isDouble,
+  is_free: !subjectId
+ };
+
+ console.log('Payload:', payload);
  showLoading();
  try{
-  const r=await post(ROUTES.saveSlot,payload);const result=await r.json();
-  if(result.success){bootstrap.Modal.getInstance(document.getElementById('editSlotModal')).hide();await loadTimetableGrid();Swal.fire({title:'Saved!',text:'The timetable has been updated.',icon:'success',timer:1500,showConfirmButton:false});}
-  else if(result.conflict)Swal.fire('⚠️ Conflict Detected',result.message+'\\n\\nPlease choose a different teacher or time slot.','warning');
-  else throw new Error(result.message);
- }catch(e){Swal.fire('Error',e.message,'error');}finally{hideLoading();}
+  const r=await post(ROUTES.saveSlot,payload);
+  const result=await r.json();
+  console.log('Response:', result);
+  if(result.success){
+   bootstrap.Modal.getInstance(document.getElementById('editSlotModal')).hide();
+   await loadTimetableGrid();
+   Swal.fire({title:'Saved!',text:'The timetable has been updated.',icon:'success',timer:1500,showConfirmButton:false});
+  } else if(result.conflict){
+   Swal.fire('⚠️ Conflict Detected',result.message,'warning');
+  } else {
+   throw new Error(result.message);
+  }
+ }catch(e){
+  console.error('Error:', e);
+  Swal.fire('Error',e.message,'error');
+ }finally{
+  hideLoading();
+ }
 }
 
 async function generateTimetable(){
  const{isConfirmed}=await Swal.fire({
-  title:'🤖 Auto-Generate Timetable?',
-  html:'<div class="text-start">This will:<br>• Clear the current timetable<br>• Analyze all subject constraints<br>• Generate an optimized schedule<br><br><strong class="text-danger">⚠️ This action cannot be undone!</strong></div>',
+  title:'Auto-Generate Timetable?',
+  html:'This will clear the current timetable and generate a new one based on your constraints.<br><strong>This action cannot be undone!</strong>',
   icon:'warning',
   showCancelButton:true,
   confirmButtonColor:'#667eea',
   cancelButtonColor:'#d33',
-  confirmButtonText:'Yes, Generate!',
-  cancelButtonText:'Cancel'
+  confirmButtonText:'Yes, Generate!'
  });
  if(!isConfirmed)return;
  showLoading();
@@ -718,10 +776,9 @@ async function generateTimetable(){
   const r=await post(ROUTES.autoGenerate,{setting_id:currentSettingId});const d=await r.json();
   if(d.success){
    await loadTimetableGrid();
-   // Switch to grid tab
    const gridTabLink=document.querySelector('[href="#timetableGridTab"]');
    if(gridTabLink){const tab=new bootstrap.Tab(gridTabLink);tab.show();}
-   Swal.fire({title:'✅ Timetable Generated!',text:'The timetable has been successfully created based on your constraints.',icon:'success',timer:2500,showConfirmButton:false});
+   Swal.fire({title:'Timetable Generated!',text:'The timetable has been successfully created.',icon:'success',timer:2000,showConfirmButton:false});
   }else throw new Error(d.message);
  }catch(e){Swal.fire('Generation Failed',e.message,'error');}finally{hideLoading();}
 }
@@ -732,13 +789,13 @@ async function checkConflicts(){
  try{
   const r=await get(buildUrl(ROUTES.checkConflicts,currentSettingId));if(!r.ok)throw new Error(`HTTP ${r.status}`);
   const d=await r.json();const ctr=document.getElementById('conflictsList');const badge=document.getElementById('conflictBadge');
-  if(d.conflict_count===0){badge.innerHTML='<span class="badge bg-success">✓ No conflicts</span>';ctr.innerHTML='<div class="alert alert-success"><i class="ri-checkbox-circle-line me-2"></i>No conflicts found! Your timetable is clean.</div>';}
+  if(d.conflict_count===0){badge.innerHTML='<span class="badge bg-success">✓ No conflicts</span>';ctr.innerHTML='<div class="alert alert-success"><i class="ri-checkbox-circle-line me-2"></i>No conflicts found!</div>';}
   else{
    badge.innerHTML=`<span class="badge bg-danger">⚠ ${d.conflict_count} conflict(s)</span>`;
-   let html=`<div class="alert alert-warning mb-3"><i class="ri-alert-line me-2"></i>Found ${d.conflict_count} teacher conflict(s) that need attention.</div>`;
+   let html=`<div class="alert alert-warning mb-3">${d.conflict_count} conflict(s) require attention.</div>`;
    d.conflicts.forEach(c=>{
     const av=c.teacher_picture?`<img src="${c.teacher_picture}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;">`:`<div style="width:44px;height:44px;border-radius:50%;background:#e2e8f0;display:flex;align-items:center;justify-content:center;"><i class="ri-user-line"></i></div>`;
-    html+=`<div class="conflict-card">${av}<div style="flex:1;"><div class="fw-semibold">${esc(c.teacher)}</div><div class="small text-muted">${esc(c.day)} · ${esc(c.period)} (${esc(c.period_time)})</div><div class="small mt-2"><span class="badge bg-danger me-1">${esc(c.class_a)}</span> <i class="ri-arrow-right-line mx-1"></i> <span class="badge bg-danger ms-1">${esc(c.class_b)}</span></div></div></div>`;
+    html+=`<div class="conflict-card">${av}<div><div class="fw-semibold">${esc(c.teacher)}</div><div class="small text-muted">${esc(c.day)} · ${esc(c.period)} (${esc(c.period_time)})</div><div class="small mt-1"><span class="badge bg-danger me-1">${esc(c.class_a)}</span> vs <span class="badge bg-danger ms-1">${esc(c.class_b)}</span></div></div></div>`;
    });
    ctr.innerHTML=html;
   }
@@ -748,7 +805,7 @@ async function checkConflicts(){
 function exportTimetable(settingId,format){if(!settingId)return Swal.fire('Error','No timetable selected.','error');window.open(buildUrl(ROUTES.export,settingId)+'?format='+format,'_blank');}
 
 async function sendNotifications(){
- const{isConfirmed}=await Swal.fire({title:'Send Email Notifications',text:'Email the timetable to all assigned teachers?',icon:'question',showCancelButton:true,confirmButtonColor:'#667eea',confirmButtonText:'Send Now'});
+ const{isConfirmed}=await Swal.fire({title:'Send Notifications',text:'Email timetable to all assigned teachers?',icon:'question',showCancelButton:true,confirmButtonColor:'#667eea',confirmButtonText:'Send'});
  if(!isConfirmed)return;
  showLoading();
  try{
@@ -758,33 +815,33 @@ async function sendNotifications(){
 }
 
 async function deleteSetting(settingId){
- const{isConfirmed}=await Swal.fire({title:'Delete Timetable?',text:'This action cannot be undone. All timetable data will be permanently removed.',icon:'warning',showCancelButton:true,confirmButtonColor:'#d33',confirmButtonText:'Yes, Delete'});
+ const{isConfirmed}=await Swal.fire({title:'Delete Timetable?',text:'Cannot be undone.',icon:'warning',showCancelButton:true,confirmButtonColor:'#d33',confirmButtonText:'Delete'});
  if(!isConfirmed)return;
  showLoading();
  try{
   const r=await fetch(buildUrl(ROUTES.deleteSetting,settingId),{method:'DELETE',headers:{'X-CSRF-TOKEN':CSRF,'Accept':'application/json'}});
   const d=await r.json();
-  if(d.success)Swal.fire('Deleted!','The timetable has been deleted.','success').then(()=>location.reload());else throw new Error(d.message);
+  if(d.success)Swal.fire('Deleted!','','success').then(()=>location.reload());else throw new Error(d.message);
  }catch(e){Swal.fire('Error',e.message,'error');}finally{hideLoading();}
 }
 
 async function cloneSetting(settingId){
  const{isConfirmed,value}=await Swal.fire({
   title:'Clone Timetable',
-  html:`<div class="text-start"><div class="mb-3"><label class="form-label fw-semibold">New Session</label>
+  html:`<div class="text-start"><div class="mb-3"><label class="form-label">New Session</label>
    <select id="sCloneSession" class="form-select"><option value="">Same Session</option>
    @foreach($schoolsessions as $s)<option value="{{ $s->id }}">{{ $s->session }}</option>@endforeach</select></div>
-   <div><label class="form-label fw-semibold">New Term</label>
+   <div><label class="form-label">New Term</label>
    <select id="sCloneTerm" class="form-select"><option value="">Same Term</option>
    @foreach($schoolterms as $t)<option value="{{ $t->id }}">{{ $t->term }}</option>@endforeach</select></div></div>`,
-  showCancelButton:true,confirmButtonColor:'#667eea',confirmButtonText:'Clone Timetable',
+  showCancelButton:true,confirmButtonColor:'#667eea',confirmButtonText:'Clone',
   preConfirm:()=>({new_session_id:document.getElementById('sCloneSession').value||null,new_term_id:document.getElementById('sCloneTerm').value||null})
  });
  if(!isConfirmed)return;
  showLoading();
  try{
   const r=await post(ROUTES.cloneSetting,{setting_id:settingId,...value});const d=await r.json();
-  if(d.success)Swal.fire('Cloned!','The timetable has been cloned successfully.','success').then(()=>location.reload());else throw new Error(d.message);
+  if(d.success)Swal.fire('Cloned!','','success').then(()=>location.reload());else throw new Error(d.message);
  }catch(e){Swal.fire('Error',e.message,'error');}finally{hideLoading();}
 }
 </script>
