@@ -75,6 +75,10 @@ class DatabaseSeeder extends Seeder
             ParentPermissionTableSeeder::class,
                // Add Timetable permissions
             TimetablePermissionTableSeeder::class,
+            RoomPermissionTableSeeder::class,
+            HolidayPermissionTableSeeder::class,
+            ExamTimetablePermissionTableSeeder::class,
+            TimetableReportsPermissionTableSeeder::class,
 
 
 
