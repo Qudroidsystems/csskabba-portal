@@ -197,7 +197,7 @@
                                             <td>
                                                 <i class="ri-group-line me-1 text-muted"></i>
                                                 {{ $room->capacity }}
-                                             </td>
+                                              </td>
                                             <td>
                                                 @if($room->building)
                                                     <i class="ri-building-line me-1"></i>{{ $room->building }}
@@ -207,7 +207,7 @@
                                                 @else
                                                     <span class="text-muted">—</span>
                                                 @endif
-                                             </td>
+                                              </td>
                                             <td>
                                                 @if($room->facilities)
                                                     <div class="d-flex flex-wrap gap-1">
@@ -226,14 +226,14 @@
                                                 @else
                                                     <span class="text-muted">—</span>
                                                 @endif
-                                             </td>
+                                              </td>
                                             <td>
                                                 @if($room->is_active)
                                                     <span class="badge bg-success">Active</span>
                                                 @else
                                                     <span class="badge bg-danger">Inactive</span>
                                                 @endif
-                                             </td>
+                                              </td>
                                             <td>
                                                 <div class="btn-group" role="group">
                                                     <button class="btn btn-sm btn-outline-info" onclick="viewRoom({{ $room->id }})" title="View Details">
@@ -258,14 +258,14 @@
                                                     </button>
                                                     @endcan
                                                 </div>
-                                             </td>
+                                              </td>
                                         </tr>
                                         @empty
                                             <tr>
                                                 <td colspan="8" class="text-center text-muted py-4">
                                                     <i class="ri-information-line ri-2x d-block mb-2"></i>
                                                     No rooms found. Click "Add New Room" to create one.
-                                                 </td>
+                                                  </td>
                                             </tr>
                                         @endforelse
                                     </tbody>
@@ -454,10 +454,8 @@
     </div>
 </div>
 
-
 <script>
     let currentRoomId = null;
-    let currentScheduleData = null;
 
     // Room CRUD Functions
     function resetRoomForm() {
@@ -471,7 +469,6 @@
         document.getElementById('roomIsActive').checked = true;
         document.getElementById('roomNotes').value = '';
 
-        // Clear facilities selection
         const facilitiesSelect = document.getElementById('roomFacilities');
         for(let i = 0; i < facilitiesSelect.options.length; i++) {
             facilitiesSelect.options[i].selected = false;
@@ -556,7 +553,6 @@
                     document.getElementById('roomIsActive').checked = room.is_active;
                     document.getElementById('roomNotes').value = room.notes || '';
 
-                    // Set facilities
                     if (room.facilities) {
                         const options = document.getElementById('roomFacilities').options;
                         for (let i = 0; i < options.length; i++) {
@@ -668,14 +664,12 @@
 
                     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
-                    // Build header
                     let headerHtml = '<th>Period / Time</th>';
                     days.forEach(day => {
                         headerHtml += `<th class="text-center">${day}</th>`;
                     });
                     document.getElementById('scheduleHeader').innerHTML = headerHtml;
 
-                    // Group bookings by period and day
                     const periods = ['Period 1 (7:30-8:10)', 'Period 2 (8:10-8:50)', 'Period 3 (9:10-9:50)', 'Period 4 (9:50-10:30)', 'Period 5 (11:10-11:50)', 'Period 6 (11:50-12:30)'];
 
                     let bodyHtml = '';
@@ -687,8 +681,7 @@
                                 bodyHtml += `<td class="text-center">
                                     <span class="fw-semibold">${booking.subject?.subject || 'Booked'}</span><br>
                                     <small class="text-muted">${booking.teacher?.name || ''}</small>
-                                    ${booking.room ? `<br><small><i class="ri-door-line"></i> ${booking.room}</small>` : ''}
-                                </td>`;
+                                 </td>`;
                             } else {
                                 bodyHtml += `<td class="text-center text-muted">—</td>`;
                             }
@@ -703,11 +696,12 @@
     }
 
     function bookRoom(id) {
+        document.getElementById('bookingRoomId').value = id;
+
         fetch(`/rooms/${id}`)
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    document.getElementById('bookingRoomId').value = id;
                     document.getElementById('bookingRoomName').value = data.room.room_name;
                     document.getElementById('bookingDate').value = '';
                     document.getElementById('bookingStartTime').value = '';
@@ -721,8 +715,8 @@
     }
 
     function submitBooking() {
+        const roomId = document.getElementById('bookingRoomId').value;
         const data = {
-            room_id: document.getElementById('bookingRoomId').value,
             date: document.getElementById('bookingDate').value,
             start_time: document.getElementById('bookingStartTime').value,
             end_time: document.getElementById('bookingEndTime').value,
@@ -742,13 +736,12 @@
             didOpen: () => { Swal.showLoading(); }
         });
 
-        // First check availability
-        fetch('/rooms/availability/check?' + new URLSearchParams({
-            room_id: data.room_id,
+        fetch(`/rooms/availability/check?${new URLSearchParams({
+            room_id: roomId,
             date: data.date,
             start_time: data.start_time,
             end_time: data.end_time
-        }))
+        })}`)
         .then(res => res.json())
         .then(availability => {
             if (!availability.available) {
@@ -757,8 +750,7 @@
                 return;
             }
 
-            // Proceed with booking
-            fetch('/rooms/book', {
+            fetch(`/rooms/${roomId}/book`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -773,10 +765,19 @@
                 if (result.success) {
                     Swal.fire('Success!', 'Room booked successfully', 'success');
                     bootstrap.Modal.getInstance(document.getElementById('bookingModal')).hide();
+                    location.reload();
                 } else {
                     Swal.fire('Error', result.message, 'error');
                 }
+            })
+            .catch(error => {
+                Swal.close();
+                Swal.fire('Error', 'Failed to book room: ' + error.message, 'error');
             });
+        })
+        .catch(error => {
+            Swal.close();
+            Swal.fire('Error', 'Failed to check availability: ' + error.message, 'error');
         });
     }
 

@@ -812,6 +812,10 @@ Route::prefix('timetable')->name('timetable.')->group(function () {
     Route::post('/generate-analytics', [TimetableController::class, 'generateAnalytics'])->name('generate-analytics');
 });
 
+
+
+
+
 // =========================================================================
 // ROOM MANAGEMENT ROUTES
 // =========================================================================
