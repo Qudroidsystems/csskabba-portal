@@ -291,6 +291,9 @@
     @if (Route::is('timetable.*'))
         @include('layouts.pages-assets.css.timetable-list-css')
     @endif
+    @if (Route::is('rooms.*'))
+        @include('layouts.pages-assets.css.rooms-list-css')
+    @endif
 </head>
 
 <body>
@@ -2546,6 +2549,9 @@
 
       @if (Route::is('timetable.*'))
             @include('layouts.pages-assets.js.timetable-list-js')
+      @endif
+      @if (Route::is('rooms.*'))
+            @include('layouts.pages-assets.js.rooms-list-js')
       @endif
       </body>
 
