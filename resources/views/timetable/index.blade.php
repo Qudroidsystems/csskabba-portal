@@ -1,7 +1,6 @@
 {{-- resources/views/timetable/index.blade.php --}}
 @extends('layouts.master')
 
-{{-- Tom Select for searchable dropdowns --}}
 <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
 
 <style>
@@ -16,64 +15,28 @@
     --tt-border:   #E2E8F0;
     --tt-radius:   12px;
     --tt-shadow:   0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
-    --tt-shadow-lg: 0 4px 16px rgba(0,0,0,.10);
 }
 
 /* ── Page header ──────────────────────────────────── */
 .tt-page-header {
     background: linear-gradient(135deg, #1565C0 0%, #6A1B9A 100%);
-    border-radius: 16px;
-    padding: 24px 28px;
-    color: #fff;
-    margin-bottom: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    border-radius: 16px; padding: 24px 28px; color: #fff;
+    margin-bottom: 24px; display: flex; align-items: center; justify-content: space-between;
 }
 .tt-page-header h4 { color: #fff; margin: 0; font-size: 20px; font-weight: 700; }
 .tt-page-header p  { color: rgba(255,255,255,.75); margin: 4px 0 0; font-size: 13px; }
 
 /* ── Cards ────────────────────────────────────────── */
-.tt-card {
-    background: #fff;
-    border: 1px solid var(--tt-border);
-    border-radius: var(--tt-radius);
-    box-shadow: var(--tt-shadow);
-    overflow: hidden;
-}
-.tt-card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--tt-border);
-    background: var(--tt-surface);
-}
+.tt-card { background: #fff; border: 1px solid var(--tt-border); border-radius: var(--tt-radius); box-shadow: var(--tt-shadow); overflow: hidden; }
+.tt-card-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--tt-border); background: var(--tt-surface); }
 .tt-card-header h6 { margin: 0; font-size: 14px; font-weight: 600; color: #1E293B; }
 .tt-card-body { padding: 20px; }
 
 /* ── Setting cards list ───────────────────────────── */
-.setting-card {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 14px 18px;
-    border: 1px solid var(--tt-border);
-    border-radius: 10px;
-    background: #fff;
-    transition: all 0.18s ease;
-    margin-bottom: 10px;
-    cursor: pointer;
-}
+.setting-card { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border: 1px solid var(--tt-border); border-radius: 10px; background: #fff; transition: all 0.18s ease; margin-bottom: 10px; cursor: pointer; }
 .setting-card:hover { border-color: var(--tt-blue); box-shadow: 0 0 0 3px rgba(21,101,192,.08); transform: translateY(-1px); }
 .setting-card:last-child { margin-bottom: 0; }
-.setting-card .sc-icon {
-    width: 42px; height: 42px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, #E3F2FD, #EDE7F6);
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-}
+.setting-card .sc-icon { width: 42px; height: 42px; border-radius: 10px; background: linear-gradient(135deg, #E3F2FD, #EDE7F6); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .setting-card .sc-icon i { font-size: 20px; color: var(--tt-blue); }
 .setting-card .sc-body { flex: 1; margin: 0 14px; }
 .setting-card .sc-body .sc-title { font-size: 14px; font-weight: 600; color: #1E293B; margin-bottom: 2px; }
@@ -81,176 +44,95 @@
 .setting-card .sc-actions { display: flex; gap: 6px; flex-shrink: 0; }
 
 /* ── Tabs ─────────────────────────────────────────── */
-.tt-tabs {
-    display: flex;
-    gap: 0;
-    border-bottom: 2px solid var(--tt-border);
-    margin-bottom: 24px;
-}
-.tt-tab {
-    padding: 10px 18px;
-    font-size: 13px;
-    font-weight: 500;
-    color: #64748B;
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    margin-bottom: -2px;
-    transition: all 0.15s;
-    white-space: nowrap;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    text-decoration: none;
-    background: none;
-    border-top: none;
-    border-left: none;
-    border-right: none;
-}
+.tt-tabs { display: flex; gap: 0; border-bottom: 2px solid var(--tt-border); margin-bottom: 24px; }
+.tt-tab { padding: 10px 18px; font-size: 13px; font-weight: 500; color: #64748B; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s; white-space: nowrap; display: flex; align-items: center; gap: 6px; text-decoration: none; background: none; border-top: none; border-left: none; border-right: none; }
 .tt-tab:hover { color: var(--tt-blue); background: rgba(21,101,192,.04); }
 .tt-tab.active { color: var(--tt-blue); border-bottom-color: var(--tt-blue); font-weight: 600; }
-.tt-tab .tab-badge {
-    font-size: 10px;
-    padding: 1px 6px;
-    background: #EF4444;
-    color: #fff;
-    border-radius: 10px;
-    font-weight: 600;
-}
+.tt-tab .tab-badge { font-size: 10px; padding: 1px 6px; background: #EF4444; color: #fff; border-radius: 10px; font-weight: 600; }
 
 /* ── Timetable grid ───────────────────────────────── */
 .tt-grid-wrapper { overflow-x: auto; }
-.tt-grid {
-    width: 100%;
-    border-collapse: collapse;
-    min-width: 700px;
-}
-.tt-grid th {
-    font-size: 12px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    padding: 12px 10px;
-    text-align: center;
-    white-space: nowrap;
-}
-.tt-grid th.period-th {
-    background: #1E293B;
-    color: #fff;
-    width: 100px;
-    text-align: left;
-    padding-left: 14px;
-}
+.tt-grid { width: 100%; border-collapse: collapse; min-width: 700px; }
+.tt-grid th { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; padding: 12px 10px; text-align: center; white-space: nowrap; }
+.tt-grid th.period-th  { background: #1E293B; color: #fff; width: 100px; text-align: left; padding-left: 14px; }
 .tt-grid th.monday-th    { background: var(--tt-blue);   color: #fff; }
 .tt-grid th.tuesday-th   { background: var(--tt-purple); color: #fff; }
 .tt-grid th.wednesday-th { background: var(--tt-green);  color: #fff; }
 .tt-grid th.thursday-th  { background: var(--tt-orange); color: #fff; }
 .tt-grid th.friday-th    { background: var(--tt-pink);   color: #fff; }
-
-.tt-grid td {
-    border: 1px solid var(--tt-border);
-    vertical-align: middle;
-    padding: 0;
-    transition: all 0.15s;
-}
-.tt-grid td.period-td {
-    background: var(--tt-surface);
-    padding: 10px 14px;
-}
+.tt-grid td { border: 1px solid var(--tt-border); vertical-align: middle; padding: 0; transition: all 0.15s; }
+.tt-grid td.period-td { background: var(--tt-surface); padding: 10px 14px; }
 .tt-grid .period-td .pname { font-size: 12px; font-weight: 700; color: #1E293B; }
 .tt-grid .period-td .ptime { font-size: 11px; color: #94A3B8; margin-top: 2px; }
 
-.tt-cell {
-    cursor: pointer;
-    padding: 8px;
-    min-height: 68px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    transition: all 0.15s;
-}
+.tt-cell { cursor: pointer; padding: 8px; min-height: 68px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; transition: all 0.15s; }
 .tt-cell:hover { background: rgba(21,101,192,.06) !important; }
 .tt-cell.is-free { background: #FAFAFA; }
 .tt-cell.is-double { background: rgba(21,101,192,.05); }
 .tt-cell.is-break { background: #FFFBEB; cursor: default; }
 .tt-cell.is-break:hover { background: #FFFBEB !important; }
-
-.tt-cell .cell-avatar {
-    width: 34px; height: 34px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid rgba(255,255,255,.8);
-    box-shadow: 0 2px 6px rgba(0,0,0,.15);
-    margin-bottom: 5px;
-}
-.tt-cell .cell-avatar-placeholder {
-    width: 34px; height: 34px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #E3F2FD, #EDE7F6);
-    display: flex; align-items: center; justify-content: center;
-    margin-bottom: 5px;
-}
+.tt-cell .cell-avatar { width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid rgba(255,255,255,.8); box-shadow: 0 2px 6px rgba(0,0,0,.15); margin-bottom: 5px; }
+.tt-cell .cell-avatar-placeholder { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, #E3F2FD, #EDE7F6); display: flex; align-items: center; justify-content: center; margin-bottom: 5px; }
 .tt-cell .cell-avatar-placeholder i { font-size: 16px; color: var(--tt-blue); }
-
 .tt-cell .cell-subject { font-size: 11px; font-weight: 700; color: #1E293B; line-height: 1.3; }
 .tt-cell .cell-teacher { font-size: 10px; color: #64748B; margin-top: 1px; }
 .tt-cell .cell-room    { font-size: 10px; color: #94A3B8; margin-top: 1px; }
-.tt-cell .cell-room i { font-size: 9px; margin-right: 2px; }
+.tt-cell .cell-room i  { font-size: 9px; margin-right: 2px; }
 .tt-cell .cell-free    { font-size: 11px; color: #CBD5E1; }
 .tt-cell .cell-break   { font-size: 11px; color: #D97706; font-weight: 600; }
-.tt-cell .cell-double-badge {
-    font-size: 9px;
-    padding: 1px 5px;
-    background: rgba(21,101,192,.12);
-    color: var(--tt-blue);
-    border-radius: 4px;
-    font-weight: 700;
-    margin-top: 3px;
-}
-
-/* Subject color stripes on left edge */
+.tt-cell .cell-double-badge { font-size: 9px; padding: 1px 5px; background: rgba(21,101,192,.12); color: var(--tt-blue); border-radius: 4px; font-weight: 700; margin-top: 3px; }
 .tt-cell.has-subject { border-left: 3px solid; }
 
 /* ── Constraints table ────────────────────────────── */
 #constraintsTable { font-size: 13px; }
 #constraintsTable td { vertical-align: middle; }
 #constraintsTable input[type="number"] { width: 70px; }
-#constraintsTable select[multiple] { font-size: 12px; }
-
-/* ── Periods table ────────────────────────────────── */
-#periodsBody tr { animation: rowFadeIn 0.2s ease; }
-@keyframes rowFadeIn { from { opacity:0; transform:translateY(-4px); } to { opacity:1; transform:translateY(0); } }
 
 /* ── Conflict items ───────────────────────────────── */
-.conflict-item {
-    border: 1px solid #FEE2E2;
-    background: #FFF5F5;
-    border-radius: 10px;
-    padding: 14px 16px;
-    margin-bottom: 10px;
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
-}
+.conflict-item { border: 1px solid #FEE2E2; background: #FFF5F5; border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: flex-start; gap: 14px; }
+.conflict-item.room-conflict { border-color: #FED7AA; background: #FFF7ED; }
 .conflict-item:last-child { margin-bottom: 0; }
-.conflict-avatar {
-    width: 44px; height: 44px;
-    border-radius: 50%;
-    object-fit: cover;
-    flex-shrink: 0;
-}
-.conflict-avatar-ph {
-    width: 44px; height: 44px;
-    border-radius: 50%;
-    background: #FEE2E2;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0;
-}
+.conflict-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.conflict-avatar-ph { width: 44px; height: 44px; border-radius: 50%; background: #FEE2E2; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.conflict-avatar-ph.room { background: #FED7AA; }
 .conflict-avatar-ph i { color: #EF4444; }
+.conflict-avatar-ph.room i { color: #EA580C; }
+
+/* ── Real-time conflict panel ─────────────────────── */
+.rtc-panel { border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 10px; font-size: 12px; animation: rtcSlideIn 0.2s ease; }
+.rtc-panel:last-child { margin-bottom: 0; }
+@keyframes rtcSlideIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+.rtc-error   { background: #FFF1F2; border: 1px solid #FECDD3; }
+.rtc-warning { background: #FFFBEB; border: 1px solid #FDE68A; }
+.rtc-clear   { background: #F0FDF4; border: 1px solid #BBF7D0; }
+.rtc-icon    { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+.rtc-body    { flex: 1; min-width: 0; }
+.rtc-msg     { font-weight: 600; color: #1E293B; margin-bottom: 4px; line-height: 1.4; }
+.rtc-msg.green { color: #15803d; }
+.rtc-detail  { color: #64748B; font-size: 11px; margin-bottom: 6px; }
+.rtc-alts    { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.rtc-alt-badge { font-size: 10px; padding: 3px 8px; background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; border-radius: 6px; cursor: pointer; transition: all .15s; white-space: nowrap; }
+.rtc-alt-badge:hover { background: #16a34a; color: #fff; border-color: #16a34a; }
+.rtc-room-alt { font-size: 10px; padding: 3px 8px; background: #EFF6FF; color: #1565C0; border: 1px solid #BFDBFE; border-radius: 6px; cursor: pointer; transition: all .15s; white-space: nowrap; }
+.rtc-room-alt:hover { background: #1565C0; color: #fff; }
+.rtc-spinner { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #64748B; padding: 10px 0; }
+.rtc-spinner .spinner-border { width: 14px; height: 14px; border-width: 2px; }
+
+/* ── Conflict suggestion box ─────── */
+.conflict-suggestion { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px 12px; font-size: 12px; margin-top: 8px; }
+.conflict-suggestion .alt-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.alt-badge { font-size: 11px; padding: 4px 8px; background: #dcfce7; color: #15803d; border-radius: 6px; cursor: pointer; border: 1px solid #bbf7d0; transition: all .15s; }
+.alt-badge:hover { background: #16a34a; color: #fff; }
 
 /* ── Export buttons ───────────────────────────────── */
 .export-group { display: flex; gap: 8px; align-items: center; }
+
+/* ── Tom Select overrides ─────── */
+.ts-wrapper .ts-control { border-color: #D1D5DB; border-radius: 6px; min-height: 38px; font-size: 14px; }
+.ts-wrapper.focus .ts-control { border-color: #1565C0; box-shadow: 0 0 0 3px rgba(21,101,192,.12); }
+.ts-dropdown { font-size: 13px; }
+.ts-dropdown .option { padding: 8px 12px; }
+.ts-dropdown .option:hover,.ts-dropdown .option.active { background: #EFF6FF; color: #1565C0; }
 
 /* ── Responsive ───────────────────────────────────── */
 @media (max-width: 768px) {
@@ -258,40 +140,6 @@
     .tt-tabs { overflow-x: auto; }
     .export-group { flex-wrap: wrap; }
 }
-
-/* ── Tom Select overrides ─────── */
-.ts-wrapper .ts-control {
-    border-color: #D1D5DB;
-    border-radius: 6px;
-    min-height: 38px;
-    font-size: 14px;
-}
-.ts-wrapper.focus .ts-control { border-color: #1565C0; box-shadow: 0 0 0 3px rgba(21,101,192,.12); }
-.ts-dropdown { font-size: 13px; }
-.ts-dropdown .option { padding: 8px 12px; }
-.ts-dropdown .option:hover,.ts-dropdown .option.active { background: #EFF6FF; color: #1565C0; }
-
-/* ── Conflict suggestion box ─────── */
-.conflict-suggestion {
-    background: #f0fdf4;
-    border: 1px solid #bbf7d0;
-    border-radius: 8px;
-    padding: 8px 12px;
-    font-size: 12px;
-    margin-top: 8px;
-}
-.conflict-suggestion .alt-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
-.alt-badge {
-    font-size: 11px;
-    padding: 4px 8px;
-    background: #dcfce7;
-    color: #15803d;
-    border-radius: 6px;
-    cursor: pointer;
-    border: 1px solid #bbf7d0;
-    transition: all .15s;
-}
-.alt-badge:hover { background: #16a34a; color: #fff; }
 </style>
 
 @section('content')
@@ -332,10 +180,8 @@
     </div>
     @endif
 
-    {{-- Selection + Existing timetables side by side --}}
+    {{-- Selection + Existing timetables --}}
     <div class="row g-3 mb-4">
-
-        {{-- Class/Session Selector --}}
         <div class="col-lg-5">
             <div class="tt-card h-100">
                 <div class="tt-card-header">
@@ -348,7 +194,6 @@
                             <select class="form-select" id="classSelect">
                                 <option value="">— Select Class —</option>
                                 @foreach ($schoolclasses as $class)
-                                    {{-- arm_name is the joined column alias --}}
                                     <option value="{{ $class->id }}">
                                         {{ $class->schoolclass }}{{ $class->arm_name ? ' ' . $class->arm_name : '' }}
                                     </option>
@@ -383,7 +228,6 @@
             </div>
         </div>
 
-        {{-- Existing timetables --}}
         <div class="col-lg-7">
             <div class="tt-card h-100">
                 <div class="tt-card-header">
@@ -396,10 +240,7 @@
                     <div class="setting-card" onclick="loadSetting({{ $setting->id }})">
                         <div class="sc-icon"><i class="ri-school-line"></i></div>
                         <div class="sc-body">
-                            {{-- Use resolved_class_name set in controller --}}
-                            <div class="sc-title">
-                                {{ $setting->resolved_class_name ?: 'Unknown Class' }}
-                            </div>
+                            <div class="sc-title">{{ $setting->resolved_class_name ?: 'Unknown Class' }}</div>
                             <div class="sc-meta">
                                 <span>{{ $setting->session->session ?? '—' }}</span>
                                 @if($setting->term)
@@ -439,8 +280,6 @@
     {{-- ===== TIMETABLE EDITOR ===== --}}
     <div id="timetableEditor" style="display:none">
         <div class="tt-card">
-
-            {{-- Editor header --}}
             <div class="tt-card-header" style="background:linear-gradient(135deg,#EFF6FF,#F5F3FF)">
                 <div>
                     <h6 id="editorContext" class="mb-0"><i class="ri-school-line me-2 text-primary"></i>Loading…</h6>
@@ -454,8 +293,6 @@
             </div>
 
             <div class="tt-card-body">
-
-                {{-- Tabs --}}
                 <div class="tt-tabs" role="tablist">
                     <button class="tt-tab active" onclick="showTab('periodsTab', this)">
                         <i class="ri-time-line"></i> Periods & Settings
@@ -570,14 +407,9 @@
                             <table class="table table-hover align-middle mb-0" id="constraintsTable">
                                 <thead class="table-light">
                                     <tr>
-                                        <th>Subject</th>
-                                        <th>Teacher</th>
-                                        <th>Periods / Week</th>
-                                        <th>Allow Double</th>
-                                        <th>Max Doubles</th>
-                                        <th>Preferred Days</th>
-                                        <th>Avoid Days</th>
-                                        <th>Compulsory</th>
+                                        <th>Subject</th><th>Teacher</th><th>Periods / Week</th>
+                                        <th>Allow Double</th><th>Max Doubles</th>
+                                        <th>Preferred Days</th><th>Avoid Days</th><th>Compulsory</th>
                                     </tr>
                                 </thead>
                                 <tbody id="constraintsBody"></tbody>
@@ -628,8 +460,7 @@
                         <div>
                             <h6 class="mb-1">Conflict Checker</h6>
                             <p class="text-muted mb-0" style="font-size:13px">
-                                Detects teacher double-booking across <strong>all classes</strong> in the same session and term,
-                                including cross-arm conflicts.
+                                Detects teacher double-booking and room conflicts across <strong>all classes</strong> in the same session and term.
                             </p>
                         </div>
                         <button class="btn btn-primary" onclick="checkConflicts()">
@@ -642,7 +473,7 @@
                     <div id="conflictsList">
                         <div class="text-center py-5 text-muted">
                             <i class="ri-check-double-line ri-3x d-block mb-3 text-success opacity-50"></i>
-                            <p>Click <strong>Run Conflict Check</strong> to validate teacher assignments across all classes.</p>
+                            <p>Click <strong>Run Conflict Check</strong> to validate teacher and room assignments across all classes.</p>
                         </div>
                     </div>
                 </div>
@@ -659,7 +490,7 @@
 {{-- EDIT SLOT MODAL                                              --}}
 {{-- ============================================================ --}}
 <div class="modal fade" id="editSlotModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content" style="border-radius:14px;overflow:hidden;border:none;box-shadow:0 20px 60px rgba(0,0,0,.18)">
             <div class="modal-header border-0 pb-0" style="background:linear-gradient(135deg,#1565C0,#6A1B9A);padding:20px 24px 0">
                 <div class="d-flex align-items-center gap-3 w-100">
@@ -689,21 +520,19 @@
                 <input type="hidden" id="editSlotPeriodId">
                 <input type="hidden" id="editSlotDay">
 
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">Subject</label>
-                    <select class="form-select" id="editSlotSubject" onchange="onSubjectChange()">
-                        <option value="">— Free Period —</option>
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">Teacher</label>
-                    <select class="form-select" id="editSlotTeacher" onchange="onTeacherChange()">
-                        <option value="">— No Teacher —</option>
-                    </select>
-                </div>
-
-                <div class="row g-3 mb-3">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Subject</label>
+                        <select class="form-select" id="editSlotSubject" onchange="onSubjectChange()">
+                            <option value="">— Free Period —</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Teacher</label>
+                        <select class="form-select" id="editSlotTeacher" onchange="onTeacherChange()">
+                            <option value="">— No Teacher —</option>
+                        </select>
+                    </div>
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Room / Venue</label>
                         <select id="editSlotRoom" placeholder="Search or type a room…"></select>
@@ -714,17 +543,24 @@
                             <label class="form-check-label" for="editSlotIsDouble">Double Period</label>
                         </div>
                     </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Notes</label>
+                        <textarea class="form-control" id="editSlotNotes" rows="2" placeholder="Optional notes…"></textarea>
+                    </div>
                 </div>
 
-                <div class="mb-0">
-                    <label class="form-label fw-semibold">Notes</label>
-                    <textarea class="form-control" id="editSlotNotes" rows="2" placeholder="Optional notes…"></textarea>
+                {{-- Real-time conflict panel --}}
+                <div id="slotConflictPanel" style="display:none;margin-top:16px">
+                    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#64748B;margin-bottom:8px">
+                        <i class="ri-shield-check-line me-1"></i>Conflict Check
+                    </div>
+                    <div id="slotConflictInner"></div>
                 </div>
             </div>
 
             <div class="modal-footer border-0 pt-0" style="padding:0 24px 20px">
                 <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary px-4" onclick="saveSlot()">
+                <button type="button" class="btn btn-primary px-4" id="saveSlotBtn" onclick="saveSlot()">
                     <i class="ri-save-line me-2"></i>Save Slot
                 </button>
             </div>
@@ -817,7 +653,6 @@
 
 @endsection
 
-{{-- Tom Select JS --}}
 <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
@@ -833,8 +668,8 @@ let availableSubjects = [];
 let allTeachers       = [];
 let availableRooms    = [];
 let pendingCloneId    = null;
-
-let roomTomSelect = null;
+let roomTomSelect     = null;
+let conflictCheckTimer = null;
 
 const SUBJECT_COLORS = ['#3B82F6','#8B5CF6','#10B981','#F59E0B','#EF4444','#06B6D4','#F97316','#EC4899','#14B8A6','#84CC16'];
 const subjectColorMap = {};
@@ -847,19 +682,20 @@ function getSubjectColor(subjectId) {
 }
 
 const ROUTES = {
-    setup:             '{{ route("timetable.setup") }}',
-    saveSettings:      '{{ route("timetable.save-settings") }}',
-    saveConstraints:   '{{ route("timetable.save-constraints") }}',
-    autoGenerate:      '{{ route("timetable.auto-generate") }}',
-    saveSlot:          '{{ route("timetable.save-slot") }}',
-    sendNotifications: '{{ route("timetable.send-notifications") }}',
-    cloneSetting:      '{{ route("timetable.clone-setting") }}',
-    getSetting:        '{{ url("/timetable/get-setting") }}',
-    getGrid:           '{{ url("/timetable/get-grid") }}',
-    checkConflicts:    '{{ url("/timetable/check-conflicts") }}',
-    export:            '{{ url("/timetable/export") }}',
-    deleteSetting:     '{{ url("/timetable/delete-setting") }}',
-    exportWholeSchool: '{{ route("timetable.export-whole-school") }}',
+    setup:              '{{ route("timetable.setup") }}',
+    saveSettings:       '{{ route("timetable.save-settings") }}',
+    saveConstraints:    '{{ route("timetable.save-constraints") }}',
+    autoGenerate:       '{{ route("timetable.auto-generate") }}',
+    saveSlot:           '{{ route("timetable.save-slot") }}',
+    sendNotifications:  '{{ route("timetable.send-notifications") }}',
+    cloneSetting:       '{{ route("timetable.clone-setting") }}',
+    getSetting:         '{{ url("/timetable/get-setting") }}',
+    getGrid:            '{{ url("/timetable/get-grid") }}',
+    checkConflicts:     '{{ url("/timetable/check-conflicts") }}',
+    checkSlotConflict:  '{{ route("timetable.check-slot-conflict") }}',
+    export:             '{{ url("/timetable/export") }}',
+    deleteSetting:      '{{ url("/timetable/delete-setting") }}',
+    exportWholeSchool:  '{{ route("timetable.export-whole-school") }}',
 };
 const CSRF = '{{ csrf_token() }}';
 
@@ -880,6 +716,9 @@ document.addEventListener('DOMContentLoaded', function () {
                      + (data.type ? '<small class="text-muted ms-2">' + escapeHtml(data.type) + '</small>' : '')
                      + '</div>';
             }
+        },
+        onChange: function() {
+            debounceConflictCheck();
         }
     });
 });
@@ -933,7 +772,7 @@ async function loadSetting(settingId) {
         currentSettingId  = settingId;
         availableSubjects = data.available_subjects || [];
 
-        const className   = data.setting.schoolclass?.schoolclass
+        const className   = (data.setting.schoolclass?.schoolclass || '')
             + (data.setting.schoolclass?.arm_name ? ' ' + data.setting.schoolclass.arm_name : '');
         const sessionName = data.setting.session?.session || '—';
         const termName    = data.setting.term?.term || 'All Terms';
@@ -1028,8 +867,7 @@ async function saveSettings() {
             period_duration_minutes:      parseInt(document.getElementById('periodDuration').value),
             short_break_duration_minutes: parseInt(document.getElementById('shortBreakDuration').value),
             long_break_duration_minutes:  parseInt(document.getElementById('longBreakDuration').value),
-            active_days: activeDays,
-            periods,
+            active_days: activeDays, periods,
         });
         const data = await res.json();
         if (data.success) {
@@ -1115,8 +953,9 @@ async function saveConstraints() {
 async function generateTimetable() {
     const result = await Swal.fire({
         title: 'Auto-Generate Timetable?',
-        html: 'This will <strong>clear the existing timetable</strong> and generate a new one based on your constraints.',
-        icon: 'warning', showCancelButton: true, confirmButtonColor: '#1565C0', confirmButtonText: 'Yes, generate!',
+        html: 'This will <strong>clear the existing timetable</strong> and generate a new one based on your constraints. The generator now respects teacher assignments across all classes.',
+        icon: 'warning', showCancelButton: true,
+        confirmButtonColor: '#1565C0', confirmButtonText: 'Yes, generate!',
     });
     if (!result.isConfirmed) return;
     showLoader();
@@ -1126,6 +965,7 @@ async function generateTimetable() {
         if (data.success) {
             await loadTimetableGrid();
             showTab('gridTab', document.querySelectorAll('.tt-tab')[2]);
+            silentConflictCheck();
             Swal.fire({ icon:'success', title:'Generated!', timer:1800, showConfirmButton:false });
         } else throw new Error(data.message || 'Failed');
     } catch (e) { Swal.fire('Error', e.message, 'error'); }
@@ -1168,8 +1008,7 @@ function renderGrid() {
     </tr></thead><tbody>`;
 
     currentPeriods.forEach(period => {
-        const isBreak = period.is_break;
-        // Strip seconds from time display
+        const isBreak   = period.is_break;
         const startTime = (period.start_time || '').slice(0, 5);
         const endTime   = (period.end_time   || '').slice(0, 5);
 
@@ -1197,11 +1036,9 @@ function renderGrid() {
                     ? `<img src="${slot.teacher_picture}" class="cell-avatar" onerror="this.style.display='none'">`
                     : `<div class="cell-avatar-placeholder"><i class="ri-user-line"></i></div>`;
                 const doubleBadge = slot.is_double ? '<span class="cell-double-badge">Double</span>' : '';
-                // Only show room if room_name is non-empty
                 const roomHtml    = slot.room_name
                     ? `<span class="cell-room"><i class="ri-door-line"></i> ${escapeHtml(slot.room_name)}</span>`
                     : '';
-                // Only show teacher if teacher name exists
                 const teacherHtml = slot.teacher
                     ? `<span class="cell-teacher">${escapeHtml(slot.teacher.split(' ')[0])}</span>`
                     : '';
@@ -1210,9 +1047,7 @@ function renderGrid() {
                     <div class="tt-cell has-subject${slot.is_double?' is-double':''}">
                         ${avatarHtml}
                         <span class="cell-subject">${escapeHtml(slot.subject_code || slot.subject || '—')}</span>
-                        ${teacherHtml}
-                        ${roomHtml}
-                        ${doubleBadge}
+                        ${teacherHtml}${roomHtml}${doubleBadge}
                     </div></td>`;
             }
         });
@@ -1230,9 +1065,10 @@ function openSlotModal(periodId, day) {
     if (!period) return;
     const slot = currentGrid[periodId]?.[day] || {};
 
-    document.getElementById('editSlotSettingId').value      = currentSettingId;
-    document.getElementById('editSlotPeriodId').value        = periodId;
-    document.getElementById('editSlotDay').value             = day;
+    document.getElementById('editSlotSettingId').value = currentSettingId;
+    document.getElementById('editSlotPeriodId').value  = periodId;
+    document.getElementById('editSlotDay').value       = day;
+
     const startFmt = (period.start_time || '').slice(0, 5);
     const endFmt   = (period.end_time   || '').slice(0, 5);
     document.getElementById('editSlotPeriodName').textContent = period.name + ' · ' + startFmt + ' – ' + endFmt;
@@ -1240,6 +1076,9 @@ function openSlotModal(periodId, day) {
     document.getElementById('editSlotContext').textContent    = period.name + ' · ' + day;
     document.getElementById('editSlotNotes').value            = slot.notes || '';
     document.getElementById('editSlotIsDouble').checked       = slot.is_double || false;
+
+    // Reset conflict panel and save button
+    resetConflictPanel();
 
     if (roomTomSelect) {
         roomTomSelect.setValue(slot.room_id ? slot.room_id.toString() : '', true);
@@ -1256,8 +1095,7 @@ function openSlotModal(periodId, day) {
     const subjectSel = document.getElementById('editSlotSubject');
     subjectSel.innerHTML = '<option value="">— Free Period —</option>';
     availableSubjects.forEach(s => {
-        const termText = s.term_name ? ` - ${s.term_name}` : '';
-        const opt      = new Option(`${s.subject_name} (${s.teacher_name})${termText}`, s.subject_id);
+        const opt      = new Option(`${s.subject_name} (${s.teacher_name})`, s.subject_id);
         opt.dataset.teacherId   = s.teacher_id;
         opt.dataset.teacherName = s.teacher_name;
         opt.selected = (slot.subject_id == s.subject_id);
@@ -1278,6 +1116,11 @@ function openSlotModal(periodId, day) {
     });
 
     new bootstrap.Modal(document.getElementById('editSlotModal')).show();
+
+    // Run conflict check after modal is shown if slot already has teacher/room
+    if (slot.teacher_id || slot.room_id) {
+        setTimeout(runRealtimeConflictCheck, 300);
+    }
 }
 
 function onSubjectChange() {
@@ -1285,20 +1128,179 @@ function onSubjectChange() {
     const opt = sel.options[sel.selectedIndex];
     const tid = opt?.dataset?.teacherId;
     if (tid) document.getElementById('editSlotTeacher').value = tid;
+    onTeacherChange();
+    debounceConflictCheck();
 }
 
 function onTeacherChange() {
     const tid = document.getElementById('editSlotTeacher').value;
-    if (!tid) return;
+    if (!tid) { debounceConflictCheck(); return; }
     const t = allTeachers.find(t => t.id == tid);
     const avatarDiv = document.getElementById('editTeacherAvatar');
     if (t?.picture) {
         avatarDiv.innerHTML = `<img src="${t.picture}" style="width:44px;height:44px;border-radius:50%;object-fit:cover" onerror="this.parentElement.innerHTML='<i class=\\'ri-user-line text-white ri-xl\\'></i>'">`;
     }
+    debounceConflictCheck();
 }
 
 // ============================================================================
-// SAVE SLOT — with real-time conflict dialog and suggestions
+// REAL-TIME CONFLICT CHECK
+// ============================================================================
+function debounceConflictCheck() {
+    clearTimeout(conflictCheckTimer);
+    // Show spinner immediately
+    const panel = document.getElementById('slotConflictPanel');
+    const inner = document.getElementById('slotConflictInner');
+    const teacherId = document.getElementById('editSlotTeacher').value;
+    const roomId    = roomTomSelect ? roomTomSelect.getValue() : '';
+    if (!teacherId && !roomId) {
+        resetConflictPanel();
+        return;
+    }
+    panel.style.display = '';
+    inner.innerHTML = `<div class="rtc-spinner"><div class="spinner-border text-primary"></div><span>Checking for conflicts…</span></div>`;
+    conflictCheckTimer = setTimeout(runRealtimeConflictCheck, 400);
+}
+
+async function runRealtimeConflictCheck() {
+    const teacherId = document.getElementById('editSlotTeacher').value;
+    const roomId    = roomTomSelect ? roomTomSelect.getValue() : '';
+    const periodId  = document.getElementById('editSlotPeriodId').value;
+    const day       = document.getElementById('editSlotDay').value;
+    const settingId = document.getElementById('editSlotSettingId').value;
+
+    const panel = document.getElementById('slotConflictPanel');
+    const inner = document.getElementById('slotConflictInner');
+
+    if (!teacherId && !roomId) { resetConflictPanel(); return; }
+
+    try {
+        const res  = await apiFetch(ROUTES.checkSlotConflict, 'POST', {
+            setting_id: parseInt(settingId),
+            period_id:  parseInt(periodId),
+            day:        day,
+            teacher_id: teacherId ? parseInt(teacherId) : null,
+            room_id:    roomId    ? parseInt(roomId)    : null,
+        });
+        const data = await res.json();
+        if (!data.success) return;
+
+        inner.innerHTML = '';
+        panel.style.display = '';
+
+        // Render conflict cards
+        data.conflicts.forEach(c => {
+            const div = document.createElement('div');
+            div.className = 'rtc-panel ' + (c.severity === 'error' ? 'rtc-error' : 'rtc-warning');
+
+            let altsHtml = '';
+            if (c.alternatives?.length) {
+                altsHtml += '<div class="rtc-alts">'
+                    + c.alternatives.slice(0, 4).map(a =>
+                        `<span class="rtc-alt-badge" onclick="closeModalAndOpenSlot(${a.period_id}, '${escapeHtml(a.day)}')">
+                            📅 ${escapeHtml(a.day)} · ${escapeHtml(a.period_name)}
+                        </span>`
+                    ).join('') + '</div>';
+            }
+            if (c.alternative_rooms?.length) {
+                altsHtml += '<div class="rtc-alts" style="margin-top:4px">'
+                    + c.alternative_rooms.slice(0, 4).map(r =>
+                        `<span class="rtc-room-alt" onclick="switchToRoom(${r.id}, '${escapeHtml(r.label)}')">
+                            🏫 ${escapeHtml(r.label)}
+                        </span>`
+                    ).join('') + '</div>';
+            }
+
+            div.innerHTML = `
+                <div class="rtc-icon">${c.icon}</div>
+                <div class="rtc-body">
+                    <div class="rtc-msg">${escapeHtml(c.message)}</div>
+                    ${c.detail ? `<div class="rtc-detail">${escapeHtml(c.detail)}</div>` : ''}
+                    ${altsHtml}
+                </div>`;
+            inner.appendChild(div);
+        });
+
+        // Render warning cards
+        data.warnings.forEach(w => {
+            const div = document.createElement('div');
+            div.className = 'rtc-panel rtc-warning';
+            div.innerHTML = `<div class="rtc-icon">${w.icon}</div>
+                <div class="rtc-body"><div class="rtc-msg">${escapeHtml(w.message)}</div></div>`;
+            inner.appendChild(div);
+        });
+
+        // All clear
+        if (!data.conflicts.length && !data.warnings.length) {
+            inner.innerHTML = `<div class="rtc-panel rtc-clear">
+                <div class="rtc-icon">✅</div>
+                <div class="rtc-body"><div class="rtc-msg green">No conflicts detected for this slot.</div></div>
+            </div>`;
+        }
+
+        // Update save button state
+        const saveBtn = document.getElementById('saveSlotBtn');
+        if (data.has_error) {
+            saveBtn.innerHTML = '<i class="ri-alert-line me-2"></i>Save Anyway (Override)';
+            saveBtn.className = 'btn btn-danger px-4';
+        } else {
+            saveBtn.innerHTML = '<i class="ri-save-line me-2"></i>Save Slot';
+            saveBtn.className = 'btn btn-primary px-4';
+        }
+
+    } catch (e) {
+        // Silent fail — don't block the user
+        inner.innerHTML = '';
+    }
+}
+
+function resetConflictPanel() {
+    document.getElementById('slotConflictPanel').style.display = 'none';
+    document.getElementById('slotConflictInner').innerHTML = '';
+    const saveBtn = document.getElementById('saveSlotBtn');
+    if (saveBtn) {
+        saveBtn.innerHTML = '<i class="ri-save-line me-2"></i>Save Slot';
+        saveBtn.className = 'btn btn-primary px-4';
+    }
+}
+
+// Click alternative slot — close modal, navigate to it
+function closeModalAndOpenSlot(periodId, day) {
+    const modal = bootstrap.Modal.getInstance(document.getElementById('editSlotModal'));
+    if (modal) modal.hide();
+    loadTimetableGrid().then(() => openSlotModal(periodId, day));
+}
+
+// Click alternative room — auto-select in Tom Select
+function switchToRoom(roomId, label) {
+    if (!roomTomSelect) return;
+    const idStr = roomId.toString();
+    if (!roomTomSelect.getOption(idStr)) {
+        roomTomSelect.addOption({ value: idStr, label: label });
+    }
+    roomTomSelect.setValue(idStr);
+    // onChange will trigger debounceConflictCheck via Tom Select onChange callback
+}
+
+// Silent background conflict check — just updates the badge
+async function silentConflictCheck() {
+    if (!currentSettingId) return;
+    try {
+        const res  = await apiFetch(url(ROUTES.checkConflicts, currentSettingId), 'GET');
+        const data = await res.json();
+        if (!data.success) return;
+        const badge = document.getElementById('conflictBadgeTab');
+        if (data.conflict_count > 0) {
+            badge.style.display = '';
+            badge.textContent   = data.conflict_count;
+        } else {
+            badge.style.display = 'none';
+        }
+    } catch (e) { /* silent */ }
+}
+
+// ============================================================================
+// SAVE SLOT
 // ============================================================================
 async function saveSlot() {
     const roomId = roomTomSelect ? (roomTomSelect.getValue() || null) : null;
@@ -1321,6 +1323,7 @@ async function saveSlot() {
         if (result.success) {
             bootstrap.Modal.getInstance(document.getElementById('editSlotModal')).hide();
             await loadTimetableGrid();
+            silentConflictCheck();
             Swal.fire({ icon:'success', title:'Saved!', timer:1200, showConfirmButton:false });
             return;
         }
@@ -1329,49 +1332,62 @@ async function saveSlot() {
         if (result.has_conflict) {
             hideLoader();
 
-            const altsHtml = result.alternatives?.length
-                ? `<div class="mt-3 text-start">
-                       <div class="fw-semibold mb-2" style="font-size:13px">
-                           <i class="ri-lightbulb-flash-line text-warning me-1"></i>Available alternative slots:
-                       </div>
-                       <div class="d-flex flex-wrap gap-1">
-                           ${result.alternatives.slice(0, 5).map(a =>
-                               `<span class="badge p-2" style="background:#dcfce7;color:#15803d;font-size:11px;cursor:default">
-                                    📅 ${escapeHtml(a.day)} · ${escapeHtml(a.period_name)} (${escapeHtml(a.period_time)})
-                                </span>`
-                           ).join('')}
-                       </div>
-                   </div>`
-                : `<p class="text-muted mt-2 mb-0" style="font-size:12px">No free slots found — consider a schedule review or substitute.</p>`;
+            const isRoomConflict = (result.conflict_type || '').startsWith('room');
+            const icon           = isRoomConflict ? '🏫' : '⚠️';
+            const title          = isRoomConflict ? 'Room Already In Use' : 'Teacher Conflict Detected';
+
+            let altsHtml = '';
+            if (result.alternatives?.length) {
+                altsHtml += `<div class="mt-3 text-start">
+                    <div class="fw-semibold mb-2" style="font-size:13px">
+                        <i class="ri-lightbulb-flash-line text-warning me-1"></i>Available alternative slots:
+                    </div>
+                    <div class="d-flex flex-wrap gap-1">
+                        ${result.alternatives.slice(0, 5).map(a =>
+                            `<span class="badge p-2" style="background:#dcfce7;color:#15803d;font-size:11px">
+                                📅 ${escapeHtml(a.day)} · ${escapeHtml(a.period_name)} (${escapeHtml(a.period_time)})
+                            </span>`
+                        ).join('')}
+                    </div></div>`;
+            }
+            if (result.alternative_rooms?.length) {
+                altsHtml += `<div class="mt-2 text-start">
+                    <div class="fw-semibold mb-2" style="font-size:13px">
+                        <i class="ri-door-line text-info me-1"></i>Available alternative rooms:
+                    </div>
+                    <div class="d-flex flex-wrap gap-1">
+                        ${result.alternative_rooms.slice(0, 4).map(r =>
+                            `<span class="badge p-2" style="background:#EFF6FF;color:#1565C0;font-size:11px;cursor:pointer"
+                                onclick="switchToRoom(${r.id}, '${escapeHtml(r.label)}')">
+                                🏫 ${escapeHtml(r.label)}
+                            </span>`
+                        ).join('')}
+                    </div></div>`;
+            }
 
             const { isConfirmed } = await Swal.fire({
-                title: '⚠️ Teacher Conflict Detected',
+                title: `${icon} ${title}`,
                 html: `<div style="font-size:14px;text-align:left">
-                           <p class="mb-2">${escapeHtml(result.message)}</p>
-                           ${altsHtml}
-                           <hr class="my-3">
-                           <p class="text-muted mb-0" style="font-size:12px">
-                               Override to save anyway, or cancel to choose a different slot.
-                           </p>
-                       </div>`,
-                icon: 'warning',
-                showCancelButton:    true,
-                confirmButtonColor:  '#DC2626',
-                cancelButtonColor:   '#6B7280',
-                confirmButtonText:   '<i class="ri-save-line me-1"></i>Override & Save',
-                cancelButtonText:    'Cancel',
-                width: 520,
+                    <p class="mb-2">${escapeHtml(result.message)}</p>
+                    ${altsHtml}
+                    <hr class="my-3">
+                    <p class="text-muted mb-0" style="font-size:12px">Override to save anyway, or cancel to choose differently.</p>
+                </div>`,
+                icon: 'warning', showCancelButton: true,
+                confirmButtonColor: '#DC2626', cancelButtonColor: '#6B7280',
+                confirmButtonText: '<i class="ri-save-line me-1"></i>Override & Save',
+                cancelButtonText:  'Cancel', width: 520,
             });
 
             if (!isConfirmed) return;
 
-            // Force-save override
             showLoader();
             const res2    = await apiFetch(ROUTES.saveSlot, 'POST', { ...payload, force_save: true });
             const result2 = await res2.json();
             if (result2.success) {
                 bootstrap.Modal.getInstance(document.getElementById('editSlotModal')).hide();
                 await loadTimetableGrid();
+                silentConflictCheck();
                 Swal.fire({ icon:'success', title:'Saved (Override)!', timer:1400, showConfirmButton:false });
             } else {
                 Swal.fire('Error', result2.message || 'Save failed', 'error');
@@ -1385,7 +1401,7 @@ async function saveSlot() {
 }
 
 // ============================================================================
-// CONFLICT CHECKER — full cross-class detection with suggestions
+// CONFLICT CHECKER TAB — full cross-class detection
 // ============================================================================
 async function checkConflicts() {
     if (!currentSettingId) return;
@@ -1398,7 +1414,6 @@ async function checkConflicts() {
         const container = document.getElementById('conflictsList');
         const badge     = document.getElementById('conflictBadgeTab');
 
-        // Show checked-at timestamp
         if (data.checked_at) {
             document.getElementById('conflictCheckedAt').style.display = '';
             document.getElementById('conflictCheckedAtText').textContent = 'Last checked: ' + data.checked_at;
@@ -1410,7 +1425,7 @@ async function checkConflicts() {
                 <div class="text-center py-5">
                     <i class="ri-check-double-line ri-3x d-block mb-3 text-success"></i>
                     <h6 class="text-success">No Conflicts Found</h6>
-                    <p class="text-muted mb-0">All teachers are properly scheduled with no overlaps across any class.</p>
+                    <p class="text-muted mb-0">All teachers and rooms are properly scheduled with no overlaps across any class.</p>
                 </div>`;
             return;
         }
@@ -1418,36 +1433,36 @@ async function checkConflicts() {
         badge.style.display = '';
         badge.textContent   = data.conflict_count;
 
+        // Count by category
+        const teacherConflicts = data.conflicts.filter(c => c.conflict_category === 'teacher');
+        const roomConflicts    = data.conflicts.filter(c => c.conflict_category === 'room');
+
         let html = `<div class="alert alert-warning d-flex align-items-center gap-2 mb-3">
             <i class="ri-alert-line ri-xl"></i>
-            Found <strong class="mx-1">${data.conflict_count}</strong> conflict(s) across all classes in this term.
+            Found <strong class="mx-1">${data.conflict_count}</strong> conflict(s) across all classes
+            ${teacherConflicts.length ? `<span class="badge bg-danger ms-1">${teacherConflicts.length} teacher</span>` : ''}
+            ${roomConflicts.length    ? `<span class="badge bg-warning text-dark ms-1">${roomConflicts.length} room</span>` : ''}
         </div>`;
 
         data.conflicts.forEach(c => {
-            const avatarHtml = c.teacher_picture
-                ? `<img src="${c.teacher_picture}" class="conflict-avatar">`
-                : `<div class="conflict-avatar-ph"><i class="ri-user-line ri-xl"></i></div>`;
+            const isRoomConflict = c.conflict_category === 'room';
+            const avatarHtml     = isRoomConflict
+                ? `<div class="conflict-avatar-ph room"><i class="ri-home-3-line ri-xl" style="color:#EA580C"></i></div>`
+                : (c.teacher_picture
+                    ? `<img src="${c.teacher_picture}" class="conflict-avatar">`
+                    : `<div class="conflict-avatar-ph"><i class="ri-user-line ri-xl"></i></div>`);
 
             const crossArmBadge = c.is_cross_arm
                 ? `<span class="badge bg-warning-subtle text-warning ms-1" style="font-size:10px">
                        <i class="ri-git-branch-line"></i> Cross-Arm
-                   </span>`
-                : '';
+                   </span>` : '';
 
-            // All-classes display when more than 2 classes involved
             const classesHtml = (c.all_classes && c.all_classes.length > 2)
-                ? c.all_classes.map(cls =>
-                    `<span class="badge bg-primary-subtle text-primary me-1">${escapeHtml(cls)}</span>`
-                  ).join('')
+                ? c.all_classes.map(cls => `<span class="badge bg-primary-subtle text-primary me-1">${escapeHtml(cls)}</span>`).join('')
                 : `<span class="badge bg-primary-subtle text-primary">${escapeHtml(c.class_a || '')}</span>
                    <span class="mx-1 text-muted">&amp;</span>
                    <span class="badge bg-primary-subtle text-primary">${escapeHtml(c.class_b || '')}</span>`;
 
-            const subjectsHtml = (c.all_subjects && c.all_subjects.length > 1)
-                ? `<span class="text-muted ms-2">${c.all_subjects.map(s => escapeHtml(s)).join(' &amp; ')}</span>`
-                : `<span class="text-muted ms-2">${escapeHtml(c.subject_a || '—')} vs ${escapeHtml(c.subject_b || '—')}</span>`;
-
-            // Suggestion box with clickable alternative slot badges
             const altHtml = c.alternatives?.length
                 ? `<div class="conflict-suggestion">
                        <div><i class="ri-lightbulb-line text-success me-1"></i>
@@ -1455,30 +1470,30 @@ async function checkConflicts() {
                        </div>
                        <div class="alt-badges">
                            ${c.alternatives.slice(0, 4).map(a =>
-                               `<span class="alt-badge"
-                                    onclick="switchToGridAndOpen(${a.period_id}, '${a.day}')"
-                                    title="Click to open this slot in the grid">
+                               `<span class="alt-badge" onclick="switchToGridAndOpen(${a.period_id}, '${a.day}')">
                                     📅 ${escapeHtml(a.day)} · ${escapeHtml(a.period_name)} (${escapeHtml(a.period_time)})
                                 </span>`
                            ).join('')}
                        </div>
                    </div>`
                 : `<div class="mt-2 text-muted" style="font-size:12px">
-                       <i class="ri-information-line me-1"></i>No free slots found — consider a substitute or full schedule review.
+                       <i class="ri-information-line me-1"></i>${escapeHtml(c.resolution_suggestion)}
                    </div>`;
 
-            html += `<div class="conflict-item">
+            html += `<div class="conflict-item ${isRoomConflict ? 'room-conflict' : ''}">
                 ${avatarHtml}
                 <div class="flex-grow-1">
                     <div class="fw-semibold mb-1">
                         ${escapeHtml(c.teacher || '—')} ${crossArmBadge}
+                        ${isRoomConflict ? '<span class="badge bg-warning-subtle text-warning ms-1" style="font-size:10px">Room Conflict</span>' : ''}
                     </div>
                     <div class="text-danger fw-semibold" style="font-size:12px">
                         <i class="ri-time-line me-1"></i>${escapeHtml(c.day)} · ${escapeHtml(c.period)}
                         ${c.period_time ? ' (' + escapeHtml(c.period_time) + ')' : ''}
                     </div>
                     <div class="mt-1" style="font-size:12px">
-                        ${classesHtml} ${subjectsHtml}
+                        ${classesHtml}
+                        <span class="text-muted ms-2">${escapeHtml(c.subject_a || '—')} vs ${escapeHtml(c.subject_b || '—')}</span>
                     </div>
                     ${altHtml}
                 </div>
@@ -1490,7 +1505,6 @@ async function checkConflicts() {
     finally { hideLoader(); }
 }
 
-// Switch to grid tab and open the slot modal for a suggested alternative
 function switchToGridAndOpen(periodId, day) {
     showTab('gridTab', document.querySelectorAll('.tt-tab')[2]);
     loadTimetableGrid().then(() => openSlotModal(periodId, day));
@@ -1554,8 +1568,10 @@ async function deleteSetting(settingId) {
     try {
         const res  = await apiFetch(url(ROUTES.deleteSetting, settingId), 'DELETE');
         const data = await res.json();
-        if (data.success) { Swal.fire({ icon:'success', title:'Deleted!', timer:1400, showConfirmButton:false }); setTimeout(() => location.reload(), 1400); }
-        else throw new Error(data.message || 'Failed');
+        if (data.success) {
+            Swal.fire({ icon:'success', title:'Deleted!', timer:1400, showConfirmButton:false });
+            setTimeout(() => location.reload(), 1400);
+        } else throw new Error(data.message || 'Failed');
     } catch (e) { Swal.fire('Error', e.message, 'error'); }
     finally { hideLoader(); }
 }
@@ -1576,8 +1592,10 @@ async function confirmClone() {
             new_term_id:    document.getElementById('cloneTermId').value    || null,
         });
         const data = await res.json();
-        if (data.success) { Swal.fire({ icon:'success', title:'Cloned!', timer:1400, showConfirmButton:false }); setTimeout(() => location.reload(), 1400); }
-        else throw new Error(data.message || 'Failed');
+        if (data.success) {
+            Swal.fire({ icon:'success', title:'Cloned!', timer:1400, showConfirmButton:false });
+            setTimeout(() => location.reload(), 1400);
+        } else throw new Error(data.message || 'Failed');
     } catch (e) { Swal.fire('Error', e.message, 'error'); }
     finally { hideLoader(); pendingCloneId = null; }
 }
