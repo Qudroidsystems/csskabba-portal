@@ -248,6 +248,19 @@
     flex-shrink: 0;
 }
 .conflict-avatar-ph i { color: #EF4444; }
+.resolution-suggestion {
+    margin-top: 8px;
+    padding: 8px;
+    background: #FEF3C7;
+    border-radius: 6px;
+    font-size: 11px;
+    color: #92400E;
+}
+.alternatives-list {
+    margin-top: 8px;
+    padding-left: 20px;
+    font-size: 11px;
+}
 
 /* ── Export buttons ───────────────────────────────── */
 .export-group { display: flex; gap: 8px; align-items: center; }
@@ -279,6 +292,15 @@
 .ts-dropdown { font-size: 13px; }
 .ts-dropdown .option { padding: 8px 12px; }
 .ts-dropdown .option:hover,.ts-dropdown .option.active { background: #EFF6FF; color: #1565C0; }
+
+/* Conflict alert animation */
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+.conflict-alert {
+    animation: pulse 1s ease-in-out 3;
+}
 </style>
 
 
@@ -614,7 +636,7 @@
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <div>
                             <h6 class="mb-1">Conflict Checker</h6>
-                            <p class="text-muted mb-0" style="font-size:13px">Checks for teacher double-booking across all classes in the same session.</p>
+                            <p class="text-muted mb-0" style="font-size:13px">Checks for teacher double-booking across all classes in the same session and term.</p>
                         </div>
                         <button class="btn btn-primary" onclick="checkConflicts()">
                             <i class="ri-search-line me-2"></i>Run Conflict Check
@@ -1318,17 +1340,19 @@ function onTeacherChange() {
 }
 
 // ============================================================================
-// SAVE SLOT — FIXED with room_id
+// SAVE SLOT with Conflict Handling and Suggestions
 // ============================================================================
 async function saveSlot() {
     const roomId = roomTomSelect ? (roomTomSelect.getValue() || null) : null;
+    const teacherId = document.getElementById('editSlotTeacher').value || null;
+    const subjectId = document.getElementById('editSlotSubject').value || null;
 
     const payload = {
         setting_id: parseInt(document.getElementById('editSlotSettingId').value),
         period_id:  parseInt(document.getElementById('editSlotPeriodId').value),
         day:        document.getElementById('editSlotDay').value,
-        subject_id: document.getElementById('editSlotSubject').value || null,
-        teacher_id: document.getElementById('editSlotTeacher').value || null,
+        subject_id: subjectId,
+        teacher_id: teacherId,
         room_id:    roomId ? parseInt(roomId) : null,
         notes:      document.getElementById('editSlotNotes').value || null,
         is_double:  document.getElementById('editSlotIsDouble').checked,
@@ -1336,24 +1360,90 @@ async function saveSlot() {
 
     showLoader();
     try {
-        const res    = await apiFetch(ROUTES.saveSlot, 'POST', payload);
+        const res = await apiFetch(ROUTES.saveSlot, 'POST', payload);
         const result = await res.json();
 
         if (result.success) {
             bootstrap.Modal.getInstance(document.getElementById('editSlotModal')).hide();
             await loadTimetableGrid();
-            Swal.fire({ icon:'success', title:'Saved!', timer:1200, showConfirmButton:false });
-        } else if (result.conflict) {
-            Swal.fire('Teacher Conflict', result.message, 'warning');
+            Swal.fire({
+                icon: 'success',
+                title: 'Saved!',
+                text: 'Timetable slot updated successfully.',
+                timer: 1500,
+                showConfirmButton: false
+            });
+        } else if (result.has_conflict) {
+            // Build alternatives HTML
+            let alternativesHtml = '';
+            if (result.alternatives && result.alternatives.length > 0) {
+                alternativesHtml = '<div class="mt-3" style="background: #f0f9ff; padding: 12px; border-radius: 8px;"><strong>💡 Suggested Alternative Slots:</strong><ul class="mt-2" style="margin-bottom: 0;">';
+                result.alternatives.forEach(alt => {
+                    alternativesHtml += `<li style="margin-bottom: 5px;">📅 <strong>${alt.day}</strong> · ${alt.period_name} (${alt.period_time}) - <span style="color: #059669;">✓ Available</span></li>`;
+                });
+                alternativesHtml += '</ul></div>';
+            } else {
+                alternativesHtml = '<div class="mt-3 text-muted">⚠️ No alternative slots available at this time.</div>';
+            }
+
+            const conflictResult = await Swal.fire({
+                title: '⚠️ Teacher Conflict Detected!',
+                html: `
+                    <div style="text-align: left;">
+                        <div style="background: #fef2f2; padding: 12px; border-radius: 8px; border-left: 4px solid #dc2626;">
+                            <strong style="color: #dc2626;">${result.conflict_details?.teacher || 'Teacher'}</strong>
+                            <p style="margin-top: 8px; margin-bottom: 4px;">Already scheduled to teach:</p>
+                            <p style="margin: 4px 0;"><strong>📖 ${escapeHtml(result.conflict_details.subject)}</strong></p>
+                            <p style="margin: 4px 0;"><strong>📚 ${escapeHtml(result.conflict_details.class)}</strong></p>
+                            <p style="margin: 4px 0;"><strong>📅 ${escapeHtml(result.conflict_details.day)} at ${escapeHtml(result.conflict_details.time)}</strong></p>
+                        </div>
+                        ${alternativesHtml}
+                        <div class="mt-3 text-warning" style="background: #fffbeb; padding: 10px; border-radius: 8px;">
+                            <strong>⚠️ Warning:</strong> Overriding may cause schedule conflicts across classes.
+                        </div>
+                    </div>
+                `,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '⚠️ Override Anyway',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#dc2626',
+                cancelButtonColor: '#6c757d',
+                width: '550px',
+            });
+
+            if (conflictResult.isConfirmed) {
+                // Save with force_save flag
+                payload.force_save = true;
+                const forceRes = await apiFetch(ROUTES.saveSlot, 'POST', payload);
+                const forceResult = await forceRes.json();
+
+                if (forceResult.success) {
+                    bootstrap.Modal.getInstance(document.getElementById('editSlotModal')).hide();
+                    await loadTimetableGrid();
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Saved with Conflict!',
+                        text: 'Timetable slot saved. Please review the Conflicts tab for potential issues.',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                } else {
+                    throw new Error(forceResult.message || 'Save failed');
+                }
+            }
         } else {
             throw new Error(result.message || 'Save failed');
         }
-    } catch (e) { Swal.fire('Error', e.message, 'error'); }
-    finally { hideLoader(); }
+    } catch (e) {
+        Swal.fire('Error', e.message, 'error');
+    } finally {
+        hideLoader();
+    }
 }
 
 // ============================================================================
-// CONFLICTS
+// CONFLICTS with detailed suggestions
 // ============================================================================
 async function checkConflicts() {
     if (!currentSettingId) return;
@@ -1373,7 +1463,7 @@ async function checkConflicts() {
                 <div class="text-center py-5">
                     <i class="ri-check-double-line ri-3x d-block mb-3 text-success"></i>
                     <h6 class="text-success">No Conflicts Found</h6>
-                    <p class="text-muted mb-0">All teachers are properly scheduled with no double-bookings.</p>
+                    <p class="text-muted mb-0">All teachers are properly scheduled with no double-bookings across the ${currentSetting.term?.term || 'term'}.</p>
                 </div>`;
         } else {
             badge.style.display = '';
@@ -1382,28 +1472,42 @@ async function checkConflicts() {
                 <i class="ri-alert-line ri-xl"></i>
                 Found <strong>${data.conflict_count}</strong> conflict(s) requiring attention.
             </div>`;
+
             data.conflicts.forEach(c => {
                 const avatarHtml = c.teacher_picture
                     ? `<img src="${c.teacher_picture}" class="conflict-avatar">`
                     : `<div class="conflict-avatar-ph"><i class="ri-user-line ri-xl"></i></div>`;
+
+                let alternativesHtml = '';
+                if (c.alternatives && c.alternatives.length > 0) {
+                    alternativesHtml = '<div class="alternatives-list"><strong>💡 Alternative slots for this teacher:</strong><ul>';
+                    c.alternatives.forEach(alt => {
+                        alternativesHtml += `<li>📅 ${alt.day} · ${alt.period_name} (${alt.period_time}) - Available</li>`;
+                    });
+                    alternativesHtml += '</ul></div>';
+                }
+
                 html += `<div class="conflict-item">
                     ${avatarHtml}
                     <div class="flex-grow-1">
-                        <div class="fw-semibold">${escapeHtml(c.teacher || '—')}</div>
-                        <div class="text-muted" style="font-size:13px">${c.day} &bull; ${escapeHtml(c.period)} ${c.period_time ? '(' + c.period_time + ')' : ''}</div>
-                        <div class="mt-1" style="font-size:12px">
-                            <span class="badge bg-primary-subtle text-primary">${escapeHtml(c.class_a||'')}</span>
-                            <span class="mx-1 text-muted">&amp;</span>
-                            <span class="badge bg-primary-subtle text-primary">${escapeHtml(c.class_b||'')}</span>
-                            <span class="text-muted ms-2">are both scheduled for ${escapeHtml(c.subject_a||'—')}</span>
+                        <div class="fw-semibold">👨‍🏫 ${escapeHtml(c.teacher || '—')}</div>
+                        <div class="text-muted" style="font-size:13px">📅 ${c.day} &bull; ⏰ ${escapeHtml(c.period)} ${c.period_time ? '(' + c.period_time + ')' : ''}</div>
+                        <div class="mt-2" style="font-size:12px">
+                            <div class="mb-1">📚 <strong>Class A:</strong> ${escapeHtml(c.class_a||'')} - ${escapeHtml(c.subject_a||'—')}</div>
+                            <div>📚 <strong>Class B:</strong> ${escapeHtml(c.class_b||'')} - ${escapeHtml(c.subject_b||'—')}</div>
                         </div>
+                        ${c.resolution_suggestion ? `<div class="resolution-suggestion"><strong>💡 Suggestion:</strong> ${escapeHtml(c.resolution_suggestion)}</div>` : ''}
+                        ${alternativesHtml}
                     </div>
                 </div>`;
             });
             container.innerHTML = html;
         }
-    } catch (e) { Swal.fire('Error', e.message, 'error'); }
-    finally { hideLoader(); }
+    } catch (e) {
+        Swal.fire('Error', e.message, 'error');
+    } finally {
+        hideLoader();
+    }
 }
 
 // ============================================================================
