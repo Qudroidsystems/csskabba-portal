@@ -230,7 +230,7 @@
     padding: 14px 16px;
     margin-bottom: 10px;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 14px;
 }
 .conflict-item:last-child { margin-bottom: 0; }
@@ -248,19 +248,6 @@
     flex-shrink: 0;
 }
 .conflict-avatar-ph i { color: #EF4444; }
-.resolution-suggestion {
-    margin-top: 8px;
-    padding: 8px;
-    background: #FEF3C7;
-    border-radius: 6px;
-    font-size: 11px;
-    color: #92400E;
-}
-.alternatives-list {
-    margin-top: 8px;
-    padding-left: 20px;
-    font-size: 11px;
-}
 
 /* ── Export buttons ───────────────────────────────── */
 .export-group { display: flex; gap: 8px; align-items: center; }
@@ -272,16 +259,7 @@
     .export-group { flex-wrap: wrap; }
 }
 
-/* ── Status badge ─────────────────────────────────── */
-.status-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    display: inline-block;
-    background: #22C55E;
-    margin-right: 5px;
-}
-
-/* ── Tom Select overrides to match app style ─────── */
+/* ── Tom Select overrides ─────── */
 .ts-wrapper .ts-control {
     border-color: #D1D5DB;
     border-radius: 6px;
@@ -293,16 +271,28 @@
 .ts-dropdown .option { padding: 8px 12px; }
 .ts-dropdown .option:hover,.ts-dropdown .option.active { background: #EFF6FF; color: #1565C0; }
 
-/* Conflict alert animation */
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+/* ── Conflict suggestion box ─────── */
+.conflict-suggestion {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 12px;
+    margin-top: 8px;
 }
-.conflict-alert {
-    animation: pulse 1s ease-in-out 3;
+.conflict-suggestion .alt-badges { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.alt-badge {
+    font-size: 11px;
+    padding: 4px 8px;
+    background: #dcfce7;
+    color: #15803d;
+    border-radius: 6px;
+    cursor: pointer;
+    border: 1px solid #bbf7d0;
+    transition: all .15s;
 }
+.alt-badge:hover { background: #16a34a; color: #fff; }
 </style>
-
 
 @section('content')
 <div class="main-content">
@@ -358,7 +348,10 @@
                             <select class="form-select" id="classSelect">
                                 <option value="">— Select Class —</option>
                                 @foreach ($schoolclasses as $class)
-                                    <option value="{{ $class->id }}">{{ $class->schoolclass }} {{ $class->arm }}</option>
+                                    {{-- arm_name is the joined column alias --}}
+                                    <option value="{{ $class->id }}">
+                                        {{ $class->schoolclass }}{{ $class->arm_name ? ' ' . $class->arm_name : '' }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
@@ -403,17 +396,15 @@
                     <div class="setting-card" onclick="loadSetting({{ $setting->id }})">
                         <div class="sc-icon"><i class="ri-school-line"></i></div>
                         <div class="sc-body">
+                            {{-- Use resolved_class_name set in controller --}}
                             <div class="sc-title">
-                                {{ $setting->schoolclass->schoolclass ?? 'Unknown Class' }}
-                                @if($setting->schoolclass?->arm)
-                                    <span class="badge bg-primary-subtle text-primary ms-1" style="font-size:11px;font-weight:600">
-                                        {{ is_object($setting->schoolclass->arm) ? $setting->schoolclass->arm->arm : $setting->schoolclass->arm }}
-                                    </span>
-                                @endif
+                                {{ $setting->resolved_class_name ?: 'Unknown Class' }}
                             </div>
                             <div class="sc-meta">
                                 <span>{{ $setting->session->session ?? '—' }}</span>
-                                @if($setting->term) <span class="mx-1">·</span><span>{{ $setting->term->term }}</span> @endif
+                                @if($setting->term)
+                                    <span class="mx-1">·</span><span>{{ $setting->term->term }}</span>
+                                @endif
                                 <span class="mx-1">·</span>
                                 <span class="text-muted">Updated {{ $setting->updated_at->diffForHumans() }}</span>
                                 @if($setting->creator)
@@ -449,7 +440,7 @@
     <div id="timetableEditor" style="display:none">
         <div class="tt-card">
 
-            {{-- Editor header with context --}}
+            {{-- Editor header --}}
             <div class="tt-card-header" style="background:linear-gradient(135deg,#EFF6FF,#F5F3FF)">
                 <div>
                     <h6 id="editorContext" class="mb-0"><i class="ri-school-line me-2 text-primary"></i>Loading…</h6>
@@ -563,7 +554,7 @@
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <div>
                             <h6 class="mb-1">Subject Constraints</h6>
-                            <p class="text-muted mb-0" style="font-size:13px">Define how many times per week each subject is taught, and preferred scheduling rules.</p>
+                            <p class="text-muted mb-0" style="font-size:13px">Define how many times per week each subject is taught and preferred scheduling rules.</p>
                         </div>
                         <div class="d-flex gap-2">
                             <button class="btn btn-success" onclick="saveConstraints()">
@@ -603,18 +594,18 @@
                             <p class="text-muted mb-0" style="font-size:13px">Click any cell to assign a subject and teacher.</p>
                         </div>
                         <div class="export-group">
-                            <select id="exportOrientation" class="form-select form-select-sm" style="width: auto;">
-                                <option value="horizontal">Horizontal Layout (Days as columns)</option>
-                                <option value="vertical">Vertical Layout (Days as rows)</option>
+                            <select id="exportOrientation" class="form-select form-select-sm" style="width:auto">
+                                <option value="horizontal">Horizontal Layout</option>
+                                <option value="vertical">Vertical Layout</option>
                             </select>
                             <button class="btn btn-sm btn-outline-secondary" onclick="loadTimetableGrid()">
                                 <i class="ri-refresh-line me-1"></i>Refresh
                             </button>
                             <button class="btn btn-sm btn-outline-primary" onclick="exportTimetable('csv')">
-                                <i class="ri-file-excel-line me-1"></i>Export CSV
+                                <i class="ri-file-excel-line me-1"></i>CSV
                             </button>
                             <button class="btn btn-sm btn-primary" onclick="exportTimetable('pdf')">
-                                <i class="ri-file-pdf-line me-1"></i>Export PDF
+                                <i class="ri-file-pdf-line me-1"></i>PDF
                             </button>
                             <button class="btn btn-sm btn-outline-success" onclick="sendNotifications()">
                                 <i class="ri-mail-send-line me-1"></i>Notify Teachers
@@ -633,19 +624,25 @@
 
                 {{-- ── TAB: Conflicts ── --}}
                 <div id="conflictsTab" class="tab-content-pane" style="display:none">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                         <div>
                             <h6 class="mb-1">Conflict Checker</h6>
-                            <p class="text-muted mb-0" style="font-size:13px">Checks for teacher double-booking across all classes in the same session and term.</p>
+                            <p class="text-muted mb-0" style="font-size:13px">
+                                Detects teacher double-booking across <strong>all classes</strong> in the same session and term,
+                                including cross-arm conflicts.
+                            </p>
                         </div>
                         <button class="btn btn-primary" onclick="checkConflicts()">
                             <i class="ri-search-line me-2"></i>Run Conflict Check
                         </button>
                     </div>
+                    <div id="conflictCheckedAt" class="text-muted mb-2" style="font-size:12px;display:none">
+                        <i class="ri-time-line me-1"></i><span id="conflictCheckedAtText"></span>
+                    </div>
                     <div id="conflictsList">
                         <div class="text-center py-5 text-muted">
                             <i class="ri-check-double-line ri-3x d-block mb-3 text-success opacity-50"></i>
-                            <p>Click <strong>Run Conflict Check</strong> to validate teacher assignments.</p>
+                            <p>Click <strong>Run Conflict Check</strong> to validate teacher assignments across all classes.</p>
                         </div>
                     </div>
                 </div>
@@ -673,7 +670,7 @@
                         <h5 class="modal-title text-white mb-0" style="font-size:15px">Edit Timetable Slot</h5>
                         <small class="text-white opacity-75" id="editSlotContext">—</small>
                     </div>
-                    <button type="button" class="btn-close btn-close-white ms-auto mt-0" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close btn-close-white ms-auto mt-0" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="w-100 mt-3 d-flex gap-2 pb-0">
                     <div class="flex-1 px-2 py-2 rounded-top" style="background:rgba(255,255,255,.1)">
@@ -706,7 +703,6 @@
                     </select>
                 </div>
 
-                {{-- Room/Venue dropdown with Tom Select --}}
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Room / Venue</label>
@@ -767,8 +763,8 @@
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Orientation</label>
                     <select class="form-select" id="wholeSchoolOrientation">
-                        <option value="horizontal">Horizontal Layout (Days as columns, Periods as rows)</option>
-                        <option value="vertical">Vertical Layout (Days as rows, Periods as columns)</option>
+                        <option value="horizontal">Horizontal Layout (Days as columns)</option>
+                        <option value="vertical">Vertical Layout (Days as rows)</option>
                     </select>
                 </div>
             </div>
@@ -782,7 +778,7 @@
     </div>
 </div>
 
-{{-- Clone modal --}}
+{{-- Clone Modal --}}
 <div class="modal fade" id="cloneModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content" style="border-radius:14px;overflow:hidden">
@@ -791,7 +787,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p class="text-muted mb-3" style="font-size:13px">The cloned timetable will copy all periods, constraints, and slots. You can optionally change the session or term.</p>
+                <p class="text-muted mb-3" style="font-size:13px">Copies all periods, constraints and slots. Optionally change session or term.</p>
                 <div class="mb-3">
                     <label class="form-label fw-semibold">New Session <span class="text-muted fw-normal">(optional)</span></label>
                     <select class="form-select" id="cloneSessionId">
@@ -821,24 +817,23 @@
 
 @endsection
 
-{{-- Tom Select JS (must come before our script) --}}
+{{-- Tom Select JS --}}
 <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 // ============================================================================
 // GLOBALS
 // ============================================================================
-let currentSettingId = null;
-let currentSetting   = null;
-let currentPeriods   = [];
-let currentGrid      = {};
-let currentDays      = [];
-let availableSubjects= [];
-let allTeachers      = [];
-let availableRooms   = [];
-let pendingCloneId   = null;
+let currentSettingId  = null;
+let currentSetting    = null;
+let currentPeriods    = [];
+let currentGrid       = {};
+let currentDays       = [];
+let availableSubjects = [];
+let allTeachers       = [];
+let availableRooms    = [];
+let pendingCloneId    = null;
 
-// Tom Select instance for room dropdown
 let roomTomSelect = null;
 
 const SUBJECT_COLORS = ['#3B82F6','#8B5CF6','#10B981','#F59E0B','#EF4444','#06B6D4','#F97316','#EC4899','#14B8A6','#84CC16'];
@@ -847,9 +842,7 @@ let colorSeq = 0;
 
 function getSubjectColor(subjectId) {
     if (!subjectId) return null;
-    if (!subjectColorMap[subjectId]) {
-        subjectColorMap[subjectId] = SUBJECT_COLORS[colorSeq++ % SUBJECT_COLORS.length];
-    }
+    if (!subjectColorMap[subjectId]) subjectColorMap[subjectId] = SUBJECT_COLORS[colorSeq++ % SUBJECT_COLORS.length];
     return subjectColorMap[subjectId];
 }
 
@@ -873,19 +866,13 @@ const CSRF = '{{ csrf_token() }}';
 function url(base, id) { return base.replace(/\/$/, '') + '/' + id; }
 
 // ============================================================================
-// INITIALISE TOM SELECT for room dropdown
+// TOM SELECT — Room dropdown
 // ============================================================================
 document.addEventListener('DOMContentLoaded', function () {
     roomTomSelect = new TomSelect('#editSlotRoom', {
-        valueField:   'value',
-        labelField:   'label',
-        searchField:  ['label'],
-        options:      [],
-        create:       true,
-        createOnBlur: true,
-        placeholder:  'Search or type a room…',
-        maxItems:     1,
-        allowEmptyOption: true,
+        valueField: 'value', labelField: 'label', searchField: ['label'],
+        options: [], create: true, createOnBlur: true,
+        placeholder: 'Search or type a room…', maxItems: 1, allowEmptyOption: true,
         render: {
             option: function(data) {
                 return '<div class="d-flex justify-content-between align-items-center">'
@@ -897,18 +884,11 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
-// Update Tom Select with rooms from server
 function updateRoomDropdown(rooms) {
     if (!roomTomSelect) return;
     roomTomSelect.clearOptions();
     roomTomSelect.addOption({ value: '', label: '— No Room —' });
-    rooms.forEach(function(r) {
-        roomTomSelect.addOption({
-            value: r.id.toString(),
-            label: r.label,
-            type:  r.type || '',
-        });
-    });
+    rooms.forEach(r => roomTomSelect.addOption({ value: r.id.toString(), label: r.label, type: r.type || '' }));
 }
 
 // ============================================================================
@@ -932,18 +912,14 @@ async function loadOrCreateSetting() {
     if (!classId || !sessionId) {
         return Swal.fire({ title: 'Required', text: 'Please select both a class and session.', icon: 'warning', confirmButtonColor: '#1565C0' });
     }
-
     showLoader();
     try {
         const res  = await apiFetch(ROUTES.setup, 'POST', { schoolclass_id: classId, session_id: sessionId, term_id: termId || null });
         const data = await res.json();
-        if (data.success) {
-            currentSettingId = data.setting_id;
-            await loadSetting(currentSettingId);
-        } else throw new Error(data.message || 'Failed');
-    } catch (e) {
-        Swal.fire('Error', e.message, 'error');
-    } finally { hideLoader(); }
+        if (data.success) { currentSettingId = data.setting_id; await loadSetting(currentSettingId); }
+        else throw new Error(data.message || 'Failed');
+    } catch (e) { Swal.fire('Error', e.message, 'error'); }
+    finally { hideLoader(); }
 }
 
 async function loadSetting(settingId) {
@@ -953,21 +929,23 @@ async function loadSetting(settingId) {
         const data = await res.json();
         if (!data.success) throw new Error(data.message || 'Failed');
 
-        currentSetting   = data.setting;
-        currentSettingId = settingId;
-        availableSubjects= data.available_subjects || [];
+        currentSetting    = data.setting;
+        currentSettingId  = settingId;
+        availableSubjects = data.available_subjects || [];
 
-        const className   = data.setting.schoolclass?.schoolclass || '—';
+        const className   = data.setting.schoolclass?.schoolclass
+            + (data.setting.schoolclass?.arm_name ? ' ' + data.setting.schoolclass.arm_name : '');
         const sessionName = data.setting.session?.session || '—';
         const termName    = data.setting.term?.term || 'All Terms';
-        document.getElementById('editorContext').innerHTML = `<i class="ri-school-line me-2 text-primary"></i>${escapeHtml(className)}`;
+
+        document.getElementById('editorContext').innerHTML    = `<i class="ri-school-line me-2 text-primary"></i>${escapeHtml(className || '—')}`;
         document.getElementById('editorSubContext').textContent = `${sessionName} · ${termName}`;
 
-        document.getElementById('schoolDayStart').value      = data.setting.school_day_start?.slice(0,5) || '08:00';
-        document.getElementById('schoolDayEnd').value        = data.setting.school_day_end?.slice(0,5) || '14:30';
-        document.getElementById('periodDuration').value      = data.setting.period_duration_minutes || 40;
-        document.getElementById('shortBreakDuration').value  = data.setting.short_break_duration_minutes || 20;
-        document.getElementById('longBreakDuration').value   = data.setting.long_break_duration_minutes || 40;
+        document.getElementById('schoolDayStart').value     = (data.setting.school_day_start || '08:00').slice(0, 5);
+        document.getElementById('schoolDayEnd').value       = (data.setting.school_day_end   || '14:30').slice(0, 5);
+        document.getElementById('periodDuration').value     = data.setting.period_duration_minutes      || 40;
+        document.getElementById('shortBreakDuration').value = data.setting.short_break_duration_minutes || 20;
+        document.getElementById('longBreakDuration').value  = data.setting.long_break_duration_minutes  || 40;
 
         const activeDays = data.setting.active_days || ['Monday','Tuesday','Wednesday','Thursday','Friday'];
         document.querySelectorAll('.active-day-checkbox').forEach(cb => cb.checked = activeDays.includes(cb.value));
@@ -1038,13 +1016,12 @@ function getPeriodsFromTable() {
 async function saveSettings() {
     const periods    = getPeriodsFromTable();
     const activeDays = [...document.querySelectorAll('.active-day-checkbox:checked')].map(cb => cb.value);
-
     if (!periods.length)    return Swal.fire('Error', 'Add at least one period.', 'error');
     if (!activeDays.length) return Swal.fire('Error', 'Select at least one active day.', 'error');
 
     showLoader();
     try {
-        const res = await apiFetch(ROUTES.saveSettings, 'POST', {
+        const res  = await apiFetch(ROUTES.saveSettings, 'POST', {
             setting_id:                   currentSettingId,
             school_day_start:             document.getElementById('schoolDayStart').value,
             school_day_end:               document.getElementById('schoolDayEnd').value,
@@ -1056,12 +1033,11 @@ async function saveSettings() {
         });
         const data = await res.json();
         if (data.success) {
-            Swal.fire({ icon:'success', title:'Saved!', text:'Settings saved successfully.', timer:1600, showConfirmButton:false });
+            Swal.fire({ icon:'success', title:'Saved!', timer:1600, showConfirmButton:false });
             await loadSetting(currentSettingId);
         } else throw new Error(data.message || 'Failed');
-    } catch (e) {
-        Swal.fire('Error', e.message, 'error');
-    } finally { hideLoader(); }
+    } catch (e) { Swal.fire('Error', e.message, 'error'); }
+    finally { hideLoader(); }
 }
 
 // ============================================================================
@@ -1070,15 +1046,12 @@ async function saveSettings() {
 function loadConstraintsIntoTable(constraints) {
     const tbody = document.getElementById('constraintsBody');
     tbody.innerHTML = '';
-
     if (!availableSubjects.length) {
         tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-4">
             <i class="ri-information-line ri-2x d-block mb-2"></i>No subjects assigned to this class.</td></tr>`;
         return;
     }
-
     const cMap = new Map(constraints.map(c => [c.subject_id, c]));
-
     availableSubjects.forEach(subj => {
         const c  = cMap.get(subj.subject_id) || {};
         const tr = document.createElement('tr');
@@ -1091,16 +1064,8 @@ function loadConstraintsIntoTable(constraints) {
             <td><input type="number" class="form-control form-control-sm periods-per-week" value="${c.periods_per_week||2}" min="1" max="10" style="width:70px"></td>
             <td class="text-center"><input type="checkbox" class="form-check-input allow-double" ${c.allow_double_period?'checked':''}></td>
             <td><input type="number" class="form-control form-control-sm max-double" value="${c.max_double_periods_per_week??1}" min="0" max="5" style="width:60px" ${!c.allow_double_period?'disabled':''}></td>
-            <td>
-                <select class="form-select form-select-sm preferred-days" multiple size="3">
-                    ${genDayOptions(c.preferred_days||[])}
-                </select>
-            </td>
-            <td>
-                <select class="form-select form-select-sm avoid-days" multiple size="3">
-                    ${genDayOptions(c.avoid_days||[])}
-                </select>
-            </td>
+            <td><select class="form-select form-select-sm preferred-days" multiple size="3">${genDayOptions(c.preferred_days||[])}</select></td>
+            <td><select class="form-select form-select-sm avoid-days" multiple size="3">${genDayOptions(c.avoid_days||[])}</select></td>
             <td class="text-center"><input type="checkbox" class="form-check-input is-compulsory" ${c.is_compulsory!==false?'checked':''}></td>
         `;
         tr.querySelector('.allow-double').addEventListener('change', function() {
@@ -1134,7 +1099,6 @@ function getConstraintsFromTable() {
 async function saveConstraints() {
     const constraints = getConstraintsFromTable();
     if (!constraints.length) return Swal.fire('Error', 'No constraints to save.', 'error');
-
     showLoader();
     try {
         const res  = await apiFetch(ROUTES.saveConstraints, 'POST', { setting_id: currentSettingId, constraints });
@@ -1152,13 +1116,9 @@ async function generateTimetable() {
     const result = await Swal.fire({
         title: 'Auto-Generate Timetable?',
         html: 'This will <strong>clear the existing timetable</strong> and generate a new one based on your constraints.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#1565C0',
-        confirmButtonText: 'Yes, generate!',
+        icon: 'warning', showCancelButton: true, confirmButtonColor: '#1565C0', confirmButtonText: 'Yes, generate!',
     });
     if (!result.isConfirmed) return;
-
     showLoader();
     try {
         const res  = await apiFetch(ROUTES.autoGenerate, 'POST', { setting_id: currentSettingId });
@@ -1166,7 +1126,7 @@ async function generateTimetable() {
         if (data.success) {
             await loadTimetableGrid();
             showTab('gridTab', document.querySelectorAll('.tt-tab')[2]);
-            Swal.fire({ icon:'success', title:'Generated!', text:'Timetable generated successfully.', timer:1800, showConfirmButton:false });
+            Swal.fire({ icon:'success', title:'Generated!', timer:1800, showConfirmButton:false });
         } else throw new Error(data.message || 'Failed');
     } catch (e) { Swal.fire('Error', e.message, 'error'); }
     finally { hideLoader(); }
@@ -1177,21 +1137,17 @@ async function generateTimetable() {
 // ============================================================================
 async function loadTimetableGrid() {
     if (!currentSettingId) return;
-
     const container = document.getElementById('timetableGridContainer');
-    container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><p class="mt-3 text-muted">Loading timetable…</p></div>';
-
+    container.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-3 text-muted">Loading timetable…</p></div>';
     try {
         const res  = await apiFetch(url(ROUTES.getGrid, currentSettingId), 'GET');
         const data = await res.json();
         if (!data.success) throw new Error(data.message || 'Failed');
-
         currentPeriods = data.periods || [];
         currentGrid    = data.grid    || {};
         currentDays    = data.days    || ['Monday','Tuesday','Wednesday','Thursday','Friday'];
         allTeachers    = data.teachers|| [];
         availableRooms = data.rooms   || [];
-
         updateRoomDropdown(availableRooms);
         renderGrid();
     } catch (e) {
@@ -1205,9 +1161,7 @@ function renderGrid() {
         container.innerHTML = '<div class="alert alert-warning m-3">No periods configured. Save settings first.</div>';
         return;
     }
-
     const dayThClasses = {Monday:'monday-th',Tuesday:'tuesday-th',Wednesday:'wednesday-th',Thursday:'thursday-th',Friday:'friday-th'};
-
     let html = `<table class="tt-grid"><thead><tr>
         <th class="period-th">Period</th>
         ${currentDays.map(d => `<th class="${dayThClasses[d]||''}">${escapeHtml(d)}</th>`).join('')}
@@ -1215,11 +1169,14 @@ function renderGrid() {
 
     currentPeriods.forEach(period => {
         const isBreak = period.is_break;
-        html += `<tr>
-            <td class="period-td">
-                <div class="pname">${escapeHtml(period.name)}</div>
-                <div class="ptime">${period.start_time} – ${period.end_time}</div>
-            </td>`;
+        // Strip seconds from time display
+        const startTime = (period.start_time || '').slice(0, 5);
+        const endTime   = (period.end_time   || '').slice(0, 5);
+
+        html += `<tr><td class="period-td">
+            <div class="pname">${escapeHtml(period.name)}</div>
+            <div class="ptime">${startTime} – ${endTime}</div>
+        </td>`;
 
         currentDays.forEach(day => {
             const slot   = currentGrid[period.id]?.[day] || null;
@@ -1234,19 +1191,26 @@ function renderGrid() {
                         <span class="cell-free">Free</span>
                     </div></td>`;
             } else {
-                const sc = getSubjectColor(slot.subject_id);
+                const sc          = getSubjectColor(slot.subject_id);
                 const borderStyle = sc ? `style="border-left:3px solid ${sc}"` : '';
-                const avatarHtml = slot.teacher_picture
+                const avatarHtml  = slot.teacher_picture
                     ? `<img src="${slot.teacher_picture}" class="cell-avatar" onerror="this.style.display='none'">`
                     : `<div class="cell-avatar-placeholder"><i class="ri-user-line"></i></div>`;
                 const doubleBadge = slot.is_double ? '<span class="cell-double-badge">Double</span>' : '';
-                const roomHtml = slot.room_name ? `<span class="cell-room"><i class="ri-door-line"></i> ${escapeHtml(slot.room_name)}</span>` : '';
+                // Only show room if room_name is non-empty
+                const roomHtml    = slot.room_name
+                    ? `<span class="cell-room"><i class="ri-door-line"></i> ${escapeHtml(slot.room_name)}</span>`
+                    : '';
+                // Only show teacher if teacher name exists
+                const teacherHtml = slot.teacher
+                    ? `<span class="cell-teacher">${escapeHtml(slot.teacher.split(' ')[0])}</span>`
+                    : '';
 
                 html += `<td onclick="openSlotModal(${period.id},'${day}')" ${borderStyle}>
                     <div class="tt-cell has-subject${slot.is_double?' is-double':''}">
                         ${avatarHtml}
                         <span class="cell-subject">${escapeHtml(slot.subject_code || slot.subject || '—')}</span>
-                        <span class="cell-teacher">${escapeHtml((slot.teacher || '').split(' ')[0])}</span>
+                        ${teacherHtml}
                         ${roomHtml}
                         ${doubleBadge}
                     </div></td>`;
@@ -1254,7 +1218,6 @@ function renderGrid() {
         });
         html += '</tr>';
     });
-
     html += '</tbody></table>';
     container.innerHTML = html;
 }
@@ -1265,28 +1228,23 @@ function renderGrid() {
 function openSlotModal(periodId, day) {
     const period = currentPeriods.find(p => p.id == periodId);
     if (!period) return;
-
     const slot = currentGrid[periodId]?.[day] || {};
 
-    document.getElementById('editSlotSettingId').value = currentSettingId;
-    document.getElementById('editSlotPeriodId').value  = periodId;
-    document.getElementById('editSlotDay').value       = day;
-    document.getElementById('editSlotPeriodName').textContent = period.name + ' · ' + period.start_time + ' – ' + period.end_time;
+    document.getElementById('editSlotSettingId').value      = currentSettingId;
+    document.getElementById('editSlotPeriodId').value        = periodId;
+    document.getElementById('editSlotDay').value             = day;
+    const startFmt = (period.start_time || '').slice(0, 5);
+    const endFmt   = (period.end_time   || '').slice(0, 5);
+    document.getElementById('editSlotPeriodName').textContent = period.name + ' · ' + startFmt + ' – ' + endFmt;
     document.getElementById('editSlotDayName').textContent    = day;
     document.getElementById('editSlotContext').textContent    = period.name + ' · ' + day;
-    document.getElementById('editSlotNotes').value   = slot.notes || '';
-    document.getElementById('editSlotIsDouble').checked = slot.is_double || false;
+    document.getElementById('editSlotNotes').value            = slot.notes || '';
+    document.getElementById('editSlotIsDouble').checked       = slot.is_double || false;
 
-    // Set room dropdown value using room_id
     if (roomTomSelect) {
-        if (slot.room_id) {
-            roomTomSelect.setValue(slot.room_id.toString(), true);
-        } else {
-            roomTomSelect.setValue('', true);
-        }
+        roomTomSelect.setValue(slot.room_id ? slot.room_id.toString() : '', true);
     }
 
-    // Avatar
     const avatarDiv = document.getElementById('editTeacherAvatar');
     if (slot.teacher_picture) {
         avatarDiv.innerHTML = `<img src="${slot.teacher_picture}" style="width:44px;height:44px;border-radius:50%;object-fit:cover">`;
@@ -1294,12 +1252,12 @@ function openSlotModal(periodId, day) {
         avatarDiv.innerHTML = `<i class="ri-user-line text-white ri-xl"></i>`;
     }
 
-    // Subject dropdown with term info
+    // Subject dropdown
     const subjectSel = document.getElementById('editSlotSubject');
     subjectSel.innerHTML = '<option value="">— Free Period —</option>';
     availableSubjects.forEach(s => {
         const termText = s.term_name ? ` - ${s.term_name}` : '';
-        const opt = new Option(`${s.subject_name} (${s.teacher_name})${termText}`, s.subject_id);
+        const opt      = new Option(`${s.subject_name} (${s.teacher_name})${termText}`, s.subject_id);
         opt.dataset.teacherId   = s.teacher_id;
         opt.dataset.teacherName = s.teacher_name;
         opt.selected = (slot.subject_id == s.subject_id);
@@ -1340,19 +1298,16 @@ function onTeacherChange() {
 }
 
 // ============================================================================
-// SAVE SLOT with Conflict Handling and Suggestions
+// SAVE SLOT — with real-time conflict dialog and suggestions
 // ============================================================================
 async function saveSlot() {
     const roomId = roomTomSelect ? (roomTomSelect.getValue() || null) : null;
-    const teacherId = document.getElementById('editSlotTeacher').value || null;
-    const subjectId = document.getElementById('editSlotSubject').value || null;
-
     const payload = {
         setting_id: parseInt(document.getElementById('editSlotSettingId').value),
         period_id:  parseInt(document.getElementById('editSlotPeriodId').value),
         day:        document.getElementById('editSlotDay').value,
-        subject_id: subjectId,
-        teacher_id: teacherId,
+        subject_id: document.getElementById('editSlotSubject').value || null,
+        teacher_id: document.getElementById('editSlotTeacher').value || null,
         room_id:    roomId ? parseInt(roomId) : null,
         notes:      document.getElementById('editSlotNotes').value || null,
         is_double:  document.getElementById('editSlotIsDouble').checked,
@@ -1360,94 +1315,80 @@ async function saveSlot() {
 
     showLoader();
     try {
-        const res = await apiFetch(ROUTES.saveSlot, 'POST', payload);
+        const res    = await apiFetch(ROUTES.saveSlot, 'POST', payload);
         const result = await res.json();
 
         if (result.success) {
             bootstrap.Modal.getInstance(document.getElementById('editSlotModal')).hide();
             await loadTimetableGrid();
-            Swal.fire({
-                icon: 'success',
-                title: 'Saved!',
-                text: 'Timetable slot updated successfully.',
-                timer: 1500,
-                showConfirmButton: false
-            });
-        } else if (result.has_conflict) {
-            // Build alternatives HTML
-            let alternativesHtml = '';
-            if (result.alternatives && result.alternatives.length > 0) {
-                alternativesHtml = '<div class="mt-3" style="background: #f0f9ff; padding: 12px; border-radius: 8px;"><strong>💡 Suggested Alternative Slots:</strong><ul class="mt-2" style="margin-bottom: 0;">';
-                result.alternatives.forEach(alt => {
-                    alternativesHtml += `<li style="margin-bottom: 5px;">📅 <strong>${alt.day}</strong> · ${alt.period_name} (${alt.period_time}) - <span style="color: #059669;">✓ Available</span></li>`;
-                });
-                alternativesHtml += '</ul></div>';
-            } else {
-                alternativesHtml = '<div class="mt-3 text-muted">⚠️ No alternative slots available at this time.</div>';
-            }
-
-            const conflictResult = await Swal.fire({
-                title: '⚠️ Teacher Conflict Detected!',
-                html: `
-                    <div style="text-align: left;">
-                        <div style="background: #fef2f2; padding: 12px; border-radius: 8px; border-left: 4px solid #dc2626;">
-                            <strong style="color: #dc2626;">${result.conflict_details?.teacher || 'Teacher'}</strong>
-                            <p style="margin-top: 8px; margin-bottom: 4px;">Already scheduled to teach:</p>
-                            <p style="margin: 4px 0;"><strong>📖 ${escapeHtml(result.conflict_details.subject)}</strong></p>
-                            <p style="margin: 4px 0;"><strong>📚 ${escapeHtml(result.conflict_details.class)}</strong></p>
-                            <p style="margin: 4px 0;"><strong>📅 ${escapeHtml(result.conflict_details.day)} at ${escapeHtml(result.conflict_details.time)}</strong></p>
-                        </div>
-                        ${alternativesHtml}
-                        <div class="mt-3 text-warning" style="background: #fffbeb; padding: 10px; border-radius: 8px;">
-                            <strong>⚠️ Warning:</strong> Overriding may cause schedule conflicts across classes.
-                        </div>
-                    </div>
-                `,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonText: '⚠️ Override Anyway',
-                cancelButtonText: 'Cancel',
-                confirmButtonColor: '#dc2626',
-                cancelButtonColor: '#6c757d',
-                width: '550px',
-            });
-
-            if (conflictResult.isConfirmed) {
-                // Save with force_save flag
-                payload.force_save = true;
-                const forceRes = await apiFetch(ROUTES.saveSlot, 'POST', payload);
-                const forceResult = await forceRes.json();
-
-                if (forceResult.success) {
-                    bootstrap.Modal.getInstance(document.getElementById('editSlotModal')).hide();
-                    await loadTimetableGrid();
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Saved with Conflict!',
-                        text: 'Timetable slot saved. Please review the Conflicts tab for potential issues.',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                } else {
-                    throw new Error(forceResult.message || 'Save failed');
-                }
-            }
-        } else {
-            throw new Error(result.message || 'Save failed');
+            Swal.fire({ icon:'success', title:'Saved!', timer:1200, showConfirmButton:false });
+            return;
         }
-    } catch (e) {
-        Swal.fire('Error', e.message, 'error');
-    } finally {
-        hideLoader();
-    }
+
+        // ── Conflict detected ──
+        if (result.has_conflict) {
+            hideLoader();
+
+            const altsHtml = result.alternatives?.length
+                ? `<div class="mt-3 text-start">
+                       <div class="fw-semibold mb-2" style="font-size:13px">
+                           <i class="ri-lightbulb-flash-line text-warning me-1"></i>Available alternative slots:
+                       </div>
+                       <div class="d-flex flex-wrap gap-1">
+                           ${result.alternatives.slice(0, 5).map(a =>
+                               `<span class="badge p-2" style="background:#dcfce7;color:#15803d;font-size:11px;cursor:default">
+                                    📅 ${escapeHtml(a.day)} · ${escapeHtml(a.period_name)} (${escapeHtml(a.period_time)})
+                                </span>`
+                           ).join('')}
+                       </div>
+                   </div>`
+                : `<p class="text-muted mt-2 mb-0" style="font-size:12px">No free slots found — consider a schedule review or substitute.</p>`;
+
+            const { isConfirmed } = await Swal.fire({
+                title: '⚠️ Teacher Conflict Detected',
+                html: `<div style="font-size:14px;text-align:left">
+                           <p class="mb-2">${escapeHtml(result.message)}</p>
+                           ${altsHtml}
+                           <hr class="my-3">
+                           <p class="text-muted mb-0" style="font-size:12px">
+                               Override to save anyway, or cancel to choose a different slot.
+                           </p>
+                       </div>`,
+                icon: 'warning',
+                showCancelButton:    true,
+                confirmButtonColor:  '#DC2626',
+                cancelButtonColor:   '#6B7280',
+                confirmButtonText:   '<i class="ri-save-line me-1"></i>Override & Save',
+                cancelButtonText:    'Cancel',
+                width: 520,
+            });
+
+            if (!isConfirmed) return;
+
+            // Force-save override
+            showLoader();
+            const res2    = await apiFetch(ROUTES.saveSlot, 'POST', { ...payload, force_save: true });
+            const result2 = await res2.json();
+            if (result2.success) {
+                bootstrap.Modal.getInstance(document.getElementById('editSlotModal')).hide();
+                await loadTimetableGrid();
+                Swal.fire({ icon:'success', title:'Saved (Override)!', timer:1400, showConfirmButton:false });
+            } else {
+                Swal.fire('Error', result2.message || 'Save failed', 'error');
+            }
+            return;
+        }
+
+        throw new Error(result.message || 'Save failed');
+    } catch (e) { Swal.fire('Error', e.message, 'error'); }
+    finally { hideLoader(); }
 }
 
 // ============================================================================
-// CONFLICTS with detailed suggestions
+// CONFLICT CHECKER — full cross-class detection with suggestions
 // ============================================================================
 async function checkConflicts() {
     if (!currentSettingId) return;
-
     showLoader();
     try {
         const res  = await apiFetch(url(ROUTES.checkConflicts, currentSettingId), 'GET');
@@ -1457,57 +1398,102 @@ async function checkConflicts() {
         const container = document.getElementById('conflictsList');
         const badge     = document.getElementById('conflictBadgeTab');
 
+        // Show checked-at timestamp
+        if (data.checked_at) {
+            document.getElementById('conflictCheckedAt').style.display = '';
+            document.getElementById('conflictCheckedAtText').textContent = 'Last checked: ' + data.checked_at;
+        }
+
         if (!data.conflict_count) {
             badge.style.display = 'none';
             container.innerHTML = `
                 <div class="text-center py-5">
                     <i class="ri-check-double-line ri-3x d-block mb-3 text-success"></i>
                     <h6 class="text-success">No Conflicts Found</h6>
-                    <p class="text-muted mb-0">All teachers are properly scheduled with no double-bookings across the ${currentSetting.term?.term || 'term'}.</p>
+                    <p class="text-muted mb-0">All teachers are properly scheduled with no overlaps across any class.</p>
                 </div>`;
-        } else {
-            badge.style.display = '';
-            badge.textContent   = data.conflict_count;
-            let html = `<div class="alert alert-warning d-flex align-items-center gap-2 mb-3">
-                <i class="ri-alert-line ri-xl"></i>
-                Found <strong>${data.conflict_count}</strong> conflict(s) requiring attention.
-            </div>`;
-
-            data.conflicts.forEach(c => {
-                const avatarHtml = c.teacher_picture
-                    ? `<img src="${c.teacher_picture}" class="conflict-avatar">`
-                    : `<div class="conflict-avatar-ph"><i class="ri-user-line ri-xl"></i></div>`;
-
-                let alternativesHtml = '';
-                if (c.alternatives && c.alternatives.length > 0) {
-                    alternativesHtml = '<div class="alternatives-list"><strong>💡 Alternative slots for this teacher:</strong><ul>';
-                    c.alternatives.forEach(alt => {
-                        alternativesHtml += `<li>📅 ${alt.day} · ${alt.period_name} (${alt.period_time}) - Available</li>`;
-                    });
-                    alternativesHtml += '</ul></div>';
-                }
-
-                html += `<div class="conflict-item">
-                    ${avatarHtml}
-                    <div class="flex-grow-1">
-                        <div class="fw-semibold">👨‍🏫 ${escapeHtml(c.teacher || '—')}</div>
-                        <div class="text-muted" style="font-size:13px">📅 ${c.day} &bull; ⏰ ${escapeHtml(c.period)} ${c.period_time ? '(' + c.period_time + ')' : ''}</div>
-                        <div class="mt-2" style="font-size:12px">
-                            <div class="mb-1">📚 <strong>Class A:</strong> ${escapeHtml(c.class_a||'')} - ${escapeHtml(c.subject_a||'—')}</div>
-                            <div>📚 <strong>Class B:</strong> ${escapeHtml(c.class_b||'')} - ${escapeHtml(c.subject_b||'—')}</div>
-                        </div>
-                        ${c.resolution_suggestion ? `<div class="resolution-suggestion"><strong>💡 Suggestion:</strong> ${escapeHtml(c.resolution_suggestion)}</div>` : ''}
-                        ${alternativesHtml}
-                    </div>
-                </div>`;
-            });
-            container.innerHTML = html;
+            return;
         }
-    } catch (e) {
-        Swal.fire('Error', e.message, 'error');
-    } finally {
-        hideLoader();
-    }
+
+        badge.style.display = '';
+        badge.textContent   = data.conflict_count;
+
+        let html = `<div class="alert alert-warning d-flex align-items-center gap-2 mb-3">
+            <i class="ri-alert-line ri-xl"></i>
+            Found <strong class="mx-1">${data.conflict_count}</strong> conflict(s) across all classes in this term.
+        </div>`;
+
+        data.conflicts.forEach(c => {
+            const avatarHtml = c.teacher_picture
+                ? `<img src="${c.teacher_picture}" class="conflict-avatar">`
+                : `<div class="conflict-avatar-ph"><i class="ri-user-line ri-xl"></i></div>`;
+
+            const crossArmBadge = c.is_cross_arm
+                ? `<span class="badge bg-warning-subtle text-warning ms-1" style="font-size:10px">
+                       <i class="ri-git-branch-line"></i> Cross-Arm
+                   </span>`
+                : '';
+
+            // All-classes display when more than 2 classes involved
+            const classesHtml = (c.all_classes && c.all_classes.length > 2)
+                ? c.all_classes.map(cls =>
+                    `<span class="badge bg-primary-subtle text-primary me-1">${escapeHtml(cls)}</span>`
+                  ).join('')
+                : `<span class="badge bg-primary-subtle text-primary">${escapeHtml(c.class_a || '')}</span>
+                   <span class="mx-1 text-muted">&amp;</span>
+                   <span class="badge bg-primary-subtle text-primary">${escapeHtml(c.class_b || '')}</span>`;
+
+            const subjectsHtml = (c.all_subjects && c.all_subjects.length > 1)
+                ? `<span class="text-muted ms-2">${c.all_subjects.map(s => escapeHtml(s)).join(' &amp; ')}</span>`
+                : `<span class="text-muted ms-2">${escapeHtml(c.subject_a || '—')} vs ${escapeHtml(c.subject_b || '—')}</span>`;
+
+            // Suggestion box with clickable alternative slot badges
+            const altHtml = c.alternatives?.length
+                ? `<div class="conflict-suggestion">
+                       <div><i class="ri-lightbulb-line text-success me-1"></i>
+                           <strong>Suggestion:</strong> ${escapeHtml(c.resolution_suggestion)}
+                       </div>
+                       <div class="alt-badges">
+                           ${c.alternatives.slice(0, 4).map(a =>
+                               `<span class="alt-badge"
+                                    onclick="switchToGridAndOpen(${a.period_id}, '${a.day}')"
+                                    title="Click to open this slot in the grid">
+                                    📅 ${escapeHtml(a.day)} · ${escapeHtml(a.period_name)} (${escapeHtml(a.period_time)})
+                                </span>`
+                           ).join('')}
+                       </div>
+                   </div>`
+                : `<div class="mt-2 text-muted" style="font-size:12px">
+                       <i class="ri-information-line me-1"></i>No free slots found — consider a substitute or full schedule review.
+                   </div>`;
+
+            html += `<div class="conflict-item">
+                ${avatarHtml}
+                <div class="flex-grow-1">
+                    <div class="fw-semibold mb-1">
+                        ${escapeHtml(c.teacher || '—')} ${crossArmBadge}
+                    </div>
+                    <div class="text-danger fw-semibold" style="font-size:12px">
+                        <i class="ri-time-line me-1"></i>${escapeHtml(c.day)} · ${escapeHtml(c.period)}
+                        ${c.period_time ? ' (' + escapeHtml(c.period_time) + ')' : ''}
+                    </div>
+                    <div class="mt-1" style="font-size:12px">
+                        ${classesHtml} ${subjectsHtml}
+                    </div>
+                    ${altHtml}
+                </div>
+            </div>`;
+        });
+
+        container.innerHTML = html;
+    } catch (e) { Swal.fire('Error', e.message, 'error'); }
+    finally { hideLoader(); }
+}
+
+// Switch to grid tab and open the slot modal for a suggested alternative
+function switchToGridAndOpen(periodId, day) {
+    showTab('gridTab', document.querySelectorAll('.tt-tab')[2]);
+    loadTimetableGrid().then(() => openSlotModal(periodId, day));
 }
 
 // ============================================================================
@@ -1515,15 +1501,10 @@ async function checkConflicts() {
 // ============================================================================
 async function sendNotifications() {
     const result = await Swal.fire({
-        title: 'Send Notifications',
-        text: 'Send timetable notifications to all assigned teachers?',
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#1565C0',
-        confirmButtonText: 'Yes, send!',
+        title: 'Send Notifications', text: 'Send timetable notifications to all assigned teachers?',
+        icon: 'question', showCancelButton: true, confirmButtonColor: '#1565C0', confirmButtonText: 'Yes, send!',
     });
     if (!result.isConfirmed) return;
-
     showLoader();
     try {
         const res  = await apiFetch(ROUTES.sendNotifications, 'POST', { setting_id: currentSettingId, type: 'weekly_preview' });
@@ -1540,33 +1521,24 @@ async function sendNotifications() {
 function exportTimetable(format) {
     if (!currentSettingId) return Swal.fire('Error', 'No timetable loaded.', 'error');
     const orientation = document.getElementById('exportOrientation')?.value || 'horizontal';
-    const exportUrl = url(ROUTES.export, currentSettingId) + '?format=' + format + '&orientation=' + orientation;
-    if (format === 'pdf') { window.open(exportUrl, '_blank'); }
-    else { window.location.href = exportUrl; }
+    const exportUrl   = url(ROUTES.export, currentSettingId) + '?format=' + format + '&orientation=' + orientation;
+    if (format === 'pdf') window.open(exportUrl, '_blank');
+    else window.location.href = exportUrl;
 }
 
-// ============================================================================
-// WHOLE SCHOOL EXPORT
-// ============================================================================
 function openWholeSchoolExportModal() {
     new bootstrap.Modal(document.getElementById('wholeSchoolExportModal')).show();
 }
 
-async function exportWholeSchoolTimetable() {
-    const sessionId = document.getElementById('wholeSchoolSessionId').value;
-    const termId = document.getElementById('wholeSchoolTermId').value;
+function exportWholeSchoolTimetable() {
+    const sessionId   = document.getElementById('wholeSchoolSessionId').value;
+    const termId      = document.getElementById('wholeSchoolTermId').value;
     const orientation = document.getElementById('wholeSchoolOrientation').value;
-
-    if (!sessionId) {
-        return Swal.fire('Error', 'Please select a session.', 'error');
-    }
-
-    const exportUrl = ROUTES.exportWholeSchool +
-        '?session_id=' + sessionId +
-        '&term_id=' + (termId || '') +
-        '&orientation=' + orientation;
-
-    window.open(exportUrl, '_blank');
+    if (!sessionId) return Swal.fire('Error', 'Please select a session.', 'error');
+    window.open(
+        ROUTES.exportWholeSchool + '?session_id=' + sessionId + '&term_id=' + (termId || '') + '&orientation=' + orientation,
+        '_blank'
+    );
 }
 
 // ============================================================================
@@ -1574,15 +1546,10 @@ async function exportWholeSchoolTimetable() {
 // ============================================================================
 async function deleteSetting(settingId) {
     const result = await Swal.fire({
-        title: 'Delete Timetable?',
-        text: 'This will permanently delete this timetable and all its slots.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonColor: '#DC2626',
-        confirmButtonText: 'Yes, delete!',
+        title: 'Delete Timetable?', text: 'This will permanently delete this timetable and all its slots.',
+        icon: 'warning', showCancelButton: true, confirmButtonColor: '#DC2626', confirmButtonText: 'Yes, delete!',
     });
     if (!result.isConfirmed) return;
-
     showLoader();
     try {
         const res  = await apiFetch(url(ROUTES.deleteSetting, settingId), 'DELETE');
@@ -1601,13 +1568,12 @@ function cloneSetting(settingId) {
 async function confirmClone() {
     if (!pendingCloneId) return;
     bootstrap.Modal.getInstance(document.getElementById('cloneModal')).hide();
-
     showLoader();
     try {
         const res  = await apiFetch(ROUTES.cloneSetting, 'POST', {
             setting_id:     pendingCloneId,
             new_session_id: document.getElementById('cloneSessionId').value || null,
-            new_term_id:    document.getElementById('cloneTermId').value || null,
+            new_term_id:    document.getElementById('cloneTermId').value    || null,
         });
         const data = await res.json();
         if (data.success) { Swal.fire({ icon:'success', title:'Cloned!', timer:1400, showConfirmButton:false }); setTimeout(() => location.reload(), 1400); }
@@ -1625,14 +1591,8 @@ function escapeHtml(str) {
 }
 
 function apiFetch(endpoint, method = 'GET', body = null) {
-    const opts = {
-        method,
-        headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
-    };
-    if (body && method !== 'GET') {
-        opts.headers['Content-Type'] = 'application/json';
-        opts.body = JSON.stringify(body);
-    }
+    const opts = { method, headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF } };
+    if (body && method !== 'GET') { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
     return fetch(endpoint, opts);
 }
 
