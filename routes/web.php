@@ -816,7 +816,8 @@ Route::prefix('timetable')->name('timetable.')->group(function () {
 // Add this route with your other timetable routes
 Route::get('/timetable/export-whole-school', [TimetableController::class, 'exportWholeSchool'])->name('timetable.export-whole-school');
 Route::post('/timetable/check-conflict-suggestions', [TimetableController::class, 'checkConflictWithSuggestions'])->name('timetable.check-conflict-suggestions');
-
+// Add this route definition
+Route::post('/timetable/check-slot-conflict', [TimetableController::class, 'checkSlotConflict'])->name('timetable.check-slot-conflict');
 
 // Add these routes to your web.php file
 
