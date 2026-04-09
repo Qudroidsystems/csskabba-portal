@@ -52,4 +52,10 @@ class TimetableSetting extends Model
     {
         return $this->hasMany(TimetableSlot::class, 'setting_id');
     }
+
+    // In app/Models/TimetableSetting.php add:
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
 }
