@@ -196,6 +196,7 @@
 .tt-cell .cell-subject { font-size: 11px; font-weight: 700; color: #1E293B; line-height: 1.3; }
 .tt-cell .cell-teacher { font-size: 10px; color: #64748B; margin-top: 1px; }
 .tt-cell .cell-room    { font-size: 10px; color: #94A3B8; margin-top: 1px; }
+.tt-cell .cell-room i { font-size: 9px; margin-right: 2px; }
 .tt-cell .cell-free    { font-size: 11px; color: #CBD5E1; }
 .tt-cell .cell-break   { font-size: 11px; color: #D97706; font-weight: 600; }
 .tt-cell .cell-double-badge {
@@ -377,7 +378,6 @@
                     <div class="setting-card" onclick="loadSetting({{ $setting->id }})">
                         <div class="sc-icon"><i class="ri-school-line"></i></div>
                         <div class="sc-body">
-                            {{-- FIX 1: show class name + arm --}}
                             <div class="sc-title">
                                 {{ $setting->schoolclass->schoolclass ?? 'Unknown Class' }}
                                 @if($setting->schoolclass?->arm)
@@ -673,7 +673,7 @@
                     </select>
                 </div>
 
-                {{-- FIX 2: Room/Venue is now a <select> powered by Tom Select --}}
+                {{-- Room/Venue dropdown with Tom Select --}}
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Room / Venue</label>
@@ -756,10 +756,10 @@ let currentGrid      = {};
 let currentDays      = [];
 let availableSubjects= [];
 let allTeachers      = [];
-let availableRooms   = [];   // FIX 2: rooms from server
+let availableRooms   = [];
 let pendingCloneId   = null;
 
-// FIX 2: Tom Select instance for room dropdown
+// Tom Select instance for room dropdown
 let roomTomSelect = null;
 
 const SUBJECT_COLORS = ['#3B82F6','#8B5CF6','#10B981','#F59E0B','#EF4444','#06B6D4','#F97316','#EC4899','#14B8A6','#84CC16'];
@@ -801,7 +801,7 @@ document.addEventListener('DOMContentLoaded', function () {
         labelField:   'label',
         searchField:  ['label'],
         options:      [],
-        create:       true,      // allow typing a custom room not in the list
+        create:       true,
         createOnBlur: true,
         placeholder:  'Search or type a room…',
         maxItems:     1,
@@ -817,14 +817,14 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 });
 
-// Populate Tom Select whenever we load a new grid
+// Update Tom Select with rooms from server
 function updateRoomDropdown(rooms) {
     if (!roomTomSelect) return;
     roomTomSelect.clearOptions();
     roomTomSelect.addOption({ value: '', label: '— No Room —' });
     rooms.forEach(function(r) {
         roomTomSelect.addOption({
-            value: r.name,
+            value: r.id.toString(),
             label: r.label,
             type:  r.type || '',
         });
@@ -1110,11 +1110,9 @@ async function loadTimetableGrid() {
         currentGrid    = data.grid    || {};
         currentDays    = data.days    || ['Monday','Tuesday','Wednesday','Thursday','Friday'];
         allTeachers    = data.teachers|| [];
-        availableRooms = data.rooms   || [];   // FIX 2: store rooms
+        availableRooms = data.rooms   || [];
 
-        // FIX 2: populate Tom Select with the fresh room list
         updateRoomDropdown(availableRooms);
-
         renderGrid();
     } catch (e) {
         container.innerHTML = `<div class="alert alert-danger m-3">Failed to load grid: ${escapeHtml(e.message)}</div>`;
@@ -1162,13 +1160,14 @@ function renderGrid() {
                     ? `<img src="${slot.teacher_picture}" class="cell-avatar" onerror="this.style.display='none'">`
                     : `<div class="cell-avatar-placeholder"><i class="ri-user-line"></i></div>`;
                 const doubleBadge = slot.is_double ? '<span class="cell-double-badge">Double</span>' : '';
+                const roomHtml = slot.room_name ? `<span class="cell-room"><i class="ri-door-line"></i> ${escapeHtml(slot.room_name)}</span>` : '';
 
                 html += `<td onclick="openSlotModal(${period.id},'${day}')" ${borderStyle}>
                     <div class="tt-cell has-subject${slot.is_double?' is-double':''}">
                         ${avatarHtml}
                         <span class="cell-subject">${escapeHtml(slot.subject_code || slot.subject || '—')}</span>
                         <span class="cell-teacher">${escapeHtml((slot.teacher || '').split(' ')[0])}</span>
-                        ${slot.room ? `<span class="cell-room"><i class="ri-door-line"></i> ${escapeHtml(slot.room)}</span>` : ''}
+                        ${roomHtml}
                         ${doubleBadge}
                     </div></td>`;
             }
@@ -1198,14 +1197,13 @@ function openSlotModal(periodId, day) {
     document.getElementById('editSlotNotes').value   = slot.notes || '';
     document.getElementById('editSlotIsDouble').checked = slot.is_double || false;
 
-    // FIX 2: set room via Tom Select (handles free-text rooms already stored)
+    // Set room dropdown value using room_id
     if (roomTomSelect) {
-        const roomVal = slot.room || '';
-        // If the saved room isn't in the list (e.g. free-text), add it temporarily
-        if (roomVal && !roomTomSelect.options[roomVal]) {
-            roomTomSelect.addOption({ value: roomVal, label: roomVal });
+        if (slot.room_id) {
+            roomTomSelect.setValue(slot.room_id.toString(), true);
+        } else {
+            roomTomSelect.setValue('', true);
         }
-        roomTomSelect.setValue(roomVal, true);
     }
 
     // Avatar
@@ -1261,11 +1259,10 @@ function onTeacherChange() {
 }
 
 // ============================================================================
-// SAVE SLOT — FIX 3: send exactly the right payload, no extra keys
+// SAVE SLOT — FIXED with room_id
 // ============================================================================
 async function saveSlot() {
-    // FIX 2: read room from Tom Select
-    const roomValue = roomTomSelect ? (roomTomSelect.getValue() || null) : null;
+    const roomId = roomTomSelect ? (roomTomSelect.getValue() || null) : null;
 
     const payload = {
         setting_id: parseInt(document.getElementById('editSlotSettingId').value),
@@ -1273,7 +1270,7 @@ async function saveSlot() {
         day:        document.getElementById('editSlotDay').value,
         subject_id: document.getElementById('editSlotSubject').value || null,
         teacher_id: document.getElementById('editSlotTeacher').value || null,
-        room:       roomValue,
+        room_id:    roomId ? parseInt(roomId) : null,
         notes:      document.getElementById('editSlotNotes').value || null,
         is_double:  document.getElementById('editSlotIsDouble').checked,
     };

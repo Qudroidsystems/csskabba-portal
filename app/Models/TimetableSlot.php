@@ -13,7 +13,7 @@ class TimetableSlot extends Model
 
     protected $fillable = [
         'setting_id', 'period_id', 'day', 'subject_id', 'teacher_id',
-        'is_double', 'is_free', 'room', 'notes'
+        'is_double', 'is_free', 'room_id', 'notes'  // Changed 'room' to 'room_id'
     ];
 
     protected $casts = [
@@ -39,6 +39,12 @@ class TimetableSlot extends Model
     public function teacher(): BelongsTo
     {
         return $this->belongsTo(User::class, 'teacher_id');
+    }
+
+    // Add this relationship
+    public function room(): BelongsTo
+    {
+        return $this->belongsTo(Room::class, 'room_id');
     }
 
     public function notifications(): HasMany

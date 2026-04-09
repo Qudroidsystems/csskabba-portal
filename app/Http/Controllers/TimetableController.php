@@ -92,7 +92,6 @@ class TimetableController extends Controller
                 'teacher_name' => $st->staff->name ?? 'Unknown',
             ]);
 
-        // FIX 1: Eager-load 'schoolclass.arm' so arm name is available in the blade
         $settings = TimetableSetting::with(['schoolclass.arm', 'session', 'term'])
             ->where('is_active', true)
             ->orderByDesc('updated_at')
@@ -126,7 +125,7 @@ class TimetableController extends Controller
 
         $slots = TimetableSlot::where('teacher_id', $teacherId)
             ->whereHas('setting', fn($q) => $q->where('session_id', $sessionId)->where('is_active', true))
-            ->with(['period', 'subject', 'setting.schoolclass', 'setting.term'])
+            ->with(['period', 'subject', 'setting.schoolclass', 'setting.term', 'room'])
             ->get()
             ->groupBy('day');
 
@@ -522,7 +521,7 @@ class TimetableController extends Controller
     }
 
     // =========================================================================
-    // GET GRID — FIX 2: returns rooms list for searchable dropdown
+    // GET GRID — FIXED with room_id
     // =========================================================================
 
     public function getGrid(int $settingId): JsonResponse
@@ -530,7 +529,7 @@ class TimetableController extends Controller
         $setting = TimetableSetting::with(['periods', 'schoolclass', 'session', 'term'])->findOrFail($settingId);
 
         $slots = TimetableSlot::where('setting_id', $settingId)
-            ->with(['subject', 'teacher', 'teacher.staffPicture', 'period'])
+            ->with(['subject', 'teacher', 'teacher.staffPicture', 'period', 'room'])
             ->get();
 
         $grid = [];
@@ -548,7 +547,9 @@ class TimetableController extends Controller
                 'teacher'         => $slot->teacher?->name,
                 'teacher_picture' => $teacherPicture,
                 'teacher_email'   => $slot->teacher?->email,
-                'room'            => $slot->room,
+                'room_id'         => $slot->room_id,
+                'room_name'       => $slot->room?->room_name,
+                'room_code'       => $slot->room?->room_code,
                 'is_double'       => $slot->is_double,
                 'is_free'         => $slot->is_free,
                 'notes'           => $slot->notes,
@@ -567,12 +568,12 @@ class TimetableController extends Controller
                     : asset('storage/staff_avatars/default.png'),
             ]);
 
-        // FIX 2: include rooms for the searchable dropdown in the slot modal
         $rooms = Room::where('is_active', true)
             ->orderBy('room_name')
             ->get(['id', 'room_code', 'room_name', 'type', 'capacity'])
             ->map(fn($r) => [
                 'id'       => $r->id,
+                'value'    => $r->id,
                 'name'     => $r->room_name,
                 'code'     => $r->room_code,
                 'type'     => $r->type,
@@ -591,12 +592,12 @@ class TimetableController extends Controller
             'grid'     => $grid,
             'days'     => $setting->active_days ?? self::DAYS,
             'teachers' => $allTeachers,
-            'rooms'    => $rooms,         // <-- new
+            'rooms'    => $rooms,
         ]);
     }
 
     // =========================================================================
-    // SAVE SLOT — FIX 3: proper updateOrCreate, safe audit log
+    // SAVE SLOT — FIXED with room_id
     // =========================================================================
 
     public function saveSlot(Request $request): JsonResponse
@@ -607,7 +608,7 @@ class TimetableController extends Controller
             'day'        => 'required|in:Monday,Tuesday,Wednesday,Thursday,Friday,Saturday',
             'subject_id' => 'nullable|exists:subject,id',
             'teacher_id' => 'nullable|exists:users,id',
-            'room'       => 'nullable|string|max:100',
+            'room_id'    => 'nullable|exists:rooms,id',
             'is_double'  => 'boolean',
             'is_free'    => 'boolean',
             'notes'      => 'nullable|string|max:191',
@@ -633,9 +634,6 @@ class TimetableController extends Controller
             }
         }
 
-        // FIX 3a: separate the composite key (where clause) from the update data
-        //         so we never accidentally overwrite the key columns, and the
-        //         ORM dirty-check works correctly.
         $whereClause = [
             'setting_id' => $validated['setting_id'],
             'period_id'  => $validated['period_id'],
@@ -645,22 +643,22 @@ class TimetableController extends Controller
         $updateData = [
             'subject_id' => $validated['subject_id'] ?? null,
             'teacher_id' => $validated['teacher_id'] ?? null,
-            'room'       => $validated['room'] ?? null,
+            'room_id'    => $validated['room_id'] ?? null,
             'notes'      => $validated['notes'] ?? null,
             'is_double'  => $validated['is_double'] ?? false,
-            'is_free'    => empty($validated['subject_id']),   // derived — ignore what the client sent
+            'is_free'    => empty($validated['subject_id']),
         ];
 
         $slot = TimetableSlot::updateOrCreate($whereClause, $updateData);
 
-        // FIX 3b: audit log is fire-and-forget — never let it break the save
+        // Audit log
         try {
             $this->logTimetableChange(Auth::id(), 'update', 'TimetableSlot', $slot->id);
         } catch (\Exception $e) {
-            Log::warning('Timetable audit log failed (table may not exist): ' . $e->getMessage());
+            Log::warning('Timetable audit log failed: ' . $e->getMessage());
         }
 
-        // FIX 3c: notification is also fire-and-forget
+        // Notification
         try {
             if ($slot->wasChanged('teacher_id') && $slot->teacher_id) {
                 $this->scheduleNotification($slot->teacher_id, $slot->id, 'change_alert');
@@ -669,7 +667,7 @@ class TimetableController extends Controller
             Log::warning('Timetable schedule notification failed: ' . $e->getMessage());
         }
 
-        return response()->json(['success' => true, 'slot' => $slot->load(['subject', 'teacher'])]);
+        return response()->json(['success' => true, 'slot' => $slot->load(['subject', 'teacher', 'room'])]);
     }
 
     // =========================================================================
@@ -741,7 +739,7 @@ class TimetableController extends Controller
 
         $setting = TimetableSetting::with([
             'slots.teacher', 'slots.teacher.staffPicture',
-            'slots.subject', 'slots.period',
+            'slots.subject', 'slots.period', 'slots.room',
             'schoolclass', 'session', 'term',
         ])->findOrFail($validated['setting_id']);
 
@@ -763,7 +761,7 @@ class TimetableController extends Controller
                     'period'  => $s->period?->name,
                     'time'    => ($s->period?->start_time ?? '') . ' – ' . ($s->period?->end_time ?? ''),
                     'subject' => $s->subject?->subject,
-                    'room'    => $s->room,
+                    'room'    => $s->room?->room_name,
                 ])->toArray(),
                 'type'      => $validated['type'],
                 'generated' => now()->format('d M Y H:i'),
@@ -842,7 +840,7 @@ class TimetableController extends Controller
         $format  = $request->input('format', 'csv');
         $setting = TimetableSetting::with(['periods', 'schoolclass', 'session', 'term'])->findOrFail($settingId);
 
-        $slots = TimetableSlot::where('setting_id', $settingId)->with(['subject', 'teacher', 'period'])->get();
+        $slots = TimetableSlot::where('setting_id', $settingId)->with(['subject', 'teacher', 'period', 'room'])->get();
 
         $grid          = [];
         $subjectColors = [];
@@ -857,6 +855,7 @@ class TimetableController extends Controller
                 'subject'      => $slot->subject?->subject ?? ($slot->is_free ? 'FREE' : '—'),
                 'subject_code' => $slot->subject?->subject_code ?? '',
                 'teacher'      => $slot->teacher?->name ?? '—',
+                'room'         => $slot->room?->room_name ?? '',
                 'is_free'      => $slot->is_free ?? !$slot->subject_id,
                 'subject_id'   => $slot->subject_id,
             ];
@@ -881,7 +880,7 @@ class TimetableController extends Controller
 
         fwrite($handle, "\xEF\xBB\xBF");
 
-        $header = ['Period', 'Time'];
+        $header = ['Period', 'Time', 'Room'];
         foreach ($days as $day) {
             $header[] = "{$day} (Subject)";
             $header[] = "{$day} (Teacher)";
@@ -948,6 +947,7 @@ class TimetableController extends Controller
                         . '<div class="sname">' . htmlspecialchars($slot['subject'] ?? '—') . '</div>'
                         . (!empty($slot['subject_code']) ? '<div class="scode">' . htmlspecialchars($slot['subject_code']) . '</div>' : '')
                         . '<div class="tname">' . htmlspecialchars($slot['teacher'] ?? '—') . '</div>'
+                        . (!empty($slot['room']) ? '<div class="room">' . htmlspecialchars($slot['room']) . '</div>' : '')
                         . '</td>';
                 }
             }
@@ -980,6 +980,7 @@ th,td{border:1px solid #dde1e7;vertical-align:middle;padding:4px 5px}
 .sname{font-weight:700;font-size:10px;color:#1a1a2e;margin-bottom:1px}
 .scode{font-size:8px;color:#555;font-style:italic;margin-bottom:2px}
 .tname{font-size:8px;color:#444}
+.room{font-size:7px;color:#666;margin-top:2px}
 .break-row td{height:20px}
 .break-cell{background:#FFF8E1!important;text-align:center}
 .break-lbl{font-size:8px;color:#F57F17;font-style:italic;font-weight:600}
@@ -993,7 +994,7 @@ th,td{border:1px solid #dde1e7;vertical-align:middle;padding:4px 5px}
 </style>
 </head>
 <body>
-<button class="print-btn" onclick="window.print()">&#x1F5A8; Print / Save as PDF</button>
+<button class="print-btn" onclick="window.print()">🖨️ Print / Save as PDF</button>
 <div class="hdr">
   <div class="school">{$schoolName}</div>
   <div>
@@ -1003,12 +1004,14 @@ th,td{border:1px solid #dde1e7;vertical-align:middle;padding:4px 5px}
   <div class="ginfo">Generated: {$generatedAt}<br>Setting ID: {$setting->id}</div>
 </div>
 <table>
-  <thead><tr><th class="period-header">Period</th>{$dayHeaders}</tr></thead>
+  <thead>
+    <tr><th class="period-header">Period</th>{$dayHeaders}</tr>
+  </thead>
   <tbody>{$tableRows}</tbody>
 </table>
 <div class="footer">
   <span>Auto-generated &mdash; for latest version refer to the school management system.</span>
-  <span>&#x2588; Break &nbsp; &#x2591; Free period</span>
+  <span>▮ Break &nbsp; ▯ Free period</span>
 </div>
 </body>
 </html>
@@ -1206,7 +1209,7 @@ HTML;
         $slots = TimetableSlot::where('teacher_id', $teacherId)
             ->whereHas('setting', fn($q) => $q->where('session_id', $sessionId)->where('is_active', true))
             ->whereNotNull('subject_id')
-            ->with(['period', 'subject', 'setting.schoolclass'])
+            ->with(['period', 'subject', 'setting.schoolclass', 'room'])
             ->get();
 
         return $slots
@@ -1229,7 +1232,7 @@ HTML;
                 'time'    => ($s->period?->start_time ?? '') . ' – ' . ($s->period?->end_time ?? ''),
                 'subject' => $s->subject?->subject,
                 'class'   => $s->setting?->schoolclass?->schoolclass,
-                'room'    => $s->room,
+                'room'    => $s->room?->room_name,
             ])
             ->values()->toArray();
     }
@@ -1239,7 +1242,7 @@ HTML;
         $slots = TimetableSlot::where('teacher_id', $teacherId)
             ->whereHas('setting', fn($q) => $q->where('session_id', $sessionId)->where('is_active', true))
             ->whereNotNull('subject_id')
-            ->with(['period', 'subject', 'setting.schoolclass'])
+            ->with(['period', 'subject', 'setting.schoolclass', 'room'])
             ->get();
 
         $summary = [];
@@ -1259,7 +1262,7 @@ HTML;
         $teacher = User::find($teacherId);
         if (!$teacher || !$teacher->email) return;
 
-        $slot = TimetableSlot::with(['period', 'subject'])->find($slotId);
+        $slot = TimetableSlot::with(['period', 'subject', 'room'])->find($slotId);
         if (!$slot) return;
 
         TimetableNotification::create([
@@ -1269,7 +1272,12 @@ HTML;
             'email'        => $teacher->email,
             'scheduled_at' => now(),
             'status'       => 'pending',
-            'payload'      => json_encode(['day' => $slot->day, 'period' => $slot->period?->name, 'subject' => $slot->subject?->subject]),
+            'payload'      => json_encode([
+                'day' => $slot->day,
+                'period' => $slot->period?->name,
+                'subject' => $slot->subject?->subject,
+                'room' => $slot->room?->room_name,
+            ]),
         ]);
     }
 
