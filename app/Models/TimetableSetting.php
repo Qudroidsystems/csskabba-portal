@@ -15,7 +15,8 @@ class TimetableSetting extends Model
         'schoolclass_id', 'session_id', 'term_id',
         'school_day_start', 'school_day_end',
         'period_duration_minutes', 'short_break_duration_minutes', 'long_break_duration_minutes',
-        'is_active', 'active_days',
+        'is_active', 'active_days','created_by','updated_by',
+
     ];
 
     protected $casts = [
@@ -58,4 +59,9 @@ class TimetableSetting extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+    public function updater()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
 }

@@ -1133,6 +1133,8 @@ HTML;
                 'long_break_duration_minutes'   => 40,
                 'is_active'                     => true,
                 'active_days'                   => self::DAYS,
+                'created_by'                    => Auth::id(),  // Add this line
+                'updated_by'                    => Auth::id(),  // Add this line
             ]
         );
 
@@ -1142,6 +1144,10 @@ HTML;
 
     // =========================================================================
     // SAVE SETTINGS + AUTO-BUILD PERIODS
+    // =========================================================================
+
+   // =========================================================================
+    // SAVE SETTINGS + AUTO-BUILD PERIODS (with created_by tracking)
     // =========================================================================
 
     public function saveSettings(Request $request): JsonResponse
@@ -1163,6 +1169,10 @@ HTML;
             DB::beginTransaction();
 
             $setting = TimetableSetting::findOrFail($validated['setting_id']);
+
+            // Check if this is a new setting (no periods yet) to set created_by
+            $isNew = $setting->periods()->count() === 0;
+
             $setting->update([
                 'school_day_start'              => $validated['school_day_start'],
                 'school_day_end'                => $validated['school_day_end'],
@@ -1170,8 +1180,16 @@ HTML;
                 'short_break_duration_minutes'  => $validated['short_break_duration_minutes'],
                 'long_break_duration_minutes'   => $validated['long_break_duration_minutes'],
                 'active_days'                   => $validated['active_days'],
+                'updated_by'                    => Auth::id(), // Track who updated
             ]);
 
+            // Set created_by only if it's a new setting
+            if ($isNew && !$setting->created_by) {
+                $setting->created_by = Auth::id();
+                $setting->saveQuietly(); // Save without triggering events
+            }
+
+            // Delete existing periods
             TimetablePeriod::where('setting_id', $setting->id)->delete();
 
             $start = Carbon::createFromFormat('H:i', $validated['school_day_start']);
@@ -1202,11 +1220,15 @@ HTML;
             }
 
             DB::commit();
+
+            // Log the change
+            $this->logTimetableChange(Auth::id(), 'update', 'TimetableSetting', $setting->id, null, $setting->fresh()->toArray());
+
             return response()->json(['success' => true, 'setting' => $setting->load('periods')]);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('saveSettings failed', ['error' => $e->getMessage()]);
+            Log::error('saveSettings failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -1456,7 +1478,7 @@ HTML;
         return $pool;
     }
 
-   
+
 
     // =========================================================================
     // SAVE SLOT — FIXED with room_id
