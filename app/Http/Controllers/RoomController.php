@@ -18,11 +18,11 @@ class RoomController extends Controller
 
     public function __construct()
     {
-        $this->middleware('permission:View rooms', ['only' => ['index', 'show', 'checkAvailability']]);
-        $this->middleware('permission:Create rooms', ['only' => ['store']]);
-        $this->middleware('permission:Edit rooms', ['only' => ['update']]);
-        $this->middleware('permission:Delete rooms', ['only' => ['destroy']]);
-        $this->middleware('permission:Manage room bookings', ['only' => ['book', 'cancelBooking']]);
+        // $this->middleware('permission:View rooms', ['only' => ['index', 'show', 'checkAvailability']]);
+        // $this->middleware('permission:Create rooms', ['only' => ['store']]);
+        // $this->middleware('permission:Edit rooms', ['only' => ['update']]);
+        // $this->middleware('permission:Delete rooms', ['only' => ['destroy']]);
+        // $this->middleware('permission:Manage room bookings', ['only' => ['book', 'cancelBooking']]);
     }
 
     public function index()
