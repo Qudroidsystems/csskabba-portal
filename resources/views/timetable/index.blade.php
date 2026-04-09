@@ -1,6 +1,9 @@
 {{-- resources/views/timetable/index.blade.php --}}
 @extends('layouts.master')
 
+{{-- Tom Select for searchable dropdowns --}}
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.min.css" rel="stylesheet">
+
 <style>
 /* ── Design tokens ────────────────────────────────── */
 :root {
@@ -255,15 +258,6 @@
     .export-group { flex-wrap: wrap; }
 }
 
-/* ── Loading overlay ──────────────────────────────── */
-.tt-loading-overlay {
-    position: absolute; inset: 0;
-    background: rgba(255,255,255,.7);
-    display: flex; align-items: center; justify-content: center;
-    border-radius: var(--tt-radius);
-    z-index: 10;
-}
-
 /* ── Status badge ─────────────────────────────────── */
 .status-dot {
     width: 8px; height: 8px;
@@ -272,6 +266,18 @@
     background: #22C55E;
     margin-right: 5px;
 }
+
+/* ── Tom Select overrides to match app style ─────── */
+.ts-wrapper .ts-control {
+    border-color: #D1D5DB;
+    border-radius: 6px;
+    min-height: 38px;
+    font-size: 14px;
+}
+.ts-wrapper.focus .ts-control { border-color: #1565C0; box-shadow: 0 0 0 3px rgba(21,101,192,.12); }
+.ts-dropdown { font-size: 13px; }
+.ts-dropdown .option { padding: 8px 12px; }
+.ts-dropdown .option:hover,.ts-dropdown .option.active { background: #EFF6FF; color: #1565C0; }
 </style>
 
 
@@ -371,7 +377,15 @@
                     <div class="setting-card" onclick="loadSetting({{ $setting->id }})">
                         <div class="sc-icon"><i class="ri-school-line"></i></div>
                         <div class="sc-body">
-                            <div class="sc-title">{{ $setting->schoolclass->schoolclass ?? 'Unknown Class' }}</div>
+                            {{-- FIX 1: show class name + arm --}}
+                            <div class="sc-title">
+                                {{ $setting->schoolclass->schoolclass ?? 'Unknown Class' }}
+                                @if($setting->schoolclass?->arm)
+                                    <span class="badge bg-primary-subtle text-primary ms-1" style="font-size:11px;font-weight:600">
+                                        {{ is_object($setting->schoolclass->arm) ? $setting->schoolclass->arm->arm : $setting->schoolclass->arm }}
+                                    </span>
+                                @endif
+                            </div>
                             <div class="sc-meta">
                                 <span>{{ $setting->session->session ?? '—' }}</span>
                                 @if($setting->term) <span class="mx-1">·</span><span>{{ $setting->term->term }}</span> @endif
@@ -659,10 +673,11 @@
                     </select>
                 </div>
 
+                {{-- FIX 2: Room/Venue is now a <select> powered by Tom Select --}}
                 <div class="row g-3 mb-3">
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Room / Venue</label>
-                        <input type="text" class="form-control" id="editSlotRoom" placeholder="e.g. Room 101, Lab A">
+                        <select id="editSlotRoom" placeholder="Search or type a room…"></select>
                     </div>
                     <div class="col-md-6 d-flex align-items-end">
                         <div class="form-check mb-0">
@@ -727,7 +742,8 @@
 
 @endsection
 
-
+{{-- Tom Select JS (must come before our script) --}}
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 // ============================================================================
@@ -740,9 +756,12 @@ let currentGrid      = {};
 let currentDays      = [];
 let availableSubjects= [];
 let allTeachers      = [];
+let availableRooms   = [];   // FIX 2: rooms from server
 let pendingCloneId   = null;
 
-// Subject color palette (for left-border stripe in grid)
+// FIX 2: Tom Select instance for room dropdown
+let roomTomSelect = null;
+
 const SUBJECT_COLORS = ['#3B82F6','#8B5CF6','#10B981','#F59E0B','#EF4444','#06B6D4','#F97316','#EC4899','#14B8A6','#84CC16'];
 const subjectColorMap = {};
 let colorSeq = 0;
@@ -756,22 +775,61 @@ function getSubjectColor(subjectId) {
 }
 
 const ROUTES = {
-    setup:           '{{ route("timetable.setup") }}',
-    saveSettings:    '{{ route("timetable.save-settings") }}',
-    saveConstraints: '{{ route("timetable.save-constraints") }}',
-    autoGenerate:    '{{ route("timetable.auto-generate") }}',
-    saveSlot:        '{{ route("timetable.save-slot") }}',
+    setup:             '{{ route("timetable.setup") }}',
+    saveSettings:      '{{ route("timetable.save-settings") }}',
+    saveConstraints:   '{{ route("timetable.save-constraints") }}',
+    autoGenerate:      '{{ route("timetable.auto-generate") }}',
+    saveSlot:          '{{ route("timetable.save-slot") }}',
     sendNotifications: '{{ route("timetable.send-notifications") }}',
-    cloneSetting:    '{{ route("timetable.clone-setting") }}',
-    getSetting:      '{{ url("/timetable/get-setting") }}',
-    getGrid:         '{{ url("/timetable/get-grid") }}',
-    checkConflicts:  '{{ url("/timetable/check-conflicts") }}',
-    export:          '{{ url("/timetable/export") }}',
-    deleteSetting:   '{{ url("/timetable/delete-setting") }}',
+    cloneSetting:      '{{ route("timetable.clone-setting") }}',
+    getSetting:        '{{ url("/timetable/get-setting") }}',
+    getGrid:           '{{ url("/timetable/get-grid") }}',
+    checkConflicts:    '{{ url("/timetable/check-conflicts") }}',
+    export:            '{{ url("/timetable/export") }}',
+    deleteSetting:     '{{ url("/timetable/delete-setting") }}',
 };
 const CSRF = '{{ csrf_token() }}';
 
 function url(base, id) { return base.replace(/\/$/, '') + '/' + id; }
+
+// ============================================================================
+// INITIALISE TOM SELECT for room dropdown
+// ============================================================================
+document.addEventListener('DOMContentLoaded', function () {
+    roomTomSelect = new TomSelect('#editSlotRoom', {
+        valueField:   'value',
+        labelField:   'label',
+        searchField:  ['label'],
+        options:      [],
+        create:       true,      // allow typing a custom room not in the list
+        createOnBlur: true,
+        placeholder:  'Search or type a room…',
+        maxItems:     1,
+        allowEmptyOption: true,
+        render: {
+            option: function(data) {
+                return '<div class="d-flex justify-content-between align-items-center">'
+                     + '<span>' + escapeHtml(data.label) + '</span>'
+                     + (data.type ? '<small class="text-muted ms-2">' + escapeHtml(data.type) + '</small>' : '')
+                     + '</div>';
+            }
+        }
+    });
+});
+
+// Populate Tom Select whenever we load a new grid
+function updateRoomDropdown(rooms) {
+    if (!roomTomSelect) return;
+    roomTomSelect.clearOptions();
+    roomTomSelect.addOption({ value: '', label: '— No Room —' });
+    rooms.forEach(function(r) {
+        roomTomSelect.addOption({
+            value: r.name,
+            label: r.label,
+            type:  r.type || '',
+        });
+    });
+}
 
 // ============================================================================
 // TABS
@@ -819,14 +877,12 @@ async function loadSetting(settingId) {
         currentSettingId = settingId;
         availableSubjects= data.available_subjects || [];
 
-        // Update editor context
         const className   = data.setting.schoolclass?.schoolclass || '—';
         const sessionName = data.setting.session?.session || '—';
         const termName    = data.setting.term?.term || 'All Terms';
-        document.getElementById('editorContext').innerHTML = `<i class="ri-school-line me-2 text-primary"></i>${className}`;
+        document.getElementById('editorContext').innerHTML = `<i class="ri-school-line me-2 text-primary"></i>${escapeHtml(className)}`;
         document.getElementById('editorSubContext').textContent = `${sessionName} · ${termName}`;
 
-        // Populate settings
         document.getElementById('schoolDayStart').value      = data.setting.school_day_start?.slice(0,5) || '08:00';
         document.getElementById('schoolDayEnd').value        = data.setting.school_day_end?.slice(0,5) || '14:30';
         document.getElementById('periodDuration').value      = data.setting.period_duration_minutes || 40;
@@ -847,8 +903,6 @@ async function loadSetting(settingId) {
 
         document.getElementById('timetableEditor').style.display = '';
         document.getElementById('timetableEditor').scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-        // Reset to first tab
         showTab('periodsTab', document.querySelector('.tt-tab'));
 
     } catch (e) {
@@ -865,10 +919,9 @@ function loadPeriodsIntoTable(periods) {
 }
 
 function addPeriodRow(name = '', type = 'lesson', order = null) {
-    const tbody = document.getElementById('periodsBody');
+    const tbody  = document.getElementById('periodsBody');
     const rowNum = order ?? (tbody.querySelectorAll('tr').length + 1);
-
-    const tr = document.createElement('tr');
+    const tr     = document.createElement('tr');
     tr.innerHTML = `
         <td class="text-center fw-bold text-muted period-order">${rowNum}</td>
         <td><input type="text" class="form-control form-control-sm period-name" value="${escapeHtml(name)}" placeholder="e.g. Period 1"></td>
@@ -912,9 +965,9 @@ async function saveSettings() {
     showLoader();
     try {
         const res = await apiFetch(ROUTES.saveSettings, 'POST', {
-            setting_id: currentSettingId,
-            school_day_start: document.getElementById('schoolDayStart').value,
-            school_day_end:   document.getElementById('schoolDayEnd').value,
+            setting_id:                   currentSettingId,
+            school_day_start:             document.getElementById('schoolDayStart').value,
+            school_day_end:               document.getElementById('schoolDayEnd').value,
             period_duration_minutes:      parseInt(document.getElementById('periodDuration').value),
             short_break_duration_minutes: parseInt(document.getElementById('shortBreakDuration').value),
             long_break_duration_minutes:  parseInt(document.getElementById('longBreakDuration').value),
@@ -1004,7 +1057,7 @@ async function saveConstraints() {
 
     showLoader();
     try {
-        const res = await apiFetch(ROUTES.saveConstraints, 'POST', { setting_id: currentSettingId, constraints });
+        const res  = await apiFetch(ROUTES.saveConstraints, 'POST', { setting_id: currentSettingId, constraints });
         const data = await res.json();
         if (data.success) Swal.fire({ icon:'success', title:'Saved!', timer:1400, showConfirmButton:false });
         else throw new Error(data.message || 'Failed');
@@ -1054,9 +1107,13 @@ async function loadTimetableGrid() {
         if (!data.success) throw new Error(data.message || 'Failed');
 
         currentPeriods = data.periods || [];
-        currentGrid    = data.grid || {};
-        currentDays    = data.days || ['Monday','Tuesday','Wednesday','Thursday','Friday'];
-        allTeachers    = data.teachers || [];
+        currentGrid    = data.grid    || {};
+        currentDays    = data.days    || ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+        allTeachers    = data.teachers|| [];
+        availableRooms = data.rooms   || [];   // FIX 2: store rooms
+
+        // FIX 2: populate Tom Select with the fresh room list
+        updateRoomDropdown(availableRooms);
 
         renderGrid();
     } catch (e) {
@@ -1116,7 +1173,6 @@ function renderGrid() {
                     </div></td>`;
             }
         });
-
         html += '</tr>';
     });
 
@@ -1139,9 +1195,18 @@ function openSlotModal(periodId, day) {
     document.getElementById('editSlotPeriodName').textContent = period.name + ' · ' + period.start_time + ' – ' + period.end_time;
     document.getElementById('editSlotDayName').textContent    = day;
     document.getElementById('editSlotContext').textContent    = period.name + ' · ' + day;
-    document.getElementById('editSlotRoom').value    = slot.room || '';
     document.getElementById('editSlotNotes').value   = slot.notes || '';
     document.getElementById('editSlotIsDouble').checked = slot.is_double || false;
+
+    // FIX 2: set room via Tom Select (handles free-text rooms already stored)
+    if (roomTomSelect) {
+        const roomVal = slot.room || '';
+        // If the saved room isn't in the list (e.g. free-text), add it temporarily
+        if (roomVal && !roomTomSelect.options[roomVal]) {
+            roomTomSelect.addOption({ value: roomVal, label: roomVal });
+        }
+        roomTomSelect.setValue(roomVal, true);
+    }
 
     // Avatar
     const avatarDiv = document.getElementById('editTeacherAvatar');
@@ -1179,17 +1244,15 @@ function openSlotModal(periodId, day) {
 }
 
 function onSubjectChange() {
-    const sel    = document.getElementById('editSlotSubject');
-    const opt    = sel.options[sel.selectedIndex];
-    const tid    = opt?.dataset?.teacherId;
+    const sel = document.getElementById('editSlotSubject');
+    const opt = sel.options[sel.selectedIndex];
+    const tid = opt?.dataset?.teacherId;
     if (tid) document.getElementById('editSlotTeacher').value = tid;
 }
 
 function onTeacherChange() {
     const tid = document.getElementById('editSlotTeacher').value;
     if (!tid) return;
-
-    // Update avatar preview
     const t = allTeachers.find(t => t.id == tid);
     const avatarDiv = document.getElementById('editTeacherAvatar');
     if (t?.picture) {
@@ -1197,22 +1260,27 @@ function onTeacherChange() {
     }
 }
 
+// ============================================================================
+// SAVE SLOT — FIX 3: send exactly the right payload, no extra keys
+// ============================================================================
 async function saveSlot() {
-    const data = {
-        setting_id: currentSettingId,
-        period_id:  document.getElementById('editSlotPeriodId').value,
+    // FIX 2: read room from Tom Select
+    const roomValue = roomTomSelect ? (roomTomSelect.getValue() || null) : null;
+
+    const payload = {
+        setting_id: parseInt(document.getElementById('editSlotSettingId').value),
+        period_id:  parseInt(document.getElementById('editSlotPeriodId').value),
         day:        document.getElementById('editSlotDay').value,
         subject_id: document.getElementById('editSlotSubject').value || null,
         teacher_id: document.getElementById('editSlotTeacher').value || null,
-        room:       document.getElementById('editSlotRoom').value,
-        notes:      document.getElementById('editSlotNotes').value,
+        room:       roomValue,
+        notes:      document.getElementById('editSlotNotes').value || null,
         is_double:  document.getElementById('editSlotIsDouble').checked,
-        is_free:    !document.getElementById('editSlotSubject').value,
     };
 
     showLoader();
     try {
-        const res    = await apiFetch(ROUTES.saveSlot, 'POST', data);
+        const res    = await apiFetch(ROUTES.saveSlot, 'POST', payload);
         const result = await res.json();
 
         if (result.success) {
@@ -1222,7 +1290,7 @@ async function saveSlot() {
         } else if (result.conflict) {
             Swal.fire('Teacher Conflict', result.message, 'warning');
         } else {
-            throw new Error(result.message || 'Failed');
+            throw new Error(result.message || 'Save failed');
         }
     } catch (e) { Swal.fire('Error', e.message, 'error'); }
     finally { hideLoader(); }
@@ -1312,13 +1380,8 @@ async function sendNotifications() {
 function exportTimetable(format) {
     if (!currentSettingId) return Swal.fire('Error', 'No timetable loaded.', 'error');
     const exportUrl = url(ROUTES.export, currentSettingId) + '?format=' + format;
-
-    if (format === 'pdf') {
-        // Open PDF in a new tab for browser print → save as PDF
-        window.open(exportUrl, '_blank');
-    } else {
-        window.location.href = exportUrl;
-    }
+    if (format === 'pdf') { window.open(exportUrl, '_blank'); }
+    else { window.location.href = exportUrl; }
 }
 
 // ============================================================================
@@ -1393,4 +1456,3 @@ function showLoader() {
 }
 function hideLoader() { Swal.close(); }
 </script>
-
