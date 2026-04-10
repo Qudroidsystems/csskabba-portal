@@ -1,5 +1,6 @@
 console.log("subjectoperation.init.js is loaded and executing at", new Date().toISOString());
 
+
 var perPage = 10,
     checkAll = document.getElementById("checkAll");
 
@@ -120,6 +121,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 unregisterButton.classList.toggle("d-none", checkedCount === 0);
             }
         };
+    }
+
+    const registeredClassesModal = document.getElementById('registeredClassesModal');
+    if (registeredClassesModal) {
+        registeredClassesModal.addEventListener('show.bs.modal', function () {
+            loadRegisteredClasses();
+        });
     }
 });
 
@@ -472,7 +480,7 @@ function unregisterSelectedStudentsBatch() {
     const sessionSelect = document.getElementById("idsession");
     const subjectCheckboxes = document.querySelectorAll('.subject-checkbox:checked');
     const unregisterButton = document.getElementById("unregister-selected-btn");
-    const loadingSpinner = document.getElementById("register-loading-spinner");
+    const loadingSpinner = document.getElementById("register-loading-spinner"); // Reusing same spinner
 
     if (!classSelect || !sessionSelect) {
         Swal.fire({
@@ -576,9 +584,14 @@ function unregisterSelectedStudentsBatch() {
     });
 }
 
-// ============================================================================
-// REGISTERED CLASSES MODAL - Card-based UI
-// ============================================================================
+
+
+
+
+// Store current registered classes data for printing
+let currentRegisteredClassesData = null;
+
+// Modified loadRegisteredClasses to store data for printing
 function loadRegisteredClasses() {
     if (!ensureAxios()) {
         console.error('Axios not initialized.');
@@ -642,11 +655,22 @@ function loadRegisteredClasses() {
         if (response.data.success) {
             const classes = response.data.data;
 
+            // Store data for printing
+            currentRegisteredClassesData = {
+                data: classes,
+                class_id: classId,
+                session_id: sessionId,
+                class_name: classes[0]?.class_name || 'N/A',
+                arm_name: classes[0]?.arm_name || 'N/A',
+                session_name: classes[0]?.session_name || 'N/A'
+            };
+
             if (!classes || classes.length === 0) {
                 modalContent.innerHTML = '<div class="text-center py-5"><i class="ri-information-line ri-3x text-muted"></i><p class="text-muted mt-3 mb-0">No registered classes found.</p></div>';
                 return;
             }
 
+            // Render the card-based UI (same as before)
             let html = '';
 
             classes.forEach((termGroup, index) => {
@@ -682,8 +706,12 @@ function loadRegisteredClasses() {
                         teacherName = teachersArray[0];
                     }
 
+                    const subjectStudentCount = totalStudents;
+
                     html += `
-                    <div class="subject-card p-3 d-flex gap-3 align-items-start" style="border-right:0.5px solid #e2e8f0; border-bottom:0.5px solid #e2e8f0; transition:all 0.2s ease;">
+                    <div class="subject-card p-3 d-flex gap-3 align-items-start" style="border-right:0.5px solid #e2e8f0; border-bottom:0.5px solid #e2e8f0; transition:all 0.2s ease;"
+                         onmouseenter="this.style.backgroundColor='#fafbff'"
+                         onmouseleave="this.style.backgroundColor='transparent'">
                         <div class="subject-num" style="width:30px; height:30px; background:#EEEDFE; color:#3C3489; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; flex-shrink:0;">${idx + 1}</div>
                         <div class="subject-info flex-grow-1">
                             <div class="fw-semibold" style="font-size:0.9rem; color:#1e293b;">${escapeHtml(subjectName)}</div>
@@ -691,7 +719,7 @@ function loadRegisteredClasses() {
                                 <i class="ri-user-star-line me-1"></i>${escapeHtml(teacherName)}
                             </div>
                             <span class="badge mt-2" style="background:#EAF3DE; color:#27500A; font-size:10px; padding:3px 10px; border-radius:20px; display:inline-flex; align-items:center; gap:4px;">
-                                <i class="ri-group-line" style="font-size:10px;"></i>${totalStudents} students
+                                <i class="ri-group-line" style="font-size:10px;"></i>${subjectStudentCount} students
                             </span>
                         </div>
                     </div>`;
@@ -726,268 +754,428 @@ function loadRegisteredClasses() {
     });
 }
 
-// ============================================================================
-// OPEN ARCHIVED MODAL - Unregistered History
-// ============================================================================
-function openArchivedModal() {
-    const classId = document.getElementById('idclass').value;
-    const sessionId = document.getElementById('idsession').value;
-
-    if (classId === 'ALL' || sessionId === 'ALL') {
+// Function to fetch school information and generate PDF/Print
+async function printRegisteredClasses() {
+    if (!currentRegisteredClassesData || !currentRegisteredClassesData.data) {
         Swal.fire({
             icon: 'warning',
-            title: 'Selection Required',
-            text: 'Please select a class and session first.',
+            title: 'No Data',
+            text: 'Please load registered classes first.',
             showConfirmButton: true
         });
         return;
     }
 
-    const archivedModal = new bootstrap.Modal(document.getElementById('archivedModal'));
-    archivedModal.show();
-    loadArchivedPage(1);
-}
-
-// Archive state variables
-let archiveCurrentPage = 1;
-let archiveMeta = {};
-let archiveSearchTimer = null;
-
-function loadArchivedPage(page) {
-    if (!ensureAxios()) return;
-
-    archiveCurrentPage = page;
-
-    const classId = document.getElementById('idclass').value;
-    const sessionId = document.getElementById('idsession').value;
-    const termId = document.getElementById('archiveTermFilter')?.value || '';
-    const search = document.getElementById('archiveSearch')?.value.trim() || '';
-    const perPage = document.getElementById('archivePerPage')?.value || 50;
-
-    if (classId === 'ALL' || sessionId === 'ALL') return;
-
-    const spinner = document.getElementById('archiveSpinner');
-    const container = document.getElementById('snapshotCardsContainer');
-
-    if (spinner) spinner.classList.remove('d-none');
-    if (container) {
-        container.innerHTML = '<div class="text-center py-4"><div class="spinner-border spinner-border-sm text-warning me-2"></div> Loading snapshots…</div>';
-    }
-
-    axios.get('/subjectoperation/archived', {
-        params: {
-            class_id: classId,
-            session_id: sessionId,
-            page: page,
-            per_page: perPage,
-            term_id: termId,
-            search: search
-        },
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'X-Requested-With': 'XMLHttpRequest'
+    // Show loading indicator
+    Swal.fire({
+        title: 'Preparing PDF...',
+        text: 'Please wait while we generate your document.',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
         }
-    }).then(function(response) {
-        if (response.data.success) {
-            archiveMeta = response.data.meta;
-            renderSnapshotCards(response.data.data);
-            renderArchivePagination(response.data.meta);
-            updateArchiveMeta(response.data.meta);
-        } else {
-            if (container) {
-                container.innerHTML = '<div class="text-center text-danger py-4">' + (response.data.message || 'Failed to load snapshots') + '</div>';
+    });
+
+    try {
+        // Fetch school information
+        const schoolInfoResponse = await axios.get('/api/school-information/active', {
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
             }
-        }
-    }).catch(function(error) {
-        console.error('Error loading archived data:', error);
-        if (container) {
-            container.innerHTML = '<div class="text-center text-danger py-4">Error loading snapshots. Please try again.</div>';
-        }
-    }).finally(function() {
-        if (spinner) spinner.classList.add('d-none');
-    });
+        });
+
+        const schoolInfo = schoolInfoResponse.data.data || {};
+
+        // Generate print HTML
+        const printHtml = generatePrintHtml(currentRegisteredClassesData, schoolInfo);
+
+        // Create a hidden iframe for printing
+        const iframe = document.createElement('iframe');
+        iframe.style.position = 'absolute';
+        iframe.style.width = '0';
+        iframe.style.height = '0';
+        iframe.style.border = 'none';
+        document.body.appendChild(iframe);
+
+        const iframeDoc = iframe.contentWindow.document;
+        iframeDoc.open();
+        iframeDoc.write(printHtml);
+        iframeDoc.close();
+
+        // Wait for images to load then print
+        setTimeout(() => {
+            iframe.contentWindow.focus();
+            iframe.contentWindow.print();
+
+            // Remove iframe after printing
+            setTimeout(() => {
+                document.body.removeChild(iframe);
+            }, 1000);
+        }, 500);
+
+        Swal.close();
+
+    } catch (error) {
+        console.error('Error preparing print:', error);
+        Swal.close();
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to prepare print document. Please try again.',
+            showConfirmButton: true
+        });
+    }
 }
 
-function renderSnapshotCards(rows) {
-    const container = document.getElementById('snapshotCardsContainer');
-    const restoreBtn = document.getElementById('restoreSelectedBtn');
-    const deleteBtn = document.getElementById('deleteSelectedBtn');
-
-    if (!rows || rows.length === 0) {
-        if (container) {
-            container.innerHTML = '<div class="text-center text-muted py-5"><i class="ri-archive-line ri-3x d-block mb-2"></i>No unregistration snapshots found.</div>';
-        }
-        if (restoreBtn) restoreBtn.classList.add('d-none');
-        if (deleteBtn) deleteBtn.classList.add('d-none');
-        return;
-    }
-
-    if (restoreBtn) restoreBtn.classList.add('d-none');
-    if (deleteBtn) deleteBtn.classList.add('d-none');
-
-    // Group rows by snapshot_name
-    const groups = {};
-    rows.forEach(row => {
-        const key = row.snapshot_name + '__' + row.subjectclassid + '__' + row.termid;
-        if (!groups[key]) {
-            groups[key] = {
-                snapshot_name: row.snapshot_name,
-                snapshot_notes: row.snapshot_notes,
-                unregistered_at: row.unregistered_at,
-                staffname: row.staffname,
-                termname: row.termname,
-                student_count: row.student_count,
-                subjectclassid: row.subjectclassid,
-                termid: row.termid,
-                sessionid: row.sessionid,
-                staffid: row.staffid,
-                subjects: []
-            };
-        }
-        groups[key].subjects.push({
-            subjectname: row.subjectname,
-            student_count: row.student_count
-        });
+// Generate professional print HTML
+function generatePrintHtml(data, schoolInfo) {
+    const classes = data.data;
+    const currentDate = new Date().toLocaleDateString('en-GB', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric'
+    });
+    const currentTime = new Date().toLocaleTimeString('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit'
     });
 
-    let html = '<div class="row g-3">';
+    // Get school logo URL
+    const schoolLogo = schoolInfo.logo_url || (schoolInfo.school_logo ?
+        (schoolInfo.school_logo.startsWith('http') ? schoolInfo.school_logo : `/storage/${schoolInfo.school_logo}`) :
+        '/theme/layouts/assets/images/logo-dark.png');
 
-    for (const group of Object.values(groups)) {
-        const unregDate = group.unregistered_at
-            ? new Date(group.unregistered_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-            : '—';
+    let subjectsHtml = '';
 
-        const subjectPills = group.subjects.map(s =>
-            '<span class="badge bg-primary-subtle text-primary me-1 mb-1">' + escapeHtml(s.subjectname) + '</span>'
-        ).join('');
+    classes.forEach((termGroup) => {
+        const subjectsArray = termGroup.subjects ? termGroup.subjects.split(',').map(s => s.trim()) : [];
+        const teachersArray = termGroup.teachers ? termGroup.teachers.split(',').map(t => t.trim()) : [];
+        const totalStudents = termGroup.student_count || 0;
 
-        const metaEncoded = encodeURIComponent(JSON.stringify({
-            snapshot_name: group.snapshot_name,
-            subjectclassid: group.subjectclassid,
-            termid: group.termid,
-            sessionid: group.sessionid,
-            staffid: group.staffid
-        }));
-
-        html += `
-        <div class="col-md-6 col-xl-4">
-            <div class="card border-0 shadow-sm h-100" style="cursor:pointer; transition:transform .15s,box-shadow .15s;">
-                <div class="card-body">
-                    <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
-                        <div class="flex-grow-1 min-w-0">
-                            <h6 class="fw-semibold mb-0 text-truncate" title="${escapeHtml(group.snapshot_name)}">
-                                <i class="ri-camera-line text-danger me-1"></i>${escapeHtml(group.snapshot_name)}
-                            </h6>
-                            <small class="text-muted">${unregDate}</small>
-                        </div>
-                        <div class="flex-shrink-0">
-                            <span class="badge bg-danger-subtle text-danger rounded-pill">
-                                ${group.student_count} student${group.student_count !== 1 ? 's' : ''}
-                            </span>
-                        </div>
-                    </div>
-                    ${group.snapshot_notes ? '<p class="text-muted small fst-italic mb-2">"' + escapeHtml(group.snapshot_notes) + '"</p>' : ''}
-                    <div class="mb-2">${subjectPills}</div>
-                    <div class="d-flex justify-content-between align-items-center mt-auto pt-1 border-top">
-                        <small class="text-muted">
-                            <i class="ri-user-star-line me-1"></i>${escapeHtml(group.staffname || '—')}
-                        </small>
-                        <small class="text-muted">
-                            <span class="badge bg-warning-subtle text-warning-emphasis">${escapeHtml(group.termname)}</span>
-                        </small>
-                    </div>
+        subjectsHtml += `
+            <div class="print-term-card">
+                <div class="print-term-header">
+                    <h3 class="print-term-title">${escapeHtml(termGroup.class_name)} ${escapeHtml(termGroup.arm_name)} — ${escapeHtml(termGroup.session_name)}</h3>
+                    <p class="print-term-subtitle">${escapeHtml(termGroup.term_name)} Term</p>
                 </div>
-                <div class="card-footer bg-light border-0 d-flex gap-2 py-2">
-                    <button class="btn btn-sm btn-outline-primary flex-grow-1" onclick="viewSnapshotDetail('${metaEncoded}')">
-                        <i class="ri-eye-line me-1"></i> View
-                    </button>
-                    <button class="btn btn-sm btn-outline-success flex-grow-1" onclick="restoreSnapshot('${metaEncoded}')">
-                        <i class="ri-refresh-line me-1"></i> Restore
-                    </button>
+                <table class="print-subjects-table">
+                    <thead>
+                        <tr>
+                            <th width="5%">#</th>
+                            <th width="40%">Subject Name</th>
+                            <th width="35%">Teacher</th>
+                            <th width="20%">Students</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        subjectsArray.forEach((subjectName, idx) => {
+            let teacherName = '— Not assigned';
+            if (teachersArray.length > idx) {
+                teacherName = teachersArray[idx];
+            } else if (teachersArray.length > 0) {
+                teacherName = teachersArray[0];
+            }
+
+            subjectsHtml += `
+                <tr>
+                    <td style="text-align: center;">${idx + 1}</td>
+                    <td><strong>${escapeHtml(subjectName)}</strong></td>
+                    <td>${escapeHtml(teacherName)}</td>
+                    <td style="text-align: center;">${totalStudents}</td>
+                </tr>
+            `;
+        });
+
+        subjectsHtml += `
+                    </tbody>
+                </table>
+            </div>
+        `;
+    });
+
+    return `<!DOCTYPE html>
+    <html>
+    <head>
+        <title>Registered Classes Overview - ${escapeHtml(data.class_name)} ${escapeHtml(data.arm_name)}</title>
+        <meta charset="utf-8">
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
+
+            body {
+                font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+                line-height: 1.6;
+                color: #333;
+                background: white;
+                padding: 20px;
+            }
+
+            .print-container {
+                max-width: 1200px;
+                margin: 0 auto;
+                background: white;
+            }
+
+            /* Header Section */
+            .print-header {
+                margin-bottom: 30px;
+                border-bottom: 3px solid #1e3a5f;
+                padding-bottom: 20px;
+            }
+
+            .print-school-info {
+                display: flex;
+                align-items: center;
+                gap: 25px;
+                margin-bottom: 20px;
+            }
+
+            .print-logo {
+                max-width: 90px;
+                max-height: 90px;
+                object-fit: contain;
+            }
+
+            .print-school-details {
+                flex: 1;
+            }
+
+            .print-school-name {
+                font-size: 26px;
+                font-weight: bold;
+                color: #1e3a5f;
+                margin: 0 0 8px 0;
+                letter-spacing: 1px;
+            }
+
+            .print-school-motto {
+                font-style: italic;
+                color: #666;
+                margin: 0 0 10px 0;
+                font-size: 14px;
+            }
+
+            .print-school-address, .print-school-contact {
+                font-size: 12px;
+                color: #555;
+                margin: 3px 0;
+            }
+
+            .print-school-address i, .print-school-contact i {
+                margin-right: 5px;
+            }
+
+            /* Title Section */
+            .print-title-section {
+                text-align: center;
+                margin: 30px 0 20px 0;
+            }
+
+            .print-title {
+                font-size: 22px;
+                font-weight: bold;
+                color: #1e3a5f;
+                margin: 0;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+            }
+
+            .print-subtitle {
+                font-size: 14px;
+                color: #666;
+                margin: 5px 0 0 0;
+            }
+
+            .print-meta {
+                text-align: center;
+                font-size: 12px;
+                color: #888;
+                margin-bottom: 30px;
+                padding-bottom: 15px;
+                border-bottom: 1px dashed #ddd;
+            }
+
+            /* Term Cards */
+            .print-term-card {
+                margin-bottom: 35px;
+                page-break-inside: avoid;
+                border: 1px solid #e0e0e0;
+                border-radius: 8px;
+                overflow: hidden;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            }
+
+            .print-term-header {
+                background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                padding: 15px 20px;
+                border-bottom: 2px solid #1e3a5f;
+            }
+
+            .print-term-title {
+                font-size: 18px;
+                font-weight: bold;
+                color: #1e3a5f;
+                margin: 0;
+            }
+
+            .print-term-subtitle {
+                font-size: 13px;
+                color: #666;
+                margin: 5px 0 0 0;
+            }
+
+            /* Subjects Table */
+            .print-subjects-table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+
+            .print-subjects-table th {
+                background: #f1f3f5;
+                padding: 12px 15px;
+                text-align: left;
+                font-size: 13px;
+                font-weight: bold;
+                color: #495057;
+                border: 1px solid #dee2e6;
+            }
+
+            .print-subjects-table td {
+                padding: 10px 15px;
+                font-size: 12px;
+                border: 1px solid #dee2e6;
+                vertical-align: top;
+            }
+
+            .print-subjects-table tbody tr:hover {
+                background: #f8f9fa;
+            }
+
+            /* Footer */
+            .print-footer {
+                margin-top: 40px;
+                padding-top: 20px;
+                border-top: 1px solid #dee2e6;
+                text-align: center;
+                font-size: 10px;
+                color: #999;
+            }
+
+            .print-footer p {
+                margin: 5px 0;
+            }
+
+            /* Summary Stats */
+            .print-summary {
+                display: flex;
+                justify-content: space-around;
+                margin: 20px 0 30px 0;
+                padding: 15px;
+                background: #f8f9fa;
+                border-radius: 8px;
+            }
+
+            .print-summary-item {
+                text-align: center;
+            }
+
+            .print-summary-label {
+                font-size: 12px;
+                color: #666;
+                margin-bottom: 5px;
+            }
+
+            .print-summary-value {
+                font-size: 20px;
+                font-weight: bold;
+                color: #1e3a5f;
+            }
+
+            @media print {
+                body {
+                    padding: 0;
+                    margin: 0;
+                }
+
+                .print-container {
+                    max-width: 100%;
+                    padding: 20px;
+                }
+
+                .print-term-card {
+                    page-break-inside: avoid;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="print-container">
+            <!-- School Header -->
+            <div class="print-header">
+                <div class="print-school-info">
+                    ${schoolLogo ? `<img src="${schoolLogo}" alt="School Logo" class="print-logo" onerror="this.style.display='none'">` : ''}
+                    <div class="print-school-details">
+                        <h1 class="print-school-name">${escapeHtml(schoolInfo.school_name || 'School Name')}</h1>
+                        ${schoolInfo.school_motto ? `<p class="print-school-motto">"${escapeHtml(schoolInfo.school_motto)}"</p>` : ''}
+                        ${schoolInfo.school_address ? `<p class="print-school-address"><i>📍</i> ${escapeHtml(schoolInfo.school_address)}</p>` : ''}
+                        <p class="print-school-contact">
+                            ${schoolInfo.school_phone ? `<i>📞</i> ${escapeHtml(schoolInfo.school_phone)}` : ''}
+                            ${schoolInfo.school_phone && schoolInfo.school_email ? ' | ' : ''}
+                            ${schoolInfo.school_email ? `<i>✉️</i> ${escapeHtml(schoolInfo.school_email)}` : ''}
+                        </p>
+                    </div>
                 </div>
             </div>
-        </div>`;
-    }
 
-    html += '</div>';
-    if (container) container.innerHTML = html;
+            <!-- Title Section -->
+            <div class="print-title-section">
+                <h2 class="print-title">Registered Classes Overview</h2>
+                <p class="print-subtitle">Academic Session: ${escapeHtml(data.session_name)}</p>
+            </div>
+
+            <div class="print-meta">
+                <p>Generated on: ${currentDate} at ${currentTime}</p>
+                <p>Class: ${escapeHtml(data.class_name)} ${escapeHtml(data.arm_name)}</p>
+            </div>
+
+            <!-- Summary Statistics -->
+            <div class="print-summary">
+                <div class="print-summary-item">
+                    <div class="print-summary-label">Total Terms</div>
+                    <div class="print-summary-value">${classes.length}</div>
+                </div>
+                <div class="print-summary-item">
+                    <div class="print-summary-label">Total Subjects</div>
+                    <div class="print-summary-value">${classes.reduce((sum, c) => sum + parseInt(c.subject_count || 0), 0)}</div>
+                </div>
+                <div class="print-summary-item">
+                    <div class="print-summary-label">Total Students</div>
+                    <div class="print-summary-value">${classes[0]?.student_count || 0}</div>
+                </div>
+            </div>
+
+            <!-- Terms and Subjects -->
+            ${subjectsHtml}
+
+            <!-- Footer -->
+            <div class="print-footer">
+                <p>This is a computer-generated document. No signature is required.</p>
+                <p>© ${new Date().getFullYear()} ${escapeHtml(schoolInfo.school_name || 'School Name')}. All rights reserved.</p>
+            </div>
+        </div>
+    </body>
+    </html>`;
 }
 
-function renderArchivePagination(meta) {
-    const container = document.getElementById('archivePagination');
-    if (!container || !meta || meta.last_page <= 1) {
-        if (container) container.innerHTML = '';
-        return;
-    }
-
-    let html = '<button class="btn btn-sm btn-outline-secondary ' + (meta.current_page === 1 ? 'disabled' : '') + '" onclick="loadArchivedPage(' + (meta.current_page - 1) + ')">‹</button>';
-
-    for (let p = 1; p <= meta.last_page; p++) {
-        if (p === 1 || p === meta.last_page || (p >= meta.current_page - 2 && p <= meta.current_page + 2)) {
-            html += '<button class="btn btn-sm ' + (p === meta.current_page ? 'btn-warning' : 'btn-outline-secondary') + '" onclick="loadArchivedPage(' + p + ')">' + p + '</button>';
-        } else if (p === meta.current_page - 3 || p === meta.current_page + 3) {
-            html += '<span class="btn btn-sm btn-outline-secondary disabled">…</span>';
-        }
-    }
-
-    html += '<button class="btn btn-sm btn-outline-secondary ' + (meta.current_page === meta.last_page ? 'disabled' : '') + '" onclick="loadArchivedPage(' + (meta.current_page + 1) + ')">›</button>';
-    container.innerHTML = html;
-}
-
-function updateArchiveMeta(meta) {
-    const el = document.getElementById('archiveMeta');
-    if (!el || !meta || !meta.total) {
-        if (el) el.textContent = '';
-        return;
-    }
-    const from = (meta.current_page - 1) * meta.per_page + 1;
-    const to = Math.min(meta.current_page * meta.per_page, meta.total);
-    el.textContent = 'Showing ' + from + '–' + to + ' of ' + meta.total + ' snapshots';
-}
-
-// Placeholder functions for snapshot actions
-function viewSnapshotDetail(metaEncoded) {
-    Swal.fire({
-        icon: 'info',
-        title: 'Coming Soon',
-        text: 'Snapshot detail view will be implemented here.',
-        showConfirmButton: true
-    });
-}
-
-function restoreSnapshot(metaEncoded) {
-    Swal.fire({
-        icon: 'question',
-        title: 'Restore Snapshot',
-        text: 'Restore functionality will be implemented here.',
-        showConfirmButton: true
-    });
-}
-
-// Archive filter event listeners
-document.addEventListener("DOMContentLoaded", function () {
-    const archiveSearch = document.getElementById('archiveSearch');
-    if (archiveSearch) {
-        archiveSearch.addEventListener('input', function() {
-            clearTimeout(archiveSearchTimer);
-            archiveSearchTimer = setTimeout(function() { loadArchivedPage(1); }, 400);
-        });
-    }
-
-    const archiveTermFilter = document.getElementById('archiveTermFilter');
-    if (archiveTermFilter) {
-        archiveTermFilter.addEventListener('change', function() { loadArchivedPage(1); });
-    }
-
-    const archivePerPage = document.getElementById('archivePerPage');
-    if (archivePerPage) {
-        archivePerPage.addEventListener('change', function() { loadArchivedPage(1); });
-    }
-});
-
-// Helper function to escape HTML
+// Make sure escapeHtml function exists
 function escapeHtml(str) {
-    if (!str) return str || '';
+    if (!str) return str ?? '';
     return String(str).replace(/[&<>"']/g, function(match) {
         if (match === '&') return '&amp;';
         if (match === '<') return '&lt;';
@@ -997,6 +1185,8 @@ function escapeHtml(str) {
         return match;
     });
 }
+
+
 
 // Attach to buttons
 document.addEventListener("DOMContentLoaded", function () {
@@ -1009,3 +1199,5 @@ document.addEventListener("DOMContentLoaded", function () {
         unregisterBtn.onclick = unregisterSelectedStudentsBatch;
     }
 });
+
+
