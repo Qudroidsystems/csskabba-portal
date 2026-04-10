@@ -1,7 +1,3 @@
-// ================================================
-// MAIN JAVASCRIPT FOR SUBJECT REGISTRATION PAGE
-// ================================================
-
 var perPage = 10,
     checkAll = document.getElementById("checkAll");
 
@@ -20,7 +16,6 @@ function ensureAxios() {
     return true;
 }
 
-// Checkbox handling
 function ischeckboxcheck() {
     const checkboxes = document.querySelectorAll('tbody input[name="chk_child"]');
     checkboxes.forEach((checkbox) => {
@@ -36,31 +31,29 @@ function handleCheckboxChange(e) {
     } else {
         row.classList.remove("table-active");
     }
-
     const checkedCount = document.querySelectorAll('tbody input[name="chk_child"]:checked').length;
     const registerButton = document.getElementById("register-selected-btn");
     const unregisterButton = document.getElementById("unregister-selected-btn");
-
-    if (registerButton) registerButton.classList.toggle("d-none", checkedCount === 0);
-    if (unregisterButton) unregisterButton.classList.toggle("d-none", checkedCount === 0);
-
-    // Check "Select All" state
-    const allCheckboxes = document.querySelectorAll('tbody input[name="chk_child"]');
-    if (checkAll) {
-        checkAll.checked = allCheckboxes.length > 0 && allCheckboxes.length === checkedCount;
+    if (registerButton) {
+        registerButton.classList.toggle("d-none", checkedCount === 0);
     }
+    if (unregisterButton) {
+        unregisterButton.classList.toggle("d-none", checkedCount === 0);
+    }
+    const allCheckboxes = document.querySelectorAll('tbody input[name="chk_child"]');
+    document.getElementById("checkAll").checked = allCheckboxes.length > 0 && allCheckboxes.length === checkedCount;
 }
 
 function refreshCallbacks() {
+    console.log("refreshCallbacks executed at", new Date().toISOString());
     ischeckboxcheck();
 }
 
-// Update Admission No dropdown
 function updateAdmissionNoOptions(students) {
     const select = document.getElementById("idadmission");
     if (!select) return;
 
-    select.innerHTML = '<option value="ALL">All Admission Nos</option>';
+    select.innerHTML = '<option value="ALL">Select Admission No</option>';
 
     const uniqueAdmissionNos = [...new Set(students.map(s => s.admissionno).filter(Boolean))].sort();
 
@@ -72,39 +65,124 @@ function updateAdmissionNoOptions(students) {
     });
 }
 
-// Subject selection helpers
 function selectAllSubjects() {
-    document.querySelectorAll('.subject-checkbox').forEach(cb => cb.checked = true);
+    const subjectCheckboxes = document.querySelectorAll('.subject-checkbox');
+    subjectCheckboxes.forEach(checkbox => {
+        checkbox.checked = true;
+    });
 }
 
 function deselectAllSubjects() {
-    document.querySelectorAll('.subject-checkbox').forEach(cb => cb.checked = false);
+    const subjectCheckboxes = document.querySelectorAll('.subject-checkbox');
+    subjectCheckboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
 }
 
-// Main Filter Function
+document.addEventListener("DOMContentLoaded", function () {
+    console.log("DOM loaded, initializing...");
+    refreshCallbacks();
+
+    if (typeof Choices !== 'undefined') {
+        const choicesElements = ['idclass', 'idsession', 'idgender', 'idadmission'];
+        choicesElements.forEach(id => {
+            const element = document.getElementById(id);
+            if (element) {
+                new Choices(element, { searchEnabled: true });
+            }
+        });
+    } else {
+        console.warn("Choices.js not available, using native select");
+    }
+
+    if (checkAll) {
+        checkAll.onclick = function () {
+            console.log("checkAll clicked");
+            var checkboxes = document.querySelectorAll('tbody input[name="chk_child"]');
+            checkboxes.forEach((checkbox) => {
+                checkbox.checked = this.checked;
+                const row = checkbox.closest("tr");
+                if (checkbox.checked) {
+                    row.classList.add("table-active");
+                } else {
+                    row.classList.remove("table-active");
+                }
+            });
+            const checkedCount = document.querySelectorAll('tbody input[name="chk_child"]:checked').length;
+            const registerButton = document.getElementById("register-selected-btn");
+            const unregisterButton = document.getElementById("unregister-selected-btn");
+            if (registerButton) {
+                registerButton.classList.toggle("d-none", checkedCount === 0);
+            }
+            if (unregisterButton) {
+                unregisterButton.classList.toggle("d-none", checkedCount === 0);
+            }
+        };
+    }
+
+    const registeredClassesModal = document.getElementById('registeredClassesModal');
+    if (registeredClassesModal) {
+        registeredClassesModal.addEventListener('show.bs.modal', function () {
+            loadRegisteredClasses();
+        });
+    }
+});
+
 function filterData() {
     if (!ensureAxios()) return;
 
-    const classValue = document.getElementById("idclass").value;
-    const sessionValue = document.getElementById("idsession").value;
-    const searchValue = document.querySelector(".search")?.value.toLowerCase() || '';
-    const genderValue = document.getElementById("idgender").value;
-    const admissionNoValue = document.getElementById("idadmission").value;
+    const classSelect = document.getElementById("idclass");
+    const sessionSelect = document.getElementById("idsession");
+    const searchInput = document.querySelector(".search-box input.search");
+    const genderSelect = document.getElementById("idgender");
+    const admissionNoSelect = document.getElementById("idadmission");
+
+    if (!classSelect || !sessionSelect) {
+        console.error("Required filter elements not found");
+        Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Filter elements not found. Please refresh the page.",
+            showConfirmButton: true
+        });
+        return;
+    }
+
+    const classValue = classSelect.value;
+    const sessionValue = sessionSelect.value;
+    const searchValue = searchInput ? searchInput.value.toLowerCase() : '';
+    const genderValue = genderSelect ? genderSelect.value : 'ALL';
+    const admissionNoValue = admissionNoSelect ? admissionNoSelect.value : 'ALL';
 
     if (classValue === 'ALL' || sessionValue === 'ALL') {
         Swal.fire({
             icon: "warning",
-            title: "Missing Selection",
+            title: "Missing filters",
             text: "Please select a class and session",
             showConfirmButton: true
         });
         return;
     }
 
+    console.log("Filtering with:", {
+        search: searchValue,
+        class_id: classValue,
+        session_id: sessionValue,
+        gender: genderValue,
+        admissionno: admissionNoValue
+    });
+
     const tableBody = document.getElementById('studentTableBody');
     const subjectTeachersContainer = document.getElementById('subjectTeachersContainer');
+    const subjectTeachersCard = document.getElementById('subjectTeachersCard');
+    const subjectTeacherCount = document.getElementById('subjectTeacherCount');
 
-    if (tableBody) tableBody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>';
+    if (tableBody) {
+        tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Loading...</td></tr>';
+    }
+    if (subjectTeachersContainer) {
+        subjectTeachersContainer.innerHTML = '<div class="col-12 text-center">Loading subject teachers...</div>';
+    }
 
     axios.get('/subjects', {
         params: {
@@ -119,35 +197,50 @@ function filterData() {
             'X-Requested-With': 'XMLHttpRequest'
         }
     }).then(function (response) {
+        console.log("AJAX response received");
+
         const parser = new DOMParser();
         const doc = parser.parseFromString(response.data, 'text/html');
 
-        // Update table body
         const newTableBody = doc.querySelector('#studentTableBody');
-        if (newTableBody && tableBody) tableBody.innerHTML = newTableBody.innerHTML;
-
-        // Update pagination if exists
-        const newPagination = doc.querySelector('.pagination');
-        const currentPagination = document.querySelector('.pagination');
-        if (newPagination && currentPagination) currentPagination.innerHTML = newPagination.innerHTML;
-
-        // Update student count
-        const newCount = doc.querySelector('#studentcount');
-        const currentCount = document.getElementById('studentcount');
-        if (newCount && currentCount) currentCount.textContent = newCount.textContent;
-
-        // Update subject teachers
-        const newSubjectContainer = doc.querySelector('#subjectTeachersContainer');
-        if (newSubjectContainer && subjectTeachersContainer) {
-            subjectTeachersContainer.innerHTML = newSubjectContainer.innerHTML;
+        const currentTableBody = document.getElementById('studentTableBody');
+        if (newTableBody && currentTableBody) {
+            currentTableBody.innerHTML = newTableBody.innerHTML;
         }
 
+        const newPagination = doc.querySelector('#pagination-container');
+        const currentPagination = document.getElementById('pagination-container');
+        if (newPagination && currentPagination) {
+            currentPagination.innerHTML = newPagination.innerHTML;
+        }
+
+        const newStudentCount = doc.querySelector('#studentcount');
+        const currentStudentCount = document.getElementById('studentcount');
+        if (newStudentCount && currentStudentCount) {
+            currentStudentCount.innerText = newStudentCount.innerText;
+        }
+
+        const newSubjectTeachersContainer = doc.querySelector('#subjectTeachersContainer');
+        if (newSubjectTeachersContainer && subjectTeachersContainer) {
+            subjectTeachersContainer.innerHTML = newSubjectTeachersContainer.innerHTML;
+            const subjectCount = subjectTeachersContainer.querySelectorAll('.subject-checkbox').length;
+            if (subjectTeacherCount) {
+                subjectTeacherCount.innerText = subjectCount;
+            }
+            if (subjectTeachersCard) {
+                subjectTeachersCard.style.display = subjectCount > 0 ? 'block' : 'none';
+            }
+        }
+
+        const studentRows = doc.querySelectorAll('#studentTableBody tr');
         const students = [];
-        doc.querySelectorAll('#studentTableBody tr').forEach(row => {
+        studentRows.forEach(row => {
             const admissionCell = row.querySelector('.admissionno');
             if (admissionCell) {
                 const admissionNo = admissionCell.dataset.admissionno || admissionCell.textContent.trim();
-                if (admissionNo) students.push({ admissionno: admissionNo });
+                if (admissionNo && admissionNo !== 'Select class and session to view students.') {
+                    students.push({ admissionno: admissionNo });
+                }
             }
         });
 
@@ -155,26 +248,43 @@ function filterData() {
         refreshCallbacks();
         setupPaginationLinks();
 
-    }).catch(function (error) {
-        console.error("Filter error:", error);
-        if (tableBody) {
-            tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Error loading data. Please try again.</td></tr>';
+        if (students.length === 0 && currentTableBody.innerHTML.includes('Select class and session')) {
+            // Initial empty state
+        } else if (students.length === 0) {
+            Swal.fire({
+                icon: "info",
+                title: "No Results",
+                text: "No students found matching your criteria",
+                showConfirmButton: true
+            });
         }
+    }).catch(function (error) {
+        console.error("Error filtering data:", error);
+
+        if (tableBody) {
+            tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
+        }
+        if (subjectTeachersContainer) {
+            subjectTeachersContainer.innerHTML = '<div class="col-12 text-center text-danger">Error loading subject teachers.</div>';
+        }
+
         Swal.fire({
             icon: "error",
             title: "Error",
-            text: error.response?.data?.message || "Failed to load data",
+            text: error.response?.data?.message || "Failed to fetch filtered data. Please try again.",
             showConfirmButton: true
         });
     });
 }
 
 function setupPaginationLinks() {
-    document.querySelectorAll('.pagination a').forEach(link => {
+    const paginationLinks = document.querySelectorAll('#pagination-container a');
+    paginationLinks.forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
-            if (!this.classList.contains('disabled')) {
-                loadPage(this.href);
+            const url = this.href;
+            if (url && !this.classList.contains('disabled')) {
+                loadPage(url);
             }
         });
     });
@@ -184,189 +294,411 @@ function loadPage(url) {
     if (!ensureAxios()) return;
 
     const tableBody = document.getElementById('studentTableBody');
-    if (tableBody) tableBody.innerHTML = '<tr><td colspan="7" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>';
+    const subjectTeachersContainer = document.getElementById('subjectTeachersContainer');
+    const subjectTeachersCard = document.getElementById('subjectTeachersCard');
+    const subjectTeacherCount = document.getElementById('subjectTeacherCount');
+
+    if (tableBody) {
+        tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Loading...</td></tr>';
+    }
+    if (subjectTeachersContainer) {
+        subjectTeachersContainer.innerHTML = '<div class="col-12 text-center">Loading subject teachers...</div>';
+    }
 
     axios.get(url, {
         headers: {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
             'X-Requested-With': 'XMLHttpRequest'
         }
-    }).then(response => {
+    }).then(function (response) {
         const parser = new DOMParser();
         const doc = parser.parseFromString(response.data, 'text/html');
 
         const newTableBody = doc.querySelector('#studentTableBody');
-        if (newTableBody && tableBody) tableBody.innerHTML = newTableBody.innerHTML;
+        const currentTableBody = document.getElementById('studentTableBody');
+        if (newTableBody && currentTableBody) {
+            currentTableBody.innerHTML = newTableBody.innerHTML;
+        }
+
+        const newPagination = doc.querySelector('#pagination-container');
+        const currentPagination = document.getElementById('pagination-container');
+        if (newPagination && currentPagination) {
+            currentPagination.innerHTML = newPagination.innerHTML;
+        }
+
+        const newStudentCount = doc.querySelector('#studentcount');
+        const currentStudentCount = document.getElementById('studentcount');
+        if (newStudentCount && currentStudentCount) {
+            currentStudentCount.innerText = newStudentCount.innerText;
+        }
+
+        const newSubjectTeachersContainer = doc.querySelector('#subjectTeachersContainer');
+        if (newSubjectTeachersContainer && subjectTeachersContainer) {
+            subjectTeachersContainer.innerHTML = newSubjectTeachersContainer.innerHTML;
+            const subjectCount = subjectTeachersContainer.querySelectorAll('.subject-checkbox').length;
+            if (subjectTeacherCount) {
+                subjectTeacherCount.innerText = subjectCount;
+            }
+            if (subjectTeachersCard) {
+                subjectTeachersCard.style.display = subjectCount > 0 ? 'block' : 'none';
+            }
+        }
 
         refreshCallbacks();
         setupPaginationLinks();
-    }).catch(error => {
-        console.error("Pagination error:", error);
-        if (tableBody) tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Failed to load page.</td></tr>';
+    }).catch(function (error) {
+        console.error("Error loading page:", error);
+        if (tableBody) {
+            tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
+        }
+        if (subjectTeachersContainer) {
+            subjectTeachersContainer.innerHTML = '<div class="col-12 text-center text-danger">Error loading subject teachers.</div>';
+        }
     });
 }
 
-// Updated loadRegisteredClasses - Matches new modal (no tabs, clean UI)
-async function loadRegisteredClasses() {
+function registerSelectedStudentsBatch() {
     if (!ensureAxios()) return;
 
-    const modalContent = document.getElementById('registeredClassesContent');
-    const classId = document.getElementById('idclass').value;
-    const sessionId = document.getElementById('idsession').value;
+    const checkboxes = document.querySelectorAll('tbody input[name="chk_child"]:checked');
+    const classSelect = document.getElementById("idclass");
+    const sessionSelect = document.getElementById("idsession");
+    const subjectCheckboxes = document.querySelectorAll('.subject-checkbox:checked');
+    const registerButton = document.getElementById("register-selected-btn");
+    const loadingSpinner = document.getElementById("register-loading-spinner");
 
-    if (classId === 'ALL' || sessionId === 'ALL') {
-        modalContent.innerHTML = `
-            <div class="text-center py-5">
-                <i class="ri-error-warning-line fs-1 text-warning d-block mb-3"></i>
-                <h5 class="text-muted">Please select Class and Session</h5>
-                <p class="text-muted">Choose a class and academic session above, then reopen this modal.</p>
-            </div>`;
+    if (!classSelect || !sessionSelect) {
+        Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Required filter elements not found. Please refresh the page.",
+            showConfirmButton: true
+        });
         return;
     }
 
-    modalContent.innerHTML = `
-        <div class="text-center py-5">
-            <div class="spinner-border text-primary mb-4" style="width:3.5rem;height:3.5rem;"></div>
-            <p class="text-muted">Loading registered subjects and teachers...</p>
-        </div>`;
+    const classValue = classSelect.value;
+    const sessionValue = sessionSelect.value;
 
-    try {
-        const response = await axios.get('/subjects/registered-classes', {
-            params: { class_id: classId, session_id: sessionId },
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            }
+    if (classValue === 'ALL' || sessionValue === 'ALL') {
+        Swal.fire({
+            icon: "warning",
+            title: "Missing filters",
+            text: "Please select a class and session before registering students.",
+            showConfirmButton: true
         });
+        return;
+    }
 
-        if (response.data.success && response.data.data.length) {
-            let html = '';
-            response.data.data.forEach(termData => {
-                html += buildTermPane(termData);
+    if (checkboxes.length === 0) {
+        Swal.fire({
+            icon: "warning",
+            title: "No students selected",
+            text: "Please select at least one student to register.",
+            showConfirmButton: true
+        });
+        return;
+    }
+
+    if (subjectCheckboxes.length === 0) {
+        Swal.fire({
+            icon: "warning",
+            title: "No subjects selected",
+            text: "Please select at least one subject to register.",
+            showConfirmButton: true
+        });
+        return;
+    }
+
+    if (loadingSpinner) loadingSpinner.classList.remove("d-none");
+    if (registerButton) {
+        registerButton.disabled = true;
+        registerButton.setAttribute("aria-disabled", "true");
+    }
+
+    const studentIds = Array.from(checkboxes).map(checkbox => checkbox.closest('tr').querySelector('.id').dataset.id);
+    const subjectClasses = Array.from(subjectCheckboxes).map(checkbox => ({
+        subjectclassid: checkbox.dataset.subjectclassid,
+        staffid: checkbox.dataset.staffid,
+        termid: checkbox.dataset.termid
+    }));
+
+    axios.post('/subjectregistration/batch', {
+        studentids: studentIds,
+        subjectclasses: subjectClasses,
+        sessionid: sessionValue
+    }, {
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    }).then(function (response) {
+        if (loadingSpinner) loadingSpinner.classList.add("d-none");
+        if (registerButton) {
+            registerButton.disabled = false;
+            registerButton.setAttribute("aria-disabled", "false");
+        }
+
+        if (response.data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: `Successfully registered ${studentIds.length} student(s) for ${subjectClasses.length} subject(s).`,
+                showConfirmButton: true
             });
+        } else {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Partial/Failed',
+                html: `Some or all registrations failed.<br>${(response.data.error_details || []).map(e => e.message).join('<br>')}`,
+                showConfirmButton: true
+            });
+        }
+        filterData();
+    }).catch(function (error) {
+        if (loadingSpinner) loadingSpinner.classList.add("d-none");
+        if (registerButton) {
+            registerButton.disabled = false;
+            registerButton.setAttribute("aria-disabled", "false");
+        }
+        Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: error.response?.data?.message || "Failed to register subjects. Please try again.",
+            showConfirmButton: true
+        });
+    });
+}
+
+function unregisterSelectedStudentsBatch() {
+    if (!ensureAxios()) return;
+
+    const checkboxes = document.querySelectorAll('tbody input[name="chk_child"]:checked');
+    const classSelect = document.getElementById("idclass");
+    const sessionSelect = document.getElementById("idsession");
+    const subjectCheckboxes = document.querySelectorAll('.subject-checkbox:checked');
+    const unregisterButton = document.getElementById("unregister-selected-btn");
+    const loadingSpinner = document.getElementById("register-loading-spinner"); // Reusing same spinner
+
+    if (!classSelect || !sessionSelect) {
+        Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Required filter elements not found. Please refresh the page.",
+            showConfirmButton: true
+        });
+        return;
+    }
+
+    const classValue = classSelect.value;
+    const sessionValue = sessionSelect.value;
+
+    if (classValue === 'ALL' || sessionValue === 'ALL') {
+        Swal.fire({
+            icon: "warning",
+            title: "Missing filters",
+            text: "Please select a class and session before unregistering students.",
+            showConfirmButton: true
+        });
+        return;
+    }
+
+    if (checkboxes.length === 0) {
+        Swal.fire({
+            icon: "warning",
+            title: "No students selected",
+            text: "Please select at least one student to unregister.",
+            showConfirmButton: true
+        });
+        return;
+    }
+
+    if (subjectCheckboxes.length === 0) {
+        Swal.fire({
+            icon: "warning",
+            title: "No subjects selected",
+            text: "Please select at least one subject to unregister.",
+            showConfirmButton: true
+        });
+        return;
+    }
+
+    if (loadingSpinner) loadingSpinner.classList.remove("d-none");
+    if (unregisterButton) {
+        unregisterButton.disabled = true;
+        unregisterButton.setAttribute("aria-disabled", "true");
+    }
+
+    const studentIds = Array.from(checkboxes).map(checkbox => checkbox.closest('tr').querySelector('.id').dataset.id);
+    const subjectClasses = Array.from(subjectCheckboxes).map(checkbox => ({
+        subjectclassid: checkbox.dataset.subjectclassid,
+        staffid: checkbox.dataset.staffid,
+        termid: checkbox.dataset.termid
+    }));
+
+    axios.post('/subjectregistration/destroy', {
+        studentids: studentIds,
+        subjectclasses: subjectClasses,
+        sessionid: sessionValue
+    }, {
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        }
+    }).then(function (response) {
+        if (loadingSpinner) loadingSpinner.classList.add("d-none");
+        if (unregisterButton) {
+            unregisterButton.disabled = false;
+            unregisterButton.setAttribute("aria-disabled", "false");
+        }
+
+        if (response.data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: `Successfully unregistered ${response.data.success_count} student(s) from ${subjectClasses.length} subject(s).`,
+                showConfirmButton: true
+            });
+        } else {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Partial/Failed',
+                html: `Some or all unregistrations failed.<br>${(response.data.error_details || []).map(e => e.message).join('<br>')}`,
+                showConfirmButton: true
+            });
+        }
+        filterData();
+    }).catch(function (error) {
+        if (loadingSpinner) loadingSpinner.classList.add("d-none");
+        if (unregisterButton) {
+            unregisterButton.disabled = false;
+            unregisterButton.setAttribute("aria-disabled", "false");
+        }
+        Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: error.response?.data?.message || "Failed to unregister subjects. Please try again.",
+            showConfirmButton: true
+        });
+    });
+}
+
+function loadRegisteredClasses() {
+    if (!ensureAxios()) {
+        console.error('Axios not initialized.');
+        return;
+    }
+
+    const modalContent = document.getElementById('registeredClassesContent');
+    if (!modalContent) {
+        console.error('Modal content element not found.');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Modal container not found.',
+            showConfirmButton: true
+        });
+        return;
+    }
+
+    const classSelect = document.getElementById('idclass');
+    const sessionSelect = document.getElementById('idsession');
+
+    if (!classSelect || !sessionSelect) {
+        console.error('Required selectors missing:', { classSelect, sessionSelect });
+        modalContent.innerHTML = '<p class="text-center text-red-500">Class or session selector not found.</p>';
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Please ensure class and session selectors are present.',
+            showConfirmButton: true
+        });
+        return;
+    }
+
+    const classId = classSelect.value;
+    const sessionId = sessionSelect.value;
+
+    if (!classId || classId === 'ALL' || !sessionId || sessionId === 'ALL') {
+        console.warn('Invalid class or session selection.');
+        modalContent.innerHTML = '<p class="text-center text-muted">Please select a valid class and session.</p>';
+        Swal.fire({
+            icon: 'warning',
+            title: 'Missing Selection',
+            text: 'Please select a valid class and session.',
+            showConfirmButton: true
+        });
+        return;
+    }
+
+    modalContent.innerHTML = '<p class="text-center">Loading registered classes...</p>';
+
+    axios.get('/subjects/registered-classes', {
+        params: { class_id: classId, session_id: sessionId },
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        timeout: 15000
+    }).then(response => {
+        console.log('Registered classes response:', JSON.stringify(response.data, null, 2));
+        if (response.data.success) {
+            const classes = response.data.data;
+            let html = '<div class="table-responsive"><table class="table table-bordered table-striped">';
+            html += '<thead><tr><th>Class</th><th>Arm</th><th>Session</th><th>Term</th><th>Students</th><th>Subjects</th><th>Teachers</th></tr></thead><tbody>';
+
+            if (!classes || classes.length === 0) {
+                html += '<tr><td colspan="7" class="text-center">No registered classes found.</td></tr>';
+            } else {
+                classes.forEach(cls => {
+                    html += `<tr>
+                        <td>${cls.class_name || '-'}</td>
+                        <td>${cls.arm_name || '-'}</td>
+                        <td>${cls.session_name || '-'}</td>
+                        <td>${cls.term_name || '-'}</td>
+                        <td>${cls.student_count || 0}</td>
+                        <td>${cls.subjects || '-'}</td>
+                        <td>${cls.teachers || '-'}</td>
+                    </tr>`;
+                });
+            }
+
+            html += '</tbody></table></div>';
             modalContent.innerHTML = html;
         } else {
-            modalContent.innerHTML = `
-                <div class="alert alert-info text-center py-5">
-                    <i class="ri-information-line fs-3 d-block mb-3"></i>
-                    No registered subjects found for the selected class and session.
-                </div>`;
-        }
-    } catch (error) {
-        console.error("Load registered classes error:", error);
-        modalContent.innerHTML = `
-            <div class="alert alert-danger text-center py-5">
-                Failed to load data. Please try again.
-            </div>`;
-    }
-}
-
-// Clean Combined Subject + Teacher Display
-function buildTermPane(termData) {
-    const subjects = termData.subjects_teachers || [];
-    const sortedSubjects = [...subjects].sort((a, b) =>
-        (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
-    );
-
-    let items = '';
-    sortedSubjects.forEach((subject, index) => {
-        const teachers = subject.teachers && subject.teachers.length
-            ? subject.teachers.map(t => esc(t.name)).join(', ')
-            : '<span class="text-muted">— Not assigned</span>';
-
-        items += `
-            <div class="subject-item d-flex align-items-start gap-3 py-3 border-bottom">
-                <div class="subject-num">${index + 1}</div>
-                <div class="flex-grow-1">
-                    <div class="fw-semibold">${esc(subject.name)}</div>
-                    <div class="small text-muted mt-1">
-                        <i class="ri-user-follow-line me-1"></i>${teachers}
-                    </div>
-                </div>
-                <div>
-                    <span class="badge bg-primary-subtle text-primary px-3 py-1">
-                        ${subject.student_count || 0} students
-                    </span>
-                </div>
-            </div>`;
-    });
-
-    return `
-        <div class="card border-0 shadow-sm mb-4 term-card">
-            <div class="card-header py-3" style="background:linear-gradient(135deg,#1e3a5f,#2563eb); color:white;">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="mb-1">${esc(termData.class_name)} ${esc(termData.arm_name)}</h5>
-                        <small>${esc(termData.session_name)} — ${esc(termData.term_name)}</small>
-                    </div>
-                    <div class="text-end">
-                        <span class="badge bg-white text-dark px-3 py-2">${termData.student_count || 0} Students</span>
-                        <div class="mt-1 small">${sortedSubjects.length} Subjects</div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body p-0">
-                <div class="subject-list">
-                    ${items || '<div class="text-center text-muted py-5">No subjects found for this term.</div>'}
-                </div>
-            </div>
-        </div>`;
-}
-
-function esc(str) {
-    if (!str) return '';
-    return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-}
-
-// Registration Functions
-async function registerSelectedStudentsBatch() {
-    // ... your existing logic (kept minimal for now)
-    if (!ensureAxios()) return;
-    Swal.fire('Info', 'Registration function triggered', 'info');
-    // Add your full axios post logic here if needed
-}
-
-function openUnregisterModal() {
-    Swal.fire('Info', 'Unregister modal opened', 'info');
-}
-
-function proceedUnregister() {
-    Swal.fire('Success', 'Unregistration completed', 'success');
-}
-
-// DOM Ready
-document.addEventListener("DOMContentLoaded", function () {
-    refreshCallbacks();
-
-    // Initialize Choices.js if available
-    if (typeof Choices !== 'undefined') {
-        ['idclass', 'idsession', 'idgender', 'idadmission'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) new Choices(el, { searchEnabled: true });
-        });
-    }
-
-    // Check All
-    if (checkAll) {
-        checkAll.addEventListener('click', function () {
-            document.querySelectorAll('tbody input[name="chk_child"]').forEach(cb => {
-                cb.checked = this.checked;
-                const row = cb.closest("tr");
-                if (row) row.classList.toggle("table-active", this.checked);
+            console.error('Failed to load:', response.data.message);
+            modalContent.innerHTML = '<p class="text-center text-red-500">Failed to load registered classes.</p>';
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: response.data.message || 'Failed to load registered classes.',
+                showConfirmButton: true
             });
-            handleCheckboxChange({ target: { checked: this.checked } }); // Trigger count update
+        }
+    }).catch(error => {
+        console.error('Error loading registered classes:', {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status
         });
-    }
-//
-    // Button handlers
+        modalContent.innerHTML = '<p class="text-center text-red-500">Error loading registered classes. Please try again.</p>';
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.response?.data?.message || 'An error occurred while loading registered classes.',
+            showConfirmButton: true
+        });
+    });
+}
+
+// Attach to buttons
+document.addEventListener("DOMContentLoaded", function () {
     const registerBtn = document.getElementById("register-selected-btn");
     const unregisterBtn = document.getElementById("unregister-selected-btn");
-
-    if (registerBtn) registerBtn.addEventListener('click', registerSelectedStudentsBatch);
-    if (unregisterBtn) unregisterBtn.addEventListener('click', openUnregisterModal);
-
-    // Modal listener
-    const registeredModal = document.getElementById('registeredClassesModal');
-    if (registeredModal) {
-        registeredModal.addEventListener('show.bs.modal', loadRegisteredClasses);
+    if (registerBtn) {
+        registerBtn.onclick = registerSelectedStudentsBatch;
+    }
+    if (unregisterBtn) {
+        unregisterBtn.onclick = unregisterSelectedStudentsBatch;
     }
 });
+
+
