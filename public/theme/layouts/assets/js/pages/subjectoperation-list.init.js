@@ -581,113 +581,113 @@ function unregisterSelectedStudentsBatch() {
     });
 }
 
-function loadRegisteredClasses() {
-    if (!ensureAxios()) {
-        console.error('Axios not initialized.');
-        return;
-    }
+// function loadRegisteredClasses() {
+//     if (!ensureAxios()) {
+//         console.error('Axios not initialized.');
+//         return;
+//     }
 
-    const modalContent = document.getElementById('registeredClassesContent');
-    if (!modalContent) {
-        console.error('Modal content element not found.');
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Modal container not found.',
-            showConfirmButton: true
-        });
-        return;
-    }
+//     const modalContent = document.getElementById('registeredClassesContent');
+//     if (!modalContent) {
+//         console.error('Modal content element not found.');
+//         Swal.fire({
+//             icon: 'error',
+//             title: 'Error',
+//             text: 'Modal container not found.',
+//             showConfirmButton: true
+//         });
+//         return;
+//     }
 
-    const classSelect = document.getElementById('idclass');
-    const sessionSelect = document.getElementById('idsession');
+//     const classSelect = document.getElementById('idclass');
+//     const sessionSelect = document.getElementById('idsession');
 
-    if (!classSelect || !sessionSelect) {
-        console.error('Required selectors missing:', { classSelect, sessionSelect });
-        modalContent.innerHTML = '<p class="text-center text-red-500">Class or session selector not found.</p>';
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Please ensure class and session selectors are present.',
-            showConfirmButton: true
-        });
-        return;
-    }
+//     if (!classSelect || !sessionSelect) {
+//         console.error('Required selectors missing:', { classSelect, sessionSelect });
+//         modalContent.innerHTML = '<p class="text-center text-red-500">Class or session selector not found.</p>';
+//         Swal.fire({
+//             icon: 'error',
+//             title: 'Error',
+//             text: 'Please ensure class and session selectors are present.',
+//             showConfirmButton: true
+//         });
+//         return;
+//     }
 
-    const classId = classSelect.value;
-    const sessionId = sessionSelect.value;
+//     const classId = classSelect.value;
+//     const sessionId = sessionSelect.value;
 
-    if (!classId || classId === 'ALL' || !sessionId || sessionId === 'ALL') {
-        console.warn('Invalid class or session selection.');
-        modalContent.innerHTML = '<p class="text-center text-muted">Please select a valid class and session.</p>';
-        Swal.fire({
-            icon: 'warning',
-            title: 'Missing Selection',
-            text: 'Please select a valid class and session.',
-            showConfirmButton: true
-        });
-        return;
-    }
+//     if (!classId || classId === 'ALL' || !sessionId || sessionId === 'ALL') {
+//         console.warn('Invalid class or session selection.');
+//         modalContent.innerHTML = '<p class="text-center text-muted">Please select a valid class and session.</p>';
+//         Swal.fire({
+//             icon: 'warning',
+//             title: 'Missing Selection',
+//             text: 'Please select a valid class and session.',
+//             showConfirmButton: true
+//         });
+//         return;
+//     }
 
-    modalContent.innerHTML = '<p class="text-center">Loading registered classes...</p>';
+//     modalContent.innerHTML = '<p class="text-center">Loading registered classes...</p>';
 
-    axios.get('/subjects/registered-classes', {
-        params: { class_id: classId, session_id: sessionId },
-        headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        timeout: 15000
-    }).then(response => {
-        console.log('Registered classes response:', JSON.stringify(response.data, null, 2));
-        if (response.data.success) {
-            const classes = response.data.data;
-            let html = '<div class="table-responsive"><table class="table table-bordered table-striped">';
-            html += '<thead><tr><th>Class</th><th>Arm</th><th>Session</th><th>Term</th><th>Students</th><th>Subjects</th><th>Teachers</th></tr></thead><tbody>';
+//     axios.get('/subjects/registered-classes', {
+//         params: { class_id: classId, session_id: sessionId },
+//         headers: {
+//             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+//             'X-Requested-With': 'XMLHttpRequest'
+//         },
+//         timeout: 15000
+//     }).then(response => {
+//         console.log('Registered classes response:', JSON.stringify(response.data, null, 2));
+//         if (response.data.success) {
+//             const classes = response.data.data;
+//             let html = '<div class="table-responsive"><table class="table table-bordered table-striped">';
+//             html += '<thead><tr><th>Class</th><th>Arm</th><th>Session</th><th>Term</th><th>Students</th><th>Subjects</th><th>Teachers</th></tr></thead><tbody>';
 
-            if (!classes || classes.length === 0) {
-                html += '<tr><td colspan="7" class="text-center">No registered classes found.</td></tr>';
-            } else {
-                classes.forEach(cls => {
-                    html += `<tr>
-                        <td>${cls.class_name || '-'}</td>
-                        <td>${cls.arm_name || '-'}</td>
-                        <td>${cls.session_name || '-'}</td>
-                        <td>${cls.term_name || '-'}</td>
-                        <td>${cls.student_count || 0}</td>
-                        <td>${cls.subjects || '-'}</td>
-                        <td>${cls.teachers || '-'}</td>
-                    </tr>`;
-                });
-            }
+//             if (!classes || classes.length === 0) {
+//                 html += '<tr><td colspan="7" class="text-center">No registered classes found.</td></tr>';
+//             } else {
+//                 classes.forEach(cls => {
+//                     html += `<tr>
+//                         <td>${cls.class_name || '-'}</td>
+//                         <td>${cls.arm_name || '-'}</td>
+//                         <td>${cls.session_name || '-'}</td>
+//                         <td>${cls.term_name || '-'}</td>
+//                         <td>${cls.student_count || 0}</td>
+//                         <td>${cls.subjects || '-'}</td>
+//                         <td>${cls.teachers || '-'}</td>
+//                     </tr>`;
+//                 });
+//             }
 
-            html += '</tbody></table></div>';
-            modalContent.innerHTML = html;
-        } else {
-            console.error('Failed to load:', response.data.message);
-            modalContent.innerHTML = '<p class="text-center text-red-500">Failed to load registered classes.</p>';
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: response.data.message || 'Failed to load registered classes.',
-                showConfirmButton: true
-            });
-        }
-    }).catch(error => {
-        console.error('Error loading registered classes:', {
-            message: error.message,
-            response: error.response?.data,
-            status: error.response?.status
-        });
-        modalContent.innerHTML = '<p class="text-center text-red-500">Error loading registered classes. Please try again.</p>';
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: error.response?.data?.message || 'An error occurred while loading registered classes.',
-            showConfirmButton: true
-        });
-    });
-}
+//             html += '</tbody></table></div>';
+//             modalContent.innerHTML = html;
+//         } else {
+//             console.error('Failed to load:', response.data.message);
+//             modalContent.innerHTML = '<p class="text-center text-red-500">Failed to load registered classes.</p>';
+//             Swal.fire({
+//                 icon: 'error',
+//                 title: 'Error',
+//                 text: response.data.message || 'Failed to load registered classes.',
+//                 showConfirmButton: true
+//             });
+//         }
+//     }).catch(error => {
+//         console.error('Error loading registered classes:', {
+//             message: error.message,
+//             response: error.response?.data,
+//             status: error.response?.status
+//         });
+//         modalContent.innerHTML = '<p class="text-center text-red-500">Error loading registered classes. Please try again.</p>';
+//         Swal.fire({
+//             icon: 'error',
+//             title: 'Error',
+//             text: error.response?.data?.message || 'An error occurred while loading registered classes.',
+//             showConfirmButton: true
+//         });
+//     });
+// }
 
 // Attach to buttons
 document.addEventListener("DOMContentLoaded", function () {
