@@ -291,35 +291,34 @@
                 </div>
 
                 {{-- ══════════════════════════════════════════════════════════ --}}
-                {{-- MODAL: Registered Classes (UPDATED UI)                     --}}
+                {{-- MODAL: Registered Classes                                  --}}
                 {{-- ══════════════════════════════════════════════════════════ --}}
-               {{-- MODAL: Registered Classes (UPDATED with Print Button) --}}
                 <div class="modal fade" id="registeredClassesModal" tabindex="-1" aria-labelledby="registeredClassesModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-xl modal-dialog-centered">
                         <div class="modal-content border-0 shadow-lg">
-                            <div class="modal-header" style="background: #1e3a5f; border-bottom: none;">
-                                <h5 class="modal-title text-white fw-medium">
+                            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                <h5 class="modal-title text-white">
                                     <i class="ri-graduation-cap-line me-2"></i>Registered Classes Overview
                                 </h5>
-                                <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-sm btn-light" onclick="printRegisteredClasses();" style="border-radius: 6px;">
-                                        <i class="ri-printer-line me-1"></i> Print / PDF
-                                    </button>
-                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                </div>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
-                            <div class="modal-body p-4" style="background: #f4f7fc;">
+                            <div class="modal-body" style="background: #f8f9fc;">
                                 <div id="registeredClassesContent">
-                                    <!-- Content loaded dynamically -->
+                                    <div class="text-center text-muted py-5">
+                                        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
+                                        <p class="mt-3 mb-0">Loading registration data...</p>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="modal-footer border-0 bg-transparent">
-                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                            <div class="modal-footer bg-light">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                                     <i class="ri-close-line me-1"></i>Close
                                 </button>
                             </div>
                         </div>
                     </div>
+                </div>
+
                 {{-- ══════════════════════════════════════════════════════════ --}}
                 {{-- MODAL: Unregistered History (snapshot list)                --}}
                 {{-- ══════════════════════════════════════════════════════════ --}}
@@ -501,154 +500,6 @@
     </div>
 </div>
 @endsection
-<style>
-/* Print Styles for Registered Classes */
-@media print {
-    body * {
-        visibility: hidden;
-    }
-
-    #printableArea, #printableArea * {
-        visibility: visible;
-    }
-
-    #printableArea {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        margin: 0;
-        padding: 20px;
-        background: white;
-        z-index: 99999;
-    }
-
-    .no-print {
-        display: none !important;
-    }
-
-    .print-header {
-        margin-bottom: 30px;
-        border-bottom: 2px solid #1e3a5f;
-        padding-bottom: 20px;
-    }
-
-    .print-school-info {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        margin-bottom: 20px;
-    }
-
-    .print-logo {
-        max-width: 80px;
-        max-height: 80px;
-    }
-
-    .print-school-details {
-        flex: 1;
-    }
-
-    .print-school-name {
-        font-size: 24px;
-        font-weight: bold;
-        color: #1e3a5f;
-        margin: 0 0 5px 0;
-    }
-
-    .print-school-motto {
-        font-style: italic;
-        color: #666;
-        margin: 0 0 10px 0;
-    }
-
-    .print-school-address, .print-school-contact {
-        font-size: 12px;
-        color: #555;
-        margin: 3px 0;
-    }
-
-    .print-title {
-        font-size: 20px;
-        font-weight: bold;
-        text-align: center;
-        color: #1e3a5f;
-        margin: 20px 0;
-    }
-
-    .print-meta {
-        text-align: center;
-        font-size: 12px;
-        color: #666;
-        margin-bottom: 20px;
-    }
-
-    .print-term-card {
-        page-break-inside: avoid;
-        margin-bottom: 30px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        overflow: hidden;
-    }
-
-    .print-term-header {
-        background: #f0f4f8;
-        padding: 12px 15px;
-        border-bottom: 2px solid #1e3a5f;
-    }
-
-    .print-term-title {
-        font-size: 16px;
-        font-weight: bold;
-        color: #1e3a5f;
-        margin: 0;
-    }
-
-    .print-term-subtitle {
-        font-size: 12px;
-        color: #666;
-        margin: 5px 0 0 0;
-    }
-
-    .print-subjects-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    .print-subjects-table th {
-        background: #e9ecef;
-        padding: 10px;
-        text-align: left;
-        font-size: 12px;
-        font-weight: bold;
-        border: 1px solid #ddd;
-    }
-
-    .print-subjects-table td {
-        padding: 8px 10px;
-        font-size: 11px;
-        border: 1px solid #ddd;
-        vertical-align: top;
-    }
-
-    .print-footer {
-        margin-top: 30px;
-        padding-top: 20px;
-        border-top: 1px solid #ddd;
-        text-align: center;
-        font-size: 10px;
-        color: #999;
-    }
-
-    .print-badge {
-        display: inline-block;
-        padding: 2px 8px;
-        background: #f0f0f0;
-        border-radius: 4px;
-        font-size: 10px;
-    }
-}
-</style>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
@@ -894,9 +745,69 @@ async function proceedUnregister() {
 }
 
 // ============================================================================
-// REGISTERED CLASSES MODAL (UPDATED RENDER LOGIC)
+// REGISTERED CLASSES MODAL
 // ============================================================================
+async function loadRegisteredClasses() {
+    const classId   = document.getElementById('idclass').value;
+    const sessionId = document.getElementById('idsession').value;
+    const container = document.getElementById('registeredClassesContent');
 
+    if (classId === 'ALL' || sessionId === 'ALL') {
+        container.innerHTML = `<div class="text-center py-5"><i class="ri-error-warning-line ri-3x text-warning"></i><p class="text-muted mt-3 mb-0">Please select a class and session first.</p></div>`;
+        return;
+    }
+
+    container.innerHTML = `<div class="text-center py-5"><div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div><p class="mt-3 text-muted">Loading…</p></div>`;
+
+    try {
+        const res  = await fetch(ROUTES.getRegistered + '?' + new URLSearchParams({ class_id: classId, session_id: sessionId }), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
+        const data = await res.json();
+
+        if (!data.success || !data.data.length) {
+            container.innerHTML = `<div class="text-center py-5"><i class="ri-information-line ri-3x text-muted"></i><p class="text-muted mt-3 mb-0">No registered classes found.</p></div>`;
+            return;
+        }
+
+        let html = `<div class="table-responsive"><table class="table table-hover align-middle mb-0">
+            <thead><tr style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;">
+                <th class="fw-semibold py-3">Class</th>
+                <th class="fw-semibold py-3">Session</th>
+                <th class="fw-semibold py-3">Term</th>
+                <th class="fw-semibold py-3 text-center">Students</th>
+                <th class="fw-semibold py-3 text-center">Subjects</th>
+                <th class="fw-semibold py-3">Teachers</th>
+                <th class="fw-semibold py-3">Subjects List</th>
+            </tr></thead><tbody>`;
+
+        data.data.forEach((row, i) => {
+            let teachersHtml = '<span class="text-muted">—</span>';
+            if (row.teachers?.length) {
+                teachersHtml = '<div class="d-flex flex-wrap gap-2">' + row.teachers.map(t => {
+                    const pic = t.picture ? `${AVATAR_URL}/staff_avatars/${t.picture}` : `${AVATAR_URL}/staff_avatars/default.png`;
+                    return `<div class="d-flex align-items-center gap-2 bg-white rounded-3 px-2 py-1 shadow-sm" style="border:1px solid #e0e0e0;">
+                        <img src="${pic}" class="rounded-circle" style="width:32px;height:32px;object-fit:cover;" onerror="this.src='${AVATAR_URL}/staff_avatars/default.png'">
+                        <span class="fw-medium" style="font-size:.85rem;">${escapeHtml(t.name)}</span>
+                    </div>`;
+                }).join('') + '</div>';
+            }
+
+            html += `<tr class="${i % 2 === 0 ? 'bg-light' : ''}">
+                <td class="fw-medium"><i class="ri-school-line text-primary me-2"></i>${escapeHtml(row.class_name)} ${escapeHtml(row.arm_name)}</td>
+                <td><span class="badge bg-info-subtle text-info">${escapeHtml(row.session_name)}</span></td>
+                <td><span class="badge bg-secondary-subtle text-secondary">${escapeHtml(row.term_name)}</span></td>
+                <td class="text-center"><span class="badge bg-primary rounded-pill px-3 py-2">${row.student_count}</span></td>
+                <td class="text-center"><span class="badge bg-success rounded-pill px-3 py-2">${row.subject_count}</span></td>
+                <td>${teachersHtml}</td>
+                <td><small class="text-muted">${escapeHtml(row.subjects)}</small></td>
+            </tr>`;
+        });
+
+        html += `</tbody></table></div>`;
+        container.innerHTML = html;
+    } catch (err) {
+        container.innerHTML = `<div class="alert alert-danger m-3">Failed to load data: ${err.message}</div>`;
+    }
+}
 
 // ============================================================================
 // ARCHIVE (SNAPSHOT LIST) MODAL
@@ -1209,7 +1120,7 @@ function renderSnapshotDetailTable(rows, assessmentHeaders) {
         const searchKey = `${name} ${row.admissionno ?? ''}`.toLowerCase();
 
         html += `<tr data-archive-id="${row.archive_id}" data-search="${escapeHtml(searchKey)}">
-            <tr><div class="form-check mb-0"><input class="form-check-input detail-chk" type="checkbox" value="${row.archive_id}"></div></td>
+            <td><div class="form-check mb-0"><input class="form-check-input detail-chk" type="checkbox" value="${row.archive_id}"></div></td>
             <td>
                 <div class="d-flex align-items-center gap-2">
                     <img src="${pic}" class="rounded-circle" style="width:34px;height:34px;object-fit:cover;border:2px solid #e9ecef;"
