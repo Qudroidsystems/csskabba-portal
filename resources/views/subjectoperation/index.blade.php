@@ -504,9 +504,9 @@ window._schoolInfo = {
     logo   : @json($school?->logo_url       ?? null),
 };
 
-let archiveCurrentPage = 1;
-let archiveMeta        = {};
-let archiveSearchTimer = null;
+let archiveCurrentPage  = 1;
+let archiveMeta         = {};
+let archiveSearchTimer  = null;
 let currentSnapshotMeta = null;
 let currentSnapshotRows = [];
 
@@ -656,6 +656,47 @@ function deselectAllSubjects() {
 function updateSubjectCount() {
     document.getElementById('subjectTeacherCount').textContent =
         document.querySelectorAll('.subject-checkbox:checked').length;
+}
+
+// ============================================================================
+// BUILD SUBJECT→TEACHER LOOKUP FROM BLADE-RENDERED CHECKBOXES
+// Called fresh each time the modal opens so it always reflects current filters
+// ============================================================================
+function buildSubjectTeacherLookup() {
+    // lookup key: "subjectname_lowercase||termid" → ["Teacher Name", ...]
+    const lookup = {};
+
+    document.querySelectorAll('.subject-checkbox').forEach(cb => {
+        const label     = cb.closest('.form-check')?.querySelector('label');
+        const labelText = label?.textContent?.trim() ?? '';
+        const termId    = String(cb.dataset.termid ?? '').trim();
+
+        // Label format from Blade: "Subject Name (Teacher Full Name)"
+        const match = labelText.match(/^(.+?)\s*\((.+)\)\s*$/);
+        if (!match) return;
+
+        const subjKey  = match[1].trim().toLowerCase();
+        const staffName = match[2].trim();
+        const key       = `${subjKey}||${termId}`;
+
+        if (!lookup[key]) lookup[key] = [];
+        if (!lookup[key].includes(staffName)) lookup[key].push(staffName);
+    });
+
+    return lookup;
+}
+
+// Resolve teacher name(s) for a given subject + termId using the lookup
+function resolveTeacher(subjectName, termId, lookup) {
+    const key = `${subjectName.trim().toLowerCase()}||${String(termId ?? '').trim()}`;
+    if (lookup[key] && lookup[key].length) return lookup[key].join(', ');
+
+    // Fallback: match subject name across any term (handles term_id mismatch)
+    const prefix = subjectName.trim().toLowerCase() + '||';
+    for (const [k, v] of Object.entries(lookup)) {
+        if (k.startsWith(prefix) && v.length) return v.join(', ');
+    }
+    return '—';
 }
 
 // ============================================================================
@@ -940,29 +981,11 @@ async function loadRegisteredClasses() {
             return;
         }
 
-        // ── Build a subject→teacher lookup from the Subject Teachers checkboxes ──
-        // These are already correctly mapped from the DB via $subjectTeachers
-        const subjectTeacherLookup = {}; // key: "subjectname||termid" → staffname
-        document.querySelectorAll('.subject-checkbox').forEach(cb => {
-            const label     = cb.closest('.form-check')?.querySelector('label');
-            const labelText = label?.textContent?.trim() ?? '';
-            const termId    = cb.dataset.termid;
+        // ── Build lookup from the Blade-rendered checkboxes (ground truth) ──
+        // Called fresh here so it always reflects the current filtered state
+        const subjectTeacherLookup = buildSubjectTeacherLookup();
 
-            // Parse "Subject Name (Teacher Name)" format
-            const match = labelText.match(/^(.+?)\s*\((.+)\)\s*$/);
-            if (match) {
-                const subjName   = match[1].trim();
-                const staffName  = match[2].trim();
-                const key        = `${subjName.toLowerCase()}||${termId}`;
-                // Handle multiple teachers for same subject: store as array
-                if (!subjectTeacherLookup[key]) {
-                    subjectTeacherLookup[key] = [];
-                }
-                subjectTeacherLookup[key].push(staffName);
-            }
-        });
-
-        // ── Group API rows by term ──
+        // ── Group API rows by term_name ──
         const termMap = {};
         data.data.forEach(row => {
             const key = row.term_name;
@@ -972,79 +995,71 @@ async function loadRegisteredClasses() {
                     arm_name     : row.arm_name     ?? '',
                     session_name : row.session_name,
                     term_name    : row.term_name,
-                    term_id      : row.term_id ?? row.termid ?? null,
+                    term_id      : String(row.term_id ?? row.termid ?? '').trim(),
                     student_count: row.student_count,
                     subject_count: row.subject_count,
                     subjects     : [],
                 };
             }
-
-            // If backend already sends per-subject rows
+            // Backend sends per-subject rows
             if (row.subject_name) {
                 termMap[key].subjects.push({
                     name   : row.subject_name,
-                    teacher: row.teacher_name || null, // may be wrong from backend
+                    teacher: null,  // resolved below via lookup
                     count  : row.student_count ?? '',
-                    term_id: row.term_id ?? row.termid ?? null,
                 });
             }
         });
 
-        // Fallback: parse subjects from comma-string
+        // Fallback: subjects sent as comma-separated string
         Object.values(termMap).forEach(term => {
             if (!term.subjects.length) {
-                const raw      = data.data.find(r => r.term_name === term.term_name);
-                const subjStr  = raw?.subjects ?? '';
-                const subjArr  = subjStr ? subjStr.split(',').map(s => s.trim()).filter(Boolean) : [];
-                subjArr.forEach(name => {
-                    term.subjects.push({ name, teacher: null, count: '', term_id: term.term_id });
+                const raw     = data.data.find(r => r.term_name === term.term_name);
+                const subjStr = raw?.subjects ?? '';
+                subjStr.split(',').map(s => s.trim()).filter(Boolean).forEach(name => {
+                    term.subjects.push({ name, teacher: null, count: '' });
                 });
             }
         });
 
-        // ── Correct teacher mapping using the checkbox lookup ──
-        // The checkbox lookup is the ground truth since it came from $subjectTeachers (server-rendered)
+        // ── Resolve every teacher via the Blade-checkbox lookup ──
         Object.values(termMap).forEach(term => {
-            term.subjects = term.subjects.map(s => {
-                const key      = `${s.name.toLowerCase()}||${term.term_id}`;
-                const teachers = subjectTeacherLookup[key];
-                return {
-                    ...s,
-                    teacher: teachers ? teachers.join(', ') : (s.teacher || '—'),
-                };
-            });
+            term.subjects = term.subjects.map(s => ({
+                ...s,
+                teacher: resolveTeacher(s.name, term.term_id, subjectTeacherLookup),
+            }));
         });
 
-        // ── Render ──
+        // ── Render cards ──
         let html = '';
         Object.values(termMap).forEach(term => {
             const subjectCells = term.subjects.map((s, i) => `
-                <div style="padding:10px 14px;border-right:0.5px solid #e5e7eb;border-bottom:0.5px solid #e5e7eb;display:flex;gap:10px;align-items:flex-start;">
-                    <div style="width:24px;height:24px;border-radius:50%;background:#EEEDFE;color:#3C3489;font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;">${i + 1}</div>
-                    <div style="min-width:0;">
-                        <div style="font-size:13px;font-weight:500;color:var(--bs-body-color);line-height:1.35;">${escapeHtml(s.name)}</div>
-                        <div style="font-size:11px;color:var(--bs-secondary-color);margin-top:3px;display:flex;align-items:center;gap:4px;">
+                <div style="padding:10px 14px;border-right:0.5px solid #e5e7eb;border-bottom:0.5px solid #e5e7eb;display:flex;gap:10px;align-items:flex-start;" data-subject-cell>
+                    <div style="width:24px;height:24px;border-radius:50%;background:#EEEDFE;color:#3C3489;font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;" data-cell-num>${i + 1}</div>
+                    <div style="min-width:0;" data-cell-info>
+                        <div style="font-size:13px;font-weight:500;color:var(--bs-body-color);line-height:1.35;" data-cell-subject>${escapeHtml(s.name)}</div>
+                        <div style="font-size:11px;color:var(--bs-secondary-color);margin-top:3px;display:flex;align-items:center;gap:4px;" data-cell-teacher-row>
                             <svg style="width:11px;height:11px;flex-shrink:0;opacity:.5;" viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 100-6 3 3 0 000 6zm-5 5a5 5 0 0110 0H3z"/></svg>
-                            <span>${escapeHtml(s.teacher)}</span>
+                            <span data-cell-teacher>${escapeHtml(s.teacher)}</span>
                         </div>
-                        ${s.count ? `<span style="font-size:10px;background:#EAF3DE;color:#27500A;padding:2px 8px;border-radius:20px;display:inline-block;margin-top:5px;">${escapeHtml(String(s.count))} students</span>` : ''}
+                        ${s.count ? `<span style="font-size:10px;background:#EAF3DE;color:#27500A;padding:2px 8px;border-radius:20px;display:inline-block;margin-top:5px;" data-cell-count>${escapeHtml(String(s.count))} students</span>` : ''}
                     </div>
                 </div>`).join('');
 
             html += `
-            <div class="mb-3">
+            <div class="mb-3" data-term-block="${escapeHtml(term.term_name)}">
                 <div style="background:var(--bs-body-bg);border-radius:12px;border:0.5px solid #dee2e6;overflow:hidden;">
-                    <div style="padding:10px 14px;border-bottom:0.5px solid #dee2e6;display:flex;justify-content:space-between;align-items:center;background:var(--bs-body-bg);">
+                    <div style="padding:10px 14px;border-bottom:0.5px solid #dee2e6;display:flex;justify-content:space-between;align-items:center;background:var(--bs-body-bg);" data-term-header>
                         <div>
-                            <div style="font-size:13px;font-weight:500;color:var(--bs-body-color);">${escapeHtml(term.class_name)} ${escapeHtml(term.arm_name)} — ${escapeHtml(term.session_name)}</div>
-                            <div style="font-size:11px;color:var(--bs-secondary-color);margin-top:2px;">${escapeHtml(term.term_name)}</div>
+                            <div style="font-size:13px;font-weight:500;color:var(--bs-body-color);" data-term-title>${escapeHtml(term.class_name)} ${escapeHtml(term.arm_name)} — ${escapeHtml(term.session_name)}</div>
+                            <div style="font-size:11px;color:var(--bs-secondary-color);margin-top:2px;" data-term-subtitle>${escapeHtml(term.term_name)}</div>
                         </div>
-                        <div style="display:flex;gap:6px;">
+                        <div style="display:flex;gap:6px;" data-term-pills>
                             <span style="font-size:11px;background:#E6F1FB;color:#0C447C;padding:3px 10px;border-radius:20px;font-weight:500;white-space:nowrap;">${term.student_count} students</span>
                             <span style="font-size:11px;background:#EEEDFE;color:#3C3489;padding:3px 10px;border-radius:20px;font-weight:500;white-space:nowrap;">${term.subject_count} subjects</span>
                         </div>
                     </div>
-                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));">
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));" data-subjects-grid>
                         ${subjectCells}
                     </div>
                 </div>
@@ -1060,17 +1075,16 @@ async function loadRegisteredClasses() {
 
 // ============================================================================
 // PRINT REGISTERED CLASSES — professional PDF
+// Reads directly from the rendered DOM nodes (data-* attributes) so subject
+// names, teacher names, and row numbers are always accurate.
 // ============================================================================
 function printRegisteredClasses() {
     const container = document.getElementById('registeredClassesContent');
     const school    = window._schoolInfo || {};
 
-    // Collect rendered term cards from the DOM
     const termBlocks = container.querySelectorAll('[data-term-block]');
-    // Fallback: parse the rendered HTML directly
-    const cards = container.querySelectorAll('div.mb-3 > div');
 
-    if (!cards.length) {
+    if (!termBlocks.length) {
         Swal.fire({ icon: 'warning', title: 'Nothing to print', text: 'Load the registered classes first, then print.', showConfirmButton: true });
         return;
     }
@@ -1079,27 +1093,31 @@ function printRegisteredClasses() {
 
     let termsHtml = '';
 
-    cards.forEach(card => {
-        const header     = card.querySelector('div:first-child');
-        const titleEl    = header?.querySelector('div > div:first-child');
-        const subEl      = header?.querySelector('div > div:last-child');
-        const pillEls    = [...(header?.querySelectorAll('span') ?? [])];
-        const subjectDivs = [...card.querySelectorAll('div > div[style*="padding:10px"]')];
+    termBlocks.forEach(block => {
+        // Header texts
+        const titleText = block.querySelector('[data-term-title]')?.textContent?.trim()    ?? '';
+        const termText  = block.querySelector('[data-term-subtitle]')?.textContent?.trim() ?? '';
 
-        const title    = titleEl?.textContent?.trim() ?? '';
-        const termName = subEl?.textContent?.trim()   ?? '';
-        const badges   = pillEls.map(p => p.textContent.trim());
+        // Pills (student count, subject count)
+        const pillSpans  = [...(block.querySelectorAll('[data-term-pills] span') ?? [])];
+        const pillsHtml  = pillSpans.map(p =>
+            `<span style="background:#E6F1FB;color:#0C447C;padding:3px 10px;border-radius:20px;font-size:9pt;font-weight:500;margin-left:6px;">${escapeHtml(p.textContent.trim())}</span>`
+        ).join('');
 
+        // Subject cells
+        const cells = [...block.querySelectorAll('[data-subject-cell]')];
         let rows = '';
-        subjectDivs.forEach((cell, idx) => {
-            const num     = idx + 1;
-            const name    = cell.querySelectorAll('div')[1]?.querySelector('div:first-child')?.textContent?.trim() ?? '';
-            const teacher = cell.querySelectorAll('div')[1]?.querySelector('div:nth-child(2) span')?.textContent?.trim() ?? '—';
-            const count   = cell.querySelector('span')?.textContent?.trim() ?? '';
+        cells.forEach((cell, idx) => {
+            const subjName = cell.querySelector('[data-cell-subject]')?.textContent?.trim() ?? '';
+            const teacher  = cell.querySelector('[data-cell-teacher]')?.textContent?.trim() ?? '—';
+            const countEl  = cell.querySelector('[data-cell-count]');
+            const count    = countEl ? countEl.textContent.trim() : '';
+
+            if (!subjName) return;
 
             rows += `<tr>
-                <td style="width:36px;text-align:center;padding:8px 10px;border-bottom:0.5pt solid #e5e7eb;color:#6b7280;font-size:10pt;">${num}</td>
-                <td style="padding:8px 12px;border-bottom:0.5pt solid #e5e7eb;font-size:10pt;font-weight:500;color:#111827;">${escapeHtml(name)}</td>
+                <td style="width:36px;text-align:center;padding:8px 10px;border-bottom:0.5pt solid #e5e7eb;color:#6b7280;font-size:10pt;">${idx + 1}</td>
+                <td style="padding:8px 12px;border-bottom:0.5pt solid #e5e7eb;font-size:10pt;font-weight:500;color:#111827;">${escapeHtml(subjName)}</td>
                 <td style="padding:8px 12px;border-bottom:0.5pt solid #e5e7eb;font-size:10pt;color:#374151;">${escapeHtml(teacher)}</td>
                 <td style="padding:8px 12px;border-bottom:0.5pt solid #e5e7eb;font-size:10pt;text-align:center;">
                     ${count ? `<span style="background:#EAF3DE;color:#27500A;padding:2px 8px;border-radius:20px;font-size:9pt;">${escapeHtml(count)}</span>` : '—'}
@@ -1107,16 +1125,12 @@ function printRegisteredClasses() {
             </tr>`;
         });
 
-        const pillsHtml = badges.map(b =>
-            `<span style="background:#E6F1FB;color:#0C447C;padding:3px 10px;border-radius:20px;font-size:9pt;font-weight:500;margin-left:6px;">${escapeHtml(b)}</span>`
-        ).join('');
-
         termsHtml += `
         <div style="margin-bottom:24pt;break-inside:avoid;page-break-inside:avoid;">
             <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1.5pt solid #1e3a5f;padding-bottom:8pt;margin-bottom:0;">
                 <div>
-                    <div style="font-size:12pt;font-weight:700;color:#1e3a5f;">${escapeHtml(title)}</div>
-                    <div style="font-size:9pt;color:#6b7280;margin-top:2pt;">${escapeHtml(termName)}</div>
+                    <div style="font-size:12pt;font-weight:700;color:#1e3a5f;">${escapeHtml(titleText)}</div>
+                    <div style="font-size:9pt;color:#6b7280;margin-top:2pt;">${escapeHtml(termText)}</div>
                 </div>
                 <div>${pillsHtml}</div>
             </div>
@@ -1683,4 +1697,3 @@ async function deleteDetailSelected() {
 async function restoreSelected()         { /* handled per-card via restoreSingleSnapshot() */ }
 async function permanentDeleteSelected() { /* handled per-card via deleteSnapshotGroup()  */ }
 </script>
-
