@@ -1033,7 +1033,14 @@ async function loadRegisteredClasses() {
         // ── Render cards ──
         let html = '';
         Object.values(termMap).forEach(term => {
-            const subjectCells = term.subjects.map((s, i) => `
+            // Use per-subject count if available, otherwise fall back to the
+            // term-level student_count (the number registered in that class/term)
+            const fallbackCount = term.student_count ?? '';
+
+            const subjectCells = term.subjects.map((s, i) => {
+                // Prefer per-subject count; fall back to term-level count
+                const displayCount = s.count ? String(s.count) : (fallbackCount ? String(fallbackCount) : '');
+                return `
                 <div style="padding:10px 14px;border-right:0.5px solid #e5e7eb;border-bottom:0.5px solid #e5e7eb;display:flex;gap:10px;align-items:flex-start;" data-subject-cell>
                     <div style="width:24px;height:24px;border-radius:50%;background:#EEEDFE;color:#3C3489;font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;" data-cell-num>${i + 1}</div>
                     <div style="min-width:0;" data-cell-info>
@@ -1042,12 +1049,15 @@ async function loadRegisteredClasses() {
                             <svg style="width:11px;height:11px;flex-shrink:0;opacity:.5;" viewBox="0 0 16 16" fill="currentColor"><path d="M8 8a3 3 0 100-6 3 3 0 000 6zm-5 5a5 5 0 0110 0H3z"/></svg>
                             <span data-cell-teacher>${escapeHtml(s.teacher)}</span>
                         </div>
-                        ${s.count ? `<span style="font-size:10px;background:#EAF3DE;color:#27500A;padding:2px 8px;border-radius:20px;display:inline-block;margin-top:5px;" data-cell-count>${escapeHtml(String(s.count))} students</span>` : ''}
+                        ${displayCount
+                            ? `<span style="font-size:10px;background:#EAF3DE;color:#27500A;padding:2px 8px;border-radius:20px;display:inline-block;margin-top:5px;" data-cell-count>${escapeHtml(displayCount)} students</span>`
+                            : ''}
                     </div>
-                </div>`).join('');
+                </div>`;
+            }).join('');
 
             html += `
-            <div class="mb-3" data-term-block="${escapeHtml(term.term_name)}">
+            <div class="mb-3" data-term-block="${escapeHtml(term.term_name)}" data-term-student-count="${escapeHtml(String(fallbackCount))}">
                 <div style="background:var(--bs-body-bg);border-radius:12px;border:0.5px solid #dee2e6;overflow:hidden;">
                     <div style="padding:10px 14px;border-bottom:0.5px solid #dee2e6;display:flex;justify-content:space-between;align-items:center;background:var(--bs-body-bg);" data-term-header>
                         <div>
@@ -1104,14 +1114,21 @@ function printRegisteredClasses() {
             `<span style="background:#E6F1FB;color:#0C447C;padding:3px 10px;border-radius:20px;font-size:9pt;font-weight:500;margin-left:6px;">${escapeHtml(p.textContent.trim())}</span>`
         ).join('');
 
+        // Fallback student count for the whole term (used when no per-subject count exists)
+        const termStudentCount = block.dataset.termStudentCount ?? '';
+
         // Subject cells
         const cells = [...block.querySelectorAll('[data-subject-cell]')];
         let rows = '';
         cells.forEach((cell, idx) => {
             const subjName = cell.querySelector('[data-cell-subject]')?.textContent?.trim() ?? '';
             const teacher  = cell.querySelector('[data-cell-teacher]')?.textContent?.trim() ?? '—';
-            const countEl  = cell.querySelector('[data-cell-count]');
-            const count    = countEl ? countEl.textContent.trim() : '';
+            // data-cell-count already contains the resolved count text (e.g. "51 students")
+            // Fall back to the term-level student count if the element is absent
+            const countEl   = cell.querySelector('[data-cell-count]');
+            const countText = countEl
+                ? countEl.textContent.trim()
+                : (termStudentCount ? `${termStudentCount} students` : '');
 
             if (!subjName) return;
 
@@ -1120,7 +1137,7 @@ function printRegisteredClasses() {
                 <td style="padding:8px 12px;border-bottom:0.5pt solid #e5e7eb;font-size:10pt;font-weight:500;color:#111827;">${escapeHtml(subjName)}</td>
                 <td style="padding:8px 12px;border-bottom:0.5pt solid #e5e7eb;font-size:10pt;color:#374151;">${escapeHtml(teacher)}</td>
                 <td style="padding:8px 12px;border-bottom:0.5pt solid #e5e7eb;font-size:10pt;text-align:center;">
-                    ${count ? `<span style="background:#EAF3DE;color:#27500A;padding:2px 8px;border-radius:20px;font-size:9pt;">${escapeHtml(count)}</span>` : '—'}
+                    ${countText ? `<span style="background:#EAF3DE;color:#27500A;padding:2px 8px;border-radius:20px;font-size:9pt;">${escapeHtml(countText)}</span>` : '—'}
                 </td>
             </tr>`;
         });
