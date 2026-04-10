@@ -940,7 +940,29 @@ async function loadRegisteredClasses() {
             return;
         }
 
-        // Group rows by term_name so each term gets one card
+        // ── Build a subject→teacher lookup from the Subject Teachers checkboxes ──
+        // These are already correctly mapped from the DB via $subjectTeachers
+        const subjectTeacherLookup = {}; // key: "subjectname||termid" → staffname
+        document.querySelectorAll('.subject-checkbox').forEach(cb => {
+            const label     = cb.closest('.form-check')?.querySelector('label');
+            const labelText = label?.textContent?.trim() ?? '';
+            const termId    = cb.dataset.termid;
+
+            // Parse "Subject Name (Teacher Name)" format
+            const match = labelText.match(/^(.+?)\s*\((.+)\)\s*$/);
+            if (match) {
+                const subjName   = match[1].trim();
+                const staffName  = match[2].trim();
+                const key        = `${subjName.toLowerCase()}||${termId}`;
+                // Handle multiple teachers for same subject: store as array
+                if (!subjectTeacherLookup[key]) {
+                    subjectTeacherLookup[key] = [];
+                }
+                subjectTeacherLookup[key].push(staffName);
+            }
+        });
+
+        // ── Group API rows by term ──
         const termMap = {};
         data.data.forEach(row => {
             const key = row.term_name;
@@ -950,47 +972,50 @@ async function loadRegisteredClasses() {
                     arm_name     : row.arm_name     ?? '',
                     session_name : row.session_name,
                     term_name    : row.term_name,
+                    term_id      : row.term_id ?? row.termid ?? null,
                     student_count: row.student_count,
                     subject_count: row.subject_count,
                     subjects     : [],
                 };
             }
-            // If controller sends per-subject rows
+
+            // If backend already sends per-subject rows
             if (row.subject_name) {
                 termMap[key].subjects.push({
                     name   : row.subject_name,
-                    teacher: row.teacher_name || '—',
+                    teacher: row.teacher_name || null, // may be wrong from backend
                     count  : row.student_count ?? '',
+                    term_id: row.term_id ?? row.termid ?? null,
                 });
             }
         });
 
-        // Fallback: controller sends subjects as comma string
+        // Fallback: parse subjects from comma-string
         Object.values(termMap).forEach(term => {
             if (!term.subjects.length) {
-                const raw = data.data.find(r => r.term_name === term.term_name);
-                const teachers = raw?.teachers;
+                const raw      = data.data.find(r => r.term_name === term.term_name);
                 const subjStr  = raw?.subjects ?? '';
-
-                const subjArr = subjStr ? subjStr.split(',').map(s => s.trim()).filter(Boolean) : [];
-
-                if (Array.isArray(teachers) && teachers.length) {
-                    subjArr.forEach((name, i) => {
-                        term.subjects.push({ name, teacher: teachers[i]?.name ?? '—', count: '' });
-                    });
-                } else if (typeof teachers === 'string' && teachers.trim()) {
-                    const teacherArr = teachers.split(',').map(t => t.trim());
-                    subjArr.forEach((name, i) => {
-                        term.subjects.push({ name, teacher: teacherArr[i] ?? '—', count: '' });
-                    });
-                } else {
-                    subjArr.forEach(name => {
-                        term.subjects.push({ name, teacher: '—', count: '' });
-                    });
-                }
+                const subjArr  = subjStr ? subjStr.split(',').map(s => s.trim()).filter(Boolean) : [];
+                subjArr.forEach(name => {
+                    term.subjects.push({ name, teacher: null, count: '', term_id: term.term_id });
+                });
             }
         });
 
+        // ── Correct teacher mapping using the checkbox lookup ──
+        // The checkbox lookup is the ground truth since it came from $subjectTeachers (server-rendered)
+        Object.values(termMap).forEach(term => {
+            term.subjects = term.subjects.map(s => {
+                const key      = `${s.name.toLowerCase()}||${term.term_id}`;
+                const teachers = subjectTeacherLookup[key];
+                return {
+                    ...s,
+                    teacher: teachers ? teachers.join(', ') : (s.teacher || '—'),
+                };
+            });
+        });
+
+        // ── Render ──
         let html = '';
         Object.values(termMap).forEach(term => {
             const subjectCells = term.subjects.map((s, i) => `
