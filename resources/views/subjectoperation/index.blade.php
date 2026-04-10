@@ -576,7 +576,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-{{-- <script>
+<script>
 // ============================================================================
 // GLOBALS
 // ============================================================================
@@ -1482,5 +1482,5 @@ async function deleteDetailSelected() {
 // Stubs retained for symmetry with toolbar buttons
 async function restoreSelected()         { /* handled per-card via restoreSingleSnapshot */ }
 async function permanentDeleteSelected() { /* handled per-card via deleteSnapshotGroup  */ }
-</script> --}}
+</script>
 @endsection
