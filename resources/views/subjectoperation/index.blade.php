@@ -900,64 +900,136 @@ async function proceedUnregister() {
 // ============================================================================
 async function loadRegisteredClasses() {
     const classId   = document.getElementById('idclass').value;
-    const sessionId = document.getElementById('idsession').value;
+    const sessionId = document document.getElementById('idsession').value;
     const container = document.getElementById('registeredClassesContent');
 
     if (classId === 'ALL' || sessionId === 'ALL') {
-        container.innerHTML = `<div class="text-center py-5"><i class="ri-error-warning-line ri-3x text-warning"></i><p class="text-muted mt-3 mb-0">Please select a class and session first.</p></div>`;
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                     style="width:64px;height:64px;background:#fef3c7;">
+                    <i class="ri-error-warning-line fs-4 text-warning"></i>
+                </div>
+                <p class="text-muted mb-0">Please select a <strong>class</strong> and <strong>session</strong> first.</p>
+            </div>`;
         return;
     }
 
-    container.innerHTML = `<div class="text-center py-5"><div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div><p class="mt-3 text-muted">Loading registration data...</p></div>`;
+    container.innerHTML = `
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary mb-3" style="width:3rem;height:3rem;"></div>
+            <p class="text-muted">Loading registered subjects...</p>
+        </div>`;
 
     try {
-        const res  = await fetch(ROUTES.getRegistered + '?' + new URLSearchParams({ class_id: classId, session_id: sessionId }), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
+        const res  = await fetch(`${ROUTES.getRegistered}?class_id=${classId}&session_id=${sessionId}`,
+            { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
         const data = await res.json();
 
         if (!data.success || !data.data.length) {
-            container.innerHTML = `<div class="text-center py-5"><i class="ri-information-line ri-3x text-muted"></i><p class="text-muted mt-3 mb-0">No registered classes found.</p></div>`;
+            container.innerHTML = `
+                <div class="text-center py-5">
+                    <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                         style="width:64px;height:64px;background:#e0e7ff;">
+                        <i class="ri-information-line fs-4 text-primary"></i>
+                    </div>
+                    <p class="text-muted">No registered classes found for this selection.</p>
+                </div>`;
             return;
         }
 
-        // Transform backend data into the new card structure
+        // Build the UI using the same card style as subject-teacher cards
         let html = '';
-        data.data.forEach(termGroup => {
-            // termGroup = { term_name, class_name, arm_name, session_name, total_students, total_subjects, subjects: [...] }
+
+        data.data.forEach((termData, termIndex) => {
+            const subjects = termData.subjects_teachers || [];
+            const studentCount = termData.student_count ?? 0;
+
             html += `
-            <div class="term-card mb-4" style="background:#fff; border-radius:12px; border:0.5px solid #e2e8f0; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-                <div class="term-header p-3 d-flex justify-content-between align-items-center" style="border-bottom:0.5px solid #e2e8f0; background:#fff;">
-                    <div>
-                        <h5 class="fw-semibold mb-0" style="font-size:1rem;">${escapeHtml(termGroup.class_name)} ${escapeHtml(termGroup.arm_name)} — ${escapeHtml(termGroup.session_name)}</h5>
-                        <span class="text-muted small">${escapeHtml(termGroup.term_name)}</span>
+                <div class="term-group mb-4">
+                    <!-- Term Header - matches subject-teacher card style -->
+                    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                        <div class="d-flex align-items-center gap-2">
+                            <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                                 style="width:44px;height:44px;background:linear-gradient(135deg,#667eea,#764ba2);">
+                                <i class="ri-calendar-2-line text-white fs-5"></i>
+                            </div>
+                            <div>
+                                <h5 class="fw-semibold mb-0" style="font-size:1.1rem;">
+                                    ${esc(termData.term_name)} Term
+                                </h5>
+                                <div class="d-flex gap-2 mt-1">
+                                    <span class="badge text-white px-3 py-1 rounded-pill" style="background:linear-gradient(135deg,#667eea,#764ba2);font-size:11px;">
+                                        <i class="ri-group-line me-1"></i>${studentCount} Students
+                                    </span>
+                                    <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-1">
+                                        <i class="ri-book-open-line me-1"></i>${subjects.length} Subjects
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-muted small">
+                            <i class="ri-school-line me-1"></i>${esc(termData.class_name)} ${esc(termData.arm_name)} &bull; ${esc(termData.session_name)}
+                        </div>
                     </div>
-                    <div class="d-flex gap-2">
-                        <span class="badge" style="background:#E6F1FB; color:#0C447C; padding:4px 12px; border-radius:20px; font-weight:500;">${termGroup.total_students} students</span>
-                        <span class="badge" style="background:#EEEDFE; color:#3C3489; padding:4px 12px; border-radius:20px; font-weight:500;">${termGroup.total_subjects} subjects</span>
-                    </div>
-                </div>
-                <div class="subjects-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr));">
+
+                    <!-- Subjects Grid - matches subject-teacher card grid -->
+                    <div class="row g-2">
             `;
 
-            termGroup.subjects.forEach((subject, idx) => {
+            subjects.forEach((subject, idx) => {
+                // Get teacher names
+                const teacherNames = (subject.teachers || []).map(t => t.name).join(', ') || '— Not assigned';
+                const teacherCount = (subject.teachers || []).length;
+                const subjectStudentCount = subject.student_count ?? studentCount;
+
                 html += `
-                <div class="subject-card p-3 d-flex gap-3 align-items-start" style="border-right:0.5px solid #e2e8f0; border-bottom:0.5px solid #e2e8f0;">
-                    <div class="subject-num" style="width:28px; height:28px; background:#EEEDFE; color:#3C3489; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:500;">${idx + 1}</div>
-                    <div class="subject-info flex-grow-1">
-                        <div class="fw-medium" style="font-size:0.9rem;">${escapeHtml(subject.subject_name)}</div>
-                        <div class="text-muted small mt-1">${escapeHtml(subject.teacher_name ?? '— Not assigned')}</div>
-                        <span class="badge mt-2" style="background:#EAF3DE; color:#27500A; font-size:10px; padding:2px 8px; border-radius:20px;">${subject.student_count} students</span>
+                    <div class="col-xl-3 col-md-4 col-sm-6">
+                        <div class="subject-card p-3 border rounded-3 h-100" style="background:#fff;border-color:#e2e8f0 !important;transition:all .2s ease;">
+                            <div class="d-flex align-items-start gap-2">
+                                <div class="subject-num flex-shrink-0" style="width:28px;height:28px;background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;">
+                                    ${idx + 1}
+                                </div>
+                                <div class="flex-grow-1">
+                                    <div class="fw-semibold mb-1" style="font-size:0.9rem;">${esc(subject.name)}</div>
+                                    <div class="text-muted small mb-2">
+                                        <i class="ri-user-star-line me-1"></i>
+                                        ${esc(teacherNames)}
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mt-2 pt-1 border-top">
+                                        <span class="badge" style="background:#EAF3DE;color:#27500A;font-size:10px;padding:3px 8px;">
+                                            <i class="ri-group-line me-1"></i>${subjectStudentCount} students
+                                        </span>
+                                        ${subject.code ? `<span class="badge bg-light text-muted" style="font-size:9px;">${esc(subject.code)}</span>` : ''}
+                                    </div>
+                                    ${teacherCount > 1 ? `<div class="small text-muted mt-1"><i class="ri-user-smile-line me-1"></i>${teacherCount} teachers</div>` : ''}
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                </div>`;
+                `;
             });
 
             html += `
+                    </div>
                 </div>
-            </div>`;
+            `;
+
+            // Add separator between terms (except last)
+            if (termIndex < data.data.length - 1) {
+                html += `<hr class="my-4" style="border-top:2px dashed #e2e8f0;">`;
+            }
         });
 
         container.innerHTML = html;
+
     } catch (err) {
-        container.innerHTML = `<div class="alert alert-danger m-3">Failed to load data: ${err.message}</div>`;
+        console.error('Error loading registered classes:', err);
+        container.innerHTML = `
+            <div class="alert alert-danger text-center py-4">
+                <i class="ri-error-warning-line fs-4 d-block mb-2"></i>
+                Failed to load registered classes: ${esc(err.message)}
+            </div>`;
     }
 }
 
