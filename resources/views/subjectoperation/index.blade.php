@@ -293,14 +293,20 @@
                 {{-- ══════════════════════════════════════════════════════════ --}}
                 {{-- MODAL: Registered Classes (UPDATED UI)                     --}}
                 {{-- ══════════════════════════════════════════════════════════ --}}
-               <div class="modal fade" id="registeredClassesModal" tabindex="-1" aria-labelledby="registeredClassesModalLabel" aria-hidden="true">
+               {{-- MODAL: Registered Classes (UPDATED with Print Button) --}}
+                <div class="modal fade" id="registeredClassesModal" tabindex="-1" aria-labelledby="registeredClassesModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-xl modal-dialog-centered">
                         <div class="modal-content border-0 shadow-lg">
                             <div class="modal-header" style="background: #1e3a5f; border-bottom: none;">
                                 <h5 class="modal-title text-white fw-medium">
-                                    Registered classes overview
+                                    <i class="ri-graduation-cap-line me-2"></i>Registered Classes Overview
                                 </h5>
-                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-sm btn-light" onclick="printRegisteredClasses();" style="border-radius: 6px;">
+                                        <i class="ri-printer-line me-1"></i> Print / PDF
+                                    </button>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
                             </div>
                             <div class="modal-body p-4" style="background: #f4f7fc;">
                                 <div id="registeredClassesContent">
@@ -497,7 +503,154 @@
     </div>
 </div>
 @endsection
+<style>
+/* Print Styles for Registered Classes */
+@media print {
+    body * {
+        visibility: hidden;
+    }
 
+    #printableArea, #printableArea * {
+        visibility: visible;
+    }
+
+    #printableArea {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        margin: 0;
+        padding: 20px;
+        background: white;
+        z-index: 99999;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+
+    .print-header {
+        margin-bottom: 30px;
+        border-bottom: 2px solid #1e3a5f;
+        padding-bottom: 20px;
+    }
+
+    .print-school-info {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+
+    .print-logo {
+        max-width: 80px;
+        max-height: 80px;
+    }
+
+    .print-school-details {
+        flex: 1;
+    }
+
+    .print-school-name {
+        font-size: 24px;
+        font-weight: bold;
+        color: #1e3a5f;
+        margin: 0 0 5px 0;
+    }
+
+    .print-school-motto {
+        font-style: italic;
+        color: #666;
+        margin: 0 0 10px 0;
+    }
+
+    .print-school-address, .print-school-contact {
+        font-size: 12px;
+        color: #555;
+        margin: 3px 0;
+    }
+
+    .print-title {
+        font-size: 20px;
+        font-weight: bold;
+        text-align: center;
+        color: #1e3a5f;
+        margin: 20px 0;
+    }
+
+    .print-meta {
+        text-align: center;
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 20px;
+    }
+
+    .print-term-card {
+        page-break-inside: avoid;
+        margin-bottom: 30px;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .print-term-header {
+        background: #f0f4f8;
+        padding: 12px 15px;
+        border-bottom: 2px solid #1e3a5f;
+    }
+
+    .print-term-title {
+        font-size: 16px;
+        font-weight: bold;
+        color: #1e3a5f;
+        margin: 0;
+    }
+
+    .print-term-subtitle {
+        font-size: 12px;
+        color: #666;
+        margin: 5px 0 0 0;
+    }
+
+    .print-subjects-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .print-subjects-table th {
+        background: #e9ecef;
+        padding: 10px;
+        text-align: left;
+        font-size: 12px;
+        font-weight: bold;
+        border: 1px solid #ddd;
+    }
+
+    .print-subjects-table td {
+        padding: 8px 10px;
+        font-size: 11px;
+        border: 1px solid #ddd;
+        vertical-align: top;
+    }
+
+    .print-footer {
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #ddd;
+        text-align: center;
+        font-size: 10px;
+        color: #999;
+    }
+
+    .print-badge {
+        display: inline-block;
+        padding: 2px 8px;
+        background: #f0f0f0;
+        border-radius: 4px;
+        font-size: 10px;
+    }
+}
+</style>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 // ============================================================================

@@ -561,7 +561,22 @@ Route::get('/school-information/get', [SubjectOperationController::class, 'getSc
 Route::resource('subjectoperation', SubjectOperationController::class);
 
 
-
+// Get active school information
+Route::get('/api/school-information/active', function () {
+    $schoolInfo = App\Models\SchoolInformation::getActiveSchool();
+    return response()->json([
+        'success' => true,
+        'data' => $schoolInfo ? [
+            'school_name' => $schoolInfo->school_name,
+            'school_address' => $schoolInfo->school_address,
+            'school_phone' => $schoolInfo->school_phone,
+            'school_email' => $schoolInfo->school_email,
+            'school_motto' => $schoolInfo->school_motto,
+            'school_website' => $schoolInfo->school_website,
+            'logo_url' => $schoolInfo->logo_url,
+        ] : null
+    ]);
+})->name('api.school-information.active');
 
     Route::get('/viewresults/{id}/{schoolclassid}/{sessid}/{termid}', [StudentResultsController::class, 'viewresults']);
 
