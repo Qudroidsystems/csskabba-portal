@@ -5,14 +5,10 @@
 <div class="main-content">
     <div class="page-content">
         <div class="container-fluid">
-
-            {{-- Page Title --}}
             <div class="row">
                 <div class="col-12">
                     <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                        <h4 class="mb-sm-0 fw-semibold">
-                            <i class="ri-user-star-line me-2 text-primary"></i>Subject Registration
-                        </h4>
+                        <h4 class="mb-sm-0">Subject Registration</h4>
                         <div class="page-title-right">
                             <ol class="breadcrumb m-0">
                                 <li class="breadcrumb-item"><a href="{{ route('subjects.index') }}">Student Management</a></li>
@@ -24,60 +20,49 @@
             </div>
 
             @if ($errors->any())
-                <div class="alert alert-danger alert-dismissible fade show">
-                    <strong><i class="ri-error-warning-line me-1"></i> Error!</strong> There were some problems with your input.
-                    <ul class="mb-0 mt-1">
+                <div class="alert alert-danger">
+                    <strong>Error!</strong> There were some problems with your input.<br>
+                    <ul>
                         @foreach ($errors->all() as $error)
                             <li>{{ $error }}</li>
                         @endforeach
                     </ul>
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
 
             @if (session('status'))
                 <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <i class="ri-checkbox-circle-line me-1"></i> {{ session('status') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    {{ session('status') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             @endif
 
             <div id="subjectList">
-
-                {{-- CLASS & SESSION FILTER --}}
+                {{-- Class & Session Filter --}}
                 <div class="row">
                     <div class="col-lg-12">
-                        <div class="card border-0 shadow-sm">
-                            <div class="card-header border-bottom-0 pb-0" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);">
-                                <h6 class="text-white mb-0 py-1"><i class="ri-filter-3-line me-2"></i>Filter Students</h6>
-                            </div>
-                            <div class="card-body pt-3">
-                                <div class="row g-3 align-items-end">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row g-3">
                                     <div class="col-xxl-4 col-sm-6">
-                                        <label class="form-label fw-medium small text-muted">Class</label>
-                                        <select class="form-select" id="idclass">
-                                            <option value="ALL">— Select Class —</option>
+                                        <select class="form-control" id="idclass">
+                                            <option value="ALL">Select Class</option>
                                             @foreach ($schoolclass as $class)
-                                                <option value="{{ $class->id }}" {{ request('class_id') == $class->id ? 'selected' : '' }}>
-                                                    {{ $class->schoolclass }} {{ $class->schoolarm }}
-                                                </option>
+                                                <option value="{{ $class->id }}">{{ $class->schoolclass }} {{ $class->schoolarm }}</option>
                                             @endforeach
                                         </select>
                                     </div>
                                     <div class="col-xxl-4 col-sm-6">
-                                        <label class="form-label fw-medium small text-muted">Session</label>
-                                        <select class="form-select" id="idsession">
-                                            <option value="ALL">— Select Session —</option>
+                                        <select class="form-control" id="idsession">
+                                            <option value="ALL">Select Session</option>
                                             @foreach ($schoolsessions as $session)
-                                                <option value="{{ $session->id }}" {{ request('session_id') == $session->id ? 'selected' : '' }}>
-                                                    {{ $session->session }}
-                                                </option>
+                                                <option value="{{ $session->id }}">{{ $session->session }}</option>
                                             @endforeach
                                         </select>
                                     </div>
                                     <div class="col-xxl-2 col-sm-6">
-                                        <button type="button" class="btn btn-primary w-100" onclick="filterData();">
-                                            <i class="ri-search-line me-1"></i> Search
+                                        <button type="button" class="btn btn-secondary w-100" onclick="filterData();">
+                                            <i class="bi bi-funnel align-baseline me-1"></i> Search
                                         </button>
                                     </div>
                                 </div>
@@ -86,60 +71,46 @@
                     </div>
                 </div>
 
-                {{-- SUBJECT TEACHERS CARD --}}
+                {{-- Subject Teachers Card --}}
                 <div class="row" id="subjectTeachersCard">
                     <div class="col-lg-12">
-                        <div class="card border-0 shadow-sm">
-                            <div class="card-header d-flex align-items-center flex-wrap gap-2">
+                        <div class="card">
+                            <div class="card-header d-flex align-items-center">
                                 <div class="flex-grow-1">
                                     <h5 class="card-title mb-0">
-                                        <i class="ri-book-open-line me-2 text-primary"></i>Subject Teachers
+                                        Subject Teachers
+                                        <span class="badge bg-primary-subtle text-primary ms-1" id="subjectTeacherCount">0</span>
                                     </h5>
                                 </div>
-                                <div class="d-flex gap-2 flex-wrap">
-                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="selectAllSubjects();">
-                                        <i class="ri-checkbox-multiple-line me-1"></i>Select All
-                                    </button>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="deselectAllSubjects();">
-                                        <i class="ri-checkbox-blank-line me-1"></i>Deselect All
-                                    </button>
+                                <div class="flex-shrink-0">
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="selectAllSubjects();">Select All</button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm ms-2" onclick="deselectAllSubjects();">Deselect All</button>
                                 </div>
                             </div>
                             <div class="card-body">
-                                <div class="alert alert-info border-0 mb-3 d-flex align-items-center gap-2" style="background:#eff6ff;">
-                                    <i class="ri-information-line fs-5 text-primary flex-shrink-0"></i>
-                                    <span class="small">Select the subjects you want to register or unregister students for.</span>
+                                <div class="alert alert-info">
+                                    <i class="ri-information-line me-2"></i>
+                                    Select the subjects you want to register or unregister students for.
                                 </div>
                                 <div id="subjectTeachersContainer">
                                     @foreach ($schoolterms as $term)
-                                        @php $termSubjects = $subjectTeachers ? $subjectTeachers->where('termid', $term->id) : collect(); @endphp
-                                        @if ($termSubjects->isNotEmpty())
-                                            <div class="term-group mb-4">
-                                                <div class="d-flex align-items-center mb-2 gap-2">
-                                                    <span class="badge text-white px-3 py-2 rounded-pill" style="background:linear-gradient(135deg,#667eea,#764ba2);">
-                                                        <i class="ri-calendar-2-line me-1"></i>{{ $term->term }}
-                                                    </span>
-                                                    <span class="badge bg-primary-subtle text-primary rounded-pill px-2">
-                                                        {{ $termSubjects->count() }} subject{{ $termSubjects->count() !== 1 ? 's' : '' }}
-                                                    </span>
-                                                </div>
-                                                <div class="row g-2">
-                                                    @foreach ($termSubjects as $teacher)
-                                                        <div class="col-xl-3 col-md-4 col-sm-6">
-                                                            <div class="subject-check-card p-2 border rounded-3 d-flex align-items-center gap-2 bg-light bg-opacity-50" style="cursor:pointer;" onclick="toggleSubjectCard(this)">
-                                                                <input class="form-check-input subject-checkbox flex-shrink-0 mt-0" type="checkbox"
-                                                                    id="subject-{{ $teacher->subjectclassid }}"
-                                                                    data-subjectclassid="{{ $teacher->subjectclassid }}"
-                                                                    data-staffid="{{ $teacher->userid }}"
-                                                                    data-termid="{{ $teacher->termid }}" checked>
-                                                                <label class="form-check-label small lh-sm mb-0 w-100" for="subject-{{ $teacher->subjectclassid }}" style="cursor:pointer;">
-                                                                    <span class="fw-semibold d-block text-truncate">{{ $teacher->subjectname }}</span>
-                                                                    <span class="text-muted" style="font-size:0.75rem;">{{ $teacher->staffname }}</span>
-                                                                </label>
-                                                            </div>
+                                        @if ($subjectTeachers && $subjectTeachers->where('termid', $term->id)->isNotEmpty())
+                                            <h6 class="mt-3">{{ $term->term }}</h6>
+                                            <div class="row">
+                                                @foreach ($subjectTeachers->where('termid', $term->id) as $teacher)
+                                                    <div class="col-md-4">
+                                                        <div class="form-check mb-2">
+                                                            <input class="form-check-input subject-checkbox" type="checkbox"
+                                                                id="subject-{{ $teacher->subjectclassid }}"
+                                                                data-subjectclassid="{{ $teacher->subjectclassid }}"
+                                                                data-staffid="{{ $teacher->userid }}"
+                                                                data-termid="{{ $teacher->termid }}" checked>
+                                                            <label class="form-check-label" for="subject-{{ $teacher->subjectclassid }}">
+                                                                {{ $teacher->subjectname }} ({{ $teacher->staffname }})
+                                                            </label>
                                                         </div>
-                                                    @endforeach
-                                                </div>
+                                                    </div>
+                                                @endforeach
                                             </div>
                                         @endif
                                     @endforeach
@@ -149,36 +120,33 @@
                     </div>
                 </div>
 
-                {{-- STUDENT FILTERS --}}
+                {{-- Student Filters --}}
                 <div class="row">
                     <div class="col-lg-12">
-                        <div class="card border-0 shadow-sm">
+                        <div class="card">
                             <div class="card-body">
-                                <div class="row g-3 align-items-end">
+                                <div class="row g-3">
                                     <div class="col-xxl-4">
-                                        <label class="form-label fw-medium small text-muted">Search Students</label>
                                         <div class="search-box">
-                                            <input type="text" class="form-control search" placeholder="Name or admission no…" value="{{ request('search') }}">
+                                            <input type="text" class="form-control search" placeholder="Search students">
                                             <i class="ri-search-line search-icon"></i>
                                         </div>
                                     </div>
                                     <div class="col-xxl-3 col-sm-6">
-                                        <label class="form-label fw-medium small text-muted">Gender</label>
-                                        <select class="form-select" id="idgender">
-                                            <option value="ALL">All Genders</option>
-                                            <option value="Male" {{ request('gender') === 'Male' ? 'selected' : '' }}>Male</option>
-                                            <option value="Female" {{ request('gender') === 'Female' ? 'selected' : '' }}>Female</option>
+                                        <select class="form-control" id="idgender">
+                                            <option value="ALL">Select Gender</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
                                         </select>
                                     </div>
                                     <div class="col-xxl-3 col-sm-6">
-                                        <label class="form-label fw-medium small text-muted">Admission No</label>
-                                        <select class="form-select" id="idadmission">
-                                            <option value="ALL">All Admission Nos</option>
+                                        <select class="form-control" id="idadmission">
+                                            <option value="ALL">Select Admission No</option>
                                         </select>
                                     </div>
                                     <div class="col-xxl-2 col-sm-6">
                                         <button type="button" class="btn btn-secondary w-100" onclick="filterData();">
-                                            <i class="ri-filter-line me-1"></i> Filter
+                                            <i class="bi bi-funnel align-baseline me-1"></i> Filters
                                         </button>
                                     </div>
                                 </div>
@@ -187,42 +155,42 @@
                     </div>
                 </div>
 
-                {{-- STUDENTS TABLE --}}
+                {{-- Students Table --}}
                 <div class="row">
                     <div class="col-lg-12">
-                        <div class="card border-0 shadow-sm">
-                            <div class="card-header d-flex align-items-center flex-wrap gap-2">
+                        <div class="card">
+                            <div class="card-header d-flex align-items-center">
                                 <div class="flex-grow-1">
                                     <h5 class="card-title mb-0">
-                                        <i class="ri-group-line me-2 text-primary"></i>Students
-                                        <span class="badge bg-dark-subtle text-dark ms-1 rounded-pill" id="studentcount">{{ $students ? $students->total() : 0 }}</span>
+                                        Students
+                                        <span class="badge bg-dark-subtle text-dark ms-1" id="studentcount">{{ $students ? $students->total() : 0 }}</span>
                                     </h5>
                                 </div>
-                                <div class="d-flex align-items-center gap-2 flex-wrap">
-                                    <button type="button" class="btn btn-success d-none" id="register-selected-btn" onclick="registerSelectedStudentsBatch();">
-                                        <i class="ri-user-add-line me-1"></i>Register Selected
+                                <div class="flex-shrink-0 d-flex align-items-center gap-2 flex-wrap">
+                                    <button type="button" class="btn btn-primary d-none" id="register-selected-btn"
+                                        onclick="registerSelectedStudentsBatch();">
+                                        Register Selected
                                     </button>
-                                    <button type="button" class="btn btn-danger d-none" id="unregister-selected-btn" onclick="openUnregisterModal();">
-                                        <i class="ri-user-unfollow-line me-1"></i>Unregister Selected
+                                    <button type="button" class="btn btn-danger d-none" id="unregister-selected-btn"
+                                        onclick="openUnregisterModal();">
+                                        Unregister Selected
                                     </button>
-                                    <div class="spinner-border spinner-border-sm text-primary d-none" id="register-loading-spinner" role="status"></div>
-                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#registeredClassesModal">
-                                        <i class="ri-eye-line me-1"></i>View Registered
+                                    <div class="spinner-border text-primary d-none" id="register-loading-spinner" role="status"></div>
+                                    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#registeredClassesModal">
+                                        <i class="ri-eye-line me-1"></i> View Registered
                                     </button>
-                                    <button type="button" class="btn btn-warning" onclick="openArchivedModal();">
-                                        <i class="ri-archive-line me-1"></i>Unregistered History
+                                    <button type="button" class="btn btn-warning" id="viewArchivedBtn" onclick="openArchivedModal();">
+                                        <i class="ri-archive-line me-1"></i> Unregistered History
                                     </button>
                                 </div>
                             </div>
-                            <div class="card-body p-0">
+                            <div class="card-body">
                                 <div class="table-responsive">
-                                    <table class="table table-hover align-middle table-nowrap mb-0">
-                                        <thead class="table-light">
+                                    <table class="table table-centered align-middle table-nowrap mb-0">
+                                        <thead class="table-active">
                                             <tr>
-                                                <th width="40" class="text-center">
-                                                    <input class="form-check-input" type="checkbox" id="checkAll">
-                                                </th>
-                                                <th width="50">S/N</th>
+                                                <th><input class="form-check-input" type="checkbox" id="checkAll"></th>
+                                                <th>SN</th>
                                                 <th>Admission No</th>
                                                 <th>Student Name</th>
                                                 <th>Class</th>
@@ -234,256 +202,205 @@
                                             @include('subjectoperation.partials.student_rows')
                                         </tbody>
                                     </table>
-                                </div>
-                                <div class="d-flex justify-content-end p-3">
-                                    {{ $students ? $students->links('pagination::bootstrap-5') : '' }}
+                                    <div class="d-flex justify-content-end mt-3">
+                                        {{ $students ? $students->links('pagination::bootstrap-5') : '' }}
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {{-- IMPROVED REGISTERED CLASSES MODAL - No Tabs --}}
+                {{-- MODAL: Registered Classes Overview --}}
                 <div class="modal fade" id="registeredClassesModal" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-                        <div class="modal-content border-0 shadow-lg" style="border-radius:18px;overflow:hidden;">
-
-                            {{-- Header --}}
-                            <div class="modal-header px-5 py-4 border-0" style="background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 60%,#7c3aed 100%);">
-                                <div class="d-flex align-items-center gap-3 flex-grow-1">
-                                    <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
-                                         style="width:48px;height:48px;background:rgba(255,255,255,0.2);">
-                                        <i class="ri-graduation-cap-line fs-4 text-white"></i>
-                                    </div>
-                                    <div>
-                                        <h5 class="modal-title text-white fw-bold mb-0">Registered Classes Overview</h5>
-                                        <small class="text-white opacity-75">Subject & Teacher Assignments by Term</small>
-                                    </div>
-                                </div>
-                                <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-sm px-4 text-white border-white border-opacity-50"
-                                            style="background:rgba(255,255,255,0.15);backdrop-filter:blur(4px);"
-                                            onclick="printRegisteredClasses()">
-                                        <i class="ri-printer-line me-1"></i> Print Report
+                    <div class="modal-dialog modal-xl modal-dialog-centered">
+                        <div class="modal-content border-0 shadow-lg">
+                            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                <h5 class="modal-title text-white">
+                                    <i class="ri-graduation-cap-line me-2"></i>Registered Classes Overview
+                                </h5>
+                                <div class="ms-auto me-2">
+                                    <button type="button" class="btn btn-light btn-sm" onclick="printRegisteredClasses()">
+                                        <i class="ri-printer-line me-1"></i> Print
                                     </button>
-                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                 </div>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                             </div>
-
-                            {{-- Body --}}
-                            <div class="modal-body p-5" style="background:#f8f9fc;">
+                            <div class="modal-body" style="background: #f8f9fc; max-height: 70vh; overflow-y: auto;">
                                 <div id="registeredClassesContent">
                                     <div class="text-center py-5">
-                                        <div class="rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center"
-                                             style="width:80px;height:80px;background:linear-gradient(135deg,#667eea,#764ba2);">
-                                            <i class="ri-search-line fs-3 text-white"></i>
-                                        </div>
-                                        <h5 class="text-muted">Select a class and session</h5>
-                                        <p class="text-muted">Then click "View Registered" to see subject-teacher assignments.</p>
+                                        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
+                                        <p class="mt-3">Select a class and session to view registered subjects...</p>
                                     </div>
                                 </div>
                             </div>
-
-                            <div class="modal-footer border-0 px-5 py-4" style="background:#f8f9fc;">
-                                <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Close</button>
+                            <div class="modal-footer bg-light">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {{-- Other Modals (Snapshot, Archived, etc.) --}}
+                {{-- MODAL: Snapshot Name for Unregistration --}}
                 <div class="modal fade" id="snapshotNameModal" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content border-0 shadow-lg" style="border-radius:14px;overflow:hidden;">
-                            <div class="modal-header border-0" style="background:linear-gradient(135deg,#f5576c 0%,#f093fb 100%);">
-                                <div class="d-flex align-items-center gap-2">
-                                    <div class="rounded-circle d-flex align-items-center justify-content-center"
-                                         style="width:36px;height:36px;background:rgba(255,255,255,0.2);">
-                                        <i class="ri-camera-line text-white"></i>
-                                    </div>
-                                    <h5 class="modal-title text-white mb-0">Name this Unregistration</h5>
-                                </div>
+                        <div class="modal-content">
+                            <div class="modal-header" style="background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);">
+                                <h5 class="modal-title text-white">Name this Unregistration</h5>
                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                             </div>
-                            <div class="modal-body p-4">
+                            <div class="modal-body">
                                 <div class="mb-3">
-                                    <label class="form-label fw-semibold">Snapshot Name <span class="text-danger">*</span></label>
+                                    <label class="form-label">Snapshot Name <span class="text-danger">*</span></label>
                                     <input type="text" class="form-control" id="snapshotNameInput" placeholder="e.g., Term 2 Corrections - June 2025">
+                                    <div class="invalid-feedback">Please enter a snapshot name.</div>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="form-label fw-semibold">Notes <span class="text-muted fw-normal">(optional)</span></label>
-                                    <textarea class="form-control" id="snapshotNotesInput" rows="3" placeholder="Reason for unregistration…"></textarea>
+                                    <label class="form-label">Notes (optional)</label>
+                                    <textarea class="form-control" id="snapshotNotesInput" rows="3" placeholder="Reason for unregistration..."></textarea>
                                 </div>
-                                <div class="alert border-0 d-flex gap-2 align-items-center" style="background:#fff8e1;">
-                                    <i class="ri-error-warning-line text-warning fs-5 flex-shrink-0"></i>
-                                    <small>All scores will be saved in a snapshot and can be fully restored later.</small>
+                                <div class="alert alert-warning">
+                                    <i class="ri-error-warning-line me-2"></i>
+                                    All scores will be saved and can be restored later.
                                 </div>
                             </div>
-                            <div class="modal-footer border-0 px-4 pb-4">
-                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-danger" onclick="proceedUnregister();">
-                                    <i class="ri-delete-bin-line me-1"></i>Unregister &amp; Save
-                                </button>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-danger" onclick="proceedUnregister();">Unregister & Save</button>
                             </div>
                         </div>
                     </div>
                 </div>
 
+                {{-- MODAL: Unregistered History --}}
                 <div class="modal fade" id="archivedModal" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog modal-xl">
-                        <div class="modal-content border-0 shadow-lg" style="border-radius:14px;overflow:hidden;">
-                            <div class="modal-header border-0" style="background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%);">
-                                <div class="d-flex align-items-center gap-2">
-                                    <div class="rounded-circle d-flex align-items-center justify-content-center"
-                                         style="width:36px;height:36px;background:rgba(255,255,255,0.2);">
-                                        <i class="ri-archive-line text-white"></i>
-                                    </div>
-                                    <h5 class="modal-title text-white mb-0">Unregistered History</h5>
-                                </div>
+                        <div class="modal-content">
+                            <div class="modal-header" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                                <h5 class="modal-title text-white">Unregistered History</h5>
                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                             </div>
-                            <div class="modal-body p-4">
-                                <div id="snapshotCardsContainer">
-                                    <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
-                                </div>
+                            <div class="modal-body">
+                                <div id="snapshotCardsContainer">Loading...</div>
+                                <div id="archivePagination" class="d-flex justify-content-center mt-3"></div>
                             </div>
                         </div>
                     </div>
                 </div>
 
+                {{-- MODAL: Snapshot Detail --}}
+                <div class="modal fade" id="snapshotDetailModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                                <h5 class="modal-title text-white" id="snapshotDetailTitle">Snapshot Detail</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div id="snapshotDetailBody">Loading...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
 <style>
-/* Improved Modal Subject List */
-.subject-list {
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    overflow: hidden;
-    background: #fff;
-}
+    /* Print Styles */
+    @media print {
+        body * { visibility: hidden; }
+        #printableArea, #printableArea * { visibility: visible; }
+        #printableArea { position: absolute; top: 0; left: 0; width: 100%; padding: 20px; }
+        .no-print { display: none !important; }
+        .print-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+        .print-header img { max-height: 80px; }
+        .print-header h2 { margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    }
 
-.subject-item {
-    transition: all 0.25s ease;
-    padding: 16px 20px;
-}
-
-.subject-item:hover {
-    background: #f0f4ff;
-}
-
-.subject-item:not(:last-child) {
-    border-bottom: 1px solid #f1f3f9;
-}
-
-.subject-num {
-    width: 32px;
-    height: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    font-weight: 700;
-    font-size: 15px;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-
-.term-card {
-    margin-bottom: 28px;
-    border: none;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.06);
-}
+    /* Custom UI Styles */
+    .subject-card { transition: transform 0.2s, box-shadow 0.2s; }
+    .subject-card:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+    .teacher-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .stats-badge { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 5px 12px; border-radius: 20px; font-size: 12px; }
+    .subject-number { display: inline-block; width: 28px; height: 28px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 50%; text-align: center; line-height: 28px; font-size: 12px; font-weight: bold; margin-right: 10px; }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
+// ============================================================================
 // CONFIGURATION
+// ============================================================================
 const ROUTES = {
-    batchRegister:  '{{ route("subjectregistration.batch") }}',
-    unregister:     '{{ route("subjects.destroy") }}',
-    getRegistered:  '{{ route("subjects.registered-classes") }}',
-    getArchived:    '{{ route("subjectoperation.archived") }}',
-    getSnapshot:    '{{ route("subjectoperation.snapshot.detail") }}',
-    restore:        '{{ route("subjectoperation.restore") }}',
-    permanentDelete:'{{ route("subjectoperation.archive.batch-delete") }}',
-    index:          '{{ route("subjects.index") }}',
-    getSchoolInfo:  '{{ route("school.information.get") }}',
+    batchRegister: '{{ route("subjectregistration.batch") }}',
+    unregister: '{{ route("subjects.destroy") }}',
+    getRegistered: '{{ route("subjects.registered-classes") }}',
+    getArchived: '{{ route("subjectoperation.archived") }}',
+    getSnapshot: '{{ route("subjectoperation.snapshot.detail") }}',
+    restore: '{{ route("subjectoperation.restore") }}',
+    permanentDelete: '{{ route("subjectoperation.archive.batch-delete") }}',
+    index: '{{ route("subjects.index") }}',
+    getSchoolInfo: '{{ route("school.information.get") }}',
 };
-const CSRF      = '{{ csrf_token() }}';
-const ASSET_URL = '{{ asset("storage") }}';
+const CSRF = '{{ csrf_token() }}';
+const AVATAR_URL = '{{ asset("storage") }}';
 
-function esc(str) {
+// ============================================================================
+// UTILITY FUNCTIONS
+// ============================================================================
+function escapeHtml(str) {
     if (!str) return '';
-    return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    return String(str).replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
 }
 
-function toast(title, msg, icon) {
-    Swal.fire({ title, html: msg, icon, confirmButtonColor: icon === 'success' ? '#28a745' : '#dc3545' });
+function showSweetAlert(title, message, type, success = true) {
+    Swal.fire({ title, html: message, icon: type, confirmButtonColor: success ? '#28a745' : '#dc3545' });
 }
 
 function filterData() {
     const params = new URLSearchParams({
-        class_id:    document.getElementById('idclass').value,
-        session_id:  document.getElementById('idsession').value,
-        search:      document.querySelector('.search')?.value || '',
-        gender:      document.getElementById('idgender').value,
+        class_id: document.getElementById('idclass').value,
+        session_id: document.getElementById('idsession').value,
+        search: document.querySelector('.search')?.value || '',
+        gender: document.getElementById('idgender').value,
         admissionno: document.getElementById('idadmission').value,
     });
     window.location.href = ROUTES.index + '?' + params.toString();
 }
 
-function toggleSubjectCard(card) {
-    const cb = card.querySelector('input[type="checkbox"]');
-    cb.checked = !cb.checked;
-    card.classList.toggle('is-checked', cb.checked);
-}
-
 function selectAllSubjects() {
-    document.querySelectorAll('.subject-checkbox').forEach(cb => {
-        cb.checked = true;
-        cb.closest('.subject-check-card')?.classList.add('is-checked');
-    });
+    document.querySelectorAll('.subject-checkbox').forEach(cb => cb.checked = true);
+    document.getElementById('subjectTeacherCount').textContent = document.querySelectorAll('.subject-checkbox:checked').length;
 }
 
 function deselectAllSubjects() {
-    document.querySelectorAll('.subject-checkbox').forEach(cb => {
-        cb.checked = false;
-        cb.closest('.subject-check-card')?.classList.remove('is-checked');
-    });
+    document.querySelectorAll('.subject-checkbox').forEach(cb => cb.checked = false);
+    document.getElementById('subjectTeacherCount').textContent = 0;
 }
 
-document.querySelectorAll('.subject-checkbox:checked').forEach(cb => {
-    cb.closest('.subject-check-card')?.classList.add('is-checked');
-});
-
-// Load Registered Classes - No Tabs
+// ============================================================================
+// REGISTERED CLASSES MODAL - ALPHABETICAL SUBJECTS WITH TEACHERS
+// ============================================================================
 async function loadRegisteredClasses() {
-    const classId   = document.getElementById('idclass').value;
+    const classId = document.getElementById('idclass').value;
     const sessionId = document.getElementById('idsession').value;
     const container = document.getElementById('registeredClassesContent');
 
     if (classId === 'ALL' || sessionId === 'ALL') {
-        container.innerHTML = `
-            <div class="text-center py-5">
-                <div class="rounded-circle mx-auto mb-4 d-flex align-items-center justify-content-center"
-                     style="width:80px;height:80px;background:#fef3c7;">
-                    <i class="ri-error-warning-line fs-3 text-warning"></i>
-                </div>
-                <h5>Please select a Class and Session</h5>
-                <p class="text-muted">Then open this modal again to view registered subjects and teachers.</p>
-            </div>`;
+        container.innerHTML = '<div class="alert alert-warning">Please select a class and session first.</div>';
         return;
     }
 
-    container.innerHTML = `
-        <div class="text-center py-5">
-            <div class="spinner-border text-primary mb-4" style="width:3.5rem;height:3.5rem;"></div>
-            <p class="text-muted">Loading registered subjects and teachers...</p>
-        </div>`;
+    container.innerHTML = '<div class="text-center"><div class="spinner-border text-primary"></div><p class="mt-2">Loading...</p></div>';
 
     try {
         const res = await fetch(`${ROUTES.getRegistered}?class_id=${classId}&session_id=${sessionId}`, {
@@ -492,80 +409,116 @@ async function loadRegisteredClasses() {
         const data = await res.json();
 
         if (!data.success || !data.data.length) {
-            container.innerHTML = `<div class="alert alert-info text-center py-5">No registered subjects found for the selected class and session.</div>`;
+            container.innerHTML = '<div class="alert alert-info">No registered classes found.</div>';
             return;
         }
 
         let html = '';
-        data.data.forEach(termData => {
-            const subjects = termData.subjects_teachers || [];
-            html += buildTermPane(termData, subjects);
-        });
-
-        container.innerHTML = html;
-
-    } catch (err) {
-        container.innerHTML = `<div class="alert alert-danger py-4"><i class="ri-error-warning-line me-2"></i>${esc(err.message)}</div>`;
-    }
-}
-
-// Clean Combined Subject + Teacher UI
-function buildTermPane(termData, subjects) {
-    const studentCount = termData.student_count ?? 0;
-    const sortedSubjects = [...subjects].sort((a, b) =>
-        (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
-    );
-    const subjectCount = sortedSubjects.length;
-
-    let html = `
-        <div class="term-card card border-0 shadow-sm mb-4">
-            <div class="card-header px-4 py-3" style="background:linear-gradient(135deg,#1e3a5f,#2563eb);color:white;">
-                <div class="d-flex justify-content-between align-items-center">
-                    <div>
-                        <h5 class="mb-0">${esc(termData.class_name)} ${esc(termData.arm_name)}</h5>
-                        <small class="opacity-75">${esc(termData.session_name)} — ${esc(termData.term_name)}</small>
-                    </div>
-                    <div class="text-end">
-                        <span class="badge bg-white text-dark px-3 py-2">${studentCount} Students</span>
-                        <div class="mt-1 small">${subjectCount} Subjects</div>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body p-0">
-                <div class="subject-list">`;
-
-    if (subjectCount === 0) {
-        html += `<div class="text-center text-muted py-5">No subjects registered in this term.</div>`;
-    } else {
-        sortedSubjects.forEach((subject, index) => {
-            const sc = subject.student_count ?? 0;
-            const teachers = subject.teachers && subject.teachers.length
-                ? subject.teachers.map(t => esc(t.name)).join(', ')
-                : '<span class="text-muted">— Not assigned</span>';
+        for (const classData of data.data) {
+            // Subjects are already alphabetically ordered from backend
+            const subjects = classData.subjects_teachers || [];
 
             html += `
-                <div class="subject-item d-flex align-items-start gap-3">
-                    <div class="subject-num">${index + 1}</div>
-                    <div class="flex-grow-1">
-                        <div class="fw-semibold fs-6">${esc(subject.name)}</div>
-                        <div class="small text-muted mt-1">
-                            <i class="ri-user-follow-line me-1"></i> ${teachers}
+                <div class="card mb-4 subject-card">
+                    <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap">
+                            <div>
+                                <i class="ri-school-line me-2"></i>
+                                <strong class="fs-5">${escapeHtml(classData.class_name)} ${escapeHtml(classData.arm_name)}</strong>
+                                <span class="ms-2 badge bg-light text-dark">${escapeHtml(classData.session_name)}</span>
+                                <span class="badge bg-warning text-dark ms-1">${escapeHtml(classData.term_name)}</span>
+                            </div>
+                            <div class="mt-2 mt-sm-0">
+                                <span class="badge bg-info me-2 p-2"><i class="ri-user-line me-1"></i> Students: ${classData.student_count || 0}</span>
+                                <span class="badge bg-success p-2"><i class="ri-book-open-line me-1"></i> Subjects: ${subjects.length}</span>
+                            </div>
                         </div>
                     </div>
-                    <div>
-                        <span class="badge rounded-pill px-3 py-1 bg-primary-subtle text-primary">${sc} students</span>
-                    </div>
-                </div>`;
-        });
-    }
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="70" class="text-center">#</th>
+                                        <th>Subject Name</th>
+                                        <th width="120">Subject Code</th>
+                                        <th>Teacher(s)</th>
+                                        <th width="100" class="text-center">Students</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
 
-    html += `</div></div></div>`;
-    return html;
+            // Display subjects with sequential numbering (already alphabetical)
+            subjects.forEach((subject, index) => {
+                const studentCount = subject.student_count || 0;
+                let teachersHtml = '';
+
+                if (subject.teachers && subject.teachers.length > 0) {
+                    teachersHtml = '<div class="d-flex flex-wrap gap-2">';
+                    subject.teachers.forEach(teacher => {
+                        const picUrl = teacher.picture ?
+                            `${AVATAR_URL}/staff_avatars/${teacher.picture.split('/').pop()}` :
+                            `${AVATAR_URL}/staff_avatars/default.png`;
+                        teachersHtml += `
+                            <div class="d-flex align-items-center gap-2 bg-light rounded-3 px-2 py-1" style="border: 1px solid #e0e0e0;">
+                                <img src="${picUrl}" class="teacher-avatar" onerror="this.src='${AVATAR_URL}/staff_avatars/default.png'">
+                                <span class="fw-medium">${escapeHtml(teacher.name)}</span>
+                            </div>
+                        `;
+                    });
+                    teachersHtml += '</div>';
+                } else {
+                    teachersHtml = '<span class="text-muted"><i class="ri-user-unfollow-line me-1"></i> Not assigned</span>';
+                }
+
+                html += `
+                    <tr>
+                        <td class="text-center"><span class="subject-number">${index + 1}</span></td>
+                        <td><strong><i class="ri-book-2-line text-primary me-2"></i>${escapeHtml(subject.name)}</strong></td>
+                        <td><span class="badge bg-secondary-subtle text-secondary">${escapeHtml(subject.code || '—')}</span></td>
+                        <td>${teachersHtml}</td>
+                        <td class="text-center"><span class="badge bg-primary rounded-pill px-3 py-2">${studentCount}</span></td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-light">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <small class="text-muted">
+                                    <i class="ri-bar-chart-line me-1"></i>
+                                    <strong>Total Subjects:</strong> ${subjects.length} |
+                                    <strong>Total Students:</strong> ${classData.student_count || 0}
+                                </small>
+                            </div>
+                            <div class="col-md-6 text-md-end">
+                                <small class="text-muted">
+                                    <i class="ri-calendar-line me-1"></i>
+                                    Generated: ${new Date().toLocaleString()}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        container.innerHTML = html;
+    } catch (err) {
+        container.innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+    }
 }
 
-// Print Function (Consistent with new design)
+// ============================================================================
+// PRINT FUNCTIONALITY WITH SCHOOL INFORMATION
+// ============================================================================
 async function printRegisteredClasses() {
-    const classId   = document.getElementById('idclass').value;
+    const classId = document.getElementById('idclass').value;
     const sessionId = document.getElementById('idsession').value;
 
     if (classId === 'ALL' || sessionId === 'ALL') {
@@ -573,16 +526,17 @@ async function printRegisteredClasses() {
         return;
     }
 
-    Swal.fire({ title: 'Preparing document…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    Swal.fire({ title: 'Preparing print...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
     try {
-        const [schoolRes, regRes] = await Promise.all([
-            fetch(ROUTES.getSchoolInfo, { headers: { 'Accept': 'application/json' } }),
-            fetch(`${ROUTES.getRegistered}?class_id=${classId}&session_id=${sessionId}`,
-                { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } }),
-        ]);
+        const schoolRes = await fetch(ROUTES.getSchoolInfo, { headers: { 'Accept': 'application/json' } });
+        const schoolData = await schoolRes.json();
 
-        const [schoolData, regData] = await Promise.all([schoolRes.json(), regRes.json()]);
+        const regRes = await fetch(`${ROUTES.getRegistered}?class_id=${classId}&session_id=${sessionId}`, {
+            headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
+        });
+        const regData = await regRes.json();
+
         Swal.close();
 
         if (!regData.success || !regData.data.length) {
@@ -590,156 +544,270 @@ async function printRegisteredClasses() {
             return;
         }
 
-        const pw = window.open('', '_blank');
-        pw.document.write(buildPrintHtml(schoolData, regData.data));
-        pw.document.close();
-        pw.focus();
-        setTimeout(() => pw.print(), 700);
-
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(await getPrintHTML(schoolData, regData.data));
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
     } catch (err) {
         Swal.close();
         Swal.fire('Error', err.message, 'error');
     }
 }
 
-function buildPrintHtml(schoolData, registeredData) {
-    // Same refined print function as before (kept for completeness)
-    const classEl   = document.getElementById('idclass');
-    const sessionEl = document.getElementById('idsession');
-    const className  = classEl.options[classEl.selectedIndex]?.text || '';
-    const sessionName = sessionEl.options[sessionEl.selectedIndex]?.text || '';
+async function getPrintHTML(schoolData, registeredData) {
+    const classSelect = document.getElementById('idclass');
+    const sessionSelect = document.getElementById('idsession');
+    const className = classSelect.options[classSelect.selectedIndex]?.text || 'Selected Class';
+    const sessionName = sessionSelect.options[sessionSelect.selectedIndex]?.text || 'Selected Session';
 
-    const school      = schoolData.success ? schoolData.data : {};
-    const schoolName  = school.school_name    || 'School Management System';
-    const schoolAddr  = school.school_address || '';
-    const schoolPhone = school.school_phone   || '';
-    const schoolEmail = school.school_email   || '';
-    const schoolMotto = school.school_motto   || '';
-    const logoSrc     = school.school_logo
-        ? (school.school_logo.startsWith('http') ? school.school_logo : `{{ asset('storage') }}/${school.school_logo}`)
-        : '';
+    const school = schoolData.success ? schoolData.data : null;
+    const schoolName = school?.school_name || 'School Name';
+    const schoolAddress = school?.school_address || '';
+    const schoolPhone = school?.school_phone || '';
+    const schoolEmail = school?.school_email || '';
+    const schoolMotto = school?.school_motto || '';
+    const schoolLogo = school?.school_logo ?
+        (school.school_logo.startsWith('http') ? school.school_logo : `{{ asset('storage') }}/${school.school_logo}`) : '';
 
-    let termsHtml = '';
+    let subjectsHtml = '';
+    let totalSubjectsOverall = 0;
 
-    registeredData.forEach(termData => {
-        const subjects = termData.subjects_teachers || [];
-        const sortedSubjects = [...subjects].sort((a, b) =>
-            (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' })
-        );
+    for (const classData of registeredData) {
+        const subjects = classData.subjects_teachers || [];
+        totalSubjectsOverall += subjects.length;
 
-        let rows = '';
-        sortedSubjects.forEach((subject, index) => {
-            const studentCount = subject.student_count ?? 0;
-            const teachers = subject.teachers && subject.teachers.length
-                ? subject.teachers.map(t => esc(t.name)).join(', ')
-                : '— Not assigned';
-
-            rows += `
-                <tr>
-                    <td class="center">${index + 1}</td>
-                    <td><strong>${esc(subject.name)}</strong></td>
-                    <td>${teachers}</td>
-                    <td class="center">${studentCount}</td>
-                </tr>`;
-        });
-
-        termsHtml += `
-            <div class="term-block">
-                <div class="term-header">
-                    <span class="term-title">${esc(termData.class_name)} ${esc(termData.arm_name)} — ${esc(termData.term_name)}</span>
-                    <span class="term-meta">${esc(termData.session_name)} • ${sortedSubjects.length} Subjects • ${termData.student_count ?? 0} Students</span>
+        subjectsHtml += `
+            <div class="class-section" style="margin-bottom: 30px; page-break-inside: avoid;">
+                <div class="class-header" style="background: #667eea; color: white; padding: 12px; border-radius: 5px 5px 0 0;">
+                    <strong>${escapeHtml(classData.class_name)} ${escapeHtml(classData.arm_name)}</strong>
+                    <span style="float: right;">Session: ${escapeHtml(classData.session_name)} | Term: ${escapeHtml(classData.term_name)}</span>
                 </div>
-                <table class="subject-table">
+                <table style="width: 100%; border-collapse: collapse;">
                     <thead>
-                        <tr>
-                            <th class="center" style="width:50px;">#</th>
-                            <th>Subject — Teacher</th>
-                            <th class="center" style="width:100px;">Students</th>
+                        <tr style="background: #f2f2f2;">
+                            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">S/N</th>
+                            <th style="border: 1px solid #ddd; padding: 8px;">Subject Name</th>
+                            <th style="border: 1px solid #ddd; padding: 8px;">Subject Code</th>
+                            <th style="border: 1px solid #ddd; padding: 8px;">Teacher(s)</th>
+                            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Students</th>
                         </tr>
                     </thead>
-                    <tbody>${rows}</tbody>
+                    <tbody>`;
+
+        subjects.forEach((subject, index) => {
+            const teachersNames = (subject.teachers || []).map(t => t.name).join(', ');
+            subjectsHtml += `
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${index + 1}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${escapeHtml(subject.name)}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${escapeHtml(subject.code || '—')}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${escapeHtml(teachersNames || '—')}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${subject.student_count || 0}</td>
+                </tr>
+            `;
+        });
+
+        subjectsHtml += `
+                    </tbody>
                 </table>
-                <div class="term-summary">
-                    <strong>${sortedSubjects.length}</strong> subjects •
-                    <strong>${termData.student_count ?? 0}</strong> students registered
-                </div>
-            </div>`;
-    });
+                <div style="padding: 5px 0; font-size: 11px;">Total Subjects: ${subjects.length} | Total Students: ${classData.student_count || 0}</div>
+            </div>
+        `;
+    }
 
     return `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Subject Registration — ${esc(schoolName)}</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11.5pt; color: #1a1a2e; background: #fff; line-height: 1.55; }
-  @page { size: A4 portrait; margin: 15mm 12mm; }
-
-  .school-header { display: flex; align-items: center; gap: 22px; border-bottom: 4px solid #2563eb; padding-bottom: 22px; margin-bottom: 28px; }
-  .school-logo { width: 82px; height: 82px; object-fit: contain; }
-  .school-logo-placeholder { width: 82px; height: 82px; border-radius: 50%; background: linear-gradient(135deg,#667eea,#764ba2); display: flex; align-items: center; justify-content: center; color: white; font-size: 34px; font-weight: 700; }
-  .school-name { font-size: 21pt; font-weight: 700; color: #1e3a5f; }
-
-  .doc-title { text-align: center; background: linear-gradient(135deg,#1e3a5f,#2563eb); color: white; padding: 16px 25px; border-radius: 8px; margin-bottom: 26px; }
-  .doc-title h2 { font-size: 17pt; font-weight: 700; }
-
-  .meta-strip { background: #f0f4ff; border: 1px solid #c7d2fe; border-radius: 8px; padding: 14px 20px; margin-bottom: 30px; font-size: 11pt; display: flex; flex-wrap: wrap; gap: 24px; }
-
-  .term-block { margin-bottom: 35px; page-break-inside: avoid; border: 1px solid #e0e7ff; border-radius: 10px; overflow: hidden; }
-  .term-header { background: linear-gradient(135deg,#1e3a5f 0%,#2563eb 70%,#7c3aed 100%); color: white; padding: 16px 20px; }
-  .term-title { font-size: 14.5pt; font-weight: 700; }
-  .term-meta { font-size: 10.5pt; opacity: 0.92; margin-top: 6px; display: block; }
-
-  .subject-table { width: 100%; border-collapse: collapse; font-size: 11pt; }
-  .subject-table th { background: #e0e7ff; padding: 12px 14px; font-weight: 600; color: #1e3a5f; text-align: left; border-bottom: 2px solid #c7d2fe; }
-  .subject-table td { padding: 11px 14px; border-bottom: 1px solid #f0f0f0; vertical-align: top; }
-  .subject-table tr:nth-child(even) td { background: #fafbff; }
-  .subject-table .center { text-align: center; }
-
-  .term-summary { background: #f8faff; padding: 12px 20px; font-size: 10.5pt; color: #1e3a5f; border-top: 1px solid #e0e7ff; text-align: right; }
-
-  .doc-footer { text-align: center; font-size: 9.5pt; color: #888; border-top: 1px solid #ddd; padding-top: 18px; margin-top: 35px; }
-</style>
-</head>
-<body>
-
-  <div class="school-header">
-    ${logoSrc ? `<img src="${logoSrc}" class="school-logo" onerror="this.style.display='none'">` : `<div class="school-logo-placeholder">${esc(schoolName).charAt(0)}</div>`}
-    <div class="school-name">${esc(schoolName)}</div>
-  </div>
-
-  <div class="doc-title">
-    <h2>Subject Registration Report</h2>
-    <p>${esc(className)} &nbsp;&bull;&nbsp; ${esc(sessionName)}</p>
-  </div>
-
-  <div class="meta-strip">
-    <div><strong>Class:</strong> ${esc(className)}</div>
-    <div><strong>Session:</strong> ${esc(sessionName)}</div>
-    <div><strong>Terms:</strong> ${registeredData.length}</div>
-    <div><strong>Printed:</strong> ${new Date().toLocaleString()}</div>
-  </div>
-
-  ${termsHtml}
-
-  <div class="doc-footer">
-    <strong>${esc(schoolName)}</strong> • Subject Registration Report • Generated on ${new Date().toLocaleString()}
-  </div>
-
-</body>
-</html>`;
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Registered Classes - ${escapeHtml(schoolName)}</title>
+        <style>
+            body { font-family: Arial, sans-serif; font-size: 12px; padding: 20px; }
+            .print-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #667eea; padding-bottom: 15px; }
+            .print-header img { max-height: 80px; }
+            .print-header h2 { margin: 10px 0; }
+            .print-info { margin-bottom: 20px; padding: 10px; background: #f8f9fc; }
+            .class-section { margin-bottom: 30px; page-break-inside: avoid; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { border: 1px solid #ddd; padding: 8px; }
+            th { background: #f2f2f2; }
+            @page { size: A4; margin: 15mm; }
+        </style>
+    </head>
+    <body>
+        <div class="print-header">
+            ${schoolLogo ? `<img src="${schoolLogo}" onerror="this.style.display='none'">` : ''}
+            <h2>${escapeHtml(schoolName)}</h2>
+            <div>${escapeHtml(schoolMotto)}</div>
+            <div>${escapeHtml(schoolAddress)}</div>
+            <div>${escapeHtml(schoolPhone)} ${schoolEmail ? '| ' + escapeHtml(schoolEmail) : ''}</div>
+        </div>
+        <div class="print-info">
+            <strong>Class:</strong> ${escapeHtml(className)} |
+            <strong>Session:</strong> ${escapeHtml(sessionName)} |
+            <strong>Print Date:</strong> ${new Date().toLocaleString()}
+        </div>
+        <h3>Subject Registration Summary</h3>
+        ${subjectsHtml}
+        <div style="text-align: center; margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd;">
+            <small>Total Subjects: ${totalSubjectsOverall} | Generated by School Management System</small>
+        </div>
+    </body>
+    </html>`;
 }
 
-// Basic stubs for other functions
-function getSelectedStudentIds() { return []; }
-function getSelectedSubjectClasses() { return []; }
-async function registerSelectedStudentsBatch() { toast('Info', 'Registration ready', 'info'); }
-function openUnregisterModal() { toast('Info', 'Unregister ready', 'info'); }
-function proceedUnregister() { toast('Success', 'Unregistered', 'success'); }
-function openArchivedModal() { toast('Info', 'Archived history ready', 'info'); }
+// ============================================================================
+// REGISTRATION FUNCTIONS
+// ============================================================================
+function getSelectedStudentIds() {
+    return [...document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked')]
+        .map(cb => parseInt(cb.closest('tr').querySelector('.id').dataset.id));
+}
 
-// Event Listener
+function getSelectedSubjectClasses() {
+    return [...document.querySelectorAll('.subject-checkbox:checked')].map(cb => ({
+        subjectclassid: parseInt(cb.dataset.subjectclassid),
+        staffid: parseInt(cb.dataset.staffid),
+        termid: parseInt(cb.dataset.termid),
+    }));
+}
+
+async function registerSelectedStudentsBatch() {
+    const studentIds = getSelectedStudentIds();
+    const subjectClasses = getSelectedSubjectClasses();
+    const sessionId = document.getElementById('idsession').value;
+
+    if (!studentIds.length) return showSweetAlert('Error', 'No students selected', 'warning');
+    if (!subjectClasses.length) return showSweetAlert('Error', 'No subjects selected', 'warning');
+    if (sessionId === 'ALL') return showSweetAlert('Error', 'Please select a session', 'warning');
+
+    const result = await Swal.fire({
+        title: 'Confirm Registration',
+        html: `Register <strong>${studentIds.length}</strong> student(s) for <strong>${subjectClasses.length}</strong> subject(s)?`,
+        icon: 'question', showCancelButton: true, confirmButtonColor: '#28a745'
+    });
+    if (!result.isConfirmed) return;
+
+    try {
+        const res = await fetch(ROUTES.batchRegister, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+            body: JSON.stringify({ studentids: studentIds, subjectclasses: subjectClasses, sessionid: parseInt(sessionId) })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showSweetAlert('Success', 'Students registered successfully!', 'success');
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            showSweetAlert('Error', data.message || 'Registration failed', 'error');
+        }
+    } catch (err) {
+        showSweetAlert('Error', err.message, 'error');
+    }
+}
+
+function openUnregisterModal() {
+    const studentIds = getSelectedStudentIds();
+    const subjectClasses = getSelectedSubjectClasses();
+    if (!studentIds.length) return showSweetAlert('Error', 'No students selected', 'warning');
+    if (!subjectClasses.length) return showSweetAlert('Error', 'No subjects selected', 'warning');
+
+    document.getElementById('snapshotNameInput').value = `Unregistration - ${new Date().toLocaleString()}`;
+    document.getElementById('snapshotNotesInput').value = '';
+    new bootstrap.Modal(document.getElementById('snapshotNameModal')).show();
+}
+
+async function proceedUnregister() {
+    const name = document.getElementById('snapshotNameInput').value.trim();
+    if (!name) return showSweetAlert('Error', 'Please enter a snapshot name', 'warning');
+
+    const studentIds = getSelectedStudentIds();
+    const subjectClasses = getSelectedSubjectClasses();
+    const sessionId = document.getElementById('idsession').value;
+    const notes = document.getElementById('snapshotNotesInput').value;
+
+    bootstrap.Modal.getInstance(document.getElementById('snapshotNameModal')).hide();
+
+    try {
+        const res = await fetch(ROUTES.unregister, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+            body: JSON.stringify({ studentids: studentIds, subjectclasses: subjectClasses, sessionid: parseInt(sessionId), snapshot_name: name, snapshot_notes: notes })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showSweetAlert('Success', `${data.success_count} student(s) unregistered`, 'success');
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            showSweetAlert('Error', data.message || 'Unregistration failed', 'error');
+        }
+    } catch (err) {
+        showSweetAlert('Error', err.message, 'error');
+    }
+}
+
+// ============================================================================
+// ARCHIVE FUNCTIONS
+// ============================================================================
+function openArchivedModal() {
+    const classId = document.getElementById('idclass').value;
+    const sessionId = document.getElementById('idsession').value;
+    if (classId === 'ALL' || sessionId === 'ALL') {
+        return showSweetAlert('Error', 'Please select a class and session first', 'warning');
+    }
+    loadArchivedPage(1);
+    new bootstrap.Modal(document.getElementById('archivedModal')).show();
+}
+
+async function loadArchivedPage(page) {
+    const classId = document.getElementById('idclass').value;
+    const sessionId = document.getElementById('idsession').value;
+    const container = document.getElementById('snapshotCardsContainer');
+
+    container.innerHTML = '<div class="text-center"><div class="spinner-border"></div></div>';
+
+    try {
+        const res = await fetch(`${ROUTES.getArchived}?class_id=${classId}&session_id=${sessionId}&page=${page}`, {
+            headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
+        });
+        const data = await res.json();
+
+        if (!data.success || !data.data.length) {
+            container.innerHTML = '<div class="alert alert-info">No archived records found.</div>';
+            return;
+        }
+
+        let html = '<div class="row">';
+        data.data.forEach(snapshot => {
+            html += `
+                <div class="col-md-6 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6><i class="ri-camera-line"></i> ${escapeHtml(snapshot.snapshot_name)}</h6>
+                            <small class="text-muted">${new Date(snapshot.unregistered_at).toLocaleString()}</small>
+                            <p class="mt-2"><strong>Subject:</strong> ${escapeHtml(snapshot.subjectname)}</p>
+                            <p><strong>Students:</strong> ${snapshot.student_count}</p>
+                            <button class="btn btn-sm btn-primary" onclick="viewSnapshotDetail(${snapshot.archive_id})">View Details</button>
+                            <button class="btn btn-sm btn-success" onclick="restoreSnapshot(${snapshot.archive_id})">Restore</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+    } catch (err) {
+        container.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
+    }
+}
+
+// ============================================================================
+// EVENT LISTENERS
+// ============================================================================
+document.getElementById('checkAll')?.addEventListener('change', function() {
+    document.querySelectorAll('#studentTableBody input[name="chk_child"]').forEach(cb => cb.checked = this.checked);
+});
+
 document.getElementById('registeredClassesModal')?.addEventListener('show.bs.modal', loadRegisteredClasses);
 </script>
 @endsection
