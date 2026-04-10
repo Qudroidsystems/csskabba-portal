@@ -502,6 +502,10 @@
 @endsection
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+{{-- resources/views/subjectoperation/index.blade.php --}}
+{{-- Replace the entire <script> block at the bottom of the blade with this --}}
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 // ============================================================================
 // GLOBALS
@@ -519,14 +523,11 @@ const ROUTES = {
 const CSRF       = '{{ csrf_token() }}';
 const AVATAR_URL = '{{ asset("storage") }}';
 
-// Archive / snapshot state
 let archiveCurrentPage = 1;
 let archiveMeta        = {};
 let archiveSearchTimer = null;
-
-// Current snapshot being viewed in the detail modal
-let currentSnapshotMeta = null;   // { snapshot_name, subjectclassid, termid, sessionid, staffid }
-let currentSnapshotRows = [];     // all rows loaded in detail modal
+let currentSnapshotMeta = null;
+let currentSnapshotRows = [];
 
 // ============================================================================
 // SWEET ALERT HELPER
@@ -547,9 +548,11 @@ function showSweetAlert(title, message, type, success = true) {
 }
 
 // ============================================================================
-// IMAGE MODAL
+// DOM READY
 // ============================================================================
 document.addEventListener('DOMContentLoaded', function () {
+
+    // Image modal
     const imgModal = document.getElementById('imageViewModal');
     if (imgModal) {
         imgModal.addEventListener('show.bs.modal', function (event) {
@@ -559,66 +562,75 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Registered-classes modal — load on open
     document.getElementById('registeredClassesModal')?.addEventListener('show.bs.modal', loadRegisteredClasses);
+
+    // Archive per-page change
     document.getElementById('archivePerPage')?.addEventListener('change', () => loadArchivedPage(1));
 
-    // Character counter for snapshot notes
+    // Snapshot notes character counter
     document.getElementById('snapshotNotesInput')?.addEventListener('input', function () {
         document.getElementById('snapshotNotesCount').textContent = this.value.length;
     });
+
+    // Archive search debounce
+    document.getElementById('archiveSearch')?.addEventListener('input', function () {
+        clearTimeout(archiveSearchTimer);
+        archiveSearchTimer = setTimeout(() => loadArchivedPage(1), 400);
+    });
+
+    // Archive term filter
+    document.getElementById('archiveTermFilter')?.addEventListener('change', () => loadArchivedPage(1));
+
+    // Subject checkboxes — count badge
+    document.querySelectorAll('.subject-checkbox').forEach(cb => cb.addEventListener('change', updateSubjectCount));
+    updateSubjectCount();
+
+    // checkAll for students
+    document.getElementById('checkAll')?.addEventListener('change', function () {
+        document.querySelectorAll('#studentTableBody input[name="chk_child"]').forEach(cb => {
+            cb.checked = this.checked;
+            cb.closest('tr')?.classList.toggle('table-active', this.checked);
+        });
+        toggleBatchButtons();
+    });
+
+    // Individual student checkbox delegation
+    document.addEventListener('change', function (e) {
+        if (e.target?.name === 'chk_child') {
+            e.target.closest('tr')?.classList.toggle('table-active', e.target.checked);
+            toggleBatchButtons();
+            // Keep checkAll in sync
+            const all  = document.querySelectorAll('#studentTableBody input[name="chk_child"]');
+            const checked = document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked');
+            const checkAll = document.getElementById('checkAll');
+            if (checkAll) checkAll.checked = all.length > 0 && all.length === checked.length;
+        }
+    });
+
+    // Wire pagination links (initial page load)
+    setupPaginationLinks();
+
+    // Choices.js (if available)
+    if (typeof Choices !== 'undefined') {
+        ['idclass', 'idsession', 'idgender', 'idadmission'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) new Choices(el, { searchEnabled: true });
+        });
+    }
 });
-
-// ============================================================================
-// FILTER / SEARCH
-// ============================================================================
-function filterData() {
-    const classId   = document.getElementById('idclass').value;
-    const sessionId = document.getElementById('idsession').value;
-    const search    = document.querySelector('.search')?.value ?? '';
-    const gender    = document.getElementById('idgender').value;
-    const admission = document.getElementById('idadmission').value;
-
-    const params = new URLSearchParams({ class_id: classId, session_id: sessionId, search, gender, admissionno: admission });
-    window.location.href = ROUTES.index + '?' + params.toString();
-}
-
-function selectAllSubjects()   { document.querySelectorAll('.subject-checkbox').forEach(cb => cb.checked = true);  updateSubjectCount(); }
-function deselectAllSubjects() { document.querySelectorAll('.subject-checkbox').forEach(cb => cb.checked = false); updateSubjectCount(); }
-function updateSubjectCount()  { document.getElementById('subjectTeacherCount').textContent = document.querySelectorAll('.subject-checkbox:checked').length; }
-document.querySelectorAll('.subject-checkbox').forEach(cb => cb.addEventListener('change', updateSubjectCount));
-updateSubjectCount();
-
-// ============================================================================
-// CHECK ALL STUDENTS
-// ============================================================================
-document.getElementById('checkAll')?.addEventListener('change', function () {
-    document.querySelectorAll('#studentTableBody input[name="chk_child"]').forEach(cb => cb.checked = this.checked);
-    toggleBatchButtons();
-});
-document.addEventListener('change', function (e) {
-    if (e.target?.name === 'chk_child') toggleBatchButtons();
-});
-function toggleBatchButtons() {
-    const any = document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked').length > 0;
-    document.getElementById('register-selected-btn')?.classList.toggle('d-none', !any);
-    document.getElementById('unregister-selected-btn')?.classList.toggle('d-none', !any);
-}
 
 // ============================================================================
 // HELPERS
 // ============================================================================
-function getSelectedStudentIds() {
-    return [...document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked')]
-        .map(cb => parseInt(cb.closest('tr').querySelector('.id').dataset.id));
+function escapeHtml(str) {
+    if (!str) return str ?? '';
+    return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 }
-function getSelectedSubjectClasses() {
-    return [...document.querySelectorAll('.subject-checkbox:checked')].map(cb => ({
-        subjectclassid: parseInt(cb.dataset.subjectclassid),
-        staffid       : parseInt(cb.dataset.staffid),
-        termid        : parseInt(cb.dataset.termid),
-    }));
+
+function setSpinner(on) {
+    document.getElementById('register-loading-spinner')?.classList.toggle('d-none', !on);
 }
-function setSpinner(on) { document.getElementById('register-loading-spinner')?.classList.toggle('d-none', !on); }
 
 async function apiFetch(url, method, body) {
     const res  = await fetch(url, {
@@ -631,9 +643,180 @@ async function apiFetch(url, method, body) {
     return data;
 }
 
-function escapeHtml(str) {
-    if (!str) return str ?? '';
-    return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+function getSelectedStudentIds() {
+    return [...document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked')]
+        .map(cb => parseInt(cb.closest('tr').querySelector('.id').dataset.id));
+}
+
+function getSelectedSubjectClasses() {
+    return [...document.querySelectorAll('.subject-checkbox:checked')].map(cb => ({
+        subjectclassid: parseInt(cb.dataset.subjectclassid),
+        staffid       : parseInt(cb.dataset.staffid),
+        termid        : parseInt(cb.dataset.termid),
+    }));
+}
+
+function toggleBatchButtons() {
+    const any = document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked').length > 0;
+    document.getElementById('register-selected-btn')?.classList.toggle('d-none', !any);
+    document.getElementById('unregister-selected-btn')?.classList.toggle('d-none', !any);
+}
+
+// ============================================================================
+// SUBJECT CHECKBOXES
+// ============================================================================
+function selectAllSubjects() {
+    document.querySelectorAll('.subject-checkbox').forEach(cb => cb.checked = true);
+    updateSubjectCount();
+}
+
+function deselectAllSubjects() {
+    document.querySelectorAll('.subject-checkbox').forEach(cb => cb.checked = false);
+    updateSubjectCount();
+}
+
+function updateSubjectCount() {
+    document.getElementById('subjectTeacherCount').textContent =
+        document.querySelectorAll('.subject-checkbox:checked').length;
+}
+
+// ============================================================================
+// FILTER / SEARCH  (AJAX — keeps current URL params, updates DOM in place)
+// ============================================================================
+function filterData() {
+    const classId   = document.getElementById('idclass').value;
+    const sessionId = document.getElementById('idsession').value;
+
+    if (classId === 'ALL' || sessionId === 'ALL') {
+        Swal.fire({ icon: 'warning', title: 'Missing filters', text: 'Please select a class and session.', showConfirmButton: true });
+        return;
+    }
+
+    const search    = document.querySelector('.search-box input.search')?.value ?? '';
+    const gender    = document.getElementById('idgender').value;
+    const admission = document.getElementById('idadmission').value;
+
+    const tableBody              = document.getElementById('studentTableBody');
+    const subjectTeachersContainer = document.getElementById('subjectTeachersContainer');
+    const subjectTeachersCard    = document.getElementById('subjectTeachersCard');
+    const subjectTeacherCount    = document.getElementById('subjectTeacherCount');
+
+    if (tableBody) tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Loading…</td></tr>';
+    if (subjectTeachersContainer) subjectTeachersContainer.innerHTML = '<div class="col-12 text-center">Loading subject teachers…</div>';
+
+    const params = new URLSearchParams({ class_id: classId, session_id: sessionId, search, gender, admissionno: admission });
+
+    fetch(ROUTES.index + '?' + params.toString(), {
+        headers: { 'X-CSRF-TOKEN': CSRF, 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' }
+    })
+    .then(r => r.text())
+    .then(html => {
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+
+        const pick = (id) => ({ fresh: doc.getElementById(id), live: document.getElementById(id) });
+
+        const tb = pick('studentTableBody');
+        if (tb.fresh && tb.live) tb.live.innerHTML = tb.fresh.innerHTML;
+
+        const pg = pick('pagination-container');
+        if (pg.fresh && pg.live) pg.live.innerHTML = pg.fresh.innerHTML;
+
+        const sc = pick('studentcount');
+        if (sc.fresh && sc.live) sc.live.textContent = sc.fresh.textContent;
+
+        const stc = pick('subjectTeachersContainer');
+        if (stc.fresh && subjectTeachersContainer) {
+            subjectTeachersContainer.innerHTML = stc.fresh.innerHTML;
+            const count = subjectTeachersContainer.querySelectorAll('.subject-checkbox').length;
+            if (subjectTeacherCount) subjectTeacherCount.textContent = count;
+            if (subjectTeachersCard) subjectTeachersCard.style.display = count > 0 ? 'block' : 'none';
+        }
+
+        // Rebuild admission dropdown
+        const admNos = [...new Set(
+            [...doc.querySelectorAll('#studentTableBody .admissionno')]
+                .map(el => el.dataset.admissionno || el.textContent.trim())
+                .filter(Boolean)
+        )].sort();
+        updateAdmissionNoOptions(admNos.map(a => ({ admissionno: a })));
+
+        // Re-wire subject checkboxes
+        document.querySelectorAll('.subject-checkbox').forEach(cb => cb.addEventListener('change', updateSubjectCount));
+        updateSubjectCount();
+
+        setupPaginationLinks();
+    })
+    .catch(err => {
+        if (tableBody) tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
+        Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Failed to fetch filtered data.', showConfirmButton: true });
+    });
+}
+
+// ============================================================================
+// PAGINATION (AJAX)
+// ============================================================================
+function setupPaginationLinks() {
+    document.querySelectorAll('#pagination-container a').forEach(link => {
+        link.addEventListener('click', function (e) {
+            e.preventDefault();
+            if (this.href && !this.classList.contains('disabled')) loadPage(this.href);
+        });
+    });
+}
+
+function loadPage(url) {
+    const tableBody              = document.getElementById('studentTableBody');
+    const subjectTeachersContainer = document.getElementById('subjectTeachersContainer');
+    const subjectTeachersCard    = document.getElementById('subjectTeachersCard');
+    const subjectTeacherCount    = document.getElementById('subjectTeacherCount');
+
+    if (tableBody) tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Loading…</td></tr>';
+
+    fetch(url, { headers: { 'X-CSRF-TOKEN': CSRF, 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' } })
+    .then(r => r.text())
+    .then(html => {
+        const doc  = new DOMParser().parseFromString(html, 'text/html');
+        const pick = (id) => ({ fresh: doc.getElementById(id), live: document.getElementById(id) });
+
+        const tb = pick('studentTableBody');
+        if (tb.fresh && tb.live) tb.live.innerHTML = tb.fresh.innerHTML;
+
+        const pg = pick('pagination-container');
+        if (pg.fresh && pg.live) pg.live.innerHTML = pg.fresh.innerHTML;
+
+        const sc = pick('studentcount');
+        if (sc.fresh && sc.live) sc.live.textContent = sc.fresh.textContent;
+
+        const stc = pick('subjectTeachersContainer');
+        if (stc.fresh && subjectTeachersContainer) {
+            subjectTeachersContainer.innerHTML = stc.fresh.innerHTML;
+            const count = subjectTeachersContainer.querySelectorAll('.subject-checkbox').length;
+            if (subjectTeacherCount) subjectTeacherCount.textContent = count;
+            if (subjectTeachersCard) subjectTeachersCard.style.display = count > 0 ? 'block' : 'none';
+        }
+
+        document.querySelectorAll('.subject-checkbox').forEach(cb => cb.addEventListener('change', updateSubjectCount));
+        updateSubjectCount();
+        setupPaginationLinks();
+    })
+    .catch(err => {
+        if (tableBody) tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
+    });
+}
+
+// ============================================================================
+// ADMISSION NO DROPDOWN HELPER
+// ============================================================================
+function updateAdmissionNoOptions(students) {
+    const select = document.getElementById('idadmission');
+    if (!select) return;
+    select.innerHTML = '<option value="ALL">Select Admission No</option>';
+    [...new Set(students.map(s => s.admissionno).filter(Boolean))].sort().forEach(no => {
+        const opt = document.createElement('option');
+        opt.value = no;
+        opt.text  = no;
+        select.appendChild(opt);
+    });
 }
 
 // ============================================================================
@@ -644,26 +827,37 @@ async function registerSelectedStudentsBatch() {
     const subjectClasses = getSelectedSubjectClasses();
     const sessionId      = document.getElementById('idsession').value;
 
-    if (!studentIds.length)    return showSweetAlert('No Students Selected', 'Please select at least one student.', 'warning', false);
-    if (!subjectClasses.length)return showSweetAlert('No Subjects Selected', 'Please select at least one subject.', 'warning', false);
-    if (sessionId === 'ALL')   return showSweetAlert('Session Required', 'Please select a session.', 'warning', false);
+    if (!studentIds.length)     return showSweetAlert('No Students Selected',  'Please select at least one student.',  'warning', false);
+    if (!subjectClasses.length) return showSweetAlert('No Subjects Selected',  'Please select at least one subject.',  'warning', false);
+    if (sessionId === 'ALL')    return showSweetAlert('Session Required',       'Please select a session.',             'warning', false);
 
     const ok = await Swal.fire({
         title: 'Confirm Registration',
-        html : `<div class="text-center"><span style="font-size:3rem;">📚</span><p class="mt-2">Register <strong>${studentIds.length}</strong> student(s) for <strong>${subjectClasses.length}</strong> subject(s)?</p></div>`,
-        icon : 'question', showCancelButton: true, confirmButtonColor: '#28a745', cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Yes, register!',
+        html : `<div class="text-center"><span style="font-size:3rem;">📚</span>
+                <p class="mt-2">Register <strong>${studentIds.length}</strong> student(s) for <strong>${subjectClasses.length}</strong> subject(s)?</p></div>`,
+        icon : 'question', showCancelButton: true,
+        confirmButtonColor: '#28a745', cancelButtonColor: '#6c757d', confirmButtonText: 'Yes, register!',
     });
     if (!ok.isConfirmed) return;
 
     setSpinner(true);
     try {
-        const res = await apiFetch(ROUTES.batchRegister, 'POST', { studentids: studentIds, subjectclasses: subjectClasses, sessionid: parseInt(sessionId) });
-        if (res.success) { showSweetAlert('Registration Successful!', res.message, 'success', true); setTimeout(() => location.reload(), 2000); }
-        else showSweetAlert('Registration Failed', res.message || 'Some students could not be registered.', 'error', false);
+        const res = await apiFetch(ROUTES.batchRegister, 'POST', {
+            studentids    : studentIds,
+            subjectclasses: subjectClasses,
+            sessionid     : parseInt(sessionId),
+        });
+        if (res.success) {
+            showSweetAlert('Registration Successful!', res.message, 'success', true);
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            showSweetAlert('Registration Failed', res.message || 'Some students could not be registered.', 'error', false);
+        }
     } catch (err) {
         showSweetAlert('Error', 'Registration failed: ' + err.message, 'error', false);
-    } finally { setSpinner(false); }
+    } finally {
+        setSpinner(false);
+    }
 }
 
 // ============================================================================
@@ -674,22 +868,19 @@ function openUnregisterModal() {
     const subjectClasses = getSelectedSubjectClasses();
     const sessionId      = document.getElementById('idsession').value;
 
-    if (!studentIds.length)    return showSweetAlert('No Students Selected', 'Please select at least one student.', 'warning', false);
-    if (!subjectClasses.length)return showSweetAlert('No Subjects Selected', 'Please select at least one subject.', 'warning', false);
-    if (sessionId === 'ALL')   return showSweetAlert('Session Required', 'Please select a session.', 'warning', false);
+    if (!studentIds.length)     return showSweetAlert('No Students Selected',  'Please select at least one student.',  'warning', false);
+    if (!subjectClasses.length) return showSweetAlert('No Subjects Selected',  'Please select at least one subject.',  'warning', false);
+    if (sessionId === 'ALL')    return showSweetAlert('Session Required',       'Please select a session.',             'warning', false);
 
-    // Populate summary pills
     document.getElementById('snapshotStudentCount').textContent = `${studentIds.length} student${studentIds.length !== 1 ? 's' : ''}`;
     document.getElementById('snapshotSubjectCount').textContent = `${subjectClasses.length} subject${subjectClasses.length !== 1 ? 's' : ''}`;
 
-    // Reset form
     const nameInput = document.getElementById('snapshotNameInput');
     nameInput.value = '';
     nameInput.classList.remove('is-invalid');
     document.getElementById('snapshotNotesInput').value = '';
     document.getElementById('snapshotNotesCount').textContent = '0';
 
-    // Suggest a default name with date + time
     const now     = new Date();
     const dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
@@ -699,27 +890,23 @@ function openUnregisterModal() {
 }
 
 // ============================================================================
-// PROCEED UNREGISTER (called from confirm button in snapshot modal)
+// PROCEED UNREGISTER
 // ============================================================================
 async function proceedUnregister() {
     const nameInput  = document.getElementById('snapshotNameInput');
     const notesInput = document.getElementById('snapshotNotesInput');
     const name       = nameInput.value.trim();
 
-    if (!name) {
-        nameInput.classList.add('is-invalid');
-        return;
-    }
+    if (!name) { nameInput.classList.add('is-invalid'); return; }
     nameInput.classList.remove('is-invalid');
 
     const studentIds     = getSelectedStudentIds();
     const subjectClasses = getSelectedSubjectClasses();
     const sessionId      = document.getElementById('idsession').value;
 
-    // Close the naming modal
     bootstrap.Modal.getInstance(document.getElementById('snapshotNameModal'))?.hide();
-
     setSpinner(true);
+
     try {
         const res = await apiFetch(ROUTES.unregister, 'DELETE', {
             studentids    : studentIds,
@@ -741,7 +928,9 @@ async function proceedUnregister() {
         }
     } catch (err) {
         showSweetAlert('Error', 'Unregistration failed: ' + err.message, 'error', false);
-    } finally { setSpinner(false); }
+    } finally {
+        setSpinner(false);
+    }
 }
 
 // ============================================================================
@@ -753,18 +942,27 @@ async function loadRegisteredClasses() {
     const container = document.getElementById('registeredClassesContent');
 
     if (classId === 'ALL' || sessionId === 'ALL') {
-        container.innerHTML = `<div class="text-center py-5"><i class="ri-error-warning-line ri-3x text-warning"></i><p class="text-muted mt-3 mb-0">Please select a class and session first.</p></div>`;
+        container.innerHTML = `<div class="text-center py-5">
+            <i class="ri-error-warning-line ri-3x text-warning"></i>
+            <p class="text-muted mt-3 mb-0">Please select a class and session first.</p></div>`;
         return;
     }
 
-    container.innerHTML = `<div class="text-center py-5"><div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div><p class="mt-3 text-muted">Loading…</p></div>`;
+    container.innerHTML = `<div class="text-center py-5">
+        <div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div>
+        <p class="mt-3 text-muted">Loading…</p></div>`;
 
     try {
-        const res  = await fetch(ROUTES.getRegistered + '?' + new URLSearchParams({ class_id: classId, session_id: sessionId }), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
+        const res  = await fetch(
+            ROUTES.getRegistered + '?' + new URLSearchParams({ class_id: classId, session_id: sessionId }),
+            { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } }
+        );
         const data = await res.json();
 
         if (!data.success || !data.data.length) {
-            container.innerHTML = `<div class="text-center py-5"><i class="ri-information-line ri-3x text-muted"></i><p class="text-muted mt-3 mb-0">No registered classes found.</p></div>`;
+            container.innerHTML = `<div class="text-center py-5">
+                <i class="ri-information-line ri-3x text-muted"></i>
+                <p class="text-muted mt-3 mb-0">No registered classes found.</p></div>`;
             return;
         }
 
@@ -783,9 +981,12 @@ async function loadRegisteredClasses() {
             let teachersHtml = '<span class="text-muted">—</span>';
             if (row.teachers?.length) {
                 teachersHtml = '<div class="d-flex flex-wrap gap-2">' + row.teachers.map(t => {
-                    const pic = t.picture ? `${AVATAR_URL}/staff_avatars/${t.picture}` : `${AVATAR_URL}/staff_avatars/default.png`;
+                    const pic = t.picture
+                        ? `${AVATAR_URL}/staff_avatars/${t.picture}`
+                        : `${AVATAR_URL}/staff_avatars/default.png`;
                     return `<div class="d-flex align-items-center gap-2 bg-white rounded-3 px-2 py-1 shadow-sm" style="border:1px solid #e0e0e0;">
-                        <img src="${pic}" class="rounded-circle" style="width:32px;height:32px;object-fit:cover;" onerror="this.src='${AVATAR_URL}/staff_avatars/default.png'">
+                        <img src="${pic}" class="rounded-circle" style="width:32px;height:32px;object-fit:cover;"
+                             onerror="this.src='${AVATAR_URL}/staff_avatars/default.png'">
                         <span class="fw-medium" style="font-size:.85rem;">${escapeHtml(t.name)}</span>
                     </div>`;
                 }).join('') + '</div>';
@@ -802,7 +1003,7 @@ async function loadRegisteredClasses() {
             </tr>`;
         });
 
-        html += `</tbody></table></div>`;
+        html += '</tbody></table></div>';
         container.innerHTML = html;
     } catch (err) {
         container.innerHTML = `<div class="alert alert-danger m-3">Failed to load data: ${err.message}</div>`;
@@ -839,15 +1040,18 @@ async function loadArchivedPage(page) {
     const spinner   = document.getElementById('archiveSpinner');
     const container = document.getElementById('snapshotCardsContainer');
 
-    spinner.classList.remove('d-none');
-    container.innerHTML = `<div class="text-center py-4"><div class="spinner-border spinner-border-sm text-warning me-2"></div> Loading snapshots…</div>`;
+    spinner?.classList.remove('d-none');
+    container.innerHTML = `<div class="text-center py-4">
+        <div class="spinner-border spinner-border-sm text-warning me-2"></div> Loading snapshots…</div>`;
 
     try {
         const params = new URLSearchParams({ class_id: classId, session_id: sessionId, page, per_page: perPage });
-        if (termId) params.set('term_id', termId);
-        if (search) params.set('search', search);
+        if (termId)  params.set('term_id', termId);
+        if (search)  params.set('search', search);
 
-        const res  = await fetch(ROUTES.getArchived + '?' + params.toString(), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
+        const res  = await fetch(ROUTES.getArchived + '?' + params.toString(), {
+            headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
+        });
         const data = await res.json();
 
         if (!data.success) {
@@ -859,22 +1063,21 @@ async function loadArchivedPage(page) {
         renderSnapshotCards(data.data);
         renderArchivePagination(data.meta);
         updateArchiveMeta(data.meta);
-
     } catch (err) {
         container.innerHTML = `<div class="text-center text-danger py-4">Error: ${err.message}</div>`;
     } finally {
-        spinner.classList.add('d-none');
+        spinner?.classList.add('d-none');
     }
 }
 
-// ── Render snapshot cards ────────────────────────────────────────────────────
 function renderSnapshotCards(rows) {
-    const container = document.getElementById('snapshotCardsContainer');
+    const container  = document.getElementById('snapshotCardsContainer');
     const restoreBtn = document.getElementById('restoreSelectedBtn');
     const deleteBtn  = document.getElementById('deleteSelectedBtn');
 
     if (!rows.length) {
-        container.innerHTML = `<div class="text-center text-muted py-5"><i class="ri-archive-line ri-3x d-block mb-2"></i>No unregistration snapshots found.</div>`;
+        container.innerHTML = `<div class="text-center text-muted py-5">
+            <i class="ri-archive-line ri-3x d-block mb-2"></i>No unregistration snapshots found.</div>`;
         restoreBtn?.classList.add('d-none');
         deleteBtn?.classList.add('d-none');
         return;
@@ -883,21 +1086,21 @@ function renderSnapshotCards(rows) {
     restoreBtn?.classList.add('d-none');
     deleteBtn?.classList.add('d-none');
 
-    // Group rows by snapshot_name to create "batch" cards
+    // Group by snapshot_name + subjectclassid + termid
     const groups = {};
     rows.forEach(row => {
         const key = `${row.snapshot_name}__${row.subjectclassid}__${row.termid}`;
         if (!groups[key]) groups[key] = { ...row, subjects: [] };
         groups[key].subjects.push({
-            subjectname    : row.subjectname,
-            subjectcode    : row.subjectcode,
-            staffname      : row.staffname,
-            student_count  : row.student_count,
-            subjectclassid : row.subjectclassid,
-            termid         : row.termid,
-            sessionid      : row.sessionid,
-            staffid        : row.staffid,
-            archive_id     : row.archive_id,
+            subjectname   : row.subjectname,
+            subjectcode   : row.subjectcode,
+            staffname     : row.staffname,
+            student_count : row.student_count,
+            subjectclassid: row.subjectclassid,
+            termid        : row.termid,
+            sessionid     : row.sessionid,
+            staffid       : row.staffid,
+            archive_id    : row.archive_id,
         });
     });
 
@@ -913,12 +1116,12 @@ function renderSnapshotCards(rows) {
         ).join('');
 
         const metaEncoded = encodeURIComponent(JSON.stringify({
-            snapshot_name  : group.snapshot_name,
-            subjectclassid : group.subjectclassid,
-            termid         : group.termid,
-            sessionid      : group.sessionid,
-            staffid        : group.staffid,
-            archive_id     : group.archive_id,
+            snapshot_name : group.snapshot_name,
+            subjectclassid: group.subjectclassid,
+            termid        : group.termid,
+            sessionid     : group.sessionid,
+            staffid       : group.staffid,
+            archive_id    : group.archive_id,
         }));
 
         html += `
@@ -928,7 +1131,6 @@ function renderSnapshotCards(rows) {
                  onmouseenter="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.12)';"
                  onmouseleave="this.style.transform='';this.style.boxShadow='';">
                 <div class="card-body">
-                    {{-- Header --}}
                     <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
                         <div class="flex-grow-1 min-w-0">
                             <h6 class="fw-semibold mb-0 text-truncate" title="${escapeHtml(group.snapshot_name)}">
@@ -936,31 +1138,19 @@ function renderSnapshotCards(rows) {
                             </h6>
                             <small class="text-muted">${unregDate}</small>
                         </div>
-                        <div class="flex-shrink-0 d-flex gap-1">
-                            <span class="badge bg-danger-subtle text-danger rounded-pill">
-                                ${group.student_count} student${group.student_count !== 1 ? 's' : ''}
-                            </span>
-                        </div>
+                        <span class="badge bg-danger-subtle text-danger rounded-pill flex-shrink-0">
+                            ${group.student_count} student${group.student_count !== 1 ? 's' : ''}
+                        </span>
                     </div>
-
-                    {{-- Notes --}}
-                    ${group.snapshot_notes ? `<p class="text-muted small fst-italic mb-2" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">"${escapeHtml(group.snapshot_notes)}"</p>` : ''}
-
-                    {{-- Subject pills --}}
+                    ${group.snapshot_notes
+                        ? `<p class="text-muted small fst-italic mb-2" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">"${escapeHtml(group.snapshot_notes)}"</p>`
+                        : ''}
                     <div class="mb-2">${subjectPills}</div>
-
-                    {{-- Footer meta --}}
                     <div class="d-flex justify-content-between align-items-center mt-auto pt-1 border-top">
-                        <small class="text-muted">
-                            <i class="ri-user-star-line me-1"></i>${escapeHtml(group.staffname ?? '—')}
-                        </small>
-                        <small class="text-muted">
-                            <span class="badge bg-warning-subtle text-warning-emphasis">${escapeHtml(group.termname)}</span>
-                        </small>
+                        <small class="text-muted"><i class="ri-user-star-line me-1"></i>${escapeHtml(group.staffname ?? '—')}</small>
+                        <small class="text-muted"><span class="badge bg-warning-subtle text-warning-emphasis">${escapeHtml(group.termname)}</span></small>
                     </div>
                 </div>
-
-                {{-- Card actions bar --}}
                 <div class="card-footer bg-light border-0 d-flex gap-2 py-2">
                     <button class="btn btn-sm btn-outline-primary flex-grow-1" onclick="event.stopPropagation();openSnapshotDetail('${metaEncoded}');">
                         <i class="ri-eye-line me-1"></i> View
@@ -980,37 +1170,33 @@ function renderSnapshotCards(rows) {
     container.innerHTML = html;
 }
 
-// ── Pagination helpers ────────────────────────────────────────────────────────
 function renderArchivePagination(meta) {
     const container = document.getElementById('archivePagination');
     if (!meta || meta.last_page <= 1) { container.innerHTML = ''; return; }
 
-    let html = `<button class="btn btn-sm btn-outline-secondary ${meta.current_page === 1 ? 'disabled' : ''}" onclick="loadArchivedPage(${meta.current_page - 1})">‹</button>`;
     const delta = 3;
+    let html = `<button class="btn btn-sm btn-outline-secondary ${meta.current_page === 1 ? 'disabled' : ''}"
+                        onclick="loadArchivedPage(${meta.current_page - 1})">‹</button>`;
     for (let p = 1; p <= meta.last_page; p++) {
         if (p === 1 || p === meta.last_page || (p >= meta.current_page - delta && p <= meta.current_page + delta)) {
-            html += `<button class="btn btn-sm ${p === meta.current_page ? 'btn-warning' : 'btn-outline-secondary'}" onclick="loadArchivedPage(${p})">${p}</button>`;
+            html += `<button class="btn btn-sm ${p === meta.current_page ? 'btn-warning' : 'btn-outline-secondary'}"
+                             onclick="loadArchivedPage(${p})">${p}</button>`;
         } else if (p === meta.current_page - delta - 1 || p === meta.current_page + delta + 1) {
             html += `<span class="btn btn-sm btn-outline-secondary disabled">…</span>`;
         }
     }
-    html += `<button class="btn btn-sm btn-outline-secondary ${meta.current_page === meta.last_page ? 'disabled' : ''}" onclick="loadArchivedPage(${meta.current_page + 1})">›</button>`;
+    html += `<button class="btn btn-sm btn-outline-secondary ${meta.current_page === meta.last_page ? 'disabled' : ''}"
+                     onclick="loadArchivedPage(${meta.current_page + 1})">›</button>`;
     container.innerHTML = html;
 }
 
 function updateArchiveMeta(meta) {
     const el = document.getElementById('archiveMeta');
-    if (!meta || !meta.total) { el.textContent = ''; return; }
+    if (!meta || !meta.total) { if (el) el.textContent = ''; return; }
     const from = (meta.current_page - 1) * meta.per_page + 1;
     const to   = Math.min(meta.current_page * meta.per_page, meta.total);
     el.textContent = `Showing ${from}–${to} of ${meta.total} snapshots`;
 }
-
-document.getElementById('archiveSearch')?.addEventListener('input', function () {
-    clearTimeout(archiveSearchTimer);
-    archiveSearchTimer = setTimeout(() => loadArchivedPage(1), 400);
-});
-document.getElementById('archiveTermFilter')?.addEventListener('change', () => loadArchivedPage(1));
 
 // ============================================================================
 // SNAPSHOT DETAIL MODAL
@@ -1018,34 +1204,32 @@ document.getElementById('archiveTermFilter')?.addEventListener('change', () => l
 async function openSnapshotDetail(metaEncoded) {
     currentSnapshotMeta = JSON.parse(decodeURIComponent(metaEncoded));
 
-    document.getElementById('snapshotDetailTitle').textContent   = currentSnapshotMeta.snapshot_name;
+    document.getElementById('snapshotDetailTitle').textContent    = currentSnapshotMeta.snapshot_name;
     document.getElementById('snapshotDetailSubtitle').textContent = '';
     document.getElementById('snapshotNotesBanner')?.classList.add('d-none');
 
-    // Reset search
     const searchInput = document.getElementById('detailSearchInput');
     if (searchInput) searchInput.value = '';
 
     document.getElementById('snapshotDetailBody').innerHTML =
         '<tr><td colspan="10" class="text-center py-4"><div class="spinner-border spinner-border-sm me-2"></div>Loading students…</td></tr>';
-
-    // Hide per-row selection buttons until loaded
     document.getElementById('detailRestoreSelectedBtn')?.classList.add('d-none');
     document.getElementById('detailDeleteSelectedBtn')?.classList.add('d-none');
 
-    const modal = new bootstrap.Modal(document.getElementById('snapshotDetailModal'));
-    modal.show();
+    new bootstrap.Modal(document.getElementById('snapshotDetailModal')).show();
 
     try {
         const params = new URLSearchParams({
-            snapshot_name  : currentSnapshotMeta.snapshot_name,
-            subjectclassid : currentSnapshotMeta.subjectclassid,
-            termid         : currentSnapshotMeta.termid,
-            sessionid      : currentSnapshotMeta.sessionid,
-            staffid        : currentSnapshotMeta.staffid,
+            snapshot_name : currentSnapshotMeta.snapshot_name,
+            subjectclassid: currentSnapshotMeta.subjectclassid,
+            termid        : currentSnapshotMeta.termid,
+            sessionid     : currentSnapshotMeta.sessionid,
+            staffid       : currentSnapshotMeta.staffid,
         });
 
-        const res  = await fetch(ROUTES.getSnapshot + '?' + params.toString(), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
+        const res  = await fetch(ROUTES.getSnapshot + '?' + params.toString(), {
+            headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
+        });
         const data = await res.json();
 
         if (!data.success) {
@@ -1056,10 +1240,8 @@ async function openSnapshotDetail(metaEncoded) {
 
         currentSnapshotRows = data.rows;
 
-        // Show notes banner
         if (data.snapshot_notes) {
-            const banner = document.getElementById('snapshotNotesBanner');
-            banner?.classList.remove('d-none');
+            document.getElementById('snapshotNotesBanner')?.classList.remove('d-none');
             document.getElementById('snapshotNotesText').textContent = data.snapshot_notes;
         }
 
@@ -1067,7 +1249,6 @@ async function openSnapshotDetail(metaEncoded) {
             `${data.total_students} student${data.total_students !== 1 ? 's' : ''} in this snapshot`;
 
         renderSnapshotDetailTable(data.rows, data.assessment_headers);
-
     } catch (err) {
         document.getElementById('snapshotDetailBody').innerHTML =
             `<tr><td colspan="10" class="text-center text-danger py-4">Error: ${err.message}</td></tr>`;
@@ -1075,9 +1256,7 @@ async function openSnapshotDetail(metaEncoded) {
 }
 
 function renderSnapshotDetailTable(rows, assessmentHeaders) {
-    // Build dynamic header columns
     const headerRow = document.getElementById('snapshotDetailHeaderRow');
-    // Remove old dynamic columns (leave first 4: checkbox, student, adm, gender)
     while (headerRow.cells.length > 4) headerRow.deleteCell(headerRow.cells.length - 1);
 
     (assessmentHeaders || []).forEach(a => {
@@ -1085,12 +1264,10 @@ function renderSnapshotDetailTable(rows, assessmentHeaders) {
         th.textContent = a.assessment_name || `Assessment ${a.assessment_id}`;
         headerRow.appendChild(th);
     });
+    const totalTh = document.createElement('th');
+    totalTh.textContent = 'Total';
+    headerRow.appendChild(totalTh);
 
-    const th = document.createElement('th');
-    th.textContent = 'Total';
-    headerRow.appendChild(th);
-
-    // Build body rows
     let html = '';
     rows.forEach(row => {
         const name    = [row.lastname, row.firstname, row.othername].filter(Boolean).join(' ');
@@ -1099,26 +1276,21 @@ function renderSnapshotDetailTable(rows, assessmentHeaders) {
             ? `${AVATAR_URL}/student_avatars/${picFile}`
             : `${AVATAR_URL}/student_avatars/unnamed.jpg`;
 
-        // Gender: solid blue for Male, solid pink/rose for Female — always high contrast
         const genderBadge = row.gender === 'Female'
             ? `<span class="badge text-white" style="background:#e84393;">${escapeHtml(row.gender)}</span>`
             : `<span class="badge text-white" style="background:#1a6fd4;">${escapeHtml(row.gender ?? '—')}</span>`;
 
         let scoresCells = '';
         let total       = 0;
-
         (assessmentHeaders || []).forEach(a => {
             const score = (row.assessment_scores || []).find(s => s.assessment_id == a.assessment_id);
             const val   = score ? parseFloat(score.score) : 0;
             total += val;
             scoresCells += `<td class="text-center fw-medium">${val > 0 ? val.toFixed(1) : '<span class="text-muted">—</span>'}</td>`;
         });
-
         scoresCells += `<td class="text-center fw-bold ${total > 0 ? 'text-success' : 'text-muted'}">${total > 0 ? total.toFixed(1) : '—'}</td>`;
 
-        // Store searchable text as data attribute for client-side filtering
         const searchKey = `${name} ${row.admissionno ?? ''}`.toLowerCase();
-
         html += `<tr data-archive-id="${row.archive_id}" data-search="${escapeHtml(searchKey)}">
             <td><div class="form-check mb-0"><input class="form-check-input detail-chk" type="checkbox" value="${row.archive_id}"></div></td>
             <td>
@@ -1134,16 +1306,14 @@ function renderSnapshotDetailTable(rows, assessmentHeaders) {
         </tr>`;
     });
 
-    document.getElementById('snapshotDetailBody').innerHTML = html || '<tr><td colspan="10" class="text-center text-muted py-4">No students found.</td></tr>';
+    document.getElementById('snapshotDetailBody').innerHTML =
+        html || '<tr><td colspan="10" class="text-center text-muted py-4">No students found.</td></tr>';
 
-    // Wire up checkboxes
     document.getElementById('detailCheckAll')?.addEventListener('change', function () {
         document.querySelectorAll('.detail-chk').forEach(cb => cb.checked = this.checked);
         toggleDetailButtons();
     });
-    document.querySelectorAll('.detail-chk').forEach(cb => {
-        cb.addEventListener('change', toggleDetailButtons);
-    });
+    document.querySelectorAll('.detail-chk').forEach(cb => cb.addEventListener('change', toggleDetailButtons));
 }
 
 function toggleDetailButtons() {
@@ -1152,19 +1322,15 @@ function toggleDetailButtons() {
     document.getElementById('detailDeleteSelectedBtn')?.classList.toggle('d-none', !any);
 }
 
-// Client-side search filter for the snapshot detail table
 function filterDetailRows(query) {
     const q     = query.toLowerCase().trim();
     const rows  = document.querySelectorAll('#snapshotDetailBody tr[data-search]');
     let visible = 0;
-
     rows.forEach(tr => {
         const match = !q || tr.dataset.search.includes(q);
         tr.style.display = match ? '' : 'none';
         if (match) visible++;
     });
-
-    // Update the meta count to show filtered vs total
     const total = currentSnapshotRows.length;
     const meta  = document.getElementById('detailStudentMeta');
     if (meta) {
@@ -1175,12 +1341,11 @@ function filterDetailRows(query) {
 }
 
 // ============================================================================
-// RESTORE — from snapshot detail modal
+// RESTORE
 // ============================================================================
 async function restoreEntireSnapshot() {
     if (!currentSnapshotRows.length) return;
-    const ids = currentSnapshotRows.map(r => r.archive_id);
-    await doRestore(ids, 'all students in this snapshot');
+    await doRestore(currentSnapshotRows.map(r => r.archive_id), 'all students in this snapshot');
 }
 
 async function restoreDetailSelected() {
@@ -1193,13 +1358,12 @@ async function doRestore(archiveIds, label) {
     const ok = await Swal.fire({
         title: 'Restore Registration?',
         html : `<p>Restore <strong>${label}</strong>? Their original scores will be recovered.</p>`,
-        icon : 'question', showCancelButton: true, confirmButtonColor: '#28a745', confirmButtonText: 'Yes, restore!'
+        icon : 'question', showCancelButton: true, confirmButtonColor: '#28a745', confirmButtonText: 'Yes, restore!',
     });
     if (!ok.isConfirmed) return;
 
     const spinner = document.getElementById('detailSpinner');
     spinner?.classList.remove('d-none');
-
     try {
         const res = await apiFetch(ROUTES.restore, 'POST', { archive_ids: archiveIds });
         if (res.success || res.total_restored > 0) {
@@ -1216,28 +1380,24 @@ async function doRestore(archiveIds, label) {
     }
 }
 
-// ── Restore from card button (entire snapshot group) ─────────────────────────
 async function restoreSingleSnapshot(metaEncoded) {
     const meta = JSON.parse(decodeURIComponent(metaEncoded));
-
     const ok = await Swal.fire({
         title: 'Restore Snapshot?',
         html : `<p>Restore all students in snapshot "<strong>${escapeHtml(meta.snapshot_name)}</strong>"?<br>Original scores will be recovered.</p>`,
-        icon : 'question', showCancelButton: true, confirmButtonColor: '#28a745', confirmButtonText: 'Yes, restore all!'
+        icon : 'question', showCancelButton: true, confirmButtonColor: '#28a745', confirmButtonText: 'Yes, restore all!',
     });
     if (!ok.isConfirmed) return;
 
     const spinner = document.getElementById('archiveSpinner');
     spinner?.classList.remove('d-none');
-
     try {
-        // Load the archive_ids for this snapshot group first
         const params = new URLSearchParams({
-            snapshot_name  : meta.snapshot_name,
-            subjectclassid : meta.subjectclassid,
-            termid         : meta.termid,
-            sessionid      : meta.sessionid,
-            staffid        : meta.staffid,
+            snapshot_name : meta.snapshot_name,
+            subjectclassid: meta.subjectclassid,
+            termid        : meta.termid,
+            sessionid     : meta.sessionid,
+            staffid       : meta.staffid,
         });
         const detailRes  = await fetch(ROUTES.getSnapshot + '?' + params.toString(), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
         const detailData = await detailRes.json();
@@ -1249,7 +1409,6 @@ async function restoreSingleSnapshot(metaEncoded) {
 
         const ids = detailData.rows.map(r => r.archive_id);
         const res = await apiFetch(ROUTES.restore, 'POST', { archive_ids: ids });
-
         if (res.success || res.total_restored > 0) {
             showSweetAlert('Restored!', `${res.total_restored || ids.length} registration(s) restored.`, 'success', true);
             loadArchivedPage(archiveCurrentPage);
@@ -1263,27 +1422,27 @@ async function restoreSingleSnapshot(metaEncoded) {
     }
 }
 
-// ── Delete entire snapshot group ─────────────────────────────────────────────
+// ============================================================================
+// DELETE SNAPSHOTS
+// ============================================================================
 async function deleteSnapshotGroup(metaEncoded) {
     const meta = JSON.parse(decodeURIComponent(metaEncoded));
-
     const ok = await Swal.fire({
         title: 'Delete Snapshot?',
         html : `<p class="text-danger">Permanently delete snapshot "<strong>${escapeHtml(meta.snapshot_name)}</strong>"?<br>This cannot be undone.</p>`,
-        icon : 'error', showCancelButton: true, confirmButtonColor: '#dc3545', confirmButtonText: 'Yes, delete permanently'
+        icon : 'error', showCancelButton: true, confirmButtonColor: '#dc3545', confirmButtonText: 'Yes, delete permanently',
     });
     if (!ok.isConfirmed) return;
 
     const spinner = document.getElementById('archiveSpinner');
     spinner?.classList.remove('d-none');
-
     try {
         const params = new URLSearchParams({
-            snapshot_name  : meta.snapshot_name,
-            subjectclassid : meta.subjectclassid,
-            termid         : meta.termid,
-            sessionid      : meta.sessionid,
-            staffid        : meta.staffid,
+            snapshot_name : meta.snapshot_name,
+            subjectclassid: meta.subjectclassid,
+            termid        : meta.termid,
+            sessionid     : meta.sessionid,
+            staffid       : meta.staffid,
         });
         const detailRes  = await fetch(ROUTES.getSnapshot + '?' + params.toString(), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
         const detailData = await detailRes.json();
@@ -1295,7 +1454,6 @@ async function deleteSnapshotGroup(metaEncoded) {
 
         const ids = detailData.rows.map(r => r.archive_id);
         const res = await apiFetch(ROUTES.permanentDelete, 'DELETE', { archive_ids: ids });
-
         if (res.success) {
             showSweetAlert('Deleted', `${res.deleted || ids.length} record(s) permanently deleted.`, 'success', false);
             loadArchivedPage(archiveCurrentPage);
@@ -1309,7 +1467,6 @@ async function deleteSnapshotGroup(metaEncoded) {
     }
 }
 
-// ── Delete selected from detail modal ────────────────────────────────────────
 async function deleteDetailSelected() {
     const ids = [...document.querySelectorAll('.detail-chk:checked')].map(cb => parseInt(cb.value));
     if (!ids.length) return;
@@ -1317,13 +1474,12 @@ async function deleteDetailSelected() {
     const ok = await Swal.fire({
         title: 'Permanently Delete?',
         html : `<p class="text-danger">Delete <strong>${ids.length}</strong> record(s) permanently?</p>`,
-        icon : 'error', showCancelButton: true, confirmButtonColor: '#dc3545', confirmButtonText: 'Yes, delete permanently'
+        icon : 'error', showCancelButton: true, confirmButtonColor: '#dc3545', confirmButtonText: 'Yes, delete permanently',
     });
     if (!ok.isConfirmed) return;
 
     const spinner = document.getElementById('detailSpinner');
     spinner?.classList.remove('d-none');
-
     try {
         const res = await apiFetch(ROUTES.permanentDelete, 'DELETE', { archive_ids: ids });
         if (res.success) {
@@ -1340,7 +1496,7 @@ async function deleteDetailSelected() {
     }
 }
 
-// Stubs for the top-level restore/delete buttons in archive modal (kept for UI symmetry)
-async function restoreSelected()       { /* snapshot-level restore now via cards */ }
-async function permanentDeleteSelected() { /* snapshot-level delete now via cards */ }
+// Stubs kept for HTML button symmetry (actions now handled via cards)
+async function restoreSelected()        { /* handled per-card via restoreSingleSnapshot() */ }
+async function permanentDeleteSelected() { /* handled per-card via deleteSnapshotGroup()  */ }
 </script>
