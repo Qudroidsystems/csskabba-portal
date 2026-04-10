@@ -581,37 +581,6 @@ function unregisterSelectedStudentsBatch() {
     });
 }
 
-
-
-
-// Store subject-teacher mapping from the Subject Teachers section
-let subjectTeacherMapping = {};
-
-// Function to build subject-teacher mapping from the checkboxes
-function buildSubjectTeacherMapping() {
-    const mapping = {};
-    document.querySelectorAll('.subject-checkbox').forEach(checkbox => {
-        const label = checkbox.closest('.form-check')?.querySelector('.form-check-label');
-        if (label) {
-            const text = label.textContent.trim();
-            // Extract subject name and teacher from format: "Subject Name (Teacher Name)"
-            const match = text.match(/^(.*?)\s*\((.*?)\)$/);
-            if (match) {
-                const subjectName = match[1].trim();
-                const teacherName = match[2].trim();
-                const termId = checkbox.dataset.termid;
-                const key = `${subjectName}|${termId}`;
-                mapping[key] = teacherName;
-            }
-        }
-    });
-    return mapping;
-}
-// Store current registered classes data for printing
-let currentRegisteredClassesData = null;
-
-// Modified loadRegisteredClasses to store data for printing
-// Modified loadRegisteredClasses function
 function loadRegisteredClasses() {
     if (!ensureAxios()) {
         console.error('Axios not initialized.');
@@ -660,11 +629,7 @@ function loadRegisteredClasses() {
         return;
     }
 
-    modalContent.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div><p class="mt-3 text-muted">Loading registration data...</p></div>';
-
-    // Build subject-teacher mapping from the Subject Teachers section
-    const teacherMapping = buildSubjectTeacherMapping();
-    console.log('Teacher Mapping:', teacherMapping);
+    modalContent.innerHTML = '<p class="text-center">Loading registered classes...</p>';
 
     axios.get('/subjects/registered-classes', {
         params: { class_id: classId, session_id: sessionId },
@@ -674,98 +639,33 @@ function loadRegisteredClasses() {
         },
         timeout: 15000
     }).then(response => {
-        console.log('Registered classes response:', response.data);
-
+        console.log('Registered classes response:', JSON.stringify(response.data, null, 2));
         if (response.data.success) {
             const classes = response.data.data;
-
-            // Store data for printing with proper teacher mapping
-            currentRegisteredClassesData = {
-                data: classes,
-                class_id: classId,
-                session_id: sessionId,
-                class_name: classes[0]?.class_name || 'N/A',
-                arm_name: classes[0]?.arm_name || 'N/A',
-                session_name: classes[0]?.session_name || 'N/A',
-                teacher_mapping: teacherMapping  // Store the mapping for PDF
-            };
+            let html = '<div class="table-responsive"><table class="table table-bordered table-striped">';
+            html += '<thead><tr><th>Class</th><th>Arm</th><th>Session</th><th>Term</th><th>Students</th><th>Subjects</th><th>Teachers</th></tr></thead><tbody>';
 
             if (!classes || classes.length === 0) {
-                modalContent.innerHTML = '<div class="text-center py-5"><i class="ri-information-line ri-3x text-muted"></i><p class="text-muted mt-3 mb-0">No registered classes found.</p></div>';
-                return;
+                html += '<tr><td colspan="7" class="text-center">No registered classes found.</td></tr>';
+            } else {
+                classes.forEach(cls => {
+                    html += `<tr>
+                        <td>${cls.class_name || '-'}</td>
+                        <td>${cls.arm_name || '-'}</td>
+                        <td>${cls.session_name || '-'}</td>
+                        <td>${cls.term_name || '-'}</td>
+                        <td>${cls.student_count || 0}</td>
+                        <td>${cls.subjects || '-'}</td>
+                        <td>${cls.teachers || '-'}</td>
+                    </tr>`;
+                });
             }
 
-            // Render the card-based UI with proper teacher mapping
-            let html = '';
-
-            classes.forEach((termGroup, index) => {
-                const subjectsArray = termGroup.subjects ? termGroup.subjects.split(',').map(s => s.trim()) : [];
-                const totalStudents = termGroup.student_count || 0;
-                const totalSubjects = termGroup.subject_count || subjectsArray.length;
-                const termId = getTermIdFromName(termGroup.term_name); // You'll need to map term name to ID
-
-                html += `
-                <div class="term-card mb-4" style="background:#fff; border-radius:12px; border:0.5px solid #e2e8f0; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-                    <div class="term-header p-3 d-flex justify-content-between align-items-center flex-wrap gap-2" style="border-bottom:0.5px solid #e2e8f0; background:#fff;">
-                        <div>
-                            <h5 class="fw-semibold mb-0" style="font-size:1rem;">${escapeHtml(termGroup.class_name)} ${escapeHtml(termGroup.arm_name)} — ${escapeHtml(termGroup.session_name)}</h5>
-                            <span class="text-muted small">${escapeHtml(termGroup.term_name)}</span>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <span class="badge" style="background:#E6F1FB; color:#0C447C; padding:4px 12px; border-radius:20px; font-weight:500;">
-                                <i class="ri-user-line me-1"></i>${totalStudents} students
-                            </span>
-                            <span class="badge" style="background:#EEEDFE; color:#3C3489; padding:4px 12px; border-radius:20px; font-weight:500;">
-                                <i class="ri-book-open-line me-1"></i>${totalSubjects} subjects
-                            </span>
-                        </div>
-                    </div>
-                    <div class="subjects-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr));">
-                `;
-
-                subjectsArray.forEach((subjectName, idx) => {
-                    // Get the correct teacher from the mapping
-                    const mappingKey = `${subjectName}|${termId}`;
-                    let teacherName = teacherMapping[mappingKey] || '— Not assigned';
-
-                    // Fallback: try without term ID
-                    if (teacherName === '— Not assigned') {
-                        const fallbackKey = `${subjectName}|`;
-                        for (const key in teacherMapping) {
-                            if (key.startsWith(subjectName)) {
-                                teacherName = teacherMapping[key];
-                                break;
-                            }
-                        }
-                    }
-
-                    html += `
-                    <div class="subject-card p-3 d-flex gap-3 align-items-start" style="border-right:0.5px solid #e2e8f0; border-bottom:0.5px solid #e2e8f0; transition:all 0.2s ease;"
-                         onmouseenter="this.style.backgroundColor='#fafbff'"
-                         onmouseleave="this.style.backgroundColor='transparent'">
-                        <div class="subject-num" style="width:30px; height:30px; background:#EEEDFE; color:#3C3489; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; flex-shrink:0;">${idx + 1}</div>
-                        <div class="subject-info flex-grow-1">
-                            <div class="fw-semibold" style="font-size:0.9rem; color:#1e293b;">${escapeHtml(subjectName)}</div>
-                            <div class="text-muted small mt-1" style="font-size:0.75rem;">
-                                <i class="ri-user-star-line me-1"></i>${escapeHtml(teacherName)}
-                            </div>
-                            <span class="badge mt-2" style="background:#EAF3DE; color:#27500A; font-size:10px; padding:3px 10px; border-radius:20px; display:inline-flex; align-items:center; gap:4px;">
-                                <i class="ri-group-line" style="font-size:10px;"></i>${totalStudents} students
-                            </span>
-                        </div>
-                    </div>`;
-                });
-
-                html += `
-                    </div>
-                </div>`;
-            });
-
+            html += '</tbody></table></div>';
             modalContent.innerHTML = html;
-
         } else {
             console.error('Failed to load:', response.data.message);
-            modalContent.innerHTML = '<div class="text-center py-5 text-danger"><i class="ri-error-warning-line ri-3x"></i><p class="mt-2">Failed to load registered classes.</p></div>';
+            modalContent.innerHTML = '<p class="text-center text-red-500">Failed to load registered classes.</p>';
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
@@ -774,8 +674,12 @@ function loadRegisteredClasses() {
             });
         }
     }).catch(error => {
-        console.error('Error loading registered classes:', error);
-        modalContent.innerHTML = '<div class="text-center py-5 text-danger"><i class="ri-error-warning-line ri-3x"></i><p class="mt-2">Error loading registered classes. Please try again.</p></div>';
+        console.error('Error loading registered classes:', {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status
+        });
+        modalContent.innerHTML = '<p class="text-center text-red-500">Error loading registered classes. Please try again.</p>';
         Swal.fire({
             icon: 'error',
             title: 'Error',
@@ -784,461 +688,6 @@ function loadRegisteredClasses() {
         });
     });
 }
-
-
-// Helper function to map term name to ID
-function getTermIdFromName(termName) {
-    const termMap = {
-        'First Term': 1,
-        'Second Term': 2,
-        'Third Term': 3
-    };
-    return termMap[termName] || '';
-}
-
-
-// Function to fetch school information and generate PDF/Print
-async function printRegisteredClasses() {
-    if (!currentRegisteredClassesData || !currentRegisteredClassesData.data) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'No Data',
-            text: 'Please load registered classes first.',
-            showConfirmButton: true
-        });
-        return;
-    }
-
-    // Show loading indicator
-    Swal.fire({
-        title: 'Preparing PDF...',
-        text: 'Please wait while we generate your document.',
-        allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
-        }
-    });
-
-    try {
-        // Fetch school information
-        const schoolInfoResponse = await axios.get('/api/school-information/active', {
-            headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json'
-            }
-        });
-
-        const schoolInfo = schoolInfoResponse.data.data || {};
-
-        // Generate print HTML
-        const printHtml = generatePrintHtml(currentRegisteredClassesData, schoolInfo);
-
-        // Create a hidden iframe for printing
-        const iframe = document.createElement('iframe');
-        iframe.style.position = 'absolute';
-        iframe.style.width = '0';
-        iframe.style.height = '0';
-        iframe.style.border = 'none';
-        document.body.appendChild(iframe);
-
-        const iframeDoc = iframe.contentWindow.document;
-        iframeDoc.open();
-        iframeDoc.write(printHtml);
-        iframeDoc.close();
-
-        // Wait for images to load then print
-        setTimeout(() => {
-            iframe.contentWindow.focus();
-            iframe.contentWindow.print();
-
-            // Remove iframe after printing
-            setTimeout(() => {
-                document.body.removeChild(iframe);
-            }, 1000);
-        }, 500);
-
-        Swal.close();
-
-    } catch (error) {
-        console.error('Error preparing print:', error);
-        Swal.close();
-        Swal.fire({
-            icon: 'error',
-            title: 'Error',
-            text: 'Failed to prepare print document. Please try again.',
-            showConfirmButton: true
-        });
-    }
-}
-
-// Generate professional print HTML
-// Updated generatePrintHtml function with proper teacher mapping
-function generatePrintHtml(data, schoolInfo) {
-    const classes = data.data;
-    const teacherMapping = data.teacher_mapping || {};
-    const currentDate = new Date().toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'long',
-        year: 'numeric'
-    });
-    const currentTime = new Date().toLocaleTimeString('en-GB', {
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-
-    // Get school logo URL
-    const schoolLogo = schoolInfo.logo_url || (schoolInfo.school_logo ?
-        (schoolInfo.school_logo.startsWith('http') ? schoolInfo.school_logo : `/storage/${schoolInfo.school_logo}`) :
-        '/theme/layouts/assets/images/logo-dark.png');
-
-    let subjectsHtml = '';
-
-    classes.forEach((termGroup) => {
-        const subjectsArray = termGroup.subjects ? termGroup.subjects.split(',').map(s => s.trim()) : [];
-        const totalStudents = termGroup.student_count || 0;
-        const termId = getTermIdFromName(termGroup.term_name);
-
-        subjectsHtml += `
-            <div class="print-term-card">
-                <div class="print-term-header">
-                    <h3 class="print-term-title">${escapeHtml(termGroup.class_name)} ${escapeHtml(termGroup.arm_name)} — ${escapeHtml(termGroup.session_name)}</h3>
-                    <p class="print-term-subtitle">${escapeHtml(termGroup.term_name)} Term</p>
-                </div>
-                <table class="print-subjects-table">
-                    <thead>
-                        <tr>
-                            <th width="5%">#</th>
-                            <th width="40%">Subject Name</th>
-                            <th width="35%">Teacher</th>
-                            <th width="20%">Students</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-        `;
-
-        subjectsArray.forEach((subjectName, idx) => {
-            // Get the correct teacher from the mapping
-            const mappingKey = `${subjectName}|${termId}`;
-            let teacherName = teacherMapping[mappingKey] || '— Not assigned';
-
-            // Fallback: try without term ID
-            if (teacherName === '— Not assigned') {
-                for (const key in teacherMapping) {
-                    if (key.startsWith(subjectName)) {
-                        teacherName = teacherMapping[key];
-                        break;
-                    }
-                }
-            }
-
-            subjectsHtml += `
-                <tr>
-                    <td style="text-align: center;">${idx + 1}</td>
-                    <td><strong>${escapeHtml(subjectName)}</strong></td>
-                    <td>${escapeHtml(teacherName)}</td>
-                    <td style="text-align: center;">${totalStudents}</td>
-                </tr>
-            `;
-        });
-
-        subjectsHtml += `
-                    </tbody>
-                </table>
-            </div>
-        `;
-    });
-
-    return `<!DOCTYPE html>
-    <html>
-    <head>
-        <title>Registered Classes Overview - ${escapeHtml(data.class_name)} ${escapeHtml(data.arm_name)}</title>
-        <meta charset="utf-8">
-        <style>
-            * {
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-            }
-
-            body {
-                font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-                line-height: 1.6;
-                color: #333;
-                background: white;
-                padding: 20px;
-            }
-
-            .print-container {
-                max-width: 1200px;
-                margin: 0 auto;
-                background: white;
-            }
-
-            /* Header Section */
-            .print-header {
-                margin-bottom: 30px;
-                border-bottom: 3px solid #1e3a5f;
-                padding-bottom: 20px;
-            }
-
-            .print-school-info {
-                display: flex;
-                align-items: center;
-                gap: 25px;
-                margin-bottom: 20px;
-            }
-
-            .print-logo {
-                max-width: 90px;
-                max-height: 90px;
-                object-fit: contain;
-            }
-
-            .print-school-details {
-                flex: 1;
-            }
-
-            .print-school-name {
-                font-size: 26px;
-                font-weight: bold;
-                color: #1e3a5f;
-                margin: 0 0 8px 0;
-                letter-spacing: 1px;
-            }
-
-            .print-school-motto {
-                font-style: italic;
-                color: #666;
-                margin: 0 0 10px 0;
-                font-size: 14px;
-            }
-
-            .print-school-address, .print-school-contact {
-                font-size: 12px;
-                color: #555;
-                margin: 3px 0;
-            }
-
-            .print-school-address i, .print-school-contact i {
-                margin-right: 5px;
-            }
-
-            /* Title Section */
-            .print-title-section {
-                text-align: center;
-                margin: 30px 0 20px 0;
-            }
-
-            .print-title {
-                font-size: 22px;
-                font-weight: bold;
-                color: #1e3a5f;
-                margin: 0;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-            }
-
-            .print-subtitle {
-                font-size: 14px;
-                color: #666;
-                margin: 5px 0 0 0;
-            }
-
-            .print-meta {
-                text-align: center;
-                font-size: 12px;
-                color: #888;
-                margin-bottom: 30px;
-                padding-bottom: 15px;
-                border-bottom: 1px dashed #ddd;
-            }
-
-            /* Term Cards */
-            .print-term-card {
-                margin-bottom: 35px;
-                page-break-inside: avoid;
-                border: 1px solid #e0e0e0;
-                border-radius: 8px;
-                overflow: hidden;
-                box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            }
-
-            .print-term-header {
-                background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-                padding: 15px 20px;
-                border-bottom: 2px solid #1e3a5f;
-            }
-
-            .print-term-title {
-                font-size: 18px;
-                font-weight: bold;
-                color: #1e3a5f;
-                margin: 0;
-            }
-
-            .print-term-subtitle {
-                font-size: 13px;
-                color: #666;
-                margin: 5px 0 0 0;
-            }
-
-            /* Subjects Table */
-            .print-subjects-table {
-                width: 100%;
-                border-collapse: collapse;
-            }
-
-            .print-subjects-table th {
-                background: #f1f3f5;
-                padding: 12px 15px;
-                text-align: left;
-                font-size: 13px;
-                font-weight: bold;
-                color: #495057;
-                border: 1px solid #dee2e6;
-            }
-
-            .print-subjects-table td {
-                padding: 10px 15px;
-                font-size: 12px;
-                border: 1px solid #dee2e6;
-                vertical-align: top;
-            }
-
-            .print-subjects-table tbody tr:hover {
-                background: #f8f9fa;
-            }
-
-            /* Footer */
-            .print-footer {
-                margin-top: 40px;
-                padding-top: 20px;
-                border-top: 1px solid #dee2e6;
-                text-align: center;
-                font-size: 10px;
-                color: #999;
-            }
-
-            .print-footer p {
-                margin: 5px 0;
-            }
-
-            /* Summary Stats */
-            .print-summary {
-                display: flex;
-                justify-content: space-around;
-                margin: 20px 0 30px 0;
-                padding: 15px;
-                background: #f8f9fa;
-                border-radius: 8px;
-            }
-
-            .print-summary-item {
-                text-align: center;
-            }
-
-            .print-summary-label {
-                font-size: 12px;
-                color: #666;
-                margin-bottom: 5px;
-            }
-
-            .print-summary-value {
-                font-size: 20px;
-                font-weight: bold;
-                color: #1e3a5f;
-            }
-
-            @media print {
-                body {
-                    padding: 0;
-                    margin: 0;
-                }
-
-                .print-container {
-                    max-width: 100%;
-                    padding: 20px;
-                }
-
-                .print-term-card {
-                    page-break-inside: avoid;
-                }
-            }
-        </style>
-    </head>
-    <body>
-        <div class="print-container">
-            <!-- School Header -->
-            <div class="print-header">
-                <div class="print-school-info">
-                    ${schoolLogo ? `<img src="${schoolLogo}" alt="School Logo" class="print-logo" onerror="this.style.display='none'">` : ''}
-                    <div class="print-school-details">
-                        <h1 class="print-school-name">${escapeHtml(schoolInfo.school_name || 'School Name')}</h1>
-                        ${schoolInfo.school_motto ? `<p class="print-school-motto">"${escapeHtml(schoolInfo.school_motto)}"</p>` : ''}
-                        ${schoolInfo.school_address ? `<p class="print-school-address"><i>📍</i> ${escapeHtml(schoolInfo.school_address)}</p>` : ''}
-                        <p class="print-school-contact">
-                            ${schoolInfo.school_phone ? `<i>📞</i> ${escapeHtml(schoolInfo.school_phone)}` : ''}
-                            ${schoolInfo.school_phone && schoolInfo.school_email ? ' | ' : ''}
-                            ${schoolInfo.school_email ? `<i>✉️</i> ${escapeHtml(schoolInfo.school_email)}` : ''}
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Title Section -->
-            <div class="print-title-section">
-                <h2 class="print-title">Registered Classes Overview</h2>
-                <p class="print-subtitle">Academic Session: ${escapeHtml(data.session_name)}</p>
-            </div>
-
-            <div class="print-meta">
-                <p>Generated on: ${currentDate} at ${currentTime}</p>
-                <p>Class: ${escapeHtml(data.class_name)} ${escapeHtml(data.arm_name)}</p>
-            </div>
-
-            <!-- Summary Statistics -->
-            <div class="print-summary">
-                <div class="print-summary-item">
-                    <div class="print-summary-label">Total Terms</div>
-                    <div class="print-summary-value">${classes.length}</div>
-                </div>
-                <div class="print-summary-item">
-                    <div class="print-summary-label">Total Subjects</div>
-                    <div class="print-summary-value">${classes.reduce((sum, c) => sum + parseInt(c.subject_count || 0), 0)}</div>
-                </div>
-                <div class="print-summary-item">
-                    <div class="print-summary-label">Total Students</div>
-                    <div class="print-summary-value">${classes[0]?.student_count || 0}</div>
-                </div>
-            </div>
-
-            <!-- Terms and Subjects -->
-            ${subjectsHtml}
-
-            <!-- Footer -->
-            <div class="print-footer">
-                <p>This is a computer-generated document. No signature is required.</p>
-                <p>© ${new Date().getFullYear()} ${escapeHtml(schoolInfo.school_name || 'School Name')}. All rights reserved.</p>
-            </div>
-        </div>
-    </body>
-    </html>`;
-}
-
-// Make sure escapeHtml function exists
-function escapeHtml(str) {
-    if (!str) return str ?? '';
-    return String(str).replace(/[&<>"']/g, function(match) {
-        if (match === '&') return '&amp;';
-        if (match === '<') return '&lt;';
-        if (match === '>') return '&gt;';
-        if (match === '"') return '&quot;';
-        if (match === "'") return '&#039;';
-        return match;
-    });
-}
-
-
 
 // Attach to buttons
 document.addEventListener("DOMContentLoaded", function () {
