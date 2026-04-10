@@ -439,7 +439,7 @@
                                             </tr>
                                         </thead>
                                         <tbody id="snapshotDetailBody">
-                                            <tr><td colspan="10" class="text-center text-muted py-4">Loading…</td></tr>
+                                            <tr><td colspan="10" class="text-center text-muted py-4">Loading…</td><tr>
                                         </tbody>
                                     </table>
                                 </div>
@@ -523,36 +523,9 @@
         th {
             background-color: #f2f2f2;
         }
-    }
-
-    /* Custom UI Improvements */
-    .subject-card {
-        transition: all 0.3s ease;
-    }
-    .subject-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-    }
-    .teacher-avatar {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 2px solid #fff;
-        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    .subject-badge {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 500;
-    }
-    .stats-card {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        border-radius: 10px;
-        padding: 10px 15px;
+        .subject-list {
+            font-size: 11px;
+        }
     }
 </style>
 @endsection
@@ -619,6 +592,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('registeredClassesModal')?.addEventListener('show.bs.modal', loadRegisteredClasses);
     document.getElementById('archivePerPage')?.addEventListener('change', () => loadArchivedPage(1));
 
+    // Character counter for snapshot notes
     document.getElementById('snapshotNotesInput')?.addEventListener('input', function () {
         document.getElementById('snapshotNotesCount').textContent = this.value.length;
     });
@@ -723,7 +697,7 @@ async function registerSelectedStudentsBatch() {
 }
 
 // ============================================================================
-// OPEN UNREGISTER MODAL
+// OPEN UNREGISTER MODAL (snapshot naming step)
 // ============================================================================
 function openUnregisterModal() {
     const studentIds     = getSelectedStudentIds();
@@ -797,7 +771,7 @@ async function proceedUnregister() {
 }
 
 // ============================================================================
-// ENHANCED REGISTERED CLASSES MODAL WITH ALPHABETICAL SUBJECTS & TEACHER MATCHING
+// ENHANCED REGISTERED CLASSES MODAL WITH COUNTS AND NUMBERED SUBJECTS
 // ============================================================================
 
 async function loadRegisteredClasses() {
@@ -810,7 +784,7 @@ async function loadRegisteredClasses() {
         return;
     }
 
-    container.innerHTML = `<div class="text-center py-5"><div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div><p class="mt-3 text-muted">Loading registration data...</p></div>`;
+    container.innerHTML = `<div class="text-center py-5"><div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div><p class="mt-3 text-muted">Loading…</p></div>`;
 
     try {
         const params = new URLSearchParams({ class_id: classId, session_id: sessionId });
@@ -828,54 +802,36 @@ async function loadRegisteredClasses() {
         let html = '';
 
         data.data.forEach((row, idx) => {
-            // Get subjects with teachers and sort alphabetically
-            let subjectsWithTeachers = row.subjects_teachers || [];
-
-            // Sort subjects alphabetically by name
-            subjectsWithTeachers = subjectsWithTeachers.sort((a, b) => {
-                return a.name.localeCompare(b.name);
-            });
-
+            const subjectsWithTeachers = row.subjects_teachers || [];
             const totalSubjects = row.subject_count || subjectsWithTeachers.length;
             const totalStudents = row.student_count || 0;
 
-            // Calculate unique teachers count
-            const uniqueTeachers = new Set();
-            subjectsWithTeachers.forEach(subject => {
-                if (subject.teachers) {
-                    subject.teachers.forEach(teacher => {
-                        if (teacher.id) uniqueTeachers.add(teacher.id);
-                    });
-                }
-            });
-
             html += `
-            <div class="card mb-4 border-0 shadow-sm subject-card">
-                <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+            <div class="card mb-4 border-0 shadow-sm">
+                <div class="card-header bg-gradient" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;">
                     <div class="d-flex justify-content-between align-items-center flex-wrap">
                         <div>
                             <i class="ri-school-line me-2"></i>
-                            <strong class="fs-5">${escapeHtml(row.class_name)} ${escapeHtml(row.arm_name)}</strong>
-                            <span class="ms-2 badge bg-light text-dark">${escapeHtml(row.session_name)}</span>
+                            <strong>${escapeHtml(row.class_name)} ${escapeHtml(row.arm_name)}</strong>
+                            <span class="ms-3 badge bg-light text-dark">${escapeHtml(row.session_name)}</span>
                             <span class="badge bg-warning text-dark ms-1">${escapeHtml(row.term_name)}</span>
                         </div>
-                        <div class="mt-2 mt-sm-0">
-                            <span class="badge bg-info me-2 p-2"><i class="ri-user-line me-1"></i> Students: ${totalStudents}</span>
-                            <span class="badge bg-success p-2"><i class="ri-book-open-line me-1"></i> Subjects: ${totalSubjects}</span>
-                            <span class="badge bg-secondary p-2 ms-2"><i class="ri-user-star-line me-1"></i> Teachers: ${uniqueTeachers.size}</span>
+                        <div>
+                            <span class="badge bg-info me-2"><i class="ri-user-line me-1"></i> Students: ${totalStudents}</span>
+                            <span class="badge bg-success"><i class="ri-book-open-line me-1"></i> Subjects: ${totalSubjects}</span>
                         </div>
                     </div>
                 </div>
-                <div class="card-body p-0">
+                <div class="card-body">
                     <div class="table-responsive">
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
-                                <tr style="background: #f8f9fa;">
-                                    <th width="60" class="text-center">#</th>
+                                <tr>
+                                    <th width="50">#</th>
                                     <th>Subject Name</th>
-                                    <th width="120">Subject Code</th>
+                                    <th>Subject Code</th>
                                     <th>Teacher(s)</th>
-                                    <th width="100" class="text-center">Students</th>
+                                    <th class="text-center">Students</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -883,45 +839,22 @@ async function loadRegisteredClasses() {
 
             subjectsWithTeachers.forEach((subject, subIdx) => {
                 const studentCount = subject.student_count || '—';
-
-                // Build teachers HTML with avatars
-                let teachersHtml = '';
-                if (subject.teachers && subject.teachers.length > 0) {
-                    teachersHtml = '<div class="d-flex flex-wrap gap-2">';
-                    subject.teachers.forEach(teacher => {
-                        const picUrl = teacher.picture ?
-                            `${AVATAR_URL}/staff_avatars/${teacher.picture.split('/').pop()}` :
-                            `${AVATAR_URL}/staff_avatars/default.png`;
-                        teachersHtml += `
-                            <div class="d-flex align-items-center gap-2 bg-light rounded-3 px-2 py-1" style="border: 1px solid #e0e0e0;">
-                                <img src="${picUrl}" class="teacher-avatar"
-                                     onerror="this.src='${AVATAR_URL}/staff_avatars/default.png'">
-                                <span class="fw-medium" style="font-size: 0.85rem;">${escapeHtml(teacher.name)}</span>
-                            </div>
-                        `;
-                    });
-                    teachersHtml += '</div>';
-                } else {
-                    teachersHtml = '<span class="text-muted"><i class="ri-user-unfollow-line me-1"></i> Not assigned</span>';
-                }
-
-                // Alternate row background for better readability
-                const rowBg = subIdx % 2 === 0 ? '' : 'bg-light';
+                const teachersHtml = (subject.teachers || []).map(t => `
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <img src="${t.picture ? `${AVATAR_URL}/staff_avatars/${t.picture.split('/').pop()}` : `${AVATAR_URL}/staff_avatars/default.png`}"
+                             class="rounded-circle" style="width:28px;height:28px;object-fit:cover;"
+                             onerror="this.src='${AVATAR_URL}/staff_avatars/default.png'">
+                        <span>${escapeHtml(t.name)}</span>
+                    </div>
+                `).join('');
 
                 html += `
-                    <tr class="${rowBg}">
-                        <td class="text-center fw-bold text-primary">${subIdx + 1}</td>
-                        <td>
-                            <i class="ri-book-2-line text-primary me-2"></i>
-                            <strong>${escapeHtml(subject.name)}</strong>
-                        </td>
-                        <td><span class="badge bg-secondary-subtle text-secondary px-3 py-2">${escapeHtml(subject.code || '—')}</span></td>
-                        <td>${teachersHtml}</td>
-                        <td class="text-center">
-                            <span class="badge bg-primary rounded-pill px-3 py-2">
-                                <i class="ri-user-line me-1"></i> ${studentCount}
-                            </span>
-                        </td>
+                    <tr>
+                        <td class="fw-bold">${subIdx + 1}</td>
+                        <td><strong>${escapeHtml(subject.name)}</strong></td>
+                        <td><span class="badge bg-secondary-subtle text-secondary">${escapeHtml(subject.code || '—')}</span></td>
+                        <td>${teachersHtml || '<span class="text-muted">—</span>'}</td>
+                        <td class="text-center"><span class="badge bg-primary rounded-pill">${studentCount}</span></td>
                     </tr>
                 `;
             });
@@ -932,20 +865,17 @@ async function loadRegisteredClasses() {
                     </div>
                 </div>
                 <div class="card-footer bg-light">
-                    <div class="row align-items-center">
+                    <div class="row">
                         <div class="col-md-6">
-                            <div class="stats-card">
-                                <i class="ri-bar-chart-2-line text-primary me-2"></i>
-                                <strong>Summary:</strong>
-                                ${totalSubjects} subjects |
-                                ${uniqueTeachers.size} teacher(s) |
-                                ${totalStudents} student(s)
-                            </div>
+                            <small class="text-muted">
+                                <i class="ri-bar-chart-line me-1"></i>
+                                <strong>Summary:</strong> ${totalSubjects} subjects taught by ${getUniqueTeachersCount(subjectsWithTeachers)} teacher(s)
+                            </small>
                         </div>
                         <div class="col-md-6 text-md-end">
                             <small class="text-muted">
                                 <i class="ri-calendar-line me-1"></i>
-                                Last updated: ${new Date().toLocaleString()}
+                                Registration as of ${new Date().toLocaleDateString()}
                             </small>
                         </div>
                     </div>
@@ -959,6 +889,18 @@ async function loadRegisteredClasses() {
     } catch (err) {
         container.innerHTML = `<div class="alert alert-danger m-3">Failed to load data: ${err.message}</div>`;
     }
+}
+
+function getUniqueTeachersCount(subjects) {
+    const teacherIds = new Set();
+    subjects.forEach(subject => {
+        if (subject.teachers) {
+            subject.teachers.forEach(teacher => {
+                if (teacher.id) teacherIds.add(teacher.id);
+            });
+        }
+    });
+    return teacherIds.size;
 }
 
 // ============================================================================
@@ -1033,9 +975,7 @@ async function getPrintHTML(schoolData, registeredData, classId, sessionId) {
     let totalStudentsOverall = 0;
 
     registeredData.forEach((row, idx) => {
-        let subjectsWithTeachers = row.subjects_teachers || [];
-        subjectsWithTeachers = subjectsWithTeachers.sort((a, b) => a.name.localeCompare(b.name));
-
+        const subjectsWithTeachers = row.subjects_teachers || [];
         const totalSubjects = row.subject_count || subjectsWithTeachers.length;
         const totalStudents = row.student_count || 0;
 
@@ -1059,11 +999,11 @@ async function getPrintHTML(schoolData, registeredData, classId, sessionId) {
                 <table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd;">
                     <thead>
                         <tr style="background: #f8f9fc;">
-                            <th style="border: 1px solid #ddd; padding: 10px; text-align: center; width: 50px;">S/N</th>
+                            <th style="border: 1px solid #ddd; padding: 10px; text-align: left;">S/N</th>
                             <th style="border: 1px solid #ddd; padding: 10px; text-align: left;">Subject Name</th>
-                            <th style="border: 1px solid #ddd; padding: 10px; text-align: left; width: 120px;">Subject Code</th>
+                            <th style="border: 1px solid #ddd; padding: 10px; text-align: left;">Subject Code</th>
                             <th style="border: 1px solid #ddd; padding: 10px; text-align: left;">Teacher(s)</th>
-                            <th style="border: 1px solid #ddd; padding: 10px; text-align: center; width: 100px;">Students</th>
+                            <th style="border: 1px solid #ddd; padding: 10px; text-align: center;">Students</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -1087,7 +1027,7 @@ async function getPrintHTML(schoolData, registeredData, classId, sessionId) {
         subjectsHtml += `
                     </tbody>
                 </table>
-                <div style="padding: 8px 0; font-size: 12px; color: #666; margin-top: 8px;">
+                <div style="padding: 8px 0; font-size: 12px; color: #666;">
                     <strong>Summary:</strong> ${totalSubjects} subject(s) | ${totalStudents} student(s)
                 </div>
             </div>
@@ -1527,8 +1467,7 @@ function renderSnapshotDetailTable(rows, assessmentHeaders) {
                          onerror="this.src='${AVATAR_URL}/student_avatars/unnamed.jpg'">
                     <span class="fw-medium">${escapeHtml(name)}</span>
                 </div>
-            </div>
-        </td>
+            </td>
             <td class="text-muted small">${escapeHtml(row.admissionno ?? '—')}</td>
             <td>${genderBadge}</td>
             ${scoresCells}
@@ -1553,8 +1492,8 @@ function toggleDetailButtons() {
 }
 
 function filterDetailRows(query) {
-    const q = query.toLowerCase().trim();
-    const rows = document.querySelectorAll('#snapshotDetailBody tr[data-search]');
+    const q     = query.toLowerCase().trim();
+    const rows  = document.querySelectorAll('#snapshotDetailBody tr[data-search]');
     let visible = 0;
 
     rows.forEach(tr => {
@@ -1564,7 +1503,7 @@ function filterDetailRows(query) {
     });
 
     const total = currentSnapshotRows.length;
-    const meta = document.getElementById('detailStudentMeta');
+    const meta  = document.getElementById('detailStudentMeta');
     if (meta) {
         meta.textContent = q
             ? `${visible} of ${total} student${total !== 1 ? 's' : ''} shown`
@@ -1590,8 +1529,8 @@ async function restoreDetailSelected() {
 async function doRestore(archiveIds, label) {
     const ok = await Swal.fire({
         title: 'Restore Registration?',
-        html: `<p>Restore <strong>${label}</strong>? Their original scores will be recovered.</p>`,
-        icon: 'question', showCancelButton: true, confirmButtonColor: '#28a745', confirmButtonText: 'Yes, restore!'
+        html : `<p>Restore <strong>${label}</strong>? Their original scores will be recovered.</p>`,
+        icon : 'question', showCancelButton: true, confirmButtonColor: '#28a745', confirmButtonText: 'Yes, restore!'
     });
     if (!ok.isConfirmed) return;
 
@@ -1619,8 +1558,8 @@ async function restoreSingleSnapshot(metaEncoded) {
 
     const ok = await Swal.fire({
         title: 'Restore Snapshot?',
-        html: `<p>Restore all students in snapshot "<strong>${escapeHtml(meta.snapshot_name)}</strong>"?<br>Original scores will be recovered.</p>`,
-        icon: 'question', showCancelButton: true, confirmButtonColor: '#28a745', confirmButtonText: 'Yes, restore all!'
+        html : `<p>Restore all students in snapshot "<strong>${escapeHtml(meta.snapshot_name)}</strong>"?<br>Original scores will be recovered.</p>`,
+        icon : 'question', showCancelButton: true, confirmButtonColor: '#28a745', confirmButtonText: 'Yes, restore all!'
     });
     if (!ok.isConfirmed) return;
 
@@ -1629,13 +1568,13 @@ async function restoreSingleSnapshot(metaEncoded) {
 
     try {
         const params = new URLSearchParams({
-            snapshot_name: meta.snapshot_name,
-            subjectclassid: meta.subjectclassid,
-            termid: meta.termid,
-            sessionid: meta.sessionid,
-            staffid: meta.staffid,
+            snapshot_name  : meta.snapshot_name,
+            subjectclassid : meta.subjectclassid,
+            termid         : meta.termid,
+            sessionid      : meta.sessionid,
+            staffid        : meta.staffid,
         });
-        const detailRes = await fetch(ROUTES.getSnapshot + '?' + params.toString(), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
+        const detailRes  = await fetch(ROUTES.getSnapshot + '?' + params.toString(), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
         const detailData = await detailRes.json();
 
         if (!detailData.success || !detailData.rows?.length) {
@@ -1667,8 +1606,8 @@ async function deleteSnapshotGroup(metaEncoded) {
 
     const ok = await Swal.fire({
         title: 'Delete Snapshot?',
-        html: `<p class="text-danger">Permanently delete snapshot "<strong>${escapeHtml(meta.snapshot_name)}</strong>"?<br>This cannot be undone.</p>`,
-        icon: 'error', showCancelButton: true, confirmButtonColor: '#dc3545', confirmButtonText: 'Yes, delete permanently'
+        html : `<p class="text-danger">Permanently delete snapshot "<strong>${escapeHtml(meta.snapshot_name)}</strong>"?<br>This cannot be undone.</p>`,
+        icon : 'error', showCancelButton: true, confirmButtonColor: '#dc3545', confirmButtonText: 'Yes, delete permanently'
     });
     if (!ok.isConfirmed) return;
 
@@ -1677,13 +1616,13 @@ async function deleteSnapshotGroup(metaEncoded) {
 
     try {
         const params = new URLSearchParams({
-            snapshot_name: meta.snapshot_name,
-            subjectclassid: meta.subjectclassid,
-            termid: meta.termid,
-            sessionid: meta.sessionid,
-            staffid: meta.staffid,
+            snapshot_name  : meta.snapshot_name,
+            subjectclassid : meta.subjectclassid,
+            termid         : meta.termid,
+            sessionid      : meta.sessionid,
+            staffid        : meta.staffid,
         });
-        const detailRes = await fetch(ROUTES.getSnapshot + '?' + params.toString(), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
+        const detailRes  = await fetch(ROUTES.getSnapshot + '?' + params.toString(), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
         const detailData = await detailRes.json();
 
         if (!detailData.success || !detailData.rows?.length) {
@@ -1713,8 +1652,8 @@ async function deleteDetailSelected() {
 
     const ok = await Swal.fire({
         title: 'Permanently Delete?',
-        html: `<p class="text-danger">Delete <strong>${ids.length}</strong> record(s) permanently?</p>`,
-        icon: 'error', showCancelButton: true, confirmButtonColor: '#dc3545', confirmButtonText: 'Yes, delete permanently'
+        html : `<p class="text-danger">Delete <strong>${ids.length}</strong> record(s) permanently?</p>`,
+        icon : 'error', showCancelButton: true, confirmButtonColor: '#dc3545', confirmButtonText: 'Yes, delete permanently'
     });
     if (!ok.isConfirmed) return;
 
@@ -1739,67 +1678,4 @@ async function deleteDetailSelected() {
 
 async function restoreSelected() {}
 async function permanentDeleteSelected() {}
-
-// ============================================================================
-// ADMISSION NUMBER FILTER POPULATION
-// ============================================================================
-document.getElementById('idclass')?.addEventListener('change', function() {
-    const classId = this.value;
-    const sessionId = document.getElementById('idsession').value;
-
-    if (classId !== 'ALL' && sessionId !== 'ALL') {
-        fetch(`/api/students/admission-numbers?class_id=${classId}&session_id=${sessionId}`, {
-            headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
-        })
-        .then(res => res.json())
-        .then(data => {
-            const select = document.getElementById('idadmission');
-            select.innerHTML = '<option value="ALL">Select Admission No</option>';
-            if (data.success && data.data) {
-                data.data.forEach(admission => {
-                    select.innerHTML += `<option value="${admission}">${admission}</option>`;
-                });
-            }
-        })
-        .catch(err => console.error('Error loading admission numbers:', err));
-    }
-});
-
-document.getElementById('idsession')?.addEventListener('change', function() {
-    const classId = document.getElementById('idclass').value;
-    const sessionId = this.value;
-
-    if (classId !== 'ALL' && sessionId !== 'ALL') {
-        fetch(`/api/students/admission-numbers?class_id=${classId}&session_id=${sessionId}`, {
-            headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
-        })
-        .then(res => res.json())
-        .then(data => {
-            const select = document.getElementById('idadmission');
-            select.innerHTML = '<option value="ALL">Select Admission No</option>';
-            if (data.success && data.data) {
-                data.data.forEach(admission => {
-                    select.innerHTML += `<option value="${admission}">${admission}</option>`;
-                });
-            }
-        })
-        .catch(err => console.error('Error loading admission numbers:', err));
-    }
-});
 </script>
-
-@push('scripts')
-<script>
-// Additional initialization if needed
-$(document).ready(function() {
-    // Initialize tooltips
-    $('[data-toggle="tooltip"]').tooltip();
-
-    // Handle subject checkbox changes
-    $('.subject-checkbox').on('change', function() {
-        const count = $('.subject-checkbox:checked').length;
-        $('#subjectTeacherCount').text(count);
-    });
-});
-</script>
-@endpush
