@@ -581,113 +581,148 @@ function unregisterSelectedStudentsBatch() {
     });
 }
 
-// function loadRegisteredClasses() {
-//     if (!ensureAxios()) {
-//         console.error('Axios not initialized.');
-//         return;
-//     }
 
-//     const modalContent = document.getElementById('registeredClassesContent');
-//     if (!modalContent) {
-//         console.error('Modal content element not found.');
-//         Swal.fire({
-//             icon: 'error',
-//             title: 'Error',
-//             text: 'Modal container not found.',
-//             showConfirmButton: true
-//         });
-//         return;
-//     }
+function loadRegisteredClasses() {
+    if (!ensureAxios()) {
+        console.error('Axios not initialized.');
+        return;
+    }
 
-//     const classSelect = document.getElementById('idclass');
-//     const sessionSelect = document.getElementById('idsession');
+    const modalContent = document.getElementById('registeredClassesContent');
+    if (!modalContent) {
+        console.error('Modal content element not found.');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Modal container not found.',
+            showConfirmButton: true
+        });
+        return;
+    }
 
-//     if (!classSelect || !sessionSelect) {
-//         console.error('Required selectors missing:', { classSelect, sessionSelect });
-//         modalContent.innerHTML = '<p class="text-center text-red-500">Class or session selector not found.</p>';
-//         Swal.fire({
-//             icon: 'error',
-//             title: 'Error',
-//             text: 'Please ensure class and session selectors are present.',
-//             showConfirmButton: true
-//         });
-//         return;
-//     }
+    const classSelect = document.getElementById('idclass');
+    const sessionSelect = document.getElementById('idsession');
 
-//     const classId = classSelect.value;
-//     const sessionId = sessionSelect.value;
+    if (!classSelect || !sessionSelect) {
+        console.error('Required selectors missing:', { classSelect, sessionSelect });
+        modalContent.innerHTML = '<p class="text-center text-red-500">Class or session selector not found.</p>';
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Please ensure class and session selectors are present.',
+            showConfirmButton: true
+        });
+        return;
+    }
 
-//     if (!classId || classId === 'ALL' || !sessionId || sessionId === 'ALL') {
-//         console.warn('Invalid class or session selection.');
-//         modalContent.innerHTML = '<p class="text-center text-muted">Please select a valid class and session.</p>';
-//         Swal.fire({
-//             icon: 'warning',
-//             title: 'Missing Selection',
-//             text: 'Please select a valid class and session.',
-//             showConfirmButton: true
-//         });
-//         return;
-//     }
+    const classId = classSelect.value;
+    const sessionId = sessionSelect.value;
 
-//     modalContent.innerHTML = '<p class="text-center">Loading registered classes...</p>';
+    if (!classId || classId === 'ALL' || !sessionId || sessionId === 'ALL') {
+        console.warn('Invalid class or session selection.');
+        modalContent.innerHTML = '<p class="text-center text-muted">Please select a valid class and session.</p>';
+        Swal.fire({
+            icon: 'warning',
+            title: 'Missing Selection',
+            text: 'Please select a valid class and session.',
+            showConfirmButton: true
+        });
+        return;
+    }
 
-//     axios.get('/subjects/registered-classes', {
-//         params: { class_id: classId, session_id: sessionId },
-//         headers: {
-//             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-//             'X-Requested-With': 'XMLHttpRequest'
-//         },
-//         timeout: 15000
-//     }).then(response => {
-//         console.log('Registered classes response:', JSON.stringify(response.data, null, 2));
-//         if (response.data.success) {
-//             const classes = response.data.data;
-//             let html = '<div class="table-responsive"><table class="table table-bordered table-striped">';
-//             html += '<thead><tr><th>Class</th><th>Arm</th><th>Session</th><th>Term</th><th>Students</th><th>Subjects</th><th>Teachers</th></tr></thead><tbody>';
+    modalContent.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div><p class="mt-3 text-muted">Loading registration data...</p></div>';
 
-//             if (!classes || classes.length === 0) {
-//                 html += '<tr><td colspan="7" class="text-center">No registered classes found.</td></tr>';
-//             } else {
-//                 classes.forEach(cls => {
-//                     html += `<tr>
-//                         <td>${cls.class_name || '-'}</td>
-//                         <td>${cls.arm_name || '-'}</td>
-//                         <td>${cls.session_name || '-'}</td>
-//                         <td>${cls.term_name || '-'}</td>
-//                         <td>${cls.student_count || 0}</td>
-//                         <td>${cls.subjects || '-'}</td>
-//                         <td>${cls.teachers || '-'}</td>
-//                     </tr>`;
-//                 });
-//             }
+    axios.get('/subjects/registered-classes', {
+        params: { class_id: classId, session_id: sessionId },
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        timeout: 15000
+    }).then(response => {
+        console.log('Registered classes response:', response.data);
 
-//             html += '</tbody></table></div>';
-//             modalContent.innerHTML = html;
-//         } else {
-//             console.error('Failed to load:', response.data.message);
-//             modalContent.innerHTML = '<p class="text-center text-red-500">Failed to load registered classes.</p>';
-//             Swal.fire({
-//                 icon: 'error',
-//                 title: 'Error',
-//                 text: response.data.message || 'Failed to load registered classes.',
-//                 showConfirmButton: true
-//             });
-//         }
-//     }).catch(error => {
-//         console.error('Error loading registered classes:', {
-//             message: error.message,
-//             response: error.response?.data,
-//             status: error.response?.status
-//         });
-//         modalContent.innerHTML = '<p class="text-center text-red-500">Error loading registered classes. Please try again.</p>';
-//         Swal.fire({
-//             icon: 'error',
-//             title: 'Error',
-//             text: error.response?.data?.message || 'An error occurred while loading registered classes.',
-//             showConfirmButton: true
-//         });
-//     });
-// }
+        if (response.data.success) {
+            const classes = response.data.data;
+
+            if (!classes || classes.length === 0) {
+                modalContent.innerHTML = '<div class="text-center py-5"><i class="ri-information-line ri-3x text-muted"></i><p class="text-muted mt-3 mb-0">No registered classes found.</p></div>';
+                return;
+            }
+
+            // NEW CARD-BASED UI (replaces the old table)
+            let html = '';
+
+            classes.forEach(termGroup => {
+                html += `
+                <div class="term-card mb-4" style="background:#fff; border-radius:12px; border:0.5px solid #e2e8f0; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                    <div class="term-header p-3 d-flex justify-content-between align-items-center" style="border-bottom:0.5px solid #e2e8f0; background:#fff;">
+                        <div>
+                            <h5 class="fw-semibold mb-0" style="font-size:1rem;">${escapeHtml(termGroup.class_name)} ${escapeHtml(termGroup.arm_name)} — ${escapeHtml(termGroup.session_name)}</h5>
+                            <span class="text-muted small">${escapeHtml(termGroup.term_name)}</span>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <span class="badge" style="background:#E6F1FB; color:#0C447C; padding:4px 12px; border-radius:20px; font-weight:500;">${termGroup.total_students || termGroup.student_count || 0} students</span>
+                            <span class="badge" style="background:#EEEDFE; color:#3C3489; padding:4px 12px; border-radius:20px; font-weight:500;">${termGroup.total_subjects || (termGroup.subjects ? termGroup.subjects.length : 0)} subjects</span>
+                        </div>
+                    </div>
+                    <div class="subjects-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr));">
+                `;
+
+                const subjects = termGroup.subjects || [];
+                subjects.forEach((subject, idx) => {
+                    html += `
+                    <div class="subject-card p-3 d-flex gap-3 align-items-start" style="border-right:0.5px solid #e2e8f0; border-bottom:0.5px solid #e2e8f0;">
+                        <div class="subject-num" style="width:28px; height:28px; background:#EEEDFE; color:#3C3489; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:500;">${idx + 1}</div>
+                        <div class="subject-info flex-grow-1">
+                            <div class="fw-medium" style="font-size:0.9rem;">${escapeHtml(subject.subject_name)}</div>
+                            <div class="text-muted small mt-1">${escapeHtml(subject.teacher_name || '— Not assigned')}</div>
+                            <span class="badge mt-2" style="background:#EAF3DE; color:#27500A; font-size:10px; padding:2px 8px; border-radius:20px;">${subject.student_count || 0} students</span>
+                        </div>
+                    </div>`;
+                });
+
+                html += `
+                    </div>
+                </div>`;
+            });
+
+            modalContent.innerHTML = html;
+
+        } else {
+            console.error('Failed to load:', response.data.message);
+            modalContent.innerHTML = '<div class="text-center py-5 text-danger">Failed to load registered classes.</div>';
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: response.data.message || 'Failed to load registered classes.',
+                showConfirmButton: true
+            });
+        }
+    }).catch(error => {
+        console.error('Error loading registered classes:', error);
+        modalContent.innerHTML = '<div class="text-center py-5 text-danger">Error loading registered classes. Please try again.</div>';
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.response?.data?.message || 'An error occurred while loading registered classes.',
+            showConfirmButton: true
+        });
+    });
+}
+
+// Helper function for escaping HTML (add this if not already present)
+function escapeHtml(str) {
+    if (!str) return str ?? '';
+    return String(str).replace(/[&<>"']/g, function(match) {
+        if (match === '&') return '&amp;';
+        if (match === '<') return '&lt;';
+        if (match === '>') return '&gt;';
+        if (match === '"') return '&quot;';
+        if (match === "'") return '&#039;';
+        return match;
+    });
+}
 
 // Attach to buttons
 document.addEventListener("DOMContentLoaded", function () {
