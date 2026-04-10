@@ -629,7 +629,7 @@ function loadRegisteredClasses() {
         return;
     }
 
-    modalContent.innerHTML = '<p class="text-center">Loading registered classes...</p>';
+    modalContent.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div><p class="mt-3 text-muted">Loading registration data...</p></div>';
 
     axios.get('/subjects/registered-classes', {
         params: { class_id: classId, session_id: sessionId },
@@ -639,33 +639,88 @@ function loadRegisteredClasses() {
         },
         timeout: 15000
     }).then(response => {
-        console.log('Registered classes response:', JSON.stringify(response.data, null, 2));
+        console.log('Registered classes response:', response.data);
+
         if (response.data.success) {
             const classes = response.data.data;
-            let html = '<div class="table-responsive"><table class="table table-bordered table-striped">';
-            html += '<thead><tr><th>Class</th><th>Arm</th><th>Session</th><th>Term</th><th>Students</th><th>Subjects</th><th>Teachers</th></tr></thead><tbody>';
 
             if (!classes || classes.length === 0) {
-                html += '<tr><td colspan="7" class="text-center">No registered classes found.</td></tr>';
-            } else {
-                classes.forEach(cls => {
-                    html += `<tr>
-                        <td>${cls.class_name || '-'}</td>
-                        <td>${cls.arm_name || '-'}</td>
-                        <td>${cls.session_name || '-'}</td>
-                        <td>${cls.term_name || '-'}</td>
-                        <td>${cls.student_count || 0}</td>
-                        <td>${cls.subjects || '-'}</td>
-                        <td>${cls.teachers || '-'}</td>
-                    </tr>`;
-                });
+                modalContent.innerHTML = '<div class="text-center py-5"><i class="ri-information-line ri-3x text-muted"></i><p class="text-muted mt-3 mb-0">No registered classes found.</p></div>';
+                return;
             }
 
-            html += '</tbody></table></div>';
+            // NEW CARD-BASED UI - works with your data format
+            let html = '';
+
+            classes.forEach((termGroup, index) => {
+                // Split the comma-separated subjects into an array
+                const subjectsArray = termGroup.subjects ? termGroup.subjects.split(',').map(s => s.trim()) : [];
+                const teachersArray = termGroup.teachers ? termGroup.teachers.split(',').map(t => t.trim()) : [];
+
+                // Calculate total students (already provided)
+                const totalStudents = termGroup.student_count || 0;
+                const totalSubjects = termGroup.subject_count || subjectsArray.length;
+
+                html += `
+                <div class="term-card mb-4" style="background:#fff; border-radius:12px; border:0.5px solid #e2e8f0; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                    <div class="term-header p-3 d-flex justify-content-between align-items-center flex-wrap gap-2" style="border-bottom:0.5px solid #e2e8f0; background:#fff;">
+                        <div>
+                            <h5 class="fw-semibold mb-0" style="font-size:1rem;">${escapeHtml(termGroup.class_name)} ${escapeHtml(termGroup.arm_name)} — ${escapeHtml(termGroup.session_name)}</h5>
+                            <span class="text-muted small">${escapeHtml(termGroup.term_name)}</span>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <span class="badge" style="background:#E6F1FB; color:#0C447C; padding:4px 12px; border-radius:20px; font-weight:500;">
+                                <i class="ri-user-line me-1"></i>${totalStudents} students
+                            </span>
+                            <span class="badge" style="background:#EEEDFE; color:#3C3489; padding:4px 12px; border-radius:20px; font-weight:500;">
+                                <i class="ri-book-open-line me-1"></i>${totalSubjects} subjects
+                            </span>
+                        </div>
+                    </div>
+                    <div class="subjects-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr));">
+                `;
+
+                // Create a subject card for each subject (max 16 per term)
+                subjectsArray.forEach((subjectName, idx) => {
+                    // Try to match teacher with subject (by index, or show first few teachers)
+                    let teacherName = '— Not assigned';
+                    if (teachersArray.length > idx) {
+                        teacherName = teachersArray[idx];
+                    } else if (teachersArray.length > 0) {
+                        teacherName = teachersArray[0]; // fallback to first teacher
+                    }
+
+                    // Random student count variation (since your data has same total for all subjects)
+                    // You can replace this with actual per-subject student counts if available
+                    const subjectStudentCount = totalStudents;
+
+                    html += `
+                    <div class="subject-card p-3 d-flex gap-3 align-items-start" style="border-right:0.5px solid #e2e8f0; border-bottom:0.5px solid #e2e8f0; transition:all 0.2s ease;"
+                         onmouseenter="this.style.backgroundColor='#fafbff'"
+                         onmouseleave="this.style.backgroundColor='transparent'">
+                        <div class="subject-num" style="width:30px; height:30px; background:#EEEDFE; color:#3C3489; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; flex-shrink:0;">${idx + 1}</div>
+                        <div class="subject-info flex-grow-1">
+                            <div class="fw-semibold" style="font-size:0.9rem; color:#1e293b;">${escapeHtml(subjectName)}</div>
+                            <div class="text-muted small mt-1" style="font-size:0.75rem;">
+                                <i class="ri-user-star-line me-1"></i>${escapeHtml(teacherName)}
+                            </div>
+                            <span class="badge mt-2" style="background:#EAF3DE; color:#27500A; font-size:10px; padding:3px 10px; border-radius:20px; display:inline-flex; align-items:center; gap:4px;">
+                                <i class="ri-group-line" style="font-size:10px;"></i>${subjectStudentCount} students
+                            </span>
+                        </div>
+                    </div>`;
+                });
+
+                html += `
+                    </div>
+                </div>`;
+            });
+
             modalContent.innerHTML = html;
+
         } else {
             console.error('Failed to load:', response.data.message);
-            modalContent.innerHTML = '<p class="text-center text-red-500">Failed to load registered classes.</p>';
+            modalContent.innerHTML = '<div class="text-center py-5 text-danger"><i class="ri-error-warning-line ri-3x"></i><p class="mt-2">Failed to load registered classes.</p></div>';
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
@@ -674,12 +729,8 @@ function loadRegisteredClasses() {
             });
         }
     }).catch(error => {
-        console.error('Error loading registered classes:', {
-            message: error.message,
-            response: error.response?.data,
-            status: error.response?.status
-        });
-        modalContent.innerHTML = '<p class="text-center text-red-500">Error loading registered classes. Please try again.</p>';
+        console.error('Error loading registered classes:', error);
+        modalContent.innerHTML = '<div class="text-center py-5 text-danger"><i class="ri-error-warning-line ri-3x"></i><p class="mt-2">Error loading registered classes. Please try again.</p></div>';
         Swal.fire({
             icon: 'error',
             title: 'Error',
@@ -688,6 +739,21 @@ function loadRegisteredClasses() {
         });
     });
 }
+
+// Make sure escapeHtml function exists
+function escapeHtml(str) {
+    if (!str) return str ?? '';
+    return String(str).replace(/[&<>"']/g, function(match) {
+        if (match === '&') return '&amp;';
+        if (match === '<') return '&lt;';
+        if (match === '>') return '&gt;';
+        if (match === '"') return '&quot;';
+        if (match === "'") return '&#039;';
+        return match;
+    });
+}
+
+
 
 // Attach to buttons
 document.addEventListener("DOMContentLoaded", function () {
