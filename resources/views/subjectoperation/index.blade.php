@@ -323,29 +323,72 @@
                 {{-- ══════════════════════════════════════════════════════════ --}}
                 {{-- MODAL: Unregistered History (snapshot list)                --}}
                 {{-- ══════════════════════════════════════════════════════════ --}}
+                <div class="modal fade" id="archivedModal" tabindex="-1" aria-labelledby="archivedModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+                        <div class="modal-content border-0 shadow-lg">
+                            <div class="modal-header border-0" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                                <h5 class="modal-title text-white" id="archivedModalLabel">
+                                    <i class="ri-archive-line me-2"></i>Unregistered History
+                                </h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body p-0">
 
-<div class="modal fade" id="registeredClassesModal" tabindex="-1" aria-labelledby="registeredClassesModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-xl modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header" style="background: #1e3a5f; border-bottom: none;">
-                <h5 class="modal-title text-white fw-medium">
-                    Registered classes overview
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body p-4" style="background: #f4f7fc;">
-                <div id="registeredClassesContent">
-                    <!-- Content loaded dynamically -->
+                                {{-- Toolbar --}}
+                                <div class="p-3 border-bottom bg-light d-flex align-items-center flex-wrap gap-2">
+                                    <div class="flex-grow-1">
+                                        <input type="text" class="form-control form-control-sm" id="archiveSearch"
+                                            placeholder="Search snapshot name or subject…" style="max-width:300px;">
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2 flex-wrap">
+                                        <select class="form-select form-select-sm" id="archiveTermFilter" style="width:auto;">
+                                            <option value="">All Terms</option>
+                                            @foreach($schoolterms as $term)
+                                                <option value="{{ $term->id }}">{{ $term->term }}</option>
+                                            @endforeach
+                                        </select>
+                                        <select class="form-select form-select-sm" id="archivePerPage" style="width:auto;">
+                                            <option value="20">20 per page</option>
+                                            <option value="50" selected>50 per page</option>
+                                            <option value="100">100 per page</option>
+                                            <option value="150">150 per page</option>
+                                        </select>
+                                        <button class="btn btn-sm btn-outline-secondary" onclick="loadArchivedPage(1);">
+                                            <i class="ri-refresh-line"></i> Refresh
+                                        </button>
+                                        <button class="btn btn-sm btn-success d-none" id="restoreSelectedBtn" onclick="restoreSelected();">
+                                            <i class="ri-refresh-line me-1"></i> Restore Selected
+                                        </button>
+                                        <button class="btn btn-sm btn-danger d-none" id="deleteSelectedBtn" onclick="permanentDeleteSelected();">
+                                            <i class="ri-delete-bin-line me-1"></i> Delete Selected
+                                        </button>
+                                        <div class="spinner-border spinner-border-sm text-warning d-none" id="archiveSpinner" role="status"></div>
+                                    </div>
+                                </div>
+
+                                {{-- Snapshot cards --}}
+                                <div class="p-3" id="snapshotCardsContainer">
+                                    <div class="text-center text-muted py-4">
+                                        Select a class and session first, then open this panel.
+                                    </div>
+                                </div>
+
+                                {{-- Pagination --}}
+                                <div class="d-flex justify-content-between align-items-center px-3 py-2 border-top" id="archivePaginationWrap">
+                                    <small class="text-muted" id="archiveMeta"></small>
+                                    <div id="archivePagination" class="d-flex gap-1"></div>
+                                </div>
+                            </div>
+                            <div class="modal-footer bg-light">
+                                <small class="text-muted me-auto">
+                                    <i class="ri-information-line me-1"></i>
+                                    Click a snapshot to view student details. Restored records are fully re-registered with original scores.
+                                </small>
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="modal-footer border-0 bg-transparent">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                    <i class="ri-close-line me-1"></i>Close
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
 
                 {{-- ══════════════════════════════════════════════════════════ --}}
                 {{-- MODAL: Snapshot Detail (students + scores inside a snapshot) --}}
