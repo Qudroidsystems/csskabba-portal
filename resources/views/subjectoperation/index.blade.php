@@ -293,23 +293,18 @@
                 {{-- ══════════════════════════════════════════════════════════ --}}
                 {{-- MODAL: Registered Classes (UPDATED UI)                     --}}
                 {{-- ══════════════════════════════════════════════════════════ --}}
-                <div class="modal fade" id="registeredClassesModal" tabindex="-1" aria-labelledby="registeredClassesModalLabel" aria-hidden="true">
+               <div class="modal fade" id="registeredClassesModal" tabindex="-1" aria-labelledby="registeredClassesModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-xl modal-dialog-centered">
                         <div class="modal-content border-0 shadow-lg">
-                            {{-- New header style (dark blue) --}}
                             <div class="modal-header" style="background: #1e3a5f; border-bottom: none;">
                                 <h5 class="modal-title text-white fw-medium">
                                     Registered classes overview
                                 </h5>
                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
-                            {{-- New body background --}}
                             <div class="modal-body p-4" style="background: #f4f7fc;">
                                 <div id="registeredClassesContent">
-                                    <div class="text-center text-muted py-5">
-                                        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
-                                        <p class="mt-3 mb-0">Loading registration data...</p>
-                                    </div>
+                                    <!-- Content loaded dynamically -->
                                 </div>
                             </div>
                             <div class="modal-footer border-0 bg-transparent">
