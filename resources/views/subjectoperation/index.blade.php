@@ -979,17 +979,27 @@ async function loadRegisteredClasses() {
 
         data.data.forEach((row, i) => {
             let teachersHtml = '<span class="text-muted">—</span>';
-            if (row.teachers?.length) {
-                teachersHtml = '<div class="d-flex flex-wrap gap-2">' + row.teachers.map(t => {
-                    const pic = t.picture
-                        ? `${AVATAR_URL}/staff_avatars/${t.picture}`
-                        : `${AVATAR_URL}/staff_avatars/default.png`;
-                    return `<div class="d-flex align-items-center gap-2 bg-white rounded-3 px-2 py-1 shadow-sm" style="border:1px solid #e0e0e0;">
-                        <img src="${pic}" class="rounded-circle" style="width:32px;height:32px;object-fit:cover;"
-                             onerror="this.src='${AVATAR_URL}/staff_avatars/default.png'">
-                        <span class="fw-medium" style="font-size:.85rem;">${escapeHtml(t.name)}</span>
-                    </div>`;
-                }).join('') + '</div>';
+            const teachers = row.teachers;
+            if (teachers) {
+                if (Array.isArray(teachers) && teachers.length) {
+                    // Array of objects: [{ name, picture }, ...]
+                    teachersHtml = '<div class="d-flex flex-wrap gap-2">' + teachers.map(t => {
+                        const pic = t.picture
+                            ? `${AVATAR_URL}/staff_avatars/${t.picture}`
+                            : `${AVATAR_URL}/staff_avatars/default.png`;
+                        return `<div class="d-flex align-items-center gap-2 bg-white rounded-3 px-2 py-1 shadow-sm" style="border:1px solid #e0e0e0;">
+                            <img src="${pic}" class="rounded-circle" style="width:32px;height:32px;object-fit:cover;"
+                                 onerror="this.src='${AVATAR_URL}/staff_avatars/default.png'">
+                            <span class="fw-medium" style="font-size:.85rem;">${escapeHtml(t.name)}</span>
+                        </div>`;
+                    }).join('') + '</div>';
+                } else if (typeof teachers === 'string' && teachers.trim()) {
+                    // Plain comma-separated string: "Mr Smith, Mrs Jones"
+                    teachersHtml = '<div class="d-flex flex-wrap gap-1">' +
+                        teachers.split(',').map(name => name.trim()).filter(Boolean).map(name =>
+                            `<span class="badge bg-secondary-subtle text-secondary px-2 py-1">${escapeHtml(name)}</span>`
+                        ).join('') + '</div>';
+                }
             }
 
             html += `<tr class="${i % 2 === 0 ? 'bg-light' : ''}">
