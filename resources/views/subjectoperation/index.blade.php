@@ -1,1043 +1,1159 @@
 {{-- resources/views/subjectoperation/index.blade.php --}}
-@extends('layouts.app')
-
-@section('title', $pagetitle)
+@extends('layouts.master')
 
 @section('content')
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        <i class="fas fa-chalkboard-teacher"></i> {{ $pagetitle }}
-                    </h3>
-                    <div class="card-tools">
-                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                            <i class="fas fa-minus"></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <!-- Filter Form -->
-                    <form method="GET" action="{{ route('subjectoperation.index') }}" id="filterForm" class="mb-4">
-                        <div class="row">
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label for="class_id">Class <span class="text-danger">*</span></label>
-                                    <select name="class_id" id="class_id" class="form-control select2">
-                                        <option value="ALL">All Classes</option>
-                                        @foreach($schoolclass as $class)
-                                            <option value="{{ $class->id }}" {{ request('class_id') == $class->id ? 'selected' : '' }}>
-                                                {{ $class->schoolclass }} {{ $class->schoolarm }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-3">
-                                <div class="form-group">
-                                    <label for="session_id">Session <span class="text-danger">*</span></label>
-                                    <select name="session_id" id="session_id" class="form-control select2">
-                                        <option value="ALL">All Sessions</option>
-                                        @foreach($schoolsessions as $session)
-                                            <option value="{{ $session->id }}" {{ request('session_id') == $session->id ? 'selected' : '' }}>
-                                                {{ $session->session }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-2">
-                                <div class="form-group">
-                                    <label for="gender">Gender</label>
-                                    <select name="gender" id="gender" class="form-control">
-                                        <option value="ALL">All Genders</option>
-                                        <option value="Male" {{ request('gender') == 'Male' ? 'selected' : '' }}>Male</option>
-                                        <option value="Female" {{ request('gender') == 'Female' ? 'selected' : '' }}>Female</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-2">
-                                <div class="form-group">
-                                    <label for="admissionno">Admission No</label>
-                                    <select name="admissionno" id="admissionno" class="form-control">
-                                        <option value="ALL">All Students</option>
-                                        @if($students)
-                                            @foreach($students as $student)
-                                                <option value="{{ $student->admissionno }}" {{ request('admissionno') == $student->admissionno ? 'selected' : '' }}>
-                                                    {{ $student->admissionno }}
-                                                </option>
-                                            @endforeach
-                                        @endif
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-md-2">
-                                <div class="form-group">
-                                    <label for="search">Search</label>
-                                    <input type="text" name="search" id="search" class="form-control"
-                                           placeholder="Name or Admission No" value="{{ request('search') }}">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-12">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-search"></i> Filter Students
-                                </button>
-                                <button type="button" id="btnRegisteredClasses" class="btn btn-info">
-                                    <i class="fas fa-chalkboard-teacher"></i> Registered Classes Overview
-                                </button>
-                                <button type="button" id="btnBatchRegister" class="btn btn-success" disabled>
-                                    <i class="fas fa-check-double"></i> Batch Register Selected
-                                </button>
-                                <button type="button" id="btnBatchUnregister" class="btn btn-danger" disabled>
-                                    <i class="fas fa-trash-alt"></i> Batch Unregister Selected
-                                </button>
-                                <button type="reset" class="btn btn-secondary" onclick="resetFilters()">
-                                    <i class="fas fa-undo"></i> Reset
-                                </button>
-                            </div>
-                        </div>
-                    </form>
+<div class="main-content">
+    <div class="page-content">
+        <div class="container-fluid">
 
-                    <!-- Subject Teachers Info -->
-                    @if($subjectTeachers && count($subjectTeachers) > 0)
-                        <div class="alert alert-info">
-                            <h6><i class="fas fa-info-circle"></i> Available Subjects for Selected Class & Session:</h6>
-                            <div class="row">
-                                @foreach($subjectTeachers as $teacher)
-                                    <div class="col-md-4">
-                                        <span class="badge badge-primary mr-2">{{ $teacher->subjectname }}</span>
-                                        <small>Teacher: {{ $teacher->staffname }}</small>
-                                    </div>
-                                @endforeach
-                            </div>
+            {{-- Page Title --}}
+            <div class="row">
+                <div class="col-12">
+                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                        <h4 class="mb-sm-0 fw-semibold">
+                            <i class="ri-user-star-line me-2 text-primary"></i>Subject Registration
+                        </h4>
+                        <div class="page-title-right">
+                            <ol class="breadcrumb m-0">
+                                <li class="breadcrumb-item"><a href="{{ route('subjects.index') }}">Student Management</a></li>
+                                <li class="breadcrumb-item active">Subject Registration</li>
+                            </ol>
                         </div>
-                    @endif
+                    </div>
                 </div>
             </div>
 
-            <!-- Students Table -->
-            @if($students && count($students) > 0)
-                <div class="card mt-3">
-                    <div class="card-header">
-                        <h3 class="card-title">
-                            <i class="fas fa-users"></i> Student List
-                            <span class="badge badge-primary ml-2">{{ $students->total() }} Students</span>
-                        </h3>
-                        <div class="card-tools">
-                            <div class="input-group input-group-sm" style="width: 150px;">
-                                <input type="text" id="tableSearch" class="form-control float-right" placeholder="Search table...">
-                                <div class="input-group-append">
-                                    <button type="button" class="btn btn-default">
-                                        <i class="fas fa-search"></i>
+            @if ($errors->any())
+                <div class="alert alert-danger alert-dismissible fade show">
+                    <strong><i class="ri-error-warning-line me-1"></i> Error!</strong> There were some problems with your input.
+                    <ul class="mb-0 mt-1">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+
+            @if (session('status'))
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="ri-checkbox-circle-line me-1"></i> {{ session('status') }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            @endif
+
+            <div id="subjectList">
+
+                {{-- ── CLASS & SESSION FILTER ─────────────────────────────────── --}}
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header border-bottom-0 pb-0" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);">
+                                <h6 class="text-white mb-0 py-1"><i class="ri-filter-3-line me-2"></i>Filter Students</h6>
+                            </div>
+                            <div class="card-body pt-3">
+                                <div class="row g-3 align-items-end">
+                                    <div class="col-xxl-4 col-sm-6">
+                                        <label class="form-label fw-medium small text-muted">Class</label>
+                                        <select class="form-select" id="idclass">
+                                            <option value="ALL">— Select Class —</option>
+                                            @foreach ($schoolclass as $class)
+                                                <option value="{{ $class->id }}" {{ request('class_id') == $class->id ? 'selected' : '' }}>
+                                                    {{ $class->schoolclass }} {{ $class->schoolarm }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-xxl-4 col-sm-6">
+                                        <label class="form-label fw-medium small text-muted">Session</label>
+                                        <select class="form-select" id="idsession">
+                                            <option value="ALL">— Select Session —</option>
+                                            @foreach ($schoolsessions as $session)
+                                                <option value="{{ $session->id }}" {{ request('session_id') == $session->id ? 'selected' : '' }}>
+                                                    {{ $session->session }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-xxl-2 col-sm-6">
+                                        <button type="button" class="btn btn-primary w-100" onclick="filterData();">
+                                            <i class="ri-search-line me-1"></i> Search
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- ── SUBJECT TEACHERS CARD ──────────────────────────────────── --}}
+                <div class="row" id="subjectTeachersCard">
+                    <div class="col-lg-12">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header d-flex align-items-center flex-wrap gap-2">
+                                <div class="flex-grow-1">
+                                    <h5 class="card-title mb-0">
+                                        <i class="ri-book-open-line me-2 text-primary"></i>Subject Teachers
+                                    </h5>
+                                </div>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="selectAllSubjects();">
+                                        <i class="ri-checkbox-multiple-line me-1"></i>Select All
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="deselectAllSubjects();">
+                                        <i class="ri-checkbox-blank-line me-1"></i>Deselect All
                                     </button>
                                 </div>
                             </div>
+                            <div class="card-body">
+                                <div class="alert alert-info border-0 mb-3 d-flex align-items-center gap-2" style="background:#eff6ff;">
+                                    <i class="ri-information-line fs-5 text-primary flex-shrink-0"></i>
+                                    <span class="small">Select the subjects you want to register or unregister students for. Subjects are grouped by term.</span>
+                                </div>
+                                <div id="subjectTeachersContainer">
+                                    @foreach ($schoolterms as $term)
+                                        @php $termSubjects = $subjectTeachers ? $subjectTeachers->where('termid', $term->id) : collect(); @endphp
+                                        @if ($termSubjects->isNotEmpty())
+                                            <div class="term-group mb-4">
+                                                <div class="d-flex align-items-center mb-2 gap-2">
+                                                    <span class="badge text-white px-3 py-2 rounded-pill" style="background:linear-gradient(135deg,#667eea,#764ba2);">
+                                                        <i class="ri-calendar-2-line me-1"></i>{{ $term->term }}
+                                                    </span>
+                                                    <span class="badge bg-primary-subtle text-primary rounded-pill px-2">
+                                                        {{ $termSubjects->count() }} subject{{ $termSubjects->count() !== 1 ? 's' : '' }}
+                                                    </span>
+                                                </div>
+                                                <div class="row g-2">
+                                                    @foreach ($termSubjects as $teacher)
+                                                        <div class="col-xl-3 col-md-4 col-sm-6">
+                                                            <div class="subject-check-card p-2 border rounded-3 d-flex align-items-center gap-2 bg-light bg-opacity-50" style="cursor:pointer;" onclick="toggleSubjectCard(this)">
+                                                                <input class="form-check-input subject-checkbox flex-shrink-0 mt-0" type="checkbox"
+                                                                    id="subject-{{ $teacher->subjectclassid }}"
+                                                                    data-subjectclassid="{{ $teacher->subjectclassid }}"
+                                                                    data-staffid="{{ $teacher->userid }}"
+                                                                    data-termid="{{ $teacher->termid }}" checked>
+                                                                <label class="form-check-label small lh-sm mb-0 w-100" for="subject-{{ $teacher->subjectclassid }}" style="cursor:pointer;">
+                                                                    <span class="fw-semibold d-block text-truncate">{{ $teacher->subjectname }}</span>
+                                                                    <span class="text-muted" style="font-size:0.75rem;">{{ $teacher->staffname }}</span>
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                    @endforeach
+                                                </div>
+                                            </div>
+                                        @endif
+                                    @endforeach
+                                    @if(!$subjectTeachers || $subjectTeachers->isEmpty())
+                                        <div class="text-center text-muted py-4">
+                                            <i class="ri-book-2-line ri-2x mb-2 d-block"></i>
+                                            Select a class and session to view subjects.
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="card-body table-responsive p-0">
-                        <form id="studentSelectionForm">
-                            <table class="table table-hover table-head-fixed text-nowrap" id="studentsTable">
-                                <thead>
-                                    <tr>
-                                        <th width="50">
-                                            <div class="custom-control custom-checkbox">
-                                                <input type="checkbox" class="custom-control-input" id="selectAll">
-                                                <label class="custom-control-label" for="selectAll"></label>
-                                            </div>
-                                        </th>
-                                        <th>#</th>
-                                        <th>Photo</th>
-                                        <th>Admission No</th>
-                                        <th>Full Name</th>
-                                        <th>Gender</th>
-                                        <th>Class</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($students as $index => $student)
-                                        <tr>
-                                            <td>
-                                                <div class="custom-control custom-checkbox">
-                                                    <input type="checkbox" class="custom-control-input student-checkbox"
-                                                           id="student_{{ $student->id }}" value="{{ $student->id }}">
-                                                    <label class="custom-control-label" for="student_{{ $student->id }}"></label>
-                                                </div>
-                                            </td>
-                                            <td>{{ $students->firstItem() + $index }}</td>
-                                            <td>
-                                                @if($student->picture)
-                                                    <img src="{{ asset('storage/' . $student->picture) }}" class="img-circle" width="40" height="40" alt="Student">
-                                                @else
-                                                    <img src="{{ asset('dist/img/avatar.png') }}" class="img-circle" width="40" height="40" alt="Avatar">
-                                                @endif
-                                            </td>
-                                            <td>{{ $student->admissionno }}</td>
-                                            <td>
-                                                {{ $student->lastname }} {{ $student->firstname }} {{ $student->othername }}
-                                            </td>
-                                            <td>
-                                                <span class="badge {{ $student->gender == 'Male' ? 'badge-info' : 'badge-danger' }}">
-                                                    {{ $student->gender }}
-                                                </span>
-                                            </td>
-                                            <td>{{ $student->class_name }} {{ $student->arm_name }}</td>
-                                            <td>
-                                                <button type="button" class="btn btn-sm btn-info subject-info-btn"
-                                                        data-student-id="{{ $student->id }}"
-                                                        data-class-id="{{ request('class_id') }}"
-                                                        data-term-id="{{ request('term_id') ?? 1 }}"
-                                                        data-session-id="{{ request('session_id') }}">
-                                                    <i class="fas fa-book"></i> Subjects
-                                                </button>
-                                            </td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </form>
-                    </div>
-                    <div class="card-footer clearfix">
-                        {{ $students->appends(request()->query())->links() }}
+                </div>
+
+                {{-- ── STUDENT FILTERS ────────────────────────────────────────── --}}
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body">
+                                <div class="row g-3 align-items-end">
+                                    <div class="col-xxl-4">
+                                        <label class="form-label fw-medium small text-muted">Search Students</label>
+                                        <div class="search-box">
+                                            <input type="text" class="form-control search" placeholder="Name or admission no…" value="{{ request('search') }}">
+                                            <i class="ri-search-line search-icon"></i>
+                                        </div>
+                                    </div>
+                                    <div class="col-xxl-3 col-sm-6">
+                                        <label class="form-label fw-medium small text-muted">Gender</label>
+                                        <select class="form-select" id="idgender">
+                                            <option value="ALL">All Genders</option>
+                                            <option value="Male" {{ request('gender') === 'Male' ? 'selected' : '' }}>Male</option>
+                                            <option value="Female" {{ request('gender') === 'Female' ? 'selected' : '' }}>Female</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-xxl-3 col-sm-6">
+                                        <label class="form-label fw-medium small text-muted">Admission No</label>
+                                        <select class="form-select" id="idadmission">
+                                            <option value="ALL">All Admission Nos</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-xxl-2 col-sm-6">
+                                        <button type="button" class="btn btn-secondary w-100" onclick="filterData();">
+                                            <i class="ri-filter-line me-1"></i> Filter
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            @elseif(request('class_id') && request('session_id') && request('class_id') !== 'ALL' && request('session_id') !== 'ALL')
-                <div class="alert alert-warning mt-3">
-                    <i class="fas fa-exclamation-triangle"></i> No students found for the selected criteria.
+
+                {{-- ── STUDENTS TABLE ─────────────────────────────────────────── --}}
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header d-flex align-items-center flex-wrap gap-2">
+                                <div class="flex-grow-1">
+                                    <h5 class="card-title mb-0">
+                                        <i class="ri-group-line me-2 text-primary"></i>Students
+                                        <span class="badge bg-dark-subtle text-dark ms-1 rounded-pill" id="studentcount">{{ $students ? $students->total() : 0 }}</span>
+                                    </h5>
+                                </div>
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <button type="button" class="btn btn-success d-none" id="register-selected-btn" onclick="registerSelectedStudentsBatch();">
+                                        <i class="ri-user-add-line me-1"></i>Register Selected
+                                    </button>
+                                    <button type="button" class="btn btn-danger d-none" id="unregister-selected-btn" onclick="openUnregisterModal();">
+                                        <i class="ri-user-unfollow-line me-1"></i>Unregister Selected
+                                    </button>
+                                    <div class="spinner-border spinner-border-sm text-primary d-none" id="register-loading-spinner" role="status"></div>
+                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#registeredClassesModal">
+                                        <i class="ri-eye-line me-1"></i>View Registered
+                                    </button>
+                                    <button type="button" class="btn btn-warning" onclick="openArchivedModal();">
+                                        <i class="ri-archive-line me-1"></i>Unregistered History
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle table-nowrap mb-0">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th width="40" class="text-center">
+                                                    <input class="form-check-input" type="checkbox" id="checkAll">
+                                                </th>
+                                                <th width="50">S/N</th>
+                                                <th>Admission No</th>
+                                                <th>Student Name</th>
+                                                <th>Class</th>
+                                                <th>Gender</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="studentTableBody">
+                                            @include('subjectoperation.partials.student_rows')
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="d-flex justify-content-end p-3">
+                                    {{ $students ? $students->links('pagination::bootstrap-5') : '' }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            @endif
+
+                {{-- ════════════════════════════════════════════════════════════ --}}
+                {{-- MODAL: Registered Classes Overview                          --}}
+                {{-- ════════════════════════════════════════════════════════════ --}}
+                <div class="modal fade" id="registeredClassesModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+                        <div class="modal-content border-0 shadow-lg" style="border-radius:16px;overflow:hidden;">
+
+                            {{-- Header --}}
+                            <div class="modal-header px-4 py-3 border-0" style="background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 60%,#7c3aed 100%);">
+                                <div class="d-flex align-items-center gap-3 flex-grow-1 flex-wrap">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                                         style="width:44px;height:44px;background:rgba(255,255,255,0.15);">
+                                        <i class="ri-graduation-cap-line fs-5 text-white"></i>
+                                    </div>
+                                    <div>
+                                        <h5 class="modal-title text-white fw-bold mb-0">Registered Classes Overview</h5>
+                                        <small class="text-white opacity-75">Subject–Teacher assignments by term</small>
+                                    </div>
+                                    <div class="ms-auto d-flex gap-2">
+                                        <button type="button" class="btn btn-sm px-3 text-white border-white border-opacity-50"
+                                                style="background:rgba(255,255,255,0.15);backdrop-filter:blur(4px);"
+                                                onclick="printRegisteredClasses()">
+                                            <i class="ri-printer-line me-1"></i>Print
+                                        </button>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {{-- Term tabs (populated dynamically) --}}
+                            <div id="regModalTermTabsWrap" class="border-bottom px-4 pt-2" style="background:#f8faff;display:none;">
+                                <ul class="nav nav-tabs border-0" id="regModalTermTabs" role="tablist"></ul>
+                            </div>
+
+                            {{-- Body --}}
+                            <div class="modal-body p-4" style="background:#f4f7fe;max-height:72vh;overflow-y:auto;">
+                                <div id="registeredClassesContent">
+                                    <div class="text-center py-5">
+                                        <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                                             style="width:64px;height:64px;background:linear-gradient(135deg,#667eea,#764ba2);">
+                                            <i class="ri-search-line fs-4 text-white"></i>
+                                        </div>
+                                        <p class="text-muted">Select a class and session, then open this modal to view registered subjects.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="modal-footer border-0 px-4 py-3" style="background:#f8faff;">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- ════════════════════════════════════════════════════════════ --}}
+                {{-- MODAL: Snapshot Name for Unregistration                     --}}
+                {{-- ════════════════════════════════════════════════════════════ --}}
+                <div class="modal fade" id="snapshotNameModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content border-0 shadow-lg" style="border-radius:14px;overflow:hidden;">
+                            <div class="modal-header border-0" style="background:linear-gradient(135deg,#f5576c 0%,#f093fb 100%);">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                                         style="width:36px;height:36px;background:rgba(255,255,255,0.2);">
+                                        <i class="ri-camera-line text-white"></i>
+                                    </div>
+                                    <h5 class="modal-title text-white mb-0">Name this Unregistration</h5>
+                                </div>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body p-4">
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Snapshot Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="snapshotNameInput" placeholder="e.g., Term 2 Corrections - June 2025">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Notes <span class="text-muted fw-normal">(optional)</span></label>
+                                    <textarea class="form-control" id="snapshotNotesInput" rows="3" placeholder="Reason for unregistration…"></textarea>
+                                </div>
+                                <div class="alert border-0 d-flex gap-2 align-items-center" style="background:#fff8e1;">
+                                    <i class="ri-error-warning-line text-warning fs-5 flex-shrink-0"></i>
+                                    <small>All scores will be saved in a snapshot and can be fully restored later.</small>
+                                </div>
+                            </div>
+                            <div class="modal-footer border-0 px-4 pb-4">
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-danger" onclick="proceedUnregister();">
+                                    <i class="ri-delete-bin-line me-1"></i>Unregister &amp; Save
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- ════════════════════════════════════════════════════════════ --}}
+                {{-- MODAL: Unregistered History                                  --}}
+                {{-- ════════════════════════════════════════════════════════════ --}}
+                <div class="modal fade" id="archivedModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content border-0 shadow-lg" style="border-radius:14px;overflow:hidden;">
+                            <div class="modal-header border-0" style="background:linear-gradient(135deg,#f093fb 0%,#f5576c 100%);">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                                         style="width:36px;height:36px;background:rgba(255,255,255,0.2);">
+                                        <i class="ri-archive-line text-white"></i>
+                                    </div>
+                                    <h5 class="modal-title text-white mb-0">Unregistered History</h5>
+                                </div>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body p-4">
+                                <div id="snapshotCardsContainer">
+                                    <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
+                                </div>
+                                <div id="archivePagination" class="d-flex justify-content-center mt-3"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- ════════════════════════════════════════════════════════════ --}}
+                {{-- MODAL: Snapshot Detail                                       --}}
+                {{-- ════════════════════════════════════════════════════════════ --}}
+                <div class="modal fade" id="snapshotDetailModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content border-0 shadow-lg" style="border-radius:14px;overflow:hidden;">
+                            <div class="modal-header border-0" style="background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%);">
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center"
+                                         style="width:36px;height:36px;background:rgba(255,255,255,0.2);">
+                                        <i class="ri-file-list-3-line text-white"></i>
+                                    </div>
+                                    <h5 class="modal-title text-white mb-0" id="snapshotDetailTitle">Snapshot Detail</h5>
+                                </div>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body p-4">
+                                <div id="snapshotDetailBody">
+                                    <div class="text-center py-4"><div class="spinner-border text-info"></div></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>{{-- #subjectList --}}
         </div>
     </div>
 </div>
-
-<!-- Subject Info Modal -->
-<div class="modal fade" id="subjectInfoModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-xl" role="document">
-        <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                <h5 class="modal-title text-white">
-                    <i class="fas fa-book-open"></i> Student Subject Registration
-                </h5>
-                <button type="button" class="close text-white" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
-            </div>
-            <div class="modal-body" id="subjectInfoContent">
-                <div class="text-center py-5">
-                    <div class="spinner-border text-primary" role="status">
-                        <span class="sr-only">Loading...</span>
-                    </div>
-                    <p class="mt-2">Loading subject information...</p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Batch Register Modal -->
-<div class="modal fade" id="batchRegisterModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title">
-                    <i class="fas fa-check-double"></i> Batch Register Students
-                </h5>
-                <button type="button" class="close text-white" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-info">
-                    <i class="fas fa-info-circle"></i> Selected Students: <span id="selectedCount">0</span>
-                </div>
-                <form id="batchRegisterForm">
-                    @csrf
-                    <div class="form-group">
-                        <label>Select Subject <span class="text-danger">*</span></label>
-                        <select class="form-control select2" id="batchSubjectId" required>
-                            <option value="">Select Subject</option>
-                            @if($subjectTeachers)
-                                @foreach($subjectTeachers as $teacher)
-                                    <option value="{{ $teacher->subjectclassid }}" data-staffid="{{ $teacher->userid }}" data-termid="{{ $teacher->termid }}">
-                                        {{ $teacher->subjectname }} - {{ $teacher->staffname }} ({{ $teacher->termname }})
-                                    </option>
-                                @endforeach
-                            @endif
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Session</label>
-                        <input type="text" class="form-control" value="{{ request('session_id') ? \App\Models\Schoolsession::find(request('session_id'))->session : '' }}" readonly>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" id="confirmBatchRegister">
-                    <i class="fas fa-check"></i> Confirm Registration
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Batch Unregister Modal -->
-<div class="modal fade" id="batchUnregisterModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title">
-                    <i class="fas fa-trash-alt"></i> Batch Unregister Students
-                </h5>
-                <button type="button" class="close text-white" data-dismiss="modal">
-                    <span>&times;</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="alert alert-warning">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    Warning: This will archive all scores and remove students from the selected subject.
-                </div>
-                <div class="alert alert-info">
-                    Selected Students: <strong id="unregisterSelectedCount">0</strong>
-                </div>
-                <form id="batchUnregisterForm">
-                    @csrf
-                    <div class="form-group">
-                        <label>Select Subject <span class="text-danger">*</span></label>
-                        <select class="form-control select2" id="unregisterSubjectId" required>
-                            <option value="">Select Subject</option>
-                            @if($subjectTeachers)
-                                @foreach($subjectTeachers as $teacher)
-                                    <option value="{{ $teacher->subjectclassid }}" data-staffid="{{ $teacher->userid }}" data-termid="{{ $teacher->termid }}">
-                                        {{ $teacher->subjectname }} - {{ $teacher->staffname }} ({{ $teacher->termname }})
-                                    </option>
-                                @endforeach
-                            @endif
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Snapshot Name (Optional)</label>
-                        <input type="text" class="form-control" id="snapshotName"
-                               placeholder="Leave empty for auto-generated name">
-                    </div>
-                    <div class="form-group">
-                        <label>Snapshot Notes (Optional)</label>
-                        <textarea class="form-control" id="snapshotNotes" rows="3"
-                                  placeholder="Reason for unregistration..."></textarea>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmBatchUnregister">
-                    <i class="fas fa-trash-alt"></i> Confirm Unregistration
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-@endsection
-
 
 <style>
-    .table-head-fixed thead tr th {
-        position: sticky;
-        top: 0;
-        background-color: #f8f9fc;
-        z-index: 10;
-    }
+/* ── Print ──────────────────────────────────────────── */
+@media print {
+    body * { visibility: hidden; }
+    #printableArea, #printableArea * { visibility: visible; }
+    #printableArea { position: absolute; top: 0; left: 0; width: 100%; }
+    .no-print { display: none !important; }
+    @page { size: A4; margin: 15mm; }
+}
 
-    .teacher-item {
-        display: inline-block;
-        margin-right: 10px;
-        margin-bottom: 5px;
-    }
+/* ── Subject check card ─────────────────────────────── */
+.subject-check-card {
+    transition: all .18s ease;
+    border-color: #e2e8f0 !important;
+}
+.subject-check-card:hover {
+    border-color: #667eea !important;
+    background: #f0f0ff !important;
+}
+.subject-check-card.is-checked {
+    border-color: #667eea !important;
+    background: #ede9fe !important;
+}
 
-    .badge-pill {
-        font-size: 12px;
-        padding: 5px 10px;
-    }
+/* ── Registered modal subject rows ─────────────────── */
+.subject-row:nth-child(even) { background: #fafbff; }
+.subject-row:hover { background: #eff6ff !important; }
 
-    .select2-container .select2-selection--single {
-        height: 38px;
-    }
+/* ── Stats strip ────────────────────────────────────── */
+.stats-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
 
-    .select2-container--default .select2-selection--single .select2-selection__rendered {
-        line-height: 38px;
-    }
+/* ── Term section heading ───────────────────────────── */
+.term-section-header {
+    background: linear-gradient(90deg, rgba(102,126,234,0.12) 0%, rgba(118,75,162,0.05) 100%);
+    border-left: 4px solid #667eea;
+    border-radius: 0 8px 8px 0;
+    padding: 10px 16px;
+    margin-bottom: 12px;
+}
 
-    .select2-container--default .select2-selection--single .select2-selection__arrow {
-        height: 36px;
-    }
+/* ── Teacher chip ───────────────────────────────────── */
+.teacher-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #f0f9ff;
+    border: 1px solid #bae6fd;
+    border-radius: 20px;
+    padding: 3px 10px 3px 5px;
+    font-size: 12px;
+}
+.teacher-chip img {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    object-fit: cover;
+}
 
-    @media print {
-        .btn, .card-tools, .filter-form, .pagination, .modal-footer {
-            display: none !important;
-        }
-        .card {
-            border: none !important;
-            box-shadow: none !important;
-        }
-    }
+/* ── Number badge ───────────────────────────────────── */
+.subject-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: linear-gradient(135deg,#667eea,#764ba2);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-$(document).ready(function() {
-    // Initialize Select2
-    $('.select2').select2({
-        theme: 'bootstrap4',
-        width: '100%'
+// ════════════════════════════════════════════════════════════════════════════
+// CONFIGURATION
+// ════════════════════════════════════════════════════════════════════════════
+const ROUTES = {
+    batchRegister:  '{{ route("subjectregistration.batch") }}',
+    unregister:     '{{ route("subjects.destroy") }}',
+    getRegistered:  '{{ route("subjects.registered-classes") }}',
+    getArchived:    '{{ route("subjectoperation.archived") }}',
+    getSnapshot:    '{{ route("subjectoperation.snapshot.detail") }}',
+    restore:        '{{ route("subjectoperation.restore") }}',
+    permanentDelete:'{{ route("subjectoperation.archive.batch-delete") }}',
+    index:          '{{ route("subjects.index") }}',
+    getSchoolInfo:  '{{ route("school.information.get") }}',
+};
+const CSRF      = '{{ csrf_token() }}';
+const ASSET_URL = '{{ asset("storage") }}';
+
+// ════════════════════════════════════════════════════════════════════════════
+// UTILITY
+// ════════════════════════════════════════════════════════════════════════════
+function esc(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, m =>
+        ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function toast(title, msg, icon) {
+    Swal.fire({ title, html: msg, icon, confirmButtonColor: icon === 'success' ? '#28a745' : '#dc3545' });
+}
+
+function filterData() {
+    const params = new URLSearchParams({
+        class_id:    document.getElementById('idclass').value,
+        session_id:  document.getElementById('idsession').value,
+        search:      document.querySelector('.search')?.value || '',
+        gender:      document.getElementById('idgender').value,
+        admissionno: document.getElementById('idadmission').value,
     });
+    window.location.href = ROUTES.index + '?' + params.toString();
+}
 
-    // Select All functionality
-    $('#selectAll').change(function() {
-        $('.student-checkbox').prop('checked', $(this).prop('checked'));
-        updateBatchButtons();
+function toggleSubjectCard(card) {
+    const cb = card.querySelector('input[type="checkbox"]');
+    cb.checked = !cb.checked;
+    card.classList.toggle('is-checked', cb.checked);
+    updateSubjectCount();
+}
+
+function updateSubjectCount() {
+    const total = document.querySelectorAll('.subject-checkbox:checked').length;
+    document.getElementById('subjectTeacherCount') && (document.getElementById('subjectTeacherCount').textContent = total);
+}
+
+function selectAllSubjects() {
+    document.querySelectorAll('.subject-checkbox').forEach(cb => {
+        cb.checked = true;
+        cb.closest('.subject-check-card')?.classList.add('is-checked');
     });
+    updateSubjectCount();
+}
 
-    $('.student-checkbox').change(function() {
-        updateBatchButtons();
+function deselectAllSubjects() {
+    document.querySelectorAll('.subject-checkbox').forEach(cb => {
+        cb.checked = false;
+        cb.closest('.subject-check-card')?.classList.remove('is-checked');
     });
+    updateSubjectCount();
+}
 
-    function updateBatchButtons() {
-        const selectedCount = $('.student-checkbox:checked').length;
-        $('#btnBatchRegister, #btnBatchUnregister').prop('disabled', selectedCount === 0);
-        $('#selectedCount').text(selectedCount);
-        $('#unregisterSelectedCount').text(selectedCount);
-    }
-
-    // Reset filters
-    window.resetFilters = function() {
-        $('#class_id').val('ALL').trigger('change');
-        $('#session_id').val('ALL').trigger('change');
-        $('#gender').val('ALL');
-        $('#admissionno').val('ALL');
-        $('#search').val('');
-        $('#filterForm').submit();
-    };
-
-    // Table search
-    $('#tableSearch').on('keyup', function() {
-        const value = $(this).val().toLowerCase();
-        $('#studentsTable tbody tr').filter(function() {
-            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
-        });
-    });
-
-    // Subject Info Button
-    $('.subject-info-btn').click(function() {
-        const studentId = $(this).data('student-id');
-        const classId = $(this).data('class-id');
-        const termId = $(this).data('term-id');
-        const sessionId = $(this).data('session-id');
-
-        $('#subjectInfoModal').modal('show');
-
-        $.ajax({
-            url: "{{ url('subjectoperation/subjectinfo') }}/" + studentId + "/" + classId + "/" + termId + "/" + sessionId,
-            method: 'GET',
-            success: function(response) {
-                if (typeof response === 'object' && response.html) {
-                    $('#subjectInfoContent').html(response.html);
-                } else {
-                    $('#subjectInfoContent').html(response);
-                }
-            },
-            error: function(xhr) {
-                $('#subjectInfoContent').html(`
-                    <div class="alert alert-danger">
-                        <i class="fas fa-exclamation-circle"></i>
-                        Failed to load subject information. Please try again.
-                    </div>
-                `);
-            }
-        });
-    });
-
-    // Batch Register Button
-    $('#btnBatchRegister').click(function() {
-        const selectedCount = $('.student-checkbox:checked').length;
-        if (selectedCount === 0) {
-            Swal.fire('Warning', 'Please select at least one student', 'warning');
-            return;
-        }
-        $('#batchRegisterModal').modal('show');
-    });
-
-    // Confirm Batch Register
-    $('#confirmBatchRegister').click(function() {
-        const subjectClassId = $('#batchSubjectId').val();
-        const selectedOption = $('#batchSubjectId option:selected');
-        const staffId = selectedOption.data('staffid');
-        const termId = selectedOption.data('termid');
-        const sessionId = {{ request('session_id') ?? 'null' }};
-        const studentIds = $('.student-checkbox:checked').map(function() {
-            return $(this).val();
-        }).get();
-
-        if (!subjectClassId) {
-            Swal.fire('Error', 'Please select a subject', 'error');
-            return;
-        }
-
-        Swal.fire({
-            title: 'Confirm Registration',
-            text: `Register ${studentIds.length} student(s) for ${selectedOption.text()}?`,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonColor: '#28a745',
-            confirmButtonText: 'Yes, register!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: "{{ route('subjectoperation.batchRegister') }}",
-                    method: 'POST',
-                    data: {
-                        studentids: studentIds,
-                        subjectclasses: [{
-                            subjectclassid: subjectClassId,
-                            staffid: staffId,
-                            termid: termId
-                        }],
-                        sessionid: sessionId,
-                        _token: '{{ csrf_token() }}'
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            Swal.fire('Success!', response.message, 'success').then(() => {
-                                location.reload();
-                            });
-                        } else {
-                            Swal.fire('Error!', response.message, 'error');
-                        }
-                    },
-                    error: function(xhr) {
-                        Swal.fire('Error!', 'Registration failed. Please try again.', 'error');
-                    }
-                });
-            }
-        });
-    });
-
-    // Batch Unregister Button
-    $('#btnBatchUnregister').click(function() {
-        const selectedCount = $('.student-checkbox:checked').length;
-        if (selectedCount === 0) {
-            Swal.fire('Warning', 'Please select at least one student', 'warning');
-            return;
-        }
-        $('#batchUnregisterModal').modal('show');
-    });
-
-    // Confirm Batch Unregister
-    $('#confirmBatchUnregister').click(function() {
-        const subjectClassId = $('#unregisterSubjectId').val();
-        const selectedOption = $('#unregisterSubjectId option:selected');
-        const staffId = selectedOption.data('staffid');
-        const termId = selectedOption.data('termid');
-        const sessionId = {{ request('session_id') ?? 'null' }};
-        const studentIds = $('.student-checkbox:checked').map(function() {
-            return $(this).val();
-        }).get();
-        const snapshotName = $('#snapshotName').val();
-        const snapshotNotes = $('#snapshotNotes').val();
-
-        if (!subjectClassId) {
-            Swal.fire('Error', 'Please select a subject', 'error');
-            return;
-        }
-
-        Swal.fire({
-            title: 'Confirm Unregistration',
-            text: `Unregister ${studentIds.length} student(s) from ${selectedOption.text()}? This will archive all scores.`,
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#d33',
-            confirmButtonText: 'Yes, unregister!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: "{{ route('subjectoperation.destroy') }}",
-                    method: 'DELETE',
-                    data: {
-                        studentids: studentIds,
-                        subjectclasses: [{
-                            subjectclassid: subjectClassId,
-                            staffid: staffId,
-                            termid: termId
-                        }],
-                        sessionid: sessionId,
-                        snapshot_name: snapshotName,
-                        snapshot_notes: snapshotNotes,
-                        _token: '{{ csrf_token() }}'
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            Swal.fire('Success!', response.message, 'success').then(() => {
-                                location.reload();
-                            });
-                        } else {
-                            Swal.fire('Error!', response.message, 'error');
-                        }
-                    },
-                    error: function(xhr) {
-                        Swal.fire('Error!', 'Unregistration failed. Please try again.', 'error');
-                    }
-                });
-            }
-        });
-    });
+// Mark already-checked cards on load
+document.querySelectorAll('.subject-checkbox:checked').forEach(cb => {
+    cb.closest('.subject-check-card')?.classList.add('is-checked');
 });
 
-// =========================================================================
-// REGISTERED CLASSES OVERVIEW FUNCTIONALITY
-// =========================================================================
+// ════════════════════════════════════════════════════════════════════════════
+// REGISTERED CLASSES MODAL
+// ════════════════════════════════════════════════════════════════════════════
+async function loadRegisteredClasses() {
+    const classId   = document.getElementById('idclass').value;
+    const sessionId = document.getElementById('idsession').value;
+    const container = document.getElementById('registeredClassesContent');
+    const tabsWrap  = document.getElementById('regModalTermTabsWrap');
+    const tabs      = document.getElementById('regModalTermTabs');
 
-function initRegisteredClassesButton() {
-    $('#btnRegisteredClasses').click(function(e) {
-        e.preventDefault();
+    if (classId === 'ALL' || sessionId === 'ALL') {
+        tabsWrap.style.display = 'none';
+        container.innerHTML = `
+            <div class="text-center py-5">
+                <div class="rounded-circle mx-auto mb-3 d-flex align-items-center justify-content-center"
+                     style="width:56px;height:56px;background:#fef3c7;">
+                    <i class="ri-error-warning-line fs-4 text-warning"></i>
+                </div>
+                <p class="text-muted mb-0">Please select a <strong>class</strong> and <strong>session</strong> first.</p>
+            </div>`;
+        return;
+    }
 
-        const classId = $('#class_id').val();
-        const sessionId = $('#session_id').val();
-        const termId = $('#term_id').val();
+    container.innerHTML = `
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary mb-3" style="width:3rem;height:3rem;"></div>
+            <p class="text-muted">Loading registered subjects…</p>
+        </div>`;
+    tabsWrap.style.display = 'none';
 
-        if (!classId || classId === 'ALL') {
-            Swal.fire('Warning', 'Please select a class', 'warning');
+    try {
+        const res  = await fetch(`${ROUTES.getRegistered}?class_id=${classId}&session_id=${sessionId}`,
+            { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
+        const data = await res.json();
+
+        if (!data.success || !data.data.length) {
+            container.innerHTML = `<div class="alert alert-info text-center py-4">
+                <i class="ri-information-line fs-4 d-block mb-2"></i>No registered classes found for this selection.</div>`;
             return;
         }
 
-        if (!sessionId || sessionId === 'ALL') {
-            Swal.fire('Warning', 'Please select a session', 'warning');
-            return;
-        }
-
-        Swal.fire({
-            title: 'Loading...',
-            text: 'Fetching registered classes overview',
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
+        // Build tab nav
+        tabs.innerHTML = '';
+        data.data.forEach((termData, idx) => {
+            tabs.innerHTML += `
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link px-4 py-2 ${idx === 0 ? 'active' : ''}"
+                            id="tab-term-${idx}"
+                            data-bs-toggle="tab"
+                            data-bs-target="#tab-pane-${idx}"
+                            type="button" role="tab">
+                        <i class="ri-calendar-2-line me-1"></i>${esc(termData.term_name)}
+                        <span class="badge bg-primary rounded-pill ms-1">${termData.subject_count ?? termData.subjects_teachers?.length ?? 0}</span>
+                    </button>
+                </li>`;
         });
+        tabsWrap.style.display = 'block';
 
-        fetchRegisteredClasses(classId, sessionId, termId);
-    });
+        // Build tab panes
+        let panesHtml = '<div class="tab-content mt-3">';
+        data.data.forEach((termData, idx) => {
+            const subjects = termData.subjects_teachers || [];
+            panesHtml += `<div class="tab-pane fade ${idx === 0 ? 'show active' : ''}" id="tab-pane-${idx}" role="tabpanel">`;
+            panesHtml += buildTermPane(termData, subjects);
+            panesHtml += '</div>';
+        });
+        panesHtml += '</div>';
+        container.innerHTML = panesHtml;
+
+    } catch (err) {
+        container.innerHTML = `<div class="alert alert-danger"><i class="ri-error-warning-line me-2"></i>${esc(err.message)}</div>`;
+    }
 }
 
-function fetchRegisteredClasses(classId, sessionId, termId = null) {
-    let url = '{{ route("registered.classes") }}';
-    let params = {
-        class_id: classId,
-        session_id: sessionId
-    };
+function buildTermPane(termData, subjects) {
+    const studentCount = termData.student_count ?? 0;
+    const subjectCount = subjects.length;
 
-    if (termId && termId !== 'ALL' && termId !== '') {
-        params.term_id = termId;
-    }
-
-    $.ajax({
-        url: url,
-        method: 'GET',
-        data: params,
-        dataType: 'json',
-        success: function(response) {
-            Swal.close();
-            if (response.success) {
-                if (response.data && response.data.length > 0) {
-                    displayRegisteredClassesModal(response.data);
-                } else {
-                    Swal.fire('Info', 'No registered classes found for the selected criteria', 'info');
-                }
-            } else {
-                Swal.fire('Error', response.message || 'Failed to load registered classes', 'error');
-            }
-        },
-        error: function(xhr) {
-            Swal.close();
-            let errorMessage = 'An error occurred while fetching registered classes';
-            if (xhr.responseJSON && xhr.responseJSON.message) {
-                errorMessage = xhr.responseJSON.message;
-            }
-            Swal.fire('Error', errorMessage, 'error');
-        }
-    });
-}
-
-function displayRegisteredClassesModal(data) {
-    if ($('#registeredClassesModal').length) {
-        $('#registeredClassesModal').remove();
-    }
-
-    let modalHtml = `
-        <div class="modal fade" id="registeredClassesModal" tabindex="-1" role="dialog" aria-labelledby="registeredClassesModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-xl" role="document">
-                <div class="modal-content">
-                    <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                        <h5 class="modal-title text-white" id="registeredClassesModalLabel">
-                            <i class="fas fa-chalkboard-teacher"></i> Registered Classes Overview
-                        </h5>
-                        <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                            <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
-                        <div class="form-group mb-3">
-                            <div class="input-group">
-                                <div class="input-group-prepend">
-                                    <span class="input-group-text">
-                                        <i class="fas fa-search"></i>
-                                    </span>
-                                </div>
-                                <input type="text" class="form-control" id="subjectSearchInput" placeholder="Search by subject or teacher...">
-                                <div class="input-group-append">
-                                    <button class="btn btn-outline-secondary" type="button" id="clearSearchBtn">
-                                        <i class="fas fa-times"></i> Clear
-                                    </button>
-                                </div>
-                            </div>
+    let html = `
+        <div class="card border-0 shadow-sm mb-0" style="border-radius:12px;overflow:hidden;">
+            <div class="card-header border-0 px-4 py-3" style="background:linear-gradient(135deg,#1e3a5f 0%,#2563eb 70%,#7c3aed 100%);">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+                             style="width:42px;height:42px;background:rgba(255,255,255,0.15);">
+                            <i class="ri-school-line text-white fs-5"></i>
                         </div>
-                        <div id="registeredClassesContent"></div>
+                        <div>
+                            <h6 class="text-white fw-bold mb-0">${esc(termData.class_name)} ${esc(termData.arm_name)}</h6>
+                            <small class="text-white opacity-75">${esc(termData.session_name)} &bull; ${esc(termData.term_name)}</small>
+                        </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                            <i class="fas fa-times"></i> Close
-                        </button>
-                        <button type="button" class="btn btn-primary" onclick="printRegisteredClassesModal()">
-                            <i class="fas fa-print"></i> Print
-                        </button>
-                        <button type="button" class="btn btn-success" onclick="exportRegisteredClassesToExcel()">
-                            <i class="fas fa-file-excel"></i> Export to Excel
-                        </button>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <span class="stats-pill" style="background:rgba(255,255,255,0.2);color:#fff;">
+                            <i class="ri-user-line"></i> ${studentCount} Student${studentCount !== 1 ? 's' : ''}
+                        </span>
+                        <span class="stats-pill" style="background:rgba(255,255,255,0.2);color:#fff;">
+                            <i class="ri-book-open-line"></i> ${subjectCount} Subject${subjectCount !== 1 ? 's' : ''}
+                        </span>
                     </div>
                 </div>
+            </div>
+            <div class="card-body p-0">`;
+
+    if (!subjectCount) {
+        html += `<div class="text-center text-muted py-4"><i class="ri-book-2-line ri-2x d-block mb-2"></i>No subjects found for this term.</div>`;
+    } else {
+        html += `
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" style="font-size:0.875rem;">
+                    <thead style="background:#f0f4ff;">
+                        <tr>
+                            <th width="52" class="text-center ps-3">#</th>
+                            <th>Subject Name</th>
+                            <th width="110">Code</th>
+                            <th>Teacher(s)</th>
+                            <th width="90" class="text-center">Students</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+        subjects.forEach((subject, index) => {
+            const sc = subject.student_count ?? 0;
+            let teachersHtml = '';
+
+            if (subject.teachers && subject.teachers.length > 0) {
+                teachersHtml = '<div class="d-flex flex-wrap gap-1">';
+                subject.teachers.forEach(t => {
+                    const pic = t.picture
+                        ? `${ASSET_URL}/staff_avatars/${t.picture.split('/').pop()}`
+                        : `${ASSET_URL}/staff_avatars/default.png`;
+                    teachersHtml += `
+                        <span class="teacher-chip">
+                            <img src="${pic}" onerror="this.src='${ASSET_URL}/staff_avatars/default.png'">
+                            <span>${esc(t.name)}</span>
+                        </span>`;
+                });
+                teachersHtml += '</div>';
+            } else {
+                teachersHtml = '<span class="text-muted small"><i class="ri-user-unfollow-line me-1"></i>Not assigned</span>';
+            }
+
+            html += `
+                <tr class="subject-row">
+                    <td class="text-center ps-3">
+                        <span class="subject-num">${index + 1}</span>
+                    </td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            <i class="ri-book-2-line text-primary"></i>
+                            <span class="fw-semibold">${esc(subject.name)}</span>
+                        </div>
+                    </td>
+                    <td>
+                        <span class="badge rounded-pill px-3" style="background:#e0e7ff;color:#4338ca;font-size:11px;">
+                            ${esc(subject.code || '—')}
+                        </span>
+                    </td>
+                    <td>${teachersHtml}</td>
+                    <td class="text-center">
+                        <span class="badge rounded-pill px-3 py-2" style="background:linear-gradient(135deg,#667eea,#764ba2);color:#fff;font-size:12px;">
+                            ${sc}
+                        </span>
+                    </td>
+                </tr>`;
+        });
+
+        html += `
+                    </tbody>
+                </table>
+            </div>`;
+    }
+
+    html += `
+            <div class="px-4 py-3 d-flex justify-content-between align-items-center flex-wrap gap-2"
+                 style="background:#f8faff;border-top:1px solid #e8eaf6;font-size:12px;">
+                <span class="text-muted">
+                    <i class="ri-bar-chart-line me-1"></i>
+                    <strong>${subjectCount}</strong> subjects &nbsp;&bull;&nbsp;
+                    <strong>${studentCount}</strong> students
+                </span>
+                <span class="text-muted">
+                    <i class="ri-time-line me-1"></i>Generated: ${new Date().toLocaleString()}
+                </span>
             </div>
         </div>
-    `;
+    </div>`;
 
-    $('body').append(modalHtml);
+    return html;
+}
 
-    // Populate content
-    const contentContainer = $('#registeredClassesContent');
-    let contentHtml = '';
+// ════════════════════════════════════════════════════════════════════════════
+// PRINT
+// ════════════════════════════════════════════════════════════════════════════
+async function printRegisteredClasses() {
+    const classId   = document.getElementById('idclass').value;
+    const sessionId = document.getElementById('idsession').value;
 
-    data.forEach((termData, termIndex) => {
-        const termName = termData.term_name || 'N/A';
-        const sessionName = termData.session_name || 'N/A';
-        const className = termData.class_name || 'N/A';
-        const armName = termData.arm_name || 'N/A';
-        const totalStudents = termData.student_count || 0;
-        const totalSubjects = termData.subject_count || 0;
+    if (classId === 'ALL' || sessionId === 'ALL') {
+        Swal.fire('Cannot Print', 'Please select a class and session first.', 'warning');
+        return;
+    }
+
+    Swal.fire({ title: 'Preparing document…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+    try {
+        const [schoolRes, regRes] = await Promise.all([
+            fetch(ROUTES.getSchoolInfo, { headers: { 'Accept': 'application/json' } }),
+            fetch(`${ROUTES.getRegistered}?class_id=${classId}&session_id=${sessionId}`,
+                { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } }),
+        ]);
+
+        const [schoolData, regData] = await Promise.all([schoolRes.json(), regRes.json()]);
+        Swal.close();
+
+        if (!regData.success || !regData.data.length) {
+            Swal.fire('No Data', 'No registered classes found.', 'info');
+            return;
+        }
+
+        const pw = window.open('', '_blank');
+        pw.document.write(buildPrintHtml(schoolData, regData.data));
+        pw.document.close();
+        pw.focus();
+        setTimeout(() => pw.print(), 600);
+
+    } catch (err) {
+        Swal.close();
+        Swal.fire('Error', err.message, 'error');
+    }
+}
+
+function buildPrintHtml(schoolData, registeredData) {
+    const classEl   = document.getElementById('idclass');
+    const sessionEl = document.getElementById('idsession');
+    const className  = classEl.options[classEl.selectedIndex]?.text || '';
+    const sessionName = sessionEl.options[sessionEl.selectedIndex]?.text || '';
+
+    const school      = schoolData.success ? schoolData.data : {};
+    const schoolName  = school.school_name    || 'School Management System';
+    const schoolAddr  = school.school_address || '';
+    const schoolPhone = school.school_phone   || '';
+    const schoolEmail = school.school_email   || '';
+    const schoolMotto = school.school_motto   || '';
+    const logoSrc     = school.school_logo
+        ? (school.school_logo.startsWith('http') ? school.school_logo : `{{ asset('storage') }}/${school.school_logo}`)
+        : '';
+
+    let totalSubjects = 0;
+    let termsHtml = '';
+
+    registeredData.forEach(termData => {
         const subjects = termData.subjects_teachers || [];
+        totalSubjects += subjects.length;
 
-        contentHtml += `
-            <div class="card mb-4 shadow-sm" data-term="${termName}">
-                <div class="card-header" style="background-color: #f8f9fa;">
-                    <div class="row align-items-center">
-                        <div class="col-md-6">
-                            <h6 class="mb-0">
-                                <i class="fas fa-calendar-alt text-primary"></i>
-                                <strong>${escapeHtml(termName)} Term</strong>
-                                <span class="text-muted">(${escapeHtml(sessionName)})</span>
-                            </h6>
-                            <small class="text-muted">
-                                <i class="fas fa-school"></i> ${escapeHtml(className)} ${escapeHtml(armName)}
-                            </small>
-                        </div>
-                        <div class="col-md-6 text-md-right">
-                            <span class="badge badge-primary badge-pill mr-2">
-                                <i class="fas fa-users"></i> Students: ${totalStudents}
-                            </span>
-                            <span class="badge badge-success badge-pill">
-                                <i class="fas fa-book"></i> Subjects: ${totalSubjects}
-                            </span>
-                        </div>
+        let rows = '';
+        subjects.forEach((s, i) => {
+            const teachers = (s.teachers || []).map(t => t.name).join(', ') || '—';
+            rows += `
+                <tr>
+                    <td class="center">${i + 1}</td>
+                    <td><strong>${esc(s.name)}</strong></td>
+                    <td>${esc(s.code || '—')}</td>
+                    <td>${esc(teachers)}</td>
+                    <td class="center">${s.student_count ?? 0}</td>
+                </tr>`;
+        });
+
+        termsHtml += `
+            <div class="term-block">
+                <div class="term-header">
+                    <span class="term-title">${esc(termData.class_name)} ${esc(termData.arm_name)}</span>
+                    <span class="term-meta">${esc(termData.session_name)} &nbsp;|&nbsp; ${esc(termData.term_name)}</span>
+                    <div style="margin-top:4px;">
+                        <span class="badge-pill">&#128100; ${termData.student_count ?? 0} Students</span>
+                        <span class="badge-pill">&#128218; ${subjects.length} Subjects</span>
                     </div>
                 </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover table-striped mb-0">
-                            <thead class="thead-light">
-                                <tr>
-                                    <th width="5%" class="text-center">#</th>
-                                    <th width="35%">Subject</th>
-                                    <th width="40%">Teacher(s)</th>
-                                    <th width="20%" class="text-center">Registered Students</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-        `;
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="center" style="width:44px;">S/N</th>
+                            <th>Subject Name</th>
+                            <th style="width:100px;">Code</th>
+                            <th>Teacher(s)</th>
+                            <th class="center" style="width:80px;">Students</th>
+                        </tr>
+                    </thead>
+                    <tbody>${rows}</tbody>
+                    <tfoot>
+                        <tr>
+                            <td colspan="2" style="font-weight:600;padding:6px 10px;background:#f0f4ff;">
+                                Total: ${subjects.length} subject${subjects.length !== 1 ? 's' : ''}
+                            </td>
+                            <td colspan="3" style="text-align:right;font-weight:600;padding:6px 10px;background:#f0f4ff;">
+                                ${termData.student_count ?? 0} student${(termData.student_count ?? 0) !== 1 ? 's' : ''} registered
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>`;
+    });
 
-        if (subjects.length === 0) {
-            contentHtml += `
-                <tr class="no-subjects-row">
-                    <td colspan="4" class="text-center text-muted py-4">
-                        <i class="fas fa-info-circle"></i> No subjects found for this term
-                    </td>
-                </tr>
-            `;
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Subject Registration — ${esc(schoolName)}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 11pt; color: #1a1a2e; background: #fff; padding: 10mm; }
+
+  /* ── School Header ── */
+  .school-header { display: flex; align-items: center; gap: 18px; border-bottom: 3px solid #2563eb; padding-bottom: 14px; margin-bottom: 18px; }
+  .school-logo { width: 72px; height: 72px; object-fit: contain; flex-shrink: 0; }
+  .school-logo-placeholder { width: 72px; height: 72px; border-radius: 50%; background: linear-gradient(135deg,#667eea,#764ba2); display: flex; align-items: center; justify-content: center; color: white; font-size: 28px; font-weight: 700; flex-shrink: 0; }
+  .school-info { flex: 1; }
+  .school-name { font-size: 18pt; font-weight: 700; color: #1e3a5f; line-height: 1.2; }
+  .school-motto { font-style: italic; color: #555; font-size: 10pt; margin-top: 2px; }
+  .school-contact { font-size: 9.5pt; color: #666; margin-top: 4px; }
+
+  /* ── Document Title ── */
+  .doc-title { text-align: center; background: linear-gradient(135deg,#1e3a5f,#2563eb); color: white; padding: 10px 20px; border-radius: 6px; margin-bottom: 14px; }
+  .doc-title h2 { font-size: 14pt; font-weight: 700; letter-spacing: 0.5px; }
+  .doc-title p { font-size: 10pt; opacity: 0.85; margin-top: 2px; }
+
+  /* ── Meta strip ── */
+  .meta-strip { display: flex; gap: 16px; background: #f0f4ff; border: 1px solid #c7d2fe; border-radius: 6px; padding: 8px 14px; margin-bottom: 18px; font-size: 10pt; }
+  .meta-item strong { color: #1e3a5f; }
+
+  /* ── Term block ── */
+  .term-block { margin-bottom: 22px; page-break-inside: avoid; border: 1px solid #e0e7ff; border-radius: 8px; overflow: hidden; }
+  .term-header { background: linear-gradient(135deg,#1e3a5f 0%,#2563eb 70%,#7c3aed 100%); color: white; padding: 10px 16px; }
+  .term-title { font-size: 13pt; font-weight: 700; display: block; }
+  .term-meta { font-size: 9.5pt; opacity: 0.85; display: block; margin-top: 2px; }
+  .badge-pill { display: inline-block; background: rgba(255,255,255,0.2); color: white; font-size: 9pt; padding: 2px 10px; border-radius: 12px; margin-right: 6px; margin-top: 4px; }
+
+  /* ── Table ── */
+  table { width: 100%; border-collapse: collapse; font-size: 10pt; }
+  thead tr { background: #e0e7ff; }
+  th { padding: 8px 10px; font-weight: 600; color: #1e3a5f; border-bottom: 2px solid #c7d2fe; text-align: left; }
+  td { padding: 7px 10px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+  tbody tr:nth-child(even) td { background: #fafbff; }
+  tbody tr:last-child td { border-bottom: none; }
+  .center { text-align: center; }
+
+  /* ── Footer ── */
+  .doc-footer { text-align: center; font-size: 9pt; color: #888; border-top: 1px solid #ddd; padding-top: 10px; margin-top: 16px; }
+  .doc-footer strong { color: #2563eb; }
+
+  /* ── Summary ── */
+  .summary-box { border: 1px solid #c7d2fe; border-radius: 8px; padding: 10px 16px; background: #f0f4ff; margin-bottom: 18px; font-size: 10pt; display: flex; gap: 24px; flex-wrap: wrap; }
+  .summary-box .sum-item { font-weight: 600; color: #1e3a5f; }
+  .summary-box .sum-val { font-size: 14pt; font-weight: 700; color: #2563eb; display: block; margin-top: 2px; }
+</style>
+</head>
+<body>
+
+  <!-- School Header -->
+  <div class="school-header">
+    ${logoSrc
+        ? `<img src="${logoSrc}" class="school-logo" onerror="this.style.display='none'">`
+        : `<div class="school-logo-placeholder">${esc(schoolName).charAt(0)}</div>`}
+    <div class="school-info">
+      <div class="school-name">${esc(schoolName)}</div>
+      ${schoolMotto ? `<div class="school-motto">"${esc(schoolMotto)}"</div>` : ''}
+      <div class="school-contact">
+        ${schoolAddr ? esc(schoolAddr) + ' &nbsp;|&nbsp; ' : ''}
+        ${schoolPhone ? esc(schoolPhone) : ''}
+        ${schoolEmail ? ' &nbsp;|&nbsp; ' + esc(schoolEmail) : ''}
+      </div>
+    </div>
+  </div>
+
+  <!-- Document Title -->
+  <div class="doc-title">
+    <h2>Subject Registration Report</h2>
+    <p>Official Academic Record — ${esc(className)} &nbsp;&bull;&nbsp; ${esc(sessionName)}</p>
+  </div>
+
+  <!-- Meta Info -->
+  <div class="meta-strip">
+    <div class="meta-item"><strong>Class:</strong> ${esc(className)}</div>
+    <div class="meta-item"><strong>Session:</strong> ${esc(sessionName)}</div>
+    <div class="meta-item"><strong>Terms:</strong> ${registeredData.length}</div>
+    <div class="meta-item"><strong>Printed:</strong> ${new Date().toLocaleString()}</div>
+  </div>
+
+  <!-- Quick Summary -->
+  <div class="summary-box">
+    <div class="sum-item">Total Terms
+      <span class="sum-val">${registeredData.length}</span>
+    </div>
+    <div class="sum-item">Total Subjects
+      <span class="sum-val">${totalSubjects}</span>
+    </div>
+    <div class="sum-item">Enrolled Students
+      <span class="sum-val">${registeredData[0]?.student_count ?? '—'}</span>
+    </div>
+  </div>
+
+  <!-- Term Blocks -->
+  ${termsHtml}
+
+  <!-- Footer -->
+  <div class="doc-footer">
+    <strong>${esc(schoolName)}</strong> &bull;
+    Subject Registration Report &bull;
+    Generated on ${new Date().toLocaleString()} &bull;
+    School Management System
+  </div>
+
+</body>
+</html>`;
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// REGISTRATION
+// ════════════════════════════════════════════════════════════════════════════
+function getSelectedStudentIds() {
+    return [...document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked')]
+        .map(cb => parseInt(cb.closest('tr').querySelector('.id')?.dataset.id));
+}
+
+function getSelectedSubjectClasses() {
+    return [...document.querySelectorAll('.subject-checkbox:checked')].map(cb => ({
+        subjectclassid: parseInt(cb.dataset.subjectclassid),
+        staffid:        parseInt(cb.dataset.staffid),
+        termid:         parseInt(cb.dataset.termid),
+    }));
+}
+
+async function registerSelectedStudentsBatch() {
+    const studentIds    = getSelectedStudentIds();
+    const subjectClasses = getSelectedSubjectClasses();
+    const sessionId     = document.getElementById('idsession').value;
+
+    if (!studentIds.length)     return toast('Error', 'No students selected', 'warning');
+    if (!subjectClasses.length) return toast('Error', 'No subjects selected', 'warning');
+    if (sessionId === 'ALL')    return toast('Error', 'Please select a session', 'warning');
+
+    const confirm = await Swal.fire({
+        title: 'Confirm Registration',
+        html: `Register <strong>${studentIds.length}</strong> student(s) for <strong>${subjectClasses.length}</strong> subject(s)?`,
+        icon: 'question', showCancelButton: true, confirmButtonColor: '#28a745',
+        confirmButtonText: 'Yes, Register',
+    });
+    if (!confirm.isConfirmed) return;
+
+    document.getElementById('register-loading-spinner').classList.remove('d-none');
+
+    try {
+        const res  = await fetch(ROUTES.batchRegister, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+            body: JSON.stringify({ studentids: studentIds, subjectclasses: subjectClasses, sessionid: parseInt(sessionId) }),
+        });
+        const data = await res.json();
+        if (data.success) {
+            toast('Success', 'Students registered successfully!', 'success');
+            setTimeout(() => location.reload(), 2000);
         } else {
-            subjects.forEach((subject, index) => {
-                const subjectName = subject.name || 'N/A';
-                const subjectCode = subject.code || '';
-                const studentCount = subject.student_count || 0;
-                const teachers = subject.teachers || [];
+            toast('Error', data.message || 'Registration failed', 'error');
+        }
+    } catch (err) {
+        toast('Error', err.message, 'error');
+    } finally {
+        document.getElementById('register-loading-spinner').classList.add('d-none');
+    }
+}
 
-                let teacherHtml = '';
-                if (teachers.length === 0) {
-                    teacherHtml = '<span class="text-muted"><i class="fas fa-user-slash"></i> No teacher assigned</span>';
-                } else {
-                    teacherHtml = teachers.map(teacher => {
-                        const teacherName = teacher.name || 'Unknown';
-                        return `
-                            <div class="teacher-item mb-1">
-                                <i class="fas fa-user-circle mr-1"></i>
-                                <span>${escapeHtml(teacherName)}</span>
+function openUnregisterModal() {
+    const studentIds    = getSelectedStudentIds();
+    const subjectClasses = getSelectedSubjectClasses();
+    if (!studentIds.length)     return toast('Error', 'No students selected', 'warning');
+    if (!subjectClasses.length) return toast('Error', 'No subjects selected', 'warning');
+
+    document.getElementById('snapshotNameInput').value  = `Unregistration — ${new Date().toLocaleString()}`;
+    document.getElementById('snapshotNotesInput').value = '';
+    new bootstrap.Modal(document.getElementById('snapshotNameModal')).show();
+}
+
+async function proceedUnregister() {
+    const name = document.getElementById('snapshotNameInput').value.trim();
+    if (!name) return toast('Error', 'Please enter a snapshot name', 'warning');
+
+    const studentIds    = getSelectedStudentIds();
+    const subjectClasses = getSelectedSubjectClasses();
+    const sessionId     = document.getElementById('idsession').value;
+    const notes         = document.getElementById('snapshotNotesInput').value;
+
+    bootstrap.Modal.getInstance(document.getElementById('snapshotNameModal')).hide();
+
+    Swal.fire({ title: 'Processing…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+    try {
+        const res  = await fetch(ROUTES.unregister, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+            body: JSON.stringify({ studentids: studentIds, subjectclasses: subjectClasses, sessionid: parseInt(sessionId), snapshot_name: name, snapshot_notes: notes }),
+        });
+        const data = await res.json();
+        Swal.close();
+        if (data.success) {
+            toast('Success', `${data.success_count} student(s) unregistered`, 'success');
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            toast('Error', data.message || 'Unregistration failed', 'error');
+        }
+    } catch (err) {
+        Swal.close();
+        toast('Error', err.message, 'error');
+    }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+// ARCHIVE
+// ════════════════════════════════════════════════════════════════════════════
+function openArchivedModal() {
+    const classId   = document.getElementById('idclass').value;
+    const sessionId = document.getElementById('idsession').value;
+    if (classId === 'ALL' || sessionId === 'ALL') {
+        return toast('Error', 'Please select a class and session first', 'warning');
+    }
+    loadArchivedPage(1);
+    new bootstrap.Modal(document.getElementById('archivedModal')).show();
+}
+
+async function loadArchivedPage(page) {
+    const classId   = document.getElementById('idclass').value;
+    const sessionId = document.getElementById('idsession').value;
+    const container = document.getElementById('snapshotCardsContainer');
+
+    container.innerHTML = '<div class="text-center py-4"><div class="spinner-border text-primary"></div></div>';
+
+    try {
+        const res  = await fetch(`${ROUTES.getArchived}?class_id=${classId}&session_id=${sessionId}&page=${page}`,
+            { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
+        const data = await res.json();
+
+        if (!data.success || !data.data.length) {
+            container.innerHTML = '<div class="alert alert-info text-center"><i class="ri-archive-line fs-4 d-block mb-2"></i>No archived records found.</div>';
+            return;
+        }
+
+        let html = '<div class="row g-3">';
+        data.data.forEach(snapshot => {
+            html += `
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm h-100" style="border-radius:10px;overflow:hidden;">
+                        <div class="card-header py-2 px-3 border-0" style="background:linear-gradient(135deg,#f093fb,#f5576c);">
+                            <div class="d-flex align-items-center gap-2">
+                                <i class="ri-camera-line text-white"></i>
+                                <span class="text-white fw-semibold small text-truncate">${esc(snapshot.snapshot_name)}</span>
                             </div>
-                        `;
-                    }).join('');
-                }
-
-                contentHtml += `
-                    <tr data-subject="${subjectName.toLowerCase()}" data-teacher="${teachers.map(t => t.name.toLowerCase()).join(' ')}">
-                        <td class="text-center align-middle">
-                            <span class="badge badge-secondary badge-pill">${index + 1}</span>
-                        </td>
-                        <td class="align-middle">
-                            <strong>${escapeHtml(subjectName)}</strong>
-                            ${subjectCode ? `<br><small class="text-muted"><i class="fas fa-code"></i> ${escapeHtml(subjectCode)}</small>` : ''}
-                        </td>
-                        <td class="align-middle">
-                            ${teacherHtml}
-                        </td>
-                        <td class="text-center align-middle">
-                            <span class="badge badge-info badge-pill" style="font-size: 14px;">
-                                <i class="fas fa-user-graduate"></i> ${studentCount}
-                            </span>
-                        </td>
-                    </tr>
-                `;
-            });
-        }
-
-        contentHtml += `
-                            </tbody>
-                        </table>
+                        </div>
+                        <div class="card-body p-3">
+                            <div class="mb-1 small text-muted"><i class="ri-time-line me-1"></i>${new Date(snapshot.unregistered_at).toLocaleString()}</div>
+                            <div class="mb-1 small"><strong>Subject:</strong> ${esc(snapshot.subjectname)}</div>
+                            <div class="mb-2 small"><strong>Students:</strong> <span class="badge bg-primary rounded-pill">${snapshot.student_count}</span></div>
+                            <div class="d-flex gap-2 mt-2">
+                                <button class="btn btn-sm btn-outline-primary flex-fill" onclick="viewSnapshotDetail(${snapshot.archive_id})">
+                                    <i class="ri-eye-line me-1"></i>Details
+                                </button>
+                                <button class="btn btn-sm btn-success flex-fill" onclick="restoreSnapshot(${snapshot.archive_id})">
+                                    <i class="ri-refresh-line me-1"></i>Restore
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="card-footer bg-light">
-                    <small class="text-muted">
-                        <i class="fas fa-chart-line"></i>
-                        Average students per subject: ${totalSubjects > 0 ? (totalStudents / totalSubjects).toFixed(1) : 0}
-                    </small>
-                </div>
-            </div>
-        `;
-    });
-
-    contentContainer.html(contentHtml);
-
-    // Search functionality
-    $('#subjectSearchInput').on('keyup', function() {
-        const searchTerm = $(this).val().toLowerCase();
-        let visibleCount = 0;
-
-        $('.card').each(function() {
-            let cardHasVisible = false;
-            $(this).find('tbody tr').each(function() {
-                const subject = $(this).data('subject') || '';
-                const teacher = $(this).data('teacher') || '';
-
-                if (subject.includes(searchTerm) || teacher.includes(searchTerm)) {
-                    $(this).show();
-                    cardHasVisible = true;
-                    visibleCount++;
-                } else {
-                    $(this).hide();
-                }
-            });
-
-            if (cardHasVisible) {
-                $(this).show();
-            } else {
-                $(this).hide();
-            }
+                </div>`;
         });
+        html += '</div>';
+        container.innerHTML = html;
 
-        if (visibleCount === 0 && searchTerm) {
-            if ($('#noSearchResultsMsg').length === 0) {
-                contentContainer.append(`
-                    <div id="noSearchResultsMsg" class="alert alert-info text-center">
-                        <i class="fas fa-search"></i> No matching subjects found for "${escapeHtml(searchTerm)}"
-                    </div>
-                `);
-            }
-        } else {
-            $('#noSearchResultsMsg').remove();
-        }
-    });
-
-    $('#clearSearchBtn').click(function() {
-        $('#subjectSearchInput').val('').trigger('keyup');
-    });
-
-    $('#registeredClassesModal').modal('show');
+    } catch (err) {
+        container.innerHTML = `<div class="alert alert-danger">${esc(err.message)}</div>`;
+    }
 }
 
-function printRegisteredClassesModal() {
-    const printContent = $('#registeredClassesModal .modal-body').clone();
-    const modalHeader = $('#registeredClassesModal .modal-header').clone();
+// ════════════════════════════════════════════════════════════════════════════
+// EVENT LISTENERS
+// ════════════════════════════════════════════════════════════════════════════
+document.getElementById('checkAll')?.addEventListener('change', function() {
+    document.querySelectorAll('#studentTableBody input[name="chk_child"]').forEach(cb => cb.checked = this.checked);
+    const count = this.checked ? document.querySelectorAll('#studentTableBody input[name="chk_child"]').length : 0;
+    document.getElementById('register-selected-btn')?.classList.toggle('d-none', count === 0);
+    document.getElementById('unregister-selected-btn')?.classList.toggle('d-none', count === 0);
+});
 
-    // Remove search input from print
-    printContent.find('.form-group').remove();
+document.getElementById('registeredClassesModal')?.addEventListener('show.bs.modal', loadRegisteredClasses);
 
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Registered Classes Overview</title>
-            <meta charset="utf-8">
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
-            <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-            <style>
-                body {
-                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                    padding: 20px;
-                    margin: 0;
-                }
-                .print-header {
-                    text-align: center;
-                    margin-bottom: 30px;
-                    padding-bottom: 20px;
-                    border-bottom: 2px solid #333;
-                }
-                .print-header h2 {
-                    margin: 0;
-                    color: #333;
-                }
-                .print-header p {
-                    margin: 5px 0;
-                    color: #666;
-                }
-                table {
-                    width: 100%;
-                    border-collapse: collapse;
-                    margin-bottom: 20px;
-                }
-                th, td {
-                    border: 1px solid #ddd;
-                    padding: 10px;
-                    text-align: left;
-                }
-                th {
-                    background-color: #f2f2f2;
-                    font-weight: bold;
-                }
-                .badge {
-                    display: inline-block;
-                    padding: 3px 8px;
-                    background-color: #007bff;
-                    color: white;
-                    border-radius: 12px;
-                    font-size: 12px;
-                }
-                .teacher-item {
-                    margin-bottom: 5px;
-                }
-                @media print {
-                    .no-print {
-                        display: none;
-                    }
-                    body {
-                        padding: 0;
-                    }
-                    .card {
-                        break-inside: avoid;
-                        page-break-inside: avoid;
-                    }
-                }
-            </style>
-        </head>
-        <body>
-            <div class="print-header">
-                <h2>Registered Classes Overview</h2>
-                <p>Generated on: ${new Date().toLocaleString()}</p>
-            </div>
-            ${modalHeader.prop('outerHTML')}
-            ${printContent.prop('outerHTML')}
-            <div class="print-footer text-center" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd;">
-                <small>Printed on: ${new Date().toLocaleString()}</small>
-            </div>
-        </body>
-        </html>
-    `);
-
-    printWindow.document.close();
-    printWindow.print();
-}
-
-function exportRegisteredClassesToExcel() {
-    const data = [['#', 'Subject', 'Teacher(s)', 'Registered Students', 'Term', 'Session', 'Class']];
-
-    $('#registeredClassesContent .card').each(function() {
-        const termText = $(this).find('.card-header strong').first().text();
-        const sessionText = $(this).find('.card-header .text-muted').first().text().replace(/[()]/g, '');
-        const classText = $(this).find('.card-header small').text().replace(/School:/, '').trim();
-
-        $(this).find('tbody tr').each(function() {
-            if (!$(this).hasClass('no-subjects-row')) {
-                const number = $(this).find('td:eq(0) .badge').text().trim();
-                const subject = $(this).find('td:eq(1) strong').text().trim();
-                const teachers = $(this).find('.teacher-item span').map(function() {
-                    return $(this).text().trim();
-                }).get().join(', ');
-                const students = $(this).find('td:eq(3) .badge').text().trim();
-
-                data.push([number, subject, teachers, students, termText, sessionText, classText]);
-            }
-        });
-    });
-
-    const csvContent = data.map(row => row.map(cell => `"${cell.replace(/"/g, '""')}"`).join(',')).join('\n');
-    const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-
-    link.setAttribute('href', url);
-    link.setAttribute('download', `registered_classes_${new Date().toISOString().slice(0,19)}.csv`);
-    link.style.visibility = 'hidden';
-
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    Swal.fire('Success', 'Export completed successfully!', 'success');
-}
-
-function escapeHtml(text) {
-    if (!text) return '';
-    const map = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;'
-    };
-    return String(text).replace(/[&<>"']/g, function(char) {
-        return map[char];
-    });
-}
-
-// Initialize on page load
-$(document).ready(function() {
-    initRegisteredClassesButton();
+// Show/hide batch buttons when individual checkboxes change
+document.addEventListener('change', function(e) {
+    if (e.target.matches('#studentTableBody input[name="chk_child"]')) {
+        const checked = document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked').length;
+        document.getElementById('register-selected-btn')?.classList.toggle('d-none', checked === 0);
+        document.getElementById('unregister-selected-btn')?.classList.toggle('d-none', checked === 0);
+    }
 });
 </script>
-
+@endsection
