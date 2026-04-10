@@ -1,3 +1,6 @@
+console.log("subjectoperation.init.js is loaded and executing at", new Date().toISOString());
+
+
 var perPage = 10,
     checkAll = document.getElementById("checkAll");
 
