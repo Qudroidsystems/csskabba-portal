@@ -651,6 +651,43 @@
     }
 }
 </style>
+<style>
+/* Subject check cards */
+.subject-check-card { transition: border-color .15s, background .15s; }
+.subject-check-card:hover { background: #eff6ff !important; border-color: #93c5fd !important; }
+.subject-check-card:has(.subject-checkbox:checked) { background: #eff6ff !important; border-color: #3b82f6 !important; }
+
+/* Registered Classes modal — subject grid */
+.reg-subjects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    border-top: 1px solid #e9ecef;
+}
+.reg-subject-cell {
+    padding: 12px 14px;
+    border-right: 1px solid #e9ecef;
+    border-bottom: 1px solid #e9ecef;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+.reg-subject-cell:nth-child(even) { border-right: none; }
+.reg-num-circle {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: #EEEDFE; color: #3C3489;
+    font-size: 11px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px;
+}
+.reg-subject-name  { font-size: 13px; font-weight: 600; color: #1e293b; line-height: 1.3; }
+.reg-subject-teacher { font-size: 11px; color: #64748b; margin-top: 3px; }
+.reg-student-pill {
+    font-size: 10px; background: #EAF3DE; color: #27500A;
+    padding: 2px 8px; border-radius: 20px;
+    display: inline-block; margin-top: 4px;
+}
+</style>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 // ============================================================================
