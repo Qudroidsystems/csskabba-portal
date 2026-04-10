@@ -217,33 +217,38 @@
 </div>
 
 <style>
-.subject-list {
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    overflow: hidden;
-    background: #fff;
+.subject-check-card.selected {
+    background: #eff6ff !important;
+    border-color: #3b82f6 !important;
 }
-.subject-item {
-    padding: 16px 20px;
-    transition: all 0.25s ease;
+.subjects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    border-top: 1px solid #e2e8f0;
 }
-.subject-item:hover {
-    background: #f0f4ff;
-}
-.subject-item:not(:last-child) {
-    border-bottom: 1px solid #f1f3f9;
-}
-.subject-num {
-    width: 32px;
-    height: 32px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    font-weight: 700;
-    border-radius: 50%;
+.subject-reg-card {
+    padding: 12px 14px;
+    border-right: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
     display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
+    gap: 10px;
+    align-items: flex-start;
+}
+.subject-reg-card:nth-child(even) { border-right: none; }
+.subject-num-circle {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    background: #EEEDFE; color: #3C3489;
+    font-size: 11px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; margin-top: 1px;
+}
+.subject-reg-name { font-size: 13px; font-weight: 600; color: #1e293b; line-height: 1.3; }
+.subject-reg-teacher { font-size: 11px; color: #64748b; margin-top: 3px; }
+.subject-reg-count {
+    font-size: 10px; background: #EAF3DE; color: #27500A;
+    padding: 2px 8px; border-radius: 20px;
+    display: inline-block; margin-top: 4px;
 }
 </style>
 
@@ -251,56 +256,61 @@
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
 <script>
-// ================================================
-// FULL CLEAN JAVASCRIPT
-// ================================================
+// ============================================================
+// SUBJECT REGISTRATION — UNIFIED SCRIPT
+// ============================================================
 
 const CSRF = '{{ csrf_token() }}';
+var checkAll = document.getElementById("checkAll");
 
 function esc(str) {
     if (!str) return '';
-    return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    return String(str).replace(/[&<>"']/g, m =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])
+    );
 }
 
-// Checkbox handling
-function refreshCheckboxHandlers() {
+function ensureAxios() {
+    if (typeof axios === 'undefined') {
+        Swal.fire({ icon: "error", title: "Configuration error", text: "Axios library is missing" });
+        return false;
+    }
+    return true;
+}
+
+// ── Checkbox Handling ────────────────────────────────────────
+
+function ischeckboxcheck() {
     document.querySelectorAll('tbody input[name="chk_child"]').forEach(cb => {
-        cb.removeEventListener('change', handleCheckboxChange);
-        cb.addEventListener('change', handleCheckboxChange);
+        cb.removeEventListener("change", handleCheckboxChange);
+        cb.addEventListener("change", handleCheckboxChange);
     });
 }
 
-function handleCheckboxChange() {
+function handleCheckboxChange(e) {
+    const target = e?.target;
+    if (target) {
+        const row = target.closest("tr");
+        if (row) row.classList.toggle("table-active", target.checked);
+    }
+
     const checkedCount = document.querySelectorAll('tbody input[name="chk_child"]:checked').length;
     document.getElementById("register-selected-btn")?.classList.toggle("d-none", checkedCount === 0);
     document.getElementById("unregister-selected-btn")?.classList.toggle("d-none", checkedCount === 0);
+
+    const allCbs = document.querySelectorAll('tbody input[name="chk_child"]');
+    if (checkAll) checkAll.checked = allCbs.length > 0 && allCbs.length === checkedCount;
 }
 
-// Main Filter
-function filterData() {
-    const classId = document.getElementById('idclass').value;
-    const sessionId = document.getElementById('idsession').value;
-
-    if (classId === 'ALL' || sessionId === 'ALL') {
-        Swal.fire({ icon: "warning", title: "Missing Selection", text: "Please select class and session" });
-        return;
-    }
-
-    const params = new URLSearchParams({
-        class_id: classId,
-        session_id: sessionId,
-        search: document.querySelector('.search')?.value || '',
-        gender: document.getElementById('idgender').value,
-        admissionno: document.getElementById('idadmission').value,
-    });
-
-    window.location.href = '{{ route("subjects.index") }}?' + params.toString();
+function refreshCallbacks() {
+    ischeckboxcheck();
 }
 
-// Subject helpers
+// ── Subject Card Helpers ─────────────────────────────────────
+
 function toggleSubjectCard(card) {
     const cb = card.querySelector('input[type="checkbox"]');
-    cb.checked = !cb.checked;
+    if (cb) cb.checked = !cb.checked;
 }
 
 function selectAllSubjects() {
@@ -311,18 +321,139 @@ function deselectAllSubjects() {
     document.querySelectorAll('.subject-checkbox').forEach(cb => cb.checked = false);
 }
 
-// Clean Modal Loader
-async function loadRegisteredClasses() {
-    const content = document.getElementById('registeredClassesContent');
-    const classId = document.getElementById('idclass').value;
-    const sessionId = document.getElementById('idsession').value;
+// ── Admission No Dropdown ─────────────────────────────────────
 
-    if (classId === 'ALL' || sessionId === 'ALL') {
-        content.innerHTML = `<div class="text-center py-5"><p class="text-muted">Please select a class and session first.</p></div>`;
+function updateAdmissionNoOptions(students) {
+    const select = document.getElementById("idadmission");
+    if (!select) return;
+    select.innerHTML = '<option value="ALL">All Admission Nos</option>';
+    const unique = [...new Set(students.map(s => s.admissionno).filter(Boolean))].sort();
+    unique.forEach(no => {
+        const opt = document.createElement("option");
+        opt.value = no; opt.text = no;
+        select.appendChild(opt);
+    });
+}
+
+// ── Main Filter ───────────────────────────────────────────────
+
+function filterData() {
+    if (!ensureAxios()) return;
+
+    const classValue    = document.getElementById("idclass").value;
+    const sessionValue  = document.getElementById("idsession").value;
+    const searchValue   = document.querySelector(".search")?.value.toLowerCase() || '';
+    const genderValue   = document.getElementById("idgender")?.value || 'ALL';
+    const admissionValue = document.getElementById("idadmission")?.value || 'ALL';
+
+    if (classValue === 'ALL' || sessionValue === 'ALL') {
+        Swal.fire({ icon: "warning", title: "Missing Selection", text: "Please select a class and session" });
         return;
     }
 
-    content.innerHTML = `<div class="text-center py-5"><div class="spinner-border text-primary mb-4" style="width:3.5rem;height:3.5rem;"></div><p class="text-muted">Loading registered subjects...</p></div>`;
+    const tableBody = document.getElementById('studentTableBody');
+    const subjectContainer = document.getElementById('subjectTeachersContainer');
+
+    if (tableBody) tableBody.innerHTML =
+        '<tr><td colspan="7" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>';
+
+    axios.get('/subjects', {
+        params: { search: searchValue, class_id: classValue, session_id: sessionValue,
+                  gender: genderValue, admissionno: admissionValue },
+        headers: { 'X-CSRF-TOKEN': CSRF, 'X-Requested-With': 'XMLHttpRequest' }
+    }).then(response => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(response.data, 'text/html');
+
+        const newBody = doc.querySelector('#studentTableBody');
+        if (newBody && tableBody) tableBody.innerHTML = newBody.innerHTML;
+
+        const newPagination = doc.querySelector('.pagination');
+        const curPagination = document.querySelector('.pagination');
+        if (newPagination && curPagination) curPagination.innerHTML = newPagination.innerHTML;
+
+        const newCount = doc.querySelector('#studentcount');
+        const curCount = document.getElementById('studentcount');
+        if (newCount && curCount) curCount.textContent = newCount.textContent;
+
+        const newSubjectContainer = doc.querySelector('#subjectTeachersContainer');
+        if (newSubjectContainer && subjectContainer)
+            subjectContainer.innerHTML = newSubjectContainer.innerHTML;
+
+        const students = [];
+        doc.querySelectorAll('#studentTableBody tr').forEach(row => {
+            const cell = row.querySelector('.admissionno');
+            if (cell) students.push({ admissionno: cell.dataset.admissionno || cell.textContent.trim() });
+        });
+
+        updateAdmissionNoOptions(students);
+        refreshCallbacks();
+        setupPaginationLinks();
+
+    }).catch(error => {
+        console.error("Filter error:", error);
+        if (tableBody)
+            tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">Error loading data.</td></tr>';
+        Swal.fire({ icon: "error", title: "Error",
+            text: error.response?.data?.message || "Failed to load data" });
+    });
+}
+
+// ── Pagination ────────────────────────────────────────────────
+
+function setupPaginationLinks() {
+    document.querySelectorAll('.pagination a').forEach(link => {
+        link.addEventListener('click', function (e) {
+            e.preventDefault();
+            if (!this.classList.contains('disabled')) loadPage(this.href);
+        });
+    });
+}
+
+function loadPage(url) {
+    if (!ensureAxios()) return;
+    const tableBody = document.getElementById('studentTableBody');
+    if (tableBody) tableBody.innerHTML =
+        '<tr><td colspan="7" class="text-center py-4"><div class="spinner-border text-primary"></div></td></tr>';
+
+    axios.get(url, {
+        headers: { 'X-CSRF-TOKEN': CSRF, 'X-Requested-With': 'XMLHttpRequest' }
+    }).then(response => {
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(response.data, 'text/html');
+        const newBody = doc.querySelector('#studentTableBody');
+        if (newBody && tableBody) tableBody.innerHTML = newBody.innerHTML;
+        refreshCallbacks();
+        setupPaginationLinks();
+    }).catch(() => {
+        if (tableBody) tableBody.innerHTML =
+            '<tr><td colspan="7" class="text-center text-danger">Failed to load page.</td></tr>';
+    });
+}
+
+// ── Registered Classes Modal ──────────────────────────────────
+
+async function loadRegisteredClasses() {
+    if (!ensureAxios()) return;
+
+    const content   = document.getElementById('registeredClassesContent');
+    const classId   = document.getElementById('idclass').value;
+    const sessionId = document.getElementById('idsession').value;
+
+    if (classId === 'ALL' || sessionId === 'ALL') {
+        content.innerHTML = `
+            <div class="text-center py-5">
+                <i class="ri-error-warning-line fs-1 text-warning d-block mb-3"></i>
+                <h5 class="text-muted">Please select a class and session first</h5>
+            </div>`;
+        return;
+    }
+
+    content.innerHTML = `
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary mb-4" style="width:3rem;height:3rem;"></div>
+            <p class="text-muted">Loading registered subjects...</p>
+        </div>`;
 
     try {
         const res = await axios.get('{{ route("subjects.registered-classes") }}', {
@@ -331,77 +462,112 @@ async function loadRegisteredClasses() {
         });
 
         if (res.data.success && res.data.data.length) {
-            let html = '';
-            res.data.data.forEach(term => html += buildTermPane(term));
-            content.innerHTML = html;
+            content.innerHTML = res.data.data.map(term => buildTermCard(term)).join('');
         } else {
-            content.innerHTML = `<div class="alert alert-info text-center py-5">No registered subjects found.</div>`;
+            content.innerHTML = `
+                <div class="alert alert-info text-center py-5">
+                    <i class="ri-information-line fs-3 d-block mb-2"></i>
+                    No registered subjects found for the selected class and session.
+                </div>`;
         }
     } catch (err) {
-        content.innerHTML = `<div class="alert alert-danger text-center py-5">Failed to load data.</div>`;
+        console.error("loadRegisteredClasses error:", err);
+        content.innerHTML = `<div class="alert alert-danger text-center py-4">Failed to load data. Please try again.</div>`;
     }
 }
 
-function buildTermPane(term) {
-    const sorted = [...(term.subjects_teachers || [])].sort((a,b) => (a.name||'').localeCompare(b.name||''));
+function buildTermCard(term) {
+    const subjects = [...(term.subjects_teachers || [])]
+        .sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }));
 
-    let items = '';
-    sorted.forEach((subject, i) => {
+    const subjectItems = subjects.map((subject, i) => {
         const teachers = subject.teachers && subject.teachers.length
             ? subject.teachers.map(t => esc(t.name)).join(', ')
-            : '<span class="text-muted">— Not assigned</span>';
+            : '<span class="text-muted fst-italic">Not assigned</span>';
 
-        items += `
-            <div class="subject-item d-flex align-items-start gap-3">
-                <div class="subject-num">${i+1}</div>
+        return `
+            <div class="subject-reg-card">
+                <div class="subject-num-circle">${i + 1}</div>
                 <div class="flex-grow-1">
-                    <div class="fw-semibold">${esc(subject.name)}</div>
-                    <div class="small text-muted mt-1">${teachers}</div>
+                    <div class="subject-reg-name">${esc(subject.name)}</div>
+                    <div class="subject-reg-teacher">
+                        <i class="ri-user-line me-1" style="font-size:10px;"></i>${teachers}
+                    </div>
+                    <span class="subject-reg-count">${subject.student_count || 0} students</span>
                 </div>
-                <span class="badge bg-primary-subtle text-primary">${subject.student_count || 0} students</span>
             </div>`;
-    });
+    }).join('');
 
     return `
-        <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header py-3" style="background:linear-gradient(135deg,#1e3a5f,#2563eb);color:white;">
-                <h5>${esc(term.class_name)} ${esc(term.arm_name)}</h5>
-                <small>${esc(term.session_name)} — ${esc(term.term_name)}</small>
+        <div class="card border-0 shadow-sm mb-3" style="border-radius:12px;overflow:hidden;">
+            <div class="card-header d-flex justify-content-between align-items-center py-3 px-4"
+                 style="background:#1e3a5f;">
+                <div>
+                    <h6 class="mb-0 text-white fw-semibold">${esc(term.class_name)} ${esc(term.arm_name)}</h6>
+                    <small class="text-white opacity-75">${esc(term.session_name)} — ${esc(term.term_name)}</small>
+                </div>
+                <div class="d-flex gap-2">
+                    <span class="badge rounded-pill" style="background:#E6F1FB;color:#0C447C;">
+                        ${term.student_count || 0} students
+                    </span>
+                    <span class="badge rounded-pill" style="background:#EEEDFE;color:#3C3489;">
+                        ${subjects.length} subjects
+                    </span>
+                </div>
             </div>
-            <div class="card-body p-0">
-                <div class="subject-list">
-                    ${items || '<div class="text-center text-muted py-5">No subjects in this term.</div>'}
+            <div class="card-body p-0 bg-white">
+                <div class="subjects-grid">
+                    ${subjectItems || '<div class="p-4 text-center text-muted">No subjects found.</div>'}
                 </div>
             </div>
         </div>`;
 }
 
-// Basic stubs
-function registerSelectedStudentsBatch() {
-    Swal.fire('Info', 'Registration started', 'info');
+// ── Registration Actions ──────────────────────────────────────
+
+async function registerSelectedStudentsBatch() {
+    if (!ensureAxios()) return;
+    Swal.fire('Info', 'Registration function triggered', 'info');
+    // Add your axios.post logic here
 }
 
 function openUnregisterModal() {
     Swal.fire('Info', 'Unregister modal opened', 'info');
 }
 
-// Initialize
-document.addEventListener("DOMContentLoaded", function () {
-    refreshCheckboxHandlers();
+// ── DOM Ready ─────────────────────────────────────────────────
 
-    const checkAllEl = document.getElementById("checkAll");
-    if (checkAllEl) {
-        checkAllEl.addEventListener('change', function () {
+document.addEventListener("DOMContentLoaded", function () {
+    refreshCallbacks();
+    setupPaginationLinks();
+
+    if (typeof Choices !== 'undefined') {
+        ['idclass', 'idsession', 'idgender', 'idadmission'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) new Choices(el, { searchEnabled: true });
+        });
+    }
+
+    checkAll = document.getElementById("checkAll");
+    if (checkAll) {
+        checkAll.addEventListener('click', function () {
             document.querySelectorAll('tbody input[name="chk_child"]').forEach(cb => {
                 cb.checked = this.checked;
                 const row = cb.closest("tr");
                 if (row) row.classList.toggle("table-active", this.checked);
             });
-            handleCheckboxChange();
+            handleCheckboxChange({ target: { checked: this.checked } });
         });
     }
 
-    document.getElementById('registeredClassesModal').addEventListener('show.bs.modal', loadRegisteredClasses);
+    const registeredModal = document.getElementById('registeredClassesModal');
+    if (registeredModal) {
+        registeredModal.addEventListener('show.bs.modal', loadRegisteredClasses);
+    }
 });
 </script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+
 @endsection
