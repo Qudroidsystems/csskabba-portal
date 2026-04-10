@@ -785,18 +785,6 @@ function loadRegisteredClasses() {
     });
 }
 
-
-// Helper function to map term name to ID
-function getTermIdFromName(termName) {
-    const termMap = {
-        'First Term': 1,
-        'Second Term': 2,
-        'Third Term': 3
-    };
-    return termMap[termName] || '';
-}
-
-
 // Function to fetch school information and generate PDF/Print
 async function printRegisteredClasses() {
     if (!currentRegisteredClassesData || !currentRegisteredClassesData.data) {
@@ -872,10 +860,8 @@ async function printRegisteredClasses() {
 }
 
 // Generate professional print HTML
-// Updated generatePrintHtml function with proper teacher mapping
 function generatePrintHtml(data, schoolInfo) {
     const classes = data.data;
-    const teacherMapping = data.teacher_mapping || {};
     const currentDate = new Date().toLocaleDateString('en-GB', {
         day: '2-digit',
         month: 'long',
@@ -895,8 +881,8 @@ function generatePrintHtml(data, schoolInfo) {
 
     classes.forEach((termGroup) => {
         const subjectsArray = termGroup.subjects ? termGroup.subjects.split(',').map(s => s.trim()) : [];
+        const teachersArray = termGroup.teachers ? termGroup.teachers.split(',').map(t => t.trim()) : [];
         const totalStudents = termGroup.student_count || 0;
-        const termId = getTermIdFromName(termGroup.term_name);
 
         subjectsHtml += `
             <div class="print-term-card">
@@ -917,18 +903,11 @@ function generatePrintHtml(data, schoolInfo) {
         `;
 
         subjectsArray.forEach((subjectName, idx) => {
-            // Get the correct teacher from the mapping
-            const mappingKey = `${subjectName}|${termId}`;
-            let teacherName = teacherMapping[mappingKey] || '— Not assigned';
-
-            // Fallback: try without term ID
-            if (teacherName === '— Not assigned') {
-                for (const key in teacherMapping) {
-                    if (key.startsWith(subjectName)) {
-                        teacherName = teacherMapping[key];
-                        break;
-                    }
-                }
+            let teacherName = '— Not assigned';
+            if (teachersArray.length > idx) {
+                teacherName = teachersArray[idx];
+            } else if (teachersArray.length > 0) {
+                teacherName = teachersArray[0];
             }
 
             subjectsHtml += `
