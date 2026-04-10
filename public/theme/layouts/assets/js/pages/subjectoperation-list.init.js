@@ -584,34 +584,11 @@ function unregisterSelectedStudentsBatch() {
 
 
 
-// Store subject-teacher mapping from the Subject Teachers section
-let subjectTeacherMapping = {};
 
-// Function to build subject-teacher mapping from the checkboxes
-function buildSubjectTeacherMapping() {
-    const mapping = {};
-    document.querySelectorAll('.subject-checkbox').forEach(checkbox => {
-        const label = checkbox.closest('.form-check')?.querySelector('.form-check-label');
-        if (label) {
-            const text = label.textContent.trim();
-            // Extract subject name and teacher from format: "Subject Name (Teacher Name)"
-            const match = text.match(/^(.*?)\s*\((.*?)\)$/);
-            if (match) {
-                const subjectName = match[1].trim();
-                const teacherName = match[2].trim();
-                const termId = checkbox.dataset.termid;
-                const key = `${subjectName}|${termId}`;
-                mapping[key] = teacherName;
-            }
-        }
-    });
-    return mapping;
-}
 // Store current registered classes data for printing
 let currentRegisteredClassesData = null;
 
 // Modified loadRegisteredClasses to store data for printing
-// Modified loadRegisteredClasses function
 function loadRegisteredClasses() {
     if (!ensureAxios()) {
         console.error('Axios not initialized.');
@@ -662,10 +639,6 @@ function loadRegisteredClasses() {
 
     modalContent.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div><p class="mt-3 text-muted">Loading registration data...</p></div>';
 
-    // Build subject-teacher mapping from the Subject Teachers section
-    const teacherMapping = buildSubjectTeacherMapping();
-    console.log('Teacher Mapping:', teacherMapping);
-
     axios.get('/subjects/registered-classes', {
         params: { class_id: classId, session_id: sessionId },
         headers: {
@@ -679,15 +652,14 @@ function loadRegisteredClasses() {
         if (response.data.success) {
             const classes = response.data.data;
 
-            // Store data for printing with proper teacher mapping
+            // Store data for printing
             currentRegisteredClassesData = {
                 data: classes,
                 class_id: classId,
                 session_id: sessionId,
                 class_name: classes[0]?.class_name || 'N/A',
                 arm_name: classes[0]?.arm_name || 'N/A',
-                session_name: classes[0]?.session_name || 'N/A',
-                teacher_mapping: teacherMapping  // Store the mapping for PDF
+                session_name: classes[0]?.session_name || 'N/A'
             };
 
             if (!classes || classes.length === 0) {
@@ -695,14 +667,14 @@ function loadRegisteredClasses() {
                 return;
             }
 
-            // Render the card-based UI with proper teacher mapping
+            // Render the card-based UI (same as before)
             let html = '';
 
             classes.forEach((termGroup, index) => {
                 const subjectsArray = termGroup.subjects ? termGroup.subjects.split(',').map(s => s.trim()) : [];
+                const teachersArray = termGroup.teachers ? termGroup.teachers.split(',').map(t => t.trim()) : [];
                 const totalStudents = termGroup.student_count || 0;
                 const totalSubjects = termGroup.subject_count || subjectsArray.length;
-                const termId = getTermIdFromName(termGroup.term_name); // You'll need to map term name to ID
 
                 html += `
                 <div class="term-card mb-4" style="background:#fff; border-radius:12px; border:0.5px solid #e2e8f0; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
@@ -724,20 +696,14 @@ function loadRegisteredClasses() {
                 `;
 
                 subjectsArray.forEach((subjectName, idx) => {
-                    // Get the correct teacher from the mapping
-                    const mappingKey = `${subjectName}|${termId}`;
-                    let teacherName = teacherMapping[mappingKey] || '— Not assigned';
-
-                    // Fallback: try without term ID
-                    if (teacherName === '— Not assigned') {
-                        const fallbackKey = `${subjectName}|`;
-                        for (const key in teacherMapping) {
-                            if (key.startsWith(subjectName)) {
-                                teacherName = teacherMapping[key];
-                                break;
-                            }
-                        }
+                    let teacherName = '— Not assigned';
+                    if (teachersArray.length > idx) {
+                        teacherName = teachersArray[idx];
+                    } else if (teachersArray.length > 0) {
+                        teacherName = teachersArray[0];
                     }
+
+                    const subjectStudentCount = totalStudents;
 
                     html += `
                     <div class="subject-card p-3 d-flex gap-3 align-items-start" style="border-right:0.5px solid #e2e8f0; border-bottom:0.5px solid #e2e8f0; transition:all 0.2s ease;"
@@ -750,7 +716,7 @@ function loadRegisteredClasses() {
                                 <i class="ri-user-star-line me-1"></i>${escapeHtml(teacherName)}
                             </div>
                             <span class="badge mt-2" style="background:#EAF3DE; color:#27500A; font-size:10px; padding:3px 10px; border-radius:20px; display:inline-flex; align-items:center; gap:4px;">
-                                <i class="ri-group-line" style="font-size:10px;"></i>${totalStudents} students
+                                <i class="ri-group-line" style="font-size:10px;"></i>${subjectStudentCount} students
                             </span>
                         </div>
                     </div>`;
