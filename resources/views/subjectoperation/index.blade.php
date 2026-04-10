@@ -631,7 +631,13 @@ async function loadRegisteredClasses() {
 
 function buildTermPane(termData, subjects) {
     const studentCount = termData.student_count ?? 0;
-    const subjectCount = subjects.length;
+
+    // Sort subjects alphabetically by name
+    const sortedSubjects = [...subjects].sort((a, b) =>
+        (a.name || '').localeCompare(b.name || '')
+    );
+
+    const subjectCount = sortedSubjects.length;
 
     let html = `
         <div class="card border-0 shadow-sm mb-0" style="border-radius:12px;overflow:hidden;">
@@ -667,16 +673,16 @@ function buildTermPane(termData, subjects) {
                 <table class="table table-hover align-middle mb-0" style="font-size:0.875rem;">
                     <thead style="background:#f0f4ff;">
                         <tr>
-                            <th width="52" class="text-center ps-3">#</th>
+                            <th width="60" class="text-center ps-3">#</th>
                             <th>Subject Name</th>
-                            <th width="110">Code</th>
+                            <th width="120">Code</th>
                             <th>Teacher(s)</th>
-                            <th width="90" class="text-center">Students</th>
+                            <th width="100" class="text-center">Students</th>
                         </tr>
                     </thead>
                     <tbody>`;
 
-        subjects.forEach((subject, index) => {
+        sortedSubjects.forEach((subject, index) => {
             const sc = subject.student_count ?? 0;
             let teachersHtml = '';
 
