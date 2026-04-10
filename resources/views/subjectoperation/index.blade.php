@@ -38,7 +38,7 @@
             @endif
 
             <div id="subjectList">
-                {{-- ── Class & Session Filter ── --}}
+                {{-- Class & Session Filter --}}
                 <div class="row">
                     <div class="col-lg-12">
                         <div class="card">
@@ -71,7 +71,7 @@
                     </div>
                 </div>
 
-                {{-- ── Subject Teachers Card ── --}}
+                {{-- Subject Teachers Card --}}
                 <div class="row" id="subjectTeachersCard">
                     <div class="col-lg-12">
                         <div class="card">
@@ -120,7 +120,7 @@
                     </div>
                 </div>
 
-                {{-- ── Student Filters ── --}}
+                {{-- Student Filters --}}
                 <div class="row">
                     <div class="col-lg-12">
                         <div class="card">
@@ -155,7 +155,7 @@
                     </div>
                 </div>
 
-                {{-- ── Students Table ── --}}
+                {{-- Students Table --}}
                 <div class="row">
                     <div class="col-lg-12">
                         <div class="card">
@@ -168,17 +168,14 @@
                                 </div>
                                 <div class="flex-shrink-0 d-flex align-items-center gap-2 flex-wrap">
                                     <button type="button" class="btn btn-primary d-none" id="register-selected-btn"
-                                        onclick="registerSelectedStudentsBatch();" aria-label="Register selected students">
+                                        onclick="registerSelectedStudentsBatch();">
                                         Register Selected
                                     </button>
-                                    {{-- Unregister now opens the snapshot-naming modal first --}}
                                     <button type="button" class="btn btn-danger d-none" id="unregister-selected-btn"
-                                        onclick="openUnregisterModal();" aria-label="Unregister selected students">
+                                        onclick="openUnregisterModal();">
                                         Unregister Selected
                                     </button>
-                                    <div class="spinner-border text-primary d-none" id="register-loading-spinner" role="status">
-                                        <span class="visually-hidden">Loading...</span>
-                                    </div>
+                                    <div class="spinner-border text-primary d-none" id="register-loading-spinner" role="status"></div>
                                     <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#registeredClassesModal">
                                         <i class="ri-eye-line me-1"></i> View Registered
                                     </button>
@@ -189,15 +186,10 @@
                             </div>
                             <div class="card-body">
                                 <div class="table-responsive">
-                                    <table class="table table-centered align-middle table-nowrap mb-0" id="subjectListTable">
+                                    <table class="table table-centered align-middle table-nowrap mb-0">
                                         <thead class="table-active">
                                             <tr>
-                                                <th>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="checkbox" id="checkAll">
-                                                        <label class="form-check-label" for="checkAll"></label>
-                                                    </div>
-                                                </th>
+                                                <th><input class="form-check-input" type="checkbox" id="checkAll"></th>
                                                 <th>SN</th>
                                                 <th>Admission No</th>
                                                 <th>Student Name</th>
@@ -210,7 +202,7 @@
                                             @include('subjectoperation.partials.student_rows')
                                         </tbody>
                                     </table>
-                                    <div class="d-flex justify-content-end mt-3" id="pagination-container">
+                                    <div class="d-flex justify-content-end mt-3">
                                         {{ $students ? $students->links('pagination::bootstrap-5') : '' }}
                                     </div>
                                 </div>
@@ -219,262 +211,29 @@
                     </div>
                 </div>
 
-                {{-- ══════════════════════════════════════════════════════════ --}}
-                {{-- MODAL: Snapshot Name — shown BEFORE unregistration         --}}
-                {{-- ══════════════════════════════════════════════════════════ --}}
-                <div class="modal fade" id="snapshotNameModal" tabindex="-1" aria-labelledby="snapshotNameModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered" style="max-width:520px;">
-                        <div class="modal-content border-0 shadow-lg overflow-hidden">
-
-                            {{-- Header --}}
-                            <div class="modal-header border-0 pb-0" style="background:linear-gradient(135deg,#f5576c 0%,#f093fb 100%);">
-                                <div class="py-1">
-                                    <h5 class="modal-title text-white fw-semibold" id="snapshotNameModalLabel">
-                                        <i class="ri-archive-line me-2"></i>Name this Unregistration
-                                    </h5>
-                                    <p class="text-white-50 small mb-0">Give this snapshot a name so you can find it later.</p>
-                                </div>
-                                <button type="button" class="btn-close btn-close-white ms-3" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-
-                            {{-- Body --}}
-                            <div class="modal-body p-4">
-
-                                {{-- Summary pills --}}
-                                <div class="d-flex gap-2 flex-wrap mb-4" id="snapshotSummaryPills">
-                                    <span class="badge rounded-pill bg-danger-subtle text-danger px-3 py-2" id="snapshotStudentCount"></span>
-                                    <span class="badge rounded-pill bg-warning-subtle text-warning-emphasis px-3 py-2" id="snapshotSubjectCount"></span>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label class="form-label fw-semibold" for="snapshotNameInput">
-                                        Snapshot Name <span class="text-danger">*</span>
-                                    </label>
-                                    <input type="text" class="form-control" id="snapshotNameInput"
-                                        placeholder="e.g. Term 2 Corrections — June 2025"
-                                        maxlength="191" autocomplete="off">
-                                    <div class="invalid-feedback" id="snapshotNameError">Please enter a snapshot name.</div>
-                                    <div class="form-text">
-                                        <i class="ri-lightbulb-line me-1 text-warning"></i>
-                                        A descriptive name helps staff identify this batch when restoring it later.
-                                    </div>
-                                </div>
-
-                                <div class="mb-1">
-                                    <label class="form-label fw-semibold" for="snapshotNotesInput">Notes <span class="text-muted fw-normal">(optional)</span></label>
-                                    <textarea class="form-control" id="snapshotNotesInput" rows="3"
-                                        placeholder="Reason for unregistration or any extra context…"
-                                        maxlength="1000"></textarea>
-                                    <div class="form-text text-end">
-                                        <span id="snapshotNotesCount">0</span>/1000
-                                    </div>
-                                </div>
-
-                                {{-- Warning box --}}
-                                <div class="alert alert-warning d-flex gap-2 align-items-start mt-3 mb-0 py-2">
-                                    <i class="ri-error-warning-line fs-5 flex-shrink-0"></i>
-                                    <div class="small">
-                                        All existing scores for these students in the selected subjects will be saved to the snapshot and can be fully restored later.
-                                    </div>
-                                </div>
-                            </div>
-
-                            {{-- Footer --}}
-                            <div class="modal-footer border-0 pt-0 px-4 pb-4">
-                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-danger px-4" id="confirmUnregisterBtn" onclick="proceedUnregister();">
-                                    <i class="ri-user-unfollow-line me-1"></i> Unregister & Save Snapshot
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- ══════════════════════════════════════════════════════════ --}}
-                {{-- MODAL: Registered Classes (UPDATED UI)                     --}}
-                {{-- ══════════════════════════════════════════════════════════ --}}
-               {{-- MODAL: Registered Classes (UPDATED with Print Button) --}}
-                <div class="modal fade" id="registeredClassesModal" tabindex="-1" aria-labelledby="registeredClassesModalLabel" aria-hidden="true">
+                {{-- MODAL: Registered Classes Overview --}}
+                <div class="modal fade" id="registeredClassesModal" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog modal-xl modal-dialog-centered">
                         <div class="modal-content border-0 shadow-lg">
-                            <div class="modal-header" style="background: #1e3a5f; border-bottom: none;">
-                                <h5 class="modal-title text-white fw-medium">
+                            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                                <h5 class="modal-title text-white">
                                     <i class="ri-graduation-cap-line me-2"></i>Registered Classes Overview
                                 </h5>
-                                <div class="d-flex gap-2">
-                                    <button type="button" class="btn btn-sm btn-light" onclick="printRegisteredClasses();" style="border-radius: 6px;">
-                                        <i class="ri-printer-line me-1"></i> Print / PDF
+                                <div class="ms-auto me-2">
+                                    <button type="button" class="btn btn-light btn-sm" onclick="printRegisteredClasses()">
+                                        <i class="ri-printer-line me-1"></i> Print
                                     </button>
-                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                             </div>
-                            <div class="modal-body p-4" style="background: #f4f7fc;">
+                            <div class="modal-body" style="background: #f8f9fc; max-height: 70vh; overflow-y: auto;">
                                 <div id="registeredClassesContent">
-                                    <!-- Content loaded dynamically -->
-                                </div>
-                            </div>
-                            <div class="modal-footer border-0 bg-transparent">
-                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
-                                    <i class="ri-close-line me-1"></i>Close
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- ══════════════════════════════════════════════════════════ --}}
-                {{-- MODAL: Unregistered History (snapshot list)                --}}
-                {{-- ══════════════════════════════════════════════════════════ --}}
-                <div class="modal fade" id="archivedModal" tabindex="-1" aria-labelledby="archivedModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-                        <div class="modal-content border-0 shadow-lg">
-                            <div class="modal-header border-0" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                                <h5 class="modal-title text-white" id="archivedModalLabel">
-                                    <i class="ri-archive-line me-2"></i>Unregistered History
-                                </h5>
-                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body p-0">
-
-                                {{-- Toolbar --}}
-                                <div class="p-3 border-bottom bg-light d-flex align-items-center flex-wrap gap-2">
-                                    <div class="flex-grow-1">
-                                        <input type="text" class="form-control form-control-sm" id="archiveSearch"
-                                            placeholder="Search snapshot name or subject…" style="max-width:300px;">
-                                    </div>
-                                    <div class="d-flex align-items-center gap-2 flex-wrap">
-                                        <select class="form-select form-select-sm" id="archiveTermFilter" style="width:auto;">
-                                            <option value="">All Terms</option>
-                                            @foreach($schoolterms as $term)
-                                                <option value="{{ $term->id }}">{{ $term->term }}</option>
-                                            @endforeach
-                                        </select>
-                                        <select class="form-select form-select-sm" id="archivePerPage" style="width:auto;">
-                                            <option value="20">20 per page</option>
-                                            <option value="50" selected>50 per page</option>
-                                            <option value="100">100 per page</option>
-                                            <option value="150">150 per page</option>
-                                        </select>
-                                        <button class="btn btn-sm btn-outline-secondary" onclick="loadArchivedPage(1);">
-                                            <i class="ri-refresh-line"></i> Refresh
-                                        </button>
-                                        <button class="btn btn-sm btn-success d-none" id="restoreSelectedBtn" onclick="restoreSelected();">
-                                            <i class="ri-refresh-line me-1"></i> Restore Selected
-                                        </button>
-                                        <button class="btn btn-sm btn-danger d-none" id="deleteSelectedBtn" onclick="permanentDeleteSelected();">
-                                            <i class="ri-delete-bin-line me-1"></i> Delete Selected
-                                        </button>
-                                        <div class="spinner-border spinner-border-sm text-warning d-none" id="archiveSpinner" role="status"></div>
+                                    <div class="text-center py-5">
+                                        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;"></div>
+                                        <p class="mt-3">Select a class and session to view registered subjects...</p>
                                     </div>
                                 </div>
-
-                                {{-- Snapshot cards --}}
-                                <div class="p-3" id="snapshotCardsContainer">
-                                    <div class="text-center text-muted py-4">
-                                        Select a class and session first, then open this panel.
-                                    </div>
-                                </div>
-
-                                {{-- Pagination --}}
-                                <div class="d-flex justify-content-between align-items-center px-3 py-2 border-top" id="archivePaginationWrap">
-                                    <small class="text-muted" id="archiveMeta"></small>
-                                    <div id="archivePagination" class="d-flex gap-1"></div>
-                                </div>
                             </div>
-                            <div class="modal-footer bg-light">
-                                <small class="text-muted me-auto">
-                                    <i class="ri-information-line me-1"></i>
-                                    Click a snapshot to view student details. Restored records are fully re-registered with original scores.
-                                </small>
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {{-- ══════════════════════════════════════════════════════════ --}}
-                {{-- MODAL: Snapshot Detail (students + scores inside a snapshot) --}}
-                {{-- ══════════════════════════════════════════════════════════ --}}
-                <div class="modal fade" id="snapshotDetailModal" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-                        <div class="modal-content border-0 shadow-lg">
-
-                            {{-- Header (dynamically filled) --}}
-                            <div class="modal-header border-0" style="background:linear-gradient(135deg,#4facfe 0%,#00f2fe 100%);">
-                                <div>
-                                    <h5 class="modal-title text-white fw-semibold" id="snapshotDetailTitle">Snapshot Detail</h5>
-                                    <p class="text-white-50 small mb-0" id="snapshotDetailSubtitle"></p>
-                                </div>
-                                <button type="button" class="btn-close btn-close-white ms-3" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-
-                            {{-- Body --}}
-                            <div class="modal-body p-0">
-
-                                {{-- Notes banner (shown only if snapshot has notes) --}}
-                                <div id="snapshotNotesBanner" class="alert alert-info d-flex gap-2 align-items-start m-3 mb-0 d-none">
-                                    <i class="ri-sticky-note-line fs-5 flex-shrink-0"></i>
-                                    <div id="snapshotNotesText" class="small"></div>
-                                </div>
-
-                                {{-- Toolbar --}}
-                                <div class="px-3 pt-3 pb-2 border-bottom">
-                                    {{-- Row 1: search --}}
-                                    <div class="mb-2">
-                                        <div class="input-group input-group-sm" style="max-width:340px;">
-                                            <span class="input-group-text bg-white border-end-0">
-                                                <i class="ri-search-line text-muted"></i>
-                                            </span>
-                                            <input type="text" class="form-control border-start-0 ps-0"
-                                                id="detailSearchInput"
-                                                placeholder="Search by name or admission no…"
-                                                oninput="filterDetailRows(this.value);">
-                                            <button class="btn btn-outline-secondary" type="button"
-                                                onclick="document.getElementById('detailSearchInput').value='';filterDetailRows('');"
-                                                title="Clear search">
-                                                <i class="ri-close-line"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    {{-- Row 2: action buttons + meta --}}
-                                    <div class="d-flex align-items-center gap-2 flex-wrap">
-                                        <button class="btn btn-sm btn-success" id="detailRestoreAllBtn" onclick="restoreEntireSnapshot();">
-                                            <i class="ri-refresh-line me-1"></i> Restore All
-                                        </button>
-                                        <button class="btn btn-sm btn-success d-none" id="detailRestoreSelectedBtn" onclick="restoreDetailSelected();">
-                                            <i class="ri-refresh-line me-1"></i> Restore Selected
-                                        </button>
-                                        <button class="btn btn-sm btn-danger d-none" id="detailDeleteSelectedBtn" onclick="deleteDetailSelected();">
-                                            <i class="ri-delete-bin-line me-1"></i> Delete Selected
-                                        </button>
-                                        <div class="spinner-border spinner-border-sm text-primary d-none ms-1" id="detailSpinner" role="status"></div>
-                                        <span class="text-muted small ms-auto" id="detailStudentMeta"></span>
-                                    </div>
-                                </div>
-
-                                {{-- Table --}}
-                                <div class="table-responsive">
-                                    <table class="table table-sm table-hover align-middle mb-0">
-                                        <thead class="table-light sticky-top">
-                                            <tr id="snapshotDetailHeaderRow">
-                                                <th style="width:36px;">
-                                                    <div class="form-check mb-0">
-                                                        <input class="form-check-input" type="checkbox" id="detailCheckAll">
-                                                    </div>
-                                                </th>
-                                                <th>Student</th>
-                                                <th>Adm. No</th>
-                                                <th>Gender</th>
-                                                {{-- Assessment columns injected by JS --}}
-                                            </tr>
-                                        </thead>
-                                        <tbody id="snapshotDetailBody">
-                                            <tr><td colspan="10" class="text-center text-muted py-4">Loading…</td></tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-
                             <div class="modal-footer bg-light">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                             </div>
@@ -482,1053 +241,573 @@
                     </div>
                 </div>
 
-                {{-- Image View Modal --}}
-                <div id="imageViewModal" class="modal fade" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                {{-- MODAL: Snapshot Name for Unregistration --}}
+                <div class="modal fade" id="snapshotNameModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
                         <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 class="modal-title">Student Image</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <div class="modal-header" style="background: linear-gradient(135deg, #f5576c 0%, #f093fb 100%);">
+                                <h5 class="modal-title text-white">Name this Unregistration</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                             </div>
-                            <div class="modal-body text-center">
-                                <img id="enlargedImage" src="" alt="Student Image" class="img-fluid"
-                                    onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}';">
+                            <div class="modal-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Snapshot Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="snapshotNameInput" placeholder="e.g., Term 2 Corrections - June 2025">
+                                    <div class="invalid-feedback">Please enter a snapshot name.</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Notes (optional)</label>
+                                    <textarea class="form-control" id="snapshotNotesInput" rows="3" placeholder="Reason for unregistration..."></textarea>
+                                </div>
+                                <div class="alert alert-warning">
+                                    <i class="ri-error-warning-line me-2"></i>
+                                    All scores will be saved and can be restored later.
+                                </div>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <button type="button" class="btn btn-danger" onclick="proceedUnregister();">Unregister & Save</button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-            </div>{{-- /subjectList --}}
+                {{-- MODAL: Unregistered History --}}
+                <div class="modal fade" id="archivedModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                                <h5 class="modal-title text-white">Unregistered History</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div id="snapshotCardsContainer">Loading...</div>
+                                <div id="archivePagination" class="d-flex justify-content-center mt-3"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- MODAL: Snapshot Detail --}}
+                <div class="modal fade" id="snapshotDetailModal" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-xl">
+                        <div class="modal-content">
+                            <div class="modal-header" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                                <h5 class="modal-title text-white" id="snapshotDetailTitle">Snapshot Detail</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div id="snapshotDetailBody">Loading...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
-@endsection
+
 <style>
-/* Print Styles for Registered Classes */
-@media print {
-    body * {
-        visibility: hidden;
+    /* Print Styles */
+    @media print {
+        body * { visibility: hidden; }
+        #printableArea, #printableArea * { visibility: visible; }
+        #printableArea { position: absolute; top: 0; left: 0; width: 100%; padding: 20px; }
+        .no-print { display: none !important; }
+        .print-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+        .print-header img { max-height: 80px; }
+        .print-header h2 { margin: 10px 0; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
     }
 
-    #printableArea, #printableArea * {
-        visibility: visible;
-    }
-
-    #printableArea {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        margin: 0;
-        padding: 20px;
-        background: white;
-        z-index: 99999;
-    }
-
-    .no-print {
-        display: none !important;
-    }
-
-    .print-header {
-        margin-bottom: 30px;
-        border-bottom: 2px solid #1e3a5f;
-        padding-bottom: 20px;
-    }
-
-    .print-school-info {
-        display: flex;
-        align-items: center;
-        gap: 20px;
-        margin-bottom: 20px;
-    }
-
-    .print-logo {
-        max-width: 80px;
-        max-height: 80px;
-    }
-
-    .print-school-details {
-        flex: 1;
-    }
-
-    .print-school-name {
-        font-size: 24px;
-        font-weight: bold;
-        color: #1e3a5f;
-        margin: 0 0 5px 0;
-    }
-
-    .print-school-motto {
-        font-style: italic;
-        color: #666;
-        margin: 0 0 10px 0;
-    }
-
-    .print-school-address, .print-school-contact {
-        font-size: 12px;
-        color: #555;
-        margin: 3px 0;
-    }
-
-    .print-title {
-        font-size: 20px;
-        font-weight: bold;
-        text-align: center;
-        color: #1e3a5f;
-        margin: 20px 0;
-    }
-
-    .print-meta {
-        text-align: center;
-        font-size: 12px;
-        color: #666;
-        margin-bottom: 20px;
-    }
-
-    .print-term-card {
-        page-break-inside: avoid;
-        margin-bottom: 30px;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        overflow: hidden;
-    }
-
-    .print-term-header {
-        background: #f0f4f8;
-        padding: 12px 15px;
-        border-bottom: 2px solid #1e3a5f;
-    }
-
-    .print-term-title {
-        font-size: 16px;
-        font-weight: bold;
-        color: #1e3a5f;
-        margin: 0;
-    }
-
-    .print-term-subtitle {
-        font-size: 12px;
-        color: #666;
-        margin: 5px 0 0 0;
-    }
-
-    .print-subjects-table {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    .print-subjects-table th {
-        background: #e9ecef;
-        padding: 10px;
-        text-align: left;
-        font-size: 12px;
-        font-weight: bold;
-        border: 1px solid #ddd;
-    }
-
-    .print-subjects-table td {
-        padding: 8px 10px;
-        font-size: 11px;
-        border: 1px solid #ddd;
-        vertical-align: top;
-    }
-
-    .print-footer {
-        margin-top: 30px;
-        padding-top: 20px;
-        border-top: 1px solid #ddd;
-        text-align: center;
-        font-size: 10px;
-        color: #999;
-    }
-
-    .print-badge {
-        display: inline-block;
-        padding: 2px 8px;
-        background: #f0f0f0;
-        border-radius: 4px;
-        font-size: 10px;
-    }
-}
+    /* Custom UI Styles */
+    .subject-card { transition: transform 0.2s, box-shadow 0.2s; }
+    .subject-card:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+    .teacher-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .stats-badge { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 5px 12px; border-radius: 20px; font-size: 12px; }
+    .subject-number { display: inline-block; width: 28px; height: 28px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 50%; text-align: center; line-height: 28px; font-size: 12px; font-weight: bold; margin-right: 10px; }
 </style>
-<style>
-/* Subject check cards */
-.subject-check-card { transition: border-color .15s, background .15s; }
-.subject-check-card:hover { background: #eff6ff !important; border-color: #93c5fd !important; }
-.subject-check-card:has(.subject-checkbox:checked) { background: #eff6ff !important; border-color: #3b82f6 !important; }
 
-/* Registered Classes modal — subject grid */
-.reg-subjects-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-    border-top: 1px solid #e9ecef;
-}
-.reg-subject-cell {
-    padding: 12px 14px;
-    border-right: 1px solid #e9ecef;
-    border-bottom: 1px solid #e9ecef;
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-}
-.reg-subject-cell:nth-child(even) { border-right: none; }
-.reg-num-circle {
-    width: 26px; height: 26px;
-    border-radius: 50%;
-    background: #EEEDFE; color: #3C3489;
-    font-size: 11px; font-weight: 600;
-    display: flex; align-items: center; justify-content: center;
-    flex-shrink: 0; margin-top: 1px;
-}
-.reg-subject-name  { font-size: 13px; font-weight: 600; color: #1e293b; line-height: 1.3; }
-.reg-subject-teacher { font-size: 11px; color: #64748b; margin-top: 3px; }
-.reg-student-pill {
-    font-size: 10px; background: #EAF3DE; color: #27500A;
-    padding: 2px 8px; border-radius: 20px;
-    display: inline-block; margin-top: 4px;
-}
-</style>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 // ============================================================================
-// GLOBALS
+// CONFIGURATION
 // ============================================================================
 const ROUTES = {
-    batchRegister   : '{{ route("subjectregistration.batch") }}',
-    unregister      : '{{ route("subjects.destroy") }}',
-    getRegistered   : '{{ route("subjects.registered-classes") }}',
-    getArchived     : '{{ route("subjectoperation.archived") }}',
-    getSnapshot     : '{{ route("subjectoperation.snapshot.detail") }}',
-    restore         : '{{ route("subjectoperation.restore") }}',
-    permanentDelete : '{{ route("subjectoperation.archive.batch-delete") }}',
-    index           : '{{ route("subjects.index") }}',
+    batchRegister: '{{ route("subjectregistration.batch") }}',
+    unregister: '{{ route("subjects.destroy") }}',
+    getRegistered: '{{ route("subjects.registered-classes") }}',
+    getArchived: '{{ route("subjectoperation.archived") }}',
+    getSnapshot: '{{ route("subjectoperation.snapshot.detail") }}',
+    restore: '{{ route("subjectoperation.restore") }}',
+    permanentDelete: '{{ route("subjectoperation.archive.batch-delete") }}',
+    index: '{{ route("subjects.index") }}',
+    getSchoolInfo: '{{ route("school.information.get") }}',
 };
-const CSRF       = '{{ csrf_token() }}';
+const CSRF = '{{ csrf_token() }}';
 const AVATAR_URL = '{{ asset("storage") }}';
 
-// Archive / snapshot state
-let archiveCurrentPage = 1;
-let archiveMeta        = {};
-let archiveSearchTimer = null;
-
-// Current snapshot being viewed in the detail modal
-let currentSnapshotMeta = null;   // { snapshot_name, subjectclassid, termid, sessionid, staffid }
-let currentSnapshotRows = [];     // all rows loaded in detail modal
-
 // ============================================================================
-// SWEET ALERT HELPER
+// UTILITY FUNCTIONS
 // ============================================================================
-function showSweetAlert(title, message, type, success = true) {
-    Swal.fire({
-        title,
-        html: `<div class="d-flex align-items-center justify-content-center gap-2">
-                <span style="font-size:2rem;">${success ? '🎉' : '😞'}</span>
-                <span>${message}</span>
-               </div>`,
-        icon: success ? 'success' : 'error',
-        confirmButtonColor: success ? '#28a745' : '#dc3545',
-        confirmButtonText: success ? 'Great!' : 'Okay',
-        timer: success ? 3000 : 5000,
-        showConfirmButton: true,
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
     });
 }
 
-// ============================================================================
-// IMAGE MODAL
-// ============================================================================
-document.addEventListener('DOMContentLoaded', function () {
-    const imgModal = document.getElementById('imageViewModal');
-    if (imgModal) {
-        imgModal.addEventListener('show.bs.modal', function (event) {
-            const btn = event.relatedTarget;
-            const src = btn?.getAttribute('data-image');
-            document.getElementById('enlargedImage').src = src || '{{ asset("storage/student_avatars/unnamed.jpg") }}';
-        });
-    }
+function showSweetAlert(title, message, type, success = true) {
+    Swal.fire({ title, html: message, icon: type, confirmButtonColor: success ? '#28a745' : '#dc3545' });
+}
 
-    document.getElementById('registeredClassesModal')?.addEventListener('show.bs.modal', loadRegisteredClasses);
-    document.getElementById('archivePerPage')?.addEventListener('change', () => loadArchivedPage(1));
-
-    // Character counter for snapshot notes
-    document.getElementById('snapshotNotesInput')?.addEventListener('input', function () {
-        document.getElementById('snapshotNotesCount').textContent = this.value.length;
-    });
-});
-
-// ============================================================================
-// FILTER / SEARCH
-// ============================================================================
 function filterData() {
-    const classId   = document.getElementById('idclass').value;
-    const sessionId = document.getElementById('idsession').value;
-    const search    = document.querySelector('.search')?.value ?? '';
-    const gender    = document.getElementById('idgender').value;
-    const admission = document.getElementById('idadmission').value;
-
-    const params = new URLSearchParams({ class_id: classId, session_id: sessionId, search, gender, admissionno: admission });
+    const params = new URLSearchParams({
+        class_id: document.getElementById('idclass').value,
+        session_id: document.getElementById('idsession').value,
+        search: document.querySelector('.search')?.value || '',
+        gender: document.getElementById('idgender').value,
+        admissionno: document.getElementById('idadmission').value,
+    });
     window.location.href = ROUTES.index + '?' + params.toString();
 }
 
-function selectAllSubjects()   { document.querySelectorAll('.subject-checkbox').forEach(cb => cb.checked = true);  updateSubjectCount(); }
-function deselectAllSubjects() { document.querySelectorAll('.subject-checkbox').forEach(cb => cb.checked = false); updateSubjectCount(); }
-function updateSubjectCount()  { document.getElementById('subjectTeacherCount').textContent = document.querySelectorAll('.subject-checkbox:checked').length; }
-document.querySelectorAll('.subject-checkbox').forEach(cb => cb.addEventListener('change', updateSubjectCount));
-updateSubjectCount();
+function selectAllSubjects() {
+    document.querySelectorAll('.subject-checkbox').forEach(cb => cb.checked = true);
+    document.getElementById('subjectTeacherCount').textContent = document.querySelectorAll('.subject-checkbox:checked').length;
+}
 
-// ============================================================================
-// CHECK ALL STUDENTS
-// ============================================================================
-document.getElementById('checkAll')?.addEventListener('change', function () {
-    document.querySelectorAll('#studentTableBody input[name="chk_child"]').forEach(cb => cb.checked = this.checked);
-    toggleBatchButtons();
-});
-document.addEventListener('change', function (e) {
-    if (e.target?.name === 'chk_child') toggleBatchButtons();
-});
-function toggleBatchButtons() {
-    const any = document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked').length > 0;
-    document.getElementById('register-selected-btn')?.classList.toggle('d-none', !any);
-    document.getElementById('unregister-selected-btn')?.classList.toggle('d-none', !any);
+function deselectAllSubjects() {
+    document.querySelectorAll('.subject-checkbox').forEach(cb => cb.checked = false);
+    document.getElementById('subjectTeacherCount').textContent = 0;
 }
 
 // ============================================================================
-// HELPERS
+// REGISTERED CLASSES MODAL - ALPHABETICAL SUBJECTS WITH TEACHERS
+// ============================================================================
+async function loadRegisteredClasses() {
+    const classId = document.getElementById('idclass').value;
+    const sessionId = document.getElementById('idsession').value;
+    const container = document.getElementById('registeredClassesContent');
+
+    if (classId === 'ALL' || sessionId === 'ALL') {
+        container.innerHTML = '<div class="alert alert-warning">Please select a class and session first.</div>';
+        return;
+    }
+
+    container.innerHTML = '<div class="text-center"><div class="spinner-border text-primary"></div><p class="mt-2">Loading...</p></div>';
+
+    try {
+        const res = await fetch(`${ROUTES.getRegistered}?class_id=${classId}&session_id=${sessionId}`, {
+            headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
+        });
+        const data = await res.json();
+
+        if (!data.success || !data.data.length) {
+            container.innerHTML = '<div class="alert alert-info">No registered classes found.</div>';
+            return;
+        }
+
+        let html = '';
+        for (const classData of data.data) {
+            // Subjects are already alphabetically ordered from backend
+            const subjects = classData.subjects_teachers || [];
+
+            html += `
+                <div class="card mb-4 subject-card">
+                    <div class="card-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap">
+                            <div>
+                                <i class="ri-school-line me-2"></i>
+                                <strong class="fs-5">${escapeHtml(classData.class_name)} ${escapeHtml(classData.arm_name)}</strong>
+                                <span class="ms-2 badge bg-light text-dark">${escapeHtml(classData.session_name)}</span>
+                                <span class="badge bg-warning text-dark ms-1">${escapeHtml(classData.term_name)}</span>
+                            </div>
+                            <div class="mt-2 mt-sm-0">
+                                <span class="badge bg-info me-2 p-2"><i class="ri-user-line me-1"></i> Students: ${classData.student_count || 0}</span>
+                                <span class="badge bg-success p-2"><i class="ri-book-open-line me-1"></i> Subjects: ${subjects.length}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="70" class="text-center">#</th>
+                                        <th>Subject Name</th>
+                                        <th width="120">Subject Code</th>
+                                        <th>Teacher(s)</th>
+                                        <th width="100" class="text-center">Students</th>
+                                    </tr>
+                                </thead>
+                                <tbody>`;
+
+            // Display subjects with sequential numbering (already alphabetical)
+            subjects.forEach((subject, index) => {
+                const studentCount = subject.student_count || 0;
+                let teachersHtml = '';
+
+                if (subject.teachers && subject.teachers.length > 0) {
+                    teachersHtml = '<div class="d-flex flex-wrap gap-2">';
+                    subject.teachers.forEach(teacher => {
+                        const picUrl = teacher.picture ?
+                            `${AVATAR_URL}/staff_avatars/${teacher.picture.split('/').pop()}` :
+                            `${AVATAR_URL}/staff_avatars/default.png`;
+                        teachersHtml += `
+                            <div class="d-flex align-items-center gap-2 bg-light rounded-3 px-2 py-1" style="border: 1px solid #e0e0e0;">
+                                <img src="${picUrl}" class="teacher-avatar" onerror="this.src='${AVATAR_URL}/staff_avatars/default.png'">
+                                <span class="fw-medium">${escapeHtml(teacher.name)}</span>
+                            </div>
+                        `;
+                    });
+                    teachersHtml += '</div>';
+                } else {
+                    teachersHtml = '<span class="text-muted"><i class="ri-user-unfollow-line me-1"></i> Not assigned</span>';
+                }
+
+                html += `
+                    <tr>
+                        <td class="text-center"><span class="subject-number">${index + 1}</span></td>
+                        <td><strong><i class="ri-book-2-line text-primary me-2"></i>${escapeHtml(subject.name)}</strong></td>
+                        <td><span class="badge bg-secondary-subtle text-secondary">${escapeHtml(subject.code || '—')}</span></td>
+                        <td>${teachersHtml}</td>
+                        <td class="text-center"><span class="badge bg-primary rounded-pill px-3 py-2">${studentCount}</span></td>
+                    </tr>
+                `;
+            });
+
+            html += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-light">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <small class="text-muted">
+                                    <i class="ri-bar-chart-line me-1"></i>
+                                    <strong>Total Subjects:</strong> ${subjects.length} |
+                                    <strong>Total Students:</strong> ${classData.student_count || 0}
+                                </small>
+                            </div>
+                            <div class="col-md-6 text-md-end">
+                                <small class="text-muted">
+                                    <i class="ri-calendar-line me-1"></i>
+                                    Generated: ${new Date().toLocaleString()}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        container.innerHTML = html;
+    } catch (err) {
+        container.innerHTML = `<div class="alert alert-danger">Error: ${err.message}</div>`;
+    }
+}
+
+// ============================================================================
+// PRINT FUNCTIONALITY WITH SCHOOL INFORMATION
+// ============================================================================
+async function printRegisteredClasses() {
+    const classId = document.getElementById('idclass').value;
+    const sessionId = document.getElementById('idsession').value;
+
+    if (classId === 'ALL' || sessionId === 'ALL') {
+        Swal.fire('Cannot Print', 'Please select a class and session first.', 'warning');
+        return;
+    }
+
+    Swal.fire({ title: 'Preparing print...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+    try {
+        const schoolRes = await fetch(ROUTES.getSchoolInfo, { headers: { 'Accept': 'application/json' } });
+        const schoolData = await schoolRes.json();
+
+        const regRes = await fetch(`${ROUTES.getRegistered}?class_id=${classId}&session_id=${sessionId}`, {
+            headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
+        });
+        const regData = await regRes.json();
+
+        Swal.close();
+
+        if (!regData.success || !regData.data.length) {
+            Swal.fire('No Data', 'No registered classes found.', 'info');
+            return;
+        }
+
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(await getPrintHTML(schoolData, regData.data));
+        printWindow.document.close();
+        printWindow.focus();
+        printWindow.print();
+    } catch (err) {
+        Swal.close();
+        Swal.fire('Error', err.message, 'error');
+    }
+}
+
+async function getPrintHTML(schoolData, registeredData) {
+    const classSelect = document.getElementById('idclass');
+    const sessionSelect = document.getElementById('idsession');
+    const className = classSelect.options[classSelect.selectedIndex]?.text || 'Selected Class';
+    const sessionName = sessionSelect.options[sessionSelect.selectedIndex]?.text || 'Selected Session';
+
+    const school = schoolData.success ? schoolData.data : null;
+    const schoolName = school?.school_name || 'School Name';
+    const schoolAddress = school?.school_address || '';
+    const schoolPhone = school?.school_phone || '';
+    const schoolEmail = school?.school_email || '';
+    const schoolMotto = school?.school_motto || '';
+    const schoolLogo = school?.school_logo ?
+        (school.school_logo.startsWith('http') ? school.school_logo : `{{ asset('storage') }}/${school.school_logo}`) : '';
+
+    let subjectsHtml = '';
+    let totalSubjectsOverall = 0;
+
+    for (const classData of registeredData) {
+        const subjects = classData.subjects_teachers || [];
+        totalSubjectsOverall += subjects.length;
+
+        subjectsHtml += `
+            <div class="class-section" style="margin-bottom: 30px; page-break-inside: avoid;">
+                <div class="class-header" style="background: #667eea; color: white; padding: 12px; border-radius: 5px 5px 0 0;">
+                    <strong>${escapeHtml(classData.class_name)} ${escapeHtml(classData.arm_name)}</strong>
+                    <span style="float: right;">Session: ${escapeHtml(classData.session_name)} | Term: ${escapeHtml(classData.term_name)}</span>
+                </div>
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: #f2f2f2;">
+                            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">S/N</th>
+                            <th style="border: 1px solid #ddd; padding: 8px;">Subject Name</th>
+                            <th style="border: 1px solid #ddd; padding: 8px;">Subject Code</th>
+                            <th style="border: 1px solid #ddd; padding: 8px;">Teacher(s)</th>
+                            <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Students</th>
+                        </tr>
+                    </thead>
+                    <tbody>`;
+
+        subjects.forEach((subject, index) => {
+            const teachersNames = (subject.teachers || []).map(t => t.name).join(', ');
+            subjectsHtml += `
+                <tr>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${index + 1}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${escapeHtml(subject.name)}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${escapeHtml(subject.code || '—')}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">${escapeHtml(teachersNames || '—')}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${subject.student_count || 0}</td>
+                </tr>
+            `;
+        });
+
+        subjectsHtml += `
+                    </tbody>
+                </table>
+                <div style="padding: 5px 0; font-size: 11px;">Total Subjects: ${subjects.length} | Total Students: ${classData.student_count || 0}</div>
+            </div>
+        `;
+    }
+
+    return `<!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="UTF-8">
+        <title>Registered Classes - ${escapeHtml(schoolName)}</title>
+        <style>
+            body { font-family: Arial, sans-serif; font-size: 12px; padding: 20px; }
+            .print-header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #667eea; padding-bottom: 15px; }
+            .print-header img { max-height: 80px; }
+            .print-header h2 { margin: 10px 0; }
+            .print-info { margin-bottom: 20px; padding: 10px; background: #f8f9fc; }
+            .class-section { margin-bottom: 30px; page-break-inside: avoid; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { border: 1px solid #ddd; padding: 8px; }
+            th { background: #f2f2f2; }
+            @page { size: A4; margin: 15mm; }
+        </style>
+    </head>
+    <body>
+        <div class="print-header">
+            ${schoolLogo ? `<img src="${schoolLogo}" onerror="this.style.display='none'">` : ''}
+            <h2>${escapeHtml(schoolName)}</h2>
+            <div>${escapeHtml(schoolMotto)}</div>
+            <div>${escapeHtml(schoolAddress)}</div>
+            <div>${escapeHtml(schoolPhone)} ${schoolEmail ? '| ' + escapeHtml(schoolEmail) : ''}</div>
+        </div>
+        <div class="print-info">
+            <strong>Class:</strong> ${escapeHtml(className)} |
+            <strong>Session:</strong> ${escapeHtml(sessionName)} |
+            <strong>Print Date:</strong> ${new Date().toLocaleString()}
+        </div>
+        <h3>Subject Registration Summary</h3>
+        ${subjectsHtml}
+        <div style="text-align: center; margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd;">
+            <small>Total Subjects: ${totalSubjectsOverall} | Generated by School Management System</small>
+        </div>
+    </body>
+    </html>`;
+}
+
+// ============================================================================
+// REGISTRATION FUNCTIONS
 // ============================================================================
 function getSelectedStudentIds() {
     return [...document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked')]
         .map(cb => parseInt(cb.closest('tr').querySelector('.id').dataset.id));
 }
+
 function getSelectedSubjectClasses() {
     return [...document.querySelectorAll('.subject-checkbox:checked')].map(cb => ({
         subjectclassid: parseInt(cb.dataset.subjectclassid),
-        staffid       : parseInt(cb.dataset.staffid),
-        termid        : parseInt(cb.dataset.termid),
+        staffid: parseInt(cb.dataset.staffid),
+        termid: parseInt(cb.dataset.termid),
     }));
 }
-function setSpinner(on) { document.getElementById('register-loading-spinner')?.classList.toggle('d-none', !on); }
 
-async function apiFetch(url, method, body) {
-    const res  = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
-        body: JSON.stringify(body),
-    });
-    const data = await res.json();
-    if (!res.ok && !data.success) throw new Error(data.message || `HTTP ${res.status}`);
-    return data;
-}
-
-function escapeHtml(str) {
-    if (!str) return str ?? '';
-    return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-}
-
-// ============================================================================
-// REGISTER BATCH
-// ============================================================================
 async function registerSelectedStudentsBatch() {
-    const studentIds     = getSelectedStudentIds();
+    const studentIds = getSelectedStudentIds();
     const subjectClasses = getSelectedSubjectClasses();
-    const sessionId      = document.getElementById('idsession').value;
+    const sessionId = document.getElementById('idsession').value;
 
-    if (!studentIds.length)    return showSweetAlert('No Students Selected', 'Please select at least one student.', 'warning', false);
-    if (!subjectClasses.length)return showSweetAlert('No Subjects Selected', 'Please select at least one subject.', 'warning', false);
-    if (sessionId === 'ALL')   return showSweetAlert('Session Required', 'Please select a session.', 'warning', false);
+    if (!studentIds.length) return showSweetAlert('Error', 'No students selected', 'warning');
+    if (!subjectClasses.length) return showSweetAlert('Error', 'No subjects selected', 'warning');
+    if (sessionId === 'ALL') return showSweetAlert('Error', 'Please select a session', 'warning');
 
-    const ok = await Swal.fire({
+    const result = await Swal.fire({
         title: 'Confirm Registration',
-        html : `<div class="text-center"><span style="font-size:3rem;">📚</span><p class="mt-2">Register <strong>${studentIds.length}</strong> student(s) for <strong>${subjectClasses.length}</strong> subject(s)?</p></div>`,
-        icon : 'question', showCancelButton: true, confirmButtonColor: '#28a745', cancelButtonColor: '#6c757d',
-        confirmButtonText: 'Yes, register!',
+        html: `Register <strong>${studentIds.length}</strong> student(s) for <strong>${subjectClasses.length}</strong> subject(s)?`,
+        icon: 'question', showCancelButton: true, confirmButtonColor: '#28a745'
     });
-    if (!ok.isConfirmed) return;
+    if (!result.isConfirmed) return;
 
-    setSpinner(true);
     try {
-        const res = await apiFetch(ROUTES.batchRegister, 'POST', { studentids: studentIds, subjectclasses: subjectClasses, sessionid: parseInt(sessionId) });
-        if (res.success) { showSweetAlert('Registration Successful!', res.message, 'success', true); setTimeout(() => location.reload(), 2000); }
-        else showSweetAlert('Registration Failed', res.message || 'Some students could not be registered.', 'error', false);
+        const res = await fetch(ROUTES.batchRegister, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+            body: JSON.stringify({ studentids: studentIds, subjectclasses: subjectClasses, sessionid: parseInt(sessionId) })
+        });
+        const data = await res.json();
+        if (data.success) {
+            showSweetAlert('Success', 'Students registered successfully!', 'success');
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            showSweetAlert('Error', data.message || 'Registration failed', 'error');
+        }
     } catch (err) {
-        showSweetAlert('Error', 'Registration failed: ' + err.message, 'error', false);
-    } finally { setSpinner(false); }
+        showSweetAlert('Error', err.message, 'error');
+    }
 }
 
-// ============================================================================
-// OPEN UNREGISTER MODAL (snapshot naming step)
-// ============================================================================
 function openUnregisterModal() {
-    const studentIds     = getSelectedStudentIds();
+    const studentIds = getSelectedStudentIds();
     const subjectClasses = getSelectedSubjectClasses();
-    const sessionId      = document.getElementById('idsession').value;
+    if (!studentIds.length) return showSweetAlert('Error', 'No students selected', 'warning');
+    if (!subjectClasses.length) return showSweetAlert('Error', 'No subjects selected', 'warning');
 
-    if (!studentIds.length)    return showSweetAlert('No Students Selected', 'Please select at least one student.', 'warning', false);
-    if (!subjectClasses.length)return showSweetAlert('No Subjects Selected', 'Please select at least one subject.', 'warning', false);
-    if (sessionId === 'ALL')   return showSweetAlert('Session Required', 'Please select a session.', 'warning', false);
-
-    // Populate summary pills
-    document.getElementById('snapshotStudentCount').textContent = `${studentIds.length} student${studentIds.length !== 1 ? 's' : ''}`;
-    document.getElementById('snapshotSubjectCount').textContent = `${subjectClasses.length} subject${subjectClasses.length !== 1 ? 's' : ''}`;
-
-    // Reset form
-    const nameInput = document.getElementById('snapshotNameInput');
-    nameInput.value = '';
-    nameInput.classList.remove('is-invalid');
+    document.getElementById('snapshotNameInput').value = `Unregistration - ${new Date().toLocaleString()}`;
     document.getElementById('snapshotNotesInput').value = '';
-    document.getElementById('snapshotNotesCount').textContent = '0';
-
-    // Suggest a default name with date + time
-    const now     = new Date();
-    const dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-    const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-    nameInput.value = `Unregistration — ${dateStr} ${timeStr}`;
-
     new bootstrap.Modal(document.getElementById('snapshotNameModal')).show();
 }
 
-// ============================================================================
-// PROCEED UNREGISTER (called from confirm button in snapshot modal)
-// ============================================================================
 async function proceedUnregister() {
-    const nameInput  = document.getElementById('snapshotNameInput');
-    const notesInput = document.getElementById('snapshotNotesInput');
-    const name       = nameInput.value.trim();
+    const name = document.getElementById('snapshotNameInput').value.trim();
+    if (!name) return showSweetAlert('Error', 'Please enter a snapshot name', 'warning');
 
-    if (!name) {
-        nameInput.classList.add('is-invalid');
-        return;
-    }
-    nameInput.classList.remove('is-invalid');
-
-    const studentIds     = getSelectedStudentIds();
+    const studentIds = getSelectedStudentIds();
     const subjectClasses = getSelectedSubjectClasses();
-    const sessionId      = document.getElementById('idsession').value;
-
-    // Close the naming modal
-    bootstrap.Modal.getInstance(document.getElementById('snapshotNameModal'))?.hide();
-
-    setSpinner(true);
-    try {
-        const res = await apiFetch(ROUTES.unregister, 'DELETE', {
-            studentids    : studentIds,
-            subjectclasses: subjectClasses,
-            sessionid     : parseInt(sessionId),
-            snapshot_name : name,
-            snapshot_notes: notesInput.value.trim() || null,
-        });
-
-        if (res.success || res.success_count > 0) {
-            showSweetAlert(
-                'Unregistration Complete',
-                `${res.success_count} student(s) unregistered.<br><small class="text-muted">Snapshot saved as "<strong>${escapeHtml(name)}</strong>"</small>`,
-                'success', true
-            );
-            setTimeout(() => location.reload(), 2500);
-        } else {
-            showSweetAlert('Unregistration Failed', res.message || 'No students were unregistered.', 'error', false);
-        }
-    } catch (err) {
-        showSweetAlert('Error', 'Unregistration failed: ' + err.message, 'error', false);
-    } finally { setSpinner(false); }
-}
-
-// ============================================================================
-// REGISTERED CLASSES MODAL (UPDATED RENDER LOGIC)
-// ============================================================================
-async function loadRegisteredClasses() {
-    const classId   = document.getElementById('idclass').value;
     const sessionId = document.getElementById('idsession').value;
-    const container = document.getElementById('registeredClassesContent');
+    const notes = document.getElementById('snapshotNotesInput').value;
 
-    if (classId === 'ALL' || sessionId === 'ALL') {
-        container.innerHTML = `<div class="text-center py-5"><i class="ri-error-warning-line ri-3x text-warning"></i><p class="text-muted mt-3 mb-0">Please select a class and session first.</p></div>`;
-        return;
-    }
-
-    container.innerHTML = `<div class="text-center py-5"><div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div><p class="mt-3 text-muted">Loading registration data...</p></div>`;
+    bootstrap.Modal.getInstance(document.getElementById('snapshotNameModal')).hide();
 
     try {
-        const res  = await fetch(ROUTES.getRegistered + '?' + new URLSearchParams({ class_id: classId, session_id: sessionId }), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
-        const data = await res.json();
-
-        if (!data.success || !data.data.length) {
-            container.innerHTML = `<div class="text-center py-5"><i class="ri-information-line ri-3x text-muted"></i><p class="text-muted mt-3 mb-0">No registered classes found.</p></div>`;
-            return;
-        }
-
-        // Transform backend data into the new card structure
-        let html = '';
-        data.data.forEach(termGroup => {
-            // termGroup = { term_name, class_name, arm_name, session_name, total_students, total_subjects, subjects: [...] }
-            html += `
-            <div class="term-card mb-4" style="background:#fff; border-radius:12px; border:0.5px solid #e2e8f0; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-                <div class="term-header p-3 d-flex justify-content-between align-items-center" style="border-bottom:0.5px solid #e2e8f0; background:#fff;">
-                    <div>
-                        <h5 class="fw-semibold mb-0" style="font-size:1rem;">${escapeHtml(termGroup.class_name)} ${escapeHtml(termGroup.arm_name)} — ${escapeHtml(termGroup.session_name)}</h5>
-                        <span class="text-muted small">${escapeHtml(termGroup.term_name)}</span>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <span class="badge" style="background:#E6F1FB; color:#0C447C; padding:4px 12px; border-radius:20px; font-weight:500;">${termGroup.total_students} students</span>
-                        <span class="badge" style="background:#EEEDFE; color:#3C3489; padding:4px 12px; border-radius:20px; font-weight:500;">${termGroup.total_subjects} subjects</span>
-                    </div>
-                </div>
-                <div class="subjects-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr));">
-            `;
-
-            termGroup.subjects.forEach((subject, idx) => {
-                html += `
-                <div class="subject-card p-3 d-flex gap-3 align-items-start" style="border-right:0.5px solid #e2e8f0; border-bottom:0.5px solid #e2e8f0;">
-                    <div class="subject-num" style="width:28px; height:28px; background:#EEEDFE; color:#3C3489; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:500;">${idx + 1}</div>
-                    <div class="subject-info flex-grow-1">
-                        <div class="fw-medium" style="font-size:0.9rem;">${escapeHtml(subject.subject_name)}</div>
-                        <div class="text-muted small mt-1">${escapeHtml(subject.teacher_name ?? '— Not assigned')}</div>
-                        <span class="badge mt-2" style="background:#EAF3DE; color:#27500A; font-size:10px; padding:2px 8px; border-radius:20px;">${subject.student_count} students</span>
-                    </div>
-                </div>`;
-            });
-
-            html += `
-                </div>
-            </div>`;
+        const res = await fetch(ROUTES.unregister, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+            body: JSON.stringify({ studentids: studentIds, subjectclasses: subjectClasses, sessionid: parseInt(sessionId), snapshot_name: name, snapshot_notes: notes })
         });
-
-        container.innerHTML = html;
+        const data = await res.json();
+        if (data.success) {
+            showSweetAlert('Success', `${data.success_count} student(s) unregistered`, 'success');
+            setTimeout(() => location.reload(), 2000);
+        } else {
+            showSweetAlert('Error', data.message || 'Unregistration failed', 'error');
+        }
     } catch (err) {
-        container.innerHTML = `<div class="alert alert-danger m-3">Failed to load data: ${err.message}</div>`;
+        showSweetAlert('Error', err.message, 'error');
     }
 }
 
 // ============================================================================
-// ARCHIVE (SNAPSHOT LIST) MODAL
+// ARCHIVE FUNCTIONS
 // ============================================================================
 function openArchivedModal() {
-    const classId   = document.getElementById('idclass').value;
+    const classId = document.getElementById('idclass').value;
     const sessionId = document.getElementById('idsession').value;
-
     if (classId === 'ALL' || sessionId === 'ALL') {
-        return showSweetAlert('Selection Required', 'Please select a class and session first.', 'warning', false);
+        return showSweetAlert('Error', 'Please select a class and session first', 'warning');
     }
-
-    archiveCurrentPage = 1;
-    new bootstrap.Modal(document.getElementById('archivedModal')).show();
     loadArchivedPage(1);
+    new bootstrap.Modal(document.getElementById('archivedModal')).show();
 }
 
 async function loadArchivedPage(page) {
-    archiveCurrentPage = page;
-
-    const classId   = document.getElementById('idclass').value;
+    const classId = document.getElementById('idclass').value;
     const sessionId = document.getElementById('idsession').value;
-    const termId    = document.getElementById('archiveTermFilter').value;
-    const search    = document.getElementById('archiveSearch').value.trim();
-    const perPage   = document.getElementById('archivePerPage').value;
-
-    if (classId === 'ALL' || sessionId === 'ALL') return;
-
-    const spinner   = document.getElementById('archiveSpinner');
     const container = document.getElementById('snapshotCardsContainer');
 
-    spinner.classList.remove('d-none');
-    container.innerHTML = `<div class="text-center py-4"><div class="spinner-border spinner-border-sm text-warning me-2"></div> Loading snapshots…</div>`;
+    container.innerHTML = '<div class="text-center"><div class="spinner-border"></div></div>';
 
     try {
-        const params = new URLSearchParams({ class_id: classId, session_id: sessionId, page, per_page: perPage });
-        if (termId) params.set('term_id', termId);
-        if (search) params.set('search', search);
-
-        const res  = await fetch(ROUTES.getArchived + '?' + params.toString(), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
+        const res = await fetch(`${ROUTES.getArchived}?class_id=${classId}&session_id=${sessionId}&page=${page}`, {
+            headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' }
+        });
         const data = await res.json();
 
-        if (!data.success) {
-            container.innerHTML = `<div class="text-center text-danger py-4">${data.message}</div>`;
+        if (!data.success || !data.data.length) {
+            container.innerHTML = '<div class="alert alert-info">No archived records found.</div>';
             return;
         }
 
-        archiveMeta = data.meta;
-        renderSnapshotCards(data.data);
-        renderArchivePagination(data.meta);
-        updateArchiveMeta(data.meta);
-
-    } catch (err) {
-        container.innerHTML = `<div class="text-center text-danger py-4">Error: ${err.message}</div>`;
-    } finally {
-        spinner.classList.add('d-none');
-    }
-}
-
-// ── Render snapshot cards ────────────────────────────────────────────────────
-function renderSnapshotCards(rows) {
-    const container = document.getElementById('snapshotCardsContainer');
-    const restoreBtn = document.getElementById('restoreSelectedBtn');
-    const deleteBtn  = document.getElementById('deleteSelectedBtn');
-
-    if (!rows.length) {
-        container.innerHTML = `<div class="text-center text-muted py-5"><i class="ri-archive-line ri-3x d-block mb-2"></i>No unregistration snapshots found.</div>`;
-        restoreBtn?.classList.add('d-none');
-        deleteBtn?.classList.add('d-none');
-        return;
-    }
-
-    restoreBtn?.classList.add('d-none');
-    deleteBtn?.classList.add('d-none');
-
-    // Group rows by snapshot_name to create "batch" cards
-    const groups = {};
-    rows.forEach(row => {
-        const key = `${row.snapshot_name}__${row.subjectclassid}__${row.termid}`;
-        if (!groups[key]) groups[key] = { ...row, subjects: [] };
-        groups[key].subjects.push({
-            subjectname    : row.subjectname,
-            subjectcode    : row.subjectcode,
-            staffname      : row.staffname,
-            student_count  : row.student_count,
-            subjectclassid : row.subjectclassid,
-            termid         : row.termid,
-            sessionid      : row.sessionid,
-            staffid        : row.staffid,
-            archive_id     : row.archive_id,
+        let html = '<div class="row">';
+        data.data.forEach(snapshot => {
+            html += `
+                <div class="col-md-6 mb-3">
+                    <div class="card">
+                        <div class="card-body">
+                            <h6><i class="ri-camera-line"></i> ${escapeHtml(snapshot.snapshot_name)}</h6>
+                            <small class="text-muted">${new Date(snapshot.unregistered_at).toLocaleString()}</small>
+                            <p class="mt-2"><strong>Subject:</strong> ${escapeHtml(snapshot.subjectname)}</p>
+                            <p><strong>Students:</strong> ${snapshot.student_count}</p>
+                            <button class="btn btn-sm btn-primary" onclick="viewSnapshotDetail(${snapshot.archive_id})">View Details</button>
+                            <button class="btn btn-sm btn-success" onclick="restoreSnapshot(${snapshot.archive_id})">Restore</button>
+                        </div>
+                    </div>
+                </div>
+            `;
         });
-    });
-
-    let html = '<div class="row g-3">';
-
-    Object.values(groups).forEach(group => {
-        const unregDate = group.unregistered_at
-            ? new Date(group.unregistered_at).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })
-            : '—';
-
-        const subjectPills = group.subjects.map(s =>
-            `<span class="badge bg-primary-subtle text-primary me-1 mb-1">${escapeHtml(s.subjectname)}</span>`
-        ).join('');
-
-        const metaEncoded = encodeURIComponent(JSON.stringify({
-            snapshot_name  : group.snapshot_name,
-            subjectclassid : group.subjectclassid,
-            termid         : group.termid,
-            sessionid      : group.sessionid,
-            staffid        : group.staffid,
-            archive_id     : group.archive_id,
-        }));
-
-        html += `
-        <div class="col-md-6 col-xl-4">
-            <div class="card border-0 shadow-sm h-100 snapshot-card" style="cursor:pointer;transition:transform .15s,box-shadow .15s;"
-                 onclick="openSnapshotDetail('${metaEncoded}')"
-                 onmouseenter="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 24px rgba(0,0,0,.12)';"
-                 onmouseleave="this.style.transform='';this.style.boxShadow='';">
-                <div class="card-body">
-                    {{-- Header --}}
-                    <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
-                        <div class="flex-grow-1 min-w-0">
-                            <h6 class="fw-semibold mb-0 text-truncate" title="${escapeHtml(group.snapshot_name)}">
-                                <i class="ri-camera-line text-danger me-1"></i>${escapeHtml(group.snapshot_name)}
-                            </h6>
-                            <small class="text-muted">${unregDate}</small>
-                        </div>
-                        <div class="flex-shrink-0 d-flex gap-1">
-                            <span class="badge bg-danger-subtle text-danger rounded-pill">
-                                ${group.student_count} student${group.student_count !== 1 ? 's' : ''}
-                            </span>
-                        </div>
-                    </div>
-
-                    {{-- Notes --}}
-                    ${group.snapshot_notes ? `<p class="text-muted small fst-italic mb-2" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">"${escapeHtml(group.snapshot_notes)}"</p>` : ''}
-
-                    {{-- Subject pills --}}
-                    <div class="mb-2">${subjectPills}</div>
-
-                    {{-- Footer meta --}}
-                    <div class="d-flex justify-content-between align-items-center mt-auto pt-1 border-top">
-                        <small class="text-muted">
-                            <i class="ri-user-star-line me-1"></i>${escapeHtml(group.staffname ?? '—')}
-                        </small>
-                        <small class="text-muted">
-                            <span class="badge bg-warning-subtle text-warning-emphasis">${escapeHtml(group.termname)}</span>
-                        </small>
-                    </div>
-                </div>
-
-                {{-- Card actions bar --}}
-                <div class="card-footer bg-light border-0 d-flex gap-2 py-2">
-                    <button class="btn btn-sm btn-outline-primary flex-grow-1" onclick="event.stopPropagation();openSnapshotDetail('${metaEncoded}');">
-                        <i class="ri-eye-line me-1"></i> View
-                    </button>
-                    <button class="btn btn-sm btn-outline-success flex-grow-1" onclick="event.stopPropagation();restoreSingleSnapshot('${metaEncoded}');">
-                        <i class="ri-refresh-line me-1"></i> Restore
-                    </button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="event.stopPropagation();deleteSnapshotGroup('${metaEncoded}');" title="Delete snapshot">
-                        <i class="ri-delete-bin-line"></i>
-                    </button>
-                </div>
-            </div>
-        </div>`;
-    });
-
-    html += '</div>';
-    container.innerHTML = html;
-}
-
-// ── Pagination helpers ────────────────────────────────────────────────────────
-function renderArchivePagination(meta) {
-    const container = document.getElementById('archivePagination');
-    if (!meta || meta.last_page <= 1) { container.innerHTML = ''; return; }
-
-    let html = `<button class="btn btn-sm btn-outline-secondary ${meta.current_page === 1 ? 'disabled' : ''}" onclick="loadArchivedPage(${meta.current_page - 1})">‹</button>`;
-    const delta = 3;
-    for (let p = 1; p <= meta.last_page; p++) {
-        if (p === 1 || p === meta.last_page || (p >= meta.current_page - delta && p <= meta.current_page + delta)) {
-            html += `<button class="btn btn-sm ${p === meta.current_page ? 'btn-warning' : 'btn-outline-secondary'}" onclick="loadArchivedPage(${p})">${p}</button>`;
-        } else if (p === meta.current_page - delta - 1 || p === meta.current_page + delta + 1) {
-            html += `<span class="btn btn-sm btn-outline-secondary disabled">…</span>`;
-        }
+        html += '</div>';
+        container.innerHTML = html;
+    } catch (err) {
+        container.innerHTML = `<div class="alert alert-danger">${err.message}</div>`;
     }
-    html += `<button class="btn btn-sm btn-outline-secondary ${meta.current_page === meta.last_page ? 'disabled' : ''}" onclick="loadArchivedPage(${meta.current_page + 1})">›</button>`;
-    container.innerHTML = html;
 }
 
-function updateArchiveMeta(meta) {
-    const el = document.getElementById('archiveMeta');
-    if (!meta || !meta.total) { el.textContent = ''; return; }
-    const from = (meta.current_page - 1) * meta.per_page + 1;
-    const to   = Math.min(meta.current_page * meta.per_page, meta.total);
-    el.textContent = `Showing ${from}–${to} of ${meta.total} snapshots`;
-}
-
-document.getElementById('archiveSearch')?.addEventListener('input', function () {
-    clearTimeout(archiveSearchTimer);
-    archiveSearchTimer = setTimeout(() => loadArchivedPage(1), 400);
+// ============================================================================
+// EVENT LISTENERS
+// ============================================================================
+document.getElementById('checkAll')?.addEventListener('change', function() {
+    document.querySelectorAll('#studentTableBody input[name="chk_child"]').forEach(cb => cb.checked = this.checked);
 });
-document.getElementById('archiveTermFilter')?.addEventListener('change', () => loadArchivedPage(1));
 
-// ============================================================================
-// SNAPSHOT DETAIL MODAL
-// ============================================================================
-async function openSnapshotDetail(metaEncoded) {
-    currentSnapshotMeta = JSON.parse(decodeURIComponent(metaEncoded));
-
-    document.getElementById('snapshotDetailTitle').textContent   = currentSnapshotMeta.snapshot_name;
-    document.getElementById('snapshotDetailSubtitle').textContent = '';
-    document.getElementById('snapshotNotesBanner')?.classList.add('d-none');
-
-    // Reset search
-    const searchInput = document.getElementById('detailSearchInput');
-    if (searchInput) searchInput.value = '';
-
-    document.getElementById('snapshotDetailBody').innerHTML =
-        '<tr><td colspan="10" class="text-center py-4"><div class="spinner-border spinner-border-sm me-2"></div>Loading students…</td></tr>';
-
-    // Hide per-row selection buttons until loaded
-    document.getElementById('detailRestoreSelectedBtn')?.classList.add('d-none');
-    document.getElementById('detailDeleteSelectedBtn')?.classList.add('d-none');
-
-    const modal = new bootstrap.Modal(document.getElementById('snapshotDetailModal'));
-    modal.show();
-
-    try {
-        const params = new URLSearchParams({
-            snapshot_name  : currentSnapshotMeta.snapshot_name,
-            subjectclassid : currentSnapshotMeta.subjectclassid,
-            termid         : currentSnapshotMeta.termid,
-            sessionid      : currentSnapshotMeta.sessionid,
-            staffid        : currentSnapshotMeta.staffid,
-        });
-
-        const res  = await fetch(ROUTES.getSnapshot + '?' + params.toString(), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
-        const data = await res.json();
-
-        if (!data.success) {
-            document.getElementById('snapshotDetailBody').innerHTML =
-                `<tr><td colspan="10" class="text-center text-danger py-4">${data.message}</td></tr>`;
-            return;
-        }
-
-        currentSnapshotRows = data.rows;
-
-        // Show notes banner
-        if (data.snapshot_notes) {
-            const banner = document.getElementById('snapshotNotesBanner');
-            banner?.classList.remove('d-none');
-            document.getElementById('snapshotNotesText').textContent = data.snapshot_notes;
-        }
-
-        document.getElementById('detailStudentMeta').textContent =
-            `${data.total_students} student${data.total_students !== 1 ? 's' : ''} in this snapshot`;
-
-        renderSnapshotDetailTable(data.rows, data.assessment_headers);
-
-    } catch (err) {
-        document.getElementById('snapshotDetailBody').innerHTML =
-            `<tr><td colspan="10" class="text-center text-danger py-4">Error: ${err.message}</td></tr>`;
-    }
-}
-
-function renderSnapshotDetailTable(rows, assessmentHeaders) {
-    // Build dynamic header columns
-    const headerRow = document.getElementById('snapshotDetailHeaderRow');
-    // Remove old dynamic columns (leave first 4: checkbox, student, adm, gender)
-    while (headerRow.cells.length > 4) headerRow.deleteCell(headerRow.cells.length - 1);
-
-    (assessmentHeaders || []).forEach(a => {
-        const th = document.createElement('th');
-        th.textContent = a.assessment_name || `Assessment ${a.assessment_id}`;
-        headerRow.appendChild(th);
-    });
-
-    const th = document.createElement('th');
-    th.textContent = 'Total';
-    headerRow.appendChild(th);
-
-    // Build body rows
-    let html = '';
-    rows.forEach(row => {
-        const name    = [row.lastname, row.firstname, row.othername].filter(Boolean).join(' ');
-        const picFile = row.picture ? row.picture.split('/').pop() : null;
-        const pic     = picFile
-            ? `${AVATAR_URL}/student_avatars/${picFile}`
-            : `${AVATAR_URL}/student_avatars/unnamed.jpg`;
-
-        // Gender: solid blue for Male, solid pink/rose for Female — always high contrast
-        const genderBadge = row.gender === 'Female'
-            ? `<span class="badge text-white" style="background:#e84393;">${escapeHtml(row.gender)}</span>`
-            : `<span class="badge text-white" style="background:#1a6fd4;">${escapeHtml(row.gender ?? '—')}</span>`;
-
-        let scoresCells = '';
-        let total       = 0;
-
-        (assessmentHeaders || []).forEach(a => {
-            const score = (row.assessment_scores || []).find(s => s.assessment_id == a.assessment_id);
-            const val   = score ? parseFloat(score.score) : 0;
-            total += val;
-            scoresCells += `<td class="text-center fw-medium">${val > 0 ? val.toFixed(1) : '<span class="text-muted">—</span>'}</td>`;
-        });
-
-        scoresCells += `<td class="text-center fw-bold ${total > 0 ? 'text-success' : 'text-muted'}">${total > 0 ? total.toFixed(1) : '—'}</td>`;
-
-        // Store searchable text as data attribute for client-side filtering
-        const searchKey = `${name} ${row.admissionno ?? ''}`.toLowerCase();
-
-        html += `<tr data-archive-id="${row.archive_id}" data-search="${escapeHtml(searchKey)}">
-            <tr><div class="form-check mb-0"><input class="form-check-input detail-chk" type="checkbox" value="${row.archive_id}"></div></td>
-            <td>
-                <div class="d-flex align-items-center gap-2">
-                    <img src="${pic}" class="rounded-circle" style="width:34px;height:34px;object-fit:cover;border:2px solid #e9ecef;"
-                         onerror="this.src='${AVATAR_URL}/student_avatars/unnamed.jpg'">
-                    <span class="fw-medium">${escapeHtml(name)}</span>
-                </div>
-            </td>
-            <td class="text-muted small">${escapeHtml(row.admissionno ?? '—')}</td>
-            <td>${genderBadge}</td>
-            ${scoresCells}
-        </tr>`;
-    });
-
-    document.getElementById('snapshotDetailBody').innerHTML = html || '<tr><td colspan="10" class="text-center text-muted py-4">No students found.</td></tr>';
-
-    // Wire up checkboxes
-    document.getElementById('detailCheckAll')?.addEventListener('change', function () {
-        document.querySelectorAll('.detail-chk').forEach(cb => cb.checked = this.checked);
-        toggleDetailButtons();
-    });
-    document.querySelectorAll('.detail-chk').forEach(cb => {
-        cb.addEventListener('change', toggleDetailButtons);
-    });
-}
-
-function toggleDetailButtons() {
-    const any = document.querySelectorAll('.detail-chk:checked').length > 0;
-    document.getElementById('detailRestoreSelectedBtn')?.classList.toggle('d-none', !any);
-    document.getElementById('detailDeleteSelectedBtn')?.classList.toggle('d-none', !any);
-}
-
-// Client-side search filter for the snapshot detail table
-function filterDetailRows(query) {
-    const q     = query.toLowerCase().trim();
-    const rows  = document.querySelectorAll('#snapshotDetailBody tr[data-search]');
-    let visible = 0;
-
-    rows.forEach(tr => {
-        const match = !q || tr.dataset.search.includes(q);
-        tr.style.display = match ? '' : 'none';
-        if (match) visible++;
-    });
-
-    // Update the meta count to show filtered vs total
-    const total = currentSnapshotRows.length;
-    const meta  = document.getElementById('detailStudentMeta');
-    if (meta) {
-        meta.textContent = q
-            ? `${visible} of ${total} student${total !== 1 ? 's' : ''} shown`
-            : `${total} student${total !== 1 ? 's' : ''} in this snapshot`;
-    }
-}
-
-// ============================================================================
-// RESTORE — from snapshot detail modal
-// ============================================================================
-async function restoreEntireSnapshot() {
-    if (!currentSnapshotRows.length) return;
-    const ids = currentSnapshotRows.map(r => r.archive_id);
-    await doRestore(ids, 'all students in this snapshot');
-}
-
-async function restoreDetailSelected() {
-    const ids = [...document.querySelectorAll('.detail-chk:checked')].map(cb => parseInt(cb.value));
-    if (!ids.length) return;
-    await doRestore(ids, `${ids.length} selected student${ids.length !== 1 ? 's' : ''}`);
-}
-
-async function doRestore(archiveIds, label) {
-    const ok = await Swal.fire({
-        title: 'Restore Registration?',
-        html : `<p>Restore <strong>${label}</strong>? Their original scores will be recovered.</p>`,
-        icon : 'question', showCancelButton: true, confirmButtonColor: '#28a745', confirmButtonText: 'Yes, restore!'
-    });
-    if (!ok.isConfirmed) return;
-
-    const spinner = document.getElementById('detailSpinner');
-    spinner?.classList.remove('d-none');
-
-    try {
-        const res = await apiFetch(ROUTES.restore, 'POST', { archive_ids: archiveIds });
-        if (res.success || res.total_restored > 0) {
-            showSweetAlert('Restored!', `${res.total_restored || archiveIds.length} registration(s) restored with original scores.`, 'success', true);
-            bootstrap.Modal.getInstance(document.getElementById('snapshotDetailModal'))?.hide();
-            loadArchivedPage(archiveCurrentPage);
-        } else {
-            showSweetAlert('Restore Failed', res.message || 'Could not restore.', 'error', false);
-        }
-    } catch (err) {
-        showSweetAlert('Error', 'Restore failed: ' + err.message, 'error', false);
-    } finally {
-        spinner?.classList.add('d-none');
-    }
-}
-
-// ── Restore from card button (entire snapshot group) ─────────────────────────
-async function restoreSingleSnapshot(metaEncoded) {
-    const meta = JSON.parse(decodeURIComponent(metaEncoded));
-
-    const ok = await Swal.fire({
-        title: 'Restore Snapshot?',
-        html : `<p>Restore all students in snapshot "<strong>${escapeHtml(meta.snapshot_name)}</strong>"?<br>Original scores will be recovered.</p>`,
-        icon : 'question', showCancelButton: true, confirmButtonColor: '#28a745', confirmButtonText: 'Yes, restore all!'
-    });
-    if (!ok.isConfirmed) return;
-
-    const spinner = document.getElementById('archiveSpinner');
-    spinner?.classList.remove('d-none');
-
-    try {
-        // Load the archive_ids for this snapshot group first
-        const params = new URLSearchParams({
-            snapshot_name  : meta.snapshot_name,
-            subjectclassid : meta.subjectclassid,
-            termid         : meta.termid,
-            sessionid      : meta.sessionid,
-            staffid        : meta.staffid,
-        });
-        const detailRes  = await fetch(ROUTES.getSnapshot + '?' + params.toString(), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
-        const detailData = await detailRes.json();
-
-        if (!detailData.success || !detailData.rows?.length) {
-            showSweetAlert('Not Found', detailData.message || 'Snapshot records not found.', 'error', false);
-            return;
-        }
-
-        const ids = detailData.rows.map(r => r.archive_id);
-        const res = await apiFetch(ROUTES.restore, 'POST', { archive_ids: ids });
-
-        if (res.success || res.total_restored > 0) {
-            showSweetAlert('Restored!', `${res.total_restored || ids.length} registration(s) restored.`, 'success', true);
-            loadArchivedPage(archiveCurrentPage);
-        } else {
-            showSweetAlert('Restore Failed', res.message, 'error', false);
-        }
-    } catch (err) {
-        showSweetAlert('Error', err.message, 'error', false);
-    } finally {
-        spinner?.classList.add('d-none');
-    }
-}
-
-// ── Delete entire snapshot group ─────────────────────────────────────────────
-async function deleteSnapshotGroup(metaEncoded) {
-    const meta = JSON.parse(decodeURIComponent(metaEncoded));
-
-    const ok = await Swal.fire({
-        title: 'Delete Snapshot?',
-        html : `<p class="text-danger">Permanently delete snapshot "<strong>${escapeHtml(meta.snapshot_name)}</strong>"?<br>This cannot be undone.</p>`,
-        icon : 'error', showCancelButton: true, confirmButtonColor: '#dc3545', confirmButtonText: 'Yes, delete permanently'
-    });
-    if (!ok.isConfirmed) return;
-
-    const spinner = document.getElementById('archiveSpinner');
-    spinner?.classList.remove('d-none');
-
-    try {
-        const params = new URLSearchParams({
-            snapshot_name  : meta.snapshot_name,
-            subjectclassid : meta.subjectclassid,
-            termid         : meta.termid,
-            sessionid      : meta.sessionid,
-            staffid        : meta.staffid,
-        });
-        const detailRes  = await fetch(ROUTES.getSnapshot + '?' + params.toString(), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
-        const detailData = await detailRes.json();
-
-        if (!detailData.success || !detailData.rows?.length) {
-            showSweetAlert('Not Found', detailData.message || 'Snapshot records not found.', 'error', false);
-            return;
-        }
-
-        const ids = detailData.rows.map(r => r.archive_id);
-        const res = await apiFetch(ROUTES.permanentDelete, 'DELETE', { archive_ids: ids });
-
-        if (res.success) {
-            showSweetAlert('Deleted', `${res.deleted || ids.length} record(s) permanently deleted.`, 'success', false);
-            loadArchivedPage(archiveCurrentPage);
-        } else {
-            showSweetAlert('Delete Failed', res.message, 'error', false);
-        }
-    } catch (err) {
-        showSweetAlert('Error', err.message, 'error', false);
-    } finally {
-        spinner?.classList.add('d-none');
-    }
-}
-
-// ── Delete selected from detail modal ────────────────────────────────────────
-async function deleteDetailSelected() {
-    const ids = [...document.querySelectorAll('.detail-chk:checked')].map(cb => parseInt(cb.value));
-    if (!ids.length) return;
-
-    const ok = await Swal.fire({
-        title: 'Permanently Delete?',
-        html : `<p class="text-danger">Delete <strong>${ids.length}</strong> record(s) permanently?</p>`,
-        icon : 'error', showCancelButton: true, confirmButtonColor: '#dc3545', confirmButtonText: 'Yes, delete permanently'
-    });
-    if (!ok.isConfirmed) return;
-
-    const spinner = document.getElementById('detailSpinner');
-    spinner?.classList.remove('d-none');
-
-    try {
-        const res = await apiFetch(ROUTES.permanentDelete, 'DELETE', { archive_ids: ids });
-        if (res.success) {
-            showSweetAlert('Deleted', `${res.deleted || ids.length} record(s) permanently deleted.`, 'success', false);
-            bootstrap.Modal.getInstance(document.getElementById('snapshotDetailModal'))?.hide();
-            loadArchivedPage(archiveCurrentPage);
-        } else {
-            showSweetAlert('Delete Failed', res.message, 'error', false);
-        }
-    } catch (err) {
-        showSweetAlert('Error', err.message, 'error', false);
-    } finally {
-        spinner?.classList.add('d-none');
-    }
-}
-
-// Stubs for the top-level restore/delete buttons in archive modal (kept for UI symmetry)
-async function restoreSelected()       { /* snapshot-level restore now via cards */ }
-async function permanentDeleteSelected() { /* snapshot-level delete now via cards */ }
+document.getElementById('registeredClassesModal')?.addEventListener('show.bs.modal', loadRegisteredClasses);
 </script>
+@endsection
