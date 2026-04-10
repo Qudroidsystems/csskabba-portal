@@ -896,68 +896,7 @@ async function proceedUnregister() {
 // ============================================================================
 // REGISTERED CLASSES MODAL (UPDATED RENDER LOGIC)
 // ============================================================================
-async function loadRegisteredClasses() {
-    const classId   = document.getElementById('idclass').value;
-    const sessionId = document.getElementById('idsession').value;
-    const container = document.getElementById('registeredClassesContent');
 
-    if (classId === 'ALL' || sessionId === 'ALL') {
-        container.innerHTML = `<div class="text-center py-5"><i class="ri-error-warning-line ri-3x text-warning"></i><p class="text-muted mt-3 mb-0">Please select a class and session first.</p></div>`;
-        return;
-    }
-
-    container.innerHTML = `<div class="text-center py-5"><div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div><p class="mt-3 text-muted">Loading registration data...</p></div>`;
-
-    try {
-        const res  = await fetch(ROUTES.getRegistered + '?' + new URLSearchParams({ class_id: classId, session_id: sessionId }), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
-        const data = await res.json();
-
-        if (!data.success || !data.data.length) {
-            container.innerHTML = `<div class="text-center py-5"><i class="ri-information-line ri-3x text-muted"></i><p class="text-muted mt-3 mb-0">No registered classes found.</p></div>`;
-            return;
-        }
-
-        // Transform backend data into the new card structure
-        let html = '';
-        data.data.forEach(termGroup => {
-            // termGroup = { term_name, class_name, arm_name, session_name, total_students, total_subjects, subjects: [...] }
-            html += `
-            <div class="term-card mb-4" style="background:#fff; border-radius:12px; border:0.5px solid #e2e8f0; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-                <div class="term-header p-3 d-flex justify-content-between align-items-center" style="border-bottom:0.5px solid #e2e8f0; background:#fff;">
-                    <div>
-                        <h5 class="fw-semibold mb-0" style="font-size:1rem;">${escapeHtml(termGroup.class_name)} ${escapeHtml(termGroup.arm_name)} — ${escapeHtml(termGroup.session_name)}</h5>
-                        <span class="text-muted small">${escapeHtml(termGroup.term_name)}</span>
-                    </div>
-                    <div class="d-flex gap-2">
-                        <span class="badge" style="background:#E6F1FB; color:#0C447C; padding:4px 12px; border-radius:20px; font-weight:500;">${termGroup.total_students} students</span>
-                        <span class="badge" style="background:#EEEDFE; color:#3C3489; padding:4px 12px; border-radius:20px; font-weight:500;">${termGroup.total_subjects} subjects</span>
-                    </div>
-                </div>
-                <div class="subjects-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr));">
-            `;
-
-            termGroup.subjects.forEach((subject, idx) => {
-                html += `
-                <div class="subject-card p-3 d-flex gap-3 align-items-start" style="border-right:0.5px solid #e2e8f0; border-bottom:0.5px solid #e2e8f0;">
-                    <div class="subject-num" style="width:28px; height:28px; background:#EEEDFE; color:#3C3489; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:500;">${idx + 1}</div>
-                    <div class="subject-info flex-grow-1">
-                        <div class="fw-medium" style="font-size:0.9rem;">${escapeHtml(subject.subject_name)}</div>
-                        <div class="text-muted small mt-1">${escapeHtml(subject.teacher_name ?? '— Not assigned')}</div>
-                        <span class="badge mt-2" style="background:#EAF3DE; color:#27500A; font-size:10px; padding:2px 8px; border-radius:20px;">${subject.student_count} students</span>
-                    </div>
-                </div>`;
-            });
-
-            html += `
-                </div>
-            </div>`;
-        });
-
-        container.innerHTML = html;
-    } catch (err) {
-        container.innerHTML = `<div class="alert alert-danger m-3">Failed to load data: ${err.message}</div>`;
-    }
-}
 
 // ============================================================================
 // ARCHIVE (SNAPSHOT LIST) MODAL
