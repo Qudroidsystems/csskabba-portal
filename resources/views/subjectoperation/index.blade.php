@@ -291,18 +291,20 @@
                 </div>
 
                 {{-- ══════════════════════════════════════════════════════════ --}}
-                {{-- MODAL: Registered Classes                                  --}}
+                {{-- MODAL: Registered Classes (UPDATED UI)                     --}}
                 {{-- ══════════════════════════════════════════════════════════ --}}
                 <div class="modal fade" id="registeredClassesModal" tabindex="-1" aria-labelledby="registeredClassesModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-xl modal-dialog-centered">
                         <div class="modal-content border-0 shadow-lg">
-                            <div class="modal-header" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                                <h5 class="modal-title text-white">
-                                    <i class="ri-graduation-cap-line me-2"></i>Registered Classes Overview
+                            {{-- New header style (dark blue) --}}
+                            <div class="modal-header" style="background: #1e3a5f; border-bottom: none;">
+                                <h5 class="modal-title text-white fw-medium">
+                                    Registered classes overview
                                 </h5>
                                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
-                            <div class="modal-body" style="background: #f8f9fc;">
+                            {{-- New body background --}}
+                            <div class="modal-body p-4" style="background: #f4f7fc;">
                                 <div id="registeredClassesContent">
                                     <div class="text-center text-muted py-5">
                                         <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status"></div>
@@ -310,8 +312,8 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="modal-footer bg-light">
-                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                            <div class="modal-footer border-0 bg-transparent">
+                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
                                     <i class="ri-close-line me-1"></i>Close
                                 </button>
                             </div>
@@ -745,7 +747,7 @@ async function proceedUnregister() {
 }
 
 // ============================================================================
-// REGISTERED CLASSES MODAL
+// REGISTERED CLASSES MODAL (UPDATED RENDER LOGIC)
 // ============================================================================
 async function loadRegisteredClasses() {
     const classId   = document.getElementById('idclass').value;
@@ -757,7 +759,7 @@ async function loadRegisteredClasses() {
         return;
     }
 
-    container.innerHTML = `<div class="text-center py-5"><div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div><p class="mt-3 text-muted">Loading…</p></div>`;
+    container.innerHTML = `<div class="text-center py-5"><div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div><p class="mt-3 text-muted">Loading registration data...</p></div>`;
 
     try {
         const res  = await fetch(ROUTES.getRegistered + '?' + new URLSearchParams({ class_id: classId, session_id: sessionId }), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
@@ -768,41 +770,42 @@ async function loadRegisteredClasses() {
             return;
         }
 
-        let html = `<div class="table-responsive"><table class="table table-hover align-middle mb-0">
-            <thead><tr style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;">
-                <th class="fw-semibold py-3">Class</th>
-                <th class="fw-semibold py-3">Session</th>
-                <th class="fw-semibold py-3">Term</th>
-                <th class="fw-semibold py-3 text-center">Students</th>
-                <th class="fw-semibold py-3 text-center">Subjects</th>
-                <th class="fw-semibold py-3">Teachers</th>
-                <th class="fw-semibold py-3">Subjects List</th>
-            </tr></thead><tbody>`;
+        // Transform backend data into the new card structure
+        let html = '';
+        data.data.forEach(termGroup => {
+            // termGroup = { term_name, class_name, arm_name, session_name, total_students, total_subjects, subjects: [...] }
+            html += `
+            <div class="term-card mb-4" style="background:#fff; border-radius:12px; border:0.5px solid #e2e8f0; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                <div class="term-header p-3 d-flex justify-content-between align-items-center" style="border-bottom:0.5px solid #e2e8f0; background:#fff;">
+                    <div>
+                        <h5 class="fw-semibold mb-0" style="font-size:1rem;">${escapeHtml(termGroup.class_name)} ${escapeHtml(termGroup.arm_name)} — ${escapeHtml(termGroup.session_name)}</h5>
+                        <span class="text-muted small">${escapeHtml(termGroup.term_name)}</span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <span class="badge" style="background:#E6F1FB; color:#0C447C; padding:4px 12px; border-radius:20px; font-weight:500;">${termGroup.total_students} students</span>
+                        <span class="badge" style="background:#EEEDFE; color:#3C3489; padding:4px 12px; border-radius:20px; font-weight:500;">${termGroup.total_subjects} subjects</span>
+                    </div>
+                </div>
+                <div class="subjects-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr));">
+            `;
 
-        data.data.forEach((row, i) => {
-            let teachersHtml = '<span class="text-muted">—</span>';
-            if (row.teachers?.length) {
-                teachersHtml = '<div class="d-flex flex-wrap gap-2">' + row.teachers.map(t => {
-                    const pic = t.picture ? `${AVATAR_URL}/staff_avatars/${t.picture}` : `${AVATAR_URL}/staff_avatars/default.png`;
-                    return `<div class="d-flex align-items-center gap-2 bg-white rounded-3 px-2 py-1 shadow-sm" style="border:1px solid #e0e0e0;">
-                        <img src="${pic}" class="rounded-circle" style="width:32px;height:32px;object-fit:cover;" onerror="this.src='${AVATAR_URL}/staff_avatars/default.png'">
-                        <span class="fw-medium" style="font-size:.85rem;">${escapeHtml(t.name)}</span>
-                    </div>`;
-                }).join('') + '</div>';
-            }
+            termGroup.subjects.forEach((subject, idx) => {
+                html += `
+                <div class="subject-card p-3 d-flex gap-3 align-items-start" style="border-right:0.5px solid #e2e8f0; border-bottom:0.5px solid #e2e8f0;">
+                    <div class="subject-num" style="width:28px; height:28px; background:#EEEDFE; color:#3C3489; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:500;">${idx + 1}</div>
+                    <div class="subject-info flex-grow-1">
+                        <div class="fw-medium" style="font-size:0.9rem;">${escapeHtml(subject.subject_name)}</div>
+                        <div class="text-muted small mt-1">${escapeHtml(subject.teacher_name ?? '— Not assigned')}</div>
+                        <span class="badge mt-2" style="background:#EAF3DE; color:#27500A; font-size:10px; padding:2px 8px; border-radius:20px;">${subject.student_count} students</span>
+                    </div>
+                </div>`;
+            });
 
-            html += `<tr class="${i % 2 === 0 ? 'bg-light' : ''}">
-                <td class="fw-medium"><i class="ri-school-line text-primary me-2"></i>${escapeHtml(row.class_name)} ${escapeHtml(row.arm_name)}</td>
-                <td><span class="badge bg-info-subtle text-info">${escapeHtml(row.session_name)}</span></td>
-                <td><span class="badge bg-secondary-subtle text-secondary">${escapeHtml(row.term_name)}</span></td>
-                <td class="text-center"><span class="badge bg-primary rounded-pill px-3 py-2">${row.student_count}</span></td>
-                <td class="text-center"><span class="badge bg-success rounded-pill px-3 py-2">${row.subject_count}</span></td>
-                <td>${teachersHtml}</td>
-                <td><small class="text-muted">${escapeHtml(row.subjects)}</small></td>
-            </tr>`;
+            html += `
+                </div>
+            </div>`;
         });
 
-        html += `</tbody></table></div>`;
         container.innerHTML = html;
     } catch (err) {
         container.innerHTML = `<div class="alert alert-danger m-3">Failed to load data: ${err.message}</div>`;
@@ -1120,7 +1123,7 @@ function renderSnapshotDetailTable(rows, assessmentHeaders) {
         const searchKey = `${name} ${row.admissionno ?? ''}`.toLowerCase();
 
         html += `<tr data-archive-id="${row.archive_id}" data-search="${escapeHtml(searchKey)}">
-            <td><div class="form-check mb-0"><input class="form-check-input detail-chk" type="checkbox" value="${row.archive_id}"></div></td>
+            <tr><div class="form-check mb-0"><input class="form-check-input detail-chk" type="checkbox" value="${row.archive_id}"></div></td>
             <td>
                 <div class="d-flex align-items-center gap-2">
                     <img src="${pic}" class="rounded-circle" style="width:34px;height:34px;object-fit:cover;border:2px solid #e9ecef;"
