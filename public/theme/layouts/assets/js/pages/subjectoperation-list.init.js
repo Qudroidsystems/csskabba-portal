@@ -581,7 +581,6 @@ function unregisterSelectedStudentsBatch() {
     });
 }
 
-
 function loadRegisteredClasses() {
     if (!ensureAxios()) {
         console.error('Axios not initialized.');
@@ -618,8 +617,6 @@ function loadRegisteredClasses() {
     const classId = classSelect.value;
     const sessionId = sessionSelect.value;
 
-    console.log('Selected class ID:', classId, 'Session ID:', sessionId);
-
     if (!classId || classId === 'ALL' || !sessionId || sessionId === 'ALL') {
         console.warn('Invalid class or session selection.');
         modalContent.innerHTML = '<p class="text-center text-muted">Please select a valid class and session.</p>';
@@ -632,102 +629,43 @@ function loadRegisteredClasses() {
         return;
     }
 
-    modalContent.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" style="width:3rem;height:3rem;"></div><p class="mt-3 text-muted">Loading registration data...</p></div>';
+    modalContent.innerHTML = '<p class="text-center">Loading registered classes...</p>';
 
-    // Build the URL with proper parameters
-    const url = '/subjects/registered-classes';
-    const params = {
-        class_id: classId,
-        session_id: sessionId
-    };
-
-    console.log('Making request to:', url, 'with params:', params);
-
-    axios.get(url, {
-        params: params,
+    axios.get('/subjects/registered-classes', {
+        params: { class_id: classId, session_id: sessionId },
         headers: {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-            'X-Requested-With': 'XMLHttpRequest',
-            'Accept': 'application/json'
+            'X-Requested-With': 'XMLHttpRequest'
         },
         timeout: 15000
     }).then(response => {
-        console.log('Response status:', response.status);
-        console.log('Response data:', response.data);
-
+        console.log('Registered classes response:', JSON.stringify(response.data, null, 2));
         if (response.data.success) {
             const classes = response.data.data;
-            console.log('Classes data:', classes);
+            let html = '<div class="table-responsive"><table class="table table-bordered table-striped">';
+            html += '<thead><tr><th>Class</th><th>Arm</th><th>Session</th><th>Term</th><th>Students</th><th>Subjects</th><th>Teachers</th></tr></thead><tbody>';
 
             if (!classes || classes.length === 0) {
-                modalContent.innerHTML = '<div class="text-center py-5"><i class="ri-information-line ri-3x text-muted"></i><p class="text-muted mt-3 mb-0">No registered classes found.</p></div>';
-                return;
+                html += '<tr><td colspan="7" class="text-center">No registered classes found.</td></tr>';
+            } else {
+                classes.forEach(cls => {
+                    html += `<tr>
+                        <td>${cls.class_name || '-'}</td>
+                        <td>${cls.arm_name || '-'}</td>
+                        <td>${cls.session_name || '-'}</td>
+                        <td>${cls.term_name || '-'}</td>
+                        <td>${cls.student_count || 0}</td>
+                        <td>${cls.subjects || '-'}</td>
+                        <td>${cls.teachers || '-'}</td>
+                    </tr>`;
+                });
             }
 
-            // NEW CARD-BASED UI
-            let html = '';
-
-            classes.forEach((termGroup, index) => {
-                console.log(`Rendering term group ${index}:`, termGroup);
-
-                // Handle different possible data structures
-                const className = termGroup.class_name || termGroup.classname || 'N/A';
-                const armName = termGroup.arm_name || termGroup.armname || '';
-                const sessionName = termGroup.session_name || termGroup.sessionname || 'N/A';
-                const termName = termGroup.term_name || termGroup.termname || 'N/A';
-                const totalStudents = termGroup.total_students || termGroup.student_count || 0;
-                const subjects = termGroup.subjects || [];
-                const totalSubjects = termGroup.total_subjects || subjects.length;
-
-                html += `
-                <div class="term-card mb-4" style="background:#fff; border-radius:12px; border:0.5px solid #e2e8f0; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
-                    <div class="term-header p-3 d-flex justify-content-between align-items-center" style="border-bottom:0.5px solid #e2e8f0; background:#fff;">
-                        <div>
-                            <h5 class="fw-semibold mb-0" style="font-size:1rem;">${escapeHtml(className)} ${escapeHtml(armName)} — ${escapeHtml(sessionName)}</h5>
-                            <span class="text-muted small">${escapeHtml(termName)}</span>
-                        </div>
-                        <div class="d-flex gap-2">
-                            <span class="badge" style="background:#E6F1FB; color:#0C447C; padding:4px 12px; border-radius:20px; font-weight:500;">${totalStudents} students</span>
-                            <span class="badge" style="background:#EEEDFE; color:#3C3489; padding:4px 12px; border-radius:20px; font-weight:500;">${totalSubjects} subjects</span>
-                        </div>
-                    </div>
-                    <div class="subjects-grid" style="display:grid; grid-template-columns:repeat(auto-fill,minmax(240px,1fr));">
-                `;
-
-                if (subjects && subjects.length > 0) {
-                    subjects.forEach((subject, idx) => {
-                        const subjectName = subject.subject_name || subject.subjectname || 'Unknown Subject';
-                        const teacherName = subject.teacher_name || subject.teachername || subject.staffname || '— Not assigned';
-                        const studentCount = subject.student_count || 0;
-
-                        html += `
-                        <div class="subject-card p-3 d-flex gap-3 align-items-start" style="border-right:0.5px solid #e2e8f0; border-bottom:0.5px solid #e2e8f0;">
-                            <div class="subject-num" style="width:28px; height:28px; background:#EEEDFE; color:#3C3489; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:500;">${idx + 1}</div>
-                            <div class="subject-info flex-grow-1">
-                                <div class="fw-medium" style="font-size:0.9rem;">${escapeHtml(subjectName)}</div>
-                                <div class="text-muted small mt-1">${escapeHtml(teacherName)}</div>
-                                <span class="badge mt-2" style="background:#EAF3DE; color:#27500A; font-size:10px; padding:2px 8px; border-radius:20px;">${studentCount} students</span>
-                            </div>
-                        </div>`;
-                    });
-                } else {
-                    html += `
-                    <div class="p-3 text-muted text-center" style="grid-column:1/-1;">
-                        No subjects found for this term
-                    </div>`;
-                }
-
-                html += `
-                    </div>
-                </div>`;
-            });
-
+            html += '</tbody></table></div>';
             modalContent.innerHTML = html;
-            console.log('Modal content updated successfully');
-
         } else {
-            console.error('API returned success=false:', response.data.message);
-            modalContent.innerHTML = `<div class="text-center py-5 text-danger">Error: ${escapeHtml(response.data.message || 'Failed to load registered classes.')}</div>`;
+            console.error('Failed to load:', response.data.message);
+            modalContent.innerHTML = '<p class="text-center text-red-500">Failed to load registered classes.</p>';
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
@@ -736,51 +674,19 @@ function loadRegisteredClasses() {
             });
         }
     }).catch(error => {
-        console.error('Error details:', {
+        console.error('Error loading registered classes:', {
             message: error.message,
-            response: error.response,
-            request: error.request,
-            config: error.config
+            response: error.response?.data,
+            status: error.response?.status
         });
-
-        let errorMessage = 'An error occurred while loading registered classes.';
-
-        if (error.response) {
-            // The request was made and the server responded with a status code outside 2xx
-            console.error('Response error data:', error.response.data);
-            console.error('Response status:', error.response.status);
-            console.error('Response headers:', error.response.headers);
-            errorMessage = error.response.data?.message || `Server error: ${error.response.status}`;
-        } else if (error.request) {
-            // The request was made but no response was received
-            console.error('No response received:', error.request);
-            errorMessage = 'No response from server. Please check your network connection.';
-        } else {
-            // Something happened in setting up the request
-            console.error('Request setup error:', error.message);
-            errorMessage = error.message;
-        }
-
-        modalContent.innerHTML = `<div class="text-center py-5 text-danger">Error loading registered classes.<br><small class="text-muted">${escapeHtml(errorMessage)}</small></div>`;
-
+        modalContent.innerHTML = '<p class="text-center text-red-500">Error loading registered classes. Please try again.</p>';
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: errorMessage,
+            text: error.response?.data?.message || 'An error occurred while loading registered classes.',
             showConfirmButton: true
         });
     });
-}
-
-// Helper function for escaping HTML
-function escapeHtml(str) {
-    if (!str) return '';
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#39;');
 }
 
 // Attach to buttons
