@@ -322,7 +322,7 @@
         <div class="modal-content border-0 shadow-lg" style="border-radius:16px;overflow:hidden;">
             <div class="modal-header border-0 px-4 py-3" style="background:linear-gradient(90deg,#1e3a5f 0%,#2563eb 60%,#7c3aed 100%);">
                 <h5 class="modal-title text-white fw-semibold d-flex align-items-center gap-2" id="registeredClassesModalLabel">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="opacity:.85;flex-shrink:0;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="opacity:.9;">
                         <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
                         <path d="M6 12v5c3 3 9 3 12 0v-5"/>
                     </svg>
@@ -502,40 +502,12 @@
 </div>
 
 <style>
-/* ── Subject check cards ── */
+/* Subject check cards */
 .subject-check-card { transition: border-color .15s, background .15s; }
 .subject-check-card:hover { background: #eff6ff !important; border-color: #93c5fd !important; }
 .subject-check-card:has(.subject-checkbox:checked) { background: #eff6ff !important; border-color: #3b82f6 !important; }
 
 /* ── Registered Classes modal ── */
-.rc-term-header {
-    padding: 12px 18px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    background: linear-gradient(90deg, #1e3a5f 0%, #2563eb 60%, #7c3aed 100%);
-}
-.rc-term-header h6 {
-    color: #fff;
-    font-size: 14px;
-    font-weight: 500;
-    margin: 0 0 2px;
-    line-height: 1.3;
-}
-.rc-term-header h6 .rc-session {
-    opacity: 0.7;
-    font-weight: 400;
-}
-.rc-term-header small {
-    color: rgba(255,255,255,0.65);
-    font-size: 12px;
-}
-.rc-term-badges { display: flex; gap: 8px; flex-shrink: 0; }
-.rc-badge-blue   { font-size: 11px; padding: 3px 12px; border-radius: 20px; font-weight: 500; background: #E6F1FB; color: #0C447C; white-space: nowrap; }
-.rc-badge-purple { font-size: 11px; padding: 3px 12px; border-radius: 20px; font-weight: 500; background: #EEEDFE; color: #3C3489; white-space: nowrap; }
-
-/* Subject cells grid */
 .reg-subjects-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
@@ -557,21 +529,18 @@
     display: flex; align-items: center; justify-content: center;
     flex-shrink: 0; margin-top: 1px;
 }
-.reg-subject-name {
-    font-size: 13px; font-weight: 600; color: #1e293b; line-height: 1.3;
-}
+.reg-subject-name    { font-size: 13px; font-weight: 600; color: #1e293b; line-height: 1.3; }
 .reg-subject-teacher {
     font-size: 11px; color: #64748b; margin-top: 3px;
     display: flex; align-items: center; gap: 4px; line-height: 1.4;
 }
-.reg-subject-teacher svg { flex-shrink: 0; opacity: 0.55; }
-.reg-subject-teacher.unassigned { font-style: italic; opacity: 0.6; }
+.reg-subject-teacher svg { flex-shrink: 0; opacity: .5; }
 .reg-student-pill {
     font-size: 10px; background: #EAF3DE; color: #27500A;
     padding: 2px 8px; border-radius: 20px;
-    display: inline-flex; align-items: center; gap: 3px; margin-top: 5px;
+    display: inline-flex; align-items: center; gap: 3px;
+    margin-top: 5px;
 }
-.reg-student-pill svg { flex-shrink: 0; }
 </style>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -593,15 +562,17 @@ const ROUTES = {
 const CSRF       = '{{ csrf_token() }}';
 const AVATAR_URL = '{{ asset("storage") }}';
 
-let archiveCurrentPage  = 1;
-let archiveMeta         = {};
-let archiveSearchTimer  = null;
+let archiveCurrentPage = 1;
+let archiveMeta        = {};
+let archiveSearchTimer = null;
 let currentSnapshotMeta = null;
 let currentSnapshotRows = [];
 
-// ── Inline SVG icon snippets ──────────────────────────────────────────────────
-const SVG_PERSON = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>`;
-const SVG_GROUP  = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`;
+// ============================================================================
+// SVG ICON HELPERS
+// ============================================================================
+const ICON_PERSON = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>`;
+const ICON_GROUP  = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>`;
 
 // ============================================================================
 // HELPERS
@@ -658,7 +629,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('enlargedImage').src = src || '{{ asset("storage/student_avatars/unnamed.jpg") }}';
     });
 
-    // Registered classes modal — load on open
+    // Registered classes modal
     document.getElementById('registeredClassesModal')?.addEventListener('show.bs.modal', loadRegisteredClasses);
 
     // Archive per-page change
@@ -870,7 +841,7 @@ async function proceedUnregister() {
 }
 
 // ============================================================================
-// REGISTERED CLASSES MODAL — updated grid UI
+// REGISTERED CLASSES MODAL
 // ============================================================================
 async function loadRegisteredClasses() {
     const classId   = document.getElementById('idclass').value;
@@ -915,46 +886,49 @@ async function loadRegisteredClasses() {
 }
 
 function buildRegisteredTermCard(term) {
-    // Sort subjects alphabetically
     const subjects = [...(term.subjects_teachers || [])]
         .sort((a, b) => (a.name || '').localeCompare(b.name || '', undefined, { sensitivity: 'base' }));
 
     const cells = subjects.map((subject, i) => {
-        const hasTeachers  = subject.teachers && subject.teachers.length;
-        const teacherNames = hasTeachers
+        const teachers = subject.teachers && subject.teachers.length
             ? subject.teachers.map(t => escapeHtml(t.name)).join(', ')
             : null;
 
-        const teacherHtml = hasTeachers
-            ? `<div class="reg-subject-teacher">${SVG_PERSON} ${teacherNames}</div>`
-            : `<div class="reg-subject-teacher unassigned">Not assigned</div>`;
+        const teacherHtml = teachers
+            ? `<div class="reg-subject-teacher">${ICON_PERSON} ${teachers}</div>`
+            : `<div class="reg-subject-teacher" style="font-style:italic;opacity:0.6;">Not assigned</div>`;
 
         return `<div class="reg-subject-cell">
             <div class="reg-num-circle">${i + 1}</div>
             <div class="flex-grow-1 min-w-0">
-                <div class="reg-subject-name text-truncate" title="${escapeHtml(subject.name)}">${escapeHtml(subject.name)}</div>
+                <div class="reg-subject-name text-truncate">${escapeHtml(subject.name)}</div>
                 ${teacherHtml}
-                <span class="reg-student-pill">${SVG_GROUP} ${subject.student_count || 0} students</span>
+                <span class="reg-student-pill">${ICON_GROUP} ${subject.student_count || 0} students</span>
             </div>
         </div>`;
     }).join('');
 
     return `
         <div class="card border-0 shadow-sm mb-3" style="border-radius:12px;overflow:hidden;">
-            <div class="rc-term-header">
+            <div class="card-header d-flex justify-content-between align-items-center py-3 px-4"
+                 style="background:linear-gradient(90deg,#1e3a5f 0%,#2563eb 60%,#7c3aed 100%);">
                 <div>
-                    <h6>
+                    <h6 class="mb-0 text-white fw-semibold">
                         ${escapeHtml(term.class_name)} ${escapeHtml(term.arm_name)}
-                        <span class="rc-session">— ${escapeHtml(term.session_name)}</span>
+                        <small class="fw-normal opacity-75">— ${escapeHtml(term.session_name)}</small>
                     </h6>
-                    <small>${escapeHtml(term.term_name)}</small>
+                    <small class="text-white opacity-65">${escapeHtml(term.term_name)}</small>
                 </div>
-                <div class="rc-term-badges">
-                    <span class="rc-badge-blue">${term.student_count || 0} students</span>
-                    <span class="rc-badge-purple">${subjects.length} subjects</span>
+                <div class="d-flex gap-2 flex-shrink-0">
+                    <span class="badge rounded-pill px-3 py-2" style="background:#E6F1FB;color:#0C447C;">
+                        ${term.student_count || 0} students
+                    </span>
+                    <span class="badge rounded-pill px-3 py-2" style="background:#EEEDFE;color:#3C3489;">
+                        ${subjects.length} subjects
+                    </span>
                 </div>
             </div>
-            <div class="bg-white">
+            <div class="card-body p-0 bg-white">
                 <div class="reg-subjects-grid">
                     ${cells || '<div class="p-4 text-center text-muted w-100">No subjects found for this term.</div>'}
                 </div>
@@ -1034,7 +1008,6 @@ function renderSnapshotCards(rows) {
         return;
     }
 
-    // Group by snapshot_name + subjectclassid + termid
     const groups = {};
     rows.forEach(row => {
         const key = `${row.snapshot_name}__${row.subjectclassid}__${row.termid}`;
@@ -1273,7 +1246,6 @@ function renderSnapshotDetailTable(rows, assessmentHeaders) {
     document.getElementById('snapshotDetailBody').innerHTML =
         html || '<tr><td colspan="10" class="text-center text-muted py-4">No students found.</td></tr>';
 
-    // Wire up detail checkboxes
     document.getElementById('detailCheckAll')?.addEventListener('change', function () {
         document.querySelectorAll('.detail-chk').forEach(cb => cb.checked = this.checked);
         toggleDetailButtons();
