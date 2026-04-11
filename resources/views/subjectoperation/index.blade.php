@@ -44,28 +44,33 @@
                 {{-- ── Class & Session Filter ── --}}
                 <div class="row">
                     <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="row g-3">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header border-bottom-0 pb-0" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);">
+                                <h6 class="text-white mb-0 py-1"><i class="ri-filter-3-line me-2"></i>Filter Students</h6>
+                            </div>
+                            <div class="card-body pt-3">
+                                <div class="row g-3 align-items-end">
                                     <div class="col-xxl-4 col-sm-6">
-                                        <select class="form-control" id="idclass">
-                                            <option value="ALL">Select Class</option>
+                                        <label class="form-label fw-medium small text-muted">Class</label>
+                                        <select class="form-select" id="idclass">
+                                            <option value="ALL">— Select Class —</option>
                                             @foreach ($schoolclass as $class)
                                                 <option value="{{ $class->id }}">{{ $class->schoolclass }} {{ $class->schoolarm }}</option>
                                             @endforeach
                                         </select>
                                     </div>
                                     <div class="col-xxl-4 col-sm-6">
-                                        <select class="form-control" id="idsession">
-                                            <option value="ALL">Select Session</option>
+                                        <label class="form-label fw-medium small text-muted">Session</label>
+                                        <select class="form-select" id="idsession">
+                                            <option value="ALL">— Select Session —</option>
                                             @foreach ($schoolsessions as $session)
                                                 <option value="{{ $session->id }}">{{ $session->session }}</option>
                                             @endforeach
                                         </select>
                                     </div>
                                     <div class="col-xxl-2 col-sm-6">
-                                        <button type="button" class="btn btn-secondary w-100" onclick="filterData();">
-                                            <i class="bi bi-funnel align-baseline me-1"></i> Search
+                                        <button type="button" class="btn btn-primary w-100" onclick="filterData();">
+                                            <i class="ri-search-line me-1"></i> Search
                                         </button>
                                     </div>
                                 </div>
@@ -74,49 +79,76 @@
                     </div>
                 </div>
 
-                {{-- ── Subject Teachers Card ── --}}
+                {{-- ── Subject Teachers Card (ENHANCED UI) ── --}}
                 <div class="row" id="subjectTeachersCard">
                     <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-header d-flex align-items-center">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header d-flex align-items-center flex-wrap gap-2">
                                 <div class="flex-grow-1">
                                     <h5 class="card-title mb-0">
-                                        Subject Teachers
-                                        <span class="badge bg-primary-subtle text-primary ms-1" id="subjectTeacherCount">0</span>
+                                        <i class="ri-book-open-line me-2 text-primary"></i>Subject Teachers
+                                        <span class="badge bg-primary-subtle text-primary ms-1 rounded-pill" id="subjectTeacherCount">0</span>
                                     </h5>
                                 </div>
-                                <div class="flex-shrink-0">
-                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="selectAllSubjects();">Select All</button>
-                                    <button type="button" class="btn btn-outline-secondary btn-sm ms-2" onclick="deselectAllSubjects();">Deselect All</button>
+                                <div class="d-flex gap-2 flex-wrap">
+                                    <button type="button" class="btn btn-outline-primary btn-sm" onclick="selectAllSubjects();">
+                                        <i class="ri-checkbox-multiple-line me-1"></i>Select All
+                                    </button>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="deselectAllSubjects();">
+                                        <i class="ri-checkbox-blank-line me-1"></i>Deselect All
+                                    </button>
                                 </div>
                             </div>
                             <div class="card-body">
-                                <div class="alert alert-info">
-                                    <i class="ri-information-line me-2"></i>
-                                    Select the subjects you want to register or unregister students for.
+                                <div class="alert alert-info border-0 mb-3 d-flex align-items-center gap-2" style="background:#eff6ff;">
+                                    <i class="ri-information-line fs-5 text-primary flex-shrink-0"></i>
+                                    <span class="small">Select the subjects you want to register or unregister students for. Subjects are grouped by term.</span>
                                 </div>
                                 <div id="subjectTeachersContainer">
                                     @foreach ($schoolterms as $term)
-                                        @if ($subjectTeachers && $subjectTeachers->where('termid', $term->id)->isNotEmpty())
-                                            <h6 class="mt-3">{{ $term->term }}</h6>
-                                            <div class="row">
-                                                @foreach ($subjectTeachers->where('termid', $term->id) as $teacher)
-                                                    <div class="col-md-4">
-                                                        <div class="form-check mb-2">
-                                                            <input class="form-check-input subject-checkbox" type="checkbox"
-                                                                id="subject-{{ $teacher->subjectclassid }}"
-                                                                data-subjectclassid="{{ $teacher->subjectclassid }}"
-                                                                data-staffid="{{ $teacher->userid }}"
-                                                                data-termid="{{ $teacher->termid }}" checked>
-                                                            <label class="form-check-label" for="subject-{{ $teacher->subjectclassid }}">
-                                                                {{ $teacher->subjectname }} ({{ $teacher->staffname }})
-                                                            </label>
+                                        @php $termSubjects = $subjectTeachers ? $subjectTeachers->where('termid', $term->id) : collect(); @endphp
+                                        @if ($termSubjects->isNotEmpty())
+                                            <div class="term-group mb-4">
+                                                <div class="d-flex align-items-center mb-2 gap-2">
+                                                    <span class="badge text-white px-3 py-2 rounded-pill" style="background:linear-gradient(135deg,#667eea,#764ba2);">
+                                                        <i class="ri-calendar-2-line me-1"></i>{{ $term->term }}
+                                                    </span>
+                                                    <span class="badge bg-primary-subtle text-primary rounded-pill px-2">
+                                                        {{ $termSubjects->count() }} subject{{ $termSubjects->count() !== 1 ? 's' : '' }}
+                                                    </span>
+                                                </div>
+                                                <div class="row g-2">
+                                                    @foreach ($termSubjects as $teacher)
+                                                        <div class="col-xl-3 col-md-4 col-sm-6">
+                                                            <div class="subject-check-card p-2 border rounded-3 d-flex align-items-center gap-2 bg-light bg-opacity-50"
+                                                                 style="cursor:pointer;"
+                                                                 onclick="toggleSubjectCard(this)">
+                                                                <input class="form-check-input subject-checkbox flex-shrink-0 mt-0"
+                                                                       type="checkbox"
+                                                                       id="subject-{{ $teacher->subjectclassid }}"
+                                                                       data-subjectclassid="{{ $teacher->subjectclassid }}"
+                                                                       data-staffid="{{ $teacher->userid }}"
+                                                                       data-termid="{{ $teacher->termid }}"
+                                                                       checked>
+                                                                <label class="form-check-label small lh-sm mb-0 w-100"
+                                                                       for="subject-{{ $teacher->subjectclassid }}"
+                                                                       style="cursor:pointer;">
+                                                                    <span class="fw-semibold d-block text-truncate">{{ $teacher->subjectname }}</span>
+                                                                    <span class="text-muted" style="font-size:0.75rem;">{{ $teacher->staffname }}</span>
+                                                                </label>
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                @endforeach
+                                                    @endforeach
+                                                </div>
                                             </div>
                                         @endif
                                     @endforeach
+                                    @if(!$subjectTeachers || $subjectTeachers->isEmpty())
+                                        <div class="text-center text-muted py-4">
+                                            <i class="ri-book-2-line ri-2x mb-2 d-block"></i>
+                                            Select a class and session to view subjects.
+                                        </div>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -126,24 +158,27 @@
                 {{-- ── Student Filters ── --}}
                 <div class="row">
                     <div class="col-lg-12">
-                        <div class="card">
+                        <div class="card border-0 shadow-sm">
                             <div class="card-body">
-                                <div class="row g-3">
+                                <div class="row g-3 align-items-end">
                                     <div class="col-xxl-4">
+                                        <label class="form-label fw-medium small text-muted">Search Students</label>
                                         <div class="search-box">
                                             <input type="text" class="form-control search" placeholder="Search students">
                                             <i class="ri-search-line search-icon"></i>
                                         </div>
                                     </div>
                                     <div class="col-xxl-3 col-sm-6">
-                                        <select class="form-control" id="idgender">
+                                        <label class="form-label fw-medium small text-muted">Gender</label>
+                                        <select class="form-select" id="idgender">
                                             <option value="ALL">Select Gender</option>
                                             <option value="Male">Male</option>
                                             <option value="Female">Female</option>
                                         </select>
                                     </div>
                                     <div class="col-xxl-3 col-sm-6">
-                                        <select class="form-control" id="idadmission">
+                                        <label class="form-label fw-medium small text-muted">Admission No</label>
+                                        <select class="form-select" id="idadmission">
                                             <option value="ALL">Select Admission No</option>
                                         </select>
                                     </div>
@@ -161,27 +196,27 @@
                 {{-- ── Students Table ── --}}
                 <div class="row">
                     <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-header d-flex align-items-center">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header d-flex align-items-center flex-wrap gap-2">
                                 <div class="flex-grow-1">
                                     <h5 class="card-title mb-0">
-                                        Students
-                                        <span class="badge bg-dark-subtle text-dark ms-1" id="studentcount">{{ $students ? $students->total() : 0 }}</span>
+                                        <i class="ri-group-line me-2 text-primary"></i>Students
+                                        <span class="badge bg-dark-subtle text-dark ms-1 rounded-pill" id="studentcount">{{ $students ? $students->total() : 0 }}</span>
                                     </h5>
                                 </div>
-                                <div class="flex-shrink-0 d-flex align-items-center gap-2 flex-wrap">
-                                    <button type="button" class="btn btn-primary d-none" id="register-selected-btn"
+                                <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <button type="button" class="btn btn-success d-none" id="register-selected-btn"
                                         onclick="registerSelectedStudentsBatch();" aria-label="Register selected students">
-                                        Register Selected
+                                        <i class="ri-user-add-line me-1"></i> Register Selected
                                     </button>
                                     <button type="button" class="btn btn-danger d-none" id="unregister-selected-btn"
                                         onclick="openUnregisterModal();" aria-label="Unregister selected students">
-                                        Unregister Selected
+                                        <i class="ri-user-unfollow-line me-1"></i> Unregister Selected
                                     </button>
-                                    <div class="spinner-border text-primary d-none" id="register-loading-spinner" role="status">
+                                    <div class="spinner-border spinner-border-sm text-primary d-none" id="register-loading-spinner" role="status">
                                         <span class="visually-hidden">Loading...</span>
                                     </div>
-                                    <button type="button" class="btn btn-info" data-bs-toggle="modal" data-bs-target="#registeredClassesModal">
+                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#registeredClassesModal">
                                         <i class="ri-eye-line me-1"></i> View Registered
                                     </button>
                                     <button type="button" class="btn btn-warning" id="viewArchivedBtn" onclick="openArchivedModal();">
@@ -189,18 +224,18 @@
                                     </button>
                                 </div>
                             </div>
-                            <div class="card-body">
+                            <div class="card-body p-0">
                                 <div class="table-responsive">
-                                    <table class="table table-centered align-middle table-nowrap mb-0" id="subjectListTable">
-                                        <thead class="table-active">
+                                    <table class="table table-hover align-middle table-nowrap mb-0" id="subjectListTable">
+                                        <thead class="table-light">
                                             <tr>
-                                                <th>
+                                                <th width="40" class="text-center">
                                                     <div class="form-check">
                                                         <input class="form-check-input" type="checkbox" id="checkAll">
                                                         <label class="form-check-label" for="checkAll"></label>
                                                     </div>
                                                 </th>
-                                                <th>SN</th>
+                                                <th width="50">SN</th>
                                                 <th>Admission No</th>
                                                 <th>Student Name</th>
                                                 <th>Class</th>
@@ -212,15 +247,14 @@
                                             @include('subjectoperation.partials.student_rows')
                                         </tbody>
                                     </table>
-                                    <div class="d-flex justify-content-end mt-3" id="pagination-container">
-                                        {{ $students ? $students->links('pagination::bootstrap-5') : '' }}
-                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-end p-3" id="pagination-container">
+                                    {{ $students ? $students->links('pagination::bootstrap-5') : '' }}
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-
 
                 {{-- ══════════════════════════════════════════════════════════ --}}
                 {{-- MODAL: Snapshot Name                                       --}}
@@ -473,8 +507,60 @@
         </div>
     </div>
 </div>
-@endsection
 
+<style>
+/* ── Subject check card styles ── */
+.subject-check-card {
+    transition: all .18s ease;
+    border-color: #e2e8f0 !important;
+    background: #ffffff !important;
+}
+.subject-check-card:hover {
+    border-color: #667eea !important;
+    background: #f8f4ff !important;
+}
+.subject-check-card.is-checked {
+    border-color: #667eea !important;
+    background: #ede9fe !important;
+    border-width: 2px !important;
+}
+
+/* Term group styling */
+.term-group {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Search box styling */
+.search-box {
+    position: relative;
+}
+.search-box .search-icon {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 18px;
+    color: #aaa;
+}
+.search-box input {
+    padding-right: 35px;
+}
+
+/* Print styles */
+@media print {
+    body * { visibility: hidden; }
+    #printableArea, #printableArea * { visibility: visible; }
+    #printableArea { position: absolute; top: 0; left: 0; width: 100%; }
+    .no-print { display: none !important; }
+    @page { size: A4; margin: 15mm; }
+}
+</style>
+@endsection
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
@@ -529,9 +615,53 @@ function showSweetAlert(title, message, type, success = true) {
 }
 
 // ============================================================================
+// SUBJECT CHECKBOXES - ENHANCED UI
+// ============================================================================
+function toggleSubjectCard(card) {
+    const cb = card.querySelector('input[type="checkbox"]');
+    cb.checked = !cb.checked;
+    card.classList.toggle('is-checked', cb.checked);
+    updateSubjectCount();
+}
+
+function updateSubjectCount() {
+    const total = document.querySelectorAll('.subject-checkbox:checked').length;
+    const countElement = document.getElementById('subjectTeacherCount');
+    if (countElement) countElement.textContent = total;
+}
+
+function selectAllSubjects() {
+    document.querySelectorAll('.subject-checkbox').forEach(cb => {
+        cb.checked = true;
+        const card = cb.closest('.subject-check-card');
+        if (card) card.classList.add('is-checked');
+    });
+    updateSubjectCount();
+}
+
+function deselectAllSubjects() {
+    document.querySelectorAll('.subject-checkbox').forEach(cb => {
+        cb.checked = false;
+        const card = cb.closest('.subject-check-card');
+        if (card) card.classList.remove('is-checked');
+    });
+    updateSubjectCount();
+}
+
+function initializeSubjectCards() {
+    document.querySelectorAll('.subject-checkbox:checked').forEach(cb => {
+        const card = cb.closest('.subject-check-card');
+        if (card) card.classList.add('is-checked');
+    });
+    updateSubjectCount();
+}
+
+// ============================================================================
 // DOM READY
 // ============================================================================
 document.addEventListener('DOMContentLoaded', function () {
+    // Initialize subject cards
+    initializeSubjectCards();
 
     // Image modal
     const imgModal = document.getElementById('imageViewModal');
@@ -562,10 +692,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Archive term filter
     document.getElementById('archiveTermFilter')?.addEventListener('change', () => loadArchivedPage(1));
-
-    // Subject checkboxes count badge
-    document.querySelectorAll('.subject-checkbox').forEach(cb => cb.addEventListener('change', updateSubjectCount));
-    updateSubjectCount();
 
     // checkAll for students
     document.getElementById('checkAll')?.addEventListener('change', function () {
@@ -641,57 +767,28 @@ function toggleBatchButtons() {
 }
 
 // ============================================================================
-// SUBJECT CHECKBOXES
-// ============================================================================
-function selectAllSubjects() {
-    document.querySelectorAll('.subject-checkbox').forEach(cb => cb.checked = true);
-    updateSubjectCount();
-}
-
-function deselectAllSubjects() {
-    document.querySelectorAll('.subject-checkbox').forEach(cb => cb.checked = false);
-    updateSubjectCount();
-}
-
-function updateSubjectCount() {
-    document.getElementById('subjectTeacherCount').textContent =
-        document.querySelectorAll('.subject-checkbox:checked').length;
-}
-
-// ============================================================================
 // BUILD SUBJECT→TEACHER LOOKUP FROM BLADE-RENDERED CHECKBOXES
-// Called fresh each time the modal opens so it always reflects current filters
 // ============================================================================
 function buildSubjectTeacherLookup() {
-    // lookup key: "subjectname_lowercase||termid" → ["Teacher Name", ...]
     const lookup = {};
-
     document.querySelectorAll('.subject-checkbox').forEach(cb => {
-        const label     = cb.closest('.form-check')?.querySelector('label');
+        const label     = cb.closest('.subject-check-card')?.querySelector('label');
         const labelText = label?.textContent?.trim() ?? '';
         const termId    = String(cb.dataset.termid ?? '').trim();
-
-        // Label format from Blade: "Subject Name (Teacher Full Name)"
         const match = labelText.match(/^(.+?)\s*\((.+)\)\s*$/);
         if (!match) return;
-
         const subjKey  = match[1].trim().toLowerCase();
         const staffName = match[2].trim();
-        const key       = `${subjKey}||${termId}`;
-
+        const key = `${subjKey}||${termId}`;
         if (!lookup[key]) lookup[key] = [];
         if (!lookup[key].includes(staffName)) lookup[key].push(staffName);
     });
-
     return lookup;
 }
 
-// Resolve teacher name(s) for a given subject + termId using the lookup
 function resolveTeacher(subjectName, termId, lookup) {
     const key = `${subjectName.trim().toLowerCase()}||${String(termId ?? '').trim()}`;
     if (lookup[key] && lookup[key].length) return lookup[key].join(', ');
-
-    // Fallback: match subject name across any term (handles term_id mismatch)
     const prefix = subjectName.trim().toLowerCase() + '||';
     for (const [k, v] of Object.entries(lookup)) {
         if (k.startsWith(prefix) && v.length) return v.join(', ');
@@ -748,6 +845,7 @@ function filterData() {
             const count = subjectTeachersContainer.querySelectorAll('.subject-checkbox').length;
             if (subjectTeacherCount) subjectTeacherCount.textContent = count;
             if (subjectTeachersCard) subjectTeachersCard.style.display = count > 0 ? 'block' : 'none';
+            initializeSubjectCards();
         }
 
         const admNos = [...new Set(
@@ -757,7 +855,6 @@ function filterData() {
         )].sort();
         updateAdmissionNoOptions(admNos.map(a => ({ admissionno: a })));
 
-        document.querySelectorAll('.subject-checkbox').forEach(cb => cb.addEventListener('change', updateSubjectCount));
         updateSubjectCount();
         setupPaginationLinks();
     })
@@ -808,9 +905,9 @@ function loadPage(url) {
             const count = subjectTeachersContainer.querySelectorAll('.subject-checkbox').length;
             if (subjectTeacherCount) subjectTeacherCount.textContent = count;
             if (subjectTeachersCard) subjectTeachersCard.style.display = count > 0 ? 'block' : 'none';
+            initializeSubjectCards();
         }
 
-        document.querySelectorAll('.subject-checkbox').forEach(cb => cb.addEventListener('change', updateSubjectCount));
         updateSubjectCount();
         setupPaginationLinks();
     })
@@ -981,11 +1078,8 @@ async function loadRegisteredClasses() {
             return;
         }
 
-        // ── Build lookup from the Blade-rendered checkboxes (ground truth) ──
-        // Called fresh here so it always reflects the current filtered state
         const subjectTeacherLookup = buildSubjectTeacherLookup();
 
-        // ── Group API rows by term_name ──
         const termMap = {};
         data.data.forEach(row => {
             const key = row.term_name;
@@ -1001,17 +1095,15 @@ async function loadRegisteredClasses() {
                     subjects     : [],
                 };
             }
-            // Backend sends per-subject rows
             if (row.subject_name) {
                 termMap[key].subjects.push({
                     name   : row.subject_name,
-                    teacher: null,  // resolved below via lookup
+                    teacher: null,
                     count  : row.student_count ?? '',
                 });
             }
         });
 
-        // Fallback: subjects sent as comma-separated string
         Object.values(termMap).forEach(term => {
             if (!term.subjects.length) {
                 const raw     = data.data.find(r => r.term_name === term.term_name);
@@ -1022,7 +1114,6 @@ async function loadRegisteredClasses() {
             }
         });
 
-        // ── Resolve every teacher via the Blade-checkbox lookup ──
         Object.values(termMap).forEach(term => {
             term.subjects = term.subjects.map(s => ({
                 ...s,
@@ -1030,15 +1121,11 @@ async function loadRegisteredClasses() {
             }));
         });
 
-        // ── Render cards ──
         let html = '';
         Object.values(termMap).forEach(term => {
-            // Use per-subject count if available, otherwise fall back to the
-            // term-level student_count (the number registered in that class/term)
             const fallbackCount = term.student_count ?? '';
 
             const subjectCells = term.subjects.map((s, i) => {
-                // Prefer per-subject count; fall back to term-level count
                 const displayCount = s.count ? String(s.count) : (fallbackCount ? String(fallbackCount) : '');
                 return `
                 <div style="padding:10px 14px;border-right:0.5px solid #e5e7eb;border-bottom:0.5px solid #e5e7eb;display:flex;gap:10px;align-items:flex-start;" data-subject-cell>
@@ -1084,9 +1171,7 @@ async function loadRegisteredClasses() {
 }
 
 // ============================================================================
-// PRINT REGISTERED CLASSES — professional PDF
-// Reads directly from the rendered DOM nodes (data-* attributes) so subject
-// names, teacher names, and row numbers are always accurate.
+// PRINT REGISTERED CLASSES
 // ============================================================================
 function printRegisteredClasses() {
     const container = document.getElementById('registeredClassesContent');
@@ -1104,27 +1189,21 @@ function printRegisteredClasses() {
     let termsHtml = '';
 
     termBlocks.forEach(block => {
-        // Header texts
         const titleText = block.querySelector('[data-term-title]')?.textContent?.trim()    ?? '';
         const termText  = block.querySelector('[data-term-subtitle]')?.textContent?.trim() ?? '';
 
-        // Pills (student count, subject count)
         const pillSpans  = [...(block.querySelectorAll('[data-term-pills] span') ?? [])];
         const pillsHtml  = pillSpans.map(p =>
             `<span style="background:#E6F1FB;color:#0C447C;padding:3px 10px;border-radius:20px;font-size:9pt;font-weight:500;margin-left:6px;">${escapeHtml(p.textContent.trim())}</span>`
         ).join('');
 
-        // Fallback student count for the whole term (used when no per-subject count exists)
         const termStudentCount = block.dataset.termStudentCount ?? '';
 
-        // Subject cells
         const cells = [...block.querySelectorAll('[data-subject-cell]')];
         let rows = '';
         cells.forEach((cell, idx) => {
             const subjName = cell.querySelector('[data-cell-subject]')?.textContent?.trim() ?? '';
             const teacher  = cell.querySelector('[data-cell-teacher]')?.textContent?.trim() ?? '—';
-            // data-cell-count already contains the resolved count text (e.g. "51 students")
-            // Fall back to the term-level student count if the element is absent
             const countEl   = cell.querySelector('[data-cell-count]');
             const countText = countEl
                 ? countEl.textContent.trim()
@@ -1465,7 +1544,7 @@ async function openSnapshotDetail(metaEncoded) {
         renderSnapshotDetailTable(data.rows, data.assessment_headers);
     } catch (err) {
         document.getElementById('snapshotDetailBody').innerHTML =
-            `<tr><td colspan="10" class="text-center text-danger py-4">Error: ${err.message}</td></tr>`;
+            `<td><td colspan="10" class="text-center text-danger py-4">Error: ${err.message}</td></tr>`;
     }
 }
 
@@ -1513,11 +1592,11 @@ function renderSnapshotDetailTable(rows, assessmentHeaders) {
                          onerror="this.src='${AVATAR_URL}/student_avatars/unnamed.jpg'">
                     <span class="fw-medium">${escapeHtml(name)}</span>
                 </div>
-            </td>
+             </td>
             <td class="text-muted small">${escapeHtml(row.admissionno ?? '—')}</td>
             <td>${genderBadge}</td>
             ${scoresCells}
-        </tr>`;
+         </tr>`;
     });
 
     document.getElementById('snapshotDetailBody').innerHTML =
@@ -1710,7 +1789,7 @@ async function deleteDetailSelected() {
     }
 }
 
-// Stubs for UI symmetry — actions handled per-card
-async function restoreSelected()         { /* handled per-card via restoreSingleSnapshot() */ }
-async function permanentDeleteSelected() { /* handled per-card via deleteSnapshotGroup()  */ }
+// Stubs for UI symmetry
+async function restoreSelected()         { /* handled per-card */ }
+async function permanentDeleteSelected() { /* handled per-card */ }
 </script>
