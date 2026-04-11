@@ -122,6 +122,9 @@
                                                         <div class="col-xl-3 col-md-4 col-sm-6">
                                                             <div class="subject-check-card p-2 border rounded-3 d-flex align-items-center gap-2 bg-light bg-opacity-50"
                                                                  style="cursor:pointer;"
+                                                                 data-subject-name="{{ $teacher->subjectname }}"
+                                                                 data-teacher-name="{{ $teacher->staffname }}"
+                                                                 data-term-id="{{ $teacher->termid }}"
                                                                  onclick="toggleSubjectCard(this)">
                                                                 <input class="form-check-input subject-checkbox flex-shrink-0 mt-0"
                                                                        type="checkbox"
@@ -129,6 +132,8 @@
                                                                        data-subjectclassid="{{ $teacher->subjectclassid }}"
                                                                        data-staffid="{{ $teacher->userid }}"
                                                                        data-termid="{{ $teacher->termid }}"
+                                                                       data-subject-name="{{ $teacher->subjectname }}"
+                                                                       data-teacher-name="{{ $teacher->staffname }}"
                                                                        checked>
                                                                 <label class="form-check-label small lh-sm mb-0 w-100"
                                                                        for="subject-{{ $teacher->subjectclassid }}"
@@ -657,6 +662,68 @@ function initializeSubjectCards() {
 }
 
 // ============================================================================
+// BUILD SUBJECT→TEACHER LOOKUP FROM CHECKBOX DATA ATTRIBUTES
+// ============================================================================
+function buildSubjectTeacherLookup() {
+    const lookup = {};
+
+    document.querySelectorAll('.subject-checkbox').forEach(cb => {
+        const termId = String(cb.dataset.termid ?? '').trim();
+        const subjectName = cb.dataset.subjectName ?? '';
+        const teacherName = cb.dataset.teacherName ?? '';
+
+        // Also try to get from parent card if data attributes are empty
+        let finalSubjectName = subjectName;
+        let finalTeacherName = teacherName;
+
+        if (!finalSubjectName || !finalTeacherName) {
+            const card = cb.closest('.subject-check-card');
+            if (card) {
+                finalSubjectName = finalSubjectName || card.dataset.subjectName || '';
+                finalTeacherName = finalTeacherName || card.dataset.teacherName || '';
+
+                // Fallback to DOM scraping
+                if (!finalTeacherName) {
+                    const teacherSpan = card.querySelector('.text-muted');
+                    if (teacherSpan) finalTeacherName = teacherSpan.textContent.trim();
+                }
+                if (!finalSubjectName) {
+                    const subjectSpan = card.querySelector('.fw-semibold');
+                    if (subjectSpan) finalSubjectName = subjectSpan.textContent.trim();
+                }
+            }
+        }
+
+        if (!finalSubjectName || !finalTeacherName) return;
+
+        const key = `${finalSubjectName.toLowerCase()}||${termId}`;
+
+        if (!lookup[key]) lookup[key] = [];
+        if (!lookup[key].includes(finalTeacherName)) lookup[key].push(finalTeacherName);
+    });
+
+    return lookup;
+}
+
+function resolveTeacher(subjectName, termId, lookup) {
+    const key = `${subjectName.trim().toLowerCase()}||${String(termId ?? '').trim()}`;
+
+    if (lookup[key] && lookup[key].length) {
+        return lookup[key].join(', ');
+    }
+
+    // Fallback: match subject name across any term (handles term_id mismatch)
+    const prefix = subjectName.trim().toLowerCase() + '||';
+    for (const [k, v] of Object.entries(lookup)) {
+        if (k.startsWith(prefix) && v.length) {
+            return v.join(', ');
+        }
+    }
+
+    return '—';
+}
+
+// ============================================================================
 // DOM READY
 // ============================================================================
 document.addEventListener('DOMContentLoaded', function () {
@@ -764,36 +831,6 @@ function toggleBatchButtons() {
     const any = document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked').length > 0;
     document.getElementById('register-selected-btn')?.classList.toggle('d-none', !any);
     document.getElementById('unregister-selected-btn')?.classList.toggle('d-none', !any);
-}
-
-// ============================================================================
-// BUILD SUBJECT→TEACHER LOOKUP FROM BLADE-RENDERED CHECKBOXES
-// ============================================================================
-function buildSubjectTeacherLookup() {
-    const lookup = {};
-    document.querySelectorAll('.subject-checkbox').forEach(cb => {
-        const label     = cb.closest('.subject-check-card')?.querySelector('label');
-        const labelText = label?.textContent?.trim() ?? '';
-        const termId    = String(cb.dataset.termid ?? '').trim();
-        const match = labelText.match(/^(.+?)\s*\((.+)\)\s*$/);
-        if (!match) return;
-        const subjKey  = match[1].trim().toLowerCase();
-        const staffName = match[2].trim();
-        const key = `${subjKey}||${termId}`;
-        if (!lookup[key]) lookup[key] = [];
-        if (!lookup[key].includes(staffName)) lookup[key].push(staffName);
-    });
-    return lookup;
-}
-
-function resolveTeacher(subjectName, termId, lookup) {
-    const key = `${subjectName.trim().toLowerCase()}||${String(termId ?? '').trim()}`;
-    if (lookup[key] && lookup[key].length) return lookup[key].join(', ');
-    const prefix = subjectName.trim().toLowerCase() + '||';
-    for (const [k, v] of Object.entries(lookup)) {
-        if (k.startsWith(prefix) && v.length) return v.join(', ');
-    }
-    return '—';
 }
 
 // ============================================================================
@@ -1218,7 +1255,7 @@ function printRegisteredClasses() {
                 <td style="padding:8px 12px;border-bottom:0.5pt solid #e5e7eb;font-size:10pt;text-align:center;">
                     ${countText ? `<span style="background:#EAF3DE;color:#27500A;padding:2px 8px;border-radius:20px;font-size:9pt;">${escapeHtml(countText)}</span>` : '—'}
                 </td>
-            </tr>`;
+             </tr>`;
         });
 
         termsHtml += `
@@ -1505,7 +1542,7 @@ async function openSnapshotDetail(metaEncoded) {
     if (searchInput) searchInput.value = '';
 
     document.getElementById('snapshotDetailBody').innerHTML =
-        '<tr><td colspan="10" class="text-center py-4"><div class="spinner-border spinner-border-sm me-2"></div>Loading students…</td></tr>';
+        '<tr><td colspan="10" class="text-center py-4"><div class="spinner-border spinner-border-sm me-2"></div>Loading students…</div></td></tr>';
     document.getElementById('detailRestoreSelectedBtn')?.classList.add('d-none');
     document.getElementById('detailDeleteSelectedBtn')?.classList.add('d-none');
 
@@ -1544,7 +1581,7 @@ async function openSnapshotDetail(metaEncoded) {
         renderSnapshotDetailTable(data.rows, data.assessment_headers);
     } catch (err) {
         document.getElementById('snapshotDetailBody').innerHTML =
-            `<td><td colspan="10" class="text-center text-danger py-4">Error: ${err.message}</td></tr>`;
+            `<tr><td colspan="10" class="text-center text-danger py-4">Error: ${err.message}</td></tr>`;
     }
 }
 
@@ -1592,7 +1629,7 @@ function renderSnapshotDetailTable(rows, assessmentHeaders) {
                          onerror="this.src='${AVATAR_URL}/student_avatars/unnamed.jpg'">
                     <span class="fw-medium">${escapeHtml(name)}</span>
                 </div>
-             </td>
+              </td>
             <td class="text-muted small">${escapeHtml(row.admissionno ?? '—')}</td>
             <td>${genderBadge}</td>
             ${scoresCells}
