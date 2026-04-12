@@ -81,6 +81,7 @@ class DatabaseSeeder extends Seeder
             TimetableReportsPermissionTableSeeder::class,
 
 
+            PromotionPermissionTableSeeder::class,
 
 
             // Add more seeders as needed

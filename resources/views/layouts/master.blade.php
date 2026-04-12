@@ -294,6 +294,10 @@
     @if (Route::is('rooms.*'))
         @include('layouts.pages-assets.css.rooms-list-css')
     @endif
+
+    @if (Route::is('promotions.*'))
+        @include('layouts.pages-assets.css.promotions-list-css')
+    @endif
 </head>
 
 <body>
@@ -720,6 +724,8 @@
                             <a href="{{ route('broadsheet.index') }}" class="nav-link" data-key="t-products">Terminal Result Broadsheet</a>
                         </li>
                        @endcan
+
+
 {{--
                        @can('View student-mock-report')
                            <li class="nav-item">
@@ -732,7 +738,26 @@
                 </div>
             </li>
             @endif
+            @if(auth()->user()->can('View myresult-room') || auth()->user()->can('View student-report') || auth()->user()->can('View student-mock-report'))
 
+            <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-apps">PROMOTION MANAGEMENT </span></li>
+
+            <li class="nav-item">
+                            <a href="#sidebarPromotions" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarRecords">
+                                <i class="ph-folder-open"></i> <span data-key="t-ecommerce">Promotion Management </span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarPromotions">
+                                <ul class="nav nav-sm flex-column">
+                                    @can('View myresult-room')
+                                         <li class="nav-item">
+                                              <a href="{{ route('promotions.index') }}" class="nav-link" data-key="t-products">Student Promotion</a>
+                                        </li>
+                                    @endcan
+                                </ul>
+                            </div>
+            </li>
+
+            @endif
             @if(auth()->user()->can('View schoolpayment') || auth()->user()->can('View analysis'))
             <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-apps">BURSARY & FINANCE </span></li>
             @endif
@@ -2552,6 +2577,9 @@
       @endif
       @if (Route::is('rooms.*'))
             @include('layouts.pages-assets.js.rooms-list-js')
+      @endif
+       @if (Route::is('promotions.*'))
+            @include('layouts.pages-assets.js.promotions-list-js')
       @endif
       </body>
 
