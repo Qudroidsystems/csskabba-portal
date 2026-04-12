@@ -2294,7 +2294,10 @@ use Spatie\Permission\Models\Role;
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
-                    <form class="tablelist-form" id="editStudentForm" enctype="multipart/form-data" autocomplete="off" method="POST" action="{{ route('student.update', ':id') }}">
+                    {{-- <form class="tablelist-form" id="editStudentForm" enctype="multipart/form-data" autocomplete="off" method="POST" action="{{ route('student.update', ':id') }}"> --}}
+                        <form class="tablelist-form" id="editStudentForm" enctype="multipart/form-data" autocomplete="off" method="POST"
+                        action="{{ route('student.update', ':id') }}"
+                        data-base-action="{{ route('student.update', ':id') }}"></form>
                         @csrf
                         @method('PATCH')
                         <div class="modal-body p-4">
@@ -4470,10 +4473,29 @@ use Spatie\Permission\Models\Role;
             }
 
             // Update form action URL
+            // const form = document.getElementById('editStudentForm');
+            // if (form && student.id) {
+            //     form.action = form.action.replace(':id', student.id);
+            // }
+
+
+
+
+            // Update form action URL — always rebuild from the stored base pattern
+            // so that opening the modal a second time doesn't use a stale URL
             const form = document.getElementById('editStudentForm');
             if (form && student.id) {
-                form.action = form.action.replace(':id', student.id);
+                const baseAction = form.dataset.baseAction; // always has ':id' literal
+                if (baseAction) {
+                    form.action = baseAction.replace(':id', student.id);
+                } else {
+                    // Fallback: strip any numeric segment and re-substitute
+                    form.action = form.action.replace(/\/\d+$/, '/' + student.id)
+                                            .replace(/\/\d+\/([^\/]+)$/, '/' + student.id + '/$1');
+                }
             }
+
+
 
             Utils.log('Edit form populated successfully');
         }
