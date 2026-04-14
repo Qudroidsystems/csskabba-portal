@@ -79,7 +79,7 @@
                     </div>
                 </div>
 
-                {{-- ── Subject Teachers Card ── --}}
+                {{-- ── Subject Teachers Card (ENHANCED UI) ── --}}
                 <div class="row" id="subjectTeachersCard">
                     <div class="col-lg-12">
                         <div class="card border-0 shadow-sm">
@@ -241,13 +241,13 @@
                                         <tbody id="studentTableBody">
                                             @include('subjectoperation.partials.student_rows')
                                         </tbody>
-                                    </table>
+                                     </table>
                                 </div>
                                 <div class="d-flex justify-content-end p-3" id="pagination-container">
                                     {{ $students ? $students->links('pagination::bootstrap-5') : '' }}
                                 </div>
 
-                                {{-- iOS/macOS Style Selection Tray --}}
+                                {{-- iOS/MacOS Style Selection Tray --}}
                                 <div id="selectionTray" class="selection-tray">
                                     <div class="tray-inner">
                                         <div class="tray-left">
@@ -256,18 +256,11 @@
                                         </div>
                                         <div class="tray-actions">
                                             <button type="button" class="btn-tray btn-tray-secondary" id="trayUnregisterBtn" onclick="openUnregisterModal()">
-                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                                                    <path d="M18 10c0 3-6 5-6 5s-6-2-6-5M12 2v8M12 2C9 2 7 4 7 6"/>
-                                                    <path d="M3 5l3-3 3 3"/>
-                                                </svg>
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 10c0 3-6 5-6 5s-6-2-6-5M12 2v8M12 2C9 2 7 4 7 6"/><path d="M3 5l3-3 3 3"/></svg>
                                                 Unregister
                                             </button>
                                             <button type="button" class="btn-tray btn-tray-primary" id="trayRegisterBtn" onclick="registerSelectedStudentsBatch()">
-                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-                                                    <circle cx="12" cy="8" r="4"/>
-                                                    <path d="M5 20v-2a7 7 0 0 1 14 0v2"/>
-                                                    <path d="M19 4l2 2-2 2M5 4L3 6l2 2"/>
-                                                </svg>
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M5 20v-2a7 7 0 0 1 14 0v2"/><path d="M19 4l2 2-2 2M5 4L3 6l2 2"/></svg>
                                                 Register Selected
                                             </button>
                                         </div>
@@ -278,7 +271,9 @@
                     </div>
                 </div>
 
-                {{-- MODAL: Snapshot Name --}}
+                {{-- ══════════════════════════════════════════════════════════ --}}
+                {{-- MODAL: Snapshot Name                                       --}}
+                {{-- ══════════════════════════════════════════════════════════ --}}
                 <div class="modal fade" id="snapshotNameModal" tabindex="-1" aria-labelledby="snapshotNameModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered" style="max-width:520px;">
                         <div class="modal-content border-0 shadow-lg overflow-hidden">
@@ -335,7 +330,9 @@
                     </div>
                 </div>
 
-                {{-- MODAL: Registered Classes --}}
+                {{-- ══════════════════════════════════════════════════════════ --}}
+                {{-- MODAL: Registered Classes                                  --}}
+                {{-- ══════════════════════════════════════════════════════════ --}}
                 <div class="modal fade" id="registeredClassesModal" tabindex="-1" aria-labelledby="registeredClassesModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
                         <div class="modal-content border-0 shadow-lg">
@@ -365,7 +362,9 @@
                     </div>
                 </div>
 
-                {{-- MODAL: Unregistered History --}}
+                {{-- ══════════════════════════════════════════════════════════ --}}
+                {{-- MODAL: Unregistered History                                --}}
+                {{-- ══════════════════════════════════════════════════════════ --}}
                 <div class="modal fade" id="archivedModal" tabindex="-1" aria-labelledby="archivedModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-xl modal-dialog-scrollable">
                         <div class="modal-content border-0 shadow-lg">
@@ -427,7 +426,9 @@
                     </div>
                 </div>
 
-                {{-- MODAL: Snapshot Detail --}}
+                {{-- ══════════════════════════════════════════════════════════ --}}
+                {{-- MODAL: Snapshot Detail                                     --}}
+                {{-- ══════════════════════════════════════════════════════════ --}}
                 <div class="modal fade" id="snapshotDetailModal" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog modal-xl modal-dialog-scrollable">
                         <div class="modal-content border-0 shadow-lg">
@@ -491,7 +492,7 @@
                                         <tbody id="snapshotDetailBody">
                                             <tr><td colspan="10" class="text-center text-muted py-4">Loading…</td></tr>
                                         </tbody>
-                                    </table>
+                                     </table>
                                 </div>
                             </div>
                             <div class="modal-footer bg-light">
@@ -524,11 +525,12 @@
 
 <style>
 /* ────────────────────────────────────────────────────────────────────────── */
-/* iOS / macOS Style - Row Animations & Selection Tray                        */
+/* iOS / macOS Style Selection Tray & Table Row Experience                    */
 /* ────────────────────────────────────────────────────────────────────────── */
 
-/* Row fade-in animation with spring effect - like the original code */
+/* Smooth row transitions */
 #studentTableBody tr {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     animation: rowFadeIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
 
@@ -543,42 +545,14 @@
     }
 }
 
-/* Staggered animation delays for rows - creates that cascading effect */
-#studentTableBody tr:nth-child(1) { animation-delay: 0ms; }
-#studentTableBody tr:nth-child(2) { animation-delay: 35ms; }
-#studentTableBody tr:nth-child(3) { animation-delay: 70ms; }
-#studentTableBody tr:nth-child(4) { animation-delay: 105ms; }
-#studentTableBody tr:nth-child(5) { animation-delay: 140ms; }
-#studentTableBody tr:nth-child(6) { animation-delay: 175ms; }
-#studentTableBody tr:nth-child(7) { animation-delay: 210ms; }
-#studentTableBody tr:nth-child(8) { animation-delay: 245ms; }
-#studentTableBody tr:nth-child(9) { animation-delay: 280ms; }
-#studentTableBody tr:nth-child(10) { animation-delay: 315ms; }
-#studentTableBody tr:nth-child(11) { animation-delay: 350ms; }
-#studentTableBody tr:nth-child(12) { animation-delay: 385ms; }
-#studentTableBody tr:nth-child(13) { animation-delay: 420ms; }
-#studentTableBody tr:nth-child(14) { animation-delay: 455ms; }
-#studentTableBody tr:nth-child(15) { animation-delay: 490ms; }
-#studentTableBody tr:nth-child(16) { animation-delay: 525ms; }
-#studentTableBody tr:nth-child(17) { animation-delay: 560ms; }
-#studentTableBody tr:nth-child(18) { animation-delay: 595ms; }
-#studentTableBody tr:nth-child(19) { animation-delay: 630ms; }
-#studentTableBody tr:nth-child(20) { animation-delay: 665ms; }
-
-/* Selected row styling - gradient background with left accent border */
+/* Selected row styling - iOS style highlight */
 #studentTableBody tr.selected-row {
-    background: linear-gradient(90deg, rgba(127, 119, 221, 0.08) 0%, rgba(127, 119, 221, 0.02) 100%);
+    background: linear-gradient(90deg, rgba(127, 119, 221, 0.08) 0%, rgba(127, 119, 221, 0.04) 100%);
     border-left: 3px solid #7F77DD;
 }
 
 #studentTableBody tr.selected-row td:first-child {
-    border-left: none;
-}
-
-/* Row hover effect */
-#studentTableBody tr:hover {
-    background: rgba(0, 0, 0, 0.02);
-    transition: background 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+    border-left-color: #7F77DD;
 }
 
 /* Custom checkbox styling - iOS/Mac style */
@@ -596,25 +570,12 @@
     border-color: #534AB7;
 }
 
-.form-check-input:checked::after {
-    content: '';
-    position: relative;
-    display: block;
-    top: -2px;
-    left: 3px;
-    width: 5px;
-    height: 9px;
-    border: solid white;
-    border-width: 0 2px 2px 0;
-    transform: rotate(45deg);
-}
-
 .form-check-input:focus {
     box-shadow: 0 0 0 3px rgba(83, 74, 183, 0.15);
     border-color: #7F77DD;
 }
 
-/* Selection Tray - Sticky bottom with spring animation */
+/* Selection Tray - Sticky bottom with smooth spring animation */
 .selection-tray {
     position: sticky;
     bottom: 0;
@@ -684,7 +645,6 @@
     border-radius: 10px;
 }
 
-/* Chip animation - spring effect like original */
 .tray-chip {
     display: inline-flex;
     align-items: center;
@@ -827,12 +787,10 @@
     border-color: #e2e8f0 !important;
     background: #ffffff !important;
 }
-
 .subject-check-card:hover {
     border-color: #667eea !important;
     background: #f8f4ff !important;
 }
-
 .subject-check-card.is-checked {
     border-color: #667eea !important;
     background: #ede9fe !important;
@@ -853,7 +811,6 @@
 .search-box {
     position: relative;
 }
-
 .search-box .search-icon {
     position: absolute;
     right: 12px;
@@ -862,7 +819,6 @@
     font-size: 18px;
     color: #aaa;
 }
-
 .search-box input {
     padding-right: 35px;
 }
@@ -908,9 +864,18 @@
     box-shadow: 0 2px 6px rgba(0,0,0,0.08);
 }
 
-/* Row cursor pointer */
+/* Hover effect on table rows */
 #studentTableBody tr {
     cursor: pointer;
+}
+
+#studentTableBody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Checkbox styling in table header */
+.table-light .form-check-input {
+    margin-top: 0;
 }
 </style>
 @endsection
@@ -948,41 +913,6 @@ let archiveMeta         = {};
 let archiveSearchTimer  = null;
 let currentSnapshotMeta = null;
 let currentSnapshotRows = [];
-
-// ============================================================================
-// ROW CLICK HANDLER - For row selection with animation
-// ============================================================================
-function attachRowClickHandlers() {
-    document.querySelectorAll('#studentTableBody tr').forEach(row => {
-        row.removeEventListener('click', rowClickHandler);
-        row.addEventListener('click', rowClickHandler);
-    });
-}
-
-function rowClickHandler(e) {
-    // Don't trigger if clicking on checkbox or its container
-    if (e.target.type === 'checkbox' || e.target.closest('.form-check')) {
-        return;
-    }
-    const cb = this.querySelector('input[name="chk_child"]');
-    if (cb) {
-        cb.checked = !cb.checked;
-        const changeEvent = new Event('change', { bubbles: true });
-        cb.dispatchEvent(changeEvent);
-
-        if (cb.checked) {
-            this.classList.add('selected-row');
-        } else {
-            this.classList.remove('selected-row');
-        }
-        updateSelectionTray();
-
-        const all = document.querySelectorAll('#studentTableBody input[name="chk_child"]');
-        const checked = document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked');
-        const ca = document.getElementById('checkAll');
-        if (ca) ca.checked = all.length > 0 && all.length === checked.length;
-    }
-}
 
 // ============================================================================
 // SWEET ALERT HELPER
@@ -1045,7 +975,7 @@ function initializeSubjectCards() {
 }
 
 // ============================================================================
-// BUILD SUBJECT→TEACHER LOOKUP
+// BUILD SUBJECT→TEACHER LOOKUP FROM CHECKBOX DATA ATTRIBUTES
 // ============================================================================
 function buildSubjectTeacherLookup() {
     const lookup = {};
@@ -1104,66 +1034,10 @@ function resolveTeacher(subjectName, termId, lookup) {
 }
 
 // ============================================================================
-// SELECTION TRAY UI UPDATE
-// ============================================================================
-function updateSelectionTray() {
-    const checkedBoxes = document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked');
-    const count = checkedBoxes.length;
-    const tray = document.getElementById('selectionTray');
-    const trayCount = document.getElementById('trayCount');
-    const trayChips = document.getElementById('trayChips');
-
-    if (!tray) return;
-
-    if (count === 0) {
-        tray.classList.remove('tray-visible');
-        return;
-    }
-
-    tray.classList.add('tray-visible');
-    trayCount.textContent = `${count} student${count !== 1 ? 's' : ''} selected`;
-
-    const chipsHtml = Array.from(checkedBoxes).map(cb => {
-        const row = cb.closest('tr');
-        const nameCell = row?.querySelector('td:nth-child(4)');
-        const fullName = nameCell?.textContent?.trim() || 'Student';
-        const firstName = fullName.split(' ')[0];
-        const initials = fullName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-        const studentId = cb.value;
-
-        return `
-            <div class="tray-chip">
-                <div class="chip-avatar">${escapeHtml(initials)}</div>
-                ${escapeHtml(firstName)}
-                <button class="chip-remove" onclick="removeFromTray(${studentId})" title="Remove">×</button>
-            </div>
-        `;
-    }).join('');
-
-    trayChips.innerHTML = chipsHtml;
-}
-
-function removeFromTray(studentId) {
-    const cb = document.querySelector(`#studentTableBody input[name="chk_child"][value="${studentId}"]`);
-    if (cb) {
-        cb.checked = false;
-        const row = cb.closest('tr');
-        if (row) row.classList.remove('selected-row');
-        updateSelectionTray();
-
-        const all = document.querySelectorAll('#studentTableBody input[name="chk_child"]');
-        const checked = document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked');
-        const ca = document.getElementById('checkAll');
-        if (ca) ca.checked = all.length > 0 && all.length === checked.length;
-    }
-}
-
-// ============================================================================
 // DOM READY
 // ============================================================================
 document.addEventListener('DOMContentLoaded', function () {
     initializeSubjectCards();
-    attachRowClickHandlers();
 
     const imgModal = document.getElementById('imageViewModal');
     if (imgModal) {
@@ -1175,14 +1049,18 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     document.getElementById('registeredClassesModal')?.addEventListener('show.bs.modal', loadRegisteredClasses);
+
     document.getElementById('archivePerPage')?.addEventListener('change', () => loadArchivedPage(1));
+
     document.getElementById('snapshotNotesInput')?.addEventListener('input', function () {
         document.getElementById('snapshotNotesCount').textContent = this.value.length;
     });
+
     document.getElementById('archiveSearch')?.addEventListener('input', function () {
         clearTimeout(archiveSearchTimer);
         archiveSearchTimer = setTimeout(() => loadArchivedPage(1), 400);
     });
+
     document.getElementById('archiveTermFilter')?.addEventListener('change', () => loadArchivedPage(1));
 
     document.getElementById('checkAll')?.addEventListener('change', function () {
@@ -1220,6 +1098,19 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    document.querySelectorAll('#studentTableBody tr').forEach(row => {
+        row.addEventListener('click', function(e) {
+            if (e.target.type !== 'checkbox' && e.target.closest('.form-check') === null) {
+                const cb = this.querySelector('input[name="chk_child"]');
+                if (cb) {
+                    cb.checked = !cb.checked;
+                    const changeEvent = new Event('change', { bubbles: true });
+                    cb.dispatchEvent(changeEvent);
+                }
+            }
+        });
+    });
+
     setupPaginationLinks();
 
     if (typeof Choices !== 'undefined') {
@@ -1229,6 +1120,61 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
+
+// ============================================================================
+// SELECTION TRAY UI UPDATE
+// ============================================================================
+function updateSelectionTray() {
+    const checkedBoxes = document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked');
+    const count = checkedBoxes.length;
+    const tray = document.getElementById('selectionTray');
+    const trayCount = document.getElementById('trayCount');
+    const trayChips = document.getElementById('trayChips');
+
+    if (!tray) return;
+
+    if (count === 0) {
+        tray.classList.remove('tray-visible');
+        return;
+    }
+
+    tray.classList.add('tray-visible');
+    trayCount.textContent = `${count} student${count !== 1 ? 's' : ''} selected`;
+
+    const chipsHtml = Array.from(checkedBoxes).map(cb => {
+        const row = cb.closest('tr');
+        const nameCell = row?.querySelector('td:nth-child(4)');
+        const fullName = nameCell?.textContent?.trim() || 'Student';
+        const firstName = fullName.split(' ')[0];
+        const initials = fullName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+        const studentId = row?.querySelector('input[name="chk_child"]')?.value || '';
+
+        return `
+            <div class="tray-chip">
+                <div class="chip-avatar">${initials}</div>
+                ${escapeHtml(firstName)}
+                <button class="chip-remove" onclick="removeFromTray(${studentId})" title="Remove">×</button>
+            </div>
+        `;
+    }).join('');
+
+    trayChips.innerHTML = chipsHtml;
+}
+
+function removeFromTray(studentId) {
+    const cb = document.querySelector(`#studentTableBody input[name="chk_child"][value="${studentId}"]`);
+    if (cb) {
+        cb.checked = false;
+        const row = cb.closest('tr');
+        if (row) row.classList.remove('selected-row');
+        updateSelectionTray();
+
+        const all = document.querySelectorAll('#studentTableBody input[name="chk_child"]');
+        const checked = document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked');
+        const ca = document.getElementById('checkAll');
+        if (ca) ca.checked = all.length > 0 && all.length === checked.length;
+    }
+}
 
 // ============================================================================
 // HELPERS
@@ -1301,10 +1247,7 @@ function filterData() {
         const pick = (id) => ({ fresh: doc.getElementById(id), live: document.getElementById(id) });
 
         const tb = pick('studentTableBody');
-        if (tb.fresh && tb.live) {
-            tb.live.innerHTML = tb.fresh.innerHTML;
-            attachRowClickHandlers();
-        }
+        if (tb.fresh && tb.live) tb.live.innerHTML = tb.fresh.innerHTML;
 
         const pg = pick('pagination-container');
         if (pg.fresh && pg.live) pg.live.innerHTML = pg.fresh.innerHTML;
@@ -1330,6 +1273,19 @@ function filterData() {
 
         updateSubjectCount();
         setupPaginationLinks();
+
+        document.querySelectorAll('#studentTableBody tr').forEach(row => {
+            row.addEventListener('click', function(e) {
+                if (e.target.type !== 'checkbox' && e.target.closest('.form-check') === null) {
+                    const cb = this.querySelector('input[name="chk_child"]');
+                    if (cb) {
+                        cb.checked = !cb.checked;
+                        const changeEvent = new Event('change', { bubbles: true });
+                        cb.dispatchEvent(changeEvent);
+                    }
+                }
+            });
+        });
     })
     .catch(err => {
         if (tableBody) tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
@@ -1364,10 +1320,7 @@ function loadPage(url) {
         const pick = (id) => ({ fresh: doc.getElementById(id), live: document.getElementById(id) });
 
         const tb = pick('studentTableBody');
-        if (tb.fresh && tb.live) {
-            tb.live.innerHTML = tb.fresh.innerHTML;
-            attachRowClickHandlers();
-        }
+        if (tb.fresh && tb.live) tb.live.innerHTML = tb.fresh.innerHTML;
 
         const pg = pick('pagination-container');
         if (pg.fresh && pg.live) pg.live.innerHTML = pg.fresh.innerHTML;
@@ -1386,6 +1339,19 @@ function loadPage(url) {
 
         updateSubjectCount();
         setupPaginationLinks();
+
+        document.querySelectorAll('#studentTableBody tr').forEach(row => {
+            row.addEventListener('click', function(e) {
+                if (e.target.type !== 'checkbox' && e.target.closest('.form-check') === null) {
+                    const cb = this.querySelector('input[name="chk_child"]');
+                    if (cb) {
+                        cb.checked = !cb.checked;
+                        const changeEvent = new Event('change', { bubbles: true });
+                        cb.dispatchEvent(changeEvent);
+                    }
+                }
+            });
+        });
     })
     .catch(() => {
         if (tableBody) tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
@@ -2003,7 +1969,7 @@ async function openSnapshotDetail(metaEncoded) {
 
         if (!data.success) {
             document.getElementById('snapshotDetailBody').innerHTML =
-                `<tr><td colspan="10" class="text-center text-danger py-4">${data.message}</td></tr>`;
+                `<td><td colspan="10" class="text-center text-danger py-4">${data.message}</td></tr>`;
             return;
         }
 
@@ -2020,7 +1986,7 @@ async function openSnapshotDetail(metaEncoded) {
         renderSnapshotDetailTable(data.rows, data.assessment_headers);
     } catch (err) {
         document.getElementById('snapshotDetailBody').innerHTML =
-            `<tr><td colspan="10" class="text-center text-danger py-4">Error: ${err.message}</td></tr>`;
+            `<td><td colspan="10" class="text-center text-danger py-4">Error: ${err.message}</td></tr>`;
     }
 }
 
@@ -2068,7 +2034,7 @@ function renderSnapshotDetailTable(rows, assessmentHeaders) {
                          onerror="this.src='${AVATAR_URL}/student_avatars/unnamed.jpg'">
                     <span class="fw-medium">${escapeHtml(name)}</span>
                 </div>
-            </td>
+               </td>
             <td class="text-muted small">${escapeHtml(row.admissionno ?? '—')}</td>
             <td>${genderBadge}</td>
             ${scoresCells}
