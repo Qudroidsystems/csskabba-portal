@@ -200,94 +200,80 @@
                     </div>
                 </div>
 
-                {{--
-                ===========================================================================
-                DROP-IN REPLACEMENT  –  Students Table card + Selection Tray
-                Replace the entire "Students Table" row block and the #selection-tray div
-                inside card-body, then add the CSS and JS patches below.
-                ===========================================================================
-                --}}
-
                 {{-- ── Students Table ── --}}
                 <div class="row">
                     <div class="col-lg-12">
-                        <div class="card border-0 shadow-sm sop-student-card">
-
-                            {{-- Card header --}}
-                            <div class="card-header d-flex align-items-center flex-wrap gap-2 sop-card-header">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-header d-flex align-items-center flex-wrap gap-2">
                                 <div class="flex-grow-1">
                                     <h5 class="card-title mb-0">
                                         <i class="ri-group-line me-2 text-primary"></i>Students
-                                        <span class="badge bg-dark-subtle text-dark ms-1 rounded-pill" id="studentcount">
-                                            {{ $students ? $students->total() : 0 }}
-                                        </span>
+                                        <span class="badge bg-dark-subtle text-dark ms-1 rounded-pill" id="studentcount">{{ $students ? $students->total() : 0 }}</span>
                                     </h5>
                                 </div>
                                 <div class="d-flex align-items-center gap-2 flex-wrap">
+                                    <button type="button" class="btn btn-success d-none" id="register-selected-btn"
+                                        onclick="registerSelectedStudentsBatch();" aria-label="Register selected students">
+                                        <i class="ri-user-add-line me-1"></i> Register Selected
+                                    </button>
+                                    <button type="button" class="btn btn-danger d-none" id="unregister-selected-btn"
+                                        onclick="openUnregisterModal();" aria-label="Unregister selected students">
+                                        <i class="ri-user-unfollow-line me-1"></i> Unregister Selected
+                                    </button>
                                     <div class="spinner-border spinner-border-sm text-primary d-none" id="register-loading-spinner" role="status">
                                         <span class="visually-hidden">Loading...</span>
                                     </div>
-                                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#registeredClassesModal">
+                                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#registeredClassesModal">
                                         <i class="ri-eye-line me-1"></i> View Registered
                                     </button>
-                                    <button type="button" class="btn btn-warning btn-sm" id="viewArchivedBtn" onclick="openArchivedModal();">
-                                        <i class="ri-archive-line me-1"></i> History
+                                    <button type="button" class="btn btn-warning" id="viewArchivedBtn" onclick="openArchivedModal();">
+                                        <i class="ri-archive-line me-1"></i> Unregistered History
                                     </button>
                                 </div>
                             </div>
-
-                            {{-- Select-all bar (mimics the reference UI's check-all-row) --}}
-                            <div class="sop-check-all-bar" id="sopCheckAllBar">
-                                <label class="sop-check-all-label" for="checkAll">
-                                    <input type="checkbox" class="sop-chk" id="checkAll">
-                                    <span>Select all visible</span>
-                                </label>
-                            </div>
-
-                            {{-- Table head row --}}
-                            <div class="sop-table-head">
-                                <div></div>
-                                <div class="sop-th">Student</div>
-                                <div class="sop-th d-none d-md-block">Adm. No</div>
-                                <div class="sop-th d-none d-sm-block">Class</div>
-                                <div class="sop-th">Gender</div>
-                                <div class="sop-th">Action</div>
-                            </div>
-
-                            {{-- Table body – server-rendered rows go here --}}
-                            <div id="studentTableBody" class="sop-table-body">
-                                @include('subjectoperation.partials.student_rows')
-                            </div>
-
-                            {{-- Pagination --}}
-                            <div class="d-flex justify-content-end p-3" id="pagination-container">
-                                {{ $students ? $students->links('pagination::bootstrap-5') : '' }}
-                            </div>
-
-                            {{-- ── Selection Tray (NEW) ── --}}
-                            <div class="sop-tray" id="selection-tray">
-                                <div class="sop-tray-inner">
-                                    <span class="sop-tray-count" id="tray-count"></span>
-                                    <div class="sop-tray-chips" id="tray-chips"></div>
-                                    <div class="sop-tray-actions">
-                                        <button class="sop-btn-unreg" onclick="openUnregisterModal()">
-                                            <i class="ri-user-unfollow-line"></i>
-                                            Unregister
-                                        </button>
-                                        <button class="sop-btn-reg" onclick="registerSelectedStudentsBatch()">
-                                            <i class="ri-user-add-line"></i>
-                                            Register selected
-                                        </button>
-                                    </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover align-middle table-nowrap mb-0" id="subjectListTable">
+                                        <thead class="table-light">
+                                            <tr>
+                                                <th width="40" class="text-center">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox" id="checkAll">
+                                                        <label class="form-check-label" for="checkAll"></label>
+                                                    </div>
+                                                </th>
+                                                <th width="50">SN</th>
+                                                <th>Admission No</th>
+                                                <th>Student Name</th>
+                                                <th>Class</th>
+                                                <th>Gender</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="studentTableBody">
+                                            @include('subjectoperation.partials.student_rows')
+                                        </tbody>
+                                    </table>
                                 </div>
-                            </div>
-
+                                <div class="d-flex justify-content-end p-3" id="pagination-container">
+                                    {{ $students ? $students->links('pagination::bootstrap-5') : '' }}
+                                </div>
+                                <div id="selection-tray">
+                                    <span class="fw-semibold small text-primary" id="tray-count"></span>
+                                    <div class="tray-chips" id="tray-chips"></div>
+                                    <button class="btn btn-success btn-sm" onclick="registerSelectedStudentsBatch()">
+                                        <i class="ri-user-add-line me-1"></i> Register
+                                    </button>
+                                    <button class="btn btn-danger btn-sm" onclick="openUnregisterModal()">
+                                        <i class="ri-user-unfollow-line me-1"></i> Unregister
+                                    </button>
+                                </div>
+                             </div>
                         </div>
                     </div>
                 </div>
 
-
-                 {{-- ══════════════════════════════════════════════════════════ --}}
+                {{-- ══════════════════════════════════════════════════════════ --}}
                 {{-- MODAL: Snapshot Name                                       --}}
                 {{-- ══════════════════════════════════════════════════════════ --}}
                 <div class="modal fade" id="snapshotNameModal" tabindex="-1" aria-labelledby="snapshotNameModalLabel" aria-hidden="true">
@@ -541,323 +527,32 @@
 
 <style>
 
-/* ============================================================
-   SOP STUDENT TABLE  –  New UI/UX (matches student_selection_tray_ui.html)
-   Add this entire block inside the <style> tag in index.blade.php.
-   Prefix: sop-   (Subject-Operation)
-   ============================================================ */
-
-/* ── Card ── */
-.sop-student-card { overflow: hidden; }
-.sop-card-header  { background: var(--bs-body-bg); border-bottom: 0.5px solid var(--bs-border-color); }
-
-/* ── Check-all bar ── */
-.sop-check-all-bar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 16px;
-    background: var(--bs-secondary-bg);
-    border-bottom: 0.5px solid var(--bs-border-color);
-}
-.sop-check-all-label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    color: var(--bs-secondary-color);
-    cursor: pointer;
-    user-select: none;
-}
-
-/* ── Table head ── */
-.sop-table-head {
-    display: grid;
-    grid-template-columns: 40px 1fr 130px 100px 90px 110px;
-    padding: 0 16px;
-    border-bottom: 0.5px solid var(--bs-border-color);
-}
-.sop-th {
-    padding: 9px 0;
-    font-size: 10.5px;
-    font-weight: 600;
-    color: var(--bs-secondary-color);
-    text-transform: uppercase;
-    letter-spacing: .05em;
-}
-
-/* ── Table body ── */
-.sop-table-body { }
-
-/* ── Student row ── */
-.sop-student-row {
-    display: grid;
-    grid-template-columns: 40px 1fr 130px 100px 90px 110px;
-    padding: 0 16px;
-    border-bottom: 0.5px solid var(--bs-border-color);
-    align-items: center;
-    min-height: 58px;
-    cursor: pointer;
-    transition: background .18s cubic-bezier(.4, 0, .2, 1);
-    animation: sopRowIn .32s cubic-bezier(.34, 1.56, .64, 1) both;
-    position: relative;
-}
-.sop-student-row:last-child { border-bottom: none; }
-.sop-student-row:hover      { background: var(--bs-secondary-bg); }
-
-/* Selected state */
-.sop-student-row.sop-selected {
-    background: #EEEDFE !important;
-}
-.sop-student-row.sop-selected:hover {
-    background: #E4E2FB !important;
-}
-
-/* Row-in animation – staggered via inline animation-delay */
-@keyframes sopRowIn {
-    from { opacity: 0; transform: translateY(7px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-/* ── Custom checkbox ── */
-.sop-chk {
-    width: 17px;
-    height: 17px;
-    border-radius: 5px;
-    border: 1.5px solid var(--bs-border-color);
-    appearance: none;
-    -webkit-appearance: none;
-    cursor: pointer;
-    background: var(--bs-body-bg);
-    transition: all .18s cubic-bezier(.34, 1.56, .64, 1);
-    position: relative;
-    flex-shrink: 0;
-}
-.sop-chk:checked {
-    background: #534AB7;
-    border-color: #534AB7;
-}
-.sop-chk:checked::after {
-    content: '';
-    position: absolute;
-    left: 4px; top: 1.5px;
-    width: 6px; height: 9px;
-    border: 2px solid #fff;
-    border-top: none;
-    border-left: none;
-    transform: rotate(42deg);
-}
-.sop-chk:focus-visible { outline: 2px solid #534AB7; outline-offset: 2px; }
-
-.sop-chk-wrap {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-/* ── Avatar ── */
-.sop-avatar {
-    width: 34px; height: 34px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 600;
-    flex-shrink: 0;
-}
-.sop-avatar-img {
-    width: 34px; height: 34px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid var(--bs-border-color);
-    flex-shrink: 0;
-}
-.sop-student-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    min-width: 0;
-}
-.sop-name {
-    font-size: 13.5px;
-    font-weight: 500;
-    color: var(--bs-body-color);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.sop-adm {
-    font-size: 11.5px;
-    color: var(--bs-secondary-color);
-}
-.sop-td {
-    font-size: 12.5px;
-    color: var(--bs-secondary-color);
-}
-
-/* ── Inline badges ── */
-.sop-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 3px 9px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 500;
-    white-space: nowrap;
-}
-.sop-badge-f { background: #FBEAF0; color: #993556; }
-.sop-badge-m { background: #E6F1FB; color: #0C447C; }
-
-/* ── Empty state ── */
-.sop-no-result {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 48px 20px;
-    color: var(--bs-secondary-color);
-    font-size: 14px;
-    gap: 10px;
-}
-.sop-no-result svg {
-    width: 42px; height: 42px;
-    opacity: .3;
-}
 
 /* ── Selection Tray ── */
-.sop-tray {
+#selection-tray {
     position: sticky;
-    bottom: 0; left: 0; right: 0;
+    bottom: 0;
     background: var(--bs-body-bg);
-    border-top: 0.5px solid rgba(83, 74, 183, .25);
-    padding: 11px 16px;
-    transform: translateY(110%);
-    transition: transform .38s cubic-bezier(.34, 1.2, .64, 1);
-    z-index: 20;
-    border-radius: 0 0 .75rem .75rem;
-}
-.sop-tray.sop-tray-visible {
-    transform: translateY(0);
-}
-.sop-tray-inner {
+    border-top: 1px solid rgba(102,126,234,.25);
+    padding: 10px 16px;
+    transform: translateY(100%);
+    transition: transform .38s cubic-bezier(.34,1.2,.64,1);
+    z-index: 99;
     display: flex;
     align-items: center;
     gap: 12px;
+    border-radius: 0 0 .75rem .75rem;
 }
-.sop-tray-count {
-    font-size: 12px;
-    color: #534AB7;
-    font-weight: 600;
-    white-space: nowrap;
-    flex-shrink: 0;
+#selection-tray.tray-visible { transform: translateY(0); }
+.tray-chips { display:flex; gap:6px; flex:1; overflow-x:auto; padding:2px 0; scrollbar-width:none; }
+.tray-chips::-webkit-scrollbar { display:none; }
+.tray-chip {
+    display:flex; align-items:center; gap:5px;
+    background:#ede9fe; border:0.5px solid #c4b5fd;
+    border-radius:20px; padding:4px 10px 4px 5px;
+    flex-shrink:0; font-size:12px; color:#4c1d95;
+    animation: chipSpring .32s cubic-bezier(.34,1.56,.64,1) both;
 }
-
-/* ── Chips ── */
-.sop-tray-chips {
-    display: flex;
-    gap: 6px;
-    flex: 1;
-    overflow-x: auto;
-    padding: 2px 0;
-    scrollbar-width: none;
-}
-.sop-tray-chips::-webkit-scrollbar { display: none; }
-
-.sop-chip {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    background: #EEEDFE;
-    border: 0.5px solid #AFA9EC;
-    border-radius: 20px;
-    padding: 4px 10px 4px 5px;
-    flex-shrink: 0;
-    font-size: 12px;
-    color: #3C3489;
-    animation: sopChipIn .32s cubic-bezier(.34, 1.56, .64, 1) both;
-}
-@keyframes sopChipIn {
-    from { opacity: 0; transform: scale(.55) translateX(-10px); }
-    to   { opacity: 1; transform: scale(1)  translateX(0); }
-}
-
-/* Chip exit (added via JS) */
-.sop-chip.sop-chip-exit {
-    animation: sopChipOut .22s cubic-bezier(.55, 0, 1, .45) both !important;
-}
-@keyframes sopChipOut {
-    from { opacity: 1; transform: scale(1); max-width: 200px; margin-right: 0; }
-    to   { opacity: 0; transform: scale(.4); max-width: 0; padding: 0; margin-right: -6px; }
-}
-
-.sop-chip-avatar {
-    width: 22px; height: 22px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 9px; font-weight: 600;
-}
-.sop-chip-x {
-    width: 15px; height: 15px;
-    border-radius: 50%;
-    background: rgba(83, 74, 183, .18);
-    border: none;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    margin-left: 2px;
-    transition: background .15s;
-    flex-shrink: 0;
-    padding: 0;
-    line-height: 1;
-}
-.sop-chip-x:hover { background: rgba(83, 74, 183, .38); }
-
-/* ── Tray action buttons ── */
-.sop-tray-actions {
-    display: flex;
-    gap: 6px;
-    flex-shrink: 0;
-}
-.sop-btn-reg {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 16px;
-    border-radius: 8px;
-    border: none;
-    background: #534AB7;
-    color: #fff;
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background .15s, transform .1s;
-}
-.sop-btn-reg:hover  { background: #3C3489; }
-.sop-btn-reg:active { transform: scale(.97); }
-.sop-btn-unreg {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 8px 14px;
-    border-radius: 8px;
-    border: 0.5px solid var(--bs-border-color);
-    background: var(--bs-secondary-bg);
-    color: var(--bs-body-color);
-    font-size: 13px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background .15s, border-color .15s, transform .1s;
-}
-.sop-btn-unreg:hover  { border-color: var(--bs-primary); }
-.sop-btn-unreg:active { transform: scale(.97); }
-
-/* ── Responsive tweaks ── */
-@media (max-width: 575.98px) {
-    .sop-table-head,
-    .sop-student-row {
-        grid-template-columns: 40px 1fr 90px 110px;
-    }
-    .sop-tray-actions { gap: 4px; }
-    .sop-btn-reg, .sop-btn-unreg { padding: 7px 10px; font-size: 12px; }
-}
-
 @keyframes chipSpring {
     from { opacity:0; transform:scale(.5) translateX(-10px); }
     to   { opacity:1; transform:scale(1)  translateX(0); }
@@ -2223,269 +1918,6 @@ async function deleteDetailSelected() {
     }
 }
 
-
-
-// ============================================================================
-//  SOP STUDENT TABLE  –  JS patches
-//  Replace the entire toggleBatchButtons() function and add the helpers below.
-//  Everything else in your existing <script> block stays as-is.
-// ============================================================================
-
-// ── State ────────────────────────────────────────────────────────────────────
-// We track selected student IDs in a Set for O(1) add/delete,
-// mirroring the standalone reference UI.
-const _sopSelected = new Set();   // Set<studentId (number)>
-
-// ── Utility ──────────────────────────────────────────────────────────────────
-function sopInitials(name) {
-    return name.trim().split(/\s+/).slice(0, 2).map(w => w[0]).join('').toUpperCase();
-}
-
-// ── Row animation re-trigger after AJAX reload ────────────────────────────────
-// Call this after filterData() / loadPage() inject new rows.
-function sopAnimateRows() {
-    document.querySelectorAll('.sop-student-row').forEach((row, i) => {
-        row.style.animationDelay = `${i * 35}ms`;
-        // Force reflow so the animation replays even if class was already on the element
-        row.style.animation = 'none';
-        row.offsetHeight;          // reflow
-        row.style.animation = '';  // restore (CSS handles the rest)
-    });
-}
-
-// ── Row click – toggle selection ──────────────────────────────────────────────
-function sopToggleRow(id, event) {
-    // Ignore clicks that originated on the checkbox itself
-    // (the checkbox's own `change` event handles that path)
-    if (event && event.target && event.target.classList.contains('sop-chk')) return;
-
-    const row = document.querySelector(`.sop-student-row[data-id="${id}"]`);
-    if (!row) return;
-
-    const cb = row.querySelector('input.sop-chk[name="chk_child"]');
-    if (!cb) return;
-
-    const willSelect = !_sopSelected.has(id);
-    if (willSelect) {
-        _sopSelected.add(id);
-        cb.checked = true;
-        row.classList.add('sop-selected');
-    } else {
-        _sopSelected.delete(id);
-        cb.checked = false;
-        row.classList.remove('sop-selected');
-    }
-
-    sopSyncTray();
-    sopSyncCheckAll();
-}
-
-// ── Checkbox change (from individual <input> change event) ───────────────────
-function sopOnCheckboxChange(cb) {
-    const row = cb.closest('.sop-student-row');
-    if (!row) return;
-    const id = parseInt(cb.dataset.id);
-
-    if (cb.checked) {
-        _sopSelected.add(id);
-        row.classList.add('sop-selected');
-    } else {
-        _sopSelected.delete(id);
-        row.classList.remove('sop-selected');
-    }
-
-    sopSyncTray();
-    sopSyncCheckAll();
-}
-
-// ── Select-all checkbox ───────────────────────────────────────────────────────
-function sopToggleAll(checked) {
-    document.querySelectorAll('#studentTableBody input.sop-chk[name="chk_child"]').forEach(cb => {
-        const row = cb.closest('.sop-student-row');
-        const id  = parseInt(cb.dataset.id);
-        cb.checked = checked;
-        if (checked) {
-            _sopSelected.add(id);
-            row && row.classList.add('sop-selected');
-        } else {
-            _sopSelected.delete(id);
-            row && row.classList.remove('sop-selected');
-        }
-    });
-    sopSyncTray();
-}
-
-// ── Sync the check-all state ──────────────────────────────────────────────────
-function sopSyncCheckAll() {
-    const all     = document.querySelectorAll('#studentTableBody input.sop-chk[name="chk_child"]');
-    const checked = document.querySelectorAll('#studentTableBody input.sop-chk[name="chk_child"]:checked');
-    const ca      = document.getElementById('checkAll');
-    if (!ca) return;
-    ca.checked       = all.length > 0 && all.length === checked.length;
-    ca.indeterminate = checked.length > 0 && checked.length < all.length;
-}
-
-// ── Tray ──────────────────────────────────────────────────────────────────────
-function sopSyncTray() {
-    const tray      = document.getElementById('selection-tray');
-    const chipsWrap = document.getElementById('tray-chips');
-    const countEl   = document.getElementById('tray-count');
-
-    if (!_sopSelected.size) {
-        tray && tray.classList.remove('sop-tray-visible');
-        return;
-    }
-
-    tray && tray.classList.add('sop-tray-visible');
-    countEl.textContent = `${_sopSelected.size} student${_sopSelected.size !== 1 ? 's' : ''} selected`;
-
-    // Re-render only chips whose IDs are new (preserve existing ones to avoid re-animating)
-    const existingIds = new Set(
-        [...chipsWrap.querySelectorAll('.sop-chip[data-chip-id]')].map(el => parseInt(el.dataset.chipId))
-    );
-
-    // Remove chips for deselected students (with exit animation)
-    chipsWrap.querySelectorAll('.sop-chip[data-chip-id]').forEach(chip => {
-        const chipId = parseInt(chip.dataset.chipId);
-        if (!_sopSelected.has(chipId)) {
-            chip.classList.add('sop-chip-exit');
-            chip.addEventListener('animationend', () => chip.remove(), { once: true });
-        }
-    });
-
-    // Add chips for newly selected students
-    _sopSelected.forEach(id => {
-        if (existingIds.has(id)) return; // already rendered
-
-        const row = document.querySelector(`.sop-student-row[data-id="${id}"]`);
-        const cb  = row ? row.querySelector('input.sop-chk[name="chk_child"]') : null;
-
-        const name     = cb ? (cb.dataset.name      || row.dataset.name     || 'Student') : 'Student';
-        const initials = cb ? (cb.dataset.initials   || sopInitials(name))                : sopInitials(name);
-        const colorBg  = cb ? (cb.dataset.colorBg    || '#EEEDFE')                        : '#EEEDFE';
-        const colorFg  = cb ? (cb.dataset.colorFg    || '#3C3489')                        : '#3C3489';
-        const firstName = name.split(' ')[0];
-
-        const chip = document.createElement('div');
-        chip.className         = 'sop-chip';
-        chip.dataset.chipId    = id;
-        chip.innerHTML = `
-            <div class="sop-chip-avatar" style="background:${colorBg};color:${colorFg};">${initials}</div>
-            <span>${firstName}</span>
-            <button class="sop-chip-x" title="Remove" onclick="sopRemoveChip(${id}, this)">
-                <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.8">
-                    <path d="M1 1l6 6M7 1L1 7"/>
-                </svg>
-            </button>`;
-        chipsWrap.appendChild(chip);
-    });
-
-    // Also keep the old-style register/unregister buttons in sync
-    // (for back-compat with the existing header buttons)
-    const regBtn   = document.getElementById('register-selected-btn');
-    const unregBtn = document.getElementById('unregister-selected-btn');
-    regBtn   && regBtn.classList.toggle('d-none',   !_sopSelected.size);
-    unregBtn && unregBtn.classList.toggle('d-none', !_sopSelected.size);
-}
-
-// ── Remove a chip (with animation, then deselect row) ────────────────────────
-function sopRemoveChip(id, btn) {
-    const chip = btn ? btn.closest('.sop-chip') : document.querySelector(`.sop-chip[data-chip-id="${id}"]`);
-
-    // Animate chip out
-    if (chip) {
-        chip.classList.add('sop-chip-exit');
-        chip.addEventListener('animationend', () => chip.remove(), { once: true });
-    }
-
-    // Deselect row
-    _sopSelected.delete(id);
-    const row = document.querySelector(`.sop-student-row[data-id="${id}"]`);
-    const cb  = row ? row.querySelector('input.sop-chk[name="chk_child"]') : null;
-    if (cb)  cb.checked = false;
-    if (row) row.classList.remove('sop-selected');
-
-    sopSyncCheckAll();
-
-    // If tray is now empty, hide it
-    if (!_sopSelected.size) {
-        const tray = document.getElementById('selection-tray');
-        tray && tray.classList.remove('sop-tray-visible');
-    } else {
-        const countEl = document.getElementById('tray-count');
-        if (countEl) countEl.textContent = `${_sopSelected.size} student${_sopSelected.size !== 1 ? 's' : ''} selected`;
-    }
-}
-
-// ── Replacement for getSelectedStudentIds() ────────────────────────────────
-// Override the existing function so the rest of your code still works.
-function getSelectedStudentIds() {
-    return [..._sopSelected];
-}
-
-// ── Override toggleBatchButtons (old function still called by the delegation
-//    listener added in DOMContentLoaded) ──────────────────────────────────────
-function toggleBatchButtons() {
-    // Rebuild _sopSelected from the current checkboxes (keeps state in sync
-    // when rows are re-rendered by AJAX and old checkboxes disappear)
-    const checked = document.querySelectorAll('#studentTableBody input.sop-chk[name="chk_child"]:checked');
-    checked.forEach(cb => _sopSelected.add(parseInt(cb.dataset.id)));
-
-    // Remove ids that are no longer in the DOM
-    const allIds = new Set(
-        [...document.querySelectorAll('#studentTableBody input.sop-chk[name="chk_child"]')]
-            .map(cb => parseInt(cb.dataset.id))
-    );
-    [..._sopSelected].forEach(id => { if (!allIds.has(id)) _sopSelected.delete(id); });
-
-    sopSyncTray();
-    sopSyncCheckAll();
-}
-
-// ── Bind events after every DOM (re-)render ───────────────────────────────────
-// Call this after AJAX loads new rows (same place you call setupPaginationLinks)
-function sopBindTableEvents() {
-    // Row checkboxes
-    document.querySelectorAll('#studentTableBody input.sop-chk[name="chk_child"]').forEach(cb => {
-        // Remove old listeners by cloning (simplest approach for dynamic content)
-        const fresh = cb.cloneNode(true);
-        cb.parentNode.replaceChild(fresh, cb);
-        fresh.addEventListener('change', () => sopOnCheckboxChange(fresh));
-    });
-
-    // Restore visual state for already-selected rows
-    _sopSelected.forEach(id => {
-        const row = document.querySelector(`.sop-student-row[data-id="${id}"]`);
-        const cb  = row ? row.querySelector('input.sop-chk[name="chk_child"]') : null;
-        if (row) row.classList.add('sop-selected');
-        if (cb)  cb.checked = true;
-    });
-
-    sopSyncCheckAll();
-    sopAnimateRows();
-}
-
-// ── DOMContentLoaded – wire up the check-all box and initial bind ─────────────
-document.addEventListener('DOMContentLoaded', function () {
-    const checkAll = document.getElementById('checkAll');
-    if (checkAll) {
-        checkAll.addEventListener('change', function () {
-            sopToggleAll(this.checked);
-        });
-    }
-
-    sopBindTableEvents();
-});
-
-// ============================================================================
-//  PATCH filterData() and loadPage() in your existing code:
-//  At the END of the .then(html => { ... }) callback inside both functions,
-//  add this line:
-//
-//      sopBindTableEvents();
-//
-//  That's all – no other changes needed to filterData() or loadPage().
-// ============================================================================
 // Stubs for UI symmetry
 async function restoreSelected()         { /* handled per-card */ }
 async function permanentDeleteSelected() { /* handled per-card */ }
