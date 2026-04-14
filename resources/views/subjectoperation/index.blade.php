@@ -169,9 +169,8 @@
                                     <div class="col-xxl-4">
                                         <label class="form-label fw-medium small text-muted">Search Students</label>
                                         <div class="search-box">
-                                   <!-- NEW -->
-                                    <input type="text" class="form-control search" placeholder="Search students"
-                                        oninput="filterData()">
+                                            <input type="text" class="form-control search" placeholder="Search students by name or admission no..."
+                                                oninput="filterData()">
                                             <i class="ri-search-line search-icon"></i>
                                         </div>
                                     </div>
@@ -212,17 +211,6 @@
                                     </h5>
                                 </div>
                                 <div class="d-flex align-items-center gap-2 flex-wrap">
-                                    <button type="button" class="btn btn-success d-none" id="register-selected-btn"
-                                        onclick="registerSelectedStudentsBatch();" aria-label="Register selected students">
-                                        <i class="ri-user-add-line me-1"></i> Register Selected
-                                    </button>
-                                    <button type="button" class="btn btn-danger d-none" id="unregister-selected-btn"
-                                        onclick="openUnregisterModal();" aria-label="Unregister selected students">
-                                        <i class="ri-user-unfollow-line me-1"></i> Unregister Selected
-                                    </button>
-                                    <div class="spinner-border spinner-border-sm text-primary d-none" id="register-loading-spinner" role="status">
-                                        <span class="visually-hidden">Loading...</span>
-                                    </div>
                                     <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#registeredClassesModal">
                                         <i class="ri-eye-line me-1"></i> View Registered
                                     </button>
@@ -247,28 +235,38 @@
                                                 <th>Student Name</th>
                                                 <th>Class</th>
                                                 <th>Gender</th>
-                                                <th>Action</th>
+                                                <th>Status</th>
                                             </tr>
                                         </thead>
                                         <tbody id="studentTableBody">
                                             @include('subjectoperation.partials.student_rows')
                                         </tbody>
-                                    </table>
+                                     </table>
                                 </div>
                                 <div class="d-flex justify-content-end p-3" id="pagination-container">
                                     {{ $students ? $students->links('pagination::bootstrap-5') : '' }}
                                 </div>
-                                <div id="selection-tray">
-                                    <span class="fw-semibold small text-primary" id="tray-count"></span>
-                                    <div class="tray-chips" id="tray-chips"></div>
-                                    <button class="btn btn-success btn-sm" onclick="registerSelectedStudentsBatch()">
-                                        <i class="ri-user-add-line me-1"></i> Register
-                                    </button>
-                                    <button class="btn btn-danger btn-sm" onclick="openUnregisterModal()">
-                                        <i class="ri-user-unfollow-line me-1"></i> Unregister
-                                    </button>
+
+                                {{-- iOS/MacOS Style Selection Tray --}}
+                                <div id="selectionTray" class="selection-tray">
+                                    <div class="tray-inner">
+                                        <div class="tray-left">
+                                            <span class="tray-count" id="trayCount">0 selected</span>
+                                            <div class="tray-chips" id="trayChips"></div>
+                                        </div>
+                                        <div class="tray-actions">
+                                            <button type="button" class="btn-tray btn-tray-secondary" id="trayUnregisterBtn" onclick="openUnregisterModal()">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 10c0 3-6 5-6 5s-6-2-6-5M12 2v8M12 2C9 2 7 4 7 6"/><path d="M3 5l3-3 3 3"/></svg>
+                                                Unregister
+                                            </button>
+                                            <button type="button" class="btn-tray btn-tray-primary" id="trayRegisterBtn" onclick="registerSelectedStudentsBatch()">
+                                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M5 20v-2a7 7 0 0 1 14 0v2"/><path d="M19 4l2 2-2 2M5 4L3 6l2 2"/></svg>
+                                                Register Selected
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
-                             </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -494,7 +492,7 @@
                                         <tbody id="snapshotDetailBody">
                                             <tr><td colspan="10" class="text-center text-muted py-4">Loading…</td></tr>
                                         </tbody>
-                                    </table>
+                                     </table>
                                 </div>
                             </div>
                             <div class="modal-footer bg-light">
@@ -526,54 +524,266 @@
 </div>
 
 <style>
+/* ────────────────────────────────────────────────────────────────────────── */
+/* iOS / macOS Style Selection Tray & Table Row Experience                    */
+/* ────────────────────────────────────────────────────────────────────────── */
 
+/* Smooth row transitions */
+#studentTableBody tr {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: rowFadeIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
 
-/* ── Selection Tray ── */
-#selection-tray {
+@keyframes rowFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Selected row styling - iOS style highlight */
+#studentTableBody tr.selected-row {
+    background: linear-gradient(90deg, rgba(127, 119, 221, 0.08) 0%, rgba(127, 119, 221, 0.04) 100%);
+    border-left: 3px solid #7F77DD;
+}
+
+#studentTableBody tr.selected-row td:first-child {
+    border-left-color: #7F77DD;
+}
+
+/* Custom checkbox styling - iOS/Mac style */
+.form-check-input {
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 5px;
+    border: 1.5px solid #cbd5e1;
+    transition: all 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+    cursor: pointer;
+}
+
+.form-check-input:checked {
+    background-color: #534AB7;
+    border-color: #534AB7;
+}
+
+.form-check-input:focus {
+    box-shadow: 0 0 0 3px rgba(83, 74, 183, 0.15);
+    border-color: #7F77DD;
+}
+
+/* Selection Tray - Sticky bottom with smooth spring animation */
+.selection-tray {
     position: sticky;
     bottom: 0;
-    background: var(--bs-body-bg);
-    border-top: 1px solid rgba(102,126,234,.25);
-    padding: 10px 16px;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    border-top: 0.5px solid rgba(0, 0, 0, 0.08);
+    padding: 12px 20px;
     transform: translateY(100%);
-    transition: transform .38s cubic-bezier(.34,1.2,.64,1);
-    z-index: 99;
+    transition: transform 0.4s cubic-bezier(0.34, 1.2, 0.64, 1);
+    z-index: 1000;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -8px 25px rgba(0, 0, 0, 0.05);
+}
+
+.selection-tray.tray-visible {
+    transform: translateY(0);
+}
+
+.tray-inner {
     display: flex;
     align-items: center;
-    gap: 12px;
-    border-radius: 0 0 .75rem .75rem;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
 }
-#selection-tray.tray-visible { transform: translateY(0); }
-.tray-chips { display:flex; gap:6px; flex:1; overflow-x:auto; padding:2px 0; scrollbar-width:none; }
-.tray-chips::-webkit-scrollbar { display:none; }
+
+.tray-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex: 1;
+    min-width: 0;
+}
+
+.tray-count {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #534AB7;
+    background: rgba(83, 74, 183, 0.1);
+    padding: 4px 12px;
+    border-radius: 30px;
+    white-space: nowrap;
+}
+
+.tray-chips {
+    display: flex;
+    gap: 8px;
+    flex: 1;
+    overflow-x: auto;
+    padding: 4px 0;
+    scrollbar-width: thin;
+}
+
+.tray-chips::-webkit-scrollbar {
+    height: 4px;
+}
+
+.tray-chips::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.tray-chips::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+}
+
 .tray-chip {
-    display:flex; align-items:center; gap:5px;
-    background:#ede9fe; border:0.5px solid #c4b5fd;
-    border-radius:20px; padding:4px 10px 4px 5px;
-    flex-shrink:0; font-size:12px; color:#4c1d95;
-    animation: chipSpring .32s cubic-bezier(.34,1.56,.64,1) both;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #EEEDFE;
+    border: 0.5px solid #AFA9EC;
+    border-radius: 40px;
+    padding: 4px 12px 4px 6px;
+    font-size: 0.8rem;
+    color: #3C3489;
+    font-weight: 500;
+    white-space: nowrap;
+    animation: chipSpring 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
+
 @keyframes chipSpring {
-    from { opacity:0; transform:scale(.5) translateX(-10px); }
-    to   { opacity:1; transform:scale(1)  translateX(0); }
+    from {
+        opacity: 0;
+        transform: scale(0.7) translateX(-12px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateX(0);
+    }
 }
-.chip-av {
-    width:22px; height:22px; border-radius:50%;
-    background:#ddd6fe; color:#4c1d95;
-    font-size:9px; font-weight:600;
-    display:flex; align-items:center; justify-content:center;
+
+.chip-avatar {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #DDD6FE;
+    color: #4C1D95;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 600;
 }
+
 .chip-remove {
-    width:14px; height:14px; border-radius:50%;
-    background:rgba(109,40,217,.15); border:none;
-    cursor:pointer; display:flex; align-items:center; justify-content:center;
-    margin-left:2px; transition:background .15s; padding:0;
-    line-height:1;
+    background: none;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: rgba(83, 74, 183, 0.15);
+    color: #3C3489;
+    font-size: 0.75rem;
+    transition: all 0.15s ease;
+    margin-left: 4px;
 }
-.chip-remove:hover { background:rgba(109,40,217,.35); }
-/* ── Subject check card styles ── */
+
+.chip-remove:hover {
+    background: rgba(83, 74, 183, 0.3);
+    transform: scale(1.05);
+}
+
+.tray-actions {
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.btn-tray {
+    padding: 8px 18px;
+    border-radius: 40px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.18s cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+
+.btn-tray-primary {
+    background: #534AB7;
+    color: white;
+    box-shadow: 0 2px 8px rgba(83, 74, 183, 0.25);
+}
+
+.btn-tray-primary:hover {
+    background: #3C3489;
+    transform: scale(0.98);
+    box-shadow: 0 1px 4px rgba(83, 74, 183, 0.3);
+}
+
+.btn-tray-secondary {
+    background: #F1F5F9;
+    color: #1E293B;
+    border: 0.5px solid #E2E8F0;
+}
+
+.btn-tray-secondary:hover {
+    background: #E2E8F0;
+    transform: scale(0.98);
+}
+
+/* Gender badges */
+.badge-female {
+    background: #FCE4EC;
+    color: #C2185B;
+    font-weight: 500;
+}
+
+.badge-male {
+    background: #E3F2FD;
+    color: #1565C0;
+    font-weight: 500;
+}
+
+/* Status badges */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 30px;
+    font-size: 0.7rem;
+    font-weight: 600;
+}
+
+.status-registered {
+    background: #E8F5E9;
+    color: #2E7D32;
+}
+
+.status-unregistered {
+    background: #FFEBEE;
+    color: #C62828;
+}
+
+/* Subject check card styles */
 .subject-check-card {
-    transition: all .18s ease;
+    transition: all 0.18s ease;
     border-color: #e2e8f0 !important;
     background: #ffffff !important;
 }
@@ -622,7 +832,51 @@
     @page { size: A4; margin: 15mm; }
 }
 
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .tray-inner {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .tray-left {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .tray-chips {
+        width: 100%;
+    }
+    .tray-actions {
+        justify-content: flex-end;
+    }
+    .btn-tray {
+        padding: 6px 14px;
+        font-size: 0.75rem;
+    }
+}
 
+/* Avatar styling for table rows */
+.student-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+/* Hover effect on table rows */
+#studentTableBody tr {
+    cursor: pointer;
+}
+
+#studentTableBody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Checkbox styling in table header */
+.table-light .form-check-input {
+    margin-top: 0;
+}
 </style>
 @endsection
 
@@ -731,7 +985,6 @@ function buildSubjectTeacherLookup() {
         const subjectName = cb.dataset.subjectName ?? '';
         const teacherName = cb.dataset.teacherName ?? '';
 
-        // Also try to get from parent card if data attributes are empty
         let finalSubjectName = subjectName;
         let finalTeacherName = teacherName;
 
@@ -741,7 +994,6 @@ function buildSubjectTeacherLookup() {
                 finalSubjectName = finalSubjectName || card.dataset.subjectName || '';
                 finalTeacherName = finalTeacherName || card.dataset.teacherName || '';
 
-                // Fallback to DOM scraping
                 if (!finalTeacherName) {
                     const teacherSpan = card.querySelector('.text-muted');
                     if (teacherSpan) finalTeacherName = teacherSpan.textContent.trim();
@@ -771,7 +1023,6 @@ function resolveTeacher(subjectName, termId, lookup) {
         return lookup[key].join(', ');
     }
 
-    // Fallback: match subject name across any term (handles term_id mismatch)
     const prefix = subjectName.trim().toLowerCase() + '||';
     for (const [k, v] of Object.entries(lookup)) {
         if (k.startsWith(prefix) && v.length) {
@@ -786,10 +1037,8 @@ function resolveTeacher(subjectName, termId, lookup) {
 // DOM READY
 // ============================================================================
 document.addEventListener('DOMContentLoaded', function () {
-    // Initialize subject cards
     initializeSubjectCards();
 
-    // Image modal
     const imgModal = document.getElementById('imageViewModal');
     if (imgModal) {
         imgModal.addEventListener('show.bs.modal', function (event) {
@@ -799,45 +1048,67 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Registered-classes modal — load on open
     document.getElementById('registeredClassesModal')?.addEventListener('show.bs.modal', loadRegisteredClasses);
 
-    // Archive per-page change
     document.getElementById('archivePerPage')?.addEventListener('change', () => loadArchivedPage(1));
 
-    // Snapshot notes character counter
     document.getElementById('snapshotNotesInput')?.addEventListener('input', function () {
         document.getElementById('snapshotNotesCount').textContent = this.value.length;
     });
 
-    // Archive search debounce
     document.getElementById('archiveSearch')?.addEventListener('input', function () {
         clearTimeout(archiveSearchTimer);
         archiveSearchTimer = setTimeout(() => loadArchivedPage(1), 400);
     });
 
-    // Archive term filter
     document.getElementById('archiveTermFilter')?.addEventListener('change', () => loadArchivedPage(1));
 
-    // checkAll for students
     document.getElementById('checkAll')?.addEventListener('change', function () {
+        const isChecked = this.checked;
         document.querySelectorAll('#studentTableBody input[name="chk_child"]').forEach(cb => {
-            cb.checked = this.checked;
-            cb.closest('tr')?.classList.toggle('table-active', this.checked);
+            cb.checked = isChecked;
+            const row = cb.closest('tr');
+            if (row) {
+                if (isChecked) {
+                    row.classList.add('selected-row');
+                } else {
+                    row.classList.remove('selected-row');
+                }
+            }
         });
-        toggleBatchButtons();
+        updateSelectionTray();
     });
 
-    // Individual student checkbox delegation
     document.addEventListener('change', function (e) {
         if (e.target?.name === 'chk_child') {
-            e.target.closest('tr')?.classList.toggle('table-active', e.target.checked);
-            toggleBatchButtons();
-            const all     = document.querySelectorAll('#studentTableBody input[name="chk_child"]');
+            const row = e.target.closest('tr');
+            if (row) {
+                if (e.target.checked) {
+                    row.classList.add('selected-row');
+                } else {
+                    row.classList.remove('selected-row');
+                }
+            }
+            updateSelectionTray();
+
+            const all = document.querySelectorAll('#studentTableBody input[name="chk_child"]');
             const checked = document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked');
-            const ca      = document.getElementById('checkAll');
+            const ca = document.getElementById('checkAll');
             if (ca) ca.checked = all.length > 0 && all.length === checked.length;
         }
+    });
+
+    document.querySelectorAll('#studentTableBody tr').forEach(row => {
+        row.addEventListener('click', function(e) {
+            if (e.target.type !== 'checkbox' && e.target.closest('.form-check') === null) {
+                const cb = this.querySelector('input[name="chk_child"]');
+                if (cb) {
+                    cb.checked = !cb.checked;
+                    const changeEvent = new Event('change', { bubbles: true });
+                    cb.dispatchEvent(changeEvent);
+                }
+            }
+        });
     });
 
     setupPaginationLinks();
@@ -849,6 +1120,61 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 });
+
+// ============================================================================
+// SELECTION TRAY UI UPDATE
+// ============================================================================
+function updateSelectionTray() {
+    const checkedBoxes = document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked');
+    const count = checkedBoxes.length;
+    const tray = document.getElementById('selectionTray');
+    const trayCount = document.getElementById('trayCount');
+    const trayChips = document.getElementById('trayChips');
+
+    if (!tray) return;
+
+    if (count === 0) {
+        tray.classList.remove('tray-visible');
+        return;
+    }
+
+    tray.classList.add('tray-visible');
+    trayCount.textContent = `${count} student${count !== 1 ? 's' : ''} selected`;
+
+    const chipsHtml = Array.from(checkedBoxes).map(cb => {
+        const row = cb.closest('tr');
+        const nameCell = row?.querySelector('td:nth-child(4)');
+        const fullName = nameCell?.textContent?.trim() || 'Student';
+        const firstName = fullName.split(' ')[0];
+        const initials = fullName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+        const studentId = row?.querySelector('input[name="chk_child"]')?.value || '';
+
+        return `
+            <div class="tray-chip">
+                <div class="chip-avatar">${initials}</div>
+                ${escapeHtml(firstName)}
+                <button class="chip-remove" onclick="removeFromTray(${studentId})" title="Remove">×</button>
+            </div>
+        `;
+    }).join('');
+
+    trayChips.innerHTML = chipsHtml;
+}
+
+function removeFromTray(studentId) {
+    const cb = document.querySelector(`#studentTableBody input[name="chk_child"][value="${studentId}"]`);
+    if (cb) {
+        cb.checked = false;
+        const row = cb.closest('tr');
+        if (row) row.classList.remove('selected-row');
+        updateSelectionTray();
+
+        const all = document.querySelectorAll('#studentTableBody input[name="chk_child"]');
+        const checked = document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked');
+        const ca = document.getElementById('checkAll');
+        if (ca) ca.checked = all.length > 0 && all.length === checked.length;
+    }
+}
 
 // ============================================================================
 // HELPERS
@@ -875,7 +1201,7 @@ async function apiFetch(url, method, body) {
 
 function getSelectedStudentIds() {
     return [...document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked')]
-        .map(cb => parseInt(cb.closest('tr').querySelector('.id').dataset.id));
+        .map(cb => parseInt(cb.value));
 }
 
 function getSelectedSubjectClasses() {
@@ -886,45 +1212,6 @@ function getSelectedSubjectClasses() {
     }));
 }
 
-// function toggleBatchButtons() {
-//     const any = document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked').length > 0;
-//     document.getElementById('register-selected-btn')?.classList.toggle('d-none', !any);
-//     document.getElementById('unregister-selected-btn')?.classList.toggle('d-none', !any);
-// }
-function toggleBatchButtons() {
-    const checked = [...document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked')];
-    const tray    = document.getElementById('selection-tray');
-    const chips   = document.getElementById('tray-chips');
-    const count   = document.getElementById('tray-count');
-
-    if (!checked.length) {
-        tray?.classList.remove('tray-visible');
-        return;
-    }
-
-    tray?.classList.add('tray-visible');
-    count.textContent = `${checked.length} student${checked.length !== 1 ? 's' : ''} selected`;
-
-    chips.innerHTML = checked.map(cb => {
-        const row  = cb.closest('tr');
-        const name = row?.querySelector('.fw-semibold')?.textContent?.trim() ?? 'Student';
-        const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-        const id   = row?.querySelector('.id')?.dataset?.id;
-        return `<div class="tray-chip">
-            <div class="chip-av">${initials}</div>
-            ${name.split(' ')[0]}
-            <button class="chip-remove" onclick="uncheckStudent('${id}', this)" title="Remove">×</button>
-        </div>`;
-    }).join('');
-}
-
-function uncheckStudent(id, btn) {
-    const row = document.querySelector(`#studentTableBody tr .id[data-id="${id}"]`)?.closest('tr');
-    if (!row) return;
-    const cb = row.querySelector('input[name="chk_child"]');
-    if (cb) { cb.checked = false; row.classList.remove('table-active'); }
-    toggleBatchButtons();
-}
 // ============================================================================
 // FILTER / SEARCH (AJAX)
 // ============================================================================
@@ -946,7 +1233,7 @@ function filterData() {
     const subjectTeachersCard      = document.getElementById('subjectTeachersCard');
     const subjectTeacherCount      = document.getElementById('subjectTeacherCount');
 
-    if (tableBody) tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Loading…</td></tr>';
+    if (tableBody) tableBody.innerHTML = '<td><td colspan="7" class="text-center">Loading…</td></tr>';
     if (subjectTeachersContainer) subjectTeachersContainer.innerHTML = '<div class="col-12 text-center">Loading subject teachers…</div>';
 
     const params = new URLSearchParams({ class_id: classId, session_id: sessionId, search, gender, admissionno: admission });
@@ -986,6 +1273,19 @@ function filterData() {
 
         updateSubjectCount();
         setupPaginationLinks();
+
+        document.querySelectorAll('#studentTableBody tr').forEach(row => {
+            row.addEventListener('click', function(e) {
+                if (e.target.type !== 'checkbox' && e.target.closest('.form-check') === null) {
+                    const cb = this.querySelector('input[name="chk_child"]');
+                    if (cb) {
+                        cb.checked = !cb.checked;
+                        const changeEvent = new Event('change', { bubbles: true });
+                        cb.dispatchEvent(changeEvent);
+                    }
+                }
+            });
+        });
     })
     .catch(err => {
         if (tableBody) tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
@@ -1039,6 +1339,19 @@ function loadPage(url) {
 
         updateSubjectCount();
         setupPaginationLinks();
+
+        document.querySelectorAll('#studentTableBody tr').forEach(row => {
+            row.addEventListener('click', function(e) {
+                if (e.target.type !== 'checkbox' && e.target.closest('.form-check') === null) {
+                    const cb = this.querySelector('input[name="chk_child"]');
+                    if (cb) {
+                        cb.checked = !cb.checked;
+                        const changeEvent = new Event('change', { bubbles: true });
+                        cb.dispatchEvent(changeEvent);
+                    }
+                }
+            });
+        });
     })
     .catch(() => {
         if (tableBody) tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
@@ -1656,7 +1969,7 @@ async function openSnapshotDetail(metaEncoded) {
 
         if (!data.success) {
             document.getElementById('snapshotDetailBody').innerHTML =
-                `<tr><td colspan="10" class="text-center text-danger py-4">${data.message}</td></tr>`;
+                `<td><td colspan="10" class="text-center text-danger py-4">${data.message}</td></tr>`;
             return;
         }
 
@@ -1673,7 +1986,7 @@ async function openSnapshotDetail(metaEncoded) {
         renderSnapshotDetailTable(data.rows, data.assessment_headers);
     } catch (err) {
         document.getElementById('snapshotDetailBody').innerHTML =
-            `<tr><td colspan="10" class="text-center text-danger py-4">Error: ${err.message}</td></tr>`;
+            `<td><td colspan="10" class="text-center text-danger py-4">Error: ${err.message}</td></tr>`;
     }
 }
 
@@ -1721,11 +2034,11 @@ function renderSnapshotDetailTable(rows, assessmentHeaders) {
                          onerror="this.src='${AVATAR_URL}/student_avatars/unnamed.jpg'">
                     <span class="fw-medium">${escapeHtml(name)}</span>
                 </div>
-              </td>
+               </td>
             <td class="text-muted small">${escapeHtml(row.admissionno ?? '—')}</td>
             <td>${genderBadge}</td>
             ${scoresCells}
-         </tr>`;
+          </tr>`;
     });
 
     document.getElementById('snapshotDetailBody').innerHTML =
