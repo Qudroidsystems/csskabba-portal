@@ -526,6 +526,51 @@
 </div>
 
 <style>
+
+
+/* ── Selection Tray ── */
+#selection-tray {
+    position: sticky;
+    bottom: 0;
+    background: var(--bs-body-bg);
+    border-top: 1px solid rgba(102,126,234,.25);
+    padding: 10px 16px;
+    transform: translateY(100%);
+    transition: transform .38s cubic-bezier(.34,1.2,.64,1);
+    z-index: 99;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-radius: 0 0 .75rem .75rem;
+}
+#selection-tray.tray-visible { transform: translateY(0); }
+.tray-chips { display:flex; gap:6px; flex:1; overflow-x:auto; padding:2px 0; scrollbar-width:none; }
+.tray-chips::-webkit-scrollbar { display:none; }
+.tray-chip {
+    display:flex; align-items:center; gap:5px;
+    background:#ede9fe; border:0.5px solid #c4b5fd;
+    border-radius:20px; padding:4px 10px 4px 5px;
+    flex-shrink:0; font-size:12px; color:#4c1d95;
+    animation: chipSpring .32s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes chipSpring {
+    from { opacity:0; transform:scale(.5) translateX(-10px); }
+    to   { opacity:1; transform:scale(1)  translateX(0); }
+}
+.chip-av {
+    width:22px; height:22px; border-radius:50%;
+    background:#ddd6fe; color:#4c1d95;
+    font-size:9px; font-weight:600;
+    display:flex; align-items:center; justify-content:center;
+}
+.chip-remove {
+    width:14px; height:14px; border-radius:50%;
+    background:rgba(109,40,217,.15); border:none;
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+    margin-left:2px; transition:background .15s; padding:0;
+    line-height:1;
+}
+.chip-remove:hover { background:rgba(109,40,217,.35); }
 /* ── Subject check card styles ── */
 .subject-check-card {
     transition: all .18s ease;
@@ -577,49 +622,7 @@
     @page { size: A4; margin: 15mm; }
 }
 
-/* ── Selection Tray ── */
-#selection-tray {
-    position: sticky;
-    bottom: 0;
-    background: var(--bs-body-bg);
-    border-top: 1px solid rgba(102,126,234,.25);
-    padding: 10px 16px;
-    transform: translateY(100%);
-    transition: transform .38s cubic-bezier(.34,1.2,.64,1);
-    z-index: 99;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    border-radius: 0 0 .75rem .75rem;
-}
-#selection-tray.tray-visible { transform: translateY(0); }
-.tray-chips { display:flex; gap:6px; flex:1; overflow-x:auto; padding:2px 0; scrollbar-width:none; }
-.tray-chips::-webkit-scrollbar { display:none; }
-.tray-chip {
-    display:flex; align-items:center; gap:5px;
-    background:#ede9fe; border:0.5px solid #c4b5fd;
-    border-radius:20px; padding:4px 10px 4px 5px;
-    flex-shrink:0; font-size:12px; color:#4c1d95;
-    animation: chipSpring .32s cubic-bezier(.34,1.56,.64,1) both;
-}
-@keyframes chipSpring {
-    from { opacity:0; transform:scale(.5) translateX(-10px); }
-    to   { opacity:1; transform:scale(1)  translateX(0); }
-}
-.chip-av {
-    width:22px; height:22px; border-radius:50%;
-    background:#ddd6fe; color:#4c1d95;
-    font-size:9px; font-weight:600;
-    display:flex; align-items:center; justify-content:center;
-}
-.chip-remove {
-    width:14px; height:14px; border-radius:50%;
-    background:rgba(109,40,217,.15); border:none;
-    cursor:pointer; display:flex; align-items:center; justify-content:center;
-    margin-left:2px; transition:background .15s; padding:0;
-    line-height:1;
-}
-.chip-remove:hover { background:rgba(109,40,217,.35); }
+
 </style>
 @endsection
 
