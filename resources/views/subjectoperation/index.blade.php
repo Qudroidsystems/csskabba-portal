@@ -169,7 +169,9 @@
                                     <div class="col-xxl-4">
                                         <label class="form-label fw-medium small text-muted">Search Students</label>
                                         <div class="search-box">
-                                            <input type="text" class="form-control search" placeholder="Search students">
+                                   <!-- NEW -->
+                                    <input type="text" class="form-control search" placeholder="Search students"
+                                        oninput="filterData()">
                                             <i class="ri-search-line search-icon"></i>
                                         </div>
                                     </div>
@@ -256,7 +258,17 @@
                                 <div class="d-flex justify-content-end p-3" id="pagination-container">
                                     {{ $students ? $students->links('pagination::bootstrap-5') : '' }}
                                 </div>
-                            </div>
+                                <div id="selection-tray">
+                                    <span class="fw-semibold small text-primary" id="tray-count"></span>
+                                    <div class="tray-chips" id="tray-chips"></div>
+                                    <button class="btn btn-success btn-sm" onclick="registerSelectedStudentsBatch()">
+                                        <i class="ri-user-add-line me-1"></i> Register
+                                    </button>
+                                    <button class="btn btn-danger btn-sm" onclick="openUnregisterModal()">
+                                        <i class="ri-user-unfollow-line me-1"></i> Unregister
+                                    </button>
+                                </div>
+                             </div>
                         </div>
                     </div>
                 </div>
@@ -564,6 +576,50 @@
     .no-print { display: none !important; }
     @page { size: A4; margin: 15mm; }
 }
+
+/* ── Selection Tray ── */
+#selection-tray {
+    position: sticky;
+    bottom: 0;
+    background: var(--bs-body-bg);
+    border-top: 1px solid rgba(102,126,234,.25);
+    padding: 10px 16px;
+    transform: translateY(100%);
+    transition: transform .38s cubic-bezier(.34,1.2,.64,1);
+    z-index: 99;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-radius: 0 0 .75rem .75rem;
+}
+#selection-tray.tray-visible { transform: translateY(0); }
+.tray-chips { display:flex; gap:6px; flex:1; overflow-x:auto; padding:2px 0; scrollbar-width:none; }
+.tray-chips::-webkit-scrollbar { display:none; }
+.tray-chip {
+    display:flex; align-items:center; gap:5px;
+    background:#ede9fe; border:0.5px solid #c4b5fd;
+    border-radius:20px; padding:4px 10px 4px 5px;
+    flex-shrink:0; font-size:12px; color:#4c1d95;
+    animation: chipSpring .32s cubic-bezier(.34,1.56,.64,1) both;
+}
+@keyframes chipSpring {
+    from { opacity:0; transform:scale(.5) translateX(-10px); }
+    to   { opacity:1; transform:scale(1)  translateX(0); }
+}
+.chip-av {
+    width:22px; height:22px; border-radius:50%;
+    background:#ddd6fe; color:#4c1d95;
+    font-size:9px; font-weight:600;
+    display:flex; align-items:center; justify-content:center;
+}
+.chip-remove {
+    width:14px; height:14px; border-radius:50%;
+    background:rgba(109,40,217,.15); border:none;
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+    margin-left:2px; transition:background .15s; padding:0;
+    line-height:1;
+}
+.chip-remove:hover { background:rgba(109,40,217,.35); }
 </style>
 @endsection
 
@@ -827,12 +883,45 @@ function getSelectedSubjectClasses() {
     }));
 }
 
+// function toggleBatchButtons() {
+//     const any = document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked').length > 0;
+//     document.getElementById('register-selected-btn')?.classList.toggle('d-none', !any);
+//     document.getElementById('unregister-selected-btn')?.classList.toggle('d-none', !any);
+// }
 function toggleBatchButtons() {
-    const any = document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked').length > 0;
-    document.getElementById('register-selected-btn')?.classList.toggle('d-none', !any);
-    document.getElementById('unregister-selected-btn')?.classList.toggle('d-none', !any);
+    const checked = [...document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked')];
+    const tray    = document.getElementById('selection-tray');
+    const chips   = document.getElementById('tray-chips');
+    const count   = document.getElementById('tray-count');
+
+    if (!checked.length) {
+        tray?.classList.remove('tray-visible');
+        return;
+    }
+
+    tray?.classList.add('tray-visible');
+    count.textContent = `${checked.length} student${checked.length !== 1 ? 's' : ''} selected`;
+
+    chips.innerHTML = checked.map(cb => {
+        const row  = cb.closest('tr');
+        const name = row?.querySelector('.fw-semibold')?.textContent?.trim() ?? 'Student';
+        const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+        const id   = row?.querySelector('.id')?.dataset?.id;
+        return `<div class="tray-chip">
+            <div class="chip-av">${initials}</div>
+            ${name.split(' ')[0]}
+            <button class="chip-remove" onclick="uncheckStudent('${id}', this)" title="Remove">×</button>
+        </div>`;
+    }).join('');
 }
 
+function uncheckStudent(id, btn) {
+    const row = document.querySelector(`#studentTableBody tr .id[data-id="${id}"]`)?.closest('tr');
+    if (!row) return;
+    const cb = row.querySelector('input[name="chk_child"]');
+    if (cb) { cb.checked = false; row.classList.remove('table-active'); }
+    toggleBatchButtons();
+}
 // ============================================================================
 // FILTER / SEARCH (AJAX)
 // ============================================================================
