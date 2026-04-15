@@ -79,7 +79,7 @@
                     </div>
                 </div>
 
-                {{-- ── Subject Teachers Card (ENHANCED UI) ── --}}
+                {{-- ── Subject Teachers Card ── --}}
                 <div class="row" id="subjectTeachersCard">
                     <div class="col-lg-12">
                         <div class="card border-0 shadow-sm">
@@ -169,9 +169,8 @@
                                     <div class="col-xxl-4">
                                         <label class="form-label fw-medium small text-muted">Search Students</label>
                                         <div class="search-box">
-                                   <!-- NEW -->
-                                    <input type="text" class="form-control search" placeholder="Search students"
-                                        oninput="filterData()">
+                                            <input type="text" class="form-control search" placeholder="Search students"
+                                                oninput="filterData()">
                                             <i class="ri-search-line search-icon"></i>
                                         </div>
                                     </div>
@@ -258,17 +257,22 @@
                                 <div class="d-flex justify-content-end p-3" id="pagination-container">
                                     {{ $students ? $students->links('pagination::bootstrap-5') : '' }}
                                 </div>
+
+                                {{-- ── Selection Tray (new markup) ── --}}
                                 <div id="selection-tray">
-                                    <span class="fw-semibold small text-primary" id="tray-count"></span>
-                                    <div class="tray-chips" id="tray-chips"></div>
-                                    <button class="btn btn-success btn-sm" onclick="registerSelectedStudentsBatch()">
-                                        <i class="ri-user-add-line me-1"></i> Register
-                                    </button>
-                                    <button class="btn btn-danger btn-sm" onclick="openUnregisterModal()">
-                                        <i class="ri-user-unfollow-line me-1"></i> Unregister
-                                    </button>
+                                    <span id="tray-count"></span>
+                                    <div id="tray-chips"></div>
+                                    <div class="sop-tray-actions">
+                                        <button class="sop-btn-unreg" onclick="openUnregisterModal()">
+                                            <i class="ri-user-unfollow-line"></i> Unregister
+                                        </button>
+                                        <button class="sop-btn-reg" onclick="registerSelectedStudentsBatch()">
+                                            <i class="ri-user-add-line"></i> Register selected
+                                        </button>
+                                    </div>
                                 </div>
-                             </div>
+
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -526,51 +530,263 @@
 </div>
 
 <style>
+/* ============================================================
+   SOP STUDENT TABLE — full CSS
+   ============================================================ */
 
+/* ── Row animation ── */
+@keyframes sopRowIn {
+    from { opacity: 0; transform: translateY(7px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+tbody .sop-student-row {
+    cursor: pointer;
+    transition: background-color .18s cubic-bezier(.4, 0, .2, 1);
+    animation: sopRowIn .32s cubic-bezier(.34, 1.56, .64, 1) both;
+}
+tbody .sop-student-row:hover {
+    background-color: var(--bs-secondary-bg) !important;
+}
+tbody .sop-student-row.sop-selected {
+    background-color: #EEEDFE !important;
+}
+tbody .sop-student-row.sop-selected:hover {
+    background-color: #E4E2FB !important;
+}
+
+/* ── Custom checkbox ── */
+.sop-chk {
+    width: 17px !important;
+    height: 17px !important;
+    border-radius: 5px !important;
+    border: 1.5px solid var(--bs-border-color) !important;
+    appearance: none !important;
+    -webkit-appearance: none !important;
+    cursor: pointer;
+    background: var(--bs-body-bg) !important;
+    transition: all .18s cubic-bezier(.34, 1.56, .64, 1) !important;
+    position: relative;
+    flex-shrink: 0;
+}
+.sop-chk:checked {
+    background: #534AB7 !important;
+    border-color: #534AB7 !important;
+    box-shadow: none !important;
+}
+.sop-chk:checked::after {
+    content: '';
+    position: absolute;
+    left: 4px; top: 1.5px;
+    width: 6px; height: 9px;
+    border: 2px solid #fff;
+    border-top: none;
+    border-left: none;
+    transform: rotate(42deg);
+}
+.sop-chk:focus {
+    box-shadow: 0 0 0 3px rgba(83, 74, 183, .18) !important;
+    outline: none !important;
+}
+
+/* ── Avatar ── */
+.sop-avatar-img {
+    width: 34px;
+    height: 34px;
+    object-fit: cover;
+    border: 2px solid var(--bs-border-color);
+    cursor: pointer;
+    transition: border-color .15s;
+}
+.sop-avatar-img:hover { border-color: #534AB7; }
+
+.sop-avatar {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+.sop-avatar-wrap { width: 34px; height: 34px; }
+
+.sop-name {
+    font-size: 13.5px;
+    line-height: 1.3;
+}
+.sop-adm {
+    font-size: 11.5px;
+    color: var(--bs-secondary-color);
+    margin-top: 1px;
+}
+
+/* ── Gender badges ── */
+.sop-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+}
+.sop-badge-f { background: #FBEAF0; color: #993556; }
+.sop-badge-m { background: #E6F1FB; color: #0C447C; }
+
+/* ── Empty state ── */
+.sop-no-result {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px 20px;
+    color: var(--bs-secondary-color);
+    font-size: 14px;
+    gap: 10px;
+}
+.sop-no-result svg { width: 42px; height: 42px; opacity: .3; }
 
 /* ── Selection Tray ── */
 #selection-tray {
     position: sticky;
-    bottom: 0;
+    bottom: 0; left: 0; right: 0;
     background: var(--bs-body-bg);
-    border-top: 1px solid rgba(102,126,234,.25);
-    padding: 10px 16px;
-    transform: translateY(100%);
-    transition: transform .38s cubic-bezier(.34,1.2,.64,1);
-    z-index: 99;
+    border-top: 0.5px solid rgba(83, 74, 183, .28);
+    padding: 11px 16px;
+    transform: translateY(110%);
+    transition: transform .38s cubic-bezier(.34, 1.2, .64, 1);
+    z-index: 20;
+    border-radius: 0 0 .75rem .75rem;
     display: flex;
     align-items: center;
     gap: 12px;
-    border-radius: 0 0 .75rem .75rem;
 }
-#selection-tray.tray-visible { transform: translateY(0); }
-.tray-chips { display:flex; gap:6px; flex:1; overflow-x:auto; padding:2px 0; scrollbar-width:none; }
-.tray-chips::-webkit-scrollbar { display:none; }
-.tray-chip {
-    display:flex; align-items:center; gap:5px;
-    background:#ede9fe; border:0.5px solid #c4b5fd;
-    border-radius:20px; padding:4px 10px 4px 5px;
-    flex-shrink:0; font-size:12px; color:#4c1d95;
-    animation: chipSpring .32s cubic-bezier(.34,1.56,.64,1) both;
+#selection-tray.sop-tray-visible {
+    transform: translateY(0);
 }
-@keyframes chipSpring {
-    from { opacity:0; transform:scale(.5) translateX(-10px); }
-    to   { opacity:1; transform:scale(1)  translateX(0); }
+
+/* tray count */
+#tray-count {
+    font-size: 12px;
+    color: #534AB7;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
-.chip-av {
-    width:22px; height:22px; border-radius:50%;
-    background:#ddd6fe; color:#4c1d95;
-    font-size:9px; font-weight:600;
-    display:flex; align-items:center; justify-content:center;
+
+/* ── Chips ── */
+#tray-chips {
+    display: flex;
+    gap: 6px;
+    flex: 1;
+    overflow-x: auto;
+    padding: 2px 0;
+    scrollbar-width: none;
 }
-.chip-remove {
-    width:14px; height:14px; border-radius:50%;
-    background:rgba(109,40,217,.15); border:none;
-    cursor:pointer; display:flex; align-items:center; justify-content:center;
-    margin-left:2px; transition:background .15s; padding:0;
-    line-height:1;
+#tray-chips::-webkit-scrollbar { display: none; }
+
+.sop-chip {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: #EEEDFE;
+    border: 0.5px solid #AFA9EC;
+    border-radius: 20px;
+    padding: 4px 10px 4px 5px;
+    flex-shrink: 0;
+    font-size: 12px;
+    color: #3C3489;
+    animation: sopChipIn .32s cubic-bezier(.34, 1.56, .64, 1) both;
 }
-.chip-remove:hover { background:rgba(109,40,217,.35); }
+@keyframes sopChipIn {
+    from { opacity: 0; transform: scale(.55) translateX(-10px); }
+    to   { opacity: 1; transform: scale(1)  translateX(0); }
+}
+
+.sop-chip.sop-chip-exit {
+    animation: sopChipOut .22s cubic-bezier(.55, 0, 1, .45) both !important;
+    overflow: hidden;
+}
+@keyframes sopChipOut {
+    from { opacity: 1; transform: scale(1);   max-width: 200px; padding: 4px 10px 4px 5px; }
+    to   { opacity: 0; transform: scale(.4);  max-width: 0;     padding: 0; border-width: 0; }
+}
+
+.sop-chip-avatar {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 600;
+    flex-shrink: 0;
+}
+.sop-chip-x {
+    width: 15px; height: 15px;
+    border-radius: 50%;
+    background: rgba(83, 74, 183, .18);
+    border: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    margin-left: 2px;
+    transition: background .15s;
+    flex-shrink: 0;
+    padding: 0;
+    line-height: 1;
+}
+.sop-chip-x:hover { background: rgba(83, 74, 183, .38); }
+
+/* ── Tray action buttons ── */
+.sop-tray-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+    margin-left: auto;
+}
+.sop-btn-reg {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    background: #534AB7;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background .15s, transform .1s;
+    white-space: nowrap;
+}
+.sop-btn-reg:hover  { background: #3C3489; }
+.sop-btn-reg:active { transform: scale(.97); }
+
+.sop-btn-unreg {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--bs-border-color);
+    background: var(--bs-secondary-bg);
+    color: var(--bs-body-color);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, transform .1s;
+    white-space: nowrap;
+}
+.sop-btn-unreg:hover  { border-color: #534AB7; color: #534AB7; }
+.sop-btn-unreg:active { transform: scale(.97); }
+
+/* ── Mobile ── */
+@media (max-width: 575.98px) {
+    .sop-tray-actions { gap: 4px; }
+    .sop-btn-reg, .sop-btn-unreg { padding: 7px 10px; font-size: 12px; }
+    #tray-count { font-size: 11px; }
+}
+
 /* ── Subject check card styles ── */
 .subject-check-card {
     transition: all .18s ease;
@@ -587,33 +803,26 @@
     border-width: 2px !important;
 }
 
-/* Term group styling */
+/* ── Term group ── */
 .term-group {
     animation: fadeIn 0.3s ease;
 }
-
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Search box styling */
-.search-box {
-    position: relative;
-}
+/* ── Search box ── */
+.search-box { position: relative; }
 .search-box .search-icon {
     position: absolute;
-    right: 12px;
-    top: 50%;
+    right: 12px; top: 50%;
     transform: translateY(-50%);
-    font-size: 18px;
-    color: #aaa;
+    font-size: 18px; color: #aaa;
 }
-.search-box input {
-    padding-right: 35px;
-}
+.search-box input { padding-right: 35px; }
 
-/* Print styles */
+/* ── Print ── */
 @media print {
     body * { visibility: hidden; }
     #printableArea, #printableArea * { visibility: visible; }
@@ -621,9 +830,8 @@
     .no-print { display: none !important; }
     @page { size: A4; margin: 15mm; }
 }
-
-
 </style>
+
 @endsection
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -644,7 +852,6 @@ const ROUTES = {
 const CSRF       = '{{ csrf_token() }}';
 const AVATAR_URL = '{{ asset("storage") }}';
 
-// School info for PDF print
 window._schoolInfo = {
     name   : @json($school?->school_name    ?? 'School'),
     address: @json($school?->school_address ?? ''),
@@ -659,6 +866,222 @@ let archiveMeta         = {};
 let archiveSearchTimer  = null;
 let currentSnapshotMeta = null;
 let currentSnapshotRows = [];
+
+// ============================================================================
+// SOP SELECTION STATE
+// ============================================================================
+const _sopSelected = new Set(); // Set<number>
+
+function sopInitials(name) {
+    return (name || '').trim().split(/\s+/).slice(0, 2)
+        .map(w => w[0] || '').join('').toUpperCase();
+}
+
+function sopAnimateRows() {
+    document.querySelectorAll('#studentTableBody .sop-student-row').forEach((row, i) => {
+        row.style.animationName  = 'none';
+        row.style.animationDelay = `${i * 35}ms`;
+        void row.offsetHeight;
+        row.style.animationName  = '';
+    });
+}
+
+function sopToggleRow(id, event) {
+    if (event && event.target && (
+        event.target.classList.contains('sop-chk') ||
+        event.target.classList.contains('form-check-input') ||
+        event.target.tagName === 'A' ||
+        event.target.tagName === 'BUTTON' ||
+        event.target.tagName === 'I' ||
+        event.target.tagName === 'IMG' ||
+        event.target.closest('a') ||
+        event.target.closest('button')
+    )) return;
+
+    const row = document.querySelector(`#studentTableBody tr.sop-student-row[data-id="${id}"]`);
+    if (!row) return;
+    const cb = row.querySelector('input.sop-chk[name="chk_child"]');
+    if (!cb) return;
+
+    if (_sopSelected.has(id)) {
+        _sopSelected.delete(id);
+        cb.checked = false;
+        row.classList.remove('sop-selected');
+    } else {
+        _sopSelected.add(id);
+        cb.checked = true;
+        row.classList.add('sop-selected');
+    }
+
+    sopSyncTray();
+    sopSyncCheckAll();
+}
+
+function sopOnCheckboxChange(cb) {
+    const row = cb.closest('tr.sop-student-row');
+    if (!row) return;
+    const id = parseInt(row.dataset.id);
+    if (isNaN(id)) return;
+
+    if (cb.checked) {
+        _sopSelected.add(id);
+        row.classList.add('sop-selected');
+    } else {
+        _sopSelected.delete(id);
+        row.classList.remove('sop-selected');
+    }
+
+    sopSyncTray();
+    sopSyncCheckAll();
+}
+
+function sopToggleAll(checked) {
+    document.querySelectorAll('#studentTableBody input.sop-chk[name="chk_child"]').forEach(cb => {
+        const row = cb.closest('tr.sop-student-row');
+        const id  = parseInt(row ? row.dataset.id : NaN);
+        if (isNaN(id)) return;
+        cb.checked = checked;
+        if (checked) {
+            _sopSelected.add(id);
+            row && row.classList.add('sop-selected');
+        } else {
+            _sopSelected.delete(id);
+            row && row.classList.remove('sop-selected');
+        }
+    });
+    sopSyncTray();
+}
+
+function sopSyncCheckAll() {
+    const all     = document.querySelectorAll('#studentTableBody input.sop-chk[name="chk_child"]');
+    const checked = document.querySelectorAll('#studentTableBody input.sop-chk[name="chk_child"]:checked');
+    const ca      = document.getElementById('checkAll');
+    if (!ca || !all.length) return;
+    ca.checked       = all.length === checked.length;
+    ca.indeterminate = checked.length > 0 && checked.length < all.length;
+}
+
+function sopSyncTray() {
+    const tray      = document.getElementById('selection-tray');
+    const chipsWrap = document.getElementById('tray-chips');
+    const countEl   = document.getElementById('tray-count');
+    if (!tray || !chipsWrap || !countEl) return;
+
+    if (!_sopSelected.size) {
+        tray.classList.remove('sop-tray-visible');
+        return;
+    }
+
+    tray.classList.add('sop-tray-visible');
+    countEl.textContent = `${_sopSelected.size} student${_sopSelected.size !== 1 ? 's' : ''} selected`;
+
+    const renderedIds = new Set(
+        [...chipsWrap.querySelectorAll('.sop-chip[data-chip-id]')]
+            .map(el => parseInt(el.dataset.chipId))
+    );
+
+    // Remove chips for deselected students
+    chipsWrap.querySelectorAll('.sop-chip[data-chip-id]').forEach(chip => {
+        const cid = parseInt(chip.dataset.chipId);
+        if (!_sopSelected.has(cid) && !chip.classList.contains('sop-chip-exit')) {
+            chip.classList.add('sop-chip-exit');
+            chip.addEventListener('animationend', () => chip.remove(), { once: true });
+        }
+    });
+
+    // Add chips for newly selected students
+    _sopSelected.forEach(id => {
+        if (renderedIds.has(id)) return;
+
+        const row  = document.querySelector(`#studentTableBody tr.sop-student-row[data-id="${id}"]`);
+        const cb   = row ? row.querySelector('input.sop-chk[name="chk_child"]') : null;
+
+        const name      = (cb && cb.dataset.name)    || (row && row.dataset.name)  || 'Student';
+        const initials  = (cb && cb.dataset.initials) || sopInitials(name);
+        const colorBg   = (cb && cb.dataset.colorBg)  || '#EEEDFE';
+        const colorFg   = (cb && cb.dataset.colorFg)  || '#3C3489';
+        const firstName = name.split(' ')[0] || name;
+
+        const chip = document.createElement('div');
+        chip.className      = 'sop-chip';
+        chip.dataset.chipId = id;
+        chip.innerHTML = `
+            <div class="sop-chip-avatar" style="background:${colorBg};color:${colorFg};">${initials}</div>
+            <span>${firstName}</span>
+            <button class="sop-chip-x" title="Remove" onclick="sopRemoveChip(${id}, this)">
+                <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path d="M1 1l6 6M7 1L1 7"/>
+                </svg>
+            </button>`;
+        chipsWrap.appendChild(chip);
+    });
+}
+
+function sopRemoveChip(id, btn) {
+    const chip = btn ? btn.closest('.sop-chip') : document.querySelector(`#tray-chips .sop-chip[data-chip-id="${id}"]`);
+    if (chip && !chip.classList.contains('sop-chip-exit')) {
+        chip.classList.add('sop-chip-exit');
+        chip.addEventListener('animationend', () => chip.remove(), { once: true });
+    }
+
+    _sopSelected.delete(id);
+    const row = document.querySelector(`#studentTableBody tr.sop-student-row[data-id="${id}"]`);
+    if (row) {
+        row.classList.remove('sop-selected');
+        const cb = row.querySelector('input.sop-chk[name="chk_child"]');
+        if (cb) cb.checked = false;
+    }
+
+    sopSyncCheckAll();
+
+    if (!_sopSelected.size) {
+        document.getElementById('selection-tray')?.classList.remove('sop-tray-visible');
+    } else {
+        const countEl = document.getElementById('tray-count');
+        if (countEl) countEl.textContent = `${_sopSelected.size} student${_sopSelected.size !== 1 ? 's' : ''} selected`;
+    }
+}
+
+function getSelectedStudentIds() {
+    return [..._sopSelected];
+}
+
+// Kept for back-compat; reconciles DOM state with the Set
+function toggleBatchButtons() {
+    const allInDom = new Set(
+        [...document.querySelectorAll('#studentTableBody tr.sop-student-row')]
+            .map(tr => parseInt(tr.dataset.id)).filter(n => !isNaN(n))
+    );
+    [..._sopSelected].forEach(id => { if (!allInDom.has(id)) _sopSelected.delete(id); });
+
+    document.querySelectorAll('#studentTableBody input.sop-chk[name="chk_child"]:checked').forEach(cb => {
+        const row = cb.closest('tr.sop-student-row');
+        if (row) _sopSelected.add(parseInt(row.dataset.id));
+    });
+
+    sopSyncTray();
+    sopSyncCheckAll();
+}
+
+function sopBindTableEvents() {
+    // Re-bind checkbox change events (clone to drop stale listeners)
+    document.querySelectorAll('#studentTableBody input.sop-chk[name="chk_child"]').forEach(cb => {
+        const fresh = cb.cloneNode(true);
+        cb.parentNode.replaceChild(fresh, cb);
+        fresh.addEventListener('change', () => sopOnCheckboxChange(fresh));
+    });
+
+    // Restore visual state for ids still selected
+    _sopSelected.forEach(id => {
+        const row = document.querySelector(`#studentTableBody tr.sop-student-row[data-id="${id}"]`);
+        const cb  = row ? row.querySelector('input.sop-chk[name="chk_child"]') : null;
+        if (row) row.classList.add('sop-selected');
+        if (cb)  cb.checked = true;
+    });
+
+    sopSyncCheckAll();
+    sopAnimateRows();
+}
 
 // ============================================================================
 // SWEET ALERT HELPER
@@ -679,7 +1102,7 @@ function showSweetAlert(title, message, type, success = true) {
 }
 
 // ============================================================================
-// SUBJECT CHECKBOXES - ENHANCED UI
+// SUBJECT CHECKBOXES
 // ============================================================================
 function toggleSubjectCard(card) {
     const cb = card.querySelector('input[type="checkbox"]');
@@ -690,15 +1113,14 @@ function toggleSubjectCard(card) {
 
 function updateSubjectCount() {
     const total = document.querySelectorAll('.subject-checkbox:checked').length;
-    const countElement = document.getElementById('subjectTeacherCount');
-    if (countElement) countElement.textContent = total;
+    const el    = document.getElementById('subjectTeacherCount');
+    if (el) el.textContent = total;
 }
 
 function selectAllSubjects() {
     document.querySelectorAll('.subject-checkbox').forEach(cb => {
         cb.checked = true;
-        const card = cb.closest('.subject-check-card');
-        if (card) card.classList.add('is-checked');
+        cb.closest('.subject-check-card')?.classList.add('is-checked');
     });
     updateSubjectCount();
 }
@@ -706,79 +1128,51 @@ function selectAllSubjects() {
 function deselectAllSubjects() {
     document.querySelectorAll('.subject-checkbox').forEach(cb => {
         cb.checked = false;
-        const card = cb.closest('.subject-check-card');
-        if (card) card.classList.remove('is-checked');
+        cb.closest('.subject-check-card')?.classList.remove('is-checked');
     });
     updateSubjectCount();
 }
 
 function initializeSubjectCards() {
     document.querySelectorAll('.subject-checkbox:checked').forEach(cb => {
-        const card = cb.closest('.subject-check-card');
-        if (card) card.classList.add('is-checked');
+        cb.closest('.subject-check-card')?.classList.add('is-checked');
     });
     updateSubjectCount();
 }
 
 // ============================================================================
-// BUILD SUBJECT→TEACHER LOOKUP FROM CHECKBOX DATA ATTRIBUTES
+// SUBJECT→TEACHER LOOKUP
 // ============================================================================
 function buildSubjectTeacherLookup() {
     const lookup = {};
-
     document.querySelectorAll('.subject-checkbox').forEach(cb => {
         const termId = String(cb.dataset.termid ?? '').trim();
-        const subjectName = cb.dataset.subjectName ?? '';
-        const teacherName = cb.dataset.teacherName ?? '';
+        let subjectName = cb.dataset.subjectName ?? '';
+        let teacherName = cb.dataset.teacherName ?? '';
 
-        // Also try to get from parent card if data attributes are empty
-        let finalSubjectName = subjectName;
-        let finalTeacherName = teacherName;
-
-        if (!finalSubjectName || !finalTeacherName) {
+        if (!subjectName || !teacherName) {
             const card = cb.closest('.subject-check-card');
             if (card) {
-                finalSubjectName = finalSubjectName || card.dataset.subjectName || '';
-                finalTeacherName = finalTeacherName || card.dataset.teacherName || '';
-
-                // Fallback to DOM scraping
-                if (!finalTeacherName) {
-                    const teacherSpan = card.querySelector('.text-muted');
-                    if (teacherSpan) finalTeacherName = teacherSpan.textContent.trim();
-                }
-                if (!finalSubjectName) {
-                    const subjectSpan = card.querySelector('.fw-semibold');
-                    if (subjectSpan) finalSubjectName = subjectSpan.textContent.trim();
-                }
+                subjectName = subjectName || card.dataset.subjectName || card.querySelector('.fw-semibold')?.textContent?.trim() || '';
+                teacherName = teacherName || card.dataset.teacherName || card.querySelector('.text-muted')?.textContent?.trim() || '';
             }
         }
 
-        if (!finalSubjectName || !finalTeacherName) return;
-
-        const key = `${finalSubjectName.toLowerCase()}||${termId}`;
-
+        if (!subjectName || !teacherName) return;
+        const key = `${subjectName.toLowerCase()}||${termId}`;
         if (!lookup[key]) lookup[key] = [];
-        if (!lookup[key].includes(finalTeacherName)) lookup[key].push(finalTeacherName);
+        if (!lookup[key].includes(teacherName)) lookup[key].push(teacherName);
     });
-
     return lookup;
 }
 
 function resolveTeacher(subjectName, termId, lookup) {
     const key = `${subjectName.trim().toLowerCase()}||${String(termId ?? '').trim()}`;
-
-    if (lookup[key] && lookup[key].length) {
-        return lookup[key].join(', ');
-    }
-
-    // Fallback: match subject name across any term (handles term_id mismatch)
+    if (lookup[key]?.length) return lookup[key].join(', ');
     const prefix = subjectName.trim().toLowerCase() + '||';
     for (const [k, v] of Object.entries(lookup)) {
-        if (k.startsWith(prefix) && v.length) {
-            return v.join(', ');
-        }
+        if (k.startsWith(prefix) && v.length) return v.join(', ');
     }
-
     return '—';
 }
 
@@ -786,10 +1180,17 @@ function resolveTeacher(subjectName, termId, lookup) {
 // DOM READY
 // ============================================================================
 document.addEventListener('DOMContentLoaded', function () {
-    // Initialize subject cards
     initializeSubjectCards();
 
-    // Image modal
+    // check-all
+    document.getElementById('checkAll')?.addEventListener('change', function () {
+        sopToggleAll(this.checked);
+    });
+
+    // initial row bind
+    sopBindTableEvents();
+
+    // image modal
     const imgModal = document.getElementById('imageViewModal');
     if (imgModal) {
         imgModal.addEventListener('show.bs.modal', function (event) {
@@ -799,46 +1200,19 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Registered-classes modal — load on open
     document.getElementById('registeredClassesModal')?.addEventListener('show.bs.modal', loadRegisteredClasses);
-
-    // Archive per-page change
     document.getElementById('archivePerPage')?.addEventListener('change', () => loadArchivedPage(1));
 
-    // Snapshot notes character counter
     document.getElementById('snapshotNotesInput')?.addEventListener('input', function () {
         document.getElementById('snapshotNotesCount').textContent = this.value.length;
     });
 
-    // Archive search debounce
     document.getElementById('archiveSearch')?.addEventListener('input', function () {
         clearTimeout(archiveSearchTimer);
         archiveSearchTimer = setTimeout(() => loadArchivedPage(1), 400);
     });
 
-    // Archive term filter
     document.getElementById('archiveTermFilter')?.addEventListener('change', () => loadArchivedPage(1));
-
-    // checkAll for students
-    document.getElementById('checkAll')?.addEventListener('change', function () {
-        document.querySelectorAll('#studentTableBody input[name="chk_child"]').forEach(cb => {
-            cb.checked = this.checked;
-            cb.closest('tr')?.classList.toggle('table-active', this.checked);
-        });
-        toggleBatchButtons();
-    });
-
-    // Individual student checkbox delegation
-    document.addEventListener('change', function (e) {
-        if (e.target?.name === 'chk_child') {
-            e.target.closest('tr')?.classList.toggle('table-active', e.target.checked);
-            toggleBatchButtons();
-            const all     = document.querySelectorAll('#studentTableBody input[name="chk_child"]');
-            const checked = document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked');
-            const ca      = document.getElementById('checkAll');
-            if (ca) ca.checked = all.length > 0 && all.length === checked.length;
-        }
-    });
 
     setupPaginationLinks();
 
@@ -873,11 +1247,6 @@ async function apiFetch(url, method, body) {
     return data;
 }
 
-function getSelectedStudentIds() {
-    return [...document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked')]
-        .map(cb => parseInt(cb.closest('tr').querySelector('.id').dataset.id));
-}
-
 function getSelectedSubjectClasses() {
     return [...document.querySelectorAll('.subject-checkbox:checked')].map(cb => ({
         subjectclassid: parseInt(cb.dataset.subjectclassid),
@@ -886,45 +1255,6 @@ function getSelectedSubjectClasses() {
     }));
 }
 
-// function toggleBatchButtons() {
-//     const any = document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked').length > 0;
-//     document.getElementById('register-selected-btn')?.classList.toggle('d-none', !any);
-//     document.getElementById('unregister-selected-btn')?.classList.toggle('d-none', !any);
-// }
-function toggleBatchButtons() {
-    const checked = [...document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked')];
-    const tray    = document.getElementById('selection-tray');
-    const chips   = document.getElementById('tray-chips');
-    const count   = document.getElementById('tray-count');
-
-    if (!checked.length) {
-        tray?.classList.remove('tray-visible');
-        return;
-    }
-
-    tray?.classList.add('tray-visible');
-    count.textContent = `${checked.length} student${checked.length !== 1 ? 's' : ''} selected`;
-
-    chips.innerHTML = checked.map(cb => {
-        const row  = cb.closest('tr');
-        const name = row?.querySelector('.fw-semibold')?.textContent?.trim() ?? 'Student';
-        const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
-        const id   = row?.querySelector('.id')?.dataset?.id;
-        return `<div class="tray-chip">
-            <div class="chip-av">${initials}</div>
-            ${name.split(' ')[0]}
-            <button class="chip-remove" onclick="uncheckStudent('${id}', this)" title="Remove">×</button>
-        </div>`;
-    }).join('');
-}
-
-function uncheckStudent(id, btn) {
-    const row = document.querySelector(`#studentTableBody tr .id[data-id="${id}"]`)?.closest('tr');
-    if (!row) return;
-    const cb = row.querySelector('input[name="chk_child"]');
-    if (cb) { cb.checked = false; row.classList.remove('table-active'); }
-    toggleBatchButtons();
-}
 // ============================================================================
 // FILTER / SEARCH (AJAX)
 // ============================================================================
@@ -986,6 +1316,7 @@ function filterData() {
 
         updateSubjectCount();
         setupPaginationLinks();
+        sopBindTableEvents(); // ← re-bind after AJAX swap
     })
     .catch(err => {
         if (tableBody) tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
@@ -1039,6 +1370,7 @@ function loadPage(url) {
 
         updateSubjectCount();
         setupPaginationLinks();
+        sopBindTableEvents(); // ← re-bind after AJAX swap
     })
     .catch(() => {
         if (tableBody) tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading data. Please try again.</td></tr>';
@@ -1054,8 +1386,7 @@ function updateAdmissionNoOptions(students) {
     select.innerHTML = '<option value="ALL">Select Admission No</option>';
     [...new Set(students.map(s => s.admissionno).filter(Boolean))].sort().forEach(no => {
         const opt = document.createElement('option');
-        opt.value = no;
-        opt.text  = no;
+        opt.value = no; opt.text = no;
         select.appendChild(opt);
     });
 }
@@ -1225,11 +1556,7 @@ async function loadRegisteredClasses() {
                 };
             }
             if (row.subject_name) {
-                termMap[key].subjects.push({
-                    name   : row.subject_name,
-                    teacher: null,
-                    count  : row.student_count ?? '',
-                });
+                termMap[key].subjects.push({ name: row.subject_name, teacher: null, count: row.student_count ?? '' });
             }
         });
 
@@ -1303,9 +1630,8 @@ async function loadRegisteredClasses() {
 // PRINT REGISTERED CLASSES
 // ============================================================================
 function printRegisteredClasses() {
-    const container = document.getElementById('registeredClassesContent');
-    const school    = window._schoolInfo || {};
-
+    const container  = document.getElementById('registeredClassesContent');
+    const school     = window._schoolInfo || {};
     const termBlocks = container.querySelectorAll('[data-term-block]');
 
     if (!termBlocks.length) {
@@ -1314,32 +1640,28 @@ function printRegisteredClasses() {
     }
 
     const now = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
-
     let termsHtml = '';
 
     termBlocks.forEach(block => {
         const titleText = block.querySelector('[data-term-title]')?.textContent?.trim()    ?? '';
         const termText  = block.querySelector('[data-term-subtitle]')?.textContent?.trim() ?? '';
 
-        const pillSpans  = [...(block.querySelectorAll('[data-term-pills] span') ?? [])];
-        const pillsHtml  = pillSpans.map(p =>
+        const pillSpans = [...(block.querySelectorAll('[data-term-pills] span') ?? [])];
+        const pillsHtml = pillSpans.map(p =>
             `<span style="background:#E6F1FB;color:#0C447C;padding:3px 10px;border-radius:20px;font-size:9pt;font-weight:500;margin-left:6px;">${escapeHtml(p.textContent.trim())}</span>`
         ).join('');
 
         const termStudentCount = block.dataset.termStudentCount ?? '';
-
         const cells = [...block.querySelectorAll('[data-subject-cell]')];
         let rows = '';
+
         cells.forEach((cell, idx) => {
-            const subjName = cell.querySelector('[data-cell-subject]')?.textContent?.trim() ?? '';
-            const teacher  = cell.querySelector('[data-cell-teacher]')?.textContent?.trim() ?? '—';
+            const subjName  = cell.querySelector('[data-cell-subject]')?.textContent?.trim() ?? '';
+            const teacher   = cell.querySelector('[data-cell-teacher]')?.textContent?.trim() ?? '—';
             const countEl   = cell.querySelector('[data-cell-count]');
-            const countText = countEl
-                ? countEl.textContent.trim()
-                : (termStudentCount ? `${termStudentCount} students` : '');
+            const countText = countEl ? countEl.textContent.trim() : (termStudentCount ? `${termStudentCount} students` : '');
 
             if (!subjName) return;
-
             rows += `<tr>
                 <td style="width:36px;text-align:center;padding:8px 10px;border-bottom:0.5pt solid #e5e7eb;color:#6b7280;font-size:10pt;">${idx + 1}</td>
                 <td style="padding:8px 12px;border-bottom:0.5pt solid #e5e7eb;font-size:10pt;font-weight:500;color:#111827;">${escapeHtml(subjName)}</td>
@@ -1634,7 +1956,7 @@ async function openSnapshotDetail(metaEncoded) {
     if (searchInput) searchInput.value = '';
 
     document.getElementById('snapshotDetailBody').innerHTML =
-        '<tr><td colspan="10" class="text-center py-4"><div class="spinner-border spinner-border-sm me-2"></div>Loading students…</div></td></tr>';
+        '<tr><td colspan="10" class="text-center py-4"><div class="spinner-border spinner-border-sm me-2"></div>Loading students…</td></tr>';
     document.getElementById('detailRestoreSelectedBtn')?.classList.add('d-none');
     document.getElementById('detailDeleteSelectedBtn')?.classList.add('d-none');
 
@@ -1721,7 +2043,7 @@ function renderSnapshotDetailTable(rows, assessmentHeaders) {
                          onerror="this.src='${AVATAR_URL}/student_avatars/unnamed.jpg'">
                     <span class="fw-medium">${escapeHtml(name)}</span>
                 </div>
-              </td>
+            </td>
             <td class="text-muted small">${escapeHtml(row.admissionno ?? '—')}</td>
             <td>${genderBadge}</td>
             ${scoresCells}
