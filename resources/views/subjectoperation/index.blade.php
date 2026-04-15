@@ -541,7 +541,6 @@
 .sf-table-wrap { position: relative; }
 .sf-check-all-row { display: flex; align-items: center; gap: 10px; padding: 9px 20px; background: #f9f9fb; border-bottom: 0.5px solid var(--sf-border); }
 .sf-check-all-label { font-size: 12px; color: var(--sf-text-2); }
-.sf-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0; }
 .sf-student-name { font-size: 14px; font-weight: 500; color: var(--sf-text-1); }
 .sf-badge { padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 500; }
 .sf-badge-f { background: #FBEAF0; color: #993556; }
@@ -551,6 +550,25 @@
 .sf-tray-chips { display: flex; gap: 6px; flex: 1; overflow-x: auto; }
 .sf-chip { display: flex; align-items: center; gap: 5px; background: var(--sf-accent-soft); border: 0.5px solid #AFA9EC; border-radius: 20px; padding: 4px 10px 4px 5px; font-size: 12px; color: #3C3489; }
 .sf-modal-content { border-radius: var(--sf-radius-xl) !important; overflow: hidden; }
+
+/* Student Picture Avatar */
+.sf-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0f0f0;
+    border: 1px solid #ddd;
+    cursor: pointer;
+}
+.sf-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
 </style>
 @endsection
 
@@ -588,7 +606,7 @@ let archiveSearchTimer = null;
 let currentSnapshotMeta = null;
 let currentSnapshotRows = [];
 
-// Avatar color palette
+// Avatar color palette (used only as fallback)
 const SF_COLORS = [
     ['#E6F1FB','#0C447C'],['#EAF3DE','#27500A'],['#FAEEDA','#633806'],
     ['#EEEDFE','#3C3489'],['#FBEAF0','#993556'],['#E1F5EE','#085041'],
@@ -742,7 +760,7 @@ function sfToggleRow(e, row) {
 }
 
 // ============================================================================
-// FIXED REWRITE ROWS (Correct Picture Handling)
+// REWRITE ROWS - NOW SHOWS REAL PICTURES (with fallback to initials)
 // ============================================================================
 function rewriteExistingRows() {
     const body = document.getElementById('studentTableBody');
@@ -758,12 +776,11 @@ function rewriteExistingRows() {
         const className = tr.querySelector('.class')?.textContent?.trim() || '';
         const gender = tr.querySelector('.gender')?.textContent?.trim() || '';
 
-        // Correctly extract the image URL from the original img tag
+        // Extract real image URL from original row
         const imgEl = tr.querySelector('img[data-image]');
         const imageUrl = imgEl ? imgEl.getAttribute('data-image') : `${AVATAR_URL}/student_avatars/unnamed.jpg`;
 
         const initials = sfInitials(fullName);
-        const [bg, fg] = sfColor(parseInt(id) || i + 1);
         const isFemale = gender.toLowerCase() === 'female';
 
         html += `
@@ -776,8 +793,9 @@ function rewriteExistingRows() {
             <td class="admissionno" data-admissionno="${escapeHtml(admissionno)}">${escapeHtml(admissionno)}</td>
             <td>
                 <div class="d-flex align-items-center gap-3">
-                    <div class="sf-avatar" style="background:${bg};color:${fg};cursor:pointer;" onclick="event.stopPropagation();showStudentImage('${escapeHtml(imageUrl)}')">
-                        ${escapeHtml(initials)}
+                    <div class="sf-avatar" onclick="event.stopPropagation();showStudentImage('${escapeHtml(imageUrl)}')">
+                        <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(fullName)}"
+                             onerror="this.onerror=null;this.parentNode.innerHTML='<span style=\'font-size:12px;font-weight:600;\'>${escapeHtml(initials)}</span>';">
                     </div>
                     <div class="sf-student-name">${escapeHtml(fullName)}</div>
                 </div>
