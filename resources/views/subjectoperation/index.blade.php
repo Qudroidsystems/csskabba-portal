@@ -742,7 +742,7 @@ function sfToggleRow(e, row) {
 }
 
 // ============================================================================
-// REWRITE ROWS (Pictures + Actions)
+// FIXED REWRITE ROWS (Correct Picture Handling)
 // ============================================================================
 function rewriteExistingRows() {
     const body = document.getElementById('studentTableBody');
@@ -757,7 +757,10 @@ function rewriteExistingRows() {
         const fullName = tr.querySelector('.name a')?.textContent?.trim() || tr.querySelector('.name')?.textContent?.trim() || '';
         const className = tr.querySelector('.class')?.textContent?.trim() || '';
         const gender = tr.querySelector('.gender')?.textContent?.trim() || '';
-        const imageUrl = tr.querySelector('img[data-image]')?.getAttribute('data-image') || `${AVATAR_URL}/student_avatars/unnamed.jpg`;
+
+        // Correctly extract the image URL from the original img tag
+        const imgEl = tr.querySelector('img[data-image]');
+        const imageUrl = imgEl ? imgEl.getAttribute('data-image') : `${AVATAR_URL}/student_avatars/unnamed.jpg`;
 
         const initials = sfInitials(fullName);
         const [bg, fg] = sfColor(parseInt(id) || i + 1);
@@ -1213,12 +1216,8 @@ async function loadArchivedPage(page) {
 
 function renderSnapshotCards(rows) {
     const container = document.getElementById('snapshotCardsContainer');
-    const restoreBtn = document.getElementById('restoreSelectedBtn');
-    const deleteBtn = document.getElementById('deleteSelectedBtn');
     if (!rows.length) {
         container.innerHTML = `<div class="sf-empty-state"><i class="ri-archive-line ri-3x d-block mb-2"></i>No unregistration snapshots found.</div>`;
-        restoreBtn?.classList.add('d-none');
-        deleteBtn?.classList.add('d-none');
         return;
     }
     const groups = {};
@@ -1525,7 +1524,7 @@ async function restoreSelected() { }
 async function permanentDeleteSelected() { }
 
 // ============================================================================
-// BUILD SUBJECT TEACHER LOOKUP (for registered classes)
+// BUILD SUBJECT TEACHER LOOKUP
 // ============================================================================
 function buildSubjectTeacherLookup() {
     const lookup = {};
