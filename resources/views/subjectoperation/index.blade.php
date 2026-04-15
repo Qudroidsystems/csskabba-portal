@@ -272,9 +272,8 @@
                     </div>
                 </div>
 
-                {{-- ══════════════════════════════════════════════════════════ --}}
-                {{-- MODAL: Snapshot Name                                       --}}
-                {{-- ══════════════════════════════════════════════════════════ --}}
+                {{-- MODALS --}}
+                {{-- Snapshot Name Modal --}}
                 <div class="modal fade" id="snapshotNameModal" tabindex="-1" aria-labelledby="snapshotNameModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered" style="max-width:520px;">
                         <div class="modal-content sf-modal-content border-0 shadow-lg overflow-hidden">
@@ -327,9 +326,7 @@
                     </div>
                 </div>
 
-                {{-- ══════════════════════════════════════════════════════════ --}}
-                {{-- MODAL: Registered Classes                                  --}}
-                {{-- ══════════════════════════════════════════════════════════ --}}
+                {{-- Registered Classes Modal --}}
                 <div class="modal fade" id="registeredClassesModal" tabindex="-1" aria-labelledby="registeredClassesModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
                         <div class="modal-content sf-modal-content border-0 shadow-lg">
@@ -359,9 +356,7 @@
                     </div>
                 </div>
 
-                {{-- ══════════════════════════════════════════════════════════ --}}
-                {{-- MODAL: Unregistered History                                --}}
-                {{-- ══════════════════════════════════════════════════════════ --}}
+                {{-- Archived History Modal --}}
                 <div class="modal fade" id="archivedModal" tabindex="-1" aria-labelledby="archivedModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-xl modal-dialog-scrollable">
                         <div class="modal-content sf-modal-content border-0 shadow-lg">
@@ -394,12 +389,6 @@
                                         <button class="sf-btn sf-btn-ghost sf-btn-sm" onclick="loadArchivedPage(1);">
                                             <i class="ri-refresh-line"></i> Refresh
                                         </button>
-                                        <button class="sf-btn sf-btn-success sf-btn-sm d-none" id="restoreSelectedBtn" onclick="restoreSelected();">
-                                            <i class="ri-refresh-line me-1"></i> Restore
-                                        </button>
-                                        <button class="sf-btn sf-btn-danger sf-btn-sm d-none" id="deleteSelectedBtn" onclick="permanentDeleteSelected();">
-                                            <i class="ri-delete-bin-line me-1"></i> Delete
-                                        </button>
                                         <div class="spinner-border spinner-border-sm text-warning d-none" id="archiveSpinner" role="status"></div>
                                     </div>
                                 </div>
@@ -422,9 +411,7 @@
                     </div>
                 </div>
 
-                {{-- ══════════════════════════════════════════════════════════ --}}
-                {{-- MODAL: Snapshot Detail                                     --}}
-                {{-- ══════════════════════════════════════════════════════════ --}}
+                {{-- Snapshot Detail Modal --}}
                 <div class="modal fade" id="snapshotDetailModal" tabindex="-1" aria-hidden="true">
                     <div class="modal-dialog modal-xl modal-dialog-scrollable">
                         <div class="modal-content sf-modal-content border-0 shadow-lg">
@@ -444,10 +431,7 @@
                                     <div class="mb-2">
                                         <div class="sf-search-wrap" style="max-width:340px;">
                                             <svg class="sf-search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8.5" cy="8.5" r="5"/><path d="m13 13 3.5 3.5"/></svg>
-                                            <input type="text" class="sf-search-input"
-                                                id="detailSearchInput"
-                                                placeholder="Search by name or admission no…"
-                                                oninput="filterDetailRows(this.value);">
+                                            <input type="text" class="sf-search-input" id="detailSearchInput" placeholder="Search by name or admission no…" oninput="filterDetailRows(this.value);">
                                         </div>
                                     </div>
                                     <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -512,9 +496,7 @@
     </div>
 </div>
 
-{{-- ============================================================ --}}
-{{-- STYLES                                                       --}}
-{{-- ============================================================ --}}
+{{-- STYLES --}}
 <style>
 /* ─── Design Tokens ─────────────────────────────────────────── */
 :root {
@@ -770,12 +752,13 @@
 
 /* ─── Action Button in Row ──────────────────────────────────── */
 .sf-row-action {
-    display: flex; align-items: center; gap: 4px;
+    display: inline-flex; align-items: center; gap: 4px;
     padding: 6px 10px; border-radius: var(--sf-radius-sm);
     border: 0.5px solid var(--sf-border-med);
     background: transparent; font-size: 12px; font-weight: 500;
     color: var(--sf-text-2); cursor: pointer;
     transition: all var(--sf-transition); white-space: nowrap;
+    text-decoration: none;
 }
 .sf-row-action:hover { background: var(--sf-accent-soft); border-color: var(--sf-accent); color: var(--sf-accent); }
 
@@ -899,8 +882,42 @@ function sfColor(id) { return SF_COLORS[(id - 1) % SF_COLORS.length]; }
 function sfInitials(name) { return (name||'').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
 
 // ============================================================================
-// SWEET ALERT HELPER
+// HELPER FUNCTIONS
 // ============================================================================
+function escapeHtml(str) {
+    if (!str) return str ?? '';
+    return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+}
+
+function setSpinner(on) {
+    document.getElementById('register-loading-spinner')?.classList.toggle('d-none', !on);
+}
+
+async function apiFetch(url, method, body) {
+    const res  = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
+        body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok && !data.success) throw new Error(data.message || `HTTP ${res.status}`);
+    return data;
+}
+
+function getSelectedStudentIds() {
+    return [...document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked')]
+        .map(cb => parseInt(cb.closest('.sf-student-row')?.querySelector('.id')?.dataset?.id))
+        .filter(Boolean);
+}
+
+function getSelectedSubjectClasses() {
+    return [...document.querySelectorAll('.subject-checkbox:checked')].map(cb => ({
+        subjectclassid: parseInt(cb.dataset.subjectclassid),
+        staffid       : parseInt(cb.dataset.staffid),
+        termid        : parseInt(cb.dataset.termid),
+    }));
+}
+
 function showSweetAlert(title, message, type, success = true) {
     Swal.fire({
         title,
@@ -925,11 +942,13 @@ function toggleSubjectCard(card) {
     card.classList.toggle('is-checked', cb.checked);
     updateSubjectCount();
 }
+
 function updateSubjectCount() {
     const total = document.querySelectorAll('.subject-checkbox:checked').length;
     const el = document.getElementById('subjectTeacherCount');
     if (el) el.textContent = total;
 }
+
 function selectAllSubjects() {
     document.querySelectorAll('.subject-checkbox').forEach(cb => {
         cb.checked = true;
@@ -937,6 +956,7 @@ function selectAllSubjects() {
     });
     updateSubjectCount();
 }
+
 function deselectAllSubjects() {
     document.querySelectorAll('.subject-checkbox').forEach(cb => {
         cb.checked = false;
@@ -944,6 +964,7 @@ function deselectAllSubjects() {
     });
     updateSubjectCount();
 }
+
 function initializeSubjectCards() {
     document.querySelectorAll('.subject-checkbox:checked').forEach(cb => {
         cb.closest('.subject-check-card')?.classList.add('is-checked');
@@ -976,6 +997,7 @@ function buildSubjectTeacherLookup() {
     });
     return lookup;
 }
+
 function resolveTeacher(subjectName, termId, lookup) {
     const key = `${subjectName.trim().toLowerCase()}||${String(termId ?? '').trim()}`;
     if (lookup[key]?.length) return lookup[key].join(', ');
@@ -987,156 +1009,144 @@ function resolveTeacher(subjectName, termId, lookup) {
 }
 
 // ============================================================================
-// DOM READY
-// ============================================================================
-document.addEventListener('DOMContentLoaded', function () {
-    initializeSubjectCards();
-
-    // Rewrite existing server-rendered rows to sf-student-row style
-    rewriteExistingRows();
-
-    const imgModal = document.getElementById('imageViewModal');
-    if (imgModal) {
-        imgModal.addEventListener('show.bs.modal', function (event) {
-            const btn = event.relatedTarget;
-            const src = btn?.getAttribute('data-image');
-            document.getElementById('enlargedImage').src = src || '{{ asset("storage/student_avatars/unnamed.jpg") }}';
-        });
-    }
-
-    document.getElementById('registeredClassesModal')?.addEventListener('show.bs.modal', loadRegisteredClasses);
-    document.getElementById('archivePerPage')?.addEventListener('change', () => loadArchivedPage(1));
-    document.getElementById('snapshotNotesInput')?.addEventListener('input', function () {
-        document.getElementById('snapshotNotesCount').textContent = this.value.length;
-    });
-    document.getElementById('archiveSearch')?.addEventListener('input', function () {
-        clearTimeout(archiveSearchTimer);
-        archiveSearchTimer = setTimeout(() => loadArchivedPage(1), 400);
-    });
-    document.getElementById('archiveTermFilter')?.addEventListener('change', () => loadArchivedPage(1));
-
-    document.getElementById('checkAll')?.addEventListener('change', function () {
-        document.querySelectorAll('#studentTableBody input[name="chk_child"]').forEach(cb => {
-            cb.checked = this.checked;
-            cb.closest('.sf-student-row')?.classList.toggle('sf-selected', this.checked);
-        });
-        toggleBatchButtons();
-    });
-
-    document.addEventListener('change', function (e) {
-        if (e.target?.name === 'chk_child') {
-            e.target.closest('.sf-student-row')?.classList.toggle('sf-selected', e.target.checked);
-            toggleBatchButtons();
-            const all     = document.querySelectorAll('#studentTableBody input[name="chk_child"]');
-            const checked = document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked');
-            const ca      = document.getElementById('checkAll');
-            if (ca) ca.checked = all.length > 0 && all.length === checked.length;
-        }
-    });
-
-    setupPaginationLinks();
-});
-
-// ============================================================================
-// REWRITE SERVER-RENDERED ROWS INTO SF STYLE
+// CONVERT TABLE ROWS TO DIV ROWS
 // ============================================================================
 function rewriteExistingRows() {
     const body = document.getElementById('studentTableBody');
     if (!body) return;
-    const oldRows = body.querySelectorAll('tr');
-    if (!oldRows.length) return;
+
+    // Check if there's a table element inside
+    const table = body.querySelector('table');
+    if (!table) {
+        // Already converted or no table, just attach listeners
+        attachCheckboxListeners();
+        return;
+    }
+
+    const oldRows = table.querySelectorAll('tbody tr');
+    if (!oldRows.length) {
+        // Check for empty message
+        const emptyMsg = table.querySelector('td[colspan]');
+        if (emptyMsg) {
+            body.innerHTML = `<div class="sf-no-result">${emptyMsg.textContent || 'No students found'}</div>`;
+        }
+        return;
+    }
 
     let html = '';
     oldRows.forEach((tr, i) => {
-        const idEl   = tr.querySelector('.id');
-        const id     = idEl?.dataset?.id || '';
-        const admEl  = tr.querySelector('.admissionno');
-        const adm    = admEl?.dataset?.admissionno || admEl?.textContent?.trim() || '';
-        const name   = tr.querySelector('.fw-semibold')?.textContent?.trim() ||
-                       tr.cells?.[3]?.textContent?.trim() || '';
-        const cls    = tr.cells?.[4]?.textContent?.trim() || '';
-        const gender = tr.cells?.[5]?.textContent?.trim() || '';
-        const actionCell = tr.cells?.[6]?.innerHTML || '';
-        const pic = tr.querySelector('[data-image]')?.getAttribute('data-image') || '';
+        // Extract data from table cells
+        const cells = tr.querySelectorAll('td');
+
+        // Get ID from first cell's data-id attribute
+        const idCell = cells[0];
+        const id = idCell?.querySelector('.id')?.dataset?.id ||
+                   idCell?.querySelector('[data-id]')?.dataset?.id || '';
+
+        // Get admission number
+        const admissionCell = tr.querySelector('td.admissionno') || cells[2];
+        const admission = admissionCell?.dataset?.admissionno ||
+                         admissionCell?.textContent?.trim() || '';
+
+        // Get name
+        const nameCell = tr.querySelector('td.name') || cells[3];
+        const name = nameCell?.dataset?.name ||
+                    nameCell?.querySelector('h6')?.textContent?.trim() || '';
+
+        // Get class
+        const classCell = tr.querySelector('td.class') || cells[4];
+        const classText = classCell?.dataset?.class ||
+                         classCell?.querySelector('.badge')?.textContent?.trim() || '';
+
+        // Get gender
+        const genderCell = tr.querySelector('td.gender') || cells[5];
+        const gender = genderCell?.dataset?.gender ||
+                      genderCell?.textContent?.trim() || '';
+
+        // Get action buttons
+        const actionCell = cells[6];
+        let actionHtml = actionCell?.innerHTML || '';
+
+        // Clean up action buttons
+        actionHtml = actionHtml
+            .replace(/class="btn btn-[^"]*"/g, 'class="sf-row-action"')
+            .replace(/class="btn-group[^"]*"/g, 'class="d-flex gap-1"')
+            .replace(/btn-subtle-primary/g, 'sf-row-action')
+            .replace(/btn-icon/g, '');
 
         const initials = sfInitials(name);
         const [bg, fg] = sfColor(parseInt(id) || i + 1);
         const isFemale = gender.toLowerCase() === 'female';
 
-        // Rewrite action cell buttons with sf style
-        const actionHtml = actionCell
-            .replace(/class="btn btn-[^"]*"/g, 'class="sf-row-action"')
-            .replace(/class="btn-group[^"]*"/g, 'class="d-flex gap-1"');
-
-        html += `<div class="sf-student-row" style="animation-delay:${i * 30}ms" onclick="sfToggleRow(event, this)">
-            <div class="sf-chk-wrap">
+        html += `<div class="sf-student-row" style="animation-delay:${i * 30}ms">
+            <div class="sf-chk-wrap" onclick="event.stopPropagation()">
                 <input type="checkbox" class="sf-chk" name="chk_child" onclick="event.stopPropagation()">
                 <span class="id" data-id="${escapeHtml(id)}" style="display:none;"></span>
             </div>
-            <div class="sf-student-info">
-                <div class="sf-avatar" style="background:${bg};color:${fg};">${escapeHtml(initials)}</div>
+            <div class="sf-student-info" onclick="event.stopPropagation()">
+                <div class="sf-avatar" style="background:${bg};color:${fg};">
+                    ${initials}
+                </div>
                 <div>
                     <div class="sf-student-name">${escapeHtml(name)}</div>
-                    <div class="sf-student-adm admissionno" data-admissionno="${escapeHtml(adm)}">${escapeHtml(adm)}</div>
+                    <div class="sf-student-adm admissionno" data-admissionno="${escapeHtml(admission)}">${escapeHtml(admission)}</div>
                 </div>
             </div>
-            <div class="sf-td">${escapeHtml(cls)}</div>
-            <div>
+            <div class="sf-td">${escapeHtml(classText)}</div>
+            <div onclick="event.stopPropagation()">
                 <span class="sf-badge ${isFemale ? 'sf-badge-f' : 'sf-badge-m'}">${escapeHtml(gender)}</span>
             </div>
-            <div class="sf-td">${escapeHtml(id ? '' : '')}</div>
-            <div onclick="event.stopPropagation();">${actionHtml}</div>
+            <div class="sf-td"></div>
+            <div onclick="event.stopPropagation();">
+                ${actionHtml}
+            </div>
         </div>`;
     });
 
     body.innerHTML = html;
-    toggleBatchButtons();
-}
-
-function sfToggleRow(e, row) {
-    if (e.target.classList.contains('sf-chk') || e.target.closest('.sf-row-action') || e.target.closest('a') || e.target.closest('button')) return;
-    const cb = row.querySelector('input[name="chk_child"]');
-    if (!cb) return;
-    cb.checked = !cb.checked;
-    row.classList.toggle('sf-selected', cb.checked);
-    toggleBatchButtons();
-    const all     = document.querySelectorAll('#studentTableBody input[name="chk_child"]');
-    const checked = document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked');
-    const ca      = document.getElementById('checkAll');
-    if (ca) ca.checked = all.length > 0 && all.length === checked.length;
+    attachCheckboxListeners();
 }
 
 // ============================================================================
-// HELPERS
+// CHECKBOX EVENT HANDLERS
 // ============================================================================
-function escapeHtml(str) {
-    if (!str) return str ?? '';
-    return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-}
-function setSpinner(on) {
-    document.getElementById('register-loading-spinner')?.classList.toggle('d-none', !on);
-}
-async function apiFetch(url, method, body) {
-    const res  = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
-        body: JSON.stringify(body),
+function attachCheckboxListeners() {
+    // Student row checkboxes
+    document.querySelectorAll('#studentTableBody input[name="chk_child"]').forEach(cb => {
+        cb.removeEventListener('change', handleStudentCheckboxChange);
+        cb.addEventListener('change', handleStudentCheckboxChange);
     });
-    const data = await res.json();
-    if (!res.ok && !data.success) throw new Error(data.message || `HTTP ${res.status}`);
-    return data;
+
+    // Check all checkbox
+    const checkAll = document.getElementById('checkAll');
+    if (checkAll) {
+        checkAll.removeEventListener('change', handleCheckAllChange);
+        checkAll.addEventListener('change', handleCheckAllChange);
+    }
 }
-function getSelectedStudentIds() {
-    return [...document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked')]
-        .map(cb => parseInt(cb.closest('.sf-student-row')?.querySelector('.id')?.dataset?.id))
-        .filter(Boolean);
+
+function handleStudentCheckboxChange(e) {
+    const row = e.target.closest('.sf-student-row');
+    if (row) row.classList.toggle('sf-selected', e.target.checked);
+    toggleBatchButtons();
+    updateCheckAllState();
 }
-function getSelectedSubjectClasses() {
-    return [...document.querySelectorAll('.subject-checkbox:checked')].map(cb => ({
-        subjectclassid: parseInt(cb.dataset.subjectclassid),
-        staffid       : parseInt(cb.dataset.staffid),
-        termid        : parseInt(cb.dataset.termid),
-    }));
+
+function handleCheckAllChange(e) {
+    document.querySelectorAll('#studentTableBody input[name="chk_child"]').forEach(cb => {
+        cb.checked = e.target.checked;
+        cb.closest('.sf-student-row')?.classList.toggle('sf-selected', e.target.checked);
+    });
+    toggleBatchButtons();
+}
+
+function updateCheckAllState() {
+    const all = document.querySelectorAll('#studentTableBody input[name="chk_child"]');
+    const checked = document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked');
+    const checkAll = document.getElementById('checkAll');
+    if (checkAll) {
+        checkAll.checked = all.length > 0 && all.length === checked.length;
+    }
 }
 
 // ============================================================================
@@ -1177,6 +1187,7 @@ function uncheckStudent(id, btn) {
     const cb = row.querySelector('input[name="chk_child"]');
     if (cb) { cb.checked = false; row.classList.remove('sf-selected'); }
     toggleBatchButtons();
+    updateCheckAllState();
 }
 
 // ============================================================================
@@ -1211,35 +1222,56 @@ function filterData() {
     .then(r => r.text())
     .then(html => {
         const doc  = new DOMParser().parseFromString(html, 'text/html');
-        const pick = (id) => ({ fresh: doc.getElementById(id), live: document.getElementById(id) });
 
-        const tb = pick('studentTableBody');
-        if (tb.fresh && tb.live) { tb.live.innerHTML = tb.fresh.innerHTML; rewriteExistingRows(); }
+        // Handle student table body
+        const newBodyContent = doc.getElementById('studentTableBody');
+        const liveBody = document.getElementById('studentTableBody');
 
-        const pg = pick('pagination-container');
-        if (pg.fresh && pg.live) pg.live.innerHTML = pg.fresh.innerHTML;
+        if (newBodyContent && liveBody) {
+            const content = newBodyContent.innerHTML;
+            // Check if content contains table (old format) or divs (new format)
+            if (content.includes('<table') || content.includes('<table>')) {
+                liveBody.innerHTML = content;
+                rewriteExistingRows();
+            } else {
+                liveBody.innerHTML = content;
+                attachCheckboxListeners();
+            }
+        }
 
-        const sc = pick('studentcount');
-        if (sc.fresh && sc.live) sc.live.textContent = sc.fresh.textContent;
+        // Handle pagination
+        const newPagination = doc.getElementById('pagination-container');
+        const livePagination = document.getElementById('pagination-container');
+        if (newPagination && livePagination) {
+            livePagination.innerHTML = newPagination.innerHTML;
+            setupPaginationLinks();
+        }
 
-        const stc = pick('subjectTeachersContainer');
-        if (stc.fresh && subjectTeachersContainer) {
-            subjectTeachersContainer.innerHTML = stc.fresh.innerHTML;
+        // Handle student count
+        const newCount = doc.getElementById('studentcount');
+        const liveCount = document.getElementById('studentcount');
+        if (newCount && liveCount) liveCount.textContent = newCount.textContent;
+
+        // Handle subject teachers container
+        const newSubjectContainer = doc.getElementById('subjectTeachersContainer');
+        if (newSubjectContainer && subjectTeachersContainer) {
+            subjectTeachersContainer.innerHTML = newSubjectContainer.innerHTML;
             const count = subjectTeachersContainer.querySelectorAll('.subject-checkbox').length;
             if (subjectTeacherCount) subjectTeacherCount.textContent = count;
             if (subjectTeachersCard) subjectTeachersCard.style.display = count > 0 ? 'block' : 'none';
             initializeSubjectCards();
         }
 
+        // Update admission no options
         const admNos = [...new Set(
-            [...doc.querySelectorAll('#studentTableBody .admissionno')]
+            [...doc.querySelectorAll('#studentTableBody .admissionno, #studentTableBody [data-admissionno]')]
                 .map(el => el.dataset.admissionno || el.textContent.trim())
                 .filter(Boolean)
         )].sort();
         updateAdmissionNoOptions(admNos.map(a => ({ admissionno: a })));
 
         updateSubjectCount();
-        setupPaginationLinks();
+        toggleBatchButtons();
     })
     .catch(err => {
         if (body) body.innerHTML = `<div class="sf-no-result"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>Error loading data.</div>`;
@@ -1252,7 +1284,9 @@ function filterData() {
 // ============================================================================
 function setupPaginationLinks() {
     document.querySelectorAll('#pagination-container a').forEach(link => {
-        link.addEventListener('click', function (e) {
+        const newLink = link.cloneNode(true);
+        link.parentNode?.replaceChild(newLink, link);
+        newLink.addEventListener('click', function (e) {
             e.preventDefault();
             if (this.href && !this.classList.contains('disabled')) loadPage(this.href);
         });
@@ -1271,20 +1305,39 @@ function loadPage(url) {
     .then(r => r.text())
     .then(html => {
         const doc  = new DOMParser().parseFromString(html, 'text/html');
-        const pick = (id) => ({ fresh: doc.getElementById(id), live: document.getElementById(id) });
 
-        const tb = pick('studentTableBody');
-        if (tb.fresh && tb.live) { tb.live.innerHTML = tb.fresh.innerHTML; rewriteExistingRows(); }
+        // Handle student table body
+        const newBodyContent = doc.getElementById('studentTableBody');
+        const liveBody = document.getElementById('studentTableBody');
 
-        const pg = pick('pagination-container');
-        if (pg.fresh && pg.live) pg.live.innerHTML = pg.fresh.innerHTML;
+        if (newBodyContent && liveBody) {
+            const content = newBodyContent.innerHTML;
+            if (content.includes('<table') || content.includes('<tr>')) {
+                liveBody.innerHTML = content;
+                rewriteExistingRows();
+            } else {
+                liveBody.innerHTML = content;
+                attachCheckboxListeners();
+            }
+        }
 
-        const sc = pick('studentcount');
-        if (sc.fresh && sc.live) sc.live.textContent = sc.fresh.textContent;
+        // Handle pagination
+        const newPagination = doc.getElementById('pagination-container');
+        const livePagination = document.getElementById('pagination-container');
+        if (newPagination && livePagination) {
+            livePagination.innerHTML = newPagination.innerHTML;
+            setupPaginationLinks();
+        }
 
-        const stc = pick('subjectTeachersContainer');
-        if (stc.fresh && subjectTeachersContainer) {
-            subjectTeachersContainer.innerHTML = stc.fresh.innerHTML;
+        // Handle student count
+        const newCount = doc.getElementById('studentcount');
+        const liveCount = document.getElementById('studentcount');
+        if (newCount && liveCount) liveCount.textContent = newCount.textContent;
+
+        // Handle subject teachers container
+        const newSubjectContainer = doc.getElementById('subjectTeachersContainer');
+        if (newSubjectContainer && subjectTeachersContainer) {
+            subjectTeachersContainer.innerHTML = newSubjectContainer.innerHTML;
             const count = subjectTeachersContainer.querySelectorAll('.subject-checkbox').length;
             if (subjectTeacherCount) subjectTeacherCount.textContent = count;
             if (subjectTeachersCard) subjectTeachersCard.style.display = count > 0 ? 'block' : 'none';
@@ -1292,7 +1345,7 @@ function loadPage(url) {
         }
 
         updateSubjectCount();
-        setupPaginationLinks();
+        toggleBatchButtons();
     })
     .catch(() => {
         if (body) body.innerHTML = `<div class="sf-no-result">Error loading data.</div>`;
@@ -1555,7 +1608,7 @@ function printRegisteredClasses() {
                 <td style="padding:8px 12px;border-bottom:0.5pt solid #e5e7eb;font-size:10pt;text-align:center;">
                     ${countText ? `<span style="background:#EAF3DE;color:#27500A;padding:2px 8px;border-radius:20px;font-size:9pt;">${escapeHtml(countText)}</span>` : '—'}
                 </td>
-            </tr>`;
+             </tr>`;
         });
         termsHtml += `<div style="margin-bottom:24pt;break-inside:avoid;">
             <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1.5pt solid #1e3a5f;padding-bottom:8pt;margin-bottom:0;">
@@ -1569,9 +1622,9 @@ function printRegisteredClasses() {
                     <th style="padding:7px 12px;text-align:left;font-size:9pt;color:#6b7280;font-weight:500;border-bottom:1pt solid #d1d5db;">Subject</th>
                     <th style="padding:7px 12px;text-align:left;font-size:9pt;color:#6b7280;font-weight:500;border-bottom:1pt solid #d1d5db;">Teacher</th>
                     <th style="padding:7px 12px;text-align:center;font-size:9pt;color:#6b7280;font-weight:500;border-bottom:1pt solid #d1d5db;">Students</th>
-                </tr></thead>
+                 </tr></thead>
                 <tbody>${rows}</tbody>
-            </table>
+             </table>
         </div>`;
     });
     const logoHtml = school.logo
@@ -1645,13 +1698,9 @@ async function loadArchivedPage(page) {
 
 function renderSnapshotCards(rows) {
     const container  = document.getElementById('snapshotCardsContainer');
-    const restoreBtn = document.getElementById('restoreSelectedBtn');
-    const deleteBtn  = document.getElementById('deleteSelectedBtn');
 
     if (!rows.length) {
         container.innerHTML = `<div class="sf-empty-state"><i class="ri-archive-line ri-3x d-block mb-2"></i>No unregistration snapshots found.</div>`;
-        restoreBtn?.classList.add('d-none');
-        deleteBtn?.classList.add('d-none');
         return;
     }
 
@@ -1819,7 +1868,7 @@ function renderSnapshotDetailTable(rows, assessmentHeaders) {
             <td class="text-muted small">${escapeHtml(row.admissionno ?? '—')}</td>
             <td>${genderBadge}</td>
             ${scoresCells}
-        </tr>`;
+         </tr>`;
     });
 
     document.getElementById('snapshotDetailBody').innerHTML =
@@ -1863,11 +1912,13 @@ async function restoreEntireSnapshot() {
     if (!currentSnapshotRows.length) return;
     await doRestore(currentSnapshotRows.map(r => r.archive_id), 'all students in this snapshot');
 }
+
 async function restoreDetailSelected() {
     const ids = [...document.querySelectorAll('.detail-chk:checked')].map(cb => parseInt(cb.value));
     if (!ids.length) return;
     await doRestore(ids, `${ids.length} selected student${ids.length !== 1 ? 's' : ''}`);
 }
+
 async function doRestore(archiveIds, label) {
     const ok = await Swal.fire({ title: 'Restore Registration?', html: `<p>Restore <strong>${label}</strong>? Original scores will be recovered.</p>`, icon: 'question', showCancelButton: true, confirmButtonColor: '#1a7a4a', confirmButtonText: 'Yes, restore!', });
     if (!ok.isConfirmed) return;
@@ -1888,6 +1939,7 @@ async function doRestore(archiveIds, label) {
         spinner?.classList.add('d-none');
     }
 }
+
 async function restoreSingleSnapshot(metaEncoded) {
     const meta = JSON.parse(decodeURIComponent(metaEncoded));
     const ok = await Swal.fire({ title: 'Restore Snapshot?', html: `<p>Restore all students in "<strong>${escapeHtml(meta.snapshot_name)}</strong>"?</p>`, icon: 'question', showCancelButton: true, confirmButtonColor: '#1a7a4a', confirmButtonText: 'Yes, restore all!', });
@@ -1913,6 +1965,7 @@ async function restoreSingleSnapshot(metaEncoded) {
         spinner?.classList.add('d-none');
     }
 }
+
 async function deleteSnapshotGroup(metaEncoded) {
     const meta = JSON.parse(decodeURIComponent(metaEncoded));
     const ok = await Swal.fire({ title: 'Delete Snapshot?', html: `<p class="text-danger">Permanently delete "<strong>${escapeHtml(meta.snapshot_name)}</strong>"? This cannot be undone.</p>`, icon: 'error', showCancelButton: true, confirmButtonColor: '#dc3545', confirmButtonText: 'Yes, delete permanently', });
@@ -1938,6 +1991,7 @@ async function deleteSnapshotGroup(metaEncoded) {
         spinner?.classList.add('d-none');
     }
 }
+
 async function deleteDetailSelected() {
     const ids = [...document.querySelectorAll('.detail-chk:checked')].map(cb => parseInt(cb.value));
     if (!ids.length) return;
@@ -1961,6 +2015,31 @@ async function deleteDetailSelected() {
     }
 }
 
-async function restoreSelected()         { /* handled per-card */ }
-async function permanentDeleteSelected() { /* handled per-card */ }
+// ============================================================================
+// DOM READY
+// ============================================================================
+document.addEventListener('DOMContentLoaded', function () {
+    initializeSubjectCards();
+    rewriteExistingRows();
+
+    const imgModal = document.getElementById('imageViewModal');
+    if (imgModal) {
+        imgModal.addEventListener('show.bs.modal', function (event) {
+            const btn = event.relatedTarget;
+            const src = btn?.getAttribute('data-image');
+            document.getElementById('enlargedImage').src = src || '{{ asset("storage/student_avatars/unnamed.jpg") }}';
+        });
+    }
+
+    document.getElementById('registeredClassesModal')?.addEventListener('show.bs.modal', loadRegisteredClasses);
+    document.getElementById('archivePerPage')?.addEventListener('change', () => loadArchivedPage(1));
+    document.getElementById('snapshotNotesInput')?.addEventListener('input', function () {
+        document.getElementById('snapshotNotesCount').textContent = this.value.length;
+    });
+    document.getElementById('archiveSearch')?.addEventListener('input', function () {
+        clearTimeout(archiveSearchTimer);
+        archiveSearchTimer = setTimeout(() => loadArchivedPage(1), 400);
+    });
+    document.getElementById('archiveTermFilter')?.addEventListener('change', () => loadArchivedPage(1));
+});
 </script>
