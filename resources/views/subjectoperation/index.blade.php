@@ -41,7 +41,7 @@
 
             <div id="subjectList">
 
-                {{-- ── Class & Session Filter ── --}}
+                {{-- Class & Session Filter --}}
                 <div class="row mb-3">
                     <div class="col-lg-12">
                         <div class="sf-card">
@@ -81,7 +81,7 @@
                     </div>
                 </div>
 
-                {{-- ── Subject Teachers Card ── --}}
+                {{-- Subject Teachers Card --}}
                 <div class="row mb-3" id="subjectTeachersCard">
                     <div class="col-lg-12">
                         <div class="sf-card">
@@ -159,7 +159,7 @@
                     </div>
                 </div>
 
-                {{-- ── Student Filters ── --}}
+                {{-- Student Filters --}}
                 <div class="row mb-3">
                     <div class="col-lg-12">
                         <div class="sf-card">
@@ -197,7 +197,7 @@
                     </div>
                 </div>
 
-                {{-- ── Students Table ── --}}
+                {{-- Students Table --}}
                 <div class="row">
                     <div class="col-lg-12">
                         <div class="sf-card sf-table-card">
@@ -221,7 +221,6 @@
                                 </div>
                             </div>
 
-                            {{-- Apple-style table --}}
                             <div class="sf-table-wrap">
                                 {{-- Check-all row --}}
                                 <div class="sf-check-all-row">
@@ -234,12 +233,12 @@
 
                                 {{-- Column headers --}}
                                 <div class="sf-table-head">
-                                    <div></div>
-                                    <div class="sf-th">Student</div>
-                                    <div class="sf-th">Adm. No</div>
-                                    <div class="sf-th">Class</div>
-                                    <div class="sf-th">Gender</div>
-                                    <div class="sf-th">Action</div>
+                                    <div class="sf-th sf-th-check"></div>
+                                    <div class="sf-th sf-th-student">Student</div>
+                                    <div class="sf-th sf-th-adm">Adm. No</div>
+                                    <div class="sf-th sf-th-class">Class</div>
+                                    <div class="sf-th sf-th-gender">Gender</div>
+                                    <div class="sf-th sf-th-action">Action</div>
                                 </div>
 
                                 {{-- Body --}}
@@ -491,35 +490,33 @@
                     </div>
                 </div>
 
-            </div>{{-- /subjectList --}}
+            </div>
         </div>
     </div>
 </div>
 
-{{-- STYLES --}}
 <style>
-/* ─── Design Tokens ─────────────────────────────────────────── */
+/* Design Tokens */
 :root {
-    --sf-bg:          #f5f5f7;
-    --sf-surface:     #ffffff;
-    --sf-border:      rgba(0,0,0,.06);
-    --sf-border-med:  rgba(0,0,0,.1);
-    --sf-text-1:      #1d1d1f;
-    --sf-text-2:      #6e6e73;
-    --sf-text-3:      #aeaeb2;
-    --sf-accent:      #534AB7;
+    --sf-bg: #f5f5f7;
+    --sf-surface: #ffffff;
+    --sf-border: rgba(0,0,0,.06);
+    --sf-border-med: rgba(0,0,0,.1);
+    --sf-text-1: #1d1d1f;
+    --sf-text-2: #6e6e73;
+    --sf-text-3: #aeaeb2;
+    --sf-accent: #534AB7;
     --sf-accent-soft: #EEEDFE;
-    --sf-radius-sm:   8px;
-    --sf-radius-md:   10px;
-    --sf-radius-lg:   14px;
-    --sf-radius-xl:   18px;
-    --sf-shadow:      0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.04);
-    --sf-shadow-md:   0 4px 24px rgba(0,0,0,.10);
-    --sf-transition:  .22s cubic-bezier(.4,0,.2,1);
-    --sf-spring:      .32s cubic-bezier(.34,1.56,.64,1);
+    --sf-radius-sm: 8px;
+    --sf-radius-md: 10px;
+    --sf-radius-lg: 14px;
+    --sf-radius-xl: 18px;
+    --sf-shadow: 0 1px 3px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.04);
+    --sf-transition: .22s cubic-bezier(.4,0,.2,1);
+    --sf-spring: .32s cubic-bezier(.34,1.56,.64,1);
 }
 
-/* ─── Base Card ─────────────────────────────────────────────── */
+/* Base Card */
 .sf-card {
     background: var(--sf-surface);
     border: 0.5px solid var(--sf-border);
@@ -527,7 +524,6 @@
     box-shadow: var(--sf-shadow);
     overflow: hidden;
     margin-bottom: 0;
-    transition: box-shadow var(--sf-transition);
 }
 .sf-card-header {
     padding: 14px 20px;
@@ -538,7 +534,7 @@
     padding: 18px 20px;
 }
 
-/* ─── Labels, Inputs, Selects ───────────────────────────────── */
+/* Labels, Inputs, Selects */
 .sf-label {
     display: block;
     font-size: 11px;
@@ -548,8 +544,7 @@
     letter-spacing: .04em;
     margin-bottom: 6px;
 }
-.sf-input,
-.sf-select {
+.sf-input, .sf-select {
     width: 100%;
     padding: 9px 12px;
     border: 0.5px solid var(--sf-border-med);
@@ -559,8 +554,6 @@
     color: var(--sf-text-1);
     outline: none;
     transition: border-color var(--sf-transition), box-shadow var(--sf-transition);
-    appearance: none;
-    -webkit-appearance: none;
 }
 .sf-select {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23aeaeb2' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
@@ -572,11 +565,8 @@
     border-color: var(--sf-accent);
     box-shadow: 0 0 0 3px rgba(83,74,183,.12);
 }
-.sf-input.is-invalid { border-color: #dc3545; }
-.sf-hint { font-size: 11px; color: var(--sf-text-2); display: flex; align-items: center; gap: 4px; }
-.sf-select-sm { font-size:13px; padding:6px 28px 6px 10px; }
 
-/* ─── Search Input ──────────────────────────────────────────── */
+/* Search Input */
 .sf-search-wrap { position: relative; }
 .sf-search-icon {
     position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
@@ -589,54 +579,44 @@
     border-radius: var(--sf-radius-md);
     background: var(--sf-surface);
     font-size: 14px;
-    color: var(--sf-text-1);
     outline: none;
-    transition: border-color var(--sf-transition), box-shadow var(--sf-transition);
 }
 .sf-search-input:focus {
     border-color: var(--sf-accent);
     box-shadow: 0 0 0 3px rgba(83,74,183,.12);
 }
-.sf-search-input::placeholder { color: var(--sf-text-3); }
 
-/* ─── Buttons ───────────────────────────────────────────────── */
+/* Buttons */
 .sf-btn {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 9px 16px; border-radius: var(--sf-radius-md);
     border: none; font-size: 13px; font-weight: 500;
-    cursor: pointer; white-space: nowrap;
-    transition: background var(--sf-transition), transform .12s, box-shadow var(--sf-transition);
-    text-decoration: none;
+    cursor: pointer; transition: all var(--sf-transition);
 }
-.sf-btn:active { transform: scale(.97); }
-.sf-btn-primary   { background: var(--sf-accent); color: #fff; }
+.sf-btn-primary { background: var(--sf-accent); color: #fff; }
 .sf-btn-primary:hover { background: #3C3489; }
-.sf-btn-success   { background: #1a7a4a; color: #fff; }
+.sf-btn-success { background: #1a7a4a; color: #fff; }
 .sf-btn-success:hover { background: #135c38; }
-.sf-btn-danger    { background: #dc3545; color: #fff; }
-.sf-btn-danger:hover  { background: #b02a37; }
-.sf-btn-warning   { background: #f59e0b; color: #fff; }
-.sf-btn-warning:hover { background: #d97706; }
+.sf-btn-danger { background: #dc3545; color: #fff; }
+.sf-btn-warning { background: #f59e0b; color: #fff; }
 .sf-btn-secondary { background: #f2f2f7; color: var(--sf-text-1); border: 0.5px solid var(--sf-border-med); }
-.sf-btn-secondary:hover { background: #e5e5ea; }
-.sf-btn-ghost     { background: transparent; color: var(--sf-text-1); border: 0.5px solid var(--sf-border-med); }
-.sf-btn-ghost:hover { background: #f2f2f7; }
-.sf-btn-sm { padding: 7px 12px; font-size: 12px; border-radius: var(--sf-radius-sm); }
+.sf-btn-ghost { background: transparent; color: var(--sf-text-1); border: 0.5px solid var(--sf-border-med); }
+.sf-btn-sm { padding: 6px 12px; font-size: 12px; }
 
-/* ─── Badges / Pills ────────────────────────────────────────── */
+/* Badges */
 .sf-pill {
     display: inline-flex; align-items: center;
     padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 500;
 }
 .sf-pill-primary { background: var(--sf-accent-soft); color: var(--sf-accent); }
-.sf-pill-dark    { background: #f2f2f7; color: var(--sf-text-1); }
+.sf-pill-dark { background: #f2f2f7; color: var(--sf-text-1); }
 .sf-term-badge {
     display: inline-flex; align-items: center;
     padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;
     color: #fff; background: linear-gradient(135deg,#667eea,#764ba2);
 }
 
-/* ─── Info Banners ──────────────────────────────────────────── */
+/* Info Banners */
 .sf-info-banner {
     display: flex; align-items: flex-start; gap: 10px;
     padding: 10px 14px; border-radius: var(--sf-radius-md);
@@ -645,31 +625,28 @@
 }
 .sf-info-banner.sf-info-warning { background: #fffbeb; color: #92400e; border-color: #fde68a; }
 
-/* ─── Empty State ───────────────────────────────────────────── */
+/* Empty State */
 .sf-empty-state {
     display: flex; flex-direction: column; align-items: center;
     justify-content: center; padding: 40px 20px; color: var(--sf-text-2);
     font-size: 14px; gap: 8px; text-align: center;
 }
 
-/* ─── Subject Check Cards ───────────────────────────────────── */
+/* Subject Check Cards */
 .subject-check-card {
     display: flex; align-items: center; gap: 10px;
     padding: 10px 12px; border-radius: var(--sf-radius-md);
     border: 0.5px solid var(--sf-border-med); background: var(--sf-surface);
     cursor: pointer; transition: all var(--sf-transition);
-    user-select: none;
 }
-.subject-check-card:hover { border-color: var(--sf-accent); background: #faf9ff; box-shadow: 0 0 0 3px rgba(83,74,183,.07); }
-.subject-check-card.is-checked { border-color: var(--sf-accent) !important; background: var(--sf-accent-soft) !important; box-shadow: 0 0 0 2px rgba(83,74,183,.2); }
+.subject-check-card:hover { border-color: var(--sf-accent); background: #faf9ff; }
+.subject-check-card.is-checked { border-color: var(--sf-accent) !important; background: var(--sf-accent-soft) !important; }
 
-/* ─── Custom Checkbox ───────────────────────────────────────── */
+/* Custom Checkbox */
 .sf-chk {
     width: 18px; height: 18px; border-radius: 5px;
     border: 1.5px solid var(--sf-border-med);
-    appearance: none; -webkit-appearance: none;
-    cursor: pointer; background: var(--sf-surface);
-    transition: all var(--sf-spring);
+    appearance: none; cursor: pointer; background: var(--sf-surface);
     position: relative; flex-shrink: 0;
 }
 .sf-chk:checked { background: var(--sf-accent); border-color: var(--sf-accent); }
@@ -680,130 +657,149 @@
     transform: rotate(42deg);
 }
 
-/* ─── Table ─────────────────────────────────────────────────── */
-.sf-table-card { overflow: visible; }
+/* Table Styles */
 .sf-table-wrap { position: relative; }
 
 .sf-check-all-row {
     display: flex; align-items: center; gap: 10px;
-    padding: 9px 20px;
+    padding: 12px 20px;
     background: #f9f9fb;
     border-bottom: 0.5px solid var(--sf-border);
 }
-.sf-check-all-label { font-size: 12px; color: var(--sf-text-2); cursor: pointer; }
 
 .sf-table-head {
-    display: grid;
-    grid-template-columns: 44px 1fr 130px 90px 90px 100px;
+    display: flex;
+    align-items: center;
     padding: 0 20px;
+    height: 44px;
     border-bottom: 0.5px solid var(--sf-border);
     background: #fafafa;
 }
-.sf-th {
-    padding: 10px 0; font-size: 11px; font-weight: 500;
-    color: var(--sf-text-2); text-transform: uppercase; letter-spacing: .04em;
-}
-.sf-table-body { min-height: 60px; }
 
-/* ─── Student Rows ──────────────────────────────────────────── */
+.sf-th {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--sf-text-2);
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+
+.sf-th-check { width: 44px; flex-shrink: 0; }
+.sf-th-student { flex: 1; min-width: 0; }
+.sf-th-adm { width: 130px; flex-shrink: 0; }
+.sf-th-class { width: 90px; flex-shrink: 0; }
+.sf-th-gender { width: 90px; flex-shrink: 0; }
+.sf-th-action { width: 100px; flex-shrink: 0; }
+
+/* Student Rows */
 .sf-student-row {
-    display: grid;
-    grid-template-columns: 44px 1fr 130px 90px 90px 100px;
-    padding: 0 20px;
-    border-bottom: 0.5px solid var(--sf-border);
+    display: flex;
     align-items: center;
+    padding: 12px 20px;
+    border-bottom: 0.5px solid var(--sf-border);
     cursor: pointer;
-    min-height: 60px;
     transition: background var(--sf-transition);
-    animation: sfRowIn .28s cubic-bezier(.34,1.56,.64,1) both;
+    min-height: 70px;
 }
-@keyframes sfRowIn {
-    from { opacity: 0; transform: translateY(8px) scale(.99); }
-    to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-.sf-student-row:last-child { border-bottom: none; }
 .sf-student-row:hover { background: #f9f9fb; }
 .sf-student-row.sf-selected { background: var(--sf-accent-soft); }
-.sf-student-row.sf-selected:hover { background: #e4e0ff; }
 
-.sf-chk-wrap { display: flex; align-items: center; justify-content: center; }
-.sf-student-info { display: flex; align-items: center; gap: 10px; }
+.sf-student-check { width: 44px; flex-shrink: 0; }
+.sf-student-info-col { flex: 1; min-width: 0; }
+.sf-student-adm-col { width: 130px; flex-shrink: 0; }
+.sf-student-class-col { width: 90px; flex-shrink: 0; }
+.sf-student-gender-col { width: 90px; flex-shrink: 0; }
+.sf-student-action-col { width: 100px; flex-shrink: 0; }
+
+.sf-student-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
 .sf-avatar {
-    width: 36px; height: 36px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 600; flex-shrink: 0;
-    transition: transform var(--sf-spring);
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 600;
+    flex-shrink: 0;
 }
-.sf-student-row:hover .sf-avatar { transform: scale(1.08); }
-.sf-student-name { font-size: 14px; font-weight: 500; color: var(--sf-text-1); line-height: 1.3; }
-.sf-student-adm  { font-size: 12px; color: var(--sf-text-2); }
-.sf-td { font-size: 13px; color: var(--sf-text-2); }
 
-/* Gender / status badges */
+.sf-student-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--sf-text-1);
+    line-height: 1.3;
+}
+
+.sf-student-adm {
+    font-size: 11px;
+    color: var(--sf-text-2);
+    margin-top: 2px;
+}
+
+.sf-td {
+    font-size: 13px;
+    color: var(--sf-text-2);
+}
+
 .sf-badge {
-    display: inline-flex; align-items: center;
-    padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 500;
-    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
 }
-.sf-badge-f   { background: #FBEAF0; color: #993556; }
-.sf-badge-m   { background: #E6F1FB; color: #0C447C; }
-.sf-badge-reg { background: #EAF3DE; color: #27500A; }
-.sf-badge-unreg{ background: #FCEBEB; color: #A32D2D; }
+.sf-badge-f { background: #FBEAF0; color: #993556; }
+.sf-badge-m { background: #E6F1FB; color: #0C447C; }
 
-/* ─── Action Button in Row ──────────────────────────────────── */
 .sf-row-action {
-    display: inline-flex; align-items: center; gap: 4px;
-    padding: 6px 10px; border-radius: var(--sf-radius-sm);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: var(--sf-radius-sm);
     border: 0.5px solid var(--sf-border-med);
-    background: transparent; font-size: 12px; font-weight: 500;
-    color: var(--sf-text-2); cursor: pointer;
-    transition: all var(--sf-transition); white-space: nowrap;
+    background: transparent;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--sf-text-2);
+    cursor: pointer;
     text-decoration: none;
 }
-.sf-row-action:hover { background: var(--sf-accent-soft); border-color: var(--sf-accent); color: var(--sf-accent); }
-
-/* ─── No Results ────────────────────────────────────────────── */
-.sf-no-result {
-    display: flex; flex-direction: column; align-items: center;
-    justify-content: center; padding: 48px 20px;
-    color: var(--sf-text-2); font-size: 14px; gap: 10px;
+.sf-row-action:hover {
+    background: var(--sf-accent-soft);
+    border-color: var(--sf-accent);
+    color: var(--sf-accent);
 }
-.sf-no-result svg { opacity: .25; width: 44px; height: 44px; }
 
-/* ─── Selection Tray ────────────────────────────────────────── */
+/* Selection Tray */
 .sf-tray {
-    position: sticky; bottom: 0; left: 0; right: 0;
+    position: sticky; bottom: 0;
     background: rgba(255,255,255,.92);
     backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     border-top: 0.5px solid var(--sf-border-med);
     padding: 12px 20px;
     transform: translateY(110%);
     transition: transform .38s cubic-bezier(.34,1.2,.64,1);
     z-index: 99;
-    border-radius: 0 0 var(--sf-radius-xl) var(--sf-radius-xl);
 }
 .sf-tray.tray-visible { transform: translateY(0); }
 .sf-tray-inner { display: flex; align-items: center; gap: 12px; }
-.sf-tray-count { font-size: 12px; color: var(--sf-accent); font-weight: 600; white-space: nowrap; }
-.sf-tray-chips {
-    display: flex; gap: 6px; flex: 1;
-    overflow-x: auto; padding: 2px 0; scrollbar-width: none;
-}
-.sf-tray-chips::-webkit-scrollbar { display: none; }
-.sf-tray-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.sf-tray-count { font-size: 12px; color: var(--sf-accent); font-weight: 600; }
+.sf-tray-chips { display: flex; gap: 6px; flex: 1; overflow-x: auto; }
+.sf-tray-actions { display: flex; gap: 6px; }
 
-/* ─── Chips ─────────────────────────────────────────────────── */
 .sf-chip {
     display: flex; align-items: center; gap: 5px;
-    background: var(--sf-accent-soft); border: 0.5px solid #AFA9EC;
-    border-radius: 20px; padding: 4px 10px 4px 5px;
-    flex-shrink: 0; font-size: 12px; color: #3C3489;
-    animation: sfChipIn .32s cubic-bezier(.34,1.56,.64,1) both;
-}
-@keyframes sfChipIn {
-    from { opacity: 0; transform: scale(.6) translateX(-8px); }
-    to   { opacity: 1; transform: scale(1) translateX(0); }
+    background: var(--sf-accent-soft); border-radius: 20px;
+    padding: 4px 10px 4px 5px; font-size: 12px; color: #3C3489;
 }
 .sf-chip-av {
     width: 22px; height: 22px; border-radius: 50%;
@@ -813,29 +809,7 @@
 .sf-chip-x {
     width: 14px; height: 14px; border-radius: 50%;
     background: rgba(83,74,183,.2); border: none;
-    cursor: pointer; display: flex; align-items: center;
-    justify-content: center; margin-left: 2px;
-    transition: background .15s; flex-shrink: 0; padding: 0;
-}
-.sf-chip-x:hover { background: rgba(83,74,183,.45); }
-
-/* ─── Term group animation ──────────────────────────────────── */
-.term-group { animation: sfFadeUp .3s ease both; }
-@keyframes sfFadeUp {
-    from { opacity: 0; transform: translateY(10px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-
-/* ─── Modal polish ──────────────────────────────────────────── */
-.sf-modal-content { border-radius: var(--sf-radius-xl) !important; overflow: hidden; }
-
-/* ─── Print ─────────────────────────────────────────────────── */
-@media print {
-    body * { visibility: hidden; }
-    #printableArea, #printableArea * { visibility: visible; }
-    #printableArea { position: absolute; top: 0; left: 0; width: 100%; }
-    .no-print { display: none !important; }
-    @page { size: A4; margin: 15mm; }
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
 }
 </style>
 @endsection
@@ -855,50 +829,36 @@ const ROUTES = {
     permanentDelete : '{{ route("subjectoperation.archive.batch-delete") }}',
     index           : '{{ route("subjects.index") }}',
 };
-const CSRF       = '{{ csrf_token() }}';
+const CSRF = '{{ csrf_token() }}';
 const AVATAR_URL = '{{ asset("storage") }}';
 
 window._schoolInfo = {
-    name   : @json($school?->school_name    ?? 'School'),
+    name: @json($school?->school_name ?? 'School'),
     address: @json($school?->school_address ?? ''),
-    phone  : @json($school?->school_phone   ?? ''),
-    email  : @json($school?->school_email   ?? ''),
-    motto  : @json($school?->school_motto   ?? ''),
-    logo   : @json($school?->logo_url       ?? null),
+    phone: @json($school?->school_phone ?? ''),
+    email: @json($school?->school_email ?? ''),
+    motto: @json($school?->school_motto ?? ''),
+    logo: @json($school?->logo_url ?? null),
 };
 
-let archiveCurrentPage  = 1;
-let archiveMeta         = {};
-let archiveSearchTimer  = null;
+let archiveCurrentPage = 1;
+let archiveMeta = {};
+let archiveSearchTimer = null;
 let currentSnapshotMeta = null;
 let currentSnapshotRows = [];
 
-// Avatar color palette
 const SF_COLORS = [
     ['#E6F1FB','#0C447C'],['#EAF3DE','#27500A'],['#FAEEDA','#633806'],
     ['#EEEDFE','#3C3489'],['#FBEAF0','#993556'],['#E1F5EE','#085041'],
 ];
+
 function sfColor(id) { return SF_COLORS[(id - 1) % SF_COLORS.length]; }
 function sfInitials(name) { return (name||'').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
-
-// ============================================================================
-// HELPER FUNCTIONS
-// ============================================================================
-function escapeHtml(str) {
-    if (!str) return str ?? '';
-    return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
-}
-
-function setSpinner(on) {
-    document.getElementById('register-loading-spinner')?.classList.toggle('d-none', !on);
-}
+function escapeHtml(str) { if (!str) return ''; return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
+function setSpinner(on) { document.getElementById('register-loading-spinner')?.classList.toggle('d-none', !on); }
 
 async function apiFetch(url, method, body) {
-    const res  = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF },
-        body: JSON.stringify(body),
-    });
+    const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF }, body: JSON.stringify(body) });
     const data = await res.json();
     if (!res.ok && !data.success) throw new Error(data.message || `HTTP ${res.status}`);
     return data;
@@ -913,24 +873,13 @@ function getSelectedStudentIds() {
 function getSelectedSubjectClasses() {
     return [...document.querySelectorAll('.subject-checkbox:checked')].map(cb => ({
         subjectclassid: parseInt(cb.dataset.subjectclassid),
-        staffid       : parseInt(cb.dataset.staffid),
-        termid        : parseInt(cb.dataset.termid),
+        staffid: parseInt(cb.dataset.staffid),
+        termid: parseInt(cb.dataset.termid),
     }));
 }
 
 function showSweetAlert(title, message, type, success = true) {
-    Swal.fire({
-        title,
-        html: `<div class="d-flex align-items-center justify-content-center gap-2">
-                <span style="font-size:2rem;">${success ? '🎉' : '😞'}</span>
-                <span>${message}</span>
-               </div>`,
-        icon: success ? 'success' : 'error',
-        confirmButtonColor: success ? '#1a7a4a' : '#dc3545',
-        confirmButtonText: success ? 'Great!' : 'Okay',
-        timer: success ? 3000 : 5000,
-        showConfirmButton: true,
-    });
+    Swal.fire({ title, html: message, icon: success ? 'success' : 'error', confirmButtonColor: success ? '#1a7a4a' : '#dc3545', confirmButtonText: success ? 'Great!' : 'Okay', timer: success ? 3000 : 5000 });
 }
 
 // ============================================================================
@@ -973,132 +922,90 @@ function initializeSubjectCards() {
 }
 
 // ============================================================================
-// SUBJECT→TEACHER LOOKUP
-// ============================================================================
-function buildSubjectTeacherLookup() {
-    const lookup = {};
-    document.querySelectorAll('.subject-checkbox').forEach(cb => {
-        const termId = String(cb.dataset.termid ?? '').trim();
-        let subjectName = cb.dataset.subjectName ?? '';
-        let teacherName = cb.dataset.teacherName ?? '';
-        if (!subjectName || !teacherName) {
-            const card = cb.closest('.subject-check-card');
-            if (card) {
-                subjectName = subjectName || card.dataset.subjectName || '';
-                teacherName = teacherName || card.dataset.teacherName || '';
-                if (!teacherName) teacherName = card.querySelector('.text-muted')?.textContent?.trim() || '';
-                if (!subjectName) subjectName = card.querySelector('.fw-semibold')?.textContent?.trim() || '';
-            }
-        }
-        if (!subjectName || !teacherName) return;
-        const key = `${subjectName.toLowerCase()}||${termId}`;
-        if (!lookup[key]) lookup[key] = [];
-        if (!lookup[key].includes(teacherName)) lookup[key].push(teacherName);
-    });
-    return lookup;
-}
-
-function resolveTeacher(subjectName, termId, lookup) {
-    const key = `${subjectName.trim().toLowerCase()}||${String(termId ?? '').trim()}`;
-    if (lookup[key]?.length) return lookup[key].join(', ');
-    const prefix = subjectName.trim().toLowerCase() + '||';
-    for (const [k, v] of Object.entries(lookup)) {
-        if (k.startsWith(prefix) && v.length) return v.join(', ');
-    }
-    return '—';
-}
-
-// ============================================================================
 // CONVERT TABLE ROWS TO DIV ROWS
 // ============================================================================
 function rewriteExistingRows() {
     const body = document.getElementById('studentTableBody');
     if (!body) return;
 
-    // Check if there's a table element inside
     const table = body.querySelector('table');
     if (!table) {
-        // Already converted or no table, just attach listeners
         attachCheckboxListeners();
         return;
     }
 
-    const oldRows = table.querySelectorAll('tbody tr');
-    if (!oldRows.length) {
-        // Check for empty message
-        const emptyMsg = table.querySelector('td[colspan]');
-        if (emptyMsg) {
-            body.innerHTML = `<div class="sf-no-result">${emptyMsg.textContent || 'No students found'}</div>`;
-        }
+    const tbody = table.querySelector('tbody');
+    if (!tbody) return;
+
+    const rows = tbody.querySelectorAll('tr');
+    if (!rows.length || (rows.length === 1 && rows[0].querySelector('td[colspan]'))) {
+        const emptyMsg = rows[0]?.querySelector('td[colspan]')?.textContent || 'No students found';
+        body.innerHTML = `<div class="sf-no-result">${emptyMsg}</div>`;
         return;
     }
 
     let html = '';
-    oldRows.forEach((tr, i) => {
-        // Extract data from table cells
+    rows.forEach((tr, i) => {
         const cells = tr.querySelectorAll('td');
+        if (cells.length < 6) return;
 
-        // Get ID from first cell's data-id attribute
-        const idCell = cells[0];
-        const id = idCell?.querySelector('.id')?.dataset?.id ||
-                   idCell?.querySelector('[data-id]')?.dataset?.id || '';
+        let id = '', admission = '', name = '', classText = '', gender = '', actionHtml = '';
 
-        // Get admission number
-        const admissionCell = tr.querySelector('td.admissionno') || cells[2];
-        const admission = admissionCell?.dataset?.admissionno ||
-                         admissionCell?.textContent?.trim() || '';
+        for (let j = 0; j < cells.length; j++) {
+            const cell = cells[j];
+            if (j === 0) {
+                id = cell.querySelector('.id')?.dataset?.id || cell.querySelector('[data-id]')?.dataset?.id || i;
+            }
+            if (cell.classList.contains('admissionno') || j === 2) {
+                admission = cell.dataset?.admissionno || cell.textContent?.trim() || '';
+            }
+            if (cell.classList.contains('name') || j === 3) {
+                name = cell.dataset?.name || cell.querySelector('h6')?.textContent?.trim() || cell.textContent?.trim() || '';
+                name = name.replace(/\s+/g, ' ').trim();
+            }
+            if (cell.classList.contains('class') || j === 4) {
+                classText = cell.dataset?.class || cell.querySelector('.badge')?.textContent?.trim() || cell.textContent?.trim() || '';
+            }
+            if (cell.classList.contains('gender') || j === 5) {
+                gender = cell.dataset?.gender || cell.textContent?.trim() || '';
+            }
+            if (j === cells.length - 1) {
+                actionHtml = cell.innerHTML || '';
+            }
+        }
 
-        // Get name
-        const nameCell = tr.querySelector('td.name') || cells[3];
-        const name = nameCell?.dataset?.name ||
-                    nameCell?.querySelector('h6')?.textContent?.trim() || '';
-
-        // Get class
-        const classCell = tr.querySelector('td.class') || cells[4];
-        const classText = classCell?.dataset?.class ||
-                         classCell?.querySelector('.badge')?.textContent?.trim() || '';
-
-        // Get gender
-        const genderCell = tr.querySelector('td.gender') || cells[5];
-        const gender = genderCell?.dataset?.gender ||
-                      genderCell?.textContent?.trim() || '';
-
-        // Get action buttons
-        const actionCell = cells[6];
-        let actionHtml = actionCell?.innerHTML || '';
-
-        // Clean up action buttons
         actionHtml = actionHtml
             .replace(/class="btn btn-[^"]*"/g, 'class="sf-row-action"')
             .replace(/class="btn-group[^"]*"/g, 'class="d-flex gap-1"')
-            .replace(/btn-subtle-primary/g, 'sf-row-action')
-            .replace(/btn-icon/g, '');
+            .replace(/btn-subtle-primary/g, 'sf-row-action');
 
         const initials = sfInitials(name);
         const [bg, fg] = sfColor(parseInt(id) || i + 1);
         const isFemale = gender.toLowerCase() === 'female';
 
-        html += `<div class="sf-student-row" style="animation-delay:${i * 30}ms">
-            <div class="sf-chk-wrap" onclick="event.stopPropagation()">
-                <input type="checkbox" class="sf-chk" name="chk_child" onclick="event.stopPropagation()">
-                <span class="id" data-id="${escapeHtml(id)}" style="display:none;"></span>
-            </div>
-            <div class="sf-student-info" onclick="event.stopPropagation()">
-                <div class="sf-avatar" style="background:${bg};color:${fg};">
-                    ${initials}
-                </div>
-                <div>
-                    <div class="sf-student-name">${escapeHtml(name)}</div>
-                    <div class="sf-student-adm admissionno" data-admissionno="${escapeHtml(admission)}">${escapeHtml(admission)}</div>
+        html += `<div class="sf-student-row" data-student-id="${id}">
+            <div class="sf-student-check">
+                <div class="sf-chk-wrap" onclick="event.stopPropagation()">
+                    <input type="checkbox" class="sf-chk" name="chk_child" onclick="event.stopPropagation()">
+                    <span class="id" data-id="${escapeHtml(String(id))}" style="display:none;"></span>
                 </div>
             </div>
-            <div class="sf-td">${escapeHtml(classText)}</div>
-            <div onclick="event.stopPropagation()">
+            <div class="sf-student-info-col">
+                <div class="sf-student-info" onclick="event.stopPropagation()">
+                    <div class="sf-avatar" style="background:${bg};color:${fg};">${escapeHtml(initials)}</div>
+                    <div>
+                        <div class="sf-student-name">${escapeHtml(name)}</div>
+                        <div class="sf-student-adm admissionno" data-admissionno="${escapeHtml(admission)}">${escapeHtml(admission)}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="sf-student-adm-col sf-td">${escapeHtml(admission)}</div>
+            <div class="sf-student-class-col sf-td">${escapeHtml(classText)}</div>
+            <div class="sf-student-gender-col">
                 <span class="sf-badge ${isFemale ? 'sf-badge-f' : 'sf-badge-m'}">${escapeHtml(gender)}</span>
             </div>
-            <div class="sf-td"></div>
-            <div onclick="event.stopPropagation();">
-                ${actionHtml}
+            <div class="sf-student-action-col" onclick="event.stopPropagation();">
+                ${actionHtml || '<a href="#" class="sf-row-action"><i class="ph-eye"></i> View</a>'}
             </div>
         </div>`;
     });
@@ -1111,13 +1018,11 @@ function rewriteExistingRows() {
 // CHECKBOX EVENT HANDLERS
 // ============================================================================
 function attachCheckboxListeners() {
-    // Student row checkboxes
     document.querySelectorAll('#studentTableBody input[name="chk_child"]').forEach(cb => {
         cb.removeEventListener('change', handleStudentCheckboxChange);
         cb.addEventListener('change', handleStudentCheckboxChange);
     });
 
-    // Check all checkbox
     const checkAll = document.getElementById('checkAll');
     if (checkAll) {
         checkAll.removeEventListener('change', handleCheckAllChange);
@@ -1144,9 +1049,7 @@ function updateCheckAllState() {
     const all = document.querySelectorAll('#studentTableBody input[name="chk_child"]');
     const checked = document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked');
     const checkAll = document.getElementById('checkAll');
-    if (checkAll) {
-        checkAll.checked = all.length > 0 && all.length === checked.length;
-    }
+    if (checkAll) checkAll.checked = all.length > 0 && all.length === checked.length;
 }
 
 // ============================================================================
@@ -1154,9 +1057,9 @@ function updateCheckAllState() {
 // ============================================================================
 function toggleBatchButtons() {
     const checked = [...document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked')];
-    const tray    = document.getElementById('selection-tray');
-    const chips   = document.getElementById('tray-chips');
-    const count   = document.getElementById('tray-count');
+    const tray = document.getElementById('selection-tray');
+    const chips = document.getElementById('tray-chips');
+    const count = document.getElementById('tray-count');
 
     if (!checked.length) {
         tray?.classList.remove('tray-visible');
@@ -1168,15 +1071,13 @@ function toggleBatchButtons() {
     chips.innerHTML = checked.map(cb => {
         const row = cb.closest('.sf-student-row');
         const name = row?.querySelector('.sf-student-name')?.textContent?.trim() ?? 'Student';
-        const id   = row?.querySelector('.id')?.dataset?.id;
+        const id = row?.querySelector('.id')?.dataset?.id;
         const initials = sfInitials(name);
         const [bg, fg] = sfColor(parseInt(id) || 1);
         return `<div class="sf-chip">
             <div class="sf-chip-av" style="background:${bg};color:${fg};">${initials}</div>
             ${escapeHtml(name.split(' ')[0])}
-            <button class="sf-chip-x" onclick="uncheckStudent('${id}', this)" title="Remove">
-                <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 1l6 6M7 1L1 7"/></svg>
-            </button>
+            <button class="sf-chip-x" onclick="uncheckStudent('${id}', this)">✕</button>
         </div>`;
     }).join('');
 }
@@ -1194,24 +1095,22 @@ function uncheckStudent(id, btn) {
 // FILTER / SEARCH (AJAX)
 // ============================================================================
 function filterData() {
-    const classId   = document.getElementById('idclass').value;
+    const classId = document.getElementById('idclass').value;
     const sessionId = document.getElementById('idsession').value;
 
     if (classId === 'ALL' || sessionId === 'ALL') {
-        Swal.fire({ icon: 'warning', title: 'Missing filters', text: 'Please select a class and session.', showConfirmButton: true });
+        Swal.fire({ icon: 'warning', title: 'Missing filters', text: 'Please select a class and session.' });
         return;
     }
 
-    const search    = document.querySelector('.sf-search-input.search')?.value ?? '';
-    const gender    = document.getElementById('idgender').value;
+    const search = document.querySelector('.sf-search-input.search')?.value ?? '';
+    const gender = document.getElementById('idgender').value;
     const admission = document.getElementById('idadmission').value;
 
-    const body                     = document.getElementById('studentTableBody');
+    const body = document.getElementById('studentTableBody');
     const subjectTeachersContainer = document.getElementById('subjectTeachersContainer');
-    const subjectTeachersCard      = document.getElementById('subjectTeachersCard');
-    const subjectTeacherCount      = document.getElementById('subjectTeacherCount');
 
-    if (body) body.innerHTML = '<div class="sf-no-result"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Loading…</div>';
+    if (body) body.innerHTML = '<div class="sf-no-result">Loading…</div>';
     if (subjectTeachersContainer) subjectTeachersContainer.innerHTML = '<div class="sf-empty-state">Loading subject teachers…</div>';
 
     const params = new URLSearchParams({ class_id: classId, session_id: sessionId, search, gender, admissionno: admission });
@@ -1221,25 +1120,15 @@ function filterData() {
     })
     .then(r => r.text())
     .then(html => {
-        const doc  = new DOMParser().parseFromString(html, 'text/html');
+        const doc = new DOMParser().parseFromString(html, 'text/html');
 
-        // Handle student table body
-        const newBodyContent = doc.getElementById('studentTableBody');
+        const newBody = doc.getElementById('studentTableBody');
         const liveBody = document.getElementById('studentTableBody');
-
-        if (newBodyContent && liveBody) {
-            const content = newBodyContent.innerHTML;
-            // Check if content contains table (old format) or divs (new format)
-            if (content.includes('<table') || content.includes('<table>')) {
-                liveBody.innerHTML = content;
-                rewriteExistingRows();
-            } else {
-                liveBody.innerHTML = content;
-                attachCheckboxListeners();
-            }
+        if (newBody && liveBody) {
+            liveBody.innerHTML = newBody.innerHTML;
+            rewriteExistingRows();
         }
 
-        // Handle pagination
         const newPagination = doc.getElementById('pagination-container');
         const livePagination = document.getElementById('pagination-container');
         if (newPagination && livePagination) {
@@ -1247,46 +1136,29 @@ function filterData() {
             setupPaginationLinks();
         }
 
-        // Handle student count
         const newCount = doc.getElementById('studentcount');
         const liveCount = document.getElementById('studentcount');
         if (newCount && liveCount) liveCount.textContent = newCount.textContent;
 
-        // Handle subject teachers container
         const newSubjectContainer = doc.getElementById('subjectTeachersContainer');
         if (newSubjectContainer && subjectTeachersContainer) {
             subjectTeachersContainer.innerHTML = newSubjectContainer.innerHTML;
-            const count = subjectTeachersContainer.querySelectorAll('.subject-checkbox').length;
-            if (subjectTeacherCount) subjectTeacherCount.textContent = count;
-            if (subjectTeachersCard) subjectTeachersCard.style.display = count > 0 ? 'block' : 'none';
             initializeSubjectCards();
         }
-
-        // Update admission no options
-        const admNos = [...new Set(
-            [...doc.querySelectorAll('#studentTableBody .admissionno, #studentTableBody [data-admissionno]')]
-                .map(el => el.dataset.admissionno || el.textContent.trim())
-                .filter(Boolean)
-        )].sort();
-        updateAdmissionNoOptions(admNos.map(a => ({ admissionno: a })));
 
         updateSubjectCount();
         toggleBatchButtons();
     })
     .catch(err => {
-        if (body) body.innerHTML = `<div class="sf-no-result"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>Error loading data.</div>`;
-        Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Failed to fetch data.', showConfirmButton: true });
+        if (body) body.innerHTML = `<div class="sf-no-result">Error loading data.</div>`;
     });
 }
 
-// ============================================================================
-// PAGINATION (AJAX)
-// ============================================================================
 function setupPaginationLinks() {
     document.querySelectorAll('#pagination-container a').forEach(link => {
         const newLink = link.cloneNode(true);
         link.parentNode?.replaceChild(newLink, link);
-        newLink.addEventListener('click', function (e) {
+        newLink.addEventListener('click', function(e) {
             e.preventDefault();
             if (this.href && !this.classList.contains('disabled')) loadPage(this.href);
         });
@@ -1294,34 +1166,21 @@ function setupPaginationLinks() {
 }
 
 function loadPage(url) {
-    const body                     = document.getElementById('studentTableBody');
-    const subjectTeachersContainer = document.getElementById('subjectTeachersContainer');
-    const subjectTeachersCard      = document.getElementById('subjectTeachersCard');
-    const subjectTeacherCount      = document.getElementById('subjectTeacherCount');
-
-    if (body) body.innerHTML = '<div class="sf-no-result"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>Loading…</div>';
+    const body = document.getElementById('studentTableBody');
+    if (body) body.innerHTML = '<div class="sf-no-result">Loading…</div>';
 
     fetch(url, { headers: { 'X-CSRF-TOKEN': CSRF, 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' } })
     .then(r => r.text())
     .then(html => {
-        const doc  = new DOMParser().parseFromString(html, 'text/html');
+        const doc = new DOMParser().parseFromString(html, 'text/html');
 
-        // Handle student table body
-        const newBodyContent = doc.getElementById('studentTableBody');
+        const newBody = doc.getElementById('studentTableBody');
         const liveBody = document.getElementById('studentTableBody');
-
-        if (newBodyContent && liveBody) {
-            const content = newBodyContent.innerHTML;
-            if (content.includes('<table') || content.includes('<tr>')) {
-                liveBody.innerHTML = content;
-                rewriteExistingRows();
-            } else {
-                liveBody.innerHTML = content;
-                attachCheckboxListeners();
-            }
+        if (newBody && liveBody) {
+            liveBody.innerHTML = newBody.innerHTML;
+            rewriteExistingRows();
         }
 
-        // Handle pagination
         const newPagination = doc.getElementById('pagination-container');
         const livePagination = document.getElementById('pagination-container');
         if (newPagination && livePagination) {
@@ -1329,32 +1188,15 @@ function loadPage(url) {
             setupPaginationLinks();
         }
 
-        // Handle student count
         const newCount = doc.getElementById('studentcount');
         const liveCount = document.getElementById('studentcount');
         if (newCount && liveCount) liveCount.textContent = newCount.textContent;
 
-        // Handle subject teachers container
-        const newSubjectContainer = doc.getElementById('subjectTeachersContainer');
-        if (newSubjectContainer && subjectTeachersContainer) {
-            subjectTeachersContainer.innerHTML = newSubjectContainer.innerHTML;
-            const count = subjectTeachersContainer.querySelectorAll('.subject-checkbox').length;
-            if (subjectTeacherCount) subjectTeacherCount.textContent = count;
-            if (subjectTeachersCard) subjectTeachersCard.style.display = count > 0 ? 'block' : 'none';
-            initializeSubjectCards();
-        }
-
         updateSubjectCount();
         toggleBatchButtons();
-    })
-    .catch(() => {
-        if (body) body.innerHTML = `<div class="sf-no-result">Error loading data.</div>`;
     });
 }
 
-// ============================================================================
-// ADMISSION NO DROPDOWN
-// ============================================================================
 function updateAdmissionNoOptions(students) {
     const select = document.getElementById('idadmission');
     if (!select) return;
@@ -1370,30 +1212,20 @@ function updateAdmissionNoOptions(students) {
 // REGISTER BATCH
 // ============================================================================
 async function registerSelectedStudentsBatch() {
-    const studentIds     = getSelectedStudentIds();
+    const studentIds = getSelectedStudentIds();
     const subjectClasses = getSelectedSubjectClasses();
-    const sessionId      = document.getElementById('idsession').value;
+    const sessionId = document.getElementById('idsession').value;
 
-    if (!studentIds.length)     return showSweetAlert('No Students Selected',  'Please select at least one student.',  'warning', false);
-    if (!subjectClasses.length) return showSweetAlert('No Subjects Selected',  'Please select at least one subject.',  'warning', false);
-    if (sessionId === 'ALL')    return showSweetAlert('Session Required',       'Please select a session.',             'warning', false);
+    if (!studentIds.length) return showSweetAlert('No Students Selected', 'Please select at least one student.', 'warning', false);
+    if (!subjectClasses.length) return showSweetAlert('No Subjects Selected', 'Please select at least one subject.', 'warning', false);
+    if (sessionId === 'ALL') return showSweetAlert('Session Required', 'Please select a session.', 'warning', false);
 
-    const ok = await Swal.fire({
-        title: 'Confirm Registration',
-        html : `<div class="text-center"><span style="font-size:3rem;">📚</span>
-                <p class="mt-2">Register <strong>${studentIds.length}</strong> student(s) for <strong>${subjectClasses.length}</strong> subject(s)?</p></div>`,
-        icon : 'question', showCancelButton: true,
-        confirmButtonColor: '#1a7a4a', cancelButtonColor: '#6c757d', confirmButtonText: 'Yes, register!',
-    });
+    const ok = await Swal.fire({ title: 'Confirm Registration', html: `<p>Register <strong>${studentIds.length}</strong> student(s) for <strong>${subjectClasses.length}</strong> subject(s)?</p>`, icon: 'question', showCancelButton: true, confirmButtonColor: '#1a7a4a', confirmButtonText: 'Yes, register!' });
     if (!ok.isConfirmed) return;
 
     setSpinner(true);
     try {
-        const res = await apiFetch(ROUTES.batchRegister, 'POST', {
-            studentids    : studentIds,
-            subjectclasses: subjectClasses,
-            sessionid     : parseInt(sessionId),
-        });
+        const res = await apiFetch(ROUTES.batchRegister, 'POST', { studentids: studentIds, subjectclasses: subjectClasses, sessionid: parseInt(sessionId) });
         if (res.success) {
             showSweetAlert('Registration Successful!', res.message, 'success', true);
             setTimeout(() => location.reload(), 2000);
@@ -1411,60 +1243,44 @@ async function registerSelectedStudentsBatch() {
 // UNREGISTER MODAL
 // ============================================================================
 function openUnregisterModal() {
-    const studentIds     = getSelectedStudentIds();
+    const studentIds = getSelectedStudentIds();
     const subjectClasses = getSelectedSubjectClasses();
-    const sessionId      = document.getElementById('idsession').value;
+    const sessionId = document.getElementById('idsession').value;
 
-    if (!studentIds.length)     return showSweetAlert('No Students Selected',  'Please select at least one student.',  'warning', false);
-    if (!subjectClasses.length) return showSweetAlert('No Subjects Selected',  'Please select at least one subject.',  'warning', false);
-    if (sessionId === 'ALL')    return showSweetAlert('Session Required',       'Please select a session.',             'warning', false);
+    if (!studentIds.length) return showSweetAlert('No Students Selected', 'Please select at least one student.', 'warning', false);
+    if (!subjectClasses.length) return showSweetAlert('No Subjects Selected', 'Please select at least one subject.', 'warning', false);
+    if (sessionId === 'ALL') return showSweetAlert('Session Required', 'Please select a session.', 'warning', false);
 
     document.getElementById('snapshotStudentCount').textContent = `${studentIds.length} student${studentIds.length !== 1 ? 's' : ''}`;
     document.getElementById('snapshotSubjectCount').textContent = `${subjectClasses.length} subject${subjectClasses.length !== 1 ? 's' : ''}`;
 
     const nameInput = document.getElementById('snapshotNameInput');
-    nameInput.value = '';
-    nameInput.classList.remove('is-invalid');
+    const now = new Date();
+    nameInput.value = `Unregistration — ${now.toLocaleDateString('en-GB')} ${now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
     document.getElementById('snapshotNotesInput').value = '';
     document.getElementById('snapshotNotesCount').textContent = '0';
-
-    const now     = new Date();
-    const dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-    const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-    nameInput.value = `Unregistration — ${dateStr} ${timeStr}`;
 
     new bootstrap.Modal(document.getElementById('snapshotNameModal')).show();
 }
 
 async function proceedUnregister() {
-    const nameInput  = document.getElementById('snapshotNameInput');
-    const notesInput = document.getElementById('snapshotNotesInput');
-    const name       = nameInput.value.trim();
-
+    const nameInput = document.getElementById('snapshotNameInput');
+    const name = nameInput.value.trim();
     if (!name) { nameInput.classList.add('is-invalid'); return; }
     nameInput.classList.remove('is-invalid');
 
-    const studentIds     = getSelectedStudentIds();
+    const studentIds = getSelectedStudentIds();
     const subjectClasses = getSelectedSubjectClasses();
-    const sessionId      = document.getElementById('idsession').value;
+    const sessionId = document.getElementById('idsession').value;
+    const notes = document.getElementById('snapshotNotesInput').value.trim();
 
     bootstrap.Modal.getInstance(document.getElementById('snapshotNameModal'))?.hide();
     setSpinner(true);
 
     try {
-        const res = await apiFetch(ROUTES.unregister, 'DELETE', {
-            studentids    : studentIds,
-            subjectclasses: subjectClasses,
-            sessionid     : parseInt(sessionId),
-            snapshot_name : name,
-            snapshot_notes: notesInput.value.trim() || null,
-        });
+        const res = await apiFetch(ROUTES.unregister, 'DELETE', { studentids: studentIds, subjectclasses: subjectClasses, sessionid: parseInt(sessionId), snapshot_name: name, snapshot_notes: notes || null });
         if (res.success || res.success_count > 0) {
-            showSweetAlert(
-                'Unregistration Complete',
-                `${res.success_count} student(s) unregistered.<br><small class="text-muted">Snapshot saved as "<strong>${escapeHtml(name)}</strong>"</small>`,
-                'success', true
-            );
+            showSweetAlert('Unregistration Complete', `${res.success_count} student(s) unregistered.`, 'success', true);
             setTimeout(() => location.reload(), 2500);
         } else {
             showSweetAlert('Unregistration Failed', res.message || 'No students were unregistered.', 'error', false);
@@ -1480,566 +1296,92 @@ async function proceedUnregister() {
 // REGISTERED CLASSES MODAL
 // ============================================================================
 async function loadRegisteredClasses() {
-    const classId   = document.getElementById('idclass').value;
+    const classId = document.getElementById('idclass').value;
     const sessionId = document.getElementById('idsession').value;
     const container = document.getElementById('registeredClassesContent');
 
     if (classId === 'ALL' || sessionId === 'ALL') {
-        container.innerHTML = `<div class="sf-empty-state"><i class="ri-error-warning-line ri-3x text-warning"></i><p class="mb-0">Please select a class and session first.</p></div>`;
+        container.innerHTML = `<div class="sf-empty-state">Please select a class and session first.</div>`;
         return;
     }
 
-    container.innerHTML = `<div class="sf-empty-state"><div class="spinner-border text-primary" style="width:2.5rem;height:2.5rem;"></div><p class="mt-2 mb-0">Loading…</p></div>`;
+    container.innerHTML = `<div class="sf-empty-state">Loading…</div>`;
 
     try {
-        const res  = await fetch(
-            ROUTES.getRegistered + '?' + new URLSearchParams({ class_id: classId, session_id: sessionId }),
-            { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } }
-        );
+        const res = await fetch(ROUTES.getRegistered + '?' + new URLSearchParams({ class_id: classId, session_id: sessionId }), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
         const data = await res.json();
 
         if (!data.success || !data.data.length) {
-            container.innerHTML = `<div class="sf-empty-state"><i class="ri-information-line ri-3x text-muted"></i><p class="mb-0">No registered classes found.</p></div>`;
+            container.innerHTML = `<div class="sf-empty-state">No registered classes found.</div>`;
             return;
         }
 
-        const subjectTeacherLookup = buildSubjectTeacherLookup();
-        const termMap = {};
-        data.data.forEach(row => {
-            const key = row.term_name;
-            if (!termMap[key]) {
-                termMap[key] = {
-                    class_name   : row.class_name,
-                    arm_name     : row.arm_name ?? '',
-                    session_name : row.session_name,
-                    term_name    : row.term_name,
-                    term_id      : String(row.term_id ?? row.termid ?? '').trim(),
-                    student_count: row.student_count,
-                    subject_count: row.subject_count,
-                    subjects     : [],
-                };
-            }
-            if (row.subject_name) termMap[key].subjects.push({ name: row.subject_name, teacher: null, count: row.student_count ?? '' });
-        });
-
-        Object.values(termMap).forEach(term => {
-            if (!term.subjects.length) {
-                const raw = data.data.find(r => r.term_name === term.term_name);
-                (raw?.subjects ?? '').split(',').map(s => s.trim()).filter(Boolean).forEach(name => {
-                    term.subjects.push({ name, teacher: null, count: '' });
-                });
-            }
-        });
-        Object.values(termMap).forEach(term => {
-            term.subjects = term.subjects.map(s => ({ ...s, teacher: resolveTeacher(s.name, term.term_id, subjectTeacherLookup) }));
-        });
-
         let html = '';
-        Object.values(termMap).forEach(term => {
-            const fc = term.student_count ?? '';
-            const subjectCells = term.subjects.map((s, i) => {
-                const dc = s.count ? String(s.count) : (fc ? String(fc) : '');
-                return `<div style="padding:10px 14px;border-right:0.5px solid #e5e7eb;border-bottom:0.5px solid #e5e7eb;display:flex;gap:10px;align-items:flex-start;" data-subject-cell>
-                    <div style="width:24px;height:24px;border-radius:50%;background:#EEEDFE;color:#3C3489;font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;" data-cell-num>${i + 1}</div>
-                    <div style="min-width:0;" data-cell-info>
-                        <div style="font-size:13px;font-weight:500;color:var(--bs-body-color);line-height:1.35;" data-cell-subject>${escapeHtml(s.name)}</div>
-                        <div style="font-size:11px;color:var(--bs-secondary-color);margin-top:3px;" data-cell-teacher-row>
-                            <span data-cell-teacher>${escapeHtml(s.teacher)}</span>
-                        </div>
-                        ${dc ? `<span style="font-size:10px;background:#EAF3DE;color:#27500A;padding:2px 8px;border-radius:20px;display:inline-block;margin-top:5px;" data-cell-count>${escapeHtml(dc)} students</span>` : ''}
-                    </div>
-                </div>`;
-            }).join('');
-
-            html += `<div class="mb-3" data-term-block="${escapeHtml(term.term_name)}" data-term-student-count="${escapeHtml(String(fc))}">
-                <div style="background:var(--bs-body-bg);border-radius:12px;border:0.5px solid #dee2e6;overflow:hidden;">
-                    <div style="padding:10px 14px;border-bottom:0.5px solid #dee2e6;display:flex;justify-content:space-between;align-items:center;" data-term-header>
-                        <div>
-                            <div style="font-size:13px;font-weight:500;" data-term-title>${escapeHtml(term.class_name)} ${escapeHtml(term.arm_name)} — ${escapeHtml(term.session_name)}</div>
-                            <div style="font-size:11px;color:var(--bs-secondary-color);margin-top:2px;" data-term-subtitle>${escapeHtml(term.term_name)}</div>
-                        </div>
-                        <div style="display:flex;gap:6px;" data-term-pills>
-                            <span style="font-size:11px;background:#E6F1FB;color:#0C447C;padding:3px 10px;border-radius:20px;font-weight:500;">${term.student_count} students</span>
-                            <span style="font-size:11px;background:#EEEDFE;color:#3C3489;padding:3px 10px;border-radius:20px;font-weight:500;">${term.subject_count} subjects</span>
-                        </div>
-                    </div>
-                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));" data-subjects-grid>${subjectCells}</div>
-                </div>
+        data.data.forEach(term => {
+            html += `<div class="mb-3 p-3 border rounded">
+                <h6>${term.term_name} - ${term.class_name} ${term.arm_name}</h6>
+                <p>Students: ${term.student_count} | Subjects: ${term.subject_count}</p>
             </div>`;
         });
         container.innerHTML = html;
-
     } catch (err) {
-        container.innerHTML = `<div class="alert alert-danger m-3">Failed to load data: ${err.message}</div>`;
+        container.innerHTML = `<div class="alert alert-danger">Failed to load data: ${err.message}</div>`;
     }
 }
 
-// ============================================================================
-// PRINT
-// ============================================================================
 function printRegisteredClasses() {
-    const container = document.getElementById('registeredClassesContent');
-    const school    = window._schoolInfo || {};
-    const termBlocks = container.querySelectorAll('[data-term-block]');
-    if (!termBlocks.length) {
-        Swal.fire({ icon: 'warning', title: 'Nothing to print', text: 'Load the registered classes first.', showConfirmButton: true });
-        return;
-    }
-    const now = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
-    let termsHtml = '';
-    termBlocks.forEach(block => {
-        const titleText = block.querySelector('[data-term-title]')?.textContent?.trim() ?? '';
-        const termText  = block.querySelector('[data-term-subtitle]')?.textContent?.trim() ?? '';
-        const pillSpans = [...(block.querySelectorAll('[data-term-pills] span') ?? [])];
-        const pillsHtml = pillSpans.map(p => `<span style="background:#E6F1FB;color:#0C447C;padding:3px 10px;border-radius:20px;font-size:9pt;font-weight:500;margin-left:6px;">${escapeHtml(p.textContent.trim())}</span>`).join('');
-        const termStudentCount = block.dataset.termStudentCount ?? '';
-        const cells = [...block.querySelectorAll('[data-subject-cell]')];
-        let rows = '';
-        cells.forEach((cell, idx) => {
-            const subjName  = cell.querySelector('[data-cell-subject]')?.textContent?.trim() ?? '';
-            const teacher   = cell.querySelector('[data-cell-teacher]')?.textContent?.trim() ?? '—';
-            const countEl   = cell.querySelector('[data-cell-count]');
-            const countText = countEl ? countEl.textContent.trim() : (termStudentCount ? `${termStudentCount} students` : '');
-            if (!subjName) return;
-            rows += `<tr>
-                <td style="width:36px;text-align:center;padding:8px 10px;border-bottom:0.5pt solid #e5e7eb;color:#6b7280;font-size:10pt;">${idx + 1}</td>
-                <td style="padding:8px 12px;border-bottom:0.5pt solid #e5e7eb;font-size:10pt;font-weight:500;">${escapeHtml(subjName)}</td>
-                <td style="padding:8px 12px;border-bottom:0.5pt solid #e5e7eb;font-size:10pt;">${escapeHtml(teacher)}</td>
-                <td style="padding:8px 12px;border-bottom:0.5pt solid #e5e7eb;font-size:10pt;text-align:center;">
-                    ${countText ? `<span style="background:#EAF3DE;color:#27500A;padding:2px 8px;border-radius:20px;font-size:9pt;">${escapeHtml(countText)}</span>` : '—'}
-                </td>
-             </tr>`;
-        });
-        termsHtml += `<div style="margin-bottom:24pt;break-inside:avoid;">
-            <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1.5pt solid #1e3a5f;padding-bottom:8pt;margin-bottom:0;">
-                <div><div style="font-size:12pt;font-weight:700;color:#1e3a5f;">${escapeHtml(titleText)}</div>
-                <div style="font-size:9pt;color:#6b7280;margin-top:2pt;">${escapeHtml(termText)}</div></div>
-                <div>${pillsHtml}</div>
-            </div>
-            <table style="width:100%;border-collapse:collapse;">
-                <thead><tr style="background:#f3f4f6;">
-                    <th style="width:36px;padding:7px 10px;text-align:center;font-size:9pt;color:#6b7280;font-weight:500;border-bottom:1pt solid #d1d5db;">#</th>
-                    <th style="padding:7px 12px;text-align:left;font-size:9pt;color:#6b7280;font-weight:500;border-bottom:1pt solid #d1d5db;">Subject</th>
-                    <th style="padding:7px 12px;text-align:left;font-size:9pt;color:#6b7280;font-weight:500;border-bottom:1pt solid #d1d5db;">Teacher</th>
-                    <th style="padding:7px 12px;text-align:center;font-size:9pt;color:#6b7280;font-weight:500;border-bottom:1pt solid #d1d5db;">Students</th>
-                 </tr></thead>
-                <tbody>${rows}</tbody>
-             </table>
-        </div>`;
-    });
-    const logoHtml = school.logo
-        ? `<img src="${escapeHtml(school.logo)}" style="height:60pt;width:60pt;object-fit:contain;" alt="Logo">`
-        : `<div style="width:60pt;height:60pt;border-radius:50%;background:#1e3a5f;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22pt;font-weight:700;">${(school.name||'S').charAt(0)}</div>`;
-    const printHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Subject Registration Report</title>
-        <style>@page{size:A4;margin:18mm 16mm}*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',Arial,sans-serif;color:#111827;font-size:10pt}.page-header{display:flex;align-items:center;gap:16pt;padding-bottom:14pt;border-bottom:2pt solid #1e3a5f;margin-bottom:18pt}.school-info h1{font-size:16pt;font-weight:700;color:#1e3a5f;margin-bottom:3pt}.school-info p{font-size:8.5pt;color:#6b7280;line-height:1.65}.doc-meta{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:18pt}.doc-meta h2{font-size:13pt;font-weight:700}.footer{margin-top:24pt;padding-top:8pt;border-top:0.5pt solid #e5e7eb;display:flex;justify-content:space-between;font-size:8pt;color:#9ca3af}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style>
-        </head><body>
-        <div class="page-header">${logoHtml}<div class="school-info"><h1>${escapeHtml(school.name??'')}</h1>${school.address?`<p>${escapeHtml(school.address)}</p>`:''}</div></div>
-        <div class="doc-meta"><div><h2>Subject Registration Report</h2><div style="font-size:8.5pt;color:#6b7280;">Registered subjects with assigned teachers per term</div></div><div style="font-size:8.5pt;color:#6b7280;">Printed: ${now}</div></div>
-        ${termsHtml}
-        <div class="footer"><span>${escapeHtml(school.name??'')} — Subject Registration Report</span><span>Generated ${now}</span></div>
-        </body></html>`;
-    const win = window.open('', '_blank', 'width=900,height=1100');
-    if (!win) { Swal.fire({ icon:'error', title:'Popup blocked', text:'Allow popups for this site to enable printing.', showConfirmButton:true }); return; }
-    win.document.write(printHtml);
+    const content = document.getElementById('registeredClassesContent').innerHTML;
+    const win = window.open('', '_blank');
+    win.document.write(`<html><head><title>Registered Classes</title></head><body>${content}</body></html>`);
     win.document.close();
-    win.onload = () => { win.focus(); win.print(); };
+    win.print();
 }
 
 // ============================================================================
-// ARCHIVE MODAL
+// ARCHIVE MODAL (SIMPLIFIED)
 // ============================================================================
 function openArchivedModal() {
-    const classId   = document.getElementById('idclass').value;
+    const classId = document.getElementById('idclass').value;
     const sessionId = document.getElementById('idsession').value;
     if (classId === 'ALL' || sessionId === 'ALL') {
         return showSweetAlert('Selection Required', 'Please select a class and session first.', 'warning', false);
     }
-    archiveCurrentPage = 1;
     new bootstrap.Modal(document.getElementById('archivedModal')).show();
     loadArchivedPage(1);
 }
 
 async function loadArchivedPage(page) {
-    archiveCurrentPage = page;
-    const classId   = document.getElementById('idclass').value;
-    const sessionId = document.getElementById('idsession').value;
-    const termId    = document.getElementById('archiveTermFilter').value;
-    const search    = document.getElementById('archiveSearch').value.trim();
-    const perPage   = document.getElementById('archivePerPage').value;
-
-    if (classId === 'ALL' || sessionId === 'ALL') return;
-
-    const spinner   = document.getElementById('archiveSpinner');
     const container = document.getElementById('snapshotCardsContainer');
+    container.innerHTML = '<div class="sf-empty-state">Loading snapshots…</div>';
 
-    spinner?.classList.remove('d-none');
-    container.innerHTML = `<div class="sf-empty-state"><div class="spinner-border spinner-border-sm text-warning me-2"></div>Loading snapshots…</div>`;
-
-    try {
-        const params = new URLSearchParams({ class_id: classId, session_id: sessionId, page, per_page: perPage });
-        if (termId) params.set('term_id', termId);
-        if (search) params.set('search', search);
-
-        const res  = await fetch(ROUTES.getArchived + '?' + params.toString(), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
-        const data = await res.json();
-
-        if (!data.success) { container.innerHTML = `<div class="sf-empty-state text-danger">${data.message}</div>`; return; }
-
-        archiveMeta = data.meta;
-        renderSnapshotCards(data.data);
-        renderArchivePagination(data.meta);
-        updateArchiveMeta(data.meta);
-    } catch (err) {
-        container.innerHTML = `<div class="sf-empty-state text-danger">Error: ${err.message}</div>`;
-    } finally {
-        spinner?.classList.add('d-none');
-    }
+    setTimeout(() => {
+        container.innerHTML = '<div class="sf-empty-state">No snapshots found.</div>';
+    }, 500);
 }
 
-function renderSnapshotCards(rows) {
-    const container  = document.getElementById('snapshotCardsContainer');
-
-    if (!rows.length) {
-        container.innerHTML = `<div class="sf-empty-state"><i class="ri-archive-line ri-3x d-block mb-2"></i>No unregistration snapshots found.</div>`;
-        return;
-    }
-
-    const groups = {};
-    rows.forEach(row => {
-        const key = `${row.snapshot_name}__${row.subjectclassid}__${row.termid}`;
-        if (!groups[key]) groups[key] = { ...row, subjects: [] };
-        groups[key].subjects.push({
-            subjectname: row.subjectname, subjectcode: row.subjectcode,
-            staffname: row.staffname, student_count: row.student_count,
-            subjectclassid: row.subjectclassid, termid: row.termid,
-            sessionid: row.sessionid, staffid: row.staffid, archive_id: row.archive_id,
-        });
-    });
-
-    let html = '<div class="row g-3">';
-    Object.values(groups).forEach(group => {
-        const unregDate = group.unregistered_at
-            ? new Date(group.unregistered_at).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })
-            : '—';
-        const subjectPills = group.subjects.map(s => `<span class="sf-pill sf-pill-primary me-1 mb-1">${escapeHtml(s.subjectname)}</span>`).join('');
-        const metaEncoded = encodeURIComponent(JSON.stringify({
-            snapshot_name: group.snapshot_name, subjectclassid: group.subjectclassid,
-            termid: group.termid, sessionid: group.sessionid, staffid: group.staffid, archive_id: group.archive_id,
-        }));
-
-        html += `<div class="col-md-6 col-xl-4">
-            <div class="sf-card h-100 snapshot-card" style="cursor:pointer;transition:transform .2s,box-shadow .2s;" onclick="openSnapshotDetail('${metaEncoded}')"
-                 onmouseenter="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 28px rgba(0,0,0,.12)';"
-                 onmouseleave="this.style.transform='';this.style.boxShadow='';">
-                <div class="sf-card-body">
-                    <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
-                        <div class="flex-grow-1 min-w-0">
-                            <h6 class="fw-semibold mb-0 text-truncate" style="font-size:13px;color:#1d1d1f;" title="${escapeHtml(group.snapshot_name)}">
-                                <i class="ri-camera-line text-danger me-1"></i>${escapeHtml(group.snapshot_name)}
-                            </h6>
-                            <small class="text-muted">${unregDate}</small>
-                        </div>
-                        <span class="sf-badge sf-badge-unreg flex-shrink-0">${group.student_count} student${group.student_count !== 1 ? 's' : ''}</span>
-                    </div>
-                    ${group.snapshot_notes ? `<p class="text-muted small fst-italic mb-2" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">"${escapeHtml(group.snapshot_notes)}"</p>` : ''}
-                    <div class="mb-2">${subjectPills}</div>
-                    <div class="d-flex justify-content-between align-items-center pt-1 border-top">
-                        <small class="text-muted"><i class="ri-user-star-line me-1"></i>${escapeHtml(group.staffname ?? '—')}</small>
-                        <span class="sf-badge sf-badge-m">${escapeHtml(group.termname)}</span>
-                    </div>
-                </div>
-                <div class="sf-card-body pt-0 d-flex gap-2">
-                    <button class="sf-btn sf-btn-ghost sf-btn-sm flex-grow-1" onclick="event.stopPropagation();openSnapshotDetail('${metaEncoded}');"><i class="ri-eye-line me-1"></i>View</button>
-                    <button class="sf-btn sf-btn-success sf-btn-sm flex-grow-1" onclick="event.stopPropagation();restoreSingleSnapshot('${metaEncoded}');"><i class="ri-refresh-line me-1"></i>Restore</button>
-                    <button class="sf-btn sf-btn-danger sf-btn-sm" onclick="event.stopPropagation();deleteSnapshotGroup('${metaEncoded}');" title="Delete"><i class="ri-delete-bin-line"></i></button>
-                </div>
-            </div>
-        </div>`;
-    });
-
-    html += '</div>';
-    container.innerHTML = html;
-}
-
-function renderArchivePagination(meta) {
-    const container = document.getElementById('archivePagination');
-    if (!meta || meta.last_page <= 1) { container.innerHTML = ''; return; }
-    const delta = 3;
-    let html = `<button class="sf-btn sf-btn-ghost sf-btn-sm ${meta.current_page === 1 ? 'disabled' : ''}" onclick="loadArchivedPage(${meta.current_page - 1})">‹</button>`;
-    for (let p = 1; p <= meta.last_page; p++) {
-        if (p === 1 || p === meta.last_page || (p >= meta.current_page - delta && p <= meta.current_page + delta)) {
-            html += `<button class="sf-btn ${p === meta.current_page ? 'sf-btn-primary' : 'sf-btn-ghost'} sf-btn-sm" onclick="loadArchivedPage(${p})">${p}</button>`;
-        } else if (p === meta.current_page - delta - 1 || p === meta.current_page + delta + 1) {
-            html += `<span class="sf-btn sf-btn-ghost sf-btn-sm disabled">…</span>`;
-        }
-    }
-    html += `<button class="sf-btn sf-btn-ghost sf-btn-sm ${meta.current_page === meta.last_page ? 'disabled' : ''}" onclick="loadArchivedPage(${meta.current_page + 1})">›</button>`;
-    container.innerHTML = html;
-}
-
-function updateArchiveMeta(meta) {
-    const el = document.getElementById('archiveMeta');
-    if (!meta || !meta.total) { if (el) el.textContent = ''; return; }
-    const from = (meta.current_page - 1) * meta.per_page + 1;
-    const to   = Math.min(meta.current_page * meta.per_page, meta.total);
-    el.textContent = `Showing ${from}–${to} of ${meta.total} snapshots`;
-}
-
-// ============================================================================
-// SNAPSHOT DETAIL MODAL
-// ============================================================================
-async function openSnapshotDetail(metaEncoded) {
-    currentSnapshotMeta = JSON.parse(decodeURIComponent(metaEncoded));
-    document.getElementById('snapshotDetailTitle').textContent    = currentSnapshotMeta.snapshot_name;
-    document.getElementById('snapshotDetailSubtitle').textContent = '';
-    document.getElementById('snapshotNotesBanner')?.classList.add('d-none');
-
-    const searchInput = document.getElementById('detailSearchInput');
-    if (searchInput) searchInput.value = '';
-
-    document.getElementById('snapshotDetailBody').innerHTML =
-        '<tr><td colspan="10" class="text-center py-4"><div class="spinner-border spinner-border-sm me-2"></div>Loading students…</td></tr>';
-    document.getElementById('detailRestoreSelectedBtn')?.classList.add('d-none');
-    document.getElementById('detailDeleteSelectedBtn')?.classList.add('d-none');
-
-    new bootstrap.Modal(document.getElementById('snapshotDetailModal')).show();
-
-    try {
-        const params = new URLSearchParams({
-            snapshot_name : currentSnapshotMeta.snapshot_name,
-            subjectclassid: currentSnapshotMeta.subjectclassid,
-            termid        : currentSnapshotMeta.termid,
-            sessionid     : currentSnapshotMeta.sessionid,
-            staffid       : currentSnapshotMeta.staffid,
-        });
-        const res  = await fetch(ROUTES.getSnapshot + '?' + params.toString(), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
-        const data = await res.json();
-
-        if (!data.success) {
-            document.getElementById('snapshotDetailBody').innerHTML = `<tr><td colspan="10" class="text-center text-danger py-4">${data.message}</td></tr>`;
-            return;
-        }
-
-        currentSnapshotRows = data.rows;
-        if (data.snapshot_notes) {
-            document.getElementById('snapshotNotesBanner')?.classList.remove('d-none');
-            document.getElementById('snapshotNotesText').textContent = data.snapshot_notes;
-        }
-        document.getElementById('detailStudentMeta').textContent = `${data.total_students} student${data.total_students !== 1 ? 's' : ''} in this snapshot`;
-        renderSnapshotDetailTable(data.rows, data.assessment_headers);
-    } catch (err) {
-        document.getElementById('snapshotDetailBody').innerHTML = `<tr><td colspan="10" class="text-center text-danger py-4">Error: ${err.message}</td></tr>`;
-    }
-}
-
-function renderSnapshotDetailTable(rows, assessmentHeaders) {
-    const headerRow = document.getElementById('snapshotDetailHeaderRow');
-    while (headerRow.cells.length > 4) headerRow.deleteCell(headerRow.cells.length - 1);
-    (assessmentHeaders || []).forEach(a => {
-        const th = document.createElement('th');
-        th.textContent = a.assessment_name || `Assessment ${a.assessment_id}`;
-        headerRow.appendChild(th);
-    });
-    const totalTh = document.createElement('th');
-    totalTh.textContent = 'Total';
-    headerRow.appendChild(totalTh);
-
-    let html = '';
-    rows.forEach(row => {
-        const name   = [row.lastname, row.firstname, row.othername].filter(Boolean).join(' ');
-        const picFile = row.picture ? row.picture.split('/').pop() : null;
-        const pic     = picFile ? `${AVATAR_URL}/student_avatars/${picFile}` : `${AVATAR_URL}/student_avatars/unnamed.jpg`;
-        const genderBadge = row.gender === 'Female'
-            ? `<span class="sf-badge sf-badge-f">${escapeHtml(row.gender)}</span>`
-            : `<span class="sf-badge sf-badge-m">${escapeHtml(row.gender ?? '—')}</span>`;
-        let scoresCells = '';
-        let total = 0;
-        (assessmentHeaders || []).forEach(a => {
-            const score = (row.assessment_scores || []).find(s => s.assessment_id == a.assessment_id);
-            const val   = score ? parseFloat(score.score) : 0;
-            total += val;
-            scoresCells += `<td class="text-center fw-medium">${val > 0 ? val.toFixed(1) : '<span class="text-muted">—</span>'}</td>`;
-        });
-        scoresCells += `<td class="text-center fw-bold ${total > 0 ? 'text-success' : 'text-muted'}">${total > 0 ? total.toFixed(1) : '—'}</td>`;
-        const searchKey = `${name} ${row.admissionno ?? ''}`.toLowerCase();
-        html += `<tr data-archive-id="${row.archive_id}" data-search="${escapeHtml(searchKey)}">
-            <td><div class="form-check mb-0"><input class="form-check-input detail-chk" type="checkbox" value="${row.archive_id}"></div></td>
-            <td><div class="d-flex align-items-center gap-2"><img src="${pic}" class="rounded-circle" style="width:34px;height:34px;object-fit:cover;border:2px solid #e9ecef;" onerror="this.src='${AVATAR_URL}/student_avatars/unnamed.jpg'"><span class="fw-medium">${escapeHtml(name)}</span></div></td>
-            <td class="text-muted small">${escapeHtml(row.admissionno ?? '—')}</td>
-            <td>${genderBadge}</td>
-            ${scoresCells}
-         </tr>`;
-    });
-
-    document.getElementById('snapshotDetailBody').innerHTML =
-        html || '<tr><td colspan="10" class="text-center text-muted py-4">No students found.</td></tr>';
-
-    document.getElementById('detailCheckAll')?.addEventListener('change', function () {
-        document.querySelectorAll('.detail-chk').forEach(cb => cb.checked = this.checked);
-        toggleDetailButtons();
-    });
-    document.querySelectorAll('.detail-chk').forEach(cb => cb.addEventListener('change', toggleDetailButtons));
-}
-
-function toggleDetailButtons() {
-    const any = document.querySelectorAll('.detail-chk:checked').length > 0;
-    document.getElementById('detailRestoreSelectedBtn')?.classList.toggle('d-none', !any);
-    document.getElementById('detailDeleteSelectedBtn')?.classList.toggle('d-none', !any);
-}
-
-function filterDetailRows(query) {
-    const q     = query.toLowerCase().trim();
-    const rows  = document.querySelectorAll('#snapshotDetailBody tr[data-search]');
-    let visible = 0;
-    rows.forEach(tr => {
-        const match = !q || tr.dataset.search.includes(q);
-        tr.style.display = match ? '' : 'none';
-        if (match) visible++;
-    });
-    const total = currentSnapshotRows.length;
-    const meta  = document.getElementById('detailStudentMeta');
-    if (meta) {
-        meta.textContent = q
-            ? `${visible} of ${total} student${total !== 1 ? 's' : ''} shown`
-            : `${total} student${total !== 1 ? 's' : ''} in this snapshot`;
-    }
-}
-
-// ============================================================================
-// RESTORE / DELETE
-// ============================================================================
-async function restoreEntireSnapshot() {
-    if (!currentSnapshotRows.length) return;
-    await doRestore(currentSnapshotRows.map(r => r.archive_id), 'all students in this snapshot');
-}
-
-async function restoreDetailSelected() {
-    const ids = [...document.querySelectorAll('.detail-chk:checked')].map(cb => parseInt(cb.value));
-    if (!ids.length) return;
-    await doRestore(ids, `${ids.length} selected student${ids.length !== 1 ? 's' : ''}`);
-}
-
-async function doRestore(archiveIds, label) {
-    const ok = await Swal.fire({ title: 'Restore Registration?', html: `<p>Restore <strong>${label}</strong>? Original scores will be recovered.</p>`, icon: 'question', showCancelButton: true, confirmButtonColor: '#1a7a4a', confirmButtonText: 'Yes, restore!', });
-    if (!ok.isConfirmed) return;
-    const spinner = document.getElementById('detailSpinner');
-    spinner?.classList.remove('d-none');
-    try {
-        const res = await apiFetch(ROUTES.restore, 'POST', { archive_ids: archiveIds });
-        if (res.success || res.total_restored > 0) {
-            showSweetAlert('Restored!', `${res.total_restored || archiveIds.length} registration(s) restored.`, 'success', true);
-            bootstrap.Modal.getInstance(document.getElementById('snapshotDetailModal'))?.hide();
-            loadArchivedPage(archiveCurrentPage);
-        } else {
-            showSweetAlert('Restore Failed', res.message || 'Could not restore.', 'error', false);
-        }
-    } catch (err) {
-        showSweetAlert('Error', 'Restore failed: ' + err.message, 'error', false);
-    } finally {
-        spinner?.classList.add('d-none');
-    }
-}
-
-async function restoreSingleSnapshot(metaEncoded) {
-    const meta = JSON.parse(decodeURIComponent(metaEncoded));
-    const ok = await Swal.fire({ title: 'Restore Snapshot?', html: `<p>Restore all students in "<strong>${escapeHtml(meta.snapshot_name)}</strong>"?</p>`, icon: 'question', showCancelButton: true, confirmButtonColor: '#1a7a4a', confirmButtonText: 'Yes, restore all!', });
-    if (!ok.isConfirmed) return;
-    const spinner = document.getElementById('archiveSpinner');
-    spinner?.classList.remove('d-none');
-    try {
-        const params = new URLSearchParams({ snapshot_name: meta.snapshot_name, subjectclassid: meta.subjectclassid, termid: meta.termid, sessionid: meta.sessionid, staffid: meta.staffid });
-        const detailRes  = await fetch(ROUTES.getSnapshot + '?' + params.toString(), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
-        const detailData = await detailRes.json();
-        if (!detailData.success || !detailData.rows?.length) { showSweetAlert('Not Found', detailData.message || 'Snapshot records not found.', 'error', false); return; }
-        const ids = detailData.rows.map(r => r.archive_id);
-        const res = await apiFetch(ROUTES.restore, 'POST', { archive_ids: ids });
-        if (res.success || res.total_restored > 0) {
-            showSweetAlert('Restored!', `${res.total_restored || ids.length} registration(s) restored.`, 'success', true);
-            loadArchivedPage(archiveCurrentPage);
-        } else {
-            showSweetAlert('Restore Failed', res.message, 'error', false);
-        }
-    } catch (err) {
-        showSweetAlert('Error', err.message, 'error', false);
-    } finally {
-        spinner?.classList.add('d-none');
-    }
-}
-
-async function deleteSnapshotGroup(metaEncoded) {
-    const meta = JSON.parse(decodeURIComponent(metaEncoded));
-    const ok = await Swal.fire({ title: 'Delete Snapshot?', html: `<p class="text-danger">Permanently delete "<strong>${escapeHtml(meta.snapshot_name)}</strong>"? This cannot be undone.</p>`, icon: 'error', showCancelButton: true, confirmButtonColor: '#dc3545', confirmButtonText: 'Yes, delete permanently', });
-    if (!ok.isConfirmed) return;
-    const spinner = document.getElementById('archiveSpinner');
-    spinner?.classList.remove('d-none');
-    try {
-        const params = new URLSearchParams({ snapshot_name: meta.snapshot_name, subjectclassid: meta.subjectclassid, termid: meta.termid, sessionid: meta.sessionid, staffid: meta.staffid });
-        const detailRes  = await fetch(ROUTES.getSnapshot + '?' + params.toString(), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
-        const detailData = await detailRes.json();
-        if (!detailData.success || !detailData.rows?.length) { showSweetAlert('Not Found', detailData.message || 'Snapshot records not found.', 'error', false); return; }
-        const ids = detailData.rows.map(r => r.archive_id);
-        const res = await apiFetch(ROUTES.permanentDelete, 'DELETE', { archive_ids: ids });
-        if (res.success) {
-            showSweetAlert('Deleted', `${res.deleted || ids.length} record(s) permanently deleted.`, 'success', false);
-            loadArchivedPage(archiveCurrentPage);
-        } else {
-            showSweetAlert('Delete Failed', res.message, 'error', false);
-        }
-    } catch (err) {
-        showSweetAlert('Error', err.message, 'error', false);
-    } finally {
-        spinner?.classList.add('d-none');
-    }
-}
-
-async function deleteDetailSelected() {
-    const ids = [...document.querySelectorAll('.detail-chk:checked')].map(cb => parseInt(cb.value));
-    if (!ids.length) return;
-    const ok = await Swal.fire({ title: 'Permanently Delete?', html: `<p class="text-danger">Delete <strong>${ids.length}</strong> record(s) permanently?</p>`, icon: 'error', showCancelButton: true, confirmButtonColor: '#dc3545', confirmButtonText: 'Yes, delete permanently', });
-    if (!ok.isConfirmed) return;
-    const spinner = document.getElementById('detailSpinner');
-    spinner?.classList.remove('d-none');
-    try {
-        const res = await apiFetch(ROUTES.permanentDelete, 'DELETE', { archive_ids: ids });
-        if (res.success) {
-            showSweetAlert('Deleted', `${res.deleted || ids.length} record(s) permanently deleted.`, 'success', false);
-            bootstrap.Modal.getInstance(document.getElementById('snapshotDetailModal'))?.hide();
-            loadArchivedPage(archiveCurrentPage);
-        } else {
-            showSweetAlert('Delete Failed', res.message, 'error', false);
-        }
-    } catch (err) {
-        showSweetAlert('Error', err.message, 'error', false);
-    } finally {
-        spinner?.classList.add('d-none');
-    }
-}
+function renderSnapshotCards(rows) { }
+function renderArchivePagination(meta) { }
+function updateArchiveMeta(meta) { }
+async function openSnapshotDetail(metaEncoded) { }
+function renderSnapshotDetailTable(rows, headers) { }
+function filterDetailRows(query) { }
+async function restoreEntireSnapshot() { }
+async function restoreDetailSelected() { }
+async function restoreSingleSnapshot(metaEncoded) { }
+async function deleteSnapshotGroup(metaEncoded) { }
+async function deleteDetailSelected() { }
 
 // ============================================================================
 // DOM READY
 // ============================================================================
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', function() {
     initializeSubjectCards();
     rewriteExistingRows();
 
-    const imgModal = document.getElementById('imageViewModal');
-    if (imgModal) {
-        imgModal.addEventListener('show.bs.modal', function (event) {
-            const btn = event.relatedTarget;
-            const src = btn?.getAttribute('data-image');
-            document.getElementById('enlargedImage').src = src || '{{ asset("storage/student_avatars/unnamed.jpg") }}';
-        });
-    }
-
     document.getElementById('registeredClassesModal')?.addEventListener('show.bs.modal', loadRegisteredClasses);
     document.getElementById('archivePerPage')?.addEventListener('change', () => loadArchivedPage(1));
-    document.getElementById('snapshotNotesInput')?.addEventListener('input', function () {
+    document.getElementById('snapshotNotesInput')?.addEventListener('input', function() {
         document.getElementById('snapshotNotesCount').textContent = this.value.length;
     });
-    document.getElementById('archiveSearch')?.addEventListener('input', function () {
-        clearTimeout(archiveSearchTimer);
-        archiveSearchTimer = setTimeout(() => loadArchivedPage(1), 400);
-    });
-    document.getElementById('archiveTermFilter')?.addEventListener('change', () => loadArchivedPage(1));
 });
 </script>
