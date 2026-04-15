@@ -222,7 +222,6 @@
                             </div>
 
                             <div class="sf-table-wrap">
-                                <!-- Check-all row -->
                                 <div class="sf-check-all-row">
                                     <div class="sf-chk-wrap">
                                         <input type="checkbox" class="sf-chk" id="checkAll">
@@ -231,7 +230,6 @@
                                     <span class="sf-check-all-label">Select all visible</span>
                                 </div>
 
-                                <!-- Student Table -->
                                 <table class="table align-middle mb-0" id="subjectListTable">
                                     <thead class="table-light">
                                         <tr>
@@ -249,12 +247,10 @@
                                     </tbody>
                                 </table>
 
-                                <!-- Pagination -->
                                 <div class="d-flex justify-content-end p-3 border-top" id="pagination-container">
                                     {{ $students ? $students->links('pagination::bootstrap-5') : '' }}
                                 </div>
 
-                                <!-- Selection Tray -->
                                 <div class="sf-tray" id="selection-tray">
                                     <div class="sf-tray-inner">
                                         <span class="sf-tray-count" id="tray-count"></span>
@@ -294,9 +290,7 @@
                                 </div>
                                 <div class="mb-3">
                                     <label class="sf-label" for="snapshotNameInput">Snapshot Name <span class="text-danger">*</span></label>
-                                    <input type="text" class="sf-input" id="snapshotNameInput"
-                                        placeholder="e.g. Term 2 Corrections — June 2025"
-                                        maxlength="191" autocomplete="off">
+                                    <input type="text" class="sf-input" id="snapshotNameInput" placeholder="e.g. Term 2 Corrections — June 2025" maxlength="191" autocomplete="off">
                                     <div class="invalid-feedback" id="snapshotNameError">Please enter a snapshot name.</div>
                                     <div class="sf-hint mt-1">
                                         <i class="ri-lightbulb-line text-warning"></i>
@@ -305,9 +299,7 @@
                                 </div>
                                 <div class="mb-1">
                                     <label class="sf-label" for="snapshotNotesInput">Notes <span class="text-muted fw-normal">(optional)</span></label>
-                                    <textarea class="sf-input" id="snapshotNotesInput" rows="3"
-                                        placeholder="Reason for unregistration or any extra context…"
-                                        maxlength="1000"></textarea>
+                                    <textarea class="sf-input" id="snapshotNotesInput" rows="3" placeholder="Reason for unregistration or any extra context…" maxlength="1000"></textarea>
                                     <div class="sf-hint text-end mt-1">
                                         <span id="snapshotNotesCount">0</span>/1000
                                     </div>
@@ -319,7 +311,7 @@
                             </div>
                             <div class="modal-footer border-0 pt-0 px-4 pb-4">
                                 <button type="button" class="sf-btn sf-btn-ghost" data-bs-dismiss="modal">Cancel</button>
-                                <button type="button" class="sf-btn sf-btn-danger px-4" id="confirmUnregisterBtn" onclick="proceedUnregister();">
+                                <button type="button" class="sf-btn sf-btn-danger px-4" onclick="proceedUnregister();">
                                     <i class="ri-user-unfollow-line me-1"></i> Unregister & Save Snapshot
                                 </button>
                             </div>
@@ -432,10 +424,7 @@
                                     <div class="mb-2">
                                         <div class="sf-search-wrap" style="max-width:340px;">
                                             <svg class="sf-search-icon" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="8.5" cy="8.5" r="5"/><path d="m13 13 3.5 3.5"/></svg>
-                                            <input type="text" class="sf-search-input"
-                                                id="detailSearchInput"
-                                                placeholder="Search by name or admission no…"
-                                                oninput="filterDetailRows(this.value);">
+                                            <input type="text" class="sf-search-input" id="detailSearchInput" placeholder="Search by name or admission no…" oninput="filterDetailRows(this.value);">
                                         </div>
                                     </div>
                                     <div class="d-flex align-items-center gap-2 flex-wrap">
@@ -495,7 +484,7 @@
                     </div>
                 </div>
 
-            </div> {{-- /subjectList --}}
+            </div>
         </div>
     </div>
 </div>
@@ -520,165 +509,47 @@
     --sf-transition: .22s cubic-bezier(.4,0,.2,1);
 }
 
-.sf-card {
-    background: var(--sf-surface);
-    border: 0.5px solid var(--sf-border);
-    border-radius: var(--sf-radius-xl);
-    box-shadow: var(--sf-shadow);
-    overflow: hidden;
-}
-
-.sf-card-header {
-    padding: 14px 20px;
-    border-bottom: 0.5px solid var(--sf-border);
-}
-
-.sf-card-body {
-    padding: 18px 20px;
-}
-
-.sf-label {
-    display: block;
-    font-size: 11px;
-    font-weight: 500;
-    color: var(--sf-text-2);
-    text-transform: uppercase;
-    letter-spacing: .04em;
-    margin-bottom: 6px;
-}
-
-.sf-input, .sf-select {
-    width: 100%;
-    padding: 9px 12px;
-    border: 0.5px solid var(--sf-border-med);
-    border-radius: var(--sf-radius-md);
-    background: var(--sf-surface);
-    font-size: 14px;
-    color: var(--sf-text-1);
-    outline: none;
-}
-
-.sf-select {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23aeaeb2' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 10px center;
-    padding-right: 30px;
-}
-
+.sf-card { background: var(--sf-surface); border: 0.5px solid var(--sf-border); border-radius: var(--sf-radius-xl); box-shadow: var(--sf-shadow); overflow: hidden; }
+.sf-card-header { padding: 14px 20px; border-bottom: 0.5px solid var(--sf-border); }
+.sf-card-body { padding: 18px 20px; }
+.sf-label { display: block; font-size: 11px; font-weight: 500; color: var(--sf-text-2); text-transform: uppercase; letter-spacing: .04em; margin-bottom: 6px; }
+.sf-input, .sf-select { width: 100%; padding: 9px 12px; border: 0.5px solid var(--sf-border-med); border-radius: var(--sf-radius-md); background: var(--sf-surface); font-size: 14px; color: var(--sf-text-1); outline: none; }
+.sf-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23aeaeb2' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px; }
 .sf-search-wrap { position: relative; }
-.sf-search-icon {
-    position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
-    width: 15px; height: 15px; color: var(--sf-text-3);
-}
-
-.sf-search-input {
-    width: 100%;
-    padding: 9px 12px 9px 34px;
-    border: 0.5px solid var(--sf-border-med);
-    border-radius: var(--sf-radius-md);
-    font-size: 14px;
-}
-
-.sf-btn {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 9px 16px; border-radius: var(--sf-radius-md);
-    border: none; font-size: 13px; font-weight: 500;
-    cursor: pointer; transition: all .22s;
-}
-
+.sf-search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: var(--sf-text-3); }
+.sf-search-input { width: 100%; padding: 9px 12px 9px 34px; border: 0.5px solid var(--sf-border-med); border-radius: var(--sf-radius-md); font-size: 14px; }
+.sf-btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: var(--sf-radius-md); border: none; font-size: 13px; font-weight: 500; cursor: pointer; transition: all .22s; }
 .sf-btn-primary { background: var(--sf-accent); color: #fff; }
 .sf-btn-success { background: #1a7a4a; color: #fff; }
 .sf-btn-danger { background: #dc3545; color: #fff; }
 .sf-btn-warning { background: #f59e0b; color: #fff; }
 .sf-btn-secondary { background: #f2f2f7; color: var(--sf-text-1); border: 0.5px solid var(--sf-border-med); }
 .sf-btn-ghost { background: transparent; color: var(--sf-text-1); border: 0.5px solid var(--sf-border-med); }
-
-.sf-pill {
-    padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 500;
-}
+.sf-pill { padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 500; }
 .sf-pill-primary { background: var(--sf-accent-soft); color: var(--sf-accent); }
 .sf-pill-dark { background: #f2f2f7; color: var(--sf-text-1); }
-
-.sf-term-badge {
-    padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500;
-    color: #fff; background: linear-gradient(135deg,#667eea,#764ba2);
-}
-
-.sf-info-banner {
-    display: flex; align-items: flex-start; gap: 10px;
-    padding: 10px 14px; border-radius: var(--sf-radius-md);
-    font-size: 13px; background: #eff6ff; color: #1e40af;
-    border: 0.5px solid #bfdbfe;
-}
+.sf-term-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; color: #fff; background: linear-gradient(135deg,#667eea,#764ba2); }
+.sf-info-banner { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; border-radius: var(--sf-radius-md); font-size: 13px; background: #eff6ff; color: #1e40af; border: 0.5px solid #bfdbfe; }
 .sf-info-banner.sf-info-warning { background: #fffbeb; color: #92400e; border-color: #fde68a; }
-
-.sf-empty-state {
-    display: flex; flex-direction: column; align-items: center;
-    justify-content: center; padding: 40px 20px; color: var(--sf-text-2);
-    font-size: 14px; gap: 8px; text-align: center;
-}
-
-.subject-check-card {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 12px; border-radius: var(--sf-radius-md);
-    border: 0.5px solid var(--sf-border-med); background: var(--sf-surface);
-    cursor: pointer; transition: all var(--sf-transition);
-}
+.sf-empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; color: var(--sf-text-2); font-size: 14px; gap: 8px; text-align: center; }
+.subject-check-card { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--sf-radius-md); border: 0.5px solid var(--sf-border-med); background: var(--sf-surface); cursor: pointer; transition: all var(--sf-transition); }
 .subject-check-card:hover { border-color: var(--sf-accent); background: #faf9ff; }
 .subject-check-card.is-checked { border-color: var(--sf-accent); background: var(--sf-accent-soft); }
-
-.sf-chk {
-    width: 18px; height: 18px; border-radius: 5px;
-    border: 1.5px solid var(--sf-border-med);
-    appearance: none; cursor: pointer; background: var(--sf-surface);
-}
+.sf-chk { width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid var(--sf-border-med); appearance: none; cursor: pointer; background: var(--sf-surface); }
 .sf-chk:checked { background: var(--sf-accent); border-color: var(--sf-accent); }
-.sf-chk:checked::after {
-    content: ''; position: absolute; left: 4px; top: 1.5px;
-    width: 6px; height: 9px; border: 2px solid #fff; border-top: none; border-left: none;
-    transform: rotate(42deg);
-}
-
+.sf-chk:checked::after { content: ''; position: absolute; left: 4px; top: 1.5px; width: 6px; height: 9px; border: 2px solid #fff; border-top: none; border-left: none; transform: rotate(42deg); }
 .sf-table-wrap { position: relative; }
-.sf-check-all-row {
-    display: flex; align-items: center; gap: 10px;
-    padding: 9px 20px; background: #f9f9fb;
-    border-bottom: 0.5px solid var(--sf-border);
-}
+.sf-check-all-row { display: flex; align-items: center; gap: 10px; padding: 9px 20px; background: #f9f9fb; border-bottom: 0.5px solid var(--sf-border); }
 .sf-check-all-label { font-size: 12px; color: var(--sf-text-2); }
-
-.sf-student-row:hover { background: #f9f9fb; }
-.sf-student-row.sf-selected { background: var(--sf-accent-soft); }
-
-.sf-avatar {
-    width: 36px; height: 36px; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12px; font-weight: 600; flex-shrink: 0;
-}
-
+.sf-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; flex-shrink: 0; }
 .sf-student-name { font-size: 14px; font-weight: 500; color: var(--sf-text-1); }
-
-.sf-badge {
-    padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 500;
-}
+.sf-badge { padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 500; }
 .sf-badge-f { background: #FBEAF0; color: #993556; }
 .sf-badge-m { background: #E6F1FB; color: #0C447C; }
-
-.sf-tray {
-    position: sticky; bottom: 0; background: rgba(255,255,255,.92);
-    backdrop-filter: blur(20px); border-top: 0.5px solid var(--sf-border-med);
-    padding: 12px 20px; transform: translateY(110%); transition: transform .38s cubic-bezier(.34,1.2,.64,1);
-    z-index: 99; border-radius: 0 0 var(--sf-radius-xl) var(--sf-radius-xl);
-}
+.sf-tray { position: sticky; bottom: 0; background: rgba(255,255,255,.92); backdrop-filter: blur(20px); border-top: 0.5px solid var(--sf-border-med); padding: 12px 20px; transform: translateY(110%); transition: transform .38s cubic-bezier(.34,1.2,.64,1); z-index: 99; border-radius: 0 0 var(--sf-radius-xl) var(--sf-radius-xl); }
 .sf-tray.tray-visible { transform: translateY(0); }
-
 .sf-tray-chips { display: flex; gap: 6px; flex: 1; overflow-x: auto; }
-.sf-chip {
-    display: flex; align-items: center; gap: 5px;
-    background: var(--sf-accent-soft); border: 0.5px solid #AFA9EC;
-    border-radius: 20px; padding: 4px 10px 4px 5px; font-size: 12px; color: #3C3489;
-}
-
+.sf-chip { display: flex; align-items: center; gap: 5px; background: var(--sf-accent-soft); border: 0.5px solid #AFA9EC; border-radius: 20px; padding: 4px 10px 4px 5px; font-size: 12px; color: #3C3489; }
 .sf-modal-content { border-radius: var(--sf-radius-xl) !important; overflow: hidden; }
 </style>
 @endsection
@@ -828,15 +699,12 @@ function toggleBatchButtons() {
     const tray = document.getElementById('selection-tray');
     const chips = document.getElementById('tray-chips');
     const count = document.getElementById('tray-count');
-
     if (!checked.length) {
         tray?.classList.remove('tray-visible');
         return;
     }
-
     tray?.classList.add('tray-visible');
     count.textContent = `${checked.length} student${checked.length !== 1 ? 's' : ''} selected`;
-
     chips.innerHTML = checked.map(cb => {
         const row = cb.closest('tr');
         const name = row?.querySelector('.sf-student-name')?.textContent?.trim() ?? 'Student';
@@ -874,17 +742,15 @@ function sfToggleRow(e, row) {
 }
 
 // ============================================================================
-// REWRITE ROWS (Fixed)
+// REWRITE ROWS (Pictures + Actions)
 // ============================================================================
 function rewriteExistingRows() {
     const body = document.getElementById('studentTableBody');
     if (!body) return;
-
     const oldRows = body.querySelectorAll('tr');
     if (!oldRows.length) return;
 
     let html = '';
-
     oldRows.forEach((tr, i) => {
         const id = tr.querySelector('.id')?.dataset?.id || '';
         const admissionno = tr.querySelector('.admissionno')?.dataset?.admissionno || tr.querySelector('.admissionno')?.textContent?.trim() || '';
@@ -903,12 +769,11 @@ function rewriteExistingRows() {
                 <input type="checkbox" class="sf-chk" name="chk_child" onclick="event.stopPropagation()">
                 <span class="id" data-id="${escapeHtml(id)}" style="display:none;"></span>
             </td>
-            <td class="text-muted small">${i + 1}</td>
+            <td class="text-muted small">${i+1}</td>
             <td class="admissionno" data-admissionno="${escapeHtml(admissionno)}">${escapeHtml(admissionno)}</td>
             <td>
                 <div class="d-flex align-items-center gap-3">
-                    <div class="sf-avatar" style="background:${bg};color:${fg};cursor:pointer;"
-                         onclick="event.stopPropagation();showStudentImage('${escapeHtml(imageUrl)}')">
+                    <div class="sf-avatar" style="background:${bg};color:${fg};cursor:pointer;" onclick="event.stopPropagation();showStudentImage('${escapeHtml(imageUrl)}')">
                         ${escapeHtml(initials)}
                     </div>
                     <div class="sf-student-name">${escapeHtml(fullName)}</div>
@@ -1053,8 +918,9 @@ async function registerSelectedStudentsBatch() {
 
     const ok = await Swal.fire({
         title: 'Confirm Registration',
-        html: `<div class="text-center"><span style="font-size:3rem;">📚</span><p class="mt-2">Register <strong>${studentIds.length}</strong> student(s) for <strong>${subjectClasses.length}</strong> subject(s)?</p></div>`,
-        icon: 'question', showCancelButton: true,
+        html : `<div class="text-center"><span style="font-size:3rem;">📚</span>
+                <p class="mt-2">Register <strong>${studentIds.length}</strong> student(s) for <strong>${subjectClasses.length}</strong> subject(s)?</p></div>`,
+        icon : 'question', showCancelButton: true,
         confirmButtonColor: '#1a7a4a', cancelButtonColor: '#6c757d', confirmButtonText: 'Yes, register!',
     });
     if (!ok.isConfirmed) return;
@@ -1062,9 +928,9 @@ async function registerSelectedStudentsBatch() {
     setSpinner(true);
     try {
         const res = await apiFetch(ROUTES.batchRegister, 'POST', {
-            studentids: studentIds,
+            studentids : studentIds,
             subjectclasses: subjectClasses,
-            sessionid: parseInt(sessionId),
+            sessionid : parseInt(sessionId),
         });
         if (res.success) {
             showSweetAlert('Registration Successful!', res.message, 'success', true);
@@ -1080,7 +946,7 @@ async function registerSelectedStudentsBatch() {
 }
 
 // ============================================================================
-// UNREGISTER MODAL
+// UNREGISTER
 // ============================================================================
 function openUnregisterModal() {
     const studentIds = getSelectedStudentIds();
@@ -1124,10 +990,10 @@ async function proceedUnregister() {
 
     try {
         const res = await apiFetch(ROUTES.unregister, 'DELETE', {
-            studentids: studentIds,
+            studentids : studentIds,
             subjectclasses: subjectClasses,
-            sessionid: parseInt(sessionId),
-            snapshot_name: name,
+            sessionid : parseInt(sessionId),
+            snapshot_name : name,
             snapshot_notes: notesInput.value.trim() || null,
         });
         if (res.success || res.success_count > 0) {
@@ -1144,16 +1010,562 @@ async function proceedUnregister() {
 }
 
 // ============================================================================
-// REGISTERED CLASSES, ARCHIVE, SNAPSHOT DETAIL, RESTORE, DELETE functions
-// (All other functions from your previous code remain the same)
+// REGISTERED CLASSES
 // ============================================================================
-// ... [You can paste the rest of your original JavaScript functions here if needed]
-// For brevity in this response, they are assumed to be included as in your earlier version.
-// If you need the full JS with loadRegisteredClasses, printRegisteredClasses, openArchivedModal, etc., let me know.
+async function loadRegisteredClasses() {
+    const classId = document.getElementById('idclass').value;
+    const sessionId = document.getElementById('idsession').value;
+    const container = document.getElementById('registeredClassesContent');
+    if (classId === 'ALL' || sessionId === 'ALL') {
+        container.innerHTML = `<div class="sf-empty-state"><i class="ri-error-warning-line ri-3x text-warning"></i><p class="mb-0">Please select a class and session first.</p></div>`;
+        return;
+    }
+    container.innerHTML = `<div class="sf-empty-state"><div class="spinner-border text-primary" style="width:2.5rem;height:2.5rem;"></div><p class="mt-2 mb-0">Loading…</p></div>`;
 
+    try {
+        const res = await fetch(
+            ROUTES.getRegistered + '?' + new URLSearchParams({ class_id: classId, session_id: sessionId }),
+            { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } }
+        );
+        const data = await res.json();
+        if (!data.success || !data.data.length) {
+            container.innerHTML = `<div class="sf-empty-state"><i class="ri-information-line ri-3x text-muted"></i><p class="mb-0">No registered classes found.</p></div>`;
+            return;
+        }
+        const subjectTeacherLookup = buildSubjectTeacherLookup();
+        const termMap = {};
+        data.data.forEach(row => {
+            const key = row.term_name;
+            if (!termMap[key]) {
+                termMap[key] = {
+                    class_name : row.class_name,
+                    arm_name : row.arm_name ?? '',
+                    session_name : row.session_name,
+                    term_name : row.term_name,
+                    term_id : String(row.term_id ?? row.termid ?? '').trim(),
+                    student_count: row.student_count,
+                    subject_count: row.subject_count,
+                    subjects : [],
+                };
+            }
+            if (row.subject_name) termMap[key].subjects.push({ name: row.subject_name, teacher: null, count: row.student_count ?? '' });
+        });
+        Object.values(termMap).forEach(term => {
+            if (!term.subjects.length) {
+                const raw = data.data.find(r => r.term_name === term.term_name);
+                (raw?.subjects ?? '').split(',').map(s => s.trim()).filter(Boolean).forEach(name => {
+                    term.subjects.push({ name, teacher: null, count: '' });
+                });
+            }
+        });
+        Object.values(termMap).forEach(term => {
+            term.subjects = term.subjects.map(s => ({ ...s, teacher: resolveTeacher(s.name, term.term_id, subjectTeacherLookup) }));
+        });
+        let html = '';
+        Object.values(termMap).forEach(term => {
+            const fc = term.student_count ?? '';
+            const subjectCells = term.subjects.map((s, i) => {
+                const dc = s.count ? String(s.count) : (fc ? String(fc) : '');
+                return `<div style="padding:10px 14px;border-right:0.5px solid #e5e7eb;border-bottom:0.5px solid #e5e7eb;display:flex;gap:10px;align-items:flex-start;" data-subject-cell>
+                    <div style="width:24px;height:24px;border-radius:50%;background:#EEEDFE;color:#3C3489;font-size:11px;font-weight:500;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;" data-cell-num>${i + 1}</div>
+                    <div style="min-width:0;" data-cell-info>
+                        <div style="font-size:13px;font-weight:500;color:var(--bs-body-color);line-height:1.35;" data-cell-subject>${escapeHtml(s.name)}</div>
+                        <div style="font-size:11px;color:var(--bs-secondary-color);margin-top:3px;" data-cell-teacher-row>
+                            <span data-cell-teacher>${escapeHtml(s.teacher)}</span>
+                        </div>
+                        ${dc ? `<span style="font-size:10px;background:#EAF3DE;color:#27500A;padding:2px 8px;border-radius:20px;display:inline-block;margin-top:5px;" data-cell-count>${escapeHtml(dc)} students</span>` : ''}
+                    </div>
+                </div>`;
+            }).join('');
+            html += `<div class="mb-3" data-term-block="${escapeHtml(term.term_name)}" data-term-student-count="${escapeHtml(String(fc))}">
+                <div style="background:var(--bs-body-bg);border-radius:12px;border:0.5px solid #dee2e6;overflow:hidden;">
+                    <div style="padding:10px 14px;border-bottom:0.5px solid #dee2e6;display:flex;justify-content:space-between;align-items:center;" data-term-header>
+                        <div>
+                            <div style="font-size:13px;font-weight:500;" data-term-title>${escapeHtml(term.class_name)} ${escapeHtml(term.arm_name)} — ${escapeHtml(term.session_name)}</div>
+                            <div style="font-size:11px;color:var(--bs-secondary-color);margin-top:2px;" data-term-subtitle>${escapeHtml(term.term_name)}</div>
+                        </div>
+                        <div style="display:flex;gap:6px;" data-term-pills>
+                            <span style="font-size:11px;background:#E6F1FB;color:#0C447C;padding:3px 10px;border-radius:20px;font-weight:500;">${term.student_count} students</span>
+                            <span style="font-size:11px;background:#EEEDFE;color:#3C3489;padding:3px 10px;border-radius:20px;font-weight:500;">${term.subject_count} subjects</span>
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));" data-subjects-grid>${subjectCells}</div>
+                </div>
+            </div>`;
+        });
+        container.innerHTML = html;
+    } catch (err) {
+        container.innerHTML = `<div class="alert alert-danger m-3">Failed to load data: ${err.message}</div>`;
+    }
+}
+
+function printRegisteredClasses() {
+    const container = document.getElementById('registeredClassesContent');
+    const school = window._schoolInfo || {};
+    const termBlocks = container.querySelectorAll('[data-term-block]');
+    if (!termBlocks.length) {
+        Swal.fire({ icon: 'warning', title: 'Nothing to print', text: 'Load the registered classes first.', showConfirmButton: true });
+        return;
+    }
+    const now = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+    let termsHtml = '';
+    termBlocks.forEach(block => {
+        const titleText = block.querySelector('[data-term-title]')?.textContent?.trim() ?? '';
+        const termText = block.querySelector('[data-term-subtitle]')?.textContent?.trim() ?? '';
+        const pillSpans = [...(block.querySelectorAll('[data-term-pills] span') ?? [])];
+        const pillsHtml = pillSpans.map(p => `<span style="background:#E6F1FB;color:#0C447C;padding:3px 10px;border-radius:20px;font-size:9pt;font-weight:500;margin-left:6px;">${escapeHtml(p.textContent.trim())}</span>`).join('');
+        const termStudentCount = block.dataset.termStudentCount ?? '';
+        const cells = [...block.querySelectorAll('[data-subject-cell]')];
+        let rows = '';
+        cells.forEach((cell, idx) => {
+            const subjName = cell.querySelector('[data-cell-subject]')?.textContent?.trim() ?? '';
+            const teacher = cell.querySelector('[data-cell-teacher]')?.textContent?.trim() ?? '—';
+            const countEl = cell.querySelector('[data-cell-count]');
+            const countText = countEl ? countEl.textContent.trim() : (termStudentCount ? `${termStudentCount} students` : '');
+            if (!subjName) return;
+            rows += `<tr>
+                <td style="width:36px;text-align:center;padding:8px 10px;border-bottom:0.5pt solid #e5e7eb;color:#6b7280;font-size:10pt;">${idx + 1}</td>
+                <td style="padding:8px 12px;border-bottom:0.5pt solid #e5e7eb;font-size:10pt;font-weight:500;">${escapeHtml(subjName)}</td>
+                <td style="padding:8px 12px;border-bottom:0.5pt solid #e5e7eb;font-size:10pt;">${escapeHtml(teacher)}</td>
+                <td style="padding:8px 12px;border-bottom:0.5pt solid #e5e7eb;font-size:10pt;text-align:center;">
+                    ${countText ? `<span style="background:#EAF3DE;color:#27500A;padding:2px 8px;border-radius:20px;font-size:9pt;">${escapeHtml(countText)}</span>` : '—'}
+                </td>
+            </tr>`;
+        });
+        termsHtml += `<div style="margin-bottom:24pt;break-inside:avoid;">
+            <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1.5pt solid #1e3a5f;padding-bottom:8pt;margin-bottom:0;">
+                <div><div style="font-size:12pt;font-weight:700;color:#1e3a5f;">${escapeHtml(titleText)}</div>
+                <div style="font-size:9pt;color:#6b7280;margin-top:2pt;">${escapeHtml(termText)}</div></div>
+                <div>${pillsHtml}</div>
+            </div>
+            <table style="width:100%;border-collapse:collapse;">
+                <thead><tr style="background:#f3f4f6;">
+                    <th style="width:36px;padding:7px 10px;text-align:center;font-size:9pt;color:#6b7280;font-weight:500;border-bottom:1pt solid #d1d5db;">#</th>
+                    <th style="padding:7px 12px;text-align:left;font-size:9pt;color:#6b7280;font-weight:500;border-bottom:1pt solid #d1d5db;">Subject</th>
+                    <th style="padding:7px 12px;text-align:left;font-size:9pt;color:#6b7280;font-weight:500;border-bottom:1pt solid #d1d5db;">Teacher</th>
+                    <th style="padding:7px 12px;text-align:center;font-size:9pt;color:#6b7280;font-weight:500;border-bottom:1pt solid #d1d5db;">Students</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+            </table>
+        </div>`;
+    });
+    const logoHtml = school.logo
+        ? `<img src="${escapeHtml(school.logo)}" style="height:60pt;width:60pt;object-fit:contain;" alt="Logo">`
+        : `<div style="width:60pt;height:60pt;border-radius:50%;background:#1e3a5f;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22pt;font-weight:700;">${(school.name||'S').charAt(0)}</div>`;
+    const printHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Subject Registration Report</title>
+        <style>@page{size:A4;margin:18mm 16mm}*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',Arial,sans-serif;color:#111827;font-size:10pt}.page-header{display:flex;align-items:center;gap:16pt;padding-bottom:14pt;border-bottom:2pt solid #1e3a5f;margin-bottom:18pt}.school-info h1{font-size:16pt;font-weight:700;color:#1e3a5f;margin-bottom:3pt}.school-info p{font-size:8.5pt;color:#6b7280;line-height:1.65}.doc-meta{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:18pt}.doc-meta h2{font-size:13pt;font-weight:700}.footer{margin-top:24pt;padding-top:8pt;border-top:0.5pt solid #e5e7eb;display:flex;justify-content:space-between;font-size:8pt;color:#9ca3af}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}</style>
+        </head><body>
+        <div class="page-header">${logoHtml}<div class="school-info"><h1>${escapeHtml(school.name??'')}</h1>${school.address?`<p>${escapeHtml(school.address)}</p>`:''}</div></div>
+        <div class="doc-meta"><div><h2>Subject Registration Report</h2><div style="font-size:8.5pt;color:#6b7280;">Registered subjects with assigned teachers per term</div></div><div style="font-size:8.5pt;color:#6b7280;">Printed: ${now}</div></div>
+        ${termsHtml}
+        <div class="footer"><span>${escapeHtml(school.name??'')} — Subject Registration Report</span><span>Generated ${now}</span></div>
+        </body></html>`;
+    const win = window.open('', '_blank', 'width=900,height=1100');
+    if (!win) { Swal.fire({ icon:'error', title:'Popup blocked', text:'Allow popups for this site to enable printing.', showConfirmButton:true }); return; }
+    win.document.write(printHtml);
+    win.document.close();
+    win.onload = () => { win.focus(); win.print(); };
+}
+
+// ============================================================================
+// ARCHIVED MODAL
+// ============================================================================
+function openArchivedModal() {
+    const classId = document.getElementById('idclass').value;
+    const sessionId = document.getElementById('idsession').value;
+    if (classId === 'ALL' || sessionId === 'ALL') {
+        return showSweetAlert('Selection Required', 'Please select a class and session first.', 'warning', false);
+    }
+    archiveCurrentPage = 1;
+    new bootstrap.Modal(document.getElementById('archivedModal')).show();
+    loadArchivedPage(1);
+}
+
+async function loadArchivedPage(page) {
+    archiveCurrentPage = page;
+    const classId = document.getElementById('idclass').value;
+    const sessionId = document.getElementById('idsession').value;
+    const termId = document.getElementById('archiveTermFilter').value;
+    const search = document.getElementById('archiveSearch').value.trim();
+    const perPage = document.getElementById('archivePerPage').value;
+    if (classId === 'ALL' || sessionId === 'ALL') return;
+    const spinner = document.getElementById('archiveSpinner');
+    const container = document.getElementById('snapshotCardsContainer');
+    spinner?.classList.remove('d-none');
+    container.innerHTML = `<div class="sf-empty-state"><div class="spinner-border spinner-border-sm text-warning me-2"></div>Loading snapshots…</div>`;
+    try {
+        const params = new URLSearchParams({ class_id: classId, session_id: sessionId, page, per_page: perPage });
+        if (termId) params.set('term_id', termId);
+        if (search) params.set('search', search);
+        const res = await fetch(ROUTES.getArchived + '?' + params.toString(), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
+        const data = await res.json();
+        if (!data.success) { container.innerHTML = `<div class="sf-empty-state text-danger">${data.message}</div>`; return; }
+        archiveMeta = data.meta;
+        renderSnapshotCards(data.data);
+        renderArchivePagination(data.meta);
+        updateArchiveMeta(data.meta);
+    } catch (err) {
+        container.innerHTML = `<div class="sf-empty-state text-danger">Error: ${err.message}</div>`;
+    } finally {
+        spinner?.classList.add('d-none');
+    }
+}
+
+function renderSnapshotCards(rows) {
+    const container = document.getElementById('snapshotCardsContainer');
+    const restoreBtn = document.getElementById('restoreSelectedBtn');
+    const deleteBtn = document.getElementById('deleteSelectedBtn');
+    if (!rows.length) {
+        container.innerHTML = `<div class="sf-empty-state"><i class="ri-archive-line ri-3x d-block mb-2"></i>No unregistration snapshots found.</div>`;
+        restoreBtn?.classList.add('d-none');
+        deleteBtn?.classList.add('d-none');
+        return;
+    }
+    const groups = {};
+    rows.forEach(row => {
+        const key = `${row.snapshot_name}__${row.subjectclassid}__${row.termid}`;
+        if (!groups[key]) groups[key] = { ...row, subjects: [] };
+        groups[key].subjects.push({
+            subjectname: row.subjectname, subjectcode: row.subjectcode,
+            staffname: row.staffname, student_count: row.student_count,
+            subjectclassid: row.subjectclassid, termid: row.termid,
+            sessionid: row.sessionid, staffid: row.staffid, archive_id: row.archive_id,
+        });
+    });
+    let html = '<div class="row g-3">';
+    Object.values(groups).forEach(group => {
+        const unregDate = group.unregistered_at
+            ? new Date(group.unregistered_at).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })
+            : '—';
+        const subjectPills = group.subjects.map(s => `<span class="sf-pill sf-pill-primary me-1 mb-1">${escapeHtml(s.subjectname)}</span>`).join('');
+        const metaEncoded = encodeURIComponent(JSON.stringify({
+            snapshot_name: group.snapshot_name, subjectclassid: group.subjectclassid,
+            termid: group.termid, sessionid: group.sessionid, staffid: group.staffid, archive_id: group.archive_id,
+        }));
+        html += `<div class="col-md-6 col-xl-4">
+            <div class="sf-card h-100 snapshot-card" style="cursor:pointer;transition:transform .2s,box-shadow .2s;" onclick="openSnapshotDetail('${metaEncoded}')"
+                 onmouseenter="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 28px rgba(0,0,0,.12)';"
+                 onmouseleave="this.style.transform='';this.style.boxShadow='';">
+                <div class="sf-card-body">
+                    <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+                        <div class="flex-grow-1 min-w-0">
+                            <h6 class="fw-semibold mb-0 text-truncate" style="font-size:13px;color:#1d1d1f;" title="${escapeHtml(group.snapshot_name)}">
+                                <i class="ri-camera-line text-danger me-1"></i>${escapeHtml(group.snapshot_name)}
+                            </h6>
+                            <small class="text-muted">${unregDate}</small>
+                        </div>
+                        <span class="sf-badge sf-badge-unreg flex-shrink-0">${group.student_count} student${group.student_count !== 1 ? 's' : ''}</span>
+                    </div>
+                    ${group.snapshot_notes ? `<p class="text-muted small fst-italic mb-2" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">"${escapeHtml(group.snapshot_notes)}"</p>` : ''}
+                    <div class="mb-2">${subjectPills}</div>
+                    <div class="d-flex justify-content-between align-items-center pt-1 border-top">
+                        <small class="text-muted"><i class="ri-user-star-line me-1"></i>${escapeHtml(group.staffname ?? '—')}</small>
+                        <span class="sf-badge sf-badge-m">${escapeHtml(group.termname)}</span>
+                    </div>
+                </div>
+                <div class="sf-card-body pt-0 d-flex gap-2">
+                    <button class="sf-btn sf-btn-ghost sf-btn-sm flex-grow-1" onclick="event.stopPropagation();openSnapshotDetail('${metaEncoded}');"><i class="ri-eye-line me-1"></i>View</button>
+                    <button class="sf-btn sf-btn-success sf-btn-sm flex-grow-1" onclick="event.stopPropagation();restoreSingleSnapshot('${metaEncoded}');"><i class="ri-refresh-line me-1"></i>Restore</button>
+                    <button class="sf-btn sf-btn-danger sf-btn-sm" onclick="event.stopPropagation();deleteSnapshotGroup('${metaEncoded}');" title="Delete"><i class="ri-delete-bin-line"></i></button>
+                </div>
+            </div>
+        </div>`;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+function renderArchivePagination(meta) {
+    const container = document.getElementById('archivePagination');
+    if (!meta || meta.last_page <= 1) { container.innerHTML = ''; return; }
+    const delta = 3;
+    let html = `<button class="sf-btn sf-btn-ghost sf-btn-sm ${meta.current_page === 1 ? 'disabled' : ''}" onclick="loadArchivedPage(${meta.current_page - 1})">‹</button>`;
+    for (let p = 1; p <= meta.last_page; p++) {
+        if (p === 1 || p === meta.last_page || (p >= meta.current_page - delta && p <= meta.current_page + delta)) {
+            html += `<button class="sf-btn ${p === meta.current_page ? 'sf-btn-primary' : 'sf-btn-ghost'} sf-btn-sm" onclick="loadArchivedPage(${p})">${p}</button>`;
+        } else if (p === meta.current_page - delta - 1 || p === meta.current_page + delta + 1) {
+            html += `<span class="sf-btn sf-btn-ghost sf-btn-sm disabled">…</span>`;
+        }
+    }
+    html += `<button class="sf-btn sf-btn-ghost sf-btn-sm ${meta.current_page === meta.last_page ? 'disabled' : ''}" onclick="loadArchivedPage(${meta.current_page + 1})">›</button>`;
+    container.innerHTML = html;
+}
+
+function updateArchiveMeta(meta) {
+    const el = document.getElementById('archiveMeta');
+    if (!meta || !meta.total) { if (el) el.textContent = ''; return; }
+    const from = (meta.current_page - 1) * meta.per_page + 1;
+    const to = Math.min(meta.current_page * meta.per_page, meta.total);
+    el.textContent = `Showing ${from}–${to} of ${meta.total} snapshots`;
+}
+
+// ============================================================================
+// SNAPSHOT DETAIL
+// ============================================================================
+async function openSnapshotDetail(metaEncoded) {
+    currentSnapshotMeta = JSON.parse(decodeURIComponent(metaEncoded));
+    document.getElementById('snapshotDetailTitle').textContent = currentSnapshotMeta.snapshot_name;
+    document.getElementById('snapshotDetailSubtitle').textContent = '';
+    document.getElementById('snapshotNotesBanner')?.classList.add('d-none');
+    const searchInput = document.getElementById('detailSearchInput');
+    if (searchInput) searchInput.value = '';
+    document.getElementById('snapshotDetailBody').innerHTML =
+        '<tr><td colspan="10" class="text-center py-4"><div class="spinner-border spinner-border-sm me-2"></div>Loading students…</td></tr>';
+    document.getElementById('detailRestoreSelectedBtn')?.classList.add('d-none');
+    document.getElementById('detailDeleteSelectedBtn')?.classList.add('d-none');
+    new bootstrap.Modal(document.getElementById('snapshotDetailModal')).show();
+    try {
+        const params = new URLSearchParams({
+            snapshot_name : currentSnapshotMeta.snapshot_name,
+            subjectclassid: currentSnapshotMeta.subjectclassid,
+            termid : currentSnapshotMeta.termid,
+            sessionid : currentSnapshotMeta.sessionid,
+            staffid : currentSnapshotMeta.staffid,
+        });
+        const res = await fetch(ROUTES.getSnapshot + '?' + params.toString(), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
+        const data = await res.json();
+        if (!data.success) {
+            document.getElementById('snapshotDetailBody').innerHTML = `<tr><td colspan="10" class="text-center text-danger py-4">${data.message}</td></tr>`;
+            return;
+        }
+        currentSnapshotRows = data.rows;
+        if (data.snapshot_notes) {
+            document.getElementById('snapshotNotesBanner')?.classList.remove('d-none');
+            document.getElementById('snapshotNotesText').textContent = data.snapshot_notes;
+        }
+        document.getElementById('detailStudentMeta').textContent = `${data.total_students} student${data.total_students !== 1 ? 's' : ''} in this snapshot`;
+        renderSnapshotDetailTable(data.rows, data.assessment_headers);
+    } catch (err) {
+        document.getElementById('snapshotDetailBody').innerHTML = `<tr><td colspan="10" class="text-center text-danger py-4">Error: ${err.message}</td></tr>`;
+    }
+}
+
+function renderSnapshotDetailTable(rows, assessmentHeaders) {
+    const headerRow = document.getElementById('snapshotDetailHeaderRow');
+    while (headerRow.cells.length > 4) headerRow.deleteCell(headerRow.cells.length - 1);
+    (assessmentHeaders || []).forEach(a => {
+        const th = document.createElement('th');
+        th.textContent = a.assessment_name || `Assessment ${a.assessment_id}`;
+        headerRow.appendChild(th);
+    });
+    const totalTh = document.createElement('th');
+    totalTh.textContent = 'Total';
+    headerRow.appendChild(totalTh);
+    let html = '';
+    rows.forEach(row => {
+        const name = [row.lastname, row.firstname, row.othername].filter(Boolean).join(' ');
+        const picFile = row.picture ? row.picture.split('/').pop() : null;
+        const pic = picFile ? `${AVATAR_URL}/student_avatars/${picFile}` : `${AVATAR_URL}/student_avatars/unnamed.jpg`;
+        const genderBadge = row.gender === 'Female'
+            ? `<span class="sf-badge sf-badge-f">${escapeHtml(row.gender)}</span>`
+            : `<span class="sf-badge sf-badge-m">${escapeHtml(row.gender ?? '—')}</span>`;
+        let scoresCells = '';
+        let total = 0;
+        (assessmentHeaders || []).forEach(a => {
+            const score = (row.assessment_scores || []).find(s => s.assessment_id == a.assessment_id);
+            const val = score ? parseFloat(score.score) : 0;
+            total += val;
+            scoresCells += `<td class="text-center fw-medium">${val > 0 ? val.toFixed(1) : '<span class="text-muted">—</span>'}</td>`;
+        });
+        scoresCells += `<td class="text-center fw-bold ${total > 0 ? 'text-success' : 'text-muted'}">${total > 0 ? total.toFixed(1) : '—'}</td>`;
+        const searchKey = `${name} ${row.admissionno ?? ''}`.toLowerCase();
+        html += `<tr data-archive-id="${row.archive_id}" data-search="${escapeHtml(searchKey)}">
+            <td><div class="form-check mb-0"><input class="form-check-input detail-chk" type="checkbox" value="${row.archive_id}"></div></td>
+            <td><div class="d-flex align-items-center gap-2"><img src="${pic}" class="rounded-circle" style="width:34px;height:34px;object-fit:cover;border:2px solid #e9ecef;" onerror="this.src='${AVATAR_URL}/student_avatars/unnamed.jpg'"><span class="fw-medium">${escapeHtml(name)}</span></div></td>
+            <td class="text-muted small">${escapeHtml(row.admissionno ?? '—')}</td>
+            <td>${genderBadge}</td>
+            ${scoresCells}
+        </tr>`;
+    });
+    document.getElementById('snapshotDetailBody').innerHTML =
+        html || '<tr><td colspan="10" class="text-center text-muted py-4">No students found.</td></tr>';
+    document.getElementById('detailCheckAll')?.addEventListener('change', function () {
+        document.querySelectorAll('.detail-chk').forEach(cb => cb.checked = this.checked);
+        toggleDetailButtons();
+    });
+    document.querySelectorAll('.detail-chk').forEach(cb => cb.addEventListener('change', toggleDetailButtons));
+}
+
+function toggleDetailButtons() {
+    const any = document.querySelectorAll('.detail-chk:checked').length > 0;
+    document.getElementById('detailRestoreSelectedBtn')?.classList.toggle('d-none', !any);
+    document.getElementById('detailDeleteSelectedBtn')?.classList.toggle('d-none', !any);
+}
+
+function filterDetailRows(query) {
+    const q = query.toLowerCase().trim();
+    const rows = document.querySelectorAll('#snapshotDetailBody tr[data-search]');
+    let visible = 0;
+    rows.forEach(tr => {
+        const match = !q || tr.dataset.search.includes(q);
+        tr.style.display = match ? '' : 'none';
+        if (match) visible++;
+    });
+    const total = currentSnapshotRows.length;
+    const meta = document.getElementById('detailStudentMeta');
+    if (meta) {
+        meta.textContent = q
+            ? `${visible} of ${total} student${total !== 1 ? 's' : ''} shown`
+            : `${total} student${total !== 1 ? 's' : ''} in this snapshot`;
+    }
+}
+
+// ============================================================================
+// RESTORE / DELETE
+// ============================================================================
+async function restoreEntireSnapshot() {
+    if (!currentSnapshotRows.length) return;
+    await doRestore(currentSnapshotRows.map(r => r.archive_id), 'all students in this snapshot');
+}
+
+async function restoreDetailSelected() {
+    const ids = [...document.querySelectorAll('.detail-chk:checked')].map(cb => parseInt(cb.value));
+    if (!ids.length) return;
+    await doRestore(ids, `${ids.length} selected student${ids.length !== 1 ? 's' : ''}`);
+}
+
+async function doRestore(archiveIds, label) {
+    const ok = await Swal.fire({ title: 'Restore Registration?', html: `<p>Restore <strong>${label}</strong>? Original scores will be recovered.</p>`, icon: 'question', showCancelButton: true, confirmButtonColor: '#1a7a4a', confirmButtonText: 'Yes, restore!', });
+    if (!ok.isConfirmed) return;
+    const spinner = document.getElementById('detailSpinner');
+    spinner?.classList.remove('d-none');
+    try {
+        const res = await apiFetch(ROUTES.restore, 'POST', { archive_ids: archiveIds });
+        if (res.success || res.total_restored > 0) {
+            showSweetAlert('Restored!', `${res.total_restored || archiveIds.length} registration(s) restored.`, 'success', true);
+            bootstrap.Modal.getInstance(document.getElementById('snapshotDetailModal'))?.hide();
+            loadArchivedPage(archiveCurrentPage);
+        } else {
+            showSweetAlert('Restore Failed', res.message || 'Could not restore.', 'error', false);
+        }
+    } catch (err) {
+        showSweetAlert('Error', 'Restore failed: ' + err.message, 'error', false);
+    } finally {
+        spinner?.classList.add('d-none');
+    }
+}
+
+async function restoreSingleSnapshot(metaEncoded) {
+    const meta = JSON.parse(decodeURIComponent(metaEncoded));
+    const ok = await Swal.fire({ title: 'Restore Snapshot?', html: `<p>Restore all students in "<strong>${escapeHtml(meta.snapshot_name)}</strong>"?</p>`, icon: 'question', showCancelButton: true, confirmButtonColor: '#1a7a4a', confirmButtonText: 'Yes, restore all!', });
+    if (!ok.isConfirmed) return;
+    const spinner = document.getElementById('archiveSpinner');
+    spinner?.classList.remove('d-none');
+    try {
+        const params = new URLSearchParams({ snapshot_name: meta.snapshot_name, subjectclassid: meta.subjectclassid, termid: meta.termid, sessionid: meta.sessionid, staffid: meta.staffid });
+        const detailRes = await fetch(ROUTES.getSnapshot + '?' + params.toString(), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
+        const detailData = await detailRes.json();
+        if (!detailData.success || !detailData.rows?.length) { showSweetAlert('Not Found', detailData.message || 'Snapshot records not found.', 'error', false); return; }
+        const ids = detailData.rows.map(r => r.archive_id);
+        const res = await apiFetch(ROUTES.restore, 'POST', { archive_ids: ids });
+        if (res.success || res.total_restored > 0) {
+            showSweetAlert('Restored!', `${res.total_restored || ids.length} registration(s) restored.`, 'success', true);
+            loadArchivedPage(archiveCurrentPage);
+        } else {
+            showSweetAlert('Restore Failed', res.message, 'error', false);
+        }
+    } catch (err) {
+        showSweetAlert('Error', err.message, 'error', false);
+    } finally {
+        spinner?.classList.add('d-none');
+    }
+}
+
+async function deleteSnapshotGroup(metaEncoded) {
+    const meta = JSON.parse(decodeURIComponent(metaEncoded));
+    const ok = await Swal.fire({ title: 'Delete Snapshot?', html: `<p class="text-danger">Permanently delete "<strong>${escapeHtml(meta.snapshot_name)}</strong>"? This cannot be undone.</p>`, icon: 'error', showCancelButton: true, confirmButtonColor: '#dc3545', confirmButtonText: 'Yes, delete permanently', });
+    if (!ok.isConfirmed) return;
+    const spinner = document.getElementById('archiveSpinner');
+    spinner?.classList.remove('d-none');
+    try {
+        const params = new URLSearchParams({ snapshot_name: meta.snapshot_name, subjectclassid: meta.subjectclassid, termid: meta.termid, sessionid: meta.sessionid, staffid: meta.staffid });
+        const detailRes = await fetch(ROUTES.getSnapshot + '?' + params.toString(), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
+        const detailData = await detailRes.json();
+        if (!detailData.success || !detailData.rows?.length) { showSweetAlert('Not Found', detailData.message || 'Snapshot records not found.', 'error', false); return; }
+        const ids = detailData.rows.map(r => r.archive_id);
+        const res = await apiFetch(ROUTES.permanentDelete, 'DELETE', { archive_ids: ids });
+        if (res.success) {
+            showSweetAlert('Deleted', `${res.deleted || ids.length} record(s) permanently deleted.`, 'success', false);
+            loadArchivedPage(archiveCurrentPage);
+        } else {
+            showSweetAlert('Delete Failed', res.message, 'error', false);
+        }
+    } catch (err) {
+        showSweetAlert('Error', err.message, 'error', false);
+    } finally {
+        spinner?.classList.add('d-none');
+    }
+}
+
+async function deleteDetailSelected() {
+    const ids = [...document.querySelectorAll('.detail-chk:checked')].map(cb => parseInt(cb.value));
+    if (!ids.length) return;
+    const ok = await Swal.fire({ title: 'Permanently Delete?', html: `<p class="text-danger">Delete <strong>${ids.length}</strong> record(s) permanently?</p>`, icon: 'error', showCancelButton: true, confirmButtonColor: '#dc3545', confirmButtonText: 'Yes, delete permanently', });
+    if (!ok.isConfirmed) return;
+    const spinner = document.getElementById('detailSpinner');
+    spinner?.classList.remove('d-none');
+    try {
+        const res = await apiFetch(ROUTES.permanentDelete, 'DELETE', { archive_ids: ids });
+        if (res.success) {
+            showSweetAlert('Deleted', `${res.deleted || ids.length} record(s) permanently deleted.`, 'success', false);
+            bootstrap.Modal.getInstance(document.getElementById('snapshotDetailModal'))?.hide();
+            loadArchivedPage(archiveCurrentPage);
+        } else {
+            showSweetAlert('Delete Failed', res.message, 'error', false);
+        }
+    } catch (err) {
+        showSweetAlert('Error', err.message, 'error', false);
+    } finally {
+        spinner?.classList.add('d-none');
+    }
+}
+
+// Stubs for symmetry
+async function restoreSelected() { }
+async function permanentDeleteSelected() { }
+
+// ============================================================================
+// BUILD SUBJECT TEACHER LOOKUP (for registered classes)
+// ============================================================================
+function buildSubjectTeacherLookup() {
+    const lookup = {};
+    document.querySelectorAll('.subject-checkbox').forEach(cb => {
+        const termId = String(cb.dataset.termid ?? '').trim();
+        let subjectName = cb.dataset.subjectName ?? '';
+        let teacherName = cb.dataset.teacherName ?? '';
+        if (!subjectName || !teacherName) {
+            const card = cb.closest('.subject-check-card');
+            if (card) {
+                subjectName = subjectName || card.dataset.subjectName || '';
+                teacherName = teacherName || card.dataset.teacherName || '';
+                if (!teacherName) teacherName = card.querySelector('.text-muted')?.textContent?.trim() || '';
+                if (!subjectName) subjectName = card.querySelector('.fw-semibold')?.textContent?.trim() || '';
+            }
+        }
+        if (!subjectName || !teacherName) return;
+        const key = `${subjectName.toLowerCase()}||${termId}`;
+        if (!lookup[key]) lookup[key] = [];
+        if (!lookup[key].includes(teacherName)) lookup[key].push(teacherName);
+    });
+    return lookup;
+}
+
+function resolveTeacher(subjectName, termId, lookup) {
+    const key = `${subjectName.trim().toLowerCase()}||${String(termId ?? '').trim()}`;
+    if (lookup[key]?.length) return lookup[key].join(', ');
+    const prefix = subjectName.trim().toLowerCase() + '||';
+    for (const [k, v] of Object.entries(lookup)) {
+        if (k.startsWith(prefix) && v.length) return v.join(', ');
+    }
+    return '—';
+}
+
+// ============================================================================
+// DOM READY
+// ============================================================================
 document.addEventListener('DOMContentLoaded', function () {
     initializeSubjectCards();
-    rewriteExistingRows();   // Fix the table on initial load
+    rewriteExistingRows();
 
     document.getElementById('registeredClassesModal')?.addEventListener('show.bs.modal', loadRegisteredClasses);
     document.getElementById('archivePerPage')?.addEventListener('change', () => loadArchivedPage(1));
@@ -1166,12 +1578,15 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     document.getElementById('archiveTermFilter')?.addEventListener('change', () => loadArchivedPage(1));
 
-    document.getElementById('checkAll')?.addEventListener('change', function () {
-        document.querySelectorAll('#studentTableBody input[name="chk_child"]').forEach(cb => {
-            cb.checked = this.checked;
+    const checkAll = document.getElementById('checkAll');
+    if (checkAll) {
+        checkAll.addEventListener('change', function () {
+            document.querySelectorAll('#studentTableBody input[name="chk_child"]').forEach(cb => {
+                cb.checked = this.checked;
+            });
+            toggleBatchButtons();
         });
-        toggleBatchButtons();
-    });
+    }
 
     document.addEventListener('change', function (e) {
         if (e.target?.name === 'chk_child') {
