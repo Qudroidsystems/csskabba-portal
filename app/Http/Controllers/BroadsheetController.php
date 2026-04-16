@@ -442,67 +442,40 @@ class BroadsheetController extends Controller
     // EXPORT PDF  — Full-width, never clips content
     // =========================================================================
 
-    public function exportPdf(Request $request)
-    {
-        try {
-            ini_set('max_execution_time', 600);
-            ini_set('memory_limit', '1024M');
+   public function exportPdf(Request $request)
+{
+    try {
+        ini_set('max_execution_time', 600);
+        ini_set('memory_limit', '1024M');
 
-            $validated = $request->validate([
-                'schoolclassid'   => 'required|integer|exists:schoolclass,id',
-                'sessionid'       => 'required|integer|exists:schoolsession,id',
-                'termid'          => 'required|integer',
-                'selectedColumns' => 'nullable|array',
-                'paper_size'      => 'nullable|in:A0,A1,A2,A3,A4',
-                'orientation'     => 'nullable|in:portrait,landscape',
-            ]);
+        $validated = $request->validate([
+            'schoolclassid'   => 'required|integer|exists:schoolclass,id',
+            'sessionid'       => 'required|integer|exists:schoolsession,id',
+            'termid'          => 'required|integer',
+            'selectedColumns' => 'nullable|array',
+            'paper_size'      => 'nullable|in:A0,A1,A2,A3,A4',
+            'orientation'     => 'nullable|in:portrait,landscape',
+        ]);
 
-            $selectedColumns = $request->input('selectedColumns', []);
-            $orientation     = $request->input('orientation', 'landscape');
-            $paperSize       = $request->input('paper_size', null);
+        $selectedColumns = $request->input('selectedColumns', []);
+        $orientation     = $request->input('orientation', 'landscape');
+        $paperSize       = $request->input('paper_size', null);
 
-            $data = $this->buildBroadsheetData(
-                (int) $validated['schoolclassid'],
-                (int) $validated['sessionid'],
-                (int) $validated['termid'],
-                $selectedColumns
-            );
+        $data = $this->buildBroadsheetData(
+            (int) $validated['schoolclassid'],
+            (int) $validated['sessionid'],
+            (int) $validated['termid'],
+            $selectedColumns
+        );
 
-            $data['school_logo_base64'] = $this->getLogoBase64($data['schoolInfo']);
+        $data['school_logo_base64'] = $this->getLogoBase64($data['schoolInfo']);
 
-            // ── Dynamic paper sizing based on column count ─────────────────
-            $subjectCount    = count($data['subjects'] ?? []);
-            $assessmentCount = isset($data['assessments']) ? $data['assessments']->count() : 0;
+        // ── Dynamic paper sizing based on column count ─────────────────
+        $subjectCount    = count($data['subjects'] ?? []);
+        $assessmentCount = isset($data['assessments']) ? $data['assessments']->count() : 0;
 
-            if (!$paperSize) {
-                // Count active columns per subject
-                $perSubjCols = 0;
-                foreach ($data['assessments'] ?? [] as $a) {
-                    if (empty($selectedColumns) || in_array('assessment_' . $a->id, $selectedColumns)) {
-                        $perSubjCols++;
-                    }
-                }
-                foreach (['total', 'bf', 'cum', 'grade', 'position', 'class_average', 'remark'] as $col) {
-                    if (empty($selectedColumns) || in_array($col, $selectedColumns)) {
-                        $perSubjCols++;
-                    }
-                }
-
-                $totalCols = $subjectCount * max(1, $perSubjCols);
-
-                if      ($totalCols <= 30)  $paperSize = 'A3';
-                elseif  ($totalCols <= 60)  $paperSize = 'A2';
-                elseif  ($totalCols <= 100) $paperSize = 'A1';
-                else                        $paperSize = 'A0';
-            }
-
-            // ── DomPDF custom page dimensions (points) ────────────────────
-            // We compute the EXACT width needed so nothing is clipped.
-            // Base: frozen cols ~200pt + (subjects × perSubjCols × 22pt) + margins
-            $perSubjColWidth = 22; // pt per data column
-            $frozenWidth     = 200; // SN + AdmNo + Name
-            $marginPt        = 57;  // 10mm each side × 2 × 2.835
-
+        if (!$paperSize) {
+            // Count active columns per subject
             $perSubjCols = 0;
             foreach ($data['assessments'] ?? [] as $a) {
                 if (empty($selectedColumns) || in_array('assessment_' . $a->id, $selectedColumns)) {
@@ -514,77 +487,105 @@ class BroadsheetController extends Controller
                     $perSubjCols++;
                 }
             }
-            foreach (['gpa', 'cgpa', 'gpa_grade', 'num_subjects', 'total_grade_points'] as $col) {
-                if (empty($selectedColumns) || in_array($col, $selectedColumns)) {
-                    $perSubjCols += 0.5; // GPA cols are narrower
-                }
-            }
 
-            $neededWidth = $frozenWidth + ($subjectCount * max(1, ceil($perSubjCols)) * $perSubjColWidth) + $marginPt;
+            $totalCols = $subjectCount * max(1, $perSubjCols);
 
-            // Standard paper heights in points (landscape = wide dimension is height)
-            $paperHeights = [
-                'A0' => 2384,
-                'A1' => 1684,
-                'A2' => 1190,
-                'A3' => 842,
-                'A4' => 595,
-            ];
-            $heightPt = $paperHeights[$paperSize] ?? 842;
-
-            // Width must be at least the needed content width
-            $standardWidths = [
-                'A0' => 3370,
-                'A1' => 2384,
-                'A2' => 1684,
-                'A3' => 1190,
-                'A4' => 842,
-            ];
-            $widthPt = max($standardWidths[$paperSize] ?? 1190, $neededWidth + 100);
-
-            // Store computed dimensions for the view
-            $data['pdf_width_pt']  = $widthPt;
-            $data['pdf_height_pt'] = $heightPt;
-            $data['pdf_paper_size'] = $paperSize;
-
-            // Build custom paper size string for DomPDF [width, height]
-            // We pass as array so DomPDF uses exact dimensions
-            $pdf = Pdf::loadView('broadsheet.pdf', $data)
-                ->setPaper([$widthPt, $heightPt], $orientation)
-                ->setOption([
-                    'isHtml5ParserEnabled'    => true,
-                    'isRemoteEnabled'         => true,
-                    'isFontSubsettingEnabled' => true,
-                    'defaultFont'             => 'DejaVu Sans',
-                    'dpi'                     => 96,
-                    'enable_css_float'        => false,
-                    'enable_javascript'       => false,
-                    'debugPng'                => false,
-                    'debugKeepTemp'           => false,
-                    'debugCss'                => false,
-                    'debugLayout'             => false,
-                ]);
-
-            $className   = ($data['schoolclass']->schoolclass ?? 'Class') . ' ' . ($data['schoolclass']->arm_name ?? '');
-            $sessionName = $data['schoolsession']->session ?? '';
-            $termName    = $data['schoolterm']->term ?? 'Term';
-
-            $filename = 'Broadsheet_'
-                . preg_replace('/[^A-Za-z0-9_\-]/', '_', trim($className))   . '_'
-                . preg_replace('/[^A-Za-z0-9_\-]/', '_', trim($sessionName)) . '_'
-                . preg_replace('/[^A-Za-z0-9_\-]/', '_', trim($termName))    . '.pdf';
-
-            return $pdf->stream($filename);
-
-        } catch (\Exception $e) {
-            Log::error('Broadsheet PDF export error', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            return back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
+            if      ($totalCols <= 30)  $paperSize = 'A3';
+            elseif  ($totalCols <= 60)  $paperSize = 'A2';
+            elseif  ($totalCols <= 100) $paperSize = 'A1';
+            else                        $paperSize = 'A0';
         }
-    }
 
+        // ── DomPDF custom page dimensions (points) ────────────────────
+        // We compute the EXACT width needed so nothing is clipped.
+        // Base: frozen cols ~200pt + (subjects × perSubjCols × 22pt) + margins
+        $perSubjColWidth = 22; // pt per data column
+        $frozenWidth     = 200; // SN + AdmNo + Name
+        $marginPt        = 57;  // 10mm each side × 2 × 2.835
+
+        $perSubjCols = 0;
+        foreach ($data['assessments'] ?? [] as $a) {
+            if (empty($selectedColumns) || in_array('assessment_' . $a->id, $selectedColumns)) {
+                $perSubjCols++;
+            }
+        }
+        foreach (['total', 'bf', 'cum', 'grade', 'position', 'class_average', 'remark'] as $col) {
+            if (empty($selectedColumns) || in_array($col, $selectedColumns)) {
+                $perSubjCols++;
+            }
+        }
+        foreach (['gpa', 'cgpa', 'gpa_grade', 'num_subjects', 'total_grade_points'] as $col) {
+            if (empty($selectedColumns) || in_array($col, $selectedColumns)) {
+                $perSubjCols += 0.5; // GPA cols are narrower
+            }
+        }
+
+        $neededWidth = $frozenWidth + ($subjectCount * max(1, ceil($perSubjCols)) * $perSubjColWidth) + $marginPt;
+
+        // Standard paper heights in points (landscape = wide dimension is height)
+        $paperHeights = [
+            'A0' => 2384,
+            'A1' => 1684,
+            'A2' => 1190,
+            'A3' => 842,
+            'A4' => 595,
+        ];
+        $heightPt = $paperHeights[$paperSize] ?? 842;
+
+        // Width must be at least the needed content width
+        $standardWidths = [
+            'A0' => 3370,
+            'A1' => 2384,
+            'A2' => 1684,
+            'A3' => 1190,
+            'A4' => 842,
+        ];
+        $widthPt = max($standardWidths[$paperSize] ?? 1190, $neededWidth + 100);
+
+        // Store computed dimensions for the view
+        $data['pdf_width_pt']  = $widthPt;
+        $data['pdf_height_pt'] = $heightPt;
+        $data['pdf_paper_size'] = $paperSize;
+
+        // FIX: Use the correct DomPDF paper size format [0, 0, width, height]
+        // The array should have 4 elements: x1, y1, x2, y2
+        $customPaper = [0, 0, $widthPt, $heightPt];
+
+        $pdf = Pdf::loadView('broadsheet.pdf', $data)
+            ->setPaper($customPaper, $orientation)
+            ->setOptions([
+                'isHtml5ParserEnabled'    => true,
+                'isRemoteEnabled'         => true,
+                'isFontSubsettingEnabled' => true,
+                'defaultFont'             => 'DejaVu Sans',
+                'dpi'                     => 96,
+                'enable_css_float'        => false,
+                'enable_javascript'       => false,
+                'debugPng'                => false,
+                'debugKeepTemp'           => false,
+                'debugCss'                => false,
+                'debugLayout'             => false,
+            ]);
+
+        $className   = ($data['schoolclass']->schoolclass ?? 'Class') . ' ' . ($data['schoolclass']->arm_name ?? '');
+        $sessionName = $data['schoolsession']->session ?? '';
+        $termName    = $data['schoolterm']->term ?? 'Term';
+
+        $filename = 'Broadsheet_'
+            . preg_replace('/[^A-Za-z0-9_\-]/', '_', trim($className))   . '_'
+            . preg_replace('/[^A-Za-z0-9_\-]/', '_', trim($sessionName)) . '_'
+            . preg_replace('/[^A-Za-z0-9_\-]/', '_', trim($termName))    . '.pdf';
+
+        return $pdf->stream($filename);
+
+    } catch (\Exception $e) {
+        Log::error('Broadsheet PDF export error', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
+        return back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
+    }
+}
     // =========================================================================
     // EXPORT EXCEL
     // =========================================================================
