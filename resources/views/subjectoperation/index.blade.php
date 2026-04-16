@@ -270,7 +270,7 @@
                     </div>
                 </div>
 
-                {{-- All Modals (Snapshot Name, Registered Classes, Archived, Snapshot Detail, Image View) --}}
+                {{-- All Modals --}}
                 {{-- Snapshot Name Modal --}}
                 <div class="modal fade" id="snapshotNameModal" tabindex="-1" aria-labelledby="snapshotNameModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered" style="max-width:520px;">
@@ -526,21 +526,24 @@
 .sf-btn-warning { background: #f59e0b; color: #fff; }
 .sf-btn-secondary { background: #f2f2f7; color: var(--sf-text-1); border: 0.5px solid var(--sf-border-med); }
 .sf-btn-ghost { background: transparent; color: var(--sf-text-1); border: 0.5px solid var(--sf-border-med); }
+.sf-btn-sm { padding: 6px 12px; font-size: 12px; }
 .sf-pill { padding: 2px 9px; border-radius: 20px; font-size: 11px; font-weight: 500; }
 .sf-pill-primary { background: var(--sf-accent-soft); color: var(--sf-accent); }
 .sf-pill-dark { background: #f2f2f7; color: var(--sf-text-1); }
 .sf-term-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 500; color: #fff; background: linear-gradient(135deg,#667eea,#764ba2); }
 .sf-info-banner { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; border-radius: var(--sf-radius-md); font-size: 13px; background: #eff6ff; color: #1e40af; border: 0.5px solid #bfdbfe; }
 .sf-info-banner.sf-info-warning { background: #fffbeb; color: #92400e; border-color: #fde68a; }
+.sf-hint { font-size: 12px; color: var(--sf-text-2); }
 .sf-empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; color: var(--sf-text-2); font-size: 14px; gap: 8px; text-align: center; }
 .subject-check-card { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--sf-radius-md); border: 0.5px solid var(--sf-border-med); background: var(--sf-surface); cursor: pointer; transition: all var(--sf-transition); }
 .subject-check-card:hover { border-color: var(--sf-accent); background: #faf9ff; }
 .subject-check-card.is-checked { border-color: var(--sf-accent); background: var(--sf-accent-soft); }
-.sf-chk { width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid var(--sf-border-med); appearance: none; cursor: pointer; background: var(--sf-surface); }
+.sf-chk { width: 18px; height: 18px; border-radius: 5px; border: 1.5px solid var(--sf-border-med); appearance: none; cursor: pointer; background: var(--sf-surface); position: relative; flex-shrink: 0; }
 .sf-chk:checked { background: var(--sf-accent); border-color: var(--sf-accent); }
 .sf-chk:checked::after { content: ''; position: absolute; left: 4px; top: 1.5px; width: 6px; height: 9px; border: 2px solid #fff; border-top: none; border-left: none; transform: rotate(42deg); }
 .sf-table-wrap { position: relative; }
 .sf-check-all-row { display: flex; align-items: center; gap: 10px; padding: 9px 20px; background: #f9f9fb; border-bottom: 0.5px solid var(--sf-border); }
+.sf-chk-wrap { display: flex; align-items: center; }
 .sf-check-all-label { font-size: 12px; color: var(--sf-text-2); }
 .sf-student-name { font-size: 14px; font-weight: 500; color: var(--sf-text-1); }
 .sf-badge { padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 500; }
@@ -548,11 +551,19 @@
 .sf-badge-m { background: #E6F1FB; color: #0C447C; }
 .sf-tray { position: sticky; bottom: 0; background: rgba(255,255,255,.92); backdrop-filter: blur(20px); border-top: 0.5px solid var(--sf-border-med); padding: 12px 20px; transform: translateY(110%); transition: transform .38s cubic-bezier(.34,1.2,.64,1); z-index: 99; border-radius: 0 0 var(--sf-radius-xl) var(--sf-radius-xl); }
 .sf-tray.tray-visible { transform: translateY(0); }
+.sf-tray-inner { display: flex; align-items: center; gap: 12px; }
+.sf-tray-count { font-size: 13px; font-weight: 600; color: var(--sf-text-1); white-space: nowrap; }
 .sf-tray-chips { display: flex; gap: 6px; flex: 1; overflow-x: auto; }
-.sf-chip { display: flex; align-items: center; gap: 5px; background: var(--sf-accent-soft); border: 0.5px solid #AFA9EC; border-radius: 20px; padding: 4px 10px 4px 5px; font-size: 12px; color: #3C3489; }
+.sf-tray-actions { display: flex; gap: 8px; }
+.sf-chip { display: flex; align-items: center; gap: 5px; background: var(--sf-accent-soft); border: 0.5px solid #AFA9EC; border-radius: 20px; padding: 4px 10px 4px 5px; font-size: 12px; color: #3C3489; white-space: nowrap; }
+.sf-chip-av { width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 600; flex-shrink: 0; }
+.sf-chip-x { background: none; border: none; cursor: pointer; padding: 0; display: flex; align-items: center; color: #3C3489; opacity: .6; }
+.sf-chip-x:hover { opacity: 1; }
 .sf-modal-content { border-radius: var(--sf-radius-xl) !important; overflow: hidden; }
 
-/* Student Picture Avatar */
+/* =====================================================================
+   STUDENT PICTURE AVATAR
+   ===================================================================== */
 .sf-avatar {
     width: 36px;
     height: 36px;
@@ -564,6 +575,7 @@
     background: #f0f0f0;
     border: 1px solid #ddd;
     cursor: pointer;
+    flex-shrink: 0;
 }
 .sf-avatar img {
     width: 100%;
@@ -571,20 +583,44 @@
     object-fit: cover;
 }
 
+/* =====================================================================
+   SUBJECT LOADER STATE
+   ===================================================================== */
+.sf-subject-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 28px 20px;
+    color: var(--sf-text-2);
+    font-size: 14px;
+}
+
+/* =====================================================================
+   ROW ANIMATION — Apple-style staggered fade+slide
+   FIX: Use a CSS transition on a toggled class (.row-visible) instead of
+   @keyframes. Keyframe animations only fire once per element lifetime and
+   don't re-fire when innerHTML is rebuilt. The double-rAF in JS guarantees
+   the browser has painted the "hidden" state before the class is added.
+   ===================================================================== */
+.sf-student-row {
+    opacity: 0;
+    transform: translateY(8px);
+    /* No transition here — added dynamically so the initial hidden paint
+       is instant and doesn't itself animate in from a previous state. */
+}
+.sf-student-row.row-visible {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.28s cubic-bezier(.4,0,.2,1),
+                transform 0.28s cubic-bezier(.4,0,.2,1);
+}
+
 /* Loading state for table */
 .loading-row td {
     text-align: center;
     padding: 40px 20px;
     color: var(--sf-text-2);
-}
-
-/* Row Animation */
-.sf-student-row {
-    animation: rowFadeIn 0.4s ease forwards;
-}
-@keyframes rowFadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
 }
 </style>
 @endsection
@@ -596,40 +632,38 @@
 // ============================================================================
 const ROUTES = {
     batchRegister : '{{ route("subjectregistration.batch") }}',
-    unregister : '{{ route("subjects.destroy") }}',
+    unregister    : '{{ route("subjects.destroy") }}',
     getRegistered : '{{ route("subjects.registered-classes") }}',
-    getArchived : '{{ route("subjectoperation.archived") }}',
-    getSnapshot : '{{ route("subjectoperation.snapshot.detail") }}',
-    restore : '{{ route("subjectoperation.restore") }}',
-    permanentDelete : '{{ route("subjectoperation.archive.batch-delete") }}',
-    index : '{{ route("subjects.index") }}',
+    getArchived   : '{{ route("subjectoperation.archived") }}',
+    getSnapshot   : '{{ route("subjectoperation.snapshot.detail") }}',
+    restore       : '{{ route("subjectoperation.restore") }}',
+    permanentDelete: '{{ route("subjectoperation.archive.batch-delete") }}',
+    index         : '{{ route("subjects.index") }}',
 };
 
-const CSRF = '{{ csrf_token() }}';
+const CSRF      = '{{ csrf_token() }}';
 const AVATAR_URL = '{{ asset("storage") }}';
 
 window._schoolInfo = {
-    name : @json($school?->school_name ?? 'School'),
+    name   : @json($school?->school_name ?? 'School'),
     address: @json($school?->school_address ?? ''),
-    phone : @json($school?->school_phone ?? ''),
-    email : @json($school?->school_email ?? ''),
-    motto : @json($school?->school_motto ?? ''),
-    logo : @json($school?->logo_url ?? null),
+    phone  : @json($school?->school_phone ?? ''),
+    email  : @json($school?->school_email ?? ''),
+    motto  : @json($school?->school_motto ?? ''),
+    logo   : @json($school?->logo_url ?? null),
 };
 
-let archiveCurrentPage = 1;
-let archiveMeta = {};
-let archiveSearchTimer = null;
+let archiveCurrentPage  = 1;
+let archiveMeta         = {};
+let archiveSearchTimer  = null;
 let currentSnapshotMeta = null;
 let currentSnapshotRows = [];
 
-// Avatar color palette (fallback only)
 const SF_COLORS = [
     ['#E6F1FB','#0C447C'],['#EAF3DE','#27500A'],['#FAEEDA','#633806'],
     ['#EEEDFE','#3C3489'],['#FBEAF0','#993556'],['#E1F5EE','#085041'],
 ];
-
-function sfColor(id) { return SF_COLORS[(id - 1) % SF_COLORS.length]; }
+function sfColor(id)    { return SF_COLORS[(id - 1) % SF_COLORS.length]; }
 function sfInitials(name) { return (name||'').split(' ').map(w=>w[0]).slice(0,2).join('').toUpperCase(); }
 
 // ============================================================================
@@ -721,8 +755,8 @@ function getSelectedStudentIds() {
 function getSelectedSubjectClasses() {
     return [...document.querySelectorAll('.subject-checkbox:checked')].map(cb => ({
         subjectclassid: parseInt(cb.dataset.subjectclassid),
-        staffid : parseInt(cb.dataset.staffid),
-        termid : parseInt(cb.dataset.termid),
+        staffid        : parseInt(cb.dataset.staffid),
+        termid         : parseInt(cb.dataset.termid),
     }));
 }
 
@@ -731,19 +765,16 @@ function getSelectedSubjectClasses() {
 // ============================================================================
 function toggleBatchButtons() {
     const checked = [...document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked')];
-    const tray = document.getElementById('selection-tray');
-    const chips = document.getElementById('tray-chips');
-    const count = document.getElementById('tray-count');
-    if (!checked.length) {
-        tray?.classList.remove('tray-visible');
-        return;
-    }
+    const tray    = document.getElementById('selection-tray');
+    const chips   = document.getElementById('tray-chips');
+    const count   = document.getElementById('tray-count');
+    if (!checked.length) { tray?.classList.remove('tray-visible'); return; }
     tray?.classList.add('tray-visible');
     count.textContent = `${checked.length} student${checked.length !== 1 ? 's' : ''} selected`;
     chips.innerHTML = checked.map(cb => {
-        const row = cb.closest('tr');
-        const name = row?.querySelector('.sf-student-name')?.textContent?.trim() ?? 'Student';
-        const id = row?.querySelector('.id')?.dataset?.id;
+        const row      = cb.closest('tr');
+        const name     = row?.querySelector('.sf-student-name')?.textContent?.trim() ?? 'Student';
+        const id       = row?.querySelector('.id')?.dataset?.id;
         const initials = sfInitials(name);
         const [bg, fg] = sfColor(parseInt(id) || 1);
         return `<div class="sf-chip">
@@ -770,14 +801,11 @@ function uncheckStudent(id, btn) {
 function sfToggleRow(e, row) {
     if (e.target.closest('input[type="checkbox"]') || e.target.closest('a') || e.target.closest('button')) return;
     const cb = row.querySelector('input[name="chk_child"]');
-    if (cb) {
-        cb.checked = !cb.checked;
-        toggleBatchButtons();
-    }
+    if (cb) { cb.checked = !cb.checked; toggleBatchButtons(); }
 }
 
 // ============================================================================
-// REWRITE ROWS - SHOWS REAL PICTURES
+// REWRITE ROWS — real pictures + staggered fade animation
 // ============================================================================
 function rewriteExistingRows() {
     const body = document.getElementById('studentTableBody');
@@ -787,31 +815,34 @@ function rewriteExistingRows() {
 
     let html = '';
     oldRows.forEach((tr, i) => {
-        const id = tr.querySelector('.id')?.dataset?.id || '';
-        const admissionno = tr.querySelector('.admissionno')?.dataset?.admissionno || tr.querySelector('.admissionno')?.textContent?.trim() || '';
-        const fullName = tr.querySelector('.name a')?.textContent?.trim() || tr.querySelector('.name')?.textContent?.trim() || '';
-        const className = tr.querySelector('.class')?.textContent?.trim() || '';
-        const gender = tr.querySelector('.gender')?.textContent?.trim() || '';
+        const id          = tr.querySelector('.id')?.dataset?.id || '';
+        const admissionno = tr.querySelector('.admissionno')?.dataset?.admissionno
+                          || tr.querySelector('.admissionno')?.textContent?.trim() || '';
+        const fullName    = tr.querySelector('.name a')?.textContent?.trim()
+                          || tr.querySelector('.name')?.textContent?.trim() || '';
+        const className   = tr.querySelector('.class')?.textContent?.trim() || '';
+        const gender      = tr.querySelector('.gender')?.textContent?.trim() || '';
 
-        const imgEl = tr.querySelector('img[data-image]');
-        const imageUrl = imgEl ? imgEl.getAttribute('data-image') : `${AVATAR_URL}/student_avatars/unnamed.jpg`;
+        const imgEl       = tr.querySelector('img[data-image]');
+        const imageUrl    = imgEl ? imgEl.getAttribute('data-image') : `${AVATAR_URL}/student_avatars/unnamed.jpg`;
 
-        const initials = sfInitials(fullName);
-        const isFemale = gender.toLowerCase() === 'female';
+        const initials  = sfInitials(fullName);
+        const isFemale  = gender.toLowerCase() === 'female';
 
+        // NOTE: No animation-delay inline style — timing is handled by setTimeout in JS after paint
         html += `
-        <tr class="sf-student-row" style="animation-delay: ${i * 30}ms" onclick="sfToggleRow(event, this)">
+        <tr class="sf-student-row" onclick="sfToggleRow(event, this)">
             <td class="text-center">
                 <input type="checkbox" class="sf-chk" name="chk_child" onclick="event.stopPropagation()">
                 <span class="id" data-id="${escapeHtml(id)}" style="display:none;"></span>
             </td>
-            <td class="text-muted small">${i+1}</td>
+            <td class="text-muted small">${i + 1}</td>
             <td class="admissionno" data-admissionno="${escapeHtml(admissionno)}">${escapeHtml(admissionno)}</td>
             <td>
                 <div class="d-flex align-items-center gap-3">
                     <div class="sf-avatar" onclick="event.stopPropagation();showStudentImage('${escapeHtml(imageUrl)}')">
                         <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(fullName)}"
-                             onerror="this.onerror=null;this.parentNode.innerHTML='<span style=\'font-size:12px;font-weight:600;\'>${escapeHtml(initials)}</span>';">
+                             onerror="this.onerror=null;this.parentNode.innerHTML='<span style=&quot;font-size:12px;font-weight:600;&quot;>${escapeHtml(initials)}</span>';">
                     </div>
                     <div class="sf-student-name">${escapeHtml(fullName)}</div>
                 </div>
@@ -822,7 +853,22 @@ function rewriteExistingRows() {
         </tr>`;
     });
 
+    // Set innerHTML — rows are now in DOM at opacity:0, translateY(8px)
     body.innerHTML = html || `<tr><td colspan="7" class="text-center py-4 text-muted">No students found.</td></tr>`;
+
+    // FIX: Double requestAnimationFrame ensures the browser has completed one
+    // full paint cycle with rows in their "hidden" state before we add
+    // .row-visible. Without this, the browser batches the innerHTML write and
+    // the class add into the same frame — the transition has no "from" state
+    // and nothing animates.
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            body.querySelectorAll('.sf-student-row').forEach((row, i) => {
+                setTimeout(() => row.classList.add('row-visible'), i * 35);
+            });
+        });
+    });
+
     toggleBatchButtons();
 }
 
@@ -832,24 +878,39 @@ function showStudentImage(src) {
 }
 
 // ============================================================================
-// FILTER / SEARCH (AJAX) - WITH LOADER
+// FILTER / SEARCH (AJAX) — with loaders for BOTH subjects AND students
 // ============================================================================
 function filterData() {
-    const classId = document.getElementById('idclass').value;
+    const classId   = document.getElementById('idclass').value;
     const sessionId = document.getElementById('idsession').value;
+
     if (classId === 'ALL' || sessionId === 'ALL') {
         Swal.fire({ icon: 'warning', title: 'Missing filters', text: 'Please select a class and session.', showConfirmButton: true });
         return;
     }
-    const search = document.querySelector('.sf-search-input.search')?.value ?? '';
-    const gender = document.getElementById('idgender').value;
+
+    const search    = document.querySelector('.sf-search-input.search')?.value ?? '';
+    const gender    = document.getElementById('idgender').value;
     const admission = document.getElementById('idadmission').value;
 
+    // FIX 1: Show student table loading spinner
     const body = document.getElementById('studentTableBody');
     if (body) {
         body.innerHTML = `<tr class="loading-row"><td colspan="7">
-            <div class="spinner-border text-primary me-2"></div>Searching students...
+            <div class="d-flex align-items-center justify-content-center gap-2 py-2">
+                <div class="spinner-border spinner-border-sm text-primary"></div>
+                <span>Searching students...</span>
+            </div>
         </td></tr>`;
+    }
+
+    // FIX 1: Show subject teachers loading spinner simultaneously
+    const stcEl = document.getElementById('subjectTeachersContainer');
+    if (stcEl) {
+        stcEl.innerHTML = `<div class="sf-subject-loading">
+            <div class="spinner-border spinner-border-sm text-primary"></div>
+            <span>Searching class subjects and teachers…</span>
+        </div>`;
     }
 
     const params = new URLSearchParams({ class_id: classId, session_id: sessionId, search, gender, admissionno: admission });
@@ -859,7 +920,7 @@ function filterData() {
     })
     .then(r => r.text())
     .then(html => {
-        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const doc  = new DOMParser().parseFromString(html, 'text/html');
         const pick = (id) => ({ fresh: doc.getElementById(id), live: document.getElementById(id) });
 
         const tb = pick('studentTableBody');
@@ -874,6 +935,7 @@ function filterData() {
         const sc = pick('studentcount');
         if (sc.fresh && sc.live) sc.live.textContent = sc.fresh.textContent;
 
+        // Update subject teachers container (already showing spinner, now replace with real data)
         const stc = pick('subjectTeachersContainer');
         if (stc.fresh && document.getElementById('subjectTeachersContainer')) {
             document.getElementById('subjectTeachersContainer').innerHTML = stc.fresh.innerHTML;
@@ -884,7 +946,8 @@ function filterData() {
         setupPaginationLinks();
     })
     .catch(err => {
-        if (body) body.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading data.</td></tr>';
+        if (body) body.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-3">Error loading data.</td></tr>';
+        if (stcEl) stcEl.innerHTML = `<div class="sf-empty-state text-danger">Failed to load subjects.</div>`;
         Swal.fire({ icon: 'error', title: 'Error', text: err.message || 'Failed to fetch data.', showConfirmButton: true });
     });
 }
@@ -905,14 +968,17 @@ function loadPage(url) {
     const body = document.getElementById('studentTableBody');
     if (body) {
         body.innerHTML = `<tr class="loading-row"><td colspan="7">
-            <div class="spinner-border text-primary me-2"></div>Loading...
+            <div class="d-flex align-items-center justify-content-center gap-2 py-2">
+                <div class="spinner-border spinner-border-sm text-primary"></div>
+                <span>Loading...</span>
+            </div>
         </td></tr>`;
     }
 
     fetch(url, { headers: { 'X-CSRF-TOKEN': CSRF, 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' } })
     .then(r => r.text())
     .then(html => {
-        const doc = new DOMParser().parseFromString(html, 'text/html');
+        const doc  = new DOMParser().parseFromString(html, 'text/html');
         const pick = (id) => ({ fresh: doc.getElementById(id), live: document.getElementById(id) });
 
         const tb = pick('studentTableBody');
@@ -931,7 +997,7 @@ function loadPage(url) {
         setupPaginationLinks();
     })
     .catch(() => {
-        if (body) body.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Error loading data.</td></tr>';
+        if (body) body.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-3">Error loading data.</td></tr>';
     });
 }
 
@@ -953,13 +1019,13 @@ function updateAdmissionNoOptions(students) {
 // REGISTER BATCH
 // ============================================================================
 async function registerSelectedStudentsBatch() {
-    const studentIds = getSelectedStudentIds();
+    const studentIds    = getSelectedStudentIds();
     const subjectClasses = getSelectedSubjectClasses();
-    const sessionId = document.getElementById('idsession').value;
+    const sessionId     = document.getElementById('idsession').value;
 
-    if (!studentIds.length) return showSweetAlert('No Students Selected', 'Please select at least one student.', 'warning', false);
+    if (!studentIds.length)    return showSweetAlert('No Students Selected', 'Please select at least one student.', 'warning', false);
     if (!subjectClasses.length) return showSweetAlert('No Subjects Selected', 'Please select at least one subject.', 'warning', false);
-    if (sessionId === 'ALL') return showSweetAlert('Session Required', 'Please select a session.', 'warning', false);
+    if (sessionId === 'ALL')   return showSweetAlert('Session Required', 'Please select a session.', 'warning', false);
 
     const ok = await Swal.fire({
         title: 'Confirm Registration',
@@ -973,9 +1039,9 @@ async function registerSelectedStudentsBatch() {
     setSpinner(true);
     try {
         const res = await apiFetch(ROUTES.batchRegister, 'POST', {
-            studentids : studentIds,
+            studentids   : studentIds,
             subjectclasses: subjectClasses,
-            sessionid : parseInt(sessionId),
+            sessionid    : parseInt(sessionId),
         });
         if (res.success) {
             showSweetAlert('Registration Successful!', res.message, 'success', true);
@@ -994,13 +1060,13 @@ async function registerSelectedStudentsBatch() {
 // UNREGISTER
 // ============================================================================
 function openUnregisterModal() {
-    const studentIds = getSelectedStudentIds();
+    const studentIds    = getSelectedStudentIds();
     const subjectClasses = getSelectedSubjectClasses();
-    const sessionId = document.getElementById('idsession').value;
+    const sessionId     = document.getElementById('idsession').value;
 
-    if (!studentIds.length) return showSweetAlert('No Students Selected', 'Please select at least one student.', 'warning', false);
+    if (!studentIds.length)    return showSweetAlert('No Students Selected', 'Please select at least one student.', 'warning', false);
     if (!subjectClasses.length) return showSweetAlert('No Subjects Selected', 'Please select at least one subject.', 'warning', false);
-    if (sessionId === 'ALL') return showSweetAlert('Session Required', 'Please select a session.', 'warning', false);
+    if (sessionId === 'ALL')   return showSweetAlert('Session Required', 'Please select a session.', 'warning', false);
 
     document.getElementById('snapshotStudentCount').textContent = `${studentIds.length} student${studentIds.length !== 1 ? 's' : ''}`;
     document.getElementById('snapshotSubjectCount').textContent = `${subjectClasses.length} subject${subjectClasses.length !== 1 ? 's' : ''}`;
@@ -1011,7 +1077,7 @@ function openUnregisterModal() {
     document.getElementById('snapshotNotesInput').value = '';
     document.getElementById('snapshotNotesCount').textContent = '0';
 
-    const now = new Date();
+    const now     = new Date();
     const dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
     nameInput.value = `Unregistration — ${dateStr} ${timeStr}`;
@@ -1020,29 +1086,31 @@ function openUnregisterModal() {
 }
 
 async function proceedUnregister() {
-    const nameInput = document.getElementById('snapshotNameInput');
+    const nameInput  = document.getElementById('snapshotNameInput');
     const notesInput = document.getElementById('snapshotNotesInput');
-    const name = nameInput.value.trim();
+    const name       = nameInput.value.trim();
     if (!name) { nameInput.classList.add('is-invalid'); return; }
     nameInput.classList.remove('is-invalid');
 
-    const studentIds = getSelectedStudentIds();
+    const studentIds    = getSelectedStudentIds();
     const subjectClasses = getSelectedSubjectClasses();
-    const sessionId = document.getElementById('idsession').value;
+    const sessionId     = document.getElementById('idsession').value;
 
     bootstrap.Modal.getInstance(document.getElementById('snapshotNameModal'))?.hide();
     setSpinner(true);
 
     try {
         const res = await apiFetch(ROUTES.unregister, 'DELETE', {
-            studentids : studentIds,
+            studentids    : studentIds,
             subjectclasses: subjectClasses,
-            sessionid : parseInt(sessionId),
+            sessionid     : parseInt(sessionId),
             snapshot_name : name,
             snapshot_notes: notesInput.value.trim() || null,
         });
         if (res.success || res.success_count > 0) {
-            showSweetAlert('Unregistration Complete', `${res.success_count} student(s) unregistered.<br><small class="text-muted">Snapshot saved as "<strong>${escapeHtml(name)}</strong>"</small>`, 'success', true);
+            showSweetAlert('Unregistration Complete',
+                `${res.success_count} student(s) unregistered.<br><small class="text-muted">Snapshot saved as "<strong>${escapeHtml(name)}</strong>"</small>`,
+                'success', true);
             setTimeout(() => location.reload(), 2500);
         } else {
             showSweetAlert('Unregistration Failed', res.message || 'No students were unregistered.', 'error', false);
@@ -1055,10 +1123,10 @@ async function proceedUnregister() {
 }
 
 // ============================================================================
-// REGISTERED CLASSES (kept full as before)
+// REGISTERED CLASSES
 // ============================================================================
 async function loadRegisteredClasses() {
-    const classId = document.getElementById('idclass').value;
+    const classId   = document.getElementById('idclass').value;
     const sessionId = document.getElementById('idsession').value;
     const container = document.getElementById('registeredClassesContent');
     if (classId === 'ALL' || sessionId === 'ALL') {
@@ -1068,7 +1136,7 @@ async function loadRegisteredClasses() {
     container.innerHTML = `<div class="sf-empty-state"><div class="spinner-border text-primary" style="width:2.5rem;height:2.5rem;"></div><p class="mt-2 mb-0">Loading…</p></div>`;
 
     try {
-        const res = await fetch(
+        const res  = await fetch(
             ROUTES.getRegistered + '?' + new URLSearchParams({ class_id: classId, session_id: sessionId }),
             { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } }
         );
@@ -1083,14 +1151,14 @@ async function loadRegisteredClasses() {
             const key = row.term_name;
             if (!termMap[key]) {
                 termMap[key] = {
-                    class_name : row.class_name,
-                    arm_name : row.arm_name ?? '',
+                    class_name   : row.class_name,
+                    arm_name     : row.arm_name ?? '',
                     session_name : row.session_name,
-                    term_name : row.term_name,
-                    term_id : String(row.term_id ?? row.termid ?? '').trim(),
+                    term_name    : row.term_name,
+                    term_id      : String(row.term_id ?? row.termid ?? '').trim(),
                     student_count: row.student_count,
                     subject_count: row.subject_count,
-                    subjects : [],
+                    subjects     : [],
                 };
             }
             if (row.subject_name) termMap[key].subjects.push({ name: row.subject_name, teacher: null, count: row.student_count ?? '' });
@@ -1145,8 +1213,8 @@ async function loadRegisteredClasses() {
 }
 
 function printRegisteredClasses() {
-    const container = document.getElementById('registeredClassesContent');
-    const school = window._schoolInfo || {};
+    const container  = document.getElementById('registeredClassesContent');
+    const school     = window._schoolInfo || {};
     const termBlocks = container.querySelectorAll('[data-term-block]');
     if (!termBlocks.length) {
         Swal.fire({ icon: 'warning', title: 'Nothing to print', text: 'Load the registered classes first.', showConfirmButton: true });
@@ -1156,16 +1224,16 @@ function printRegisteredClasses() {
     let termsHtml = '';
     termBlocks.forEach(block => {
         const titleText = block.querySelector('[data-term-title]')?.textContent?.trim() ?? '';
-        const termText = block.querySelector('[data-term-subtitle]')?.textContent?.trim() ?? '';
+        const termText  = block.querySelector('[data-term-subtitle]')?.textContent?.trim() ?? '';
         const pillSpans = [...(block.querySelectorAll('[data-term-pills] span') ?? [])];
         const pillsHtml = pillSpans.map(p => `<span style="background:#E6F1FB;color:#0C447C;padding:3px 10px;border-radius:20px;font-size:9pt;font-weight:500;margin-left:6px;">${escapeHtml(p.textContent.trim())}</span>`).join('');
         const termStudentCount = block.dataset.termStudentCount ?? '';
         const cells = [...block.querySelectorAll('[data-subject-cell]')];
         let rows = '';
         cells.forEach((cell, idx) => {
-            const subjName = cell.querySelector('[data-cell-subject]')?.textContent?.trim() ?? '';
-            const teacher = cell.querySelector('[data-cell-teacher]')?.textContent?.trim() ?? '—';
-            const countEl = cell.querySelector('[data-cell-count]');
+            const subjName  = cell.querySelector('[data-cell-subject]')?.textContent?.trim() ?? '';
+            const teacher   = cell.querySelector('[data-cell-teacher]')?.textContent?.trim() ?? '—';
+            const countEl   = cell.querySelector('[data-cell-count]');
             const countText = countEl ? countEl.textContent.trim() : (termStudentCount ? `${termStudentCount} students` : '');
             if (!subjName) return;
             rows += `<tr>
@@ -1213,10 +1281,10 @@ function printRegisteredClasses() {
 }
 
 // ============================================================================
-// ARCHIVED MODAL (full)
+// ARCHIVED MODAL
 // ============================================================================
 function openArchivedModal() {
-    const classId = document.getElementById('idclass').value;
+    const classId   = document.getElementById('idclass').value;
     const sessionId = document.getElementById('idsession').value;
     if (classId === 'ALL' || sessionId === 'ALL') {
         return showSweetAlert('Selection Required', 'Please select a class and session first.', 'warning', false);
@@ -1227,22 +1295,22 @@ function openArchivedModal() {
 }
 
 async function loadArchivedPage(page) {
-    archiveCurrentPage = page;
-    const classId = document.getElementById('idclass').value;
-    const sessionId = document.getElementById('idsession').value;
-    const termId = document.getElementById('archiveTermFilter').value;
-    const search = document.getElementById('archiveSearch').value.trim();
-    const perPage = document.getElementById('archivePerPage').value;
+    archiveCurrentPage  = page;
+    const classId       = document.getElementById('idclass').value;
+    const sessionId     = document.getElementById('idsession').value;
+    const termId        = document.getElementById('archiveTermFilter').value;
+    const search        = document.getElementById('archiveSearch').value.trim();
+    const perPage       = document.getElementById('archivePerPage').value;
     if (classId === 'ALL' || sessionId === 'ALL') return;
-    const spinner = document.getElementById('archiveSpinner');
+    const spinner   = document.getElementById('archiveSpinner');
     const container = document.getElementById('snapshotCardsContainer');
     spinner?.classList.remove('d-none');
     container.innerHTML = `<div class="sf-empty-state"><div class="spinner-border spinner-border-sm text-warning me-2"></div>Loading snapshots…</div>`;
     try {
         const params = new URLSearchParams({ class_id: classId, session_id: sessionId, page, per_page: perPage });
-        if (termId) params.set('term_id', termId);
-        if (search) params.set('search', search);
-        const res = await fetch(ROUTES.getArchived + '?' + params.toString(), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
+        if (termId)  params.set('term_id', termId);
+        if (search)  params.set('search', search);
+        const res  = await fetch(ROUTES.getArchived + '?' + params.toString(), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
         const data = await res.json();
         if (!data.success) { container.innerHTML = `<div class="sf-empty-state text-danger">${data.message}</div>`; return; }
         archiveMeta = data.meta;
@@ -1268,23 +1336,25 @@ function renderSnapshotCards(rows) {
         if (!groups[key]) groups[key] = { ...row, subjects: [] };
         groups[key].subjects.push({
             subjectname: row.subjectname, subjectcode: row.subjectcode,
-            staffname: row.staffname, student_count: row.student_count,
+            staffname  : row.staffname,   student_count: row.student_count,
             subjectclassid: row.subjectclassid, termid: row.termid,
-            sessionid: row.sessionid, staffid: row.staffid, archive_id: row.archive_id,
+            sessionid  : row.sessionid,   staffid: row.staffid, archive_id: row.archive_id,
         });
     });
     let html = '<div class="row g-3">';
     Object.values(groups).forEach(group => {
-        const unregDate = group.unregistered_at
+        const unregDate    = group.unregistered_at
             ? new Date(group.unregistered_at).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })
             : '—';
         const subjectPills = group.subjects.map(s => `<span class="sf-pill sf-pill-primary me-1 mb-1">${escapeHtml(s.subjectname)}</span>`).join('');
-        const metaEncoded = encodeURIComponent(JSON.stringify({
-            snapshot_name: group.snapshot_name, subjectclassid: group.subjectclassid,
-            termid: group.termid, sessionid: group.sessionid, staffid: group.staffid, archive_id: group.archive_id,
+        const metaEncoded  = encodeURIComponent(JSON.stringify({
+            snapshot_name : group.snapshot_name, subjectclassid: group.subjectclassid,
+            termid        : group.termid,         sessionid: group.sessionid,
+            staffid       : group.staffid,        archive_id: group.archive_id,
         }));
         html += `<div class="col-md-6 col-xl-4">
-            <div class="sf-card h-100 snapshot-card" style="cursor:pointer;transition:transform .2s,box-shadow .2s;" onclick="openSnapshotDetail('${metaEncoded}')"
+            <div class="sf-card h-100 snapshot-card" style="cursor:pointer;transition:transform .2s,box-shadow .2s;"
+                 onclick="openSnapshotDetail('${metaEncoded}')"
                  onmouseenter="this.style.transform='translateY(-3px)';this.style.boxShadow='0 8px 28px rgba(0,0,0,.12)';"
                  onmouseleave="this.style.transform='';this.style.boxShadow='';">
                 <div class="sf-card-body">
@@ -1295,7 +1365,7 @@ function renderSnapshotCards(rows) {
                             </h6>
                             <small class="text-muted">${unregDate}</small>
                         </div>
-                        <span class="sf-badge sf-badge-unreg flex-shrink-0">${group.student_count} student${group.student_count !== 1 ? 's' : ''}</span>
+                        <span class="sf-badge sf-badge-f flex-shrink-0">${group.student_count} student${group.student_count !== 1 ? 's' : ''}</span>
                     </div>
                     ${group.snapshot_notes ? `<p class="text-muted small fst-italic mb-2" style="display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">"${escapeHtml(group.snapshot_notes)}"</p>` : ''}
                     <div class="mb-2">${subjectPills}</div>
@@ -1336,7 +1406,7 @@ function updateArchiveMeta(meta) {
     const el = document.getElementById('archiveMeta');
     if (!meta || !meta.total) { if (el) el.textContent = ''; return; }
     const from = (meta.current_page - 1) * meta.per_page + 1;
-    const to = Math.min(meta.current_page * meta.per_page, meta.total);
+    const to   = Math.min(meta.current_page * meta.per_page, meta.total);
     el.textContent = `Showing ${from}–${to} of ${meta.total} snapshots`;
 }
 
@@ -1345,7 +1415,7 @@ function updateArchiveMeta(meta) {
 // ============================================================================
 async function openSnapshotDetail(metaEncoded) {
     currentSnapshotMeta = JSON.parse(decodeURIComponent(metaEncoded));
-    document.getElementById('snapshotDetailTitle').textContent = currentSnapshotMeta.snapshot_name;
+    document.getElementById('snapshotDetailTitle').textContent    = currentSnapshotMeta.snapshot_name;
     document.getElementById('snapshotDetailSubtitle').textContent = '';
     document.getElementById('snapshotNotesBanner')?.classList.add('d-none');
     const searchInput = document.getElementById('detailSearchInput');
@@ -1359,11 +1429,11 @@ async function openSnapshotDetail(metaEncoded) {
         const params = new URLSearchParams({
             snapshot_name : currentSnapshotMeta.snapshot_name,
             subjectclassid: currentSnapshotMeta.subjectclassid,
-            termid : currentSnapshotMeta.termid,
-            sessionid : currentSnapshotMeta.sessionid,
-            staffid : currentSnapshotMeta.staffid,
+            termid        : currentSnapshotMeta.termid,
+            sessionid     : currentSnapshotMeta.sessionid,
+            staffid       : currentSnapshotMeta.staffid,
         });
-        const res = await fetch(ROUTES.getSnapshot + '?' + params.toString(), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
+        const res  = await fetch(ROUTES.getSnapshot + '?' + params.toString(), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
         const data = await res.json();
         if (!data.success) {
             document.getElementById('snapshotDetailBody').innerHTML = `<tr><td colspan="10" class="text-center text-danger py-4">${data.message}</td></tr>`;
@@ -1385,26 +1455,26 @@ function renderSnapshotDetailTable(rows, assessmentHeaders) {
     const headerRow = document.getElementById('snapshotDetailHeaderRow');
     while (headerRow.cells.length > 4) headerRow.deleteCell(headerRow.cells.length - 1);
     (assessmentHeaders || []).forEach(a => {
-        const th = document.createElement('th');
+        const th       = document.createElement('th');
         th.textContent = a.assessment_name || `Assessment ${a.assessment_id}`;
         headerRow.appendChild(th);
     });
-    const totalTh = document.createElement('th');
+    const totalTh       = document.createElement('th');
     totalTh.textContent = 'Total';
     headerRow.appendChild(totalTh);
     let html = '';
     rows.forEach(row => {
-        const name = [row.lastname, row.firstname, row.othername].filter(Boolean).join(' ');
+        const name    = [row.lastname, row.firstname, row.othername].filter(Boolean).join(' ');
         const picFile = row.picture ? row.picture.split('/').pop() : null;
-        const pic = picFile ? `${AVATAR_URL}/student_avatars/${picFile}` : `${AVATAR_URL}/student_avatars/unnamed.jpg`;
+        const pic     = picFile ? `${AVATAR_URL}/student_avatars/${picFile}` : `${AVATAR_URL}/student_avatars/unnamed.jpg`;
         const genderBadge = row.gender === 'Female'
             ? `<span class="sf-badge sf-badge-f">${escapeHtml(row.gender)}</span>`
             : `<span class="sf-badge sf-badge-m">${escapeHtml(row.gender ?? '—')}</span>`;
         let scoresCells = '';
-        let total = 0;
+        let total       = 0;
         (assessmentHeaders || []).forEach(a => {
             const score = (row.assessment_scores || []).find(s => s.assessment_id == a.assessment_id);
-            const val = score ? parseFloat(score.score) : 0;
+            const val   = score ? parseFloat(score.score) : 0;
             total += val;
             scoresCells += `<td class="text-center fw-medium">${val > 0 ? val.toFixed(1) : '<span class="text-muted">—</span>'}</td>`;
         });
@@ -1434,7 +1504,7 @@ function toggleDetailButtons() {
 }
 
 function filterDetailRows(query) {
-    const q = query.toLowerCase().trim();
+    const q    = query.toLowerCase().trim();
     const rows = document.querySelectorAll('#snapshotDetailBody tr[data-search]');
     let visible = 0;
     rows.forEach(tr => {
@@ -1443,7 +1513,7 @@ function filterDetailRows(query) {
         if (match) visible++;
     });
     const total = currentSnapshotRows.length;
-    const meta = document.getElementById('detailStudentMeta');
+    const meta  = document.getElementById('detailStudentMeta');
     if (meta) {
         meta.textContent = q
             ? `${visible} of ${total} student${total !== 1 ? 's' : ''} shown`
@@ -1466,7 +1536,12 @@ async function restoreDetailSelected() {
 }
 
 async function doRestore(archiveIds, label) {
-    const ok = await Swal.fire({ title: 'Restore Registration?', html: `<p>Restore <strong>${label}</strong>? Original scores will be recovered.</p>`, icon: 'question', showCancelButton: true, confirmButtonColor: '#1a7a4a', confirmButtonText: 'Yes, restore!', });
+    const ok = await Swal.fire({
+        title: 'Restore Registration?',
+        html : `<p>Restore <strong>${label}</strong>? Original scores will be recovered.</p>`,
+        icon : 'question', showCancelButton: true,
+        confirmButtonColor: '#1a7a4a', confirmButtonText: 'Yes, restore!',
+    });
     if (!ok.isConfirmed) return;
     const spinner = document.getElementById('detailSpinner');
     spinner?.classList.remove('d-none');
@@ -1488,13 +1563,18 @@ async function doRestore(archiveIds, label) {
 
 async function restoreSingleSnapshot(metaEncoded) {
     const meta = JSON.parse(decodeURIComponent(metaEncoded));
-    const ok = await Swal.fire({ title: 'Restore Snapshot?', html: `<p>Restore all students in "<strong>${escapeHtml(meta.snapshot_name)}</strong>"?</p>`, icon: 'question', showCancelButton: true, confirmButtonColor: '#1a7a4a', confirmButtonText: 'Yes, restore all!', });
+    const ok   = await Swal.fire({
+        title: 'Restore Snapshot?',
+        html : `<p>Restore all students in "<strong>${escapeHtml(meta.snapshot_name)}</strong>"?</p>`,
+        icon : 'question', showCancelButton: true,
+        confirmButtonColor: '#1a7a4a', confirmButtonText: 'Yes, restore all!',
+    });
     if (!ok.isConfirmed) return;
     const spinner = document.getElementById('archiveSpinner');
     spinner?.classList.remove('d-none');
     try {
-        const params = new URLSearchParams({ snapshot_name: meta.snapshot_name, subjectclassid: meta.subjectclassid, termid: meta.termid, sessionid: meta.sessionid, staffid: meta.staffid });
-        const detailRes = await fetch(ROUTES.getSnapshot + '?' + params.toString(), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
+        const params     = new URLSearchParams({ snapshot_name: meta.snapshot_name, subjectclassid: meta.subjectclassid, termid: meta.termid, sessionid: meta.sessionid, staffid: meta.staffid });
+        const detailRes  = await fetch(ROUTES.getSnapshot + '?' + params.toString(), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
         const detailData = await detailRes.json();
         if (!detailData.success || !detailData.rows?.length) { showSweetAlert('Not Found', detailData.message || 'Snapshot records not found.', 'error', false); return; }
         const ids = detailData.rows.map(r => r.archive_id);
@@ -1514,13 +1594,18 @@ async function restoreSingleSnapshot(metaEncoded) {
 
 async function deleteSnapshotGroup(metaEncoded) {
     const meta = JSON.parse(decodeURIComponent(metaEncoded));
-    const ok = await Swal.fire({ title: 'Delete Snapshot?', html: `<p class="text-danger">Permanently delete "<strong>${escapeHtml(meta.snapshot_name)}</strong>"? This cannot be undone.</p>`, icon: 'error', showCancelButton: true, confirmButtonColor: '#dc3545', confirmButtonText: 'Yes, delete permanently', });
+    const ok   = await Swal.fire({
+        title: 'Delete Snapshot?',
+        html : `<p class="text-danger">Permanently delete "<strong>${escapeHtml(meta.snapshot_name)}</strong>"? This cannot be undone.</p>`,
+        icon : 'error', showCancelButton: true,
+        confirmButtonColor: '#dc3545', confirmButtonText: 'Yes, delete permanently',
+    });
     if (!ok.isConfirmed) return;
     const spinner = document.getElementById('archiveSpinner');
     spinner?.classList.remove('d-none');
     try {
-        const params = new URLSearchParams({ snapshot_name: meta.snapshot_name, subjectclassid: meta.subjectclassid, termid: meta.termid, sessionid: meta.sessionid, staffid: meta.staffid });
-        const detailRes = await fetch(ROUTES.getSnapshot + '?' + params.toString(), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
+        const params     = new URLSearchParams({ snapshot_name: meta.snapshot_name, subjectclassid: meta.subjectclassid, termid: meta.termid, sessionid: meta.sessionid, staffid: meta.staffid });
+        const detailRes  = await fetch(ROUTES.getSnapshot + '?' + params.toString(), { headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' } });
         const detailData = await detailRes.json();
         if (!detailData.success || !detailData.rows?.length) { showSweetAlert('Not Found', detailData.message || 'Snapshot records not found.', 'error', false); return; }
         const ids = detailData.rows.map(r => r.archive_id);
@@ -1541,7 +1626,12 @@ async function deleteSnapshotGroup(metaEncoded) {
 async function deleteDetailSelected() {
     const ids = [...document.querySelectorAll('.detail-chk:checked')].map(cb => parseInt(cb.value));
     if (!ids.length) return;
-    const ok = await Swal.fire({ title: 'Permanently Delete?', html: `<p class="text-danger">Delete <strong>${ids.length}</strong> record(s) permanently?</p>`, icon: 'error', showCancelButton: true, confirmButtonColor: '#dc3545', confirmButtonText: 'Yes, delete permanently', });
+    const ok  = await Swal.fire({
+        title: 'Permanently Delete?',
+        html : `<p class="text-danger">Delete <strong>${ids.length}</strong> record(s) permanently?</p>`,
+        icon : 'error', showCancelButton: true,
+        confirmButtonColor: '#dc3545', confirmButtonText: 'Yes, delete permanently',
+    });
     if (!ok.isConfirmed) return;
     const spinner = document.getElementById('detailSpinner');
     spinner?.classList.remove('d-none');
@@ -1562,7 +1652,7 @@ async function deleteDetailSelected() {
 }
 
 // Stubs for symmetry
-async function restoreSelected() { }
+async function restoreSelected()        { }
 async function permanentDeleteSelected() { }
 
 // ============================================================================
@@ -1571,9 +1661,9 @@ async function permanentDeleteSelected() { }
 function buildSubjectTeacherLookup() {
     const lookup = {};
     document.querySelectorAll('.subject-checkbox').forEach(cb => {
-        const termId = String(cb.dataset.termid ?? '').trim();
-        let subjectName = cb.dataset.subjectName ?? '';
-        let teacherName = cb.dataset.teacherName ?? '';
+        const termId      = String(cb.dataset.termid ?? '').trim();
+        let subjectName   = cb.dataset.subjectName  ?? '';
+        let teacherName   = cb.dataset.teacherName  ?? '';
         if (!subjectName || !teacherName) {
             const card = cb.closest('.subject-check-card');
             if (card) {
@@ -1632,9 +1722,9 @@ document.addEventListener('DOMContentLoaded', function () {
     document.addEventListener('change', function (e) {
         if (e.target?.name === 'chk_child') {
             toggleBatchButtons();
-            const all = document.querySelectorAll('#studentTableBody input[name="chk_child"]');
+            const all     = document.querySelectorAll('#studentTableBody input[name="chk_child"]');
             const checked = document.querySelectorAll('#studentTableBody input[name="chk_child"]:checked');
-            const ca = document.getElementById('checkAll');
+            const ca      = document.getElementById('checkAll');
             if (ca) ca.checked = all.length > 0 && all.length === checked.length;
         }
     });
