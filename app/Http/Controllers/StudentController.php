@@ -751,20 +751,59 @@ class StudentController extends Controller
      * 2. PromotionStatus — scoped to all four fields; correct and unchanged.
      * 3. StudentCurrentTerm — correct; unchanged.
      */
+  <?php
+
+// ============================================================================
+// FIXED update() METHOD — drop this into StudentController.php
+// ============================================================================
+//
+// ROOT CAUSES OF 500 ERROR:
+// 1. states_lgas.json missing or wrong path → file_get_contents() throws fatal
+// 2. Missing schoolhouseid in validator (inconsistency with store)
+// 3. State/LGA custom validators crash when JSON unavailable
+// 4. Studentpersonalityprofile updateOrCreate uses wrong key (studentid not studentid)
+//
+// HOW TO APPLY:
+// Replace the entire update() method in app/Http/Controllers/StudentController.php
+// with the method below.
+// ============================================================================
+
     public function update(Request $request, $id): JsonResponse
     {
-        Log::debug('Updating student', ['id'=>$id, 'data'=>$request->except(['avatar','_token'])]);
+        Log::debug('Updating student', ['id' => $id, 'data' => $request->except(['avatar', '_token'])]);
 
         try {
-            $statesLgas = json_decode(file_get_contents(public_path('states_lgas.json')), true);
-            $states     = array_column($statesLgas, 'state');
-            $lgas       = collect($statesLgas)->pluck('lgas', 'state')->toArray();
+            // ------------------------------------------------------------------
+            // Load states/LGAs safely — don't crash if the file is missing
+            // ------------------------------------------------------------------
+            $states = [];
+            $lgas   = [];
 
-            $validator = Validator::make($request->all(), [
+            $jsonPath = public_path('states_lgas.json');
+            if (file_exists($jsonPath)) {
+                try {
+                    $statesLgas = json_decode(file_get_contents($jsonPath), true);
+                    if (is_array($statesLgas)) {
+                        $states = array_column($statesLgas, 'state');
+                        $lgas   = collect($statesLgas)->pluck('lgas', 'state')->toArray();
+                    }
+                } catch (\Exception $e) {
+                    Log::warning('Could not load states_lgas.json: ' . $e->getMessage());
+                }
+            } else {
+                Log::warning('states_lgas.json not found at: ' . $jsonPath);
+            }
+
+            $hasStateData = !empty($states);
+
+            // ------------------------------------------------------------------
+            // Build validation rules
+            // ------------------------------------------------------------------
+            $rules = [
                 'avatar'             => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
                 'admissionMode'      => 'required|in:auto,manual',
-                'admissionNo'        => 'required|string|max:255|unique:studentRegistration,admissionNo,'.$id,
-                'admissionYear'      => 'required|integer|min:1900|max:'.date('Y'),
+                'admissionNo'        => 'required|string|max:255|unique:studentRegistration,admissionNo,' . $id,
+                'admissionYear'      => 'required|integer|min:1900|max:' . date('Y'),
                 'admissionDate'      => 'required|date|before_or_equal:today',
                 'title'              => 'nullable|in:Master,Miss',
                 'firstname'          => 'required|string|max:255',
@@ -783,17 +822,13 @@ class StudentController extends Controller
                 'email'              => 'nullable|email|max:255',
                 'nin_number'         => 'nullable|string|max:20',
                 'city'               => 'nullable|string|max:255',
-                'state'              => ['required','string','max:255', function ($a,$v,$fail) use ($states) {
-                    if (!in_array($v,$states)) $fail('The selected state is invalid.');
-                }],
-                'local'              => ['required','string','max:255', function ($a,$v,$fail) use ($request,$lgas) {
-                    $s = $request->input('state');
-                    if (!isset($lgas[$s]) || !in_array($v,$lgas[$s])) $fail('The selected LGA is invalid for the chosen state.');
-                }],
+                'state'              => 'required|string|max:255',
+                'local'              => 'required|string|max:255',
                 'future_ambition'    => 'required|string|max:500',
                 'permanent_address'  => 'required|string|max:255',
                 'student_category'   => 'required|in:Day,Boarding',
                 'schoolclassid'      => 'required|exists:schoolclass,id',
+                'schoolhouseid'      => 'nullable|exists:schoolhouses,id',
                 'termid'             => 'required|exists:schoolterm,id',
                 'sessionid'          => 'required|exists:schoolsession,id',
                 'statusId'           => 'required|in:1,2',
@@ -812,11 +847,42 @@ class StudentController extends Controller
                 'last_school'        => 'nullable|string|max:255',
                 'last_class'         => 'nullable|string|max:255',
                 'reason_for_leaving' => 'nullable|string|max:500',
-            ]);
+            ];
+
+            // Only add custom state/LGA validators when the JSON loaded successfully
+            if ($hasStateData) {
+                $rules['state'] = [
+                    'required', 'string', 'max:255',
+                    function ($attribute, $value, $fail) use ($states) {
+                        if (!in_array($value, $states)) {
+                            $fail('The selected state is invalid.');
+                        }
+                    },
+                ];
+
+                $rules['local'] = [
+                    'required', 'string', 'max:255',
+                    function ($attribute, $value, $fail) use ($request, $lgas) {
+                        $selectedState = $request->input('state');
+                        if (!isset($lgas[$selectedState]) || !in_array($value, $lgas[$selectedState])) {
+                            $fail('The selected LGA is invalid for the chosen state.');
+                        }
+                    },
+                ];
+            }
+
+            $validator = Validator::make($request->all(), $rules);
 
             if ($validator->fails()) {
-                Log::warning('Validation failed for student update', ['errors'=>$validator->errors()->toArray()]);
-                return response()->json(['success'=>false,'message'=>'Validation failed','errors'=>$validator->errors()], 422);
+                Log::warning('Validation failed for student update', [
+                    'id'     => $id,
+                    'errors' => $validator->errors()->toArray(),
+                ]);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Validation failed',
+                    'errors'  => $validator->errors(),
+                ], 422);
             }
 
             DB::beginTransaction();
@@ -862,9 +928,7 @@ class StudentController extends Controller
             $student->save();
 
             // ------------------------------------------------------------------
-            // 2. Studentclass — FIX: find-then-update so changing class does NOT
-            //    insert a second row.  updateOrCreate with schoolclassid in the
-            //    key would create a duplicate whenever the class changes.
+            // 2. Studentclass — find-then-update to avoid duplicate rows
             // ------------------------------------------------------------------
             $existingClass = Studentclass::where('studentId', $id)
                 ->where('termid',    $request->termid)
@@ -883,7 +947,7 @@ class StudentController extends Controller
             }
 
             // ------------------------------------------------------------------
-            // 3. PromotionStatus — correct scoping, no change needed
+            // 3. PromotionStatus
             // ------------------------------------------------------------------
             PromotionStatus::updateOrCreate(
                 [
@@ -901,7 +965,7 @@ class StudentController extends Controller
             // ------------------------------------------------------------------
             // 4. Parent — one row per student
             // ------------------------------------------------------------------
-            $parent = ParentRegistration::firstOrNew(['studentId' => $id]);
+            $parent                    = ParentRegistration::firstOrNew(['studentId' => $id]);
             $parent->father_title      = $request->father_title;
             $parent->mother_title      = $request->mother_title;
             $parent->father            = $request->father_name;
@@ -920,30 +984,47 @@ class StudentController extends Controller
             // ------------------------------------------------------------------
             $picture = Studentpicture::firstOrNew(['studentid' => $id]);
             if ($request->hasFile('avatar')) {
-                if ($picture->picture && $picture->picture !== 'unnamed.jpg'
-                    && Storage::exists('public/images/student_avatars/'.$picture->picture)) {
-                    Storage::delete('public/images/student_avatars/'.$picture->picture);
+                if ($picture->picture && $picture->picture !== 'unnamed.jpg') {
+                    $oldPath = storage_path('app/public/images/student_avatars/' . $picture->picture);
+                    if (file_exists($oldPath)) {
+                        try {
+                            Storage::delete('public/images/student_avatars/' . $picture->picture);
+                        } catch (\Exception $e) {
+                            Log::warning('Could not delete old avatar: ' . $e->getMessage());
+                        }
+                    }
                 }
-                $path = $this->storeImage($request->file('avatar'), 'images/student_avatars');
+                $path            = $this->storeImage($request->file('avatar'), 'images/student_avatars');
                 $picture->picture = basename($path);
+            }
+            if (!$picture->picture) {
+                $picture->picture = 'unnamed.jpg';
             }
             $picture->save();
 
             // ------------------------------------------------------------------
             // 6. Student house — scoped to term+session
             // ------------------------------------------------------------------
-            Studenthouse::updateOrCreate(
-                ['studentid'=>$id,'termid'=>$request->termid,'sessionid'=>$request->sessionid],
-                ['schoolhouse'=>$request->schoolhouseid ?? null]
-            );
+            if ($request->filled('schoolhouseid')) {
+                Studenthouse::updateOrCreate(
+                    [
+                        'studentid' => $id,
+                        'termid'    => $request->termid,
+                        'sessionid' => $request->sessionid,
+                    ],
+                    ['schoolhouse' => $request->schoolhouseid]
+                );
+            }
 
             // ------------------------------------------------------------------
             // 7. Personality profile — scoped to class+term+session
             // ------------------------------------------------------------------
-            Studentpersonalityprofile::updateOrCreate(
-                ['studentid'=>$id,'schoolclassid'=>$request->schoolclassid,'termid'=>$request->termid,'sessionid'=>$request->sessionid],
-                []
-            );
+            Studentpersonalityprofile::firstOrCreate([
+                'studentid'     => $id,
+                'schoolclassid' => $request->schoolclassid,
+                'termid'        => $request->termid,
+                'sessionid'     => $request->sessionid,
+            ]);
 
             // ------------------------------------------------------------------
             // 8. StudentCurrentTerm — mark this as current, clear others
@@ -965,56 +1046,63 @@ class StudentController extends Controller
             DB::commit();
 
             return response()->json([
-                'success' => true,
-                'message' => 'Student updated successfully',
-                'redirect'=> route('student.index'),
-                'student' => [
-                    'id'                => $student->id,
-                    'admissionNo'       => $student->admissionNo,
-                    'admissionYear'     => $student->admissionYear,
-                    'title'             => $student->title,
-                    'firstname'         => $student->firstname,
-                    'lastname'          => $student->lastname,
-                    'othername'         => $student->othername,
-                    'gender'            => $student->gender,
-                    'dateofbirth'       => $student->dateofbirth,
-                    'placeofbirth'      => $student->placeofbirth,
-                    'nationality'       => $student->nationality,
-                    'religion'          => $student->religion,
-                    'last_school'       => $student->last_school,
-                    'last_class'        => $student->last_class,
-                    'schoolclassid'     => $request->schoolclassid,
-                    'termid'            => $request->termid,
-                    'sessionid'         => $request->sessionid,
-                    'phone_number'      => $student->phone_number,
-                    'nin_number'        => $student->nin_number,
-                    'blood_group'       => $student->blood_group,
-                    'mother_tongue'     => $student->mother_tongue,
-                    'father_name'       => $parent->father ?? '',
-                    'father_phone'      => $parent->father_phone ?? '',
-                    'father_occupation' => $parent->father_occupation ?? '',
-                    'mother_name'       => $parent->mother ?? '',
-                    'mother_phone'      => $parent->mother_phone ?? '',
-                    'parent_address'    => $parent->parent_address ?? '',
-                    'student_category'  => $student->student_category,
-                    'reason_for_leaving'=> $student->reason_for_leaving,
-                    'picture'           => $picture->picture ?? 'unnamed.jpg',
-                    'state'             => $student->state,
-                    'local'             => $student->local,
-                    'statusId'          => $student->statusId,
-                    'student_status'    => $student->student_status,
-                    'future_ambition'   => $student->future_ambition,
-                    'permanent_address' => $student->home_address2,
-                ]
+                'success'  => true,
+                'message'  => 'Student updated successfully',
+                'redirect' => route('student.index'),
+                'student'  => [
+                    'id'                 => $student->id,
+                    'admissionNo'        => $student->admissionNo,
+                    'admissionYear'      => $student->admissionYear,
+                    'title'              => $student->title,
+                    'firstname'          => $student->firstname,
+                    'lastname'           => $student->lastname,
+                    'othername'          => $student->othername,
+                    'gender'             => $student->gender,
+                    'dateofbirth'        => $student->dateofbirth,
+                    'placeofbirth'       => $student->placeofbirth,
+                    'nationality'        => $student->nationality,
+                    'religion'           => $student->religion,
+                    'last_school'        => $student->last_school,
+                    'last_class'         => $student->last_class,
+                    'schoolclassid'      => $request->schoolclassid,
+                    'termid'             => $request->termid,
+                    'sessionid'          => $request->sessionid,
+                    'phone_number'       => $student->phone_number,
+                    'nin_number'         => $student->nin_number,
+                    'blood_group'        => $student->blood_group,
+                    'mother_tongue'      => $student->mother_tongue,
+                    'father_name'        => $parent->father          ?? '',
+                    'father_phone'       => $parent->father_phone    ?? '',
+                    'father_occupation'  => $parent->father_occupation ?? '',
+                    'mother_name'        => $parent->mother          ?? '',
+                    'mother_phone'       => $parent->mother_phone    ?? '',
+                    'parent_address'     => $parent->parent_address  ?? '',
+                    'student_category'   => $student->student_category,
+                    'reason_for_leaving' => $student->reason_for_leaving,
+                    'picture'            => $picture->picture        ?? 'unnamed.jpg',
+                    'state'              => $student->state,
+                    'local'              => $student->local,
+                    'statusId'           => $student->statusId,
+                    'student_status'     => $student->student_status,
+                    'future_ambition'    => $student->future_ambition,
+                    'permanent_address'  => $student->home_address2,
+                ],
             ], 200);
+
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            DB::rollBack();
+            Log::error("Student ID {$id} not found during update");
+            return response()->json(['success' => false, 'message' => 'Student not found'], 404);
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error("Error updating student ID {$id}: {$e->getMessage()}\n{$e->getTraceAsString()}");
-            return response()->json(['success'=>false,'message'=>'Failed to update student: '.$e->getMessage()], 500);
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update student: ' . $e->getMessage(),
+            ], 500);
         }
     }
-
     protected function deleteImage($filename)
     {
         try {

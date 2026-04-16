@@ -531,57 +531,57 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
 
 
 
-// ============================================================================
-// ADD THIS ROUTE to your existing routes (alongside the others)
-// ============================================================================
+    // ============================================================================
+    // ADD THIS ROUTE to your existing routes (alongside the others)
+    // ============================================================================
 
-// GET snapshot detail — returns individual student rows + score snapshots
-// for a specific named snapshot group
-Route::get('/subjectoperation/snapshot/detail', [SubjectOperationController::class, 'getSnapshotDetail'])
-    ->name('subjectoperation.snapshot.detail');
-Route::get('/subjectoperation/registered-classes', [SubjectOperationController::class, 'registeredClasses'])
-    ->name('subjectoperation.registered-classes');
-Route::get('/subjectoperation/student-subject-counts', [SubjectOperationController::class, 'getStudentSubjectCounts'])
-    ->name('subjectoperation.student-subject-counts');
+    // GET snapshot detail — returns individual student rows + score snapshots
+    // for a specific named snapshot group
+    Route::get('/subjectoperation/snapshot/detail', [SubjectOperationController::class, 'getSnapshotDetail'])
+        ->name('subjectoperation.snapshot.detail');
+    Route::get('/subjectoperation/registered-classes', [SubjectOperationController::class, 'registeredClasses'])
+        ->name('subjectoperation.registered-classes');
+    Route::get('/subjectoperation/student-subject-counts', [SubjectOperationController::class, 'getStudentSubjectCounts'])
+        ->name('subjectoperation.student-subject-counts');
 
-// ── All existing routes stay the same ──────────────────────────────────────
+    // ── All existing routes stay the same ──────────────────────────────────────
 
-Route::get('/subjects', [SubjectOperationController::class, 'index'])->name('subjects.index');
+    Route::get('/subjects', [SubjectOperationController::class, 'index'])->name('subjects.index');
 
-Route::post('/subjectregistration', [SubjectOperationController::class, 'store'])->name('subjects.store');
-Route::get('/subjectoperation/subjectinfo/{id}/{schoolclassid}/{termid}/{sessionid}', [SubjectOperationController::class, 'subjectinfo'])->name('subjects.subjectinfo');
+    Route::post('/subjectregistration', [SubjectOperationController::class, 'store'])->name('subjects.store');
+    Route::get('/subjectoperation/subjectinfo/{id}/{schoolclassid}/{termid}/{sessionid}', [SubjectOperationController::class, 'subjectinfo'])->name('subjects.subjectinfo');
 
-Route::delete('/subjects/registered-classes', [SubjectOperationController::class, 'destroy'])->name('subjects.destroy');
-Route::get('/subjects/registered-classes', [SubjectOperationController::class, 'getRegisteredClasses'])->name('subjects.registered-classes');
+    Route::delete('/subjects/registered-classes', [SubjectOperationController::class, 'destroy'])->name('subjects.destroy');
+    Route::get('/subjects/registered-classes', [SubjectOperationController::class, 'getRegisteredClasses'])->name('subjects.registered-classes');
 
-Route::post('/subjectregistration/destroy', [SubjectOperationController::class, 'destroy'])->name('subjectregistration.destroy');
-Route::post('/subjectregistration/batch', [SubjectOperationController::class, 'batchRegister'])->name('subjectregistration.batch');
+    Route::post('/subjectregistration/destroy', [SubjectOperationController::class, 'destroy'])->name('subjectregistration.destroy');
+    Route::post('/subjectregistration/batch', [SubjectOperationController::class, 'batchRegister'])->name('subjectregistration.batch');
 
-Route::get('/subjectoperation/archived', [SubjectOperationController::class, 'getArchivedRegistrations'])->name('subjectoperation.archived');
-Route::post('/subjectoperation/restore', [SubjectOperationController::class, 'restoreRegistration'])->name('subjectoperation.restore');
+    Route::get('/subjectoperation/archived', [SubjectOperationController::class, 'getArchivedRegistrations'])->name('subjectoperation.archived');
+    Route::post('/subjectoperation/restore', [SubjectOperationController::class, 'restoreRegistration'])->name('subjectoperation.restore');
 
-Route::delete('/subjectoperation/archive/batch-delete', [SubjectOperationController::class, 'permanentlyDeleteArchiveBatch'])->name('subjectoperation.archive.batch-delete');
-Route::delete('/subjectoperation/archive/{archiveId}', [SubjectOperationController::class, 'permanentlyDeleteArchive'])->name('subjectoperation.archive.delete');
-Route::get('/school-information/get', [SubjectOperationController::class, 'getSchoolInformation'])->name('school.information.get');
-Route::resource('subjectoperation', SubjectOperationController::class);
+    Route::delete('/subjectoperation/archive/batch-delete', [SubjectOperationController::class, 'permanentlyDeleteArchiveBatch'])->name('subjectoperation.archive.batch-delete');
+    Route::delete('/subjectoperation/archive/{archiveId}', [SubjectOperationController::class, 'permanentlyDeleteArchive'])->name('subjectoperation.archive.delete');
+    Route::get('/school-information/get', [SubjectOperationController::class, 'getSchoolInformation'])->name('school.information.get');
+    Route::resource('subjectoperation', SubjectOperationController::class);
 
 
-// Get active school information
-Route::get('/api/school-information/active', function () {
-    $schoolInfo = App\Models\SchoolInformation::getActiveSchool();
-    return response()->json([
-        'success' => true,
-        'data' => $schoolInfo ? [
-            'school_name' => $schoolInfo->school_name,
-            'school_address' => $schoolInfo->school_address,
-            'school_phone' => $schoolInfo->school_phone,
-            'school_email' => $schoolInfo->school_email,
-            'school_motto' => $schoolInfo->school_motto,
-            'school_website' => $schoolInfo->school_website,
-            'logo_url' => $schoolInfo->logo_url,
-        ] : null
-    ]);
-})->name('api.school-information.active');
+    // Get active school information
+    Route::get('/api/school-information/active', function () {
+        $schoolInfo = App\Models\SchoolInformation::getActiveSchool();
+        return response()->json([
+            'success' => true,
+            'data' => $schoolInfo ? [
+                'school_name' => $schoolInfo->school_name,
+                'school_address' => $schoolInfo->school_address,
+                'school_phone' => $schoolInfo->school_phone,
+                'school_email' => $schoolInfo->school_email,
+                'school_motto' => $schoolInfo->school_motto,
+                'school_website' => $schoolInfo->school_website,
+                'logo_url' => $schoolInfo->logo_url,
+            ] : null
+        ]);
+    })->name('api.school-information.active');
 
     Route::get('/viewresults/{id}/{schoolclassid}/{sessid}/{termid}', [StudentResultsController::class, 'viewresults']);
 
