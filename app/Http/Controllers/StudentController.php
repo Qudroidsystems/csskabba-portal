@@ -755,353 +755,340 @@ class StudentController extends Controller
 // ============================================================================
 // FIXED update() METHOD — drop this into StudentController.php
 // ============================================================================
-//
-// ROOT CAUSES OF 500 ERROR:
-// 1. states_lgas.json missing or wrong path → file_get_contents() throws fatal
-// 2. Missing schoolhouseid in validator (inconsistency with store)
-// 3. State/LGA custom validators crash when JSON unavailable
-// 4. Studentpersonalityprofile updateOrCreate uses wrong key (studentid not studentid)
-//
-// HOW TO APPLY:
-// Replace the entire update() method in app/Http/Controllers/StudentController.php
-// with the method below.
-// ============================================================================
 
-    public function update(Request $request, $id): JsonResponse
-    {
-        Log::debug('Updating student', ['id' => $id, 'data' => $request->except(['avatar', '_token'])]);
 
-        try {
-            // ------------------------------------------------------------------
-            // Load states/LGAs safely — don't crash if the file is missing
-            // ------------------------------------------------------------------
-            $states = [];
-            $lgas   = [];
+public function update(Request $request, $id): JsonResponse
+{
+    Log::debug('Updating student', ['id' => $id, 'data' => $request->except(['avatar', '_token'])]);
 
-            $jsonPath = public_path('states_lgas.json');
-            if (file_exists($jsonPath)) {
-                try {
-                    $statesLgas = json_decode(file_get_contents($jsonPath), true);
-                    if (is_array($statesLgas)) {
-                        $states = array_column($statesLgas, 'state');
-                        $lgas   = collect($statesLgas)->pluck('lgas', 'state')->toArray();
-                    }
-                } catch (\Exception $e) {
-                    Log::warning('Could not load states_lgas.json: ' . $e->getMessage());
+    try {
+        // Load states/LGAs safely
+        $states = [];
+        $lgas   = [];
+
+        $jsonPath = public_path('states_lgas.json');
+        if (file_exists($jsonPath)) {
+            try {
+                $statesLgas = json_decode(file_get_contents($jsonPath), true);
+                if (is_array($statesLgas)) {
+                    $states = array_column($statesLgas, 'state');
+                    $lgas   = collect($statesLgas)->pluck('lgas', 'state')->toArray();
                 }
-            } else {
-                Log::warning('states_lgas.json not found at: ' . $jsonPath);
+            } catch (\Exception $e) {
+                Log::warning('Could not load states_lgas.json: ' . $e->getMessage());
             }
+        }
 
-            $hasStateData = !empty($states);
+        $hasStateData = !empty($states);
 
-            // ------------------------------------------------------------------
-            // Build validation rules
-            // ------------------------------------------------------------------
-            $rules = [
-                'avatar'             => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
-                'admissionMode'      => 'required|in:auto,manual',
-                'admissionNo'        => 'required|string|max:255|unique:studentRegistration,admissionNo,' . $id,
-                'admissionYear'      => 'required|integer|min:1900|max:' . date('Y'),
-                'admissionDate'      => 'required|date|before_or_equal:today',
-                'title'              => 'nullable|in:Master,Miss',
-                'firstname'          => 'required|string|max:255',
-                'lastname'           => 'required|string|max:255',
-                'othername'          => 'nullable|string|max:255',
-                'gender'             => 'required|in:Male,Female',
-                'dateofbirth'        => 'required|date|before:today',
-                'placeofbirth'       => 'required|string|max:255',
-                'nationality'        => 'required|string|max:255',
-                'age'                => 'required|integer|min:1|max:100',
-                'blood_group'        => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
-                'mother_tongue'      => 'nullable|string|max:255',
-                'religion'           => 'required|in:Christianity,Islam,Others',
-                'sport_house'        => 'nullable|string|max:255',
-                'phone_number'       => 'nullable|string|max:20',
-                'email'              => 'nullable|email|max:255',
-                'nin_number'         => 'nullable|string|max:20',
-                'city'               => 'nullable|string|max:255',
-                'state'              => 'required|string|max:255',
-                'local'              => 'required|string|max:255',
-                'future_ambition'    => 'required|string|max:500',
-                'permanent_address'  => 'required|string|max:255',
-                'student_category'   => 'required|in:Day,Boarding',
-                'schoolclassid'      => 'required|exists:schoolclass,id',
-                'schoolhouseid'      => 'nullable|exists:schoolhouses,id',
-                'termid'             => 'required|exists:schoolterm,id',
-                'sessionid'          => 'required|exists:schoolsession,id',
-                'statusId'           => 'required|in:1,2',
-                'student_status'     => 'required|in:Active,Inactive',
-                'father_title'       => 'nullable|in:Mr,Dr,Prof',
-                'mother_title'       => 'nullable|in:Mrs,Dr,Prof',
-                'father_name'        => 'nullable|string|max:255',
-                'mother_name'        => 'nullable|string|max:255',
-                'father_occupation'  => 'nullable|string|max:255',
-                'father_city'        => 'nullable|string|max:255',
-                'office_address'     => 'nullable|string|max:255',
-                'father_phone'       => 'nullable|string|max:20',
-                'mother_phone'       => 'nullable|string|max:20',
-                'parent_email'       => 'nullable|email|max:255',
-                'parent_address'     => 'nullable|string|max:255',
-                'last_school'        => 'nullable|string|max:255',
-                'last_class'         => 'nullable|string|max:255',
-                'reason_for_leaving' => 'nullable|string|max:500',
+        // Validation rules
+        $rules = [
+            'avatar'             => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'admissionMode'      => 'required|in:auto,manual',
+            'admissionNo'        => 'required|string|max:255|unique:studentRegistration,admissionNo,' . $id,
+            'admissionYear'      => 'required|integer|min:1900|max:' . date('Y'),
+            'admissionDate'      => 'required|date|before_or_equal:today',
+            'title'              => 'nullable|in:Master,Miss',
+            'firstname'          => 'required|string|max:255',
+            'lastname'           => 'required|string|max:255',
+            'othername'          => 'nullable|string|max:255',
+            'gender'             => 'required|in:Male,Female',
+            'dateofbirth'        => 'required|date|before:today',
+            'placeofbirth'       => 'required|string|max:255',
+            'nationality'        => 'required|string|max:255',
+            'age'                => 'required|integer|min:1|max:100',
+            'blood_group'        => 'nullable|in:A+,A-,B+,B-,AB+,AB-,O+,O-',
+            'mother_tongue'      => 'nullable|string|max:255',
+            'religion'           => 'required|in:Christianity,Islam,Others',
+            'sport_house'        => 'nullable|string|max:255',
+            'phone_number'       => 'nullable|string|max:20',
+            'email'              => 'nullable|email|max:255',
+            'nin_number'         => 'nullable|string|max:20',
+            'city'               => 'nullable|string|max:255',
+            'state'              => 'required|string|max:255',
+            'local'              => 'required|string|max:255',
+            'future_ambition'    => 'required|string|max:500',
+            'permanent_address'  => 'required|string|max:255',
+            'student_category'   => 'required|in:Day,Boarding',
+            'schoolclassid'      => 'required|exists:schoolclass,id',
+            'schoolhouseid'      => 'nullable|exists:schoolhouses,id',
+            'termid'             => 'required|exists:schoolterm,id',
+            'sessionid'          => 'required|exists:schoolsession,id',
+            'statusId'           => 'required|in:1,2',
+            'student_status'     => 'required|in:Active,Inactive',
+            'father_title'       => 'nullable|in:Mr,Dr,Prof',
+            'mother_title'       => 'nullable|in:Mrs,Dr,Prof',
+            'father_name'        => 'nullable|string|max:255',
+            'mother_name'        => 'nullable|string|max:255',
+            'father_occupation'  => 'nullable|string|max:255',
+            'father_city'        => 'nullable|string|max:255',
+            'office_address'     => 'nullable|string|max:255',
+            'father_phone'       => 'nullable|string|max:20',
+            'mother_phone'       => 'nullable|string|max:20',
+            'parent_email'       => 'nullable|email|max:255',
+            'parent_address'     => 'nullable|string|max:255',
+            'last_school'        => 'nullable|string|max:255',
+            'last_class'         => 'nullable|string|max:255',
+            'reason_for_leaving' => 'nullable|string|max:500',
+        ];
+
+        if ($hasStateData) {
+            $rules['state'] = [
+                'required', 'string', 'max:255',
+                function ($attribute, $value, $fail) use ($states) {
+                    if (!in_array($value, $states)) {
+                        $fail('The selected state is invalid.');
+                    }
+                },
             ];
 
-            // Only add custom state/LGA validators when the JSON loaded successfully
-            if ($hasStateData) {
-                $rules['state'] = [
-                    'required', 'string', 'max:255',
-                    function ($attribute, $value, $fail) use ($states) {
-                        if (!in_array($value, $states)) {
-                            $fail('The selected state is invalid.');
-                        }
-                    },
-                ];
-
-                $rules['local'] = [
-                    'required', 'string', 'max:255',
-                    function ($attribute, $value, $fail) use ($request, $lgas) {
-                        $selectedState = $request->input('state');
-                        if (!isset($lgas[$selectedState]) || !in_array($value, $lgas[$selectedState])) {
-                            $fail('The selected LGA is invalid for the chosen state.');
-                        }
-                    },
-                ];
-            }
-
-            $validator = Validator::make($request->all(), $rules);
-
-            if ($validator->fails()) {
-                Log::warning('Validation failed for student update', [
-                    'id'     => $id,
-                    'errors' => $validator->errors()->toArray(),
-                ]);
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation failed',
-                    'errors'  => $validator->errors(),
-                ], 422);
-            }
-
-            DB::beginTransaction();
-
-            // ------------------------------------------------------------------
-            // 1. Core student record
-            // ------------------------------------------------------------------
-            $student = Student::findOrFail($id);
-
-            $student->admissionNo        = $request->admissionMode === 'auto'
-                ? $this->generateAdmissionNumber()
-                : $request->admissionNo;
-            $student->admission_date     = $request->admissionDate;
-            $student->title              = $request->title;
-            $student->admissionYear      = $request->admissionYear;
-            $student->firstname          = $request->firstname;
-            $student->lastname           = $request->lastname;
-            $student->othername          = $request->othername;
-            $student->gender             = $request->gender;
-            $student->dateofbirth        = $request->dateofbirth;
-            $student->age                = $request->age;
-            $student->blood_group        = $request->blood_group;
-            $student->mother_tongue      = $request->mother_tongue;
-            $student->religion           = $request->religion;
-            $student->sport_house        = $request->sport_house;
-            $student->phone_number       = $request->phone_number;
-            $student->email              = $request->email;
-            $student->nin_number         = $request->nin_number;
-            $student->city               = $request->city;
-            $student->state              = $request->state;
-            $student->local              = $request->local;
-            $student->nationality        = $request->nationality;
-            $student->placeofbirth       = $request->placeofbirth;
-            $student->future_ambition    = $request->future_ambition;
-            $student->home_address2      = $request->permanent_address;
-            $student->student_category   = $request->student_category;
-            $student->statusId           = $request->statusId;
-            $student->student_status     = $request->student_status;
-            $student->last_school        = $request->last_school;
-            $student->last_class         = $request->last_class;
-            $student->reason_for_leaving = $request->reason_for_leaving;
-            $student->registeredBy       = auth()->user()->id;
-            $student->save();
-
-            // ------------------------------------------------------------------
-            // 2. Studentclass — find-then-update to avoid duplicate rows
-            // ------------------------------------------------------------------
-            $existingClass = Studentclass::where('studentId', $id)
-                ->where('termid',    $request->termid)
-                ->where('sessionid', $request->sessionid)
-                ->first();
-
-            if ($existingClass) {
-                $existingClass->update(['schoolclassid' => $request->schoolclassid]);
-            } else {
-                Studentclass::create([
-                    'studentId'     => $id,
-                    'schoolclassid' => $request->schoolclassid,
-                    'termid'        => $request->termid,
-                    'sessionid'     => $request->sessionid,
-                ]);
-            }
-
-            // ------------------------------------------------------------------
-            // 3. PromotionStatus
-            // ------------------------------------------------------------------
-            PromotionStatus::updateOrCreate(
-                [
-                    'studentId'     => $id,
-                    'schoolclassid' => $request->schoolclassid,
-                    'termid'        => $request->termid,
-                    'sessionid'     => $request->sessionid,
-                ],
-                [
-                    'promotionStatus' => 'PROMOTED',
-                    'classstatus'     => 'CURRENT',
-                ]
-            );
-
-            // ------------------------------------------------------------------
-            // 4. Parent — one row per student
-            // ------------------------------------------------------------------
-            $parent                    = ParentRegistration::firstOrNew(['studentId' => $id]);
-            $parent->father_title      = $request->father_title;
-            $parent->mother_title      = $request->mother_title;
-            $parent->father            = $request->father_name;
-            $parent->mother            = $request->mother_name;
-            $parent->father_phone      = $request->father_phone;
-            $parent->mother_phone      = $request->mother_phone;
-            $parent->father_occupation = $request->father_occupation;
-            $parent->father_city       = $request->father_city;
-            $parent->office_address    = $request->office_address;
-            $parent->parent_email      = $request->parent_email;
-            $parent->parent_address    = $request->parent_address;
-            $parent->save();
-
-            // ------------------------------------------------------------------
-            // 5. Picture — one row per student
-            // ------------------------------------------------------------------
-            $picture = Studentpicture::firstOrNew(['studentid' => $id]);
-            if ($request->hasFile('avatar')) {
-                if ($picture->picture && $picture->picture !== 'unnamed.jpg') {
-                    $oldPath = storage_path('app/public/images/student_avatars/' . $picture->picture);
-                    if (file_exists($oldPath)) {
-                        try {
-                            Storage::delete('public/images/student_avatars/' . $picture->picture);
-                        } catch (\Exception $e) {
-                            Log::warning('Could not delete old avatar: ' . $e->getMessage());
-                        }
+            $rules['local'] = [
+                'required', 'string', 'max:255',
+                function ($attribute, $value, $fail) use ($request, $lgas) {
+                    $selectedState = $request->input('state');
+                    if (!isset($lgas[$selectedState]) || !in_array($value, $lgas[$selectedState])) {
+                        $fail('The selected LGA is invalid for the chosen state.');
                     }
-                }
-                $path            = $this->storeImage($request->file('avatar'), 'images/student_avatars');
-                $picture->picture = basename($path);
-            }
-            if (!$picture->picture) {
-                $picture->picture = 'unnamed.jpg';
-            }
-            $picture->save();
+                },
+            ];
+        }
 
-            // ------------------------------------------------------------------
-            // 6. Student house — scoped to term+session
-            // ------------------------------------------------------------------
-            if ($request->filled('schoolhouseid')) {
-                Studenthouse::updateOrCreate(
-                    [
-                        'studentid' => $id,
-                        'termid'    => $request->termid,
-                        'sessionid' => $request->sessionid,
-                    ],
-                    ['schoolhouse' => $request->schoolhouseid]
-                );
-            }
+        $validator = Validator::make($request->all(), $rules);
 
-            // ------------------------------------------------------------------
-            // 7. Personality profile — scoped to class+term+session
-            // ------------------------------------------------------------------
-            Studentpersonalityprofile::firstOrCreate([
-                'studentid'     => $id,
+        if ($validator->fails()) {
+            Log::warning('Validation failed for student update', [
+                'id'     => $id,
+                'errors' => $validator->errors()->toArray(),
+            ]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        DB::beginTransaction();
+
+        // 1. Core student record
+        $student = Student::findOrFail($id);
+
+        $student->admissionNo        = $request->admissionMode === 'auto'
+            ? $this->generateAdmissionNumber()
+            : $request->admissionNo;
+        $student->admission_date     = $request->admissionDate;
+        $student->title              = $request->title;
+        $student->admissionYear      = $request->admissionYear;
+        $student->firstname          = $request->firstname;
+        $student->lastname           = $request->lastname;
+        $student->othername          = $request->othername;
+        $student->gender             = $request->gender;
+        $student->dateofbirth        = $request->dateofbirth;
+        $student->age                = $request->age;
+        $student->blood_group        = $request->blood_group;
+        $student->mother_tongue      = $request->mother_tongue;
+        $student->religion           = $request->religion;
+        $student->sport_house        = $request->sport_house;
+        $student->phone_number       = $request->phone_number;
+        $student->email              = $request->email;
+        $student->nin_number         = $request->nin_number;
+        $student->city               = $request->city;
+        $student->state              = $request->state;
+        $student->local              = $request->local;
+        $student->nationality        = $request->nationality;
+        $student->placeofbirth       = $request->placeofbirth;
+        $student->future_ambition    = $request->future_ambition;
+        $student->home_address2      = $request->permanent_address;
+        $student->student_category   = $request->student_category;
+        $student->statusId           = $request->statusId;
+        $student->student_status     = $request->student_status;
+        $student->last_school        = $request->last_school;
+        $student->last_class         = $request->last_class;
+        $student->reason_for_leaving = $request->reason_for_leaving;
+        $student->registeredBy       = auth()->user()->id;
+        $student->save();
+
+        // 2. Studentclass
+        $existingClass = Studentclass::where('studentId', $id)
+            ->where('termid',    $request->termid)
+            ->where('sessionid', $request->sessionid)
+            ->first();
+
+        if ($existingClass) {
+            $existingClass->update(['schoolclassid' => $request->schoolclassid]);
+        } else {
+            Studentclass::create([
+                'studentId'     => $id,
                 'schoolclassid' => $request->schoolclassid,
                 'termid'        => $request->termid,
                 'sessionid'     => $request->sessionid,
             ]);
-
-            // ------------------------------------------------------------------
-            // 8. StudentCurrentTerm — mark this as current, clear others
-            // ------------------------------------------------------------------
-            DB::table('student_current_term')
-                ->where('studentId', $id)
-                ->update(['is_current' => false]);
-
-            StudentCurrentTerm::updateOrCreate(
-                [
-                    'studentId'     => $id,
-                    'schoolclassId' => $request->schoolclassid,
-                    'termId'        => $request->termid,
-                    'sessionId'     => $request->sessionid,
-                ],
-                ['is_current' => true]
-            );
-
-            DB::commit();
-
-            return response()->json([
-                'success'  => true,
-                'message'  => 'Student updated successfully',
-                'redirect' => route('student.index'),
-                'student'  => [
-                    'id'                 => $student->id,
-                    'admissionNo'        => $student->admissionNo,
-                    'admissionYear'      => $student->admissionYear,
-                    'title'              => $student->title,
-                    'firstname'          => $student->firstname,
-                    'lastname'           => $student->lastname,
-                    'othername'          => $student->othername,
-                    'gender'             => $student->gender,
-                    'dateofbirth'        => $student->dateofbirth,
-                    'placeofbirth'       => $student->placeofbirth,
-                    'nationality'        => $student->nationality,
-                    'religion'           => $student->religion,
-                    'last_school'        => $student->last_school,
-                    'last_class'         => $student->last_class,
-                    'schoolclassid'      => $request->schoolclassid,
-                    'termid'             => $request->termid,
-                    'sessionid'          => $request->sessionid,
-                    'phone_number'       => $student->phone_number,
-                    'nin_number'         => $student->nin_number,
-                    'blood_group'        => $student->blood_group,
-                    'mother_tongue'      => $student->mother_tongue,
-                    'father_name'        => $parent->father          ?? '',
-                    'father_phone'       => $parent->father_phone    ?? '',
-                    'father_occupation'  => $parent->father_occupation ?? '',
-                    'mother_name'        => $parent->mother          ?? '',
-                    'mother_phone'       => $parent->mother_phone    ?? '',
-                    'parent_address'     => $parent->parent_address  ?? '',
-                    'student_category'   => $student->student_category,
-                    'reason_for_leaving' => $student->reason_for_leaving,
-                    'picture'            => $picture->picture        ?? 'unnamed.jpg',
-                    'state'              => $student->state,
-                    'local'              => $student->local,
-                    'statusId'           => $student->statusId,
-                    'student_status'     => $student->student_status,
-                    'future_ambition'    => $student->future_ambition,
-                    'permanent_address'  => $student->home_address2,
-                ],
-            ], 200);
-
-        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            DB::rollBack();
-            Log::error("Student ID {$id} not found during update");
-            return response()->json(['success' => false, 'message' => 'Student not found'], 404);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error("Error updating student ID {$id}: {$e->getMessage()}\n{$e->getTraceAsString()}");
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to update student: ' . $e->getMessage(),
-            ], 500);
         }
+
+        // 3. PromotionStatus
+        PromotionStatus::updateOrCreate(
+            [
+                'studentId'     => $id,
+                'schoolclassid' => $request->schoolclassid,
+                'termid'        => $request->termid,
+                'sessionid'     => $request->sessionid,
+            ],
+            [
+                'promotionStatus' => 'PROMOTED',
+                'classstatus'     => 'CURRENT',
+            ]
+        );
+
+        // 4. Parent
+        $parent = ParentRegistration::firstOrNew(['studentId' => $id]);
+        $parent->father_title      = $request->father_title;
+        $parent->mother_title      = $request->mother_title;
+        $parent->father            = $request->father_name;
+        $parent->mother            = $request->mother_name;
+        $parent->father_phone      = $request->father_phone;
+        $parent->mother_phone      = $request->mother_phone;
+        $parent->father_occupation = $request->father_occupation;
+        $parent->father_city       = $request->father_city;
+        $parent->office_address    = $request->office_address;
+        $parent->parent_email      = $request->parent_email;
+        $parent->parent_address    = $request->parent_address;
+        $parent->save();
+
+        // 5. Picture
+        $picture = Studentpicture::firstOrNew(['studentid' => $id]);
+        if ($request->hasFile('avatar')) {
+            if ($picture->picture && $picture->picture !== 'unnamed.jpg') {
+                $oldPath = storage_path('app/public/images/student_avatars/' . $picture->picture);
+                if (file_exists($oldPath)) {
+                    try {
+                        Storage::delete('public/images/student_avatars/' . $picture->picture);
+                    } catch (\Exception $e) {
+                        Log::warning('Could not delete old avatar: ' . $e->getMessage());
+                    }
+                }
+            }
+            $path            = $this->storeImage($request->file('avatar'), 'images/student_avatars');
+            $picture->picture = basename($path);
+        }
+        if (!$picture->picture) {
+            $picture->picture = 'unnamed.jpg';
+        }
+        $picture->save();
+
+        // 6. Student house
+        if ($request->filled('schoolhouseid')) {
+            Studenthouse::updateOrCreate(
+                [
+                    'studentid' => $id,
+                    'termid'    => $request->termid,
+                    'sessionid' => $request->sessionid,
+                ],
+                ['schoolhouse' => $request->schoolhouseid]
+            );
+        }
+
+        // 7. Personality profile
+        Studentpersonalityprofile::firstOrCreate([
+            'studentid'     => $id,
+            'schoolclassid' => $request->schoolclassid,
+            'termid'        => $request->termid,
+            'sessionid'     => $request->sessionid,
+        ]);
+
+        // 8. StudentCurrentTerm - FIXED
+        // First, check if there's already a record for this specific combination
+        $existingTerm = StudentCurrentTerm::where('studentId', $id)
+            ->where('termId', $request->termid)
+            ->where('sessionId', $request->sessionid)
+            ->first();
+
+        if ($existingTerm) {
+            // Update existing record
+            $existingTerm->update([
+                'schoolclassId' => $request->schoolclassid,
+                'is_current'    => true
+            ]);
+
+            // Set all other term records for this student to is_current = false
+            StudentCurrentTerm::where('studentId', $id)
+                ->where('id', '!=', $existingTerm->id)
+                ->update(['is_current' => false]);
+        } else {
+            // Create new record - first, set all existing to false
+            StudentCurrentTerm::where('studentId', $id)->update(['is_current' => false]);
+
+            // Then create the new record
+            StudentCurrentTerm::create([
+                'studentId'     => $id,
+                'schoolclassId' => $request->schoolclassid,
+                'termId'        => $request->termid,
+                'sessionId'     => $request->sessionid,
+                'is_current'    => true,
+            ]);
+        }
+
+        DB::commit();
+
+        return response()->json([
+            'success'  => true,
+            'message'  => 'Student updated successfully',
+            'redirect' => route('student.index'),
+            'student'  => [
+                'id'                 => $student->id,
+                'admissionNo'        => $student->admissionNo,
+                'admissionYear'      => $student->admissionYear,
+                'title'              => $student->title,
+                'firstname'          => $student->firstname,
+                'lastname'           => $student->lastname,
+                'othername'          => $student->othername,
+                'gender'             => $student->gender,
+                'dateofbirth'        => $student->dateofbirth,
+                'placeofbirth'       => $student->placeofbirth,
+                'nationality'        => $student->nationality,
+                'religion'           => $student->religion,
+                'last_school'        => $student->last_school,
+                'last_class'         => $student->last_class,
+                'schoolclassid'      => $request->schoolclassid,
+                'termid'             => $request->termid,
+                'sessionid'          => $request->sessionid,
+                'phone_number'       => $student->phone_number,
+                'nin_number'         => $student->nin_number,
+                'blood_group'        => $student->blood_group,
+                'mother_tongue'      => $student->mother_tongue,
+                'father_name'        => $parent->father          ?? '',
+                'father_phone'       => $parent->father_phone    ?? '',
+                'father_occupation'  => $parent->father_occupation ?? '',
+                'mother_name'        => $parent->mother          ?? '',
+                'mother_phone'       => $parent->mother_phone    ?? '',
+                'parent_address'     => $parent->parent_address  ?? '',
+                'student_category'   => $student->student_category,
+                'reason_for_leaving' => $student->reason_for_leaving,
+                'picture'            => $picture->picture        ?? 'unnamed.jpg',
+                'state'              => $student->state,
+                'local'              => $student->local,
+                'statusId'           => $student->statusId,
+                'student_status'     => $student->student_status,
+                'future_ambition'    => $student->future_ambition,
+                'permanent_address'  => $student->home_address2,
+            ],
+        ], 200);
+
+    } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+        DB::rollBack();
+        Log::error("Student ID {$id} not found during update");
+        return response()->json(['success' => false, 'message' => 'Student not found'], 404);
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error("Error updating student ID {$id}: {$e->getMessage()}\n{$e->getTraceAsString()}");
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to update student: ' . $e->getMessage(),
+        ], 500);
     }
+}
+
+
+
     protected function deleteImage($filename)
     {
         try {
