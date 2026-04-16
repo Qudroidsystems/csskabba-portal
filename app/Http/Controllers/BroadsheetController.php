@@ -122,38 +122,62 @@ class BroadsheetController extends Controller
     // GET STUDENT PREVIEW (AJAX)
     // =========================================================================
 
-    public function getStudentPreview(Request $request): JsonResponse
-    {
-        $schoolclassid = $request->input('schoolclassid');
-        $sessionid     = $request->input('sessionid');
-        $termid        = $request->input('termid');
+ // =========================================================================
+// PATCH 1: Update getStudentPreview to return subject_count & assessment_count
+// Replace the existing getStudentPreview method in BroadsheetController
+// =========================================================================
 
-        if (!$schoolclassid || !$sessionid) {
-            return response()->json(['success' => false, 'message' => 'Missing parameters'], 400);
-        }
+public function getStudentPreview(Request $request): JsonResponse
+{
+    $schoolclassid = $request->input('schoolclassid');
+    $sessionid     = $request->input('sessionid');
+    $termid        = $request->input('termid');
 
-        $students = Studentclass::where('schoolclassid', $schoolclassid)
-            ->where('sessionid', $sessionid)
-            ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
-            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-            ->select([
-                'studentRegistration.id as id',
-                'studentRegistration.admissionNo as admissionno',
-                'studentRegistration.firstname',
-                'studentRegistration.lastname',
-                'studentRegistration.gender',
-                'studentpicture.picture',
-            ])
-            ->orderBy('studentRegistration.lastname')
-            ->orderBy('studentRegistration.firstname')
-            ->get();
-
-        return response()->json([
-            'success' => true,
-            'count'   => $students->count(),
-            'students'=> $students,
-        ]);
+    if (!$schoolclassid || !$sessionid) {
+        return response()->json(['success' => false, 'message' => 'Missing parameters'], 400);
     }
+
+    // Student count
+    $students = Studentclass::where('schoolclassid', $schoolclassid)
+        ->where('sessionid', $sessionid)
+        ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
+        ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+        ->select([
+            'studentRegistration.id as id',
+            'studentRegistration.admissionNo as admissionno',
+            'studentRegistration.firstname',
+            'studentRegistration.lastname',
+            'studentRegistration.gender',
+            'studentpicture.picture',
+        ])
+        ->orderBy('studentRegistration.lastname')
+        ->orderBy('studentRegistration.firstname')
+        ->get();
+
+    // Subject count for this class
+    $subjectCount = DB::table('subjectclass as sc')
+        ->join('subjectteacher as st', 'st.id', '=', 'sc.subjectteacherid')
+        ->where('sc.schoolclassid', $schoolclassid)
+        ->distinct()
+        ->count('sc.subjectid');
+
+    // Assessment count from class categories
+    $assessmentCount = 0;
+    $schoolclass = Schoolclass::with('classcategories')->find($schoolclassid);
+    if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
+        $categoryIds     = $schoolclass->classcategories->pluck('id');
+        $assessmentCount = Assessment::whereIn('classcategory_id', $categoryIds)->count();
+    }
+
+    return response()->json([
+        'success'          => true,
+        'count'            => $students->count(),
+        'students'         => $students,
+        'subject_count'    => $subjectCount,
+        'assessment_count' => $assessmentCount,
+    ]);
+}
+
 
     // =========================================================================
     // BUILD BROADSHEET DATA
@@ -407,8 +431,24 @@ class BroadsheetController extends Controller
 
 
 // =========================================================================
-// ADD THIS METHOD TO BroadsheetController
-// (paste inside the class, after exportExcel)
+// PATCH 2: webView — keep as POST (the form posts to it), but also accept GET
+// Add this route to web.php alongside the existing post route:
+//   Route::get('/web-view', [BroadsheetController::class, 'webView'])->name('broadsheet.web-view.get');
+// Or simply change the route to accept both methods:
+//   Route::match(['GET','POST'], '/web-view', [BroadsheetController::class, 'webView'])->name('broadsheet.web-view');
+// =========================================================================
+
+// =========================================================================
+// ROUTE FILE CHANGE  (routes/web.php)
+// Replace:
+//   Route::post('/web-view', [BroadsheetController::class, 'webView'])->name('web-view');
+// With:
+//   Route::match(['GET','POST'], '/web-view', [BroadsheetController::class, 'webView'])->name('web-view');
+// =========================================================================
+
+
+// =========================================================================
+// PATCH 3: Complete updated webView method for BroadsheetController
 // =========================================================================
 
 public function webView(Request $request): View|JsonResponse
@@ -424,9 +464,9 @@ public function webView(Request $request): View|JsonResponse
         $selectedColumns = $request->input('selectedColumns', []);
 
         $data = $this->buildBroadsheetData(
-            $validated['schoolclassid'],
-            $validated['sessionid'],
-            $validated['termid'],
+            (int) $validated['schoolclassid'],
+            (int) $validated['sessionid'],
+            (int) $validated['termid'],
             $selectedColumns
         );
 
@@ -435,9 +475,129 @@ public function webView(Request $request): View|JsonResponse
 
         return view('broadsheet.web', $data);
 
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return back()->withErrors($e->errors())->with('error', 'Invalid input: ' . implode(', ', $e->errors()));
     } catch (\Exception $e) {
-        Log::error('Broadsheet web view error', ['error' => $e->getMessage()]);
+        Log::error('Broadsheet web view error', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
         return back()->with('error', 'Failed to generate broadsheet: ' . $e->getMessage());
+    }
+}
+
+
+// =========================================================================
+// PATCH 4: Updated exportPdf — uses getLogoBase64, full page width options
+// Replaces existing exportPdf in BroadsheetController
+// =========================================================================
+
+public function exportPdf(Request $request)
+{
+    try {
+        ini_set('max_execution_time', 600);
+        ini_set('memory_limit', '1024M');
+
+        $validated = $request->validate([
+            'schoolclassid'   => 'required|integer|exists:schoolclass,id',
+            'sessionid'       => 'required|integer|exists:schoolsession,id',
+            'termid'          => 'required|integer',
+            'selectedColumns' => 'nullable|array',
+            'paper_size'      => 'nullable|in:A1,A2,A3,A4',
+            'orientation'     => 'nullable|in:portrait,landscape',
+        ]);
+
+        $selectedColumns = $request->input('selectedColumns', []);
+        $orientation     = $request->input('orientation', 'landscape');
+        $paperSize       = $request->input('paper_size', null);
+
+        $data = $this->buildBroadsheetData(
+            (int) $validated['schoolclassid'],
+            (int) $validated['sessionid'],
+            (int) $validated['termid'],
+            $selectedColumns
+        );
+
+        // Fix logo for PDF embedding
+        $data['school_logo_base64'] = $this->getLogoBase64($data['schoolInfo']);
+
+        // ── Dynamic paper sizing ──────────────────────────────────────────
+        $subjectCount    = count($data['subjects'] ?? []);
+        $assessmentCount = isset($data['assessments']) ? $data['assessments']->count() : 0;
+
+        if (!$paperSize) {
+            $colsPerSubject = $assessmentCount;
+            $colsPerSubject += (in_array('total',         $selectedColumns) || empty($selectedColumns)) ? 1 : 0;
+            $colsPerSubject += (in_array('cum',           $selectedColumns) || empty($selectedColumns)) ? 1 : 0;
+            $colsPerSubject += (in_array('grade',         $selectedColumns) || empty($selectedColumns)) ? 1 : 0;
+            $colsPerSubject += (in_array('position',      $selectedColumns) || empty($selectedColumns)) ? 1 : 0;
+            $colsPerSubject += (in_array('bf',            $selectedColumns))                            ? 1 : 0;
+            $colsPerSubject += (in_array('class_average', $selectedColumns))                            ? 1 : 0;
+            $totalSubCols    = $subjectCount * max(1, $colsPerSubject);
+
+            if      ($totalSubCols <= 40)  $paperSize = 'A3';
+            elseif  ($totalSubCols <= 70)  $paperSize = 'A2';
+            elseif  ($totalSubCols <= 110) $paperSize = 'A1';
+            else                           $paperSize = 'A0';
+        }
+
+        // ── DomPDF paper dimensions (mm → points conversion) ─────────────
+        // A0: 841×1189mm  A1: 594×841mm  A2: 420×594mm  A3: 297×420mm
+        $paperDimensions = [
+            'A0' => [2384, 3370],
+            'A1' => [1684, 2384],
+            'A2' => [1190, 1684],
+            'A3' => [842,  1190],
+            'A4' => [595,  842],
+        ];
+        [$shortPt, $longPt] = $paperDimensions[$paperSize] ?? [842, 1190];
+
+        $widthPt  = $orientation === 'landscape' ? $longPt  : $shortPt;
+        $heightPt = $orientation === 'landscape' ? $shortPt : $longPt;
+
+        $paperString = strtolower($paperSize) . ($orientation === 'landscape' ? '-landscape' : '');
+
+        $pdf = Pdf::loadView('broadsheet.pdf', $data)
+            ->setPaper($paperString)
+            ->setOption([
+                'isHtml5ParserEnabled'    => true,
+                'isRemoteEnabled'         => true,
+                'isFontSubsettingEnabled' => true,
+                'defaultFont'             => 'DejaVu Sans',
+                'defaultPaperWidth'       => $widthPt,
+                'defaultPaperHeight'      => $heightPt,
+                'dpi'                     => 96,
+                'enable_css_float'        => false,
+                'enable_javascript'       => false,
+                'debugPng'                => false,
+                'debugKeepTemp'           => false,
+                'debugCss'                => false,
+                'debugLayout'             => false,
+                'debugLayoutLines'        => false,
+                'debugLayoutBlocks'       => false,
+                'debugLayoutInline'       => false,
+                'debugLayoutPaddingBox'   => false,
+            ]);
+
+        // ── Filename ─────────────────────────────────────────────────────
+        $className   = ($data['schoolclass']->schoolclass ?? 'Class') . ' ' . ($data['schoolclass']->arm_name ?? '');
+        $sessionName = $data['schoolsession']->session ?? '';
+        $termName    = $data['schoolterm']->term ?? 'Term';
+
+        $filename = 'Broadsheet_'
+            . preg_replace('/[^A-Za-z0-9_\- ]/', '_', trim($className))   . '_'
+            . preg_replace('/[^A-Za-z0-9_\- ]/', '_', trim($sessionName)) . '_'
+            . preg_replace('/[^A-Za-z0-9_\- ]/', '_', trim($termName))    . '.pdf';
+
+        // Stream (opens in browser — user can scroll/zoom/print)
+        return $pdf->stream($filename);
+
+    } catch (\Exception $e) {
+        Log::error('Broadsheet PDF export error', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString(),
+        ]);
+        return back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
     }
 }
 

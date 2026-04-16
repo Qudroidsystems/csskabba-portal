@@ -764,23 +764,33 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
     Route::get('/debug-student-scores', [ViewStudentReportController::class, 'debugStudentScores']);
 
 
-    Route::prefix('broadsheet')->name('broadsheet.')->group(function () {
 
-        // Index page — select class / session / term
-        Route::get('/',  [BroadsheetController::class, 'index'])->name('index');
+// =========================================================================
+// routes/web.php — UPDATED broadsheet route group
+// Change Route::post('/web-view', ...) to Route::match(['GET','POST'], ...)
+// so the form POST works AND direct GET navigation also works.
+// =========================================================================
 
-        // AJAX: get column options for the chosen class
-        Route::post('/column-options',  [BroadsheetController::class, 'getColumnOptions'])->name('column-options');
+Route::prefix('broadsheet')->name('broadsheet.')->group(function () {
 
-        // AJAX: get student preview count for the chosen class+session
-        Route::post('/student-preview', [BroadsheetController::class, 'getStudentPreview'])->name('student-preview');
-        Route::post('/web-view',           [BroadsheetController::class, 'webView'])       ->name('web-view');
-        // Export
-        Route::post('/export/pdf',   [BroadsheetController::class, 'exportPdf'])->name('export.pdf');
-        Route::post('/export/excel', [BroadsheetController::class, 'exportExcel'])->name('export.excel');
-    });
+    // Index page
+    Route::get('/', [BroadsheetController::class, 'index'])->name('index');
 
+    // AJAX: column options
+    Route::post('/column-options',  [BroadsheetController::class, 'getColumnOptions'])->name('column-options');
 
+    // AJAX: student preview
+    Route::post('/student-preview', [BroadsheetController::class, 'getStudentPreview'])->name('student-preview');
+
+    // Web View — accept both GET and POST (form submits via POST, direct link works via GET)
+    Route::match(['GET', 'POST'], '/web-view', [BroadsheetController::class, 'webView'])->name('web-view');
+
+    // PDF export
+    Route::post('/export/pdf',   [BroadsheetController::class, 'exportPdf'])->name('export.pdf');
+
+    // Excel export
+    Route::post('/export/excel', [BroadsheetController::class, 'exportExcel'])->name('export.excel');
+});
 
 
 // =========================================================================
