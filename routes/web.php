@@ -539,6 +539,8 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
 // for a specific named snapshot group
 Route::get('/subjectoperation/snapshot/detail', [SubjectOperationController::class, 'getSnapshotDetail'])
     ->name('subjectoperation.snapshot.detail');
+Route::get('/subjectoperation/registered-classes', [SubjectOperationController::class, 'registeredClasses'])
+    ->name('subjectoperation.registered-classes');
 
 // ── All existing routes stay the same ──────────────────────────────────────
 
