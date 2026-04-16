@@ -109,11 +109,11 @@ class BroadsheetController extends Controller
         }
 
         return response()->json([
-            'success'     => true,
-            'columns'     => $columns,
-            'is_senior'   => $schoolclass && $schoolclass->classcategories->isNotEmpty()
+            'success'          => true,
+            'columns'          => $columns,
+            'is_senior'        => $schoolclass && $schoolclass->classcategories->isNotEmpty()
                 ? ($schoolclass->classcategories->first()->is_senior ?? false) : false,
-            'subject_count' => count($columns['scores']),
+            'subject_count'    => count($columns['scores']),
             'assessment_count' => count($columns['assessments']),
         ]);
     }
@@ -122,487 +122,469 @@ class BroadsheetController extends Controller
     // GET STUDENT PREVIEW (AJAX)
     // =========================================================================
 
- // =========================================================================
-// PATCH 1: Update getStudentPreview to return subject_count & assessment_count
-// Replace the existing getStudentPreview method in BroadsheetController
-// =========================================================================
+    public function getStudentPreview(Request $request): JsonResponse
+    {
+        $schoolclassid = $request->input('schoolclassid');
+        $sessionid     = $request->input('sessionid');
+        $termid        = $request->input('termid');
 
-public function getStudentPreview(Request $request): JsonResponse
-{
-    $schoolclassid = $request->input('schoolclassid');
-    $sessionid     = $request->input('sessionid');
-    $termid        = $request->input('termid');
+        if (!$schoolclassid || !$sessionid) {
+            return response()->json(['success' => false, 'message' => 'Missing parameters'], 400);
+        }
 
-    if (!$schoolclassid || !$sessionid) {
-        return response()->json(['success' => false, 'message' => 'Missing parameters'], 400);
+        $students = Studentclass::where('schoolclassid', $schoolclassid)
+            ->where('sessionid', $sessionid)
+            ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
+            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+            ->select([
+                'studentRegistration.id as id',
+                'studentRegistration.admissionNo as admissionno',
+                'studentRegistration.firstname',
+                'studentRegistration.lastname',
+                'studentRegistration.gender',
+                'studentpicture.picture',
+            ])
+            ->orderBy('studentRegistration.lastname')
+            ->orderBy('studentRegistration.firstname')
+            ->get();
+
+        $subjectCount = DB::table('subjectclass as sc')
+            ->join('subjectteacher as st', 'st.id', '=', 'sc.subjectteacherid')
+            ->where('sc.schoolclassid', $schoolclassid)
+            ->distinct()
+            ->count('sc.subjectid');
+
+        $assessmentCount = 0;
+        $schoolclass = Schoolclass::with('classcategories')->find($schoolclassid);
+        if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
+            $categoryIds     = $schoolclass->classcategories->pluck('id');
+            $assessmentCount = Assessment::whereIn('classcategory_id', $categoryIds)->count();
+        }
+
+        return response()->json([
+            'success'          => true,
+            'count'            => $students->count(),
+            'students'         => $students,
+            'subject_count'    => $subjectCount,
+            'assessment_count' => $assessmentCount,
+        ]);
     }
-
-    // Student count
-    $students = Studentclass::where('schoolclassid', $schoolclassid)
-        ->where('sessionid', $sessionid)
-        ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
-        ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-        ->select([
-            'studentRegistration.id as id',
-            'studentRegistration.admissionNo as admissionno',
-            'studentRegistration.firstname',
-            'studentRegistration.lastname',
-            'studentRegistration.gender',
-            'studentpicture.picture',
-        ])
-        ->orderBy('studentRegistration.lastname')
-        ->orderBy('studentRegistration.firstname')
-        ->get();
-
-    // Subject count for this class
-    $subjectCount = DB::table('subjectclass as sc')
-        ->join('subjectteacher as st', 'st.id', '=', 'sc.subjectteacherid')
-        ->where('sc.schoolclassid', $schoolclassid)
-        ->distinct()
-        ->count('sc.subjectid');
-
-    // Assessment count from class categories
-    $assessmentCount = 0;
-    $schoolclass = Schoolclass::with('classcategories')->find($schoolclassid);
-    if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
-        $categoryIds     = $schoolclass->classcategories->pluck('id');
-        $assessmentCount = Assessment::whereIn('classcategory_id', $categoryIds)->count();
-    }
-
-    return response()->json([
-        'success'          => true,
-        'count'            => $students->count(),
-        'students'         => $students,
-        'subject_count'    => $subjectCount,
-        'assessment_count' => $assessmentCount,
-    ]);
-}
-
 
     // =========================================================================
     // BUILD BROADSHEET DATA
     // =========================================================================
 
-
-
-
-
     private function buildBroadsheetData(
-    int $schoolclassid,
-    int $sessionid,
-    int $termid,
-    array $selectedColumns = []
-): array {
-    // ── School & class meta ───────────────────────────────────────────────
-    $schoolInfo  = SchoolInformation::getActiveSchool() ?? new \stdClass();
+        int $schoolclassid,
+        int $sessionid,
+        int $termid,
+        array $selectedColumns = []
+    ): array {
+        $schoolInfo = SchoolInformation::getActiveSchool() ?? new \stdClass();
 
-    $schoolclass = Schoolclass::with('classcategories')
-        ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-        ->select(['schoolclass.*', 'schoolarm.arm as arm_name'])
-        ->where('schoolclass.id', $schoolclassid)
-        ->first();
+        $schoolclass = Schoolclass::with('classcategories')
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->select(['schoolclass.*', 'schoolarm.arm as arm_name'])
+            ->where('schoolclass.id', $schoolclassid)
+            ->first();
 
-    $schoolsession = Schoolsession::find($sessionid);
-    $schoolterm    = Schoolterm::find($termid);
+        $schoolsession = Schoolsession::find($sessionid);
+        $schoolterm    = Schoolterm::find($termid);
 
-    // ── Dynamic assessments ────────────────────────────────────────────────
-    $assessments = collect();
-    if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
-        $categoryIds = $schoolclass->classcategories->pluck('id');
-        $assessments = Assessment::whereIn('classcategory_id', $categoryIds)
-            ->orderBy('id')
+        $assessments = collect();
+        if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
+            $categoryIds = $schoolclass->classcategories->pluck('id');
+            $assessments = Assessment::whereIn('classcategory_id', $categoryIds)
+                ->orderBy('id')
+                ->get();
+        }
+
+        $subjectsMap   = [];
+        $subjectClasses = DB::table('subjectclass as sc')
+            ->join('subjectteacher as st', 'st.id', '=', 'sc.subjectteacherid')
+            ->join('subject', 'subject.id', '=', 'sc.subjectid')
+            ->where('sc.schoolclassid', $schoolclassid)
+            ->select([
+                'sc.subjectid',
+                'subject.subject as subject_name',
+                'subject.subject_code',
+                'sc.subjectteacherid',
+                'st.staffid',
+            ])
+            ->distinct()
             ->get();
-    }
 
-    // ── Get subjects using RAW QUERY (Fixed - removed st.userid) ───────────
-    $subjectsMap = [];
-
-    $subjectClasses = DB::table('subjectclass as sc')
-        ->join('subjectteacher as st', 'st.id', '=', 'sc.subjectteacherid')
-        ->join('subject', 'subject.id', '=', 'sc.subjectid')
-        ->where('sc.schoolclassid', $schoolclassid)
-        // You can uncomment these if subjectteacher has sessionid/termid and you want to filter
-        // ->where('st.sessionid', $sessionid)
-        // ->where('st.termid', $termid)
-        ->select([
-            'sc.subjectid',
-            'subject.subject as subject_name',
-            'subject.subject_code',
-            'sc.subjectteacherid',
-            'st.staffid'                    // Only staffid exists
-            // Removed st.userid because it doesn't exist
-        ])
-        ->distinct()
-        ->get();
-
-    foreach ($subjectClasses as $sc) {
-        $subjectsMap[$sc->subjectid] = [
-            'subject_id'       => $sc->subjectid,
-            'subject_name'     => $sc->subject_name,
-            'subject_code'     => $sc->subject_code ?? '',
-            'subjectteacherid' => $sc->subjectteacherid,
-            'staffid'          => $sc->staffid,
-        ];
-    }
-
-    // ── All students in this class/session ────────────────────────────────
-    $studentIds = Studentclass::where('schoolclassid', $schoolclassid)
-        ->where('sessionid', $sessionid)
-        ->pluck('studentId')
-        ->toArray();
-
-    if (empty($studentIds)) {
-        // Return empty data if no students
-        return [
-            'schoolInfo'       => $schoolInfo,
-            'schoolclass'      => $schoolclass,
-            'schoolsession'    => $schoolsession,
-            'schoolterm'       => $schoolterm,
-            'assessments'      => $assessments,
-            'subjects'         => $subjectsMap,
-            'studentRows'      => [],
-            'subjectStats'     => [],
-            'selectedColumns'  => $selectedColumns,
-            'totalStudents'    => 0,
-            'generatedAt'      => now()->format('d M Y, H:i'),
-        ];
-    }
-
-    // ── All broadsheet rows ───────────────────────────────────────────────
-    $broadsheets = Broadsheets::whereIn('broadsheet_records.student_id', $studentIds)
-        ->where('broadsheets.term_id', $termid)
-        ->where('broadsheet_records.session_id', $sessionid)
-        ->where('broadsheet_records.schoolclass_id', $schoolclassid)
-        ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
-        ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
-        ->join('studentRegistration', 'studentRegistration.id', '=', 'broadsheet_records.student_id')
-        ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-        ->select([
-            'broadsheets.id as broadsheet_id',
-            'broadsheet_records.student_id',
-            'broadsheet_records.subject_id',
-            'subject.subject as subject_name',
-            'subject.subject_code',
-            'studentRegistration.admissionNo as admissionno',
-            'studentRegistration.firstname',
-            'studentRegistration.lastname',
-            'studentRegistration.gender',
-            'studentpicture.picture',
-            'broadsheets.total',
-            'broadsheets.bf',
-            'broadsheets.cum',
-            'broadsheets.grade',
-            'broadsheets.remark',
-            'broadsheets.subject_position_class as position',
-            'broadsheets.avg as class_average',
-            'broadsheets.vettedstatus',
-        ])
-        ->orderBy('studentRegistration.lastname')
-        ->orderBy('studentRegistration.firstname')
-        ->orderBy('subject.subject')
-        ->get();
-
-    // ── Load assessment scores ─────────────────────────────────────────────
-    $broadsheetIds = $broadsheets->pluck('broadsheet_id')->unique()->toArray();
-    $assessmentScoresAll = BroadsheetAssessmentScore::whereIn('broadsheet_id', $broadsheetIds)
-        ->get()
-        ->groupBy('broadsheet_id');
-
-    // ── Pivot data: student → subject ──────────────────────────────────────
-    $studentSubjectMap = [];
-
-    foreach ($broadsheets as $row) {
-        $sid = $row->student_id;
-        $sub = $row->subject_id;
-
-        if (!isset($subjectsMap[$sub])) {
-            $subjectsMap[$sub] = [
-                'subject_id'   => $sub,
-                'subject_name' => $row->subject_name,
-                'subject_code' => $row->subject_code ?? '',
+        foreach ($subjectClasses as $sc) {
+            $subjectsMap[$sc->subjectid] = [
+                'subject_id'       => $sc->subjectid,
+                'subject_name'     => $sc->subject_name,
+                'subject_code'     => $sc->subject_code ?? '',
+                'subjectteacherid' => $sc->subjectteacherid,
+                'staffid'          => $sc->staffid,
             ];
         }
 
-        $assessmentScoreRow = $assessmentScoresAll->get($row->broadsheet_id, collect());
-        $assessmentData = [];
-        foreach ($assessments as $a) {
-            $score = $assessmentScoreRow->firstWhere('assessment_id', $a->id);
-            $assessmentData[$a->id] = $score ? (float)$score->score : 0;
+        $studentIds = Studentclass::where('schoolclassid', $schoolclassid)
+            ->where('sessionid', $sessionid)
+            ->pluck('studentId')
+            ->toArray();
+
+        if (empty($studentIds)) {
+            return [
+                'schoolInfo'      => $schoolInfo,
+                'schoolclass'     => $schoolclass,
+                'schoolsession'   => $schoolsession,
+                'schoolterm'      => $schoolterm,
+                'assessments'     => $assessments,
+                'subjects'        => $subjectsMap,
+                'studentRows'     => [],
+                'subjectStats'    => [],
+                'selectedColumns' => $selectedColumns,
+                'totalStudents'   => 0,
+                'generatedAt'     => now()->format('d M Y, H:i'),
+            ];
         }
 
-        $studentSubjectMap[$sid][$sub] = [
-            'total'         => (float)($row->total ?? 0),
-            'bf'            => (float)($row->bf ?? 0),
-            'cum'           => (float)($row->cum ?? 0),
-            'grade'         => $row->grade ?? '-',
-            'remark'        => $row->remark ?? '-',
-            'position'      => $row->position ?? '-',
-            'class_average' => (float)($row->class_average ?? 0),
-            'assessments'   => $assessmentData,
-        ];
-    }
+        $broadsheets = Broadsheets::whereIn('broadsheet_records.student_id', $studentIds)
+            ->where('broadsheets.term_id', $termid)
+            ->where('broadsheet_records.session_id', $sessionid)
+            ->where('broadsheet_records.schoolclass_id', $schoolclassid)
+            ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
+            ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
+            ->join('studentRegistration', 'studentRegistration.id', '=', 'broadsheet_records.student_id')
+            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+            ->select([
+                'broadsheets.id as broadsheet_id',
+                'broadsheet_records.student_id',
+                'broadsheet_records.subject_id',
+                'subject.subject as subject_name',
+                'subject.subject_code',
+                'studentRegistration.admissionNo as admissionno',
+                'studentRegistration.firstname',
+                'studentRegistration.lastname',
+                'studentRegistration.gender',
+                'studentpicture.picture',
+                'broadsheets.total',
+                'broadsheets.bf',
+                'broadsheets.cum',
+                'broadsheets.grade',
+                'broadsheets.remark',
+                'broadsheets.subject_position_class as position',
+                'broadsheets.avg as class_average',
+                'broadsheets.vettedstatus',
+            ])
+            ->orderBy('studentRegistration.lastname')
+            ->orderBy('studentRegistration.firstname')
+            ->orderBy('subject.subject')
+            ->get();
 
-    // ── Build final student rows with GPA ──────────────────────────────────
-    $studentInfo = Studentclass::where('schoolclassid', $schoolclassid)
-        ->where('sessionid', $sessionid)
-        ->join('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
-        ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-        ->select([
-            'studentRegistration.id as id',
-            'studentRegistration.admissionNo as admissionno',
-            'studentRegistration.firstname',
-            'studentRegistration.lastname',
-            'studentRegistration.gender',
-            'studentRegistration.dateofbirth',
-            'studentpicture.picture',
-        ])
-        ->orderBy('studentRegistration.lastname')
-        ->orderBy('studentRegistration.firstname')
-        ->get();
+        $broadsheetIds       = $broadsheets->pluck('broadsheet_id')->unique()->toArray();
+        $assessmentScoresAll = BroadsheetAssessmentScore::whereIn('broadsheet_id', $broadsheetIds)
+            ->get()
+            ->groupBy('broadsheet_id');
 
-    $studentRows = [];
-    foreach ($studentInfo as $stu) {
-        $sid       = $stu->id;
-        $subScores = $studentSubjectMap[$sid] ?? [];
+        $studentSubjectMap = [];
+        foreach ($broadsheets as $row) {
+            $sid = $row->student_id;
+            $sub = $row->subject_id;
 
-        $cumValues   = collect($subScores)->pluck('cum')->filter(fn($v) => $v > 0);
-        $totalCum    = $cumValues->sum();
-        $numSubjects = $cumValues->count();
+            if (!isset($subjectsMap[$sub])) {
+                $subjectsMap[$sub] = [
+                    'subject_id'   => $sub,
+                    'subject_name' => $row->subject_name,
+                    'subject_code' => $row->subject_code ?? '',
+                ];
+            }
 
-        $totalValues = collect($subScores)->pluck('total')->filter(fn($v) => $v > 0);
-        $gradePoints = $totalValues->map(fn($s) => $this->getGradePoint($s));
+            $assessmentScoreRow = $assessmentScoresAll->get($row->broadsheet_id, collect());
+            $assessmentData     = [];
+            foreach ($assessments as $a) {
+                $score = $assessmentScoreRow->firstWhere('assessment_id', $a->id);
+                $assessmentData[$a->id] = $score ? (float) $score->score : 0;
+            }
 
-        $gpa      = $gradePoints->count() > 0 ? round($gradePoints->avg(), 2) : 0.0;
-        $cgpa     = $gpa;
-        $gpaGrade = $this->getGpaGrade($gpa);
-
-        $studentRows[$sid] = [
-            'id'                 => $sid,
-            'admissionno'        => $stu->admissionno,
-            'firstname'          => $stu->firstname,
-            'lastname'           => $stu->lastname,
-            'gender'             => $stu->gender,
-            'dateofbirth'        => $stu->dateofbirth,
-            'picture'            => $stu->picture,
-            'subjects'           => $subScores,
-            'total_cum'          => round($totalCum, 1),
-            'num_subjects'       => $numSubjects,
-            'class_average'      => $numSubjects > 0 ? round($totalCum / $numSubjects, 1) : 0,
-            'gpa'                => $gpa,
-            'cgpa'               => $cgpa,
-            'gpa_grade'          => $gpaGrade,
-            'total_grade_points' => round($gradePoints->sum(), 1),
-        ];
-    }
-
-    // ── Subject statistics ────────────────────────────────────────────────
-    $subjectStats = [];
-    foreach ($subjectsMap as $sub => $subInfo) {
-        $allTotals = collect($studentRows)
-            ->pluck("subjects.{$sub}.total")
-            ->filter(fn($v) => $v !== null && $v > 0);
-
-        $subjectStats[$sub] = [
-            'avg'     => $allTotals->count() > 0 ? round($allTotals->avg(), 1) : 0,
-            'highest' => $allTotals->count() > 0 ? $allTotals->max() : 0,
-            'lowest'  => $allTotals->count() > 0 ? $allTotals->min() : 0,
-            'passed'  => $allTotals->filter(fn($v) => $v >= 40)->count(),
-            'failed'  => $allTotals->filter(fn($v) => $v < 40)->count(),
-        ];
-    }
-
-    // Sort subjects by name
-    uasort($subjectsMap, fn($a, $b) => strcmp($a['subject_name'], $b['subject_name']));
-
-    return [
-        'schoolInfo'       => $schoolInfo,
-        'schoolclass'      => $schoolclass,
-        'schoolsession'    => $schoolsession,
-        'schoolterm'       => $schoolterm,
-        'assessments'      => $assessments,
-        'subjects'         => $subjectsMap,
-        'studentRows'      => array_values($studentRows),
-        'subjectStats'     => $subjectStats,
-        'selectedColumns'  => $selectedColumns,
-        'totalStudents'    => count($studentRows),
-        'generatedAt'      => now()->format('d M Y, H:i'),
-    ];
-}
-
-
-// =========================================================================
-// PATCH 2: webView — keep as POST (the form posts to it), but also accept GET
-// Add this route to web.php alongside the existing post route:
-//   Route::get('/web-view', [BroadsheetController::class, 'webView'])->name('broadsheet.web-view.get');
-// Or simply change the route to accept both methods:
-//   Route::match(['GET','POST'], '/web-view', [BroadsheetController::class, 'webView'])->name('broadsheet.web-view');
-// =========================================================================
-
-// =========================================================================
-// ROUTE FILE CHANGE  (routes/web.php)
-// Replace:
-//   Route::post('/web-view', [BroadsheetController::class, 'webView'])->name('web-view');
-// With:
-//   Route::match(['GET','POST'], '/web-view', [BroadsheetController::class, 'webView'])->name('web-view');
-// =========================================================================
-
-
-// =========================================================================
-// PATCH 3: Complete updated webView method for BroadsheetController
-// =========================================================================
-
-public function webView(Request $request): View|JsonResponse
-{
-    try {
-        $validated = $request->validate([
-            'schoolclassid'   => 'required|integer|exists:schoolclass,id',
-            'sessionid'       => 'required|integer|exists:schoolsession,id',
-            'termid'          => 'required|integer',
-            'selectedColumns' => 'nullable|array',
-        ]);
-
-        $selectedColumns = $request->input('selectedColumns', []);
-
-        $data = $this->buildBroadsheetData(
-            (int) $validated['schoolclassid'],
-            (int) $validated['sessionid'],
-            (int) $validated['termid'],
-            $selectedColumns
-        );
-
-        $data['school_logo_base64'] = $this->getLogoBase64($data['schoolInfo']);
-        $data['pagetitle']          = 'Class Broadsheet – Web View';
-
-        return view('broadsheet.web', $data);
-
-    } catch (\Illuminate\Validation\ValidationException $e) {
-        return back()->withErrors($e->errors())->with('error', 'Invalid input: ' . implode(', ', $e->errors()));
-    } catch (\Exception $e) {
-        Log::error('Broadsheet web view error', [
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString(),
-        ]);
-        return back()->with('error', 'Failed to generate broadsheet: ' . $e->getMessage());
-    }
-}
-
-
-// =========================================================================
-// PATCH 4: Updated exportPdf — uses getLogoBase64, full page width options
-// Replaces existing exportPdf in BroadsheetController
-// =========================================================================
-
-public function exportPdf(Request $request)
-{
-    try {
-        ini_set('max_execution_time', 600);
-        ini_set('memory_limit', '1024M');
-
-        $validated = $request->validate([
-            'schoolclassid'   => 'required|integer|exists:schoolclass,id',
-            'sessionid'       => 'required|integer|exists:schoolsession,id',
-            'termid'          => 'required|integer',
-            'selectedColumns' => 'nullable|array',
-            'paper_size'      => 'nullable|in:A1,A2,A3,A4',
-            'orientation'     => 'nullable|in:portrait,landscape',
-        ]);
-
-        $selectedColumns = $request->input('selectedColumns', []);
-        $orientation     = $request->input('orientation', 'landscape');
-        $paperSize       = $request->input('paper_size', null);
-
-        $data = $this->buildBroadsheetData(
-            (int) $validated['schoolclassid'],
-            (int) $validated['sessionid'],
-            (int) $validated['termid'],
-            $selectedColumns
-        );
-
-        // Fix logo for PDF embedding
-        $data['school_logo_base64'] = $this->getLogoBase64($data['schoolInfo']);
-
-        // ── Dynamic paper sizing ──────────────────────────────────────────
-        $subjectCount    = count($data['subjects'] ?? []);
-        $assessmentCount = isset($data['assessments']) ? $data['assessments']->count() : 0;
-
-        if (!$paperSize) {
-            $colsPerSubject = $assessmentCount;
-            $colsPerSubject += (in_array('total',         $selectedColumns) || empty($selectedColumns)) ? 1 : 0;
-            $colsPerSubject += (in_array('cum',           $selectedColumns) || empty($selectedColumns)) ? 1 : 0;
-            $colsPerSubject += (in_array('grade',         $selectedColumns) || empty($selectedColumns)) ? 1 : 0;
-            $colsPerSubject += (in_array('position',      $selectedColumns) || empty($selectedColumns)) ? 1 : 0;
-            $colsPerSubject += (in_array('bf',            $selectedColumns))                            ? 1 : 0;
-            $colsPerSubject += (in_array('class_average', $selectedColumns))                            ? 1 : 0;
-            $totalSubCols    = $subjectCount * max(1, $colsPerSubject);
-
-            if      ($totalSubCols <= 40)  $paperSize = 'A3';
-            elseif  ($totalSubCols <= 70)  $paperSize = 'A2';
-            elseif  ($totalSubCols <= 110) $paperSize = 'A1';
-            else                           $paperSize = 'A0';
+            $studentSubjectMap[$sid][$sub] = [
+                'total'         => (float) ($row->total ?? 0),
+                'bf'            => (float) ($row->bf ?? 0),
+                'cum'           => (float) ($row->cum ?? 0),
+                'grade'         => $row->grade ?? '-',
+                'remark'        => $row->remark ?? '-',
+                'position'      => $row->position ?? '-',
+                'class_average' => (float) ($row->class_average ?? 0),
+                'assessments'   => $assessmentData,
+            ];
         }
 
-        // ── DomPDF paper dimensions (mm → points conversion) ─────────────
-        // A0: 841×1189mm  A1: 594×841mm  A2: 420×594mm  A3: 297×420mm
-        $paperDimensions = [
-            'A0' => [2384, 3370],
-            'A1' => [1684, 2384],
-            'A2' => [1190, 1684],
-            'A3' => [842,  1190],
-            'A4' => [595,  842],
+        $studentInfo = Studentclass::where('schoolclassid', $schoolclassid)
+            ->where('sessionid', $sessionid)
+            ->join('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
+            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+            ->select([
+                'studentRegistration.id as id',
+                'studentRegistration.admissionNo as admissionno',
+                'studentRegistration.firstname',
+                'studentRegistration.lastname',
+                'studentRegistration.gender',
+                'studentRegistration.dateofbirth',
+                'studentpicture.picture',
+            ])
+            ->orderBy('studentRegistration.lastname')
+            ->orderBy('studentRegistration.firstname')
+            ->get();
+
+        $studentRows = [];
+        foreach ($studentInfo as $stu) {
+            $sid       = $stu->id;
+            $subScores = $studentSubjectMap[$sid] ?? [];
+
+            $cumValues   = collect($subScores)->pluck('cum')->filter(fn ($v) => $v > 0);
+            $totalCum    = $cumValues->sum();
+            $numSubjects = $cumValues->count();
+
+            $totalValues = collect($subScores)->pluck('total')->filter(fn ($v) => $v > 0);
+            $gradePoints = $totalValues->map(fn ($s) => $this->getGradePoint($s));
+
+            $gpa      = $gradePoints->count() > 0 ? round($gradePoints->avg(), 2) : 0.0;
+            $cgpa     = $gpa;
+            $gpaGrade = $this->getGpaGrade($gpa);
+
+            $studentRows[$sid] = [
+                'id'                 => $sid,
+                'admissionno'        => $stu->admissionno,
+                'firstname'          => $stu->firstname,
+                'lastname'           => $stu->lastname,
+                'gender'             => $stu->gender,
+                'dateofbirth'        => $stu->dateofbirth,
+                'picture'            => $stu->picture,
+                'subjects'           => $subScores,
+                'total_cum'          => round($totalCum, 1),
+                'num_subjects'       => $numSubjects,
+                'class_average'      => $numSubjects > 0 ? round($totalCum / $numSubjects, 1) : 0,
+                'gpa'                => $gpa,
+                'cgpa'               => $cgpa,
+                'gpa_grade'          => $gpaGrade,
+                'total_grade_points' => round($gradePoints->sum(), 1),
+            ];
+        }
+
+        $subjectStats = [];
+        foreach ($subjectsMap as $sub => $subInfo) {
+            $allTotals = collect($studentRows)
+                ->pluck("subjects.{$sub}.total")
+                ->filter(fn ($v) => $v !== null && $v > 0);
+
+            $subjectStats[$sub] = [
+                'avg'     => $allTotals->count() > 0 ? round($allTotals->avg(), 1) : 0,
+                'highest' => $allTotals->count() > 0 ? $allTotals->max() : 0,
+                'lowest'  => $allTotals->count() > 0 ? $allTotals->min() : 0,
+                'passed'  => $allTotals->filter(fn ($v) => $v >= 40)->count(),
+                'failed'  => $allTotals->filter(fn ($v) => $v < 40)->count(),
+            ];
+        }
+
+        uasort($subjectsMap, fn ($a, $b) => strcmp($a['subject_name'], $b['subject_name']));
+
+        return [
+            'schoolInfo'      => $schoolInfo,
+            'schoolclass'     => $schoolclass,
+            'schoolsession'   => $schoolsession,
+            'schoolterm'      => $schoolterm,
+            'assessments'     => $assessments,
+            'subjects'        => $subjectsMap,
+            'studentRows'     => array_values($studentRows),
+            'subjectStats'    => $subjectStats,
+            'selectedColumns' => $selectedColumns,
+            'totalStudents'   => count($studentRows),
+            'generatedAt'     => now()->format('d M Y, H:i'),
         ];
-        [$shortPt, $longPt] = $paperDimensions[$paperSize] ?? [842, 1190];
+    }
 
-        $widthPt  = $orientation === 'landscape' ? $longPt  : $shortPt;
-        $heightPt = $orientation === 'landscape' ? $shortPt : $longPt;
+    // =========================================================================
+    // WEB VIEW
+    // =========================================================================
 
-        $paperString = strtolower($paperSize) . ($orientation === 'landscape' ? '-landscape' : '');
-
-        $pdf = Pdf::loadView('broadsheet.pdf', $data)
-            ->setPaper($paperString)
-            ->setOption([
-                'isHtml5ParserEnabled'    => true,
-                'isRemoteEnabled'         => true,
-                'isFontSubsettingEnabled' => true,
-                'defaultFont'             => 'DejaVu Sans',
-                'defaultPaperWidth'       => $widthPt,
-                'defaultPaperHeight'      => $heightPt,
-                'dpi'                     => 96,
-                'enable_css_float'        => false,
-                'enable_javascript'       => false,
-                'debugPng'                => false,
-                'debugKeepTemp'           => false,
-                'debugCss'                => false,
-                'debugLayout'             => false,
-                'debugLayoutLines'        => false,
-                'debugLayoutBlocks'       => false,
-                'debugLayoutInline'       => false,
-                'debugLayoutPaddingBox'   => false,
+    public function webView(Request $request): View|JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'schoolclassid'   => 'required|integer|exists:schoolclass,id',
+                'sessionid'       => 'required|integer|exists:schoolsession,id',
+                'termid'          => 'required|integer',
+                'selectedColumns' => 'nullable|array',
             ]);
 
-        // ── Filename ─────────────────────────────────────────────────────
-        $className   = ($data['schoolclass']->schoolclass ?? 'Class') . ' ' . ($data['schoolclass']->arm_name ?? '');
-        $sessionName = $data['schoolsession']->session ?? '';
-        $termName    = $data['schoolterm']->term ?? 'Term';
+            $selectedColumns = $request->input('selectedColumns', []);
 
-        $filename = 'Broadsheet_'
-            . preg_replace('/[^A-Za-z0-9_\- ]/', '_', trim($className))   . '_'
-            . preg_replace('/[^A-Za-z0-9_\- ]/', '_', trim($sessionName)) . '_'
-            . preg_replace('/[^A-Za-z0-9_\- ]/', '_', trim($termName))    . '.pdf';
+            $data = $this->buildBroadsheetData(
+                (int) $validated['schoolclassid'],
+                (int) $validated['sessionid'],
+                (int) $validated['termid'],
+                $selectedColumns
+            );
 
-        // Stream (opens in browser — user can scroll/zoom/print)
-        return $pdf->stream($filename);
+            $data['school_logo_base64'] = $this->getLogoBase64($data['schoolInfo']);
+            $data['pagetitle']          = 'Class Broadsheet – Web View';
 
-    } catch (\Exception $e) {
-        Log::error('Broadsheet PDF export error', [
-            'error' => $e->getMessage(),
-            'trace' => $e->getTraceAsString(),
-        ]);
-        return back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
+            return view('broadsheet.web', $data);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return back()->withErrors($e->errors())->with('error', 'Invalid input: ' . implode(', ', $e->errors()));
+        } catch (\Exception $e) {
+            Log::error('Broadsheet web view error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return back()->with('error', 'Failed to generate broadsheet: ' . $e->getMessage());
+        }
     }
-}
 
+    // =========================================================================
+    // EXPORT PDF  — Full-width, never clips content
+    // =========================================================================
 
- 
+    public function exportPdf(Request $request)
+    {
+        try {
+            ini_set('max_execution_time', 600);
+            ini_set('memory_limit', '1024M');
+
+            $validated = $request->validate([
+                'schoolclassid'   => 'required|integer|exists:schoolclass,id',
+                'sessionid'       => 'required|integer|exists:schoolsession,id',
+                'termid'          => 'required|integer',
+                'selectedColumns' => 'nullable|array',
+                'paper_size'      => 'nullable|in:A0,A1,A2,A3,A4',
+                'orientation'     => 'nullable|in:portrait,landscape',
+            ]);
+
+            $selectedColumns = $request->input('selectedColumns', []);
+            $orientation     = $request->input('orientation', 'landscape');
+            $paperSize       = $request->input('paper_size', null);
+
+            $data = $this->buildBroadsheetData(
+                (int) $validated['schoolclassid'],
+                (int) $validated['sessionid'],
+                (int) $validated['termid'],
+                $selectedColumns
+            );
+
+            $data['school_logo_base64'] = $this->getLogoBase64($data['schoolInfo']);
+
+            // ── Dynamic paper sizing based on column count ─────────────────
+            $subjectCount    = count($data['subjects'] ?? []);
+            $assessmentCount = isset($data['assessments']) ? $data['assessments']->count() : 0;
+
+            if (!$paperSize) {
+                // Count active columns per subject
+                $perSubjCols = 0;
+                foreach ($data['assessments'] ?? [] as $a) {
+                    if (empty($selectedColumns) || in_array('assessment_' . $a->id, $selectedColumns)) {
+                        $perSubjCols++;
+                    }
+                }
+                foreach (['total', 'bf', 'cum', 'grade', 'position', 'class_average', 'remark'] as $col) {
+                    if (empty($selectedColumns) || in_array($col, $selectedColumns)) {
+                        $perSubjCols++;
+                    }
+                }
+
+                $totalCols = $subjectCount * max(1, $perSubjCols);
+
+                if      ($totalCols <= 30)  $paperSize = 'A3';
+                elseif  ($totalCols <= 60)  $paperSize = 'A2';
+                elseif  ($totalCols <= 100) $paperSize = 'A1';
+                else                        $paperSize = 'A0';
+            }
+
+            // ── DomPDF custom page dimensions (points) ────────────────────
+            // We compute the EXACT width needed so nothing is clipped.
+            // Base: frozen cols ~200pt + (subjects × perSubjCols × 22pt) + margins
+            $perSubjColWidth = 22; // pt per data column
+            $frozenWidth     = 200; // SN + AdmNo + Name
+            $marginPt        = 57;  // 10mm each side × 2 × 2.835
+
+            $perSubjCols = 0;
+            foreach ($data['assessments'] ?? [] as $a) {
+                if (empty($selectedColumns) || in_array('assessment_' . $a->id, $selectedColumns)) {
+                    $perSubjCols++;
+                }
+            }
+            foreach (['total', 'bf', 'cum', 'grade', 'position', 'class_average', 'remark'] as $col) {
+                if (empty($selectedColumns) || in_array($col, $selectedColumns)) {
+                    $perSubjCols++;
+                }
+            }
+            foreach (['gpa', 'cgpa', 'gpa_grade', 'num_subjects', 'total_grade_points'] as $col) {
+                if (empty($selectedColumns) || in_array($col, $selectedColumns)) {
+                    $perSubjCols += 0.5; // GPA cols are narrower
+                }
+            }
+
+            $neededWidth = $frozenWidth + ($subjectCount * max(1, ceil($perSubjCols)) * $perSubjColWidth) + $marginPt;
+
+            // Standard paper heights in points (landscape = wide dimension is height)
+            $paperHeights = [
+                'A0' => 2384,
+                'A1' => 1684,
+                'A2' => 1190,
+                'A3' => 842,
+                'A4' => 595,
+            ];
+            $heightPt = $paperHeights[$paperSize] ?? 842;
+
+            // Width must be at least the needed content width
+            $standardWidths = [
+                'A0' => 3370,
+                'A1' => 2384,
+                'A2' => 1684,
+                'A3' => 1190,
+                'A4' => 842,
+            ];
+            $widthPt = max($standardWidths[$paperSize] ?? 1190, $neededWidth + 100);
+
+            // Store computed dimensions for the view
+            $data['pdf_width_pt']  = $widthPt;
+            $data['pdf_height_pt'] = $heightPt;
+            $data['pdf_paper_size'] = $paperSize;
+
+            // Build custom paper size string for DomPDF [width, height]
+            // We pass as array so DomPDF uses exact dimensions
+            $pdf = Pdf::loadView('broadsheet.pdf', $data)
+                ->setPaper([$widthPt, $heightPt], $orientation)
+                ->setOption([
+                    'isHtml5ParserEnabled'    => true,
+                    'isRemoteEnabled'         => true,
+                    'isFontSubsettingEnabled' => true,
+                    'defaultFont'             => 'DejaVu Sans',
+                    'dpi'                     => 96,
+                    'enable_css_float'        => false,
+                    'enable_javascript'       => false,
+                    'debugPng'                => false,
+                    'debugKeepTemp'           => false,
+                    'debugCss'                => false,
+                    'debugLayout'             => false,
+                ]);
+
+            $className   = ($data['schoolclass']->schoolclass ?? 'Class') . ' ' . ($data['schoolclass']->arm_name ?? '');
+            $sessionName = $data['schoolsession']->session ?? '';
+            $termName    = $data['schoolterm']->term ?? 'Term';
+
+            $filename = 'Broadsheet_'
+                . preg_replace('/[^A-Za-z0-9_\-]/', '_', trim($className))   . '_'
+                . preg_replace('/[^A-Za-z0-9_\-]/', '_', trim($sessionName)) . '_'
+                . preg_replace('/[^A-Za-z0-9_\-]/', '_', trim($termName))    . '.pdf';
+
+            return $pdf->stream($filename);
+
+        } catch (\Exception $e) {
+            Log::error('Broadsheet PDF export error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
+        }
+    }
+
     // =========================================================================
     // EXPORT EXCEL
     // =========================================================================
@@ -630,19 +612,10 @@ public function exportPdf(Request $request)
             $sessionName = $data['schoolsession']->session ?? '';
             $termName    = $data['schoolterm']->term ?? 'Term';
 
-            // Clean filename for Excel as well
-            $cleanClassName = preg_replace('/[\/\\\\:*?"<>|]/', '_', trim($className));
-            $cleanSession = preg_replace('/[\/\\\\:*?"<>|]/', '_', trim($sessionName));
-            $cleanTerm = preg_replace('/[\/\\\\:*?"<>|]/', '_', trim($termName));
-            $cleanClassName = preg_replace('/[^A-Za-z0-9_\- ]/', '', $cleanClassName);
-            $cleanSession = preg_replace('/[^A-Za-z0-9_\- ]/', '', $cleanSession);
-            $cleanTerm = preg_replace('/[^A-Za-z0-9_\- ]/', '', $cleanTerm);
-
-            $filename = 'Broadsheet_' . $cleanClassName . '_' . $cleanSession . '_' . $cleanTerm . '.xlsx';
-
-            if (strlen($filename) < 15) {
-                $filename = 'Broadsheet_' . date('Y-m-d_H-i-s') . '.xlsx';
-            }
+            $filename = 'Broadsheet_'
+                . preg_replace('/[^A-Za-z0-9_\-]/', '_', trim($className))   . '_'
+                . preg_replace('/[^A-Za-z0-9_\-]/', '_', trim($sessionName)) . '_'
+                . preg_replace('/[^A-Za-z0-9_\-]/', '_', trim($termName))    . '.xlsx';
 
             return Excel::download(new \App\Exports\BroadsheetExport($data), $filename);
 
