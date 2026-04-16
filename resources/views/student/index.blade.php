@@ -2296,8 +2296,8 @@ use Spatie\Permission\Models\Role;
                     </div>
                     {{-- <form class="tablelist-form" id="editStudentForm" enctype="multipart/form-data" autocomplete="off" method="POST" action="{{ route('student.update', ':id') }}"> --}}
                         <form class="tablelist-form" id="editStudentForm" enctype="multipart/form-data" autocomplete="off" method="POST"
-                        action="{{ route('student.update', ':id') }}"
-                        data-base-action="{{ route('student.update', ':id') }}"></form>
+                                        action="{{ route('student.update', ':id') }}"
+                                        data-base-action="{{ route('student.update', ':id') }}">
                         @csrf
                         @method('PATCH')
                         <div class="modal-body p-4">
