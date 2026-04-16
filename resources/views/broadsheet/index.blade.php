@@ -541,7 +541,18 @@
                         {{-- ── Export format & buttons ── --}}
                         <div class="mt-4 p-3 rounded-3" style="background:#f8fafc;border:1px solid var(--bs-border);">
                             <h6 class="fw-bold mb-3" style="color:#1e3a5f;"><i class="ri-download-line me-2"></i>Export Format</h6>
+
+
                             <div class="row g-3">
+                                 <div class="col-md-6">
+                                     <button class="export-btn" style="background:linear-gradient(135deg,#1d6fa4,#2a8fc9);color:white;" onclick="doExport('web');">
+                                        <i class="ri-global-line"></i>
+                                       <div class="text-start">
+                                         <div>Open Web View</div>
+                                         <div style="font-size:11px;opacity:.8;font-weight:400;">Interactive · Scroll · Zoom · Navigate</div>
+                                       </div>
+                                     </button>
+                                 </div>
                                 <div class="col-md-6">
                                     <button class="export-btn pdf" onclick="doExport('pdf');">
                                         <i class="ri-file-pdf-line"></i>
@@ -614,6 +625,7 @@ const ROUTES = {
     studentPreview : '{{ route("broadsheet.student-preview") }}',
     exportPdf      : '{{ route("broadsheet.export.pdf") }}',
     exportExcel    : '{{ route("broadsheet.export.excel") }}',
+    webView        : '{{ route("broadsheet.web-view") }}',     // ← ADD THIS
 };
 
 let columnData      = null;   // raw column data from server

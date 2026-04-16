@@ -774,7 +774,7 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
 
         // AJAX: get student preview count for the chosen class+session
         Route::post('/student-preview', [BroadsheetController::class, 'getStudentPreview'])->name('student-preview');
-
+        Route::post('/web-view',           [BroadsheetController::class, 'webView'])       ->name('web-view');
         // Export
         Route::post('/export/pdf',   [BroadsheetController::class, 'exportPdf'])->name('export.pdf');
         Route::post('/export/excel', [BroadsheetController::class, 'exportExcel'])->name('export.excel');

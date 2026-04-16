@@ -406,6 +406,40 @@ class BroadsheetController extends Controller
 }
 
 
+// =========================================================================
+// ADD THIS METHOD TO BroadsheetController
+// (paste inside the class, after exportExcel)
+// =========================================================================
+
+public function webView(Request $request): View|JsonResponse
+{
+    try {
+        $validated = $request->validate([
+            'schoolclassid'   => 'required|integer|exists:schoolclass,id',
+            'sessionid'       => 'required|integer|exists:schoolsession,id',
+            'termid'          => 'required|integer',
+            'selectedColumns' => 'nullable|array',
+        ]);
+
+        $selectedColumns = $request->input('selectedColumns', []);
+
+        $data = $this->buildBroadsheetData(
+            $validated['schoolclassid'],
+            $validated['sessionid'],
+            $validated['termid'],
+            $selectedColumns
+        );
+
+        $data['school_logo_base64'] = $this->getLogoBase64($data['schoolInfo']);
+        $data['pagetitle']          = 'Class Broadsheet – Web View';
+
+        return view('broadsheet.web', $data);
+
+    } catch (\Exception $e) {
+        Log::error('Broadsheet web view error', ['error' => $e->getMessage()]);
+        return back()->with('error', 'Failed to generate broadsheet: ' . $e->getMessage());
+    }
+}
 
 
     // =========================================================================
@@ -427,8 +461,8 @@ class BroadsheetController extends Controller
             'orientation'     => 'nullable|in:portrait,landscape',
         ]);
 
-        $paperSize      = $request->input('paper_size', 'A3');
-        $orientation    = $request->input('orientation', 'landscape');
+        // $paperSize      = $request->input('paper_size', 'A3');
+        // $orientation    = $request->input('orientation', 'landscape');
         $selectedColumns= $request->input('selectedColumns', []);
 
         $data = $this->buildBroadsheetData(
@@ -438,19 +472,63 @@ class BroadsheetController extends Controller
             $selectedColumns
         );
 
-        // Fix logo for PDF
-        $data['school_logo_base64'] = $this->getLogoBase64($data['schoolInfo']);
+        // // Fix logo for PDF
+        // $data['school_logo_base64'] = $this->getLogoBase64($data['schoolInfo']);
 
-        // Determine paper size and orientation
-        $paperString = $paperSize;
-        if ($orientation === 'landscape') {
-            $paperString .= '-landscape';
+        // // Determine paper size and orientation
+        // $paperString = $paperSize;
+        // if ($orientation === 'landscape') {
+        //     $paperString .= '-landscape';
+        // }
+
+        // $pdf = Pdf::loadView('broadsheet.pdf', $data)
+        //     ->setPaper($paperString)
+        //     ->setOption('isHtml5ParserEnabled', true)
+        //     ->setOption('isRemoteEnabled', true);
+
+
+        // =========================================================================
+// UPDATE exportPdf — replace the paper-size block inside the try{} with:
+// =========================================================================
+
+        // Dynamic paper sizing based on subject count
+        $subjectCount    = count($data['subjects'] ?? []);
+        $assessmentCount = isset($data['assessments']) ? $data['assessments']->count() : 0;
+
+        // Choose paper size automatically if not forced
+        $paperSize   = $request->input('paper_size', null);
+        $orientation = $request->input('orientation', 'landscape');
+
+        if (!$paperSize) {
+            // Auto-select based on column density
+            $totalSubCols = $subjectCount * (
+                $assessmentCount
+                + (in_array('total',         $selectedColumns) || empty($selectedColumns) ? 1 : 0)
+                + (in_array('cum',           $selectedColumns) || empty($selectedColumns) ? 1 : 0)
+                + (in_array('grade',         $selectedColumns) || empty($selectedColumns) ? 1 : 0)
+                + (in_array('position',      $selectedColumns) || empty($selectedColumns) ? 1 : 0)
+                + (in_array('bf',            $selectedColumns)  ? 1 : 0)
+                + (in_array('class_average', $selectedColumns)  ? 1 : 0)
+            );
+
+            if ($totalSubCols <= 40)       $paperSize = 'A3';
+            elseif ($totalSubCols <= 70)   $paperSize = 'A2';
+            elseif ($totalSubCols <= 110)  $paperSize = 'A1';
+            else                           $paperSize = 'A0';
         }
+
+        // DomPDF paper string
+        $paperString = strtolower($paperSize) . ($orientation === 'landscape' ? '-landscape' : '');
 
         $pdf = Pdf::loadView('broadsheet.pdf', $data)
             ->setPaper($paperString)
             ->setOption('isHtml5ParserEnabled', true)
-            ->setOption('isRemoteEnabled', true);
+            ->setOption('isRemoteEnabled', true)
+            ->setOption('isFontSubsettingEnabled', true)
+            ->setOption('defaultFont', 'DejaVu Sans')
+            // Allow very wide tables — critical fix
+            ->setOption('defaultPaperWidth',  $orientation === 'landscape' ? 1587 : 1122)
+            ->setOption('defaultPaperHeight', $orientation === 'landscape' ? 1122 : 1587);
 
         // Build clean filename
         $className   = ($data['schoolclass']->schoolclass ?? 'Class') . ' ' . ($data['schoolclass']->arm_name ?? '');
