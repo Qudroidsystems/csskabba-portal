@@ -21,7 +21,7 @@
             position: relative;
         }
 
-        /* ================== SCHOOL NAME HEADER (Fixed - No overflow) ================== */
+        /* ================== SCHOOL NAME HEADER ================== */
         .school-name-header {
             width: 100%;
             background: #111827;
@@ -88,7 +88,7 @@
             page-break-after: avoid;
         }
 
-        /* HEADER: Logo + School Info + Photo */
+        /* HEADER TABLE - Logo + Expanded School Info + Photo */
         .header-table {
             width: 100%;
             border-collapse: collapse;
@@ -97,12 +97,12 @@
         }
 
         .school-logo, .photo-frame {
-            width: 72px;
-            height: 85px;
+            width: 74px;
+            height: 88px;
             border: 2px solid #47b492;
             border-radius: 6px;
             background: white;
-            padding: 2px;
+            padding: 3px;
             overflow: hidden;
             display: flex;
             align-items: center;
@@ -116,14 +116,15 @@
         }
 
         .middle-info {
-            font-size: 8.2px;
-            line-height: 1.45;
-            padding: 0 12px;
+            font-size: 9.2px;           /* BIGGER text */
+            line-height: 1.65;          /* More breathing space */
+            padding: 0 15px;
             vertical-align: middle;
         }
 
         .middle-info strong {
             color: #1e40af;
+            font-weight: 700;
         }
 
         .header-divider {
@@ -150,7 +151,7 @@
             margin: 0;
         }
 
-        /* STUDENT INFO BAR - Improved spacing & alignment */
+        /* STUDENT INFO BAR */
         .student-info-bar {
             background: linear-gradient(to bottom, #f0f7ff 0%, #ffffff 100%);
             border: 2px solid #2aa886;
@@ -181,7 +182,7 @@
             padding-left: 4px;
         }
 
-        /* DUAL LAYOUT & Other tables (unchanged except minor tweaks) */
+        /* DUAL LAYOUT */
         .dual-layout-table {
             width: 100%;
             border-collapse: collapse;
@@ -198,6 +199,7 @@
             background: #fef9e6;
         }
 
+        /* Result table styles (unchanged) */
         .result-table table {
             width: 100%;
             border: 2px solid #000000;
@@ -233,7 +235,6 @@
 
         .highlight-red { color: #dc2626; font-weight: 900; }
 
-        /* Column widths */
         .col-sn { width: 28px; }
         .col-admissionno { width: 78px; }
         .col-name { width: 130px; }
@@ -258,55 +259,24 @@
             margin: 8px auto;
         }
 
-        /* Psychomotor (unchanged) */
-        .psychomotor-container {
-            width: 148px;
-            background: #fef9e6;
-            border: 2px solid #c0a86a;
-            border-radius: 8px;
-            padding: 0 4px 4px 4px;
-        }
-
-        .psychomotor-title {
-            background: #2c3e4e;
-            color: white;
-            text-align: center;
-            font-weight: 800;
-            font-size: 8.5px;
-            padding: 3px 2px;
-            margin: 0 -4px 5px -4px;
-            border-radius: 6px 6px 0 0;
-        }
-
-        .psycho-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 7.2px;
-        }
-
-        .psycho-table th, .psycho-table td {
-            border: 1px solid #b78d4a;
-            padding: 2px 2px;
-            height: 16px;
-            line-height: 16px;
-        }
-
+        /* Psychomotor & Remarks & Footer (unchanged) */
+        .psychomotor-container { width: 148px; background: #fef9e6; border: 2px solid #c0a86a; border-radius: 8px; padding: 0 4px 4px 4px; }
+        .psychomotor-title { background: #2c3e4e; color: white; text-align: center; font-weight: 800; font-size: 8.5px; padding: 3px 2px; margin: 0 -4px 5px -4px; border-radius: 6px 6px 0 0; }
+        .psycho-table { width: 100%; border-collapse: collapse; font-size: 7.2px; }
+        .psycho-table th, .psycho-table td { border: 1px solid #b78d4a; padding: 2px 2px; height: 16px; line-height: 16px; }
         .psycho-table th { background: #e9d6b0; font-weight: 800; font-size: 7px; }
         .psycho-table td:first-child { width: 72%; background: #fff7e8; padding-left: 3px; }
         .psycho-table td:last-child { width: 28%; text-align: center; font-weight: bold; }
-
         .psycho-totals-row td { background: #e9d6b0; font-weight: 900; font-size: 7.5px; }
         .psycho-obtainable-row td { background: #faf0dd; font-size: 6.8px; text-align: center; }
         .psycho-note { font-size: 6px; text-align: center; margin-top: 4px; color: #4a5b6e; }
 
-        /* Remarks */
         .remarks-table {
             width: 100%;
             border: 2px solid #000000;
             border-collapse: collapse;
             margin: 8px 10px 4px;
         }
-
         .remarks-table td {
             border: 1px solid #000000;
             padding: 5px 8px;
@@ -314,7 +284,6 @@
             vertical-align: top;
             font-size: 8.5px;
         }
-
         .remarks-table .h6 {
             font-weight: 700;
             margin-bottom: 3px;
@@ -323,7 +292,6 @@
             display: inline-block;
         }
 
-        /* FOOTER - Centered & Bigger */
         .footer-section {
             background: #f1f5f9;
             padding: 9px 12px 6px;
@@ -332,7 +300,6 @@
             margin: 0 10px 8px;
             font-size: 8.6px;
         }
-
         .footer-content {
             display: flex;
             flex-direction: column;
@@ -340,7 +307,6 @@
             gap: 6px;
             line-height: 1.4;
         }
-
         .text-dot-space2 {
             border-bottom: 1px dotted #333;
             display: inline-block;
@@ -348,14 +314,12 @@
             font-weight: bold;
             margin: 0 4px;
         }
-
         .powered-by {
             font-size: 8px;
             margin-top: 4px;
             color: #64748b;
         }
 
-        /* Grade & Position styles (unchanged) */
         .grade-A { color: #16a34a; font-weight: 900; }
         .grade-B { color: #2563eb; font-weight: 900; }
         .grade-C { color: #ca8a04; font-weight: 900; }
@@ -385,7 +349,6 @@
                 padding: 0;
                 box-shadow: none;
             }
-            .school-name-header { border-bottom: 1px solid #1e40af; }
         }
     </style>
 </head>
@@ -409,7 +372,7 @@
             $assessments = $studentData['assessments'] ?? collect();
             $totals = $studentData['totals_summary'] ?? [];
 
-            // Psychomotor (same as before)
+            // Psychomotor
             $psychomotorSkills = ['Handwriting', 'Sports', 'Musical Skills', 'Participation', 'Punctuality','Concern for Others', 'Relationship(Students)', 'Relationship(Staff)','Courtesy', 'Neatness', 'Honesty', 'Team Spirit', 'Leadership','Listening Skills', 'Organizational Ability', 'Self Control', 'Perseverance', 'Initiative'];
             $displaySkills = ['Handwriting', 'Sports', 'Musical Skills', 'Participation', 'Punctuality','Concern for Others', 'Relate(Students)', 'Relate(Staff)','Courtesy', 'Neatness', 'Honesty', 'Team Spirit', 'Leadership','Listening', 'Organizational', 'Self Control', 'Perseverance', 'Initiative'];
 
@@ -464,10 +427,11 @@
                 <div class="motto">{{ $schoolInfo->school_motto ?? 'KNOWLEDGE AND VIRTUE' }}</div>
             </div>
 
-            <!-- HEADER: Logo + Middle Info + Photo -->
+            <!-- HEADER: Logo + Expanded School Info (Email + Website added) + Photo -->
             <table class="header-table">
                 <tr>
-                    <td width="22%" style="text-align:center;">
+                    <!-- Logo -->
+                    <td width="20%" style="text-align:center;">
                         <div class="school-logo">
                             @php
                                 $logoSrc = !empty($studentData['school_logo_base64'])
@@ -477,11 +441,17 @@
                             <img src="{{ $logoSrc }}" alt="School Logo">
                         </div>
                     </td>
-                    <td width="56%" class="middle-info">
-                        <strong>Address:</strong> {{ $schoolInfo->school_address ?? 'No. 1, Claret Avenue' }}<br>
-                        <strong>Phone:</strong> {{ $schoolInfo->school_phone ?? '08136663185' }}
+
+                    <!-- Middle School Info - Bigger & Better arranged -->
+                    <td width="58%" class="middle-info">
+                        <strong>Address:</strong> {{ $schoolInfo->school_address ?? 'No. 1, Claret Avenue, Kabba, Kogi State' }}<br>
+                        <strong>Phone:</strong> {{ $schoolInfo->school_phone ?? '08136663185' }}<br>
+                        <strong>Email:</strong> {{ $schoolInfo->school_email ?? '—' }}<br>
+                        <strong>Website:</strong> {{ $schoolInfo->school_website ?? '—' }}
                     </td>
-                    <td width="22%" style="text-align:center;">
+
+                    <!-- Student Photo - Adjusted to the right -->
+                    <td width="22%" style="text-align:right; padding-right: 12px;">
                         @if(in_array('picture', $columnsToShow))
                         <div class="photo-frame">
                             @if(!empty($studentData['student_image_base64']))
@@ -503,7 +473,7 @@
                 {{ strtoupper($metadata['term'] ?? 'SECOND TERM') }} {{ strtoupper($metadata['session'] ?? '2025/2026') }} ACADEMIC SESSION TERMINAL PROGRESS REPORT
             </div>
 
-            <!-- STUDENT INFO BAR - Better alignment & spacing -->
+            <!-- STUDENT INFO BAR -->
             @if ($studentData['students'] && $studentData['students']->isNotEmpty())
                 @php
                     $profile = $studentData['studentpp'] && $studentData['studentpp']->isNotEmpty() ? $studentData['studentpp']->first() : null;
@@ -536,7 +506,7 @@
                 <div class="student-info-bar"><div style="text-align:center;">No student data available.</div></div>
             @endif>
 
-            <!-- DUAL LAYOUT, TOTALS, REMARKS, FOOTER (same as previous) -->
+            <!-- DUAL LAYOUT, TOTALS, REMARKS, FOOTER (unchanged from previous version) -->
             <table class="dual-layout-table">
                 <tr>
                     <td class="academic-cell">
@@ -681,7 +651,7 @@
                 </tbody>
             </table>
 
-            <!-- IMPROVED FOOTER -->
+            <!-- FOOTER -->
             <div class="footer-section">
                 <div class="footer-content">
                     <div>
