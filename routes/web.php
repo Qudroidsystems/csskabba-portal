@@ -541,6 +541,8 @@ Route::get('/subjectoperation/snapshot/detail', [SubjectOperationController::cla
     ->name('subjectoperation.snapshot.detail');
 Route::get('/subjectoperation/registered-classes', [SubjectOperationController::class, 'registeredClasses'])
     ->name('subjectoperation.registered-classes');
+Route::get('/subjectoperation/student-subject-counts', [SubjectOperationController::class, 'getStudentSubjectCounts'])
+    ->name('subjectoperation.student-subject-counts');
 
 // ── All existing routes stay the same ──────────────────────────────────────
 

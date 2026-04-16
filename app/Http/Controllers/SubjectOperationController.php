@@ -332,149 +332,389 @@ class SubjectOperationController extends Controller
     // REGISTERED CLASSES — alphabetical subjects with per-term counts & teachers
     // =========================================================================
 
-    public function registeredClasses(Request $request): JsonResponse
-    {
-        try {
-            $validated = $request->validate([
-                'class_id'   => ['required', 'integer', 'exists:schoolclass,id'],
-                'session_id' => ['required', 'integer', 'exists:schoolsession,id'],
-                'term_id'    => ['nullable', 'integer', 'exists:schoolterm,id'],
-            ]);
+    // public function registeredClasses(Request $request): JsonResponse
+    // {
+    //     try {
+    //         $validated = $request->validate([
+    //             'class_id'   => ['required', 'integer', 'exists:schoolclass,id'],
+    //             'session_id' => ['required', 'integer', 'exists:schoolsession,id'],
+    //             'term_id'    => ['nullable', 'integer', 'exists:schoolterm,id'],
+    //         ]);
 
-            DB::statement('SET SESSION group_concat_max_len = 1000000');
+    //         DB::statement('SET SESSION group_concat_max_len = 1000000');
 
-            // Get class information
-            $classInfo = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-                ->where('schoolclass.id', $validated['class_id'])
+    //         // Get class information
+    //         $classInfo = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+    //             ->where('schoolclass.id', $validated['class_id'])
+    //             ->select([
+    //                 'schoolclass.id as class_id',
+    //                 'schoolclass.schoolclass as class_name',
+    //                 'schoolarm.arm as arm_name',
+    //             ])
+    //             ->first();
+
+    //         // Get session info
+    //         $sessionInfo = Schoolsession::find($validated['session_id']);
+
+    //         // Get all terms for this session (or specific term if provided)
+    //         $terms = !empty($validated['term_id'])
+    //             ? Schoolterm::where('id', $validated['term_id'])->get()
+    //             : Schoolterm::all();
+
+    //         $processedData = [];
+
+    //         foreach ($terms as $term) {
+    //             // Get subjects for this specific term with their teachers, ordered alphabetically
+    //             $subjectRecords = Subjectclass::query()
+    //                 ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
+    //                 ->leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
+    //                 ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
+    //                 ->leftJoin('staffpicture', 'staffpicture.staffid', '=', 'users.id')
+    //                 ->where('subjectclass.schoolclassid', $validated['class_id'])
+    //                 ->where('subjectteacher.sessionid', $validated['session_id'])
+    //                 ->where('subjectteacher.termid', $term->id)
+    //                 ->whereNotNull('subject.id')
+    //                 ->select([
+    //                     'subject.id as subject_id',
+    //                     'subject.subject as subject_name',
+    //                     'subject.subject_code as subject_code',
+    //                     'users.id as teacher_id',
+    //                     'users.name as teacher_name',
+    //                     'staffpicture.picture as teacher_picture',
+    //                 ])
+    //                 ->orderBy('subject.subject', 'asc')
+    //                 ->get();
+
+    //             // Group subjects with their teachers
+    //             $subjectsWithTeachers = [];
+    //             foreach ($subjectRecords as $record) {
+    //                 $subjectKey = $record->subject_id;
+
+    //                 if (!isset($subjectsWithTeachers[$subjectKey])) {
+    //                     $subjectsWithTeachers[$subjectKey] = [
+    //                         'id'            => $record->subject_id,
+    //                         'name'          => $record->subject_name,
+    //                         'code'          => $record->subject_code,
+    //                         'teachers'      => [],
+    //                         'student_count' => 0,
+    //                     ];
+    //                 }
+
+    //                 // Add teacher if exists and not already added
+    //                 if ($record->teacher_id && $record->teacher_name) {
+    //                     $teacherExists = false;
+    //                     foreach ($subjectsWithTeachers[$subjectKey]['teachers'] as $existingTeacher) {
+    //                         if ($existingTeacher['id'] == $record->teacher_id) {
+    //                             $teacherExists = true;
+    //                             break;
+    //                         }
+    //                     }
+    //                     if (!$teacherExists) {
+    //                         $subjectsWithTeachers[$subjectKey]['teachers'][] = [
+    //                             'id'      => $record->teacher_id,
+    //                             'name'    => $record->teacher_name,
+    //                             'picture' => $record->teacher_picture,
+    //                         ];
+    //                     }
+    //                 }
+    //             }
+
+    //             // Get student counts per subject for this specific term
+    //             $studentCounts = SubjectRegistrationStatus::query()
+    //                 ->join('subjectclass', 'subjectclass.id', '=', 'subject_registration_status.subjectclassid')
+    //                 ->join('broadsheet', 'broadsheet.id', '=', 'subject_registration_status.broadsheetid')
+    //                 ->join('subject', 'subject.id', '=', 'broadsheet.subjectid')
+    //                 ->where('subjectclass.schoolclassid', $validated['class_id'])
+    //                 ->where('subject_registration_status.sessionid', $validated['session_id'])
+    //                 ->where('subject_registration_status.termid', $term->id)
+    //                 ->select([
+    //                     'subject.id as subject_id',
+    //                     DB::raw('COUNT(DISTINCT subject_registration_status.studentid) as student_count'),
+    //                 ])
+    //                 ->groupBy('subject.id')
+    //                 ->get()
+    //                 ->pluck('student_count', 'subject_id')
+    //                 ->toArray();
+
+    //             // Apply per-subject student counts
+    //             foreach ($subjectsWithTeachers as $key => $subject) {
+    //                 $subjectsWithTeachers[$key]['student_count'] = $studentCounts[$subject['id']] ?? 0;
+    //             }
+
+    //             // Convert to indexed array (preserves alphabetical order from query)
+    //             $subjectsWithTeachers = array_values($subjectsWithTeachers);
+
+    //             // Get total unique students registered in ANY subject for this term/class/session
+    //             $totalStudents = SubjectRegistrationStatus::query()
+    //                 ->join('subjectclass', 'subjectclass.id', '=', 'subject_registration_status.subjectclassid')
+    //                 ->where('subjectclass.schoolclassid', $validated['class_id'])
+    //                 ->where('subject_registration_status.sessionid', $validated['session_id'])
+    //                 ->where('subject_registration_status.termid', $term->id)
+    //                 ->distinct('subject_registration_status.studentid')
+    //                 ->count();
+
+    //             $processedData[] = [
+    //                 'class_id'        => $classInfo->class_id ?? null,
+    //                 'class_name'      => $classInfo->class_name ?? 'N/A',
+    //                 'arm_name'        => $classInfo->arm_name ?? 'N/A',
+    //                 'session_name'    => $sessionInfo->session ?? 'N/A',
+    //                 'term_name'       => $term->term,
+    //                 'term_id'         => $term->id,
+    //                 'student_count'   => $totalStudents,
+    //                 'subject_count'   => count($subjectsWithTeachers),
+    //                 'subjects_teachers' => $subjectsWithTeachers,
+    //             ];
+    //         }
+
+    //         return response()->json(['success' => true, 'data' => $processedData]);
+
+    //     } catch (ValidationException $e) {
+    //         return response()->json(['success' => false, 'message' => 'Invalid parameters.', 'errors' => $e->errors()], 422);
+    //     } catch (\Exception $e) {
+    //         Log::error('Error fetching registered classes', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+    //         return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+    //     }
+    // }
+
+
+    // =========================================================================
+// REGISTERED CLASSES — fixed student counts (no broken broadsheet join)
+// =========================================================================
+
+public function registeredClasses(Request $request): JsonResponse
+{
+    try {
+        $validated = $request->validate([
+            'class_id'   => ['required', 'integer', 'exists:schoolclass,id'],
+            'session_id' => ['required', 'integer', 'exists:schoolsession,id'],
+            'term_id'    => ['nullable', 'integer', 'exists:schoolterm,id'],
+        ]);
+
+        // Get class information
+        $classInfo = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->where('schoolclass.id', $validated['class_id'])
+            ->select([
+                'schoolclass.id as class_id',
+                'schoolclass.schoolclass as class_name',
+                'schoolarm.arm as arm_name',
+            ])
+            ->first();
+
+        if (!$classInfo) {
+            return response()->json(['success' => false, 'message' => 'Class not found.'], 404);
+        }
+
+        $sessionInfo = Schoolsession::find($validated['session_id']);
+
+        $terms = !empty($validated['term_id'])
+            ? Schoolterm::where('id', $validated['term_id'])->get()
+            : Schoolterm::all();
+
+        $processedData = [];
+
+        foreach ($terms as $term) {
+            // Get subjects for this term with their teachers
+            $subjectRecords = Subjectclass::query()
+                ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
+                ->leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
+                ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
+                ->where('subjectclass.schoolclassid', $validated['class_id'])
+                ->where('subjectteacher.sessionid', $validated['session_id'])
+                ->where('subjectteacher.termid', $term->id)
+                ->whereNotNull('subject.id')
                 ->select([
-                    'schoolclass.id as class_id',
-                    'schoolclass.schoolclass as class_name',
-                    'schoolarm.arm as arm_name',
+                    'subjectclass.id as subjectclass_id',
+                    'subject.id as subject_id',
+                    'subject.subject as subject_name',
+                    'subject.subject_code as subject_code',
+                    'users.id as teacher_id',
+                    'users.name as teacher_name',
                 ])
-                ->first();
+                ->orderBy('subject.subject', 'asc')
+                ->get();
 
-            // Get session info
-            $sessionInfo = Schoolsession::find($validated['session_id']);
-
-            // Get all terms for this session (or specific term if provided)
-            $terms = !empty($validated['term_id'])
-                ? Schoolterm::where('id', $validated['term_id'])->get()
-                : Schoolterm::all();
-
-            $processedData = [];
-
-            foreach ($terms as $term) {
-                // Get subjects for this specific term with their teachers, ordered alphabetically
-                $subjectRecords = Subjectclass::query()
-                    ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
-                    ->leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
-                    ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
-                    ->leftJoin('staffpicture', 'staffpicture.staffid', '=', 'users.id')
-                    ->where('subjectclass.schoolclassid', $validated['class_id'])
-                    ->where('subjectteacher.sessionid', $validated['session_id'])
-                    ->where('subjectteacher.termid', $term->id)
-                    ->whereNotNull('subject.id')
-                    ->select([
-                        'subject.id as subject_id',
-                        'subject.subject as subject_name',
-                        'subject.subject_code as subject_code',
-                        'users.id as teacher_id',
-                        'users.name as teacher_name',
-                        'staffpicture.picture as teacher_picture',
-                    ])
-                    ->orderBy('subject.subject', 'asc')
-                    ->get();
-
-                // Group subjects with their teachers
-                $subjectsWithTeachers = [];
-                foreach ($subjectRecords as $record) {
-                    $subjectKey = $record->subject_id;
-
-                    if (!isset($subjectsWithTeachers[$subjectKey])) {
-                        $subjectsWithTeachers[$subjectKey] = [
-                            'id'            => $record->subject_id,
-                            'name'          => $record->subject_name,
-                            'code'          => $record->subject_code,
-                            'teachers'      => [],
-                            'student_count' => 0,
-                        ];
-                    }
-
-                    // Add teacher if exists and not already added
-                    if ($record->teacher_id && $record->teacher_name) {
-                        $teacherExists = false;
-                        foreach ($subjectsWithTeachers[$subjectKey]['teachers'] as $existingTeacher) {
-                            if ($existingTeacher['id'] == $record->teacher_id) {
-                                $teacherExists = true;
-                                break;
-                            }
-                        }
-                        if (!$teacherExists) {
-                            $subjectsWithTeachers[$subjectKey]['teachers'][] = [
-                                'id'      => $record->teacher_id,
-                                'name'    => $record->teacher_name,
-                                'picture' => $record->teacher_picture,
-                            ];
-                        }
-                    }
-                }
-
-                // Get student counts per subject for this specific term
-                $studentCounts = SubjectRegistrationStatus::query()
-                    ->join('subjectclass', 'subjectclass.id', '=', 'subject_registration_status.subjectclassid')
-                    ->join('broadsheet', 'broadsheet.id', '=', 'subject_registration_status.broadsheetid')
-                    ->join('subject', 'subject.id', '=', 'broadsheet.subjectid')
-                    ->where('subjectclass.schoolclassid', $validated['class_id'])
-                    ->where('subject_registration_status.sessionid', $validated['session_id'])
-                    ->where('subject_registration_status.termid', $term->id)
-                    ->select([
-                        'subject.id as subject_id',
-                        DB::raw('COUNT(DISTINCT subject_registration_status.studentid) as student_count'),
-                    ])
-                    ->groupBy('subject.id')
-                    ->get()
-                    ->pluck('student_count', 'subject_id')
-                    ->toArray();
-
-                // Apply per-subject student counts
-                foreach ($subjectsWithTeachers as $key => $subject) {
-                    $subjectsWithTeachers[$key]['student_count'] = $studentCounts[$subject['id']] ?? 0;
-                }
-
-                // Convert to indexed array (preserves alphabetical order from query)
-                $subjectsWithTeachers = array_values($subjectsWithTeachers);
-
-                // Get total unique students registered in ANY subject for this term/class/session
-                $totalStudents = SubjectRegistrationStatus::query()
-                    ->join('subjectclass', 'subjectclass.id', '=', 'subject_registration_status.subjectclassid')
-                    ->where('subjectclass.schoolclassid', $validated['class_id'])
-                    ->where('subject_registration_status.sessionid', $validated['session_id'])
-                    ->where('subject_registration_status.termid', $term->id)
-                    ->distinct('subject_registration_status.studentid')
-                    ->count();
-
-                $processedData[] = [
-                    'class_id'        => $classInfo->class_id ?? null,
-                    'class_name'      => $classInfo->class_name ?? 'N/A',
-                    'arm_name'        => $classInfo->arm_name ?? 'N/A',
-                    'session_name'    => $sessionInfo->session ?? 'N/A',
-                    'term_name'       => $term->term,
-                    'term_id'         => $term->id,
-                    'student_count'   => $totalStudents,
-                    'subject_count'   => count($subjectsWithTeachers),
-                    'subjects_teachers' => $subjectsWithTeachers,
-                ];
+            if ($subjectRecords->isEmpty()) {
+                continue; // Skip terms with no subjects configured
             }
 
-            return response()->json(['success' => true, 'data' => $processedData]);
+            // Group subjects with their teachers
+            $subjectsWithTeachers = [];
+            foreach ($subjectRecords as $record) {
+                $subjectKey = $record->subject_id;
 
-        } catch (ValidationException $e) {
-            return response()->json(['success' => false, 'message' => 'Invalid parameters.', 'errors' => $e->errors()], 422);
-        } catch (\Exception $e) {
-            Log::error('Error fetching registered classes', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+                if (!isset($subjectsWithTeachers[$subjectKey])) {
+                    $subjectsWithTeachers[$subjectKey] = [
+                        'id'              => $record->subject_id,
+                        'name'            => $record->subject_name,
+                        'code'            => $record->subject_code,
+                        'subjectclass_id' => $record->subjectclass_id,
+                        'teachers'        => [],
+                        'student_count'   => 0,
+                    ];
+                }
+
+                if ($record->teacher_id && $record->teacher_name) {
+                    $alreadyAdded = false;
+                    foreach ($subjectsWithTeachers[$subjectKey]['teachers'] as $t) {
+                        if ($t['id'] == $record->teacher_id) { $alreadyAdded = true; break; }
+                    }
+                    if (!$alreadyAdded) {
+                        $subjectsWithTeachers[$subjectKey]['teachers'][] = [
+                            'id'   => $record->teacher_id,
+                            'name' => $record->teacher_name,
+                        ];
+                    }
+                }
+            }
+
+            // Get all subjectclass IDs for this class/session/term
+            $subjectclassIds = $subjectRecords->pluck('subjectclass_id')->unique()->toArray();
+
+            // ── FIXED: count directly from subject_registration_status ──────
+            // No join to broadsheet — just count distinct students per subjectclassid
+            $studentCountsRaw = SubjectRegistrationStatus::query()
+                ->whereIn('subjectclassid', $subjectclassIds)
+                ->where('sessionid', $validated['session_id'])
+                ->where('termid', $term->id)
+                ->select([
+                    'subjectclassid',
+                    DB::raw('COUNT(DISTINCT studentid) as student_count'),
+                ])
+                ->groupBy('subjectclassid')
+                ->get()
+                ->keyBy('subjectclassid');
+
+            // Map subjectclass_id → subject_id so we can assign counts
+            $subjectclassToSubject = [];
+            foreach ($subjectRecords as $record) {
+                $subjectclassToSubject[$record->subjectclass_id] = $record->subject_id;
+            }
+
+            // Aggregate counts per subject (a subject may have multiple subjectclass rows)
+            $subjectStudentCounts = [];
+            foreach ($studentCountsRaw as $subjectclassId => $row) {
+                $subjectId = $subjectclassToSubject[$subjectclassId] ?? null;
+                if (!$subjectId) continue;
+                if (!isset($subjectStudentCounts[$subjectId])) {
+                    $subjectStudentCounts[$subjectId] = 0;
+                }
+                // Use max, not sum — same student may appear in multiple subjectclass rows
+                $subjectStudentCounts[$subjectId] = max(
+                    $subjectStudentCounts[$subjectId],
+                    (int) $row->student_count
+                );
+            }
+
+            foreach ($subjectsWithTeachers as $key => $subject) {
+                $subjectsWithTeachers[$key]['student_count'] = $subjectStudentCounts[$subject['id']] ?? 0;
+            }
+
+            $subjectsWithTeachers = array_values($subjectsWithTeachers);
+
+            // Total unique students registered in ANY subject for this term
+            $totalStudents = SubjectRegistrationStatus::query()
+                ->whereIn('subjectclassid', $subjectclassIds)
+                ->where('sessionid', $validated['session_id'])
+                ->where('termid', $term->id)
+                ->distinct('studentid')
+                ->count('studentid');
+
+            // Only include terms that actually have registrations
+            if ($totalStudents === 0 && collect($subjectsWithTeachers)->sum('student_count') === 0) {
+                // Still include if subjects exist — just show 0 counts
+            }
+
+            $processedData[] = [
+                'class_id'          => $classInfo->class_id,
+                'class_name'        => $classInfo->class_name,
+                'arm_name'          => $classInfo->arm_name ?? '',
+                'session_name'      => $sessionInfo->session ?? 'N/A',
+                'term_name'         => $term->term,
+                'term_id'           => $term->id,
+                'student_count'     => $totalStudents,
+                'subject_count'     => count($subjectsWithTeachers),
+                'subjects_teachers' => $subjectsWithTeachers,
+            ];
         }
+
+        if (empty($processedData)) {
+            return response()->json(['success' => false, 'message' => 'No subjects found for this class and session. Please ensure subjects and teachers have been assigned.'], 200);
+        }
+
+        return response()->json(['success' => true, 'data' => $processedData]);
+
+    } catch (ValidationException $e) {
+        return response()->json(['success' => false, 'message' => 'Invalid parameters.', 'errors' => $e->errors()], 422);
+    } catch (\Exception $e) {
+        Log::error('Error fetching registered classes', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+        return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
     }
+}
+
+// =========================================================================
+// PER-STUDENT SUBJECT COUNT — for accurate PDF breakdown
+// =========================================================================
+
+public function getStudentSubjectCounts(Request $request): JsonResponse
+{
+    try {
+        $validated = $request->validate([
+            'class_id'   => ['required', 'integer', 'exists:schoolclass,id'],
+            'session_id' => ['required', 'integer', 'exists:schoolsession,id'],
+            'term_id'    => ['nullable', 'integer', 'exists:schoolterm,id'],
+        ]);
+
+        // Get all subjectclass IDs for this class/session (optionally filtered by term)
+        $subjectclassQuery = Subjectclass::query()
+            ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
+            ->where('subjectclass.schoolclassid', $validated['class_id'])
+            ->where('subjectteacher.sessionid', $validated['session_id']);
+
+        if (!empty($validated['term_id'])) {
+            $subjectclassQuery->where('subjectteacher.termid', $validated['term_id']);
+        }
+
+        $subjectclassIds = $subjectclassQuery->pluck('subjectclass.id')->unique()->toArray();
+
+        if (empty($subjectclassIds)) {
+            return response()->json(['success' => true, 'data' => []]);
+        }
+
+        // Count distinct subjects per student
+        $srsQuery = SubjectRegistrationStatus::query()
+            ->whereIn('subjectclassid', $subjectclassIds)
+            ->where('sessionid', $validated['session_id']);
+
+        if (!empty($validated['term_id'])) {
+            $srsQuery->where('termid', $validated['term_id']);
+        }
+
+        $perStudent = $srsQuery
+            ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'subject_registration_status.studentid')
+            ->select([
+                'subject_registration_status.studentid',
+                'studentRegistration.admissionno',
+                DB::raw("CONCAT(COALESCE(studentRegistration.lastname,''), ' ', COALESCE(studentRegistration.firstname,'')) as student_name"),
+                'studentRegistration.gender',
+                DB::raw('COUNT(DISTINCT subject_registration_status.subjectclassid) as subject_count'),
+            ])
+            ->groupBy([
+                'subject_registration_status.studentid',
+                'studentRegistration.admissionno',
+                'studentRegistration.lastname',
+                'studentRegistration.firstname',
+                'studentRegistration.gender',
+            ])
+            ->orderBy('studentRegistration.lastname')
+            ->get();
+
+        return response()->json(['success' => true, 'data' => $perStudent]);
+
+    } catch (\Exception $e) {
+        Log::error('Error fetching per-student subject counts', ['error' => $e->getMessage()]);
+        return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+    }
+}
 
     // =========================================================================
     // GET REGISTERED CLASSES (Legacy)
