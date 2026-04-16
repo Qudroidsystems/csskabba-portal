@@ -1,1576 +1,760 @@
-{{--
-    broadsheet/web.blade.php
-    Full scrollable broadsheet web view with smart locate/filter toolbar
---}}
 @extends('layouts.master')
 
-@section('content')
+@section('styles')
 <style>
-/* ══════════════════════════════════════════════════════════
-   CSS VARIABLES & RESET
-══════════════════════════════════════════════════════════ */
-:root {
-    --c-navy:    #0f2744;
-    --c-blue:    #1d4ed8;
-    --c-sky:     #3b82f6;
-    --c-green:   #16a34a;
-    --c-red:     #dc2626;
-    --c-amber:   #d97706;
-    --c-purple:  #7c3aed;
-    --c-teal:    #0891b2;
-    --c-muted:   #6b7280;
-    --c-border:  #e2e8f0;
-    --c-bg:      #f1f5f9;
-    --c-card:    #ffffff;
-    --c-text:    #1e293b;
-    --c-subtext: #64748b;
+    /* Grade colors - matching PDF */
+    .grade-a1 { background-color: #dcfce7 !important; color: #166534; font-weight: bold; }
+    .grade-b2 { background-color: #dbeafe !important; color: #1e40af; }
+    .grade-b3 { background-color: #e0eeff !important; color: #1e40af; }
+    .grade-c4 { background-color: #fef9c3 !important; color: #854d0e; }
+    .grade-c5 { background-color: #fef3c7 !important; color: #92400e; }
+    .grade-c6 { background-color: #fde68a !important; color: #78350f; }
+    .grade-d7 { background-color: #ffedd5 !important; color: #9a3412; }
+    .grade-e8 { background-color: #fed7aa !important; color: #9a3412; }
+    .grade-f9 { background-color: #fee2e2 !important; color: #991b1b; font-weight: bold; }
 
-    /* Table specifics */
-    --th-height:  36px;
-    --td-height:  30px;
-    --sticky-w:   42px;   /* SN column */
-    --name-w:     180px;  /* Name column */
-    --adm-w:      90px;
+    /* Animation keyframes */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 
-    --zoom: 1;
-    --font-size-base: 11px;
-}
+    @keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
 
-* { box-sizing: border-box; margin: 0; padding: 0; }
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
 
-body { background: var(--c-bg); font-family: 'Segoe UI', system-ui, sans-serif; color: var(--c-text); }
+    @keyframes shimmer {
+        0% { background-position: -1000px 0; }
+        100% { background-position: 1000px 0; }
+    }
 
-/* ══════════════════════════════════════════════════════════
-   TOOLBAR (sticky top)
-══════════════════════════════════════════════════════════ */
-#bs-toolbar {
-    position: sticky;
-    top: 0;
-    z-index: 1000;
-    background: var(--c-navy);
-    padding: 10px 20px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-    box-shadow: 0 4px 12px rgba(0,0,0,.35);
-}
-#bs-toolbar .tb-title {
-    font-size: 13px;
-    font-weight: 700;
-    color: #fff;
-    white-space: nowrap;
-    margin-right: auto;
-}
-#bs-toolbar .tb-title small {
-    font-size: 10px;
-    font-weight: 400;
-    color: rgba(255,255,255,.6);
-    display: block;
-}
+    /* Main content wrapper with proper spacing */
+    .broadsheet-wrapper {
+        margin-left: 0;
+        padding: 20px 25px;
+        animation: fadeInUp 0.5s ease-out;
+    }
 
-/* Locate dropdown */
-.locate-wrap {
-    position: relative;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-.locate-wrap label {
-    font-size: 11px;
-    color: rgba(255,255,255,.7);
-    white-space: nowrap;
-}
-#locateSelect {
-    background: rgba(255,255,255,.12);
-    border: 1px solid rgba(255,255,255,.25);
-    border-radius: 6px;
-    color: #fff;
-    font-size: 12px;
-    padding: 6px 28px 6px 10px;
-    appearance: none;
-    cursor: pointer;
-    min-width: 220px;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='white' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 8px center;
-    background-size: 12px;
-}
-#locateSelect:focus { outline: 2px solid rgba(59,130,246,.6); }
-#locateSelect option { background: #1e293b; color: #fff; }
+    /* School header animation */
+    .school-header {
+        background: linear-gradient(135deg, var(--bs-pri) 0%, var(--bs-acc) 100%);
+        border-radius: 12px;
+        padding: 20px 25px;
+        margin-bottom: 25px;
+        color: white;
+        animation: slideInRight 0.6s ease-out;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
 
-/* Subject locate select */
-#subjectLocateSelect {
-    background: rgba(255,255,255,.12);
-    border: 1px solid rgba(255,255,255,.25);
-    border-radius: 6px;
-    color: #fff;
-    font-size: 12px;
-    padding: 6px 28px 6px 10px;
-    appearance: none;
-    cursor: pointer;
-    min-width: 160px;
-    display: none;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='white' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 8px center;
-    background-size: 12px;
-}
-#subjectLocateSelect option { background: #1e293b; }
+    .school-header:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
 
-/* Score input for custom threshold */
-#scoreThresholdWrap {
-    display: none;
-    align-items: center;
-    gap: 6px;
-}
-#scoreThresholdWrap label { font-size:11px; color:rgba(255,255,255,.7); }
-#scoreThresholdInput {
-    width: 70px;
-    background: rgba(255,255,255,.12);
-    border: 1px solid rgba(255,255,255,.25);
-    border-radius: 6px;
-    color: #fff;
-    font-size: 12px;
-    padding: 6px 10px;
-    text-align: center;
-}
-#scoreThresholdInput::placeholder { color: rgba(255,255,255,.4); }
+    /* Toolbar styling */
+    .toolbar-card {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        padding: 15px 20px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+        animation: fadeInUp 0.5s ease-out 0.1s both;
+    }
 
-/* Toolbar buttons */
-.tb-btn {
-    display: flex; align-items: center; gap: 5px;
-    background: rgba(255,255,255,.1);
-    border: 1px solid rgba(255,255,255,.2);
-    border-radius: 6px;
-    color: #fff;
-    font-size: 11.5px;
-    font-weight: 600;
-    padding: 6px 12px;
-    cursor: pointer;
-    transition: background .15s;
-    white-space: nowrap;
-}
-.tb-btn:hover { background: rgba(255,255,255,.2); }
-.tb-btn.danger { background: rgba(220,38,38,.35); border-color: rgba(220,38,38,.5); }
-.tb-btn.success { background: rgba(22,163,74,.35); border-color: rgba(22,163,74,.5); }
+    .toolbar-card:hover {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+    }
 
-/* Zoom controls */
-.zoom-group { display: flex; align-items: center; gap: 4px; }
-.zoom-group span { font-size: 11px; color: rgba(255,255,255,.6); min-width: 38px; text-align: center; }
-.zoom-btn {
-    width: 26px; height: 26px;
-    background: rgba(255,255,255,.12);
-    border: 1px solid rgba(255,255,255,.2);
-    border-radius: 4px;
-    color: #fff;
-    font-size: 14px;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: background .1s;
-}
-.zoom-btn:hover { background: rgba(255,255,255,.25); }
+    /* Locate dropdown styling */
+    .locate-select {
+        border: 2px solid var(--bs-border);
+        border-radius: 8px;
+        padding: 8px 15px;
+        font-size: 13px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
 
-/* Result count badge */
-#resultBadge {
-    display: none;
-    background: var(--c-sky);
-    color: white;
-    font-size: 10.5px;
-    font-weight: 700;
-    padding: 4px 10px;
-    border-radius: 20px;
-}
+    .locate-select:focus {
+        border-color: var(--bs-acc);
+        box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        outline: none;
+    }
 
-/* ══════════════════════════════════════════════════════════
-   SCHOOL HEADER BLOCK
-══════════════════════════════════════════════════════════ */
-.bs-header {
-    background: white;
-    border-bottom: 3px solid var(--c-navy);
-    padding: 16px 24px;
-    display: flex;
-    align-items: center;
-    gap: 20px;
-}
-.bs-header img.school-logo {
-    width: 70px; height: 70px;
-    object-fit: contain;
-    border-radius: 6px;
-    flex-shrink: 0;
-}
-.bs-header .sch-meta { flex: 1; }
-.bs-header .sch-name {
-    font-size: 17px;
-    font-weight: 800;
-    color: var(--c-navy);
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    line-height: 1.2;
-}
-.bs-header .sch-address {
-    font-size: 11px;
-    color: var(--c-subtext);
-    margin-top: 2px;
-}
-.bs-header .sch-motto {
-    font-size: 11px;
-    font-style: italic;
-    color: var(--c-blue);
-    margin-top: 1px;
-}
-.bs-header .bs-meta-pills {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    align-items: flex-start;
-}
-.meta-pill {
-    background: var(--c-bg);
-    border: 1px solid var(--c-border);
-    border-radius: 6px;
-    padding: 6px 12px;
-    text-align: center;
-    min-width: 90px;
-}
-.meta-pill .mp-val {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--c-navy);
-    display: block;
-}
-.meta-pill .mp-lbl {
-    font-size: 9.5px;
-    color: var(--c-muted);
-    text-transform: uppercase;
-    letter-spacing: .4px;
-}
+    /* Stats cards animation */
+    .stat-card {
+        background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+        border-radius: 10px;
+        padding: 12px 15px;
+        text-align: center;
+        border: 1px solid var(--bs-border);
+        transition: all 0.3s ease;
+        animation: fadeInUp 0.5s ease-out both;
+    }
 
-/* ══════════════════════════════════════════════════════════
-   GRADE KEY BAR
-══════════════════════════════════════════════════════════ */
-.grade-key-bar {
-    background: #fefce8;
-    border-top: 1px solid #fde047;
-    border-bottom: 1px solid #fde047;
-    padding: 6px 24px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-    font-size: 10.5px;
-}
-.grade-key-bar strong { color: var(--c-navy); margin-right: 4px; }
-.gk-item {
-    background: white;
-    border: 1px solid #e5e7eb;
-    border-radius: 4px;
-    padding: 2px 7px;
-    font-size: 10.5px;
-    white-space: nowrap;
-}
+    .stat-card:nth-child(1) { animation-delay: 0.1s; }
+    .stat-card:nth-child(2) { animation-delay: 0.2s; }
+    .stat-card:nth-child(3) { animation-delay: 0.3s; }
+    .stat-card:nth-child(4) { animation-delay: 0.4s; }
+    .stat-card:nth-child(5) { animation-delay: 0.5s; }
 
-/* ══════════════════════════════════════════════════════════
-   TABLE WRAPPER (the scrollable viewport)
-══════════════════════════════════════════════════════════ */
-#bs-table-outer {
-    overflow: auto;
-    width: 100%;
-    background: white;
-    /* Leave room for toolbar */
-    max-height: calc(100vh - 120px);
-    position: relative;
-}
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
 
-/* The zoom container */
-#bs-zoom-wrap {
-    display: inline-block;
-    transform-origin: top left;
-    min-width: 100%;
-}
+    .stat-value {
+        font-size: 24px;
+        font-weight: bold;
+        color: var(--bs-pri);
+        display: block;
+    }
 
-/* ══════════════════════════════════════════════════════════
-   BROADSHEET TABLE
-══════════════════════════════════════════════════════════ */
-#bs-table {
-    border-collapse: collapse;
-    font-size: var(--font-size-base);
-    white-space: nowrap;
-    width: max-content;
-    min-width: 100%;
-}
+    /* Table container with horizontal scroll */
+    .table-container {
+        overflow-x: auto;
+        border-radius: 12px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        animation: fadeInUp 0.6s ease-out 0.2s both;
+    }
 
-/* Header rows */
-#bs-table thead tr th {
-    background: var(--c-navy);
-    color: white;
-    font-weight: 700;
-    font-size: 10px;
-    text-align: center;
-    padding: 0 5px;
-    height: var(--th-height);
-    border: 1px solid rgba(255,255,255,.12);
-    position: sticky;
-    top: 0;
-    z-index: 20;
-    vertical-align: middle;
-}
-/* Subject group header cells */
-#bs-table thead tr.subj-header th {
-    background: #1e3a5f;
-    font-size: 9.5px;
-    letter-spacing: .2px;
-}
-/* Assessment sub-headers */
-#bs-table thead tr.asm-header th {
-    background: #263f6a;
-    font-size: 9px;
-    font-weight: 600;
-    color: rgba(255,255,255,.85);
-}
+    /* Table styling matching PDF */
+    .broadsheet-table {
+        width: 100%;
+        min-width: 1200px;
+        border-collapse: collapse;
+        font-size: 12px;
+        background: white;
+    }
 
-/* Sticky left columns in thead */
-#bs-table thead th.col-sn   { position: sticky; left: 0;                        z-index: 30; min-width: var(--sticky-w); max-width: var(--sticky-w); }
-#bs-table thead th.col-adm  { position: sticky; left: var(--sticky-w);          z-index: 30; min-width: var(--adm-w);    max-width: var(--adm-w); }
-#bs-table thead th.col-name { position: sticky; left: calc(var(--sticky-w) + var(--adm-w)); z-index: 30; min-width: var(--name-w); max-width: var(--name-w); }
+    .broadsheet-table thead tr.subject-header th {
+        background: #1e3a5f;
+        color: white;
+        text-align: center;
+        padding: 10px 5px;
+        border: 0.5px solid #2563eb55;
+        font-weight: bold;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
 
-/* TD cells */
-#bs-table tbody tr td {
-    height: var(--td-height);
-    padding: 0 5px;
-    border: 1px solid #e5e7eb;
-    text-align: center;
-    vertical-align: middle;
-    font-size: 10.5px;
-    color: var(--c-text);
-    transition: background .1s;
-}
-#bs-table tbody tr td.col-name {
-    text-align: left;
-    font-weight: 600;
-}
-/* Sticky left cols in tbody */
-#bs-table tbody td.col-sn {
-    position: sticky; left: 0; z-index: 10;
-    background: #f8fafc;
-    font-weight: 700;
-    color: var(--c-navy);
-    border-right: 2px solid #cbd5e1;
-}
-#bs-table tbody td.col-adm {
-    position: sticky; left: var(--sticky-w); z-index: 10;
-    background: #f8fafc;
-    font-size: 9.5px;
-    color: var(--c-subtext);
-    border-right: 1px solid #e2e8f0;
-}
-#bs-table tbody td.col-name {
-    position: sticky; left: calc(var(--sticky-w) + var(--adm-w)); z-index: 10;
-    background: white;
-    border-right: 2px solid #cbd5e1;
-    min-width: var(--name-w);
-    max-width: var(--name-w);
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-/* Alternate row shading */
-#bs-table tbody tr:nth-child(even) td { background: #f8fafc; }
-#bs-table tbody tr:nth-child(even) td.col-sn,
-#bs-table tbody tr:nth-child(even) td.col-adm  { background: #f0f4f8; }
-#bs-table tbody tr:nth-child(even) td.col-name { background: #f9fafb; }
+    .broadsheet-table thead tr.assessment-header th {
+        background: #1a3d6a;
+        color: #a8d4ef;
+        text-align: center;
+        padding: 6px 3px;
+        border: 0.5px solid #2563eb33;
+        font-size: 11px;
+    }
 
-/* Hover */
-#bs-table tbody tr:hover td { background: #eff6ff !important; }
-#bs-table tbody tr:hover td.col-sn,
-#bs-table tbody tr:hover td.col-adm,
-#bs-table tbody tr:hover td.col-name { background: #dbeafe !important; }
+    .broadsheet-table tbody tr {
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
 
-/* Grade colouring */
-.grade-a1 { color: #15803d; font-weight: 700; }
-.grade-b2, .grade-b3 { color: #1d4ed8; font-weight: 600; }
-.grade-c4, .grade-c5, .grade-c6 { color: #d97706; font-weight: 600; }
-.grade-d7 { color: #ea580c; font-weight: 600; }
-.grade-e8, .grade-f9 { color: #dc2626; font-weight: 700; }
+    .broadsheet-table tbody tr:hover {
+        background-color: #f0f7ff !important;
+        transform: scale(1.01);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
 
-/* GPA footer area */
-.gpa-cell { font-weight: 700; color: var(--c-purple); }
-.cgpa-cell { font-weight: 700; color: var(--c-teal); }
+    .broadsheet-table tbody tr.highlight-row {
+        animation: pulse 0.5s ease;
+        background-color: #fef3c7 !important;
+        border-left: 3px solid var(--bs-warn);
+    }
 
-/* Stats footer row */
-#bs-table tfoot tr td {
-    height: 28px;
-    padding: 0 5px;
-    border: 1px solid #e2e8f0;
-    font-size: 9.5px;
-    text-align: center;
-    vertical-align: middle;
-}
-#bs-table tfoot tr.stat-avg   td { background: #eff6ff; color: #1d4ed8; font-weight: 700; }
-#bs-table tfoot tr.stat-high  td { background: #f0fdf4; color: #16a34a; font-weight: 700; }
-#bs-table tfoot tr.stat-low   td { background: #fff7ed; color: #d97706; font-weight: 700; }
-#bs-table tfoot tr.stat-pass  td { background: #f0fdf4; color: #15803d; }
-#bs-table tfoot tr.stat-fail  td { background: #fef2f2; color: #dc2626; }
+    .broadsheet-table tbody td {
+        padding: 8px 5px;
+        border: 0.5px solid #c5d3e8;
+        text-align: center;
+        vertical-align: middle;
+    }
 
-#bs-table tfoot td.col-sn,
-#bs-table tfoot td.col-adm,
-#bs-table tfoot td.col-name {
-    position: sticky;
-    z-index: 10;
-    background: #e2e8f0;
-    font-weight: 700;
-    color: var(--c-navy);
-    text-align: left;
-    font-size: 9.5px;
-}
-#bs-table tfoot td.col-sn   { left: 0; }
-#bs-table tfoot td.col-adm  { left: var(--sticky-w); }
-#bs-table tfoot td.col-name { left: calc(var(--sticky-w) + var(--adm-w)); border-right: 2px solid #94a3b8; }
+    .broadsheet-table tbody td.student-info-cell {
+        text-align: left;
+        padding-left: 10px;
+        font-weight: 600;
+        position: sticky;
+        left: 0;
+        background: inherit;
+        z-index: 5;
+    }
 
-/* ══════════════════════════════════════════════════════════
-   HIGHLIGHT STATES (from locate/filter)
-══════════════════════════════════════════════════════════ */
-#bs-table tbody tr.hl-match td { background: #fef9c3 !important; }
-#bs-table tbody tr.hl-match td.col-sn,
-#bs-table tbody tr.hl-match td.col-adm,
-#bs-table tbody tr.hl-match td.col-name { background: #fef08a !important; }
+    /* Loading overlay animation */
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.7);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        animation: fadeInUp 0.3s ease;
+    }
 
-#bs-table tbody tr.hl-primary td { background: #dbeafe !important; }
-#bs-table tbody tr.hl-primary td.col-sn,
-#bs-table tbody tr.hl-primary td.col-adm,
-#bs-table tbody tr.hl-primary td.col-name { background: #bfdbfe !important; }
+    .loading-overlay.active {
+        display: flex;
+    }
 
-#bs-table tbody tr.hl-danger td { background: #fee2e2 !important; }
-#bs-table tbody tr.hl-danger td.col-sn,
-#bs-table tbody tr.hl-danger td.col-adm,
-#bs-table tbody tr.hl-danger td.col-name { background: #fecaca !important; }
+    .loading-content {
+        background: white;
+        border-radius: 15px;
+        padding: 30px 40px;
+        text-align: center;
+        animation: pulse 1s infinite;
+    }
 
-#bs-table tbody tr.hl-success td { background: #dcfce7 !important; }
-#bs-table tbody tr.hl-success td.col-sn,
-#bs-table tbody tr.hl-success td.col-adm,
-#bs-table tbody tr.hl-success td.col-name { background: #bbf7d0 !important; }
+    .spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid var(--bs-border);
+        border-top-color: var(--bs-acc);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin: 0 auto 15px;
+    }
 
-#bs-table tbody tr.hl-warning td { background: #fef3c7 !important; }
-#bs-table tbody tr.hl-warning td.col-sn,
-#bs-table tbody tr.hl-warning td.col-adm,
-#bs-table tbody tr.hl-warning td.col-name { background: #fde68a !important; }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
 
-/* Cell-level highlight for locate-in-subject */
-td.cell-hl { outline: 2.5px solid #f59e0b; background: #fef9c3 !important; position: relative; z-index: 5; }
-td.cell-hl-danger { outline: 2.5px solid #ef4444; background: #fee2e2 !important; }
-td.cell-hl-success { outline: 2.5px solid #22c55e; background: #dcfce7 !important; }
+    /* Alert animations */
+    .alert {
+        animation: slideInRight 0.4s ease-out;
+    }
 
-/* Dim non-matching rows */
-#bs-table tbody tr.hl-dim td { opacity: .35; }
+    /* Button hover effects */
+    .btn-export {
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
 
-/* ══════════════════════════════════════════════════════════
-   PASS / FAIL SUMMARY TABLE
-══════════════════════════════════════════════════════════ */
-.pf-summary {
-    background: white;
-    margin: 24px;
-    border-radius: 10px;
-    border: 1px solid var(--c-border);
-    overflow: hidden;
-}
-.pf-summary h3 {
-    padding: 14px 20px;
-    background: var(--c-navy);
-    color: white;
-    font-size: 13px;
-    font-weight: 700;
-}
-.pf-summary table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 11.5px;
-}
-.pf-summary th {
-    background: #f1f5f9;
-    color: var(--c-navy);
-    font-weight: 700;
-    font-size: 11px;
-    padding: 8px 14px;
-    text-align: left;
-    border-bottom: 1px solid var(--c-border);
-}
-.pf-summary td {
-    padding: 7px 14px;
-    border-bottom: 1px solid #f1f5f9;
-    vertical-align: middle;
-}
-.pf-summary tr:hover td { background: #f8fafc; }
-.pass-rate-bar {
-    background: #e2e8f0;
-    border-radius: 4px;
-    height: 8px;
-    width: 100%;
-    overflow: hidden;
-    display: inline-block;
-    vertical-align: middle;
-    margin-left: 6px;
-    min-width: 60px;
-}
-.pass-rate-fill {
-    height: 100%;
-    background: linear-gradient(90deg, #22c55e, #16a34a);
-    border-radius: 4px;
-    transition: width .3s;
-}
+    .btn-export:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
 
-/* ══════════════════════════════════════════════════════════
-   SIGNATURE BLOCK
-══════════════════════════════════════════════════════════ */
-.sig-block {
-    display: flex;
-    gap: 30px;
-    flex-wrap: wrap;
-    padding: 20px 24px 30px;
-    background: white;
-    margin: 0 24px 24px;
-    border-radius: 10px;
-    border: 1px solid var(--c-border);
-}
-.sig-item {
-    flex: 1;
-    min-width: 140px;
-    text-align: center;
-}
-.sig-item .sig-line {
-    border-top: 1.5px solid #374151;
-    margin: 28px 10px 4px;
-}
-.sig-item .sig-lbl {
-    font-size: 10px;
-    color: var(--c-subtext);
-    text-transform: uppercase;
-    letter-spacing: .5px;
-}
+    .btn-export:active {
+        transform: translateY(0);
+    }
 
-/* ══════════════════════════════════════════════════════════
-   TOAST NOTIFICATION
-══════════════════════════════════════════════════════════ */
-#bs-toast {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    background: var(--c-navy);
-    color: white;
-    padding: 12px 20px;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 600;
-    z-index: 9999;
-    opacity: 0;
-    transform: translateY(12px);
-    transition: opacity .25s, transform .25s;
-    pointer-events: none;
-}
-#bs-toast.show { opacity: 1; transform: translateY(0); }
+    /* Search input animation */
+    .search-input {
+        transition: all 0.3s ease;
+        border: 2px solid var(--bs-border);
+    }
 
-/* Scroll to first match button */
-#scrollToFirst {
-    display: none;
-    align-items: center; gap: 5px;
-    background: var(--c-amber);
-    border: none;
-    border-radius: 6px;
-    color: white;
-    font-size: 11.5px;
-    font-weight: 700;
-    padding: 6px 12px;
-    cursor: pointer;
-    animation: pulse 1.5s infinite;
-}
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.7} }
+    .search-input:focus {
+        border-color: var(--bs-acc);
+        box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+        transform: scale(1.02);
+    }
 
-@media (max-width: 600px) {
-    #bs-toolbar { gap: 8px; }
-    #locateSelect { min-width: 150px; }
-    .bs-header { flex-direction: column; gap: 10px; }
-}
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .broadsheet-wrapper {
+            padding: 15px;
+        }
+
+        .stat-value {
+            font-size: 18px;
+        }
+
+        .broadsheet-table {
+            font-size: 10px;
+        }
+    }
 </style>
+@endsection
 
-{{-- ── TOOLBAR ── --}}
-<div id="bs-toolbar">
-    <div class="tb-title">
-        {{ $schoolclass->schoolclass ?? 'Class' }}
-        {{ $schoolclass->arm_name ?? '' }}
-        <small>
-            {{ $schoolsession->session ?? '' }} &nbsp;·&nbsp; {{ $schoolterm->term ?? '' }}
-            &nbsp;·&nbsp; {{ $totalStudents }} Students
-        </small>
-    </div>
+@section('content')
+<div class="broadsheet-wrapper">
 
-    {{-- Smart locate --}}
-    <div class="locate-wrap">
-        <label><i class="ri-search-eye-line me-1"></i>Locate:</label>
-        <select id="locateSelect" onchange="onLocateChange()">
-            <optgroup label="── Quick View ──">
-                <option value="">— Select what to find —</option>
-                <option value="all">Show All (clear filter)</option>
-            </optgroup>
-            <optgroup label="── By Performance ──">
-                <option value="top5">Top 5 Students (by GPA)</option>
-                <option value="top10">Top 10 Students (by GPA)</option>
-                <option value="bottom5">Bottom 5 Students (by GPA)</option>
-                <option value="below_avg">Students Below Class Average</option>
-                <option value="above_avg">Students Above Class Average</option>
-                <option value="distinction">Distinction (all A1/B2)</option>
-                <option value="at_risk">At-Risk (2+ F9 grades)</option>
-            </optgroup>
-            <optgroup label="── By Score Range ──">
-                <option value="score_gt80">Score ≥ 80 in Any Subject</option>
-                <option value="score_gt70">Score ≥ 70 in Any Subject</option>
-                <option value="score_lt40">Score < 40 (Fail) in Any Subject</option>
-                <option value="score_lt50">Score < 50 in Any Subject</option>
-                <option value="custom_min">Custom Minimum Score…</option>
-                <option value="custom_max">Custom Maximum Score…</option>
-            </optgroup>
-            <optgroup label="── By Grade ──">
-                <option value="grade_a1">Grade A1 in Any Subject</option>
-                <option value="grade_b2b3">Grade B2 or B3 in Any Subject</option>
-                <option value="grade_f9">Grade F9 in Any Subject</option>
-                <option value="grade_e8f9">Grade E8 or F9 (Fail)</option>
-            </optgroup>
-            <optgroup label="── By Subject ──">
-                <option value="subj_top">Top Scorer per Subject</option>
-                <option value="subj_fail">All Fails in Subject</option>
-                <option value="subj_pass">All Passes in Subject</option>
-                <option value="subj_above_avg">Above Average in Subject</option>
-                <option value="subj_below_avg">Below Average in Subject</option>
-            </optgroup>
-            <optgroup label="── By Completion ──">
-                <option value="missing_scores">Students with Missing Scores (0s)</option>
-                <option value="complete">Students with All Scores Entered</option>
-            </optgroup>
-        </select>
-    </div>
-
-    {{-- Subject select (shown when needed) --}}
-    <select id="subjectLocateSelect" onchange="runLocate()">
-        <option value="">— Pick subject —</option>
-        @foreach($subjects as $subId => $subInfo)
-            <option value="{{ $subId }}">{{ $subInfo['subject_name'] }}</option>
-        @endforeach
-    </select>
-
-    {{-- Custom score threshold --}}
-    <div id="scoreThresholdWrap">
-        <label>Score:</label>
-        <input type="number" id="scoreThresholdInput" min="0" max="100" placeholder="e.g. 60"
-               oninput="runLocate()" />
-    </div>
-
-    {{-- Result badge --}}
-    <span id="resultBadge">0 found</span>
-
-    {{-- Scroll to first --}}
-    <button id="scrollToFirst" onclick="scrollToFirstMatch()">
-        <i class="ri-arrow-down-line"></i> Go to First
-    </button>
-
-    {{-- Zoom controls --}}
-    <div class="zoom-group">
-        <button class="zoom-btn" onclick="changeZoom(-0.1)" title="Zoom out">−</button>
-        <span id="zoomLabel">100%</span>
-        <button class="zoom-btn" onclick="changeZoom(+0.1)" title="Zoom in">+</button>
-        <button class="zoom-btn" onclick="resetZoom()" title="Reset zoom" style="font-size:10px;width:auto;padding:0 6px;">Fit</button>
-    </div>
-
-    {{-- Print --}}
-    <button class="tb-btn" onclick="window.print()">
-        <i class="ri-printer-line"></i> Print
-    </button>
-
-    {{-- Back --}}
-    <a href="{{ route('broadsheet.index') }}" class="tb-btn">
-        <i class="ri-arrow-left-line"></i> Back
-    </a>
-</div>
-
-{{-- ── SCHOOL HEADER ── --}}
-<div class="bs-header">
-    <img src="{{ $school_logo_base64 ?? '' }}" alt="School Logo" class="school-logo"
-         onerror="this.style.display='none'">
-    <div class="sch-meta">
-        <div class="sch-name">{{ $schoolInfo->school_name ?? 'School Name' }}</div>
-        @if(!empty($schoolInfo->school_address))
-            <div class="sch-address">{{ $schoolInfo->school_address }}</div>
-        @endif
-        @if(!empty($schoolInfo->school_motto))
-            <div class="sch-motto">"{{ $schoolInfo->school_motto }}"</div>
-        @endif
-    </div>
-    <div class="bs-meta-pills">
-        <div class="meta-pill">
-            <span class="mp-val">{{ $schoolclass->schoolclass ?? '—' }} {{ $schoolclass->arm_name ?? '' }}</span>
-            <span class="mp-lbl">Class</span>
+    {{-- Success/Error Messages --}}
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="ri-checkbox-circle-line me-2"></i>{{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
-        <div class="meta-pill">
-            <span class="mp-val">{{ $schoolsession->session ?? '—' }}</span>
-            <span class="mp-lbl">Session</span>
-        </div>
-        <div class="meta-pill">
-            <span class="mp-val">{{ $schoolterm->term ?? '—' }}</span>
-            <span class="mp-lbl">Term</span>
-        </div>
-        <div class="meta-pill">
-            <span class="mp-val">{{ $totalStudents }}</span>
-            <span class="mp-lbl">Students</span>
-        </div>
-        <div class="meta-pill">
-            <span class="mp-val">{{ count($subjects) }}</span>
-            <span class="mp-lbl">Subjects</span>
-        </div>
-        <div class="meta-pill">
-            <span class="mp-val">{{ $assessments->count() }}</span>
-            <span class="mp-lbl">Assessments</span>
-        </div>
-    </div>
-</div>
-
-{{-- ── GRADE KEY ── --}}
-<div class="grade-key-bar">
-    <strong>Grade Key:</strong>
-    <span class="gk-item">A1: 75–100</span>
-    <span class="gk-item">B2: 70–74</span>
-    <span class="gk-item">B3: 65–69</span>
-    <span class="gk-item">C4: 60–64</span>
-    <span class="gk-item">C5: 55–59</span>
-    <span class="gk-item">C6: 50–54</span>
-    <span class="gk-item">D7: 45–49</span>
-    <span class="gk-item">E8: 40–44</span>
-    <span class="gk-item" style="color:#dc2626;font-weight:700;">F9: 0–39</span>
-    <span style="margin-left:auto;font-size:10px;color:#6b7280;">Generated: {{ $generatedAt }}</span>
-</div>
-
-{{-- ── TABLE WRAPPER ── --}}
-<div id="bs-table-outer">
-<div id="bs-zoom-wrap">
-<table id="bs-table">
-
-{{-- ════════════════ THEAD ════════════════ --}}
-<thead>
-{{-- Row 1: Subject group headers --}}
-<tr class="subj-header">
-    {{-- Fixed left cols --}}
-    @if(in_array('sn', $selectedColumns) || empty($selectedColumns))
-        <th class="col-sn" rowspan="2">SN</th>
-    @endif
-    @if(in_array('admission_no', $selectedColumns) || empty($selectedColumns))
-        <th class="col-adm" rowspan="2">Adm. No.</th>
-    @endif
-    @if(in_array('name', $selectedColumns) || empty($selectedColumns))
-        <th class="col-name" rowspan="2" style="text-align:left;">Student Name</th>
-    @endif
-    @if(in_array('gender', $selectedColumns))
-        <th rowspan="2">Sex</th>
     @endif
 
-    {{-- Subject spans --}}
-    @php
-        $showAsm  = $assessments->count() > 0;
-        $showTotal = in_array('total',  $selectedColumns) || empty($selectedColumns);
-        $showBf    = in_array('bf',     $selectedColumns) || empty($selectedColumns);
-        $showCum   = in_array('cum',    $selectedColumns) || empty($selectedColumns);
-        $showGrade = in_array('grade',  $selectedColumns) || empty($selectedColumns);
-        $showPos   = in_array('position', $selectedColumns) || empty($selectedColumns);
-        $showAvg   = in_array('class_average', $selectedColumns) || empty($selectedColumns);
-        $showRemark= in_array('remark', $selectedColumns);
+    @if(session('error'))
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="ri-error-warning-line me-2"></i>{{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
 
-        $colsPerSubj = $assessments->count();
-        foreach(['total','bf','cum','grade','position','class_average','remark'] as $col) {
-            if(in_array($col, $selectedColumns) || empty($selectedColumns)) {
-                if(!($col === 'remark' && !$showRemark)) $colsPerSubj++;
-            }
-        }
-        // Simpler: count per subject columns
-        $perSubjCols = 0;
-        foreach($assessments as $a) {
-            if(in_array('assessment_'.$a->id, $selectedColumns) || empty($selectedColumns)) $perSubjCols++;
-        }
-        if($showTotal)  $perSubjCols++;
-        if($showBf)     $perSubjCols++;
-        if($showCum)    $perSubjCols++;
-        if($showGrade)  $perSubjCols++;
-        if($showPos)    $perSubjCols++;
-        if($showAvg)    $perSubjCols++;
-        if($showRemark) $perSubjCols++;
-    @endphp
-
-    @foreach($subjects as $subId => $subInfo)
-        <th colspan="{{ $perSubjCols }}"
-            style="background:{{ ['#1d4ed8','#0f766e','#7c3aed','#c2410c','#0369a1','#15803d','#b45309','#be185d'][array_search($subId, array_keys($subjects)) % 8] }};
-                   border-left:2px solid rgba(255,255,255,.3);">
-            {{ $subInfo['subject_name'] }}
-            @if(!empty($subInfo['subject_code']))
-                <span style="opacity:.7;font-size:8.5px;">({{ $subInfo['subject_code'] }})</span>
+    {{-- School Header --}}
+    <div class="school-header">
+        <div class="d-flex align-items-center">
+            @if(!empty($school_logo_base64))
+                <div class="me-3">
+                    <img src="{{ $school_logo_base64 }}" alt="Logo" style="width: 70px; height: 70px; object-fit: contain; border-radius: 50%; border: 2px solid white;">
+                </div>
             @endif
-        </th>
-    @endforeach
+            <div class="flex-grow-1 text-center">
+                <h2 class="mb-1 fw-bold">{{ $schoolInfo->school_name ?? 'SCHOOL NAME' }}</h2>
+                @if(!empty($schoolInfo->school_address))
+                    <p class="mb-1 opacity-75">{{ $schoolInfo->school_address }}</p>
+                @endif
+                @if(!empty($schoolInfo->school_motto))
+                    <p class="mb-0 fst-italic">"{{ $schoolInfo->school_motto }}"</p>
+                @endif
+            </div>
+        </div>
+    </div>
 
-    {{-- GPA cols --}}
-    @if(in_array('gpa', $selectedColumns) || empty($selectedColumns))
-        <th rowspan="2" style="background:#7c3aed;">GPA</th>
-    @endif
-    @if(in_array('cgpa', $selectedColumns))
-        <th rowspan="2" style="background:#6d28d9;">CGPA</th>
-    @endif
-    @if(in_array('gpa_grade', $selectedColumns))
-        <th rowspan="2" style="background:#5b21b6;">GPA<br>Grade</th>
-    @endif
-    @if(in_array('num_subjects', $selectedColumns))
-        <th rowspan="2" style="background:#4c1d95;">No.<br>Subj</th>
-    @endif
-    @if(in_array('total_grade_points', $selectedColumns))
-        <th rowspan="2" style="background:#3b0764;">Total<br>GP</th>
-    @endif
-</tr>
+    {{-- Title --}}
+    <div class="text-center mb-4">
+        <h3 class="fw-bold" style="color: var(--bs-pri);">CLASS ACADEMIC BROADSHEET</h3>
+        <div class="d-flex justify-content-center gap-3 mt-2">
+            <span class="badge bg-primary">{{ $schoolclass->schoolclass ?? '-' }} {{ $schoolclass->arm_name ?? '' }}</span>
+            <span class="badge bg-success">{{ $schoolsession->session ?? '-' }}</span>
+            <span class="badge bg-warning">{{ $schoolterm->term ?? '-' }}</span>
+        </div>
+    </div>
 
-{{-- Row 2: Assessment sub-headers per subject --}}
-<tr class="asm-header">
-    @foreach($subjects as $subId => $subInfo)
-        @foreach($assessments as $a)
-            @if(in_array('assessment_'.$a->id, $selectedColumns) || empty($selectedColumns))
-                <th style="background:#263f6a;min-width:36px;max-width:44px;font-size:8.5px;">
-                    {{ $a->name }}<br><span style="opacity:.65;">({{ $a->max_score }})</span>
-                </th>
-            @endif
-        @endforeach
-        @if($showTotal)  <th style="min-width:38px;background:#1a3356;">Total</th> @endif
-        @if($showBf)     <th style="min-width:34px;background:#1a3356;">BF</th>    @endif
-        @if($showCum)    <th style="min-width:36px;background:#1a3356;">Cum</th>   @endif
-        @if($showGrade)  <th style="min-width:32px;background:#1a3356;">Grd</th>   @endif
-        @if($showPos)    <th style="min-width:32px;background:#1a3356;">Pos</th>   @endif
-        @if($showAvg)    <th style="min-width:38px;background:#1a3356;">Avg</th>   @endif
-        @if($showRemark) <th style="min-width:50px;background:#1a3356;">Rmk</th>   @endif
-    @endforeach
-</tr>
-</thead>
+    {{-- Stats Cards --}}
+    <div class="row g-3 mb-4">
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card">
+                <i class="ri-group-line" style="font-size: 28px; color: var(--bs-acc);"></i>
+                <span class="stat-value">{{ $totalStudents }}</span>
+                <small class="text-muted">Total Students</small>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card">
+                <i class="ri-book-open-line" style="font-size: 28px; color: var(--bs-success);"></i>
+                <span class="stat-value">{{ count($subjects) }}</span>
+                <small class="text-muted">Subjects</small>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card">
+                <i class="ri-clipboard-line" style="font-size: 28px; color: var(--bs-warn);"></i>
+                <span class="stat-value">{{ $assessments->count() }}</span>
+                <small class="text-muted">Assessments</small>
+            </div>
+        </div>
+        <div class="col-md-3 col-sm-6">
+            <div class="stat-card">
+                <i class="ri-calendar-line" style="font-size: 28px; color: var(--bs-danger);"></i>
+                <span class="stat-value" style="font-size: 14px;">{{ $generatedAt }}</span>
+                <small class="text-muted">Generated</small>
+            </div>
+        </div>
+    </div>
 
-{{-- ════════════════ TBODY ════════════════ --}}
-<tbody>
-@forelse($studentRows as $idx => $stu)
-@php
-    $fullName = trim($stu['lastname'] . ' ' . $stu['firstname']);
-    $subScores = $stu['subjects'] ?? [];
+    {{-- Toolbar --}}
+    <div class="toolbar-card">
+        <div class="row align-items-center">
+            <div class="col-md-4 mb-2 mb-md-0">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="ri-search-line"></i></span>
+                    <input type="text" class="form-control search-input" id="searchStudent"
+                           placeholder="Search by name or admission number...">
+                </div>
+            </div>
+            <div class="col-md-4 mb-2 mb-md-0">
+                <select class="form-select locate-select" id="locateStudent">
+                    <option value="">🔍 Locate Student...</option>
+                    <option value="top5">🏆 Top 5 Students (by GPA)</option>
+                    <option value="top10">⭐ Top 10 Students (by GPA)</option>
+                    <option value="failures">⚠️ Students with Failures (F9)</option>
+                    <option value="below_avg">📉 Below Class Average</option>
+                    <option value="missing_scores">❌ Missing Assessment Scores</option>
+                    <option disabled>──────────</option>
+                    @foreach($studentRows as $student)
+                        <option value="student_{{ $student['id'] }}">👤 {{ $student['lastname'] }}, {{ $student['firstname'] }} ({{ $student['admissionno'] }})</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <button class="btn btn-sm btn-outline-primary me-2" onclick="window.print();">
+                    <i class="ri-printer-line"></i> Print
+                </button>
+                <button class="btn btn-sm btn-primary" onclick="scrollToTop();">
+                    <i class="ri-arrow-up-line"></i> Top
+                </button>
+            </div>
+        </div>
+    </div>
 
-    // Compute class average across subjects for this student
-    $cumVals = collect($subScores)->pluck('cum')->filter(fn($v)=>$v>0);
-    $stuAvg  = $cumVals->count() > 0 ? round($cumVals->avg(),1) : 0;
-    $f9Count = collect($subScores)->filter(fn($s)=>($s['grade']??'') === 'F9')->count();
-@endphp
-<tr data-student-id="{{ $stu['id'] }}"
-    data-gpa="{{ $stu['gpa'] }}"
-    data-avg="{{ $stuAvg }}"
-    data-f9="{{ $f9Count }}">
+    {{-- Grade Key --}}
+    <div class="toolbar-card mb-3">
+        <div class="row align-items-center">
+            <div class="col-md-2 fw-bold">GRADING SCALE:</div>
+            <div class="col-md-10">
+                @php
+                $gradeKey = [
+                    'A1' => ['75-100', '#16a34a'], 'B2' => ['70-74', '#1d4ed8'], 'B3' => ['65-69', '#2563eb'],
+                    'C4' => ['60-64', '#d97706'], 'C5' => ['55-59', '#b45309'], 'C6' => ['50-54', '#92400e'],
+                    'D7' => ['45-49', '#ea580c'], 'E8' => ['40-44', '#c2410c'], 'F9' => ['0-39', '#dc2626'],
+                ];
+                @endphp
+                @foreach($gradeKey as $grade => $info)
+                    <span class="badge me-2 mb-1" style="background: {{ $info[1] }};">{{ $grade }} ({{ $info[0] }})</span>
+                @endforeach
+                <span class="text-muted ms-2">
+                    <small><strong>BF</strong>=Brought Forward | <strong>CUM</strong>=Cumulative | <strong>POS</strong>=Position</small>
+                </span>
+            </div>
+        </div>
+    </div>
 
-    @if(in_array('sn', $selectedColumns) || empty($selectedColumns))
-        <td class="col-sn">{{ $idx + 1 }}</td>
-    @endif
-    @if(in_array('admission_no', $selectedColumns) || empty($selectedColumns))
-        <td class="col-adm">{{ $stu['admissionno'] }}</td>
-    @endif
-    @if(in_array('name', $selectedColumns) || empty($selectedColumns))
-        <td class="col-name" title="{{ $fullName }}">{{ $fullName }}</td>
-    @endif
-    @if(in_array('gender', $selectedColumns))
-        <td>{{ strtoupper(substr($stu['gender'] ?? '-', 0, 1)) }}</td>
-    @endif
+    {{-- Main Table --}}
+    <div class="table-container">
+        @php
+            $selected = $selectedColumns ?? [];
+            $showAdmNo = empty($selected) || in_array('admission_no', $selected);
+            $showGender = in_array('gender', $selected);
+            $showTotal = empty($selected) || in_array('total', $selected);
+            $showBF = in_array('bf', $selected);
+            $showCum = empty($selected) || in_array('cum', $selected);
+            $showGrade = empty($selected) || in_array('grade', $selected);
+            $showPosition = empty($selected) || in_array('position', $selected);
+            $showAvg = in_array('class_average', $selected);
+            $showRemark = in_array('remark', $selected);
+            $showGPA = in_array('gpa', $selected);
+            $showCGPA = in_array('cgpa', $selected);
+            $showGPAGrade = in_array('gpa_grade', $selected);
+            $showNumSub = in_array('num_subjects', $selected);
+            $showTotalGP = in_array('total_grade_points', $selected);
 
-    @foreach($subjects as $subId => $subInfo)
-        @php $ss = $subScores[$subId] ?? null; @endphp
+            $activeAssessments = $assessments->filter(fn($a) =>
+                empty($selected) || in_array('assessment_' . $a->id, $selected)
+            );
 
-        @foreach($assessments as $a)
-            @if(in_array('assessment_'.$a->id, $selectedColumns) || empty($selectedColumns))
-                <td data-sub="{{ $subId }}" data-col="asm{{ $a->id }}"
-                    data-score="{{ $ss['assessments'][$a->id] ?? 0 }}">
-                    {{ $ss ? ($ss['assessments'][$a->id] ?? '–') : '–' }}
-                </td>
-            @endif
-        @endforeach
+            $gradeColors = [
+                'A1'=>'grade-a1','B2'=>'grade-b2','B3'=>'grade-b3',
+                'C4'=>'grade-c4','C5'=>'grade-c5','C6'=>'grade-c6',
+                'D7'=>'grade-d7','E8'=>'grade-e8','F9'=>'grade-f9','-'=>'',
+            ];
+        @endphp
 
-        @if($showTotal)
-            <td data-sub="{{ $subId }}" data-col="total"
-                data-score="{{ $ss['total'] ?? 0 }}">
-                {{ $ss ? $ss['total'] : '–' }}
-            </td>
-        @endif
-        @if($showBf)
-            <td data-sub="{{ $subId }}" data-col="bf"
-                data-score="{{ $ss['bf'] ?? 0 }}">
-                {{ $ss ? $ss['bf'] : '–' }}
-            </td>
-        @endif
-        @if($showCum)
-            <td data-sub="{{ $subId }}" data-col="cum"
-                data-score="{{ $ss['cum'] ?? 0 }}">
-                {{ $ss ? $ss['cum'] : '–' }}
-            </td>
-        @endif
-        @if($showGrade)
-            @php $gr = strtolower($ss['grade'] ?? 'f9'); @endphp
-            <td data-sub="{{ $subId }}" data-col="grade" data-grade="{{ $ss['grade'] ?? '' }}"
-                class="grade-{{ str_replace(['/','\\',' '], '', $gr) }}">
-                {{ $ss ? ($ss['grade'] ?? '–') : '–' }}
-            </td>
-        @endif
-        @if($showPos)
-            <td data-sub="{{ $subId }}" data-col="position">
-                {{ $ss ? ($ss['position'] ?? '–') : '–' }}
-            </td>
-        @endif
-        @if($showAvg)
-            <td data-sub="{{ $subId }}" data-col="avg"
-                data-score="{{ $ss['class_average'] ?? 0 }}">
-                {{ $ss ? number_format($ss['class_average'], 1) : '–' }}
-            </td>
-        @endif
-        @if($showRemark)
-            <td data-sub="{{ $subId }}" data-col="remark">
-                {{ $ss ? ($ss['remark'] ?? '–') : '–' }}
-            </td>
-        @endif
-    @endforeach
-
-    {{-- GPA columns --}}
-    @if(in_array('gpa', $selectedColumns) || empty($selectedColumns))
-        <td class="gpa-cell" data-gpa="{{ $stu['gpa'] }}">{{ $stu['gpa'] }}</td>
-    @endif
-    @if(in_array('cgpa', $selectedColumns))
-        <td class="cgpa-cell">{{ $stu['cgpa'] }}</td>
-    @endif
-    @if(in_array('gpa_grade', $selectedColumns))
-        <td>{{ $stu['gpa_grade'] }}</td>
-    @endif
-    @if(in_array('num_subjects', $selectedColumns))
-        <td>{{ $stu['num_subjects'] }}</td>
-    @endif
-    @if(in_array('total_grade_points', $selectedColumns))
-        <td>{{ $stu['total_grade_points'] }}</td>
-    @endif
-</tr>
-@empty
-<tr><td colspan="999" style="text-align:center;padding:24px;color:#9ca3af;">No student data found.</td></tr>
-@endforelse
-</tbody>
-
-{{-- ════════════════ TFOOT (stats) ════════════════ --}}
-<tfoot>
-{{-- Class Average row --}}
-<tr class="stat-avg">
-    @if(in_array('sn', $selectedColumns) || empty($selectedColumns))
-        <td class="col-sn">—</td>
-    @endif
-    @if(in_array('admission_no', $selectedColumns) || empty($selectedColumns))
-        <td class="col-adm">—</td>
-    @endif
-    @if(in_array('name', $selectedColumns) || empty($selectedColumns))
-        <td class="col-name" style="text-align:left;font-weight:800;">CLASS AVG</td>
-    @endif
-    @if(in_array('gender', $selectedColumns))<td>—</td>@endif
-
-    @foreach($subjects as $subId => $subInfo)
-        @php $st = $subjectStats[$subId] ?? null; @endphp
-        @foreach($assessments as $a)
-            @if(in_array('assessment_'.$a->id, $selectedColumns) || empty($selectedColumns))
-                <td>—</td>
-            @endif
-        @endforeach
-        @if($showTotal)  <td>{{ $st ? $st['avg'] : '—' }}</td> @endif
-        @if($showBf)     <td>—</td>  @endif
-        @if($showCum)    <td>—</td>  @endif
-        @if($showGrade)  <td>—</td>  @endif
-        @if($showPos)    <td>—</td>  @endif
-        @if($showAvg)    <td>{{ $st ? $st['avg'] : '—' }}</td> @endif
-        @if($showRemark) <td>—</td>  @endif
-    @endforeach
-    @if(in_array('gpa', $selectedColumns) || empty($selectedColumns))
-        @php $avgGpa = count($studentRows) > 0 ? round(collect($studentRows)->avg('gpa'),2) : 0; @endphp
-        <td>{{ $avgGpa }}</td>
-    @endif
-    @if(in_array('cgpa', $selectedColumns))<td>—</td>@endif
-    @if(in_array('gpa_grade', $selectedColumns))<td>—</td>@endif
-    @if(in_array('num_subjects', $selectedColumns))<td>—</td>@endif
-    @if(in_array('total_grade_points', $selectedColumns))<td>—</td>@endif
-</tr>
-
-{{-- Highest row --}}
-<tr class="stat-high">
-    @if(in_array('sn', $selectedColumns) || empty($selectedColumns))<td class="col-sn">—</td>@endif
-    @if(in_array('admission_no', $selectedColumns) || empty($selectedColumns))<td class="col-adm">—</td>@endif
-    @if(in_array('name', $selectedColumns) || empty($selectedColumns))
-        <td class="col-name" style="text-align:left;font-weight:800;">HIGHEST</td>
-    @endif
-    @if(in_array('gender', $selectedColumns))<td>—</td>@endif
-    @foreach($subjects as $subId => $subInfo)
-        @php $st = $subjectStats[$subId] ?? null; @endphp
-        @foreach($assessments as $a)
-            @if(in_array('assessment_'.$a->id, $selectedColumns) || empty($selectedColumns))<td>—</td>@endif
-        @endforeach
-        @if($showTotal)  <td>{{ $st ? $st['highest'] : '—' }}</td> @endif
-        @if($showBf)     <td>—</td> @endif
-        @if($showCum)    <td>—</td> @endif
-        @if($showGrade)  <td>—</td> @endif
-        @if($showPos)    <td>—</td> @endif
-        @if($showAvg)    <td>—</td> @endif
-        @if($showRemark) <td>—</td> @endif
-    @endforeach
-    @if(in_array('gpa', $selectedColumns) || empty($selectedColumns))
-        @php $maxGpa = count($studentRows) > 0 ? collect($studentRows)->max('gpa') : 0; @endphp
-        <td>{{ $maxGpa }}</td>
-    @endif
-    @if(in_array('cgpa', $selectedColumns))<td>—</td>@endif
-    @if(in_array('gpa_grade', $selectedColumns))<td>—</td>@endif
-    @if(in_array('num_subjects', $selectedColumns))<td>—</td>@endif
-    @if(in_array('total_grade_points', $selectedColumns))<td>—</td>@endif
-</tr>
-
-{{-- Lowest row --}}
-<tr class="stat-low">
-    @if(in_array('sn', $selectedColumns) || empty($selectedColumns))<td class="col-sn">—</td>@endif
-    @if(in_array('admission_no', $selectedColumns) || empty($selectedColumns))<td class="col-adm">—</td>@endif
-    @if(in_array('name', $selectedColumns) || empty($selectedColumns))
-        <td class="col-name" style="text-align:left;font-weight:800;">LOWEST</td>
-    @endif
-    @if(in_array('gender', $selectedColumns))<td>—</td>@endif
-    @foreach($subjects as $subId => $subInfo)
-        @php $st = $subjectStats[$subId] ?? null; @endphp
-        @foreach($assessments as $a)
-            @if(in_array('assessment_'.$a->id, $selectedColumns) || empty($selectedColumns))<td>—</td>@endif
-        @endforeach
-        @if($showTotal)  <td>{{ $st ? $st['lowest'] : '—' }}</td> @endif
-        @if($showBf)     <td>—</td> @endif
-        @if($showCum)    <td>—</td> @endif
-        @if($showGrade)  <td>—</td> @endif
-        @if($showPos)    <td>—</td> @endif
-        @if($showAvg)    <td>—</td> @endif
-        @if($showRemark) <td>—</td> @endif
-    @endforeach
-    @if(in_array('gpa', $selectedColumns) || empty($selectedColumns))
-        @php $minGpa = count($studentRows) > 0 ? collect($studentRows)->min('gpa') : 0; @endphp
-        <td>{{ $minGpa }}</td>
-    @endif
-    @if(in_array('cgpa', $selectedColumns))<td>—</td>@endif
-    @if(in_array('gpa_grade', $selectedColumns))<td>—</td>@endif
-    @if(in_array('num_subjects', $selectedColumns))<td>—</td>@endif
-    @if(in_array('total_grade_points', $selectedColumns))<td>—</td>@endif
-</tr>
-
-{{-- Pass count --}}
-<tr class="stat-pass">
-    @if(in_array('sn', $selectedColumns) || empty($selectedColumns))<td class="col-sn">—</td>@endif
-    @if(in_array('admission_no', $selectedColumns) || empty($selectedColumns))<td class="col-adm">—</td>@endif
-    @if(in_array('name', $selectedColumns) || empty($selectedColumns))
-        <td class="col-name" style="text-align:left;font-weight:800;">PASS COUNT</td>
-    @endif
-    @if(in_array('gender', $selectedColumns))<td>—</td>@endif
-    @foreach($subjects as $subId => $subInfo)
-        @php $st = $subjectStats[$subId] ?? null; @endphp
-        @foreach($assessments as $a)
-            @if(in_array('assessment_'.$a->id, $selectedColumns) || empty($selectedColumns))<td>—</td>@endif
-        @endforeach
-        @if($showTotal)  <td>{{ $st ? $st['passed'] : '—' }}</td> @endif
-        @if($showBf)     <td>—</td> @endif
-        @if($showCum)    <td>—</td> @endif
-        @if($showGrade)  <td>—</td> @endif
-        @if($showPos)    <td>—</td> @endif
-        @if($showAvg)    <td>—</td> @endif
-        @if($showRemark) <td>—</td> @endif
-    @endforeach
-    @if(in_array('gpa', $selectedColumns) || empty($selectedColumns))<td>—</td>@endif
-    @if(in_array('cgpa', $selectedColumns))<td>—</td>@endif
-    @if(in_array('gpa_grade', $selectedColumns))<td>—</td>@endif
-    @if(in_array('num_subjects', $selectedColumns))<td>—</td>@endif
-    @if(in_array('total_grade_points', $selectedColumns))<td>—</td>@endif
-</tr>
-
-{{-- Fail count --}}
-<tr class="stat-fail">
-    @if(in_array('sn', $selectedColumns) || empty($selectedColumns))<td class="col-sn">—</td>@endif
-    @if(in_array('admission_no', $selectedColumns) || empty($selectedColumns))<td class="col-adm">—</td>@endif
-    @if(in_array('name', $selectedColumns) || empty($selectedColumns))
-        <td class="col-name" style="text-align:left;font-weight:800;">FAIL COUNT</td>
-    @endif
-    @if(in_array('gender', $selectedColumns))<td>—</td>@endif
-    @foreach($subjects as $subId => $subInfo)
-        @php $st = $subjectStats[$subId] ?? null; @endphp
-        @foreach($assessments as $a)
-            @if(in_array('assessment_'.$a->id, $selectedColumns) || empty($selectedColumns))<td>—</td>@endif
-        @endforeach
-        @if($showTotal)  <td>{{ $st ? $st['failed'] : '—' }}</td> @endif
-        @if($showBf)     <td>—</td> @endif
-        @if($showCum)    <td>—</td> @endif
-        @if($showGrade)  <td>—</td> @endif
-        @if($showPos)    <td>—</td> @endif
-        @if($showAvg)    <td>—</td> @endif
-        @if($showRemark) <td>—</td> @endif
-    @endforeach
-    @if(in_array('gpa', $selectedColumns) || empty($selectedColumns))<td>—</td>@endif
-    @if(in_array('cgpa', $selectedColumns))<td>—</td>@endif
-    @if(in_array('gpa_grade', $selectedColumns))<td>—</td>@endif
-    @if(in_array('num_subjects', $selectedColumns))<td>—</td>@endif
-    @if(in_array('total_grade_points', $selectedColumns))<td>—</td>@endif
-</tr>
-</tfoot>
-
-</table>
-</div>{{-- /zoom-wrap --}}
-</div>{{-- /table-outer --}}
-
-{{-- ── PASS/FAIL SUMMARY ── --}}
-<div class="pf-summary">
-    <h3><i class="ri-bar-chart-2-line me-2"></i>Subject Pass / Fail Summary</h3>
-    <div style="overflow-x:auto;">
-        <table>
+        <table class="broadsheet-table" id="broadsheetTable">
             <thead>
-                <tr>
-                    <th>#</th>
-                    <th>Subject</th>
-                    <th>Students</th>
-                    <th>Avg Score</th>
-                    <th>Highest</th>
-                    <th>Lowest</th>
-                    <th>Passed</th>
-                    <th>Failed</th>
-                    <th>Pass Rate</th>
+                {{-- Subject headers --}}
+                <tr class="subject-header">
+                    <th rowspan="2" style="width: 40px;">#</th>
+                    @if($showAdmNo)
+                        <th rowspan="2" style="min-width: 80px;">Admission No</th>
+                    @endif
+                    <th rowspan="2" style="min-width: 180px; text-align: left;">Student Name</th>
+                    @if($showGender)
+                        <th rowspan="2" style="width: 50px;">Gender</th>
+                    @endif
+                    @foreach($subjects as $subId => $subInfo)
+                        <th colspan="{{ $activeAssessments->count() + ($showTotal?1:0) + ($showBF?1:0) + ($showCum?1:0) + ($showGrade?1:0) + ($showPosition?1:0) + ($showAvg?1:0) + ($showRemark?1:0) }}">
+                            {{ $subInfo['subject_name'] }}
+                            @if(!empty($subInfo['subject_code']))
+                                <br><small>({{ $subInfo['subject_code'] }})</small>
+                            @endif
+                        </th>
+                    @endforeach
+                    @php $gpaCount = ($showGPA?1:0)+($showCGPA?1:0)+($showGPAGrade?1:0)+($showNumSub?1:0)+($showTotalGP?1:0); @endphp
+                    @if($gpaCount > 0)
+                        <th colspan="{{ $gpaCount }}" style="background: #0a1e38;">GPA METRICS</th>
+                    @endif
+                </tr>
+
+                {{-- Assessment sub-headers --}}
+                <tr class="assessment-header">
+                    @foreach($subjects as $subId => $subInfo)
+                        @foreach($activeAssessments as $aIdx => $a)
+                            <th style="min-width: 55px;">
+                                {{ $a->name }}<br>
+                                <small>/{{ $a->max_score }}</small>
+                            </th>
+                        @endforeach
+                        @if($showTotal) <th>Total</th> @endif
+                        @if($showBF) <th>BF</th> @endif
+                        @if($showCum) <th>Cum</th> @endif
+                        @if($showGrade) <th>Grade</th> @endif
+                        @if($showPosition) <th>Pos</th> @endif
+                        @if($showAvg) <th>Avg</th> @endif
+                        @if($showRemark) <th>Remark</th> @endif
+                    @endforeach
+                    @if($showGPA) <th>GPA</th> @endif
+                    @if($showCGPA) <th>CGPA</th> @endif
+                    @if($showGPAGrade) <th>GGrd</th> @endif
+                    @if($showNumSub) <th>#Sub</th> @endif
+                    @if($showTotalGP) <th>TGP</th> @endif
                 </tr>
             </thead>
             <tbody>
-            @foreach($subjects as $subId => $subInfo)
-                @php
-                    $st = $subjectStats[$subId] ?? ['avg'=>0,'highest'=>0,'lowest'=>0,'passed'=>0,'failed'=>0];
-                    $total = ($st['passed'] + $st['failed']);
-                    $passRate = $total > 0 ? round($st['passed'] / $total * 100, 1) : 0;
-                    $n = $loop->iteration;
-                @endphp
-                <tr>
-                    <td style="color:#9ca3af;font-size:10px;">{{ $n }}</td>
-                    <td style="font-weight:600;text-align:left;">{{ $subInfo['subject_name'] }}</td>
-                    <td>{{ $total }}</td>
-                    <td><strong>{{ $st['avg'] }}</strong></td>
-                    <td style="color:#16a34a;font-weight:700;">{{ $st['highest'] }}</td>
-                    <td style="color:#d97706;font-weight:700;">{{ $st['lowest'] }}</td>
-                    <td style="color:#16a34a;font-weight:700;">{{ $st['passed'] }}</td>
-                    <td style="color:#dc2626;font-weight:700;">{{ $st['failed'] }}</td>
-                    <td>
-                        <span style="font-weight:700;color:{{ $passRate >= 50 ? '#16a34a' : '#dc2626' }};">
-                            {{ $passRate }}%
-                        </span>
-                        <span class="pass-rate-bar">
-                            <span class="pass-rate-fill" style="width:{{ $passRate }}%;background:{{ $passRate>=50?'linear-gradient(90deg,#22c55e,#16a34a)':'linear-gradient(90deg,#f87171,#dc2626)' }};"></span>
-                        </span>
-                    </td>
-                </tr>
-            @endforeach
+                @foreach($studentRows as $idx => $stu)
+                    @php
+                        $classAvgAll = $stu['class_average'] ?? 0;
+                        $hasFailure = false;
+                        foreach($stu['subjects'] as $subData) {
+                            if(($subData['grade'] ?? '') === 'F9') { $hasFailure = true; break; }
+                        }
+                    @endphp
+                    <tr data-student-id="{{ $stu['id'] }}"
+                        data-student-name="{{ $stu['lastname'] }}, {{ $stu['firstname'] }}"
+                        data-admission="{{ $stu['admissionno'] }}"
+                        data-gpa="{{ $stu['gpa'] }}"
+                        data-has-failure="{{ $hasFailure ? 'true' : 'false' }}"
+                        data-class-avg="{{ $classAvgAll }}">
+
+                        <td>{{ $idx + 1 }}</td>
+                        @if($showAdmNo)
+                            <td>{{ $stu['admissionno'] }}</td>
+                        @endif
+                        <td class="student-info-cell">
+                            <strong>{{ strtoupper($stu['lastname']) }}</strong>, {{ $stu['firstname'] }}
+                        </td>
+                        @if($showGender)
+                            <td>{{ substr($stu['gender'] ?? '', 0, 1) }}</td>
+                        @endif
+
+                        @foreach($subjects as $subId => $subInfo)
+                            @php
+                                $sd = $stu['subjects'][$subId] ?? [];
+                                $grade = $sd['grade'] ?? '-';
+                                $gradeClass = $gradeColors[$grade] ?? '';
+                            @endphp
+                            @foreach($activeAssessments as $a)
+                                @php $score = $sd['assessments'][$a->id] ?? 0; @endphp
+                                <td>{{ $score > 0 ? number_format($score, 1) : '—' }}</td>
+                            @endforeach
+                            @if($showTotal) <td class="{{ $gradeClass }}">{{ ($sd['total']??0) > 0 ? number_format($sd['total'],1) : '—' }}</td> @endif
+                            @if($showBF) <td>{{ ($sd['bf']??0) > 0 ? number_format($sd['bf'],1) : '—' }}</td> @endif
+                            @if($showCum) <td class="{{ $gradeClass }} fw-bold">{{ ($sd['cum']??0) > 0 ? number_format($sd['cum'],1) : '—' }}</td> @endif
+                            @if($showGrade) <td class="{{ $gradeClass }} fw-bold">{{ $grade }}</td> @endif
+                            @if($showPosition) <td>{{ $sd['position'] ?? '—' }}</td> @endif
+                            @if($showAvg) <td>{{ $subjectStats[$subId]['avg'] ?? '—' }}</td> @endif
+                            @if($showRemark) <td>{{ $sd['remark'] ?? '—' }}</td> @endif
+                        @endforeach
+
+                        @if($showGPA) <td class="grade-{{ $stu['gpa_grade'] ?? 'f9' }}">{{ number_format($stu['gpa'], 2) }}</td> @endif
+                        @if($showCGPA) <td>{{ number_format($stu['cgpa'], 2) }}</td> @endif
+                        @if($showGPAGrade) <td class="grade-{{ $stu['gpa_grade'] ?? 'f9' }} fw-bold">{{ $stu['gpa_grade'] ?? '—' }}</td> @endif
+                        @if($showNumSub) <td>{{ $stu['num_subjects'] ?? '—' }}</td> @endif
+                        @if($showTotalGP) <td>{{ number_format($stu['total_grade_points'], 1) }}</td> @endif
+                    </tr>
+                @endforeach
             </tbody>
         </table>
     </div>
-</div>
 
-{{-- ── SIGNATURE BLOCK ── --}}
-<div class="sig-block">
-    @foreach(['Class Teacher','Head of Department','Vice Principal (Academics)','Principal'] as $role)
-    <div class="sig-item">
-        <div class="sig-line"></div>
-        <div class="sig-lbl">{{ $role }}</div>
+    {{-- Loading Overlay --}}
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <h5>Processing...</h5>
+            <p class="text-muted mb-0">Please wait while we load the data</p>
+        </div>
     </div>
-    @endforeach
 </div>
 
-{{-- Toast --}}
-<div id="bs-toast"></div>
-
-{{-- ═══════════════════════════════════════════════════════════
-     JAVASCRIPT
-═══════════════════════════════════════════════════════════ --}}
 <script>
-/* ── Subject data from PHP ── */
-const SUBJECTS = @json(collect($subjects)->map(fn($s) => ['id' => $s['subject_id'], 'name' => $s['subject_name']])->values());
-const SUBJECT_STATS = @json($subjectStats);
+// Search functionality with animation
+const searchInput = document.getElementById('searchStudent');
+const tableRows = document.querySelectorAll('#broadsheetTable tbody tr');
 
-/* ── State ── */
-let currentZoom    = 1.0;
-let currentLocate  = '';
-let matchIndices   = [];
-let matchCursor    = 0;
+searchInput.addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    let visibleCount = 0;
 
-/* ══════════════════════════════════════════════════
-   ZOOM
-══════════════════════════════════════════════════ */
-function changeZoom(delta) {
-    currentZoom = Math.min(2.5, Math.max(0.3, currentZoom + delta));
-    applyZoom();
-}
-function resetZoom() {
-    // Fit table to window width
-    const outer = document.getElementById('bs-table-outer');
-    const table = document.getElementById('bs-table');
-    const ratio = outer.clientWidth / table.scrollWidth;
-    currentZoom = Math.min(1.0, Math.max(0.3, ratio));
-    applyZoom();
-}
-function applyZoom() {
-    const wrap = document.getElementById('bs-zoom-wrap');
-    wrap.style.transform = `scale(${currentZoom})`;
-    wrap.style.transformOrigin = 'top left';
-    // Adjust outer height to match scaled content
-    const table = document.getElementById('bs-table');
-    const scaledH = table.scrollHeight * currentZoom;
-    document.getElementById('bs-table-outer').style.minHeight = scaledH + 'px';
-    document.getElementById('zoomLabel').textContent = Math.round(currentZoom * 100) + '%';
-}
+    tableRows.forEach(row => {
+        const name = row.getAttribute('data-student-name')?.toLowerCase() || '';
+        const admission = row.getAttribute('data-admission')?.toLowerCase() || '';
+        const matches = name.includes(searchTerm) || admission.includes(searchTerm);
 
-/* ══════════════════════════════════════════════════
-   LOCATE / FILTER ENGINE
-══════════════════════════════════════════════════ */
-const SUBJECT_DEPENDENT = ['subj_top','subj_fail','subj_pass','subj_above_avg','subj_below_avg'];
-const SCORE_DEPENDENT   = ['custom_min','custom_max'];
-
-function onLocateChange() {
-    const val = document.getElementById('locateSelect').value;
-    currentLocate = val;
-
-    const subjSel   = document.getElementById('subjectLocateSelect');
-    const scoreSel  = document.getElementById('scoreThresholdWrap');
-
-    subjSel.style.display  = SUBJECT_DEPENDENT.includes(val) ? 'inline-block' : 'none';
-    scoreSel.style.display = SCORE_DEPENDENT.includes(val)   ? 'flex'         : 'none';
-
-    if (!SUBJECT_DEPENDENT.includes(val) && !SCORE_DEPENDENT.includes(val)) {
-        runLocate();
-    }
-}
-
-function runLocate() {
-    const val       = currentLocate;
-    const subjectId = document.getElementById('subjectLocateSelect').value;
-    const threshold = parseFloat(document.getElementById('scoreThresholdInput').value) || 0;
-
-    const rows = Array.from(document.querySelectorAll('#bs-table tbody tr[data-student-id]'));
-
-    // Clear all highlights first
-    rows.forEach(r => {
-        r.classList.remove('hl-match','hl-primary','hl-danger','hl-success','hl-warning','hl-dim');
-        r.querySelectorAll('td').forEach(td => td.classList.remove('cell-hl','cell-hl-danger','cell-hl-success'));
-    });
-    document.getElementById('resultBadge').style.display = 'none';
-    document.getElementById('scrollToFirst').style.display = 'none';
-    matchIndices = [];
-
-    if (!val || val === 'all') {
-        showToast('Filter cleared — showing all students');
-        return;
-    }
-
-    // Compute class average GPA
-    const allGpas = rows.map(r => parseFloat(r.dataset.gpa) || 0);
-    const classGpaAvg = allGpas.length ? allGpas.reduce((a,b)=>a+b,0)/allGpas.length : 0;
-
-    const matchedRows = [];
-
-    rows.forEach((row, idx) => {
-        const gpa  = parseFloat(row.dataset.gpa)  || 0;
-        const avg  = parseFloat(row.dataset.avg)   || 0;
-        const f9   = parseInt(row.dataset.f9)      || 0;
-        let match  = false;
-        let hlClass = 'hl-match';
-
-        // All subject score cells for this row
-        const scoreCells = Array.from(row.querySelectorAll('td[data-sub][data-score]'));
-        const gradeCells = Array.from(row.querySelectorAll('td[data-sub][data-grade]'));
-
-        // Subject-specific cells
-        const subjScoreCells = subjectId
-            ? Array.from(row.querySelectorAll(`td[data-sub="${subjectId}"][data-score]`))
-            : [];
-        const subjGradeCells = subjectId
-            ? Array.from(row.querySelectorAll(`td[data-sub="${subjectId}"][data-grade]`))
-            : [];
-
-        // ── Avg for a specific subject
-        const subjAvg = subjectId && SUBJECT_STATS[subjectId] ? SUBJECT_STATS[subjectId].avg : 0;
-
-        switch(val) {
-            /* ── performance ── */
-            case 'top5':
-            case 'top10': {
-                // will handle after loop
-                break;
-            }
-            case 'bottom5': break; // handled after loop
-            case 'below_avg':
-                match = gpa < classGpaAvg;
-                hlClass = 'hl-warning';
-                break;
-            case 'above_avg':
-                match = gpa > classGpaAvg;
-                hlClass = 'hl-success';
-                break;
-            case 'distinction':
-                // all grades in graded cells are A1 or B2
-                match = gradeCells.length > 0 &&
-                    gradeCells.every(td => ['A1','B2'].includes(td.dataset.grade));
-                hlClass = 'hl-success';
-                break;
-            case 'at_risk':
-                match = f9 >= 2;
-                hlClass = 'hl-danger';
-                break;
-
-            /* ── score range ── */
-            case 'score_gt80':
-                match = scoreCells.some(td => parseFloat(td.dataset.score) >= 80);
-                hlClass = 'hl-success';
-                if(match) scoreCells.forEach(td => {
-                    if(parseFloat(td.dataset.score)>=80) td.classList.add('cell-hl-success');
-                });
-                break;
-            case 'score_gt70':
-                match = scoreCells.some(td => parseFloat(td.dataset.score) >= 70);
-                hlClass = 'hl-success';
-                if(match) scoreCells.forEach(td => {
-                    if(parseFloat(td.dataset.score)>=70) td.classList.add('cell-hl-success');
-                });
-                break;
-            case 'score_lt40':
-                match = scoreCells.some(td => {
-                    const s = parseFloat(td.dataset.score);
-                    return s > 0 && s < 40;
-                });
-                hlClass = 'hl-danger';
-                if(match) scoreCells.forEach(td => {
-                    const s = parseFloat(td.dataset.score);
-                    if(s>0 && s<40) td.classList.add('cell-hl-danger');
-                });
-                break;
-            case 'score_lt50':
-                match = scoreCells.some(td => {
-                    const s = parseFloat(td.dataset.score);
-                    return s > 0 && s < 50;
-                });
-                hlClass = 'hl-warning';
-                if(match) scoreCells.forEach(td => {
-                    const s = parseFloat(td.dataset.score);
-                    if(s>0 && s<50) td.classList.add('cell-hl');
-                });
-                break;
-            case 'custom_min':
-                match = threshold > 0 && scoreCells.some(td => parseFloat(td.dataset.score) >= threshold);
-                hlClass = 'hl-primary';
-                if(match) scoreCells.forEach(td => {
-                    if(parseFloat(td.dataset.score)>=threshold) td.classList.add('cell-hl');
-                });
-                break;
-            case 'custom_max':
-                match = threshold > 0 && scoreCells.some(td => {
-                    const s = parseFloat(td.dataset.score);
-                    return s > 0 && s <= threshold;
-                });
-                hlClass = 'hl-warning';
-                if(match) scoreCells.forEach(td => {
-                    const s = parseFloat(td.dataset.score);
-                    if(s>0 && s<=threshold) td.classList.add('cell-hl');
-                });
-                break;
-
-            /* ── by grade ── */
-            case 'grade_a1':
-                match = gradeCells.some(td => td.dataset.grade === 'A1');
-                hlClass = 'hl-success';
-                if(match) gradeCells.forEach(td => {
-                    if(td.dataset.grade==='A1') td.classList.add('cell-hl-success');
-                });
-                break;
-            case 'grade_b2b3':
-                match = gradeCells.some(td => ['B2','B3'].includes(td.dataset.grade));
-                hlClass = 'hl-primary';
-                if(match) gradeCells.forEach(td => {
-                    if(['B2','B3'].includes(td.dataset.grade)) td.classList.add('cell-hl');
-                });
-                break;
-            case 'grade_f9':
-                match = gradeCells.some(td => td.dataset.grade === 'F9');
-                hlClass = 'hl-danger';
-                if(match) gradeCells.forEach(td => {
-                    if(td.dataset.grade==='F9') td.classList.add('cell-hl-danger');
-                });
-                break;
-            case 'grade_e8f9':
-                match = gradeCells.some(td => ['E8','F9'].includes(td.dataset.grade));
-                hlClass = 'hl-danger';
-                if(match) gradeCells.forEach(td => {
-                    if(['E8','F9'].includes(td.dataset.grade)) td.classList.add('cell-hl-danger');
-                });
-                break;
-
-            /* ── by subject ── */
-            case 'subj_fail':
-                if(!subjectId) return;
-                match = subjGradeCells.some(td => ['E8','F9'].includes(td.dataset.grade));
-                hlClass = 'hl-danger';
-                break;
-            case 'subj_pass':
-                if(!subjectId) return;
-                match = subjGradeCells.some(td => !['E8','F9'].includes(td.dataset.grade) && td.dataset.grade !== '');
-                hlClass = 'hl-success';
-                break;
-            case 'subj_above_avg':
-                if(!subjectId) return;
-                match = subjScoreCells.some(td => parseFloat(td.dataset.score) > subjAvg);
-                hlClass = 'hl-success';
-                break;
-            case 'subj_below_avg':
-                if(!subjectId) return;
-                match = subjScoreCells.some(td => {
-                    const s = parseFloat(td.dataset.score);
-                    return s > 0 && s < subjAvg;
-                });
-                hlClass = 'hl-warning';
-                break;
-            case 'subj_top':
-                if(!subjectId) return;
-                // handled after loop
-                break;
-
-            /* ── completion ── */
-            case 'missing_scores':
-                match = scoreCells.some(td => parseFloat(td.dataset.score) === 0);
-                hlClass = 'hl-warning';
-                if(match) scoreCells.forEach(td => {
-                    if(parseFloat(td.dataset.score)===0) td.classList.add('cell-hl');
-                });
-                break;
-            case 'complete':
-                match = scoreCells.length > 0 && scoreCells.every(td => parseFloat(td.dataset.score) > 0);
-                hlClass = 'hl-success';
-                break;
-        }
-
-        if(match) {
-            row.classList.add(hlClass);
-            matchedRows.push({ idx, row, gpa, hlClass });
+        if (matches) {
+            row.style.display = '';
+            visibleCount++;
+            // Add highlight animation
+            row.style.animation = 'none';
+            setTimeout(() => {
+                row.style.animation = 'pulse 0.3s ease';
+            }, 10);
+        } else {
+            row.style.display = 'none';
         }
     });
 
-    /* ── Handle top/bottom N (requires sort after loop) ── */
-    if(['top5','top10','bottom5','subj_top'].includes(val)) {
-        const sorted = [...rows].map((r,i)=>({
-            row: r,
-            idx: i,
-            gpa: parseFloat(r.dataset.gpa)||0,
-            subjScore: subjectId ? (()=>{
-                const c = r.querySelector(`td[data-sub="${subjectId}"][data-col="total"]`);
-                return c ? parseFloat(c.dataset.score)||0 : 0;
-            })() : 0,
-        }));
+    // Show result count
+    if (searchTerm.length > 0) {
+        showTemporaryMessage(`Found ${visibleCount} student(s)`, 'info');
+    }
+});
 
-        if(val === 'top5' || val === 'top10') {
-            const n = val === 'top5' ? 5 : 10;
-            sorted.sort((a,b) => b.gpa - a.gpa);
-            sorted.slice(0, n).forEach(({row}) => { row.classList.add('hl-success'); matchedRows.push({row}); });
-        } else if(val === 'bottom5') {
-            sorted.sort((a,b) => a.gpa - b.gpa);
-            sorted.slice(0, 5).forEach(({row}) => { row.classList.add('hl-danger'); matchedRows.push({row}); });
-        } else if(val === 'subj_top') {
-            if(subjectId) {
-                sorted.sort((a,b) => b.subjScore - a.subjScore);
-                const maxScore = sorted[0]?.subjScore || 0;
-                sorted.filter(s => s.subjScore === maxScore && s.subjScore > 0)
-                    .forEach(({row}) => { row.classList.add('hl-success'); matchedRows.push({row}); });
-            }
-        }
+// Locate functionality
+const locateSelect = document.getElementById('locateStudent');
+locateSelect.addEventListener('change', function(e) {
+    const value = e.target.value;
+    if (!value) return;
+
+    // Remove previous highlights
+    tableRows.forEach(row => {
+        row.classList.remove('highlight-row');
+        row.style.opacity = '1';
+    });
+
+    if (value === 'top5') {
+        highlightTopStudents(5);
+    } else if (value === 'top10') {
+        highlightTopStudents(10);
+    } else if (value === 'failures') {
+        highlightFailures();
+    } else if (value === 'below_avg') {
+        highlightBelowAverage();
+    } else if (value === 'missing_scores') {
+        highlightMissingScores();
+    } else if (value.startsWith('student_')) {
+        const studentId = value.replace('student_', '');
+        highlightStudent(studentId);
     }
 
-    /* ── Dim non-matching rows ── */
-    const allMatchedRows = document.querySelectorAll(
-        '#bs-table tbody tr.hl-match, #bs-table tbody tr.hl-primary, ' +
-        '#bs-table tbody tr.hl-danger, #bs-table tbody tr.hl-success, #bs-table tbody tr.hl-warning'
-    );
-    if(allMatchedRows.length > 0) {
-        rows.forEach(r => {
-            if(!r.classList.contains('hl-match') && !r.classList.contains('hl-primary') &&
-               !r.classList.contains('hl-danger') && !r.classList.contains('hl-success') &&
-               !r.classList.contains('hl-warning')) {
-                r.classList.add('hl-dim');
+    // Reset select
+    setTimeout(() => {
+        locateSelect.value = '';
+    }, 100);
+});
+
+function highlightTopStudents(count) {
+    const rows = Array.from(tableRows).filter(row => row.style.display !== 'none');
+    const sortedRows = [...rows].sort((a, b) => {
+        const gpaA = parseFloat(a.getAttribute('data-gpa')) || 0;
+        const gpaB = parseFloat(b.getAttribute('data-gpa')) || 0;
+        return gpaB - gpaA;
+    });
+
+    sortedRows.slice(0, count).forEach(row => {
+        row.classList.add('highlight-row');
+        scrollToRow(row);
+    });
+
+    showTemporaryMessage(`Highlighted top ${count} students`, 'success');
+}
+
+function highlightFailures() {
+    let failureCount = 0;
+    tableRows.forEach(row => {
+        if (row.getAttribute('data-has-failure') === 'true') {
+            row.classList.add('highlight-row');
+            failureCount++;
+        }
+    });
+    showTemporaryMessage(`${failureCount} student(s) have at least one failure (F9)`, 'warning');
+}
+
+function highlightBelowAverage() {
+    let belowAvgCount = 0;
+    tableRows.forEach(row => {
+        const gpa = parseFloat(row.getAttribute('data-gpa')) || 0;
+        const classAvg = parseFloat(row.getAttribute('data-class-avg')) || 0;
+        if (gpa < classAvg && gpa > 0) {
+            row.classList.add('highlight-row');
+            belowAvgCount++;
+        }
+    });
+    showTemporaryMessage(`${belowAvgCount} student(s) below class average`, 'info');
+}
+
+function highlightMissingScores() {
+    let missingCount = 0;
+    tableRows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        let hasMissing = false;
+        cells.forEach(cell => {
+            if (cell.textContent.trim() === '—' && !cell.classList.contains('student-info-cell')) {
+                hasMissing = true;
             }
         });
-    }
-
-    /* ── Build scroll index ── */
-    matchIndices = Array.from(allMatchedRows);
-    matchCursor = 0;
-
-    /* ── Update badge ── */
-    const badge = document.getElementById('resultBadge');
-    badge.textContent = allMatchedRows.length + ' found';
-    badge.style.display = allMatchedRows.length > 0 ? 'inline-block' : 'none';
-
-    const btn = document.getElementById('scrollToFirst');
-    btn.style.display = allMatchedRows.length > 0 ? 'flex' : 'none';
-
-    showToast(allMatchedRows.length + ' student(s) matched');
+        if (hasMissing) {
+            row.classList.add('highlight-row');
+            missingCount++;
+        }
+    });
+    showTemporaryMessage(`${missingCount} student(s) have missing assessment scores`, 'warning');
 }
 
-function scrollToFirstMatch() {
-    if(matchIndices.length === 0) return;
-    const row = matchIndices[matchCursor % matchIndices.length];
+function highlightStudent(studentId) {
+    const row = document.querySelector(`tr[data-student-id="${studentId}"]`);
+    if (row) {
+        row.classList.add('highlight-row');
+        scrollToRow(row);
+        showTemporaryMessage(`Located student: ${row.getAttribute('data-student-name')}`, 'success');
+    }
+}
+
+function scrollToRow(row) {
     row.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    // Flash the row
-    row.style.boxShadow = 'inset 0 0 0 2px #f59e0b';
-    setTimeout(() => row.style.boxShadow = '', 1500);
-    matchCursor++;
-    if(matchCursor >= matchIndices.length) matchCursor = 0;
-    const btn = document.getElementById('scrollToFirst');
-    btn.innerHTML = `<i class="ri-arrow-down-line"></i> Next (${matchCursor}/${matchIndices.length})`;
-    if(matchCursor === 0) btn.innerHTML = `<i class="ri-arrow-up-line"></i> Wrap (${matchIndices.length})`;
 }
 
-/* ══════════════════════════════════════════════════
-   TOAST
-══════════════════════════════════════════════════ */
-let toastTimer = null;
-function showToast(msg) {
-    const t = document.getElementById('bs-toast');
-    t.textContent = msg;
-    t.classList.add('show');
-    clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => t.classList.remove('show'), 2800);
+function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-/* ══════════════════════════════════════════════════
-   KEYBOARD SHORTCUTS
-══════════════════════════════════════════════════ */
-document.addEventListener('keydown', e => {
-    if(e.ctrlKey || e.metaKey) {
-        if(e.key === '=' || e.key === '+') { e.preventDefault(); changeZoom(+0.1); }
-        if(e.key === '-')                  { e.preventDefault(); changeZoom(-0.1); }
-        if(e.key === '0')                  { e.preventDefault(); resetZoom(); }
-    }
-    if(e.key === 'Escape') {
-        document.getElementById('locateSelect').value = '';
-        onLocateChange();
-    }
-    if(e.key === 'Enter' && matchIndices.length > 0) {
-        scrollToFirstMatch();
-    }
+function showTemporaryMessage(message, type = 'info') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type === 'info' ? 'info' : type} alert-dismissible fade show position-fixed`;
+    alertDiv.style.top = '20px';
+    alertDiv.style.right = '20px';
+    alertDiv.style.zIndex = '9999';
+    alertDiv.style.maxWidth = '400px';
+    alertDiv.style.animation = 'slideInRight 0.3s ease';
+    alertDiv.innerHTML = `
+        <i class="ri-information-line me-2"></i>${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    document.body.appendChild(alertDiv);
+
+    setTimeout(() => {
+        alertDiv.classList.remove('show');
+        setTimeout(() => alertDiv.remove(), 300);
+    }, 3000);
+}
+
+// Add loading animation on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const overlay = document.getElementById('loadingOverlay');
+    overlay.classList.add('active');
+    setTimeout(() => {
+        overlay.classList.remove('active');
+    }, 500);
 });
 
-/* ══════════════════════════════════════════════════
-   COLUMN HEADER CLICK → SCROLL TO SUBJECT
-══════════════════════════════════════════════════ */
-document.querySelectorAll('#bs-table thead tr.subj-header th[colspan]').forEach(th => {
-    th.style.cursor = 'pointer';
-    th.title = 'Click to go to this subject in the locate dropdown';
-});
-
-/* ══════════════════════════════════════════════════
-   INIT
-══════════════════════════════════════════════════ */
-document.addEventListener('DOMContentLoaded', () => {
-    // Auto-fit zoom on load
-    setTimeout(resetZoom, 100);
-    showToast('Broadsheet loaded — use Ctrl+/- to zoom, Esc to clear filters');
+// Smooth scrolling for anchor links
+document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+            target.scrollIntoView({ behavior: 'smooth' });
+        }
+    });
 });
 </script>
 @endsection
