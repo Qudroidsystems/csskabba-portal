@@ -270,6 +270,7 @@
                     </div>
                 </div>
 
+                {{-- All Modals (Snapshot Name, Registered Classes, Archived, Snapshot Detail, Image View) --}}
                 {{-- Snapshot Name Modal --}}
                 <div class="modal fade" id="snapshotNameModal" tabindex="-1" aria-labelledby="snapshotNameModalLabel" aria-hidden="true">
                     <div class="modal-dialog modal-dialog-centered" style="max-width:520px;">
@@ -569,6 +570,22 @@
     height: 100%;
     object-fit: cover;
 }
+
+/* Loading state for table */
+.loading-row td {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--sf-text-2);
+}
+
+/* Row Animation */
+.sf-student-row {
+    animation: rowFadeIn 0.4s ease forwards;
+}
+@keyframes rowFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 </style>
 @endsection
 
@@ -606,7 +623,7 @@ let archiveSearchTimer = null;
 let currentSnapshotMeta = null;
 let currentSnapshotRows = [];
 
-// Avatar color palette (used only as fallback)
+// Avatar color palette (fallback only)
 const SF_COLORS = [
     ['#E6F1FB','#0C447C'],['#EAF3DE','#27500A'],['#FAEEDA','#633806'],
     ['#EEEDFE','#3C3489'],['#FBEAF0','#993556'],['#E1F5EE','#085041'],
@@ -760,7 +777,7 @@ function sfToggleRow(e, row) {
 }
 
 // ============================================================================
-// REWRITE ROWS - NOW SHOWS REAL PICTURES (with fallback to initials)
+// REWRITE ROWS - SHOWS REAL PICTURES
 // ============================================================================
 function rewriteExistingRows() {
     const body = document.getElementById('studentTableBody');
@@ -776,7 +793,6 @@ function rewriteExistingRows() {
         const className = tr.querySelector('.class')?.textContent?.trim() || '';
         const gender = tr.querySelector('.gender')?.textContent?.trim() || '';
 
-        // Extract real image URL from original row
         const imgEl = tr.querySelector('img[data-image]');
         const imageUrl = imgEl ? imgEl.getAttribute('data-image') : `${AVATAR_URL}/student_avatars/unnamed.jpg`;
 
@@ -784,7 +800,7 @@ function rewriteExistingRows() {
         const isFemale = gender.toLowerCase() === 'female';
 
         html += `
-        <tr onclick="sfToggleRow(event, this)">
+        <tr class="sf-student-row" style="animation-delay: ${i * 30}ms" onclick="sfToggleRow(event, this)">
             <td class="text-center">
                 <input type="checkbox" class="sf-chk" name="chk_child" onclick="event.stopPropagation()">
                 <span class="id" data-id="${escapeHtml(id)}" style="display:none;"></span>
@@ -816,7 +832,7 @@ function showStudentImage(src) {
 }
 
 // ============================================================================
-// FILTER / SEARCH (AJAX)
+// FILTER / SEARCH (AJAX) - WITH LOADER
 // ============================================================================
 function filterData() {
     const classId = document.getElementById('idclass').value;
@@ -830,7 +846,11 @@ function filterData() {
     const admission = document.getElementById('idadmission').value;
 
     const body = document.getElementById('studentTableBody');
-    if (body) body.innerHTML = '<tr><td colspan="7" class="text-center">Loading…</td></tr>';
+    if (body) {
+        body.innerHTML = `<tr class="loading-row"><td colspan="7">
+            <div class="spinner-border text-primary me-2"></div>Searching students...
+        </td></tr>`;
+    }
 
     const params = new URLSearchParams({ class_id: classId, session_id: sessionId, search, gender, admissionno: admission });
 
@@ -883,7 +903,11 @@ function setupPaginationLinks() {
 
 function loadPage(url) {
     const body = document.getElementById('studentTableBody');
-    if (body) body.innerHTML = '<tr><td colspan="7" class="text-center">Loading…</td></tr>';
+    if (body) {
+        body.innerHTML = `<tr class="loading-row"><td colspan="7">
+            <div class="spinner-border text-primary me-2"></div>Loading...
+        </td></tr>`;
+    }
 
     fetch(url, { headers: { 'X-CSRF-TOKEN': CSRF, 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'text/html' } })
     .then(r => r.text())
@@ -1031,7 +1055,7 @@ async function proceedUnregister() {
 }
 
 // ============================================================================
-// REGISTERED CLASSES
+// REGISTERED CLASSES (kept full as before)
 // ============================================================================
 async function loadRegisteredClasses() {
     const classId = document.getElementById('idclass').value;
@@ -1189,7 +1213,7 @@ function printRegisteredClasses() {
 }
 
 // ============================================================================
-// ARCHIVED MODAL
+// ARCHIVED MODAL (full)
 // ============================================================================
 function openArchivedModal() {
     const classId = document.getElementById('idclass').value;
