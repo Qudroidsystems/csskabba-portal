@@ -478,7 +478,7 @@
                         </div>
                     </td>
                     <td width="56%" class="middle-info">
-                        <strong>Address:</strong> {{ $schoolInfo->school_address ?? 'No. 1, Claret Avenue, Kabba, Kogi State' }}<br>
+                        <strong>Address:</strong> {{ $schoolInfo->school_address ?? 'No. 1, Claret Avenue' }}<br>
                         <strong>Phone:</strong> {{ $schoolInfo->school_phone ?? '08136663185' }}
                     </td>
                     <td width="22%" style="text-align:center;">
