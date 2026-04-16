@@ -751,7 +751,6 @@ class StudentController extends Controller
      * 2. PromotionStatus — scoped to all four fields; correct and unchanged.
      * 3. StudentCurrentTerm — correct; unchanged.
      */
-  <?php
 
 // ============================================================================
 // FIXED update() METHOD — drop this into StudentController.php
