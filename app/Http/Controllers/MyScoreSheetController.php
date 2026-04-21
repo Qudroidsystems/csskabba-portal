@@ -288,7 +288,7 @@ class MyScoreSheetController extends Controller
     {
         try {
             $validated = $request->validate([
-                'broadsheet_id' => 'required|exists:broadsheets_mock,id',
+                'broadsheet_id' => 'required|exists:broadsheetmock,id',
                 'exam'          => 'required|numeric|min:0|max:100',
             ]);
 
@@ -349,7 +349,7 @@ class MyScoreSheetController extends Controller
     {
         $validated = $request->validate([
             'scores'          => 'required|array',
-            'scores.*.id'     => 'required|exists:broadsheets_mock,id',
+            'scores.*.id'     => 'required|exists:broadsheetmock,id',
             'scores.*.exam'   => 'nullable|numeric|min:0|max:100',
             'term_id'         => 'required|exists:schoolterm,id',
             'session_id'      => 'required|exists:schoolsession,id',
