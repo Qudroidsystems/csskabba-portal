@@ -1395,64 +1395,65 @@ class MyScoreSheetController extends Controller
      * Query broadsheets_mock joined with all student/subject/class data.
      * FK column: broadsheet_records_mock_id (matches your table schema).
      */
-    protected function getMockBroadsheets($staffId, $termId, $sessionId, $schoolClassId = null, $subjectClassId = null)
-    {
-        $query = BroadsheetsMock::query()
-            ->where('broadsheets_mock.staff_id', $staffId)
-            ->where('broadsheets_mock.term_id', $termId)
-            ->join('broadsheet_records_mock', 'broadsheet_records_mock.id', '=', 'broadsheets_mock.broadsheet_records_mock_id')
-            ->join('subjectclass', function ($join) use ($subjectClassId) {
-                $join->on('subjectclass.id', '=', 'broadsheets_mock.subjectclass_id')
-                     ->on('broadsheet_records_mock.subject_id', '=', 'subjectclass.subjectid')
-                     ->on('broadsheet_records_mock.schoolclass_id', '=', 'subjectclass.schoolclassid');
-                if ($subjectClassId) $join->where('subjectclass.id', $subjectClassId);
-            })
-            ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'broadsheet_records_mock.student_id')
-            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-            ->leftJoin('subject', 'subject.id', '=', 'broadsheet_records_mock.subject_id')
-            ->leftJoin('schoolclass', 'schoolclass.id', '=', 'broadsheet_records_mock.schoolclass_id')
-            ->leftJoin('classcategories', 'classcategories.id', '=', 'schoolclass.classcategoryid')
-            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
-            ->leftJoin('schoolterm', 'schoolterm.id', '=', 'broadsheets_mock.term_id')
-            ->leftJoin('schoolsession', 'schoolsession.id', '=', 'broadsheet_records_mock.session_id')
-            ->where('broadsheet_records_mock.session_id', $sessionId)
-            ->orderBy('studentRegistration.lastname', 'asc')
-            ->orderBy('studentRegistration.firstname', 'asc');
+   protected function getMockBroadsheets($staffId, $termId, $sessionId, $schoolClassId = null, $subjectClassId = null)
+        {
+            $query = BroadsheetsMock::query()
+                ->where('broadsheetmock.staff_id', $staffId)
+                ->where('broadsheetmock.term_id', $termId)
+                ->join('broadsheet_records_mock', 'broadsheet_records_mock.id', '=', 'broadsheetmock.broadsheet_records_mock_id')
+                ->join('subjectclass', function ($join) use ($subjectClassId) {
+                    $join->on('subjectclass.id', '=', 'broadsheetmock.subjectclass_id')
+                        ->on('broadsheet_records_mock.subject_id', '=', 'subjectclass.subjectid')
+                        ->on('broadsheet_records_mock.schoolclass_id', '=', 'subjectclass.schoolclassid');
+                    if ($subjectClassId) $join->where('subjectclass.id', $subjectClassId);
+                })
+                ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'broadsheet_records_mock.student_id')
+                ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+                ->leftJoin('subject', 'subject.id', '=', 'broadsheet_records_mock.subject_id')
+                ->leftJoin('schoolclass', 'schoolclass.id', '=', 'broadsheet_records_mock.schoolclass_id')
+                ->leftJoin('classcategories', 'classcategories.id', '=', 'schoolclass.classcategoryid')
+                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+                ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
+                ->leftJoin('schoolterm', 'schoolterm.id', '=', 'broadsheetmock.term_id')
+                ->leftJoin('schoolsession', 'schoolsession.id', '=', 'broadsheet_records_mock.session_id')
+                ->where('broadsheet_records_mock.session_id', $sessionId)
+                ->orderBy('studentRegistration.lastname', 'asc')
+                ->orderBy('studentRegistration.firstname', 'asc');
 
-        if ($schoolClassId) $query->where('schoolclass.id', $schoolClassId);
+            if ($schoolClassId) $query->where('schoolclass.id', $schoolClassId);
 
-        return $query->get([
-            'broadsheets_mock.id',
-            'studentRegistration.admissionNO as admissionno',
-            'broadsheet_records_mock.student_id as student_id',
-            'studentRegistration.firstname as fname',
-            'studentRegistration.lastname as lname',
-            'studentRegistration.othername as mname',
-            'subject.subject as subject',
-            'subject.subject_code as subject_code',
-            'broadsheet_records_mock.subject_id',
-            'schoolclass.schoolclass',
-            'schoolclass.id as schoolclass_id',
-            'schoolarm.arm',
-            'schoolterm.term',
-            'schoolsession.session',
-            'subjectclass.id as subjectclid',
-            'broadsheets_mock.staff_id',
-            'broadsheets_mock.term_id',
-            'broadsheet_records_mock.session_id as sessionid',
-            'studentpicture.picture',
-            'broadsheets_mock.exam',
-            'broadsheets_mock.total',
-            'broadsheets_mock.grade',
-            'broadsheets_mock.subject_position_class as position',
-            'broadsheets_mock.remark',
-            'broadsheets_mock.cmin',
-            'broadsheets_mock.cmax',
-            'broadsheets_mock.avg',
-            'broadsheets_mock.vettedstatus',
-        ]);
-    }
+            return $query->get([
+                'broadsheetmock.id',
+                'studentRegistration.admissionNO as admissionno',
+                'broadsheet_records_mock.student_id as student_id',
+                'studentRegistration.firstname as fname',
+                'studentRegistration.lastname as lname',
+                'studentRegistration.othername as mname',
+                'subject.subject as subject',
+                'subject.subject_code as subject_code',
+                'broadsheet_records_mock.subject_id',
+                'schoolclass.schoolclass',
+                'schoolclass.id as schoolclass_id',
+                'schoolarm.arm',
+                'schoolterm.term',
+                'schoolsession.session',
+                'subjectclass.id as subjectclid',
+                'broadsheetmock.staff_id',
+                'broadsheetmock.term_id',
+                'broadsheet_records_mock.session_id as sessionid',
+                'studentpicture.picture',
+                'broadsheetmock.exam',
+                'broadsheetmock.total',
+                'broadsheetmock.grade',
+                'broadsheetmock.subject_position_class as position',
+                'broadsheetmock.remark',
+                'broadsheetmock.cmin',
+                'broadsheetmock.cmax',
+                'broadsheetmock.avg',
+                'broadsheetmock.vettedstatus',
+            ]);
+        }
+
 
     // =========================================================================
     // POSITION / METRICS HELPERS (terminal)
@@ -1529,65 +1530,85 @@ class MyScoreSheetController extends Controller
     /**
      * Update cmin / cmax / avg for broadsheets_mock of a subject.
      */
-    protected function updateMockClassMetrics($subjectclassid, $staffid, $termid, $sessionid)
-    {
-        $subjectClass = DB::table('subjectclass')->where('id', $subjectclassid)->first(['subjectteacherid']);
-        if (!$subjectClass) return;
-        $subjectTeacher = DB::table('subjectteacher')->where('id', $subjectClass->subjectteacherid)->first(['subjectid']);
-        if (!$subjectTeacher) return;
-        $subjectId = $subjectTeacher->subjectid;
+   protected function updateMockClassMetrics($subjectclassid, $staffid, $termid, $sessionid)
+        {
+            $subjectClass = DB::table('subjectclass')->where('id', $subjectclassid)->first(['subjectteacherid']);
+            if (!$subjectClass) return;
 
-        $metrics = BroadsheetsMock::where('broadsheets_mock.subjectclass_id', $subjectclassid)
-            ->where('broadsheets_mock.staff_id', $staffid)
-            ->where('broadsheets_mock.term_id', $termid)
-            ->leftJoin('broadsheet_records_mock', 'broadsheet_records_mock.id', '=', 'broadsheets_mock.broadsheet_records_mock_id')
-            ->where('broadsheet_records_mock.session_id', $sessionid)
-            ->where('broadsheet_records_mock.subject_id', $subjectId)
-            ->select([
-                DB::raw('MIN(broadsheets_mock.total) as class_min'),
-                DB::raw('MAX(broadsheets_mock.total) as class_max'),
-                DB::raw('SUM(broadsheets_mock.total)  as total_sum'),
-                DB::raw('COUNT(broadsheets_mock.id)   as student_count'),
-            ])->first();
+            $subjectTeacher = DB::table('subjectteacher')->where('id', $subjectClass->subjectteacherid)->first(['subjectid']);
+            if (!$subjectTeacher) return;
 
-        $classMin = $metrics->class_min ?? 0;
-        $classMax = $metrics->class_max ?? 0;
-        $classAvg = $metrics->student_count > 0 ? round((float) $metrics->total_sum / $metrics->student_count, 1) : 0;
+            $subjectId = $subjectTeacher->subjectid;
 
-        // Use a subquery-based update to avoid the join + update limitation
-        $ids = BroadsheetsMock::where('subjectclass_id', $subjectclassid)
-            ->where('staff_id', $staffid)
-            ->where('term_id', $termid)
-            ->leftJoin('broadsheet_records_mock', 'broadsheet_records_mock.id', '=', 'broadsheets_mock.broadsheet_records_mock_id')
-            ->where('broadsheet_records_mock.session_id', $sessionid)
-            ->where('broadsheet_records_mock.subject_id', $subjectId)
-            ->pluck('broadsheets_mock.id');
+            $metrics = BroadsheetsMock::query()
+                ->where('broadsheetmock.subjectclass_id', $subjectclassid)
+                ->where('broadsheetmock.staff_id', $staffid)
+                ->where('broadsheetmock.term_id', $termid)
+                ->leftJoin('broadsheet_records_mock', 'broadsheet_records_mock.id', '=', 'broadsheetmock.broadsheet_records_mock_id')
+                ->where('broadsheet_records_mock.session_id', $sessionid)
+                ->where('broadsheet_records_mock.subject_id', $subjectId)
+                ->select([
+                    DB::raw('MIN(broadsheetmock.total) as class_min'),
+                    DB::raw('MAX(broadsheetmock.total) as class_max'),
+                    DB::raw('SUM(broadsheetmock.total)  as total_sum'),
+                    DB::raw('COUNT(broadsheetmock.id)   as student_count'),
+                ])->first();
 
-        BroadsheetsMock::whereIn('id', $ids)->update(['cmin' => $classMin, 'cmax' => $classMax, 'avg' => $classAvg]);
+            $classMin = $metrics->class_min ?? 0;
+            $classMax = $metrics->class_max ?? 0;
+            $classAvg = $metrics->student_count > 0
+                ? round((float) $metrics->total_sum / $metrics->student_count, 1)
+                : 0;
 
-        Log::info('Mock class metrics updated', compact('subjectclassid', 'classMin', 'classMax', 'classAvg'));
-    }
+            $ids = BroadsheetsMock::query()
+                ->where('broadsheetmock.subjectclass_id', $subjectclassid)
+                ->where('broadsheetmock.staff_id', $staffid)
+                ->where('broadsheetmock.term_id', $termid)
+                ->leftJoin('broadsheet_records_mock', 'broadsheet_records_mock.id', '=', 'broadsheetmock.broadsheet_records_mock_id')
+                ->where('broadsheet_records_mock.session_id', $sessionid)
+                ->where('broadsheet_records_mock.subject_id', $subjectId)
+                ->pluck('broadsheetmock.id');
+
+            BroadsheetsMock::whereIn('id', $ids)->update([
+                'cmin' => $classMin,
+                'cmax' => $classMax,
+                'avg'  => $classAvg,
+            ]);
+
+            Log::info('Mock class metrics updated', compact('subjectclassid', 'classMin', 'classMax', 'classAvg'));
+        }
 
     /**
      * Rank students within a subject by total score (mock).
      */
-    protected function updateMockSubjectPositions($subjectclass_id, $staff_id, $term_id, $session_id)
+   protected function updateMockSubjectPositions($subjectclass_id, $staff_id, $term_id, $session_id)
     {
-        $broadsheets = BroadsheetsMock::where('broadsheets_mock.subjectclass_id', $subjectclass_id)
-            ->where('broadsheets_mock.staff_id', $staff_id)
-            ->where('broadsheets_mock.term_id', $term_id)
-            ->leftJoin('broadsheet_records_mock', 'broadsheet_records_mock.id', '=', 'broadsheets_mock.broadsheet_records_mock_id')
+        $broadsheets = BroadsheetsMock::query()
+            ->where('broadsheetmock.subjectclass_id', $subjectclass_id)
+            ->where('broadsheetmock.staff_id', $staff_id)
+            ->where('broadsheetmock.term_id', $term_id)
+            ->leftJoin('broadsheet_records_mock', 'broadsheet_records_mock.id', '=', 'broadsheetmock.broadsheet_records_mock_id')
             ->where('broadsheet_records_mock.session_id', $session_id)
-            ->orderByDesc('broadsheets_mock.total')
-            ->orderBy('broadsheets_mock.id')
-            ->get(['broadsheets_mock.id', 'broadsheets_mock.total', 'broadsheets_mock.subject_position_class']);
+            ->orderByDesc('broadsheetmock.total')
+            ->orderBy('broadsheetmock.id')
+            ->get([
+                'broadsheetmock.id',
+                'broadsheetmock.total',
+                'broadsheetmock.subject_position_class',
+            ]);
 
         if ($broadsheets->isEmpty()) return;
 
-        $rank = 0; $lastTotal = null; $lastPosition = 0;
+        $rank         = 0;
+        $lastTotal    = null;
+        $lastPosition = 0;
+
         foreach ($broadsheets as $b) {
             $rank++;
-            if ($lastTotal === null || $b->total != $lastTotal) { $lastPosition = $rank; $lastTotal = $b->total; }
+            if ($lastTotal === null || $b->total != $lastTotal) {
+                $lastPosition = $rank;
+                $lastTotal    = $b->total;
+            }
             if ($b->subject_position_class != $lastPosition) {
                 BroadsheetsMock::where('id', $b->id)->update(['subject_position_class' => $lastPosition]);
             }
