@@ -130,11 +130,12 @@ class AttendanceController extends Controller
         // Calendar – generate school days for date picker
         $calendarDays = $this->buildCalendarDays($setting, $termId, $sessionId);
 
-        // Summaries for this term (for the sidebar stats)
+       // CORRECT - gets all columns, keyed by student_id
         $summaries = AttendanceSummary::where('schoolclass_id', $classId)
             ->where('term_id', $termId)
             ->where('session_id', $sessionId)
-            ->pluck(null, 'student_id');
+            ->get()
+            ->keyBy('student_id');
 
         $schoolclass = Schoolclass::with('arms')->find($classId);
         $term        = Schoolterm::find($termId);
