@@ -332,7 +332,8 @@ class AttendanceController extends Controller
             'session_id'     => $sessionId,
         ])->first();
 
-        $student = Studentclass::where('studentId', $studentId)
+        // CORRECT - table name specified to remove ambiguity
+        $student = Studentclass::where('studentclass.studentId', $studentId)
             ->join('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
             ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
             ->first([
