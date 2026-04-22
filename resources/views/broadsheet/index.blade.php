@@ -223,6 +223,74 @@
                 </button>
             </div>
 
+
+            {{-- All Classes Broadsheet --}}
+            <div class="step-card mt-3" id="allClassesCard">
+                <div class="step-title">
+                    <span class="step-badge" style="background:#7c3aed;">★</span>
+                    All Classes Broadsheet
+                    <span class="step-subtitle">Combined arms</span>
+                </div>
+                <p style="font-size:12px;color:#6b7280;margin-bottom:14px;">
+                    Generate a single broadsheet combining all arms of a class level (e.g. all JSS 1 arms), sorted alphabetically by student name.
+                </p>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" style="font-size:12.5px;color:#374151;">
+                        Class Group <span class="text-danger">*</span>
+                    </label>
+                    <select class="bsg-select" id="classGroupSelect">
+                        <option value="">— Loading class groups… —</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" style="font-size:12.5px;color:#374151;">
+                        Session <span class="text-danger">*</span>
+                    </label>
+                    <select class="bsg-select" id="classGroupSession">
+                        <option value="">— Select session —</option>
+                        @foreach($schoolsessions as $session)
+                            <option value="{{ $session->id }}">{{ $session->session }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold" style="font-size:12.5px;color:#374151;">
+                        Term <span class="text-danger">*</span>
+                    </label>
+                    <select class="bsg-select" id="classGroupTerm">
+                        <option value="">— Select term —</option>
+                        @foreach($schoolterms as $term)
+                            <option value="{{ $term->id }}">{{ $term->term }}</option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <div id="allClassesPreview" class="student-preview-card mb-3" style="display:none;">
+                    <div class="row g-0">
+                        <div class="col-6 preview-stat">
+                            <span class="val" id="allClassesArms">0</span>
+                            <span class="lbl">Arms Found</span>
+                        </div>
+                        <div class="col-6 preview-stat" style="border-left:1px solid #bfdbfe;">
+                            <span class="val text-success" id="allClassesStudents">0</span>
+                            <span class="lbl">Total Students</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button class="btn btn-primary flex-grow-1" id="allClassesWebBtn" disabled onclick="doAllClassesExport('web')">
+                        <i class="ri-global-line me-1"></i>Web View
+                    </button>
+                    <button class="btn btn-danger flex-grow-1" id="allClassesPdfBtn" disabled onclick="doAllClassesExport('pdf')">
+                        <i class="ri-file-pdf-line me-1"></i>PDF
+                    </button>
+                </div>
+            </div>
+
             <div class="step-card" id="step2Card">
                 <div class="step-title">
                     <span class="step-badge">2</span>
@@ -697,6 +765,111 @@ function doExport(type) {
 
     form.submit();
     bootstrap.Modal.getInstance(document.getElementById('columnModal'))?.hide();
+}
+
+
+
+// ── All Classes Broadsheet ────────────────────────────────────────────
+// Load class groups on page load
+fetch('{{ route("broadsheet.class-groups") }}')
+    .then(r => r.json())
+    .then(data => {
+        const sel = document.getElementById('classGroupSelect');
+        sel.innerHTML = '<option value="">— Select class group —</option>';
+        (data.groups || []).forEach(g => {
+            const opt = document.createElement('option');
+            opt.value = g;
+            opt.textContent = g;
+            sel.appendChild(opt);
+        });
+    });
+
+['classGroupSelect','classGroupSession','classGroupTerm'].forEach(id => {
+    document.getElementById(id).addEventListener('change', checkAllClassesPreview);
+});
+
+function checkAllClassesPreview() {
+    const group     = document.getElementById('classGroupSelect').value;
+    const sessionId = document.getElementById('classGroupSession').value;
+    const termId    = document.getElementById('classGroupTerm').value;
+    const webBtn    = document.getElementById('allClassesWebBtn');
+    const pdfBtn    = document.getElementById('allClassesPdfBtn');
+    const preview   = document.getElementById('allClassesPreview');
+
+    if (!group || !sessionId || !termId) {
+        webBtn.disabled = true;
+        pdfBtn.disabled = true;
+        preview.style.display = 'none';
+        return;
+    }
+
+    // Fetch a quick preview: count arms and students
+    fetch('{{ route("broadsheet.student-preview") }}', {
+        method : 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+        body   : JSON.stringify({ classgroup: group, sessionid: sessionId, termid: termId }),
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            document.getElementById('allClassesArms').textContent     = data.arms_count    ?? '—';
+            document.getElementById('allClassesStudents').textContent = data.count         ?? '—';
+            preview.style.display = 'block';
+            webBtn.disabled = false;
+            pdfBtn.disabled = false;
+        }
+    })
+    .catch(() => {});
+}
+
+function doAllClassesExport(type) {
+    const group     = document.getElementById('classGroupSelect').value;
+    const sessionId = document.getElementById('classGroupSession').value;
+    const termId    = document.getElementById('classGroupTerm').value;
+
+    if (!group || !sessionId || !termId) {
+        Swal.fire({ icon: 'warning', title: 'Incomplete', text: 'Please select class group, session and term.' });
+        return;
+    }
+
+    const form   = document.getElementById('exportForm');
+    const routes = {
+        web : '{{ route("broadsheet.all-classes.web") }}',
+        pdf : '{{ route("broadsheet.all-classes.pdf") }}',
+    };
+
+    form.action = routes[type];
+    form.target = '_blank';
+
+    // Re-use existing hidden inputs
+    document.getElementById('ef_class').value   = '';
+    document.getElementById('ef_session').value = sessionId;
+    document.getElementById('ef_term').value    = termId;
+    document.getElementById('ef_paper').value   = document.getElementById('paperSize').value;
+    document.getElementById('ef_orient').value  = document.getElementById('orientation').value;
+
+    // Add classgroup hidden input
+    let cgInput = document.getElementById('ef_classgroup');
+    if (!cgInput) {
+        cgInput = document.createElement('input');
+        cgInput.type = 'hidden';
+        cgInput.id   = 'ef_classgroup';
+        cgInput.name = 'classgroup';
+        document.getElementById('exportForm').appendChild(cgInput);
+    }
+    cgInput.value = group;
+
+    // Default all columns selected for combined view
+    const colDiv = document.getElementById('ef_columns');
+    colDiv.innerHTML = '';
+
+    if (type !== 'web') {
+        document.getElementById('loadingMsg').textContent = 'Generating Combined Broadsheet…';
+        document.getElementById('loadingOverlay').classList.add('active');
+        setTimeout(() => document.getElementById('loadingOverlay').classList.remove('active'), 15000);
+    }
+
+    form.submit();
 }
 </script>
 @endsection
