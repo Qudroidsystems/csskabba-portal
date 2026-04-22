@@ -453,20 +453,13 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
 
     Route::get('/studentmockreports', [ViewStudentMockReportController::class, 'index'])->name('studentmockreports.index');
 
-    // Display individual student mock result
-    Route::get('/studentmockresult/{id}/{schoolclassid}/{sessionid}/{termid}', [ViewStudentMockReportController::class, 'studentmockresult'])->name('studentmockreports.studentmockresult');
-
-    // Fetch registered classes for a session
-    Route::get('/registered-classes', [ViewStudentMockReportController::class, 'registeredClasses'])->name('studentmockreports.registeredClasses');
-
-    // Display class broadsheet
-    Route::get('/class-broadsheet/{schoolclassid}/{sessionid}/{termid}', [ViewStudentMockReportController::class, 'classBroadsheet'])->name('studentmockreports.classBroadsheet');
-
-
-    // Export class mock results as PDF
-    Route::post('/export-class-results-pdf', [ViewStudentMockReportController::class, 'exportClassMockResultsPdf'])->name('studentmockreports.exportClassMockResultsPdf');
-
-
+    // Mock Student Report Routes
+    Route::get('studentmockreports', [ViewStudentMockReportController::class, 'index'])->name('studentmockreports.index');
+    Route::post('studentmockreports/column-options', [ViewStudentMockReportController::class, 'getColumnOptions'])->name('studentmockreports.column-options');
+    Route::post('studentmockreports/export-class-pdf', [ViewStudentMockReportController::class, 'exportClassMockResultsPdf'])->name('studentmockreports.exportClassMockResultsPdf');
+    Route::get('studentmockreports/{id}/{schoolclassid}/{sessionid}/{termid}', [ViewStudentMockReportController::class, 'studentmockresult'])->name('studentmockreports.studentmockresult');
+    Route::get('studentmockreports/{id}/{schoolclassid}/{sessionid}/{termid}/pdf', [ViewStudentMockReportController::class, 'exportStudentMockResultPdf'])->name('studentmockreports.exportStudentMockResultPdf');
+    Route::get('studentmockreports/registered-classes', [ViewStudentMockReportController::class, 'registeredClasses'])->name('studentmockreports.registeredClasses');
 
 
 
