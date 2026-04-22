@@ -678,6 +678,7 @@
                             </li>
                       @endcan
 
+
                        @can('View my-subject-vettings')
                               <li class="nav-item">
                                   <a href="{{ route('mysubjectvettings.index') }}" class="nav-link" data-key="t-products">Subjects to Vet</a>
@@ -698,6 +699,29 @@
                 </div>
             </li>
             @endif
+
+            @if( auth()->user()->can('View attendance-register') || auth()->user()->can('View attendance-class-summary') ||auth()->user()->can('View attendance-student-report'))
+                <li class="nav-item">
+                    <a href="#sidebarAttendance" class="nav-link menu-link collapsed"
+                    data-bs-toggle="collapse" role="button"
+                    aria-expanded="false" aria-controls="sidebarAttendance">
+                        <i class="ph-calendar-check"></i>
+                        <span data-key="t-attendance">Attendance</span>
+                    </a>
+                    <div class="collapse menu-dropdown" id="sidebarAttendance">
+                        <ul class="nav nav-sm flex-column">
+                            @can('View attendance-register')
+                            <li class="nav-item">
+                                <a href="{{ route('attendance.my-classes') }}" class="nav-link">
+                                    Mark Attendance
+                                </a>
+                            </li>
+                            @endcan
+                        </ul>
+                    </div>
+                </li>
+            @endif
+
 
             @if(auth()->user()->can('View myresult-room') || auth()->user()->can('View student-report') || auth()->user()->can('View student-mock-report'))
             <li class="nav-item">
@@ -966,6 +990,49 @@
                             </li>
                         @endcan
 
+                    </ul>
+                </div>
+            </li>
+            @endif
+
+            {{-- ============================================================
+                SNIPPET 3 – Admin sidebar block
+                Place this inside the admin/management nav section.
+                ============================================================ --}}
+
+            @if(auth()->user()->can('View attendance-settings') ||auth()->user()->can('View attendance-holidays') ||auth()->user()->can('View attendance-school-report') )
+            <li class="nav-item">
+                <a href="#sidebarAttendanceAdmin" class="nav-link menu-link collapsed"
+                data-bs-toggle="collapse" role="button"
+                aria-expanded="false" aria-controls="sidebarAttendanceAdmin">
+                    <i class="ph-calendar-check"></i>
+                    <span data-key="t-attendance-admin">Attendance Admin</span>
+                </a>
+                <div class="collapse menu-dropdown" id="sidebarAttendanceAdmin">
+                    <ul class="nav nav-sm flex-column">
+                        @can('View attendance-settings')
+                        <li class="nav-item">
+                            <a href="{{ route('attendance.settings') }}" class="nav-link">
+                                Term Settings
+                            </a>
+                        </li>
+                        @endcan
+
+                        @can('View attendance-holidays')
+                        <li class="nav-item">
+                            <a href="{{ route('attendance.holidays') }}" class="nav-link">
+                                Holidays & Breaks
+                            </a>
+                        </li>
+                        @endcan
+
+                        @can('View attendance-school-report')
+                        <li class="nav-item">
+                            <a href="{{ route('attendance.school-report') }}" class="nav-link">
+                                School Report
+                            </a>
+                        </li>
+                        @endcan
                     </ul>
                 </div>
             </li>

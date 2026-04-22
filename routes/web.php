@@ -3,6 +3,8 @@
 use \App\Http\Controllers\SchoolInformationController;
 use App\Http\Controllers\Admin\ExamPauseController;
 use App\Http\Controllers\AnalysisController;
+use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\AttendanceSettingController;
 use App\Http\Controllers\BiodataController;
 use App\Http\Controllers\BroadsheetController;
 use App\Http\Controllers\CBTController;
@@ -809,134 +811,157 @@ Route::prefix('broadsheet')->name('broadsheet.')->group(function () {
 });
 
 
-// =========================================================================
-// TIMETABLE MANAGEMENT ROUTES
-// =========================================================================
+    // =========================================================================
+    // TIMETABLE MANAGEMENT ROUTES
+    // =========================================================================
 
-Route::prefix('timetable')->name('timetable.')->group(function () {
+    Route::prefix('timetable')->name('timetable.')->group(function () {
 
-    // Views
-    Route::get('/', [TimetableController::class, 'index'])->name('index');
-    Route::get('/teacher', [TimetableController::class, 'teacherView'])->name('teacher');
+        // Views
+        Route::get('/', [TimetableController::class, 'index'])->name('index');
+        Route::get('/teacher', [TimetableController::class, 'teacherView'])->name('teacher');
 
-    // AJAX — Setting management
-    Route::post('/setup', [TimetableController::class, 'setup'])->name('setup');
-    Route::get('/get-setting/{settingId}', [TimetableController::class, 'getSetting'])->name('get-setting');
-    Route::post('/save-settings', [TimetableController::class, 'saveSettings'])->name('save-settings');
-    Route::post('/save-constraints', [TimetableController::class, 'saveConstraints'])->name('save-constraints');
-    Route::delete('/delete-setting/{settingId}', [TimetableController::class, 'deleteSetting'])->name('delete-setting');
-    Route::post('/clone-setting', [TimetableController::class, 'cloneSetting'])->name('clone-setting');
+        // AJAX — Setting management
+        Route::post('/setup', [TimetableController::class, 'setup'])->name('setup');
+        Route::get('/get-setting/{settingId}', [TimetableController::class, 'getSetting'])->name('get-setting');
+        Route::post('/save-settings', [TimetableController::class, 'saveSettings'])->name('save-settings');
+        Route::post('/save-constraints', [TimetableController::class, 'saveConstraints'])->name('save-constraints');
+        Route::delete('/delete-setting/{settingId}', [TimetableController::class, 'deleteSetting'])->name('delete-setting');
+        Route::post('/clone-setting', [TimetableController::class, 'cloneSetting'])->name('clone-setting');
 
-    // AJAX — Grid & slots
-    Route::post('/auto-generate', [TimetableController::class, 'autoGenerate'])->name('auto-generate');
-    Route::get('/get-grid/{settingId}', [TimetableController::class, 'getGrid'])->name('get-grid');
-    Route::post('/save-slot', [TimetableController::class, 'saveSlot'])->name('save-slot');
-    Route::post('/bulk-update', [TimetableController::class, 'bulkUpdateSlots'])->name('bulk-update');
+        // AJAX — Grid & slots
+        Route::post('/auto-generate', [TimetableController::class, 'autoGenerate'])->name('auto-generate');
+        Route::get('/get-grid/{settingId}', [TimetableController::class, 'getGrid'])->name('get-grid');
+        Route::post('/save-slot', [TimetableController::class, 'saveSlot'])->name('save-slot');
+        Route::post('/bulk-update', [TimetableController::class, 'bulkUpdateSlots'])->name('bulk-update');
 
-    // AJAX — Checks & utilities
-    Route::get('/check-conflicts/{settingId}', [TimetableController::class, 'checkConflicts'])->name('check-conflicts');
-    Route::post('/send-notifications', [TimetableController::class, 'sendNotifications'])->name('send-notifications');
-    Route::get('/export/{settingId}', [TimetableController::class, 'export'])->name('export');
+        // AJAX — Checks & utilities
+        Route::get('/check-conflicts/{settingId}', [TimetableController::class, 'checkConflicts'])->name('check-conflicts');
+        Route::post('/send-notifications', [TimetableController::class, 'sendNotifications'])->name('send-notifications');
+        Route::get('/export/{settingId}', [TimetableController::class, 'export'])->name('export');
 
-    // AJAX — Subjects & teachers
-    Route::get('/class-subjects', [TimetableController::class, 'getClassSubjects'])->name('class-subjects');
+        // AJAX — Subjects & teachers
+        Route::get('/class-subjects', [TimetableController::class, 'getClassSubjects'])->name('class-subjects');
 
-    // AJAX — Teacher availability
-    Route::post('/teacher-availability', [TimetableController::class, 'saveTeacherAvailability'])->name('teacher-availability');
-    Route::get('/teacher-availability/{teacherId}', [TimetableController::class, 'getTeacherAvailability'])->name('get-teacher-availability');
+        // AJAX — Teacher availability
+        Route::post('/teacher-availability', [TimetableController::class, 'saveTeacherAvailability'])->name('teacher-availability');
+        Route::get('/teacher-availability/{teacherId}', [TimetableController::class, 'getTeacherAvailability'])->name('get-teacher-availability');
 
-    // AJAX — Substitutes
-    Route::post('/request-substitute', [TimetableController::class, 'requestSubstitute'])->name('request-substitute');
-    Route::post('/approve-substitute/{substituteId}', [TimetableController::class, 'approveSubstitute'])->name('approve-substitute');
-    Route::get('/substitute-requests', [TimetableController::class, 'getSubstituteRequests'])->name('substitute-requests');
+        // AJAX — Substitutes
+        Route::post('/request-substitute', [TimetableController::class, 'requestSubstitute'])->name('request-substitute');
+        Route::post('/approve-substitute/{substituteId}', [TimetableController::class, 'approveSubstitute'])->name('approve-substitute');
+        Route::get('/substitute-requests', [TimetableController::class, 'getSubstituteRequests'])->name('substitute-requests');
 
-    // NEW: Available substitutes for a given slot (was missing, broke teacher view)
-    Route::get('/available-substitutes', [TimetableController::class, 'getAvailableSubstitutes'])->name('available-substitutes');
+        // NEW: Available substitutes for a given slot (was missing, broke teacher view)
+        Route::get('/available-substitutes', [TimetableController::class, 'getAvailableSubstitutes'])->name('available-substitutes');
 
-    // AJAX — Dashboard & analytics
-    Route::get('/workload-dashboard', [TimetableController::class, 'workloadDashboard'])->name('workload-dashboard');
-    Route::post('/generate-analytics', [TimetableController::class, 'generateAnalytics'])->name('generate-analytics');
+        // AJAX — Dashboard & analytics
+        Route::get('/workload-dashboard', [TimetableController::class, 'workloadDashboard'])->name('workload-dashboard');
+        Route::post('/generate-analytics', [TimetableController::class, 'generateAnalytics'])->name('generate-analytics');
 
 
-});
-// Add this route with your other timetable routes
-Route::get('/timetable/export-whole-school', [TimetableController::class, 'exportWholeSchool'])->name('timetable.export-whole-school');
-Route::post('/timetable/check-conflict-suggestions', [TimetableController::class, 'checkConflictWithSuggestions'])->name('timetable.check-conflict-suggestions');
-// Add this route definition
-Route::post('/timetable/check-slot-conflict', [TimetableController::class, 'checkSlotConflict'])->name('timetable.check-slot-conflict');
+    });
+    // Add this route with your other timetable routes
+    Route::get('/timetable/export-whole-school', [TimetableController::class, 'exportWholeSchool'])->name('timetable.export-whole-school');
+    Route::post('/timetable/check-conflict-suggestions', [TimetableController::class, 'checkConflictWithSuggestions'])->name('timetable.check-conflict-suggestions');
+    // Add this route definition
+    Route::post('/timetable/check-slot-conflict', [TimetableController::class, 'checkSlotConflict'])->name('timetable.check-slot-conflict');
 
-// Add these routes to your web.php file
+    // Add these routes to your web.php file
 
-// =========================================================================
-// ROOM MANAGEMENT ROUTES
-// =========================================================================
+    // =========================================================================
+    // ROOM MANAGEMENT ROUTES
+    // =========================================================================
 
-Route::prefix('rooms')->name('rooms.')->group(function () {
-    Route::get('/', [RoomController::class, 'index'])->name('index');
-    Route::post('/', [RoomController::class, 'store'])->name('store');
-    Route::get('/{room}', [RoomController::class, 'show'])->name('show');
-    Route::put('/{room}', [RoomController::class, 'update'])->name('update');
-    Route::delete('/{room}', [RoomController::class, 'destroy'])->name('destroy');
-    Route::post('/{room}/book', [RoomController::class, 'book'])->name('book');
-    Route::delete('/bookings/{booking}', [RoomController::class, 'cancelBooking'])->name('cancel-booking');
-    Route::get('/availability/check', [RoomController::class, 'checkAvailability'])->name('check-availability');
-});
+    Route::prefix('rooms')->name('rooms.')->group(function () {
+        Route::get('/', [RoomController::class, 'index'])->name('index');
+        Route::post('/', [RoomController::class, 'store'])->name('store');
+        Route::get('/{room}', [RoomController::class, 'show'])->name('show');
+        Route::put('/{room}', [RoomController::class, 'update'])->name('update');
+        Route::delete('/{room}', [RoomController::class, 'destroy'])->name('destroy');
+        Route::post('/{room}/book', [RoomController::class, 'book'])->name('book');
+        Route::delete('/bookings/{booking}', [RoomController::class, 'cancelBooking'])->name('cancel-booking');
+        Route::get('/availability/check', [RoomController::class, 'checkAvailability'])->name('check-availability');
+    });
 
-// =========================================================================
-// EXAM TIMETABLE ROUTES
-// =========================================================================
+    // =========================================================================
+    // EXAM TIMETABLE ROUTES
+    // =========================================================================
 
-Route::prefix('exam-timetable')->name('exam-timetable.')->group(function () {
-    Route::get('/', [ExamTimetableController::class, 'index'])->name('index');
-    Route::post('/', [ExamTimetableController::class, 'store'])->name('store');
-    Route::get('/{examTimetable}', [ExamTimetableController::class, 'show'])->name('show');
-    Route::put('/{examTimetable}', [ExamTimetableController::class, 'update'])->name('update');
-    Route::delete('/{examTimetable}', [ExamTimetableController::class, 'destroy'])->name('destroy');
-    Route::post('/{examTimetable}/slots', [ExamTimetableController::class, 'addSlot'])->name('add-slot');
-    Route::delete('/slots/{slot}', [ExamTimetableController::class, 'removeSlot'])->name('remove-slot');
-    Route::post('/{examTimetable}/publish', [ExamTimetableController::class, 'publish'])->name('publish');
-    Route::get('/{examTimetable}/export', [ExamTimetableController::class, 'export'])->name('export');
-});
+    Route::prefix('exam-timetable')->name('exam-timetable.')->group(function () {
+        Route::get('/', [ExamTimetableController::class, 'index'])->name('index');
+        Route::post('/', [ExamTimetableController::class, 'store'])->name('store');
+        Route::get('/{examTimetable}', [ExamTimetableController::class, 'show'])->name('show');
+        Route::put('/{examTimetable}', [ExamTimetableController::class, 'update'])->name('update');
+        Route::delete('/{examTimetable}', [ExamTimetableController::class, 'destroy'])->name('destroy');
+        Route::post('/{examTimetable}/slots', [ExamTimetableController::class, 'addSlot'])->name('add-slot');
+        Route::delete('/slots/{slot}', [ExamTimetableController::class, 'removeSlot'])->name('remove-slot');
+        Route::post('/{examTimetable}/publish', [ExamTimetableController::class, 'publish'])->name('publish');
+        Route::get('/{examTimetable}/export', [ExamTimetableController::class, 'export'])->name('export');
+    });
 
-// =========================================================================
-// HOLIDAY MANAGEMENT ROUTES
-// =========================================================================
+    // =========================================================================
+    // HOLIDAY MANAGEMENT ROUTES
+    // =========================================================================
 
-Route::prefix('holidays')->name('holidays.')->group(function () {
-    Route::get('/', [HolidayController::class, 'index'])->name('index');
-    Route::post('/', [HolidayController::class, 'store'])->name('store');
-    Route::get('/{holiday}', [HolidayController::class, 'show'])->name('show');    // WAS MISSING
-    Route::put('/{holiday}', [HolidayController::class, 'update'])->name('update');
-    Route::delete('/{holiday}', [HolidayController::class, 'destroy'])->name('destroy');
-    Route::post('/{holiday}/apply', [HolidayController::class, 'applyToTimetable'])->name('apply');
-});
+    Route::prefix('holidays')->name('holidays.')->group(function () {
+        Route::get('/', [HolidayController::class, 'index'])->name('index');
+        Route::post('/', [HolidayController::class, 'store'])->name('store');
+        Route::get('/{holiday}', [HolidayController::class, 'show'])->name('show');    // WAS MISSING
+        Route::put('/{holiday}', [HolidayController::class, 'update'])->name('update');
+        Route::delete('/{holiday}', [HolidayController::class, 'destroy'])->name('destroy');
+        Route::post('/{holiday}/apply', [HolidayController::class, 'applyToTimetable'])->name('apply');
+    });
 
-// =========================================================================
-// TIMETABLE REPORTS ROUTES
-// =========================================================================
+    // =========================================================================
+    // TIMETABLE REPORTS ROUTES
+    // =========================================================================
 
-Route::prefix('timetable-reports')->name('timetable.reports.')->group(function () {
-    Route::get('/', [TimetableReportController::class, 'index'])->name('index');
-    Route::post('/generate', [TimetableReportController::class, 'generate'])->name('generate');
-    Route::get('/{report}', [TimetableReportController::class, 'show'])->name('show');
-    Route::get('/download/{report}', [TimetableReportController::class, 'download'])->name('download');
-    Route::delete('/{report}', [TimetableReportController::class, 'destroy'])->name('destroy');
-    Route::post('/schedule', [TimetableReportController::class, 'schedule'])->name('schedule');
-});
+    Route::prefix('timetable-reports')->name('timetable.reports.')->group(function () {
+        Route::get('/', [TimetableReportController::class, 'index'])->name('index');
+        Route::post('/generate', [TimetableReportController::class, 'generate'])->name('generate');
+        Route::get('/{report}', [TimetableReportController::class, 'show'])->name('show');
+        Route::get('/download/{report}', [TimetableReportController::class, 'download'])->name('download');
+        Route::delete('/{report}', [TimetableReportController::class, 'destroy'])->name('destroy');
+        Route::post('/schedule', [TimetableReportController::class, 'schedule'])->name('schedule');
+    });
 
-// =========================================================================
-// API ROUTES (also add to routes/api.php if using separate API prefix)
-// =========================================================================
+    // =========================================================================
+    // API ROUTES (also add to routes/api.php if using separate API prefix)
+    // =========================================================================
 
-// The teacher view's JS calls /api/timetable/available-substitutes
-// Add this alias to api.php or define it here:
-Route::prefix('api/timetable')->name('api.timetable.')->group(function () {
-    Route::get('/available-substitutes', [TimetableController::class, 'getAvailableSubstitutes'])
-        ->name('available-substitutes')
-        ->middleware('auth');
-});
+    // The teacher view's JS calls /api/timetable/available-substitutes
+    // Add this alias to api.php or define it here:
+    Route::prefix('api/timetable')->name('api.timetable.')->group(function () {
+        Route::get('/available-substitutes', [TimetableController::class, 'getAvailableSubstitutes'])
+            ->name('available-substitutes')
+            ->middleware('auth');
+    });
 
     Route::get('/promotions', [PromotionController::class, 'index'])->name('promotions.index');
     Route::put('/promotions/{studentId}', [PromotionController::class, 'update'])->name('promotions.update');
     Route::delete('/promotions/{studentId}', [PromotionController::class, 'destroy'])->name('promotions.destroy');
+
+
+
+        // ── Attendance Routes ──────────────────────────────────────────
+        // Class teacher
+        Route::get('/attendance/my-classes',              [AttendanceController::class, 'myClasses'])->name('attendance.my-classes');
+        Route::get('/attendance/register/{classId}/{termId}/{sessionId}', [AttendanceController::class, 'register'])->name('attendance.register');
+        Route::post('/attendance/save',                   [AttendanceController::class, 'save'])->name('attendance.save');
+        Route::post('/attendance/save-single',            [AttendanceController::class, 'saveSingle'])->name('attendance.save-single');
+        Route::post('/attendance/mark-all-present',       [AttendanceController::class, 'markAllPresent'])->name('attendance.mark-all-present');
+        Route::get('/attendance/student/{studentId}/{classId}/{termId}/{sessionId}', [AttendanceController::class, 'studentReport'])->name('attendance.student-report');
+        Route::get('/attendance/class-summary/{classId}/{termId}/{sessionId}', [AttendanceController::class, 'classSummary'])->name('attendance.class-summary');
+
+        // Admin
+        Route::get('/attendance/settings',                [AttendanceSettingController::class, 'index'])->name('attendance.settings');
+        Route::post('/attendance/settings',               [AttendanceSettingController::class, 'store'])->name('attendance.settings.store');
+        Route::delete('/attendance/settings/{id}',        [AttendanceSettingController::class, 'destroy'])->name('attendance.settings.destroy');
+        Route::get('/attendance/holidays',                [AttendanceSettingController::class, 'holidays'])->name('attendance.holidays');
+        Route::post('/attendance/holidays',               [AttendanceSettingController::class, 'storeHoliday'])->name('attendance.holidays.store');
+        Route::delete('/attendance/holidays/{id}',        [AttendanceSettingController::class, 'destroyHoliday'])->name('attendance.holidays.destroy');
+        Route::get('/attendance/school-report',           [AttendanceSettingController::class, 'schoolReport'])->name('attendance.school-report');
+
+
 });
