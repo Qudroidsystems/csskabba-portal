@@ -2652,7 +2652,7 @@
       @endif
 
       @if (Route::is('atttendance.*'))
-            @include('layouts.pages-assets.js.promotions-list-js')
+            @include('layouts.pages-assets.js.attendance-list-js')
       @endif
       </body>
 
