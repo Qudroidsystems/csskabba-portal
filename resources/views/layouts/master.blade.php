@@ -2651,9 +2651,9 @@
             @include('layouts.pages-assets.js.promotions-list-js')
       @endif
 
-      @if (Route::is('atttendance.*'))
+      {{-- @if (Route::is('atttendance.*'))
             @include('layouts.pages-assets.js.attendance-list-js')
-      @endif
+      @endif --}}
       </body>
 
       </html>
