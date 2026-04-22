@@ -789,27 +789,31 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
 // so the form POST works AND direct GET navigation also works.
 // =========================================================================
 
-Route::prefix('broadsheet')->name('broadsheet.')->group(function () {
+    Route::prefix('broadsheet')->name('broadsheet.')->group(function () {
 
-    // Index page
-    Route::get('/', [BroadsheetController::class, 'index'])->name('index');
+        // Index page
+        Route::get('/', [BroadsheetController::class, 'index'])->name('index');
 
-    // AJAX: column options
-    Route::post('/column-options',  [BroadsheetController::class, 'getColumnOptions'])->name('column-options');
+        // AJAX: column options
+        Route::post('/column-options',  [BroadsheetController::class, 'getColumnOptions'])->name('column-options');
 
-    // AJAX: student preview
-    Route::post('/student-preview', [BroadsheetController::class, 'getStudentPreview'])->name('student-preview');
+        // AJAX: student preview
+        Route::post('/student-preview', [BroadsheetController::class, 'getStudentPreview'])->name('student-preview');
 
-    // Web View — accept both GET and POST (form submits via POST, direct link works via GET)
-    Route::match(['GET', 'POST'], '/web-view', [BroadsheetController::class, 'webView'])->name('web-view');
+        // Web View — accept both GET and POST (form submits via POST, direct link works via GET)
+        Route::match(['GET', 'POST'], '/web-view', [BroadsheetController::class, 'webView'])->name('web-view');
 
-    // PDF export
-    Route::post('/export/pdf',   [BroadsheetController::class, 'exportPdf'])->name('export.pdf');
+        // PDF export
+        Route::post('/export/pdf',   [BroadsheetController::class, 'exportPdf'])->name('export.pdf');
 
-    // Excel export
-    Route::post('/export/excel', [BroadsheetController::class, 'exportExcel'])->name('export.excel');
-});
+        // Excel export
+        Route::post('/export/excel', [BroadsheetController::class, 'exportExcel'])->name('export.excel');
+    });
 
+    // All-classes broadsheet
+    Route::post('/broadsheet/all-classes/web',  [BroadsheetController::class, 'allClassesWebView'])->name('broadsheet.all-classes.web');
+    Route::post('/broadsheet/all-classes/pdf',  [BroadsheetController::class, 'allClassesExportPdf'])->name('broadsheet.all-classes.pdf');
+    Route::get('/broadsheet/class-groups',      [BroadsheetController::class, 'getClassGroups'])->name('broadsheet.class-groups');
 
     // =========================================================================
     // TIMETABLE MANAGEMENT ROUTES

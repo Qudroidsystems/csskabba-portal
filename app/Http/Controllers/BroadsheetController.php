@@ -122,12 +122,79 @@ class BroadsheetController extends Controller
     // GET STUDENT PREVIEW (AJAX)
     // =========================================================================
 
+    // public function getStudentPreview(Request $request): JsonResponse
+    // {
+    //     $schoolclassid = $request->input('schoolclassid');
+    //     $sessionid     = $request->input('sessionid');
+    //     $termid        = $request->input('termid');
+
+    //     if (!$schoolclassid || !$sessionid) {
+    //         return response()->json(['success' => false, 'message' => 'Missing parameters'], 400);
+    //     }
+
+    //     $students = Studentclass::where('schoolclassid', $schoolclassid)
+    //         ->where('sessionid', $sessionid)
+    //         ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
+    //         ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+    //         ->select([
+    //             'studentRegistration.id as id',
+    //             'studentRegistration.admissionNo as admissionno',
+    //             'studentRegistration.firstname',
+    //             'studentRegistration.lastname',
+    //             'studentRegistration.gender',
+    //             'studentpicture.picture',
+    //         ])
+    //         ->orderBy('studentRegistration.lastname')
+    //         ->orderBy('studentRegistration.firstname')
+    //         ->get();
+
+    //     $subjectCount = DB::table('subjectclass as sc')
+    //         ->join('subjectteacher as st', 'st.id', '=', 'sc.subjectteacherid')
+    //         ->where('sc.schoolclassid', $schoolclassid)
+    //         ->distinct()
+    //         ->count('sc.subjectid');
+
+    //     $assessmentCount = 0;
+    //     $schoolclass = Schoolclass::with('classcategories')->find($schoolclassid);
+    //     if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
+    //         $categoryIds     = $schoolclass->classcategories->pluck('id');
+    //         $assessmentCount = Assessment::whereIn('classcategory_id', $categoryIds)->count();
+    //     }
+
+    //     return response()->json([
+    //         'success'          => true,
+    //         'count'            => $students->count(),
+    //         'students'         => $students,
+    //         'subject_count'    => $subjectCount,
+    //         'assessment_count' => $assessmentCount,
+    //     ]);
+    // }
+
+
     public function getStudentPreview(Request $request): JsonResponse
     {
         $schoolclassid = $request->input('schoolclassid');
+        $classgroup    = $request->input('classgroup');  // NEW
         $sessionid     = $request->input('sessionid');
         $termid        = $request->input('termid');
 
+        // Handle combined all-classes preview
+        if ($classgroup && $sessionid) {
+            $matchingClasses = Schoolclass::where('schoolclass', $classgroup)->get();
+            $classIds        = $matchingClasses->pluck('id')->toArray();
+
+            $count = Studentclass::whereIn('schoolclassid', $classIds)
+                ->where('sessionid', $sessionid)
+                ->count();
+
+            return response()->json([
+                'success'    => true,
+                'count'      => $count,
+                'arms_count' => $matchingClasses->count(),
+            ]);
+        }
+
+        // Existing single-class logic below (unchanged)
         if (!$schoolclassid || !$sessionid) {
             return response()->json(['success' => false, 'message' => 'Missing parameters'], 400);
         }
@@ -169,7 +236,6 @@ class BroadsheetController extends Controller
             'assessment_count' => $assessmentCount,
         ]);
     }
-
     // =========================================================================
     // BUILD BROADSHEET DATA
     // =========================================================================
@@ -695,4 +761,402 @@ class BroadsheetController extends Controller
         if ($score >= 40) return 'E8';
         return 'F9';
     }
+
+
+    // =========================================================================
+// ALL CLASSES BROADSHEET (e.g. all JSS 1 arms combined)
+// =========================================================================
+
+public function allClassesWebView(Request $request): View|JsonResponse
+{
+    try {
+        $validated = $request->validate([
+            'classgroup'      => 'required|string',   // e.g. "JSS 1"
+            'sessionid'       => 'required|integer|exists:schoolsession,id',
+            'termid'          => 'required|integer',
+            'selectedColumns' => 'nullable|array',
+        ]);
+
+        $selectedColumns = $request->input('selectedColumns', []);
+
+        $data = $this->buildAllClassesBroadsheetData(
+            $validated['classgroup'],
+            (int) $validated['sessionid'],
+            (int) $validated['termid'],
+            $selectedColumns
+        );
+
+        $data['school_logo_base64'] = $this->getLogoBase64($data['schoolInfo']);
+        $data['pagetitle']          = 'All Classes Broadsheet – ' . $validated['classgroup'];
+        $data['is_combined']        = true;
+
+        return view('broadsheet.web', $data);
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return back()->withErrors($e->errors())->with('error', 'Invalid input.');
+    } catch (\Exception $e) {
+        Log::error('All-classes broadsheet error', ['error' => $e->getMessage()]);
+        return back()->with('error', 'Failed to generate broadsheet: ' . $e->getMessage());
+    }
+}
+
+public function allClassesExportPdf(Request $request)
+{
+    try {
+        ini_set('max_execution_time', 600);
+        ini_set('memory_limit', '1024M');
+
+        $validated = $request->validate([
+            'classgroup'      => 'required|string',
+            'sessionid'       => 'required|integer|exists:schoolsession,id',
+            'termid'          => 'required|integer',
+            'selectedColumns' => 'nullable|array',
+            'paper_size'      => 'nullable|in:A0,A1,A2,A3,A4',
+            'orientation'     => 'nullable|in:portrait,landscape',
+        ]);
+
+        $selectedColumns = $request->input('selectedColumns', []);
+        $orientation     = $request->input('orientation', 'landscape');
+        $paperSize       = $request->input('paper_size', 'A2');
+
+        $data = $this->buildAllClassesBroadsheetData(
+            $validated['classgroup'],
+            (int) $validated['sessionid'],
+            (int) $validated['termid'],
+            $selectedColumns
+        );
+
+        $data['school_logo_base64'] = $this->getLogoBase64($data['schoolInfo']);
+        $data['is_combined']        = true;
+
+        $subjectCount    = count($data['subjects'] ?? []);
+        $assessmentCount = isset($data['assessments']) ? $data['assessments']->count() : 0;
+
+        $perSubjCols = 0;
+        foreach ($data['assessments'] ?? [] as $a) {
+            if (empty($selectedColumns) || in_array('assessment_' . $a->id, $selectedColumns)) $perSubjCols++;
+        }
+        foreach (['total','bf','cum','grade','position','class_average','remark'] as $col) {
+            if (empty($selectedColumns) || in_array($col, $selectedColumns)) $perSubjCols++;
+        }
+
+        $frozenWidth  = 200;
+        $marginPt     = 57;
+        $neededWidth  = $frozenWidth + ($subjectCount * max(1, ceil($perSubjCols)) * 22) + $marginPt;
+
+        $paperHeights  = ['A0'=>2384,'A1'=>1684,'A2'=>1190,'A3'=>842,'A4'=>595];
+        $standardWidths= ['A0'=>3370,'A1'=>2384,'A2'=>1684,'A3'=>1190,'A4'=>842];
+
+        $heightPt = $paperHeights[$paperSize]   ?? 1190;
+        $widthPt  = max($standardWidths[$paperSize] ?? 1684, $neededWidth + 100);
+
+        $customPaper = [0, 0, $widthPt, $heightPt];
+
+        $pdf = Pdf::loadView('broadsheet.pdf', $data)
+            ->setPaper($customPaper, $orientation)
+            ->setOptions([
+                'isHtml5ParserEnabled'    => true,
+                'isRemoteEnabled'         => true,
+                'isFontSubsettingEnabled' => true,
+                'defaultFont'             => 'DejaVu Sans',
+                'dpi'                     => 96,
+                'enable_css_float'        => false,
+                'enable_javascript'       => false,
+            ]);
+
+        $filename = 'Broadsheet_'
+            . preg_replace('/[^A-Za-z0-9_\-]/', '_', trim($validated['classgroup'])) . '_'
+            . preg_replace('/[^A-Za-z0-9_\-]/', '_', $data['schoolsession']->session ?? '') . '_'
+            . preg_replace('/[^A-Za-z0-9_\-]/', '_', $data['schoolterm']->term ?? '') . '.pdf';
+
+        return $pdf->stream($filename);
+
+    } catch (\Exception $e) {
+        Log::error('All-classes PDF error', ['error' => $e->getMessage()]);
+        return back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
+    }
+}
+
+// =========================================================================
+// BUILD ALL-CLASSES BROADSHEET DATA
+// =========================================================================
+
+private function buildAllClassesBroadsheetData(
+    string $classgroup,
+    int $sessionid,
+    int $termid,
+    array $selectedColumns = []
+): array {
+    $schoolInfo = SchoolInformation::getActiveSchool() ?? new \stdClass();
+    $schoolsession = Schoolsession::find($sessionid);
+    $schoolterm    = Schoolterm::find($termid);
+
+    // Find all classes matching the group name (e.g. all "JSS 1" arms)
+    $matchingClasses = Schoolclass::with('classcategories')
+        ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+        ->select(['schoolclass.*', 'schoolarm.arm as arm_name'])
+        ->where('schoolclass.schoolclass', $classgroup)
+        ->orderBy('schoolarm.arm')
+        ->get();
+
+    if ($matchingClasses->isEmpty()) {
+        return [
+            'schoolInfo'      => $schoolInfo,
+            'schoolclass'     => (object)['schoolclass' => $classgroup, 'arm_name' => '(All Arms)'],
+            'schoolsession'   => $schoolsession,
+            'schoolterm'      => $schoolterm,
+            'assessments'     => collect(),
+            'subjects'        => [],
+            'studentRows'     => [],
+            'subjectStats'    => [],
+            'selectedColumns' => $selectedColumns,
+            'totalStudents'   => 0,
+            'generatedAt'     => now()->format('d M Y, H:i'),
+            'classgroup'      => $classgroup,
+            'arm_labels'      => [],
+        ];
+    }
+
+    // Get assessments from the first class category
+    $assessments = collect();
+    foreach ($matchingClasses as $cls) {
+        if ($cls->classcategories->isNotEmpty()) {
+            $categoryIds = $cls->classcategories->pluck('id');
+            $assessments = Assessment::whereIn('classcategory_id', $categoryIds)->orderBy('id')->get();
+            break;
+        }
+    }
+
+    // Collect all class IDs
+    $classIds = $matchingClasses->pluck('id')->toArray();
+
+    // Build subjects map across all classes
+    $subjectsMap = [];
+    $subjectClasses = DB::table('subjectclass as sc')
+        ->join('subjectteacher as st', 'st.id', '=', 'sc.subjectteacherid')
+        ->join('subject', 'subject.id', '=', 'sc.subjectid')
+        ->whereIn('sc.schoolclassid', $classIds)
+        ->select(['sc.subjectid', 'subject.subject as subject_name', 'subject.subject_code'])
+        ->distinct()
+        ->get();
+
+    foreach ($subjectClasses as $sc) {
+        $subjectsMap[$sc->subjectid] = [
+            'subject_id'   => $sc->subjectid,
+            'subject_name' => $sc->subject_name,
+            'subject_code' => $sc->subject_code ?? '',
+        ];
+    }
+
+    // Get all student IDs across all classes
+    $studentClassRecords = Studentclass::whereIn('schoolclassid', $classIds)
+        ->where('sessionid', $sessionid)
+        ->get(['studentId', 'schoolclassid']);
+
+    $studentClassMap = $studentClassRecords->pluck('schoolclassid', 'studentId')->toArray();
+    $allStudentIds   = $studentClassRecords->pluck('studentId')->toArray();
+
+    if (empty($allStudentIds)) {
+        return [
+            'schoolInfo'      => $schoolInfo,
+            'schoolclass'     => (object)['schoolclass' => $classgroup, 'arm_name' => '(All Arms)'],
+            'schoolsession'   => $schoolsession,
+            'schoolterm'      => $schoolterm,
+            'assessments'     => $assessments,
+            'subjects'        => $subjectsMap,
+            'studentRows'     => [],
+            'subjectStats'    => [],
+            'selectedColumns' => $selectedColumns,
+            'totalStudents'   => 0,
+            'generatedAt'     => now()->format('d M Y, H:i'),
+            'classgroup'      => $classgroup,
+            'arm_labels'      => $matchingClasses->pluck('arm_name', 'id')->toArray(),
+        ];
+    }
+
+    // Fetch broadsheet records for all students across all classes
+    $broadsheets = Broadsheets::whereIn('broadsheet_records.student_id', $allStudentIds)
+        ->where('broadsheets.term_id', $termid)
+        ->where('broadsheet_records.session_id', $sessionid)
+        ->whereIn('broadsheet_records.schoolclass_id', $classIds)
+        ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
+        ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
+        ->join('studentRegistration', 'studentRegistration.id', '=', 'broadsheet_records.student_id')
+        ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+        ->select([
+            'broadsheets.id as broadsheet_id',
+            'broadsheet_records.student_id',
+            'broadsheet_records.subject_id',
+            'broadsheet_records.schoolclass_id',
+            'subject.subject as subject_name',
+            'subject.subject_code',
+            'studentRegistration.admissionNo as admissionno',
+            'studentRegistration.firstname',
+            'studentRegistration.lastname',
+            'studentRegistration.gender',
+            'studentpicture.picture',
+            'broadsheets.total',
+            'broadsheets.bf',
+            'broadsheets.cum',
+            'broadsheets.grade',
+            'broadsheets.remark',
+            'broadsheets.subject_position_class as position',
+            'broadsheets.avg as class_average',
+        ])
+        ->orderBy('studentRegistration.lastname')
+        ->orderBy('studentRegistration.firstname')
+        ->get();
+
+    $broadsheetIds       = $broadsheets->pluck('broadsheet_id')->unique()->toArray();
+    $assessmentScoresAll = BroadsheetAssessmentScore::whereIn('broadsheet_id', $broadsheetIds)
+        ->get()->groupBy('broadsheet_id');
+
+    $studentSubjectMap = [];
+    foreach ($broadsheets as $row) {
+        $sid = $row->student_id;
+        $sub = $row->subject_id;
+
+        if (!isset($subjectsMap[$sub])) {
+            $subjectsMap[$sub] = [
+                'subject_id'   => $sub,
+                'subject_name' => $row->subject_name,
+                'subject_code' => $row->subject_code ?? '',
+            ];
+        }
+
+        $assessmentScoreRow = $assessmentScoresAll->get($row->broadsheet_id, collect());
+        $assessmentData     = [];
+        foreach ($assessments as $a) {
+            $score = $assessmentScoreRow->firstWhere('assessment_id', $a->id);
+            $assessmentData[$a->id] = $score ? (float) $score->score : 0;
+        }
+
+        $studentSubjectMap[$sid][$sub] = [
+            'total'         => (float) ($row->total ?? 0),
+            'bf'            => (float) ($row->bf ?? 0),
+            'cum'           => (float) ($row->cum ?? 0),
+            'grade'         => $row->grade ?? '-',
+            'remark'        => $row->remark ?? '-',
+            'position'      => $row->position ?? '-',
+            'class_average' => (float) ($row->class_average ?? 0),
+            'assessments'   => $assessmentData,
+        ];
+    }
+
+    // Build student info — sorted by lastname ASC (alphabetical across all arms)
+    $studentInfo = Studentclass::whereIn('schoolclassid', $classIds)
+        ->where('sessionid', $sessionid)
+        ->join('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
+        ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+        ->select([
+            'studentRegistration.id as id',
+            'studentRegistration.admissionNo as admissionno',
+            'studentRegistration.firstname',
+            'studentRegistration.lastname',
+            'studentRegistration.gender',
+            'studentRegistration.dateofbirth',
+            'studentpicture.picture',
+            'studentclass.schoolclassid',
+        ])
+        ->orderBy('studentRegistration.lastname')   // ascending alphabetical
+        ->orderBy('studentRegistration.firstname')
+        ->get();
+
+    // Build the arm label lookup
+    $armLabels = $matchingClasses->pluck('arm_name', 'id')->toArray();
+
+    $studentRows = [];
+    foreach ($studentInfo as $stu) {
+        $sid       = $stu->id;
+        $subScores = $studentSubjectMap[$sid] ?? [];
+
+        $cumValues   = collect($subScores)->pluck('cum')->filter(fn ($v) => $v > 0);
+        $totalCum    = $cumValues->sum();
+        $numSubjects = $cumValues->count();
+
+        $totalValues = collect($subScores)->pluck('total')->filter(fn ($v) => $v > 0);
+        $gradePoints = $totalValues->map(fn ($s) => $this->getGradePoint($s));
+
+        $gpa      = $gradePoints->count() > 0 ? round($gradePoints->avg(), 2) : 0.0;
+        $cgpa     = $gpa;
+        $gpaGrade = $this->getGpaGrade($gpa);
+
+        // Determine which arm/class this student belongs to
+        $studentClassId = $studentClassMap[$sid] ?? null;
+        $armLabel       = $studentClassId ? ($armLabels[$studentClassId] ?? '') : '';
+
+        $studentRows[$sid] = [
+            'id'                 => $sid,
+            'admissionno'        => $stu->admissionno,
+            'firstname'          => $stu->firstname,
+            'lastname'           => $stu->lastname,
+            'gender'             => $stu->gender,
+            'dateofbirth'        => $stu->dateofbirth,
+            'picture'            => $stu->picture,
+            'arm'                => $armLabel,         // e.g. "A", "B", "C"
+            'schoolclassid'      => $studentClassId,
+            'subjects'           => $subScores,
+            'total_cum'          => round($totalCum, 1),
+            'num_subjects'       => $numSubjects,
+            'class_average'      => $numSubjects > 0 ? round($totalCum / $numSubjects, 1) : 0,
+            'gpa'                => $gpa,
+            'cgpa'               => $cgpa,
+            'gpa_grade'          => $gpaGrade,
+            'total_grade_points' => round($gradePoints->sum(), 1),
+        ];
+    }
+
+    // Subject stats across all classes combined
+    $subjectStats = [];
+    foreach ($subjectsMap as $sub => $subInfo) {
+        $allTotals = collect($studentRows)
+            ->pluck("subjects.{$sub}.total")
+            ->filter(fn ($v) => $v !== null && $v > 0);
+
+        $subjectStats[$sub] = [
+            'avg'     => $allTotals->count() > 0 ? round($allTotals->avg(), 1) : 0,
+            'highest' => $allTotals->count() > 0 ? $allTotals->max() : 0,
+            'lowest'  => $allTotals->count() > 0 ? $allTotals->min() : 0,
+            'passed'  => $allTotals->filter(fn ($v) => $v >= 40)->count(),
+            'failed'  => $allTotals->filter(fn ($v) => $v < 40)->count(),
+        ];
+    }
+
+    uasort($subjectsMap, fn ($a, $b) => strcmp($a['subject_name'], $b['subject_name']));
+
+    // A virtual "combined class" object for the header
+    $combinedClass = (object)[
+        'schoolclass' => $classgroup,
+        'arm_name'    => '(' . $matchingClasses->pluck('arm_name')->filter()->implode(', ') . ')',
+        'id'          => null,
+    ];
+
+    return [
+        'schoolInfo'      => $schoolInfo,
+        'schoolclass'     => $combinedClass,
+        'schoolsession'   => $schoolsession,
+        'schoolterm'      => $schoolterm,
+        'assessments'     => $assessments,
+        'subjects'        => $subjectsMap,
+        'studentRows'     => array_values($studentRows),
+        'subjectStats'    => $subjectStats,
+        'selectedColumns' => $selectedColumns,
+        'totalStudents'   => count($studentRows),
+        'generatedAt'     => now()->format('d M Y, H:i'),
+        'classgroup'      => $classgroup,
+        'arm_labels'      => $armLabels,
+        'is_combined'     => true,
+    ];
+}
+
+// AJAX: Get class groups for the "All Classes" dropdown
+public function getClassGroups(): JsonResponse
+{
+    $groups = Schoolclass::select('schoolclass')
+        ->distinct()
+        ->orderBy('schoolclass')
+        ->pluck('schoolclass');
+
+    return response()->json(['success' => true, 'groups' => $groups]);
+}
 }
