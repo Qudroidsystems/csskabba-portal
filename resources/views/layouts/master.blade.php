@@ -298,6 +298,10 @@
     @if (Route::is('promotions.*'))
         @include('layouts.pages-assets.css.promotions-list-css')
     @endif
+
+    @if (Route::is('attendance.*'))
+        @include('layouts.pages-assets.css.attendance-list-css')
+    @endif
 </head>
 
 <body>
@@ -2644,6 +2648,10 @@
             @include('layouts.pages-assets.js.rooms-list-js')
       @endif
        @if (Route::is('promotions.*'))
+            @include('layouts.pages-assets.js.promotions-list-js')
+      @endif
+
+      @if (Route::is('atttendance.*'))
             @include('layouts.pages-assets.js.promotions-list-js')
       @endif
       </body>
