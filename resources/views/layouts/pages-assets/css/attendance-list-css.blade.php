@@ -1,4 +1,4 @@
-{{-- <!-- Sweet Alert css-->
+<!-- Sweet Alert css-->
 <link href="{{ asset('theme/layouts/assets/libs/sweetalert2/sweetalert2.min.css') }}" rel="stylesheet" type="text/css">
 
 <!-- dropzone css -->
@@ -13,4 +13,4 @@
 <!-- App Css-->
 <link href="{{ asset('theme/layouts/assets/css/app.min.css')}}" rel="stylesheet" type="text/css">
 <!-- custom Css-->
-<link href="{{ asset('theme/layouts/assets/css/custom.min.css')}}" rel="stylesheet" type="text/css"> --}}
+<link href="{{ asset('theme/layouts/assets/css/custom.min.css')}}" rel="stylesheet" type="text/css">
