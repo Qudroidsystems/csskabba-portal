@@ -45,6 +45,32 @@ class AttendanceSettingController extends Controller
         return view('attendance.admin.settings', compact('settings', 'terms', 'sessions', 'holidays', 'pagetitle'));
     }
 
+
+    public function update(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'term_id'         => 'required|exists:schoolterm,id',
+            'session_id'      => 'required|exists:schoolsession,id',
+            'resumption_date' => 'required|date',
+            'vacation_date'   => 'required|date|after:resumption_date',
+            'track_morning'   => 'boolean',
+            'track_afternoon' => 'boolean',
+        ]);
+
+        $validated['track_morning']   = $request->boolean('track_morning', true);
+        $validated['track_afternoon'] = $request->boolean('track_afternoon', false);
+
+        try {
+            $setting = AttendanceTermSetting::findOrFail($id);
+            $setting->update($validated);
+
+            return response()->json(['success' => true, 'message' => 'Term setting updated successfully.', 'data' => $setting]);
+        } catch (\Exception $e) {
+            Log::error('AttendanceSetting update error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
     public function store(Request $request)
     {
         $validated = $request->validate([

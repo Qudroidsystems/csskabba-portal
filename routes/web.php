@@ -956,6 +956,8 @@ Route::prefix('broadsheet')->name('broadsheet.')->group(function () {
 
         // Admin
         Route::get('/attendance/settings',                [AttendanceSettingController::class, 'index'])->name('attendance.settings');
+        // Add this route in your routes file
+        Route::put('/attendance/settings/{id}', [AttendanceSettingController::class, 'update'])->name('attendance.settings.update');
         Route::post('/attendance/settings',               [AttendanceSettingController::class, 'store'])->name('attendance.settings.store');
         Route::delete('/attendance/settings/{id}',        [AttendanceSettingController::class, 'destroy'])->name('attendance.settings.destroy');
         Route::get('/attendance/holidays',                [AttendanceSettingController::class, 'holidays'])->name('attendance.holidays');

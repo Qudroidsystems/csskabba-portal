@@ -19,7 +19,6 @@
                 </div>
             </div>
 
-            {{-- Tabs --}}
             <div class="row">
                 <div class="col-12">
                     <div class="card">
@@ -52,18 +51,25 @@
 
                                     @can('Create attendance-settings')
                                     <div class="card border mb-4">
-                                        <div class="card-header bg-light">
+                                        <div class="card-header bg-light d-flex align-items-center justify-content-between">
                                             <h6 class="mb-0 fw-semibold">
-                                                <i class="ri-add-circle-line me-2 text-primary"></i>Add / Update Term Calendar
+                                                <i class="ri-add-circle-line me-2 text-primary"></i>
+                                                <span id="formTitle">Add / Update Term Calendar</span>
                                             </h6>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" id="resetFormBtn" style="display:none;" onclick="resetSettingForm()">
+                                                <i class="ri-close-line me-1"></i>Cancel Edit
+                                            </button>
                                         </div>
                                         <div class="card-body">
                                             <form id="settingForm">
                                                 @csrf
+                                                {{-- Hidden field to hold the ID when editing --}}
+                                                <input type="hidden" id="settingId" name="setting_id" value="">
+
                                                 <div class="row g-3">
                                                     <div class="col-md-3">
                                                         <label class="form-label fw-semibold">Term <span class="text-danger">*</span></label>
-                                                        <select name="term_id" class="form-select" required>
+                                                        <select name="term_id" id="termId" class="form-select" required>
                                                             <option value="">Select Term</option>
                                                             @foreach($terms as $t)
                                                                 <option value="{{ $t->id }}">{{ $t->term }}</option>
@@ -72,7 +78,7 @@
                                                     </div>
                                                     <div class="col-md-3">
                                                         <label class="form-label fw-semibold">Session <span class="text-danger">*</span></label>
-                                                        <select name="session_id" class="form-select" required>
+                                                        <select name="session_id" id="sessionId" class="form-select" required>
                                                             <option value="">Select Session</option>
                                                             @foreach($sessions as $s)
                                                                 <option value="{{ $s->id }}">{{ $s->session }}</option>
@@ -81,11 +87,11 @@
                                                     </div>
                                                     <div class="col-md-3">
                                                         <label class="form-label fw-semibold">Resumption Date <span class="text-danger">*</span></label>
-                                                        <input type="date" name="resumption_date" class="form-control" required>
+                                                        <input type="date" name="resumption_date" id="resumptionDate" class="form-control" required>
                                                     </div>
                                                     <div class="col-md-3">
                                                         <label class="form-label fw-semibold">Vacation Date <span class="text-danger">*</span></label>
-                                                        <input type="date" name="vacation_date" class="form-control" required>
+                                                        <input type="date" name="vacation_date" id="vacationDate" class="form-control" required>
                                                     </div>
                                                     <div class="col-md-6">
                                                         <label class="form-label fw-semibold">Periods to Track</label>
@@ -101,9 +107,13 @@
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div class="mt-3">
-                                                    <button type="submit" class="btn btn-primary">
-                                                        <i class="ri-save-line me-1"></i>Save Setting
+                                                <div class="mt-3 d-flex gap-2">
+                                                    <button type="submit" class="btn btn-primary" id="saveSettingBtn">
+                                                        <i class="ri-save-line me-1"></i>
+                                                        <span id="saveBtnText">Save Setting</span>
+                                                    </button>
+                                                    <button type="button" class="btn btn-outline-secondary" id="cancelEditBtn" style="display:none;" onclick="resetSettingForm()">
+                                                        Cancel
                                                     </button>
                                                 </div>
                                             </form>
@@ -130,7 +140,7 @@
                                                             <th class="text-white text-center">Morning</th>
                                                             <th class="text-white text-center">Afternoon</th>
                                                             <th class="text-white text-center">School Days</th>
-                                                            @can('Delete attendance-settings')<th class="text-white"></th>@endcan
+                                                            <th class="text-white"></th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
@@ -157,13 +167,30 @@
                                                         <td class="text-center">
                                                             <span class="badge bg-primary-subtle text-primary fw-bold fs-6">{{ $s->totalSchoolDays() }}</span>
                                                         </td>
-                                                        @can('Delete attendance-settings')
                                                         <td>
-                                                            <button class="btn btn-sm btn-outline-danger" onclick="deleteSetting({{ $s->id }})">
-                                                                <i class="ri-delete-bin-line"></i>
-                                                            </button>
+                                                            <div class="d-flex gap-1">
+                                                                @can('Create attendance-settings')
+                                                                <button class="btn btn-sm btn-outline-primary"
+                                                                    onclick="editSetting(
+                                                                        {{ $s->id }},
+                                                                        {{ $s->term_id }},
+                                                                        {{ $s->session_id }},
+                                                                        '{{ $s->resumption_date->toDateString() }}',
+                                                                        '{{ $s->vacation_date->toDateString() }}',
+                                                                        {{ $s->track_morning ? 'true' : 'false' }},
+                                                                        {{ $s->track_afternoon ? 'true' : 'false' }}
+                                                                    )"
+                                                                    title="Edit">
+                                                                    <i class="ri-edit-line"></i>
+                                                                </button>
+                                                                @endcan
+                                                                @can('Delete attendance-settings')
+                                                                <button class="btn btn-sm btn-outline-danger" onclick="deleteSetting({{ $s->id }})" title="Delete">
+                                                                    <i class="ri-delete-bin-line"></i>
+                                                                </button>
+                                                                @endcan
+                                                            </div>
                                                         </td>
-                                                        @endcan
                                                     </tr>
                                                     @empty
                                                     <tr>
@@ -333,13 +360,63 @@ function showToast(msg, type = 'success') {
     setTimeout(() => document.getElementById(id)?.remove(), 3500);
 }
 
+// ── Edit Setting ──────────────────────────────────────────────────────────────
+function editSetting(id, termId, sessionId, resumption, vacation, morning, afternoon) {
+    // Populate form fields
+    document.getElementById('settingId').value       = id;
+    document.getElementById('termId').value          = termId;
+    document.getElementById('sessionId').value       = sessionId;
+    document.getElementById('resumptionDate').value  = resumption;
+    document.getElementById('vacationDate').value    = vacation;
+    document.getElementById('trackMorning').checked  = morning;
+    document.getElementById('trackAfternoon').checked= afternoon;
+
+    // Update UI to show edit mode
+    document.getElementById('formTitle').textContent    = 'Edit Term Calendar';
+    document.getElementById('saveBtnText').textContent  = 'Update Setting';
+    document.getElementById('resetFormBtn').style.display  = 'inline-block';
+    document.getElementById('cancelEditBtn').style.display = 'inline-block';
+
+    // Scroll to form
+    document.getElementById('settingForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+// ── Reset / Cancel Edit ───────────────────────────────────────────────────────
+function resetSettingForm() {
+    document.getElementById('settingForm').reset();
+    document.getElementById('settingId').value             = '';
+    document.getElementById('formTitle').textContent       = 'Add / Update Term Calendar';
+    document.getElementById('saveBtnText').textContent     = 'Save Setting';
+    document.getElementById('resetFormBtn').style.display  = 'none';
+    document.getElementById('cancelEditBtn').style.display = 'none';
+    document.getElementById('trackMorning').checked        = true;
+    document.getElementById('trackAfternoon').checked      = false;
+}
+
 @can('Create attendance-settings')
 document.getElementById('settingForm')?.addEventListener('submit', async function(e) {
     e.preventDefault();
     const fd = new FormData(this);
     fd.set('track_morning',   document.getElementById('trackMorning').checked   ? '1' : '0');
     fd.set('track_afternoon', document.getElementById('trackAfternoon').checked ? '1' : '0');
-    const r = await fetch('{{ route('attendance.settings.store') }}', { method:'POST', headers:{'X-CSRF-TOKEN':csrfToken()}, body:fd });
+
+    const settingId = document.getElementById('settingId').value;
+
+    // If editing, send PUT to update route; if new, send POST to store route
+    const url    = settingId
+        ? `/attendance/settings/${settingId}`
+        : '{{ route('attendance.settings.store') }}';
+    const method = settingId ? 'POST' : 'POST'; // Laravel needs POST + _method for PUT
+
+    if (settingId) {
+        fd.set('_method', 'PUT');
+    }
+
+    const r = await fetch(url, {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': csrfToken() },
+        body: fd
+    });
     const d = await r.json();
     showToast(d.message, d.success ? 'success' : 'danger');
     if (d.success) setTimeout(() => location.reload(), 1000);
