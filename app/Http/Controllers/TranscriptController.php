@@ -298,12 +298,12 @@ class TranscriptController extends Controller
             ->keyBy(fn ($r) => $r->session . '_' . $r->term);
 
         // ── Principal's comments ──────────────────────────────────────────────
-        $comments = DB::table('studentpersonalityprofile')
-            ->join('schoolterm',    'schoolterm.id',    '=', 'studentpersonalityprofile.termid')
-            ->join('schoolsession', 'schoolsession.id', '=', 'studentpersonalityprofile.sessionid')
-            ->where('studentpersonalityprofile.studentid', $studentId)
+        $comments = DB::table('studentpersonalityprofiles')
+            ->join('schoolterm',    'schoolterm.id',    '=', 'studentpersonalityprofiles.termid')
+            ->join('schoolsession', 'schoolsession.id', '=', 'studentpersonalityprofiles.sessionid')
+            ->where('studentpersonalityprofiles.studentid', $studentId)
             ->select([
-                'studentpersonalityprofile.principalscomment',
+                'studentpersonalityprofiles.principalscomment',
                 'schoolterm.term',
                 'schoolsession.session',
             ])
