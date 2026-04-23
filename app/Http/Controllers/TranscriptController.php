@@ -11,12 +11,12 @@ use App\Models\Studentclass;
 use App\Models\PromotionStatus;
 use App\Models\Studentpersonalityprofile;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 
 class TranscriptController extends Controller
 {
@@ -31,10 +31,10 @@ class TranscriptController extends Controller
 
     public function index(): View
     {
-        $pagetitle    = 'Student Transcript Generator';
-        $sessions     = Schoolsession::orderByDesc('id')->get();
-        $terms        = Schoolterm::all();
-        $schoolclasses= Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+        $pagetitle     = 'Student Transcript Generator';
+        $sessions      = Schoolsession::orderByDesc('id')->get();
+        $terms         = Schoolterm::all();
+        $schoolclasses = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
             ->select(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm'])
             ->orderBy('schoolclass.schoolclass')
             ->get();
@@ -48,9 +48,9 @@ class TranscriptController extends Controller
 
     public function searchStudents(Request $request): JsonResponse
     {
-        $q          = $request->input('q', '');
-        $sessionId  = $request->input('session_id');
-        $classId    = $request->input('class_id');
+        $q         = $request->input('q', '');
+        $sessionId = $request->input('session_id');
+        $classId   = $request->input('class_id');
 
         $query = DB::table('studentRegistration as sr')
             ->leftJoin('studentpicture as sp', 'sp.studentid', '=', 'sr.id')
@@ -71,7 +71,7 @@ class TranscriptController extends Controller
                 'sess.session',
             ])
             ->where(function ($inner) use ($q) {
-                $inner->where('sr.lastname',    'like', "%{$q}%")
+                $inner->where('sr.lastname',     'like', "%{$q}%")
                       ->orWhere('sr.firstname',  'like', "%{$q}%")
                       ->orWhere('sr.admissionNo','like', "%{$q}%");
             });
@@ -120,7 +120,7 @@ class TranscriptController extends Controller
     // EXPORT PDF
     // =========================================================================
 
-    public function exportPdf(Request $request)
+    public function exportPdf(Request $request): mixed
     {
         try {
             ini_set('max_execution_time', 300);
@@ -206,10 +206,10 @@ class TranscriptController extends Controller
 
         // ── All class enrolments for this student ─────────────────────────────
         $enrolmentQuery = Studentclass::where('studentId', $studentId)
-            ->join('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
-            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->join('schoolclass',   'schoolclass.id',   '=', 'studentclass.schoolclassid')
+            ->leftJoin('schoolarm', 'schoolarm.id',     '=', 'schoolclass.arm')
             ->join('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
-            ->join('schoolterm', 'schoolterm.id', '=', 'studentclass.termid')
+            ->join('schoolterm',    'schoolterm.id',    '=', 'studentclass.termid')
             ->select([
                 'studentclass.schoolclassid',
                 'studentclass.termid',
@@ -235,16 +235,17 @@ class TranscriptController extends Controller
             ->get();
 
         // ── Pull all broadsheet records for this student ───────────────────────
-        $bsQuery = Broadsheets::where('broadsheet_records.student_id', $studentId)
-            ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
-            ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
-            ->join('schoolterm', 'schoolterm.id', '=', 'broadsheets.term_id')
-            ->join('schoolsession', 'schoolsession.id', '=', 'broadsheet_records.session_id')
-            ->join('schoolclass', 'schoolclass.id', '=', 'broadsheet_records.schoolclass_id')
-            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+        $bsQuery = DB::table('broadsheets')
+            ->join('broadsheet_records', 'broadsheet_records.id',        '=', 'broadsheets.broadsheet_record_id')
+            ->join('subject',            'subject.id',                   '=', 'broadsheet_records.subject_id')
+            ->join('schoolterm',         'schoolterm.id',                '=', 'broadsheets.term_id')
+            ->join('schoolsession',      'schoolsession.id',             '=', 'broadsheet_records.session_id')
+            ->join('schoolclass',        'schoolclass.id',               '=', 'broadsheet_records.schoolclass_id')
+            ->leftJoin('schoolarm',      'schoolarm.id',                 '=', 'schoolclass.arm')
+            ->where('broadsheet_records.student_id', $studentId)
             ->select([
                 'broadsheet_records.session_id',
-                'broadsheet_records.term_id as term_id',
+                'broadsheets.term_id',
                 'broadsheet_records.schoolclass_id',
                 'subject.subject as subject_name',
                 'subject.subject_code',
@@ -276,11 +277,12 @@ class TranscriptController extends Controller
             ->get();
 
         // ── Promotion history ──────────────────────────────────────────────────
-        $promotions = PromotionStatus::where('studentId', $studentId)
+        $promotionQuery = DB::table('promotionStatus')
             ->join('schoolterm',    'schoolterm.id',    '=', 'promotionStatus.termid')
             ->join('schoolsession', 'schoolsession.id', '=', 'promotionStatus.sessionid')
             ->join('schoolclass',   'schoolclass.id',   '=', 'promotionStatus.schoolclassid')
             ->leftJoin('schoolarm', 'schoolarm.id',     '=', 'schoolclass.arm')
+            ->where('promotionStatus.studentId', $studentId)
             ->select([
                 'promotionStatus.promotionStatus',
                 'promotionStatus.classstatus',
@@ -296,9 +298,10 @@ class TranscriptController extends Controller
             ->keyBy(fn ($r) => $r->session . '_' . $r->term);
 
         // ── Principal's comments ──────────────────────────────────────────────
-        $comments = Studentpersonalityprofile::where('studentid', $studentId)
+        $comments = DB::table('studentpersonalityprofile')
             ->join('schoolterm',    'schoolterm.id',    '=', 'studentpersonalityprofile.termid')
             ->join('schoolsession', 'schoolsession.id', '=', 'studentpersonalityprofile.sessionid')
+            ->where('studentpersonalityprofile.studentid', $studentId)
             ->select([
                 'studentpersonalityprofile.principalscomment',
                 'schoolterm.term',
@@ -327,10 +330,10 @@ class TranscriptController extends Controller
                 fn ($r) => $r->session === $sessionKey && $r->term === $termKey
             );
 
-            $subjects    = [];
-            $totalScore  = 0;
-            $totalCum    = 0;
-            $subjectCount= 0;
+            $subjects     = [];
+            $totalScore   = 0;
+            $totalCum     = 0;
+            $subjectCount = 0;
 
             foreach ($termRecords as $rec) {
                 $subjects[] = [
@@ -349,51 +352,51 @@ class TranscriptController extends Controller
                 $subjectCount++;
             }
 
-            $termAvg    = $subjectCount > 0 ? round($totalScore / $subjectCount, 1) : 0;
-            $cumAvg     = $subjectCount > 0 ? round($totalCum   / $subjectCount, 1) : 0;
-            $promotion  = $promotions[$mapKey]  ?? null;
-            $comment    = $comments[$mapKey]    ?? null;
+            $termAvg   = $subjectCount > 0 ? round($totalScore / $subjectCount, 1) : 0;
+            $cumAvg    = $subjectCount > 0 ? round($totalCum   / $subjectCount, 1) : 0;
+            $promotion = $promotionQuery[$mapKey] ?? null;
+            $comment   = $comments[$mapKey]       ?? null;
 
             $transcriptData[$sessionKey]['terms'][$termKey] = [
-                'term'            => $termKey,
-                'term_id'         => $enrol->term_id_val,
-                'class'           => $enrol->schoolclass . ' ' . ($enrol->arm ?? ''),
-                'subjects'        => $subjects,
-                'subject_count'   => $subjectCount,
-                'total_score'     => round($totalScore, 1),
-                'average'         => $termAvg,
-                'cum_average'     => $cumAvg,
-                'promotion'       => $promotion?->promotionStatus ?? null,
-                'class_position'  => $promotion?->position ?? null,
-                'comment'         => $comment?->principalscomment ?? null,
+                'term'           => $termKey,
+                'term_id'        => $enrol->term_id_val,
+                'class'          => $enrol->schoolclass . ' ' . ($enrol->arm ?? ''),
+                'subjects'       => $subjects,
+                'subject_count'  => $subjectCount,
+                'total_score'    => round($totalScore, 1),
+                'average'        => $termAvg,
+                'cum_average'    => $cumAvg,
+                'promotion'      => $promotion?->promotionStatus ?? null,
+                'class_position' => $promotion?->position        ?? null,
+                'comment'        => $comment?->principalscomment ?? null,
             ];
         }
 
-        // ── Overall GPA across all records ────────────────────────────────────
-        $allTotals = $allRecords->pluck('total')->filter(fn ($v) => $v > 0);
-        $overallGpa= $allTotals->count() > 0
+        // ── Overall GPA across all records ─────────────────────────────────────
+        $allTotals  = $allRecords->pluck('total')->filter(fn ($v) => $v > 0);
+        $overallGpa = $allTotals->count() > 0
             ? round($allTotals->map(fn ($s) => $this->getGradePoint((float) $s))->avg(), 2)
             : 0.0;
 
-        // ── Grade distribution across all records ─────────────────────────────
+        // ── Grade distribution ─────────────────────────────────────────────────
         $gradeDistribution = $allRecords
             ->groupBy('grade')
             ->map(fn ($g) => $g->count())
             ->sortKeys();
 
         return [
-            'schoolInfo'         => $schoolInfo,
-            'student'            => $student,
-            'transcriptData'     => $transcriptData,
-            'allRecords'         => $allRecords,
-            'overallGpa'         => $overallGpa,
-            'overallGpaGrade'    => $this->getGpaGrade($overallGpa),
-            'gradeDistribution'  => $gradeDistribution,
-            'type'               => $type,
-            'sessionId'          => $sessionId,
-            'termId'             => $termId,
-            'totalSubjects'      => $allRecords->pluck('subject_name')->unique()->count(),
-            'totalSessions'      => collect($transcriptData)->count(),
+            'schoolInfo'        => $schoolInfo,
+            'student'           => $student,
+            'transcriptData'    => $transcriptData,
+            'allRecords'        => $allRecords,
+            'overallGpa'        => $overallGpa,
+            'overallGpaGrade'   => $this->getGpaGrade($overallGpa),
+            'gradeDistribution' => $gradeDistribution,
+            'type'              => $type,
+            'sessionId'         => $sessionId,
+            'termId'            => $termId,
+            'totalSubjects'     => $allRecords->pluck('subject_name')->unique()->count(),
+            'totalSessions'     => collect($transcriptData)->count(),
         ];
     }
 
