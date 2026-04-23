@@ -1,481 +1,260 @@
-{{-- resources/views/student/assessments/print-pdf.blade.php --}}
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Assessment Report - {{ $fullName ?? 'Student' }}</title>
+    <title>Student Assessment Report</title>
     <style>
-        /* ============================================================
-            MATCHING ORIGINAL STUDENT RESULT STYLES
-           ============================================================ */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'DejaVu Sans', 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 10px;
+            line-height: 1.3;
+            color: #000;
             background: #fff;
-            color: #1a1a2e;
-            font-size: 11px;
-            line-height: 1.4;
-            padding: 15px;
+            padding: 10mm;
         }
-
-        /* Main container */
-        .report-container {
-            max-width: 1100px;
-            margin: 0 auto;
-            background: #ffffff;
-            position: relative;
-        }
-
-        /* WATERMARK */
         .watermark {
             position: fixed;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%) rotate(-45deg);
-            opacity: 0.12;
+            transform: translate(-50%, -50%) rotate(-25deg);
+            font-size: 60px;
+            font-weight: 900;
+            color: rgba(220, 38, 38, 0.1);
+            white-space: nowrap;
             pointer-events: none;
             z-index: 1000;
-            white-space: nowrap;
-            font-size: 48px;
-            font-weight: 900;
-            font-family: 'DejaVu Sans', 'Segoe UI', sans-serif;
-            letter-spacing: 6px;
-            color: #c0392b;
             text-transform: uppercase;
-            width: 100%;
-            text-align: center;
         }
-
-        /* Header Section */
+        .report-container {
+            max-width: 190mm;
+            margin: 0 auto;
+            border: 2px solid #000;
+            background: #fff;
+            page-break-after: avoid;
+        }
         .school-header {
+            background: #111827;
+            color: white;
             text-align: center;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #1e3a5f;
+            padding: 10px;
         }
-        .school-name {
-            font-size: 20px;
-            font-weight: 800;
-            letter-spacing: 1px;
-            color: #0f1c35;
-            text-transform: uppercase;
-            margin-bottom: 5px;
-        }
-        .school-motto {
-            font-size: 9px;
-            color: #5a6e8a;
-            font-style: italic;
-        }
-        .school-address {
-            font-size: 8px;
-            color: #6c757d;
-        }
-
-        /* Report Title */
-        .report-title {
-            text-align: center;
-            margin: 15px 0 10px;
-        }
-        .report-title h2 {
-            font-size: 16px;
-            font-weight: 700;
-            color: #1e3a5f;
-            letter-spacing: 1px;
-        }
-        .term-badge {
-            display: inline-block;
-            background: #eef2f7;
-            padding: 3px 12px;
-            border-radius: 20px;
-            font-size: 10px;
-            font-weight: 600;
-            margin-top: 5px;
-        }
-
-        /* Student Info Card - Horizontal layout like original */
+        .school-name { font-size: 18px; font-weight: 900; text-transform: uppercase; }
+        .school-motto { font-size: 10px; margin-top: 3px; }
         .student-info {
-            background: #f8fafc;
-            border: 1px solid #e2e8f0;
-            border-radius: 10px;
-            padding: 12px 18px;
-            margin: 15px 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .info-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 20px;
-            flex: 1;
-        }
-        .info-item {
-            display: flex;
-            align-items: baseline;
-            gap: 5px;
-        }
-        .info-label {
-            font-weight: 700;
-            color: #475569;
-            text-transform: uppercase;
-            font-size: 8px;
-            letter-spacing: 0.5px;
-            min-width: 70px;
-        }
-        .info-value {
-            font-weight: 600;
-            color: #0f1c35;
-            font-size: 10px;
-        }
-        .student-photo {
-            width: 55px;
-            height: 65px;
-            object-fit: cover;
+            background: #f0f7ff;
+            border: 1px solid #2aa886;
+            margin: 10px;
+            padding: 10px;
             border-radius: 6px;
-            border: 1px solid #cbd5e1;
-            background: #f1f5f9;
-            margin-left: 15px;
         }
-
-        /* Subjects Table - Matching original structure */
-        .subjects-table {
+        .info-row { display: flex; flex-wrap: wrap; margin-bottom: 5px; }
+        .info-label { font-weight: 700; width: 100px; }
+        .info-value { font-weight: 600; }
+        table {
             width: 100%;
             border-collapse: collapse;
-            margin: 15px 0;
-            font-size: 9.5px;
+            margin: 10px;
         }
-        .subjects-table th {
-            background: #1e3a5f;
+        th {
+            background: #0d1a3d;
             color: white;
-            padding: 8px 5px;
-            font-weight: 600;
-            text-align: center;
-            border: 1px solid #2d4a7a;
-        }
-        .subjects-table td {
-            border: 1px solid #d1d9e8;
             padding: 6px 4px;
-            text-align: center;
-            vertical-align: middle;
-        }
-        .subjects-table tbody tr:nth-child(even) {
-            background-color: #f9fbfd;
-        }
-        .subject-name-cell {
-            font-weight: 600;
-            text-align: left !important;
-            color: #1e293b;
-        }
-        .assessment-breakdown-cell {
-            font-size: 8px;
-            color: #3b4b6e;
-            line-height: 1.3;
-            text-align: left;
-        }
-        .grade-box {
-            font-weight: 700;
-            padding: 2px 6px;
-            border-radius: 10px;
-            display: inline-block;
-            min-width: 30px;
+            border: 1px solid #000;
             font-size: 9px;
         }
-        .grade-A1, .grade-A { background: #d4edda; color: #0e6b46; }
-        .grade-B2, .grade-B3, .grade-B { background: #cce5ff; color: #1565c0; }
-        .grade-C4, .grade-C5, .grade-C6, .grade-C { background: #fff3cd; color: #8a6000; }
-        .grade-D7, .grade-D { background: #ffe5cc; color: #7a4200; }
-        .grade-E8, .grade-F9, .grade-F { background: #f8d7da; color: #c0392b; }
-
-        /* Summary Section - Matching original stats strip */
-        .summary-section {
-            margin-top: 20px;
-            display: flex;
-            justify-content: space-between;
-            gap: 12px;
-            flex-wrap: wrap;
+        td {
+            border: 1px solid #000;
+            padding: 4px;
+            text-align: center;
+            font-size: 8.5px;
         }
-        .stats-box {
+        .subject-name { text-align: left; font-weight: 700; }
+        .grade-A { color: #16a34a; font-weight: 900; }
+        .grade-B { color: #2563eb; font-weight: 900; }
+        .grade-C { color: #ca8a04; font-weight: 900; }
+        .grade-D { color: #ea580c; font-weight: 900; }
+        .grade-F { color: #dc2626; font-weight: 900; }
+        .position-1 { background: gold; font-weight: 900; }
+        .position-2 { background: silver; font-weight: 900; }
+        .position-3 { background: #cd7f32; color: white; font-weight: 900; }
+        .summary-bar {
+            background: #0d1a3d;
+            color: white;
+            text-align: center;
+            padding: 6px;
+            margin: 10px;
+            font-weight: 700;
+        }
+        .gpa-box {
+            display: flex;
+            justify-content: space-around;
+            margin: 10px;
+            padding: 8px;
             background: #f1f5f9;
-            border-radius: 10px;
-            padding: 10px 15px;
-            flex: 1;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+        }
+        .gpa-item { text-align: center; }
+        .gpa-value { font-size: 16px; font-weight: 900; color: #1e40af; }
+        .remarks {
+            margin: 10px;
+            border: 1px solid #000;
+        }
+        .remarks td { padding: 8px; }
+        .footer {
             text-align: center;
-            border: 1px solid #e2e8f0;
-        }
-        .stats-box h4 {
-            font-size: 9px;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: #475569;
-            letter-spacing: 1px;
-            margin-bottom: 5px;
-        }
-        .stats-number {
-            font-size: 18px;
-            font-weight: 800;
-            color: #0f1c35;
-        }
-        .stats-label {
+            padding: 10px;
+            background: #f1f5f9;
+            margin-top: 10px;
             font-size: 8px;
-            color: #64748b;
-            margin-top: 3px;
         }
-
-        /* Footer */
-        .remarks-section {
-            margin-top: 20px;
-            border-top: 1px solid #cbd5e1;
-            padding-top: 12px;
-            display: flex;
-            justify-content: space-between;
-        }
-        .sign-line {
-            margin-top: 6px;
-            width: 160px;
-            border-top: 1px dotted #94a3b8;
-            padding-top: 4px;
-            font-size: 8px;
-            color: #5b6e8c;
-            text-align: center;
-        }
-        .disclaimer {
-            font-size: 7px;
-            text-align: center;
-            margin-top: 15px;
-            color: #7c8ba0;
-            border-top: 1px solid #e2e8f0;
-            padding-top: 8px;
-        }
-
-        /* Print optimization */
         @media print {
-            body {
-                padding: 0;
-                margin: 0;
-            }
-            .watermark {
-                opacity: 0.15;
-                print-color-adjust: exact;
-                -webkit-print-color-adjust: exact;
-            }
-            .subjects-table th {
-                background: #1e3a5f !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
-            .grade-box {
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-            }
+            .watermark { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            th { background: #0d1a3d !important; -webkit-print-color-adjust: exact; }
         }
-
-        .text-center { text-align: center; }
-        .text-left { text-align: left; }
-        .fw-bold { font-weight: 700; }
-        .mt-1 { margin-top: 4px; }
-        .mb-1 { margin-bottom: 4px; }
     </style>
 </head>
 <body>
-
-    {{-- WATERMARK --}}
     <div class="watermark">STUDENT COPY - NOT FOR OFFICIAL USE</div>
 
+    @foreach($studentsData as $data)
     <div class="report-container">
-
-        {{-- SCHOOL HEADER --}}
         <div class="school-header">
-            @if(!empty($logoBase64))
-                <img src="{{ $logoBase64 }}" alt="School Logo" style="height: 55px; margin-bottom: 5px;">
-            @endif
             <div class="school-name">{{ $schoolInfo->school_name ?? 'PREMIUM ACADEMY' }}</div>
-            @if(!empty($schoolInfo->motto))
-                <div class="school-motto">{{ $schoolInfo->motto }}</div>
-            @endif
-            <div class="school-address">
-                {{ $schoolInfo->address ?? 'P.O. Box 123, Education City' }}
-                @if(!empty($schoolInfo->email)) | {{ $schoolInfo->email }} @endif
-                @if(!empty($schoolInfo->phone)) | {{ $schoolInfo->phone }} @endif
-            </div>
+            <div class="school-motto">{{ $schoolInfo->school_motto ?? 'EXCELLENCE IN EDUCATION' }}</div>
         </div>
 
-        {{-- REPORT TITLE --}}
-        <div class="report-title">
-            <h2>TERM ASSESSMENT REPORT</h2>
-            <div class="term-badge">{{ strtoupper($termName ?? '') }} TERM · {{ $sessionName ?? 'N/A' }} SESSION</div>
-        </div>
-
-        {{-- STUDENT INFO CARD - HORIZONTAL LAYOUT --}}
         <div class="student-info">
-            <div class="info-grid">
-                <div class="info-item">
-                    <span class="info-label">Student Name:</span>
-                    <span class="info-value">{{ $fullName ?? $student->firstname . ' ' . $student->lastname }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Admission No:</span>
-                    <span class="info-value">{{ $student->admissionNo ?? 'N/A' }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Class:</span>
-                    <span class="info-value">{{ $className ?? 'N/A' }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Term:</span>
-                    <span class="info-value">{{ $termName ?? 'N/A' }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Session:</span>
-                    <span class="info-value">{{ $sessionName ?? 'N/A' }}</span>
-                </div>
-                <div class="info-item">
-                    <span class="info-label">Report Date:</span>
-                    <span class="info-value">{{ date('d M, Y') }}</span>
-                </div>
+            <div class="info-row">
+                <span class="info-label">NAME:</span>
+                <span class="info-value">{{ $data['student']->lastname ?? '' }}, {{ $data['student']->firstname ?? '' }}</span>
+                <span class="info-label" style="margin-left: 30px;">CLASS:</span>
+                <span class="info-value">{{ $data['class']->schoolclass ?? '' }}</span>
             </div>
-            @if(!empty($pictureBase64))
-                <img src="{{ $pictureBase64 }}" class="student-photo" alt="Student Photo">
-            @endif
+            <div class="info-row">
+                <span class="info-label">ADM NO:</span>
+                <span class="info-value">{{ $data['student']->admissionNo ?? '' }}</span>
+                <span class="info-label" style="margin-left: 30px;">TERM:</span>
+                <span class="info-value">{{ $data['term']->term ?? '' }}</span>
+                <span class="info-label" style="margin-left: 30px;">SESSION:</span>
+                <span class="info-value">{{ $data['session']->session ?? '' }}</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">GPA:</span>
+                <span class="info-value">{{ number_format($data['overallProgress']['gpa'] ?? 0, 2) }}</span>
+                <span class="info-label" style="margin-left: 30px;">CGPA:</span>
+                <span class="info-value">{{ number_format($data['overallProgress']['cgpa'] ?? 0, 2) }}</span>
+                <span class="info-label" style="margin-left: 30px;">GRADE:</span>
+                <span class="info-value">{{ $data['overallProgress']['gpa_grade'] ?? 'F' }}</span>
+            </div>
         </div>
 
-        {{-- SUBJECTS TABLE - MATCHING ORIGINAL STRUCTURE --}}
-        <table class="subjects-table" cellspacing="0">
+        @php $selected = $data['selectedColumns']; @endphp
+        <table>
             <thead>
                 <tr>
-                    <th width="20%">Subject</th>
-                    <th width="25%">Assessment Breakdown (CA / Exam)</th>
-                    <th width="9%">Total (100)</th>
-                    <th width="9%">Cumulative</th>
-                    <th width="9%">Grade</th>
-                    <th width="9%">GPA</th>
-                    <th width="19%">Remark / Position</th>
+                    <th>S/N</th>
+                    <th>SUBJECT</th>
+                    @foreach($data['subjects']->first()['assessments'] ?? [] as $a)
+                        @if(in_array($a['id'], $selected))
+                            <th>{{ $a['name'] }}<br>({{ $a['max_score'] }})</th>
+                        @endif
+                    @endforeach
+                    @if(in_array('total', $selected)) <th>TOTAL</th> @endif
+                    @if(in_array('cum', $selected)) <th>CUM</th> @endif
+                    @if(in_array('grade', $selected)) <th>GRADE</th> @endif
+                    @if(in_array('subject_gpa', $selected)) <th>GPA</th> @endif
+                    @if(in_array('position', $selected)) <th>POS</th> @endif
                 </tr>
             </thead>
             <tbody>
-                @forelse($subjectsWithAssessments as $subject)
-                    @php
-                        $grade = $subject['grade'] ?? '-';
-                        $gradeUp = strtoupper($grade);
-                        $gradeClass = match(true) {
-                            str_starts_with($gradeUp,'A') => 'grade-A1',
-                            str_starts_with($gradeUp,'B') => 'grade-B2',
-                            str_starts_with($gradeUp,'C') => 'grade-C4',
-                            str_starts_with($gradeUp,'D') => 'grade-D7',
-                            default => 'grade-F9',
-                        };
-                        // Build assessment text like original
-                        $assessments = $subject['assessments'] ?? collect();
-                        $assessText = '';
-                        foreach($assessments as $a) {
-                            $assessText .= $a['name'] . ': ' . number_format($a['score'],0) . '/' . $a['max_score'] . ($loop->last ? '' : ', ');
-                        }
-                        $position = $subject['position'] ?? '-';
-                        $remark = $subject['remark'] ?? '-';
-                    @endphp
-                    <tr>
-                        <td class="subject-name-cell">
-                            {{ $subject['subject_name'] }}
-                            @if(!empty($subject['subject_code']))
-                                <br><span style="font-size:7px; color:#5b6e8c;">{{ $subject['subject_code'] }}</span>
-                            @endif
-                        </td>
-                        <td class="assessment-breakdown-cell">{{ $assessText ?: '—' }}</td>
-                        <td><strong>{{ number_format($subject['total'] ?? 0, 1) }}</strong></td>
-                        <td><strong>{{ number_format($subject['cum'] ?? 0, 1) }}</strong></td>
-                        <td><span class="grade-box {{ $gradeClass }}">{{ $grade }}</span></td>
-                        <td>{{ number_format($subject['subject_gpa'] ?? 0, 1) }}</td>
-                        <td style="font-size: 8px;">
-                            @if($remark !== '-') {{ $remark }} @endif
-                            @if($position !== '-') <br><strong>Position:</strong> {{ $position }} @endif
-                        </td>
-                    </tr>
-                @empty
-                    <tr>
-                        <td colspan="7" class="text-center" style="padding: 30px;">No subject records found for this term.</td>
-                    </tr>
-                @endforelse
+                @foreach($data['subjects'] as $idx => $subj)
+                @php
+                    $grade = $subj['grade'] ?? '-';
+                    $gradeClass = match(true) {
+                        str_starts_with($grade, 'A') => 'grade-A',
+                        str_starts_with($grade, 'B') => 'grade-B',
+                        str_starts_with($grade, 'C') => 'grade-C',
+                        str_starts_with($grade, 'D') => 'grade-D',
+                        default => 'grade-F'
+                    };
+                    $position = $subj['position'] ?? '-';
+                    $posNum = (int) filter_var($position, FILTER_SANITIZE_NUMBER_INT);
+                    $posClass = match($posNum) { 1 => 'position-1', 2 => 'position-2', 3 => 'position-3', default => '' };
+                @endphp
+                <tr>
+                    <td>{{ $idx + 1 }}</td>
+                    <td class="subject-name">{{ $subj['subject_name'] }}</td>
+                    @foreach($subj['assessments'] as $a)
+                        @if(in_array($a['id'], $selected))
+                            <td>{{ $a['score'] ? number_format($a['score'], 0) : '-' }}</td>
+                        @endif
+                    @endforeach
+                    @if(in_array('total', $selected)) <td>{{ number_format($subj['total'], 1) }}</td> @endif
+                    @if(in_array('cum', $selected)) <td>{{ number_format($subj['cum'], 1) }}</td> @endif
+                    @if(in_array('grade', $selected)) <td class="{{ $gradeClass }}">{{ $grade }}</td> @endif
+                    @if(in_array('subject_gpa', $selected)) <td>{{ number_format($subj['subject_gpa'], 1) }}</td> @endif
+                    @if(in_array('position', $selected)) <td class="{{ $posClass }}">{{ $position }}</td> @endif
+                </tr>
+                @endforeach
             </tbody>
         </table>
 
-        {{-- PERFORMANCE SUMMARY - MATCHING ORIGINAL STATS STRIP --}}
-        <div class="summary-section">
-            <div class="stats-box">
-                <h4>Subjects</h4>
-                <div class="stats-number">{{ $subjectsWithAssessments->count() ?? 0 }}</div>
-                <div class="stats-label">Total Subjects</div>
+        @if(in_array('totals_summary', $selected))
+        <div class="summary-bar">
+            TOTAL OBTAINED: {{ number_format($data['totalObtained'], 1) }} |
+            TOTAL OBTAINABLE: {{ $data['totalObtainable'] }} |
+            PERCENTAGE: {{ number_format($data['percentage'], 1) }}%
+        </div>
+        @endif
+
+        @if(in_array('gpa_summary', $selected) || in_array('cgpa_summary', $selected))
+        <div class="gpa-box">
+            @if(in_array('gpa_summary', $selected))
+            <div class="gpa-item">
+                <div>TERM GPA</div>
+                <div class="gpa-value">{{ number_format($data['overallProgress']['gpa'] ?? 0, 2) }}</div>
             </div>
-            <div class="stats-box">
-                <h4>Average Score</h4>
-                <div class="stats-number">{{ number_format($overallProgress['average_cum'] ?? 0, 1) }}%</div>
-                <div class="stats-label">Class Average</div>
+            @endif
+            @if(in_array('cgpa_summary', $selected))
+            <div class="gpa-item">
+                <div>CGPA</div>
+                <div class="gpa-value">{{ number_format($data['overallProgress']['cgpa'] ?? 0, 2) }}</div>
             </div>
-            <div class="stats-box">
-                <h4>GPA</h4>
-                <div class="stats-number">{{ number_format($overallProgress['gpa'] ?? 0, 2) }}</div>
-                <div class="stats-label">Term GPA</div>
+            @endif
+            <div class="gpa-item">
+                <div>AVERAGE</div>
+                <div class="gpa-value">{{ number_format($data['overallProgress']['average_cum'] ?? 0, 1) }}%</div>
             </div>
-            <div class="stats-box">
-                <h4>CGPA</h4>
-                <div class="stats-number">{{ number_format($overallProgress['cgpa'] ?? 0, 2) }}</div>
-                <div class="stats-label">Cumulative GPA</div>
-            </div>
-            <div class="stats-box">
-                <h4>GPA Grade</h4>
-                @php
-                    $gpaGrade = $overallProgress['gpa_grade'] ?? 'F';
-                    $gpaGradeClass = match(true) {
-                        str_starts_with($gpaGrade,'A') => 'grade-A1',
-                        str_starts_with($gpaGrade,'B') => 'grade-B2',
-                        str_starts_with($gpaGrade,'C') => 'grade-C4',
-                        str_starts_with($gpaGrade,'D') => 'grade-D7',
-                        default => 'grade-F9',
-                    };
-                @endphp
-                <div><span class="grade-box {{ $gpaGradeClass }}" style="font-size: 14px; padding: 3px 12px;">{{ $gpaGrade }}</span></div>
-                <div class="stats-label">Letter Grade</div>
-            </div>
-            <div class="stats-box">
-                <h4>Performance</h4>
-                <div class="stats-number">{{ number_format($percentage ?? 0, 1) }}%</div>
-                <div class="stats-label">Overall Score</div>
+            <div class="gpa-item">
+                <div>SUBJECTS</div>
+                <div class="gpa-value">{{ $data['subjects']->count() }}</div>
             </div>
         </div>
+        @endif
 
-        {{-- TOTAL SUMMARY ROW --}}
-        <div style="background: #eef2f7; border-radius: 8px; padding: 8px 15px; margin: 12px 0; text-align: center;">
-            <span style="font-weight: 700;">Total Obtainable: {{ $totalObtainable ?? 0 }}</span>
-            &nbsp;|&nbsp;
-            <span style="font-weight: 700;">Total Obtained: {{ number_format($totalObtained ?? 0, 1) }}</span>
-            &nbsp;|&nbsp;
-            <span style="font-weight: 700;">Percentage: {{ number_format($percentage ?? 0, 1) }}%</span>
-        </div>
+        @if(in_array('remarks', $selected))
+        <table class="remarks">
+            <tr>
+                <td width="50%">
+                    <strong>Teacher's Remark:</strong><br>
+                    {{ $data['subjects']->first()['remark'] ?? 'Performed satisfactorily.' }}
+                </td>
+                <td width="50%">
+                    <strong>Principal's Remark:</strong><br>
+                    {{ $data['subjects']->first()['remark'] ?? 'Approved.' }}
+                </td>
+            </tr>
+        </table>
+        @endif
 
-        {{-- REMARKS AND SIGNATURES --}}
-        <div class="remarks-section">
-            <div style="flex: 2;">
-                <strong>Teacher's Remark:</strong><br>
-                {{ $subjectsWithAssessments->first()['remark'] ?? 'Performed satisfactorily. Keep improving.' }}
-            </div>
-            <div style="flex: 1; text-align: center;">
-                <div class="sign-line">Form Teacher's Signature</div>
-            </div>
-            <div style="flex: 1; text-align: center;">
-                <div class="sign-line">Principal's Signature / Stamp</div>
-            </div>
-        </div>
-
-        {{-- DISCLAIMER --}}
-        <div class="disclaimer">
-            <strong>DISCLAIMER:</strong> This is a student copy and is not valid for official transactions.
-            Issued on {{ date('jS F, Y') }}.
+        <div class="footer">
+            <div>Issued: {{ date('jS F, Y') }} | Received by: _________________________</div>
+            <div>Next Term Begins: {{ \Carbon\Carbon::now()->addMonths(2)->format('jS F, Y') }}</div>
+            <div style="margin-top: 5px;">Powered by School Management System</div>
         </div>
     </div>
+    @endforeach
 </body>
 </html>
