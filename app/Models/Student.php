@@ -50,7 +50,7 @@ class Student extends Model
         'admissionNo',
         'admission_date',
         'admissionYear',
-        'present_address',
+        // 'present_address',
         'permanent_address',
         'sport_house',
         'email',
