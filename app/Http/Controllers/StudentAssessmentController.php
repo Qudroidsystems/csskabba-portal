@@ -20,10 +20,10 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class StudentAssessmentController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('permission:View student assessments', ['only' => ['index', 'printResult']]);
-    }
+    // public function __construct()
+    // {
+    //     $this->middleware('permission:View student assessments', ['only' => ['index', 'printResult']]);
+    // }
 
     // =========================================================================
     // INDEX
