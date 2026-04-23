@@ -59,6 +59,7 @@ use App\Http\Controllers\SubjectTeacherController;
 use App\Http\Controllers\SubjectVettingController;
 use App\Http\Controllers\TimetableController;
 use App\Http\Controllers\TimetableReportController;
+use App\Http\Controllers\TranscriptController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ViewStudentController;
 use App\Http\Controllers\ViewStudentMockReportController;
@@ -948,26 +949,35 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
 
 
 
-        // ── Attendance Routes ──────────────────────────────────────────
-        // Class teacher
-        Route::get('/attendance/my-classes',              [AttendanceController::class, 'myClasses'])->name('attendance.my-classes');
-        Route::get('/attendance/register/{classId}/{termId}/{sessionId}', [AttendanceController::class, 'register'])->name('attendance.register');
-        Route::post('/attendance/save',                   [AttendanceController::class, 'save'])->name('attendance.save');
-        Route::post('/attendance/save-single',            [AttendanceController::class, 'saveSingle'])->name('attendance.save-single');
-        Route::post('/attendance/mark-all-present',       [AttendanceController::class, 'markAllPresent'])->name('attendance.mark-all-present');
-        Route::get('/attendance/student/{studentId}/{classId}/{termId}/{sessionId}', [AttendanceController::class, 'studentReport'])->name('attendance.student-report');
-        Route::get('/attendance/class-summary/{classId}/{termId}/{sessionId}', [AttendanceController::class, 'classSummary'])->name('attendance.class-summary');
+    // ── Attendance Routes ──────────────────────────────────────────
+    // Class teacher
+    Route::get('/attendance/my-classes',              [AttendanceController::class, 'myClasses'])->name('attendance.my-classes');
+    Route::get('/attendance/register/{classId}/{termId}/{sessionId}', [AttendanceController::class, 'register'])->name('attendance.register');
+    Route::post('/attendance/save',                   [AttendanceController::class, 'save'])->name('attendance.save');
+    Route::post('/attendance/save-single',            [AttendanceController::class, 'saveSingle'])->name('attendance.save-single');
+    Route::post('/attendance/mark-all-present',       [AttendanceController::class, 'markAllPresent'])->name('attendance.mark-all-present');
+    Route::get('/attendance/student/{studentId}/{classId}/{termId}/{sessionId}', [AttendanceController::class, 'studentReport'])->name('attendance.student-report');
+    Route::get('/attendance/class-summary/{classId}/{termId}/{sessionId}', [AttendanceController::class, 'classSummary'])->name('attendance.class-summary');
 
-        // Admin
-        Route::get('/attendance/settings',                [AttendanceSettingController::class, 'index'])->name('attendance.settings');
-        // Add this route in your routes file
-        Route::put('/attendance/settings/{id}', [AttendanceSettingController::class, 'update'])->name('attendance.settings.update');
-        Route::post('/attendance/settings',               [AttendanceSettingController::class, 'store'])->name('attendance.settings.store');
-        Route::delete('/attendance/settings/{id}',        [AttendanceSettingController::class, 'destroy'])->name('attendance.settings.destroy');
-        Route::get('/attendance/holidays',                [AttendanceSettingController::class, 'holidays'])->name('attendance.holidays');
-        Route::post('/attendance/holidays',               [AttendanceSettingController::class, 'storeHoliday'])->name('attendance.holidays.store');
-        Route::delete('/attendance/holidays/{id}',        [AttendanceSettingController::class, 'destroyHoliday'])->name('attendance.holidays.destroy');
-        Route::get('/attendance/school-report',           [AttendanceSettingController::class, 'schoolReport'])->name('attendance.school-report');
+    // Admin
+    Route::get('/attendance/settings',                [AttendanceSettingController::class, 'index'])->name('attendance.settings');
+    // Add this route in your routes file
+    Route::put('/attendance/settings/{id}', [AttendanceSettingController::class, 'update'])->name('attendance.settings.update');
+    Route::post('/attendance/settings',               [AttendanceSettingController::class, 'store'])->name('attendance.settings.store');
+    Route::delete('/attendance/settings/{id}',        [AttendanceSettingController::class, 'destroy'])->name('attendance.settings.destroy');
+    Route::get('/attendance/holidays',                [AttendanceSettingController::class, 'holidays'])->name('attendance.holidays');
+    Route::post('/attendance/holidays',               [AttendanceSettingController::class, 'storeHoliday'])->name('attendance.holidays.store');
+    Route::delete('/attendance/holidays/{id}',        [AttendanceSettingController::class, 'destroyHoliday'])->name('attendance.holidays.destroy');
+    Route::get('/attendance/school-report',           [AttendanceSettingController::class, 'schoolReport'])->name('attendance.school-report');
 
+
+
+    // Transcript Routes
+    Route::prefix('transcript')->name('transcript.')->group(function () {
+        Route::get('/',                [TranscriptController::class, 'index'])->name('index');
+        Route::post('/search',         [TranscriptController::class, 'searchStudents'])->name('search');
+        Route::post('/preview',        [TranscriptController::class, 'preview'])->name('preview');
+        Route::post('/pdf',            [TranscriptController::class, 'exportPdf'])->name('pdf');
+    });
 
 });

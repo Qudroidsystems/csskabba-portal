@@ -764,6 +764,31 @@
                 </div>
             </li>
             @endif
+
+            @if(auth()->user()->can('View student-transcript') || auth()->user()->can('Preview student-transcript') || auth()->user()->can('Download student-transcript'))
+              <li class="menu-title"><i class="ph-folder-open"></i> <span data-key="t-apps">TRANSCRIPTS</span></li>
+                <li class="nav-item">
+                    <a href="#sidebarTranscript" class="nav-link menu-link collapsed"
+                    data-bs-toggle="collapse" role="button"
+                    aria-expanded="false" aria-controls="sidebarTranscript">
+                        <i class="ri-file-text-line"></i>
+                        <span data-key="t-transcript">Transcript</span>
+                    </a>
+                    <div class="collapse menu-dropdown" id="sidebarTranscript">
+                        <ul class="nav nav-sm flex-column">
+                            @can('View student-transcript')
+                            <li class="nav-item">
+                                <a href="{{ route('transcript.index') }}" class="nav-link">
+                                    Generate Transcript
+                                </a>
+                            </li>
+                            @endcan
+                        </ul>
+                    </div>
+                </li>
+            @endif
+
+
             @if(auth()->user()->can('View myresult-room') || auth()->user()->can('View student-report') || auth()->user()->can('View student-mock-report'))
 
             <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-apps">PROMOTION MANAGEMENT </span></li>
