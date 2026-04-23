@@ -542,7 +542,7 @@ $gradeClassMap = [
                         <span class="term-name">{{ $termName }}</span>
                         <span class="term-class">— {{ $termData['class'] }}</span>
                     </div>
-                    <div class="term-badges-cell">
+                    {{-- <div class="term-badges-cell">
                         @if($termData['class_position'])
                             <span class="badge badge-position">Position: {{ $termData['class_position'] }}</span>
                         @endif
@@ -552,7 +552,7 @@ $gradeClassMap = [
                                 {{ $termData['promotion'] }}
                             </span>
                         @endif
-                    </div>
+                    </div> --}}
                 </div>
 
                 {{-- Subject table --}}

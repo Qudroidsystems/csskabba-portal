@@ -241,7 +241,7 @@
                                             <span class="fw-bold" style="font-size:14px;color:#1e3a5f;">{{ $termName }}</span>
                                             <span class="text-muted ms-2" style="font-size:12px;">— {{ $termData['class'] }}</span>
                                         </div>
-                                        <div class="d-flex gap-2 flex-wrap">
+                                        {{-- <div class="d-flex gap-2 flex-wrap">
                                             @if($termData['class_position'])
                                                 <span class="badge bg-warning-subtle text-warning">
                                                     <i class="ri-trophy-line me-1"></i>Position: {{ $termData['class_position'] }}
@@ -254,7 +254,7 @@
                                                     {{ $termData['promotion'] }}
                                                 </span>
                                             @endif
-                                        </div>
+                                        </div> --}}
                                     </div>
 
                                     {{-- Subject Table --}}
