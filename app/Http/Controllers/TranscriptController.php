@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 
 class TranscriptController extends Controller
 {
@@ -87,7 +88,7 @@ class TranscriptController extends Controller
     // PREVIEW – show transcript data before PDF
     // =========================================================================
 
-    public function preview(Request $request): View|JsonResponse
+    public function preview(Request $request): View|JsonResponse|RedirectResponse
     {
         try {
             $validated = $request->validate([
