@@ -394,7 +394,9 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
 
 
 
-    Route::get('/studentassessments', [StudentAssessmentController::class, 'index'])->name('assessments');
+   
+    Route::get('/student/assessments', [StudentAssessmentController::class, 'index'])->name('assessments');
+    Route::get('/student/assessments/print', [StudentAssessmentController::class, 'printResult'])->name('assessments.print');
 
 
 
