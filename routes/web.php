@@ -393,10 +393,8 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
     Route::post('/subjectscoresheet/single-update', [MyScoreSheetController::class, 'singleUpdateScore'])->name('subjectscoresheet.single-update');
 
 
-
-   
-    Route::get('/student/assessments', [StudentAssessmentController::class, 'index'])->name('assessments');
-    Route::get('/student/assessments/print', [StudentAssessmentController::class, 'printResult'])->name('assessments.print');
+    Route::get('/studentassessments', [StudentAssessmentController::class, 'index'])->name('assessments');
+    Route::get('/studentassessments/print', [StudentAssessmentController::class, 'printResult'])->name('assessments.print');
 
 
 
