@@ -255,7 +255,7 @@ class StudentAssessmentController extends Controller
     }
 
     // =========================================================================
-    // PRINT RESULT (PDF) with Column Selection
+    // PRINT RESULT (PDF)
     // =========================================================================
 
     public function printResult(Request $request)
@@ -307,6 +307,9 @@ class StudentAssessmentController extends Controller
         $schoolclass = Schoolclass::with('classcategories')->find($studentClassData->class_id);
         $isSenior = $schoolclass?->classcategories->first()?->is_senior ?? false;
         $categoryIds = $schoolclass?->classcategories->pluck('id') ?? collect();
+        $termModel = Schoolterm::find($selectedTermId);
+        $sessionModel = Schoolsession::find($selectedSessionId ?? $studentClassData->session_id);
+        $classModel = Schoolclass::find($studentClassData->class_id);
 
         $registeredSubjects = DB::table('student_subject_register_record as ssrr')
             ->where('ssrr.studentId', $studentId)
@@ -321,12 +324,11 @@ class StudentAssessmentController extends Controller
             ->distinct()
             ->get();
 
-        $subjectsWithAssessments = collect();
+        $scores = collect();
         $totalObtained = 0;
         $totalObtainable = 0;
 
         $allAssessments = Assessment::whereIn('classcategory_id', $categoryIds)
-            ->with('subAssessments')
             ->orderBy('id')
             ->get();
 
@@ -344,94 +346,87 @@ class StudentAssessmentController extends Controller
 
             $broadsheet->load(['assessmentScores', 'subAssessmentScores']);
 
-            $assessmentData = $allAssessments->map(function ($assessment) use ($broadsheet) {
+            $scoreData = new \stdClass();
+            $scoreData->subject_name = $regSubject->subject_name;
+            $scoreData->total = $broadsheet->total ?? 0;
+            $scoreData->bf = $broadsheet->bf ?? 0;
+            $scoreData->cum = $broadsheet->cum ?? 0;
+            $scoreData->grade = $broadsheet->grade ?? '-';
+            $scoreData->position = $broadsheet->position ?? '-';
+            $scoreData->assessment_scores = collect();
+
+            foreach ($allAssessments as $assessment) {
                 $scoreObj = $broadsheet->assessmentScores->where('assessment_id', $assessment->id)->first();
-                return [
-                    'id'        => $assessment->id,
-                    'name'      => $assessment->name,
+                $scoreData->assessment_scores->push((object)[
+                    'assessment_id' => $assessment->id,
+                    'score' => $scoreObj ? $scoreObj->score : 0,
                     'max_score' => $assessment->max_score,
-                    'score'     => $scoreObj ? $scoreObj->score : 0,
-                ];
-            });
+                    'name' => $assessment->name
+                ]);
+            }
 
-            $subjectGPA = $this->getGradePoint($broadsheet->cum ?? 0, $isSenior);
-
-            $subjectsWithAssessments->push([
-                'subject_id'   => $regSubject->subject_id,
-                'subject_name' => $regSubject->subject_name,
-                'subject_code' => $regSubject->subject_code,
-                'assessments'  => $assessmentData,
-                'total'        => $broadsheet->total ?? 0,
-                'cum'          => $broadsheet->cum ?? 0,
-                'grade'        => $broadsheet->grade ?? '-',
-                'subject_gpa'  => round($subjectGPA, 1),
-                'remark'       => $broadsheet->remark ?? '-',
-                'position'     => $broadsheet->position
-                    ? $broadsheet->position . $this->ordinalSuffix($broadsheet->position)
-                    : '-',
-            ]);
+            $scores->push($scoreData);
 
             if (is_numeric($broadsheet->total)) $totalObtained += (float) $broadsheet->total;
             $totalObtainable += 100;
-        }
-
-        $overallProgress = ['gpa' => 0, 'cgpa' => 0, 'gpa_grade' => '-', 'average_cum' => 0];
-        if ($subjectsWithAssessments->isNotEmpty() && $schoolclass) {
-            $gpaCgpaData = $this->computeOverallForStudent(
-                $studentId, $schoolclass, $selectedTermId,
-                $selectedSessionId ?? $studentClassData->session_id, $isSenior
-            );
-            $overallProgress['gpa']       = round($gpaCgpaData['gpa'], 2);
-            $overallProgress['cgpa']      = round($gpaCgpaData['cgpa'], 2);
-            $overallProgress['gpa_grade'] = $gpaCgpaData['gpa_grade'] ?? '-';
-            $cumValues = $subjectsWithAssessments->pluck('cum')->filter(fn ($v) => $v > 0);
-            $overallProgress['average_cum'] = $cumValues->count() > 0 ? round($cumValues->avg(), 1) : 0;
         }
 
         $percentage = $totalObtainable > 0 ? round($totalObtained / $totalObtainable * 100, 1) : 0;
 
         $schoolInfo = SchoolInformation::first();
         $logoBase64 = $this->logoToBase64($schoolInfo);
-
         $picturePath = DB::table('studentpicture')->where('studentid', $studentId)->value('picture');
         $pictureBase64 = $this->imageToBase64ForPdf($picturePath);
 
-        $term = Schoolterm::find($selectedTermId);
-        $session = Schoolsession::find($selectedSessionId ?? $studentClassData->session_id);
-        $class = Schoolclass::find($studentClassData->class_id);
-        $fullName = strtoupper($student->lastname ?? '') . ', ' . ($student->firstname ?? '');
+        $fullName = strtoupper($student->lastname ?? '') . ' ' . ($student->firstname ?? '') . ' ' . ($student->othername ?? '');
+        $className = ($classModel->schoolclass ?? '') . ' ' . ($classModel->arms->arm ?? '');
+
+        // Get number of students in class
+        $numberOfStudents = DB::table('studentclass')
+            ->where('schoolclassid', $studentClassData->class_id)
+            ->where('sessionid', $selectedSessionId ?? $studentClassData->session_id)
+            ->where('termid', $selectedTermId)
+            ->count();
 
         // If no columns selected, use defaults
         if (empty($selectedColumns)) {
-            $selectedColumns = ['picture', 'admission_no', 'total', 'cum', 'grade', 'position', 'totals_summary', 'gpa_summary', 'cgpa_summary', 'remarks'];
+            $selectedColumns = ['sn', 'admission_no', 'name', 'total', 'cum', 'grade', 'position'];
             foreach ($allAssessments as $assessment) {
                 $selectedColumns[] = $assessment->id;
             }
         }
 
-        $studentsData = [[
-            'student' => $student,
-            'class' => $class,
-            'term' => $term,
-            'session' => $session,
-            'subjects' => $subjectsWithAssessments,
-            'overallProgress' => $overallProgress,
-            'totalObtained' => $totalObtained,
-            'totalObtainable' => $totalObtainable,
-            'percentage' => $percentage,
-            'selectedColumns' => $selectedColumns,
-            'isSenior' => $isSenior,
+        $metadata = [
+            'term' => $termModel->term ?? 'Term',
+            'session' => $sessionModel->session ?? 'Session',
+            'selected_columns' => $selectedColumns
+        ];
+
+        $allStudentData = [[
+            'students' => collect([$student]),
+            'studentpp' => collect(),
+            'schoolclass' => $classModel,
+            'scores' => $scores,
+            'assessments' => $allAssessments,
+            'totals_summary' => [
+                'obtained' => $totalObtained,
+                'obtainable' => $totalObtainable,
+                'percentage' => $percentage
+            ],
+            'schoolInfo' => $schoolInfo,
+            'school_logo_base64' => $logoBase64,
             'student_image_base64' => $pictureBase64,
+            'numberOfStudents' => $numberOfStudents,
+            'psychomotor_scores' => null
         ]];
 
-        $safeTermName = preg_replace('/[\/\\\\]/', '-', $term->term ?? 'Term');
+        $safeTermName = preg_replace('/[\/\\\\]/', '-', $termModel->term ?? 'Term');
         $safeAdmissionNo = preg_replace('/[\/\\\\]/', '-', $student->admissionNo ?? 'student');
         $filename = 'Assessment_Report_' . $safeAdmissionNo . '_' . $safeTermName . '.pdf';
 
         $pdf = Pdf::loadView('student.assessments.print-pdf', [
-            'studentsData' => $studentsData,
-            'schoolInfo' => $schoolInfo,
-            'logoBase64' => $logoBase64,
+            'allStudentData' => $allStudentData,
+            'metadata' => $metadata,
         ])
             ->setPaper('A4', 'portrait')
             ->setOptions([
@@ -519,7 +514,6 @@ class StudentAssessmentController extends Controller
         $num_subjects = $currentTermBroadsheets->count();
         $total_grade_points = $termGradePoints->sum();
 
-        $averageTotal = $currentTermBroadsheets->avg('cum') ?? 0.0;
         $gpaGrade = $this->getGpaGrade($gpa);
 
         $annualGPAs = [];
@@ -626,14 +620,5 @@ class StudentAssessmentController extends Controller
         }
 
         return $placeholder;
-    }
-
-    protected function getDefaultGrade($score): string
-    {
-        if ($score >= 70) return 'A';
-        if ($score >= 60) return 'B';
-        if ($score >= 50) return 'C';
-        if ($score >= 40) return 'D';
-        return 'F';
     }
 }
