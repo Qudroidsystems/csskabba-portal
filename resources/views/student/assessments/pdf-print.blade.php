@@ -1,4 +1,4 @@
-{{-- resources/views/student/assessments/print.blade.php --}}
+{{-- resources/views/student/assessments/print-pdf.blade.php --}}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,9 +6,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
     <title>Assessment Report - {{ $fullName ?? 'Student' }}</title>
     <style>
-        /* ============================================================
-            PDF OPTIMIZED STYLES — Clean, printable, watermarked
-           ============================================================ */
+        /* Reset and base styles */
         * {
             margin: 0;
             padding: 0;
@@ -32,7 +30,7 @@
             position: relative;
         }
 
-        /* ========== WATERMARK ========== */
+        /* WATERMARK */
         .watermark {
             position: fixed;
             top: 50%;
@@ -224,10 +222,6 @@
             font-weight: 800;
             color: #0f1c35;
         }
-        .gpa-grade-lg {
-            font-size: 20px;
-            font-weight: 800;
-        }
 
         /* Footer Remarks */
         .remarks {
@@ -269,7 +263,6 @@
             }
         }
 
-        /* Utility */
         .text-right { text-align: right; }
         .text-left { text-align: left; }
         .fw-bold { font-weight: 700; }
@@ -333,17 +326,17 @@
             @endif
         </div>
 
-        {{-- SUBJECTS TABLE (with assessment breakdown) --}}
+        {{-- SUBJECTS TABLE --}}
         <table class="subjects-table" cellspacing="0">
             <thead>
                 <tr>
                     <th width="22%">Subject</th>
-                    <th width="28%">Assessment Breakdown (CA / Exam)</th>
-                    <th width="8%">Total (100)</th>
+                    <th width="28%">Assessment Breakdown</th>
+                    <th width="8%">Total</th>
                     <th width="8%">Cum</th>
                     <th width="8%">Grade</th>
                     <th width="10%">GPA</th>
-                    <th width="16%">Remark / Position</th>
+                    <th width="16%">Remark</th>
                 </tr>
             </thead>
             <tbody>
@@ -358,7 +351,6 @@
                             str_starts_with($gradeUp,'D') => 'grade-D7',
                             default => 'grade-F9',
                         };
-                        // Build assessment text summary
                         $assessments = $subject['assessments'] ?? collect();
                         $assessText = '';
                         foreach($assessments as $a) {
@@ -383,7 +375,7 @@
             </tbody>
         </table>
 
-        {{-- PERFORMANCE SUMMARY & GPA --}}
+        {{-- PERFORMANCE SUMMARY --}}
         <div class="summary-section">
             <div class="stats-box">
                 <h4>Academic Summary</h4>
@@ -397,9 +389,7 @@
                 <div>Term GPA: <span class="stats-number">{{ number_format($overallProgress['gpa'] ?? 0, 2) }}</span></div>
                 <div>Cumulative GPA (CGPA): <strong>{{ number_format($overallProgress['cgpa'] ?? 0, 2) }}</strong></div>
                 <div class="mt-2">GPA Grade:
-                    <span class="grade-box {{ $overallProgress['gpa_grade'] === 'A1' ? 'grade-A1' : (str_starts_with($overallProgress['gpa_grade'] ?? 'F', 'B') ? 'grade-B2' : (str_starts_with($overallProgress['gpa_grade'] ?? 'F', 'C') ? 'grade-C4' : 'grade-F9')) }}">
-                        {{ $overallProgress['gpa_grade'] ?? 'F' }}
-                    </span>
+                    <span class="grade-box grade-A1">{{ $overallProgress['gpa_grade'] ?? 'F' }}</span>
                 </div>
             </div>
             <div class="stats-box">

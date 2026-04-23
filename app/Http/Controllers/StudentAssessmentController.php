@@ -262,7 +262,6 @@ class StudentAssessmentController extends Controller
     // =========================================================================
     // PRINT RESULT (PDF) — watermarked "STUDENT COPY - NOT FOR OFFICIAL USE"
     // =========================================================================
-
     public function printResult(Request $request)
     {
         ini_set('max_execution_time', 120);
@@ -283,9 +282,6 @@ class StudentAssessmentController extends Controller
         if (!$student || !$student->can_view_assessments) {
             return back()->with('error', 'You do not have permission to print assessments.');
         }
-
-        $terms    = Schoolterm::orderBy('id')->get(['id', 'term']);
-        $sessions = Schoolsession::orderBy('id', 'desc')->get(['id', 'session']);
 
         $studentClassData = DB::table('studentclass')
             ->where('studentId', $studentId)
@@ -326,7 +322,8 @@ class StudentAssessmentController extends Controller
             ->get();
 
         $subjectsWithAssessments = collect();
-        $totalObtained = 0; $totalObtainable = 0;
+        $totalObtained = 0;
+        $totalObtainable = 0;
 
         foreach ($registeredSubjects as $regSubject) {
             $assessments = Assessment::whereIn('classcategory_id', $categoryIds)
@@ -405,7 +402,12 @@ class StudentAssessmentController extends Controller
         $className   = $studentClassData->class_name;
         $fullName    = strtoupper($student->lastname) . ', ' . $student->firstname;
 
-        $pdf = Pdf::loadView('student.assessments.print', [
+        // **FIX: Sanitize filename - remove any slashes or problematic characters**
+        $safeTermName = preg_replace('/[\/\\\\]/', '-', $termName);
+        $safeAdmissionNo = preg_replace('/[\/\\\\]/', '-', $student->admissionNo);
+        $filename = 'Assessment_Report_' . $safeAdmissionNo . '_' . $safeTermName . '.pdf';
+
+        $pdf = Pdf::loadView('student.assessments.print-pdf', [  // Note: using a different view name
             'student'                => $student,
             'fullName'               => $fullName,
             'className'              => $className,
@@ -429,8 +431,6 @@ class StudentAssessmentController extends Controller
                 'isFontSubsettingEnabled' => true,
                 'isPhpEnabled'           => false,
             ]);
-
-        $filename = 'Assessment_Report_' . $student->admissionNo . '_' . $termName . '.pdf';
 
         return $pdf->download($filename);
     }
