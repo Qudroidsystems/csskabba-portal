@@ -194,8 +194,8 @@ class TranscriptController extends Controller
                 'sr.othername',
                 'sr.gender',
                 'sr.dateofbirth',
-                'sr.phone',
-                'sr.address',
+                'sr.phone_number as phone',
+                'sr.present_address as address',
                 'sp.picture',
             ])
             ->first();
