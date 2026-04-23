@@ -302,6 +302,10 @@
     @if (Route::is('attendance.*'))
         @include('layouts.pages-assets.css.attendance-list-css')
     @endif
+
+    @if (Route::is('transcript.*'))
+        @include('layouts.pages-assets.css.attendance-list-css')
+    @endif
 </head>
 
 <body>
@@ -2677,6 +2681,10 @@
       @endif
 
       @if (Route::is('atttendance.*'))
+            @include('layouts.pages-assets.js.attendance-list-js')
+      @endif
+
+      @if (Route::is('transcript.*'))
             @include('layouts.pages-assets.js.attendance-list-js')
       @endif
       </body>
