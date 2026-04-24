@@ -93,30 +93,38 @@ Auth::routes();
 Route::get('/home', [HomeController::class, 'index'])->name('home');
 
 Route::group(['middleware' => ['auth']], function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    Route::post('roles/bulk-remove-users', [RoleController::class, 'bulkRemoveUsers'])->name('roles.bulkremoveusers');
-   // Get role users with pagination (for AJAX)
-    Route::get('/roles/{role}/users', [RoleController::class, 'getRoleUsers'])->name('roles.users');
-    Route::resource('roles', RoleController::class);
-    Route::resource('users', UserController::class);
-    Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
-    Route::get('/users/all', [UserController::class, 'allUsers'])->name('users.all');
-    Route::get('/users/paginate', [UserController::class, 'paginate'])->name('users.paginate');
-    Route::get('/user/overview/{id}', [UserController::class, 'show'])->name('users.overview');
-    Route::get('/users/roles', [UserController::class, 'roles']);
-    Route::resource('permissions', PermissionController::class);
+        // ── Users resource + explicit sub-routes ────────────────────────
+        // IMPORTANT: all GET /users/xxx static routes must come BEFORE the resource
+        // or they'll be captured by /users/{user}
 
+        Route::get('/users/all',              [UserController::class, 'allUsers'])->name('users.all');
+        Route::get('/users/paginate',         [UserController::class, 'paginate'])->name('users.paginate');
+        Route::get('/users/get-students',     [UserController::class, 'getStudents'])->name('get.students');
+        Route::get('/users/add-student',      [UserController::class, 'createFromStudentForm'])->name('users.add-student-form');
 
+        Route::post('/users/store-student',       [UserController::class, 'storeStudent'])->name('users.store-student');
+        Route::post('/users/mass-create-students',[UserController::class, 'massCreateStudents'])->name('users.mass-create-students');
+        Route::post('/users/create-from-student', [UserController::class, 'createFromStudent'])->name('users.createFromStudent');
 
-    Route::get('users/add-student', [UserController::class, 'createFromStudentForm'])->name('users.add-student-form');
-    Route::post('users/create-from-student', [UserController::class, 'createFromStudent'])->name('users.createFromStudent');
-    Route::get('/get-students', [UserController::class, 'getStudents'])->name('get.students');
+        Route::delete('/users/{id}',          [UserController::class, 'destroy'])->name('users.destroy');
 
-    Route::post('/users/store-student', [UserController::class, 'storeStudent'])->name('users.store-student');
-    Route::post('/users/mass-create-students', [UserController::class, 'massCreateStudents']) ->name('users.mass-create-students');
+        // Resource AFTER all static /users/xxx routes
+        Route::resource('users', UserController::class);
 
-    // getStudents is likely already registered — make sure it exists:
-    Route::get('/users/get-students', [UserController::class, 'getStudents']) ->name('get.students');
+        // ── Roles ────────────────────────────────────────────────────────
+        Route::post('roles/bulk-remove-users', [RoleController::class, 'bulkRemoveUsers'])->name('roles.bulkremoveusers');
+        Route::get('/roles/{role}/users',      [RoleController::class, 'getRoleUsers'])->name('roles.users');
+        Route::resource('roles', RoleController::class);
+
+        // ── Other ────────────────────────────────────────────────────────
+        Route::get('/user/overview/{id}',     [UserController::class, 'show'])->name('users.overview');
+        Route::get('/users/roles',            [UserController::class, 'roles']);
+        Route::resource('permissions', PermissionController::class);
+        Route::get('/dashboard',              [DashboardController::class, 'index'])->name('dashboard');
+
+        // Remove these — they were the duplicates/conflicts:
+        // Route::get('/get-students', ...)           ← DELETE this line
+        // Route::get('/users/get-students', ...)     ← keep only the one above
 
     // ===================================================================
     // PROFILE & BIODATA ROUTES - FULLY CORRECTED AND CLEANED
