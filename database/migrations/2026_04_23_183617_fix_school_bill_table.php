@@ -10,7 +10,9 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // 1. Add missing columns to school_bill
+        // ============================================
+        // PART 1: Add missing columns to school_bill
+        // ============================================
         Schema::table('school_bill', function (Blueprint $table) {
             if (!Schema::hasColumn('school_bill', 'statusId')) {
                 $table->unsignedBigInteger('statusId')->default(1)->after('bill_amount');
@@ -65,102 +67,188 @@ return new class extends Migration
             }
         });
 
-        // 2. Fix school_bill_class_term_session table - ALTER FIRST, then add indexes with short names
-        Schema::table('school_bill_class_term_session', function (Blueprint $table) {
-            // Add new integer columns first
-            if (!Schema::hasColumn('school_bill_class_term_session', 'bill_id_int')) {
-                $table->unsignedBigInteger('bill_id_int')->nullable()->after('id');
-                $table->unsignedBigInteger('class_id_int')->nullable()->after('bill_id_int');
-                $table->unsignedBigInteger('termid_id_int')->nullable()->after('class_id_int');
-                $table->unsignedBigInteger('session_id_int')->nullable()->after('termid_id_int');
-                $table->unsignedBigInteger('created_by_int')->nullable()->after('createdBy');
-            }
-        });
+        // ============================================
+        // PART 2: Fix school_bill_class_term_session table
+        // ============================================
 
-        // Migrate data from string to integer columns (using raw SQL for safety)
-        if (Schema::hasTable('school_bill') && Schema::hasTable('school_bill_class_term_session')) {
-            DB::statement('UPDATE school_bill_class_term_session SET bill_id_int = CAST(bill_id AS UNSIGNED) WHERE bill_id IS NOT NULL AND bill_id != ""');
-            DB::statement('UPDATE school_bill_class_term_session SET class_id_int = CAST(class_id AS UNSIGNED) WHERE class_id IS NOT NULL AND class_id != ""');
-            DB::statement('UPDATE school_bill_class_term_session SET termid_id_int = CAST(termid_id AS UNSIGNED) WHERE termid_id IS NOT NULL AND termid_id != ""');
-            DB::statement('UPDATE school_bill_class_term_session SET session_id_int = CAST(session_id AS UNSIGNED) WHERE session_id IS NOT NULL AND session_id != ""');
-            DB::statement('UPDATE school_bill_class_term_session SET created_by_int = CAST(createdBy AS UNSIGNED) WHERE createdBy IS NOT NULL AND createdBy != ""');
+        // First, check if createdBy column exists, if not, add it
+        if (!Schema::hasColumn('school_bill_class_term_session', 'createdBy')) {
+            Schema::table('school_bill_class_term_session', function (Blueprint $table) {
+                $table->string('createdBy')->nullable()->after('session_id');
+            });
         }
 
-        // Drop old string columns and rename new ones
+        // Check if we need to convert string IDs to integers
+        $needsConversion = false;
+
+        // Check if columns exist as strings
+        if (Schema::hasColumn('school_bill_class_term_session', 'bill_id')) {
+            $columnType = DB::getSchemaBuilder()->getColumnType('school_bill_class_term_session', 'bill_id');
+            if ($columnType !== 'bigint' && $columnType !== 'integer') {
+                $needsConversion = true;
+            }
+        }
+
+        if ($needsConversion) {
+            // Add new integer columns
+            Schema::table('school_bill_class_term_session', function (Blueprint $table) {
+                if (!Schema::hasColumn('school_bill_class_term_session', 'bill_id_int')) {
+                    $table->unsignedBigInteger('bill_id_int')->nullable()->after('id');
+                }
+                if (!Schema::hasColumn('school_bill_class_term_session', 'class_id_int')) {
+                    $table->unsignedBigInteger('class_id_int')->nullable()->after('bill_id_int');
+                }
+                if (!Schema::hasColumn('school_bill_class_term_session', 'termid_id_int')) {
+                    $table->unsignedBigInteger('termid_id_int')->nullable()->after('class_id_int');
+                }
+                if (!Schema::hasColumn('school_bill_class_term_session', 'session_id_int')) {
+                    $table->unsignedBigInteger('session_id_int')->nullable()->after('termid_id_int');
+                }
+                if (!Schema::hasColumn('school_bill_class_term_session', 'created_by_int')) {
+                    $table->unsignedBigInteger('created_by_int')->nullable()->after('createdBy');
+                }
+            });
+
+            // Migrate data from string to integer columns
+            try {
+                DB::statement('UPDATE school_bill_class_term_session SET bill_id_int = CAST(bill_id AS UNSIGNED) WHERE bill_id IS NOT NULL AND bill_id != ""');
+                DB::statement('UPDATE school_bill_class_term_session SET class_id_int = CAST(class_id AS UNSIGNED) WHERE class_id IS NOT NULL AND class_id != ""');
+                DB::statement('UPDATE school_bill_class_term_session SET termid_id_int = CAST(termid_id AS UNSIGNED) WHERE termid_id IS NOT NULL AND termid_id != ""');
+                DB::statement('UPDATE school_bill_class_term_session SET session_id_int = CAST(session_id AS UNSIGNED) WHERE session_id IS NOT NULL AND session_id != ""');
+                DB::statement('UPDATE school_bill_class_term_session SET created_by_int = CAST(createdBy AS UNSIGNED) WHERE createdBy IS NOT NULL AND createdBy != ""');
+            } catch (\Exception $e) {
+                // If conversion fails, continue - we'll handle it
+            }
+
+            // Drop old string columns and rename new ones
+            Schema::table('school_bill_class_term_session', function (Blueprint $table) {
+                // Drop old columns if they exist and are string type
+                if (Schema::hasColumn('school_bill_class_term_session', 'bill_id')) {
+                    $table->dropColumn('bill_id');
+                }
+                if (Schema::hasColumn('school_bill_class_term_session', 'class_id')) {
+                    $table->dropColumn('class_id');
+                }
+                if (Schema::hasColumn('school_bill_class_term_session', 'termid_id')) {
+                    $table->dropColumn('termid_id');
+                }
+                if (Schema::hasColumn('school_bill_class_term_session', 'session_id')) {
+                    $table->dropColumn('session_id');
+                }
+                if (Schema::hasColumn('school_bill_class_term_session', 'createdBy')) {
+                    $table->dropColumn('createdBy');
+                }
+
+                // Rename new columns
+                if (Schema::hasColumn('school_bill_class_term_session', 'bill_id_int')) {
+                    $table->renameColumn('bill_id_int', 'bill_id');
+                }
+                if (Schema::hasColumn('school_bill_class_term_session', 'class_id_int')) {
+                    $table->renameColumn('class_id_int', 'class_id');
+                }
+                if (Schema::hasColumn('school_bill_class_term_session', 'termid_id_int')) {
+                    $table->renameColumn('termid_id_int', 'termid_id');
+                }
+                if (Schema::hasColumn('school_bill_class_term_session', 'session_id_int')) {
+                    $table->renameColumn('session_id_int', 'session_id');
+                }
+                if (Schema::hasColumn('school_bill_class_term_session', 'created_by_int')) {
+                    $table->renameColumn('created_by_int', 'created_by');
+                }
+            });
+        } else {
+            // If no conversion needed, just ensure columns are the right type
+            Schema::table('school_bill_class_term_session', function (Blueprint $table) {
+                // Add created_by if it doesn't exist (as created_by, not createdBy)
+                if (!Schema::hasColumn('school_bill_class_term_session', 'created_by') && Schema::hasColumn('school_bill_class_term_session', 'createdBy')) {
+                    $table->renameColumn('createdBy', 'created_by');
+                } elseif (!Schema::hasColumn('school_bill_class_term_session', 'created_by')) {
+                    $table->unsignedBigInteger('created_by')->nullable()->after('session_id');
+                }
+            });
+        }
+
+        // ============================================
+        // PART 3: Add Foreign Keys and Indexes (with short names)
+        // ============================================
         Schema::table('school_bill_class_term_session', function (Blueprint $table) {
-            // Drop old string columns if they exist
+            // Check if columns exist before adding foreign keys
             if (Schema::hasColumn('school_bill_class_term_session', 'bill_id')) {
-                $table->dropColumn('bill_id');
-            }
-            if (Schema::hasColumn('school_bill_class_term_session', 'class_id')) {
-                $table->dropColumn('class_id');
-            }
-            if (Schema::hasColumn('school_bill_class_term_session', 'termid_id')) {
-                $table->dropColumn('termid_id');
-            }
-            if (Schema::hasColumn('school_bill_class_term_session', 'session_id')) {
-                $table->dropColumn('session_id');
-            }
-            if (Schema::hasColumn('school_bill_class_term_session', 'createdBy')) {
-                $table->dropColumn('createdBy');
-            }
+                // Drop existing foreign keys if they exist (to avoid duplicates)
+                try {
+                    $table->dropForeign('fk_sbcts_bill');
+                } catch (\Exception $e) {
+                    // Foreign key doesn't exist, continue
+                }
+                try {
+                    $table->dropForeign('fk_sbcts_class');
+                } catch (\Exception $e) {
+                    // Ignore
+                }
+                try {
+                    $table->dropForeign('fk_sbcts_term');
+                } catch (\Exception $e) {
+                    // Ignore
+                }
+                try {
+                    $table->dropForeign('fk_sbcts_session');
+                } catch (\Exception $e) {
+                    // Ignore
+                }
+                try {
+                    $table->dropForeign('fk_sbcts_created');
+                } catch (\Exception $e) {
+                    // Ignore
+                }
 
-            // Rename new columns (using short names)
-            if (Schema::hasColumn('school_bill_class_term_session', 'bill_id_int')) {
-                $table->renameColumn('bill_id_int', 'bill_id');
-            }
-            if (Schema::hasColumn('school_bill_class_term_session', 'class_id_int')) {
-                $table->renameColumn('class_id_int', 'class_id');
-            }
-            if (Schema::hasColumn('school_bill_class_term_session', 'termid_id_int')) {
-                $table->renameColumn('termid_id_int', 'termid_id');
-            }
-            if (Schema::hasColumn('school_bill_class_term_session', 'session_id_int')) {
-                $table->renameColumn('session_id_int', 'session_id');
-            }
-            if (Schema::hasColumn('school_bill_class_term_session', 'created_by_int')) {
-                $table->renameColumn('created_by_int', 'created_by');
-            }
+                // Add foreign keys with short names
+                $table->foreign('bill_id', 'fk_sbcts_bill')->references('id')->on('school_bill')->onDelete('cascade');
+                $table->foreign('class_id', 'fk_sbcts_class')->references('id')->on('schoolclass')->onDelete('cascade');
+                $table->foreign('termid_id', 'fk_sbcts_term')->references('id')->on('schoolterm')->onDelete('cascade');
+                $table->foreign('session_id', 'fk_sbcts_session')->references('id')->on('schoolsession')->onDelete('cascade');
+                $table->foreign('created_by', 'fk_sbcts_created')->references('id')->on('users')->onDelete('cascade');
 
-            // Add foreign keys with short names
-            $table->foreign('bill_id', 'fk_sbcts_bill')->references('id')->on('school_bill')->onDelete('cascade');
-            $table->foreign('class_id', 'fk_sbcts_class')->references('id')->on('schoolclass')->onDelete('cascade');
-            $table->foreign('termid_id', 'fk_sbcts_term')->references('id')->on('schoolterm')->onDelete('cascade');
-            $table->foreign('session_id', 'fk_sbcts_session')->references('id')->on('schoolsession')->onDelete('cascade');
-            $table->foreign('created_by', 'fk_sbcts_created')->references('id')->on('users')->onDelete('cascade');
+                // Add unique constraint with short name
+                try {
+                    $table->dropUnique('uk_sbcts_unique');
+                } catch (\Exception $e) {
+                    // Ignore
+                }
+                $table->unique(['bill_id', 'class_id', 'termid_id', 'session_id'], 'uk_sbcts_unique');
 
-            // Add unique constraint with short name
-            $table->unique(['bill_id', 'class_id', 'termid_id', 'session_id'], 'uk_sbcts_unique');
-
-            // Add indexes with short names
-            $table->index(['class_id', 'termid_id', 'session_id'], 'idx_sbcts_cts');
-            $table->index('bill_id', 'idx_sbcts_bill');
+                // Add indexes with short names
+                try {
+                    $table->dropIndex('idx_sbcts_cts');
+                } catch (\Exception $e) {
+                    // Ignore
+                }
+                try {
+                    $table->dropIndex('idx_sbcts_bill');
+                } catch (\Exception $e) {
+                    // Ignore
+                }
+                $table->index(['class_id', 'termid_id', 'session_id'], 'idx_sbcts_cts');
+                $table->index('bill_id', 'idx_sbcts_bill');
+            }
         });
     }
 
     public function down(): void
     {
-        // Drop foreign keys first
+        // Drop foreign keys and indexes
         Schema::table('school_bill_class_term_session', function (Blueprint $table) {
-            $table->dropForeign('fk_sbcts_bill');
-            $table->dropForeign('fk_sbcts_class');
-            $table->dropForeign('fk_sbcts_term');
-            $table->dropForeign('fk_sbcts_session');
-            $table->dropForeign('fk_sbcts_created');
-            $table->dropUnique('uk_sbcts_unique');
-            $table->dropIndex('idx_sbcts_cts');
-            $table->dropIndex('idx_sbcts_bill');
-        });
-
-        // Restore original columns if needed
-        Schema::table('school_bill_class_term_session', function (Blueprint $table) {
-            $table->string('bill_id')->nullable();
-            $table->string('class_id')->nullable();
-            $table->string('termid_id')->nullable();
-            $table->string('session_id')->nullable();
-            $table->string('createdBy')->nullable();
-
-            $table->dropColumn(['bill_id_int', 'class_id_int', 'termid_id_int', 'session_id_int', 'created_by_int']);
+            try {
+                $table->dropForeign('fk_sbcts_bill');
+                $table->dropForeign('fk_sbcts_class');
+                $table->dropForeign('fk_sbcts_term');
+                $table->dropForeign('fk_sbcts_session');
+                $table->dropForeign('fk_sbcts_created');
+                $table->dropUnique('uk_sbcts_unique');
+                $table->dropIndex('idx_sbcts_cts');
+                $table->dropIndex('idx_sbcts_bill');
+            } catch (\Exception $e) {
+                // Ignore errors during rollback
+            }
         });
 
         // Drop added columns from school_bill
