@@ -10,9 +10,6 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
-     *
-     * This migration creates all finance-related tables in the correct order
-     * with proper existence checks to prevent errors.
      */
     public function up(): void
     {
@@ -39,9 +36,6 @@ return new class extends Migration
                 $table->index('account_type');
                 $table->index('is_active');
             });
-            $this->command->info('✅ Created chart_of_accounts table');
-        } else {
-            $this->command->info('⏭️  chart_of_accounts table already exists - skipping');
         }
 
         // ============================================
@@ -60,13 +54,10 @@ return new class extends Migration
 
                 $table->index('code');
             });
-            $this->command->info('✅ Created bill_categories table');
-        } else {
-            $this->command->info('⏭️  bill_categories table already exists - skipping');
         }
 
         // ============================================
-        // 3. EXPENSE CATEGORIES (without foreign key first)
+        // 3. EXPENSE CATEGORIES
         // ============================================
         if (!Schema::hasTable('expense_categories')) {
             Schema::create('expense_categories', function (Blueprint $table) {
@@ -82,9 +73,6 @@ return new class extends Migration
                 $table->index('account_id');
                 $table->index('is_active');
             });
-            $this->command->info('✅ Created expense_categories table');
-        } else {
-            $this->command->info('⏭️  expense_categories table already exists - skipping');
         }
 
         // ============================================
@@ -107,13 +95,10 @@ return new class extends Migration
                 $table->index('group_no');
                 $table->index('family_name');
             });
-            $this->command->info('✅ Created sibling_groups table');
-        } else {
-            $this->command->info('⏭️  sibling_groups table already exists - skipping');
         }
 
         // ============================================
-        // 5. SIBLING GROUP STUDENTS (Pivot)
+        // 5. SIBLING GROUP STUDENTS
         // ============================================
         if (!Schema::hasTable('sibling_group_students')) {
             Schema::create('sibling_group_students', function (Blueprint $table) {
@@ -127,9 +112,6 @@ return new class extends Migration
                 $table->index('sibling_group_id');
                 $table->index('student_id');
             });
-            $this->command->info('✅ Created sibling_group_students table');
-        } else {
-            $this->command->info('⏭️  sibling_group_students table already exists - skipping');
         }
 
         // ============================================
@@ -147,9 +129,6 @@ return new class extends Migration
                 $table->boolean('is_active')->default(true);
                 $table->timestamps();
             });
-            $this->command->info('✅ Created scholarship_types table');
-        } else {
-            $this->command->info('⏭️  scholarship_types table already exists - skipping');
         }
 
         // ============================================
@@ -186,9 +165,6 @@ return new class extends Migration
                 $table->index('status');
                 $table->index('scholarship_no');
             });
-            $this->command->info('✅ Created scholarships table');
-        } else {
-            $this->command->info('⏭️  scholarships table already exists - skipping');
         }
 
         // ============================================
@@ -219,9 +195,6 @@ return new class extends Migration
                 $table->unique(['scholarship_id', 'student_id', 'effective_from'], 'uk_sa_unique');
                 $table->index(['student_id', 'status'], 'idx_sa_student_status');
             });
-            $this->command->info('✅ Created scholarship_assignments table');
-        } else {
-            $this->command->info('⏭️  scholarship_assignments table already exists - skipping');
         }
 
         // ============================================
@@ -238,9 +211,6 @@ return new class extends Migration
                 $table->boolean('is_active')->default(true);
                 $table->timestamps();
             });
-            $this->command->info('✅ Created discount_types table');
-        } else {
-            $this->command->info('⏭️  discount_types table already exists - skipping');
         }
 
         // ============================================
@@ -278,9 +248,6 @@ return new class extends Migration
                 $table->index('status');
                 $table->index('discount_no');
             });
-            $this->command->info('✅ Created discounts table');
-        } else {
-            $this->command->info('⏭️  discounts table already exists - skipping');
         }
 
         // ============================================
@@ -308,9 +275,6 @@ return new class extends Migration
                 $table->index(['student_id', 'status'], 'idx_da_student_status');
                 $table->index('sibling_group_id');
             });
-            $this->command->info('✅ Created discount_assignments table');
-        } else {
-            $this->command->info('⏭️  discount_assignments table already exists - skipping');
         }
 
         // ============================================
@@ -334,9 +298,6 @@ return new class extends Migration
                 $table->index(['student_id', 'status'], 'idx_schapp_student_status');
                 $table->index('submitted_at');
             });
-            $this->command->info('✅ Created scholarship_applications table');
-        } else {
-            $this->command->info('⏭️  scholarship_applications table already exists - skipping');
         }
 
         // ============================================
@@ -363,9 +324,6 @@ return new class extends Migration
                 $table->index(['entry_date', 'status'], 'idx_je_date_status');
                 $table->index('entry_no');
             });
-            $this->command->info('✅ Created journal_entries table');
-        } else {
-            $this->command->info('⏭️  journal_entries table already exists - skipping');
         }
 
         // ============================================
@@ -388,9 +346,6 @@ return new class extends Migration
                 $table->index('debit');
                 $table->index('credit');
             });
-            $this->command->info('✅ Created journal_entry_lines table');
-        } else {
-            $this->command->info('⏭️  journal_entry_lines table already exists - skipping');
         }
 
         // ============================================
@@ -410,9 +365,6 @@ return new class extends Migration
                 $table->boolean('is_active')->default(true);
                 $table->timestamps();
             });
-            $this->command->info('✅ Created payment_gateways table');
-        } else {
-            $this->command->info('⏭️  payment_gateways table already exists - skipping');
         }
 
         // ============================================
@@ -440,9 +392,6 @@ return new class extends Migration
                 $table->index('payment_date');
                 $table->index('status');
             });
-            $this->command->info('✅ Created payment_batches table');
-        } else {
-            $this->command->info('⏭️  payment_batches table already exists - skipping');
         }
 
         // ============================================
@@ -468,9 +417,6 @@ return new class extends Migration
 
                 $table->index(['payment_batch_id', 'school_bill_id'], 'idx_pbi_batch_bill');
             });
-            $this->command->info('✅ Created payment_batch_items table');
-        } else {
-            $this->command->info('⏭️  payment_batch_items table already exists - skipping');
         }
 
         // ============================================
@@ -488,7 +434,7 @@ return new class extends Migration
         if (Schema::hasTable('expense_categories') && Schema::hasTable('chart_of_accounts')) {
             Schema::table('expense_categories', function (Blueprint $table) {
                 try {
-                    if (!Schema::getConnection()->getSchemaBuilder()->hasColumn('expense_categories', 'account_id')) {
+                    if (!Schema::hasColumn('expense_categories', 'account_id')) {
                         $table->unsignedBigInteger('account_id')->nullable()->after('description');
                     }
                     $table->foreign('account_id', 'fk_exp_cat_account')
@@ -498,7 +444,6 @@ return new class extends Migration
                     // Foreign key might already exist
                 }
             });
-            $this->command->info('✅ Added foreign key to expense_categories');
         }
 
         // Add foreign key to sibling_group_students
@@ -509,7 +454,6 @@ return new class extends Migration
                           ->references('id')->on('sibling_groups')->onDelete('cascade');
                 } catch (\Exception $e) {}
             });
-            $this->command->info('✅ Added foreign key to sibling_group_students');
         }
 
         // Add foreign key to discount_assignments
@@ -520,7 +464,26 @@ return new class extends Migration
                           ->references('id')->on('sibling_groups')->onDelete('set null');
                 } catch (\Exception $e) {}
             });
-            $this->command->info('✅ Added foreign key to discount_assignments');
+        }
+
+        // Add foreign key to scholarships
+        if (Schema::hasTable('scholarships') && Schema::hasTable('scholarship_types')) {
+            Schema::table('scholarships', function (Blueprint $table) {
+                try {
+                    $table->foreign('scholarship_type_id', 'fk_scholarships_type')
+                          ->references('id')->on('scholarship_types');
+                } catch (\Exception $e) {}
+            });
+        }
+
+        // Add foreign key to discounts
+        if (Schema::hasTable('discounts') && Schema::hasTable('discount_types')) {
+            Schema::table('discounts', function (Blueprint $table) {
+                try {
+                    $table->foreign('discount_type_id', 'fk_discounts_type')
+                          ->references('id')->on('discount_types');
+                } catch (\Exception $e) {}
+            });
         }
     }
 
@@ -529,6 +492,37 @@ return new class extends Migration
      */
     public function down(): void
     {
+        // Drop foreign keys first
+        try {
+            Schema::table('expense_categories', function (Blueprint $table) {
+                $table->dropForeign('fk_exp_cat_account');
+            });
+        } catch (\Exception $e) {}
+
+        try {
+            Schema::table('sibling_group_students', function (Blueprint $table) {
+                $table->dropForeign('fk_sgs_group');
+            });
+        } catch (\Exception $e) {}
+
+        try {
+            Schema::table('discount_assignments', function (Blueprint $table) {
+                $table->dropForeign('fk_da_sibling');
+            });
+        } catch (\Exception $e) {}
+
+        try {
+            Schema::table('scholarships', function (Blueprint $table) {
+                $table->dropForeign('fk_scholarships_type');
+            });
+        } catch (\Exception $e) {}
+
+        try {
+            Schema::table('discounts', function (Blueprint $table) {
+                $table->dropForeign('fk_discounts_type');
+            });
+        } catch (\Exception $e) {}
+
         // Drop tables in reverse order
         Schema::dropIfExists('payment_batch_items');
         Schema::dropIfExists('payment_batches');
@@ -547,7 +541,5 @@ return new class extends Migration
         Schema::dropIfExists('expense_categories');
         Schema::dropIfExists('bill_categories');
         Schema::dropIfExists('chart_of_accounts');
-
-        $this->command->info('✅ All finance tables dropped successfully');
     }
 };
