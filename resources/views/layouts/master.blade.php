@@ -552,183 +552,290 @@
                             </li>
                         @endif
 
+
+
+
+
+
+
+
                         {{-- ============================================================
-                            BURSARY & FINANCE (Enhanced with new finance module)
-                            ============================================================ --}}
+    BURSARY & FINANCE (Enhanced with new finance module)
+    ============================================================ --}}
 
-                        @if(auth()->user()->can('View schoolpayment') || auth()->user()->can('View analysis') ||
-                            auth()->user()->can('View scholarship') || auth()->user()->can('View discount') ||
-                            auth()->user()->can('View sibling groups') || auth()->user()->can('View financial reports') ||
-                            auth()->user()->can('View payroll') || auth()->user()->can('View staff payments'))
-                            <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-apps">BURSARY & FINANCE</span></li>
-                        @endif
+@if(auth()->user()->can('View schoolpayment') || auth()->user()->can('View analysis') ||
+    auth()->user()->can('View scholarship') || auth()->user()->can('View discount') ||
+    auth()->user()->can('View sibling groups') || auth()->user()->can('View financial reports') ||
+    auth()->user()->can('View payroll') || auth()->user()->can('View staff payments'))
+    <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-apps">BURSARY & FINANCE</span></li>
+@endif
 
-                        {{-- Student Payments (Existing) --}}
-                        @can('View schoolpayment')
-                            <li class="nav-item">
-                                <a href="#sidebarStudentpayments" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStudentpayments">
-                                    <i class="ph-storefront"></i> <span data-key="t-ecommerce">Student Payments</span>
-                                </a>
-                                <div class="collapse menu-dropdown" id="sidebarStudentpayments">
-                                    <ul class="nav nav-sm flex-column">
-                                        <li class="nav-item"><a href="{{ route('schoolpayment.index') }}" class="nav-link" data-key="t-products">Student Bill</a></li>
-                                        <li class="nav-item"><a href="{{ route('payment.index') }}" class="nav-link" data-key="t-payments"><i class="ri-wallet-line"></i> Payment Portal</a></li>
-                                    </ul>
-                                </div>
-                            </li>
-                        @endcan
+{{-- Student Payments (Existing) --}}
+@can('View schoolpayment')
+<li class="nav-item">
+    <a href="#sidebarStudentpayments" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStudentpayments">
+        <i class="ph-storefront"></i> <span data-key="t-ecommerce">Student Payments</span>
+    </a>
+    <div class="collapse menu-dropdown" id="sidebarStudentpayments">
+        <ul class="nav nav-sm flex-column">
+            <li class="nav-item">
+                <a href="{{ route('schoolpayment.index') }}" class="nav-link" data-key="t-products">Student Bill</a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ route('payment.index') }}" class="nav-link" data-key="t-payments">
+                    <i class="ri-wallet-line"></i> Payment Portal
+                </a>
+            </li>
+        </ul>
+    </div>
+</li>
+@endcan
 
-                        {{-- Payment Analysis (Existing) --}}
-                        @can('View analysis')
-                            <li class="nav-item">
-                                <a href="#sidebarAnalysis" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAnalysis">
-                                    <i class="ph-storefront"></i> <span data-key="t-ecommerce">Payment Analysis</span>
-                                </a>
-                                <div class="collapse menu-dropdown" id="sidebarAnalysis">
-                                    <ul class="nav nav-sm flex-column">
-                                        <li class="nav-item"><a href="{{ route('analysis.index') }}" class="nav-link" data-key="t-products">School Payment Analysis</a></li>
-                                    </ul>
-                                </div>
-                            </li>
-                        @endcan
+{{-- Payment Analysis (Existing) --}}
+@can('View analysis')
+<li class="nav-item">
+    <a href="#sidebarAnalysis" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAnalysis">
+        <i class="ph-storefront"></i> <span data-key="t-ecommerce">Payment Analysis</span>
+    </a>
+    <div class="collapse menu-dropdown" id="sidebarAnalysis">
+        <ul class="nav nav-sm flex-column">
+            <li class="nav-item">
+                <a href="{{ route('analysis.index') }}" class="nav-link" data-key="t-products">School Payment Analysis</a>
+            </li>
+        </ul>
+    </div>
+</li>
+@endcan
 
-                        {{-- Scholarship Management (New) --}}
-                        @can('View scholarship')
-                            <li class="nav-item">
-                                <a href="#sidebarScholarship" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarScholarship">
-                                    <i class="ph-graduation-cap"></i> <span data-key="t-scholarship">Scholarship Management</span>
-                                </a>
-                                <div class="collapse menu-dropdown" id="sidebarScholarship">
-                                    <ul class="nav nav-sm flex-column">
-                                        <li class="nav-item"><a href="{{ route('admin.scholarship.index') }}" class="nav-link" data-key="t-all-scholarships"><i class="ri-list-check"></i> All Scholarships</a></li>
-                                        @can('Create scholarship')
-                                            <li class="nav-item"><a href="{{ route('admin.scholarship.create') }}" class="nav-link" data-key="t-create-scholarship"><i class="ri-add-line"></i> Create Scholarship</a></li>
-                                        @endcan
-                                        <li class="nav-item"><a href="{{ route('admin.scholarship.assignments') }}" class="nav-link" data-key="t-scholarship-assignments"><i class="ri-user-star-line"></i> Scholarship Assignments</a></li>
-                                        <li class="nav-item"><a href="{{ route('admin.scholarship.applications') }}" class="nav-link" data-key="t-scholarship-applications"><i class="ri-file-list-line"></i> Applications</a></li>
-                                    </ul>
-                                </div>
-                            </li>
-                        @endcan
+{{-- Scholarship Management --}}
+@can('View scholarship')
+<li class="nav-item">
+    <a href="#sidebarScholarship" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarScholarship">
+        <i class="ph-graduation-cap"></i> <span data-key="t-scholarship">Scholarship Management</span>
+    </a>
+    <div class="collapse menu-dropdown" id="sidebarScholarship">
+        <ul class="nav nav-sm flex-column">
+            <li class="nav-item">
+                <a href="{{ route('admin.scholarship.index') }}" class="nav-link" data-key="t-all-scholarships">
+                    <i class="ri-list-check"></i> All Scholarships
+                </a>
+            </li>
+            @can('Create scholarship')
+            <li class="nav-item">
+                <a href="{{ route('admin.scholarship.create') }}" class="nav-link" data-key="t-create-scholarship">
+                    <i class="ri-add-line"></i> Create Scholarship
+                </a>
+            </li>
+            @endcan
+            <li class="nav-item">
+                <a href="{{ route('admin.scholarship.assignments') }}" class="nav-link" data-key="t-scholarship-assignments">
+                    <i class="ri-user-star-line"></i> Scholarship Assignments
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ route('admin.scholarship.applications') }}" class="nav-link" data-key="t-scholarship-applications">
+                    <i class="ri-file-list-line"></i> Applications
+                </a>
+            </li>
+        </ul>
+    </div>
+</li>
+@endcan
 
-                        {{-- Discount Management (New) --}}
-                        @can('View discount')
-                            <li class="nav-item">
-                                <a href="#sidebarDiscount" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarDiscount">
-                                    <i class="ph-tag"></i> <span data-key="t-discount">Discount Management</span>
-                                </a>
-                                <div class="collapse menu-dropdown" id="sidebarDiscount">
-                                    <ul class="nav nav-sm flex-column">
-                                        <li class="nav-item"><a href="{{ route('admin.discount.index') }}" class="nav-link" data-key="t-all-discounts"><i class="ri-list-check"></i> All Discounts</a></li>
-                                        @can('Create discount')
-                                            <li class="nav-item"><a href="{{ route('admin.discount.create') }}" class="nav-link" data-key="t-create-discount"><i class="ri-add-line"></i> Create Discount</a></li>
-                                        @endcan
-                                        <li class="nav-item"><a href="{{ route('admin.discount.assignments') }}" class="nav-link" data-key="t-discount-assignments"><i class="ri-user-settings-line"></i> Discount Assignments</a></li>
-                                    </ul>
-                                </div>
-                            </li>
-                        @endcan
+{{-- Discount Management --}}
+@can('View discount')
+<li class="nav-item">
+    <a href="#sidebarDiscount" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarDiscount">
+        <i class="ph-tag"></i> <span data-key="t-discount">Discount Management</span>
+    </a>
+    <div class="collapse menu-dropdown" id="sidebarDiscount">
+        <ul class="nav nav-sm flex-column">
+            <li class="nav-item">
+                <a href="{{ route('admin.discount.index') }}" class="nav-link" data-key="t-all-discounts">
+                    <i class="ri-list-check"></i> All Discounts
+                </a>
+            </li>
+            @can('Create discount')
+            <li class="nav-item">
+                <a href="{{ route('admin.discount.create') }}" class="nav-link" data-key="t-create-discount">
+                    <i class="ri-add-line"></i> Create Discount
+                </a>
+            </li>
+            @endcan
+            <li class="nav-item">
+                <a href="{{ route('admin.discount.assignments') }}" class="nav-link" data-key="t-discount-assignments">
+                    <i class="ri-user-settings-line"></i> Discount Assignments
+                </a>
+            </li>
+        </ul>
+    </div>
+</li>
+@endcan
 
-                       {{-- Sibling Groups --}}
-                        @can('View sibling groups')
-                        <li class="nav-item">
-                            <a href="#sidebarSibling" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSibling">
-                                <i class="ph-users"></i> <span data-key="t-sibling-groups">Sibling Groups</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarSibling">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item">
-                                        <a href="{{ route('sibling.index') }}" class="nav-link" data-key="t-all-groups">
-                                            <i class="ri-group-line"></i> All Family Groups
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="{{ route('sibling.create') }}" class="nav-link" data-key="t-create-group">
-                                            <i class="ri-add-line"></i> Create Family Group
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </li>
-                        @endcan
+{{-- Sibling Groups (Corrected route names) --}}
+@can('View sibling groups')
+<li class="nav-item">
+    <a href="#sidebarSibling" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSibling">
+        <i class="ph-users"></i> <span data-key="t-sibling-groups">Sibling Groups</span>
+    </a>
+    <div class="collapse menu-dropdown" id="sidebarSibling">
+        <ul class="nav nav-sm flex-column">
+            <li class="nav-item">
+                <a href="{{ route('sibling-groups.index') }}" class="nav-link" data-key="t-all-groups">
+                    <i class="ri-group-line"></i> All Family Groups
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ route('sibling-groups.create') }}" class="nav-link" data-key="t-create-group">
+                    <i class="ri-add-line"></i> Create Family Group
+                </a>
+            </li>
+        </ul>
+    </div>
+</li>
+@endcan
 
-                        {{-- Payment Gateways (Admin only) --}}
-                        @can('Manage payment gateways')
-                            <li class="nav-item">
-                                <a href="{{ route('admin.payment-gateways.index') }}" class="nav-link">
-                                    <i class="ph-credit-card"></i> <span data-key="t-payment-gateways">Payment Gateways</span>
-                                </a>
-                            </li>
-                        @endcan
+{{-- Payment Gateways (Admin only) --}}
+@can('Manage payment gateways')
+<li class="nav-item">
+    <a href="{{ route('admin.payment-gateways.index') }}" class="nav-link">
+        <i class="ph-credit-card"></i> <span data-key="t-payment-gateways">Payment Gateways</span>
+    </a>
+</li>
+@endcan
 
-                        {{-- Accounting & Reports (New) --}}
-                        @can('View financial reports')
-                            <li class="nav-item">
-                                <a href="#sidebarAccounting" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAccounting">
-                                    <i class="ph-chart-line"></i> <span data-key="t-accounting">Accounting & Reports</span>
-                                </a>
-                                <div class="collapse menu-dropdown" id="sidebarAccounting">
-                                    <ul class="nav nav-sm flex-column">
-                                        <li class="nav-item"><a href="{{ route('reports.financial.balance-sheet') }}" class="nav-link"><i class="ri-file-copy-line"></i> Balance Sheet</a></li>
-                                        <li class="nav-item"><a href="{{ route('reports.financial.income-statement') }}" class="nav-link"><i class="ri-bar-chart-line"></i> Income Statement</a></li>
-                                        <li class="nav-item"><a href="{{ route('reports.financial.trial-balance') }}" class="nav-link"><i class="ri-calculator-line"></i> Trial Balance</a></li>
-                                        <li class="nav-item"><a href="{{ route('reports.financial.cash-flow') }}" class="nav-link"><i class="ri-wallet-line"></i> Cash Flow</a></li>
-                                        <li class="dropdown-divider"></li>
-                                        <li class="nav-item"><a href="{{ route('reports.financial.debtors') }}" class="nav-link"><i class="ri-user-follow-line"></i> Student Debtors List</a></li>
-                                        <li class="nav-item"><a href="{{ route('reports.financial.collection-summary') }}" class="nav-link"><i class="ri-bar-chart-grouped-line"></i> Collection Summary</a></li>
-                                        <li class="nav-item"><a href="{{ route('reports.financial.scholarship-impact') }}" class="nav-link"><i class="ri-graduation-cap-line"></i> Scholarship Impact</a></li>
-                                        <li class="dropdown-divider"></li>
-                                        <li class="nav-item"><a href="{{ route('reports.analysis.class') }}" class="nav-link"><i class="ri-school-line"></i> Class Analysis</a></li>
-                                        <li class="nav-item"><a href="{{ route('reports.analysis.school-wide') }}" class="nav-link"><i class="ri-building-line"></i> School-Wide Analysis</a></li>
-                                    </ul>
-                                </div>
-                            </li>
-                        @endcan
+{{-- Accounting & Reports --}}
+@can('View financial reports')
+<li class="nav-item">
+    <a href="#sidebarAccounting" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAccounting">
+        <i class="ph-chart-line"></i> <span data-key="t-accounting">Accounting & Reports</span>
+    </a>
+    <div class="collapse menu-dropdown" id="sidebarAccounting">
+        <ul class="nav nav-sm flex-column">
+            <li class="nav-item">
+                <a href="{{ route('reports.financial.balance-sheet') }}" class="nav-link" data-key="t-balance-sheet">
+                    <i class="ri-file-copy-line"></i> Balance Sheet
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ route('reports.financial.income-statement') }}" class="nav-link" data-key="t-income-statement">
+                    <i class="ri-bar-chart-line"></i> Income Statement
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ route('reports.financial.trial-balance') }}" class="nav-link" data-key="t-trial-balance">
+                    <i class="ri-calculator-line"></i> Trial Balance
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ route('reports.financial.cash-flow') }}" class="nav-link" data-key="t-cash-flow">
+                    <i class="ri-wallet-line"></i> Cash Flow
+                </a>
+            </li>
+            <li class="dropdown-divider"></li>
+            <li class="nav-item">
+                <a href="{{ route('reports.financial.debtors') }}" class="nav-link" data-key="t-debtors-list">
+                    <i class="ri-user-follow-line"></i> Student Debtors List
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ route('reports.financial.collection-summary') }}" class="nav-link" data-key="t-collection-summary">
+                    <i class="ri-bar-chart-grouped-line"></i> Collection Summary
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ route('reports.financial.scholarship-impact') }}" class="nav-link" data-key="t-scholarship-impact">
+                    <i class="ri-graduation-cap-line"></i> Scholarship Impact
+                </a>
+            </li>
+            <li class="dropdown-divider"></li>
+            <li class="nav-item">
+                <a href="{{ route('reports.analysis.class') }}" class="nav-link" data-key="t-class-analysis">
+                    <i class="ri-school-line"></i> Class Analysis
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ route('reports.analysis.school-wide') }}" class="nav-link" data-key="t-school-wide-analysis">
+                    <i class="ri-building-line"></i> School-Wide Analysis
+                </a>
+            </li>
+        </ul>
+    </div>
+</li>
+@endcan
 
-                        {{-- Payroll Management (New) --}}
-                        @can('View payroll')
-                            <li class="nav-item">
-                                <a href="#sidebarPayroll" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarPayroll">
-                                    <i class="ph-money"></i> <span data-key="t-payroll">Payroll Management</span>
-                                </a>
-                                <div class="collapse menu-dropdown" id="sidebarPayroll">
-                                    <ul class="nav nav-sm flex-column">
-                                        <li class="nav-item"><a href="{{ route('payroll.periods') }}" class="nav-link"><i class="ri-calendar-line"></i> Payroll Periods</a></li>
-                                        <li class="nav-item"><a href="{{ route('payroll.summary') }}" class="nav-link"><i class="ri-bar-chart-line"></i> Payroll Summary</a></li>
-                                        <li class="nav-item"><a href="{{ route('payroll.statutory') }}" class="nav-link"><i class="ri-tax-line"></i> Statutory Report</a></li>
-                                        <li class="nav-item"><a href="{{ route('payroll.structures') }}" class="nav-link"><i class="ri-bank-card-line"></i> Salary Structures</a></li>
-                                    </ul>
-                                </div>
-                            </li>
-                        @endcan
+{{-- Payroll Management --}}
+@can('View payroll')
+<li class="nav-item">
+    <a href="#sidebarPayroll" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarPayroll">
+        <i class="ph-money"></i> <span data-key="t-payroll">Payroll Management</span>
+    </a>
+    <div class="collapse menu-dropdown" id="sidebarPayroll">
+        <ul class="nav nav-sm flex-column">
+            <li class="nav-item">
+                <a href="{{ route('payroll.periods') }}" class="nav-link" data-key="t-payroll-periods">
+                    <i class="ri-calendar-line"></i> Payroll Periods
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ route('payroll.summary') }}" class="nav-link" data-key="t-payroll-summary">
+                    <i class="ri-bar-chart-line"></i> Payroll Summary
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ route('payroll.statutory') }}" class="nav-link" data-key="t-statutory-report">
+                    <i class="ri-tax-line"></i> Statutory Report
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{{ route('payroll.structures') }}" class="nav-link" data-key="t-salary-structures">
+                    <i class="ri-bank-card-line"></i> Salary Structures
+                </a>
+            </li>
+        </ul>
+    </div>
+</li>
+@endcan
 
-                        {{-- Staff Payments (New) --}}
-                        @can('View staff payments')
-                            <li class="nav-item">
-                                <a href="#sidebarStaffPayments" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStaffPayments">
-                                    <i class="ph-wallet"></i> <span data-key="t-staff-payments">Staff Payments</span>
-                                </a>
-                                <div class="collapse menu-dropdown" id="sidebarStaffPayments">
-                                    <ul class="nav nav-sm flex-column">
-                                        @can('View staff payments')
-                                            <li class="nav-item"><a href="{{ route('staff.payments.index') }}" class="nav-link"><i class="ri-list-check"></i> All Payments</a></li>
-                                        @endcan
-                                        @can('Create staff payment')
-                                            <li class="nav-item"><a href="{{ route('staff.payments.create') }}" class="nav-link"><i class="ri-add-line"></i> Record Payment</a></li>
-                                        @endcan
-                                    </ul>
-                                </div>
-                            </li>
-                        @endcan
+{{-- Staff Payments --}}
+@can('View staff payments')
+<li class="nav-item">
+    <a href="#sidebarStaffPayments" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStaffPayments">
+        <i class="ph-wallet"></i> <span data-key="t-staff-payments">Staff Payments</span>
+    </a>
+    <div class="collapse menu-dropdown" id="sidebarStaffPayments">
+        <ul class="nav nav-sm flex-column">
+            @can('View staff payments')
+            <li class="nav-item">
+                <a href="{{ route('staff.payments.index') }}" class="nav-link" data-key="t-all-payments">
+                    <i class="ri-list-check"></i> All Payments
+                </a>
+            </li>
+            @endcan
+            @can('Create staff payment')
+            <li class="nav-item">
+                <a href="{{ route('staff.payments.create') }}" class="nav-link" data-key="t-record-payment">
+                    <i class="ri-add-line"></i> Record Payment
+                </a>
+            </li>
+            @endcan
+        </ul>
+    </div>
+</li>
+@endcan
 
-                        {{-- Staff Portal - My Payments (for staff view) --}}
-                        @if(auth()->user()->isStaff())
-                            <li class="nav-item">
-                                <a href="{{ route('staff.payments.dashboard') }}" class="nav-link">
-                                    <i class="ph-briefcase"></i> <span data-key="t-my-payments">My Payments</span>
-                                </a>
-                            </li>
-                        @endif
+{{-- Staff Portal - My Payments (for staff view) --}}
+@if(auth()->user()->isStaff())
+<li class="nav-item">
+    <a href="{{ route('staff.payments.dashboard') }}" class="nav-link">
+        <i class="ph-briefcase"></i> <span data-key="t-my-payments">My Payments</span>
+    </a>
+</li>
+@endif
+
+
+
+
 
                         {{-- SCHOOL BASIC SETTINGS --}}
                         @if(auth()->user()->can('View schoolinformation') || auth()->user()->can('View session') || auth()->user()->can('View term') || auth()->user()->can('View schoolhouse') || auth()->user()->can('View school-arm') || auth()->user()->can('View class-category') || auth()->user()->can('View school-class') || auth()->user()->can('View class-teacher') || auth()->user()->can('View subjects') || auth()->user()->can('View subject-teacher') || auth()->user()->can('View subject-class') || auth()->user()->can('View compulsory-subject') || auth()->user()->can('View principals-comment') || auth()->user()->can('View school-bills') || auth()->user()->can('View school-bill-for-term-session'))
