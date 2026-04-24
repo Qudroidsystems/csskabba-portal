@@ -442,250 +442,250 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
 
 
 
-// ============================================
-// SCHOOL BILL MANAGEMENT ROUTES
-// ============================================
-Route::prefix('schoolbill')->name('schoolbill.')->group(function () {
-    Route::get('/', [SchoolBillController::class, 'index'])->name('index');
-    Route::post('/store', [SchoolBillController::class, 'store'])->name('store');
-    Route::put('/{id}', [SchoolBillController::class, 'update'])->name('update');
-    Route::delete('/{id}', [SchoolBillController::class, 'destroy'])->name('destroy');
-    Route::post('/bulk-destroy', [SchoolBillController::class, 'bulkDestroy'])->name('bulk-destroy');
-    Route::get('/{id}/edit-json', [SchoolBillController::class, 'edit'])->name('edit-json');
-    Route::get('/{id}', [SchoolBillController::class, 'show'])->name('show');
-});
+    // ============================================
+    // SCHOOL BILL MANAGEMENT ROUTES
+    // ============================================
+    Route::prefix('schoolbill')->name('schoolbill.')->group(function () {
+        Route::get('/', [SchoolBillController::class, 'index'])->name('index');
+        Route::post('/store', [SchoolBillController::class, 'store'])->name('store');
+        Route::put('/{id}', [SchoolBillController::class, 'update'])->name('update');
+        Route::delete('/{id}', [SchoolBillController::class, 'destroy'])->name('destroy');
+        Route::post('/bulk-destroy', [SchoolBillController::class, 'bulkDestroy'])->name('bulk-destroy');
+        Route::get('/{id}/edit-json', [SchoolBillController::class, 'edit'])->name('edit-json');
+        Route::get('/{id}', [SchoolBillController::class, 'show'])->name('show');
+    });
 
-// ============================================
-// SCHOOL BILL TERM SESSION ROUTES
-// ============================================
-Route::prefix('schoolbilltermsession')->name('schoolbilltermsession.')->group(function () {
-    Route::get('/', [SchoolBillTermSessionController::class, 'index'])->name('index');
-    Route::post('/store', [SchoolBillTermSessionController::class, 'store'])->name('store');
-    Route::get('/{id}/edit', [SchoolBillTermSessionController::class, 'edit'])->name('edit');
-    Route::put('/{id}', [SchoolBillTermSessionController::class, 'update'])->name('update');
-    Route::delete('/{id}', [SchoolBillTermSessionController::class, 'destroy'])->name('destroy');
-    Route::get('/{id}/related', [SchoolBillTermSessionController::class, 'getRelated'])->name('related');
-    Route::post('/bulk-destroy', [SchoolBillTermSessionController::class, 'bulkDestroy'])->name('bulk-destroy');
-});
+    // ============================================
+    // SCHOOL BILL TERM SESSION ROUTES
+    // ============================================
+    Route::prefix('schoolbilltermsession')->name('schoolbilltermsession.')->group(function () {
+        Route::get('/', [SchoolBillTermSessionController::class, 'index'])->name('index');
+        Route::post('/store', [SchoolBillTermSessionController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [SchoolBillTermSessionController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [SchoolBillTermSessionController::class, 'update'])->name('update');
+        Route::delete('/{id}', [SchoolBillTermSessionController::class, 'destroy'])->name('destroy');
+        Route::get('/{id}/related', [SchoolBillTermSessionController::class, 'getRelated'])->name('related');
+        Route::post('/bulk-destroy', [SchoolBillTermSessionController::class, 'bulkDestroy'])->name('bulk-destroy');
+    });
 
-// ============================================
-// SCHOLARSHIP MANAGEMENT ROUTES
-// ============================================
-Route::prefix('admin/scholarship')->name('admin.scholarship.')->group(function () {
-    Route::get('/', [ScholarshipController::class, 'index'])->name('index');
-    Route::get('/create', [ScholarshipController::class, 'create'])->name('create');
-    Route::post('/store', [ScholarshipController::class, 'store'])->name('store');
-    Route::get('/{id}', [ScholarshipController::class, 'show'])->name('show');
-    Route::get('/{id}/edit', [ScholarshipController::class, 'edit'])->name('edit');
-    Route::put('/{id}', [ScholarshipController::class, 'update'])->name('update');
-    Route::delete('/{id}', [ScholarshipController::class, 'destroy'])->name('destroy');
-    Route::post('/bulk-destroy', [ScholarshipController::class, 'bulkDestroy'])->name('bulk-destroy');
-    Route::post('/{id}/approve', [ScholarshipController::class, 'approve'])->name('approve');
-    Route::post('/{id}/revoke', [ScholarshipController::class, 'revoke'])->name('revoke');
-    Route::get('/assignments', [ScholarshipController::class, 'showAssignments'])->name('assignments');
-    Route::post('/assign', [ScholarshipController::class, 'assignToStudent'])->name('assign');
-    Route::delete('/assignment/{assignmentId}', [ScholarshipController::class, 'revokeAssignment'])->name('assignment.revoke');
-    Route::get('/applications', [ScholarshipController::class, 'showApplications'])->name('applications');
-    Route::post('/application/{applicationId}/approve', [ScholarshipController::class, 'approveApplication'])->name('application.approve');
-    Route::post('/application/{applicationId}/reject', [ScholarshipController::class, 'rejectApplication'])->name('application.reject');
-    Route::get('/eligible-students', [ScholarshipController::class, 'getEligibleStudents'])->name('eligible-students');
-});
+    // ============================================
+    // SCHOLARSHIP MANAGEMENT ROUTES
+    // ============================================
+    Route::prefix('admin/scholarship')->name('admin.scholarship.')->group(function () {
+        Route::get('/', [ScholarshipController::class, 'index'])->name('index');
+        Route::get('/create', [ScholarshipController::class, 'create'])->name('create');
+        Route::post('/store', [ScholarshipController::class, 'store'])->name('store');
+        Route::get('/{id}', [ScholarshipController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [ScholarshipController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [ScholarshipController::class, 'update'])->name('update');
+        Route::delete('/{id}', [ScholarshipController::class, 'destroy'])->name('destroy');
+        Route::post('/bulk-destroy', [ScholarshipController::class, 'bulkDestroy'])->name('bulk-destroy');
+        Route::post('/{id}/approve', [ScholarshipController::class, 'approve'])->name('approve');
+        Route::post('/{id}/revoke', [ScholarshipController::class, 'revoke'])->name('revoke');
+        Route::get('/assignments', [ScholarshipController::class, 'showAssignments'])->name('assignments');
+        Route::post('/assign', [ScholarshipController::class, 'assignToStudent'])->name('assign');
+        Route::delete('/assignment/{assignmentId}', [ScholarshipController::class, 'revokeAssignment'])->name('assignment.revoke');
+        Route::get('/applications', [ScholarshipController::class, 'showApplications'])->name('applications');
+        Route::post('/application/{applicationId}/approve', [ScholarshipController::class, 'approveApplication'])->name('application.approve');
+        Route::post('/application/{applicationId}/reject', [ScholarshipController::class, 'rejectApplication'])->name('application.reject');
+        Route::get('/eligible-students', [ScholarshipController::class, 'getEligibleStudents'])->name('eligible-students');
+    });
 
-// ============================================
-// DISCOUNT MANAGEMENT ROUTES
-// ============================================
-Route::prefix('admin/discount')->name('admin.discount.')->group(function () {
-    Route::get('/', [DiscountController::class, 'index'])->name('index');
-    Route::get('/create', [DiscountController::class, 'create'])->name('create');
-    Route::post('/store', [DiscountController::class, 'store'])->name('store');
-    Route::get('/{id}', [DiscountController::class, 'show'])->name('show');
-    Route::get('/{id}/edit', [DiscountController::class, 'edit'])->name('edit');
-    Route::put('/{id}', [DiscountController::class, 'update'])->name('update');
-    Route::delete('/{id}', [DiscountController::class, 'destroy'])->name('destroy');
-    Route::post('/bulk-destroy', [DiscountController::class, 'bulkDestroy'])->name('bulk-destroy');
-    Route::post('/{id}/approve', [DiscountController::class, 'approve'])->name('approve');
-    Route::get('/assignments', [DiscountController::class, 'showAssignments'])->name('assignments');
-    Route::post('/assign', [DiscountController::class, 'assignToStudent'])->name('assign');
-    Route::delete('/assignment/{assignmentId}', [DiscountController::class, 'removeAssignment'])->name('assignment.remove');
-});
+    // ============================================
+    // DISCOUNT MANAGEMENT ROUTES
+    // ============================================
+    Route::prefix('admin/discount')->name('admin.discount.')->group(function () {
+        Route::get('/', [DiscountController::class, 'index'])->name('index');
+        Route::get('/create', [DiscountController::class, 'create'])->name('create');
+        Route::post('/store', [DiscountController::class, 'store'])->name('store');
+        Route::get('/{id}', [DiscountController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [DiscountController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [DiscountController::class, 'update'])->name('update');
+        Route::delete('/{id}', [DiscountController::class, 'destroy'])->name('destroy');
+        Route::post('/bulk-destroy', [DiscountController::class, 'bulkDestroy'])->name('bulk-destroy');
+        Route::post('/{id}/approve', [DiscountController::class, 'approve'])->name('approve');
+        Route::get('/assignments', [DiscountController::class, 'showAssignments'])->name('assignments');
+        Route::post('/assign', [DiscountController::class, 'assignToStudent'])->name('assign');
+        Route::delete('/assignment/{assignmentId}', [DiscountController::class, 'removeAssignment'])->name('assignment.remove');
+    });
 
-// ============================================
-// SIBLING GROUP ROUTES
-// ============================================
-Route::prefix('sibling-groups')->name('sibling.')->group(function () {
-    Route::get('/', [SiblingGroupController::class, 'index'])->name('index');
-    Route::post('/store', [SiblingGroupController::class, 'store'])->name('store');
-    Route::get('/{id}', [SiblingGroupController::class, 'show'])->name('show');
-    Route::put('/{id}', [SiblingGroupController::class, 'update'])->name('update');
-    Route::delete('/{id}', [SiblingGroupController::class, 'destroy'])->name('destroy');
-    Route::post('/apply-discount', [SiblingGroupController::class, 'applyDiscount'])->name('apply-discount');
-    Route::get('/student/{studentId}', [SiblingGroupController::class, 'getStudentSiblings'])->name('student-siblings');
-    Route::get('/search-students', [SiblingGroupController::class, 'searchStudents'])->name('search-students');
-});
+    // ============================================
+    // SIBLING GROUP ROUTES
+    // ============================================
+    // In your web.php, you should have routes like:
+    Route::resource('sibling-groups', SiblingGroupController::class);
+    // or
+    Route::get('/sibling-groups', [SiblingGroupController::class, 'index'])->name('sibling-groups.index');
+    Route::get('/sibling-groups/create', [SiblingGroupController::class, 'create'])->name('sibling-groups.create');
+    Route::post('/sibling-groups', [SiblingGroupController::class, 'store'])->name('sibling-groups.store');
+    Route::get('/sibling-groups/{id}', [SiblingGroupController::class, 'show'])->name('sibling-groups.show');
+    Route::get('/sibling-groups/{id}/edit', [SiblingGroupController::class, 'edit'])->name('sibling-groups.edit');
+    Route::put('/sibling-groups/{id}', [SiblingGroupController::class, 'update'])->name('sibling-groups.update');
+    Route::delete('/sibling-groups/{id}', [SiblingGroupController::class, 'destroy'])->name('sibling-groups.destroy');
 
-// ============================================
-// PAYMENT GATEWAY ROUTES
-// ============================================
-Route::prefix('admin/payment-gateways')->name('admin.payment-gateways.')->group(function () {
-    Route::get('/', [PaymentGatewayController::class, 'index'])->name('index');
-    Route::post('/{gateway}/toggle', [PaymentGatewayController::class, 'toggleGateway'])->name('toggle');
-    Route::put('/{gateway}', [PaymentGatewayController::class, 'updateConfig'])->name('update');
-    Route::post('/test/{gateway}', [PaymentGatewayController::class, 'testGateway'])->name('test');
-});
+    // ============================================
+    // PAYMENT GATEWAY ROUTES
+    // ============================================
+    Route::prefix('admin/payment-gateways')->name('admin.payment-gateways.')->group(function () {
+        Route::get('/', [PaymentGatewayController::class, 'index'])->name('index');
+        Route::post('/{gateway}/toggle', [PaymentGatewayController::class, 'toggleGateway'])->name('toggle');
+        Route::put('/{gateway}', [PaymentGatewayController::class, 'updateConfig'])->name('update');
+        Route::post('/test/{gateway}', [PaymentGatewayController::class, 'testGateway'])->name('test');
+    });
 
-// ============================================
-// ENHANCED PAYMENT ROUTES
-// ============================================
-Route::prefix('payment')->name('payment.')->group(function () {
-    Route::get('/', [EnhancedSchoolPaymentController::class, 'index'])->name('index');
-    Route::get('/student/{studentId}/class/{classId}/term/{termId}/session/{sessionId}', [EnhancedSchoolPaymentController::class, 'showPaymentDetails'])->name('details');
-    Route::get('/flexible/{studentId}/{classId}/{termId}/{sessionId}', [EnhancedSchoolPaymentController::class, 'showFlexiblePayment'])->name('flexible');
-    Route::post('/offline/process', [EnhancedSchoolPaymentController::class, 'processOfflinePayment'])->name('offline.process');
-    Route::post('/invoice/generate/{paymentId}', [EnhancedSchoolPaymentController::class, 'generateInvoice'])->name('invoice.generate');
-    Route::get('/invoice/{studentId}/{classId}/{termId}/{sessionId}', [EnhancedSchoolPaymentController::class, 'showInvoice'])->name('invoice');
-    Route::get('/invoice/download/{studentId}/{classId}/{termId}/{sessionId}', [EnhancedSchoolPaymentController::class, 'showInvoice'])->name('invoice.download');
-    Route::get('/receipt/{batchId}', [EnhancedSchoolPaymentController::class, 'showReceipt'])->name('receipt');
-    Route::post('/reverse/{batchId}', [EnhancedSchoolPaymentController::class, 'reversePayment'])->name('reverse');
-    Route::get('/status/{studentId}/{classId}/{termId}/{sessionId}', [EnhancedSchoolPaymentController::class, 'getPaymentStatus'])->name('status');
-    Route::get('/savings/{studentId}', [EnhancedSchoolPaymentController::class, 'getSavingsSummary'])->name('savings');
-    Route::get('/history', [EnhancedSchoolPaymentController::class, 'getPaymentHistory'])->name('history');
-});
+    // ============================================
+    // ENHANCED PAYMENT ROUTES
+    // ============================================
+    Route::prefix('payment')->name('payment.')->group(function () {
+        Route::get('/', [EnhancedSchoolPaymentController::class, 'index'])->name('index');
+        Route::get('/student/{studentId}/class/{classId}/term/{termId}/session/{sessionId}', [EnhancedSchoolPaymentController::class, 'showPaymentDetails'])->name('details');
+        Route::get('/flexible/{studentId}/{classId}/{termId}/{sessionId}', [EnhancedSchoolPaymentController::class, 'showFlexiblePayment'])->name('flexible');
+        Route::post('/offline/process', [EnhancedSchoolPaymentController::class, 'processOfflinePayment'])->name('offline.process');
+        Route::post('/invoice/generate/{paymentId}', [EnhancedSchoolPaymentController::class, 'generateInvoice'])->name('invoice.generate');
+        Route::get('/invoice/{studentId}/{classId}/{termId}/{sessionId}', [EnhancedSchoolPaymentController::class, 'showInvoice'])->name('invoice');
+        Route::get('/invoice/download/{studentId}/{classId}/{termId}/{sessionId}', [EnhancedSchoolPaymentController::class, 'showInvoice'])->name('invoice.download');
+        Route::get('/receipt/{batchId}', [EnhancedSchoolPaymentController::class, 'showReceipt'])->name('receipt');
+        Route::post('/reverse/{batchId}', [EnhancedSchoolPaymentController::class, 'reversePayment'])->name('reverse');
+        Route::get('/status/{studentId}/{classId}/{termId}/{sessionId}', [EnhancedSchoolPaymentController::class, 'getPaymentStatus'])->name('status');
+        Route::get('/savings/{studentId}', [EnhancedSchoolPaymentController::class, 'getSavingsSummary'])->name('savings');
+        Route::get('/history', [EnhancedSchoolPaymentController::class, 'getPaymentHistory'])->name('history');
+    });
 
-// ============================================
-// FLEXIBLE ONLINE PAYMENT ROUTES
-// ============================================
-Route::prefix('payment/flexible')->name('payment.flexible.')->group(function () {
-    Route::get('/{studentId}/{classId}/{termId}/{sessionId}', [FlexibleOnlinePaymentController::class, 'showFlexiblePayment'])->name('show');
-    Route::post('/initialize', [FlexibleOnlinePaymentController::class, 'initializeFlexiblePayment'])->name('initialize');
-    Route::get('/callback', [FlexibleOnlinePaymentController::class, 'handlePaymentCallback'])->name('callback');
-    Route::get('/success/{reference}', [FlexibleOnlinePaymentController::class, 'paymentSuccess'])->name('success');
-    Route::get('/status/{reference}', [FlexibleOnlinePaymentController::class, 'getPaymentStatus'])->name('status');
-    Route::post('/retry/{onlinePaymentId}', [FlexibleOnlinePaymentController::class, 'retryPayment'])->name('retry');
-    Route::post('/webhook/{gateway}', [FlexibleOnlinePaymentController::class, 'webhook'])->name('webhook');
-});
+    // ============================================
+    // FLEXIBLE ONLINE PAYMENT ROUTES
+    // ============================================
+    Route::prefix('payment/flexible')->name('payment.flexible.')->group(function () {
+        Route::get('/{studentId}/{classId}/{termId}/{sessionId}', [FlexibleOnlinePaymentController::class, 'showFlexiblePayment'])->name('show');
+        Route::post('/initialize', [FlexibleOnlinePaymentController::class, 'initializeFlexiblePayment'])->name('initialize');
+        Route::get('/callback', [FlexibleOnlinePaymentController::class, 'handlePaymentCallback'])->name('callback');
+        Route::get('/success/{reference}', [FlexibleOnlinePaymentController::class, 'paymentSuccess'])->name('success');
+        Route::get('/status/{reference}', [FlexibleOnlinePaymentController::class, 'getPaymentStatus'])->name('status');
+        Route::post('/retry/{onlinePaymentId}', [FlexibleOnlinePaymentController::class, 'retryPayment'])->name('retry');
+        Route::post('/webhook/{gateway}', [FlexibleOnlinePaymentController::class, 'webhook'])->name('webhook');
+    });
 
-// ============================================
-// SIMPLE ONLINE PAYMENT ROUTES
-// ============================================
-Route::prefix('payment/online')->name('payment.online.')->group(function () {
-    Route::get('/', [OnlinePaymentController::class, 'index'])->name('index');
-    Route::get('/success/{reference}', [OnlinePaymentController::class, 'success'])->name('success');
-    Route::get('/bills', [OnlinePaymentController::class, 'getStudentBillsAjax'])->name('bills');
-    Route::post('/initialize', [OnlinePaymentController::class, 'initialize'])->name('initialize');
-    Route::get('/status/{reference}', [OnlinePaymentController::class, 'getPaymentStatus'])->name('status');
-    Route::post('/retry/{onlinePaymentId}', [OnlinePaymentController::class, 'retryPayment'])->name('retry');
-    Route::post('/cancel/{onlinePaymentId}', [OnlinePaymentController::class, 'cancelPayment'])->name('cancel');
-    Route::get('/verify/{reference}', [OnlinePaymentController::class, 'verifyPayment'])->name('verify');
-    Route::get('/analytics', [OnlinePaymentController::class, 'getPaymentAnalytics'])->name('analytics');
-    Route::post('/bank-transfer/initiate', [OnlinePaymentController::class, 'initiateBankTransfer'])->name('bank-transfer.initiate');
-    Route::get('/bank-transfer/status/{reference}', [OnlinePaymentController::class, 'checkBankTransferStatus'])->name('bank-transfer.status');
-    Route::get('/banks', [OnlinePaymentController::class, 'getSupportedBanks'])->name('banks');
-    Route::get('/receipt/{batchId}', [OnlinePaymentController::class, 'downloadReceipt'])->name('receipt');
-    Route::get('/transaction/{reference}', [OnlinePaymentController::class, 'getTransactionDetails'])->name('transaction');
-    Route::get('/callback', [OnlinePaymentController::class, 'callback'])->name('callback');
-    Route::post('/webhook/{gateway}', [OnlinePaymentController::class, 'webhook'])->name('webhook');
-});
+    // ============================================
+    // SIMPLE ONLINE PAYMENT ROUTES
+    // ============================================
+    Route::prefix('payment/online')->name('payment.online.')->group(function () {
+        Route::get('/', [OnlinePaymentController::class, 'index'])->name('index');
+        Route::get('/success/{reference}', [OnlinePaymentController::class, 'success'])->name('success');
+        Route::get('/bills', [OnlinePaymentController::class, 'getStudentBillsAjax'])->name('bills');
+        Route::post('/initialize', [OnlinePaymentController::class, 'initialize'])->name('initialize');
+        Route::get('/status/{reference}', [OnlinePaymentController::class, 'getPaymentStatus'])->name('status');
+        Route::post('/retry/{onlinePaymentId}', [OnlinePaymentController::class, 'retryPayment'])->name('retry');
+        Route::post('/cancel/{onlinePaymentId}', [OnlinePaymentController::class, 'cancelPayment'])->name('cancel');
+        Route::get('/verify/{reference}', [OnlinePaymentController::class, 'verifyPayment'])->name('verify');
+        Route::get('/analytics', [OnlinePaymentController::class, 'getPaymentAnalytics'])->name('analytics');
+        Route::post('/bank-transfer/initiate', [OnlinePaymentController::class, 'initiateBankTransfer'])->name('bank-transfer.initiate');
+        Route::get('/bank-transfer/status/{reference}', [OnlinePaymentController::class, 'checkBankTransferStatus'])->name('bank-transfer.status');
+        Route::get('/banks', [OnlinePaymentController::class, 'getSupportedBanks'])->name('banks');
+        Route::get('/receipt/{batchId}', [OnlinePaymentController::class, 'downloadReceipt'])->name('receipt');
+        Route::get('/transaction/{reference}', [OnlinePaymentController::class, 'getTransactionDetails'])->name('transaction');
+        Route::get('/callback', [OnlinePaymentController::class, 'callback'])->name('callback');
+        Route::post('/webhook/{gateway}', [OnlinePaymentController::class, 'webhook'])->name('webhook');
+    });
 
-// ============================================
-// LEGACY PAYMENT ROUTES (Backward Compatibility)
-// ============================================
-Route::prefix('schoolpayment')->name('schoolpayment.')->group(function () {
-    Route::get('/', [SchoolPaymentController::class, 'index'])->name('index');
-    Route::get('/term-session/{id}', [SchoolPaymentController::class, 'termSession'])->name('termsession');
-    Route::get('/termsessionpayments', [SchoolPaymentController::class, 'termsessionpayments'])->name('termsessionpayments');
-    Route::post('/store', [SchoolPaymentController::class, 'store'])->name('store');
-    Route::post('/delete/{recordId}', [SchoolPaymentController::class, 'deletestudentpayment'])->name('deletestudentpayment');
-    Route::get('/invoice/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'invoice'])->name('invoice');
-    Route::get('/statement/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'statement'])->name('statement');
-});
+    // ============================================
+    // LEGACY PAYMENT ROUTES (Backward Compatibility)
+    // ============================================
+    Route::prefix('schoolpayment')->name('schoolpayment.')->group(function () {
+        Route::get('/', [SchoolPaymentController::class, 'index'])->name('index');
+        Route::get('/term-session/{id}', [SchoolPaymentController::class, 'termSession'])->name('termsession');
+        Route::get('/termsessionpayments', [SchoolPaymentController::class, 'termsessionpayments'])->name('termsessionpayments');
+        Route::post('/store', [SchoolPaymentController::class, 'store'])->name('store');
+        Route::post('/delete/{recordId}', [SchoolPaymentController::class, 'deletestudentpayment'])->name('deletestudentpayment');
+        Route::get('/invoice/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'invoice'])->name('invoice');
+        Route::get('/statement/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'statement'])->name('statement');
+    });
 
-// ============================================
-// STAFF PAYMENT ROUTES
-// ============================================
-Route::prefix('staff/payments')->name('staff.payments.')->group(function () {
-    Route::get('/dashboard', [StaffPaymentController::class, 'staffDashboard'])->name('dashboard');
-    Route::get('/payslip/{payrollRunId}', [StaffPaymentController::class, 'viewPayslip'])->name('payslip');
-    Route::get('/payslip/download/{payrollRunId}', [StaffPaymentController::class, 'generatePayslip'])->name('payslip.download');
-    Route::get('/', [StaffPaymentController::class, 'index'])->name('index');
-    Route::post('/record', [StaffPaymentController::class, 'recordManualPayment'])->name('record');
-    Route::get('/history', [StaffPaymentController::class, 'getPaymentHistory'])->name('history');
-    Route::post('/reverse/{paymentId}', [StaffPaymentController::class, 'reversePayment'])->name('reverse');
-    Route::post('/mark-paid/{paymentId}', [StaffPaymentController::class, 'markAsPaid'])->name('mark-paid');
-});
+    // ============================================
+    // STAFF PAYMENT ROUTES
+    // ============================================
+    Route::prefix('staff/payments')->name('staff.payments.')->group(function () {
+        Route::get('/dashboard', [StaffPaymentController::class, 'staffDashboard'])->name('dashboard');
+        Route::get('/payslip/{payrollRunId}', [StaffPaymentController::class, 'viewPayslip'])->name('payslip');
+        Route::get('/payslip/download/{payrollRunId}', [StaffPaymentController::class, 'generatePayslip'])->name('payslip.download');
+        Route::get('/', [StaffPaymentController::class, 'index'])->name('index');
+        Route::post('/record', [StaffPaymentController::class, 'recordManualPayment'])->name('record');
+        Route::get('/history', [StaffPaymentController::class, 'getPaymentHistory'])->name('history');
+        Route::post('/reverse/{paymentId}', [StaffPaymentController::class, 'reversePayment'])->name('reverse');
+        Route::post('/mark-paid/{paymentId}', [StaffPaymentController::class, 'markAsPaid'])->name('mark-paid');
+    });
 
-// ============================================
-// PAYROLL MANAGEMENT ROUTES
-// ============================================
-Route::prefix('payroll')->name('payroll.')->group(function () {
-    // Periods
-    Route::get('/periods', [PayrollController::class, 'periods'])->name('periods');
-    Route::post('/periods', [PayrollController::class, 'createPeriod'])->name('periods.store');
-    Route::post('/periods/{periodId}/process', [PayrollController::class, 'processPayroll'])->name('process');
-    Route::post('/periods/{periodId}/approve', [PayrollController::class, 'approvePayroll'])->name('approve');
-    Route::post('/periods/{periodId}/lock', [PayrollController::class, 'lockPeriod'])->name('lock');
+    // ============================================
+    // PAYROLL MANAGEMENT ROUTES
+    // ============================================
+    Route::prefix('payroll')->name('payroll.')->group(function () {
+        // Periods
+        Route::get('/periods', [PayrollController::class, 'periods'])->name('periods');
+        Route::post('/periods', [PayrollController::class, 'createPeriod'])->name('periods.store');
+        Route::post('/periods/{periodId}/process', [PayrollController::class, 'processPayroll'])->name('process');
+        Route::post('/periods/{periodId}/approve', [PayrollController::class, 'approvePayroll'])->name('approve');
+        Route::post('/periods/{periodId}/lock', [PayrollController::class, 'lockPeriod'])->name('lock');
 
-    // Salary Structures
-    Route::get('/salary-structures', [PayrollController::class, 'salaryStructures'])->name('structures');
-    Route::post('/salary-structures', [PayrollController::class, 'storeSalaryStructure'])->name('structures.store');
-    Route::put('/salary-structures/{id}', [PayrollController::class, 'updateSalaryStructure'])->name('structures.update');
-    Route::delete('/salary-structures/{id}', [PayrollController::class, 'destroySalaryStructure'])->name('structures.destroy');
+        // Salary Structures
+        Route::get('/salary-structures', [PayrollController::class, 'salaryStructures'])->name('structures');
+        Route::post('/salary-structures', [PayrollController::class, 'storeSalaryStructure'])->name('structures.store');
+        Route::put('/salary-structures/{id}', [PayrollController::class, 'updateSalaryStructure'])->name('structures.update');
+        Route::delete('/salary-structures/{id}', [PayrollController::class, 'destroySalaryStructure'])->name('structures.destroy');
 
-    // Payroll Runs
-    Route::get('/runs/{periodId}', [PayrollController::class, 'getPayrollRuns'])->name('runs');
-    Route::get('/run/{payrollRunId}', [PayrollController::class, 'showPayrollRun'])->name('run.show');
-    Route::post('/run/{payrollRunId}/pay', [PayrollController::class, 'processStaffPayment'])->name('run.pay');
+        // Payroll Runs
+        Route::get('/runs/{periodId}', [PayrollController::class, 'getPayrollRuns'])->name('runs');
+        Route::get('/run/{payrollRunId}', [PayrollController::class, 'showPayrollRun'])->name('run.show');
+        Route::post('/run/{payrollRunId}/pay', [PayrollController::class, 'processStaffPayment'])->name('run.pay');
 
-    // Reports
-    Route::get('/summary', [PayrollController::class, 'summaryReport'])->name('summary');
-    Route::get('/export/{periodId}', [PayrollController::class, 'exportPayroll'])->name('export');
-    Route::get('/statutory', [PayrollController::class, 'statutoryReport'])->name('statutory');
-});
+        // Reports
+        Route::get('/summary', [PayrollController::class, 'summaryReport'])->name('summary');
+        Route::get('/export/{periodId}', [PayrollController::class, 'exportPayroll'])->name('export');
+        Route::get('/statutory', [PayrollController::class, 'statutoryReport'])->name('statutory');
+    });
 
-// ============================================
-// FINANCIAL REPORTS ROUTES
-// ============================================
-Route::prefix('reports/financial')->name('reports.financial.')->group(function () {
-    Route::get('/balance-sheet', [FinancialReportController::class, 'balanceSheet'])->name('balance-sheet');
-    Route::get('/income-statement', [FinancialReportController::class, 'incomeStatement'])->name('income-statement');
-    Route::get('/trial-balance', [FinancialReportController::class, 'trialBalance'])->name('trial-balance');
-    Route::get('/cash-flow', [FinancialReportController::class, 'cashFlow'])->name('cash-flow');
-    Route::get('/debtors', [FinancialReportController::class, 'debtorsList'])->name('debtors');
-    Route::get('/collection-summary', [FinancialReportController::class, 'collectionSummary'])->name('collection-summary');
-    Route::get('/scholarship-impact', [FinancialReportController::class, 'scholarshipImpact'])->name('scholarship-impact');
-    Route::get('/export/{report}/{format}', [FinancialReportController::class, 'export'])->name('export');
-    Route::get('/data/debtors', [FinancialReportController::class, 'getDebtorsData'])->name('data.debtors');
-    Route::get('/data/collection', [FinancialReportController::class, 'getCollectionData'])->name('data.collection');
-});
+    // ============================================
+    // FINANCIAL REPORTS ROUTES
+    // ============================================
+    Route::prefix('reports/financial')->name('reports.financial.')->group(function () {
+        Route::get('/balance-sheet', [FinancialReportController::class, 'balanceSheet'])->name('balance-sheet');
+        Route::get('/income-statement', [FinancialReportController::class, 'incomeStatement'])->name('income-statement');
+        Route::get('/trial-balance', [FinancialReportController::class, 'trialBalance'])->name('trial-balance');
+        Route::get('/cash-flow', [FinancialReportController::class, 'cashFlow'])->name('cash-flow');
+        Route::get('/debtors', [FinancialReportController::class, 'debtorsList'])->name('debtors');
+        Route::get('/collection-summary', [FinancialReportController::class, 'collectionSummary'])->name('collection-summary');
+        Route::get('/scholarship-impact', [FinancialReportController::class, 'scholarshipImpact'])->name('scholarship-impact');
+        Route::get('/export/{report}/{format}', [FinancialReportController::class, 'export'])->name('export');
+        Route::get('/data/debtors', [FinancialReportController::class, 'getDebtorsData'])->name('data.debtors');
+        Route::get('/data/collection', [FinancialReportController::class, 'getCollectionData'])->name('data.collection');
+    });
 
-// ============================================
-// ANALYSIS REPORTS ROUTES
-// ============================================
-Route::prefix('reports/analysis')->name('reports.analysis.')->middleware(['auth', 'permission:View financial reports'])->group(function () {
-    Route::get('/class', [AnalysisReportController::class, 'classAnalysis'])->name('class');
-    Route::get('/school-wide', [AnalysisReportController::class, 'schoolWideAnalysis'])->name('school-wide');
-    Route::get('/scholarship-impact', [AnalysisReportController::class, 'scholarshipImpactAnalysis'])->name('scholarship-impact');
-    Route::get('/export/{type}', [AnalysisReportController::class, 'exportAnalysis'])->name('export');
-});
+    // ============================================
+    // ANALYSIS REPORTS ROUTES
+    // ============================================
+    Route::prefix('reports/analysis')->name('reports.analysis.')->middleware(['auth', 'permission:View financial reports'])->group(function () {
+        Route::get('/class', [AnalysisReportController::class, 'classAnalysis'])->name('class');
+        Route::get('/school-wide', [AnalysisReportController::class, 'schoolWideAnalysis'])->name('school-wide');
+        Route::get('/scholarship-impact', [AnalysisReportController::class, 'scholarshipImpactAnalysis'])->name('scholarship-impact');
+        Route::get('/export/{type}', [AnalysisReportController::class, 'exportAnalysis'])->name('export');
+    });
 
-// ============================================
-// WEBHOOK ROUTES (No CSRF)
-// ============================================
-Route::prefix('webhook')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class])->group(function () {
-    Route::post('/paystack', [FlexibleOnlinePaymentController::class, 'webhook'])->name('webhook.paystack');
-    Route::post('/remita', [FlexibleOnlinePaymentController::class, 'webhook'])->name('webhook.remita');
-    Route::post('/flutterwave', [FlexibleOnlinePaymentController::class, 'webhook'])->name('webhook.flutterwave');
-});
+    // ============================================
+    // WEBHOOK ROUTES (No CSRF)
+    // ============================================
+    Route::prefix('webhook')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class])->group(function () {
+        Route::post('/paystack', [FlexibleOnlinePaymentController::class, 'webhook'])->name('webhook.paystack');
+        Route::post('/remita', [FlexibleOnlinePaymentController::class, 'webhook'])->name('webhook.remita');
+        Route::post('/flutterwave', [FlexibleOnlinePaymentController::class, 'webhook'])->name('webhook.flutterwave');
+    });
 
-// ============================================
-// BULK PAYMENT ROUTES
-// ============================================
-Route::prefix('bulk-payment')->name('bulk-payment.')->middleware(['auth', 'permission:Process payment'])->group(function () {
-    Route::get('/', [EnhancedSchoolPaymentController::class, 'bulkPaymentForm'])->name('form');
-    Route::post('/upload', [EnhancedSchoolPaymentController::class, 'uploadBulkPayment'])->name('upload');
-    Route::post('/process', [EnhancedSchoolPaymentController::class, 'processBulkPayment'])->name('process');
-    Route::get('/template', [EnhancedSchoolPaymentController::class, 'downloadTemplate'])->name('template');
-    Route::get('/status/{batchId}', [EnhancedSchoolPaymentController::class, 'getBulkStatus'])->name('status');
-});
+    // ============================================
+    // BULK PAYMENT ROUTES
+    // ============================================
+    Route::prefix('bulk-payment')->name('bulk-payment.')->middleware(['auth', 'permission:Process payment'])->group(function () {
+        Route::get('/', [EnhancedSchoolPaymentController::class, 'bulkPaymentForm'])->name('form');
+        Route::post('/upload', [EnhancedSchoolPaymentController::class, 'uploadBulkPayment'])->name('upload');
+        Route::post('/process', [EnhancedSchoolPaymentController::class, 'processBulkPayment'])->name('process');
+        Route::get('/template', [EnhancedSchoolPaymentController::class, 'downloadTemplate'])->name('template');
+        Route::get('/status/{batchId}', [EnhancedSchoolPaymentController::class, 'getBulkStatus'])->name('status');
+    });
 
 
 
