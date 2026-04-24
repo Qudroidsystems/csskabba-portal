@@ -112,6 +112,7 @@ use Spatie\Permission\Models\Role;
                                         @can('Create user')
                                             <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#showModal"><i class="bi bi-plus-circle align-baseline me-1"></i> Add User</button>
                                             <button type="button" class="btn btn-success add-btn" data-bs-toggle="modal" data-bs-target="#addStudentModal"><i class="bi bi-person-plus align-baseline me-1"></i> Add Student</button>
+                                            <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#massStudentModal"> <i class="bi bi-people-fill me-1"></i> Mass Create Students</button>
                                         @endcan
                                     </div>
                                 </div>
@@ -436,7 +437,7 @@ use Spatie\Permission\Models\Role;
                     </div>
                 </div>
             </div>
-
+            @include('users.partials.mass-student-modal')
         </div>
     </div>
 </div>
