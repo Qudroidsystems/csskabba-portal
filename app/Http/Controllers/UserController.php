@@ -28,6 +28,9 @@ class UserController extends Controller
         $this->middleware('permission:Delete user', ['only' => ['destroy']]);
     }
 
+    // ─────────────────────────────────────────────────────────────────
+    // INDEX
+    // ─────────────────────────────────────────────────────────────────
     public function index(Request $request): View
     {
         $pagetitle = "User Management";
@@ -44,6 +47,9 @@ class UserController extends Controller
         return view('users.index', compact('data', 'roles', 'role_permissions', 'pagetitle', 'role_counts'));
     }
 
+    // ─────────────────────────────────────────────────────────────────
+    // CREATE
+    // ─────────────────────────────────────────────────────────────────
     public function create(): View
     {
         $title = "Create User";
@@ -51,6 +57,9 @@ class UserController extends Controller
         return view('users.create', compact('roles', 'title'));
     }
 
+    // ─────────────────────────────────────────────────────────────────
+    // STORE (generic user)
+    // ─────────────────────────────────────────────────────────────────
     public function store(Request $request): JsonResponse
     {
         Log::debug("Creating user", $request->all());
@@ -108,6 +117,9 @@ class UserController extends Controller
         }
     }
 
+    // ─────────────────────────────────────────────────────────────────
+    // SHOW
+    // ─────────────────────────────────────────────────────────────────
     public function show($id): View
     {
         $pagetitle = "User Overview";
@@ -145,6 +157,9 @@ class UserController extends Controller
         ));
     }
 
+    // ─────────────────────────────────────────────────────────────────
+    // EDIT
+    // ─────────────────────────────────────────────────────────────────
     public function edit($id): View
     {
         if (auth()->user()->hasRole('student')) {
@@ -158,6 +173,9 @@ class UserController extends Controller
         return view('users.edit', compact('user', 'roles', 'userRole'));
     }
 
+    // ─────────────────────────────────────────────────────────────────
+    // UPDATE
+    // ─────────────────────────────────────────────────────────────────
     public function update(Request $request, $id): JsonResponse
     {
         if (auth()->user()->hasRole('student')) {
@@ -228,6 +246,9 @@ class UserController extends Controller
         }
     }
 
+    // ─────────────────────────────────────────────────────────────────
+    // DESTROY
+    // ─────────────────────────────────────────────────────────────────
     public function destroy($id): JsonResponse
     {
         Log::debug("Attempting to delete user ID: {$id}");
@@ -256,6 +277,9 @@ class UserController extends Controller
         }
     }
 
+    // ─────────────────────────────────────────────────────────────────
+    // ROLES LIST
+    // ─────────────────────────────────────────────────────────────────
     public function roles(): JsonResponse
     {
         $roles = Role::pluck('name')->all();
@@ -263,7 +287,7 @@ class UserController extends Controller
     }
 
     // ─────────────────────────────────────────────────────────────────
-    // SINGLE student user creation (existing)
+    // SINGLE student user creation
     // ─────────────────────────────────────────────────────────────────
     public function storeStudent(Request $request): JsonResponse
     {
@@ -342,7 +366,7 @@ class UserController extends Controller
     }
 
     // ─────────────────────────────────────────────────────────────────
-    // MASS student user creation (NEW)
+    // MASS student user creation
     // ─────────────────────────────────────────────────────────────────
     public function massCreateStudents(Request $request): JsonResponse
     {
@@ -368,8 +392,6 @@ class UserController extends Controller
             $created = [];
             $skipped = [];
             $errors  = [];
-
-            $isStudentRole = in_array('student', $validated['roles']);
 
             DB::beginTransaction();
 
@@ -417,7 +439,7 @@ class UserController extends Controller
                     ? $validated['shared_password']
                     : strtoupper(Str::random(4)) . rand(100, 999) . strtolower(Str::random(3));
 
-                // Create user
+                // Create user — always assign only 'student' role via mass create
                 $user = User::create([
                     'name'       => trim("{$student->firstname} {$student->lastname}"),
                     'email'      => $email,
@@ -426,7 +448,8 @@ class UserController extends Controller
                     'password'   => Hash::make($plainPassword),
                 ]);
 
-                $user->syncRoles($validated['roles']);
+                // Force only student role regardless of what was sent
+                $user->syncRoles(['student']);
 
                 // Sync bio record
                 BioModel::updateOrCreate(
@@ -449,7 +472,7 @@ class UserController extends Controller
                     'name'        => $user->name,
                     'email'       => $email,
                     'username'    => $username,
-                    'password'    => $plainPassword,  // plain — returned once for printing only
+                    'password'    => $plainPassword,
                     'admissionNo' => $student->admissionNo ?? '',
                     'class_name'  => $student->class_name ?? '',
                 ];
@@ -490,17 +513,115 @@ class UserController extends Controller
     }
 
     // ─────────────────────────────────────────────────────────────────
-    // Get students list for modals (updated — includes has_account + class_name)
+    // REVOKE student password (single or mass)
+    // ─────────────────────────────────────────────────────────────────
+    public function revokeStudentPassword(Request $request): JsonResponse
+    {
+        Log::debug("Revoking student password(s)", $request->all());
+
+        try {
+            if (!auth()->user()->hasPermissionTo('Update user')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Insufficient permissions.',
+                ], 403);
+            }
+
+            $userIds = [];
+
+            // Accept user_ids directly (single revoke from user list button)
+            if ($request->has('user_ids')) {
+                $request->validate([
+                    'user_ids'   => 'required|array|min:1',
+                    'user_ids.*' => 'exists:users,id',
+                ]);
+                $userIds = $request->input('user_ids');
+            }
+            // Accept student_ids (mass revoke from mass modal)
+            elseif ($request->has('student_ids')) {
+                $request->validate([
+                    'student_ids'   => 'required|array|min:1',
+                    'student_ids.*' => 'integer',
+                ]);
+                $userIds = User::whereIn('student_id', $request->input('student_ids'))
+                               ->pluck('id')
+                               ->toArray();
+            }
+
+            if (empty($userIds)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No valid users found to revoke.',
+                ], 422);
+            }
+
+            $newPassword = Hash::make('ChangeMe@123');
+            $count       = 0;
+            $skipped     = 0;
+
+            foreach ($userIds as $uid) {
+                $user = User::with('roles')->find($uid);
+                if (!$user) {
+                    continue;
+                }
+
+                // Safety guard — only revoke for student-role users
+                if (!$user->hasRole('student')) {
+                    $skipped++;
+                    Log::warning("revokeStudentPassword: skipped user {$uid} — not a student role");
+                    continue;
+                }
+
+                $updateData = ['password' => $newPassword];
+
+                // If your users table has a force_password_change column, set it here.
+                // Remove this line if you don't have that column yet.
+                // $updateData['force_password_change'] = true;
+
+                $user->update($updateData);
+                $count++;
+            }
+
+            $msg = "{$count} student password(s) revoked successfully. New password: ChangeMe@123";
+            if ($skipped) {
+                $msg .= " ({$skipped} non-student user(s) skipped.)";
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => $msg,
+                'count'   => $count,
+                'skipped' => $skipped,
+            ]);
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed',
+                'errors'  => $e->errors(),
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error("revokeStudentPassword error: {$e->getMessage()}");
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to revoke passwords.',
+            ], 500);
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // GET students list for modals (includes arm + class filters)
     // ─────────────────────────────────────────────────────────────────
     public function getStudents(Request $request): JsonResponse
     {
         try {
-            $search = trim($request->get('search', ''));
-            $limit  = min((int) $request->get('limit', 300), 2000);
+            $search  = trim($request->get('search', ''));
+            $limit   = min((int) $request->get('limit', 300), 2000);
+            $classId = $request->get('class_id');
+            $armId   = $request->get('arm_id');
 
             $query = DB::table('studentRegistration as sr')
                 ->leftJoin('studentclass as sc', function ($join) {
-                    // Most recent class record per student
                     $join->on('sc.studentId', '=', 'sr.id')
                          ->whereRaw('sc.id = (
                              SELECT id FROM studentclass
@@ -509,6 +630,7 @@ class UserController extends Controller
                          )');
                 })
                 ->leftJoin('schoolclass as cls', 'cls.id', '=', 'sc.schoolclassid')
+                ->leftJoin('schoolarm as arm', 'arm.id', '=', 'cls.arm')
                 ->leftJoin('users as u', 'u.student_id', '=', 'sr.id')
                 ->whereNotNull('sr.admissionNo')
                 ->select(
@@ -517,7 +639,10 @@ class UserController extends Controller
                     'sr.firstname',
                     'sr.lastname',
                     'sr.email',
+                    'cls.id as class_id',
                     'cls.schoolclass as class_name',
+                    'arm.id as arm_id',
+                    'arm.arm as arm_name',
                     DB::raw('CASE WHEN u.id IS NOT NULL THEN 1 ELSE 0 END as has_account')
                 );
 
@@ -530,10 +655,30 @@ class UserController extends Controller
                 });
             }
 
+            if ($classId) {
+                $query->where('cls.id', $classId);
+            }
+
+            if ($armId) {
+                $query->where('arm.id', $armId);
+            }
+
             $students = $query
                 ->orderBy('sr.lastname')
                 ->orderBy('sr.firstname')
                 ->limit($limit)
+                ->get();
+
+            // Dropdown data for filter selects
+            $classes = DB::table('schoolclass as cls')
+                ->leftJoin('schoolarm as arm', 'arm.id', '=', 'cls.arm')
+                ->select('cls.id', 'cls.schoolclass as name', 'arm.id as arm_id', 'arm.arm as arm_name')
+                ->orderBy('cls.schoolclass')
+                ->get();
+
+            $arms = DB::table('schoolarm')
+                ->select('id', 'arm as name')
+                ->orderBy('arm')
                 ->get();
 
             return response()->json([
@@ -543,9 +688,14 @@ class UserController extends Controller
                     'admissionNo' => $s->admissionNo,
                     'name'        => trim("{$s->firstname} {$s->lastname}"),
                     'email'       => $s->email ?? '',
+                    'class_id'    => $s->class_id,
                     'class_name'  => $s->class_name ?? '',
+                    'arm_id'      => $s->arm_id,
+                    'arm_name'    => $s->arm_name ?? '',
                     'has_account' => (bool) $s->has_account,
                 ])->values()->toArray(),
+                'classes'  => $classes,
+                'arms'     => $arms,
             ]);
 
         } catch (\Exception $e) {
