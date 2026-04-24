@@ -805,33 +805,21 @@
     </a>
     <div class="collapse menu-dropdown" id="sidebarStaffPayments">
         <ul class="nav nav-sm flex-column">
-            @can('View staff payments')
             <li class="nav-item">
                 <a href="{{ route('staff.payments.index') }}" class="nav-link" data-key="t-all-payments">
                     <i class="ri-list-check"></i> All Payments
                 </a>
             </li>
-            @endcan
-            @can('Create staff payment')
             <li class="nav-item">
-                <a href="{{ route('staff.payments.create') }}" class="nav-link" data-key="t-record-payment">
-                    <i class="ri-add-line"></i> Record Payment
+                <a href="{{ route('staff.payments.dashboard') }}" class="nav-link" data-key="t-my-payments">
+                    <i class="ri-briefcase-line"></i> My Payments
                 </a>
             </li>
-            @endcan
         </ul>
     </div>
 </li>
 @endcan
 
-{{-- Staff Portal - My Payments (for staff view) --}}
-@if(auth()->user()->isStaff())
-<li class="nav-item">
-    <a href="{{ route('staff.payments.dashboard') }}" class="nav-link">
-        <i class="ph-briefcase"></i> <span data-key="t-my-payments">My Payments</span>
-    </a>
-</li>
-@endif
 
 
 

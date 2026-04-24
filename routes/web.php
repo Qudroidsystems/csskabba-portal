@@ -602,15 +602,16 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
     // ============================================
     // STAFF PAYMENT ROUTES
     // ============================================
-    Route::prefix('staff/payments')->name('staff.payments.')->group(function () {
-        Route::get('/dashboard', [StaffPaymentController::class, 'staffDashboard'])->name('dashboard');
-        Route::get('/payslip/{payrollRunId}', [StaffPaymentController::class, 'viewPayslip'])->name('payslip');
-        Route::get('/payslip/download/{payrollRunId}', [StaffPaymentController::class, 'generatePayslip'])->name('payslip.download');
+   // In your web.php, you should have:
+    Route::prefix('staff/payments')->name('staff.payments.')->middleware(['auth'])->group(function () {
         Route::get('/', [StaffPaymentController::class, 'index'])->name('index');
+        Route::get('/dashboard', [StaffPaymentController::class, 'staffDashboard'])->name('dashboard');
         Route::post('/record', [StaffPaymentController::class, 'recordManualPayment'])->name('record');
         Route::get('/history', [StaffPaymentController::class, 'getPaymentHistory'])->name('history');
         Route::post('/reverse/{paymentId}', [StaffPaymentController::class, 'reversePayment'])->name('reverse');
         Route::post('/mark-paid/{paymentId}', [StaffPaymentController::class, 'markAsPaid'])->name('mark-paid');
+        Route::get('/payslip/{payrollRunId}', [StaffPaymentController::class, 'viewPayslip'])->name('payslip');
+        Route::get('/payslip/download/{payrollRunId}', [StaffPaymentController::class, 'generatePayslip'])->name('payslip.download');
     });
 
     // ============================================
