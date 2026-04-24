@@ -629,19 +629,27 @@
                             </li>
                         @endcan
 
-                        {{-- Sibling Groups (New) --}}
+                       {{-- Sibling Groups --}}
                         @can('View sibling groups')
-                            <li class="nav-item">
-                                <a href="#sidebarSibling" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSibling">
-                                    <i class="ph-users"></i> <span data-key="t-sibling-groups">Sibling Groups</span>
-                                </a>
-                                <div class="collapse menu-dropdown" id="sidebarSibling">
-                                    <ul class="nav nav-sm flex-column">
-                                        <li class="nav-item"><a href="{{ route('sibling.index') }}" class="nav-link" data-key="t-all-groups"><i class="ri-group-line"></i> All Family Groups</a></li>
-                                        <li class="nav-item"><a href="{{ route('sibling.create') }}" class="nav-link" data-key="t-create-group"><i class="ri-add-line"></i> Create Family Group</a></li>
-                                    </ul>
-                                </div>
-                            </li>
+                        <li class="nav-item">
+                            <a href="#sidebarSibling" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSibling">
+                                <i class="ph-users"></i> <span data-key="t-sibling-groups">Sibling Groups</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarSibling">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item">
+                                        <a href="{{ route('sibling.index') }}" class="nav-link" data-key="t-all-groups">
+                                            <i class="ri-group-line"></i> All Family Groups
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('sibling.create') }}" class="nav-link" data-key="t-create-group">
+                                            <i class="ri-add-line"></i> Create Family Group
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
                         @endcan
 
                         {{-- Payment Gateways (Admin only) --}}
