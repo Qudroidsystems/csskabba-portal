@@ -21,11 +21,10 @@ class SiblingGroupPermissionSeeder extends Seeder
         foreach ($permissions as $permission) {
             Permission::updateOrCreate(
                 ['name' => $permission, 'guard_name' => 'web'],
-                [
-                    'title' => 'Sibling Management',
-                    // 'module' => 'finance'
-                ]
+                ['title' => 'Sibling Management']
             );
         }
+
+        $this->command->info('✅ Sibling group permissions seeded successfully!');
     }
 }

@@ -41,11 +41,10 @@ class FinancePermissionSeeder extends Seeder
         foreach ($permissions as $permission) {
             Permission::updateOrCreate(
                 ['name' => $permission, 'guard_name' => 'web'],
-                [
-                    'title' => 'Finance Management',
-                    'module' => 'accounting'
-                ]
+                ['title' => 'Finance Management']  // Removed 'module' field
             );
         }
+
+        $this->command->info('✅ Finance permissions seeded successfully!');
     }
 }

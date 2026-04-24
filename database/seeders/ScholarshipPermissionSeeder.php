@@ -41,43 +41,15 @@ class ScholarshipPermissionSeeder extends Seeder
             'View income statement',
             'View trial balance',
             'View cash flow',
-
-            // Payroll Permissions
-            'View payroll',
-            'Process payroll',
-            'Approve payroll',
-            'View payslip',
-            'Download payslip',
-
-            // Staff Payment Permissions
-            'View staff payments',
-            'Create staff payment',
-            'Reverse staff payment',
-
-            // Loan Permissions
-            'View loans',
-            'Create loan',
-            'Approve loan',
-            'Repay loan',
-
-            // Expense Permissions
-            'View expenses',
-            'Create expense',
-            'Approve expense',
-
-            // Scholarship Application Permissions (for parents/students)
-            'Apply scholarship',
-            'View scholarship status',
         ];
 
         foreach ($permissions as $permission) {
             Permission::updateOrCreate(
                 ['name' => $permission, 'guard_name' => 'web'],
-                [
-                    'title' => 'Scholarship & Payment Management',
-                    // 'module' => 'finance'
-                ]
+                ['title' => 'Scholarship & Payment Management']
             );
         }
+
+        $this->command->info('✅ Scholarship permissions seeded successfully!');
     }
 }
