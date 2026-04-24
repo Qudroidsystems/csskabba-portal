@@ -420,70 +420,122 @@ return new class extends Migration
         }
 
         // ============================================
-        // Add Foreign Keys (After all tables exist)
+        // Add Foreign Keys (After all tables exist, with existence checks)
         // ============================================
         $this->addForeignKeys();
     }
 
     /**
-     * Add foreign keys after all tables are created
+     * Add foreign keys after all tables are created (with checks)
      */
     private function addForeignKeys(): void
     {
+        // Get existing foreign keys for each table
+        $existingForeignKeys = $this->getExistingForeignKeys();
+
         // Add foreign key to expense_categories
         if (Schema::hasTable('expense_categories') && Schema::hasTable('chart_of_accounts')) {
-            Schema::table('expense_categories', function (Blueprint $table) {
-                try {
-                    if (!Schema::hasColumn('expense_categories', 'account_id')) {
-                        $table->unsignedBigInteger('account_id')->nullable()->after('description');
+            if (!in_array('fk_exp_cat_account', $existingForeignKeys)) {
+                Schema::table('expense_categories', function (Blueprint $table) {
+                    try {
+                        $table->foreign('account_id', 'fk_exp_cat_account')
+                              ->references('id')->on('chart_of_accounts')
+                              ->onDelete('set null');
+                    } catch (\Exception $e) {
+                        // Silently fail if foreign key already exists
                     }
-                    $table->foreign('account_id', 'fk_exp_cat_account')
-                          ->references('id')->on('chart_of_accounts')
-                          ->onDelete('set null');
-                } catch (\Exception $e) {
-                    // Foreign key might already exist
-                }
-            });
+                });
+            }
         }
 
         // Add foreign key to sibling_group_students
         if (Schema::hasTable('sibling_group_students') && Schema::hasTable('sibling_groups')) {
-            Schema::table('sibling_group_students', function (Blueprint $table) {
-                try {
-                    $table->foreign('sibling_group_id', 'fk_sgs_group')
-                          ->references('id')->on('sibling_groups')->onDelete('cascade');
-                } catch (\Exception $e) {}
-            });
+            if (!in_array('fk_sgs_group', $existingForeignKeys)) {
+                Schema::table('sibling_group_students', function (Blueprint $table) {
+                    try {
+                        $table->foreign('sibling_group_id', 'fk_sgs_group')
+                              ->references('id')->on('sibling_groups')->onDelete('cascade');
+                    } catch (\Exception $e) {}
+                });
+            }
         }
 
         // Add foreign key to discount_assignments
         if (Schema::hasTable('discount_assignments') && Schema::hasTable('sibling_groups')) {
-            Schema::table('discount_assignments', function (Blueprint $table) {
-                try {
-                    $table->foreign('sibling_group_id', 'fk_da_sibling')
-                          ->references('id')->on('sibling_groups')->onDelete('set null');
-                } catch (\Exception $e) {}
-            });
+            if (!in_array('fk_da_sibling', $existingForeignKeys)) {
+                Schema::table('discount_assignments', function (Blueprint $table) {
+                    try {
+                        $table->foreign('sibling_group_id', 'fk_da_sibling')
+                              ->references('id')->on('sibling_groups')->onDelete('set null');
+                    } catch (\Exception $e) {}
+                });
+            }
         }
 
         // Add foreign key to scholarships
         if (Schema::hasTable('scholarships') && Schema::hasTable('scholarship_types')) {
-            Schema::table('scholarships', function (Blueprint $table) {
-                try {
-                    $table->foreign('scholarship_type_id', 'fk_scholarships_type')
-                          ->references('id')->on('scholarship_types');
-                } catch (\Exception $e) {}
-            });
+            if (!in_array('fk_scholarships_type', $existingForeignKeys)) {
+                Schema::table('scholarships', function (Blueprint $table) {
+                    try {
+                        $table->foreign('scholarship_type_id', 'fk_scholarships_type')
+                              ->references('id')->on('scholarship_types');
+                    } catch (\Exception $e) {}
+                });
+            }
         }
 
         // Add foreign key to discounts
         if (Schema::hasTable('discounts') && Schema::hasTable('discount_types')) {
-            Schema::table('discounts', function (Blueprint $table) {
-                try {
-                    $table->foreign('discount_type_id', 'fk_discounts_type')
-                          ->references('id')->on('discount_types');
-                } catch (\Exception $e) {}
-            });
+            if (!in_array('fk_discounts_type', $existingForeignKeys)) {
+                Schema::table('discounts', function (Blueprint $table) {
+                    try {
+                        $table->foreign('discount_type_id', 'fk_discounts_type')
+                              ->references('id')->on('discount_types');
+                    } catch (\Exception $e) {}
+                });
+            }
+        }
+
+        // Add foreign key to scholarship_assignments
+        if (Schema::hasTable('scholarship_assignments') && Schema::hasTable('scholarships')) {
+            if (!in_array('fk_sa_scholarship', $existingForeignKeys)) {
+                Schema::table('scholarship_assignments', function (Blueprint $table) {
+                    try {
+                        $table->foreign('scholarship_id', 'fk_sa_scholarship')
+                              ->references('id')->on('scholarships');
+                    } catch (\Exception $e) {}
+                });
+            }
+        }
+
+        // Add foreign key to discount_assignments for discount_id
+        if (Schema::hasTable('discount_assignments') && Schema::hasTable('discounts')) {
+            if (!in_array('fk_da_discount', $existingForeignKeys)) {
+                Schema::table('discount_assignments', function (Blueprint $table) {
+                    try {
+                        $table->foreign('discount_id', 'fk_da_discount')
+                              ->references('id')->on('discounts');
+                    } catch (\Exception $e) {}
+                });
+            }
+        }
+    }
+
+    /**
+     * Get all existing foreign key names in the database
+     */
+    private function getExistingForeignKeys(): array
+    {
+        try {
+            $result = DB::select("
+                SELECT CONSTRAINT_NAME
+                FROM information_schema.KEY_COLUMN_USAGE
+                WHERE TABLE_SCHEMA = DATABASE()
+                AND REFERENCED_TABLE_NAME IS NOT NULL
+            ");
+            return array_column($result, 'CONSTRAINT_NAME');
+        } catch (\Exception $e) {
+            return [];
         }
     }
 
@@ -492,36 +544,16 @@ return new class extends Migration
      */
     public function down(): void
     {
-        // Drop foreign keys first
-        try {
-            Schema::table('expense_categories', function (Blueprint $table) {
-                $table->dropForeign('fk_exp_cat_account');
-            });
-        } catch (\Exception $e) {}
+        // Drop foreign keys if they exist
+        $foreignKeys = ['fk_exp_cat_account', 'fk_sgs_group', 'fk_da_sibling', 'fk_scholarships_type', 'fk_discounts_type', 'fk_sa_scholarship', 'fk_da_discount'];
 
-        try {
-            Schema::table('sibling_group_students', function (Blueprint $table) {
-                $table->dropForeign('fk_sgs_group');
-            });
-        } catch (\Exception $e) {}
-
-        try {
-            Schema::table('discount_assignments', function (Blueprint $table) {
-                $table->dropForeign('fk_da_sibling');
-            });
-        } catch (\Exception $e) {}
-
-        try {
-            Schema::table('scholarships', function (Blueprint $table) {
-                $table->dropForeign('fk_scholarships_type');
-            });
-        } catch (\Exception $e) {}
-
-        try {
-            Schema::table('discounts', function (Blueprint $table) {
-                $table->dropForeign('fk_discounts_type');
-            });
-        } catch (\Exception $e) {}
+        foreach ($foreignKeys as $fk) {
+            try {
+                Schema::table('expense_categories', function (Blueprint $table) use ($fk) {
+                    $table->dropForeign($fk);
+                });
+            } catch (\Exception $e) {}
+        }
 
         // Drop tables in reverse order
         Schema::dropIfExists('payment_batch_items');
