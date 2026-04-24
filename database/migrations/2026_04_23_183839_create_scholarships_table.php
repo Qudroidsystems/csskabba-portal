@@ -1,5 +1,5 @@
 <?php
-// database/migrations/2024_01_01_000003_create_scholarships_table.php
+// database/migrations/2026_04_23_183839_create_scholarships_table.php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -9,20 +9,59 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Scholarship types master table
+        // ============================================
+        // 1. Sibling Groups (Must come first)
+        // ============================================
+        Schema::create('sibling_groups', function (Blueprint $table) {
+            $table->id();
+            $table->string('group_no')->unique();
+            $table->string('family_name');
+            $table->string('parent_phone')->nullable();
+            $table->string('parent_email')->nullable();
+            $table->text('address')->nullable();
+            $table->integer('total_children')->default(0);
+            $table->enum('discount_type', ['percentage', 'fixed_per_child'])->nullable();
+            $table->decimal('discount_value', 15, 2)->nullable();
+            $table->unsignedBigInteger('primary_contact_id')->nullable();
+            $table->timestamps();
+
+            $table->index('group_no');
+            $table->index('family_name');
+        });
+
+        // ============================================
+        // 2. Sibling Group Students (Pivot)
+        // ============================================
+        Schema::create('sibling_group_students', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('sibling_group_id');
+            $table->unsignedBigInteger('student_id');
+            $table->integer('birth_order')->nullable();
+            $table->timestamps();
+
+            $table->foreign('sibling_group_id', 'fk_sgs_group')->references('id')->on('sibling_groups')->onDelete('cascade');
+            $table->foreign('student_id', 'fk_sgs_student')->references('id')->on('studentRegistration')->onDelete('cascade');
+            $table->unique(['sibling_group_id', 'student_id'], 'uk_sgs_group_student');
+        });
+
+        // ============================================
+        // 3. Scholarship Types
+        // ============================================
         Schema::create('scholarship_types', function (Blueprint $table) {
             $table->id();
-            $table->string('name'); // Full Scholarship, Merit Scholarship, Sports Scholarship, etc.
+            $table->string('name');
             $table->string('code', 50)->unique();
             $table->enum('type', ['full', 'percentage', 'fixed_amount', 'category_specific']);
-            $table->enum('application', ['auto', 'manual'])->default('manual'); // Auto-applied or requires application
+            $table->enum('application', ['auto', 'manual'])->default('manual');
             $table->text('description')->nullable();
             $table->json('criteria')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
 
-        // Scholarships table
+        // ============================================
+        // 4. Scholarships
+        // ============================================
         Schema::create('scholarships', function (Blueprint $table) {
             $table->id();
             $table->string('scholarship_no')->unique();
@@ -32,20 +71,20 @@ return new class extends Migration
 
             // Scholarship value
             $table->enum('value_type', ['percentage', 'fixed_amount']);
-            $table->decimal('value', 15, 2); // e.g., 50 for 50% or 50000 for fixed amount
-            $table->decimal('cap_amount', 15, 2)->nullable(); // Maximum amount if percentage-based
+            $table->decimal('value', 15, 2);
+            $table->decimal('cap_amount', 15, 2)->nullable();
 
             // Eligibility
             $table->boolean('requires_application')->default(false);
-            $table->json('eligible_classes')->nullable(); // Array of class IDs
-            $table->json('eligible_status_ids')->nullable(); // Array of student status IDs
-            $table->json('excluded_bill_categories')->nullable(); // Bill categories not covered
+            $table->json('eligible_classes')->nullable();
+            $table->json('eligible_status_ids')->nullable();
+            $table->json('excluded_bill_categories')->nullable();
 
-            // effective dates
+            // Effective dates
             $table->date('effective_from');
             $table->date('effective_to')->nullable();
-            $table->integer('max_recipients')->nullable(); // Limit number of recipients
-            $table->integer('renewal_frequency')->nullable(); // Months before renewal required
+            $table->integer('max_recipients')->nullable();
+            $table->integer('renewal_frequency')->nullable();
 
             // Financial tracking
             $table->decimal('budget_amount', 15, 2)->nullable();
@@ -60,51 +99,63 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->foreign('scholarship_type_id')->references('id')->on('scholarship_types');
-            $table->foreign('created_by')->references('id')->on('users');
-            $table->foreign('approved_by')->references('id')->on('users');
-            $table->index(['effective_from', 'effective_to']);
-            $table->index('status');
+            // Foreign keys (using short names)
+            $table->foreign('scholarship_type_id', 'fk_scholarships_type')->references('id')->on('scholarship_types');
+            $table->foreign('created_by', 'fk_scholarships_created')->references('id')->on('users');
+            $table->foreign('approved_by', 'fk_scholarships_approved')->references('id')->on('users');
+
+            // Indexes
+            $table->index(['effective_from', 'effective_to'], 'idx_scholarships_dates');
+            $table->index('status', 'idx_scholarships_status');
         });
 
-        // Scholarship assignments to students
+        // ============================================
+        // 5. Scholarship Assignments
+        // ============================================
         Schema::create('scholarship_assignments', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('scholarship_id');
             $table->unsignedBigInteger('student_id');
-            $table->string('application_no')->nullable(); // If manual application
+            $table->string('application_no')->nullable();
             $table->enum('status', ['pending', 'approved', 'rejected', 'active', 'expired', 'revoked']);
             $table->timestamp('approved_at')->nullable();
             $table->timestamp('renewed_at')->nullable();
             $table->date('effective_from');
             $table->date('effective_to')->nullable();
 
-            // Values at assignment time (snapshot)
+            // Values at assignment time
             $table->enum('value_type', ['percentage', 'fixed_amount']);
             $table->decimal('value', 15, 2);
             $table->decimal('cap_amount', 15, 2)->nullable();
 
-            // Tracking
             $table->text('reason')->nullable();
             $table->text('rejection_reason')->nullable();
             $table->text('revocation_reason')->nullable();
             $table->unsignedBigInteger('assigned_by');
             $table->unsignedBigInteger('approved_by')->nullable();
+
             $table->timestamps();
             $table->softDeletes();
 
-            $table->foreign('scholarship_id')->references('id')->on('scholarships');
-            $table->foreign('student_id')->references('id')->on('studentRegistration');
-            $table->foreign('assigned_by')->references('id')->on('users');
-            $table->foreign('approved_by')->references('id')->on('users');
-            $table->unique(['scholarship_id', 'student_id', 'effective_from'], 'unique_student_scholarship_period');
-            $table->index(['student_id', 'status']);
+            // Foreign keys
+            $table->foreign('scholarship_id', 'fk_sa_scholarship')->references('id')->on('scholarships');
+            $table->foreign('student_id', 'fk_sa_student')->references('id')->on('studentRegistration');
+            $table->foreign('assigned_by', 'fk_sa_assigned')->references('id')->on('users');
+            $table->foreign('approved_by', 'fk_sa_approved')->references('id')->on('users');
+
+            // Unique constraint
+            $table->unique(['scholarship_id', 'student_id', 'effective_from'], 'uk_sa_unique');
+
+            // Indexes
+            $table->index(['student_id', 'status'], 'idx_sa_student_status');
         });
 
-        // Discount types master table
+        // ============================================
+        // 6. Discount Types
+        // ============================================
         Schema::create('discount_types', function (Blueprint $table) {
             $table->id();
-            $table->string('name'); // Early Payment, Sibling Discount, Loyalty Discount
+            $table->string('name');
             $table->string('code', 50)->unique();
             $table->enum('type', ['percentage', 'fixed_amount', 'per_child']);
             $table->text('description')->nullable();
@@ -113,7 +164,9 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Discounts table
+        // ============================================
+        // 7. Discounts
+        // ============================================
         Schema::create('discounts', function (Blueprint $table) {
             $table->id();
             $table->string('discount_no')->unique();
@@ -124,7 +177,7 @@ return new class extends Migration
             // Discount value
             $table->enum('value_type', ['percentage', 'fixed_amount']);
             $table->decimal('value', 15, 2);
-            $table->decimal('max_amount', 15, 2)->nullable(); // Maximum discount amount if percentage
+            $table->decimal('max_amount', 15, 2)->nullable();
 
             // Eligibility
             $table->enum('applicable_to', ['all_bills', 'specific_bills', 'specific_categories']);
@@ -134,15 +187,15 @@ return new class extends Migration
 
             // Conditions
             $table->enum('condition_type', ['none', 'early_payment', 'min_amount', 'sibling_count'])->default('none');
-            $table->decimal('condition_value', 15, 2)->nullable(); // For min_amount or sibling_count
-            $table->integer('days_before_due')->nullable(); // For early payment
+            $table->decimal('condition_value', 15, 2)->nullable();
+            $table->integer('days_before_due')->nullable();
 
             // Stacking rules
             $table->boolean('stackable_with_scholarship')->default(false);
             $table->boolean('stackable_with_other_discounts')->default(false);
-            $table->integer('stacking_priority')->default(1); // Higher priority applies first
+            $table->integer('stacking_priority')->default(1);
 
-            // effective dates
+            // Effective dates
             $table->date('effective_from');
             $table->date('effective_to')->nullable();
 
@@ -154,12 +207,18 @@ return new class extends Migration
             $table->timestamps();
             $table->softDeletes();
 
-            $table->foreign('discount_type_id')->references('id')->on('discount_types');
-            $table->foreign('created_by')->references('id')->on('users');
-            $table->foreign('approved_by')->references('id')->on('users');
+            // Foreign keys
+            $table->foreign('discount_type_id', 'fk_discounts_type')->references('id')->on('discount_types');
+            $table->foreign('created_by', 'fk_discounts_created')->references('id')->on('users');
+            $table->foreign('approved_by', 'fk_discounts_approved')->references('id')->on('users');
+
+            // Indexes
+            $table->index('status', 'idx_discounts_status');
         });
 
-        // Discount assignments to students
+        // ============================================
+        // 8. Discount Assignments
+        // ============================================
         Schema::create('discount_assignments', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('discount_id');
@@ -171,7 +230,7 @@ return new class extends Migration
             $table->decimal('max_amount', 15, 2)->nullable();
 
             // Sibling discount specific fields
-            $table->unsignedBigInteger('sibling_group_id')->nullable(); // For sibling discounts
+            $table->unsignedBigInteger('sibling_group_id')->nullable();
             $table->integer('sibling_count')->nullable();
             $table->decimal('per_child_discount', 15, 2)->nullable();
 
@@ -180,52 +239,33 @@ return new class extends Migration
             $table->date('effective_to')->nullable();
             $table->text('reason')->nullable();
             $table->unsignedBigInteger('assigned_by');
+
             $table->timestamps();
             $table->softDeletes();
 
-            $table->foreign('discount_id')->references('id')->on('discounts');
-            $table->foreign('student_id')->references('id')->on('studentRegistration');
-            $table->foreign('assigned_by')->references('id')->on('users');
-            $table->foreign('sibling_group_id')->references('id')->on('sibling_groups');
-            $table->index(['student_id', 'status']);
+            // Foreign keys
+            $table->foreign('discount_id', 'fk_da_discount')->references('id')->on('discounts');
+            $table->foreign('student_id', 'fk_da_student')->references('id')->on('studentRegistration');
+            $table->foreign('assigned_by', 'fk_da_assigned')->references('id')->on('users');
+
+            // Sibling group foreign key - sibling_groups table created above (step 1)
+            $table->foreign('sibling_group_id', 'fk_da_sibling')->references('id')->on('sibling_groups')->onDelete('set null');
+
+            // Indexes
+            $table->index(['student_id', 'status'], 'idx_da_student_status');
+            $table->index('sibling_group_id', 'idx_da_sibling');
         });
 
-        // Sibling groups for family discounts
-        Schema::create('sibling_groups', function (Blueprint $table) {
-            $table->id();
-            $table->string('group_no')->unique();
-            $table->string('family_name');
-            $table->string('parent_phone')->nullable();
-            $table->string('parent_email')->nullable();
-            $table->text('address')->nullable();
-            $table->integer('total_children')->default(0);
-            $table->enum('discount_type', ['percentage', 'fixed_per_child'])->nullable();
-            $table->decimal('discount_value', 15, 2)->nullable();
-            $table->unsignedBigInteger('primary_contact_id')->nullable(); // Parent/Guardian user ID
-            $table->timestamps();
-        });
-
-        // Add student to sibling group (pivot)
-        Schema::create('sibling_group_students', function (Blueprint $table) {
-            $table->id();
-            $table->unsignedBigInteger('sibling_group_id');
-            $table->unsignedBigInteger('student_id');
-            $table->integer('birth_order')->nullable();
-            $table->timestamps();
-
-            $table->foreign('sibling_group_id')->references('id')->on('sibling_groups')->onDelete('cascade');
-            $table->foreign('student_id')->references('id')->on('studentRegistration')->onDelete('cascade');
-            $table->unique(['sibling_group_id', 'student_id']);
-        });
-
-        // Scholarship/Discount application history
+        // ============================================
+        // 9. Scholarship Applications
+        // ============================================
         Schema::create('scholarship_applications', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('scholarship_id');
             $table->unsignedBigInteger('student_id');
             $table->enum('status', ['draft', 'submitted', 'under_review', 'approved', 'rejected', 'revoked']);
             $table->text('motivation_letter')->nullable();
-            $table->json('documents')->nullable(); // Array of uploaded document paths
+            $table->json('documents')->nullable();
             $table->text('admin_notes')->nullable();
             $table->text('rejection_reason')->nullable();
             $table->timestamp('submitted_at')->nullable();
@@ -233,23 +273,28 @@ return new class extends Migration
             $table->unsignedBigInteger('reviewed_by')->nullable();
             $table->timestamps();
 
-            $table->foreign('scholarship_id')->references('id')->on('scholarships');
-            $table->foreign('student_id')->references('id')->on('studentRegistration');
-            $table->foreign('reviewed_by')->references('id')->on('users');
-            $table->index(['student_id', 'status']);
+            // Foreign keys
+            $table->foreign('scholarship_id', 'fk_schapp_scholarship')->references('id')->on('scholarships');
+            $table->foreign('student_id', 'fk_schapp_student')->references('id')->on('studentRegistration');
+            $table->foreign('reviewed_by', 'fk_schapp_reviewed')->references('id')->on('users');
+
+            // Indexes
+            $table->index(['student_id', 'status'], 'idx_schapp_student_status');
+            $table->index('submitted_at', 'idx_schapp_submitted');
         });
     }
 
     public function down(): void
     {
+        // Drop in reverse order
         Schema::dropIfExists('scholarship_applications');
-        Schema::dropIfExists('sibling_group_students');
-        Schema::dropIfExists('sibling_groups');
         Schema::dropIfExists('discount_assignments');
         Schema::dropIfExists('discounts');
         Schema::dropIfExists('discount_types');
         Schema::dropIfExists('scholarship_assignments');
         Schema::dropIfExists('scholarships');
         Schema::dropIfExists('scholarship_types');
+        Schema::dropIfExists('sibling_group_students');
+        Schema::dropIfExists('sibling_groups');
     }
 };
