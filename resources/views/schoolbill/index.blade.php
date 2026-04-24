@@ -1,278 +1,366 @@
+{{-- resources/views/schoolbill/index.blade.php --}}
 @extends('layouts.master')
+
 @section('content')
+<style>
+:root {
+    --bill-primary: #1e3a5f;
+    --bill-accent: #2563eb;
+    --bill-success: #16a34a;
+    --bill-warning: #d97706;
+    --bill-danger: #dc2626;
+    --bill-border: #e2e8f0;
+    --bill-radius: 12px;
+}
+
+.bill-hero {
+    background: linear-gradient(135deg, var(--bill-primary) 0%, #2563eb 60%, #4f46e5 100%);
+    border-radius: var(--bill-radius);
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+}
+.bill-hero h1 { font-size: 22px; font-weight: 700; color: white; margin: 0 0 6px; }
+.bill-hero p { font-size: 13px; color: rgba(255,255,255,.75); margin: 0; }
+
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter,
+.dataTables_wrapper .dataTables_info,
+.dataTables_wrapper .dataTables_paginate {
+    margin-bottom: 1rem;
+}
+.dataTables_wrapper .dataTables_filter input {
+    border: 1px solid var(--bill-border);
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin-left: 8px;
+}
+.dataTables_wrapper .dataTables_length select {
+    border: 1px solid var(--bill-border);
+    border-radius: 8px;
+    padding: 6px 10px;
+}
+</style>
 
 <div class="main-content">
-    <div class="page-content">
-        <div class="container-fluid">
-            <!-- Start page title -->
-            <div class="row">
-                <div class="col-12">
-                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                        <h4 class="mb-sm-0">School Bill Management</h4>
-                        <div class="page-title-right">
-                            <ol class="breadcrumb m-0">
-                                <li class="breadcrumb-item"><a href="javascript:void(0);">School Bill Management</a></li>
-                                <li class="breadcrumb-item active">School Bills</li>
-                            </ol>
-                        </div>
+<div class="page-content">
+<div class="container-fluid">
+
+    <div class="bill-hero">
+        <h1><i class="ri-file-list-line me-2"></i>{{ $pagetitle }}</h1>
+        <p>Create, manage, and assign school bills for fee collection across different student categories.</p>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 fw-semibold" style="color: var(--bill-primary);">
+                            <i class="ri-list-check me-2"></i>All School Bills
+                        </h5>
+                        @can('Create school-bills')
+                            <button type="button" class="btn btn-primary" id="createBillBtn">
+                                <i class="ri-add-line me-1"></i>Create School Bill
+                            </button>
+                        @endcan
                     </div>
                 </div>
-            </div>
-            <!-- End page title -->
-
-            @if ($errors->any())
-                <div class="alert alert-danger">
-                    <strong>Whoops!</strong> There were some problems with your input.<br><br>
-                    <ul>
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
-            @if (session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
-            @if (session('danger'))
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    {{ session('danger') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
-
-            <div id="schoolBillList">
-                <div class="row">
-                    <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="row g-3">
-                                    <div class="col-xxl-3">
-                                        <div class="search-box">
-                                            <input type="text" class="form-control search" placeholder="Search school bills">
-                                            <i class="ri-search-line search-icon"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-header d-flex align-items-center">
-                                <div class="flex-grow-1">
-                                    <h5 class="card-title mb-0">School Bills <span class="badge bg-dark-subtle text-dark ms-1">{{ $schoolbills->total() }}</span></h5>
-                                </div>
-                                <div class="flex-shrink-0">
-                                    <div class="d-flex flex-wrap align-items-start gap-2">
-                                        <button class="btn btn-subtle-danger d-none" id="remove-actions" onclick="deleteMultiple()"><i class="ri-delete-bin-2-line"></i></button>
-                                        @can('Create school-bills')
-                                            <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addSchoolBillModal" id="create-school-bill-btn"><i class="bi bi-plus-circle align-baseline me-1"></i> Create School Bill</button>
-                                        @endcan
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table align-middle table-row-dashed fs-6 gy-5 mb-0" id="kt_roles_view_table">
-                                        <thead>
-                                            <tr class="text-start text-muted fw-bold fs-7 text-uppercase gs-0">
-                                                <th class="w-10px pe-2">
-                                                    <div class="form-check form-check-sm form-check-custom form-check-solid me-3">
-                                                        <input class="form-check-input" type="checkbox" id="checkAll" />
-                                                    </div>
-                                                </th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="sn" style="color: rgb(51, 35, 200)">SN</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="title" style="color: rgb(51, 35, 200)">School Bill</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="bill_amount" style="color: rgb(51, 35, 200)">Bill Amount</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="description" style="color: rgb(51, 35, 200)">Remark</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="statusId" style="color: rgb(51, 35, 200)">Student Status</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="updated_at" style="color: rgb(51, 35, 200)">Date Updated</th>
-                                                <th class="min-w-100px" style="color: rgb(51, 35, 200)">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="fw-semibold text-gray-600 list form-check-all">
-                                            @php $i = $schoolbills->firstItem() - 1 @endphp
-                                            @forelse ($schoolbills as $bill)
-                                                <tr data-url="{{ route('schoolbill.destroy', $bill->id) }}">
-                                                    <td class="id" data-id="{{ $bill->id }}">
-                                                        <div class="form-check form-check-sm form-check-custom form-check-solid">
-                                                            <input class="form-check-input" type="checkbox" name="chk_child" />
-                                                        </div>
-                                                    </td>
-                                                    <td class="sn">{{ ++$i }}</td>
-                                                    <td class="title">{{ $bill->title }}</td>
-                                                    <td class="bill_amount">₦ {{ number_format($bill->bill_amount) }}</td>
-                                                    <td class="description">{{ $bill->description }}</td>
-                                                    <td class="statusId">
-                                                        @if($bill->statusId == 1)
-                                                            Old Student Bill
-                                                        @elseif($bill->statusId == 2)
-                                                            New Student Bill
-                                                        @else
-                                                            Unknown Status
-                                                        @endif
-                                                    </td>
-                                                    <td class="updated_at">{{ $bill->updated_at->format('Y-m-d') }}</td>
-                                                    <td>
-                                                        <ul class="d-flex gap-2 list-unstyled mb-0">
-                                                            @can('Update school-bills')
-                                                                <li>
-                                                                    <a href="javascript:void(0);" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn" data-id="{{ $bill->id }}" data-title="{{ $bill->title }}" data-bill_amount="{{ $bill->bill_amount }}" data-description="{{ $bill->description }}" data-statusId="{{ $bill->statusId }}"><i class="ph-pencil"></i></a>
-                                                                </li>
-                                                            @endcan
-                                                            @can('Delete school-bills')
-                                                                <li>
-                                                                    <a href="javascript:void(0);" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn" data-id="{{ $bill->id }}"><i class="ph-trash"></i></a>
-                                                                </li>
-                                                            @endcan
-                                                        </ul>
-                                                    </td>
-                                                </tr>
-                                            @empty
-                                                <tr>
-                                                    <td colspan="8" class="noresult" style="display: none;">No results found</td>
-                                                </tr>
-                                            @endforelse
-                                        </tbody>
-                                    </table>
-                                    <div class="d-flex justify-content-end mt-4">
-                                        {{ $schoolbills->links() }}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Add School Bill Modal -->
-            <div id="addSchoolBillModal" class="modal fade" tabindex="-1" aria-labelledby="addSchoolBillModalLabel" aria-hidden="true" data-bs-backdrop="static">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 id="addSchoolBillModalLabel" class="modal-title">Add School Bill</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <form class="tablelist-form" autocomplete="off" id="add-schoolbill-form">
-                            <div class="modal-body">
-                                <input type="hidden" id="add-id-field" name="id">
-                                <div class="mb-3">
-                                    <label for="title" class="form-label">Bill Title</label>
-                                    <input type="text" name="title" id="title" class="form-control" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="bill_amount" class="form-label">Bill Amount (₦)</label>
-                                    <input type="text" name="bill_amount" id="bill_amount" class="form-control" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="description" class="form-label">Remark</label>
-                                    <textarea name="description" id="description" class="form-control" required></textarea>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="statusId" class="form-label">Student Status</label>
-                                    <select name="statusId" id="statusId" class="form-control" required>
-                                        <option value="">Select Status</option>
-                                        <option value="1">Old Student Bill</option>
-                                        <option value="2">New Student Bill</option>
-                                    </select>
-                                </div>
-                                <div class="alert alert-danger d-none" id="alert-error-msg"></div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                                <button type="submit" class="btn btn-primary" id="add-btn">Add School Bill</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Edit School Bill Modal -->
-            <div id="editSchoolBillModal" class="modal fade" tabindex="-1" aria-labelledby="editSchoolBillModalLabel" aria-hidden="true" data-bs-backdrop="static">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 id="editSchoolBillModalLabel" class="modal-title">Edit School Bill</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <form class="tablelist-form" autocomplete="off" id="edit-schoolbill-form">
-                            <div class="modal-body">
-                                <input type="hidden" id="edit-id-field" name="id">
-                                <div class="mb-3">
-                                    <label for="edit-title" class="form-label">Bill Title</label>
-                                    <input type="text" name="title" id="edit-title" class="form-control" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="edit-bill_amount" class="form-label">Bill Amount (₦)</label>
-                                    <input type="text" name="bill_amount" id="edit-bill_amount" class="form-control" required>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="edit-description" class="form-label">Remark</label>
-                                    <textarea name="description" id="edit-description" class="form-control" required></textarea>
-                                </div>
-                                <div class="mb-3">
-                                    <label for="edit-statusId" class="form-label">Student Status</label>
-                                    <select name="statusId" id="edit-statusId" class="form-control" required>
-                                        <option value="">Select Status</option>
-                                        <option value="1">Old Student Bill</option>
-                                        <option value="2">New Student Bill</option>
-                                    </select>
-                                </div>
-                                <div class="alert alert-danger d-none" id="edit-alert-error-msg"></div>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                                <button type="submit" class="btn btn-primary" id="update-btn">Update</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Delete Confirmation Modal -->
-            <div id="deleteRecordModal" class="modal fade" tabindex="-1" aria-labelledby="deleteRecordModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-body text-center">
-                            <h4>Are you sure?</h4>
-                            <p>You won't be able to revert this!</p>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                            <button type="button" class="btn btn-danger" id="delete-record">Delete</button>
-                        </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover w-100" id="billsTable">
+                            <thead>
+                                <tr>
+                                    <th width="50"><input type="checkbox" id="selectAll"></th>
+                                    <th>#</th>
+                                    <th>Title</th>
+                                    <th>Bill Amount</th>
+                                    <th>Remark</th>
+                                    <th>Status</th>
+                                    <th>Last Updated</th>
+                                    <th width="120">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- End Page-content -->
+    </div>
+</div>
+</div>
+</div>
+
+{{-- Create/Edit Modal --}}
+<div class="modal fade" id="billModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalTitle">Create School Bill</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="billForm">
+                @csrf
+                <input type="hidden" name="id" id="billId">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Bill Title <span class="text-danger">*</span></label>
+                        <input type="text" name="title" id="title" class="form-control" placeholder="Enter bill title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Bill Amount (₦) <span class="text-danger">*</span></label>
+                        <input type="number" name="bill_amount" id="billAmount" class="form-control" step="0.01" placeholder="0.00" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Remark/Description</label>
+                        <textarea name="description" id="description" class="form-control" rows="3" placeholder="Enter bill description"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Student Status <span class="text-danger">*</span></label>
+                        <select name="statusId" id="statusId" class="form-select" required>
+                            <option value="">Select Status</option>
+                            <option value="1">Old Student Bill</option>
+                            <option value="2">New Student Bill</option>
+                        </select>
+                    </div>
+                    <div class="alert alert-danger d-none" id="formErrors"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveBtn">Save Bill</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
-<script src="{{ asset('js/schoolbill.init.js') }}"></script>
+{{-- Delete Confirmation Modal --}}
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="ri-delete-bin-line me-2"></i>Confirm Deletion</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong id="deleteItemTitle"></strong>?</p>
+                <p class="text-muted small">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 <script>
-    // Fallback to test modal manually
-    document.addEventListener('DOMContentLoaded', function () {
-        const createBtn = document.getElementById('create-school-bill-btn');
-        if (createBtn) {
-            createBtn.addEventListener('click', function () {
-                console.log('Fallback: Create School Bill button clicked');
-                try {
-                    const modal = new bootstrap.Modal(document.getElementById('addSchoolBillModal'));
-                    modal.show();
-                    console.log('Fallback: Add modal opened');
-                } catch (error) {
-                    console.error('Fallback: Error opening add modal:', error);
+$(document).ready(function() {
+    const CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
+    let table;
+
+    // Initialize DataTable
+    function initDataTable() {
+        table = $('#billsTable').DataTable({
+            processing: true,
+            serverSide: true,
+            ajax: {
+                url: "{{ route('schoolbill.index') }}",
+                type: 'GET',
+                data: function(d) {
+                    d._token = CSRF_TOKEN;
                 }
-            });
-        }
+            },
+            columns: [
+                { data: 'id', orderable: false, searchable: false,
+                    render: function(data) {
+                        return '<input type="checkbox" class="row-checkbox" value="' + data + '">';
+                    }
+                },
+                { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
+                { data: 'title', name: 'title' },
+                { data: 'formatted_amount', name: 'bill_amount' },
+                { data: 'description', name: 'description' },
+                { data: 'status_name', name: 'statusId' },
+                { data: 'formatted_date', name: 'updated_at' },
+                { data: 'action', name: 'action', orderable: false, searchable: false }
+            ],
+            language: {
+                processing: '<div class="spinner-border text-primary"></div>',
+                search: '<i class="ri-search-line"></i>',
+                searchPlaceholder: 'Search bills...',
+                lengthMenu: 'Show _MENU_ entries',
+                info: 'Showing _START_ to _END_ of _TOTAL_ entries',
+                infoEmpty: 'No records available',
+                zeroRecords: 'No matching records found'
+            },
+            order: [[1, 'desc']],
+            pageLength: 15,
+            responsive: true
+        });
+    }
+
+    initDataTable();
+
+    // Select All functionality
+    $('#selectAll').on('change', function() {
+        $('.row-checkbox').prop('checked', this.checked);
+        $('.row-checkbox').trigger('change');
     });
+
+    // Create Bill Button
+    $('#createBillBtn').on('click', function() {
+        $('#billForm')[0].reset();
+        $('#billId').val('');
+        $('#modalTitle').text('Create School Bill');
+        $('#formErrors').addClass('d-none').empty();
+        $('#billModal').modal('show');
+    });
+
+    // Edit Bill
+    $(document).on('click', '.edit-bill', function() {
+        const id = $(this).data('id');
+        const title = $(this).data('title');
+        const amount = $(this).data('amount');
+        const description = $(this).data('description');
+        const status = $(this).data('status');
+
+        $('#billId').val(id);
+        $('#title').val(title);
+        $('#billAmount').val(amount);
+        $('#description').val(description);
+        $('#statusId').val(status);
+        $('#modalTitle').text('Edit School Bill');
+        $('#formErrors').addClass('d-none').empty();
+        $('#billModal').modal('show');
+    });
+
+    // Delete Bill
+    let deleteId = null;
+    $(document).on('click', '.delete-bill', function() {
+        deleteId = $(this).data('id');
+        $('#deleteItemTitle').text($(this).data('title'));
+        $('#deleteModal').modal('show');
+    });
+
+    $('#confirmDelete').on('click', function() {
+        if (!deleteId) return;
+
+        $.ajax({
+            url: '/schoolbill/' + deleteId,
+            type: 'DELETE',
+            headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
+            success: function(response) {
+                if (response.success) {
+                    Swal.fire('Deleted!', response.message, 'success');
+                    table.ajax.reload();
+                    $('#deleteModal').modal('hide');
+                } else {
+                    Swal.fire('Error!', response.message, 'error');
+                }
+            },
+            error: function(xhr) {
+                Swal.fire('Error!', 'Failed to delete bill', 'error');
+            }
+        });
+    });
+
+    // Form Submission
+    $('#billForm').on('submit', function(e) {
+        e.preventDefault();
+        const id = $('#billId').val();
+        const url = id ? '/schoolbill/' + id : '/schoolbill';
+        const method = id ? 'PUT' : 'POST';
+
+        const formData = {
+            title: $('#title').val(),
+            bill_amount: $('#billAmount').val(),
+            description: $('#description').val(),
+            statusId: $('#statusId').val(),
+            _token: CSRF_TOKEN,
+            _method: method
+        };
+
+        $('#saveBtn').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Saving...');
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: formData,
+            success: function(response) {
+                if (response.success) {
+                    Swal.fire('Success!', response.message, 'success');
+                    $('#billModal').modal('hide');
+                    table.ajax.reload();
+                    $('#billForm')[0].reset();
+                }
+            },
+            error: function(xhr) {
+                if (xhr.status === 422) {
+                    const errors = xhr.responseJSON.errors;
+                    let errorHtml = '<ul>';
+                    $.each(errors, function(key, value) {
+                        errorHtml += '<li>' + value + '</li>';
+                    });
+                    errorHtml += '</ul>';
+                    $('#formErrors').removeClass('d-none').html(errorHtml);
+                } else {
+                    Swal.fire('Error!', 'Something went wrong', 'error');
+                }
+            },
+            complete: function() {
+                $('#saveBtn').prop('disabled', false).html('Save Bill');
+            }
+        });
+    });
+
+    // Bulk Delete
+    $('#bulkDeleteBtn').on('click', function() {
+        const selectedIds = [];
+        $('.row-checkbox:checked').each(function() {
+            selectedIds.push($(this).val());
+        });
+
+        if (selectedIds.length === 0) {
+            Swal.fire('Warning', 'Please select at least one bill to delete', 'warning');
+            return;
+        }
+
+        Swal.fire({
+            title: 'Delete Selected Bills?',
+            text: `You are about to delete ${selectedIds.length} bill(s).`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            confirmButtonText: 'Yes, delete them'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: "{{ route('schoolbill.bulk-destroy') }}",
+                    type: 'POST',
+                    headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
+                    data: { ids: selectedIds },
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire('Deleted!', response.message, 'success');
+                            table.ajax.reload();
+                            $('#selectAll').prop('checked', false);
+                        }
+                    },
+                    error: function() {
+                        Swal.fire('Error!', 'Failed to delete bills', 'error');
+                    }
+                });
+            }
+        });
+    });
+});
 </script>
 @endsection

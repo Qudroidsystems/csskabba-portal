@@ -176,7 +176,7 @@ class SchoolPaymentController extends Controller
 
         // Fetch school bills (fallback to all bills if school_bill_term_session doesn't exist)
         try {
-  
+
               $student_bill_info = SchoolBillTermSession::where('school_bill_class_term_session.class_id', $studentdata->schoolclassId)
                         ->where('school_bill_class_term_session.termid_id', $request->termid)
                         ->where('school_bill_class_term_session.session_id', $request->sessionid)
@@ -472,7 +472,7 @@ class SchoolPaymentController extends Controller
         }
     }
 
-    
+
     /**
      * Generate and display/download an invoice.
      */
@@ -580,7 +580,7 @@ class SchoolPaymentController extends Controller
         // Process all bills (both paid and unpaid)
         $payments = $allClassBills->map(function ($bill) use ($paidBills, $studentId, $schoolclassid, $termid, $sessionid, $invoiceNumber) {
             $paidBill = $paidBills->get($bill->school_bill_id);
-            
+
             if ($paidBill) {
                 // This bill has payment records
                 $paymentRecords = StudentBillPaymentRecord::where('student_bill_payment_id', $paidBill->paymentid)
@@ -589,14 +589,14 @@ class SchoolPaymentController extends Controller
 
                 // Calculate totals for this bill
                 $totalPaidForThisBill = $paymentRecords->sum('amount_paid');
-                
+
                 // Get the most recent payment (last payment made)
                 $lastPaymentRecord = $paymentRecords->sortByDesc('created_at')->first();
                 $lastPaymentAmount = $lastPaymentRecord ? $lastPaymentRecord->amount_paid : 0;
-                
+
                 // Previous paid = Total paid - Last payment amount
                 $previousPaid = $totalPaidForThisBill - $lastPaymentAmount;
-                
+
                 // Calculate current balance (outstanding amount)
                 $currentBalance = max(0, $bill->amount - $totalPaidForThisBill);
 
