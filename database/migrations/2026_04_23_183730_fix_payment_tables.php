@@ -1,5 +1,5 @@
 <?php
-// database/migrations/2024_01_01_000002_fix_payment_tables.php
+// database/migrations/2026_04_23_183618_fix_payment_tables.php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -33,26 +33,34 @@ return new class extends Migration
             }
         });
 
-        // Fix data types for foreign keys in student_bill_payment
-        $this->fixForeignKeyColumns('student_bill_payment', [
-            'student_id', 'school_bill_id', 'class_id', 'termid_id', 'session_id', 'generated_by'
-        ]);
+        // Fix data types for foreign keys using direct ALTER
+        $this->fixColumnTypes('student_bill_payment', ['student_id', 'school_bill_id', 'class_id', 'termid_id', 'session_id', 'generated_by']);
 
-        // Add foreign key constraints to student_bill_payment
+        // Add foreign keys with short names
         Schema::table('student_bill_payment', function (Blueprint $table) {
-            if (!Schema::hasColumn('student_bill_payment', 'student_id_int')) {
-                // Add foreign keys after data type fix
-                $table->foreign('student_id')->references('id')->on('studentRegistration')->onDelete('cascade');
-                $table->foreign('school_bill_id')->references('id')->on('school_bill')->onDelete('cascade');
-                $table->foreign('class_id')->references('id')->on('schoolclass');
-                $table->foreign('termid_id')->references('id')->on('schoolterm');
-                $table->foreign('session_id')->references('id')->on('schoolsession');
-                $table->foreign('generated_by')->references('id')->on('users');
-
-                // Add indexes
-                $table->index(['student_id', 'termid_id', 'session_id']);
-                $table->index('payment_status');
+            // Check if columns exist and add foreign keys
+            if (Schema::hasColumn('student_bill_payment', 'student_id')) {
+                $table->foreign('student_id', 'fk_sbp_student')->references('id')->on('studentRegistration')->onDelete('cascade');
             }
+            if (Schema::hasColumn('student_bill_payment', 'school_bill_id')) {
+                $table->foreign('school_bill_id', 'fk_sbp_bill')->references('id')->on('school_bill')->onDelete('cascade');
+            }
+            if (Schema::hasColumn('student_bill_payment', 'class_id')) {
+                $table->foreign('class_id', 'fk_sbp_class')->references('id')->on('schoolclass');
+            }
+            if (Schema::hasColumn('student_bill_payment', 'termid_id')) {
+                $table->foreign('termid_id', 'fk_sbp_term')->references('id')->on('schoolterm');
+            }
+            if (Schema::hasColumn('student_bill_payment', 'session_id')) {
+                $table->foreign('session_id', 'fk_sbp_session')->references('id')->on('schoolsession');
+            }
+            if (Schema::hasColumn('student_bill_payment', 'generated_by')) {
+                $table->foreign('generated_by', 'fk_sbp_generated')->references('id')->on('users');
+            }
+
+            // Add indexes with short names
+            $table->index(['student_id', 'termid_id', 'session_id'], 'idx_sbp_student_term_session');
+            $table->index('payment_status', 'idx_sbp_status');
         });
 
         // Fix student_bill_payment_record table
@@ -70,13 +78,18 @@ return new class extends Migration
             if (!Schema::hasColumn('student_bill_payment_record', 'invoiceNo')) {
                 $table->string('invoiceNo', 100)->nullable()->after('reversal_reason');
             }
+            if (!Schema::hasColumn('student_bill_payment_record', 'transaction_reference')) {
+                $table->string('transaction_reference', 100)->nullable()->after('invoiceNo');
+            }
             if (!Schema::hasColumn('student_bill_payment_record', 'deleted_at')) {
                 $table->softDeletes()->after('updated_at');
             }
 
-            // Fix data types
+            // Fix column type
             $table->unsignedBigInteger('student_bill_payment_id')->change();
-            $table->foreign('student_bill_payment_id')->references('id')->on('student_bill_payment')->onDelete('cascade');
+
+            // Add foreign key with short name
+            $table->foreign('student_bill_payment_id', 'fk_sbpr_payment')->references('id')->on('student_bill_payment')->onDelete('cascade');
         });
 
         // Fix student_bill_payment_book table
@@ -106,10 +119,8 @@ return new class extends Migration
 
         // Fix student_bill_invoice table
         Schema::table('student_bill_invoice', function (Blueprint $table) {
-            // Fix data types for foreign keys
-            $this->fixForeignKeyColumns('student_bill_invoice', [
-                'student_id', 'school_bill_id', 'class_id', 'termid_id', 'session_id', 'generated_by'
-            ]);
+            // Fix data types
+            $this->fixColumnTypes('student_bill_invoice', ['student_id', 'school_bill_id', 'class_id', 'termid_id', 'session_id', 'generated_by']);
 
             // Add PDF path column
             if (!Schema::hasColumn('student_bill_invoice', 'pdf_path')) {
@@ -124,36 +135,64 @@ return new class extends Migration
         });
     }
 
-    private function fixForeignKeyColumns($table, $columns): void
+    /**
+     * Fix column types from string to unsigned big integer
+     */
+    private function fixColumnTypes($table, $columns): void
     {
-        Schema::table($table, function (Blueprint $table) use ($columns) {
-            // This is a helper - actual implementation uses raw SQL for data conversion
-        });
-
         foreach ($columns as $column) {
             if (Schema::hasColumn($table, $column)) {
-                // Convert string to unsigned big integer
-                DB::statement("ALTER TABLE {$table} MODIFY {$column} BIGINT UNSIGNED NOT NULL");
+                try {
+                    DB::statement("ALTER TABLE `{$table}` MODIFY `{$column}` BIGINT UNSIGNED NOT NULL");
+                } catch (\Exception $e) {
+                    // If column has data that can't be converted, try with conversion
+                    DB::statement("ALTER TABLE `{$table}` MODIFY `{$column}` BIGINT UNSIGNED NULL");
+                }
             }
         }
     }
 
     public function down(): void
     {
-        // Remove foreign keys and restore original structure
+        // Remove foreign keys
         Schema::table('student_bill_payment', function (Blueprint $table) {
-            $table->dropForeign(['student_id']);
-            $table->dropForeign(['school_bill_id']);
-            $table->dropForeign(['class_id']);
-            $table->dropForeign(['termid_id']);
-            $table->dropForeign(['session_id']);
-            $table->dropForeign(['generated_by']);
+            $table->dropForeign('fk_sbp_student');
+            $table->dropForeign('fk_sbp_bill');
+            $table->dropForeign('fk_sbp_class');
+            $table->dropForeign('fk_sbp_term');
+            $table->dropForeign('fk_sbp_session');
+            $table->dropForeign('fk_sbp_generated');
+            $table->dropIndex('idx_sbp_student_term_session');
+            $table->dropIndex('idx_sbp_status');
 
             $table->dropColumnIfExists('total_paid');
             $table->dropColumnIfExists('total_balance');
             $table->dropColumnIfExists('last_payment_date');
             $table->dropColumnIfExists('payment_status');
             $table->dropColumnIfExists('session_token');
+            $table->dropColumnIfExists('deleted_at');
+        });
+
+        Schema::table('student_bill_payment_record', function (Blueprint $table) {
+            $table->dropForeign('fk_sbpr_payment');
+            $table->dropColumnIfExists('last_payment');
+            $table->dropColumnIfExists('is_reversal');
+            $table->dropColumnIfExists('reversal_reason');
+            $table->dropColumnIfExists('invoiceNo');
+            $table->dropColumnIfExists('transaction_reference');
+            $table->dropColumnIfExists('deleted_at');
+        });
+
+        Schema::table('student_bill_payment_book', function (Blueprint $table) {
+            $table->dropColumnIfExists('original_amount');
+            $table->dropColumnIfExists('scholarship_deduction');
+            $table->dropColumnIfExists('discount_deduction');
+            $table->dropColumnIfExists('adjusted_amount');
+        });
+
+        Schema::table('student_bill_invoice', function (Blueprint $table) {
+            $table->dropColumnIfExists('pdf_path');
+            $table->dropColumnIfExists('amount');
             $table->dropColumnIfExists('deleted_at');
         });
     }

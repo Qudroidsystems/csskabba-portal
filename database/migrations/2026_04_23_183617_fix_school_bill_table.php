@@ -1,5 +1,5 @@
 <?php
-// database/migrations/2024_01_01_000001_fix_school_bill_table.php
+// database/migrations/2026_04_23_183617_fix_school_bill_table.php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -65,11 +65,10 @@ return new class extends Migration
             }
         });
 
-        // 2. Fix data types for school_bill_class_term_session
+        // 2. Fix school_bill_class_term_session table - ALTER FIRST, then add indexes with short names
         Schema::table('school_bill_class_term_session', function (Blueprint $table) {
-            // First, add new columns as unsignedBigInteger
-            if (Schema::hasColumn('school_bill_class_term_session', 'bill_id') &&
-                !Schema::hasColumn('school_bill_class_term_session', 'bill_id_int')) {
+            // Add new integer columns first
+            if (!Schema::hasColumn('school_bill_class_term_session', 'bill_id_int')) {
                 $table->unsignedBigInteger('bill_id_int')->nullable()->after('id');
                 $table->unsignedBigInteger('class_id_int')->nullable()->after('bill_id_int');
                 $table->unsignedBigInteger('termid_id_int')->nullable()->after('class_id_int');
@@ -78,31 +77,18 @@ return new class extends Migration
             }
         });
 
-        // Migrate data from string to integer columns
+        // Migrate data from string to integer columns (using raw SQL for safety)
         if (Schema::hasTable('school_bill') && Schema::hasTable('school_bill_class_term_session')) {
-            DB::statement('UPDATE school_bill_class_term_session
-                SET bill_id_int = CAST(bill_id AS UNSIGNED)
-                WHERE bill_id IS NOT NULL AND bill_id != ""');
-
-            DB::statement('UPDATE school_bill_class_term_session
-                SET class_id_int = CAST(class_id AS UNSIGNED)
-                WHERE class_id IS NOT NULL AND class_id != ""');
-
-            DB::statement('UPDATE school_bill_class_term_session
-                SET termid_id_int = CAST(termid_id AS UNSIGNED)
-                WHERE termid_id IS NOT NULL AND termid_id != ""');
-
-            DB::statement('UPDATE school_bill_class_term_session
-                SET session_id_int = CAST(session_id AS UNSIGNED)
-                WHERE session_id IS NOT NULL AND session_id != ""');
-
-            DB::statement('UPDATE school_bill_class_term_session
-                SET created_by_int = CAST(createdBy AS UNSIGNED)
-                WHERE createdBy IS NOT NULL AND createdBy != ""');
+            DB::statement('UPDATE school_bill_class_term_session SET bill_id_int = CAST(bill_id AS UNSIGNED) WHERE bill_id IS NOT NULL AND bill_id != ""');
+            DB::statement('UPDATE school_bill_class_term_session SET class_id_int = CAST(class_id AS UNSIGNED) WHERE class_id IS NOT NULL AND class_id != ""');
+            DB::statement('UPDATE school_bill_class_term_session SET termid_id_int = CAST(termid_id AS UNSIGNED) WHERE termid_id IS NOT NULL AND termid_id != ""');
+            DB::statement('UPDATE school_bill_class_term_session SET session_id_int = CAST(session_id AS UNSIGNED) WHERE session_id IS NOT NULL AND session_id != ""');
+            DB::statement('UPDATE school_bill_class_term_session SET created_by_int = CAST(createdBy AS UNSIGNED) WHERE createdBy IS NOT NULL AND createdBy != ""');
         }
 
         // Drop old string columns and rename new ones
         Schema::table('school_bill_class_term_session', function (Blueprint $table) {
+            // Drop old string columns if they exist
             if (Schema::hasColumn('school_bill_class_term_session', 'bill_id')) {
                 $table->dropColumn('bill_id');
             }
@@ -119,7 +105,7 @@ return new class extends Migration
                 $table->dropColumn('createdBy');
             }
 
-            // Rename new columns
+            // Rename new columns (using short names)
             if (Schema::hasColumn('school_bill_class_term_session', 'bill_id_int')) {
                 $table->renameColumn('bill_id_int', 'bill_id');
             }
@@ -136,25 +122,48 @@ return new class extends Migration
                 $table->renameColumn('created_by_int', 'created_by');
             }
 
-            // Add foreign key constraints
-            $table->foreign('bill_id')->references('id')->on('school_bill')->onDelete('cascade');
-            $table->foreign('class_id')->references('id')->on('schoolclass')->onDelete('cascade');
-            $table->foreign('termid_id')->references('id')->on('schoolterm')->onDelete('cascade');
-            $table->foreign('session_id')->references('id')->on('schoolsession')->onDelete('cascade');
-            $table->foreign('created_by')->references('id')->on('users')->onDelete('cascade');
+            // Add foreign keys with short names
+            $table->foreign('bill_id', 'fk_sbcts_bill')->references('id')->on('school_bill')->onDelete('cascade');
+            $table->foreign('class_id', 'fk_sbcts_class')->references('id')->on('schoolclass')->onDelete('cascade');
+            $table->foreign('termid_id', 'fk_sbcts_term')->references('id')->on('schoolterm')->onDelete('cascade');
+            $table->foreign('session_id', 'fk_sbcts_session')->references('id')->on('schoolsession')->onDelete('cascade');
+            $table->foreign('created_by', 'fk_sbcts_created')->references('id')->on('users')->onDelete('cascade');
 
-            // Add unique constraint to prevent duplicates
-            $table->unique(['bill_id', 'class_id', 'termid_id', 'session_id'], 'unique_bill_class_term_session');
+            // Add unique constraint with short name
+            $table->unique(['bill_id', 'class_id', 'termid_id', 'session_id'], 'uk_sbcts_unique');
 
-            // Add indexes
-            $table->index(['class_id', 'termid_id', 'session_id']);
-            $table->index('bill_id');
+            // Add indexes with short names
+            $table->index(['class_id', 'termid_id', 'session_id'], 'idx_sbcts_cts');
+            $table->index('bill_id', 'idx_sbcts_bill');
         });
     }
 
     public function down(): void
     {
-        // Rollback logic (preserves original structure)
+        // Drop foreign keys first
+        Schema::table('school_bill_class_term_session', function (Blueprint $table) {
+            $table->dropForeign('fk_sbcts_bill');
+            $table->dropForeign('fk_sbcts_class');
+            $table->dropForeign('fk_sbcts_term');
+            $table->dropForeign('fk_sbcts_session');
+            $table->dropForeign('fk_sbcts_created');
+            $table->dropUnique('uk_sbcts_unique');
+            $table->dropIndex('idx_sbcts_cts');
+            $table->dropIndex('idx_sbcts_bill');
+        });
+
+        // Restore original columns if needed
+        Schema::table('school_bill_class_term_session', function (Blueprint $table) {
+            $table->string('bill_id')->nullable();
+            $table->string('class_id')->nullable();
+            $table->string('termid_id')->nullable();
+            $table->string('session_id')->nullable();
+            $table->string('createdBy')->nullable();
+
+            $table->dropColumn(['bill_id_int', 'class_id_int', 'termid_id_int', 'session_id_int', 'created_by_int']);
+        });
+
+        // Drop added columns from school_bill
         Schema::table('school_bill', function (Blueprint $table) {
             $table->dropColumnIfExists('statusId');
             $table->dropColumnIfExists('effective_from');
