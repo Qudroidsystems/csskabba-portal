@@ -113,7 +113,10 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('/get-students', [UserController::class, 'getStudents'])->name('get.students');
 
     Route::post('/users/store-student', [UserController::class, 'storeStudent'])->name('users.store-student');
+    Route::post('/users/mass-create-students', [UserController::class, 'massCreateStudents']) ->name('users.mass-create-students');
 
+    // getStudents is likely already registered — make sure it exists:
+    Route::get('/users/get-students', [UserController::class, 'getStudents']) ->name('get.students');
 
     // ===================================================================
     // PROFILE & BIODATA ROUTES - FULLY CORRECTED AND CLEANED

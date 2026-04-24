@@ -437,7 +437,7 @@ use Spatie\Permission\Models\Role;
                     </div>
                 </div>
             </div>
-            @include('users.partials.mass-student-modal')
+
         </div>
     </div>
 </div>
@@ -647,4 +647,5 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 });
 </script>
+@include('users.partials.mass-student-modal')
 @endsection
