@@ -30,15 +30,18 @@ class CBTController extends Controller
     {
         $pagetitle = 'CBT Management';
 
-        $studentId = auth()->user()->student_id;
+        // $authUserId  = users.id  (FK used in exam_attempts, answers, results)
+        // $studentRegId = studentRegistration.id (used for class/subject lookups)
+        $authUserId   = auth()->user()->id;
+        $studentRegId = auth()->user()->student_id;
 
         $student = DB::table('studentRegistration')
-            ->where('id', $studentId)
+            ->where('id', $studentRegId)
             ->select('id', 'firstname', 'lastname', 'admissionNo')
             ->first();
 
         $studentClassData = DB::table('studentclass')
-            ->where('studentId', $studentId)
+            ->where('studentId', $studentRegId)
             ->join('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
             ->join('schoolterm', 'schoolterm.id', '=', 'studentclass.termid')
             ->join('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
@@ -96,42 +99,39 @@ class CBTController extends Controller
                 ->count('subjectteacher.subjectid');
 
             $reg = DB::table('student_subject_register_record')
-                ->where('student_subject_register_record.studentId', $studentId)
+                ->where('student_subject_register_record.studentId', $studentRegId)
                 ->leftJoin('subjectclass', 'subjectclass.id', '=', 'student_subject_register_record.subjectclassid')
                 ->leftJoin('schoolsession', 'schoolsession.id', '=', 'student_subject_register_record.session')
                 ->count();
 
-            // Get the student's registered subject IDs (from subject table, not subjectteacher)
+            // Get the student's registered subject IDs
             $registeredSubjectIds = DB::table('student_subject_register_record')
-                ->where('student_subject_register_record.studentId', $studentId)
+                ->where('student_subject_register_record.studentId', $studentRegId)
                 ->leftJoin('subjectclass', 'subjectclass.id', '=', 'student_subject_register_record.subjectclassid')
                 ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
                 ->leftJoin('schoolsession', 'schoolsession.id', '=', 'student_subject_register_record.session')
                 ->join('subject', 'subject.id', '=', 'subjectteacher.subjectid')
-                ->pluck('subject.id') // Get subject IDs, not subjectteacher IDs
+                ->pluck('subject.id')
                 ->unique()
                 ->toArray();
 
-            // Debug: Log the registered subjects
-            \Log::info('Registered Subject IDs for student', [
-                'student_id' => $studentId,
+            Log::info('Registered Subject IDs for student', [
+                'auth_user_id'       => $authUserId,
+                'student_reg_id'     => $studentRegId,
                 'registered_subjects' => $registeredSubjectIds,
-                'class_id' => $studentClassData->class_id,
-                'term_id' => $selectedTermId,
-                'session_id' => $selectedSessionId
+                'class_id'           => $studentClassData->class_id,
+                'term_id'            => $selectedTermId,
+                'session_id'         => $selectedSessionId
             ]);
 
-            // Fetch exams based on the student's class, term, session, and registered subjects
             $examsQuery = Exam::where('schoolclass_id', $studentClassData->class_id)
                 ->where('termid', $selectedTermId)
                 ->where('session', $selectedSessionId);
 
-            // If student has registered subjects, filter by them
             if (!empty($registeredSubjectIds)) {
                 $examsQuery->whereIn('subject_id', $registeredSubjectIds);
             } else {
-                // If no subjects registered, show no exams
-                $examsQuery->whereRaw('1=0'); // Force no results
+                $examsQuery->whereRaw('1=0');
             }
 
             if ($search !== '') {
@@ -143,20 +143,20 @@ class CBTController extends Controller
 
             $exams = $examsQuery
                 ->select('id', 'title', 'subject_id', 'description', 'duration', 'start_time', 'end_time')
-                ->with(['subject:id,subject']) // Load subject name
+                ->with(['subject:id,subject'])
                 ->paginate(15)
                 ->appends($request->query());
 
-            // Debug: Log the exams found
-            \Log::info('Exams found for student', [
-                'student_id' => $studentId,
-                'exams_count' => $exams->count(),
-                'exams' => $exams->pluck('id')->toArray()
+            Log::info('Exams found for student', [
+                'auth_user_id' => $authUserId,
+                'exams_count'  => $exams->count(),
+                'exams'        => $exams->pluck('id')->toArray()
             ]);
 
             $examIds = $exams->pluck('id')->toArray();
 
-            $attempts = ExamAttempt::where('student_id', $studentId)
+            // Use $authUserId (users.id) for exam_attempts lookup
+            $attempts = ExamAttempt::where('student_id', $authUserId)
                 ->whereIn('exam_id', $examIds)
                 ->where('status', 'completed')
                 ->pluck('exam_id')
@@ -193,7 +193,10 @@ class CBTController extends Controller
         $pagetitle = 'CBT Exams';
 
         try {
-            $student = auth()->user()->student_id;
+            // $authUserId  = users.id  → used as FK in exam_attempts.student_id
+            // $studentRegId = studentRegistration.id → used for class/subject data
+            $authUserId   = auth()->user()->id;
+            $studentRegId = auth()->user()->student_id;
 
             $exam = Exam::where('id', $examid)
                 ->with(['questions.options' => function ($query) {
@@ -209,7 +212,8 @@ class CBTController extends Controller
                 return redirect()->route('cbt.index')->with('error', 'This exam is not currently available.');
             }
 
-            $existingAttempt = ExamAttempt::where('student_id', $student)
+            // Check for existing attempt using users.id
+            $existingAttempt = ExamAttempt::where('student_id', $authUserId)
                 ->where('exam_id', $exam->id)
                 ->first();
 
@@ -217,45 +221,45 @@ class CBTController extends Controller
                 return redirect()->route('cbt.index')->with('error', 'You have already taken this exam.');
             }
 
+            // Create attempt using users.id as student_id (FK → users.id)
             $attempt = ExamAttempt::create([
-                'student_id' => $student,
+                'student_id' => $authUserId,
                 'exam_id'    => $exam->id,
                 'start_time' => $now,
                 'status'     => 'in_progress'
             ]);
 
-            // Include marks and type in questions data
+            // Build questions array
             $questions = $exam->questions->map(function ($question) {
-                // Get the correct option for True/False and Short Answer
                 $correctOption = $question->options->where('is_correct', true)->first();
 
                 return [
-                    'id'        => $question->id,
-                    'text'      => $question->question_text,
-                    'type'      => $question->type,
-                    'options'   => $question->options->map(function($option) {
+                    'id'             => $question->id,
+                    'text'           => $question->question_text,
+                    'type'           => $question->type,
+                    'options'        => $question->options->map(function ($option) {
                         return [
-                            'id' => $option->id,
-                            'text' => $option->option_text,
+                            'id'         => $option->id,
+                            'text'       => $option->option_text,
                             'is_correct' => $option->is_correct
                         ];
                     })->toArray(),
                     'correct_answer' => $correctOption ? $correctOption->option_text : '',
-                    'image_url' => $question->image ? asset('storage/' . $question->image) : null,
-                    'marks'     => (float) ($question->marks ?? 1.0), // Use float value with default 1.0
+                    'image_url'      => $question->image ? asset('storage/' . $question->image) : null,
+                    'marks'          => (float) ($question->marks ?? 1.0),
                 ];
             })->toArray();
 
-            // Calculate total marks - ensure we're using float values
             $totalExamMarks = $exam->questions->sum('marks');
 
+            // Student display info still comes from studentRegistration
             $studentReg = DB::table('studentRegistration')
-                ->where('id', $student)
+                ->where('id', $studentRegId)
                 ->select('id', 'firstname', 'lastname', 'admissionNo')
                 ->first();
 
             $studentClassData = DB::table('studentclass')
-                ->where('studentId', $student)
+                ->where('studentId', $studentRegId)
                 ->join('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
                 ->join('schoolterm', 'schoolterm.id', '=', 'studentclass.termid')
                 ->join('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
@@ -309,14 +313,15 @@ class CBTController extends Controller
                 'answers.*.notes'       => 'nullable|string|max:1000',
             ]);
 
-            $student = auth()->user()->student_id;
-            if (!$student) {
-                throw new \Exception('No authenticated student found');
+            // Use users.id for all FK references in exam_attempts / answers / results
+            $authUserId = auth()->user()->id;
+            if (!$authUserId) {
+                throw new \Exception('No authenticated user found');
             }
 
             $attempt = ExamAttempt::findOrFail($data['attempt_id']);
 
-            if ($attempt->student_id != $student || $attempt->exam_id != $data['exam_id']) {
+            if ($attempt->student_id != $authUserId || $attempt->exam_id != $data['exam_id']) {
                 return response()->json(['success' => false, 'message' => 'Invalid attempt or exam'], 403);
             }
 
@@ -341,22 +346,20 @@ class CBTController extends Controller
                 'status'   => 'completed'
             ]);
 
-            // Calculate marks
             $totalMarks = 0;
-            $score = 0;
-            $attempted = 0;
+            $score      = 0;
+            $attempted  = 0;
 
             foreach ($data['answers'] as $submittedAnswer) {
                 $question = $exam->questions->firstWhere('id', $submittedAnswer['question_id']);
                 if ($question) {
                     Log::info('Processing answer', [
-                        'question_id' => $question->id,
+                        'question_id'   => $question->id,
                         'question_type' => $question->type,
                         'student_answer' => $submittedAnswer['answer'] ?? null,
                         'question_marks' => $question->marks,
                     ]);
 
-                    // Add question marks to total
                     $questionMarks = (float) ($question->marks ?? 1.0);
                     $totalMarks += $questionMarks;
 
@@ -365,15 +368,12 @@ class CBTController extends Controller
                     if (!empty($studentAnswer)) {
                         $attempted++;
 
-                        // Initialize variables
-                        $optionId = null;
+                        $optionId        = null;
                         $shortAnswerText = null;
 
                         if ($question->type === 'short_answer') {
-                            // For short answer questions
                             $shortAnswerText = $studentAnswer;
 
-                            // Find correct option for comparison and scoring
                             $correctOption = $question->options->where('is_correct', true)->first();
                             if ($correctOption) {
                                 $correctAnswer = trim($correctOption->option_text);
@@ -381,27 +381,22 @@ class CBTController extends Controller
                                 Log::info('Short answer comparison', [
                                     'student_answer' => $studentAnswer,
                                     'correct_answer' => $correctAnswer,
-                                    'type' => $question->type
+                                    'type'           => $question->type
                                 ]);
 
-                                // Case-insensitive comparison for scoring
                                 if (strtolower($studentAnswer) === strtolower($correctAnswer)) {
                                     $score += $questionMarks;
                                 } else {
-                                    // Optional: Allow partial matches
                                     similar_text(strtolower($studentAnswer), strtolower($correctAnswer), $percent);
-                                    if ($percent >= 80) { // 80% similarity threshold
+                                    if ($percent >= 80) {
                                         $score += $questionMarks;
                                     }
                                 }
                             }
-                            // For short answer, option_id remains null
                         } else {
-                            // For MCQ and True/False questions
                             $shortAnswerText = null;
 
-                            // Find the selected option
-                            $selectedOption = $question->options->first(function($option) use ($studentAnswer) {
+                            $selectedOption = $question->options->first(function ($option) use ($studentAnswer) {
                                 return trim($option->option_text) === $studentAnswer;
                             });
 
@@ -414,30 +409,30 @@ class CBTController extends Controller
                         }
 
                         Log::info('Creating answer record', [
-                            'question_id' => $question->id,
+                            'question_id'   => $question->id,
                             'question_type' => $question->type,
-                            'option_id' => $optionId,
-                            'short_answer' => $shortAnswerText,
+                            'option_id'     => $optionId,
+                            'short_answer'  => $shortAnswerText,
                             'question_marks' => $questionMarks,
-                            'score_added' => $score
+                            'score_added'   => $score
                         ]);
 
-                        // Create answer record
+                        // Store answer — user_id = users.id
                         Answer::create([
-                            'user_id'       => $student,
-                            'exam_id'       => $data['exam_id'],
-                            'question_id'   => $submittedAnswer['question_id'],
-                            'option_id'     => $optionId, // null for short answers
-                            'short_answer'  => $shortAnswerText, // Store short answer text here
+                            'user_id'      => $authUserId,
+                            'exam_id'      => $data['exam_id'],
+                            'question_id'  => $submittedAnswer['question_id'],
+                            'option_id'    => $optionId,
+                            'short_answer' => $shortAnswerText,
                         ]);
                     }
                 }
             }
 
-            // Create or update result
+            // Store result — user_id = users.id
             Result::updateOrCreate(
                 [
-                    'user_id' => $student,
+                    'user_id' => $authUserId,
                     'exam_id' => $data['exam_id'],
                 ],
                 [
@@ -450,19 +445,20 @@ class CBTController extends Controller
             );
 
             Log::info('Result saved', [
-                'score'       => $score,
-                'total_marks' => $totalMarks,
-                'percentage'  => $totalMarks > 0 ? ($score / $totalMarks) * 100 : 0,
-                'attempted'   => $attempted
+                'auth_user_id' => $authUserId,
+                'score'        => $score,
+                'total_marks'  => $totalMarks,
+                'percentage'   => $totalMarks > 0 ? ($score / $totalMarks) * 100 : 0,
+                'attempted'    => $attempted
             ]);
 
             return response()->json([
-                'success' => true,
-                'message' => 'Exam submitted successfully',
-                'score'   => $score,
-                'total_marks' => $totalMarks,
-                'percentage' => $totalMarks > 0 ? round(($score / $totalMarks) * 100, 2) : 0,
-                'attempted' => $attempted,
+                'success'         => true,
+                'message'         => 'Exam submitted successfully',
+                'score'           => $score,
+                'total_marks'     => $totalMarks,
+                'percentage'      => $totalMarks > 0 ? round(($score / $totalMarks) * 100, 2) : 0,
+                'attempted'       => $attempted,
                 'total_questions' => $exam->questions->count()
             ]);
 
