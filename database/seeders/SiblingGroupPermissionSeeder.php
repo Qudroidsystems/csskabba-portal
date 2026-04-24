@@ -23,7 +23,7 @@ class SiblingGroupPermissionSeeder extends Seeder
                 ['name' => $permission, 'guard_name' => 'web'],
                 [
                     'title' => 'Sibling Management',
-                    'module' => 'finance'
+                    // 'module' => 'finance'
                 ]
             );
         }
