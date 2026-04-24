@@ -130,12 +130,12 @@
                                         <input class="form-check-input" type="checkbox"
                                                id="massRole_{{ $role->name }}"
                                                value="{{ $role->name }}"
-                                               {{ $role->name === 'student' ? 'checked' : '' }}
+                                               {{ $role->name === 'Student' ? 'checked' : '' }}
                                                disabled>
                                         <label class="form-check-label {{ $role->name !== 'student' ? 'text-muted' : 'fw-semibold text-success' }}"
                                                for="massRole_{{ $role->name }}">
                                             {{ $role->name }}
-                                            @if($role->name === 'student')
+                                            @if($role->name === 'Student')
                                                 <span class="badge bg-success ms-1">
                                                     <i class="bi bi-lock-fill me-1"></i>Required
                                                 </span>
