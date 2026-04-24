@@ -68,33 +68,26 @@ return new class extends Migration
         });
 
         // ============================================
-        // PART 2: Add missing columns to school_bill_class_term_session
+        // PART 2: Fix school_bill_class_term_session table
         // ============================================
 
-        // First, check if createdBy column exists, if not, add it
-        if (!Schema::hasColumn('school_bill_class_term_session', 'createdBy') && !Schema::hasColumn('school_bill_class_term_session', 'created_by')) {
-            Schema::table('school_bill_class_term_session', function (Blueprint $table) {
-                $table->string('createdBy')->nullable()->after('session_id');
-            });
-        }
-
-        // Add created_by column if needed (rename from createdBy if exists)
-        if (Schema::hasColumn('school_bill_class_term_session', 'createdBy') && !Schema::hasColumn('school_bill_class_term_session', 'created_by')) {
-            Schema::table('school_bill_class_term_session', function (Blueprint $table) {
-                $table->renameColumn('createdBy', 'created_by');
-            });
-        }
-
+        // Add created_by column if needed
         if (!Schema::hasColumn('school_bill_class_term_session', 'created_by')) {
-            Schema::table('school_bill_class_term_session', function (Blueprint $table) {
-                $table->unsignedBigInteger('created_by')->nullable()->after('session_id');
-            });
+            // Check if createdBy exists and rename it
+            if (Schema::hasColumn('school_bill_class_term_session', 'createdBy')) {
+                Schema::table('school_bill_class_term_session', function (Blueprint $table) {
+                    $table->renameColumn('createdBy', 'created_by');
+                });
+            } else {
+                Schema::table('school_bill_class_term_session', function (Blueprint $table) {
+                    $table->unsignedBigInteger('created_by')->nullable()->after('session_id');
+                });
+            }
         }
 
-        // Convert string IDs to integers if needed - using a safer approach
-        // Check if columns exist and are not already integers
-        $columnsToCheck = ['bill_id', 'class_id', 'termid_id', 'session_id'];
+        // Convert string IDs to integers if needed
         $needsConversion = false;
+        $columnsToCheck = ['bill_id', 'class_id', 'termid_id', 'session_id'];
 
         foreach ($columnsToCheck as $column) {
             if (Schema::hasColumn('school_bill_class_term_session', $column)) {
@@ -152,51 +145,93 @@ return new class extends Migration
         }
 
         // ============================================
-        // PART 3: Add Foreign Keys and Indexes (only if they don't exist)
+        // PART 3: Add Foreign Keys (check if they don't exist)
         // ============================================
 
-        // Check if foreign keys exist before adding them
-        $foreignKeys = DB::select("SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
-                                   WHERE TABLE_SCHEMA = DATABASE()
-                                   AND TABLE_NAME = 'school_bill_class_term_session'
-                                   AND CONSTRAINT_NAME LIKE 'fk_%'");
-
-        $existingForeignKeys = array_column($foreignKeys, 'CONSTRAINT_NAME');
+        // Check existing foreign keys
+        $existingForeignKeys = [];
+        try {
+            $foreignKeys = DB::select("SELECT CONSTRAINT_NAME FROM information_schema.KEY_COLUMN_USAGE
+                                       WHERE TABLE_SCHEMA = DATABASE()
+                                       AND TABLE_NAME = 'school_bill_class_term_session'
+                                       AND CONSTRAINT_NAME LIKE 'fk_%'");
+            $existingForeignKeys = array_column($foreignKeys, 'CONSTRAINT_NAME');
+        } catch (\Exception $e) {
+            // Table might not exist yet
+        }
 
         Schema::table('school_bill_class_term_session', function (Blueprint $table) use ($existingForeignKeys) {
+            // Add foreign keys only if they don't exist
             if (Schema::hasColumn('school_bill_class_term_session', 'bill_id') && !in_array('fk_sbcts_bill', $existingForeignKeys)) {
-                $table->foreign('bill_id', 'fk_sbcts_bill')->references('id')->on('school_bill')->onDelete('cascade');
+                try {
+                    $table->foreign('bill_id', 'fk_sbcts_bill')->references('id')->on('school_bill')->onDelete('cascade');
+                } catch (\Exception $e) {}
             }
             if (Schema::hasColumn('school_bill_class_term_session', 'class_id') && !in_array('fk_sbcts_class', $existingForeignKeys)) {
-                $table->foreign('class_id', 'fk_sbcts_class')->references('id')->on('schoolclass')->onDelete('cascade');
+                try {
+                    $table->foreign('class_id', 'fk_sbcts_class')->references('id')->on('schoolclass')->onDelete('cascade');
+                } catch (\Exception $e) {}
             }
             if (Schema::hasColumn('school_bill_class_term_session', 'termid_id') && !in_array('fk_sbcts_term', $existingForeignKeys)) {
-                $table->foreign('termid_id', 'fk_sbcts_term')->references('id')->on('schoolterm')->onDelete('cascade');
+                try {
+                    $table->foreign('termid_id', 'fk_sbcts_term')->references('id')->on('schoolterm')->onDelete('cascade');
+                } catch (\Exception $e) {}
             }
             if (Schema::hasColumn('school_bill_class_term_session', 'session_id') && !in_array('fk_sbcts_session', $existingForeignKeys)) {
-                $table->foreign('session_id', 'fk_sbcts_session')->references('id')->on('schoolsession')->onDelete('cascade');
+                try {
+                    $table->foreign('session_id', 'fk_sbcts_session')->references('id')->on('schoolsession')->onDelete('cascade');
+                } catch (\Exception $e) {}
             }
             if (Schema::hasColumn('school_bill_class_term_session', 'created_by') && !in_array('fk_sbcts_created', $existingForeignKeys)) {
-                $table->foreign('created_by', 'fk_sbcts_created')->references('id')->on('users')->onDelete('cascade');
+                try {
+                    $table->foreign('created_by', 'fk_sbcts_created')->references('id')->on('users')->onDelete('cascade');
+                } catch (\Exception $e) {}
             }
+        });
 
-            // Add unique constraint
-            try {
-                $table->unique(['bill_id', 'class_id', 'termid_id', 'session_id'], 'uk_sbcts_unique');
-            } catch (\Exception $e) {
-                // Constraint might already exist
-            }
+        // ============================================
+        // PART 4: Add Unique Constraint (if not exists)
+        // ============================================
 
-            // Add indexes
-            try {
-                $table->index(['class_id', 'termid_id', 'session_id'], 'idx_sbcts_cts');
-            } catch (\Exception $e) {
-                // Index might already exist
+        // Check if unique constraint already exists
+        $uniqueExists = false;
+        try {
+            $uniqueCheck = DB::select("SELECT CONSTRAINT_NAME FROM information_schema.TABLE_CONSTRAINTS
+                                      WHERE TABLE_SCHEMA = DATABASE()
+                                      AND TABLE_NAME = 'school_bill_class_term_session'
+                                      AND CONSTRAINT_NAME = 'uk_sbcts_unique'");
+            $uniqueExists = !empty($uniqueCheck);
+        } catch (\Exception $e) {}
+
+        if (!$uniqueExists && Schema::hasColumn('school_bill_class_term_session', 'bill_id')) {
+            Schema::table('school_bill_class_term_session', function (Blueprint $table) {
+                try {
+                    $table->unique(['bill_id', 'class_id', 'termid_id', 'session_id'], 'uk_sbcts_unique');
+                } catch (\Exception $e) {}
+            });
+        }
+
+        // ============================================
+        // PART 5: Add Indexes (if they don't exist)
+        // ============================================
+
+        // Check existing indexes
+        $existingIndexes = [];
+        try {
+            $indexes = DB::select("SHOW INDEX FROM school_bill_class_term_session");
+            $existingIndexes = array_column($indexes, 'Key_name');
+        } catch (\Exception $e) {}
+
+        Schema::table('school_bill_class_term_session', function (Blueprint $table) use ($existingIndexes) {
+            if (!in_array('idx_sbcts_cts', $existingIndexes)) {
+                try {
+                    $table->index(['class_id', 'termid_id', 'session_id'], 'idx_sbcts_cts');
+                } catch (\Exception $e) {}
             }
-            try {
-                $table->index('bill_id', 'idx_sbcts_bill');
-            } catch (\Exception $e) {
-                // Index might already exist
+            if (!in_array('idx_sbcts_bill', $existingIndexes)) {
+                try {
+                    $table->index('bill_id', 'idx_sbcts_bill');
+                } catch (\Exception $e) {}
             }
         });
     }
