@@ -615,7 +615,7 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
     // ============================================
     // STAFF PAYMENT ROUTES
     // ============================================
-    Route::prefix('staff/payments')->name('staff.payments.')->middleware(['auth'])->group(function () {
+    Route::prefix('staff/payments')->name('staff.payments.')->group(function () {
         // Staff dashboard (staff view)
         Route::get('/dashboard', [StaffPaymentController::class, 'staffDashboard'])->name('dashboard');
 
