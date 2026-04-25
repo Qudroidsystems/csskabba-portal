@@ -1,3 +1,5 @@
+php
+
 <!doctype html>
 <html lang="en" data-layout="vertical" data-sidebar="dark" data-sidebar-size="lg" data-preloader="disable" data-theme="default" data-topbar="light" data-bs-theme="light">
 
@@ -20,50 +22,222 @@
     <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.0.3/src/bold/style.css">
     <link href="{{ asset('theme/layouts/assets/fonts/materialdesignicons-webfont.woff2') }}?v=6.5.95" rel="stylesheet" type="font/woff2">
 
+    <!-- NProgress (page transition bar) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/nprogress@0.2.0/nprogress.min.js"></script>
+
     <style>
+        /* =====================================================
+           NPROGRESS CUSTOM STYLE
+           ===================================================== */
+        #nprogress .bar {
+            background: #4f8ef7 !important;
+            height: 3px !important;
+            box-shadow: 0 0 8px rgba(79, 142, 247, 0.6) !important;
+        }
+        #nprogress .peg  { box-shadow: none !important; }
+        #nprogress .spinner { display: none !important; }
+
+        /* =====================================================
+           PAGINATION
+           ===================================================== */
         .pagination-wrap .page-item { margin: 0 5px; }
         .pagination-wrap .page-link { padding: 5px 10px; }
         .pagination-wrap .active .page-link { background-color: #007bff; color: white; }
         .pagination-wrap .disabled .page-link { pointer-events: none; opacity: 0.5; }
 
-        /* Loading spinner */
+        /* =====================================================
+           LOADING SPINNER
+           ===================================================== */
         .spin { animation: spin 1s linear infinite; }
         @keyframes spin {
-            0% { transform: rotate(0deg); }
+            0%   { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
 
-        /* Checkbox styling */
+        /* =====================================================
+           CHECKBOX
+           ===================================================== */
         .form-check-input:checked { background-color: #405189; border-color: #405189; }
 
-        /* SweetAlert customization */
+        /* =====================================================
+           SWEETALERT CUSTOMIZATION
+           ===================================================== */
         .swal2-toast { font-size: 14px !important; }
+        .swal2-container.swal2-top-end { top: 70px !important; }
 
-        /* Table row hover effect */
+        /* =====================================================
+           TABLE ROW HOVER
+           ===================================================== */
+        .table tbody tr {
+            transition: background-color 0.15s ease;
+        }
         .table tbody tr:hover { background-color: rgba(67, 97, 238, 0.05); }
 
-        /* Modal animations */
+        /* =====================================================
+           MODAL ANIMATIONS
+           ===================================================== */
         .modal.fade .modal-dialog {
             transform: translate(0, -50px);
             transition: transform 0.3s ease-out;
         }
         .modal.show .modal-dialog { transform: translate(0, 0); }
 
-        /* Scrollbar styling */
+        /* =====================================================
+           SIDEBAR SCROLLBAR
+           ===================================================== */
+        #scrollbar { overflow-y: auto; }
+        #scrollbar::-webkit-scrollbar { width: 4px; }
+        #scrollbar::-webkit-scrollbar-track { background: transparent; }
+        #scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 4px; }
+        #scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.28); }
         .bg-light::-webkit-scrollbar { width: 6px; }
         .bg-light::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
         .bg-light::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; }
         .bg-light::-webkit-scrollbar-thumb:hover { background: #555; }
 
-        /* Finance Module Custom CSS */
+        /* =====================================================
+           SIDEBAR: SMOOTH ACCORDION
+           ===================================================== */
+        #navbar-nav .menu-dropdown {
+            overflow: hidden;
+        }
+
+        /* Chevron rotation */
+        #navbar-nav .nav-link.menu-link .ri-arrow-down-s-line {
+            transition: transform 0.25s ease;
+            display: inline-block;
+        }
+        #navbar-nav .nav-link.menu-link[aria-expanded="true"] .ri-arrow-down-s-line {
+            transform: rotate(180deg);
+        }
+
+        /* =====================================================
+           SIDEBAR: ACTIVE PARENT ITEM
+           ===================================================== */
+        #navbar-nav .nav-link.menu-link.nav-active-parent {
+            color: #fff !important;
+            background: rgba(79, 142, 247, 0.18) !important;
+            border-left: 3px solid #4f8ef7;
+            padding-left: calc(1.3rem - 3px); /* compensate border width */
+        }
+        #navbar-nav .nav-link.menu-link.nav-active-parent i {
+            color: #4f8ef7 !important;
+        }
+
+        /* =====================================================
+           SIDEBAR: ACTIVE CHILD LINK
+           ===================================================== */
+        #navbar-nav .nav-sm .nav-link.nav-active-child {
+            color: #7eb8fb !important;
+            font-weight: 500;
+        }
+        #navbar-nav .nav-sm .nav-link.nav-active-child::before {
+            content: '';
+            display: inline-block;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: #4f8ef7;
+            margin-right: 8px;
+            box-shadow: 0 0 0 3px rgba(79, 142, 247, 0.25);
+            vertical-align: middle;
+            flex-shrink: 0;
+            animation: dotPop 0.25s ease;
+        }
+        @keyframes dotPop {
+            from { transform: scale(0); opacity: 0; }
+            to   { transform: scale(1); opacity: 1; }
+        }
+
+        /* =====================================================
+           SIDEBAR: HOVER TRANSITIONS
+           ===================================================== */
+        #navbar-nav .nav-link {
+            transition: color 0.18s ease, background-color 0.18s ease, padding-left 0.18s ease;
+        }
+
+        /* =====================================================
+           RIPPLE EFFECT ON NAV LINKS
+           ===================================================== */
+        #navbar-nav .nav-link {
+            position: relative;
+            overflow: hidden;
+        }
+        .nav-ripple {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.18);
+            transform: scale(0);
+            animation: ripple-anim 0.55s linear;
+            pointer-events: none;
+            z-index: 0;
+        }
+        @keyframes ripple-anim {
+            to { transform: scale(5); opacity: 0; }
+        }
+
+        /* =====================================================
+           BACK TO TOP BUTTON — ANIMATED
+           ===================================================== */
+        #back-to-top {
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(12px);
+            transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s ease;
+        }
+        #back-to-top.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        #back-to-top:hover {
+            transform: translateY(-3px) !important;
+        }
+
+        /* =====================================================
+           PAGE CONTENT FADE-IN
+           ===================================================== */
+        .page-content {
+            animation: pageFadeIn 0.35s ease;
+        }
+        @keyframes pageFadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* =====================================================
+           TOPBAR BUTTON HOVER EFFECTS
+           ===================================================== */
+        #page-topbar .header-item {
+            transition: color 0.2s ease, background-color 0.2s ease;
+        }
+
+        /* =====================================================
+           PROFILE AVATAR HOVER
+           ===================================================== */
+        .header-profile-user-enhanced {
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+        }
+        .header-profile-user-enhanced:hover {
+            transform: scale(1.07);
+            box-shadow: 0 0 0 3px rgba(79, 142, 247, 0.35) !important;
+        }
+
+        /* =====================================================
+           FINANCE MODULE CUSTOM CSS
+           ===================================================== */
         .finance-stat-card {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             border-radius: 12px;
             padding: 20px;
             color: white;
-            transition: transform 0.3s;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
-        .finance-stat-card:hover { transform: translateY(-3px); }
+        .finance-stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.35);
+        }
 
         .payment-method-icon {
             width: 40px;
@@ -88,13 +262,85 @@
         }
 
         .payment-progress { height: 8px; border-radius: 4px; background: #e2e8f0; }
-        .payment-progress-bar { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
+        .payment-progress-bar { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
 
-        .scholarship-card { border-left: 4px solid #10b981; transition: all 0.2s; }
-        .scholarship-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .scholarship-card {
+            border-left: 4px solid #10b981;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .scholarship-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
 
         .payroll-table th { background: #1e293b; color: white; }
 
+        /* =====================================================
+           CARD HOVER LIFT (GENERAL)
+           ===================================================== */
+        .card {
+            transition: box-shadow 0.25s ease, transform 0.25s ease;
+        }
+        .card:hover {
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        /* =====================================================
+           BUTTON MICRO-INTERACTION
+           ===================================================== */
+        .btn {
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+        }
+        .btn:active {
+            transform: scale(0.97);
+        }
+
+        /* =====================================================
+           MENU TITLE FADE-IN (stagger)
+           ===================================================== */
+        #navbar-nav > li {
+            animation: navItemFadeIn 0.4s ease both;
+        }
+        #navbar-nav > li:nth-child(1)  { animation-delay: 0.02s; }
+        #navbar-nav > li:nth-child(2)  { animation-delay: 0.04s; }
+        #navbar-nav > li:nth-child(3)  { animation-delay: 0.06s; }
+        #navbar-nav > li:nth-child(4)  { animation-delay: 0.08s; }
+        #navbar-nav > li:nth-child(5)  { animation-delay: 0.10s; }
+        #navbar-nav > li:nth-child(6)  { animation-delay: 0.12s; }
+        #navbar-nav > li:nth-child(7)  { animation-delay: 0.14s; }
+        #navbar-nav > li:nth-child(8)  { animation-delay: 0.16s; }
+        #navbar-nav > li:nth-child(9)  { animation-delay: 0.18s; }
+        #navbar-nav > li:nth-child(10) { animation-delay: 0.20s; }
+        #navbar-nav > li:nth-child(11) { animation-delay: 0.22s; }
+        #navbar-nav > li:nth-child(12) { animation-delay: 0.24s; }
+        #navbar-nav > li:nth-child(n+13) { animation-delay: 0.26s; }
+        @keyframes navItemFadeIn {
+            from { opacity: 0; transform: translateX(-8px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+
+        /* =====================================================
+           DROPDOWN MENU ANIMATION
+           ===================================================== */
+        .dropdown-menu {
+            animation: dropdownFadeIn 0.2s ease;
+        }
+        @keyframes dropdownFadeIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* =====================================================
+           TOOLTIP-STYLE TITLE ON COLLAPSED SIDEBAR
+           ===================================================== */
+        [data-sidebar-size="sm"] #navbar-nav .nav-link span[data-key],
+        [data-sidebar-size="sm"] #navbar-nav .menu-title span {
+            display: none;
+        }
+
+        /* =====================================================
+           PRINT STYLES
+           ===================================================== */
         @media print {
             .no-print { display: none !important; }
             .invoice-box { box-shadow: none; border: none; padding: 0; }
@@ -552,278 +798,256 @@
                             </li>
                         @endif
 
-
-
-
-
-
-
-
                         {{-- ============================================================
-    BURSARY & FINANCE (Enhanced with new finance module)
-    ============================================================ --}}
+                             BURSARY & FINANCE
+                             ============================================================ --}}
+                        @if(auth()->user()->can('View schoolpayment') || auth()->user()->can('View analysis') ||
+                            auth()->user()->can('View scholarship') || auth()->user()->can('View discount') ||
+                            auth()->user()->can('View sibling groups') || auth()->user()->can('View financial reports') ||
+                            auth()->user()->can('View payroll') || auth()->user()->can('View staff payments'))
+                            <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-apps">BURSARY & FINANCE</span></li>
+                        @endif
 
-@if(auth()->user()->can('View schoolpayment') || auth()->user()->can('View analysis') ||
-    auth()->user()->can('View scholarship') || auth()->user()->can('View discount') ||
-    auth()->user()->can('View sibling groups') || auth()->user()->can('View financial reports') ||
-    auth()->user()->can('View payroll') || auth()->user()->can('View staff payments'))
-    <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-apps">BURSARY & FINANCE</span></li>
-@endif
+                        @can('View schoolpayment')
+                        <li class="nav-item">
+                            <a href="#sidebarStudentpayments" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStudentpayments">
+                                <i class="ph-storefront"></i> <span data-key="t-ecommerce">Student Payments</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarStudentpayments">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item">
+                                        <a href="{{ route('schoolpayment.index') }}" class="nav-link" data-key="t-products">Student Bill</a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('payment.index') }}" class="nav-link" data-key="t-payments">
+                                            <i class="ri-wallet-line"></i> Payment Portal
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        @endcan
 
-{{-- Student Payments (Existing) --}}
-@can('View schoolpayment')
-<li class="nav-item">
-    <a href="#sidebarStudentpayments" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStudentpayments">
-        <i class="ph-storefront"></i> <span data-key="t-ecommerce">Student Payments</span>
-    </a>
-    <div class="collapse menu-dropdown" id="sidebarStudentpayments">
-        <ul class="nav nav-sm flex-column">
-            <li class="nav-item">
-                <a href="{{ route('schoolpayment.index') }}" class="nav-link" data-key="t-products">Student Bill</a>
-            </li>
-            <li class="nav-item">
-                <a href="{{ route('payment.index') }}" class="nav-link" data-key="t-payments">
-                    <i class="ri-wallet-line"></i> Payment Portal
-                </a>
-            </li>
-        </ul>
-    </div>
-</li>
-@endcan
+                        @can('View analysis')
+                        <li class="nav-item">
+                            <a href="#sidebarAnalysis" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAnalysis">
+                                <i class="ph-storefront"></i> <span data-key="t-ecommerce">Payment Analysis</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarAnalysis">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item">
+                                        <a href="{{ route('analysis.index') }}" class="nav-link" data-key="t-products">School Payment Analysis</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        @endcan
 
-{{-- Payment Analysis (Existing) --}}
-@can('View analysis')
-<li class="nav-item">
-    <a href="#sidebarAnalysis" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAnalysis">
-        <i class="ph-storefront"></i> <span data-key="t-ecommerce">Payment Analysis</span>
-    </a>
-    <div class="collapse menu-dropdown" id="sidebarAnalysis">
-        <ul class="nav nav-sm flex-column">
-            <li class="nav-item">
-                <a href="{{ route('analysis.index') }}" class="nav-link" data-key="t-products">School Payment Analysis</a>
-            </li>
-        </ul>
-    </div>
-</li>
-@endcan
+                        @can('View scholarship')
+                        <li class="nav-item">
+                            <a href="#sidebarScholarship" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarScholarship">
+                                <i class="ph-graduation-cap"></i> <span data-key="t-scholarship">Scholarship Management</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarScholarship">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item">
+                                        <a href="{{ route('admin.scholarship.index') }}" class="nav-link" data-key="t-all-scholarships">
+                                            <i class="ri-list-check"></i> All Scholarships
+                                        </a>
+                                    </li>
+                                    @can('Create scholarship')
+                                    <li class="nav-item">
+                                        <a href="{{ route('admin.scholarship.create') }}" class="nav-link" data-key="t-create-scholarship">
+                                            <i class="ri-add-line"></i> Create Scholarship
+                                        </a>
+                                    </li>
+                                    @endcan
+                                    <li class="nav-item">
+                                        <a href="{{ route('admin.scholarship.assignments') }}" class="nav-link" data-key="t-scholarship-assignments">
+                                            <i class="ri-user-star-line"></i> Scholarship Assignments
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('admin.scholarship.applications') }}" class="nav-link" data-key="t-scholarship-applications">
+                                            <i class="ri-file-list-line"></i> Applications
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        @endcan
 
-{{-- Scholarship Management --}}
-@can('View scholarship')
-<li class="nav-item">
-    <a href="#sidebarScholarship" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarScholarship">
-        <i class="ph-graduation-cap"></i> <span data-key="t-scholarship">Scholarship Management</span>
-    </a>
-    <div class="collapse menu-dropdown" id="sidebarScholarship">
-        <ul class="nav nav-sm flex-column">
-            <li class="nav-item">
-                <a href="{{ route('admin.scholarship.index') }}" class="nav-link" data-key="t-all-scholarships">
-                    <i class="ri-list-check"></i> All Scholarships
-                </a>
-            </li>
-            @can('Create scholarship')
-            <li class="nav-item">
-                <a href="{{ route('admin.scholarship.create') }}" class="nav-link" data-key="t-create-scholarship">
-                    <i class="ri-add-line"></i> Create Scholarship
-                </a>
-            </li>
-            @endcan
-            <li class="nav-item">
-                <a href="{{ route('admin.scholarship.assignments') }}" class="nav-link" data-key="t-scholarship-assignments">
-                    <i class="ri-user-star-line"></i> Scholarship Assignments
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="{{ route('admin.scholarship.applications') }}" class="nav-link" data-key="t-scholarship-applications">
-                    <i class="ri-file-list-line"></i> Applications
-                </a>
-            </li>
-        </ul>
-    </div>
-</li>
-@endcan
+                        @can('View discount')
+                        <li class="nav-item">
+                            <a href="#sidebarDiscount" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarDiscount">
+                                <i class="ph-tag"></i> <span data-key="t-discount">Discount Management</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarDiscount">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item">
+                                        <a href="{{ route('admin.discount.index') }}" class="nav-link" data-key="t-all-discounts">
+                                            <i class="ri-list-check"></i> All Discounts
+                                        </a>
+                                    </li>
+                                    @can('Create discount')
+                                    <li class="nav-item">
+                                        <a href="{{ route('admin.discount.create') }}" class="nav-link" data-key="t-create-discount">
+                                            <i class="ri-add-line"></i> Create Discount
+                                        </a>
+                                    </li>
+                                    @endcan
+                                    <li class="nav-item">
+                                        <a href="{{ route('admin.discount.assignments') }}" class="nav-link" data-key="t-discount-assignments">
+                                            <i class="ri-user-settings-line"></i> Discount Assignments
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        @endcan
 
-{{-- Discount Management --}}
-@can('View discount')
-<li class="nav-item">
-    <a href="#sidebarDiscount" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarDiscount">
-        <i class="ph-tag"></i> <span data-key="t-discount">Discount Management</span>
-    </a>
-    <div class="collapse menu-dropdown" id="sidebarDiscount">
-        <ul class="nav nav-sm flex-column">
-            <li class="nav-item">
-                <a href="{{ route('admin.discount.index') }}" class="nav-link" data-key="t-all-discounts">
-                    <i class="ri-list-check"></i> All Discounts
-                </a>
-            </li>
-            @can('Create discount')
-            <li class="nav-item">
-                <a href="{{ route('admin.discount.create') }}" class="nav-link" data-key="t-create-discount">
-                    <i class="ri-add-line"></i> Create Discount
-                </a>
-            </li>
-            @endcan
-            <li class="nav-item">
-                <a href="{{ route('admin.discount.assignments') }}" class="nav-link" data-key="t-discount-assignments">
-                    <i class="ri-user-settings-line"></i> Discount Assignments
-                </a>
-            </li>
-        </ul>
-    </div>
-</li>
-@endcan
+                        @can('View sibling groups')
+                        <li class="nav-item">
+                            <a href="#sidebarSibling" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSibling">
+                                <i class="ph-users"></i> <span data-key="t-sibling-groups">Sibling Groups</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarSibling">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item">
+                                       <a href="{{ route('sibling.index') }}" class="nav-link" data-key="t-all-groups">
+                                            <i class="ri-group-line"></i> All Family Groups
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('sibling.create') }}" class="nav-link" data-key="t-create-group">
+                                            <i class="ri-add-line"></i> Create Family Group
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        @endcan
 
-{{-- Sibling Groups (Corrected route names) --}}
-@can('View sibling groups')
-<li class="nav-item">
-    <a href="#sidebarSibling" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarSibling">
-        <i class="ph-users"></i> <span data-key="t-sibling-groups">Sibling Groups</span>
-    </a>
-    <div class="collapse menu-dropdown" id="sidebarSibling">
-        <ul class="nav nav-sm flex-column">
-            <li class="nav-item">
-               <a href="{{ route('sibling.index') }}" class="nav-link" data-key="t-all-groups">
-                    <i class="ri-group-line"></i> All Family Groups
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="{{ route('sibling.create') }}" class="nav-link" data-key="t-create-group">
-                    <i class="ri-add-line"></i> Create Family Group
-                </a>
-            </li>
-        </ul>
-    </div>
-</li>
-@endcan
+                        @can('Manage payment gateways')
+                        <li class="nav-item">
+                            <a href="{{ route('admin.payment-gateways.index') }}" class="nav-link">
+                                <i class="ph-credit-card"></i> <span data-key="t-payment-gateways">Payment Gateways</span>
+                            </a>
+                        </li>
+                        @endcan
 
-{{-- Payment Gateways (Admin only) --}}
-@can('Manage payment gateways')
-<li class="nav-item">
-    <a href="{{ route('admin.payment-gateways.index') }}" class="nav-link">
-        <i class="ph-credit-card"></i> <span data-key="t-payment-gateways">Payment Gateways</span>
-    </a>
-</li>
-@endcan
+                        @can('View financial reports')
+                        <li class="nav-item">
+                            <a href="#sidebarAccounting" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAccounting">
+                                <i class="ph-chart-line"></i> <span data-key="t-accounting">Accounting & Reports</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarAccounting">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.financial.balance-sheet') }}" class="nav-link" data-key="t-balance-sheet">
+                                            <i class="ri-file-copy-line"></i> Balance Sheet
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.financial.income-statement') }}" class="nav-link" data-key="t-income-statement">
+                                            <i class="ri-bar-chart-line"></i> Income Statement
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.financial.trial-balance') }}" class="nav-link" data-key="t-trial-balance">
+                                            <i class="ri-calculator-line"></i> Trial Balance
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.financial.cash-flow') }}" class="nav-link" data-key="t-cash-flow">
+                                            <i class="ri-wallet-line"></i> Cash Flow
+                                        </a>
+                                    </li>
+                                    <li class="dropdown-divider"></li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.financial.debtors') }}" class="nav-link" data-key="t-debtors-list">
+                                            <i class="ri-user-follow-line"></i> Student Debtors List
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.financial.collection-summary') }}" class="nav-link" data-key="t-collection-summary">
+                                            <i class="ri-bar-chart-grouped-line"></i> Collection Summary
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.financial.scholarship-impact') }}" class="nav-link" data-key="t-scholarship-impact">
+                                            <i class="ri-graduation-cap-line"></i> Scholarship Impact
+                                        </a>
+                                    </li>
+                                    <li class="dropdown-divider"></li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.analysis.class') }}" class="nav-link" data-key="t-class-analysis">
+                                            <i class="ri-school-line"></i> Class Analysis
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('reports.analysis.school-wide') }}" class="nav-link" data-key="t-school-wide-analysis">
+                                            <i class="ri-building-line"></i> School-Wide Analysis
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        @endcan
 
-{{-- Accounting & Reports --}}
-@can('View financial reports')
-<li class="nav-item">
-    <a href="#sidebarAccounting" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAccounting">
-        <i class="ph-chart-line"></i> <span data-key="t-accounting">Accounting & Reports</span>
-    </a>
-    <div class="collapse menu-dropdown" id="sidebarAccounting">
-        <ul class="nav nav-sm flex-column">
-            <li class="nav-item">
-                <a href="{{ route('reports.financial.balance-sheet') }}" class="nav-link" data-key="t-balance-sheet">
-                    <i class="ri-file-copy-line"></i> Balance Sheet
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="{{ route('reports.financial.income-statement') }}" class="nav-link" data-key="t-income-statement">
-                    <i class="ri-bar-chart-line"></i> Income Statement
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="{{ route('reports.financial.trial-balance') }}" class="nav-link" data-key="t-trial-balance">
-                    <i class="ri-calculator-line"></i> Trial Balance
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="{{ route('reports.financial.cash-flow') }}" class="nav-link" data-key="t-cash-flow">
-                    <i class="ri-wallet-line"></i> Cash Flow
-                </a>
-            </li>
-            <li class="dropdown-divider"></li>
-            <li class="nav-item">
-                <a href="{{ route('reports.financial.debtors') }}" class="nav-link" data-key="t-debtors-list">
-                    <i class="ri-user-follow-line"></i> Student Debtors List
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="{{ route('reports.financial.collection-summary') }}" class="nav-link" data-key="t-collection-summary">
-                    <i class="ri-bar-chart-grouped-line"></i> Collection Summary
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="{{ route('reports.financial.scholarship-impact') }}" class="nav-link" data-key="t-scholarship-impact">
-                    <i class="ri-graduation-cap-line"></i> Scholarship Impact
-                </a>
-            </li>
-            <li class="dropdown-divider"></li>
-            <li class="nav-item">
-                <a href="{{ route('reports.analysis.class') }}" class="nav-link" data-key="t-class-analysis">
-                    <i class="ri-school-line"></i> Class Analysis
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="{{ route('reports.analysis.school-wide') }}" class="nav-link" data-key="t-school-wide-analysis">
-                    <i class="ri-building-line"></i> School-Wide Analysis
-                </a>
-            </li>
-        </ul>
-    </div>
-</li>
-@endcan
+                        @can('View payroll')
+                        <li class="nav-item">
+                            <a href="#sidebarPayroll" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarPayroll">
+                                <i class="ph-money"></i> <span data-key="t-payroll">Payroll Management</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarPayroll">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item">
+                                        <a href="{{ route('payroll.periods') }}" class="nav-link" data-key="t-payroll-periods">
+                                            <i class="ri-calendar-line"></i> Payroll Periods
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('payroll.summary') }}" class="nav-link" data-key="t-payroll-summary">
+                                            <i class="ri-bar-chart-line"></i> Payroll Summary
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('payroll.statutory') }}" class="nav-link" data-key="t-statutory-report">
+                                            <i class="ri-tax-line"></i> Statutory Report
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('payroll.structures') }}" class="nav-link" data-key="t-salary-structures">
+                                            <i class="ri-bank-card-line"></i> Salary Structures
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        @endcan
 
-{{-- Payroll Management --}}
-@can('View payroll')
-<li class="nav-item">
-    <a href="#sidebarPayroll" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarPayroll">
-        <i class="ph-money"></i> <span data-key="t-payroll">Payroll Management</span>
-    </a>
-    <div class="collapse menu-dropdown" id="sidebarPayroll">
-        <ul class="nav nav-sm flex-column">
-            <li class="nav-item">
-                <a href="{{ route('payroll.periods') }}" class="nav-link" data-key="t-payroll-periods">
-                    <i class="ri-calendar-line"></i> Payroll Periods
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="{{ route('payroll.summary') }}" class="nav-link" data-key="t-payroll-summary">
-                    <i class="ri-bar-chart-line"></i> Payroll Summary
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="{{ route('payroll.statutory') }}" class="nav-link" data-key="t-statutory-report">
-                    <i class="ri-tax-line"></i> Statutory Report
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="{{ route('payroll.structures') }}" class="nav-link" data-key="t-salary-structures">
-                    <i class="ri-bank-card-line"></i> Salary Structures
-                </a>
-            </li>
-        </ul>
-    </div>
-</li>
-@endcan
-
-{{-- Staff Payments --}}
-@can('View staff payments')
-<li class="nav-item">
-    <a href="#sidebarStaffPayments" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStaffPayments">
-        <i class="ph-wallet"></i> <span data-key="t-staff-payments">Staff Payments</span>
-    </a>
-    <div class="collapse menu-dropdown" id="sidebarStaffPayments">
-        <ul class="nav nav-sm flex-column">
-            <li class="nav-item">
-                <a href="{{ route('staff.payments.index') }}" class="nav-link" data-key="t-all-payments">
-                    <i class="ri-list-check"></i> All Payments
-                </a>
-            </li>
-            <li class="nav-item">
-                <a href="{{ route('staff.payments.dashboard') }}" class="nav-link" data-key="t-my-payments">
-                    <i class="ri-briefcase-line"></i> My Payments
-                </a>
-            </li>
-        </ul>
-    </div>
-</li>
-@endcan
-
-
-
-
-
+                        @can('View staff payments')
+                        <li class="nav-item">
+                            <a href="#sidebarStaffPayments" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStaffPayments">
+                                <i class="ph-wallet"></i> <span data-key="t-staff-payments">Staff Payments</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarStaffPayments">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item">
+                                        <a href="{{ route('staff.payments.index') }}" class="nav-link" data-key="t-all-payments">
+                                            <i class="ri-list-check"></i> All Payments
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a href="{{ route('staff.payments.dashboard') }}" class="nav-link" data-key="t-my-payments">
+                                            <i class="ri-briefcase-line"></i> My Payments
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        @endcan
 
                         {{-- SCHOOL BASIC SETTINGS --}}
                         @if(auth()->user()->can('View schoolinformation') || auth()->user()->can('View session') || auth()->user()->can('View term') || auth()->user()->can('View schoolhouse') || auth()->user()->can('View school-arm') || auth()->user()->can('View class-category') || auth()->user()->can('View school-class') || auth()->user()->can('View class-teacher') || auth()->user()->can('View subjects') || auth()->user()->can('View subject-teacher') || auth()->user()->can('View subject-class') || auth()->user()->can('View compulsory-subject') || auth()->user()->can('View principals-comment') || auth()->user()->can('View school-bills') || auth()->user()->can('View school-bill-for-term-session'))
@@ -1170,7 +1394,9 @@
     </div>
 
     <!-- Back to Top -->
-    <button class="btn btn-dark btn-icon" id="back-to-top"><i class="bi bi-caret-up fs-3xl"></i></button>
+    <button class="btn btn-dark btn-icon" id="back-to-top" title="Back to top">
+        <i class="bi bi-caret-up fs-3xl"></i>
+    </button>
 
     <!-- Preloader -->
     <div id="preloader"><div id="status"><div class="spinner-border text-primary avatar-sm" role="status"><span class="visually-hidden">Loading...</span></div></div></div>
@@ -1284,421 +1510,415 @@
                         <div class="row">
                             <div class="col-4"><div class="form-check sidebar-setting card-radio"><input class="form-check-input" type="radio" name="data-sidebar-size" id="sidebar-size-default" value="lg"><label class="form-check-label p-0 avatar-md w-100" for="sidebar-size-default"><span class="d-flex gap-1 h-100"><span class="flex-shrink-0"><span class="bg-light d-flex h-100 flex-column gap-1 p-1"><span class="d-block p-1 px-2 bg-primary-subtle rounded mb-2"></span><span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span><span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span><span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span></span></span><span class="flex-grow-1"><span class="d-flex h-100 flex-column"><span class="bg-light d-block p-1"></span><span class="bg-light d-block p-1 mt-auto"></span></span></span></span></label></div><h5 class="fs-sm text-center fw-medium mt-2">Default</h5></div>
                             <div class="col-4"><div class="form-check sidebar-setting card-radio"><input class="form-check-input" type="radio" name="data-sidebar-size" id="sidebar-size-compact" value="md"><label class="form-check-label p-0 avatar-md w-100" for="sidebar-size-compact"><span class="d-flex gap-1 h-100"><span class="flex-shrink-0"><span class="bg-light d-flex h-100 flex-column gap-1 p-1"><span class="d-block p-1 bg-primary-subtle rounded mb-2"></span><span class="d-block p-1 pb-0 bg-primary-subtle"></span><span class="d-block p-1 pb-0 bg-primary-subtle"></span><span class="d-block p-1 pb-0 bg-primary-subtle"></span></span></span><span class="flex-grow-1"><span class="d-flex h-100 flex-column"><span class="bg-light d-block p-1"></span><span class="bg-light d-block p-1 mt-auto"></span></span></span></span></label></div><h5 class="fs-sm text-center fw-medium mt-2">Compact</h5></div>
-                            {{-- <div class="col-4"><div class="form-check sidebar-setting card-radio"><input class="form-check-input" type="radio" name="data-sidebar-size" --}}
+                            <div class="col-4">
+                                <div class="form-check sidebar-setting card-radio">
+                                    <input class="form-check-input" type="radio" name="data-sidebar-size" id="sidebar-size-small" value="sm">
+                                    <label class="form-check-label p-0 avatar-md w-100" for="sidebar-size-small">
+                                        <span class="d-flex gap-1 h-100">
+                                            <span class="flex-shrink-0"><span class="bg-light d-flex h-100 flex-column gap-1"><span class="d-block p-1 bg-primary-subtle mb-2"></span><span class="d-block p-1 pb-0 bg-primary-subtle"></span><span class="d-block p-1 pb-0 bg-primary-subtle"></span><span class="d-block p-1 pb-0 bg-primary-subtle"></span></span></span>
+                                            <span class="flex-grow-1"><span class="d-flex h-100 flex-column"><span class="bg-light d-block p-1"></span><span class="bg-light d-block p-1 mt-auto"></span></span></span>
+                                        </span>
+                                    </label>
+                                </div>
+                                <h5 class="fs-sm text-center fw-medium mt-2">Small (Icon View)</h5>
+                            </div>
+                            <div class="col-4">
+                                <div class="form-check sidebar-setting card-radio">
+                                    <input class="form-check-input" type="radio" name="data-sidebar-size" id="sidebar-size-small-hover" value="sm-hover">
+                                    <label class="form-check-label p-0 avatar-md w-100" for="sidebar-size-small-hover">
+                                        <span class="d-flex gap-1 h-100">
+                                            <span class="flex-shrink-0"><span class="bg-light d-flex h-100 flex-column gap-1"><span class="d-block p-1 bg-primary-subtle mb-2"></span><span class="d-block p-1 pb-0 bg-primary-subtle"></span><span class="d-block p-1 pb-0 bg-primary-subtle"></span><span class="d-block p-1 pb-0 bg-primary-subtle"></span></span></span>
+                                            <span class="flex-grow-1"><span class="d-flex h-100 flex-column"><span class="bg-light d-block p-1"></span><span class="bg-light d-block p-1 mt-auto"></span></span></span>
+                                        </span>
+                                    </label>
+                                </div>
+                                <h5 class="fs-sm text-center fw-medium mt-2">Small Hover View</h5>
+                            </div>
+                        </div>
+                    </div>
 
+                    <div id="sidebar-view">
+                        <h6 class="mt-4 fs-md mb-1">Sidebar View</h6>
+                        <p class="text-muted fs-sm">Choose Default or Detached Sidebar view.</p>
+                        <div class="row">
+                            <div class="col-4">
+                                <div class="form-check sidebar-setting card-radio">
+                                    <input class="form-check-input" type="radio" name="data-layout-style" id="sidebar-view-default" value="default">
+                                    <label class="form-check-label p-0 avatar-md w-100" for="sidebar-view-default">
+                                        <span class="d-flex gap-1 h-100">
+                                            <span class="flex-shrink-0"><span class="bg-light d-flex h-100 flex-column gap-1 p-1"><span class="d-block p-1 px-2 bg-primary-subtle rounded mb-2"></span><span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span><span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span><span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span></span></span>
+                                            <span class="flex-grow-1"><span class="d-flex h-100 flex-column"><span class="bg-light d-block p-1"></span><span class="bg-light d-block p-1 mt-auto"></span></span></span>
+                                        </span>
+                                    </label>
+                                </div>
+                                <h5 class="fs-sm text-center fw-medium mt-2">Default</h5>
+                            </div>
+                            <div class="col-4">
+                                <div class="form-check sidebar-setting card-radio">
+                                    <input class="form-check-input" type="radio" name="data-layout-style" id="sidebar-view-detached" value="detached">
+                                    <label class="form-check-label p-0 avatar-md w-100" for="sidebar-view-detached">
+                                        <span class="d-flex h-100 flex-column">
+                                            <span class="bg-light d-flex p-1 gap-1 align-items-center px-2"><span class="d-block p-1 bg-primary-subtle rounded me-1"></span><span class="d-block p-1 pb-0 px-2 bg-primary-subtle ms-auto"></span><span class="d-block p-1 pb-0 px-2 bg-primary-subtle"></span></span>
+                                            <span class="d-flex gap-1 h-100 p-1 px-2"><span class="flex-shrink-0"><span class="bg-light d-flex h-100 flex-column gap-1 p-1"><span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span><span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span><span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span></span></span></span>
+                                            <span class="bg-light d-block p-1 mt-auto px-2"></span>
+                                        </span>
+                                    </label>
+                                </div>
+                                <h5 class="fs-sm text-center fw-medium mt-2">Detached</h5>
+                            </div>
+                        </div>
+                    </div>
 
+                    <div id="sidebar-color">
+                        <h6 class="mt-4 fs-md mb-1">Sidebar Color</h6>
+                        <p class="text-muted fs-sm">Choose a color of Sidebar.</p>
+                        <div class="row">
+                            <div class="col-4">
+                                <div class="form-check sidebar-setting card-radio" data-bs-toggle="collapse" data-bs-target="#collapseBgGradient.show">
+                                    <input class="form-check-input" type="radio" name="data-sidebar" id="sidebar-color-light" value="light">
+                                    <label class="form-check-label p-0 avatar-md w-100" for="sidebar-color-light">
+                                        <span class="d-flex gap-1 h-100"><span class="flex-shrink-0"><span class="bg-white border-end d-flex h-100 flex-column gap-1 p-1"><span class="d-block p-1 px-2 bg-primary-subtle rounded mb-2"></span><span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span><span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span><span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span></span></span><span class="flex-grow-1"><span class="d-flex h-100 flex-column"><span class="bg-light d-block p-1"></span><span class="bg-light d-block p-1 mt-auto"></span></span></span></span>
+                                    </label>
+                                </div>
+                                <h5 class="fs-sm text-center fw-medium mt-2">Light</h5>
+                            </div>
+                            <div class="col-4">
+                                <div class="form-check sidebar-setting card-radio" data-bs-toggle="collapse" data-bs-target="#collapseBgGradient.show">
+                                    <input class="form-check-input" type="radio" name="data-sidebar" id="sidebar-color-dark" value="dark">
+                                    <label class="form-check-label p-0 avatar-md w-100" for="sidebar-color-dark">
+                                        <span class="d-flex gap-1 h-100"><span class="flex-shrink-0"><span class="bg-primary d-flex h-100 flex-column gap-1 p-1"><span class="d-block p-1 px-2 bg-soft-light rounded mb-2"></span><span class="d-block p-1 px-2 pb-0 bg-soft-light"></span><span class="d-block p-1 px-2 pb-0 bg-soft-light"></span><span class="d-block p-1 px-2 pb-0 bg-soft-light"></span></span></span><span class="flex-grow-1"><span class="d-flex h-100 flex-column"><span class="bg-light d-block p-1"></span><span class="bg-light d-block p-1 mt-auto"></span></span></span></span>
+                                    </label>
+                                </div>
+                                <h5 class="fs-sm text-center fw-medium mt-2">Dark</h5>
+                            </div>
+                            <div class="col-4">
+                                <button class="btn btn-link avatar-md w-100 p-0 overflow-hidden border collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseBgGradient" aria-expanded="false" aria-controls="collapseBgGradient">
+                                    <span class="d-flex gap-1 h-100"><span class="flex-shrink-0"><span class="bg-vertical-gradient d-flex h-100 flex-column gap-1 p-1"><span class="d-block p-1 px-2 bg-soft-light rounded mb-2"></span><span class="d-block p-1 px-2 pb-0 bg-soft-light"></span><span class="d-block p-1 px-2 pb-0 bg-soft-light"></span><span class="d-block p-1 px-2 pb-0 bg-soft-light"></span></span></span><span class="flex-grow-1"><span class="d-flex h-100 flex-column"><span class="bg-light d-block p-1"></span><span class="bg-light d-block p-1 mt-auto"></span></span></span></span>
+                                </button>
+                                <h5 class="fs-sm text-center fw-medium mt-2">Gradient</h5>
+                            </div>
+                        </div>
+                        <div class="collapse" id="collapseBgGradient">
+                            <div class="d-flex gap-2 flex-wrap img-switch p-2 px-3 bg-light rounded">
+                                <div class="form-check sidebar-setting card-radio"><input class="form-check-input" type="radio" name="data-sidebar" id="sidebar-color-gradient" value="gradient"><label class="form-check-label p-0 avatar-xs rounded-circle" for="sidebar-color-gradient"><span class="avatar-title rounded-circle bg-vertical-gradient"></span></label></div>
+                                <div class="form-check sidebar-setting card-radio"><input class="form-check-input" type="radio" name="data-sidebar" id="sidebar-color-gradient-2" value="gradient-2"><label class="form-check-label p-0 avatar-xs rounded-circle" for="sidebar-color-gradient-2"><span class="avatar-title rounded-circle bg-vertical-gradient-2"></span></label></div>
+                                <div class="form-check sidebar-setting card-radio"><input class="form-check-input" type="radio" name="data-sidebar" id="sidebar-color-gradient-3" value="gradient-3"><label class="form-check-label p-0 avatar-xs rounded-circle" for="sidebar-color-gradient-3"><span class="avatar-title rounded-circle bg-vertical-gradient-3"></span></label></div>
+                                <div class="form-check sidebar-setting card-radio"><input class="form-check-input" type="radio" name="data-sidebar" id="sidebar-color-gradient-4" value="gradient-4"><label class="form-check-label p-0 avatar-xs rounded-circle" for="sidebar-color-gradient-4"><span class="avatar-title rounded-circle bg-vertical-gradient-4"></span></label></div>
+                            </div>
+                        </div>
+                    </div>
 
+                    <div id="sidebar-img">
+                        <h6 class="mt-4 fw-semibold fs-base">Sidebar Images</h6>
+                        <p class="text-muted fs-sm">Choose a image of Sidebar.</p>
+                        <div class="d-flex gap-2 flex-wrap img-switch">
+                            <div class="form-check sidebar-setting card-radio"><input class="form-check-input" type="radio" name="data-sidebar-image" id="sidebarimg-none" value="none"><label class="form-check-label p-0 avatar-sm h-auto" for="sidebarimg-none"><span class="avatar-md w-auto bg-light d-flex align-items-center justify-content-center"><i class="ri-close-fill fs-3xl"></i></span></label></div>
+                            <div class="form-check sidebar-setting card-radio"><input class="form-check-input" type="radio" name="data-sidebar-image" id="sidebarimg-01" value="img-1"><label class="form-check-label p-0 avatar-sm h-auto" for="sidebarimg-01"><img src="{{ asset('theme/layouts/assets/images/sidebar/img-sm-1.jpg')}}" alt="" class="avatar-md w-auto object-cover"></label></div>
+                            <div class="form-check sidebar-setting card-radio"><input class="form-check-input" type="radio" name="data-sidebar-image" id="sidebarimg-02" value="img-2"><label class="form-check-label p-0 avatar-sm h-auto" for="sidebarimg-02"><img src="{{ asset('theme/layouts/assets/images/sidebar/img-sm-2.jpg')}}" alt="" class="avatar-md w-auto object-cover"></label></div>
+                            <div class="form-check sidebar-setting card-radio"><input class="form-check-input" type="radio" name="data-sidebar-image" id="sidebarimg-03" value="img-3"><label class="form-check-label p-0 avatar-sm h-auto" for="sidebarimg-03"><img src="{{ asset('theme/layouts/assets/images/sidebar/img-sm-3.jpg')}}" alt="" class="avatar-md w-auto object-cover"></label></div>
+                            <div class="form-check sidebar-setting card-radio"><input class="form-check-input" type="radio" name="data-sidebar-image" id="sidebarimg-04" value="img-4"><label class="form-check-label p-0 avatar-sm h-auto" for="sidebarimg-04"><img src="{{ asset('theme/layouts/assets/images/sidebar/img-sm-4.jpg')}}" alt="" class="avatar-md w-auto object-cover"></label></div>
+                        </div>
+                    </div>
 
-<div class="col-4">
-    <div class="form-check sidebar-setting card-radio">
-        <input class="form-check-input" type="radio" name="data-sidebar-size" id="sidebar-size-small" value="sm">
-        <label class="form-check-label p-0 avatar-md w-100" for="sidebar-size-small">
-            <span class="d-flex gap-1 h-100">
-                <span class="flex-shrink-0">
-                    <span class="bg-light d-flex h-100 flex-column gap-1">
-                        <span class="d-block p-1 bg-primary-subtle mb-2"></span>
-                        <span class="d-block p-1 pb-0 bg-primary-subtle"></span>
-                        <span class="d-block p-1 pb-0 bg-primary-subtle"></span>
-                        <span class="d-block p-1 pb-0 bg-primary-subtle"></span>
-                    </span>
-                </span>
-                <span class="flex-grow-1">
-                    <span class="d-flex h-100 flex-column">
-                        <span class="bg-light d-block p-1"></span>
-                        <span class="bg-light d-block p-1 mt-auto"></span>
-                    </span>
-                </span>
-            </span>
-        </label>
-    </div>
-    <h5 class="fs-sm text-center fw-medium mt-2">Small (Icon View)</h5>
-</div>
-<div class="col-4">
-    <div class="form-check sidebar-setting card-radio">
-        <input class="form-check-input" type="radio" name="data-sidebar-size" id="sidebar-size-small-hover" value="sm-hover">
-        <label class="form-check-label p-0 avatar-md w-100" for="sidebar-size-small-hover">
-            <span class="d-flex gap-1 h-100">
-                <span class="flex-shrink-0">
-                    <span class="bg-light d-flex h-100 flex-column gap-1">
-                        <span class="d-block p-1 bg-primary-subtle mb-2"></span>
-                        <span class="d-block p-1 pb-0 bg-primary-subtle"></span>
-                        <span class="d-block p-1 pb-0 bg-primary-subtle"></span>
-                        <span class="d-block p-1 pb-0 bg-primary-subtle"></span>
-                    </span>
-                </span>
-                <span class="flex-grow-1">
-                    <span class="d-flex h-100 flex-column">
-                        <span class="bg-light d-block p-1"></span>
-                        <span class="bg-light d-block p-1 mt-auto"></span>
-                    </span>
-                </span>
-            </span>
-        </label>
-    </div>
-    <h5 class="fs-sm text-center fw-medium mt-2">Small Hover View</h5>
-</div>
-</div>
-</div>
+                    <div id="preloader-menu">
+                        <h6 class="mt-4 fw-semibold fs-base">Preloader</h6>
+                        <p class="text-muted fs-sm">Choose a preloader.</p>
+                        <div class="row">
+                            <div class="col-4">
+                                <div class="form-check sidebar-setting card-radio">
+                                    <input class="form-check-input" type="radio" name="data-preloader" id="preloader-view-custom" value="enable">
+                                    <label class="form-check-label p-0 avatar-md w-100" for="preloader-view-custom">
+                                        <span class="d-flex gap-1 h-100"><span class="flex-shrink-0"><span class="bg-light d-flex h-100 flex-column gap-1 p-1"><span class="d-block p-1 px-2 bg-primary-subtle rounded mb-2"></span><span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span><span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span><span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span></span></span><span class="flex-grow-1"><span class="d-flex h-100 flex-column"><span class="bg-light d-block p-1"></span><span class="bg-light d-block p-1 mt-auto"></span></span></span></span>
+                                        <span class="d-flex align-items-center justify-content-center"><span class="spinner-border text-primary avatar-xxs m-auto" role="status"><span class="visually-hidden">Loading...</span></span></span>
+                                    </label>
+                                </div>
+                                <h5 class="fs-sm text-center fw-medium mt-2">Enable</h5>
+                            </div>
+                            <div class="col-4">
+                                <div class="form-check sidebar-setting card-radio">
+                                    <input class="form-check-input" type="radio" name="data-preloader" id="preloader-view-none" value="disable">
+                                    <label class="form-check-label p-0 avatar-md w-100" for="preloader-view-none">
+                                        <span class="d-flex gap-1 h-100"><span class="flex-shrink-0"><span class="bg-light d-flex h-100 flex-column gap-1 p-1"><span class="d-block p-1 px-2 bg-primary-subtle rounded mb-2"></span><span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span><span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span><span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span></span></span><span class="flex-grow-1"><span class="d-flex h-100 flex-column"><span class="bg-light d-block p-1"></span><span class="bg-light d-block p-1 mt-auto"></span></span></span></span>
+                                    </label>
+                                </div>
+                                <h5 class="fs-sm text-center fw-medium mt-2">Disable</h5>
+                            </div>
+                        </div>
+                    </div>
 
-<div id="sidebar-view">
-    <h6 class="mt-4 fs-md mb-1">Sidebar View</h6>
-    <p class="text-muted fs-sm">Choose Default or Detached Sidebar view.</p>
-    <div class="row">
-        <div class="col-4">
-            <div class="form-check sidebar-setting card-radio">
-                <input class="form-check-input" type="radio" name="data-layout-style" id="sidebar-view-default" value="default">
-                <label class="form-check-label p-0 avatar-md w-100" for="sidebar-view-default">
-                    <span class="d-flex gap-1 h-100">
-                        <span class="flex-shrink-0">
-                            <span class="bg-light d-flex h-100 flex-column gap-1 p-1">
-                                <span class="d-block p-1 px-2 bg-primary-subtle rounded mb-2"></span>
-                                <span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span>
-                                <span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span>
-                                <span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span>
-                            </span>
-                        </span>
-                        <span class="flex-grow-1">
-                            <span class="d-flex h-100 flex-column">
-                                <span class="bg-light d-block p-1"></span>
-                                <span class="bg-light d-block p-1 mt-auto"></span>
-                            </span>
-                        </span>
-                    </span>
-                </label>
+                </div>
             </div>
-            <h5 class="fs-sm text-center fw-medium mt-2">Default</h5>
         </div>
-        <div class="col-4">
-            <div class="form-check sidebar-setting card-radio">
-                <input class="form-check-input" type="radio" name="data-layout-style" id="sidebar-view-detached" value="detached">
-                <label class="form-check-label p-0 avatar-md w-100" for="sidebar-view-detached">
-                    <span class="d-flex h-100 flex-column">
-                        <span class="bg-light d-flex p-1 gap-1 align-items-center px-2">
-                            <span class="d-block p-1 bg-primary-subtle rounded me-1"></span>
-                            <span class="d-block p-1 pb-0 px-2 bg-primary-subtle ms-auto"></span>
-                            <span class="d-block p-1 pb-0 px-2 bg-primary-subtle"></span>
-                        </span>
-                        <span class="d-flex gap-1 h-100 p-1 px-2">
-                            <span class="flex-shrink-0">
-                                <span class="bg-light d-flex h-100 flex-column gap-1 p-1">
-                                    <span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span>
-                                    <span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span>
-                                    <span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span>
-                                </span>
-                            </span>
-                        </span>
-                        <span class="bg-light d-block p-1 mt-auto px-2"></span>
-                    </span>
-                </label>
-            </div>
-            <h5 class="fs-sm text-center fw-medium mt-2">Detached</h5>
-        </div>
-    </div>
-</div>
-
-<div id="sidebar-color">
-    <h6 class="mt-4 fs-md mb-1">Sidebar Color</h6>
-    <p class="text-muted fs-sm">Choose a color of Sidebar.</p>
-    <div class="row">
-        <div class="col-4">
-            <div class="form-check sidebar-setting card-radio" data-bs-toggle="collapse" data-bs-target="#collapseBgGradient.show">
-                <input class="form-check-input" type="radio" name="data-sidebar" id="sidebar-color-light" value="light">
-                <label class="form-check-label p-0 avatar-md w-100" for="sidebar-color-light">
-                    <span class="d-flex gap-1 h-100">
-                        <span class="flex-shrink-0">
-                            <span class="bg-white border-end d-flex h-100 flex-column gap-1 p-1">
-                                <span class="d-block p-1 px-2 bg-primary-subtle rounded mb-2"></span>
-                                <span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span>
-                                <span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span>
-                                <span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span>
-                            </span>
-                        </span>
-                        <span class="flex-grow-1">
-                            <span class="d-flex h-100 flex-column">
-                                <span class="bg-light d-block p-1"></span>
-                                <span class="bg-light d-block p-1 mt-auto"></span>
-                            </span>
-                        </span>
-                    </span>
-                </label>
-            </div>
-            <h5 class="fs-sm text-center fw-medium mt-2">Light</h5>
-        </div>
-        <div class="col-4">
-            <div class="form-check sidebar-setting card-radio" data-bs-toggle="collapse" data-bs-target="#collapseBgGradient.show">
-                <input class="form-check-input" type="radio" name="data-sidebar" id="sidebar-color-dark" value="dark">
-                <label class="form-check-label p-0 avatar-md w-100" for="sidebar-color-dark">
-                    <span class="d-flex gap-1 h-100">
-                        <span class="flex-shrink-0">
-                            <span class="bg-primary d-flex h-100 flex-column gap-1 p-1">
-                                <span class="d-block p-1 px-2 bg-soft-light rounded mb-2"></span>
-                                <span class="d-block p-1 px-2 pb-0 bg-soft-light"></span>
-                                <span class="d-block p-1 px-2 pb-0 bg-soft-light"></span>
-                                <span class="d-block p-1 px-2 pb-0 bg-soft-light"></span>
-                            </span>
-                        </span>
-                        <span class="flex-grow-1">
-                            <span class="d-flex h-100 flex-column">
-                                <span class="bg-light d-block p-1"></span>
-                                <span class="bg-light d-block p-1 mt-auto"></span>
-                            </span>
-                        </span>
-                    </span>
-                </label>
-            </div>
-            <h5 class="fs-sm text-center fw-medium mt-2">Dark</h5>
-        </div>
-        <div class="col-4">
-            <button class="btn btn-link avatar-md w-100 p-0 overflow-hidden border collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseBgGradient" aria-expanded="false" aria-controls="collapseBgGradient">
-                <span class="d-flex gap-1 h-100">
-                    <span class="flex-shrink-0">
-                        <span class="bg-vertical-gradient d-flex h-100 flex-column gap-1 p-1">
-                            <span class="d-block p-1 px-2 bg-soft-light rounded mb-2"></span>
-                            <span class="d-block p-1 px-2 pb-0 bg-soft-light"></span>
-                            <span class="d-block p-1 px-2 pb-0 bg-soft-light"></span>
-                            <span class="d-block p-1 px-2 pb-0 bg-soft-light"></span>
-                        </span>
-                    </span>
-                    <span class="flex-grow-1">
-                        <span class="d-flex h-100 flex-column">
-                            <span class="bg-light d-block p-1"></span>
-                            <span class="bg-light d-block p-1 mt-auto"></span>
-                        </span>
-                    </span>
-                </span>
-            </button>
-            <h5 class="fs-sm text-center fw-medium mt-2">Gradient</h5>
-        </div>
-    </div>
-
-    <div class="collapse" id="collapseBgGradient">
-        <div class="d-flex gap-2 flex-wrap img-switch p-2 px-3 bg-light rounded">
-            <div class="form-check sidebar-setting card-radio">
-                <input class="form-check-input" type="radio" name="data-sidebar" id="sidebar-color-gradient" value="gradient">
-                <label class="form-check-label p-0 avatar-xs rounded-circle" for="sidebar-color-gradient">
-                    <span class="avatar-title rounded-circle bg-vertical-gradient"></span>
-                </label>
-            </div>
-            <div class="form-check sidebar-setting card-radio">
-                <input class="form-check-input" type="radio" name="data-sidebar" id="sidebar-color-gradient-2" value="gradient-2">
-                <label class="form-check-label p-0 avatar-xs rounded-circle" for="sidebar-color-gradient-2">
-                    <span class="avatar-title rounded-circle bg-vertical-gradient-2"></span>
-                </label>
-            </div>
-            <div class="form-check sidebar-setting card-radio">
-                <input class="form-check-input" type="radio" name="data-sidebar" id="sidebar-color-gradient-3" value="gradient-3">
-                <label class="form-check-label p-0 avatar-xs rounded-circle" for="sidebar-color-gradient-3">
-                    <span class="avatar-title rounded-circle bg-vertical-gradient-3"></span>
-                </label>
-            </div>
-            <div class="form-check sidebar-setting card-radio">
-                <input class="form-check-input" type="radio" name="data-sidebar" id="sidebar-color-gradient-4" value="gradient-4">
-                <label class="form-check-label p-0 avatar-xs rounded-circle" for="sidebar-color-gradient-4">
-                    <span class="avatar-title rounded-circle bg-vertical-gradient-4"></span>
-                </label>
+        <div class="offcanvas-footer border-top p-3 text-center">
+            <div class="row">
+                <div class="col-6">
+                    <button type="button" class="btn btn-light w-100" id="reset-layout">Reset</button>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
-<div id="sidebar-img">
-    <h6 class="mt-4 fw-semibold fs-base">Sidebar Images</h6>
-    <p class="text-muted fs-sm">Choose a image of Sidebar.</p>
-    <div class="d-flex gap-2 flex-wrap img-switch">
-        <div class="form-check sidebar-setting card-radio">
-            <input class="form-check-input" type="radio" name="data-sidebar-image" id="sidebarimg-none" value="none">
-            <label class="form-check-label p-0 avatar-sm h-auto" for="sidebarimg-none">
-                <span class="avatar-md w-auto bg-light d-flex align-items-center justify-content-center">
-                    <i class="ri-close-fill fs-3xl"></i>
-                </span>
-            </label>
-        </div>
-        <div class="form-check sidebar-setting card-radio">
-            <input class="form-check-input" type="radio" name="data-sidebar-image" id="sidebarimg-01" value="img-1">
-            <label class="form-check-label p-0 avatar-sm h-auto" for="sidebarimg-01">
-                <img src="{{ asset('theme/layouts/assets/images/sidebar/img-sm-1.jpg')}}" alt="" class="avatar-md w-auto object-cover">
-            </label>
-        </div>
-        <div class="form-check sidebar-setting card-radio">
-            <input class="form-check-input" type="radio" name="data-sidebar-image" id="sidebarimg-02" value="img-2">
-            <label class="form-check-label p-0 avatar-sm h-auto" for="sidebarimg-02">
-                <img src="{{ asset('theme/layouts/assets/images/sidebar/img-sm-2.jpg')}}" alt="" class="avatar-md w-auto object-cover">
-            </label>
-        </div>
-        <div class="form-check sidebar-setting card-radio">
-            <input class="form-check-input" type="radio" name="data-sidebar-image" id="sidebarimg-03" value="img-3">
-            <label class="form-check-label p-0 avatar-sm h-auto" for="sidebarimg-03">
-                <img src="{{ asset('theme/layouts/assets/images/sidebar/img-sm-3.jpg')}}" alt="" class="avatar-md w-auto object-cover">
-            </label>
-        </div>
-        <div class="form-check sidebar-setting card-radio">
-            <input class="form-check-input" type="radio" name="data-sidebar-image" id="sidebarimg-04" value="img-4">
-            <label class="form-check-label p-0 avatar-sm h-auto" for="sidebarimg-04">
-                <img src="{{ asset('theme/layouts/assets/images/sidebar/img-sm-4.jpg')}}" alt="" class="avatar-md w-auto object-cover">
-            </label>
-        </div>
-    </div>
-</div>
+    <!-- ====================================================
+         Route-specific JS includes
+         ==================================================== -->
+    @if (Route::is('dashboard')) @include('layouts.pages-assets.js.dashboard-list-js') @endif
+    @if (Route::is('users.*')) @include('layouts.pages-assets.js.users-list-js') @endif
+    @if (Route::is('profile.*')) @include('layouts.pages-assets.js.users-list-js') @endif
+    @if (Route::is('roles.*')) @include('layouts.pages-assets.js.role-list-js') @endif
+    @if (Route::is('permissions.*')) @include('layouts.pages-assets.js.permissions-list-js') @endif
+    @if (Route::is('session.*')) @include('layouts.pages-assets.js.session-list-js') @endif
+    @if (Route::is('term.*')) @include('layouts.pages-assets.js.term-list-js') @endif
+    @if (Route::is('school-information.*')) @include('layouts.pages-assets.js.schoolinformation-list-js') @endif
+    @if (Route::is('admin.school-info.*')) @include('layouts.pages-assets.js.schoolinformation-list-js') @endif
+    @if (Route::is('schoolhouse.*')) @include('layouts.pages-assets.js.schoolhouse-list-js') @endif
+    @if (Route::is('schoolarm.*')) @include('layouts.pages-assets.js.arm-list-js') @endif
+    @if (Route::is('classcategories.*')) @include('layouts.pages-assets.js.classcategory-list-js') @endif
+    @if (Route::is('schoolclass.*')) @include('layouts.pages-assets.js.schoolclass-list-js') @endif
+    @if (Route::is('classteacher.*')) @include('layouts.pages-assets.js.classteacher-list-js') @endif
+    @if (Route::is('subject.*')) @include('layouts.pages-assets.js.subject-list-js') @endif
+    @if (Route::is('subjects.*')) @include('layouts.pages-assets.js.subject-list-js') @endif
+    @if (Route::is('subjectteacher.*')) @include('layouts.pages-assets.js.subjectteacher-list-js') @endif
+    @if (Route::is('subjectclass.*')) @include('layouts.pages-assets.js.subjectclass-list-js') @endif
+    @if (Route::is('schoolbill.*')) @include('layouts.pages-assets.js.schoolbill-list-js') @endif
+    @if (Route::is('schoolbilltermsession.*')) @include('layouts.pages-assets.js.schoolbilltermsession-list-js') @endif
+    @if (Route::is('student.*')) @include('layouts.pages-assets.js.student-list-js') @endif
+    @if (Route::is('studentbatchindex')) @include('layouts.pages-assets.js.studentbatch-list-js') @endif
+    @if (Route::is('myclass.*')) @include('layouts.pages-assets.js.myclass-list-js') @endif
+    @if (Route::is('mysubject.*')) @include('layouts.pages-assets.js.mysubject-list-js') @endif
+    @if (Route::is('viewstudent')) @include('layouts.pages-assets.js.viewstudent-list-js') @endif
+    @if (Route::is('studentreports.*')) @include('layouts.pages-assets.js.studentreport-list-js') @endif
+    @if (Route::is('broadsheet.*')) @include('layouts.pages-assets.js.studentreport-list-js') @endif
+    @if (Route::is('studentmockreports.*')) @include('layouts.pages-assets.js.studentmockreport-list-js') @endif
+    @if (Route::is('subjectoperation.*')) @include('layouts.pages-assets.js.subjectoperation-list-js') @endif
+    @if (Route::is('subjects.subjectinfo')) @include('layouts.pages-assets.js.subjectinfo-list-js') @endif
+    @if (Route::is('myresultroom.*')) @include('layouts.pages-assets.js.myresultroom-list-js') @endif
+    @if (Route::is('assessment.*')) @include('layouts.pages-assets.js.subjectscoresheet-list-js') @endif
+    @if (Route::is('assessments')) @include('layouts.pages-assets.js.studentassessment-list-js') @endif
+    @if (Route::is('subjectscoresheet')) @include('layouts.pages-assets.js.subjectscoresheet-list-js') @endif
+    @if (Route::is('subjectscoresheet-mock.*')) @include('layouts.pages-assets.js.subjectscoresheet-mock-list-js') @endif
+    @if (Route::is('studentresults*')) @include('layouts.pages-assets.js.studentresults-list-js') @endif
+    @if (Route::is('schoolbill*')) @include('layouts.pages-assets.js.schoolbill-list-js') @endif
+    @if (Route::is('schoolpayment*')) @include('layouts.pages-assets.js.schoolpayment-list-js') @endif
+    @if (Route::is('analysis*')) @include('layouts.pages-assets.js.analysis-list-js') @endif
+    @if (Route::is('exams*')) @include('layouts.pages-assets.js.exams-list-js') @endif
+    @if (Route::is('questions*')) @include('layouts.pages-assets.js.questions-list-js') @endif
+    @if (Route::is('cbt*')) @include('layouts.pages-assets.js.cbt-list-js') @endif
+    @if (Route::is('classbroadsheet.*')) @include('layouts.pages-assets.js.classbroadsheet-list-js') @endif
+    @if (Route::is('principalscomment.*')) @include('layouts.pages-assets.js.principalscomment-list-js') @endif
+    @if (Route::is('myprincipalscomment.*')) @include('layouts.pages-assets.js.myprincipalscomment-list-js') @endif
+    @if (Route::is('compulsorysubjectclass.*')) @include('layouts.pages-assets.js.compulsorysubjectclass-list-js') @endif
+    @if (Route::is('subjectvetting.*')) @include('layouts.pages-assets.js.subjectvetting-list-js') @endif
+    @if (Route::is('mocksubjectvetting.*')) @include('layouts.pages-assets.js.mocksubjectvetting-list-js') @endif
+    @if (Route::is('mysubjectvettings.*')) @include('layouts.pages-assets.js.mysubjectvettings-list-js') @endif
+    @if (Route::is('mymocksubjectvettings.*')) @include('layouts.pages-assets.js.timetable-list-js') @endif
+    @if (Route::is('timetable.*')) @include('layouts.pages-assets.js.timetable-list-js') @endif
+    @if (Route::is('rooms.*')) @include('layouts.pages-assets.js.rooms-list-js') @endif
+    @if (Route::is('promotions.*')) @include('layouts.pages-assets.js.promotions-list-js') @endif
+    @if (Route::is('attendance.*')) @include('layouts.pages-assets.js.attendance-list-js') @endif
+    @if (Route::is('transcript.*')) @include('layouts.pages-assets.js.attendance-list-js') @endif
 
-<div id="preloader-menu">
-    <h6 class="mt-4 fw-semibold fs-base">Preloader</h6>
-    <p class="text-muted fs-sm">Choose a preloader.</p>
-    <div class="row">
-        <div class="col-4">
-            <div class="form-check sidebar-setting card-radio">
-                <input class="form-check-input" type="radio" name="data-preloader" id="preloader-view-custom" value="enable">
-                <label class="form-check-label p-0 avatar-md w-100" for="preloader-view-custom">
-                    <span class="d-flex gap-1 h-100">
-                        <span class="flex-shrink-0">
-                            <span class="bg-light d-flex h-100 flex-column gap-1 p-1">
-                                <span class="d-block p-1 px-2 bg-primary-subtle rounded mb-2"></span>
-                                <span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span>
-                                <span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span>
-                                <span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span>
-                            </span>
-                        </span>
-                        <span class="flex-grow-1">
-                            <span class="d-flex h-100 flex-column">
-                                <span class="bg-light d-block p-1"></span>
-                                <span class="bg-light d-block p-1 mt-auto"></span>
-                            </span>
-                        </span>
-                    </span>
-                    <span class="d-flex align-items-center justify-content-center">
-                        <span class="spinner-border text-primary avatar-xxs m-auto" role="status">
-                            <span class="visually-hidden">Loading...</span>
-                        </span>
-                    </span>
-                </label>
-            </div>
-            <h5 class="fs-sm text-center fw-medium mt-2">Enable</h5>
-        </div>
-        <div class="col-4">
-            <div class="form-check sidebar-setting card-radio">
-                <input class="form-check-input" type="radio" name="data-preloader" id="preloader-view-none" value="disable">
-                <label class="form-check-label p-0 avatar-md w-100" for="preloader-view-none">
-                    <span class="d-flex gap-1 h-100">
-                        <span class="flex-shrink-0">
-                            <span class="bg-light d-flex h-100 flex-column gap-1 p-1">
-                                <span class="d-block p-1 px-2 bg-primary-subtle rounded mb-2"></span>
-                                <span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span>
-                                <span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span>
-                                <span class="d-block p-1 px-2 pb-0 bg-primary-subtle"></span>
-                            </span>
-                        </span>
-                        <span class="flex-grow-1">
-                            <span class="d-flex h-100 flex-column">
-                                <span class="bg-light d-block p-1"></span>
-                                <span class="bg-light d-block p-1 mt-auto"></span>
-                            </span>
-                        </span>
-                    </span>
-                </label>
-            </div>
-            <h5 class="fs-sm text-center fw-medium mt-2">Disable</h5>
-        </div>
-    </div>
-</div>
+    {{-- Finance Module JS --}}
+    @if (Route::is('admin.scholarship.*') || Route::is('admin.discount.*') || Route::is('sibling.*') ||
+        Route::is('payment.*') || Route::is('reports.financial.*') || Route::is('reports.analysis.*') ||
+        Route::is('payroll.*') || Route::is('staff.payments.*'))
+        @include('layouts.pages-assets.js.finance-list-js')
+    @endif
 
-</div>
-</div>
+    <!-- ====================================================
+         MASTER ENHANCEMENT SCRIPTS
+         ==================================================== -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
 
-<div class="offcanvas-footer border-top p-3 text-center">
-    <div class="row">
-        <div class="col-6">
-            <button type="button" class="btn btn-light w-100" id="reset-layout">Reset</button>
-        </div>
-    </div>
-</div>
-</div>
+        // =====================================================
+        // 1. NPROGRESS — page transition bar
+        // =====================================================
+        if (typeof NProgress !== 'undefined') {
+            NProgress.configure({ showSpinner: false, speed: 400, minimum: 0.1 });
 
-<!-- Route-specific JS includes -->
-@if (Route::is('dashboard')) @include('layouts.pages-assets.js.dashboard-list-js') @endif
-@if (Route::is('users.*')) @include('layouts.pages-assets.js.users-list-js') @endif
-@if (Route::is('profile.*')) @include('layouts.pages-assets.js.users-list-js') @endif
-@if (Route::is('roles.*')) @include('layouts.pages-assets.js.role-list-js') @endif
-@if (Route::is('permissions.*')) @include('layouts.pages-assets.js.permissions-list-js') @endif
-@if (Route::is('session.*')) @include('layouts.pages-assets.js.session-list-js') @endif
-@if (Route::is('term.*')) @include('layouts.pages-assets.js.term-list-js') @endif
-@if (Route::is('school-information.*')) @include('layouts.pages-assets.js.schoolinformation-list-js') @endif
-@if (Route::is('admin.school-info.*')) @include('layouts.pages-assets.js.schoolinformation-list-js') @endif
-@if (Route::is('schoolhouse.*')) @include('layouts.pages-assets.js.schoolhouse-list-js') @endif
-@if (Route::is('schoolarm.*')) @include('layouts.pages-assets.js.arm-list-js') @endif
-@if (Route::is('classcategories.*')) @include('layouts.pages-assets.js.classcategory-list-js') @endif
-@if (Route::is('schoolclass.*')) @include('layouts.pages-assets.js.schoolclass-list-js') @endif
-@if (Route::is('classteacher.*')) @include('layouts.pages-assets.js.classteacher-list-js') @endif
-@if (Route::is('subject.*')) @include('layouts.pages-assets.js.subject-list-js') @endif
-@if (Route::is('subjects.*')) @include('layouts.pages-assets.js.subject-list-js') @endif
-@if (Route::is('subjectteacher.*')) @include('layouts.pages-assets.js.subjectteacher-list-js') @endif
-@if (Route::is('subjectclass.*')) @include('layouts.pages-assets.js.subjectclass-list-js') @endif
-@if (Route::is('schoolbill.*')) @include('layouts.pages-assets.js.schoolbill-list-js') @endif
-@if (Route::is('schoolbilltermsession.*')) @include('layouts.pages-assets.js.schoolbilltermsession-list-js') @endif
-@if (Route::is('student.*')) @include('layouts.pages-assets.js.student-list-js') @endif
-@if (Route::is('studentbatchindex')) @include('layouts.pages-assets.js.studentbatch-list-js') @endif
-@if (Route::is('myclass.*')) @include('layouts.pages-assets.js.myclass-list-js') @endif
-@if (Route::is('mysubject.*')) @include('layouts.pages-assets.js.mysubject-list-js') @endif
-@if (Route::is('viewstudent')) @include('layouts.pages-assets.js.viewstudent-list-js') @endif
-@if (Route::is('studentreports.*')) @include('layouts.pages-assets.js.studentreport-list-js') @endif
-@if (Route::is('broadsheet.*')) @include('layouts.pages-assets.js.studentreport-list-js') @endif
-@if (Route::is('studentmockreports.*')) @include('layouts.pages-assets.js.studentmockreport-list-js') @endif
-@if (Route::is('subjectoperation.*')) @include('layouts.pages-assets.js.subjectoperation-list-js') @endif
-@if (Route::is('subjects.subjectinfo')) @include('layouts.pages-assets.js.subjectinfo-list-js') @endif
-@if (Route::is('myresultroom.*')) @include('layouts.pages-assets.js.myresultroom-list-js') @endif
-@if (Route::is('assessment.*')) @include('layouts.pages-assets.js.subjectscoresheet-list-js') @endif
-@if (Route::is('assessments')) @include('layouts.pages-assets.js.studentassessment-list-js') @endif
-@if (Route::is('subjectscoresheet')) @include('layouts.pages-assets.js.subjectscoresheet-list-js') @endif
-@if (Route::is('subjectscoresheet-mock.*')) @include('layouts.pages-assets.js.subjectscoresheet-mock-list-js') @endif
-@if (Route::is('studentresults*')) @include('layouts.pages-assets.js.studentresults-list-js') @endif
-@if (Route::is('schoolbill*')) @include('layouts.pages-assets.js.schoolbill-list-js') @endif
-@if (Route::is('schoolpayment*')) @include('layouts.pages-assets.js.schoolpayment-list-js') @endif
-@if (Route::is('analysis*')) @include('layouts.pages-assets.js.analysis-list-js') @endif
-@if (Route::is('exams*')) @include('layouts.pages-assets.js.exams-list-js') @endif
-@if (Route::is('questions*')) @include('layouts.pages-assets.js.questions-list-js') @endif
-@if (Route::is('cbt*')) @include('layouts.pages-assets.js.cbt-list-js') @endif
-@if (Route::is('classbroadsheet.*')) @include('layouts.pages-assets.js.classbroadsheet-list-js') @endif
-@if (Route::is('principalscomment.*')) @include('layouts.pages-assets.js.principalscomment-list-js') @endif
-@if (Route::is('myprincipalscomment.*')) @include('layouts.pages-assets.js.myprincipalscomment-list-js') @endif
-@if (Route::is('compulsorysubjectclass.*')) @include('layouts.pages-assets.js.compulsorysubjectclass-list-js') @endif
-@if (Route::is('subjectvetting.*')) @include('layouts.pages-assets.js.subjectvetting-list-js') @endif
-@if (Route::is('mocksubjectvetting.*')) @include('layouts.pages-assets.js.mocksubjectvetting-list-js') @endif
-@if (Route::is('mysubjectvettings.*')) @include('layouts.pages-assets.js.mysubjectvettings-list-js') @endif
-@if (Route::is('mymocksubjectvettings.*')) @include('layouts.pages-assets.js.timetable-list-js') @endif
-@if (Route::is('timetable.*')) @include('layouts.pages-assets.js.timetable-list-js') @endif
-@if (Route::is('rooms.*')) @include('layouts.pages-assets.js.rooms-list-js') @endif
-@if (Route::is('promotions.*')) @include('layouts.pages-assets.js.promotions-list-js') @endif
-@if (Route::is('attendance.*')) @include('layouts.pages-assets.js.attendance-list-js') @endif
-@if (Route::is('transcript.*')) @include('layouts.pages-assets.js.attendance-list-js') @endif
+            // Start bar on any real navigation link
+            document.querySelectorAll('a[href]').forEach(function (a) {
+                var href = a.getAttribute('href');
+                if (
+                    href &&
+                    !href.startsWith('#') &&
+                    !href.startsWith('javascript') &&
+                    !href.startsWith('mailto') &&
+                    !href.startsWith('tel') &&
+                    !a.hasAttribute('data-bs-toggle') &&
+                    !a.hasAttribute('data-bs-dismiss') &&
+                    a.getAttribute('target') !== '_blank'
+                ) {
+                    a.addEventListener('click', function () {
+                        NProgress.start();
+                    });
+                }
+            });
 
-{{-- Finance Module JS --}}
-@if (Route::is('admin.scholarship.*') || Route::is('admin.discount.*') || Route::is('sibling.*') ||
-    Route::is('payment.*') || Route::is('reports.financial.*') || Route::is('reports.analysis.*') ||
-    Route::is('payroll.*') || Route::is('staff.payments.*'))
-    @include('layouts.pages-assets.js.finance-list-js')
-@endif
+            // Done when page fully loads / restores from bfcache
+            window.addEventListener('pageshow', function () { NProgress.done(); });
+            window.addEventListener('load', function () { NProgress.done(); });
+        }
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Image Modal functionality
-    const imageModal = document.getElementById('imageViewModal');
-    if (imageModal) {
-        imageModal.addEventListener('show.bs.modal', function(event) {
-            const button = event.relatedTarget;
-            const imageSrc = button.getAttribute('data-image');
-            const enlargedImg = document.getElementById('enlargedImage');
-            if (enlargedImg) enlargedImg.src = imageSrc;
+        // =====================================================
+        // 2. ACTIVE LINK DETECTION — auto-open parent & scroll
+        // =====================================================
+        (function () {
+            var currentPath = window.location.pathname;
+
+            // Walk every child nav-link inside the sidebar
+            var childLinks = document.querySelectorAll('#navbar-nav .nav-sm a.nav-link');
+
+            childLinks.forEach(function (link) {
+                try {
+                    var linkPath = new URL(link.href, window.location.origin).pathname;
+                    // Match exact path OR sub-path (for nested routes)
+                    var isActive = linkPath === currentPath ||
+                                   (linkPath.length > 1 && currentPath.startsWith(linkPath));
+
+                    if (!isActive) return;
+
+                    // Mark child as active
+                    link.classList.add('nav-active-child');
+
+                    // Walk up to the parent collapse div
+                    var parentCollapse = link.closest('.collapse');
+                    if (parentCollapse) {
+                        // Bootstrap: add 'show' to open the collapse
+                        parentCollapse.classList.add('show');
+
+                        // Find the toggle button / anchor that controls this collapse
+                        var collapseId = parentCollapse.getAttribute('id');
+                        var parentToggle = document.querySelector(
+                            '[data-bs-target="#' + collapseId + '"], [href="#' + collapseId + '"]'
+                        );
+
+                        if (parentToggle) {
+                            parentToggle.setAttribute('aria-expanded', 'true');
+                            parentToggle.classList.remove('collapsed');
+                            parentToggle.classList.add('nav-active-parent');
+                        }
+                    }
+
+                    // Smooth scroll the active link into the sidebar's visible area
+                    setTimeout(function () {
+                        link.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }, 350);
+
+                } catch (e) {
+                    // Silently ignore malformed hrefs
+                }
+            });
+        })();
+
+        // =====================================================
+        // 3. RIPPLE EFFECT on nav-link clicks
+        // =====================================================
+        document.querySelectorAll('#navbar-nav .nav-link').forEach(function (link) {
+            link.addEventListener('click', function (e) {
+                // Don't add ripple to dropdown toggles (they open/close, no nav)
+                if (link.hasAttribute('data-bs-toggle')) return;
+
+                var ripple = document.createElement('span');
+                ripple.classList.add('nav-ripple');
+
+                var rect     = link.getBoundingClientRect();
+                var size     = Math.max(rect.width, rect.height);
+                var x        = e.clientX - rect.left - size / 2;
+                var y        = e.clientY - rect.top  - size / 2;
+
+                ripple.style.cssText =
+                    'width:'  + size + 'px;' +
+                    'height:' + size + 'px;' +
+                    'left:'   + x    + 'px;' +
+                    'top:'    + y    + 'px;';
+
+                link.appendChild(ripple);
+
+                setTimeout(function () {
+                    if (ripple.parentNode) ripple.parentNode.removeChild(ripple);
+                }, 650);
+            });
         });
-    }
 
-    // Reset layout button
-    const resetBtn = document.getElementById('reset-layout');
-    if (resetBtn) {
-        resetBtn.addEventListener('click', function() {
-            localStorage.clear();
-            location.reload();
+        // =====================================================
+        // 4. BACK-TO-TOP button — show after 300px scroll
+        // =====================================================
+        var backToTop = document.getElementById('back-to-top');
+        if (backToTop) {
+            window.addEventListener('scroll', function () {
+                if (window.scrollY > 300) {
+                    backToTop.classList.add('show');
+                } else {
+                    backToTop.classList.remove('show');
+                }
+            }, { passive: true });
+
+            backToTop.addEventListener('click', function () {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        }
+
+        // =====================================================
+        // 5. IMAGE MODAL — profile photo enlargement
+        // =====================================================
+        var imageModal = document.getElementById('imageViewModal');
+        if (imageModal) {
+            imageModal.addEventListener('show.bs.modal', function (event) {
+                var button     = event.relatedTarget;
+                var imageSrc   = button ? button.getAttribute('data-image') : null;
+                var enlargedImg = document.getElementById('enlargedImage');
+                if (enlargedImg && imageSrc) {
+                    enlargedImg.src = imageSrc;
+                }
+            });
+        }
+
+        // =====================================================
+        // 6. RESET LAYOUT button
+        // =====================================================
+        var resetBtn = document.getElementById('reset-layout');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', function () {
+                localStorage.clear();
+                location.reload();
+            });
+        }
+
+        // =====================================================
+        // 7. FORM SUBMISSION — start NProgress on any form submit
+        //    (covers POST forms like logout, filters, etc.)
+        // =====================================================
+        document.querySelectorAll('form').forEach(function (form) {
+            // Skip forms that are purely modal/ajax — check for action attribute
+            if (form.getAttribute('action') && !form.dataset.noProgress) {
+                form.addEventListener('submit', function () {
+                    if (typeof NProgress !== 'undefined') {
+                        NProgress.start();
+                    }
+                });
+            }
         });
-    }
-});
-</script>
+
+        // =====================================================
+        // 8. ACTIVE STATE on direct (non-collapse) nav links
+        //    e.g. Payment Gateways single link
+        // =====================================================
+        (function () {
+            var currentPath = window.location.pathname;
+            var directLinks = document.querySelectorAll('#navbar-nav > li > a.nav-link:not(.menu-link)');
+            directLinks.forEach(function (link) {
+                try {
+                    var linkPath = new URL(link.href, window.location.origin).pathname;
+                    if (linkPath === currentPath) {
+                        link.classList.add('nav-active-parent');
+                    }
+                } catch (e) {}
+            });
+        })();
+
+    }); // end DOMContentLoaded
+    </script>
 
 </body>
 
