@@ -4,7 +4,7 @@
 namespace App\Http\Controllers\Finance;
 
 use App\Http\Controllers\Controller;
-use App\Models\StaffRecord;
+use App\Models\Staff;
 use App\Models\StaffPayment;
 use App\Models\PayrollRun;
 use App\Models\PayrollPeriod;
@@ -15,7 +15,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 use Yajra\DataTables\Facades\DataTables;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class StaffPaymentController extends Controller
 {
@@ -29,13 +31,15 @@ class StaffPaymentController extends Controller
         $this->payrollService = $payrollService;
         $this->accountingService = $accountingService;
 
-        $this->middleware('permission:View staff payments', ['only' => ['index', 'staffDashboard', 'getPaymentHistory']]);
-        $this->middleware('permission:Create staff payment', ['only' => ['recordManualPayment']]);
+        $this->middleware('permission:View staff payments', ['only' => ['index', 'show', 'staffDashboard', 'getPaymentHistory']]);
+        $this->middleware('permission:Create staff payment', ['only' => ['create', 'store']]);
+        $this->middleware('permission:Update staff payment', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:Delete staff payment', ['only' => ['destroy']]);
         $this->middleware('permission:Reverse staff payment', ['only' => ['reversePayment']]);
     }
 
     /**
-     * Admin index with DataTable AJAX.
+     * Display list of staff payments (Admin view).
      */
     public function index(Request $request)
     {
@@ -43,7 +47,8 @@ class StaffPaymentController extends Controller
 
         if ($request->ajax()) {
             $payments = StaffPayment::with(['staff.user', 'payrollRun'])
-                ->select('staff_payments.*');
+                ->select('staff_payments.*')
+                ->orderBy('created_at', 'desc');
 
             return DataTables::of($payments)
                 ->addIndexColumn()
@@ -56,95 +61,74 @@ class StaffPaymentController extends Controller
                 ->addColumn('formatted_amount', function($payment) {
                     return '₦' . number_format($payment->amount, 2);
                 })
+                ->addColumn('payment_type_badge', function($payment) {
+                    $badges = [
+                        'salary' => 'primary',
+                        'bonus' => 'success',
+                        'loan_disbursement' => 'info',
+                        'reimbursement' => 'warning',
+                        'advance' => 'danger',
+                        'other' => 'secondary',
+                    ];
+                    $color = $badges[$payment->payment_type] ?? 'secondary';
+                    return '<span class="badge bg-' . $color . '">' . ucfirst(str_replace('_', ' ', $payment->payment_type)) . '</span>';
+                })
                 ->addColumn('status_badge', function($payment) {
                     $badges = [
-                        'pending' => '<span class="badge bg-warning">Pending</span>',
-                        'processed' => '<span class="badge bg-info">Processed</span>',
-                        'paid' => '<span class="badge bg-success">Paid</span>',
-                        'failed' => '<span class="badge bg-danger">Failed</span>',
+                        'pending' => 'warning',
+                        'processed' => 'info',
+                        'paid' => 'success',
+                        'failed' => 'danger',
+                        'reversed' => 'secondary',
                     ];
-                    return $badges[$payment->payment_status] ?? '<span class="badge bg-secondary">Unknown</span>';
+                    $color = $badges[$payment->payment_status] ?? 'secondary';
+                    return '<span class="badge bg-' . $color . '">' . ucfirst($payment->payment_status) . '</span>';
                 })
                 ->addColumn('action', function($payment) {
                     $buttons = '<button class="btn btn-sm btn-info view-payment me-1" data-id="'.$payment->id.'"><i class="ri-eye-line"></i></button>';
-                    if ($payment->payment_status !== 'paid') {
-                        $buttons .= '<button class="btn btn-sm btn-success mark-paid me-1" data-id="'.$payment->id.'"><i class="ri-check-line"></i></button>';
-                        $buttons .= '<button class="btn btn-sm btn-danger reverse-payment" data-id="'.$payment->id.'"><i class="ri-refund-line"></i></button>';
+
+                    if ($payment->payment_status === 'processed') {
+                        $buttons .= '<button class="btn btn-sm btn-success mark-paid me-1" data-id="'.$payment->id.'"><i class="ri-check-line"></i> Mark Paid</button>';
                     }
+
+                    if ($payment->payment_status !== 'reversed' && $payment->payment_status !== 'paid') {
+                        $buttons .= '<button class="btn btn-sm btn-danger reverse-payment me-1" data-id="'.$payment->id.'"><i class="ri-refund-line"></i> Reverse</button>';
+                    }
+
                     return $buttons;
                 })
-                ->rawColumns(['status_badge', 'action'])
+                ->rawColumns(['payment_type_badge', 'status_badge', 'action'])
                 ->make(true);
         }
 
-        $staff = StaffRecord::with('user')->get();
+        $staff = Staff::with('user')->active()->get();
         $payrollPeriods = PayrollPeriod::orderBy('id', 'desc')->get();
 
-        return view('finance.staff.index', compact('pagetitle', 'staff', 'payrollPeriods'));
+        return view('finance.staff.payments-index', compact('pagetitle', 'staff', 'payrollPeriods'));
     }
 
     /**
-     * Staff dashboard (staff view with AJAX).
+     * Show form for creating a new staff payment.
      */
-    public function staffDashboard(Request $request)
+    public function create()
     {
-        $staff = Auth::user()->staff;
+        $pagetitle = 'Record Staff Payment';
+        $staff = Staff::with('user')->active()->get();
 
-        if (!$staff) {
-            return redirect()->route('dashboard')->with('error', 'Staff record not found');
-        }
-
-        if ($request->ajax()) {
-            $payments = StaffPayment::where('staff_id', $staff->id)
-                ->orderBy('payment_date', 'desc')
-                ->get();
-
-            return response()->json([
-                'success' => true,
-                'payments' => $payments->map(function($payment) {
-                    return [
-                        'id' => $payment->id,
-                        'reference' => $payment->payment_reference,
-                        'amount' => '₦' . number_format($payment->amount, 2),
-                        'date' => $payment->payment_date->format('d M, Y'),
-                        'type' => ucfirst($payment->payment_type),
-                        'method' => ucfirst(str_replace('_', ' ', $payment->payment_method)),
-                        'status' => ucfirst($payment->payment_status),
-                        'purpose' => $payment->purpose,
-                    ];
-                })
-            ]);
-        }
-
-        $payments = StaffPayment::where('staff_id', $staff->id)
-            ->orderBy('payment_date', 'desc')
-            ->paginate(20);
-
-        $payrollHistory = PayrollRun::where('staff_id', $staff->id)
-            ->where('payment_status', 'paid')
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        $loanSummary = $this->payrollService->getActiveLoanDeductions($staff->id);
-
-        $pagetitle = 'My Payment Dashboard';
-
-        return view('finance.staff.payment-dashboard', compact(
-            'pagetitle', 'staff', 'payments', 'payrollHistory', 'loanSummary'
-        ));
+        return view('finance.staff.payments-create', compact('pagetitle', 'staff'));
     }
 
     /**
-     * Record manual payment (AJAX).
+     * Store a new staff payment.
      */
-    public function recordManualPayment(Request $request)
+    public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'staff_id' => 'required|exists:staff_records,id',
+            'staff_id' => 'required|exists:staffbioinfo,id',
             'amount' => 'required|numeric|min:0.01',
             'payment_date' => 'required|date',
             'payment_method' => 'required|in:bank_transfer,cash,cheque',
-            'payment_type' => 'required|in:salary,bonus,loan_disbursement,reimbursement,advance',
+            'payment_type' => 'required|in:salary,bonus,loan_disbursement,reimbursement,advance,other',
             'purpose' => 'required|string|min:5',
             'bank_name' => 'required_if:payment_method,bank_transfer',
             'account_number' => 'required_if:payment_method,bank_transfer',
@@ -153,10 +137,13 @@ class StaffPaymentController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+            return redirect()->back()->withErrors($validator)->withInput();
         }
 
         DB::beginTransaction();
@@ -175,34 +162,213 @@ class StaffPaymentController extends Controller
                 'payment_method' => $request->payment_method,
                 'bank_name' => $request->bank_name,
                 'account_number' => $request->account_number,
+                'account_name' => $request->account_name,
                 'transaction_ref' => $request->transaction_ref,
                 'purpose' => $request->purpose,
                 'attachment' => $attachmentPath,
+                'notes' => $request->notes,
                 'payment_status' => 'processed',
                 'created_by' => Auth::id(),
             ]);
 
-            // Create accounting entry
-            $this->createPaymentJournalEntry($payment);
-
             DB::commit();
 
-            // Send notification to staff (optional)
-            // $this->sendPaymentNotification($payment);
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Payment recorded successfully!',
+                    'data' => $payment
+                ], 201);
+            }
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Payment recorded successfully!',
-                'data' => $payment
-            ], 201);
+            return redirect()->route('staff.payments.index')->with('success', 'Payment recorded successfully!');
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Staff payment creation error: ' . $e->getMessage());
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to record payment: ' . $e->getMessage()
+                ], 500);
+            }
+
+            return redirect()->back()->with('error', 'Failed to record payment: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Show staff payment details.
+     */
+    public function show($id)
+    {
+        $payment = StaffPayment::with(['staff.user', 'createdBy', 'reversedBy'])
+            ->findOrFail($id);
+
+        return view('finance.staff.payments-show', compact('payment'));
+    }
+
+    /**
+     * Edit staff payment.
+     */
+    public function edit($id)
+    {
+        $payment = StaffPayment::findOrFail($id);
+
+        if ($payment->payment_status === 'paid') {
+            return redirect()->route('staff.payments.index')->with('error', 'Cannot edit a paid payment.');
+        }
+
+        $staff = Staff::with('user')->active()->get();
+        $pagetitle = 'Edit Staff Payment';
+
+        return view('finance.staff.payments-edit', compact('payment', 'staff', 'pagetitle'));
+    }
+
+    /**
+     * Update staff payment.
+     */
+    public function update(Request $request, $id)
+    {
+        $payment = StaffPayment::findOrFail($id);
+
+        if ($payment->payment_status === 'paid') {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot edit a paid payment.'
+                ], 400);
+            }
+            return redirect()->route('staff.payments.index')->with('error', 'Cannot edit a paid payment.');
+        }
+
+        $validator = Validator::make($request->all(), [
+            'amount' => 'required|numeric|min:0.01',
+            'payment_date' => 'required|date',
+            'payment_method' => 'required|in:bank_transfer,cash,cheque',
+            'purpose' => 'required|string|min:5',
+        ]);
+
+        if ($validator->fails()) {
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+            return redirect()->back()->withErrors($validator)->withInput();
+        }
+
+        try {
+            $payment->update([
+                'amount' => $request->amount,
+                'payment_date' => $request->payment_date,
+                'payment_method' => $request->payment_method,
+                'bank_name' => $request->bank_name,
+                'account_number' => $request->account_number,
+                'transaction_ref' => $request->transaction_ref,
+                'purpose' => $request->purpose,
+                'notes' => $request->notes,
+            ]);
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Payment updated successfully!',
+                    'data' => $payment
+                ]);
+            }
+
+            return redirect()->route('staff.payments.index')->with('success', 'Payment updated successfully!');
+
+        } catch (\Exception $e) {
+            Log::error('Staff payment update error: ' . $e->getMessage());
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Failed to update payment: ' . $e->getMessage()
+                ], 500);
+            }
+
+            return redirect()->back()->with('error', 'Failed to update payment.');
+        }
+    }
+
+    /**
+     * Delete staff payment.
+     */
+    public function destroy($id)
+    {
+        $payment = StaffPayment::findOrFail($id);
+
+        if ($payment->payment_status === 'paid') {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to record payment: ' . $e->getMessage()
-            ], 500);
+                'message' => 'Cannot delete a paid payment.'
+            ], 400);
         }
+
+        $payment->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Payment deleted successfully!'
+        ]);
+    }
+
+    /**
+     * Staff dashboard view (for staff members).
+     */
+    public function staffDashboard(Request $request)
+    {
+        $staff = Auth::user()->staff;
+
+        if (!$staff) {
+            return redirect()->route('dashboard')->with('error', 'Staff record not found.');
+        }
+
+        $pagetitle = 'My Payment Dashboard';
+
+        if ($request->ajax()) {
+            $payments = StaffPayment::where('staff_id', $staff->id)
+                ->orderBy('payment_date', 'desc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'payments' => $payments->map(function($payment) {
+                    return [
+                        'id' => $payment->id,
+                        'reference' => $payment->payment_reference,
+                        'amount' => '₦' . number_format($payment->amount, 2),
+                        'date' => $payment->payment_date->format('d M, Y'),
+                        'type' => ucfirst(str_replace('_', ' ', $payment->payment_type)),
+                        'method' => ucfirst(str_replace('_', ' ', $payment->payment_method)),
+                        'status' => ucfirst($payment->payment_status),
+                        'purpose' => $payment->purpose,
+                    ];
+                })
+            ]);
+        }
+
+        $payments = StaffPayment::where('staff_id', $staff->id)
+            ->orderBy('payment_date', 'desc')
+            ->paginate(20);
+
+        $payrollHistory = PayrollRun::where('staff_id', $staff->id)
+            ->where('payment_status', 'paid')
+            ->with('payrollPeriod')
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        $loanSummary = $this->payrollService->getActiveLoanDeductions($staff->id);
+        $stats = $this->getStaffPaymentStats($staff->id);
+
+        return view('finance.staff.payment-dashboard', compact(
+            'pagetitle', 'staff', 'payments', 'payrollHistory', 'loanSummary', 'stats'
+        ));
     }
 
     /**
@@ -241,7 +407,7 @@ class StaffPaymentController extends Controller
                     'staff_name' => $payment->staff->user->name ?? 'N/A',
                     'amount' => number_format($payment->amount, 2),
                     'date' => $payment->payment_date->format('Y-m-d'),
-                    'type' => ucfirst($payment->payment_type),
+                    'type' => ucfirst(str_replace('_', ' ', $payment->payment_type)),
                     'method' => ucfirst(str_replace('_', ' ', $payment->payment_method)),
                     'status' => ucfirst($payment->payment_status),
                     'purpose' => $payment->purpose,
@@ -251,7 +417,7 @@ class StaffPaymentController extends Controller
     }
 
     /**
-     * Reverse payment (AJAX).
+     * Reverse a payment.
      */
     public function reversePayment(Request $request, $paymentId)
     {
@@ -273,7 +439,7 @@ class StaffPaymentController extends Controller
             if ($payment->payment_status === 'paid') {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot reverse a payment that has already been disbursed'
+                    'message' => 'Cannot reverse a payment that has already been disbursed.'
                 ], 400);
             }
 
@@ -284,9 +450,6 @@ class StaffPaymentController extends Controller
                 'reversed_at' => now(),
             ]);
 
-            // Create reversal accounting entry
-            $this->createReversalJournalEntry($payment);
-
             DB::commit();
 
             return response()->json([
@@ -296,6 +459,7 @@ class StaffPaymentController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Payment reversal error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to reverse payment: ' . $e->getMessage()
@@ -304,7 +468,7 @@ class StaffPaymentController extends Controller
     }
 
     /**
-     * Mark payment as paid (AJAX).
+     * Mark payment as paid.
      */
     public function markAsPaid(Request $request, $paymentId)
     {
@@ -326,11 +490,73 @@ class StaffPaymentController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Mark payment as paid error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update payment status'
+                'message' => 'Failed to update payment status.'
             ], 500);
         }
+    }
+
+    /**
+     * View payslip.
+     */
+    public function viewPayslip($payrollRunId)
+    {
+        $payrollRun = PayrollRun::with(['staff.user', 'payrollPeriod', 'salaryStructure'])
+            ->findOrFail($payrollRunId);
+
+        $user = Auth::user();
+        $staff = $user->staff;
+
+        if (!$staff || ($staff->id != $payrollRun->staff_id && !$user->hasPermissionTo('View payroll'))) {
+            abort(403);
+        }
+
+        $earnings = $this->getEarningsBreakdown($payrollRun);
+        $deductions = $this->getDeductionsBreakdown($payrollRun);
+        $employerContributions = [
+            ['name' => 'Pension (Employer)', 'amount' => $payrollRun->employer_pension],
+            ['name' => 'NSITF', 'amount' => $payrollRun->nsitf],
+        ];
+
+        $schoolInfo = \App\Models\SchoolInformation::first();
+        $pagetitle = 'Payslip - ' . ($payrollRun->staff->user->name ?? 'Staff');
+
+        return view('finance.staff.payslip', compact(
+            'pagetitle', 'payrollRun', 'earnings', 'deductions', 'employerContributions', 'schoolInfo'
+        ));
+    }
+
+    /**
+     * Download payslip as PDF.
+     */
+    public function downloadPayslip($payrollRunId)
+    {
+        $payrollRun = PayrollRun::with(['staff.user', 'payrollPeriod', 'salaryStructure'])
+            ->findOrFail($payrollRunId);
+
+        $user = Auth::user();
+        $staff = $user->staff;
+
+        if (!$staff || ($staff->id != $payrollRun->staff_id && !$user->hasPermissionTo('View payroll'))) {
+            abort(403);
+        }
+
+        $earnings = $this->getEarningsBreakdown($payrollRun);
+        $deductions = $this->getDeductionsBreakdown($payrollRun);
+        $employerContributions = [
+            ['name' => 'Pension (Employer)', 'amount' => $payrollRun->employer_pension],
+            ['name' => 'NSITF', 'amount' => $payrollRun->nsitf],
+        ];
+
+        $schoolInfo = \App\Models\SchoolInformation::first();
+
+        $pdf = PDF::loadView('finance.staff.payslip-pdf', compact(
+            'payrollRun', 'earnings', 'deductions', 'employerContributions', 'schoolInfo'
+        ));
+
+        return $pdf->download('payslip_' . ($payrollRun->staff->employmentid ?? 'staff') . '_' . $payrollRun->payrollPeriod->period_name . '.pdf');
     }
 
     /**
@@ -342,71 +568,69 @@ class StaffPaymentController extends Controller
     }
 
     /**
-     * Create accounting journal entry for payment.
+     * Get staff payment statistics.
      */
-    private function createPaymentJournalEntry($payment)
+    private function getStaffPaymentStats($staffId)
     {
-        // Get account IDs
-        $expenseAccount = \App\Models\ChartOfAccount::where('account_code', '5000')->first(); // Staff Salaries
-        $bankAccount = \App\Models\ChartOfAccount::where('account_code', '1020')->first(); // Bank Account
+        $totalPaid = StaffPayment::where('staff_id', $staffId)
+            ->where('payment_status', 'paid')
+            ->sum('amount');
 
-        if (!$expenseAccount || !$bankAccount) {
-            return;
-        }
+        $totalPending = StaffPayment::where('staff_id', $staffId)
+            ->where('payment_status', 'processed')
+            ->sum('amount');
 
-        $this->accountingService->createJournalEntry([
-            'entry_date' => $payment->payment_date,
-            'entry_type' => 'payment',
-            'description' => $payment->purpose,
-            'reference_id' => $payment->id,
-            'reference_type' => StaffPayment::class,
-        ], [
-            [
-                'account_id' => $expenseAccount->id,
-                'debit' => $payment->amount,
-                'credit' => 0,
-                'narration' => $payment->purpose,
-            ],
-            [
-                'account_id' => $bankAccount->id,
-                'debit' => 0,
-                'credit' => $payment->amount,
-                'narration' => 'Payment to staff via ' . $payment->payment_method,
-            ]
-        ]);
+        $paymentCount = StaffPayment::where('staff_id', $staffId)->count();
+
+        return [
+            'total_paid' => $totalPaid,
+            'total_pending' => $totalPending,
+            'payment_count' => $paymentCount,
+        ];
     }
 
     /**
-     * Create reversal journal entry.
+     * Get earnings breakdown.
      */
-    private function createReversalJournalEntry($payment)
+    private function getEarningsBreakdown($payrollRun)
     {
-        $expenseAccount = \App\Models\ChartOfAccount::where('account_code', '5000')->first();
-        $bankAccount = \App\Models\ChartOfAccount::where('account_code', '1020')->first();
+        $earnings = [
+            ['name' => 'Basic Salary', 'amount' => $payrollRun->basic_salary],
+            ['name' => 'Housing Allowance', 'amount' => $payrollRun->housing_allowance],
+            ['name' => 'Transport Allowance', 'amount' => $payrollRun->transport_allowance],
+            ['name' => 'Meal Allowance', 'amount' => $payrollRun->meal_allowance],
+            ['name' => 'Medical Allowance', 'amount' => $payrollRun->medical_allowance],
+            ['name' => 'Utility Allowance', 'amount' => $payrollRun->utility_allowance],
+            ['name' => 'Other Allowances', 'amount' => $payrollRun->other_allowances],
+        ];
 
-        if (!$expenseAccount || !$bankAccount) {
-            return;
+        $customAllowances = $payrollRun->custom_allowances ?? [];
+        foreach ($customAllowances as $allowance) {
+            if (($allowance['amount'] ?? 0) > 0) {
+                $earnings[] = ['name' => $allowance['name'], 'amount' => $allowance['amount']];
+            }
         }
 
-        $this->accountingService->createJournalEntry([
-            'entry_date' => now(),
-            'entry_type' => 'reversal',
-            'description' => 'Reversal of payment #' . $payment->payment_reference . ' - Reason: ' . $payment->reversal_reason,
-            'reference_id' => $payment->id,
-            'reference_type' => StaffPayment::class,
-        ], [
-            [
-                'account_id' => $expenseAccount->id,
-                'debit' => 0,
-                'credit' => $payment->amount,
-                'narration' => 'Reversal of payment',
-            ],
-            [
-                'account_id' => $bankAccount->id,
-                'debit' => $payment->amount,
-                'credit' => 0,
-                'narration' => 'Reversal credit',
-            ]
-        ]);
+        return array_filter($earnings, function($item) {
+            return $item['amount'] > 0;
+        });
+    }
+
+    /**
+     * Get deductions breakdown.
+     */
+    private function getDeductionsBreakdown($payrollRun)
+    {
+        $deductions = [
+            ['name' => 'PAYE Tax', 'amount' => $payrollRun->paye_tax],
+            ['name' => 'Pension (Employee)', 'amount' => $payrollRun->employee_pension],
+            ['name' => 'NHF', 'amount' => $payrollRun->nhf],
+            ['name' => 'Loan Repayment', 'amount' => $payrollRun->loan_repayment],
+            ['name' => 'Salary Advance', 'amount' => $payrollRun->advance_repayment],
+        ];
+
+        return array_filter($deductions, function($item) {
+            return $item['amount'] > 0;
+        });
     }
 }
