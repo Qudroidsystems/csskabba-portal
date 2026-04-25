@@ -1016,7 +1016,7 @@
                                         </a>
                                     </li>
                                     <li class="nav-item">
-                                        <a href="{{ route('payroll.structures') }}" class="nav-link" data-key="t-salary-structures">
+                                                  <a href="{{ route('payroll.salary-structures') }}" class="nav-link" data-key="t-salary-structures">
                                             <i class="ri-bank-card-line"></i> Salary Structures
                                         </a>
                                     </li>
