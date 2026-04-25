@@ -4,7 +4,7 @@
 namespace App\Http\Controllers\Finance;
 
 use App\Http\Controllers\Controller;
-use App\Models\StaffRecord;
+use App\Models\Staff;
 use App\Models\PayrollPeriod;
 use App\Models\PayrollRun;
 use App\Models\StaffSalaryStructure;
@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\Facades\DataTables;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PayrollController extends Controller
 {
@@ -29,11 +30,12 @@ class PayrollController extends Controller
         $this->payrollService = $payrollService;
         $this->accountingService = $accountingService;
 
-        $this->middleware('permission:View payroll', ['only' => ['periods', 'getPayrollRuns', 'showPayrollRun', 'summaryReport']]);
+        $this->middleware('permission:View payroll', ['only' => ['periods', 'getPayrollRuns', 'showPayrollRun', 'summaryReport', 'salaryStructures']]);
         $this->middleware('permission:Process payroll', ['only' => ['processPayroll']]);
         $this->middleware('permission:Approve payroll', ['only' => ['approvePayroll']]);
         $this->middleware('permission:View payslip', ['only' => ['showPayrollRun']]);
         $this->middleware('permission:Download payslip', ['only' => ['exportPayroll']]);
+        $this->middleware('permission:Manage salary structures', ['only' => ['storeSalaryStructure', 'updateSalaryStructure', 'destroySalaryStructure']]);
     }
 
     /**
@@ -58,6 +60,9 @@ class PayrollController extends Controller
                 ->addColumn('total_net', function($period) {
                     return '₦' . number_format($period->total_net_pay, 2);
                 })
+                ->addColumn('staff_count', function($period) {
+                    return $period->payrollRuns()->count();
+                })
                 ->addColumn('status_badge', function($period) {
                     return $period->status_badge;
                 })
@@ -72,6 +77,9 @@ class PayrollController extends Controller
                     }
                     if ($period->status === 'approved') {
                         $buttons .= '<button class="btn btn-sm btn-warning mark-paid me-1" data-id="'.$period->id.'"><i class="ri-bank-card-line"></i> Mark Paid</button>';
+                    }
+                    if ($period->status !== 'locked') {
+                        $buttons .= '<button class="btn btn-sm btn-secondary lock-period me-1" data-id="'.$period->id.'"><i class="ri-lock-line"></i> Lock</button>';
                     }
 
                     $buttons .= '<a href="' . route('payroll.runs', $period->id) . '" class="btn btn-sm btn-info"><i class="ri-eye-line"></i> View</a>';
@@ -173,7 +181,7 @@ class PayrollController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Payroll approved and journal entry created!',
+                'message' => 'Payroll approved successfully!',
                 'data' => $result
             ]);
         } catch (\Exception $e) {
@@ -248,7 +256,7 @@ class PayrollController extends Controller
         $summary = [
             'total_staff' => PayrollRun::where('payroll_period_id', $periodId)->count(),
             'total_gross' => $period->total_gross_pay,
-            'total_deductions' => $period->total_net_pay ? ($period->total_gross_pay - $period->total_net_pay) : 0,
+            'total_deductions' => $period->total_gross_pay - $period->total_net_pay,
             'total_net' => $period->total_net_pay,
             'total_tax' => $period->total_tax,
             'total_pension' => $period->total_employee_pension,
@@ -288,6 +296,11 @@ class PayrollController extends Controller
             $earnings[] = ['name' => $allowance['name'], 'amount' => $allowance['amount']];
         }
 
+        // Filter out zero amounts
+        $earnings = array_filter($earnings, function($item) {
+            return $item['amount'] > 0;
+        });
+
         $deductions = [
             ['name' => 'PAYE Tax', 'amount' => $payrollRun->paye_tax],
             ['name' => 'Pension (Employee)', 'amount' => $payrollRun->employee_pension],
@@ -296,6 +309,11 @@ class PayrollController extends Controller
             ['name' => 'Salary Advance', 'amount' => $payrollRun->advance_repayment],
         ];
 
+        // Filter out zero amounts
+        $deductions = array_filter($deductions, function($item) {
+            return $item['amount'] > 0;
+        });
+
         $employerContributions = [
             ['name' => 'Pension (Employer)', 'amount' => $payrollRun->employer_pension],
             ['name' => 'NSITF', 'amount' => $payrollRun->nsitf],
@@ -303,7 +321,14 @@ class PayrollController extends Controller
 
         $schoolInfo = \App\Models\SchoolInformation::first();
 
-        $pagetitle = 'Payslip - ' . $payrollRun->staff->user->name . ' (' . $payrollRun->payrollPeriod->period_name . ')';
+        $pagetitle = 'Payslip - ' . ($payrollRun->staff->user->name ?? 'Staff') . ' (' . $payrollRun->payrollPeriod->period_name . ')';
+
+        if (request()->has('download')) {
+            $pdf = PDF::loadView('finance.payroll.payslip-pdf', compact(
+                'payrollRun', 'earnings', 'deductions', 'employerContributions', 'schoolInfo'
+            ));
+            return $pdf->download('payslip_' . ($payrollRun->staff->staff_no ?? 'staff') . '_' . $payrollRun->payrollPeriod->period_name . '.pdf');
+        }
 
         return view('finance.payroll.payslip', compact(
             'pagetitle', 'payrollRun', 'earnings', 'deductions',
@@ -332,8 +357,17 @@ class PayrollController extends Controller
         }
 
         try {
+            $payrollRun = PayrollRun::findOrFail($payrollRunId);
+
+            if ($payrollRun->payment_status === 'paid') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'This payroll has already been paid'
+                ], 400);
+            }
+
             $payment = $this->payrollService->recordStaffPayment(
-                $request->staff_id ?? null,
+                $payrollRun->staff_id,
                 $payrollRunId,
                 $request->all()
             );
@@ -370,14 +404,33 @@ class PayrollController extends Controller
                     'total_tax',
                     'total_employee_pension',
                     'total_employer_pension',
+                    'total_nhf',
                     'total_net_pay'
                 )
                 ->orderBy('month')
                 ->get();
 
+            $stats = [
+                'total_gross' => $data->sum('total_gross_pay'),
+                'total_tax' => $data->sum('total_tax'),
+                'total_pension' => $data->sum('total_employee_pension') + $data->sum('total_employer_pension'),
+                'total_net' => $data->sum('total_net_pay'),
+            ];
+
+            $statutoryData = [
+                $data->sum('total_tax'),
+                $data->sum('total_employee_pension'),
+                $data->sum('total_nhf'),
+            ];
+
+            $trendData = $data->pluck('total_net_pay')->toArray();
+
             return response()->json([
                 'success' => true,
                 'data' => $data,
+                'stats' => $stats,
+                'statutory_data' => $statutoryData,
+                'trend_data' => $trendData,
                 'year' => $year
             ]);
         }
@@ -400,13 +453,11 @@ class PayrollController extends Controller
 
         $filename = "payroll_{$period->period_name}_{$period->year}.xlsx";
 
-        // Excel export logic here
-        // return Excel::download(new PayrollExport($runs, $period), $filename);
-
+        // Excel export logic - you'll need to implement with Maatwebsite Excel
         return response()->json([
             'success' => true,
             'message' => 'Export initiated',
-            'download_url' => route('payroll.export.download', $periodId)
+            'download_url' => '#'
         ]);
     }
 
@@ -426,6 +477,9 @@ class PayrollController extends Controller
                 ->addColumn('staff_name', function($structure) {
                     return $structure->staff->user->name ?? 'N/A';
                 })
+                ->addColumn('staff_id', function($structure) {
+                    return $structure->staff->employmentid ?? 'N/A';
+                })
                 ->addColumn('basic_salary', function($structure) {
                     return '₦' . number_format($structure->basic_salary, 2);
                 })
@@ -433,20 +487,21 @@ class PayrollController extends Controller
                     return '₦' . number_format($structure->total_earnings, 2);
                 })
                 ->addColumn('effective_period', function($structure) {
-                    $from = $structure->effective_from->format('d M Y');
-                    $to = $structure->effective_to ? $structure->effective_to->format('d M Y') : 'Present';
-                    return $from . ' - ' . $to;
+                    return $structure->effective_period;
+                })
+                ->addColumn('is_active', function($structure) {
+                    return $structure->is_active ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>';
                 })
                 ->addColumn('action', function($structure) {
                     $buttons = '<button class="btn btn-sm btn-primary edit-structure me-1" data-id="'.$structure->id.'"><i class="ri-pencil-line"></i></button>';
                     $buttons .= '<button class="btn btn-sm btn-danger delete-structure" data-id="'.$structure->id.'"><i class="ri-delete-bin-line"></i></button>';
                     return $buttons;
                 })
-                ->rawColumns(['action'])
+                ->rawColumns(['is_active', 'action'])
                 ->make(true);
         }
 
-        $staff = StaffRecord::with('user')->get();
+        $staff = Staff::with('user')->active()->get();
 
         return view('finance.payroll.structures', compact('pagetitle', 'staff'));
     }
@@ -457,7 +512,7 @@ class PayrollController extends Controller
     public function storeSalaryStructure(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'staff_id' => 'required|exists:staff_records,id',
+            'staff_id' => 'required|exists:staffbioinfo,id',
             'basic_salary' => 'required|numeric|min:0',
             'effective_from' => 'required|date',
             'effective_to' => 'nullable|date|after:effective_from',
@@ -475,6 +530,18 @@ class PayrollController extends Controller
             ->where('is_active', true)
             ->update(['is_active' => false, 'effective_to' => now()]);
 
+        $customAllowances = [];
+        if ($request->has('custom_allowances')) {
+            foreach ($request->custom_allowances as $allowance) {
+                if (!empty($allowance['name']) && !empty($allowance['amount'])) {
+                    $customAllowances[] = [
+                        'name' => $allowance['name'],
+                        'amount' => $allowance['amount']
+                    ];
+                }
+            }
+        }
+
         $structure = StaffSalaryStructure::create([
             'staff_id' => $request->staff_id,
             'basic_salary' => $request->basic_salary,
@@ -484,7 +551,7 @@ class PayrollController extends Controller
             'medical_allowance' => $request->medical_allowance ?? 0,
             'utility_allowance' => $request->utility_allowance ?? 0,
             'other_allowances' => $request->other_allowances ?? 0,
-            'custom_allowances' => $request->custom_allowances,
+            'custom_allowances' => $customAllowances,
             'effective_from' => $request->effective_from,
             'effective_to' => $request->effective_to,
             'is_active' => true,
@@ -518,6 +585,18 @@ class PayrollController extends Controller
             ], 422);
         }
 
+        $customAllowances = [];
+        if ($request->has('custom_allowances')) {
+            foreach ($request->custom_allowances as $allowance) {
+                if (!empty($allowance['name']) && !empty($allowance['amount'])) {
+                    $customAllowances[] = [
+                        'name' => $allowance['name'],
+                        'amount' => $allowance['amount']
+                    ];
+                }
+            }
+        }
+
         $structure->update([
             'basic_salary' => $request->basic_salary,
             'housing_allowance' => $request->housing_allowance ?? 0,
@@ -526,7 +605,7 @@ class PayrollController extends Controller
             'medical_allowance' => $request->medical_allowance ?? 0,
             'utility_allowance' => $request->utility_allowance ?? 0,
             'other_allowances' => $request->other_allowances ?? 0,
-            'custom_allowances' => $request->custom_allowances,
+            'custom_allowances' => $customAllowances,
             'effective_from' => $request->effective_from,
             'effective_to' => $request->effective_to,
         ]);
@@ -544,6 +623,17 @@ class PayrollController extends Controller
     public function destroySalaryStructure($id)
     {
         $structure = StaffSalaryStructure::findOrFail($id);
+
+        // Check if structure is being used in any payroll run
+        $isUsed = PayrollRun::where('salary_structure_id', $id)->exists();
+
+        if ($isUsed) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cannot delete this salary structure because it has been used in payroll runs.'
+            ], 400);
+        }
+
         $structure->delete();
 
         return response()->json([
@@ -562,18 +652,26 @@ class PayrollController extends Controller
         $year = $request->input('year', date('Y'));
 
         $data = PayrollPeriod::where('year', $year)
-            ->where('status', 'approved')
+            ->whereIn('status', ['approved', 'paid'])
             ->select(
                 'month',
                 'period_name',
                 'total_tax as paye',
                 'total_employee_pension as employee_pension',
                 'total_employer_pension as employer_pension',
-                'total_nhf as nhf'
+                'total_nhf as nhf',
+                'total_net_pay'
             )
             ->orderBy('month')
             ->get();
 
-        return view('finance.payroll.statutory', compact('pagetitle', 'data', 'year'));
+        $totalPaye = $data->sum('paye');
+        $totalEmployeePension = $data->sum('employee_pension');
+        $totalEmployerPension = $data->sum('employer_pension');
+        $totalNhf = $data->sum('nhf');
+
+        $years = PayrollPeriod::select('year')->distinct()->orderBy('year', 'desc')->pluck('year');
+
+        return view('finance.payroll.statutory', compact('pagetitle', 'data', 'year', 'years', 'totalPaye', 'totalEmployeePension', 'totalEmployerPension', 'totalNhf'));
     }
 }
