@@ -569,15 +569,15 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
     // ============================================
     // FLEXIBLE ONLINE PAYMENT ROUTES
     // ============================================
-    Route::prefix('payment/flexible')->name('payment.flexible.')->group(function () {
-        Route::get('/{studentId}/{classId}/{termId}/{sessionId}', [FlexibleOnlinePaymentController::class, 'showFlexiblePayment'])->name('show');
-        Route::post('/initialize', [FlexibleOnlinePaymentController::class, 'initializeFlexiblePayment'])->name('initialize');
-        Route::get('/callback', [FlexibleOnlinePaymentController::class, 'handlePaymentCallback'])->name('callback');
-        Route::get('/success/{reference}', [FlexibleOnlinePaymentController::class, 'paymentSuccess'])->name('success');
-        Route::get('/status/{reference}', [FlexibleOnlinePaymentController::class, 'getPaymentStatus'])->name('status');
-        Route::post('/retry/{onlinePaymentId}', [FlexibleOnlinePaymentController::class, 'retryPayment'])->name('retry');
-        Route::post('/webhook/{gateway}', [FlexibleOnlinePaymentController::class, 'webhook'])->name('webhook');
-    });
+    // Route::prefix('payment/flexible')->name('payment.flexible.')->group(function () {
+    //     Route::get('/{studentId}/{classId}/{termId}/{sessionId}', [FlexibleOnlinePaymentController::class, 'showFlexiblePayment'])->name('show');
+    //     Route::post('/initialize', [FlexibleOnlinePaymentController::class, 'initializeFlexiblePayment'])->name('initialize');
+    //     Route::get('/callback', [FlexibleOnlinePaymentController::class, 'handlePaymentCallback'])->name('callback');
+    //     Route::get('/success/{reference}', [FlexibleOnlinePaymentController::class, 'paymentSuccess'])->name('success');
+    //     Route::get('/status/{reference}', [FlexibleOnlinePaymentController::class, 'getPaymentStatus'])->name('status');
+    //     Route::post('/retry/{onlinePaymentId}', [FlexibleOnlinePaymentController::class, 'retryPayment'])->name('retry');
+    //     Route::post('/webhook/{gateway}', [FlexibleOnlinePaymentController::class, 'webhook'])->name('webhook');
+    // });
 
     // ============================================
     // SIMPLE ONLINE PAYMENT ROUTES
@@ -704,11 +704,11 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
     // ============================================
     // WEBHOOK ROUTES (No CSRF)
     // ============================================
-    Route::prefix('webhook')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class])->group(function () {
-        Route::post('/paystack', [FlexibleOnlinePaymentController::class, 'webhook'])->name('webhook.paystack');
-        Route::post('/remita', [FlexibleOnlinePaymentController::class, 'webhook'])->name('webhook.remita');
-        Route::post('/flutterwave', [FlexibleOnlinePaymentController::class, 'webhook'])->name('webhook.flutterwave');
-    });
+    // Route::prefix('webhook')->withoutMiddleware([\App\Http\Middleware\VerifyCsrfToken::class])->group(function () {
+    //     Route::post('/paystack', [FlexibleOnlinePaymentController::class, 'webhook'])->name('webhook.paystack');
+    //     Route::post('/remita', [FlexibleOnlinePaymentController::class, 'webhook'])->name('webhook.remita');
+    //     Route::post('/flutterwave', [FlexibleOnlinePaymentController::class, 'webhook'])->name('webhook.flutterwave');
+    // });
 
     // ============================================
     // BULK PAYMENT ROUTES
