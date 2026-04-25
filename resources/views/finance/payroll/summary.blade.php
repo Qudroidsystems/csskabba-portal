@@ -52,7 +52,16 @@
             <div class="table-responsive">
                 <table class="table table-hover w-100" id="payrollSummaryTable">
                     <thead>
-                        <tr><th>Month</th><th>Period</th><th>Gross Pay (₦)</th><th>PAYE (₦)</th><th>Pension (₦)</th><th>NHF (₦)</th><th>Net Pay (₦)</th><th>Employer Cost (₦)</th></tr>
+                        <tr>
+                            <th>Month</th>
+                            <th>Period</th>
+                            <th>Gross Pay (₦)</th>
+                            <th>PAYE (₦)</th>
+                            <th>Pension (₦)</th>
+                            <th>NHF (₦)</th>
+                            <th>Net Pay (₦)</th>
+                            <th>Employer Cost (₦)</th>
+                        </tr>
                     </thead>
                     <tbody></tbody>
                 </table>
@@ -88,25 +97,91 @@ const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').content;
 let summaryTable, statutoryChart, trendChart;
 
 $(document).ready(function() {
-    summaryTable = $('#payrollSummaryTable').DataTable({ processing: true, serverSide: true, pageLength: 12, ordering: false, columns: [{ data: 'month' }, { data: 'period_name' }, { data: 'gross_pay' }, { data: 'paye' }, { data: 'pension' }, { data: 'nhf' }, { data: 'net_pay' }, { data: 'employer_cost' }] });
-    loadYearData();
-    $('#yearSelect').on('change', loadYearData);
+    summaryTable = $('#payrollSummaryTable').DataTable({
+        processing: true,
+        serverSide: true,
+        pageLength: 12,
+        ordering: false,
+        ajax: {
+            url: '{{ route("payroll.summary") }}',
+            type: 'GET',
+            data: function(d) {
+                d.year = $('#yearSelect').val();
+            }
+        },
+        columns: [
+            { data: 'month', name: 'month' },
+            { data: 'period_name', name: 'period_name' },
+            { data: 'gross_pay', name: 'gross_pay' },
+            { data: 'paye', name: 'paye' },
+            { data: 'pension', name: 'pension' },
+            { data: 'nhf', name: 'nhf' },
+            { data: 'net_pay', name: 'net_pay' },
+            { data: 'employer_cost', name: 'employer_cost' }
+        ]
+    });
+
+    $('#yearSelect').on('change', function() {
+        summaryTable.ajax.reload();
+        loadYearStats();
+    });
+
     $('#exportExcelBtn').on('click', () => Swal.fire('Export Started', 'Excel file will download shortly', 'success'));
     $('#exportPdfBtn').on('click', () => Swal.fire('Export Started', 'PDF file will download shortly', 'success'));
+
+    loadYearStats();
 });
 
-function loadYearData() {
+function loadYearStats() {
     const year = $('#yearSelect').val();
-    summaryTable.ajax.url('{{ route("payroll.summary") }}?year=' + year).load();
-    $.ajax({ url: '{{ route("payroll.summary") }}', data: { year: year, stats: true }, success: updateStatsAndCharts });
+    $.ajax({
+        url: '{{ route("payroll.summary") }}',
+        data: { year: year, stats: true },
+        success: function(response) {
+            if (response.success) {
+                updateStatsAndCharts(response);
+            }
+        }
+    });
 }
 
 function updateStatsAndCharts(response) {
-    if (!response.success) return;
     const s = response.stats;
-    $('#summaryStats').html(`<div class="col-md-3"><div class="summary-stat"><div class="fs-2 fw-bold text-primary">₦${s.total_gross?.toLocaleString()}</div><div>Total Gross Pay</div></div></div><div class="col-md-3"><div class="summary-stat"><div class="fs-2 fw-bold text-danger">₦${s.total_tax?.toLocaleString()}</div><div>Total PAYE</div></div></div><div class="col-md-3"><div class="summary-stat"><div class="fs-2 fw-bold text-success">₦${s.total_pension?.toLocaleString()}</div><div>Total Pension</div></div></div><div class="col-md-3"><div class="summary-stat"><div class="fs-2 fw-bold text-warning">₦${s.total_net?.toLocaleString()}</div><div>Total Net Pay</div></div></div>`);
-    if (response.statutory_data && statutoryChart) { statutoryChart.data.datasets[0].data = response.statutory_data; statutoryChart.update(); }
-    if (response.trend_data && trendChart) { trendChart.data.datasets[0].data = response.trend_data; trendChart.update(); }
+    $('#summaryStats').html(`
+        <div class="col-md-3"><div class="summary-stat"><div class="fs-2 fw-bold text-primary">₦${(s.total_gross || 0).toLocaleString()}</div><div>Total Gross Pay</div></div></div>
+        <div class="col-md-3"><div class="summary-stat"><div class="fs-2 fw-bold text-danger">₦${(s.total_tax || 0).toLocaleString()}</div><div>Total PAYE</div></div></div>
+        <div class="col-md-3"><div class="summary-stat"><div class="fs-2 fw-bold text-success">₦${(s.total_pension || 0).toLocaleString()}</div><div>Total Pension</div></div></div>
+        <div class="col-md-3"><div class="summary-stat"><div class="fs-2 fw-bold text-warning">₦${(s.total_net || 0).toLocaleString()}</div><div>Total Net Pay</div></div></div>
+    `);
+
+    // Statutory Chart
+    if (response.statutory_data) {
+        const ctx1 = document.getElementById('statutoryChart').getContext('2d');
+        if (statutoryChart) statutoryChart.destroy();
+        statutoryChart = new Chart(ctx1, {
+            type: 'pie',
+            data: {
+                labels: ['PAYE Tax', 'Employee Pension', 'NHF'],
+                datasets: [{ data: response.statutory_data, backgroundColor: ['#dc2626', '#2563eb', '#d97706'] }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
+
+    // Trend Chart
+    if (response.trend_data) {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const ctx2 = document.getElementById('trendChart').getContext('2d');
+        if (trendChart) trendChart.destroy();
+        trendChart = new Chart(ctx2, {
+            type: 'line',
+            data: {
+                labels: months.slice(0, response.trend_data.length),
+                datasets: [{ label: 'Net Pay (₦)', data: response.trend_data, borderColor: '#16a34a', backgroundColor: 'rgba(22,163,74,0.1)', fill: true, tension: 0.4 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        });
+    }
 }
 </script>
 @endsection
