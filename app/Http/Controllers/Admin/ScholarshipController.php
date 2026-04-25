@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use Yajra\DataTables\Facades\DataTables;
 
 class ScholarshipController extends Controller
 {
@@ -27,7 +28,6 @@ class ScholarshipController extends Controller
     {
         $this->scholarshipService = $scholarshipService;
 
-        // Apply permissions middleware
         $this->middleware('permission:View scholarship', ['only' => ['index', 'show', 'showAssignments', 'showApplications']]);
         $this->middleware('permission:Create scholarship', ['only' => ['create', 'store']]);
         $this->middleware('permission:Update scholarship', ['only' => ['edit', 'update']]);
@@ -41,8 +41,6 @@ class ScholarshipController extends Controller
      */
     public function index(Request $request)
     {
-        $user = auth()->user();
-
         $query = Scholarship::with(['type', 'createdBy', 'approvedBy']);
 
         // Search filter
@@ -76,7 +74,7 @@ class ScholarshipController extends Controller
         $totalScholarships = Scholarship::count();
         $activeScholarships = Scholarship::where('status', 'active')->count();
         $totalAwarded = ScholarshipAssignment::where('status', 'active')->sum('value');
-        $totalStudents = ScholarshipAssignment::where('status', 'active')->distinct('student_id')->count();
+        $totalStudents = ScholarshipAssignment::where('status', 'active')->distinct('student_id')->count('student_id');
 
         $scholarshipTypes = ScholarshipType::where('is_active', true)->get();
 
@@ -200,7 +198,6 @@ class ScholarshipController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
-        $totalStudents = $scholarship->assignments()->count();
         $totalAmount = $scholarship->assignments()->sum('value');
         $activeCount = $scholarship->assignments()->where('status', 'active')->count();
 
@@ -210,7 +207,6 @@ class ScholarshipController extends Controller
             'pagetitle',
             'scholarship',
             'assignments',
-            'totalStudents',
             'totalAmount',
             'activeCount'
         ));
@@ -515,11 +511,14 @@ class ScholarshipController extends Controller
             'revoked' => ScholarshipAssignment::where('status', 'revoked')->count(),
         ];
 
+        $scholarships = Scholarship::where('status', 'active')->get();
+
         return view('admin.scholarship.assignments', compact(
             'pagetitle',
             'assignments',
             'statusCounts',
-            'scholarshipId'
+            'scholarshipId',
+            'scholarships'
         ));
     }
 
@@ -619,6 +618,12 @@ class ScholarshipController extends Controller
                 'message' => 'Scholarship application rejected.'
             ]);
 
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error.',
+                'errors' => $e->errors()
+            ], 422);
         } catch (\Exception $e) {
             Log::error('Error rejecting application: ' . $e->getMessage());
             return response()->json([
@@ -637,11 +642,9 @@ class ScholarshipController extends Controller
             $validated = $request->validate([
                 'scholarship_id' => 'required|exists:scholarships,id',
                 'student_id' => 'required|exists:studentRegistration,id',
-                'value_type' => 'required|in:percentage,fixed_amount',
-                'value' => 'required|numeric|min:0.01',
-                'cap_amount' => 'nullable|numeric|min:0',
                 'effective_from' => 'required|date',
                 'effective_to' => 'nullable|date|after:effective_from',
+                'reason' => 'nullable|string',
             ]);
 
             $scholarship = Scholarship::findOrFail($validated['scholarship_id']);
@@ -649,13 +652,13 @@ class ScholarshipController extends Controller
             // Check if student already has active assignment for this scholarship
             $existing = ScholarshipAssignment::where('scholarship_id', $validated['scholarship_id'])
                 ->where('student_id', $validated['student_id'])
-                ->where('status', 'active')
+                ->whereIn('status', ['active', 'pending', 'approved'])
                 ->exists();
 
             if ($existing) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Student already has an active assignment for this scholarship.'
+                    'message' => 'Student already has an active/ pending assignment for this scholarship.'
                 ], 400);
             }
 
@@ -666,12 +669,16 @@ class ScholarshipController extends Controller
                 'approved_at' => now(),
                 'effective_from' => $validated['effective_from'],
                 'effective_to' => $validated['effective_to'],
-                'value_type' => $validated['value_type'],
-                'value' => $validated['value'],
-                'cap_amount' => $validated['cap_amount'],
+                'value_type' => $scholarship->value_type,
+                'value' => $scholarship->value,
+                'cap_amount' => $scholarship->cap_amount,
+                'reason' => $validated['reason'] ?? null,
                 'assigned_by' => auth()->id(),
                 'approved_by' => auth()->id(),
             ]);
+
+            // Update utilized amount
+            $scholarship->increment('utilized_amount', $scholarship->value_type === 'fixed_amount' ? $scholarship->value : 0);
 
             return response()->json([
                 'success' => true,
@@ -697,16 +704,20 @@ class ScholarshipController extends Controller
     /**
      * Revoke a scholarship assignment.
      */
-    public function revokeAssignment($assignmentId)
+    public function revokeAssignment(Request $request, $assignmentId)
     {
         try {
             $assignment = ScholarshipAssignment::findOrFail($assignmentId);
 
             $assignment->update([
                 'status' => 'revoked',
-                'revocation_reason' => request()->input('reason', 'Revoked by administrator'),
+                'revocation_reason' => $request->input('reason', 'Revoked by administrator'),
                 'effective_to' => now(),
             ]);
+
+            // Update scholarship utilized amount
+            $scholarship = $assignment->scholarship;
+            $scholarship->decrement('utilized_amount', $assignment->value_type === 'fixed_amount' ? $assignment->value : 0);
 
             return response()->json([
                 'success' => true,
@@ -723,13 +734,14 @@ class ScholarshipController extends Controller
     }
 
     /**
-     * Get students eligible for scholarship based on criteria.
+     * Get students eligible for scholarship based on criteria (AJAX).
      */
     public function getEligibleStudents(Request $request)
     {
         try {
             $request->validate([
-                'scholarship_id' => 'required|exists:scholarships,id'
+                'scholarship_id' => 'required|exists:scholarships,id',
+                'q' => 'nullable|string'
             ]);
 
             $scholarship = Scholarship::findOrFail($request->scholarship_id);
@@ -739,19 +751,32 @@ class ScholarshipController extends Controller
             $query = Student::query();
 
             if (!empty($eligibleClasses)) {
-                $query->whereHas('currentClass', function($q) use ($eligibleClasses) {
+                $query->whereHas('studentClass', function($q) use ($eligibleClasses) {
                     $q->whereIn('schoolclassid', $eligibleClasses);
                 });
+            } else {
+                // Get all students with current class
+                $query->whereHas('studentClass');
             }
 
             if (!empty($eligibleStatusIds)) {
                 $query->whereIn('statusId', $eligibleStatusIds);
             }
 
+            // Search by name or admission number
+            if ($request->filled('q')) {
+                $search = $request->q;
+                $query->where(function($q) use ($search) {
+                    $q->where('firstname', 'like', "%{$search}%")
+                      ->orWhere('lastname', 'like', "%{$search}%")
+                      ->orWhere('admissionNo', 'like', "%{$search}%");
+                });
+            }
+
             // Exclude students who already have active assignment
             $query->whereDoesntHave('scholarshipAssignments', function($q) use ($scholarship) {
                 $q->where('scholarship_id', $scholarship->id)
-                  ->where('status', 'active');
+                  ->whereIn('status', ['active', 'pending', 'approved']);
             });
 
             $students = $query->select('id', 'firstname', 'lastname', 'admissionNo')
