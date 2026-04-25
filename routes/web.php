@@ -651,6 +651,7 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
         // Salary Structures
         Route::get('/salary-structures', [PayrollController::class, 'salaryStructures'])->name('salary-structures');
         Route::post('/salary-structures', [PayrollController::class, 'storeSalaryStructure'])->name('salary-structures.store');
+        Route::get('/payroll/salary-structures/{id}', [PayrollController::class, 'showSalaryStructure'])->name('payroll.salary-structures.show');
         Route::get('/salary-structures/{id}/edit', [PayrollController::class, 'editSalaryStructure'])->name('salary-structures.edit');
         Route::put('/salary-structures/{id}', [PayrollController::class, 'updateSalaryStructure'])->name('salary-structures.update');
         Route::delete('/salary-structures/{id}', [PayrollController::class, 'destroySalaryStructure'])->name('salary-structures.destroy');

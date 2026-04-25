@@ -66,7 +66,12 @@ class PayrollController extends Controller
                     return $period->payrollRuns()->count();
                 })
                 ->addColumn('status_badge', function($period) {
-                    return $period->status_badge;
+                    if ($period->status == 'draft') return '<span class="badge bg-secondary">Draft</span>';
+                    if ($period->status == 'processing') return '<span class="badge bg-info">Processing</span>';
+                    if ($period->status == 'approved') return '<span class="badge bg-primary">Approved</span>';
+                    if ($period->status == 'paid') return '<span class="badge bg-success">Paid</span>';
+                    if ($period->status == 'locked') return '<span class="badge bg-dark">Locked</span>';
+                    return '<span class="badge bg-secondary">' . ucfirst($period->status) . '</span>';
                 })
                 ->addColumn('action', function($period) {
                     $buttons = '';
@@ -516,13 +521,25 @@ class PayrollController extends Controller
                 foreach ($structures as $structure) {
                     $data[] = [
                         'DT_RowIndex' => $i++,
+                        'id' => $structure->id,
+                        'staff_id' => $structure->staff_id,
                         'staff_name' => $structure->staff->user->name ?? 'N/A',
-                        'staff_id' => $structure->staff->employmentid ?? 'N/A',
+                        'staff_id_no' => $structure->staff->employmentid ?? 'N/A',
                         'basic_salary' => '₦' . number_format($structure->basic_salary, 2),
                         'total_earnings' => '₦' . number_format($structure->total_earnings, 2),
+                        'effective_from' => $structure->effective_from->format('Y-m-d'),
+                        'effective_to' => $structure->effective_to ? $structure->effective_to->format('Y-m-d') : null,
                         'effective_period' => $structure->effective_period,
+                        'housing_allowance' => $structure->housing_allowance,
+                        'transport_allowance' => $structure->transport_allowance,
+                        'meal_allowance' => $structure->meal_allowance,
+                        'medical_allowance' => $structure->medical_allowance,
+                        'utility_allowance' => $structure->utility_allowance,
+                        'other_allowances' => $structure->other_allowances,
+                        'custom_allowances' => $structure->custom_allowances,
                         'is_active' => $structure->is_active ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-secondary">Inactive</span>',
-                        'action' => '<button class="btn btn-sm btn-primary edit-structure me-1" data-id="'.$structure->id.'"><i class="ri-pencil-line"></i></button>
+                        'action' => '<button class="btn btn-sm btn-info view-structure me-1" data-id="'.$structure->id.'" data-bs-toggle="modal" data-bs-target="#viewStructureModal"><i class="ri-eye-line"></i></button>
+                                     <button class="btn btn-sm btn-primary edit-structure me-1" data-id="'.$structure->id.'"><i class="ri-pencil-line"></i></button>
                                      <button class="btn btn-sm btn-danger delete-structure" data-id="'.$structure->id.'"><i class="ri-delete-bin-line"></i></button>',
                     ];
                 }
@@ -619,6 +636,26 @@ class PayrollController extends Controller
     }
 
     /**
+     * Edit salary structure (AJAX).
+     */
+    public function editSalaryStructure($id)
+    {
+        try {
+            $structure = StaffSalaryStructure::findOrFail($id);
+
+            return response()->json([
+                'success' => true,
+                'data' => $structure
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Structure not found'
+            ], 404);
+        }
+    }
+
+    /**
      * Update salary structure (AJAX).
      */
     public function updateSalaryStructure(Request $request, $id)
@@ -701,4 +738,24 @@ class PayrollController extends Controller
             'message' => 'Salary structure deleted successfully!'
         ]);
     }
+
+    /**
+ * Show salary structure details (AJAX).
+ */
+public function showSalaryStructure($id)
+{
+    try {
+        $structure = StaffSalaryStructure::with(['staff.user'])->findOrFail($id);
+
+        return response()->json([
+            'success' => true,
+            'data' => $structure
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Structure not found'
+        ], 404);
+    }
+}
 }

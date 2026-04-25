@@ -18,6 +18,12 @@
     padding: 0.25rem 0.5rem;
     font-size: 0.75rem;
 }
+.structure-card {
+    transition: transform 0.2s;
+}
+.structure-card:hover {
+    transform: translateY(-2px);
+}
 </style>
 
 <div class="main-content">
@@ -44,7 +50,7 @@
     {{-- Statistics Cards --}}
     <div class="row g-3 mb-4">
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm">
+            <div class="card border-0 shadow-sm structure-card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -59,7 +65,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm">
+            <div class="card border-0 shadow-sm structure-card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -74,8 +80,8 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
+            <div class="card border-0 shadow-sm structure-card">
+                <div class-card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
                             <span class="text-muted small">Avg Basic Salary</span>
@@ -89,7 +95,7 @@
             </div>
         </div>
         <div class="col-md-3">
-            <div class="card border-0 shadow-sm">
+            <div class="card border-0 shadow-sm structure-card">
                 <div class="card-body">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
@@ -114,7 +120,7 @@
         </div>
         <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover mb-0" id="structuresTable">
+                <table class="table table-hover mb-0 w-100" id="structuresTable">
                     <thead class="table-light">
                         <tr>
                             <th width="50">#</th>
@@ -124,7 +130,7 @@
                             <th>Total Earnings</th>
                             <th>Effective Period</th>
                             <th>Status</th>
-                            <th width="100">Actions</th>
+                            <th width="120">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -259,13 +265,8 @@
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-md-12">
-                            <label class="form-label fw-semibold">Staff Member <span class="text-danger">*</span></label>
-                            <select name="staff_id" id="editStaffId" class="form-select" disabled>
-                                <option value="">-- Select Staff --</option>
-                                @foreach($staff as $s)
-                                    <option value="{{ $s->id }}">{{ $s->user->name ?? 'N/A' }} ({{ $s->employmentid ?? 'No ID' }})</option>
-                                @endforeach
-                            </select>
+                            <label class="form-label fw-semibold">Staff Member</label>
+                            <input type="text" id="editStaffName" class="form-control" readonly disabled>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Effective From</label>
@@ -297,7 +298,7 @@
                             <label class="form-label fw-semibold">Transport Allowance</label>
                             <div class="input-group">
                                 <span class="input-group-text">₦</span>
-                                <input type="number" name="transport_allowance" id="editTransportAllowance" class="form-control" step="0.01">
+                                                               <input type="number" name="transport_allowance" id="editTransportAllowance" class="form-control" step="0.01">
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -311,7 +312,7 @@
                             <label class="form-label fw-semibold">Medical Allowance</label>
                             <div class="input-group">
                                 <span class="input-group-text">₦</span>
-                                <input type="number" name="medical_allowance" id="editMedicalAllowance" class="form-control" step="0.01">
+                                <input type="number" name="medical_allowance" id="editMedicalAllowance" class="form-control" step="0.01>
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -339,6 +340,27 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+{{-- View Structure Modal --}}
+<div class="modal fade" id="viewStructureModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title"><i class="ri-eye-line me-2"></i>View Salary Structure</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="viewStructureContent">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary"></div>
+                    <p class="mt-2">Loading structure details...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
     </div>
 </div>
@@ -376,21 +398,21 @@ $(document).ready(function() {
         processing: true,
         serverSide: false,
         ajax: {
-            url: '{{ route("payroll.structures") }}',
+            url: '{{ route("payroll.salary-structures") }}',
             type: 'GET',
             dataSrc: 'data',
             beforeSend: function() {
-                $('#structuresTable tbody').html('<tr><td colspan="8" class="text-center"><div class="spinner-border text-primary"></div><p>Loading...</p></td></tr>');
+                $('#structuresTable tbody').html('<tr><td colspan="8" class="text-center"><div class="spinner-border text-primary"></div><p>Loading...</p> </td></tr>');
             },
             error: function(xhr) {
                 console.error('DataTable Error:', xhr);
-                $('#structuresTable tbody').html('<tr><td colspan="8" class="text-center text-danger">Failed to load data. Please refresh the page.</td></tr>');
+                $('#structuresTable tbody').html('<tr><td colspan="8" class="text-center text-danger">Failed to load data. Please refresh the page. </td></tr>');
             }
         },
         columns: [
             { data: 'DT_RowIndex' },
             { data: 'staff_name' },
-            { data: 'staff_id' },
+            { data: 'staff_id_no', defaultContent: 'N/A' },
             { data: 'basic_salary' },
             { data: 'total_earnings' },
             { data: 'effective_period' },
@@ -421,7 +443,7 @@ $(document).ready(function() {
         const formData = $(this).serialize();
 
         $.ajax({
-            url: '{{ route("payroll.structures.store") }}',
+            url: '{{ route("payroll.salary-structures.store") }}',
             type: 'POST',
             data: formData,
             headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
@@ -454,6 +476,79 @@ $(document).ready(function() {
         });
     });
 
+    // View Structure
+    $(document).on('click', '.view-structure', function() {
+        const id = $(this).data('id');
+        const modal = new bootstrap.Modal(document.getElementById('viewStructureModal'));
+
+        $.ajax({
+            url: `/payroll/salary-structures/${id}`,
+            type: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    const data = response.data;
+                    $('#viewStructureContent').html(`
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="border rounded-3 p-3">
+                                    <div class="small text-muted">Staff Name</div>
+                                    <div class="fw-bold">${data.staff?.user?.name || 'N/A'}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="border rounded-3 p-3">
+                                    <div class="small text-muted">Staff ID</div>
+                                    <div class="fw-bold">${data.staff?.employmentid || 'N/A'}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="border rounded-3 p-3">
+                                    <div class="small text-muted">Effective From</div>
+                                    <div class="fw-bold">${new Date(data.effective_from).toLocaleDateString()}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="border rounded-3 p-3">
+                                    <div class="small text-muted">Effective To</div>
+                                    <div class="fw-bold">${data.effective_to ? new Date(data.effective_to).toLocaleDateString() : 'Ongoing'}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="border rounded-3 p-3">
+                                    <div class="small text-muted">Basic Salary</div>
+                                    <div class="fw-bold text-success">₦${parseFloat(data.basic_salary).toLocaleString()}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="border rounded-3 p-3">
+                                    <div class="small text-muted">Total Earnings</div>
+                                    <div class="fw-bold text-primary">₦${parseFloat(data.total_earnings).toLocaleString()}</div>
+                                </div>
+                            </div>
+                            <div class="col-12">
+                                <div class="border rounded-3 p-3">
+                                    <div class="small text-muted mb-2">Allowances Breakdown</div>
+                                    <table class="table table-sm mb-0">
+                                        <tr><td width="50%">Housing Allowance:</td><td>₦${parseFloat(data.housing_allowance || 0).toLocaleString()}</td></tr>
+                                        <tr><td>Transport Allowance:</td><td>₦${parseFloat(data.transport_allowance || 0).toLocaleString()}</td></tr>
+                                        <tr><td>Meal Allowance:</td><td>₦${parseFloat(data.meal_allowance || 0).toLocaleString()}</td></tr>
+                                        <tr><td>Medical Allowance:</td><td>₦${parseFloat(data.medical_allowance || 0).toLocaleString()}</td></tr>
+                                        <tr><td>Utility Allowance:</td><td>₦${parseFloat(data.utility_allowance || 0).toLocaleString()}</td></tr>
+                                        <tr><td>Other Allowances:</td><td>₦${parseFloat(data.other_allowances || 0).toLocaleString()}</td></tr>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    `);
+                    modal.show();
+                }
+            },
+            error: function() {
+                $('#viewStructureContent').html('<div class="alert alert-danger">Failed to load structure details.</div>');
+            }
+        });
+    });
+
     // Edit Structure
     $(document).on('click', '.edit-structure', function() {
         const id = $(this).data('id');
@@ -465,7 +560,7 @@ $(document).ready(function() {
                 if (response.success) {
                     const data = response.data;
                     $('#editId').val(data.id);
-                    $('#editStaffId').val(data.staff_id);
+                    $('#editStaffName').val(data.staff?.user?.name || 'N/A');
                     $('#editEffectiveFrom').val(data.effective_from);
                     $('#editEffectiveTo').val(data.effective_to || '');
                     $('#editBasicSalary').val(data.basic_salary);
@@ -573,7 +668,7 @@ $(document).ready(function() {
 
         const uniqueStaff = new Set();
         rows.each(function(row) {
-            uniqueStaff.add(row.staff_id);
+            uniqueStaff.add(row.id);
         });
 
         $('#totalStructures').text(total);
