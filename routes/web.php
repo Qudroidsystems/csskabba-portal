@@ -618,8 +618,6 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
     // STAFF PAYMENT ROUTES
     // ============================================
     Route::prefix('staff/payments')->name('staff.payments.')->group(function () {
-        // Staff dashboard (staff view)
-        Route::get('/dashboard', [StaffPaymentController::class, 'staffDashboard'])->name('dashboard');
 
         // Admin views
         Route::get('/', [StaffPaymentController::class, 'index'])->name('index');
@@ -629,6 +627,8 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
         Route::get('/{id}/edit', [StaffPaymentController::class, 'edit'])->name('edit');
         Route::put('/{id}', [StaffPaymentController::class, 'update'])->name('update');
         Route::delete('/{id}', [StaffPaymentController::class, 'destroy'])->name('destroy');
+        // Staff dashboard (staff view)
+        Route::get('/dashboard', [StaffPaymentController::class, 'staffDashboard'])->name('dashboard');
 
         // AJAX endpoints
         Route::get('/history', [StaffPaymentController::class, 'getPaymentHistory'])->name('history');
