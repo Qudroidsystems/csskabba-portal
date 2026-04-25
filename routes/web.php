@@ -472,29 +472,34 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
     // SCHOLARSHIP MANAGEMENT ROUTES
     // ============================================
     Route::prefix('admin/scholarship')->name('admin.scholarship.')->group(function () {
-        Route::get('/', [ScholarshipController::class, 'index'])->name('index');
+        // Static routes FIRST
+        Route::get('/assignments', [ScholarshipController::class, 'showAssignments'])->name('assignments');
+        Route::get('/applications', [ScholarshipController::class, 'showApplications'])->name('applications');
         Route::get('/create', [ScholarshipController::class, 'create'])->name('create');
         Route::post('/store', [ScholarshipController::class, 'store'])->name('store');
+        Route::post('/bulk-destroy', [ScholarshipController::class, 'bulkDestroy'])->name('bulk-destroy');
+        Route::post('/assign', [ScholarshipController::class, 'assignToStudent'])->name('assign');
+        Route::delete('/assignment/{assignmentId}', [ScholarshipController::class, 'revokeAssignment'])->name('assignment.revoke');
+        Route::post('/application/{applicationId}/approve', [ScholarshipController::class, 'approveApplication'])->name('application.approve');
+        Route::post('/application/{applicationId}/reject', [ScholarshipController::class, 'rejectApplication'])->name('application.reject');
+
+        // ADD THIS MISSING ROUTE
+        Route::get('/eligible-students', [ScholarshipController::class, 'getEligibleStudents'])->name('eligible-students');
+
+        // Parameter routes LAST
+        Route::get('/', [ScholarshipController::class, 'index'])->name('index');
         Route::get('/{id}', [ScholarshipController::class, 'show'])->name('show');
         Route::get('/{id}/edit', [ScholarshipController::class, 'edit'])->name('edit');
         Route::put('/{id}', [ScholarshipController::class, 'update'])->name('update');
         Route::delete('/{id}', [ScholarshipController::class, 'destroy'])->name('destroy');
-        Route::post('/bulk-destroy', [ScholarshipController::class, 'bulkDestroy'])->name('bulk-destroy');
         Route::post('/{id}/approve', [ScholarshipController::class, 'approve'])->name('approve');
         Route::post('/{id}/revoke', [ScholarshipController::class, 'revoke'])->name('revoke');
-        Route::get('/assignments', [ScholarshipController::class, 'showAssignments'])->name('assignments');
-        Route::post('/assign', [ScholarshipController::class, 'assignToStudent'])->name('assign');
-        Route::delete('/assignment/{assignmentId}', [ScholarshipController::class, 'revokeAssignment'])->name('assignment.revoke');
-        Route::get('/applications', [ScholarshipController::class, 'showApplications'])->name('applications');
-        Route::post('/application/{applicationId}/approve', [ScholarshipController::class, 'approveApplication'])->name('application.approve');
-        Route::post('/application/{applicationId}/reject', [ScholarshipController::class, 'rejectApplication'])->name('application.reject');
-        Route::get('/eligible-students', [ScholarshipController::class, 'getEligibleStudents'])->name('eligible-students');
     });
 
     // ============================================
-    // DISCOUNT MANAGEMENT ROUTES - CORRECTED ORDER
+    // DISCOUNT MANAGEMENT ROUTES
     // ============================================
-    Route::prefix('admin/discount')->name('admin.discount.')->middleware(['auth'])->group(function () {
+    Route::prefix('admin/discount')->name('admin.discount.')->group(function () {
         // Static routes FIRST (before parameter routes)
         Route::get('/assignments', [DiscountController::class, 'showAssignments'])->name('assignments');
         Route::get('/create', [DiscountController::class, 'create'])->name('create');
@@ -503,7 +508,10 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
         Route::post('/assign', [DiscountController::class, 'assignToStudent'])->name('assign');
         Route::delete('/assignment/{assignmentId}', [DiscountController::class, 'removeAssignment'])->name('assignment.remove');
 
-        // Parameter routes LAST (these come after static routes)
+        // ADD THIS MISSING ROUTE
+        Route::get('/eligible-students', [DiscountController::class, 'getEligibleStudents'])->name('eligible-students');
+
+        // Parameter routes LAST
         Route::get('/', [DiscountController::class, 'index'])->name('index');
         Route::get('/{id}', [DiscountController::class, 'show'])->name('show');
         Route::get('/{id}/edit', [DiscountController::class, 'edit'])->name('edit');
