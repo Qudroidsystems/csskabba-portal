@@ -648,12 +648,14 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
         Route::get('/summary', [PayrollController::class, 'summaryReport'])->name('summary');
         Route::get('/statutory', [PayrollController::class, 'statutoryReport'])->name('statutory');
 
-        // Salary Structures - Using /salary-structures
-        Route::get('/salary-structures', [PayrollController::class, 'salaryStructures'])->name('salary-structures');
-        Route::post('/salary-structures', [PayrollController::class, 'storeSalaryStructure'])->name('salary-structures.store');
-        Route::put('/salary-structures/{id}', [PayrollController::class, 'updateSalaryStructure'])->name('salary-structures.update');
-        Route::delete('/salary-structures/{id}', [PayrollController::class, 'destroySalaryStructure'])->name('salary-structures.destroy');
-    });
+        // Salary Structures Routes
+        Route::get('/payroll/salary-structures', [PayrollController::class, 'salaryStructures'])->name('payroll.structures');
+        Route::post('/payroll/salary-structures', [PayrollController::class, 'storeSalaryStructure'])->name('payroll.structures.store');
+        Route::get('/payroll/salary-structures/{id}/edit', [PayrollController::class, 'editSalaryStructure'])->name('payroll.structures.edit');
+        Route::put('/payroll/salary-structures/{id}', [PayrollController::class, 'updateSalaryStructure'])->name('payroll.structures.update');
+        Route::delete('/payroll/salary-structures/{id}', [PayrollController::class, 'destroySalaryStructure'])->name('payroll.structures.destroy');
+
+});
 
 
 
