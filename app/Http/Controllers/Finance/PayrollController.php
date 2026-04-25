@@ -4,19 +4,19 @@
 namespace App\Http\Controllers\Finance;
 
 use App\Http\Controllers\Controller;
-use App\Models\Staff;
-use App\Models\PayrollPeriod;
 use App\Models\PayrollRun;
-use App\Models\StaffSalaryStructure;
+use App\Models\SchoolInformation;
+use App\Models\Staff;
 use App\Models\StaffPayment;
-use App\Services\Payroll\NigerianPayrollService;
+use App\Models\StaffSalaryStructure;
 use App\Services\Accounting\AccountingService;
+use App\Services\Payroll\NigerianPayrollService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Yajra\DataTables\Facades\DataTables;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class PayrollController extends Controller
 {
