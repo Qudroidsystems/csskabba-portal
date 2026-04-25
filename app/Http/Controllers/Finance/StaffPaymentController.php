@@ -44,67 +44,68 @@ class StaffPaymentController extends Controller
     public function index(Request $request)
     {
         $pagetitle = 'Staff Payments Management';
+        echo "yes";
 
-        if ($request->ajax()) {
-            $payments = StaffPayment::with(['staff.user', 'payrollRun'])
-                ->select('staff_payments.*')
-                ->orderBy('created_at', 'desc');
+        // if ($request->ajax()) {
+        //     $payments = StaffPayment::with(['staff.user', 'payrollRun'])
+        //         ->select('staff_payments.*')
+        //         ->orderBy('created_at', 'desc');
 
-            return DataTables::of($payments)
-                ->addIndexColumn()
-                ->addColumn('staff_name', function($payment) {
-                    return $payment->staff->user->name ?? 'N/A';
-                })
-                ->addColumn('staff_id', function($payment) {
-                    return $payment->staff->employmentid ?? 'N/A';
-                })
-                ->addColumn('formatted_amount', function($payment) {
-                    return '₦' . number_format($payment->amount, 2);
-                })
-                ->addColumn('payment_type_badge', function($payment) {
-                    $badges = [
-                        'salary' => 'primary',
-                        'bonus' => 'success',
-                        'loan_disbursement' => 'info',
-                        'reimbursement' => 'warning',
-                        'advance' => 'danger',
-                        'other' => 'secondary',
-                    ];
-                    $color = $badges[$payment->payment_type] ?? 'secondary';
-                    return '<span class="badge bg-' . $color . '">' . ucfirst(str_replace('_', ' ', $payment->payment_type)) . '</span>';
-                })
-                ->addColumn('status_badge', function($payment) {
-                    $badges = [
-                        'pending' => 'warning',
-                        'processed' => 'info',
-                        'paid' => 'success',
-                        'failed' => 'danger',
-                        'reversed' => 'secondary',
-                    ];
-                    $color = $badges[$payment->payment_status] ?? 'secondary';
-                    return '<span class="badge bg-' . $color . '">' . ucfirst($payment->payment_status) . '</span>';
-                })
-                ->addColumn('action', function($payment) {
-                    $buttons = '<button class="btn btn-sm btn-info view-payment me-1" data-id="'.$payment->id.'"><i class="ri-eye-line"></i></button>';
+        //     return DataTables::of($payments)
+        //         ->addIndexColumn()
+        //         ->addColumn('staff_name', function($payment) {
+        //             return $payment->staff->user->name ?? 'N/A';
+        //         })
+        //         ->addColumn('staff_id', function($payment) {
+        //             return $payment->staff->employmentid ?? 'N/A';
+        //         })
+        //         ->addColumn('formatted_amount', function($payment) {
+        //             return '₦' . number_format($payment->amount, 2);
+        //         })
+        //         ->addColumn('payment_type_badge', function($payment) {
+        //             $badges = [
+        //                 'salary' => 'primary',
+        //                 'bonus' => 'success',
+        //                 'loan_disbursement' => 'info',
+        //                 'reimbursement' => 'warning',
+        //                 'advance' => 'danger',
+        //                 'other' => 'secondary',
+        //             ];
+        //             $color = $badges[$payment->payment_type] ?? 'secondary';
+        //             return '<span class="badge bg-' . $color . '">' . ucfirst(str_replace('_', ' ', $payment->payment_type)) . '</span>';
+        //         })
+        //         ->addColumn('status_badge', function($payment) {
+        //             $badges = [
+        //                 'pending' => 'warning',
+        //                 'processed' => 'info',
+        //                 'paid' => 'success',
+        //                 'failed' => 'danger',
+        //                 'reversed' => 'secondary',
+        //             ];
+        //             $color = $badges[$payment->payment_status] ?? 'secondary';
+        //             return '<span class="badge bg-' . $color . '">' . ucfirst($payment->payment_status) . '</span>';
+        //         })
+        //         ->addColumn('action', function($payment) {
+        //             $buttons = '<button class="btn btn-sm btn-info view-payment me-1" data-id="'.$payment->id.'"><i class="ri-eye-line"></i></button>';
 
-                    if ($payment->payment_status === 'processed') {
-                        $buttons .= '<button class="btn btn-sm btn-success mark-paid me-1" data-id="'.$payment->id.'"><i class="ri-check-line"></i> Mark Paid</button>';
-                    }
+        //             if ($payment->payment_status === 'processed') {
+        //                 $buttons .= '<button class="btn btn-sm btn-success mark-paid me-1" data-id="'.$payment->id.'"><i class="ri-check-line"></i> Mark Paid</button>';
+        //             }
 
-                    if ($payment->payment_status !== 'reversed' && $payment->payment_status !== 'paid') {
-                        $buttons .= '<button class="btn btn-sm btn-danger reverse-payment me-1" data-id="'.$payment->id.'"><i class="ri-refund-line"></i> Reverse</button>';
-                    }
+        //             if ($payment->payment_status !== 'reversed' && $payment->payment_status !== 'paid') {
+        //                 $buttons .= '<button class="btn btn-sm btn-danger reverse-payment me-1" data-id="'.$payment->id.'"><i class="ri-refund-line"></i> Reverse</button>';
+        //             }
 
-                    return $buttons;
-                })
-                ->rawColumns(['payment_type_badge', 'status_badge', 'action'])
-                ->make(true);
-        }
+        //             return $buttons;
+        //         })
+        //         ->rawColumns(['payment_type_badge', 'status_badge', 'action'])
+        //         ->make(true);
+        // }
 
-        $staff = Staff::with('user')->active()->get();
-        $payrollPeriods = PayrollPeriod::orderBy('id', 'desc')->get();
+        // $staff = Staff::with('user')->active()->get();
+        // $payrollPeriods = PayrollPeriod::orderBy('id', 'desc')->get();
 
-        return view('finance.staff.payments-index', compact('pagetitle', 'staff', 'payrollPeriods'));
+        // return view('finance.staff.payments-index', compact('pagetitle', 'staff', 'payrollPeriods'));
     }
 
     /**
