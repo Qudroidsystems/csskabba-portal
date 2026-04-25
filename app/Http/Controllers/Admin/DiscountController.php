@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use Yajra\DataTables\Facades\DataTables;
 
 class DiscountController extends Controller
 {
@@ -420,8 +421,200 @@ class DiscountController extends Controller
         }
     }
 
+    /**
+     * Display discount assignments.
+     */
+    public function showAssignments(Request $request)
+    {
+        $query = DiscountAssignment::with(['discount', 'student', 'assignedBy']);
 
-   
+        // Status filter
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Student search
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->whereHas('student', function($q) use ($search) {
+                $q->where('firstname', 'like', "%{$search}%")
+                  ->orWhere('lastname', 'like', "%{$search}%")
+                  ->orWhere('admissionNo', 'like', "%{$search}%");
+            });
+        }
+
+        // Discount filter
+        if ($request->filled('discount_id')) {
+            $query->where('discount_id', $request->discount_id);
+        }
+
+        $assignments = $query->orderBy('created_at', 'desc')->paginate(20);
+
+        $statusCounts = [
+            'active' => DiscountAssignment::where('status', 'active')->count(),
+            'expired' => DiscountAssignment::where('status', 'expired')->count(),
+            'removed' => DiscountAssignment::where('status', 'removed')->count(),
+        ];
+
+        $discounts = Discount::where('status', 'active')->get();
+
+        $pagetitle = 'Discount Assignments';
+
+        return view('admin.discount.assignments', compact(
+            'pagetitle',
+            'assignments',
+            'statusCounts',
+            'discounts'
+        ));
+    }
+
+    /**
+     * Assign discount to a student.
+     */
+    public function assignToStudent(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'discount_id' => 'required|exists:discounts,id',
+                'student_id' => 'required|exists:studentRegistration,id',
+                'effective_from' => 'required|date',
+                'effective_to' => 'nullable|date|after:effective_from',
+                'reason' => 'nullable|string',
+            ]);
+
+            $discount = Discount::findOrFail($validated['discount_id']);
+
+            // Check if student already has active assignment for this discount
+            $existing = DiscountAssignment::where('discount_id', $validated['discount_id'])
+                ->where('student_id', $validated['student_id'])
+                ->where('status', 'active')
+                ->exists();
+
+            if ($existing) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Student already has an active assignment for this discount.'
+                ], 400);
+            }
+
+            $assignment = DiscountAssignment::create([
+                'discount_id' => $validated['discount_id'],
+                'student_id' => $validated['student_id'],
+                'status' => 'active',
+                'effective_from' => $validated['effective_from'],
+                'effective_to' => $validated['effective_to'],
+                'value_type' => $discount->value_type,
+                'value' => $discount->value,
+                'max_amount' => $discount->max_amount,
+                'reason' => $validated['reason'] ?? null,
+                'assigned_by' => auth()->id(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Discount assigned successfully.',
+                'assignment' => $assignment
+            ]);
+
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation error.',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Error assigning discount: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to assign discount.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Remove discount assignment from a student.
+     */
+    public function removeAssignment(Request $request, $assignmentId)
+    {
+        try {
+            $assignment = DiscountAssignment::findOrFail($assignmentId);
+
+            $assignment->update([
+                'status' => 'removed',
+                'effective_to' => now(),
+                'reason' => $request->input('reason', 'Removed by administrator'),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Discount assignment removed successfully.'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error removing assignment: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to remove assignment.'
+            ], 500);
+        }
+    }
+
+    /**
+     * Get eligible students for discount (AJAX).
+     */
+    public function getEligibleStudents(Request $request)
+    {
+        try {
+            $request->validate([
+                'discount_id' => 'required|exists:discounts,id',
+                'q' => 'nullable|string'
+            ]);
+
+            $discount = Discount::findOrFail($request->discount_id);
+            $eligibleClasses = json_decode($discount->eligible_classes, true) ?? [];
+
+            $query = Student::query();
+
+            if (!empty($eligibleClasses)) {
+                $query->whereHas('studentClass', function($q) use ($eligibleClasses) {
+                    $q->whereIn('schoolclassid', $eligibleClasses);
+                });
+            }
+
+            // Search by name or admission number
+            if ($request->filled('q')) {
+                $search = $request->q;
+                $query->where(function($q) use ($search) {
+                    $q->where('firstname', 'like', "%{$search}%")
+                      ->orWhere('lastname', 'like', "%{$search}%")
+                      ->orWhere('admissionNo', 'like', "%{$search}%");
+                });
+            }
+
+            // Exclude students who already have active assignment
+            $query->whereDoesntHave('discountAssignments', function($q) use ($discount) {
+                $q->where('discount_id', $discount->id)
+                  ->where('status', 'active');
+            });
+
+            $students = $query->select('id', 'firstname', 'lastname', 'admissionNo')
+                ->orderBy('lastname')
+                ->limit(50)
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'students' => $students
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error getting eligible students: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to get eligible students.'
+            ], 500);
+        }
+    }
 
     /**
      * Generate unique discount number.
@@ -437,204 +630,4 @@ class DiscountController extends Controller
 
         return 'DSC-' . $year . '-' . str_pad($sequence, 4, '0', STR_PAD_LEFT);
     }
-
-
-
-
-/**
- * Display discount assignments.
- */
-public function showAssignments(Request $request, $discountId = null)
-{
-    $query = DiscountAssignment::with(['discount', 'student', 'assignedBy']);
-
-    if ($discountId) {
-        $query->where('discount_id', $discountId);
-        $discount = Discount::findOrFail($discountId);
-        $pagetitle = 'Discount Assignments: ' . $discount->title;
-    } else {
-        $pagetitle = 'All Discount Assignments';
-    }
-
-    // Status filter
-    if ($request->filled('status')) {
-        $query->where('status', $request->status);
-    }
-
-    // Student search
-    if ($request->filled('search')) {
-        $search = $request->search;
-        $query->whereHas('student', function($q) use ($search) {
-            $q->where('firstname', 'like', "%{$search}%")
-              ->orWhere('lastname', 'like', "%{$search}%")
-              ->orWhere('admissionNo', 'like', "%{$search}%");
-        });
-    }
-
-    $assignments = $query->orderBy('created_at', 'desc')->paginate(20);
-
-    $statusCounts = [
-        'active' => DiscountAssignment::where('status', 'active')->count(),
-        'expired' => DiscountAssignment::where('status', 'expired')->count(),
-        'removed' => DiscountAssignment::where('status', 'removed')->count(),
-    ];
-
-    $discounts = Discount::where('status', 'active')->get();
-
-    return view('admin.discount.assignments', compact(
-        'pagetitle',
-        'assignments',
-        'statusCounts',
-        'discountId',
-        'discounts'
-    ));
-}
-
-/**
- * Assign discount to a student.
- */
-public function assignToStudent(Request $request)
-{
-    try {
-        $validated = $request->validate([
-            'discount_id' => 'required|exists:discounts,id',
-            'student_id' => 'required|exists:studentRegistration,id',
-            'effective_from' => 'required|date',
-            'effective_to' => 'nullable|date|after:effective_from',
-            'reason' => 'nullable|string',
-        ]);
-
-        $discount = Discount::findOrFail($validated['discount_id']);
-
-        // Check if student already has active assignment for this discount
-        $existing = DiscountAssignment::where('discount_id', $validated['discount_id'])
-            ->where('student_id', $validated['student_id'])
-            ->where('status', 'active')
-            ->exists();
-
-        if ($existing) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Student already has an active assignment for this discount.'
-            ], 400);
-        }
-
-        $assignment = DiscountAssignment::create([
-            'discount_id' => $validated['discount_id'],
-            'student_id' => $validated['student_id'],
-            'status' => 'active',
-            'effective_from' => $validated['effective_from'],
-            'effective_to' => $validated['effective_to'],
-            'value_type' => $discount->value_type,
-            'value' => $discount->value,
-            'max_amount' => $discount->max_amount,
-            'reason' => $validated['reason'] ?? null,
-            'assigned_by' => auth()->id(),
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Discount assigned successfully.',
-            'assignment' => $assignment
-        ]);
-
-    } catch (ValidationException $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Validation error.',
-            'errors' => $e->errors()
-        ], 422);
-    } catch (\Exception $e) {
-        Log::error('Error assigning discount: ' . $e->getMessage());
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to assign discount.'
-        ], 500);
-    }
-}
-
-/**
- * Remove discount assignment from a student.
- */
-public function removeAssignment(Request $request, $assignmentId)
-{
-    try {
-        $assignment = DiscountAssignment::findOrFail($assignmentId);
-
-        $assignment->update([
-            'status' => 'removed',
-            'effective_to' => now(),
-            'reason' => $request->input('reason', 'Removed by administrator'),
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Discount assignment removed successfully.'
-        ]);
-
-    } catch (\Exception $e) {
-        Log::error('Error removing assignment: ' . $e->getMessage());
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to remove assignment.'
-        ], 500);
-    }
-}
-
-/**
- * Get eligible students for discount (AJAX).
- */
-public function getEligibleStudents(Request $request)
-{
-    try {
-        $request->validate([
-            'discount_id' => 'required|exists:discounts,id',
-            'q' => 'nullable|string'
-        ]);
-
-        $discount = Discount::findOrFail($request->discount_id);
-        $eligibleClasses = json_decode($discount->eligible_classes, true) ?? [];
-
-        $query = Student::query();
-
-        if (!empty($eligibleClasses)) {
-            $query->whereHas('studentClass', function($q) use ($eligibleClasses) {
-                $q->whereIn('schoolclassid', $eligibleClasses);
-            });
-        }
-
-        // Search by name or admission number
-        if ($request->filled('q')) {
-            $search = $request->q;
-            $query->where(function($q) use ($search) {
-                $q->where('firstname', 'like', "%{$search}%")
-                  ->orWhere('lastname', 'like', "%{$search}%")
-                  ->orWhere('admissionNo', 'like', "%{$search}%");
-            });
-        }
-
-        // Exclude students who already have active assignment
-        $query->whereDoesntHave('discountAssignments', function($q) use ($discount) {
-            $q->where('discount_id', $discount->id)
-              ->where('status', 'active');
-        });
-
-        $students = $query->select('id', 'firstname', 'lastname', 'admissionNo')
-            ->orderBy('lastname')
-            ->limit(50)
-            ->get();
-
-        return response()->json([
-            'success' => true,
-            'students' => $students
-        ]);
-
-    } catch (\Exception $e) {
-        Log::error('Error getting eligible students: ' . $e->getMessage());
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to get eligible students.'
-        ], 500);
-    }
-}
 }

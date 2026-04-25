@@ -492,21 +492,24 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
     });
 
     // ============================================
-    // DISCOUNT MANAGEMENT ROUTES
+    // DISCOUNT MANAGEMENT ROUTES - CORRECTED ORDER
     // ============================================
-    Route::prefix('admin/discount')->name('admin.discount.')->group(function () {
-        Route::get('/', [DiscountController::class, 'index'])->name('index');
+    Route::prefix('admin/discount')->name('admin.discount.')->middleware(['auth'])->group(function () {
+        // Static routes FIRST (before parameter routes)
+        Route::get('/assignments', [DiscountController::class, 'showAssignments'])->name('assignments');
         Route::get('/create', [DiscountController::class, 'create'])->name('create');
         Route::post('/store', [DiscountController::class, 'store'])->name('store');
+        Route::post('/bulk-destroy', [DiscountController::class, 'bulkDestroy'])->name('bulk-destroy');
+        Route::post('/assign', [DiscountController::class, 'assignToStudent'])->name('assign');
+        Route::delete('/assignment/{assignmentId}', [DiscountController::class, 'removeAssignment'])->name('assignment.remove');
+
+        // Parameter routes LAST (these come after static routes)
+        Route::get('/', [DiscountController::class, 'index'])->name('index');
         Route::get('/{id}', [DiscountController::class, 'show'])->name('show');
         Route::get('/{id}/edit', [DiscountController::class, 'edit'])->name('edit');
         Route::put('/{id}', [DiscountController::class, 'update'])->name('update');
         Route::delete('/{id}', [DiscountController::class, 'destroy'])->name('destroy');
-        Route::post('/bulk-destroy', [DiscountController::class, 'bulkDestroy'])->name('bulk-destroy');
         Route::post('/{id}/approve', [DiscountController::class, 'approve'])->name('approve');
-        Route::get('/assignments', [DiscountController::class, 'showAssignments'])->name('assignments');
-        Route::post('/assign', [DiscountController::class, 'assignToStudent'])->name('assign');
-        Route::delete('/assignment/{assignmentId}', [DiscountController::class, 'removeAssignment'])->name('assignment.remove');
     });
 
     // ============================================
