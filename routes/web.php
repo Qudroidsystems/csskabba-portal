@@ -520,20 +520,22 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
         Route::post('/{id}/approve', [DiscountController::class, 'approve'])->name('approve');
     });
 
-    // ============================================
-    // SIBLING GROUP ROUTES
-    // ============================================
 
-    Route::prefix('sibling-groups')->name('sibling.')->group(function () {
-        Route::get('/', [SiblingGroupController::class, 'index'])->name('index');
-        Route::post('/store', [SiblingGroupController::class, 'store'])->name('store');
-        Route::get('/{id}', [SiblingGroupController::class, 'show'])->name('show');
-        Route::put('/{id}', [SiblingGroupController::class, 'update'])->name('update');
-        Route::delete('/{id}', [SiblingGroupController::class, 'destroy'])->name('destroy');
-        Route::post('/apply-discount', [SiblingGroupController::class, 'applyDiscount'])->name('apply-discount');
-        Route::get('/search-students', [SiblingGroupController::class, 'searchStudents'])->name('search-students');
-        Route::get('/student/{studentId}', [SiblingGroupController::class, 'getStudentSiblings'])->name('student-siblings');
-    });
+         // ============================================
+        // SIBLING GROUP ROUTES
+        // ============================================
+        Route::prefix('sibling')->name('sibling.')->group(function () {
+            Route::get('/', [SiblingGroupController::class, 'index'])->name('index');
+            Route::get('/create', [SiblingGroupController::class, 'create'])->name('create');
+            Route::post('/store', [SiblingGroupController::class, 'store'])->name('store');
+            Route::get('/{id}', [SiblingGroupController::class, 'show'])->name('show');
+            Route::get('/{id}/edit', [SiblingGroupController::class, 'edit'])->name('edit');
+            Route::put('/{id}', [SiblingGroupController::class, 'update'])->name('update');
+            Route::delete('/{id}', [SiblingGroupController::class, 'destroy'])->name('destroy');
+            Route::post('/apply-discount', [SiblingGroupController::class, 'applyDiscount'])->name('apply-discount');
+            Route::get('/search-students', [SiblingGroupController::class, 'searchStudents'])->name('search-students');
+            Route::get('/student/{studentId}', [SiblingGroupController::class, 'getStudentSiblings'])->name('student-siblings');
+        });
         // ============================================
     // PAYMENT GATEWAY ROUTES
     // ============================================
