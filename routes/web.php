@@ -523,18 +523,18 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
     // ============================================
     // SIBLING GROUP ROUTES
     // ============================================
-    // In your web.php, you should have routes like:
-    Route::resource('sibling-groups', SiblingGroupController::class);
-    // or
-    Route::get('/sibling-groups', [SiblingGroupController::class, 'index'])->name('sibling-groups.index');
-    Route::get('/sibling-groups/create', [SiblingGroupController::class, 'create'])->name('sibling-groups.create');
-    Route::post('/sibling-groups', [SiblingGroupController::class, 'store'])->name('sibling-groups.store');
-    Route::get('/sibling-groups/{id}', [SiblingGroupController::class, 'show'])->name('sibling-groups.show');
-    Route::get('/sibling-groups/{id}/edit', [SiblingGroupController::class, 'edit'])->name('sibling-groups.edit');
-    Route::put('/sibling-groups/{id}', [SiblingGroupController::class, 'update'])->name('sibling-groups.update');
-    Route::delete('/sibling-groups/{id}', [SiblingGroupController::class, 'destroy'])->name('sibling-groups.destroy');
 
-    // ============================================
+    Route::prefix('sibling-groups')->name('sibling.')->group(function () {
+        Route::get('/', [SiblingGroupController::class, 'index'])->name('index');
+        Route::post('/store', [SiblingGroupController::class, 'store'])->name('store');
+        Route::get('/{id}', [SiblingGroupController::class, 'show'])->name('show');
+        Route::put('/{id}', [SiblingGroupController::class, 'update'])->name('update');
+        Route::delete('/{id}', [SiblingGroupController::class, 'destroy'])->name('destroy');
+        Route::post('/apply-discount', [SiblingGroupController::class, 'applyDiscount'])->name('apply-discount');
+        Route::get('/search-students', [SiblingGroupController::class, 'searchStudents'])->name('search-students');
+        Route::get('/student/{studentId}', [SiblingGroupController::class, 'getStudentSiblings'])->name('student-siblings');
+    });
+        // ============================================
     // PAYMENT GATEWAY ROUTES
     // ============================================
     Route::prefix('admin/payment-gateways')->name('admin.payment-gateways.')->group(function () {
