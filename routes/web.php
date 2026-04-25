@@ -648,12 +648,16 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
         Route::get('/summary', [PayrollController::class, 'summaryReport'])->name('summary');
         Route::get('/statutory', [PayrollController::class, 'statutoryReport'])->name('statutory');
 
-        // Salary Structures
-        Route::get('/structures', [PayrollController::class, 'salaryStructures'])->name('structures');
-        Route::post('/structures', [PayrollController::class, 'storeSalaryStructure'])->name('structures.store');
-        Route::put('/structures/{id}', [PayrollController::class, 'updateSalaryStructure'])->name('structures.update');
-        Route::delete('/structures/{id}', [PayrollController::class, 'destroySalaryStructure'])->name('structures.destroy');
+        // Salary Structures - Using /salary-structures
+        Route::get('/salary-structures', [PayrollController::class, 'salaryStructures'])->name('salary-structures');
+        Route::post('/salary-structures', [PayrollController::class, 'storeSalaryStructure'])->name('salary-structures.store');
+        Route::put('/salary-structures/{id}', [PayrollController::class, 'updateSalaryStructure'])->name('salary-structures.update');
+        Route::delete('/salary-structures/{id}', [PayrollController::class, 'destroySalaryStructure'])->name('salary-structures.destroy');
     });
+
+
+
+
 
     // ============================================
     // FINANCIAL REPORTS ROUTES
