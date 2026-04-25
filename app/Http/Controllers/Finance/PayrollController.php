@@ -4,7 +4,8 @@
 namespace App\Http\Controllers\Finance;
 
 use App\Http\Controllers\Controller;
-use App\Models\PayrollRun;
+use App\Models\PayrollPeriod;  // ADD THIS LINE
+use App\Models\PayrollRun;      // ADD THIS LINE
 use App\Models\SchoolInformation;
 use App\Models\Staff;
 use App\Models\StaffPayment;
