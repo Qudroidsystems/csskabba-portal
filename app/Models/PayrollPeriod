@@ -34,6 +34,8 @@ class PayrollPeriod extends Model
         'total_net_pay' => 'decimal:2',
         'processed_at' => 'datetime',
         'approved_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     // Relationships
@@ -68,10 +70,25 @@ class PayrollPeriod extends Model
         return $query->where('status', 'approved');
     }
 
+    public function scopePaid($query)
+    {
+        return $query->where('status', 'paid');
+    }
+
+    public function scopeForYear($query, $year)
+    {
+        return $query->where('year', $year);
+    }
+
     // Accessors
     public function getFormattedTotalGrossAttribute()
     {
         return '₦' . number_format($this->total_gross_pay, 2);
+    }
+
+    public function getFormattedTotalNetAttribute()
+    {
+        return '₦' . number_format($this->total_net_pay, 2);
     }
 
     public function getStatusBadgeAttribute()
@@ -85,5 +102,15 @@ class PayrollPeriod extends Model
         ];
         $color = $badges[$this->status] ?? 'secondary';
         return "<span class='badge bg-{$color}'>" . ucfirst($this->status) . "</span>";
+    }
+
+    public function getProgressPercentageAttribute()
+    {
+        if ($this->status === 'draft') return 0;
+        if ($this->status === 'processing') return 25;
+        if ($this->status === 'approved') return 50;
+        if ($this->status === 'paid') return 75;
+        if ($this->status === 'locked') return 100;
+        return 0;
     }
 }

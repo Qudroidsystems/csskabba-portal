@@ -27,12 +27,13 @@ class StaffPayment extends Model
         'reversed_at' => 'datetime',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
     ];
 
     // Relationships
     public function staff()
     {
-        return $this->belongsTo(StaffRecord::class, 'staff_id');
+        return $this->belongsTo(Staff::class, 'staff_id');
     }
 
     public function payrollRun()
@@ -87,6 +88,6 @@ class StaffPayment extends Model
             'reversed' => 'secondary',
         ];
         $color = $badges[$this->payment_status] ?? 'secondary';
-        return "<span class='badge bg-{$color}'>{$this->payment_status}</span>";
+        return "<span class='badge bg-{$color}'>" . ucfirst($this->payment_status) . "</span>";
     }
 }

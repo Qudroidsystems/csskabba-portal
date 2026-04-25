@@ -55,6 +55,8 @@ class PayrollRun extends Model
         'total_deductions' => 'decimal:2',
         'net_pay' => 'decimal:2',
         'paid_at' => 'datetime',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
 
     // Relationships
@@ -65,7 +67,7 @@ class PayrollRun extends Model
 
     public function staff()
     {
-        return $this->belongsTo(StaffRecord::class, 'staff_id');
+        return $this->belongsTo(Staff::class, 'staff_id');
     }
 
     public function salaryStructure()
@@ -94,6 +96,11 @@ class PayrollRun extends Model
         return $query->where('payment_status', 'paid');
     }
 
+    public function scopePending($query)
+    {
+        return $query->where('payment_status', 'pending');
+    }
+
     // Accessors
     public function getFormattedNetPayAttribute()
     {
@@ -109,5 +116,17 @@ class PayrollRun extends Model
         ];
         $color = $badges[$this->status] ?? 'secondary';
         return "<span class='badge bg-{$color}'>" . ucfirst($this->status) . "</span>";
+    }
+
+    public function getPaymentStatusBadgeAttribute()
+    {
+        $badges = [
+            'pending' => 'warning',
+            'processed' => 'info',
+            'paid' => 'success',
+            'failed' => 'danger',
+        ];
+        $color = $badges[$this->payment_status] ?? 'secondary';
+        return "<span class='badge bg-{$color}'>" . ucfirst($this->payment_status) . "</span>";
     }
 }
