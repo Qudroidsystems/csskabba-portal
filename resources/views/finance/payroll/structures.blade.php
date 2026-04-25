@@ -39,7 +39,11 @@
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody></tbody>
+                    <tbody>
+                        <tr>
+                            <td colspan="8" class="text-center">Loading data...</td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
         </div>
@@ -100,7 +104,7 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Utility Allowance</label>
-                            <input type="number" name="utility_allowance" class="form-control" step="0.01">
+                            <input type="number" name="utility_allowance" class="form-control" step="0.01>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Other Allowances</label>
@@ -124,22 +128,32 @@
 const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').content;
 
 $(document).ready(function() {
-    $('#structuresTable').DataTable({
+    // Initialize DataTable
+    var table = $('#structuresTable').DataTable({
         processing: true,
-        serverSide: true,
-        ajax: '{{ route("payroll.structures") }}',
+        serverSide: false, // Set to false since we're using manual data
+        ajax: {
+            url: '{{ route("payroll.structures") }}',
+            type: 'GET',
+            dataSrc: 'data',
+            error: function(xhr, error, code) {
+                console.log('AJAX Error:', xhr.responseText);
+                $('#structuresTable tbody').html('<tr><td colspan="8" class="text-center text-danger">Error loading data. Please check console.</td></tr>');
+            }
+        },
         columns: [
-            { data: 'DT_RowIndex', orderable: false, searchable: false },
-            { data: 'staff_name', name: 'staff_name' },
-            { data: 'staff_id', name: 'staff_id' },
-            { data: 'basic_salary', name: 'basic_salary' },
-            { data: 'total_earnings', name: 'total_earnings' },
-            { data: 'effective_period', name: 'effective_period' },
-            { data: 'is_active', name: 'is_active', orderable: false },
-            { data: 'action', name: 'action', orderable: false, searchable: false }
+            { data: 'DT_RowIndex' },
+            { data: 'staff_name' },
+            { data: 'staff_id' },
+            { data: 'basic_salary' },
+            { data: 'total_earnings' },
+            { data: 'effective_period' },
+            { data: 'is_active' },
+            { data: 'action', orderable: false }
         ]
     });
 
+    // Create Structure Form Submit
     $('#createStructureForm').on('submit', function(e) {
         e.preventDefault();
         var formData = $(this).serialize();
@@ -158,9 +172,13 @@ $(document).ready(function() {
                 if (xhr.status === 422) {
                     var errors = xhr.responseJSON.errors;
                     var html = '<ul>';
-                    $.each(errors, function(k, v) { html += '<li>' + v + '</li>'; });
+                    $.each(errors, function(k, v) {
+                        html += '<li>' + v + '</li>';
+                    });
                     html += '</ul>';
                     $('#structureErrors').removeClass('d-none').html(html);
+                } else {
+                    Swal.fire('Error!', xhr.responseJSON?.message || 'Something went wrong', 'error');
                 }
             }
         });
