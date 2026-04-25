@@ -8,7 +8,38 @@ return new class extends Migration
 {
     public function up()
     {
-        // Payroll Periods Table
+        // ============================================
+        // 1. Staff Salary Structures (No dependencies)
+        // ============================================
+        if (!Schema::hasTable('staff_salary_structures')) {
+            Schema::create('staff_salary_structures', function (Blueprint $table) {
+                $table->id();
+                $table->unsignedBigInteger('staff_id');
+                $table->date('effective_from');
+                $table->date('effective_to')->nullable();
+                $table->decimal('basic_salary', 15, 2);
+                $table->decimal('housing_allowance', 15, 2)->default(0);
+                $table->decimal('transport_allowance', 15, 2)->default(0);
+                $table->decimal('meal_allowance', 15, 2)->default(0);
+                $table->decimal('medical_allowance', 15, 2)->default(0);
+                $table->decimal('utility_allowance', 15, 2)->default(0);
+                $table->decimal('other_allowances', 15, 2)->default(0);
+                $table->json('custom_allowances')->nullable();
+                $table->boolean('is_active')->default(true);
+                $table->unsignedBigInteger('created_by');
+                $table->timestamps();
+                $table->softDeletes();
+
+                $table->foreign('staff_id', 'fk_sss_staff')->references('id')->on('staffbioinfo')->onDelete('cascade');
+                $table->foreign('created_by', 'fk_sss_created')->references('id')->on('users');
+                $table->index(['staff_id', 'is_active'], 'idx_sss_staff_active');
+                $table->index(['effective_from', 'effective_to'], 'idx_sss_dates');
+            });
+        }
+
+        // ============================================
+        // 2. Payroll Periods (No dependencies)
+        // ============================================
         if (!Schema::hasTable('payroll_periods')) {
             Schema::create('payroll_periods', function (Blueprint $table) {
                 $table->id();
@@ -34,12 +65,14 @@ return new class extends Migration
                 $table->unsignedBigInteger('journal_entry_id')->nullable();
                 $table->timestamps();
 
-                $table->index(['year', 'month']);
-                $table->index('status');
+                $table->index(['year', 'month'], 'idx_pp_year_month');
+                $table->index('status', 'idx_pp_status');
             });
         }
 
-        // Payroll Runs Table
+        // ============================================
+        // 3. Payroll Runs (Depends on both above)
+        // ============================================
         if (!Schema::hasTable('payroll_runs')) {
             Schema::create('payroll_runs', function (Blueprint $table) {
                 $table->id();
@@ -93,43 +126,19 @@ return new class extends Migration
                 $table->unsignedBigInteger('processed_by')->nullable();
                 $table->timestamps();
 
-                $table->foreign('payroll_period_id')->references('id')->on('payroll_periods')->onDelete('cascade');
-                $table->foreign('staff_id')->references('id')->on('staffbioinfo')->onDelete('cascade');
-                $table->foreign('salary_structure_id')->references('id')->on('staff_salary_structures');
+                // Foreign keys with short names
+                $table->foreign('payroll_period_id', 'fk_pr_period')->references('id')->on('payroll_periods')->onDelete('cascade');
+                $table->foreign('staff_id', 'fk_pr_staff')->references('id')->on('staffbioinfo')->onDelete('cascade');
+                $table->foreign('salary_structure_id', 'fk_pr_salary')->references('id')->on('staff_salary_structures');
 
-                $table->index(['payroll_period_id', 'staff_id']);
-                $table->index('payment_status');
+                $table->index(['payroll_period_id', 'staff_id'], 'idx_pr_period_staff');
+                $table->index('payment_status', 'idx_pr_payment_status');
             });
         }
 
-        // Staff Salary Structures Table
-        if (!Schema::hasTable('staff_salary_structures')) {
-            Schema::create('staff_salary_structures', function (Blueprint $table) {
-                $table->id();
-                $table->unsignedBigInteger('staff_id');
-                $table->date('effective_from');
-                $table->date('effective_to')->nullable();
-                $table->decimal('basic_salary', 15, 2);
-                $table->decimal('housing_allowance', 15, 2)->default(0);
-                $table->decimal('transport_allowance', 15, 2)->default(0);
-                $table->decimal('meal_allowance', 15, 2)->default(0);
-                $table->decimal('medical_allowance', 15, 2)->default(0);
-                $table->decimal('utility_allowance', 15, 2)->default(0);
-                $table->decimal('other_allowances', 15, 2)->default(0);
-                $table->json('custom_allowances')->nullable();
-                $table->boolean('is_active')->default(true);
-                $table->unsignedBigInteger('created_by');
-                $table->timestamps();
-                $table->softDeletes();
-
-                $table->foreign('staff_id')->references('id')->on('staffbioinfo')->onDelete('cascade');
-                $table->foreign('created_by')->references('id')->on('users');
-                $table->index(['staff_id', 'is_active']);
-                $table->index(['effective_from', 'effective_to']);
-            });
-        }
-
-        // Staff Payments Table
+        // ============================================
+        // 4. Staff Payments (Depends on payroll_runs)
+        // ============================================
         if (!Schema::hasTable('staff_payments')) {
             Schema::create('staff_payments', function (Blueprint $table) {
                 $table->id();
@@ -155,20 +164,22 @@ return new class extends Migration
                 $table->timestamps();
                 $table->softDeletes();
 
-                $table->foreign('staff_id')->references('id')->on('staffbioinfo')->onDelete('cascade');
-                $table->foreign('payroll_run_id')->references('id')->on('payroll_runs');
-                $table->foreign('created_by')->references('id')->on('users');
-                $table->foreign('reversed_by')->references('id')->on('users');
+                // Foreign keys with short names
+                $table->foreign('staff_id', 'fk_sp_staff')->references('id')->on('staffbioinfo')->onDelete('cascade');
+                $table->foreign('payroll_run_id', 'fk_sp_run')->references('id')->on('payroll_runs');
+                $table->foreign('created_by', 'fk_sp_created')->references('id')->on('users');
+                $table->foreign('reversed_by', 'fk_sp_reversed')->references('id')->on('users');
 
-                $table->index('payment_reference');
-                $table->index('payment_date');
-                $table->index('payment_status');
+                $table->index('payment_reference', 'idx_sp_reference');
+                $table->index('payment_date', 'idx_sp_date');
+                $table->index('payment_status', 'idx_sp_status');
             });
         }
     }
 
     public function down()
     {
+        // Drop in reverse order
         Schema::dropIfExists('staff_payments');
         Schema::dropIfExists('payroll_runs');
         Schema::dropIfExists('payroll_periods');
