@@ -681,12 +681,12 @@
     <div class="collapse menu-dropdown" id="sidebarSibling">
         <ul class="nav nav-sm flex-column">
             <li class="nav-item">
-                <a href="{{ route('sibling-groups.index') }}" class="nav-link" data-key="t-all-groups">
+               <a href="{{ route('sibling.index') }}" class="nav-link" data-key="t-all-groups">
                     <i class="ri-group-line"></i> All Family Groups
                 </a>
             </li>
             <li class="nav-item">
-                <a href="{{ route('sibling-groups.create') }}" class="nav-link" data-key="t-create-group">
+                <a href="{{ route('sibling.create') }}" class="nav-link" data-key="t-create-group">
                     <i class="ri-add-line"></i> Create Family Group
                 </a>
             </li>
