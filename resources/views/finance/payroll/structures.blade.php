@@ -2,46 +2,139 @@
 @extends('layouts.master')
 
 @section('content')
+<style>
+.modal-lg {
+    max-width: 800px;
+}
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+}
+.table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+.btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+</style>
+
 <div class="main-content">
 <div class="page-content">
 <div class="container-fluid">
 
+    {{-- Page Title --}}
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h4 class="fw-bold">Staff Salary Structures</h4>
-                    <p class="text-muted">Manage staff salary structures and allowances</p>
+                    <h4 class="fw-bold mb-1" style="color: #1e3a5f;">
+                        <i class="ri-bank-card-line me-2"></i>{{ $pagetitle }}
+                    </h4>
+                    <p class="text-muted">Manage staff salary structures, allowances, and compensation packages.</p>
                 </div>
                 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createStructureModal">
-                    <i class="ri-add-line me-1"></i>Add Structure
+                    <i class="ri-add-line me-1"></i>Add Salary Structure
                 </button>
             </div>
         </div>
     </div>
 
-    <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white py-3">
-            <h5 class="mb-0">Salary Structures</h5>
+    {{-- Statistics Cards --}}
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-muted small">Total Structures</span>
+                            <h3 class="mb-0" id="totalStructures">0</h3>
+                        </div>
+                        <div class="avatar-sm bg-primary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center">
+                            <i class="ri-bank-card-line text-primary fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="card-body">
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-muted small">Active Structures</span>
+                            <h3 class="mb-0" id="activeStructures">0</h3>
+                        </div>
+                        <div class="avatar-sm bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center">
+                            <i class="ri-check-line text-success fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-muted small">Avg Basic Salary</span>
+                            <h3 class="mb-0" id="avgBasicSalary">₦0</h3>
+                        </div>
+                        <div class="avatar-sm bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center">
+                            <i class="ri-money-dollar-circle-line text-info fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-muted small">Staff Covered</span>
+                            <h3 class="mb-0" id="staffCovered">0</h3>
+                        </div>
+                        <div class="avatar-sm bg-warning bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center">
+                            <i class="ri-user-line text-warning fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Data Table --}}
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3 border-bottom">
+            <h5 class="mb-0 fw-semibold">
+                <i class="ri-table-line me-2"></i>Salary Structures List
+            </h5>
+        </div>
+        <div class="card-body p-0">
             <div class="table-responsive">
-                <table class="table table-hover w-100" id="structuresTable">
-                    <thead>
+                <table class="table table-hover mb-0" id="structuresTable">
+                    <thead class="table-light">
                         <tr>
-                            <th>#</th>
+                            <th width="50">#</th>
                             <th>Staff Name</th>
                             <th>Staff ID</th>
                             <th>Basic Salary</th>
                             <th>Total Earnings</th>
                             <th>Effective Period</th>
                             <th>Status</th>
-                            <th>Actions</th>
+                            <th width="100">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td colspan="8" class="text-center">Loading data...</td>
+                            <td colspan="8" class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <p class="mt-2 text-muted">Loading salary structures...</p>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -54,7 +147,7 @@
 </div>
 
 {{-- Create Structure Modal --}}
-<div class="modal fade" id="createStructureModal" tabindex="-1">
+<div class="modal fade" id="createStructureModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white">
@@ -65,10 +158,10 @@
                 @csrf
                 <div class="modal-body">
                     <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Staff <span class="text-danger">*</span></label>
-                            <select name="staff_id" class="form-select" required>
-                                <option value="">Select Staff</option>
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Staff Member <span class="text-danger">*</span></label>
+                            <select name="staff_id" class="form-select" id="staffSelect" required>
+                                <option value="">-- Select Staff --</option>
                                 @foreach($staff as $s)
                                     <option value="{{ $s->id }}">{{ $s->user->name ?? 'N/A' }} ({{ $s->employmentid ?? 'No ID' }})</option>
                                 @endforeach
@@ -76,48 +169,196 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Effective From <span class="text-danger">*</span></label>
-                            <input type="date" name="effective_from" class="form-control" required>
+                            <input type="date" name="effective_from" class="form-control" value="{{ date('Y-m-d') }}" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Effective To</label>
                             <input type="date" name="effective_to" class="form-control">
+                            <small class="text-muted">Leave empty for ongoing</small>
                         </div>
+                    </div>
+
+                    <h6 class="mt-4 mb-3 fw-semibold border-bottom pb-2">Salary Components</h6>
+                    <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Basic Salary <span class="text-danger">*</span></label>
-                            <input type="number" name="basic_salary" class="form-control" step="0.01" required>
+                            <div class="input-group">
+                                <span class="input-group-text">₦</span>
+                                <input type="number" name="basic_salary" class="form-control" step="0.01" required>
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Housing Allowance</label>
-                            <input type="number" name="housing_allowance" class="form-control" step="0.01">
+                            <div class="input-group">
+                                <span class="input-group-text">₦</span>
+                                <input type="number" name="housing_allowance" class="form-control" step="0.01">
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Transport Allowance</label>
-                            <input type="number" name="transport_allowance" class="form-control" step="0.01">
+                            <div class="input-group">
+                                <span class="input-group-text">₦</span>
+                                <input type="number" name="transport_allowance" class="form-control" step="0.01">
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Meal Allowance</label>
-                            <input type="number" name="meal_allowance" class="form-control" step="0.01">
+                            <div class="input-group">
+                                <span class="input-group-text">₦</span>
+                                <input type="number" name="meal_allowance" class="form-control" step="0.01">
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Medical Allowance</label>
-                            <input type="number" name="medical_allowance" class="form-control" step="0.01">
+                            <div class="input-group">
+                                <span class="input-group-text">₦</span>
+                                <input type="number" name="medical_allowance" class="form-control" step="0.01">
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Utility Allowance</label>
-                            <input type="number" name="utility_allowance" class="form-control" step="0.01>
+                            <div class="input-group">
+                                <span class="input-group-text">₦</span>
+                                <input type="number" name="utility_allowance" class="form-control" step="0.01">
+                            </div>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Other Allowances</label>
-                            <input type="number" name="other_allowances" class="form-control" step="0.01">
+                            <div class="input-group">
+                                <span class="input-group-text">₦</span>
+                                <input type="number" name="other_allowances" class="form-control" step="0.01">
+                            </div>
                         </div>
                     </div>
+
                     <div class="alert alert-danger d-none mt-3" id="structureErrors"></div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Create Structure</button>
+                    <button type="submit" class="btn btn-primary" id="saveStructureBtn">
+                        <i class="ri-save-line me-1"></i>Save Structure
+                    </button>
                 </div>
             </form>
+        </div>
+    </div>
+</div>
+
+{{-- Edit Structure Modal --}}
+<div class="modal fade" id="editStructureModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title"><i class="ri-edit-line me-2"></i>Edit Salary Structure</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="editStructureForm">
+                @csrf
+                @method('PUT')
+                <input type="hidden" name="id" id="editId">
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <label class="form-label fw-semibold">Staff Member <span class="text-danger">*</span></label>
+                            <select name="staff_id" id="editStaffId" class="form-select" disabled>
+                                <option value="">-- Select Staff --</option>
+                                @foreach($staff as $s)
+                                    <option value="{{ $s->id }}">{{ $s->user->name ?? 'N/A' }} ({{ $s->employmentid ?? 'No ID' }})</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Effective From</label>
+                            <input type="date" name="effective_from" id="editEffectiveFrom" class="form-control" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Effective To</label>
+                            <input type="date" name="effective_to" id="editEffectiveTo" class="form-control">
+                        </div>
+                    </div>
+
+                    <h6 class="mt-4 mb-3 fw-semibold border-bottom pb-2">Salary Components</h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Basic Salary</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₦</span>
+                                <input type="number" name="basic_salary" id="editBasicSalary" class="form-control" step="0.01">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Housing Allowance</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₦</span>
+                                <input type="number" name="housing_allowance" id="editHousingAllowance" class="form-control" step="0.01">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Transport Allowance</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₦</span>
+                                <input type="number" name="transport_allowance" id="editTransportAllowance" class="form-control" step="0.01">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Meal Allowance</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₦</span>
+                                <input type="number" name="meal_allowance" id="editMealAllowance" class="form-control" step="0.01">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Medical Allowance</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₦</span>
+                                <input type="number" name="medical_allowance" id="editMedicalAllowance" class="form-control" step="0.01">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Utility Allowance</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₦</span>
+                                <input type="number" name="utility_allowance" id="editUtilityAllowance" class="form-control" step="0.01">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Other Allowances</label>
+                            <div class="input-group">
+                                <span class="input-group-text">₦</span>
+                                <input type="number" name="other_allowances" id="editOtherAllowances" class="form-control" step="0.01">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-danger d-none mt-3" id="editStructureErrors"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-warning" id="updateStructureBtn">
+                        <i class="ri-save-line me-1"></i>Update Structure
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- Delete Confirmation Modal --}}
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="ri-delete-bin-line me-2"></i>Delete Salary Structure</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this salary structure?</p>
+                <p class="text-muted small">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Yes, Delete</button>
+            </div>
         </div>
     </div>
 </div>
@@ -126,19 +367,24 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').content;
+let deleteId = null;
+let dataTable;
 
 $(document).ready(function() {
     // Initialize DataTable
-    var table = $('#structuresTable').DataTable({
+    dataTable = $('#structuresTable').DataTable({
         processing: true,
-        serverSide: false, // Set to false since we're using manual data
+        serverSide: false,
         ajax: {
             url: '{{ route("payroll.structures") }}',
             type: 'GET',
             dataSrc: 'data',
-            error: function(xhr, error, code) {
-                console.log('AJAX Error:', xhr.responseText);
-                $('#structuresTable tbody').html('<tr><td colspan="8" class="text-center text-danger">Error loading data. Please check console.</td></tr>');
+            beforeSend: function() {
+                $('#structuresTable tbody').html('<tr><td colspan="8" class="text-center"><div class="spinner-border text-primary"></div><p>Loading...</p></td></tr>');
+            },
+            error: function(xhr) {
+                console.error('DataTable Error:', xhr);
+                $('#structuresTable tbody').html('<tr><td colspan="8" class="text-center text-danger">Failed to load data. Please refresh the page.</td></tr>');
             }
         },
         columns: [
@@ -150,13 +396,29 @@ $(document).ready(function() {
             { data: 'effective_period' },
             { data: 'is_active' },
             { data: 'action', orderable: false }
-        ]
+        ],
+        drawCallback: function(settings) {
+            updateStatistics();
+        },
+        language: {
+            emptyTable: "No salary structures found",
+            info: "Showing _START_ to _END_ of _TOTAL_ entries",
+            infoEmpty: "Showing 0 to 0 of 0 entries",
+            search: "Search:",
+            lengthMenu: "Show _MENU_ entries",
+            zeroRecords: "No matching records found"
+        }
     });
 
     // Create Structure Form Submit
     $('#createStructureForm').on('submit', function(e) {
         e.preventDefault();
-        var formData = $(this).serialize();
+
+        const submitBtn = $('#saveStructureBtn');
+        const originalText = submitBtn.html();
+        submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Saving...');
+
+        const formData = $(this).serialize();
 
         $.ajax({
             url: '{{ route("payroll.structures.store") }}',
@@ -165,24 +427,160 @@ $(document).ready(function() {
             headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
             success: function(response) {
                 if (response.success) {
-                    Swal.fire('Success!', response.message, 'success').then(() => location.reload());
+                    Swal.fire('Success!', response.message, 'success').then(() => {
+                        $('#createStructureModal').modal('hide');
+                        $('#createStructureForm')[0].reset();
+                        dataTable.ajax.reload();
+                    });
                 }
             },
             error: function(xhr) {
                 if (xhr.status === 422) {
                     var errors = xhr.responseJSON.errors;
-                    var html = '<ul>';
+                    var html = '<ul class="mb-0">';
                     $.each(errors, function(k, v) {
                         html += '<li>' + v + '</li>';
                     });
                     html += '</ul>';
                     $('#structureErrors').removeClass('d-none').html(html);
+                    $('html, body').animate({ scrollTop: 0 }, 'slow');
                 } else {
                     Swal.fire('Error!', xhr.responseJSON?.message || 'Something went wrong', 'error');
                 }
+            },
+            complete: function() {
+                submitBtn.prop('disabled', false).html(originalText);
             }
         });
     });
+
+    // Edit Structure
+    $(document).on('click', '.edit-structure', function() {
+        const id = $(this).data('id');
+
+        $.ajax({
+            url: `/payroll/salary-structures/${id}/edit`,
+            type: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    const data = response.data;
+                    $('#editId').val(data.id);
+                    $('#editStaffId').val(data.staff_id);
+                    $('#editEffectiveFrom').val(data.effective_from);
+                    $('#editEffectiveTo').val(data.effective_to || '');
+                    $('#editBasicSalary').val(data.basic_salary);
+                    $('#editHousingAllowance').val(data.housing_allowance);
+                    $('#editTransportAllowance').val(data.transport_allowance);
+                    $('#editMealAllowance').val(data.meal_allowance);
+                    $('#editMedicalAllowance').val(data.medical_allowance);
+                    $('#editUtilityAllowance').val(data.utility_allowance);
+                    $('#editOtherAllowances').val(data.other_allowances);
+
+                    new bootstrap.Modal(document.getElementById('editStructureModal')).show();
+                }
+            },
+            error: function(xhr) {
+                Swal.fire('Error!', 'Failed to load structure details', 'error');
+            }
+        });
+    });
+
+    // Update Structure Form Submit
+    $('#editStructureForm').on('submit', function(e) {
+        e.preventDefault();
+
+        const id = $('#editId').val();
+        const submitBtn = $('#updateStructureBtn');
+        const originalText = submitBtn.html();
+        submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Updating...');
+
+        const formData = $(this).serialize();
+
+        $.ajax({
+            url: `/payroll/salary-structures/${id}`,
+            type: 'PUT',
+            data: formData,
+            headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
+            success: function(response) {
+                if (response.success) {
+                    Swal.fire('Updated!', response.message, 'success').then(() => {
+                        $('#editStructureModal').modal('hide');
+                        dataTable.ajax.reload();
+                    });
+                }
+            },
+            error: function(xhr) {
+                if (xhr.status === 422) {
+                    var errors = xhr.responseJSON.errors;
+                    var html = '<ul class="mb-0">';
+                    $.each(errors, function(k, v) {
+                        html += '<li>' + v + '</li>';
+                    });
+                    html += '</ul>';
+                    $('#editStructureErrors').removeClass('d-none').html(html);
+                } else {
+                    Swal.fire('Error!', xhr.responseJSON?.message || 'Something went wrong', 'error');
+                }
+            },
+            complete: function() {
+                submitBtn.prop('disabled', false).html(originalText);
+            }
+        });
+    });
+
+    // Delete Structure
+    $(document).on('click', '.delete-structure', function() {
+        deleteId = $(this).data('id');
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    });
+
+    $('#confirmDeleteBtn').on('click', function() {
+        if (!deleteId) return;
+
+        $.ajax({
+            url: `/payroll/salary-structures/${deleteId}`,
+            type: 'DELETE',
+            headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
+            success: function(response) {
+                if (response.success) {
+                    Swal.fire('Deleted!', response.message, 'success').then(() => {
+                        $('#deleteModal').modal('hide');
+                        dataTable.ajax.reload();
+                    });
+                } else {
+                    Swal.fire('Error!', response.message, 'error');
+                }
+            },
+            error: function(xhr) {
+                Swal.fire('Error!', xhr.responseJSON?.message || 'Failed to delete', 'error');
+            }
+        });
+    });
+
+    function updateStatistics() {
+        const rows = dataTable.rows().data();
+        const total = rows.count();
+        const active = rows.filter(function(row) {
+            return row.is_active.indexOf('Active') !== -1;
+        }).count();
+
+        let totalBasic = 0;
+        rows.each(function(row) {
+            const basic = parseFloat(row.basic_salary.replace(/[₦,]/g, '')) || 0;
+            totalBasic += basic;
+        });
+        const avgBasic = total > 0 ? totalBasic / total : 0;
+
+        const uniqueStaff = new Set();
+        rows.each(function(row) {
+            uniqueStaff.add(row.staff_id);
+        });
+
+        $('#totalStructures').text(total);
+        $('#activeStructures').text(active);
+        $('#avgBasicSalary').text('₦' + avgBasic.toLocaleString());
+        $('#staffCovered').text(uniqueStaff.size);
+    }
 });
 </script>
 @endsection
