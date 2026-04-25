@@ -13,17 +13,7 @@ class StaffPaymentController extends Controller
      */
     public function index()
     {
-        try {
-            $pagetitle = 'Staff Payments Management';
-
-            // Simple test data
-            $staff = [];
-            $payrollPeriods = [];
-
-            return view('finance.staff.payments-index', compact('pagetitle', 'staff', 'payrollPeriods'));
-        } catch (\Exception $e) {
-            return "Error: " . $e->getMessage() . " in " . $e->getFile() . " line " . $e->getLine();
-        }
+        echo "hi";..
     }
 
     /**
