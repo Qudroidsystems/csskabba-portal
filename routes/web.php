@@ -627,6 +627,7 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
         Route::get('/payslip/download/{payrollRunId}', [StaffPaymentController::class, 'generatePayslip'])->name('payslip.download');
     });
 
+
     // ============================================
     // PAYROLL MANAGEMENT ROUTES
     // ============================================
@@ -638,12 +639,6 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
         Route::post('/periods/{periodId}/approve', [PayrollController::class, 'approvePayroll'])->name('approve');
         Route::post('/periods/{periodId}/lock', [PayrollController::class, 'lockPeriod'])->name('lock');
 
-        // Salary Structures
-        Route::get('/salary-structures', [PayrollController::class, 'salaryStructures'])->name('structures');
-        Route::post('/salary-structures', [PayrollController::class, 'storeSalaryStructure'])->name('structures.store');
-        Route::put('/salary-structures/{id}', [PayrollController::class, 'updateSalaryStructure'])->name('structures.update');
-        Route::delete('/salary-structures/{id}', [PayrollController::class, 'destroySalaryStructure'])->name('structures.destroy');
-
         // Payroll Runs
         Route::get('/runs/{periodId}', [PayrollController::class, 'getPayrollRuns'])->name('runs');
         Route::get('/run/{payrollRunId}', [PayrollController::class, 'showPayrollRun'])->name('run.show');
@@ -651,8 +646,13 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
 
         // Reports
         Route::get('/summary', [PayrollController::class, 'summaryReport'])->name('summary');
-        Route::get('/export/{periodId}', [PayrollController::class, 'exportPayroll'])->name('export');
         Route::get('/statutory', [PayrollController::class, 'statutoryReport'])->name('statutory');
+
+        // Salary Structures
+        Route::get('/structures', [PayrollController::class, 'salaryStructures'])->name('structures');
+        Route::post('/structures', [PayrollController::class, 'storeSalaryStructure'])->name('structures.store');
+        Route::put('/structures/{id}', [PayrollController::class, 'updateSalaryStructure'])->name('structures.update');
+        Route::delete('/structures/{id}', [PayrollController::class, 'destroySalaryStructure'])->name('structures.destroy');
     });
 
     // ============================================
