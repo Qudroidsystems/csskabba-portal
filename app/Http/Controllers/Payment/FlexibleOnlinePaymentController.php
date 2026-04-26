@@ -809,7 +809,7 @@ class FlexibleOnlinePaymentController extends Controller
             $pdf->save($pdfPath);
 
             // Send email with attachment
-            Mail::send('payment.receipt-email', ['receipt' $receipt, 'paymentData' => $paymentData], function ($message) use ($email, $pdfPath, $receipt) {
+            Mail::send('payment.receipt-email', ['receipt' .$receipt, 'paymentData' => $paymentData], function ($message) use ($email, $pdfPath, $receipt) {
                 $message->to($email)
                         ->subject('Payment Receipt - ' . $receipt['receipt_no'])
                         ->attach($pdfPath, [
