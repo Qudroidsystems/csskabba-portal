@@ -2,7 +2,6 @@
 
 use \App\Http\Controllers\SchoolInformationController;
 use App\Http\Controllers\Admin\DiscountController;
-use App\Http\Controllers\ExamPauseController;
 use App\Http\Controllers\Admin\PaymentGatewayController;
 use App\Http\Controllers\Admin\ScholarshipController;
 use App\Http\Controllers\Admin\SiblingGroupController;
@@ -19,9 +18,9 @@ use App\Http\Controllers\ClassTeacherController;
 use App\Http\Controllers\CompulsorySubjectClassController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExamController;
+use App\Http\Controllers\ExamPauseController;
 use App\Http\Controllers\ExamTimetableController;
 use App\Http\Controllers\Finance\PayrollController;
-
 use App\Http\Controllers\Finance\Staff\StaffPaymentController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\HomeController;
@@ -87,6 +86,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return redirect('/login');
 });
+
 
 
 Auth::routes();
