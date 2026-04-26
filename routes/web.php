@@ -89,7 +89,10 @@ Route::get('/', function () {
 });
 
 
-Route::get('staff/payments', function () {
+Route::get('/staff/payments-test', function () {
+    return view('staff-payments-test');
+});
+Route::get('/staff/payments', function () {
     return view('staff-payments-test');
 });
 
