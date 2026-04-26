@@ -6,9 +6,9 @@
 <style>
 :root {
     --sch-primary: #1e3a5f;
-    --sch-accent:  #2563eb;
-    --sch-border:  #e2e8f0;
-    --sch-radius:  12px;
+    --sch-accent: #2563eb;
+    --sch-border: #e2e8f0;
+    --sch-radius: 12px;
 }
 
 .status-badge {
@@ -21,6 +21,28 @@
 .status-expired  { background: #fee2e2; color: #dc2626; }
 .status-revoked  { background: #f3f4f6; color: #6b7280; }
 
+/* Student avatar styles */
+.student-avatar-sm {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #e2e8f0;
+}
+.student-avatar-placeholder {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 16px;
+}
+
+/* Modal styles */
 .assign-modal .modal-dialog { max-width: 680px; }
 .assign-modal .modal-content { border-radius: 16px; overflow: hidden; }
 
@@ -52,30 +74,16 @@
 .sch-card:hover { border-color: #93c5fd; background: #eff6ff; }
 .sch-card.selected { border-color: #2563eb; background: #eff6ff; }
 .sch-card .sch-check {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    width: 22px;
-    height: 22px;
-    background: #2563eb;
-    border-radius: 50%;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 12px;
+    position: absolute; top: -8px; right: -8px;
+    width: 22px; height: 22px; background: #2563eb; border-radius: 50%;
+    display: none; align-items: center; justify-content: center; color: white; font-size: 12px;
 }
 .sch-card.selected .sch-check { display: flex; }
 .sch-card-title { font-size: 14px; font-weight: 600; color: #1e3a5f; margin-bottom: 4px; }
 .sch-card-meta { font-size: 11px; color: #6b7280; }
 .sch-card-value {
-    margin-top: 8px;
-    padding: 6px 10px;
-    background: #f1f5f9;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 600;
-    color: #2563eb;
+    margin-top: 8px; padding: 6px 10px; background: #f1f5f9; border-radius: 8px;
+    font-size: 12px; font-weight: 600; color: #2563eb;
 }
 
 .student-grid {
@@ -101,48 +109,19 @@
 .student-card:hover { border-color: #93c5fd; background: #f0f9ff; }
 .student-card.selected { border-color: #2563eb; background: #eff6ff; }
 .student-card .s-check {
-    position: absolute;
-    top: -8px;
-    right: -8px;
-    width: 22px;
-    height: 22px;
-    background: #2563eb;
-    border-radius: 50%;
-    display: none;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 11px;
+    position: absolute; top: -8px; right: -8px;
+    width: 22px; height: 22px; background: #2563eb; border-radius: 50%;
+    display: none; align-items: center; justify-content: center; color: white; font-size: 11px;
 }
 .student-card.selected .s-check { display: flex; }
-.student-avatar-placeholder {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-weight: 700;
-    font-size: 16px;
-    flex-shrink: 0;
-}
 .s-name { font-size: 13px; font-weight: 600; color: #1e3a5f; }
 .s-no { font-size: 11px; color: #6b7280; }
 
 .summary-card {
-    background: #f8fafc;
-    border: 1px solid var(--sch-border);
-    border-radius: 12px;
-    padding: 16px;
+    background: #f8fafc; border: 1px solid var(--sch-border);
+    border-radius: 12px; padding: 16px;
 }
-.summary-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--sch-border);
-}
+.summary-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--sch-border); }
 .summary-row:last-child { border-bottom: none; }
 </style>
 
@@ -232,36 +211,62 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($assignments as $index => $a)
-                        <tr>
-                            <td>{{ $assignments->firstItem() + $index }}</td>
-                            <td>{{ $a->scholarship->title ?? 'N/A' }}</td>
-                            <td class="fw-semibold">{{ $a->student->firstname ?? '' }} {{ $a->student->lastname ?? '' }}</td>
-                            <td>{{ $a->student->admissionNo ?? 'N/A' }}</td>
-                            <td>
-                                @if($a->value_type == 'percentage')
-                                    <span class="badge bg-info">{{ $a->value }}%</span>
-                                @else
-                                    <span class="badge bg-success">₦{{ number_format($a->value, 2) }}</span>
-                                @endif
-                            </td>
-                            <td><span class="status-badge status-{{ $a->status }}">{{ ucfirst($a->status) }}</span></td>
-                            <td>
-                                <small>
-                                    {{ \Carbon\Carbon::parse($a->effective_from)->format('d M Y') }}
-                                    → {{ $a->effective_to ? \Carbon\Carbon::parse($a->effective_to)->format('d M Y') : 'Ongoing' }}
-                                </small>
-                            </td>
-                            <td>{{ $a->assignedBy->name ?? 'System' }}</td>
-                            <td>{{ $a->created_at->format('d M Y') }}</td>
-                            <td>
-                                @if($a->status == 'active')
-                                    <button class="btn btn-sm btn-danger revoke-btn" data-id="{{ $a->id }}" title="Revoke">
-                                        <i class="ri-close-line"></i>
-                                    </button>
-                                @endif
-                             </td>
-                        </tr>
+                        @forelse($assignments as $index => $assignment)
+                            @php
+                                $student = $assignment->student;
+                                $picture = $student->picture ?? null;
+                                $avatarUrl = null;
+
+                                if ($picture && $picture->picture) {
+                                    $avatarUrl = Storage::url('student_avatars/' . $picture->picture);
+                                }
+                                $initials = strtoupper(substr($student->firstname ?? '?', 0, 1) . substr($student->lastname ?? '', 0, 1));
+                            @endphp
+                            <tr>
+                                <td>{{ $assignments->firstItem() + $index }}</td>
+                                <td>{{ $assignment->scholarship->title ?? 'N/A' }}</td>
+                                <td class="align-middle">
+                                    <div class="d-flex align-items-center gap-2">
+                                        @if($avatarUrl)
+                                            <img src="{{ $avatarUrl }}" alt="Student"
+                                                 class="student-avatar-sm"
+                                                 style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover;">
+                                        @else
+                                            <div class="student-avatar-placeholder" style="width: 35px; height: 35px; font-size: 14px;">
+                                                {{ $initials }}
+                                            </div>
+                                        @endif
+                                        <div>
+                                            <div class="fw-semibold">{{ $student->firstname ?? '' }} {{ $student->lastname ?? '' }}</div>
+                                            <div class="small text-muted">{{ $student->admissionNo ?? 'N/A' }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{ $student->admissionNo ?? 'N/A' }}</td>
+                                <td>
+                                    @if($assignment->value_type == 'percentage')
+                                        <span class="badge bg-info">{{ $assignment->value }}%</span>
+                                    @else
+                                        <span class="badge bg-success">₦{{ number_format($assignment->value, 2) }}</span>
+                                    @endif
+                                </td>
+                                <td><span class="status-badge status-{{ $assignment->status }}">{{ ucfirst($assignment->status) }}</span></td>
+                                <td>
+                                    <small>
+                                        {{ \Carbon\Carbon::parse($assignment->effective_from)->format('d M Y') }}
+                                        → {{ $assignment->effective_to ? \Carbon\Carbon::parse($assignment->effective_to)->format('d M Y') : 'Ongoing' }}
+                                    </small>
+                                </td>
+                                <td>{{ $assignment->assignedBy->name ?? 'System' }}</td>
+                                <td>{{ $assignment->created_at->format('d M Y') }}</td>
+                                <td>
+                                    @if($assignment->status == 'active')
+                                        <button class="btn btn-sm btn-danger revoke-btn" data-id="{{ $assignment->id }}" title="Revoke">
+                                            <i class="ri-close-line"></i>
+                                        </button>
+                                    @endif
+                                </td>
+                            </tr>
                         @empty
                             <tr>
                                 <td colspan="10" class="text-center py-5 text-muted">
@@ -271,7 +276,7 @@
                             </tr>
                         @endforelse
                     </tbody>
-                 </table>
+                </table>
             </div>
         </div>
         @if($assignments->hasPages())
@@ -287,8 +292,6 @@
 <div class="modal fade assign-modal" id="assignModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog">
         <div class="modal-content">
-
-            {{-- Modal Header --}}
             <div class="modal-header-custom">
                 <h5><i class="ri-graduation-cap-line me-2"></i>Assign Scholarship</h5>
                 <p>Select a scholarship, choose a student, and set the effective dates.</p>
@@ -297,13 +300,13 @@
 
             {{-- Step Indicator --}}
             <div class="d-flex border-bottom bg-light">
-                <div class="flex-fill text-center py-3 step-tab active" data-step="1" id="stepTab1">
+                <div class="flex-fill text-center py-3 step-tab active" data-step="1">
                     <span class="badge bg-primary rounded-circle me-1">1</span> Scholarship
                 </div>
-                <div class="flex-fill text-center py-3 step-tab" data-step="2" id="stepTab2">
+                <div class="flex-fill text-center py-3 step-tab" data-step="2">
                     <span class="badge bg-secondary rounded-circle me-1">2</span> Student
                 </div>
-                <div class="flex-fill text-center py-3 step-tab" data-step="3" id="stepTab3">
+                <div class="flex-fill text-center py-3 step-tab" data-step="3">
                     <span class="badge bg-secondary rounded-circle me-1">3</span> Confirm
                 </div>
             </div>
@@ -456,7 +459,6 @@ $(document).ready(function() {
             status: $(this).data('status')
         };
 
-        // Enable next button
         $('#nextBtn').prop('disabled', false);
     });
 
@@ -464,15 +466,12 @@ $(document).ready(function() {
     function goToStep(step) {
         currentStep = step;
 
-        // Hide all step contents
         $('.step-content').hide();
         $(`#step${step}Content`).show();
 
-        // Update step tabs
         $('.step-tab').removeClass('active');
-        $(`#stepTab${step}`).addClass('active');
+        $(`.step-tab[data-step="${step}"]`).addClass('active');
 
-        // Update buttons
         if (step === 1) {
             $('#prevBtn').hide();
             $('#nextBtn').show();
@@ -483,7 +482,6 @@ $(document).ready(function() {
             $('#nextBtn').show();
             $('#submitBtn').hide();
             $('#nextBtn').prop('disabled', !selectedStudent);
-            // Load students if scholarship is selected
             if (selectedScholarship) {
                 loadEligibleStudents();
             }
@@ -522,8 +520,6 @@ $(document).ready(function() {
         $('#effectiveFrom').val('{{ date("Y-m-d") }}');
         $('#effectiveTo').val('');
         $('#assignReason').val('');
-        $('#effectiveFrom').prop('disabled', false);
-        $('#effectiveTo').prop('disabled', false);
         goToStep(1);
     }
 
@@ -568,14 +564,22 @@ $(document).ready(function() {
 
         students.forEach(student => {
             const initials = (student.firstname?.charAt(0) || '?') + (student.lastname?.charAt(0) || '?');
+            const avatarUrl = student.avatar_url || null;
+
             container.append(`
                 <div class="student-card" data-id="${student.id}"
                      data-name="${student.firstname} ${student.lastname}"
                      data-admission="${student.admissionNo}"
                      data-firstname="${student.firstname}"
-                     data-lastname="${student.lastname}">
+                     data-lastname="${student.lastname}"
+                     data-avatar="${avatarUrl || ''}">
                     <div class="s-check"><i class="ri-check-line"></i></div>
-                    <div class="student-avatar-placeholder">${initials.toUpperCase()}</div>
+                    <div class="student-avatar">
+                        ${avatarUrl ?
+                            `<img src="${avatarUrl}" alt="Student" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover;">` :
+                            `<div class="student-avatar-placeholder" style="width: 44px; height: 44px; font-size: 18px;">${initials.toUpperCase()}</div>`
+                        }
+                    </div>
                     <div>
                         <div class="s-name">${student.firstname} ${student.lastname}</div>
                         <div class="s-no">${student.admissionNo}</div>
@@ -594,7 +598,8 @@ $(document).ready(function() {
                 name: $(this).data('name'),
                 admission: $(this).data('admission'),
                 firstname: $(this).data('firstname'),
-                lastname: $(this).data('lastname')
+                lastname: $(this).data('lastname'),
+                avatar: $(this).data('avatar')
             };
 
             $('#nextBtn').prop('disabled', false);
@@ -606,11 +611,7 @@ $(document).ready(function() {
         $('.student-card').each(function() {
             const name = $(this).data('name')?.toLowerCase() || '';
             const admission = $(this).data('admission')?.toLowerCase() || '';
-            if (name.includes(searchTerm) || admission.includes(searchTerm)) {
-                $(this).show();
-            } else {
-                $(this).hide();
-            }
+            $(this).toggle(name.includes(searchTerm) || admission.includes(searchTerm));
         });
     });
 
