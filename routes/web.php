@@ -89,7 +89,9 @@ Route::get('/', function () {
 });
 
 
-
+Route::get('/staff/payments-test', function () {
+    return view('staff-payments-test');
+});
 Auth::routes();
 Route::get('/home', [HomeController::class, 'index'])->name('home');
 
