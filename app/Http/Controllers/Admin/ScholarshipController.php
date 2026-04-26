@@ -603,12 +603,25 @@ class ScholarshipController extends Controller
 
     // ── Helpers ───────────────────────────────────────────────────────────
 
-    private function generateScholarshipNumber(): string
+   private function generateScholarshipNumber(): string
     {
-        $year    = date('Y');
-        $last    = Scholarship::whereYear('created_at', $year)->orderBy('id', 'desc')->first();
-        $seq     = $last ? intval(substr($last->scholarship_no, -4)) + 1 : 1;
+        $year   = date('Y');
+        $prefix = 'SCH-' . $year . '-';
 
-        return 'SCH-' . $year . '-' . str_pad($seq, 4, '0', STR_PAD_LEFT);
+        // Find the highest existing sequence for this year
+        $last = Scholarship::where('scholarship_no', 'like', $prefix . '%')
+            ->orderByRaw('CAST(SUBSTRING(scholarship_no, -4) AS UNSIGNED) DESC')
+            ->value('scholarship_no');
+
+        $seq = $last ? (int) substr($last, -4) + 1 : 1;
+
+        // Safety: if generated number already exists (race condition), keep incrementing
+        do {
+            $number = $prefix . str_pad($seq, 4, '0', STR_PAD_LEFT);
+            $exists = Scholarship::where('scholarship_no', $number)->exists();
+            $seq++;
+        } while ($exists);
+
+        return $number;
     }
 }
