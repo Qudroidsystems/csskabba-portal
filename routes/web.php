@@ -22,7 +22,7 @@ use App\Http\Controllers\ExamController;
 use App\Http\Controllers\ExamTimetableController;
 use App\Http\Controllers\Finance\PayrollController;
 
-use App\Http\Controllers\Finance\StaffPaymentController;
+use App\Http\Controllers\Finance\Staff\StaffPaymentController;
 use App\Http\Controllers\HolidayController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\JobStatusController;
