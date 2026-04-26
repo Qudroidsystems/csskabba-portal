@@ -641,7 +641,7 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
     // ============================================
     // STAFF PAYMENT ROUTES
     // ============================================
-    Route::prefix('staff/payments')->name('staff.payments.')->group(function () {
+    Route::prefix('staff/payments')->group(function () {
 
         // Admin views
         Route::get('/', [StaffPaymentController::class, 'index'])->name('index');
