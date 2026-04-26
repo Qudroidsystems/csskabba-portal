@@ -1,7 +1,7 @@
 <?php
 // app/Http/Controllers/Finance/StaffPaymentController.php
 
-namespace App\Http\Controllers\Finance;
+namespace App\Http\Controllers\Finance\Staff;
 
 use App\Http\Controllers\Controller;
 use App\Models\Staff;
