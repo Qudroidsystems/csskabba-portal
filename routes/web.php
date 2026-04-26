@@ -89,39 +89,6 @@ Route::get('/', function () {
 });
 
 
-Route::get('/staff/payments-test', function () {
-    return view('staff-payments-test');
-});
-Route::get('/staff/payments', function () {
-    return view('staff-payments-test');
-});
-
-    // ============================================
-    // STAFF PAYMENT ROUTES
-    // ============================================
-    Route::prefix('staff/payments')->name('staff.payments.')->group(function () {
-
-        // Admin views
-        Route::get('/', [StaffPaymentController::class, 'index'])->name('index');
-        Route::get('/create', [StaffPaymentController::class, 'create'])->name('create');
-        Route::post('/store', [StaffPaymentController::class, 'store'])->name('store');
-        Route::get('/{id}', [StaffPaymentController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [StaffPaymentController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [StaffPaymentController::class, 'update'])->name('update');
-        Route::delete('/{id}', [StaffPaymentController::class, 'destroy'])->name('destroy');
-        // Staff dashboard (staff view)
-        Route::get('/dashboard', [StaffPaymentController::class, 'staffDashboard'])->name('dashboard');
-
-        // AJAX endpoints
-        Route::get('/history', [StaffPaymentController::class, 'getPaymentHistory'])->name('history');
-        Route::post('/reverse/{paymentId}', [StaffPaymentController::class, 'reversePayment'])->name('reverse');
-        Route::post('/mark-paid/{paymentId}', [StaffPaymentController::class, 'markAsPaid'])->name('mark-paid');
-
-        // Payslip
-        Route::get('/payslip/{payrollRunId}', [StaffPaymentController::class, 'viewPayslip'])->name('payslip');
-        Route::get('/payslip/download/{payrollRunId}', [StaffPaymentController::class, 'downloadPayslip'])->name('payslip.download');
-    });
-
 Auth::routes();
 Route::get('/home', [HomeController::class, 'index'])->name('home');
 
@@ -644,6 +611,32 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
         Route::post('/delete/{recordId}', [SchoolPaymentController::class, 'deletestudentpayment'])->name('deletestudentpayment');
         Route::get('/invoice/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'invoice'])->name('invoice');
         Route::get('/statement/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'statement'])->name('statement');
+    });
+
+    // ============================================
+    // STAFF PAYMENT ROUTES
+    // ============================================
+    Route::prefix('staff/payments')->name('staff.payments.')->group(function () {
+
+        // Admin views
+        Route::get('/', [StaffPaymentController::class, 'index'])->name('index');
+        Route::get('/create', [StaffPaymentController::class, 'create'])->name('create');
+        Route::post('/store', [StaffPaymentController::class, 'store'])->name('store');
+        Route::get('/{id}', [StaffPaymentController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [StaffPaymentController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [StaffPaymentController::class, 'update'])->name('update');
+        Route::delete('/{id}', [StaffPaymentController::class, 'destroy'])->name('destroy');
+        // Staff dashboard (staff view)
+        Route::get('/dashboard', [StaffPaymentController::class, 'staffDashboard'])->name('dashboard');
+
+        // AJAX endpoints
+        Route::get('/history', [StaffPaymentController::class, 'getPaymentHistory'])->name('history');
+        Route::post('/reverse/{paymentId}', [StaffPaymentController::class, 'reversePayment'])->name('reverse');
+        Route::post('/mark-paid/{paymentId}', [StaffPaymentController::class, 'markAsPaid'])->name('mark-paid');
+
+        // Payslip
+        Route::get('/payslip/{payrollRunId}', [StaffPaymentController::class, 'viewPayslip'])->name('payslip');
+        Route::get('/payslip/download/{payrollRunId}', [StaffPaymentController::class, 'downloadPayslip'])->name('payslip.download');
     });
 
 
