@@ -87,31 +87,31 @@ Route::get('/', function () {
     return redirect('/login');
 });
 
- // ============================================
-    // STAFF PAYMENT ROUTES
-    // ============================================
-    Route::prefix('staff/payments')->name('staff.payments.')->group(function () {
+    // // ============================================
+    // // STAFF PAYMENT ROUTES
+    // // ============================================
+    // Route::prefix('staff/payments')->name('staff.payments.')->group(function () {
 
-        // Admin views
-        Route::get('/', [StaffPaymentController::class, 'index'])->name('index');
-        Route::get('/create', [StaffPaymentController::class, 'create'])->name('create');
-        Route::post('/store', [StaffPaymentController::class, 'store'])->name('store');
-        Route::get('/{id}', [StaffPaymentController::class, 'show'])->name('show');
-        Route::get('/{id}/edit', [StaffPaymentController::class, 'edit'])->name('edit');
-        Route::put('/{id}', [StaffPaymentController::class, 'update'])->name('update');
-        Route::delete('/{id}', [StaffPaymentController::class, 'destroy'])->name('destroy');
-        // Staff dashboard (staff view)
-        Route::get('/dashboard', [StaffPaymentController::class, 'staffDashboard'])->name('dashboard');
+    //     // Admin views
+    //     Route::get('/', [StaffPaymentController::class, 'index'])->name('index');
+    //     Route::get('/create', [StaffPaymentController::class, 'create'])->name('create');
+    //     Route::post('/store', [StaffPaymentController::class, 'store'])->name('store');
+    //     Route::get('/{id}', [StaffPaymentController::class, 'show'])->name('show');
+    //     Route::get('/{id}/edit', [StaffPaymentController::class, 'edit'])->name('edit');
+    //     Route::put('/{id}', [StaffPaymentController::class, 'update'])->name('update');
+    //     Route::delete('/{id}', [StaffPaymentController::class, 'destroy'])->name('destroy');
+    //     // Staff dashboard (staff view)
+    //     Route::get('/dashboard', [StaffPaymentController::class, 'staffDashboard'])->name('dashboard');
 
-        // AJAX endpoints
-        Route::get('/history', [StaffPaymentController::class, 'getPaymentHistory'])->name('history');
-        Route::post('/reverse/{paymentId}', [StaffPaymentController::class, 'reversePayment'])->name('reverse');
-        Route::post('/mark-paid/{paymentId}', [StaffPaymentController::class, 'markAsPaid'])->name('mark-paid');
+    //     // AJAX endpoints
+    //     Route::get('/history', [StaffPaymentController::class, 'getPaymentHistory'])->name('history');
+    //     Route::post('/reverse/{paymentId}', [StaffPaymentController::class, 'reversePayment'])->name('reverse');
+    //     Route::post('/mark-paid/{paymentId}', [StaffPaymentController::class, 'markAsPaid'])->name('mark-paid');
 
-        // Payslip
-        Route::get('/payslip/{payrollRunId}', [StaffPaymentController::class, 'viewPayslip'])->name('payslip');
-        Route::get('/payslip/download/{payrollRunId}', [StaffPaymentController::class, 'downloadPayslip'])->name('payslip.download');
-    });
+    //     // Payslip
+    //     Route::get('/payslip/{payrollRunId}', [StaffPaymentController::class, 'viewPayslip'])->name('payslip');
+    //     Route::get('/payslip/download/{payrollRunId}', [StaffPaymentController::class, 'downloadPayslip'])->name('payslip.download');
+    // });
 
 
 Auth::routes();
