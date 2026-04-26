@@ -617,28 +617,28 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
     // ============================================
     // STAFF PAYMENT ROUTES
     // ============================================
-    // Route::prefix('staff/payments')->name('staff.payments.')->group(function () {
+    Route::prefix('staff/payments')->name('staff.payments.')->group(function () {
 
-    //     // Admin views
-    //     Route::get('/', [StaffPaymentController::class, 'index'])->name('index');
-    //     Route::get('/create', [StaffPaymentController::class, 'create'])->name('create');
-    //     Route::post('/store', [StaffPaymentController::class, 'store'])->name('store');
-    //     Route::get('/{id}', [StaffPaymentController::class, 'show'])->name('show');
-    //     Route::get('/{id}/edit', [StaffPaymentController::class, 'edit'])->name('edit');
-    //     Route::put('/{id}', [StaffPaymentController::class, 'update'])->name('update');
-    //     Route::delete('/{id}', [StaffPaymentController::class, 'destroy'])->name('destroy');
-    //     // Staff dashboard (staff view)
-    //     Route::get('/dashboard', [StaffPaymentController::class, 'staffDashboard'])->name('dashboard');
+        // Admin views
+        Route::get('/', [StaffPaymentController::class, 'index'])->name('index');
+        Route::get('/create', [StaffPaymentController::class, 'create'])->name('create');
+        Route::post('/store', [StaffPaymentController::class, 'store'])->name('store');
+        Route::get('/{id}', [StaffPaymentController::class, 'show'])->name('show');
+        Route::get('/{id}/edit', [StaffPaymentController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [StaffPaymentController::class, 'update'])->name('update');
+        Route::delete('/{id}', [StaffPaymentController::class, 'destroy'])->name('destroy');
+        // Staff dashboard (staff view)
+        Route::get('/dashboard', [StaffPaymentController::class, 'staffDashboard'])->name('dashboard');
 
-    //     // AJAX endpoints
-    //     Route::get('/history', [StaffPaymentController::class, 'getPaymentHistory'])->name('history');
-    //     Route::post('/reverse/{paymentId}', [StaffPaymentController::class, 'reversePayment'])->name('reverse');
-    //     Route::post('/mark-paid/{paymentId}', [StaffPaymentController::class, 'markAsPaid'])->name('mark-paid');
+        // AJAX endpoints
+        Route::get('/history', [StaffPaymentController::class, 'getPaymentHistory'])->name('history');
+        Route::post('/reverse/{paymentId}', [StaffPaymentController::class, 'reversePayment'])->name('reverse');
+        Route::post('/mark-paid/{paymentId}', [StaffPaymentController::class, 'markAsPaid'])->name('mark-paid');
 
-    //     // Payslip
-    //     Route::get('/payslip/{payrollRunId}', [StaffPaymentController::class, 'viewPayslip'])->name('payslip');
-    //     Route::get('/payslip/download/{payrollRunId}', [StaffPaymentController::class, 'downloadPayslip'])->name('payslip.download');
-    // });
+        // Payslip
+        Route::get('/payslip/{payrollRunId}', [StaffPaymentController::class, 'viewPayslip'])->name('payslip');
+        Route::get('/payslip/download/{payrollRunId}', [StaffPaymentController::class, 'downloadPayslip'])->name('payslip.download');
+    });
 
 
      // ============================================
@@ -694,7 +694,7 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
     // ============================================
     // ANALYSIS REPORTS ROUTES
     // ============================================
-    Route::prefix('reports/analysis')->name('reports.analysis.')->middleware(['auth', 'permission:View financial reports'])->group(function () {
+    Route::prefix('reports/analysis')->name('reports.analysis.')->group(function () {
         Route::get('/class', [AnalysisReportController::class, 'classAnalysis'])->name('class');
         Route::get('/school-wide', [AnalysisReportController::class, 'schoolWideAnalysis'])->name('school-wide');
         Route::get('/scholarship-impact', [AnalysisReportController::class, 'scholarshipImpactAnalysis'])->name('scholarship-impact');
