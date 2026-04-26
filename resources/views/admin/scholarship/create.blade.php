@@ -9,7 +9,6 @@
     --sch-border: #e2e8f0;
     --sch-radius: 12px;
 }
-
 .form-section {
     background: white;
     border: 1px solid var(--sch-border);
@@ -18,21 +17,14 @@
     margin-bottom: 24px;
 }
 .form-section h5 {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--sch-primary);
-    margin-bottom: 20px;
-    padding-bottom: 10px;
+    font-size: 16px; font-weight: 600; color: var(--sch-primary);
+    margin-bottom: 20px; padding-bottom: 10px;
     border-bottom: 2px solid var(--sch-border);
 }
 .section-icon {
-    width: 32px; height: 32px;
-    background: var(--sch-primary);
-    border-radius: 8px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 10px;
+    width: 32px; height: 32px; background: var(--sch-primary);
+    border-radius: 8px; display: inline-flex;
+    align-items: center; justify-content: center; margin-right: 10px;
 }
 .section-icon i { color: white; font-size: 16px; }
 </style>
@@ -75,11 +67,13 @@
                     <div class="row g-3">
                         <div class="col-md-12">
                             <label class="form-label fw-semibold">Title <span class="text-danger">*</span></label>
-                            <input type="text" name="title" class="form-control" required placeholder="e.g., Academic Excellence Scholarship 2024">
+                            <input type="text" name="title" class="form-control" required
+                                   placeholder="e.g., Academic Excellence Scholarship 2024">
                         </div>
                         <div class="col-md-12">
                             <label class="form-label fw-semibold">Description</label>
-                            <textarea name="description" class="form-control" rows="3" placeholder="Describe the scholarship criteria and benefits..."></textarea>
+                            <textarea name="description" class="form-control" rows="3"
+                                      placeholder="Describe the scholarship criteria and benefits..."></textarea>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Scholarship Type <span class="text-danger">*</span></label>
@@ -120,11 +114,13 @@
                         </div>
                         <div class="col-md-6" id="capAmountDiv" style="display: none;">
                             <label class="form-label fw-semibold">Maximum Amount (Cap)</label>
-                            <input type="number" name="cap_amount" class="form-control" step="0.01" placeholder="Optional - limits the maximum discount">
+                            <input type="number" name="cap_amount" class="form-control" step="0.01"
+                                   placeholder="Optional – limits the maximum discount">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Budget Amount (Optional)</label>
-                            <input type="number" name="budget_amount" class="form-control" step="0.01" placeholder="Total budget for this scholarship">
+                            <input type="number" name="budget_amount" class="form-control" step="0.01"
+                                   placeholder="Total budget for this scholarship">
                         </div>
                     </div>
                 </div>
@@ -155,7 +151,7 @@
                         <h5 class="mb-0">Quick Tips</h5>
                     </div>
                     <ul class="small text-muted mb-0 ps-3">
-                        <li class="mb-2">✓ Percentage scholarships are calculated based on each bill amount</li>
+                        <li class="mb-2">✓ Percentage scholarships are calculated on each bill amount</li>
                         <li class="mb-2">✓ Fixed amount scholarships deduct a set amount from total fees</li>
                         <li class="mb-2">✓ Set a cap to limit percentage-based scholarships</li>
                         <li class="mb-2">✓ Draft scholarships are not visible to students</li>
@@ -184,13 +180,12 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const valueType = document.getElementById('valueType');
-    const valueLabel = document.getElementById('valueLabel');
+document.addEventListener('DOMContentLoaded', function () {
+    const valueType    = document.getElementById('valueType');
+    const valueLabel   = document.getElementById('valueLabel');
     const capAmountDiv = document.getElementById('capAmountDiv');
-    const valueInput = document.getElementById('value');
 
-    valueType.addEventListener('change', function() {
+    valueType.addEventListener('change', function () {
         if (this.value === 'percentage') {
             valueLabel.textContent = 'Value (%)';
             capAmountDiv.style.display = 'block';
@@ -200,42 +195,41 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    const form = document.getElementById('scholarshipForm');
-    form.addEventListener('submit', async function(e) {
+    const form      = document.getElementById('scholarshipForm');
+    const submitBtn = document.getElementById('submitBtn');
+
+    form.addEventListener('submit', async function (e) {
         e.preventDefault();
 
-        const submitBtn = document.getElementById('submitBtn');
         const originalText = submitBtn.innerHTML;
-        submitBtn.disabled = true;
+        submitBtn.disabled  = true;
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
-
-        const formData = new FormData(form);
 
         try {
             const response = await fetch(form.action, {
                 method: 'POST',
-                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-                body: formData
+                headers: {
+                    'X-CSRF-TOKEN':        document.querySelector('meta[name="csrf-token"]').content,
+                    'X-Requested-With':    'XMLHttpRequest',   // required for $request->ajax()
+                },
+                body: new FormData(form),
             });
 
             const data = await response.json();
 
             if (data.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Success!',
-                    text: data.message,
-                    confirmButtonText: 'OK'
-                }).then(() => {
-                    window.location.href = '{{ route("admin.scholarship.index") }}';
-                });
+                await Swal.fire({ icon: 'success', title: 'Success!', text: data.message });
+                window.location.href = '{{ route("admin.scholarship.index") }}';
             } else {
-                Swal.fire({ icon: 'error', title: 'Error!', text: data.message || 'Something went wrong' });
+                let msg = data.message || 'Something went wrong';
+                if (data.errors) msg = Object.values(data.errors).flat().join('\n');
+                Swal.fire({ icon: 'error', title: 'Error!', text: msg });
             }
         } catch (error) {
+            console.error(error);
             Swal.fire({ icon: 'error', title: 'Error!', text: 'Network error. Please try again.' });
         } finally {
-            submitBtn.disabled = false;
+            submitBtn.disabled  = false;
             submitBtn.innerHTML = originalText;
         }
     });

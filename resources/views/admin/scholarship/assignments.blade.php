@@ -5,22 +5,17 @@
 <style>
 :root {
     --sch-primary: #1e3a5f;
-    --sch-success: #16a34a;
-    --sch-warning: #d97706;
-    --sch-danger: #dc2626;
     --sch-border: #e2e8f0;
 }
-
-.status-badge {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500;
-}
-.status-active { background: #dcfce7; color: #16a34a; }
-.status-pending { background: #fef3c7; color: #d97706; }
+.status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+.status-active   { background: #dcfce7; color: #16a34a; }
+.status-pending  { background: #fef3c7; color: #d97706; }
 .status-approved { background: #dbeafe; color: #2563eb; }
-.status-expired { background: #fee2e2; color: #dc2626; }
-.status-revoked { background: #f3f4f6; color: #6b7280; }
+.status-expired  { background: #fee2e2; color: #dc2626; }
+.status-revoked  { background: #f3f4f6; color: #6b7280; }
 </style>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css">
 
 <div class="main-content">
 <div class="page-content">
@@ -40,61 +35,40 @@
                         </ol>
                     </nav>
                 </div>
-                <div>
-                    <a href="{{ route('admin.scholarship.index') }}" class="btn btn-light">
-                        <i class="ri-arrow-left-line me-1"></i>Back to Scholarships
-                    </a>
-                </div>
+                <a href="{{ route('admin.scholarship.index') }}" class="btn btn-light">
+                    <i class="ri-arrow-left-line me-1"></i>Back to Scholarships
+                </a>
             </div>
         </div>
     </div>
 
-    {{-- Status Filter Tabs --}}
+    {{-- Status tabs --}}
     <ul class="nav nav-tabs mb-4">
         <li class="nav-item">
             <a class="nav-link {{ !request('status') ? 'active' : '' }}" href="{{ route('admin.scholarship.assignments') }}">
                 All <span class="badge bg-secondary ms-1">{{ array_sum($statusCounts) }}</span>
             </a>
         </li>
+        @foreach(['active' => 'success', 'pending' => 'warning', 'approved' => 'info', 'expired' => 'secondary', 'revoked' => 'danger'] as $status => $color)
         <li class="nav-item">
-            <a class="nav-link {{ request('status') == 'active' ? 'active' : '' }}" href="{{ route('admin.scholarship.assignments', ['status' => 'active']) }}">
-                Active <span class="badge bg-success ms-1">{{ $statusCounts['active'] ?? 0 }}</span>
+            <a class="nav-link {{ request('status') == $status ? 'active' : '' }}"
+               href="{{ route('admin.scholarship.assignments', ['status' => $status]) }}">
+                {{ ucfirst($status) }}
+                <span class="badge bg-{{ $color }} ms-1">{{ $statusCounts[$status] ?? 0 }}</span>
             </a>
         </li>
-        <li class="nav-item">
-            <a class="nav-link {{ request('status') == 'pending' ? 'active' : '' }}" href="{{ route('admin.scholarship.assignments', ['status' => 'pending']) }}">
-                Pending <span class="badge bg-warning ms-1">{{ $statusCounts['pending'] ?? 0 }}</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link {{ request('status') == 'approved' ? 'active' : '' }}" href="{{ route('admin.scholarship.assignments', ['status' => 'approved']) }}">
-                Approved <span class="badge bg-info ms-1">{{ $statusCounts['approved'] ?? 0 }}</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link {{ request('status') == 'expired' ? 'active' : '' }}" href="{{ route('admin.scholarship.assignments', ['status' => 'expired']) }}">
-                Expired <span class="badge bg-secondary ms-1">{{ $statusCounts['expired'] ?? 0 }}</span>
-            </a>
-        </li>
-        <li class="nav-item">
-            <a class="nav-link {{ request('status') == 'revoked' ? 'active' : '' }}" href="{{ route('admin.scholarship.assignments', ['status' => 'revoked']) }}">
-                Revoked <span class="badge bg-danger ms-1">{{ $statusCounts['revoked'] ?? 0 }}</span>
-            </a>
-        </li>
+        @endforeach
     </ul>
 
-    {{-- Search Bar --}}
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body">
             <div class="row g-3">
                 <div class="col-md-6">
-                    <div class="search-box">
-                        <input type="text" class="form-control" id="searchInput" placeholder="Search by student name or admission number...">
-                        <i class="ri-search-line search-icon"></i>
-                    </div>
+                    <input type="text" class="form-control" id="searchInput"
+                           placeholder="Search by student name or admission number...">
                 </div>
                 <div class="col-md-6 text-end">
-                    <button class="btn btn-success" id="assignScholarshipBtn" data-bs-toggle="modal" data-bs-target="#assignModal">
+                    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#assignModal">
                         <i class="ri-add-line me-1"></i>Assign Scholarship
                     </button>
                 </div>
@@ -102,7 +76,6 @@
         </div>
     </div>
 
-    {{-- Assignments Table --}}
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white py-3 border-bottom">
             <h5 class="mb-0 fw-semibold"><i class="ri-list-check me-2"></i>Scholarship Assignments</h5>
@@ -126,56 +99,54 @@
                     </thead>
                     <tbody>
                         @forelse($assignments as $index => $assignment)
-                            <tr>
-                                <td>{{ $assignments->firstItem() + $index }}</td>
-                                <td>{{ $assignment->scholarship->title ?? 'N/A' }}</td>
-                                <td>{{ $assignment->student->firstname ?? '' }} {{ $assignment->student->lastname ?? '' }}</td>
-                                <td>{{ $assignment->student->admissionNo ?? 'N/A' }}</td>
-                                <td>
-                                    @if($assignment->value_type == 'percentage')
-                                        {{ $assignment->value }}%
-                                    @else
-                                        ₦{{ number_format($assignment->value, 2) }}
-                                    @endif
-                                </td>
-                                <td>
-                                    <span class="status-badge status-{{ $assignment->status }}">
-                                        {{ ucfirst($assignment->status) }}
-                                    </span>
-                                </td>
-                                <td>
+                        <tr>
+                            <td>{{ $assignments->firstItem() + $index }}</td>
+                            <td>{{ $assignment->scholarship->title ?? 'N/A' }}</td>
+                            <td>{{ $assignment->student->firstname ?? '' }} {{ $assignment->student->lastname ?? '' }}</td>
+                            <td>{{ $assignment->student->admissionNo ?? 'N/A' }}</td>
+                            <td>
+                                @if($assignment->value_type == 'percentage')
+                                    {{ $assignment->value }}%
+                                @else
+                                    ₦{{ number_format($assignment->value, 2) }}
+                                @endif
+                            </td>
+                            <td>
+                                <span class="status-badge status-{{ $assignment->status }}">
+                                    {{ ucfirst($assignment->status) }}
+                                </span>
+                            </td>
+                            <td>
+                                <small>
                                     {{ \Carbon\Carbon::parse($assignment->effective_from)->format('d M Y') }}
                                     @if($assignment->effective_to)
                                         → {{ \Carbon\Carbon::parse($assignment->effective_to)->format('d M Y') }}
                                     @else
                                         → Ongoing
                                     @endif
-                                </td>
-                                <td>{{ $assignment->assignedBy->name ?? 'System' }}</td>
-                                <td>{{ $assignment->created_at->format('d M Y') }}</td>
-                                <td>
-                                    <div class="btn-group btn-group-sm">
-                                        @if($assignment->status == 'active')
-                                        <button class="btn btn-danger revoke-btn" data-id="{{ $assignment->id }}" title="Revoke">
-                                            <i class="ri-close-line"></i>
-                                        </button>
-                                        @endif
-                                    </div>
-                                </td>
-                            </tr>
+                                </small>
+                            </td>
+                            <td>{{ $assignment->assignedBy->name ?? 'System' }}</td>
+                            <td>{{ $assignment->created_at->format('d M Y') }}</td>
+                            <td>
+                                @if($assignment->status == 'active')
+                                <button class="btn btn-sm btn-danger revoke-btn" data-id="{{ $assignment->id }}" title="Revoke">
+                                    <i class="ri-close-line"></i>
+                                </button>
+                                @endif
+                            </td>
+                        </tr>
                         @empty
-                            <tr>
-                                <td colspan="10" class="text-center py-4 text-muted">No scholarship assignments found.</td>
-                            </tr>
+                        <tr>
+                            <td colspan="10" class="text-center py-4 text-muted">No scholarship assignments found.</td>
+                        </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
         </div>
         @if($assignments->hasPages())
-        <div class="card-footer bg-white">
-            {{ $assignments->links() }}
-        </div>
+        <div class="card-footer bg-white">{{ $assignments->links() }}</div>
         @endif
     </div>
 
@@ -183,7 +154,7 @@
 </div>
 </div>
 
-{{-- Assign Scholarship Modal --}}
+{{-- Assign Modal --}}
 <div class="modal fade" id="assignModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -196,7 +167,7 @@
                 <div class="modal-body">
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Select Scholarship <span class="text-danger">*</span></label>
-                        <select name="scholarship_id" class="form-select" required>
+                        <select name="scholarship_id" class="form-select" id="scholarshipSelect" required>
                             <option value="">-- Select Scholarship --</option>
                             @foreach($scholarships ?? [] as $scholarship)
                                 <option value="{{ $scholarship->id }}">{{ $scholarship->title }} ({{ $scholarship->scholarship_no }})</option>
@@ -205,7 +176,7 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Select Student <span class="text-danger">*</span></label>
-                        <select name="student_id" class="form-select select2" required>
+                        <select name="student_id" class="form-select select2-student" id="studentSelect" required>
                             <option value="">-- Search Student --</option>
                         </select>
                     </div>
@@ -230,14 +201,14 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Assign Scholarship</button>
+                    <button type="submit" class="btn btn-primary" id="assignSubmitBtn">Assign Scholarship</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-{{-- Revoke Confirmation Modal --}}
+{{-- Revoke Modal --}}
 <div class="modal fade" id="revokeModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -248,7 +219,7 @@
             <div class="modal-body">
                 <p>Are you sure you want to revoke this scholarship assignment?</p>
                 <div class="mb-3">
-                    <label class="form-label fw-semibold">Reason for Revocation <span class="text-danger">*</span></label>
+                    <label class="form-label fw-semibold">Reason <span class="text-danger">*</span></label>
                     <textarea id="revokeReason" class="form-control" rows="3" placeholder="Please provide a reason..."></textarea>
                 </div>
             </div>
@@ -266,89 +237,115 @@
 const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content;
 let revokeId = null;
 
-$(document).ready(function() {
-    // Initialize Select2 for student search
-    $('.select2').select2({
+$(document).ready(function () {
+
+    // ── Select2 for student search ──────────────────────────────────────
+    $('.select2-student').select2({
         dropdownParent: $('#assignModal'),
+        placeholder:    'Search for a student...',
+        minimumInputLength: 2,
         ajax: {
-            url: '{{ route("admin.scholarship.eligible-students") }}',
+            url:      '{{ route("admin.scholarship.eligible-students") }}',
             dataType: 'json',
-            delay: 250,
-            data: function(params) {
+            delay:    250,
+            headers:  { 'X-Requested-With': 'XMLHttpRequest' },
+            data: function (params) {
                 return {
-                    q: params.term,
-                    scholarship_id: $('select[name="scholarship_id"]').val()
+                    q:               params.term,
+                    scholarship_id:  $('#scholarshipSelect').val(),
                 };
             },
-            processResults: function(data) {
+            processResults: function (data) {
                 return {
-                    results: data.students?.map(s => ({ id: s.id, text: s.firstname + ' ' + s.lastname + ' (' + s.admissionNo + ')' })) || []
+                    results: (data.students || []).map(s => ({
+                        id:   s.id,
+                        text: s.firstname + ' ' + s.lastname + ' (' + s.admissionNo + ')',
+                    })),
                 };
             },
-            cache: true
+            cache: true,
         },
-        placeholder: 'Search for a student...',
-        minimumInputLength: 2
     });
 
-    // Load scholarship details when selected
-    $('select[name="scholarship_id"]').on('change', function() {
-        const scholarshipId = $(this).val();
-        if (scholarshipId) {
-            // Get scholarship details via AJAX
-            fetch(`/admin/scholarship/${scholarshipId}/edit-json`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        const sch = data.data;
-                        $('#value_type_display').val(sch.value_type == 'percentage' ? 'Percentage (%)' : 'Fixed Amount (₦)');
-                        $('#value_display').val(sch.value_type == 'percentage' ? sch.value + '%' : '₦' + sch.value);
-                    }
-                });
-        }
+    // ── Load scholarship details on change ──────────────────────────────
+    $('#scholarshipSelect').on('change', function () {
+        const id = $(this).val();
+        $('#value_type_display').val('');
+        $('#value_display').val('');
+        // Trigger Select2 to reload (different scholarship = different exclusion list)
+        $('.select2-student').val(null).trigger('change');
+
+        if (!id) return;
+        fetch(`/admin/scholarship/${id}/edit-json`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                const s = data.data;
+                $('#value_type_display').val(s.value_type === 'percentage' ? 'Percentage (%)' : 'Fixed Amount (₦)');
+                $('#value_display').val(s.value_type === 'percentage' ? s.value + '%' : '₦' + s.value);
+            }
+        })
+        .catch(() => {});
     });
 
-    // Assign Form Submit
-    $('#assignForm').on('submit', async function(e) {
+    // ── Assign form submit ──────────────────────────────────────────────
+    $('#assignForm').on('submit', async function (e) {
         e.preventDefault();
-        const formData = $(this).serialize();
+
+        const btn          = $('#assignSubmitBtn');
+        const originalText = btn.html();
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Assigning...');
 
         try {
             const response = await fetch('{{ route("admin.scholarship.assign") }}', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-TOKEN': CSRF_TOKEN },
-                body: formData
+                headers: {
+                    'Content-Type':     'application/x-www-form-urlencoded',
+                    'X-CSRF-TOKEN':     CSRF_TOKEN,
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: $(this).serialize(),
             });
             const data = await response.json();
             if (data.success) {
                 Swal.fire('Success!', data.message, 'success').then(() => location.reload());
             } else {
-                $('#assignErrors').removeClass('d-none').html(data.message);
+                let msg = data.message || 'Something went wrong';
+                if (data.errors) msg = Object.values(data.errors).flat().join('\n');
+                $('#assignErrors').removeClass('d-none').text(msg);
             }
-        } catch (error) {
+        } catch (err) {
             Swal.fire('Error!', 'Something went wrong', 'error');
+        } finally {
+            btn.prop('disabled', false).html(originalText);
         }
     });
 
-    // Revoke Button Click
-    $('.revoke-btn').on('click', function() {
+    // ── Revoke ──────────────────────────────────────────────────────────
+    $(document).on('click', '.revoke-btn', function () {
         revokeId = $(this).data('id');
+        $('#revokeReason').val('');
         $('#revokeModal').modal('show');
     });
 
-    $('#confirmRevokeBtn').on('click', async function() {
+    $('#confirmRevokeBtn').on('click', async function () {
         if (!revokeId) return;
-        const reason = $('#revokeReason').val();
+        const reason = $('#revokeReason').val().trim();
         if (!reason) {
             Swal.fire('Error!', 'Please provide a reason for revocation', 'error');
             return;
         }
-
         try {
             const response = await fetch(`/admin/scholarship/assignment/${revokeId}/revoke`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN },
-                body: JSON.stringify({ reason: reason })
+                headers: {
+                    'Content-Type':     'application/json',
+                    'X-CSRF-TOKEN':     CSRF_TOKEN,
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                body: JSON.stringify({ reason }),
             });
             const data = await response.json();
             if (data.success) {
@@ -356,17 +353,17 @@ $(document).ready(function() {
             } else {
                 Swal.fire('Error!', data.message, 'error');
             }
-        } catch (error) {
+        } catch (err) {
             Swal.fire('Error!', 'Something went wrong', 'error');
         }
         $('#revokeModal').modal('hide');
     });
 
-    // Search functionality
-    $('#searchInput').on('keyup', function() {
-        const value = $(this).val().toLowerCase();
-        $('#assignmentsTable tbody tr').filter(function() {
-            $(this).toggle($(this).text().toLowerCase().indexOf(value) > -1);
+    // ── Client-side search filter ───────────────────────────────────────
+    $('#searchInput').on('keyup', function () {
+        const val = $(this).val().toLowerCase();
+        $('#assignmentsTable tbody tr').each(function () {
+            $(this).toggle($(this).text().toLowerCase().includes(val));
         });
     });
 });

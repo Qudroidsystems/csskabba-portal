@@ -15,68 +15,46 @@
     --sch-radius: 12px;
     --sch-shadow: 0 2px 8px rgba(0,0,0,.08);
 }
-
 .sch-hero {
     background: linear-gradient(135deg, var(--sch-primary) 0%, #2563eb 60%, #4f46e5 100%);
-    border-radius: var(--sch-radius);
-    padding: 28px 32px;
-    margin-bottom: 24px;
-    position: relative;
-    overflow: hidden;
+    border-radius: var(--sch-radius); padding: 28px 32px; margin-bottom: 24px;
+    position: relative; overflow: hidden;
 }
 .sch-hero::before {
-    content: '';
-    position: absolute;
-    top: -60px; right: -60px;
-    width: 220px; height: 220px;
-    background: rgba(255,255,255,.06);
-    border-radius: 50%;
+    content: ''; position: absolute; top: -60px; right: -60px;
+    width: 220px; height: 220px; background: rgba(255,255,255,.06); border-radius: 50%;
 }
-.sch-hero h1 { font-size: 22px; font-weight: 700; color: white; margin: 0 0 6px; }
-.sch-hero p { font-size: 13px; color: rgba(255,255,255,.75); margin: 0; }
+.sch-hero h1  { font-size: 22px; font-weight: 700; color: white; margin: 0 0 6px; }
+.sch-hero p   { font-size: 13px; color: rgba(255,255,255,.75); margin: 0; }
 
-.stat-card {
-    background: white;
-    border: 1px solid var(--sch-border);
-    border-radius: var(--sch-radius);
-    padding: 18px 20px;
-    transition: transform .15s, box-shadow .15s;
-}
-.stat-card:hover { transform: translateY(-2px); box-shadow: var(--sch-shadow); }
-.stat-card .stat-value { font-size: 28px; font-weight: 700; color: var(--sch-primary); }
-.stat-card .stat-label { font-size: 12px; color: var(--sch-muted); margin-top: 4px; }
-.stat-card .stat-icon { font-size: 32px; opacity: .12; float: right; margin-top: -8px; }
+.stat-card { background: white; border: 1px solid var(--sch-border); border-radius: var(--sch-radius); padding: 18px 20px; transition: transform .15s, box-shadow .15s; }
+.stat-card:hover         { transform: translateY(-2px); box-shadow: var(--sch-shadow); }
+.stat-card .stat-value   { font-size: 28px; font-weight: 700; color: var(--sch-primary); }
+.stat-card .stat-label   { font-size: 12px; color: var(--sch-muted); margin-top: 4px; }
+.stat-card .stat-icon    { font-size: 32px; opacity: .12; float: right; margin-top: -8px; }
 
 .sch-table th { background: var(--sch-primary); color: white; padding: 12px 16px; font-weight: 600; }
 .sch-table td { padding: 12px 16px; vertical-align: middle; border-bottom: 1px solid var(--sch-border); }
 .sch-table tr:hover { background: #eff6ff; }
 
-.status-badge {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500;
-}
-.status-active { background: #dcfce7; color: #16a34a; }
-.status-draft { background: #fef3c7; color: #d97706; }
-.status-expired { background: #fee2e2; color: #dc2626; }
+.status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+.status-active    { background: #dcfce7; color: #16a34a; }
+.status-draft     { background: #fef3c7; color: #d97706; }
+.status-expired   { background: #fee2e2; color: #dc2626; }
 .status-suspended { background: #f3f4f6; color: #6b7280; }
 
-.filter-bar {
-    background: white; border: 1px solid var(--sch-border);
-    border-radius: var(--sch-radius); padding: 16px 20px; margin-bottom: 20px;
-}
+.filter-bar { background: white; border: 1px solid var(--sch-border); border-radius: var(--sch-radius); padding: 16px 20px; margin-bottom: 20px; }
 </style>
 
 <div class="main-content">
 <div class="page-content">
 <div class="container-fluid">
 
-    {{-- Hero Section --}}
     <div class="sch-hero">
         <h1><i class="ri-graduation-cap-line me-2"></i>{{ $pagetitle }}</h1>
         <p>Manage scholarships, assign to students, track budgets and monitor scholarship impact on school revenue.</p>
     </div>
 
-    {{-- Statistics Cards --}}
     <div class="row g-3 mb-4">
         <div class="col-md-3">
             <div class="stat-card">
@@ -108,29 +86,32 @@
         </div>
     </div>
 
-    {{-- Filter Bar --}}
     <div class="filter-bar">
         <div class="row g-3 align-items-center">
             <div class="col-md-4">
                 <div class="search-box">
-                    <input type="text" class="form-control search" id="searchInput" placeholder="Search by title or code...">
+                    <input type="text" class="form-control search" id="searchInput"
+                           placeholder="Search by title or code..."
+                           value="{{ request('search') }}">
                     <i class="ri-search-line search-icon"></i>
                 </div>
             </div>
             <div class="col-md-3">
                 <select class="form-select" id="statusFilter">
                     <option value="">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="draft">Draft</option>
-                    <option value="expired">Expired</option>
-                    <option value="suspended">Suspended</option>
+                    <option value="active"    {{ request('status') == 'active'    ? 'selected' : '' }}>Active</option>
+                    <option value="draft"     {{ request('status') == 'draft'     ? 'selected' : '' }}>Draft</option>
+                    <option value="expired"   {{ request('status') == 'expired'   ? 'selected' : '' }}>Expired</option>
+                    <option value="suspended" {{ request('status') == 'suspended' ? 'selected' : '' }}>Suspended</option>
                 </select>
             </div>
             <div class="col-md-3">
                 <select class="form-select" id="typeFilter">
                     <option value="">All Types</option>
                     @foreach($scholarshipTypes ?? [] as $type)
-                        <option value="{{ $type->id }}">{{ $type->name }}</option>
+                        <option value="{{ $type->id }}" {{ request('type_id') == $type->id ? 'selected' : '' }}>
+                            {{ $type->name }}
+                        </option>
                     @endforeach
                 </select>
             </div>
@@ -142,12 +123,11 @@
         </div>
     </div>
 
-    {{-- Scholarships Table --}}
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white py-3 border-bottom">
             <h5 class="mb-0 fw-semibold" style="color: var(--sch-primary);">
                 <i class="ri-list-check me-2"></i>All Scholarships
-                <span class="badge bg-primary ms-2" id="totalCount">{{ $scholarships->total() ?? 0 }}</span>
+                <span class="badge bg-primary ms-2">{{ $scholarships->total() ?? 0 }}</span>
             </h5>
         </div>
         <div class="card-body p-0">
@@ -191,8 +171,8 @@
                                 <td>
                                     @if($scholarship->budget_amount)
                                         ₦{{ number_format($scholarship->budget_amount, 2) }}
-                                        <div class="progress mt-1" style="height: 3px;">
-                                            <div class="progress-bar bg-warning" style="width: {{ $budgetUsage }}%"></div>
+                                        <div class="progress mt-1" style="height:3px;">
+                                            <div class="progress-bar bg-warning" style="width:{{ $budgetUsage }}%"></div>
                                         </div>
                                     @else
                                         <span class="text-muted">Unlimited</span>
@@ -247,9 +227,7 @@
                         <i class="ri-delete-bin-line me-1"></i>Delete Selected
                     </button>
                 </div>
-                <div>
-                    {{ $scholarships->links() }}
-                </div>
+                <div>{{ $scholarships->links() }}</div>
             </div>
         </div>
     </div>
@@ -258,7 +236,7 @@
 </div>
 </div>
 
-{{-- Delete Confirmation Modal --}}
+{{-- Delete Modal --}}
 <div class="modal fade" id="deleteModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -282,106 +260,103 @@
 <script>
 const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content;
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Search and Filter
-    const searchInput = document.getElementById('searchInput');
+document.addEventListener('DOMContentLoaded', function () {
+
+    // ── Search & Filters ────────────────────────────────────────────────
+    const searchInput  = document.getElementById('searchInput');
     const statusFilter = document.getElementById('statusFilter');
-    const typeFilter = document.getElementById('typeFilter');
+    const typeFilter   = document.getElementById('typeFilter');
     let searchTimeout;
 
     function applyFilters() {
-        const search = searchInput?.value || '';
-        const status = statusFilter?.value || '';
-        const type = typeFilter?.value || '';
-
-        let url = new URL(window.location.href);
-        url.searchParams.set('search', search);
-        url.searchParams.set('status', status);
-        url.searchParams.set('type_id', type);
+        const url = new URL(window.location.href);
+        url.searchParams.set('search',  searchInput?.value  || '');
+        url.searchParams.set('status',  statusFilter?.value || '');
+        url.searchParams.set('type_id', typeFilter?.value   || '');
         window.location.href = url.toString();
     }
 
-    if (searchInput) {
-        searchInput.addEventListener('input', function() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(applyFilters, 500);
-        });
-    }
-    if (statusFilter) statusFilter.addEventListener('change', applyFilters);
-    if (typeFilter) typeFilter.addEventListener('change', applyFilters);
+    searchInput?.addEventListener('input', function () {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(applyFilters, 500);
+    });
+    statusFilter?.addEventListener('change', applyFilters);
+    typeFilter?.addEventListener('change',   applyFilters);
 
-    // Check All
-    const checkAll = document.getElementById('checkAll');
-    const rowCheckboxes = document.querySelectorAll('.row-checkbox');
-    const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+    // ── Check All / Bulk ────────────────────────────────────────────────
+    const checkAll       = document.getElementById('checkAll');
+    const rowCheckboxes  = document.querySelectorAll('.row-checkbox');
+    const bulkDeleteBtn  = document.getElementById('bulkDeleteBtn');
 
-    if (checkAll) {
-        checkAll.addEventListener('change', function() {
-            rowCheckboxes.forEach(cb => cb.checked = this.checked);
-            bulkDeleteBtn.style.display = this.checked || Array.from(rowCheckboxes).some(cb => cb.checked) ? 'inline-flex' : 'none';
-        });
-    }
+    checkAll?.addEventListener('change', function () {
+        rowCheckboxes.forEach(cb => cb.checked = this.checked);
+        bulkDeleteBtn.style.display = this.checked ? 'inline-flex' : 'none';
+    });
 
     rowCheckboxes.forEach(cb => {
-        cb.addEventListener('change', function() {
+        cb.addEventListener('change', function () {
             const anyChecked = Array.from(rowCheckboxes).some(c => c.checked);
             bulkDeleteBtn.style.display = anyChecked ? 'inline-flex' : 'none';
             if (checkAll) checkAll.checked = Array.from(rowCheckboxes).every(c => c.checked);
         });
     });
 
-    // Bulk Delete
-    if (bulkDeleteBtn) {
-        bulkDeleteBtn.addEventListener('click', async function() {
-            const selectedIds = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value);
-            if (!selectedIds.length) return;
+    // ── Bulk Delete ─────────────────────────────────────────────────────
+    bulkDeleteBtn?.addEventListener('click', function () {
+        const selectedIds = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value);
+        if (!selectedIds.length) return;
 
-            Swal.fire({
-                title: 'Delete Scholarships?',
-                text: `Are you sure you want to delete ${selectedIds.length} scholarship(s)?`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#dc2626',
-                confirmButtonText: 'Yes, delete'
-            }).then(async (result) => {
-                if (result.isConfirmed) {
-                    try {
-                        const response = await fetch('{{ route("admin.scholarship.bulk-destroy") }}', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN },
-                            body: JSON.stringify({ ids: selectedIds })
-                        });
-                        const data = await response.json();
-                        if (data.success) {
-                            Swal.fire('Deleted!', data.message, 'success').then(() => location.reload());
-                        } else {
-                            Swal.fire('Error!', data.message, 'error');
-                        }
-                    } catch (error) {
-                        Swal.fire('Error!', 'Something went wrong', 'error');
-                    }
+        Swal.fire({
+            title: 'Delete Scholarships?',
+            text:  `Are you sure you want to delete ${selectedIds.length} scholarship(s)?`,
+            icon:  'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#dc2626',
+            confirmButtonText:  'Yes, delete',
+        }).then(async result => {
+            if (!result.isConfirmed) return;
+            try {
+                const response = await fetch('{{ route("admin.scholarship.bulk-destroy") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type':     'application/json',
+                        'X-CSRF-TOKEN':     CSRF_TOKEN,
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: JSON.stringify({ ids: selectedIds }),
+                });
+                const data = await response.json();
+                if (data.success) {
+                    Swal.fire('Deleted!', data.message, 'success').then(() => location.reload());
+                } else {
+                    Swal.fire('Error!', data.message, 'error');
                 }
-            });
+            } catch (err) {
+                Swal.fire('Error!', 'Something went wrong', 'error');
+            }
         });
-    }
+    });
 
-    // Single Delete
-    const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
-    let deleteId = null;
+    // ── Single Delete ───────────────────────────────────────────────────
+    const deleteModal   = new bootstrap.Modal(document.getElementById('deleteModal'));
+    let deleteId        = null;
 
     document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             deleteId = this.dataset.id;
             deleteModal.show();
         });
     });
 
-    document.getElementById('confirmDeleteBtn')?.addEventListener('click', async function() {
+    document.getElementById('confirmDeleteBtn')?.addEventListener('click', async function () {
         if (!deleteId) return;
         try {
             const response = await fetch(`/admin/scholarship/${deleteId}`, {
                 method: 'DELETE',
-                headers: { 'X-CSRF-TOKEN': CSRF_TOKEN }
+                headers: {
+                    'X-CSRF-TOKEN':     CSRF_TOKEN,
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
             });
             const data = await response.json();
             if (data.success) {
@@ -389,7 +364,7 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 Swal.fire('Error!', data.message, 'error');
             }
-        } catch (error) {
+        } catch (err) {
             Swal.fire('Error!', 'Something went wrong', 'error');
         }
         deleteModal.hide();

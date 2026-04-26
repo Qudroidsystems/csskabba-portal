@@ -6,13 +6,9 @@
 :root {
     --sch-primary: #1e3a5f;
     --sch-accent: #2563eb;
-    --sch-success: #16a34a;
-    --sch-warning: #d97706;
-    --sch-danger: #dc2626;
     --sch-border: #e2e8f0;
     --sch-radius: 12px;
 }
-
 .form-section {
     background: white;
     border: 1px solid var(--sch-border);
@@ -21,31 +17,23 @@
     margin-bottom: 24px;
 }
 .form-section h5 {
-    font-size: 16px;
-    font-weight: 600;
-    color: var(--sch-primary);
-    margin-bottom: 20px;
-    padding-bottom: 10px;
+    font-size: 16px; font-weight: 600; color: var(--sch-primary);
+    margin-bottom: 20px; padding-bottom: 10px;
     border-bottom: 2px solid var(--sch-border);
 }
 .section-icon {
-    width: 32px;
-    height: 32px;
-    background: var(--sch-primary);
-    border-radius: 8px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 10px;
+    width: 32px; height: 32px; background: var(--sch-primary);
+    border-radius: 8px; display: inline-flex;
+    align-items: center; justify-content: center; margin-right: 10px;
 }
 .section-icon i { color: white; font-size: 16px; }
 .status-badge {
     display: inline-flex; align-items: center; gap: 6px;
     padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500;
 }
-.status-active { background: #dcfce7; color: #16a34a; }
-.status-draft { background: #fef3c7; color: #d97706; }
-.status-expired { background: #fee2e2; color: #dc2626; }
+.status-active    { background: #dcfce7; color: #16a34a; }
+.status-draft     { background: #fef3c7; color: #d97706; }
+.status-expired   { background: #fee2e2; color: #dc2626; }
 .status-suspended { background: #f3f4f6; color: #6b7280; }
 </style>
 
@@ -86,7 +74,6 @@
 
         <div class="row">
             <div class="col-lg-8">
-                {{-- Basic Information --}}
                 <div class="form-section">
                     <div class="d-flex align-items-center mb-3">
                         <div class="section-icon"><i class="ri-information-line"></i></div>
@@ -99,7 +86,8 @@
                         </div>
                         <div class="col-md-12">
                             <label class="form-label fw-semibold">Title <span class="text-danger">*</span></label>
-                            <input type="text" name="title" class="form-control" value="{{ old('title', $scholarship->title) }}" required>
+                            <input type="text" name="title" class="form-control"
+                                   value="{{ old('title', $scholarship->title) }}" required>
                         </div>
                         <div class="col-md-12">
                             <label class="form-label fw-semibold">Description</label>
@@ -110,22 +98,23 @@
                             <select name="scholarship_type_id" class="form-select" required>
                                 <option value="">Select Type</option>
                                 @foreach($scholarshipTypes ?? [] as $type)
-                                    <option value="{{ $type->id }}" {{ $scholarship->scholarship_type_id == $type->id ? 'selected' : '' }}>{{ $type->name }}</option>
+                                    <option value="{{ $type->id }}" {{ $scholarship->scholarship_type_id == $type->id ? 'selected' : '' }}>
+                                        {{ $type->name }}
+                                    </option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Status</label>
                             <select name="status" class="form-select">
-                                <option value="draft" {{ $scholarship->status == 'draft' ? 'selected' : '' }}>Draft</option>
-                                <option value="active" {{ $scholarship->status == 'active' ? 'selected' : '' }}>Active</option>
-                                <option value="suspended" {{ $scholarship->status == 'suspended' ? 'selected' : '' }}>Suspended</option>
+                                <option value="draft"      {{ $scholarship->status == 'draft'      ? 'selected' : '' }}>Draft</option>
+                                <option value="active"     {{ $scholarship->status == 'active'     ? 'selected' : '' }}>Active</option>
+                                <option value="suspended"  {{ $scholarship->status == 'suspended'  ? 'selected' : '' }}>Suspended</option>
                             </select>
                         </div>
                     </div>
                 </div>
 
-                {{-- Scholarship Value --}}
                 <div class="form-section">
                     <div class="d-flex align-items-center mb-3">
                         <div class="section-icon"><i class="ri-money-dollar-circle-line"></i></div>
@@ -135,24 +124,36 @@
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Value Type <span class="text-danger">*</span></label>
                             <select name="value_type" id="valueType" class="form-select" required>
-                                <option value="percentage" {{ $scholarship->value_type == 'percentage' ? 'selected' : '' }}>Percentage (%)</option>
+                                <option value="percentage"   {{ $scholarship->value_type == 'percentage'   ? 'selected' : '' }}>Percentage (%)</option>
                                 <option value="fixed_amount" {{ $scholarship->value_type == 'fixed_amount' ? 'selected' : '' }}>Fixed Amount (₦)</option>
                             </select>
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold" id="valueLabel">{{ $scholarship->value_type == 'percentage' ? 'Value (%)' : 'Value (₦)' }} <span class="text-danger">*</span></label>
-                            <input type="number" name="value" id="value" class="form-control" step="0.01" value="{{ $scholarship->value }}" required>
+                            <label class="form-label fw-semibold" id="valueLabel">
+                                {{ $scholarship->value_type == 'percentage' ? 'Value (%)' : 'Value (₦)' }}
+                                <span class="text-danger">*</span>
+                            </label>
+                            <input type="number" name="value" id="value" class="form-control"
+                                   step="0.01" value="{{ $scholarship->value }}" required>
                         </div>
-                        <div class="col-md-6" id="capAmountDiv" style="{{ $scholarship->value_type == 'percentage' ? 'display: block;' : 'display: none;' }}">
+                        <div class="col-md-6" id="capAmountDiv"
+                             style="{{ $scholarship->value_type == 'percentage' ? 'display:block' : 'display:none' }}">
                             <label class="form-label fw-semibold">Maximum Amount (Cap)</label>
-                            <input type="number" name="cap_amount" class="form-control" step="0.01" value="{{ $scholarship->cap_amount }}" placeholder="Optional - limits the maximum discount">
+                            <input type="number" name="cap_amount" class="form-control"
+                                   step="0.01" value="{{ $scholarship->cap_amount }}"
+                                   placeholder="Optional – limits the maximum discount">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Budget Amount (Optional)</label>
-                            <input type="number" name="budget_amount" class="form-control" step="0.01" value="{{ $scholarship->budget_amount }}" placeholder="Total budget for this scholarship">
+                            <input type="number" name="budget_amount" class="form-control"
+                                   step="0.01" value="{{ $scholarship->budget_amount }}"
+                                   placeholder="Total budget for this scholarship">
                             @if($scholarship->budget_amount > 0)
                                 @php $utilizedPercent = ($scholarship->utilized_amount / $scholarship->budget_amount) * 100; @endphp
-                                <small class="text-muted">Utilized: ₦{{ number_format($scholarship->utilized_amount, 2) }} ({{ round($utilizedPercent, 1) }}%)</small>
+                                <small class="text-muted">
+                                    Utilized: ₦{{ number_format($scholarship->utilized_amount, 2) }}
+                                    ({{ round($utilizedPercent, 1) }}%)
+                                </small>
                             @endif
                         </div>
                     </div>
@@ -160,7 +161,6 @@
             </div>
 
             <div class="col-lg-4">
-                {{-- Effective Dates --}}
                 <div class="form-section">
                     <div class="d-flex align-items-center mb-3">
                         <div class="section-icon"><i class="ri-calendar-line"></i></div>
@@ -169,17 +169,18 @@
                     <div class="row g-3">
                         <div class="col-md-12">
                             <label class="form-label fw-semibold">Effective From <span class="text-danger">*</span></label>
-                            <input type="date" name="effective_from" class="form-control" value="{{ $scholarship->effective_from->format('Y-m-d') }}" required>
+                            <input type="date" name="effective_from" class="form-control"
+                                   value="{{ $scholarship->effective_from->format('Y-m-d') }}" required>
                         </div>
                         <div class="col-md-12">
                             <label class="form-label fw-semibold">Effective To</label>
-                            <input type="date" name="effective_to" class="form-control" value="{{ $scholarship->effective_to ? $scholarship->effective_to->format('Y-m-d') : '' }}">
+                            <input type="date" name="effective_to" class="form-control"
+                                   value="{{ $scholarship->effective_to ? $scholarship->effective_to->format('Y-m-d') : '' }}">
                             <small class="text-muted">Leave empty for ongoing</small>
                         </div>
                     </div>
                 </div>
 
-                {{-- Statistics --}}
                 <div class="form-section bg-light">
                     <div class="d-flex align-items-center mb-3">
                         <div class="section-icon bg-success"><i class="ri-bar-chart-line"></i></div>
@@ -205,7 +206,6 @@
                     </div>
                 </div>
 
-                {{-- Quick Tips --}}
                 <div class="form-section bg-light">
                     <div class="d-flex align-items-center mb-3">
                         <div class="section-icon bg-warning"><i class="ri-lightbulb-line"></i></div>
@@ -214,28 +214,21 @@
                     <ul class="small text-muted mb-0 ps-3">
                         <li class="mb-2">✓ Changing value type will affect existing assignments</li>
                         <li class="mb-2">✓ Deactivating a scholarship will revoke active assignments</li>
-                        <li class="mb-2">✓ Budget changes cannot be less than already utilized amount</li>
+                        <li class="mb-2">✓ Budget cannot be less than already utilised amount</li>
                     </ul>
                 </div>
             </div>
         </div>
 
-        {{-- Form Actions --}}
         <div class="row">
             <div class="col-12">
                 <div class="form-section text-end">
                     <button type="button" class="btn btn-light me-2" onclick="window.history.back()">
                         <i class="ri-close-line me-1"></i>Cancel
                     </button>
-                    @if($scholarship->status != 'active')
-                    <button type="submit" class="btn btn-primary" id="submitBtn">
+                    <button type="submit" class="btn {{ $scholarship->status == 'active' ? 'btn-warning' : 'btn-primary' }}" id="submitBtn">
                         <i class="ri-save-line me-1"></i>Update Scholarship
                     </button>
-                    @else
-                    <button type="submit" class="btn btn-warning" id="submitBtn">
-                        <i class="ri-save-line me-1"></i>Update Scholarship
-                    </button>
-                    @endif
                 </div>
             </div>
         </div>
@@ -247,28 +240,24 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const valueType = document.getElementById('valueType');
-    const valueLabel = document.getElementById('valueLabel');
+document.addEventListener('DOMContentLoaded', function () {
+    const valueType    = document.getElementById('valueType');
+    const valueLabel   = document.getElementById('valueLabel');
     const capAmountDiv = document.getElementById('capAmountDiv');
 
-    valueType.addEventListener('change', function() {
-        if (this.value === 'percentage') {
-            valueLabel.textContent = 'Value (%)';
-            capAmountDiv.style.display = 'block';
-        } else {
-            valueLabel.textContent = 'Value (₦)';
-            capAmountDiv.style.display = 'none';
-        }
+    valueType.addEventListener('change', function () {
+        valueLabel.firstChild.textContent = this.value === 'percentage' ? 'Value (%) ' : 'Value (₦) ';
+        capAmountDiv.style.display = this.value === 'percentage' ? 'block' : 'none';
     });
 
-    const form = document.getElementById('scholarshipForm');
-    form.addEventListener('submit', async function(e) {
+    const form      = document.getElementById('scholarshipForm');
+    const submitBtn = document.getElementById('submitBtn');
+
+    form.addEventListener('submit', async function (e) {
         e.preventDefault();
 
-        const submitBtn = document.getElementById('submitBtn');
         const originalText = submitBtn.innerHTML;
-        submitBtn.disabled = true;
+        submitBtn.disabled  = true;
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Updating...';
 
         const formData = new FormData(form);
@@ -277,32 +266,28 @@ document.addEventListener('DOMContentLoaded', function() {
         try {
             const response = await fetch(form.action, {
                 method: 'POST',
-                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-                body: formData
+                headers: {
+                    'X-CSRF-TOKEN':     document.querySelector('meta[name="csrf-token"]').content,
+                    'X-Requested-With': 'XMLHttpRequest',   // required for $request->ajax()
+                },
+                body: formData,
             });
 
             const data = await response.json();
 
             if (data.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Success!',
-                    text: data.message,
-                    confirmButtonText: 'OK'
-                }).then(() => {
-                    window.location.href = '{{ route("admin.scholarship.index") }}';
-                });
+                await Swal.fire({ icon: 'success', title: 'Success!', text: data.message });
+                window.location.href = '{{ route("admin.scholarship.index") }}';
             } else {
-                let errorMsg = data.message || 'Something went wrong';
-                if (data.errors) {
-                    errorMsg = Object.values(data.errors).flat().join('\n');
-                }
-                Swal.fire({ icon: 'error', title: 'Error!', text: errorMsg });
+                let msg = data.message || 'Something went wrong';
+                if (data.errors) msg = Object.values(data.errors).flat().join('\n');
+                Swal.fire({ icon: 'error', title: 'Error!', text: msg });
             }
         } catch (error) {
+            console.error(error);
             Swal.fire({ icon: 'error', title: 'Error!', text: 'Network error. Please try again.' });
         } finally {
-            submitBtn.disabled = false;
+            submitBtn.disabled  = false;
             submitBtn.innerHTML = originalText;
         }
     });
