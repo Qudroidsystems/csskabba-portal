@@ -537,8 +537,6 @@ class ScholarshipController extends Controller
     }
 
     // ── Get Eligible Students (AJAX / Select2) ────────────────────────────
-
-   // Replace getEligibleStudents() entirely
     public function getEligibleStudents(Request $request)
     {
         try {
@@ -554,18 +552,21 @@ class ScholarshipController extends Controller
                 }
             }
 
-            $query = Student::with('picture');
+            $query = Student::with(['picture', 'currentTerm.schoolClass.armRelation']);
 
+            // Apply class eligibility filter
             if (!empty($eligibleClasses)) {
-                $query->whereHas('schoolClass', function ($q) use ($eligibleClasses) {
-                    $q->whereIn('schoolclassid', $eligibleClasses);
+                $query->whereHas('currentTerm', function ($q) use ($eligibleClasses) {
+                    $q->whereIn('schoolclassId', $eligibleClasses);
                 });
             }
 
+            // Apply status filter
             if (!empty($eligibleStatusIds)) {
                 $query->whereIn('statusId', $eligibleStatusIds);
             }
 
+            // Apply search filter
             if ($request->filled('q')) {
                 $search = $request->q;
                 $query->where(function ($q) use ($search) {
@@ -575,6 +576,7 @@ class ScholarshipController extends Controller
                 });
             }
 
+            // Exclude students who already have this scholarship
             if ($scholarship) {
                 $query->whereDoesntHave('scholarshipAssignments', function ($q) use ($scholarship) {
                     $q->where('scholarship_id', $scholarship->id)
@@ -587,14 +589,36 @@ class ScholarshipController extends Controller
                 ->limit(50)
                 ->get()
                 ->map(function ($student) {
+                    // Get current class information using the getCurrentTermInfo method
+                    $currentTermInfo = $student->getCurrentTermInfo();
+                    $currentClassDisplay = 'Not Assigned';
+
+                    if ($currentTermInfo) {
+                        $className = $currentTermInfo['current_class'] ?? '';
+                        $armName = $currentTermInfo['current_class_arm'] ?? '';
+                        $currentClassDisplay = trim($className . ' ' . $armName);
+                        $currentClassDisplay = $currentClassDisplay ?: 'Not Assigned';
+                    }
+
+                    // Get avatar URL
+                    $avatarUrl = null;
+                    if ($student->picture && $student->picture->picture) {
+                        // Check if the picture path already includes 'storage/'
+                        $picturePath = $student->picture->picture;
+                        if (str_starts_with($picturePath, 'student_avatars/') || str_starts_with($picturePath, 'storage/')) {
+                            $avatarUrl = asset($picturePath);
+                        } else {
+                            $avatarUrl = asset('storage/student_avatars/' . $picturePath);
+                        }
+                    }
+
                     return [
-                        'id'          => $student->id,
-                        'firstname'   => $student->firstname,
-                        'lastname'    => $student->lastname,
-                        'admissionNo' => $student->admissionNo,
-                        'avatar'      => $student->picture?->picture
-                                            ? asset('storage/student_avatars/' . $student->picture->picture)
-                                            : null,
+                        'id'            => $student->id,
+                        'firstname'     => $student->firstname,
+                        'lastname'      => $student->lastname,
+                        'admissionNo'   => $student->admissionNo,
+                        'current_class' => $currentClassDisplay,
+                        'avatar'        => $avatarUrl,
                     ];
                 });
 
@@ -612,27 +636,24 @@ class ScholarshipController extends Controller
 
     // ── Helpers ───────────────────────────────────────────────────────────
 
-  private function generateScholarshipNumber(): string
-{
-    $year   = date('Y');
-    $prefix = 'SCH-' . $year . '-';
+    private function generateScholarshipNumber(): string
+    {
+        $year   = date('Y');
+        $prefix = 'SCH-' . $year . '-';
 
-    // withTrashed() ensures soft-deleted records are included,
-    // preventing reuse of a number that was previously assigned
-    $last = Scholarship::withTrashed()
-        ->where('scholarship_no', 'like', $prefix . '%')
-        ->orderByRaw('CAST(SUBSTRING(scholarship_no, -4) AS UNSIGNED) DESC')
-        ->value('scholarship_no');
+        $last = Scholarship::withTrashed()
+            ->where('scholarship_no', 'like', $prefix . '%')
+            ->orderByRaw('CAST(SUBSTRING(scholarship_no, -4) AS UNSIGNED) DESC')
+            ->value('scholarship_no');
 
-    $seq = $last ? (int) substr($last, -4) + 1 : 1;
+        $seq = $last ? (int) substr($last, -4) + 1 : 1;
 
-    // Guard against any remaining duplicates
-    do {
-        $number = $prefix . str_pad($seq, 4, '0', STR_PAD_LEFT);
-        $exists = Scholarship::withTrashed()->where('scholarship_no', $number)->exists();
-        $seq++;
-    } while ($exists);
+        do {
+            $number = $prefix . str_pad($seq, 4, '0', STR_PAD_LEFT);
+            $exists = Scholarship::withTrashed()->where('scholarship_no', $number)->exists();
+            $seq++;
+        } while ($exists);
 
-    return $number;
-}
+        return $number;
+    }
 }

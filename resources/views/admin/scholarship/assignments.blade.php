@@ -86,14 +86,22 @@
     font-size: 12px; font-weight: 600; color: #2563eb;
 }
 
+/* Student grid styles */
 .student-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
     gap: 10px;
     max-height: 320px;
     overflow-y: auto;
     padding: 4px;
 }
+
+@media (min-width: 768px) {
+    .student-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
 .student-card {
     border: 2px solid var(--sch-border);
     border-radius: 12px;
@@ -101,7 +109,7 @@
     cursor: pointer;
     transition: all 0.2s;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
     background: white;
     position: relative;
@@ -116,6 +124,17 @@
 .student-card.selected .s-check { display: flex; }
 .s-name { font-size: 13px; font-weight: 600; color: #1e3a5f; }
 .s-no { font-size: 11px; color: #6b7280; }
+.s-class {
+    font-size: 11px;
+    color: #6b7280;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.s-class i {
+    font-size: 10px;
+}
 
 .summary-card {
     background: #f8fafc; border: 1px solid var(--sch-border);
@@ -218,7 +237,7 @@
                                 $avatarUrl = null;
 
                                 if ($picture && $picture->picture) {
-                                    $avatarUrl = Storage::url('student_avatars/' . $picture->picture);
+                                    $avatarUrl = asset('storage/student_avatars/' . $picture->picture);
                                 }
                                 $initials = strtoupper(substr($student->firstname ?? '?', 0, 1) . substr($student->lastname ?? '', 0, 1));
                             @endphp
@@ -564,7 +583,7 @@ $(document).ready(function() {
 
         students.forEach(student => {
             const initials = (student.firstname?.charAt(0) || '?') + (student.lastname?.charAt(0) || '?');
-            const avatarUrl = student.avatar_url || null;
+            const avatarUrl = student.avatar || null;
 
             container.append(`
                 <div class="student-card" data-id="${student.id}"
@@ -572,17 +591,26 @@ $(document).ready(function() {
                      data-admission="${student.admissionNo}"
                      data-firstname="${student.firstname}"
                      data-lastname="${student.lastname}"
-                     data-avatar="${avatarUrl || ''}">
+                     data-avatar="${avatarUrl || ''}"
+                     data-current-class="${student.current_class || 'Not Assigned'}">
                     <div class="s-check"><i class="ri-check-line"></i></div>
                     <div class="student-avatar">
                         ${avatarUrl ?
-                            `<img src="${avatarUrl}" alt="Student" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover;">` :
-                            `<div class="student-avatar-placeholder" style="width: 44px; height: 44px; font-size: 18px;">${initials.toUpperCase()}</div>`
+                            `<img src="${avatarUrl}" alt="Student" style="width: 44px; height: 44px; border-radius: 50%; object-fit: cover;"
+                                  onerror="this.onerror=null; this.src=''; this.style.display='none'; this.nextElementSibling.style.display='flex';">` :
+                            ''
                         }
+                        <div class="student-avatar-placeholder" style="width: 44px; height: 44px; font-size: 18px; display: ${avatarUrl ? 'none' : 'flex'};">
+                            ${initials.toUpperCase()}
+                        </div>
                     </div>
-                    <div>
-                        <div class="s-name">${student.firstname} ${student.lastname}</div>
-                        <div class="s-no">${student.admissionNo}</div>
+                    <div style="flex: 1;">
+                        <div class="s-name">${escapeHtml(student.firstname)} ${escapeHtml(student.lastname)}</div>
+                        <div class="s-no">${escapeHtml(student.admissionNo)}</div>
+                        <div class="s-class">
+                            <i class="ri-book-open-line"></i>
+                            ${escapeHtml(student.current_class || 'Not Assigned')}
+                        </div>
                     </div>
                 </div>
             `);
@@ -599,10 +627,22 @@ $(document).ready(function() {
                 admission: $(this).data('admission'),
                 firstname: $(this).data('firstname'),
                 lastname: $(this).data('lastname'),
-                avatar: $(this).data('avatar')
+                avatar: $(this).data('avatar'),
+                currentClass: $(this).data('current-class')
             };
 
             $('#nextBtn').prop('disabled', false);
+        });
+    }
+
+    // Helper function to escape HTML
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
         });
     }
 
@@ -616,11 +656,24 @@ $(document).ready(function() {
     });
 
     function updateConfirmationSummary() {
+        // Get avatar HTML for selected student
+        let avatarHtml = '';
+        if (selectedStudent.avatar) {
+            avatarHtml = `<img src="${selectedStudent.avatar}" alt="Student" style="width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 3px solid #2563eb;">`;
+        } else {
+            const initials = (selectedStudent.firstname?.charAt(0) || '?') + (selectedStudent.lastname?.charAt(0) || '?');
+            avatarHtml = `<div class="student-avatar-placeholder" style="width: 60px; height: 60px; font-size: 24px; margin: 0 auto;">${initials.toUpperCase()}</div>`;
+        }
+
         let html = `
             <div class="summary-card">
-                <div class="summary-row"><span class="s-key">Scholarship:</span><span class="s-val fw-bold">${selectedScholarship.title}</span></div>
-                <div class="summary-row"><span class="s-key">Reference No.:</span><span class="s-val"><code>${selectedScholarship.no}</code></span></div>
-                <div class="summary-row"><span class="s-key">Student:</span><span class="s-val">${selectedStudent.name} (${selectedStudent.admission})</span></div>
+                <div class="text-center mb-3">
+                    ${avatarHtml}
+                </div>
+                <div class="summary-row"><span class="s-key">Scholarship:</span><span class="s-val fw-bold">${escapeHtml(selectedScholarship.title)}</span></div>
+                <div class="summary-row"><span class="s-key">Reference No.:</span><span class="s-val"><code>${escapeHtml(selectedScholarship.no)}</code></span></div>
+                <div class="summary-row"><span class="s-key">Student:</span><span class="s-val">${escapeHtml(selectedStudent.name)} (${escapeHtml(selectedStudent.admission)})</span></div>
+                <div class="summary-row"><span class="s-key">Current Class:</span><span class="s-val"><i class="ri-book-open-line me-1"></i>${escapeHtml(selectedStudent.currentClass || 'Not Assigned')}</span></div>
                 <div class="summary-row"><span class="s-key">Value:</span><span class="s-val text-primary">
                     ${selectedScholarship.value_type == 'percentage' ? selectedScholarship.value + '%' : '₦' + parseFloat(selectedScholarship.value).toLocaleString()}
                 </span></div>
