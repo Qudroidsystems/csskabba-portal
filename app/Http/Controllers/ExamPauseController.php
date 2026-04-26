@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers;
 
 use App\Models\Exam;
 use App\Models\ExamAttempt;
@@ -31,13 +31,13 @@ class ExamPauseController extends Controller
             $this->notifyPausedAttempts($activeAttempts, $exam);
 
             return response()->json([
-                'success' => true, 
+                'success' => true,
                 'message' => "Exam paused for {$count} active attempts"
             ]);
         } catch (\Exception $e) {
             Log::error("Pause exam failed: {$e->getMessage()}", ['exam_id' => $exam->id]);
             return response()->json([
-                'success' => false, 
+                'success' => false,
                 'message' => 'Failed to pause exam: ' . $e->getMessage()
             ], 500);
         }
@@ -72,13 +72,13 @@ class ExamPauseController extends Controller
             $this->notifyResumedAttempts($pausedAttempts, $exam);
 
             return response()->json([
-                'success' => true, 
+                'success' => true,
                 'message' => "Exam resumed for {$count} attempts. Added {$totalPauseSeconds}s pause time."
             ]);
         } catch (\Exception $e) {
             Log::error("Resume exam failed: {$e->getMessage()}", ['exam_id' => $exam->id]);
             return response()->json([
-                'success' => false, 
+                'success' => false,
                 'message' => 'Failed to resume exam: ' . $e->getMessage()
             ], 500);
         }
