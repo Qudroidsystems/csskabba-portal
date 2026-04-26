@@ -2,7 +2,7 @@
 
 use \App\Http\Controllers\SchoolInformationController;
 use App\Http\Controllers\Admin\DiscountController;
-use App\Http\Controllers\Admin\ExamPauseController;
+use App\Http\Controllers\ExamPauseController;
 use App\Http\Controllers\Admin\PaymentGatewayController;
 use App\Http\Controllers\Admin\ScholarshipController;
 use App\Http\Controllers\Admin\SiblingGroupController;
