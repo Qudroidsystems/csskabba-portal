@@ -367,7 +367,7 @@ class ScholarshipController extends Controller
             'expired'  => ScholarshipAssignment::where('status', 'expired')->count(),
             'revoked'  => ScholarshipAssignment::where('status', 'revoked')->count(),
         ];
-        $scholarships = Scholarship::where('status', 'active')->get();
+        $scholarships = Scholarship::whereIn('status', ['active', 'draft'])->get();
 
         return view('admin.scholarship.assignments', compact(
             'pagetitle', 'assignments', 'statusCounts', 'scholarshipId', 'scholarships'
@@ -538,27 +538,26 @@ class ScholarshipController extends Controller
 
     // ── Get Eligible Students (AJAX / Select2) ────────────────────────────
 
+   // Replace getEligibleStudents() entirely
     public function getEligibleStudents(Request $request)
     {
         try {
-            $scholarship      = null;
-            $eligibleClasses  = [];
+            $scholarship       = null;
+            $eligibleClasses   = [];
             $eligibleStatusIds = [];
 
             if ($request->filled('scholarship_id')) {
                 $scholarship = Scholarship::find($request->scholarship_id);
                 if ($scholarship) {
-                    $eligibleClasses   = json_decode($scholarship->eligible_classes,   true) ?? [];
+                    $eligibleClasses   = json_decode($scholarship->eligible_classes,    true) ?? [];
                     $eligibleStatusIds = json_decode($scholarship->eligible_status_ids, true) ?? [];
                 }
             }
 
-            $query = Student::query();
+            $query = Student::with('picture');
 
-            // Only restrict by class when the scholarship specifies eligible classes
             if (!empty($eligibleClasses)) {
                 $query->whereHas('schoolClass', function ($q) use ($eligibleClasses) {
-                    // schoolClass() → Studentclass, which has schoolclassid
                     $q->whereIn('schoolclassid', $eligibleClasses);
                 });
             }
@@ -570,24 +569,34 @@ class ScholarshipController extends Controller
             if ($request->filled('q')) {
                 $search = $request->q;
                 $query->where(function ($q) use ($search) {
-                    $q->where('firstname',    'like', "%{$search}%")
-                      ->orWhere('lastname',   'like', "%{$search}%")
-                      ->orWhere('admissionNo','like', "%{$search}%");
+                    $q->where('firstname',     'like', "%{$search}%")
+                    ->orWhere('lastname',    'like', "%{$search}%")
+                    ->orWhere('admissionNo', 'like', "%{$search}%");
                 });
             }
 
-            // Exclude students who already hold this scholarship
             if ($scholarship) {
                 $query->whereDoesntHave('scholarshipAssignments', function ($q) use ($scholarship) {
                     $q->where('scholarship_id', $scholarship->id)
-                      ->whereIn('status', ['active', 'pending', 'approved']);
+                    ->whereIn('status', ['active', 'pending', 'approved']);
                 });
             }
 
             $students = $query->select('id', 'firstname', 'lastname', 'admissionNo')
                 ->orderBy('lastname')
                 ->limit(50)
-                ->get();
+                ->get()
+                ->map(function ($student) {
+                    return [
+                        'id'          => $student->id,
+                        'firstname'   => $student->firstname,
+                        'lastname'    => $student->lastname,
+                        'admissionNo' => $student->admissionNo,
+                        'avatar'      => $student->picture?->picture
+                                            ? asset('storage/student_avatars/' . $student->picture->picture)
+                                            : null,
+                    ];
+                });
 
             return response()->json(['success' => true, 'students' => $students]);
 
