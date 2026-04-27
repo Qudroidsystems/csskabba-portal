@@ -88,7 +88,11 @@ class SchoolPaymentController extends Controller
 
         foreach ($assignments as $assignment) {
             if (!$assignment->discount || $assignment->discount->status !== 'active') continue;
-            if (!$assignment->discount->appliesToBill($billId)) continue;
+
+            // Check if discount applies to this bill
+            if (method_exists($assignment->discount, 'appliesToBill')) {
+                if (!$assignment->discount->appliesToBill($billId)) continue;
+            }
 
             $deduction = 0;
             if ($assignment->value_type === 'percentage') {
@@ -102,10 +106,12 @@ class SchoolPaymentController extends Controller
 
             $totalDeduction += $deduction;
             $labels[] = $assignment->discount->title;
+            $remaining -= $deduction;
+            if ($remaining <= 0) break;
         }
 
         return [
-            'deduction' => round(min($totalDeduction, $remaining), 2),
+            'deduction' => round(min($totalDeduction, $remaining + $totalDeduction), 2),
             'labels'    => $labels,
         ];
     }

@@ -32,6 +32,25 @@
     z-index: 9999;
     display: none;
 }
+
+.form-label {
+    font-weight: 600;
+    color: var(--pay-primary);
+    margin-bottom: 8px;
+}
+
+.form-select {
+    border: 1.5px solid var(--pay-border);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 14px;
+    transition: all 0.15s;
+}
+
+.form-select:focus {
+    border-color: var(--pay-accent);
+    box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+}
 </style>
 
 <div class="main-content">
@@ -56,8 +75,7 @@
                         </a>
                     </div>
 
-                    <form id="termSessionForm">
-                        @csrf
+                    <form method="GET" action="{{ route('schoolpayment.termsessionpayments') }}" id="paymentForm">
                         <input type="hidden" name="studentId" value="{{ $id }}">
 
                         <div class="row g-4">
@@ -103,22 +121,20 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('termSessionForm');
+    const form = document.getElementById('paymentForm');
     const termSelect = document.getElementById('termid');
     const sessionSelect = document.getElementById('sessionid');
     const submitBtn = document.getElementById('submitBtn');
     const loadingOverlay = document.getElementById('loadingOverlay');
 
     form.addEventListener('submit', function(e) {
-        e.preventDefault();
-
         const termid = termSelect.value;
         const sessionid = sessionSelect.value;
 
         if (!termid || !sessionid) {
+            e.preventDefault();
             Swal.fire({
                 icon: 'warning',
                 title: 'Incomplete Selection',
@@ -128,50 +144,12 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
 
+        // Show loading overlay
         loadingOverlay.style.display = 'flex';
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
-
-        const formData = new FormData(form);
-
-        fetch('{{ route("schoolpayment.termsessionpayments") }}?' + new URLSearchParams(formData), {
-            method: 'GET',
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Display payment details in a modal or redirect
-                showPaymentDetails(data);
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: data.message || 'No payment records found.'
-                });
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Failed to load payment details. Please try again.'
-            });
-        })
-        .finally(() => {
-            loadingOverlay.style.display = 'none';
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="ri-search-eye-line me-2"></i>View Payment Details';
-        });
     });
-
-    function showPaymentDetails(data) {
-        // You can redirect to a payment details page
-        window.location.href = `{{ route('schoolpayment.termsessionpayments') }}?studentId=${data.student_id}&termid=${termSelect.value}&sessionid=${sessionSelect.value}`;
-    }
 });
 </script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 @endsection

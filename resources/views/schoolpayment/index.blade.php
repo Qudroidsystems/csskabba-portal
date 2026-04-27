@@ -17,7 +17,6 @@
     --pay-shadow:   0 2px 8px rgba(0,0,0,.08);
 }
 
-/* ── Hero ───────────────────────────────── */
 .pay-hero {
     background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #4f46e5 100%);
     border-radius: var(--pay-radius);
@@ -31,7 +30,6 @@
 .pay-hero h1 { font-size:22px; font-weight:700; color:#fff; margin:0 0 6px; position:relative; }
 .pay-hero p  { font-size:13px; color:rgba(255,255,255,.75); margin:0; position:relative; }
 
-/* ── Stat cards ─────────────────────────── */
 .stat-card {
     background:#fff; border:1px solid var(--pay-border);
     border-radius: var(--pay-radius); padding:18px 20px;
@@ -42,18 +40,6 @@
 .stat-card .stat-label { font-size:12px; color:var(--pay-muted); margin-top:4px; }
 .stat-card .stat-icon  { font-size:32px; opacity:.12; float:right; margin-top:-8px; }
 
-/* ── Search bar ─────────────────────────── */
-.search-bar {
-    background:#fff; border:1.5px solid var(--pay-border);
-    border-radius:10px; padding:8px 14px; font-size:13px;
-    transition:border .15s; min-width:260px;
-}
-.search-bar:focus {
-    border-color:var(--pay-accent); outline:none;
-    box-shadow:0 0 0 3px rgba(37,99,235,.1);
-}
-
-/* ── Table ──────────────────────────────── */
 .pay-table th {
     background:var(--pay-primary); color:#fff;
     padding:12px 16px; font-weight:600; font-size:13px; white-space:nowrap;
@@ -64,7 +50,6 @@
 }
 .pay-table tr:hover td { background:#f0f9ff; }
 
-/* ── Avatar ─────────────────────────────── */
 .student-avatar {
     width:40px; height:40px; border-radius:50%; object-fit:cover;
     border:2px solid var(--pay-border);
@@ -77,7 +62,6 @@
     border:2px solid var(--pay-border);
 }
 
-/* ── Badges ─────────────────────────────── */
 .badge-class {
     display:inline-flex; align-items:center; gap:4px;
     background:#f0fdf4; color:#16a34a; border:1px solid #bbf7d0;
@@ -94,7 +78,6 @@
     padding:2px 7px; border-radius:20px; font-size:10px; font-weight:600;
 }
 
-/* ── DataTables overrides ───────────────── */
 .dataTables_wrapper .dataTables_filter input {
     border:1.5px solid var(--pay-border); border-radius:8px;
     padding:7px 14px; margin-left:8px; font-size:13px;
@@ -103,29 +86,17 @@
     border-color:var(--pay-accent); outline:none;
     box-shadow:0 0 0 3px rgba(37,99,235,.1);
 }
-.dataTables_wrapper .dataTables_length select {
-    border:1.5px solid var(--pay-border); border-radius:8px;
-    padding:6px 10px; margin:0 6px; font-size:13px;
-}
-.dataTables_wrapper .dataTables_info { font-size:13px; color:var(--pay-muted); }
-.dataTables_wrapper .paginate_button { border-radius:6px !important; font-size:13px !important; padding:4px 10px !important; }
-.dataTables_wrapper .paginate_button.current,
-.dataTables_wrapper .paginate_button.current:hover {
-    background:var(--pay-accent) !important; border-color:var(--pay-accent) !important; color:#fff !important;
-}
 </style>
 
 <div class="main-content">
 <div class="page-content">
 <div class="container-fluid">
 
-    {{-- Hero --}}
     <div class="pay-hero">
         <h1><i class="ri-wallet-line me-2"></i>Student Payment Portal</h1>
         <p>Select a student to process school fee payments for the current session.</p>
     </div>
 
-    {{-- Stat cards --}}
     <div class="row g-3 mb-4">
         <div class="col-md-3">
             <div class="stat-card">
@@ -159,7 +130,6 @@
         </div>
     </div>
 
-    {{-- Table card --}}
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white py-3 border-bottom">
             <div class="d-flex justify-content-between align-items-center">
@@ -261,6 +231,7 @@
 </div>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
 <script>
