@@ -17,127 +17,115 @@
     --bill-shadow:  0 2px 8px rgba(0,0,0,.08);
 }
 
-/* ── Hero ──────────────────────────────────────────────────── */
+/* ── Hero ──────────────────────────────────────────────── */
 .bill-hero {
     background: linear-gradient(135deg, var(--bill-primary) 0%, #2563eb 60%, #4f46e5 100%);
     border-radius: var(--bill-radius);
-    padding: 28px 32px;
-    margin-bottom: 24px;
-    position: relative;
-    overflow: hidden;
+    padding: 28px 32px; margin-bottom: 24px;
+    position: relative; overflow: hidden;
 }
 .bill-hero::before {
-    content: ''; position: absolute; top: -60px; right: -60px;
-    width: 220px; height: 220px;
-    background: rgba(255,255,255,.06); border-radius: 50%;
+    content:''; position:absolute; top:-60px; right:-60px;
+    width:220px; height:220px; background:rgba(255,255,255,.06); border-radius:50%;
 }
 .bill-hero::after {
-    content: ''; position: absolute; bottom: -80px; left: -30px;
-    width: 260px; height: 260px;
-    background: rgba(255,255,255,.03); border-radius: 50%;
+    content:''; position:absolute; bottom:-80px; left:-30px;
+    width:260px; height:260px; background:rgba(255,255,255,.03); border-radius:50%;
 }
-.bill-hero h1 { font-size: 22px; font-weight: 700; color: #fff; margin: 0 0 6px; position: relative; }
-.bill-hero p  { font-size: 13px; color: rgba(255,255,255,.75); margin: 0; position: relative; }
+.bill-hero h1 { font-size:22px; font-weight:700; color:#fff; margin:0 0 6px; position:relative; }
+.bill-hero p  { font-size:13px; color:rgba(255,255,255,.75); margin:0; position:relative; }
 
-/* ── Stat cards ────────────────────────────────────────────── */
+/* ── Stat cards ────────────────────────────────────────── */
 .stat-card {
-    background: #fff; border: 1px solid var(--bill-border);
-    border-radius: var(--bill-radius); padding: 18px 20px;
-    transition: transform .15s, box-shadow .15s;
+    background:#fff; border:1px solid var(--bill-border);
+    border-radius:var(--bill-radius); padding:18px 20px;
+    transition:transform .15s, box-shadow .15s;
 }
-.stat-card:hover { transform: translateY(-2px); box-shadow: var(--bill-shadow); }
-.stat-card .stat-value { font-size: 28px; font-weight: 700; color: var(--bill-primary); }
-.stat-card .stat-label { font-size: 12px; color: var(--bill-muted); margin-top: 4px; }
-.stat-card .stat-icon  { font-size: 32px; opacity: .12; float: right; margin-top: -8px; }
+.stat-card:hover { transform:translateY(-2px); box-shadow:var(--bill-shadow); }
+.stat-card .stat-value { font-size:28px; font-weight:700; color:var(--bill-primary); }
+.stat-card .stat-label { font-size:12px; color:var(--bill-muted); margin-top:4px; }
+.stat-card .stat-icon  { font-size:32px; opacity:.12; float:right; margin-top:-8px; }
 
-/* ── Table ─────────────────────────────────────────────────── */
+/* ── Table ─────────────────────────────────────────────── */
 .bill-table th {
-    background: var(--bill-primary); color: #fff;
-    padding: 12px 16px; font-weight: 600; font-size: 13px;
-    white-space: nowrap;
+    background:var(--bill-primary); color:#fff;
+    padding:12px 16px; font-weight:600; font-size:13px;
+    white-space:nowrap;
 }
 .bill-table td {
-    padding: 12px 16px; vertical-align: middle;
-    border-bottom: 1px solid var(--bill-border); font-size: 13px;
+    padding:12px 16px; vertical-align:middle;
+    border-bottom:1px solid var(--bill-border); font-size:13px;
 }
-.bill-table tr:hover { background: #eff6ff; }
-.bill-table tbody tr { transition: background .1s; }
+.bill-table tr:hover td { background:#eff6ff; }
 
-/* ── Badges ────────────────────────────────────────────────── */
+/* ── Badges ────────────────────────────────────────────── */
 .bill-badge {
-    display: inline-flex; align-items: center;
-    padding: 4px 10px; border-radius: 20px;
-    font-size: 11px; font-weight: 600; letter-spacing: .2px;
+    display:inline-flex; align-items:center;
+    padding:4px 10px; border-radius:20px;
+    font-size:11px; font-weight:600;
 }
-.bill-badge-old     { background: #dbeafe; color: #2563eb; }
-.bill-badge-new     { background: #dcfce7; color: #16a34a; }
-.bill-badge-unknown { background: #f3f4f6; color: #6b7280; }
+.bill-badge-old     { background:#dbeafe; color:#2563eb; }
+.bill-badge-new     { background:#dcfce7; color:#16a34a; }
+.bill-badge-unknown { background:#f3f4f6; color:#6b7280; }
 
-/* ── DataTables overrides ──────────────────────────────────── */
+/* ── DataTables overrides ──────────────────────────────── */
 .dataTables_wrapper .dataTables_filter input {
-    border: 1.5px solid var(--bill-border); border-radius: 8px;
-    padding: 7px 14px; margin-left: 8px; font-size: 13px;
-    transition: border .15s;
+    border:1.5px solid var(--bill-border); border-radius:8px;
+    padding:7px 14px; margin-left:8px; font-size:13px;
+    transition:border .15s;
 }
 .dataTables_wrapper .dataTables_filter input:focus {
-    border-color: var(--bill-accent); outline: none;
-    box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+    border-color:var(--bill-accent); outline:none;
+    box-shadow:0 0 0 3px rgba(37,99,235,.1);
 }
 .dataTables_wrapper .dataTables_length select {
-    border: 1.5px solid var(--bill-border); border-radius: 8px;
-    padding: 6px 10px; margin: 0 6px; font-size: 13px;
+    border:1.5px solid var(--bill-border); border-radius:8px;
+    padding:6px 10px; margin:0 6px; font-size:13px;
 }
-.dataTables_wrapper .dataTables_info  { font-size: 13px; color: var(--bill-muted); }
-.dataTables_wrapper .dataTables_paginate { margin-top: 4px; }
+.dataTables_wrapper .dataTables_info  { font-size:13px; color:var(--bill-muted); }
 .dataTables_wrapper .paginate_button {
-    border-radius: 6px !important; font-size: 13px !important;
-    padding: 4px 10px !important;
+    border-radius:6px !important; font-size:13px !important;
+    padding:4px 10px !important;
 }
 .dataTables_wrapper .paginate_button.current,
 .dataTables_wrapper .paginate_button.current:hover {
-    background: var(--bill-accent) !important;
-    border-color: var(--bill-accent) !important; color: #fff !important;
-}
-.dataTables_wrapper .dataTables_processing {
-    background: rgba(255,255,255,.9);
-    border: 1px solid var(--bill-border); border-radius: 8px;
-    padding: 12px 20px; font-size: 13px;
+    background:var(--bill-accent) !important;
+    border-color:var(--bill-accent) !important; color:#fff !important;
 }
 
-/* ── Modal ─────────────────────────────────────────────────── */
+/* ── Modal ─────────────────────────────────────────────── */
 #billModal .modal-content {
-    border: none; border-radius: 16px;
-    overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.15);
+    border:none; border-radius:16px;
+    overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.15);
 }
 .modal-hero-bar {
-    background: linear-gradient(135deg, var(--bill-primary) 0%, #2563eb 100%);
-    padding: 22px 28px; position: relative; overflow: hidden;
+    background:linear-gradient(135deg, var(--bill-primary) 0%, #2563eb 100%);
+    padding:22px 28px; position:relative; overflow:hidden;
 }
 .modal-hero-bar::before {
     content:''; position:absolute; top:-30px; right:-30px;
     width:120px; height:120px; background:rgba(255,255,255,.07); border-radius:50%;
 }
 .modal-hero-bar h5 { color:#fff; font-weight:700; margin:0; font-size:16px; position:relative; }
-.modal-hero-bar .btn-close-white { position:absolute; top:16px; right:20px; }
+.modal-hero-bar .btn-close { position:absolute; top:18px; right:20px; filter:invert(1); }
 
-.form-label { font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+.form-label { font-size:13px; font-weight:600; color:#374151; margin-bottom:6px; }
 .form-control, .form-select {
-    border: 1.5px solid var(--bill-border); border-radius: 8px;
-    font-size: 13px; padding: 9px 14px; transition: border .15s;
+    border:1.5px solid var(--bill-border); border-radius:8px;
+    font-size:13px; padding:9px 14px; transition:border .15s;
 }
 .form-control:focus, .form-select:focus {
-    border-color: var(--bill-accent);
-    box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+    border-color:var(--bill-accent);
+    box-shadow:0 0 0 3px rgba(37,99,235,.1);
 }
 
-/* ── Bulk bar ──────────────────────────────────────────────── */
+/* ── Bulk bar ──────────────────────────────────────────── */
 .bulk-bar {
-    background: #fff3cd; border: 1px solid #ffc107;
-    border-radius: 8px; padding: 10px 16px;
-    display: none; align-items: center; gap: 12px;
-    margin-bottom: 12px;
+    background:#fff3cd; border:1px solid #ffc107;
+    border-radius:8px; padding:10px 16px;
+    display:none; align-items:center; gap:12px; margin-bottom:12px;
 }
-.bulk-bar.show { display: flex; }
+.bulk-bar.show { display:flex; }
 </style>
 
 <div class="main-content">
@@ -151,7 +139,7 @@
     </div>
 
     {{-- Stat cards --}}
-    <div class="row g-3 mb-4" id="statCards">
+    <div class="row g-3 mb-4">
         <div class="col-md-3">
             <div class="stat-card">
                 <div class="stat-icon"><i class="ri-file-list-3-line"></i></div>
@@ -203,6 +191,8 @@
             </div>
         </div>
         <div class="card-body">
+
+            {{-- Bulk bar --}}
             <div class="bulk-bar" id="bulkBar">
                 <i class="ri-checkbox-circle-line text-warning"></i>
                 <span id="bulkCount">0</span> bill(s) selected
@@ -210,11 +200,14 @@
                     <i class="ri-delete-bin-line me-1"></i>Delete Selected
                 </button>
             </div>
+
             <div class="table-responsive">
                 <table class="table bill-table w-100 mb-0" id="billsTable">
                     <thead>
                         <tr>
-                            <th width="40"><input type="checkbox" id="selectAll" class="form-check-input"></th>
+                            <th width="40">
+                                <input type="checkbox" id="selectAll" class="form-check-input">
+                            </th>
                             <th>#</th>
                             <th>Title</th>
                             <th>Amount</th>
@@ -234,14 +227,12 @@
 </div>
 </div>
 
-{{-- ═══════════════════════════════════
-     CREATE / EDIT MODAL
-═══════════════════════════════════ --}}
+{{-- CREATE / EDIT MODAL --}}
 <div class="modal fade" id="billModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered" style="max-width:480px">
         <div class="modal-content">
             <div class="modal-hero-bar">
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 <h5 id="modalTitle"><i class="ri-file-add-line me-2"></i>Create School Bill</h5>
             </div>
             <form id="billForm">
@@ -251,12 +242,14 @@
                     <div class="mb-3">
                         <label class="form-label">Bill Title <span class="text-danger">*</span></label>
                         <input type="text" id="title" class="form-control"
-                               placeholder="e.g., First Term Tuition Fee 2025" required>
+                               placeholder="e.g., First Term Tuition 2025" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Bill Amount (₦) <span class="text-danger">*</span></label>
                         <div class="input-group">
-                            <span class="input-group-text" style="border-radius:8px 0 0 8px;border:1.5px solid var(--bill-border);border-right:none;background:#f8fafc;font-weight:600;color:var(--bill-muted)">₦</span>
+                            <span class="input-group-text"
+                                  style="border-radius:8px 0 0 8px;border:1.5px solid var(--bill-border);
+                                         border-right:none;background:#f8fafc;font-weight:600;color:var(--bill-muted)">₦</span>
                             <input type="number" id="billAmount" class="form-control"
                                    style="border-radius:0 8px 8px 0"
                                    step="0.01" min="1" placeholder="0.00" required>
@@ -265,7 +258,7 @@
                     <div class="mb-3">
                         <label class="form-label">Description</label>
                         <textarea id="description" class="form-control" rows="3"
-                                  placeholder="Optional description or remark..."></textarea>
+                                  placeholder="Optional remark..."></textarea>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Student Type <span class="text-danger">*</span></label>
@@ -315,6 +308,17 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 $(document).ready(function () {
+
+    // ── Use route helpers for all URLs ─────────────────────────────────
+    const ROUTES = {
+        index:       '{{ route("schoolbill.index") }}',
+        store:       '{{ route("schoolbill.store") }}',
+        update:      function(id) { return '{{ url("schoolbill") }}/' + id; },
+        destroy:     function(id) { return '{{ url("schoolbill") }}/' + id; },
+        bulkDestroy: '{{ route("schoolbill.bulk-destroy") }}',
+        stats:       '{{ route("schoolbill.index") }}?stats=1',
+    };
+
     const CSRF = $('meta[name="csrf-token"]').attr('content');
     let table, deleteId = null;
 
@@ -323,72 +327,71 @@ $(document).ready(function () {
         processing: true,
         serverSide: true,
         ajax: {
-            url:  '{{ route("schoolbill.index") }}',
-            type: 'GET',
-            // KEY FIX: tell Laravel this is an AJAX request
+            url:     ROUTES.index,
+            type:    'GET',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            error: function (xhr, error, thrown) {
-                console.error('DataTables Ajax error:', xhr.responseText);
-                Swal.fire('Error', 'Failed to load bills. Please refresh the page.', 'error');
+            error: function (xhr) {
+                console.error('DataTables error:', xhr.responseText);
+                Swal.fire('Error', 'Failed to load bills. Please refresh.', 'error');
             }
         },
         columns: [
             {
                 data: 'id', orderable: false, searchable: false,
-                render: data => `<input type="checkbox" class="form-check-input row-checkbox" value="${data}">`
+                render: data =>
+                    `<input type="checkbox" class="form-check-input row-checkbox" value="${data}">`
             },
             { data: 'DT_RowIndex', orderable: false, searchable: false },
             { data: 'title' },
-            { data: 'formatted_amount' },
+            { data: 'formatted_amount',  orderable: false },
             {
                 data: 'description',
                 render: data => data
                     ? `<span class="text-muted">${data.length > 50 ? data.substring(0, 50) + '…' : data}</span>`
                     : '<span class="text-muted fst-italic">—</span>'
             },
-            { data: 'status_name', orderable: false },
+            { data: 'status_name',   orderable: false },
             { data: 'formatted_date', orderable: false },
-            { data: 'action',        orderable: false, searchable: false },
+            { data: 'action',         orderable: false, searchable: false },
         ],
         language: {
-            processing:    '<div class="d-flex align-items-center gap-2"><span class="spinner-border spinner-border-sm text-primary"></span> Loading...</div>',
-            search:        '',
-            searchPlaceholder: 'Search bills...',
-            lengthMenu:    'Show _MENU_ entries',
-            info:          'Showing _START_–_END_ of _TOTAL_ bills',
-            infoEmpty:     'No bills found',
-            zeroRecords:   'No matching bills',
-            emptyTable:    'No school bills created yet',
+            processing:       '<span class="spinner-border spinner-border-sm text-primary me-2"></span>Loading...',
+            search:           '',
+            searchPlaceholder:'Search bills...',
+            lengthMenu:       'Show _MENU_ entries',
+            info:             'Showing _START_–_END_ of _TOTAL_ bills',
+            infoEmpty:        'No bills found',
+            zeroRecords:      'No matching bills',
+            emptyTable:       'No school bills created yet',
         },
         order:      [[1, 'desc']],
         pageLength: 15,
         responsive: true,
-        drawCallback: function (settings) {
-            // Update stats after each draw
-            const json = settings.json;
-            if (json) {
-                $('#totalBadge').text(json.recordsTotal);
-                updateStats();
-            }
-            // Re-bind checkboxes after redraw
+        drawCallback: function () {
             bindCheckboxes();
+            // Update badge
+            const info = this.api().page.info();
+            $('#totalBadge').text(info.recordsTotal);
         },
     });
 
-    // ── Stats (fetch summary separately) ──────────────────────────────
-    function updateStats() {
-        $.get('{{ route("schoolbill.index") }}', { stats: 1 }, function (data) {
+    // ── Load stats ─────────────────────────────────────────────────────
+    function loadStats() {
+        $.get(ROUTES.stats, function (data) {
             if (data.stats) {
                 $('#statTotal' ).text(data.stats.total);
                 $('#statOld'   ).text(data.stats.old);
                 $('#statNew'   ).text(data.stats.new);
-                $('#statAmount').text('₦' + Number(data.stats.total_amount).toLocaleString('en-NG', { minimumFractionDigits: 0 }));
+                $('#statAmount').text(
+                    '₦' + Number(data.stats.total_amount)
+                        .toLocaleString('en-NG', { minimumFractionDigits: 0 })
+                );
             }
         });
     }
-    updateStats();
+    loadStats();
 
-    // ── Checkbox / bulk select ─────────────────────────────────────────
+    // ── Checkboxes ─────────────────────────────────────────────────────
     function bindCheckboxes() {
         $('.row-checkbox').off('change').on('change', updateBulkBar);
     }
@@ -400,28 +403,26 @@ $(document).ready(function () {
 
     function updateBulkBar() {
         const count = $('.row-checkbox:checked').length;
-        if (count > 0) {
-            $('#bulkBar').addClass('show');
-            $('#bulkCount').text(count);
-            $('#bulkDeleteBtn').removeClass('d-none');
-        } else {
-            $('#bulkBar').removeClass('show');
-            $('#bulkDeleteBtn').addClass('d-none');
-            $('#selectAll').prop('checked', false);
-        }
+        $('#bulkBar').toggleClass('show', count > 0);
+        $('#bulkCount').text(count);
+        $('#bulkDeleteBtn').toggleClass('d-none', count === 0);
+        if (count === 0) $('#selectAll').prop('checked', false);
     }
 
-    // ── Create bill ────────────────────────────────────────────────────
+    // ── Create ─────────────────────────────────────────────────────────
     $('#createBillBtn').on('click', function () {
-        $('#billForm')[0].reset();
         $('#billId').val('');
+        $('#title').val('');
+        $('#billAmount').val('');
+        $('#description').val('');
+        $('#statusId').val('');
         $('#modalTitle').html('<i class="ri-file-add-line me-2"></i>Create School Bill');
-        $('#formErrors').addClass('d-none').empty();
         $('#saveBtn').html('<i class="ri-save-line me-1"></i>Save Bill');
+        $('#formErrors').addClass('d-none').html('');
         $('#billModal').modal('show');
     });
 
-    // ── Edit bill ──────────────────────────────────────────────────────
+    // ── Edit ───────────────────────────────────────────────────────────
     $(document).on('click', '.edit-bill', function () {
         $('#billId'     ).val($(this).data('id'));
         $('#title'      ).val($(this).data('title'));
@@ -429,49 +430,56 @@ $(document).ready(function () {
         $('#description').val($(this).data('description'));
         $('#statusId'   ).val($(this).data('status'));
         $('#modalTitle').html('<i class="ri-edit-line me-2"></i>Edit School Bill');
-        $('#formErrors').addClass('d-none').empty();
         $('#saveBtn').html('<i class="ri-save-line me-1"></i>Update Bill');
+        $('#formErrors').addClass('d-none').html('');
         $('#billModal').modal('show');
     });
 
-    // ── Form submit (create + update) ──────────────────────────────────
+    // ── Save (create + update) ─────────────────────────────────────────
     $('#billForm').on('submit', function (e) {
         e.preventDefault();
-        const id  = $('#billId').val();
-        const url = id ? '/schoolbill/' + id : '/schoolbill';
+
+        const id      = $('#billId').val();
+        const isEdit  = !!id;
+
+        // URL and method based on create vs update
+        const url    = isEdit ? ROUTES.update(id) : ROUTES.store;
+        const method = 'POST'; // always POST, spoof PUT via _method for update
+
+        const payload = {
+            title:       $('#title').val(),
+            bill_amount: $('#billAmount').val(),
+            description: $('#description').val(),
+            statusId:    $('#statusId').val(),
+            _token:      CSRF,
+        };
+        if (isEdit) payload._method = 'PUT';
 
         $('#saveBtn').prop('disabled', true)
                      .html('<span class="spinner-border spinner-border-sm me-2"></span>Saving...');
+        $('#formErrors').addClass('d-none').html('');
 
         $.ajax({
             url,
-            type: 'POST',
-            headers: { 'X-CSRF-TOKEN': CSRF, 'X-Requested-With': 'XMLHttpRequest' },
-            data: {
-                title:       $('#title').val(),
-                bill_amount: $('#billAmount').val(),
-                description: $('#description').val(),
-                statusId:    $('#statusId').val(),
-                _method:     id ? 'PUT' : 'POST',
-            },
+            type:    method,
+            data:    payload,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
             success(res) {
                 if (res.success) {
                     $('#billModal').modal('hide');
                     table.ajax.reload();
-                    updateStats();
+                    loadStats();
                     Swal.fire({
                         icon: 'success', title: 'Saved!', text: res.message,
-                        confirmButtonColor: '#2563eb', timer: 2500, showConfirmButton: false,
+                        timer: 2500, showConfirmButton: false,
                     });
+                } else {
+                    showErrors(res.message, res.errors);
                 }
             },
             error(xhr) {
                 if (xhr.status === 422) {
-                    const errors = xhr.responseJSON?.errors || {};
-                    let html = '<ul class="mb-0 ps-3">';
-                    $.each(errors, (k, v) => { html += `<li>${v}</li>`; });
-                    html += '</ul>';
-                    $('#formErrors').removeClass('d-none').html(html);
+                    showErrors(null, xhr.responseJSON?.errors);
                 } else {
                     Swal.fire('Error!', 'Something went wrong. Please try again.', 'error');
                 }
@@ -483,6 +491,19 @@ $(document).ready(function () {
         });
     });
 
+    function showErrors(message, errors) {
+        let html = '<ul class="mb-0 ps-3">';
+        if (errors) {
+            $.each(errors, function (k, v) {
+                html += `<li>${Array.isArray(v) ? v[0] : v}</li>`;
+            });
+        } else {
+            html += `<li>${message || 'Something went wrong.'}</li>`;
+        }
+        html += '</ul>';
+        $('#formErrors').removeClass('d-none').html(html);
+    }
+
     // ── Single delete ──────────────────────────────────────────────────
     $(document).on('click', '.delete-bill', function () {
         deleteId = $(this).data('id');
@@ -492,25 +513,33 @@ $(document).ready(function () {
 
     $('#confirmDelete').on('click', function () {
         if (!deleteId) return;
-        $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+        const btn = $(this);
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
 
         $.ajax({
-            url:  '/schoolbill/' + deleteId,
-            type: 'DELETE',
-            headers: { 'X-CSRF-TOKEN': CSRF, 'X-Requested-With': 'XMLHttpRequest' },
+            url:     ROUTES.destroy(deleteId),
+            type:    'POST',
+            data:    { _method: 'DELETE', _token: CSRF },
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
             success(res) {
                 if (res.success) {
                     $('#deleteModal').modal('hide');
                     table.ajax.reload();
-                    updateStats();
-                    Swal.fire({ icon: 'success', title: 'Deleted!', text: res.message, timer: 2000, showConfirmButton: false });
+                    loadStats();
+                    Swal.fire({
+                        icon: 'success', title: 'Deleted!', text: res.message,
+                        timer: 2000, showConfirmButton: false,
+                    });
+                } else {
+                    Swal.fire('Error!', res.message, 'error');
                 }
             },
             error() {
                 Swal.fire('Error!', 'Failed to delete bill.', 'error');
             },
             complete() {
-                $('#confirmDelete').prop('disabled', false).html('<i class="ri-delete-bin-line me-1"></i>Delete');
+                btn.prop('disabled', false)
+                   .html('<i class="ri-delete-bin-line me-1"></i>Delete');
                 deleteId = null;
             },
         });
@@ -530,21 +559,28 @@ $(document).ready(function () {
             confirmButtonText:  'Yes, delete',
         }).then(result => {
             if (!result.isConfirmed) return;
+
             $.ajax({
-                url:  '{{ route("schoolbill.bulk-destroy") }}',
-                type: 'POST',
-                headers: { 'X-CSRF-TOKEN': CSRF, 'X-Requested-With': 'XMLHttpRequest' },
-                data: { ids },
+                url:         ROUTES.bulkDestroy,
+                type:        'POST',
+                data:        { ids: ids, _token: CSRF },
+                headers:     { 'X-Requested-With': 'XMLHttpRequest' },
+                traditional: true, // needed for array data with jQuery
                 success(res) {
                     if (res.success) {
                         table.ajax.reload();
-                        updateStats();
+                        loadStats();
                         $('#selectAll').prop('checked', false);
                         updateBulkBar();
-                        Swal.fire({ icon: 'success', title: 'Deleted!', text: res.message, timer: 2000, showConfirmButton: false });
+                        Swal.fire({
+                            icon: 'success', title: 'Deleted!', text: res.message,
+                            timer: 2000, showConfirmButton: false,
+                        });
                     }
                 },
-                error() { Swal.fire('Error!', 'Failed to delete bills.', 'error'); },
+                error() {
+                    Swal.fire('Error!', 'Failed to delete bills.', 'error');
+                },
             });
         });
     }

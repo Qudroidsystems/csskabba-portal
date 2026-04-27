@@ -446,14 +446,15 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
     // SCHOOL BILL MANAGEMENT ROUTES
     // ============================================
     Route::prefix('schoolbill')->name('schoolbill.')->group(function () {
-        Route::get('/', [SchoolBillController::class, 'index'])->name('index');
-        Route::post('/store', [SchoolBillController::class, 'store'])->name('store');
-        Route::put('/{id}', [SchoolBillController::class, 'update'])->name('update');
-        Route::delete('/{id}', [SchoolBillController::class, 'destroy'])->name('destroy');
-        Route::post('/bulk-destroy', [SchoolBillController::class, 'bulkDestroy'])->name('bulk-destroy');
-        Route::get('/{id}/edit-json', [SchoolBillController::class, 'edit'])->name('edit-json');
-        Route::get('/{id}', [SchoolBillController::class, 'show'])->name('show');
+        Route::get('/',               [SchoolBillController::class, 'index']      )->name('index');
+        Route::post('/store',         [SchoolBillController::class, 'store']      )->name('store');
+        Route::post('/bulk-destroy',  [SchoolBillController::class, 'bulkDestroy'])->name('bulk-destroy');
+        Route::get('/{id}/edit-json', [SchoolBillController::class, 'edit']       )->name('edit-json');
+        Route::get('/{id}',           [SchoolBillController::class, 'show']       )->name('show');
+        Route::put('/{id}',           [SchoolBillController::class, 'update']     )->name('update');
+        Route::delete('/{id}',        [SchoolBillController::class, 'destroy']    )->name('destroy');
     });
+
 
     // ============================================
     // SCHOOL BILL TERM SESSION ROUTES
