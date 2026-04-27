@@ -806,7 +806,7 @@
                             <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-apps">BURSARY & FINANCE</span></li>
                         @endif
 
-                        @can('View schoolpayment')
+                        @can('View school-payment')
                         <li class="nav-item">
                             <a href="#sidebarStudentpayments" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStudentpayments">
                                 <i class="ph-storefront"></i> <span data-key="t-ecommerce">Student Payments</span>
