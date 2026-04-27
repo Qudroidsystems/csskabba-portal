@@ -11,166 +11,212 @@
     --pay-warning: #d97706;
     --pay-danger:  #dc2626;
     --pay-purple:  #7c3aed;
+    --pay-muted:   #6b7280;
     --pay-border:  #e2e8f0;
     --pay-bg:      #f8fafc;
     --pay-radius:  12px;
     --pay-shadow:  0 2px 8px rgba(0,0,0,.08);
 }
 
-/* ── Hero ───────────────────────────────── */
+/* ── Hero ── */
 .pay-hero {
     background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #4f46e5 100%);
-    border-radius: var(--pay-radius); padding: 24px 32px; margin-bottom: 24px;
-    position: relative; overflow: hidden;
+    border-radius: var(--pay-radius);
+    padding: 24px 32px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
 }
 .pay-hero::before {
-    content:''; position:absolute; top:-50px; right:-50px;
-    width:200px; height:200px; background:rgba(255,255,255,.06); border-radius:50%;
+    content: '';
+    position: absolute; top: -50px; right: -50px;
+    width: 200px; height: 200px;
+    background: rgba(255,255,255,.06);
+    border-radius: 50%;
 }
-.pay-hero h1 { font-size:20px; font-weight:700; color:#fff; margin:0 0 4px; position:relative; }
-.pay-hero p  { font-size:13px; color:rgba(255,255,255,.75); margin:0; position:relative; }
+.pay-hero h1 { font-size: 20px; font-weight: 700; color: #fff; margin: 0 0 4px; position: relative; }
+.pay-hero p  { font-size: 13px; color: rgba(255,255,255,.75); margin: 0; position: relative; }
 
-/* ── Student info card ──────────────────── */
+/* ── Student card ── */
 .student-card {
-    background:#fff; border:1px solid var(--pay-border);
-    border-radius:var(--pay-radius); padding:20px 24px; margin-bottom:20px;
-    box-shadow:var(--pay-shadow);
+    background: #fff;
+    border: 1px solid var(--pay-border);
+    border-radius: var(--pay-radius);
+    padding: 20px 24px;
+    margin-bottom: 20px;
+    box-shadow: var(--pay-shadow);
 }
 .student-avatar-lg {
-    width:72px; height:72px; border-radius:50%; object-fit:cover;
-    border:3px solid var(--pay-border);
+    width: 72px; height: 72px;
+    border-radius: 50%; object-fit: cover;
+    border: 3px solid var(--pay-border);
 }
 .avatar-placeholder-lg {
-    width:72px; height:72px; border-radius:50%;
-    background:linear-gradient(135deg,#dbeafe,#93c5fd);
-    display:inline-flex; align-items:center; justify-content:center;
-    font-size:22px; font-weight:700; color:var(--pay-accent);
-    border:3px solid var(--pay-border); flex-shrink:0;
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #dbeafe, #93c5fd);
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 700; color: var(--pay-accent);
+    border: 3px solid var(--pay-border);
+    flex-shrink: 0;
 }
 .info-chip {
-    display:inline-flex; align-items:center; gap:5px;
-    background:var(--pay-bg); border:1px solid var(--pay-border);
-    border-radius:8px; padding:6px 12px; font-size:12px; font-weight:600;
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--pay-bg);
+    border: 1px solid var(--pay-border);
+    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 12px; font-weight: 600;
 }
-.info-chip i { opacity:.7; }
+.info-chip i { opacity: .7; }
 
-/* ── Scholarship / discount banners ─────── */
+/* ── Benefit banners ── */
 .benefit-banner {
-    border-radius:10px; padding:12px 16px; margin-bottom:16px;
-    display:flex; align-items:flex-start; gap:12px; font-size:13px;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    display: flex; align-items: flex-start; gap: 12px;
+    font-size: 13px;
 }
-.benefit-banner.schol {
-    background:#fef9c3; border:1px solid #fde68a; color:#92400e;
-}
-.benefit-banner.disc {
-    background:#ede9fe; border:1px solid #ddd6fe; color:#6d28d9;
-}
-.benefit-banner .icon { font-size:20px; flex-shrink:0; margin-top:1px; }
+.benefit-banner.schol { background: #fef9c3; border: 1px solid #fde68a; color: #92400e; }
+.benefit-banner.disc  { background: #ede9fe; border: 1px solid #ddd6fe; color: #6d28d9; }
+.benefit-banner .icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
 
-/* ── Bill cards ─────────────────────────── */
+/* ── Bill cards ── */
 .bill-card {
-    background:#fff; border:1px solid var(--pay-border);
-    border-radius:12px; padding:18px 20px; height:100%;
-    position:relative; overflow:hidden; transition:transform .15s, box-shadow .15s;
+    background: #fff;
+    border: 1px solid var(--pay-border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    transition: transform .15s, box-shadow .15s;
 }
-.bill-card:hover { transform:translateY(-2px); box-shadow:var(--pay-shadow); }
-.bill-card .stripe {
-    position:absolute; top:0; left:0; right:0; height:3px;
-}
-.bill-card.paid    .stripe { background:linear-gradient(90deg,#16a34a,#15803d); }
-.bill-card.partial .stripe { background:linear-gradient(90deg,#2563eb,#1d4ed8); }
-.bill-card.unpaid  .stripe { background:linear-gradient(90deg,#d97706,#b45309); }
-.bill-card.savings .stripe { background:linear-gradient(90deg,#7c3aed,#6d28d9); }
+.bill-card:hover { transform: translateY(-2px); box-shadow: var(--pay-shadow); }
+.bill-card .stripe { position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+.bill-card.paid    .stripe { background: linear-gradient(90deg, #16a34a, #15803d); }
+.bill-card.partial .stripe { background: linear-gradient(90deg, #2563eb, #1d4ed8); }
+.bill-card.unpaid  .stripe { background: linear-gradient(90deg, #d97706, #b45309); }
+.bill-card.savings .stripe { background: linear-gradient(90deg, #7c3aed, #6d28d9); }
 
-.bill-amount-main { font-size:22px; font-weight:700; color:var(--pay-primary); }
-.bill-mini-label  { font-size:10px; color:#6b7280; text-transform:uppercase; letter-spacing:.04em; }
-.bill-mini-value  { font-size:13px; font-weight:700; }
+.bill-amount-main { font-size: 22px; font-weight: 700; color: var(--pay-primary); }
+.bill-mini-label  { font-size: 10px; color: #6b7280; text-transform: uppercase; letter-spacing: .04em; }
+.bill-mini-value  { font-size: 13px; font-weight: 700; }
 
-.savings-pill {
-    display:inline-flex; align-items:center; gap:4px;
-    background:#f3e8ff; border:1px solid #e9d5ff;
-    color:#7c3aed; border-radius:20px; padding:2px 9px; font-size:11px; font-weight:600;
-}
 .schol-pill {
-    display:inline-flex; align-items:center; gap:4px;
-    background:#fef9c3; border:1px solid #fde68a;
-    color:#92400e; border-radius:20px; padding:2px 9px; font-size:11px; font-weight:600;
+    display: inline-flex; align-items: center; gap: 4px;
+    background: #fef9c3; border: 1px solid #fde68a;
+    color: #92400e; border-radius: 20px;
+    padding: 2px 9px; font-size: 11px; font-weight: 600;
 }
 .disc-pill {
-    display:inline-flex; align-items:center; gap:4px;
-    background:#ede9fe; border:1px solid #ddd6fe;
-    color:#6d28d9; border-radius:20px; padding:2px 9px; font-size:11px; font-weight:600;
+    display: inline-flex; align-items: center; gap: 4px;
+    background: #ede9fe; border: 1px solid #ddd6fe;
+    color: #6d28d9; border-radius: 20px;
+    padding: 2px 9px; font-size: 11px; font-weight: 600;
 }
 
-.progress { height:6px; border-radius:10px; background:#e2e8f0; }
-.progress-bar-paid    { background:linear-gradient(90deg,#16a34a,#15803d); border-radius:10px; }
-.progress-bar-partial { background:linear-gradient(90deg,#2563eb,#1d4ed8); border-radius:10px; }
+/* ── Progress bar ── */
+.progress            { height: 6px; border-radius: 10px; background: #e2e8f0; overflow: hidden; }
+.progress-bar-paid   { background: linear-gradient(90deg, #16a34a, #15803d); border-radius: 10px; height: 6px; }
+.progress-bar-partial{ background: linear-gradient(90deg, #2563eb, #1d4ed8); border-radius: 10px; height: 6px; }
 
-/* ── Tab nav ────────────────────────────── */
+/* ── Tabs ── */
 .nav-tabs .nav-link {
-    color:var(--pay-muted); font-size:13px; font-weight:600;
-    border:none; border-bottom:2px solid transparent; padding:10px 16px;
+    color: var(--pay-muted);
+    font-size: 13px; font-weight: 600;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 10px 16px;
 }
 .nav-tabs .nav-link.active {
-    color:var(--pay-accent); border-bottom-color:var(--pay-accent); background:transparent;
+    color: var(--pay-accent);
+    border-bottom-color: var(--pay-accent);
+    background: transparent;
 }
 
-/* ── Payment Records table ──────────────── */
+/* ── Record tables ── */
 .rec-table th {
-    background:#f8fafc; color:var(--pay-primary);
-    padding:10px 14px; font-size:12px; font-weight:700; white-space:nowrap;
-    border-bottom:2px solid var(--pay-border);
+    background: var(--pay-bg);
+    color: var(--pay-primary);
+    padding: 10px 14px;
+    font-size: 12px; font-weight: 700;
+    white-space: nowrap;
+    border-bottom: 2px solid var(--pay-border);
 }
 .rec-table td {
-    padding:10px 14px; vertical-align:middle; font-size:13px;
-    border-bottom:1px solid var(--pay-border);
+    padding: 10px 14px;
+    vertical-align: middle;
+    font-size: 13px;
+    border-bottom: 1px solid var(--pay-border);
 }
-.rec-table tr:hover td { background:#f0f9ff; }
+.rec-table tr:hover td { background: #f0f9ff; }
 
-/* ── Empty state ────────────────────────── */
+/* ── Empty state ── */
 .empty-state {
-    text-align:center; padding:48px 24px;
+    text-align: center;
+    padding: 52px 24px;
+    color: var(--pay-muted);
 }
-.empty-state i { font-size:3rem; opacity:.25; color:var(--pay-muted); display:block; margin-bottom:12px; }
-.empty-state p { color:var(--pay-muted); margin:0; font-size:14px; }
+.empty-state i { font-size: 3rem; opacity: .25; display: block; margin-bottom: 14px; }
+.empty-state p { margin: 0; font-size: 14px; }
+.empty-state .sub { font-size: 12px; margin-top: 6px; }
 
-/* ── Payment Modal ──────────────────────── */
-#paymentModal .modal-content { border:none; border-radius:16px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.15); }
+/* ── Payment Modal ── */
+#paymentModal .modal-content {
+    border: none;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,.15);
+}
 .modal-hero-bar {
-    background:linear-gradient(135deg,#1e3a5f,#2563eb);
-    padding:20px 28px; position:relative; overflow:hidden;
+    background: linear-gradient(135deg, #1e3a5f, #2563eb);
+    padding: 20px 28px;
+    position: relative;
+    overflow: hidden;
 }
 .modal-hero-bar::before {
-    content:''; position:absolute; top:-25px; right:-25px;
-    width:100px; height:100px; background:rgba(255,255,255,.07); border-radius:50%;
+    content: '';
+    position: absolute; top: -25px; right: -25px;
+    width: 100px; height: 100px;
+    background: rgba(255,255,255,.07);
+    border-radius: 50%;
 }
-.modal-hero-bar h5 { color:#fff; font-weight:700; margin:0; font-size:15px; position:relative; }
-.modal-hero-bar .btn-close { position:absolute; top:16px; right:20px; filter:invert(1); }
+.modal-hero-bar h5 { color: #fff; font-weight: 700; margin: 0; font-size: 15px; position: relative; }
+.modal-hero-bar .btn-close { position: absolute; top: 16px; right: 20px; filter: invert(1); }
 
 .savings-breakdown {
-    background:linear-gradient(135deg,#f3e8ff,#ede9fe);
-    border:1px solid #ddd6fe; border-radius:10px; padding:12px 16px; margin-bottom:14px;
+    background: linear-gradient(135deg, #f3e8ff, #ede9fe);
+    border: 1px solid #ddd6fe;
+    border-radius: 10px;
+    padding: 12px 16px;
+    margin-bottom: 14px;
 }
-.savings-breakdown .title { font-size:12px; font-weight:700; color:#7c3aed; margin-bottom:8px; }
-.savings-row { display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px; }
-.savings-row:last-child { margin-bottom:0; border-top:1px solid #ddd6fe; padding-top:6px; font-weight:700; }
+.savings-breakdown .title { font-size: 12px; font-weight: 700; color: #7c3aed; margin-bottom: 8px; }
+.savings-row { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px; }
+.savings-row:last-child { margin-bottom: 0; border-top: 1px solid #ddd6fe; padding-top: 6px; font-weight: 700; }
 
-.form-label { font-size:13px; font-weight:600; color:#374151; margin-bottom:6px; }
+.form-label { font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
 .form-control, .form-select {
-    border:1.5px solid var(--pay-border); border-radius:8px;
-    font-size:13px; padding:9px 14px; transition:border .15s;
+    border: 1.5px solid var(--pay-border);
+    border-radius: 8px;
+    font-size: 13px;
+    padding: 9px 14px;
+    transition: border .15s;
 }
 .form-control:focus, .form-select:focus {
-    border-color:var(--pay-accent); box-shadow:0 0 0 3px rgba(37,99,235,.1);
+    border-color: var(--pay-accent);
+    box-shadow: 0 0 0 3px rgba(37,99,235,.1);
 }
-.form-control[readonly] { background:#f8fafc; cursor:default; }
+.form-control[readonly] { background: var(--pay-bg); cursor: default; }
 </style>
 
 <div class="main-content">
 <div class="page-content">
 <div class="container-fluid">
 
-    {{-- Messages --}}
+    {{-- Flash messages --}}
     @if(session('error'))
         <div class="alert alert-danger alert-dismissible fade show">
             {{ session('error') }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
@@ -188,21 +234,30 @@
         <p>Manage school fee payments for the selected student, term, and session.</p>
     </div>
 
-    {{-- ── Student info ── --}}
-    @if($studentdata)
+    {{-- Guard: studentdata not found --}}
+    @if(!$studentdata)
+        <div class="alert alert-warning d-flex align-items-center gap-3">
+            <i class="ri-alert-line fs-4"></i>
+            <div>
+                Student not found or not enrolled in the current session.
+                <a href="{{ route('schoolpayment.index') }}" class="alert-link ms-2">← Back to students list</a>
+            </div>
+        </div>
+    @else
+
+    {{-- Pre-compute totals --}}
     @php
         $totalBillOriginal = $student_bill_info->sum('amount');
         $totalBillAdjusted = $student_bill_info->sum('adjusted_amount');
-        $totalPaidSoFar    = $studentpaymentbillbook
-            ->where('student_id', $studentId)
-            ->where('term_id', $termid)
-            ->where('session_id', $sessionid)
-            ->sum('amount_paid');
+        $totalPaidSoFar    = $studentpaymentbillbook->sum('amount_paid');
         $totalOutstanding  = max(0, $totalBillAdjusted - $totalPaidSoFar);
         $totalSavings      = $student_bill_info->sum('total_savings');
     @endphp
+
+    {{-- Student info card --}}
     <div class="student-card">
         <div class="d-flex align-items-start gap-4 flex-wrap">
+
             {{-- Avatar --}}
             <div>
                 @if($studentdata->avatar)
@@ -210,12 +265,12 @@
                          alt="{{ $studentdata->firstname }}" class="student-avatar-lg">
                 @else
                     <div class="avatar-placeholder-lg">
-                        {{ strtoupper(substr($studentdata->firstname,0,1) . substr($studentdata->lastname,0,1)) }}
+                        {{ strtoupper(substr($studentdata->firstname,0,1).substr($studentdata->lastname,0,1)) }}
                     </div>
                 @endif
             </div>
 
-            {{-- Info --}}
+            {{-- Details --}}
             <div class="flex-grow-1">
                 <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
                     <h5 class="mb-0 fw-bold" style="color:var(--pay-primary)">
@@ -224,7 +279,9 @@
                     @if(($studentdata->student_status ?? '') === 'Active')
                         <span class="badge bg-success-subtle text-success px-2 py-1" style="font-size:11px">Active</span>
                     @else
-                        <span class="badge bg-danger-subtle text-danger px-2 py-1" style="font-size:11px">{{ $studentdata->student_status ?? 'Unknown' }}</span>
+                        <span class="badge bg-danger-subtle text-danger px-2 py-1" style="font-size:11px">
+                            {{ $studentdata->student_status ?? 'Unknown' }}
+                        </span>
                     @endif
                     @if(($studentdata->statusId ?? 0) == 1)
                         <span class="badge bg-info-subtle text-info px-2 py-1" style="font-size:11px">Returning Student</span>
@@ -232,7 +289,8 @@
                         <span class="badge bg-warning-subtle text-warning px-2 py-1" style="font-size:11px">New Student</span>
                     @endif
                 </div>
-                <div class="text-muted small mb-3 font-monospace">{{ $studentdata->admissionNo }}</div>
+
+                <div class="text-muted small font-monospace mb-3">{{ $studentdata->admissionNo }}</div>
 
                 <div class="d-flex flex-wrap gap-2">
                     <div class="info-chip">
@@ -256,54 +314,50 @@
                         Paid: ₦{{ number_format($totalPaidSoFar, 0) }}
                     </div>
                     @if($totalOutstanding > 0)
-                    <div class="info-chip" style="background:#fef2f2;border-color:#fecaca;color:#dc2626">
-                        <i class="ri-alert-line"></i>
-                        Outstanding: ₦{{ number_format($totalOutstanding, 0) }}
-                    </div>
+                        <div class="info-chip" style="background:#fef2f2;border-color:#fecaca;color:#dc2626">
+                            <i class="ri-alert-line"></i>
+                            Outstanding: ₦{{ number_format($totalOutstanding, 0) }}
+                        </div>
                     @else
-                    <div class="info-chip" style="background:#f0fdf4;border-color:#bbf7d0;color:#16a34a">
-                        <i class="ri-checkbox-circle-line"></i>Fully Paid
-                    </div>
+                        <div class="info-chip" style="background:#f0fdf4;border-color:#bbf7d0;color:#16a34a">
+                            <i class="ri-checkbox-circle-line"></i> Fully Paid
+                        </div>
                     @endif
                 </div>
             </div>
 
-            {{-- Actions --}}
+            {{-- Action buttons --}}
             <div class="d-flex gap-2 flex-wrap align-items-start">
                 <a href="{{ route('schoolpayment.index') }}" class="btn btn-outline-secondary btn-sm">
                     <i class="ri-arrow-left-line me-1"></i>Back
                 </a>
                 @if($paymentRecordsCount > 0)
-                <a href="{{ route('schoolpayment.invoice', ['studentId'=>$studentId,'schoolclassid'=>$schoolclassId,'termid'=>$termid,'sessionid'=>$sessionid]) }}"
-                   class="btn btn-primary btn-sm">
-                    <i class="ri-file-download-line me-1"></i>Generate Invoice
-                </a>
+                    <a href="{{ route('schoolpayment.invoice', ['studentId'=>$studentId,'schoolclassid'=>$schoolclassId,'termid'=>$termid,'sessionid'=>$sessionid]) }}"
+                       class="btn btn-primary btn-sm">
+                        <i class="ri-file-download-line me-1"></i>Generate Invoice
+                    </a>
                 @else
-                <button class="btn btn-primary btn-sm" disabled title="Make a payment first">
-                    <i class="ri-file-download-line me-1"></i>Generate Invoice
-                </button>
+                    <button class="btn btn-primary btn-sm" disabled title="Make a payment first">
+                        <i class="ri-file-download-line me-1"></i>Generate Invoice
+                    </button>
                 @endif
                 <a href="{{ route('schoolpayment.statement', ['studentId'=>$studentId,'schoolclassid'=>$schoolclassId,'termid'=>$termid,'sessionid'=>$sessionid]) }}"
                    class="btn btn-outline-primary btn-sm">
                     <i class="ri-file-list-line me-1"></i>Statement
                 </a>
             </div>
+
         </div>
     </div>
-    @else
-    <div class="alert alert-warning">
-        <i class="ri-alert-line me-2"></i>
-        Student data could not be loaded. The student may not be enrolled in the current session.
-        <a href="{{ route('schoolpayment.index') }}" class="alert-link ms-2">← Back to students</a>
-    </div>
-    @endif
 
     {{-- Scholarship banner --}}
     @if(isset($scholarshipInfo) && $scholarshipInfo)
     <div class="benefit-banner schol">
         <i class="ri-award-line icon"></i>
         <div>
-            <div class="fw-semibold mb-1">Scholarship Active: {{ $scholarshipInfo->scholarship->title ?? 'Scholarship' }}</div>
+            <div class="fw-semibold mb-1">
+                Scholarship Active: {{ $scholarshipInfo->scholarship->title ?? 'Scholarship' }}
+            </div>
             <div class="small">
                 @if($scholarshipInfo->value_type === 'percentage')
                     {{ $scholarshipInfo->value }}% deduction on applicable fees.
@@ -313,9 +367,7 @@
                 @if($scholarshipInfo->effective_to)
                     Valid until {{ \Carbon\Carbon::parse($scholarshipInfo->effective_to)->format('d M Y') }}.
                 @endif
-                <strong class="ms-2">
-                    Total Savings: ₦{{ number_format($totalSavings ?? 0, 0) }}
-                </strong>
+                <strong class="ms-2">Total Savings: ₦{{ number_format($totalSavings, 0) }}</strong>
             </div>
         </div>
     </div>
@@ -345,7 +397,7 @@
     </div>
     @endif
 
-    {{-- ── Tabs ── --}}
+    {{-- ── TABS ── --}}
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white border-bottom pt-3 pb-0">
             <ul class="nav nav-tabs border-0" id="payTabs">
@@ -377,14 +429,14 @@
         <div class="card-body">
             <div class="tab-content">
 
-                {{-- ══════════════════ BILLS TAB ══════════════════ --}}
+                {{-- ════════════════ BILLS TAB ════════════════ --}}
                 <div class="tab-pane fade show active" id="tab-bills">
                     @if($student_bill_info->isEmpty())
                         <div class="empty-state">
                             <i class="ri-inbox-line"></i>
                             <p>No bills assigned for this class, term, and session.</p>
-                            <p class="text-muted small mt-1">
-                                Class: <strong>{{ $studentdata->schoolclass ?? '—' }} {{ $studentdata->arm ?? '' }}</strong> ·
+                            <p class="sub text-muted">
+                                Class: <strong>{{ $studentdata->schoolclass }} {{ $studentdata->arm }}</strong> ·
                                 Term: <strong>{{ $schoolterm }}</strong> ·
                                 Session: <strong>{{ $schoolsession }}</strong>
                             </p>
@@ -393,14 +445,14 @@
                         <div class="row g-3 mt-1">
                             @foreach($student_bill_info as $bill)
                             @php
-                                $bookEntry  = $studentpaymentbillbook->where('school_bill_id', $bill->schoolbillid)->first();
-                                $amountPaid = $bookEntry ? (float)$bookEntry->amount_paid : 0;
-                                $adjustedAmt = (float)$bill->adjusted_amount;
-                                $balance    = max(0, $adjustedAmt - $amountPaid);
-                                $progress   = $adjustedAmt > 0 ? min(100, ($amountPaid / $adjustedAmt) * 100) : 0;
-                                $isPaid     = $balance <= 0 && $amountPaid > 0;
-                                $isPartial  = $amountPaid > 0 && $balance > 0;
-                                $hasSavings = $bill->total_savings > 0;
+                                $bookEntry   = $studentpaymentbillbook->where('school_bill_id', $bill->schoolbillid)->first();
+                                $amountPaid  = $bookEntry ? (float) $bookEntry->amount_paid : 0;
+                                $adjustedAmt = (float) $bill->adjusted_amount;
+                                $balance     = max(0, $adjustedAmt - $amountPaid);
+                                $progress    = $adjustedAmt > 0 ? min(100, ($amountPaid / $adjustedAmt) * 100) : 0;
+                                $isPaid      = $balance <= 0 && $amountPaid > 0;
+                                $isPartial   = $amountPaid > 0 && $balance > 0;
+                                $hasSavings  = $bill->total_savings > 0;
 
                                 $pendingPayment = $studentpaymentbill->where('school_bill_id', $bill->schoolbillid)->first();
                                 $invoicePending = $pendingPayment && $pendingPayment->delete_status == '1';
@@ -422,7 +474,7 @@
                                                 <div class="text-muted" style="font-size:11px">{{ $bill->description }}</div>
                                             @endif
                                         </div>
-                                        <div class="ms-2">
+                                        <div class="ms-2 flex-shrink-0">
                                             @if($isPaid)
                                                 <span class="badge bg-success-subtle text-success px-2 py-1" style="font-size:10px">
                                                     <i class="ri-checkbox-circle-line me-1"></i>Paid
@@ -493,12 +545,14 @@
                                         </div>
                                         <div class="progress">
                                             <div class="{{ $isPaid ? 'progress-bar-paid' : 'progress-bar-partial' }}"
-                                                 style="width:{{ $progress }}%;height:6px;"
-                                                 role="progressbar"></div>
+                                                 style="width:{{ $progress }}%"
+                                                 role="progressbar"
+                                                 aria-valuenow="{{ $progress }}"
+                                                 aria-valuemin="0" aria-valuemax="100"></div>
                                         </div>
                                     </div>
 
-                                    {{-- Action button --}}
+                                    {{-- Action --}}
                                     @if($isPaid)
                                         <button class="btn btn-success btn-sm w-100" disabled>
                                             <i class="ri-checkbox-circle-line me-1"></i>Fully Paid
@@ -512,19 +566,18 @@
                                         <button class="btn btn-primary btn-sm w-100 make-payment"
                                                 data-student_id="{{ $studentId }}"
                                                 data-amount="{{ $adjustedAmt }}"
-                                                data-amount_actual="{{ $adjustedAmt }}"
                                                 data-original_amount="{{ $bill->original_amount }}"
-                                                data-amount_paid="{{ number_format($amountPaid, 0) }}"
+                                                data-amount_paid="{{ $amountPaid }}"
                                                 data-balance="{{ $balance }}"
                                                 data-school_bill_id="{{ $bill->schoolbillid }}"
                                                 data-class_id="{{ $schoolclassId }}"
                                                 data-term_id="{{ $termid }}"
                                                 data-session_id="{{ $sessionid }}"
-                                                data-title="{{ $bill->title }}"
+                                                data-title="{{ addslashes($bill->title) }}"
                                                 data-scholarship_deduction="{{ $bill->scholarship_deduction }}"
-                                                data-scholarship_label="{{ $bill->scholarship_label }}"
+                                                data-scholarship_label="{{ addslashes($bill->scholarship_label ?? '') }}"
                                                 data-discount_deduction="{{ $bill->discount_deduction }}"
-                                                data-discount_labels="{{ implode(', ', $bill->discount_labels ?? []) }}"
+                                                data-discount_labels="{{ addslashes(implode(', ', $bill->discount_labels ?? [])) }}"
                                                 data-total_savings="{{ $bill->total_savings }}"
                                                 data-bs-toggle="modal"
                                                 data-bs-target="#paymentModal">
@@ -536,16 +589,18 @@
                             @endforeach
                         </div>
 
-                        {{-- Total savings summary --}}
-                        @if(isset($totalSavings) && $totalSavings > 0)
-                        <div class="mt-4 p-3 rounded-3" style="background:linear-gradient(135deg,#f3e8ff,#ede9fe);border:1px solid #ddd6fe">
+                        {{-- Savings summary --}}
+                        @if($totalSavings > 0)
+                        <div class="mt-4 p-3 rounded-3"
+                             style="background:linear-gradient(135deg,#f3e8ff,#ede9fe);border:1px solid #ddd6fe">
                             <div class="d-flex align-items-center gap-2">
                                 <i class="ri-gift-line" style="font-size:18px;color:#7c3aed"></i>
                                 <div>
                                     <span class="fw-semibold" style="color:#7c3aed">Total Savings Applied:</span>
                                     <span class="fw-bold ms-1" style="color:#7c3aed">₦{{ number_format($totalSavings, 0) }}</span>
                                     <span class="text-muted small ms-2">
-                                        (Original: ₦{{ number_format($totalBillOriginal, 0) }} → Payable: ₦{{ number_format($totalBillAdjusted, 0) }})
+                                        (Original: ₦{{ number_format($totalBillOriginal, 0) }}
+                                        → Payable: ₦{{ number_format($totalBillAdjusted, 0) }})
                                     </span>
                                 </div>
                             </div>
@@ -554,7 +609,7 @@
                     @endif
                 </div>
 
-                {{-- ══════════════════ RECORDS TAB ══════════════════ --}}
+                {{-- ════════════════ RECORDS TAB ════════════════ --}}
                 <div class="tab-pane fade" id="tab-records">
                     @if($studentpaymentbill->isEmpty())
                         <div class="empty-state">
@@ -584,10 +639,14 @@
                                         <td>{{ $i + 1 }}</td>
                                         <td>
                                             <div class="fw-semibold">{{ $sp->title }}</div>
-                                            <div class="text-muted small">{{ $sp->description }}</div>
+                                            @if($sp->description)
+                                                <div class="text-muted small">{{ $sp->description }}</div>
+                                            @endif
                                         </td>
-                                        <td>₦{{ number_format($sp->billAmount, 0) }}</td>
-                                        <td class="text-success fw-semibold">₦{{ number_format($sp->totalAmountPaid ?? 0, 0) }}</td>
+                                        <td>₦{{ number_format($sp->billAmount ?? 0, 0) }}</td>
+                                        <td class="text-success fw-semibold">
+                                            ₦{{ number_format($sp->totalAmountPaid ?? 0, 0) }}
+                                        </td>
                                         <td class="{{ ($sp->balance ?? 0) > 0 ? 'text-danger' : 'text-success' }} fw-semibold">
                                             ₦{{ number_format($sp->balance ?? 0, 0) }}
                                         </td>
@@ -596,25 +655,27 @@
                                                 {{ $sp->paymentMethod === 'Bank Transfer' ? 'bg-primary-subtle text-primary' :
                                                    ($sp->paymentMethod === 'School POS'   ? 'bg-success-subtle text-success' :
                                                    'bg-secondary-subtle text-secondary') }}">
-                                                {{ $sp->paymentMethod }}
+                                                {{ $sp->paymentMethod ?? '—' }}
                                             </span>
                                         </td>
-                                        <td>{{ $sp->receivedBy }}</td>
-                                        <td>
-                                            <span class="text-muted small">
-                                                {{ $sp->receivedDate ? \Carbon\Carbon::parse($sp->receivedDate)->format('d M Y') : 'N/A' }}
-                                            </span>
+                                        <td class="text-muted small">{{ $sp->receivedBy ?? '—' }}</td>
+                                        <td class="text-muted small">
+                                            {{ $sp->receivedDate ? \Carbon\Carbon::parse($sp->receivedDate)->format('d M Y') : 'N/A' }}
                                         </td>
                                         <td>
-                                            <span class="badge {{ $sp->paymentStatus === 'Completed' ? 'bg-success' : 'bg-warning text-dark' }}">
-                                                {{ $sp->paymentStatus }}
+                                            <span class="badge {{ ($sp->paymentStatus ?? '') === 'Completed' ? 'bg-success' : 'bg-warning text-dark' }}">
+                                                {{ $sp->paymentStatus ?? 'Pending' }}
                                             </span>
                                         </td>
                                         <td>
+                                            @if($sp->recordId)
                                             <button class="btn btn-sm btn-danger delete-payment"
-                                                    data-url="{{ route('schoolpayment.deletestudentpayment', ['recordId'=>$sp->recordId]) }}">
+                                                    data-url="{{ route('schoolpayment.deletestudentpayment', ['recordId' => $sp->recordId]) }}">
                                                 <i class="ri-delete-bin-line"></i>
                                             </button>
+                                            @else
+                                                <span class="text-muted small">—</span>
+                                            @endif
                                         </td>
                                     </tr>
                                     @endforeach
@@ -624,7 +685,7 @@
                     @endif
                 </div>
 
-                {{-- ══════════════════ HISTORY TAB ══════════════════ --}}
+                {{-- ════════════════ HISTORY TAB ════════════════ --}}
                 <div class="tab-pane fade" id="tab-history">
                     @if($paymentHistory->isEmpty())
                         <div class="empty-state">
@@ -654,30 +715,44 @@
                                         <td>{{ $i + 1 }}</td>
                                         <td>
                                             <div class="fw-semibold">{{ $ph->title }}</div>
-                                            <div class="text-muted small">{{ $ph->description }}</div>
+                                            @if($ph->description)
+                                                <div class="text-muted small">{{ $ph->description }}</div>
+                                            @endif
                                         </td>
-                                        <td>₦{{ number_format($ph->billAmount, 0) }}</td>
-                                        <td class="text-success fw-semibold">₦{{ number_format($ph->totalAmountPaid ?? 0, 0) }}</td>
+                                        <td>₦{{ number_format($ph->billAmount ?? 0, 0) }}</td>
+                                        <td class="text-success fw-semibold">
+                                            ₦{{ number_format($ph->totalAmountPaid ?? 0, 0) }}
+                                        </td>
                                         <td class="{{ ($ph->balance ?? 0) > 0 ? 'text-danger' : 'text-success' }} fw-semibold">
                                             ₦{{ number_format($ph->balance ?? 0, 0) }}
                                         </td>
                                         <td>
-                                            <span class="badge bg-secondary-subtle text-secondary">{{ $ph->paymentMethod }}</span>
+                                            <span class="badge bg-secondary-subtle text-secondary">
+                                                {{ $ph->paymentMethod ?? '—' }}
+                                            </span>
                                         </td>
-                                        <td>{{ $ph->receivedBy }}</td>
+                                        <td class="text-muted small">{{ $ph->receivedBy ?? '—' }}</td>
+                                        <td class="text-muted small">
+                                            {{ $ph->receivedDate ? \Carbon\Carbon::parse($ph->receivedDate)->format('d M Y') : 'N/A' }}
+                                        </td>
                                         <td>
-                                            <span class="text-muted small">
-                                                {{ $ph->receivedDate ? \Carbon\Carbon::parse($ph->receivedDate)->format('d M Y') : 'N/A' }}
+                                            @php
+                                                $histDone = ($ph->paymentStatus ?? '') === 'Completed'
+                                                         || ($ph->completePayment ?? 0) == 1;
+                                            @endphp
+                                            <span class="badge {{ $histDone ? 'bg-success' : 'bg-warning text-dark' }}">
+                                                {{ $histDone ? 'Completed' : 'Partial' }}
                                             </span>
                                         </td>
                                         <td>
-                                            <span class="badge {{ ($ph->paymentStatus ?? '') === 'Completed' || ($ph->completePayment ?? 0) == 1 ? 'bg-success' : 'bg-warning text-dark' }}">
-                                                {{ ($ph->paymentStatus ?? '') === 'Completed' || ($ph->completePayment ?? 0) == 1 ? 'Completed' : 'Partial' }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <a href="{{ route('schoolpayment.invoice', ['studentId'=>$studentId,'schoolclassid'=>$ph->classId,'termid'=>$ph->termId,'sessionid'=>$ph->sessionId]) }}"
-                                               class="btn btn-sm btn-outline-primary">
+                                            <a href="{{ route('schoolpayment.invoice', [
+                                                    'studentId'    => $studentId,
+                                                    'schoolclassid'=> $ph->classId ?? $schoolclassId,
+                                                    'termid'       => $ph->termId  ?? $termid,
+                                                    'sessionid'    => $ph->sessionId ?? $sessionid,
+                                               ]) }}"
+                                               class="btn btn-sm btn-outline-primary"
+                                               title="View Invoice">
                                                 <i class="ri-file-download-line"></i>
                                             </a>
                                         </td>
@@ -687,7 +762,12 @@
                             </table>
                         </div>
                         <div class="mt-3">
-                            <a href="{{ route('schoolpayment.statement', ['studentId'=>$studentId,'schoolclassid'=>$schoolclassId,'termid'=>$termid,'sessionid'=>$sessionid]) }}"
+                            <a href="{{ route('schoolpayment.statement', [
+                                    'studentId'    => $studentId,
+                                    'schoolclassid'=> $schoolclassId,
+                                    'termid'       => $termid,
+                                    'sessionid'    => $sessionid,
+                               ]) }}"
                                class="btn btn-outline-primary btn-sm">
                                 <i class="ri-file-list-3-line me-1"></i>Download Payment Statement
                             </a>
@@ -698,6 +778,8 @@
             </div>{{-- /tab-content --}}
         </div>{{-- /card-body --}}
     </div>{{-- /card --}}
+
+    @endif {{-- /studentdata guard --}}
 
 </div>
 </div>
@@ -729,7 +811,8 @@
                 <div class="modal-body p-4">
                     {{-- Bill name --}}
                     <div class="mb-3 pb-3 border-bottom">
-                        <div class="fw-semibold" style="color:var(--pay-primary);font-size:15px" id="modal-bill-title">—</div>
+                        <div class="fw-semibold" id="modal-bill-title"
+                             style="color:var(--pay-primary);font-size:15px">—</div>
                     </div>
 
                     {{-- Savings breakdown --}}
@@ -745,11 +828,11 @@
                         </div>
                         <div class="savings-row">
                             <span>Total Savings</span>
-                            <span style="color:#7c3aed" id="totalSavingsAmt">-₦0</span>
+                            <span style="color:#7c3aed;font-weight:700" id="totalSavingsAmt">-₦0</span>
                         </div>
                     </div>
 
-                    {{-- Read-only info --}}
+                    {{-- Read-only amounts --}}
                     <div class="row g-3 mb-3">
                         <div class="col-6">
                             <label class="form-label">Bill Amount</label>
@@ -763,24 +846,28 @@
                     <div class="mb-3">
                         <label class="form-label">Outstanding Balance</label>
                         <input type="text" id="balance_d" class="form-control" readonly
-                               style="background:#fff3cd;font-weight:700">
+                               style="background:#fff3cd;font-weight:700;">
                         <div class="form-text small text-muted">Payment cannot exceed this balance.</div>
                     </div>
 
                     {{-- Payment amount --}}
                     <div class="mb-3">
-                        <label class="form-label">Enter Payment Amount <span class="text-danger">*</span></label>
+                        <label class="form-label">
+                            Enter Payment Amount <span class="text-danger">*</span>
+                        </label>
                         <div class="input-group">
-                            <span class="input-group-text">₦</span>
+                            <span class="input-group-text fw-semibold">₦</span>
                             <input type="text" id="payment_amount" name="payment_amount"
                                    class="form-control" placeholder="0.00" required>
                         </div>
-                        <div class="invalid-feedback" id="amountError"></div>
+                        <div class="invalid-feedback d-block" id="amountError" style="display:none!important"></div>
                     </div>
 
                     {{-- Payment method --}}
                     <div class="mb-3">
-                        <label class="form-label">Payment Method <span class="text-danger">*</span></label>
+                        <label class="form-label">
+                            Payment Method <span class="text-danger">*</span>
+                        </label>
                         <select id="payment_method2" name="payment_method2" class="form-select" required>
                             <option value="">— Select Method —</option>
                             <option value="Bank Deposit">Bank Deposit / Teller</option>
@@ -789,9 +876,8 @@
                             <option value="Cheque">Cheque</option>
                         </select>
                     </div>
-
-                    <div class="alert alert-danger d-none" id="formErrors"></div>
                 </div>
+
                 <div class="modal-footer border-0 pt-0 px-4 pb-4">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="paySubmitBtn">
@@ -803,7 +889,7 @@
     </div>
 </div>
 
-{{-- ══════════════════════ CONFIRM DELETE MODAL ══════════════════════ --}}
+{{-- ════════════════════════ CONFIRM DELETE MODAL ════════════════════════ --}}
 <div class="modal fade" id="confirmDeleteModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered" style="max-width:380px">
         <div class="modal-content border-0" style="border-radius:16px;overflow:hidden">
@@ -829,29 +915,30 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
+    // ── Format number with commas ──────────────────────────────────────
     function fmt(n) {
-        return Number(n).toLocaleString('en-NG', { minimumFractionDigits: 0 });
+        return Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 0 });
     }
 
-    // ── Populate payment modal ──────────────────────────────────────────
+    // ── Populate payment modal ─────────────────────────────────────────
     document.querySelectorAll('.make-payment').forEach(function (btn) {
         btn.addEventListener('click', function () {
-            const d = {
+            var d = {
                 student_id:    this.dataset.student_id,
-                amount:        parseFloat(this.dataset.amount),
-                original:      parseFloat(this.dataset.original_amount),
-                amount_paid:   parseFloat((this.dataset.amount_paid || '0').replace(/,/g, '')),
-                balance:       parseFloat(this.dataset.balance),
+                amount:        parseFloat(this.dataset.amount        || 0),
+                original:      parseFloat(this.dataset.original_amount || 0),
+                amount_paid:   parseFloat(this.dataset.amount_paid   || 0),
+                balance:       parseFloat(this.dataset.balance        || 0),
                 bill_id:       this.dataset.school_bill_id,
                 class_id:      this.dataset.class_id,
                 term_id:       this.dataset.term_id,
                 session_id:    this.dataset.session_id,
                 title:         this.dataset.title,
                 schol_ded:     parseFloat(this.dataset.scholarship_deduction || 0),
-                schol_label:   this.dataset.scholarship_label || 'Scholarship',
-                disc_ded:      parseFloat(this.dataset.discount_deduction || 0),
-                disc_labels:   this.dataset.discount_labels || 'Discount',
-                total_savings: parseFloat(this.dataset.total_savings || 0),
+                schol_label:   this.dataset.scholarship_label  || 'Scholarship',
+                disc_ded:      parseFloat(this.dataset.discount_deduction    || 0),
+                disc_labels:   this.dataset.discount_labels    || 'Discount',
+                total_savings: parseFloat(this.dataset.total_savings         || 0),
             };
 
             document.getElementById('modal-bill-title').textContent       = d.title;
@@ -872,26 +959,31 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('payment_amount').value               = '';
             document.getElementById('payment_amount2').value              = '';
             document.getElementById('payment_method2').value              = '';
-            document.getElementById('formErrors').classList.add('d-none');
             document.getElementById('payment_amount').classList.remove('is-invalid');
+            document.getElementById('payment_method2').classList.remove('is-invalid');
+            document.getElementById('amountError').style.display          = 'none';
             document.getElementById('amountError').textContent            = '';
 
             // Savings breakdown
-            const savBox = document.getElementById('savingsBreakdown');
+            var savBox = document.getElementById('savingsBreakdown');
             if (d.total_savings > 0) {
                 savBox.classList.remove('d-none');
-                const scholRow = document.getElementById('scholRow');
-                const discRow  = document.getElementById('discRow');
+                var scholRow = document.getElementById('scholRow');
+                var discRow  = document.getElementById('discRow');
                 if (d.schol_ded > 0) {
                     scholRow.classList.remove('d-none');
                     document.getElementById('scholLabel').textContent = d.schol_label;
                     document.getElementById('scholAmt').textContent   = '-₦' + fmt(d.schol_ded);
-                } else { scholRow.classList.add('d-none'); }
+                } else {
+                    scholRow.classList.add('d-none');
+                }
                 if (d.disc_ded > 0) {
                     discRow.classList.remove('d-none');
-                    document.getElementById('discLabel').textContent  = d.disc_labels;
-                    document.getElementById('discAmt').textContent    = '-₦' + fmt(d.disc_ded);
-                } else { discRow.classList.add('d-none'); }
+                    document.getElementById('discLabel').textContent = d.disc_labels;
+                    document.getElementById('discAmt').textContent   = '-₦' + fmt(d.disc_ded);
+                } else {
+                    discRow.classList.add('d-none');
+                }
                 document.getElementById('totalSavingsAmt').textContent = '-₦' + fmt(d.total_savings);
             } else {
                 savBox.classList.add('d-none');
@@ -899,106 +991,131 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // ── Validate payment amount input ───────────────────────────────────
-    document.getElementById('payment_amount')?.addEventListener('input', function () {
-        const val     = parseFloat(this.value.replace(/[^0-9.]/g, '')) || 0;
-        const balance = parseFloat(document.getElementById('balance2').value) || 0;
-        const err     = document.getElementById('amountError');
+    // ── Live validate payment amount ───────────────────────────────────
+    document.getElementById('payment_amount').addEventListener('input', function () {
+        var val     = parseFloat(this.value.replace(/[^0-9.]/g, '')) || 0;
+        var balance = parseFloat(document.getElementById('balance2').value) || 0;
+        var errEl   = document.getElementById('amountError');
+
         if (val <= 0) {
             this.classList.add('is-invalid');
-            err.textContent = 'Enter a valid amount greater than 0.';
+            errEl.textContent     = 'Enter a valid amount greater than 0.';
+            errEl.style.display   = 'block';
         } else if (val > balance) {
             this.classList.add('is-invalid');
-            err.textContent = 'Amount cannot exceed outstanding balance of ₦' + fmt(balance) + '.';
+            errEl.textContent     = 'Amount cannot exceed outstanding balance of ₦' + fmt(balance) + '.';
+            errEl.style.display   = 'block';
         } else {
             this.classList.remove('is-invalid');
-            err.textContent = '';
+            errEl.textContent     = '';
+            errEl.style.display   = 'none';
         }
         document.getElementById('payment_amount2').value = val > 0 ? val.toFixed(2) : '';
     });
 
-    // ── Form submit ─────────────────────────────────────────────────────
-    document.getElementById('paymentForm')?.addEventListener('submit', function (e) {
+    // ── Submit payment form ────────────────────────────────────────────
+    document.getElementById('paymentForm').addEventListener('submit', function (e) {
         e.preventDefault();
 
-        const amtInput = document.getElementById('payment_amount');
-        const val      = parseFloat(amtInput.value.replace(/[^0-9.]/g, '')) || 0;
-        const balance  = parseFloat(document.getElementById('balance2').value) || 0;
-        const method   = document.getElementById('payment_method2').value;
+        var amtInput = document.getElementById('payment_amount');
+        var val      = parseFloat(amtInput.value.replace(/[^0-9.]/g, '')) || 0;
+        var balance  = parseFloat(document.getElementById('balance2').value) || 0;
+        var method   = document.getElementById('payment_method2').value;
+        var errEl    = document.getElementById('amountError');
 
-        document.getElementById('amountError').textContent = '';
+        // Reset
         amtInput.classList.remove('is-invalid');
         document.getElementById('payment_method2').classList.remove('is-invalid');
-        document.getElementById('formErrors').classList.add('d-none');
+        errEl.style.display = 'none';
+        errEl.textContent   = '';
 
+        // Validate amount
         if (val <= 0) {
             amtInput.classList.add('is-invalid');
-            document.getElementById('amountError').textContent = 'Enter a valid amount greater than 0.';
+            errEl.textContent   = 'Enter a valid amount greater than 0.';
+            errEl.style.display = 'block';
+            amtInput.focus();
             return;
         }
         if (val > balance) {
             amtInput.classList.add('is-invalid');
-            document.getElementById('amountError').textContent = 'Amount cannot exceed outstanding balance of ₦' + fmt(balance) + '.';
+            errEl.textContent   = 'Amount cannot exceed outstanding balance of ₦' + fmt(balance) + '.';
+            errEl.style.display = 'block';
+            amtInput.focus();
             return;
         }
+
+        // Validate method
         if (!method) {
             document.getElementById('payment_method2').classList.add('is-invalid');
-            Swal.fire({ icon:'warning', title:'Missing Information', text:'Please select a payment method.', confirmButtonText:'OK' });
+            Swal.fire({
+                icon: 'warning', title: 'Missing Information',
+                text: 'Please select a payment method.',
+                confirmButtonColor: '#2563eb'
+            });
             return;
         }
 
         document.getElementById('payment_amount2').value = val.toFixed(2);
 
-        const btn = document.getElementById('paySubmitBtn');
-        const originalHtml = btn.innerHTML;
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Processing...';
+        var btn         = document.getElementById('paySubmitBtn');
+        var originalHtml = btn.innerHTML;
+        btn.disabled    = true;
+        btn.innerHTML   = '<span class="spinner-border spinner-border-sm me-1"></span>Processing...';
 
         fetch(this.action, {
-            method: 'POST',
-            body: new FormData(this),
+            method:  'POST',
+            body:    new FormData(this),
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json',
+                'X-CSRF-TOKEN':     document.querySelector('meta[name="csrf-token"]').content,
+                'Accept':           'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
             }
         })
         .then(function (response) {
             if (!response.ok) {
                 return response.json().then(function (data) {
-                    throw { status: response.status, data: data };
+                    var err = new Error(data.message || 'Server error');
+                    err.data = data;
+                    throw err;
                 });
             }
             return response.json();
         })
         .then(function (data) {
-            const modal = bootstrap.Modal.getInstance(document.getElementById('paymentModal'));
+            var modal = bootstrap.Modal.getInstance(document.getElementById('paymentModal'));
             if (modal) modal.hide();
 
             if (data.success) {
-                Swal.fire({ icon:'success', title:'Success!', text: data.message, timer:2000, showConfirmButton:false })
-                    .then(function () {
-                        window.location.href = data.redirect_url || window.location.href;
-                    });
+                Swal.fire({
+                    icon: 'success', title: 'Payment Recorded!',
+                    text: data.message,
+                    timer: 2000, showConfirmButton: false
+                }).then(function () {
+                    window.location.href = data.redirect_url || window.location.href;
+                });
             } else {
-                let msg = data.message || 'Something went wrong.';
-                if (data.errors) msg = Object.values(data.errors).flat().join('<br>');
-                Swal.fire({ icon:'error', title:'Error', html: msg, confirmButtonText:'OK' });
+                var msg = data.message || 'Something went wrong.';
+                if (data.errors) {
+                    msg = Object.values(data.errors).flat().join('<br>');
+                }
+                Swal.fire({ icon: 'error', title: 'Error', html: msg });
             }
         })
         .catch(function (error) {
-            let msg = 'An unexpected error occurred. Please try again.';
+            var msg = 'An unexpected error occurred. Please try again.';
             if (error.data && error.data.message) msg = error.data.message;
-            Swal.fire({ icon:'error', title:'Payment Failed', html: msg, confirmButtonText:'OK' });
+            Swal.fire({ icon: 'error', title: 'Payment Failed', html: msg });
         })
         .finally(function () {
-            btn.disabled = false;
+            btn.disabled  = false;
             btn.innerHTML = originalHtml;
         });
     });
 
-    // ── Delete payment ──────────────────────────────────────────────────
-    let deleteUrl = '';
+    // ── Delete payment ─────────────────────────────────────────────────
+    var deleteUrl = '';
+
     document.querySelectorAll('.delete-payment').forEach(function (btn) {
         btn.addEventListener('click', function () {
             deleteUrl = this.dataset.url;
@@ -1006,37 +1123,42 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    document.getElementById('confirmDeleteBtn')?.addEventListener('click', function () {
-        const modal = bootstrap.Modal.getInstance(document.getElementById('confirmDeleteModal'));
+    document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
+        var modal = bootstrap.Modal.getInstance(document.getElementById('confirmDeleteModal'));
         if (modal) modal.hide();
 
-        this.disabled = true;
-        this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Deleting...';
+        var self         = this;
+        self.disabled    = true;
+        self.innerHTML   = '<span class="spinner-border spinner-border-sm me-1"></span>Deleting...';
 
-        const self = this;
         fetch(deleteUrl, {
-            method: 'POST',
+            method:  'POST',
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
+                'X-CSRF-TOKEN':  document.querySelector('meta[name="csrf-token"]').content,
+                'Accept':        'application/json',
+                'Content-Type':  'application/json'
             },
             body: JSON.stringify({})
         })
         .then(function (r) { return r.json(); })
         .then(function (data) {
             if (data.success) {
-                Swal.fire({ icon:'success', title:'Deleted!', text: data.message, timer:1500, showConfirmButton:false })
-                    .then(function () { location.reload(); });
+                Swal.fire({
+                    icon: 'success', title: 'Deleted!',
+                    text: data.message,
+                    timer: 1500, showConfirmButton: false
+                }).then(function () { location.reload(); });
             } else {
                 Swal.fire('Error', data.message, 'error');
             }
         })
-        .catch(function () { Swal.fire('Error', 'Failed to delete payment.', 'error'); })
+        .catch(function () {
+            Swal.fire('Error', 'Failed to delete payment. Please try again.', 'error');
+        })
         .finally(function () {
-            self.disabled = false;
+            self.disabled  = false;
             self.innerHTML = '<i class="ri-delete-bin-line me-1"></i>Delete';
-            deleteUrl = '';
+            deleteUrl      = '';
         });
     });
 
