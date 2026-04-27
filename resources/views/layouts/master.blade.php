@@ -799,7 +799,7 @@
                         {{-- ============================================================
                              BURSARY & FINANCE
                              ============================================================ --}}
-                        @if(auth()->user()->can('View schoolpayment') || auth()->user()->can('View analysis') ||
+                        @if(auth()->user()->can('View school-payment') || auth()->user()->can('View analysis') ||
                             auth()->user()->can('View scholarship') || auth()->user()->can('View discount') ||
                             auth()->user()->can('View sibling groups') || auth()->user()->can('View financial reports') ||
                             auth()->user()->can('View payroll') || auth()->user()->can('View staff payments'))
