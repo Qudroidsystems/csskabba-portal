@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\SchoolBillModel;
-use Yajra\DataTables\Facades\DataTables;
+use Yajra\DataTables\DataTables;
 
 class SchoolBillController extends Controller
 {
@@ -22,7 +22,7 @@ class SchoolBillController extends Controller
      */
     public function index(Request $request)
     {
-        // ── Stats endpoint ────────────────────────────────────────────────
+        // ── Stats endpoint ────────────────────────────────────────────
         if ($request->has('stats')) {
             $bills = SchoolBillModel::leftJoin('student_status', 'student_status.id', '=', 'school_bill.statusId')
                 ->whereIn('student_status.id', [1, 2])
@@ -39,7 +39,7 @@ class SchoolBillController extends Controller
             ]);
         }
 
-        // ── DataTables AJAX ───────────────────────────────────────────────
+        // ── DataTables AJAX ───────────────────────────────────────────
         if ($request->ajax()) {
             $schoolbills = SchoolBillModel::leftJoin('student_status', 'student_status.id', '=', 'school_bill.statusId')
                 ->whereIn('student_status.id', [1, 2])
@@ -79,7 +79,7 @@ class SchoolBillController extends Controller
                     $buttons = '<div class="btn-group btn-group-sm">';
                     if (auth()->user()->can('Update school-bills')) {
                         $buttons .= '<button class="btn btn-primary edit-bill" title="Edit"
-                            data-id="'          . $row->id          . '"
+                            data-id="'          . $row->id             . '"
                             data-title="'       . e($row->title)       . '"
                             data-amount="'      . $row->bill_amount    . '"
                             data-description="' . e($row->description) . '"
@@ -103,14 +103,6 @@ class SchoolBillController extends Controller
 
         $pagetitle = 'School Bill Management';
         return view('schoolbill.index', compact('pagetitle'));
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        return view('schoolbill.create');
     }
 
     /**
@@ -163,10 +155,7 @@ class SchoolBillController extends Controller
     {
         $bill = SchoolBillModel::find($id);
         if (!$bill) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Bill not found.',
-            ], 404);
+            return response()->json(['success' => false, 'message' => 'Bill not found.'], 404);
         }
         return response()->json(['success' => true, 'data' => $bill]);
     }
@@ -178,10 +167,7 @@ class SchoolBillController extends Controller
     {
         $bill = SchoolBillModel::find($id);
         if (!$bill) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Bill not found.',
-            ], 404);
+            return response()->json(['success' => false, 'message' => 'Bill not found.'], 404);
         }
         return response()->json(['success' => true, 'data' => $bill]);
     }
@@ -193,10 +179,7 @@ class SchoolBillController extends Controller
     {
         $bill = SchoolBillModel::find($id);
         if (!$bill) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Bill not found.',
-            ], 404);
+            return response()->json(['success' => false, 'message' => 'Bill not found.'], 404);
         }
 
         $validator = Validator::make($request->all(), [
@@ -244,10 +227,7 @@ class SchoolBillController extends Controller
     {
         $bill = SchoolBillModel::find($id);
         if (!$bill) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Bill not found.',
-            ], 404);
+            return response()->json(['success' => false, 'message' => 'Bill not found.'], 404);
         }
 
         $bill->delete();
