@@ -2,17 +2,22 @@
 @extends('layouts.master')
 
 @section('content')
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
 <style>
 :root {
     --bill-primary: #1e3a5f;
-    --bill-accent: #2563eb;
+    --bill-accent:  #2563eb;
     --bill-success: #16a34a;
     --bill-warning: #d97706;
-    --bill-danger: #dc2626;
-    --bill-border: #e2e8f0;
-    --bill-radius: 12px;
+    --bill-danger:  #dc2626;
+    --bill-muted:   #6b7280;
+    --bill-border:  #e2e8f0;
+    --bill-bg:      #f8fafc;
+    --bill-radius:  12px;
+    --bill-shadow:  0 2px 8px rgba(0,0,0,.08);
 }
 
+/* ── Hero ──────────────────────────────────────────────────── */
 .bill-hero {
     background: linear-gradient(135deg, var(--bill-primary) 0%, #2563eb 60%, #4f46e5 100%);
     border-radius: var(--bill-radius);
@@ -21,137 +26,285 @@
     position: relative;
     overflow: hidden;
 }
-.bill-hero h1 { font-size: 22px; font-weight: 700; color: white; margin: 0 0 6px; }
-.bill-hero p { font-size: 13px; color: rgba(255,255,255,.75); margin: 0; }
-
-.dataTables_wrapper .dataTables_length,
-.dataTables_wrapper .dataTables_filter,
-.dataTables_wrapper .dataTables_info,
-.dataTables_wrapper .dataTables_paginate {
-    margin-bottom: 1rem;
+.bill-hero::before {
+    content: ''; position: absolute; top: -60px; right: -60px;
+    width: 220px; height: 220px;
+    background: rgba(255,255,255,.06); border-radius: 50%;
 }
+.bill-hero::after {
+    content: ''; position: absolute; bottom: -80px; left: -30px;
+    width: 260px; height: 260px;
+    background: rgba(255,255,255,.03); border-radius: 50%;
+}
+.bill-hero h1 { font-size: 22px; font-weight: 700; color: #fff; margin: 0 0 6px; position: relative; }
+.bill-hero p  { font-size: 13px; color: rgba(255,255,255,.75); margin: 0; position: relative; }
+
+/* ── Stat cards ────────────────────────────────────────────── */
+.stat-card {
+    background: #fff; border: 1px solid var(--bill-border);
+    border-radius: var(--bill-radius); padding: 18px 20px;
+    transition: transform .15s, box-shadow .15s;
+}
+.stat-card:hover { transform: translateY(-2px); box-shadow: var(--bill-shadow); }
+.stat-card .stat-value { font-size: 28px; font-weight: 700; color: var(--bill-primary); }
+.stat-card .stat-label { font-size: 12px; color: var(--bill-muted); margin-top: 4px; }
+.stat-card .stat-icon  { font-size: 32px; opacity: .12; float: right; margin-top: -8px; }
+
+/* ── Table ─────────────────────────────────────────────────── */
+.bill-table th {
+    background: var(--bill-primary); color: #fff;
+    padding: 12px 16px; font-weight: 600; font-size: 13px;
+    white-space: nowrap;
+}
+.bill-table td {
+    padding: 12px 16px; vertical-align: middle;
+    border-bottom: 1px solid var(--bill-border); font-size: 13px;
+}
+.bill-table tr:hover { background: #eff6ff; }
+.bill-table tbody tr { transition: background .1s; }
+
+/* ── Badges ────────────────────────────────────────────────── */
+.bill-badge {
+    display: inline-flex; align-items: center;
+    padding: 4px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 600; letter-spacing: .2px;
+}
+.bill-badge-old     { background: #dbeafe; color: #2563eb; }
+.bill-badge-new     { background: #dcfce7; color: #16a34a; }
+.bill-badge-unknown { background: #f3f4f6; color: #6b7280; }
+
+/* ── DataTables overrides ──────────────────────────────────── */
 .dataTables_wrapper .dataTables_filter input {
-    border: 1px solid var(--bill-border);
-    border-radius: 8px;
-    padding: 8px 12px;
-    margin-left: 8px;
+    border: 1.5px solid var(--bill-border); border-radius: 8px;
+    padding: 7px 14px; margin-left: 8px; font-size: 13px;
+    transition: border .15s;
+}
+.dataTables_wrapper .dataTables_filter input:focus {
+    border-color: var(--bill-accent); outline: none;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.1);
 }
 .dataTables_wrapper .dataTables_length select {
-    border: 1px solid var(--bill-border);
-    border-radius: 8px;
-    padding: 6px 10px;
+    border: 1.5px solid var(--bill-border); border-radius: 8px;
+    padding: 6px 10px; margin: 0 6px; font-size: 13px;
 }
+.dataTables_wrapper .dataTables_info  { font-size: 13px; color: var(--bill-muted); }
+.dataTables_wrapper .dataTables_paginate { margin-top: 4px; }
+.dataTables_wrapper .paginate_button {
+    border-radius: 6px !important; font-size: 13px !important;
+    padding: 4px 10px !important;
+}
+.dataTables_wrapper .paginate_button.current,
+.dataTables_wrapper .paginate_button.current:hover {
+    background: var(--bill-accent) !important;
+    border-color: var(--bill-accent) !important; color: #fff !important;
+}
+.dataTables_wrapper .dataTables_processing {
+    background: rgba(255,255,255,.9);
+    border: 1px solid var(--bill-border); border-radius: 8px;
+    padding: 12px 20px; font-size: 13px;
+}
+
+/* ── Modal ─────────────────────────────────────────────────── */
+#billModal .modal-content {
+    border: none; border-radius: 16px;
+    overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.15);
+}
+.modal-hero-bar {
+    background: linear-gradient(135deg, var(--bill-primary) 0%, #2563eb 100%);
+    padding: 22px 28px; position: relative; overflow: hidden;
+}
+.modal-hero-bar::before {
+    content:''; position:absolute; top:-30px; right:-30px;
+    width:120px; height:120px; background:rgba(255,255,255,.07); border-radius:50%;
+}
+.modal-hero-bar h5 { color:#fff; font-weight:700; margin:0; font-size:16px; position:relative; }
+.modal-hero-bar .btn-close-white { position:absolute; top:16px; right:20px; }
+
+.form-label { font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+.form-control, .form-select {
+    border: 1.5px solid var(--bill-border); border-radius: 8px;
+    font-size: 13px; padding: 9px 14px; transition: border .15s;
+}
+.form-control:focus, .form-select:focus {
+    border-color: var(--bill-accent);
+    box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+}
+
+/* ── Bulk bar ──────────────────────────────────────────────── */
+.bulk-bar {
+    background: #fff3cd; border: 1px solid #ffc107;
+    border-radius: 8px; padding: 10px 16px;
+    display: none; align-items: center; gap: 12px;
+    margin-bottom: 12px;
+}
+.bulk-bar.show { display: flex; }
 </style>
 
 <div class="main-content">
 <div class="page-content">
 <div class="container-fluid">
 
+    {{-- Hero --}}
     <div class="bill-hero">
-        <h1><i class="ri-file-list-line me-2"></i>{{ $pagetitle }}</h1>
-        <p>Create, manage, and assign school bills for fee collection across different student categories.</p>
+        <h1><i class="ri-file-list-3-line me-2"></i>{{ $pagetitle }}</h1>
+        <p>Create, manage and assign school bills across student categories.</p>
     </div>
 
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-white py-3 border-bottom">
-                    <div class="d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0 fw-semibold" style="color: var(--bill-primary);">
-                            <i class="ri-list-check me-2"></i>All School Bills
-                        </h5>
-                        @can('Create school-bills')
-                            <button type="button" class="btn btn-primary" id="createBillBtn">
-                                <i class="ri-add-line me-1"></i>Create School Bill
-                            </button>
-                        @endcan
-                    </div>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-bordered table-hover w-100" id="billsTable">
-                            <thead>
-                                <tr>
-                                    <th width="50"><input type="checkbox" id="selectAll"></th>
-                                    <th>#</th>
-                                    <th>Title</th>
-                                    <th>Bill Amount</th>
-                                    <th>Remark</th>
-                                    <th>Status</th>
-                                    <th>Last Updated</th>
-                                    <th width="120">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+    {{-- Stat cards --}}
+    <div class="row g-3 mb-4" id="statCards">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="ri-file-list-3-line"></i></div>
+                <div class="stat-value" id="statTotal">—</div>
+                <div class="stat-label">Total Bills</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="ri-user-line"></i></div>
+                <div class="stat-value text-primary" id="statOld">—</div>
+                <div class="stat-label">Old Student Bills</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="ri-user-add-line"></i></div>
+                <div class="stat-value text-success" id="statNew">—</div>
+                <div class="stat-label">New Student Bills</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="ri-money-naira-circle-line"></i></div>
+                <div class="stat-value text-warning" id="statAmount">—</div>
+                <div class="stat-label">Total Bill Value</div>
             </div>
         </div>
     </div>
+
+    {{-- Table card --}}
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3 border-bottom">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-semibold" style="color:var(--bill-primary)">
+                    <i class="ri-list-check me-2"></i>All School Bills
+                    <span class="badge bg-primary ms-2" id="totalBadge">0</span>
+                </h5>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-danger d-none" id="bulkDeleteBtn">
+                        <i class="ri-delete-bin-line me-1"></i>Delete Selected
+                    </button>
+                    @can('Create school-bills')
+                    <button class="btn btn-primary" id="createBillBtn">
+                        <i class="ri-add-line me-1"></i>Create School Bill
+                    </button>
+                    @endcan
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="bulk-bar" id="bulkBar">
+                <i class="ri-checkbox-circle-line text-warning"></i>
+                <span id="bulkCount">0</span> bill(s) selected
+                <button class="btn btn-sm btn-danger ms-auto" id="bulkDeleteBtn2">
+                    <i class="ri-delete-bin-line me-1"></i>Delete Selected
+                </button>
+            </div>
+            <div class="table-responsive">
+                <table class="table bill-table w-100 mb-0" id="billsTable">
+                    <thead>
+                        <tr>
+                            <th width="40"><input type="checkbox" id="selectAll" class="form-check-input"></th>
+                            <th>#</th>
+                            <th>Title</th>
+                            <th>Amount</th>
+                            <th>Description</th>
+                            <th>Student Type</th>
+                            <th>Last Updated</th>
+                            <th width="100">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
 </div>
 </div>
 </div>
 
-{{-- Create/Edit Modal --}}
+{{-- ═══════════════════════════════════
+     CREATE / EDIT MODAL
+═══════════════════════════════════ --}}
 <div class="modal fade" id="billModal" tabindex="-1" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:480px">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="modalTitle">Create School Bill</h5>
+            <div class="modal-hero-bar">
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <h5 id="modalTitle"><i class="ri-file-add-line me-2"></i>Create School Bill</h5>
             </div>
             <form id="billForm">
                 @csrf
-                <input type="hidden" name="id" id="billId">
-                <div class="modal-body">
+                <input type="hidden" id="billId">
+                <div class="modal-body p-4">
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Bill Title <span class="text-danger">*</span></label>
-                        <input type="text" name="title" id="title" class="form-control" placeholder="Enter bill title" required>
+                        <label class="form-label">Bill Title <span class="text-danger">*</span></label>
+                        <input type="text" id="title" class="form-control"
+                               placeholder="e.g., First Term Tuition Fee 2025" required>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Bill Amount (₦) <span class="text-danger">*</span></label>
-                        <input type="number" name="bill_amount" id="billAmount" class="form-control" step="0.01" placeholder="0.00" required>
+                        <label class="form-label">Bill Amount (₦) <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text" style="border-radius:8px 0 0 8px;border:1.5px solid var(--bill-border);border-right:none;background:#f8fafc;font-weight:600;color:var(--bill-muted)">₦</span>
+                            <input type="number" id="billAmount" class="form-control"
+                                   style="border-radius:0 8px 8px 0"
+                                   step="0.01" min="1" placeholder="0.00" required>
+                        </div>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Remark/Description</label>
-                        <textarea name="description" id="description" class="form-control" rows="3" placeholder="Enter bill description"></textarea>
+                        <label class="form-label">Description</label>
+                        <textarea id="description" class="form-control" rows="3"
+                                  placeholder="Optional description or remark..."></textarea>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Student Status <span class="text-danger">*</span></label>
-                        <select name="statusId" id="statusId" class="form-select" required>
-                            <option value="">Select Status</option>
+                        <label class="form-label">Student Type <span class="text-danger">*</span></label>
+                        <select id="statusId" class="form-select" required>
+                            <option value="">— Select Type —</option>
                             <option value="1">Old Student Bill</option>
                             <option value="2">New Student Bill</option>
                         </select>
                     </div>
                     <div class="alert alert-danger d-none" id="formErrors"></div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="saveBtn">Save Bill</button>
+                <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveBtn">
+                        <i class="ri-save-line me-1"></i>Save Bill
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-{{-- Delete Confirmation Modal --}}
+{{-- DELETE MODAL --}}
 <div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:400px">
+        <div class="modal-content border-0" style="border-radius:16px;overflow:hidden">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title"><i class="ri-delete-bin-line me-2"></i>Confirm Deletion</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <p>Are you sure you want to delete <strong id="deleteItemTitle"></strong>?</p>
-                <p class="text-muted small">This action cannot be undone.</p>
+                <p class="text-muted small mb-0">This action cannot be undone.</p>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmDelete">Delete</button>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDelete">
+                    <i class="ri-delete-bin-line me-1"></i>Delete
+                </button>
             </div>
         </div>
     </div>
@@ -160,207 +313,243 @@
 <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 <script>
-$(document).ready(function() {
-    const CSRF_TOKEN = $('meta[name="csrf-token"]').attr('content');
-    let table;
+$(document).ready(function () {
+    const CSRF = $('meta[name="csrf-token"]').attr('content');
+    let table, deleteId = null;
 
-    // Initialize DataTable
-    function initDataTable() {
-        table = $('#billsTable').DataTable({
-            processing: true,
-            serverSide: true,
-            ajax: {
-                url: "{{ route('schoolbill.index') }}",
-                type: 'GET',
-                data: function(d) {
-                    d._token = CSRF_TOKEN;
-                }
+    // ── DataTable ──────────────────────────────────────────────────────
+    table = $('#billsTable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url:  '{{ route("schoolbill.index") }}',
+            type: 'GET',
+            // KEY FIX: tell Laravel this is an AJAX request
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            error: function (xhr, error, thrown) {
+                console.error('DataTables Ajax error:', xhr.responseText);
+                Swal.fire('Error', 'Failed to load bills. Please refresh the page.', 'error');
+            }
+        },
+        columns: [
+            {
+                data: 'id', orderable: false, searchable: false,
+                render: data => `<input type="checkbox" class="form-check-input row-checkbox" value="${data}">`
             },
-            columns: [
-                { data: 'id', orderable: false, searchable: false,
-                    render: function(data) {
-                        return '<input type="checkbox" class="row-checkbox" value="' + data + '">';
-                    }
-                },
-                { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false },
-                { data: 'title', name: 'title' },
-                { data: 'formatted_amount', name: 'bill_amount' },
-                { data: 'description', name: 'description' },
-                { data: 'status_name', name: 'statusId' },
-                { data: 'formatted_date', name: 'updated_at' },
-                { data: 'action', name: 'action', orderable: false, searchable: false }
-            ],
-            language: {
-                processing: '<div class="spinner-border text-primary"></div>',
-                search: '<i class="ri-search-line"></i>',
-                searchPlaceholder: 'Search bills...',
-                lengthMenu: 'Show _MENU_ entries',
-                info: 'Showing _START_ to _END_ of _TOTAL_ entries',
-                infoEmpty: 'No records available',
-                zeroRecords: 'No matching records found'
+            { data: 'DT_RowIndex', orderable: false, searchable: false },
+            { data: 'title' },
+            { data: 'formatted_amount' },
+            {
+                data: 'description',
+                render: data => data
+                    ? `<span class="text-muted">${data.length > 50 ? data.substring(0, 50) + '…' : data}</span>`
+                    : '<span class="text-muted fst-italic">—</span>'
             },
-            order: [[1, 'desc']],
-            pageLength: 15,
-            responsive: true
+            { data: 'status_name', orderable: false },
+            { data: 'formatted_date', orderable: false },
+            { data: 'action',        orderable: false, searchable: false },
+        ],
+        language: {
+            processing:    '<div class="d-flex align-items-center gap-2"><span class="spinner-border spinner-border-sm text-primary"></span> Loading...</div>',
+            search:        '',
+            searchPlaceholder: 'Search bills...',
+            lengthMenu:    'Show _MENU_ entries',
+            info:          'Showing _START_–_END_ of _TOTAL_ bills',
+            infoEmpty:     'No bills found',
+            zeroRecords:   'No matching bills',
+            emptyTable:    'No school bills created yet',
+        },
+        order:      [[1, 'desc']],
+        pageLength: 15,
+        responsive: true,
+        drawCallback: function (settings) {
+            // Update stats after each draw
+            const json = settings.json;
+            if (json) {
+                $('#totalBadge').text(json.recordsTotal);
+                updateStats();
+            }
+            // Re-bind checkboxes after redraw
+            bindCheckboxes();
+        },
+    });
+
+    // ── Stats (fetch summary separately) ──────────────────────────────
+    function updateStats() {
+        $.get('{{ route("schoolbill.index") }}', { stats: 1 }, function (data) {
+            if (data.stats) {
+                $('#statTotal' ).text(data.stats.total);
+                $('#statOld'   ).text(data.stats.old);
+                $('#statNew'   ).text(data.stats.new);
+                $('#statAmount').text('₦' + Number(data.stats.total_amount).toLocaleString('en-NG', { minimumFractionDigits: 0 }));
+            }
         });
     }
+    updateStats();
 
-    initDataTable();
+    // ── Checkbox / bulk select ─────────────────────────────────────────
+    function bindCheckboxes() {
+        $('.row-checkbox').off('change').on('change', updateBulkBar);
+    }
 
-    // Select All functionality
-    $('#selectAll').on('change', function() {
+    $('#selectAll').on('change', function () {
         $('.row-checkbox').prop('checked', this.checked);
-        $('.row-checkbox').trigger('change');
+        updateBulkBar();
     });
 
-    // Create Bill Button
-    $('#createBillBtn').on('click', function() {
+    function updateBulkBar() {
+        const count = $('.row-checkbox:checked').length;
+        if (count > 0) {
+            $('#bulkBar').addClass('show');
+            $('#bulkCount').text(count);
+            $('#bulkDeleteBtn').removeClass('d-none');
+        } else {
+            $('#bulkBar').removeClass('show');
+            $('#bulkDeleteBtn').addClass('d-none');
+            $('#selectAll').prop('checked', false);
+        }
+    }
+
+    // ── Create bill ────────────────────────────────────────────────────
+    $('#createBillBtn').on('click', function () {
         $('#billForm')[0].reset();
         $('#billId').val('');
-        $('#modalTitle').text('Create School Bill');
+        $('#modalTitle').html('<i class="ri-file-add-line me-2"></i>Create School Bill');
         $('#formErrors').addClass('d-none').empty();
+        $('#saveBtn').html('<i class="ri-save-line me-1"></i>Save Bill');
         $('#billModal').modal('show');
     });
 
-    // Edit Bill
-    $(document).on('click', '.edit-bill', function() {
-        const id = $(this).data('id');
-        const title = $(this).data('title');
-        const amount = $(this).data('amount');
-        const description = $(this).data('description');
-        const status = $(this).data('status');
-
-        $('#billId').val(id);
-        $('#title').val(title);
-        $('#billAmount').val(amount);
-        $('#description').val(description);
-        $('#statusId').val(status);
-        $('#modalTitle').text('Edit School Bill');
+    // ── Edit bill ──────────────────────────────────────────────────────
+    $(document).on('click', '.edit-bill', function () {
+        $('#billId'     ).val($(this).data('id'));
+        $('#title'      ).val($(this).data('title'));
+        $('#billAmount' ).val($(this).data('amount'));
+        $('#description').val($(this).data('description'));
+        $('#statusId'   ).val($(this).data('status'));
+        $('#modalTitle').html('<i class="ri-edit-line me-2"></i>Edit School Bill');
         $('#formErrors').addClass('d-none').empty();
+        $('#saveBtn').html('<i class="ri-save-line me-1"></i>Update Bill');
         $('#billModal').modal('show');
     });
 
-    // Delete Bill
-    let deleteId = null;
-    $(document).on('click', '.delete-bill', function() {
+    // ── Form submit (create + update) ──────────────────────────────────
+    $('#billForm').on('submit', function (e) {
+        e.preventDefault();
+        const id  = $('#billId').val();
+        const url = id ? '/schoolbill/' + id : '/schoolbill';
+
+        $('#saveBtn').prop('disabled', true)
+                     .html('<span class="spinner-border spinner-border-sm me-2"></span>Saving...');
+
+        $.ajax({
+            url,
+            type: 'POST',
+            headers: { 'X-CSRF-TOKEN': CSRF, 'X-Requested-With': 'XMLHttpRequest' },
+            data: {
+                title:       $('#title').val(),
+                bill_amount: $('#billAmount').val(),
+                description: $('#description').val(),
+                statusId:    $('#statusId').val(),
+                _method:     id ? 'PUT' : 'POST',
+            },
+            success(res) {
+                if (res.success) {
+                    $('#billModal').modal('hide');
+                    table.ajax.reload();
+                    updateStats();
+                    Swal.fire({
+                        icon: 'success', title: 'Saved!', text: res.message,
+                        confirmButtonColor: '#2563eb', timer: 2500, showConfirmButton: false,
+                    });
+                }
+            },
+            error(xhr) {
+                if (xhr.status === 422) {
+                    const errors = xhr.responseJSON?.errors || {};
+                    let html = '<ul class="mb-0 ps-3">';
+                    $.each(errors, (k, v) => { html += `<li>${v}</li>`; });
+                    html += '</ul>';
+                    $('#formErrors').removeClass('d-none').html(html);
+                } else {
+                    Swal.fire('Error!', 'Something went wrong. Please try again.', 'error');
+                }
+            },
+            complete() {
+                $('#saveBtn').prop('disabled', false)
+                             .html('<i class="ri-save-line me-1"></i>Save Bill');
+            },
+        });
+    });
+
+    // ── Single delete ──────────────────────────────────────────────────
+    $(document).on('click', '.delete-bill', function () {
         deleteId = $(this).data('id');
-        $('#deleteItemTitle').text($(this).data('title'));
+        $('#deleteItemTitle').text('"' + $(this).data('title') + '"');
         $('#deleteModal').modal('show');
     });
 
-    $('#confirmDelete').on('click', function() {
+    $('#confirmDelete').on('click', function () {
         if (!deleteId) return;
+        $(this).prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
 
         $.ajax({
-            url: '/schoolbill/' + deleteId,
+            url:  '/schoolbill/' + deleteId,
             type: 'DELETE',
-            headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
-            success: function(response) {
-                if (response.success) {
-                    Swal.fire('Deleted!', response.message, 'success');
-                    table.ajax.reload();
+            headers: { 'X-CSRF-TOKEN': CSRF, 'X-Requested-With': 'XMLHttpRequest' },
+            success(res) {
+                if (res.success) {
                     $('#deleteModal').modal('hide');
-                } else {
-                    Swal.fire('Error!', response.message, 'error');
-                }
-            },
-            error: function(xhr) {
-                Swal.fire('Error!', 'Failed to delete bill', 'error');
-            }
-        });
-    });
-
-    // Form Submission
-    $('#billForm').on('submit', function(e) {
-        e.preventDefault();
-        const id = $('#billId').val();
-        const url = id ? '/schoolbill/' + id : '/schoolbill';
-        const method = id ? 'PUT' : 'POST';
-
-        const formData = {
-            title: $('#title').val(),
-            bill_amount: $('#billAmount').val(),
-            description: $('#description').val(),
-            statusId: $('#statusId').val(),
-            _token: CSRF_TOKEN,
-            _method: method
-        };
-
-        $('#saveBtn').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Saving...');
-
-        $.ajax({
-            url: url,
-            type: 'POST',
-            data: formData,
-            success: function(response) {
-                if (response.success) {
-                    Swal.fire('Success!', response.message, 'success');
-                    $('#billModal').modal('hide');
                     table.ajax.reload();
-                    $('#billForm')[0].reset();
+                    updateStats();
+                    Swal.fire({ icon: 'success', title: 'Deleted!', text: res.message, timer: 2000, showConfirmButton: false });
                 }
             },
-            error: function(xhr) {
-                if (xhr.status === 422) {
-                    const errors = xhr.responseJSON.errors;
-                    let errorHtml = '<ul>';
-                    $.each(errors, function(key, value) {
-                        errorHtml += '<li>' + value + '</li>';
-                    });
-                    errorHtml += '</ul>';
-                    $('#formErrors').removeClass('d-none').html(errorHtml);
-                } else {
-                    Swal.fire('Error!', 'Something went wrong', 'error');
-                }
+            error() {
+                Swal.fire('Error!', 'Failed to delete bill.', 'error');
             },
-            complete: function() {
-                $('#saveBtn').prop('disabled', false).html('Save Bill');
-            }
+            complete() {
+                $('#confirmDelete').prop('disabled', false).html('<i class="ri-delete-bin-line me-1"></i>Delete');
+                deleteId = null;
+            },
         });
     });
 
-    // Bulk Delete
-    $('#bulkDeleteBtn').on('click', function() {
-        const selectedIds = [];
-        $('.row-checkbox:checked').each(function() {
-            selectedIds.push($(this).val());
-        });
-
-        if (selectedIds.length === 0) {
-            Swal.fire('Warning', 'Please select at least one bill to delete', 'warning');
-            return;
-        }
+    // ── Bulk delete ────────────────────────────────────────────────────
+    function doBulkDelete() {
+        const ids = $('.row-checkbox:checked').map((i, el) => el.value).get();
+        if (!ids.length) return;
 
         Swal.fire({
-            title: 'Delete Selected Bills?',
-            text: `You are about to delete ${selectedIds.length} bill(s).`,
-            icon: 'warning',
-            showCancelButton: true,
+            title: `Delete ${ids.length} bill(s)?`,
+            text:  'This cannot be undone.',
+            icon:  'warning',
+            showCancelButton:   true,
             confirmButtonColor: '#dc2626',
-            confirmButtonText: 'Yes, delete them'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: "{{ route('schoolbill.bulk-destroy') }}",
-                    type: 'POST',
-                    headers: { 'X-CSRF-TOKEN': CSRF_TOKEN },
-                    data: { ids: selectedIds },
-                    success: function(response) {
-                        if (response.success) {
-                            Swal.fire('Deleted!', response.message, 'success');
-                            table.ajax.reload();
-                            $('#selectAll').prop('checked', false);
-                        }
-                    },
-                    error: function() {
-                        Swal.fire('Error!', 'Failed to delete bills', 'error');
+            confirmButtonText:  'Yes, delete',
+        }).then(result => {
+            if (!result.isConfirmed) return;
+            $.ajax({
+                url:  '{{ route("schoolbill.bulk-destroy") }}',
+                type: 'POST',
+                headers: { 'X-CSRF-TOKEN': CSRF, 'X-Requested-With': 'XMLHttpRequest' },
+                data: { ids },
+                success(res) {
+                    if (res.success) {
+                        table.ajax.reload();
+                        updateStats();
+                        $('#selectAll').prop('checked', false);
+                        updateBulkBar();
+                        Swal.fire({ icon: 'success', title: 'Deleted!', text: res.message, timer: 2000, showConfirmButton: false });
                     }
-                });
-            }
+                },
+                error() { Swal.fire('Error!', 'Failed to delete bills.', 'error'); },
+            });
         });
-    });
+    }
+
+    $('#bulkDeleteBtn, #bulkDeleteBtn2').on('click', doBulkDelete);
 });
 </script>
 @endsection

@@ -1,5 +1,4 @@
 <?php
-// app/Http/Controllers/SchoolBillController.php
 
 namespace App\Http\Controllers;
 
@@ -12,60 +11,98 @@ class SchoolBillController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('permission:View school-bills|Create school-bills|Update school-bills|Delete school-bills', ['only' => ['index', 'store']]);
+        $this->middleware('permission:View school-bills|Create school-bills|Update school-bills|Delete school-bills', ['only' => ['index']]);
         $this->middleware('permission:Create school-bills', ['only' => ['create', 'store']]);
-        $this->middleware('permission:Update school-bills', ['only' => ['edit', 'update', 'updatebill']]);
-        $this->middleware('permission:Delete school-bills', ['only' => ['destroy', 'deletebill']]);
+        $this->middleware('permission:Update school-bills', ['only' => ['edit', 'update']]);
+        $this->middleware('permission:Delete school-bills', ['only' => ['destroy', 'bulkDestroy']]);
     }
 
     /**
-     * Display a listing of the resource with AJAX DataTable support.
+     * Display listing with DataTables AJAX support.
      */
     public function index(Request $request)
     {
-        $pagetitle = "School Bill Management";
+        // ── Stats endpoint ────────────────────────────────────────────────
+        if ($request->has('stats')) {
+            $bills = SchoolBillModel::leftJoin('student_status', 'student_status.id', '=', 'school_bill.statusId')
+                ->whereIn('student_status.id', [1, 2])
+                ->select('school_bill.bill_amount', 'school_bill.statusId')
+                ->get();
 
+            return response()->json([
+                'stats' => [
+                    'total'        => $bills->count(),
+                    'old'          => $bills->where('statusId', 1)->count(),
+                    'new'          => $bills->where('statusId', 2)->count(),
+                    'total_amount' => $bills->sum('bill_amount'),
+                ]
+            ]);
+        }
+
+        // ── DataTables AJAX ───────────────────────────────────────────────
         if ($request->ajax()) {
             $schoolbills = SchoolBillModel::leftJoin('student_status', 'student_status.id', '=', 'school_bill.statusId')
                 ->whereIn('student_status.id', [1, 2])
                 ->select([
-                    'school_bill.id as id',
-                    'school_bill.title as title',
-                    'school_bill.description as description',
-                    'school_bill.bill_amount as bill_amount',
+                    'school_bill.id',
+                    'school_bill.title',
+                    'school_bill.description',
+                    'school_bill.bill_amount',
                     'student_status.id as statusId',
-                    'school_bill.updated_at as updated_at'
+                    'school_bill.updated_at',
                 ]);
 
             return DataTables::of($schoolbills)
                 ->addIndexColumn()
-                ->addColumn('status_name', function($row) {
-                    if($row->statusId == 1) return '<span class="badge bg-info">Old Student Bill</span>';
-                    if($row->statusId == 2) return '<span class="badge bg-success">New Student Bill</span>';
-                    return '<span class="badge bg-secondary">Unknown</span>';
-                })
-                ->addColumn('formatted_amount', function($row) {
-                    return '₦ ' . number_format($row->bill_amount, 2);
-                })
-                ->addColumn('formatted_date', function($row) {
-                    return $row->updated_at ? $row->updated_at->format('Y-m-d H:i') : 'N/A';
-                })
-                ->addColumn('action', function($row) {
-                    $buttons = '';
-                    if(auth()->user()->can('Update school-bills')) {
-                        $buttons .= '<button class="btn btn-sm btn-primary edit-bill me-1" data-id="'.$row->id.'" data-title="'.$row->title.'" data-amount="'.$row->bill_amount.'" data-description="'.$row->description.'" data-status="'.$row->statusId.'"><i class="ri-pencil-line"></i></button>';
+                ->addColumn('status_name', function ($row) {
+                    if ($row->statusId == 1) {
+                        return '<span class="bill-badge bill-badge-old"><i class="ri-user-line me-1"></i>Old Student</span>';
                     }
-                    if(auth()->user()->can('Delete school-bills')) {
-                        $buttons .= '<button class="btn btn-sm btn-danger delete-bill" data-id="'.$row->id.'" data-title="'.$row->title.'"><i class="ri-delete-bin-line"></i></button>';
+                    if ($row->statusId == 2) {
+                        return '<span class="bill-badge bill-badge-new"><i class="ri-user-add-line me-1"></i>New Student</span>';
                     }
+                    return '<span class="bill-badge bill-badge-unknown">Unknown</span>';
+                })
+                ->addColumn('formatted_amount', function ($row) {
+                    return '₦&nbsp;' . number_format($row->bill_amount, 2);
+                })
+                ->addColumn('formatted_date', function ($row) {
+                    return $row->updated_at
+                        ? '<span class="text-muted small">'
+                            . $row->updated_at->format('d M Y')
+                            . '<br><span style="font-size:10px">'
+                            . $row->updated_at->format('H:i')
+                            . '</span></span>'
+                        : 'N/A';
+                })
+                ->addColumn('action', function ($row) {
+                    $buttons = '<div class="btn-group btn-group-sm">';
+                    if (auth()->user()->can('Update school-bills')) {
+                        $buttons .= '<button class="btn btn-primary edit-bill" title="Edit"
+                            data-id="'          . $row->id          . '"
+                            data-title="'       . e($row->title)       . '"
+                            data-amount="'      . $row->bill_amount    . '"
+                            data-description="' . e($row->description) . '"
+                            data-status="'      . $row->statusId       . '">
+                            <i class="ri-pencil-line"></i>
+                        </button>';
+                    }
+                    if (auth()->user()->can('Delete school-bills')) {
+                        $buttons .= '<button class="btn btn-danger delete-bill" title="Delete"
+                            data-id="'    . $row->id       . '"
+                            data-title="' . e($row->title) . '">
+                            <i class="ri-delete-bin-line"></i>
+                        </button>';
+                    }
+                    $buttons .= '</div>';
                     return $buttons;
                 })
-                ->rawColumns(['status_name', 'action'])
+                ->rawColumns(['status_name', 'formatted_amount', 'formatted_date', 'action'])
                 ->make(true);
         }
 
-        return view('schoolbill.index')
-            ->with('pagetitle', $pagetitle);
+        $pagetitle = 'School Bill Management';
+        return view('schoolbill.index', compact('pagetitle'));
     }
 
     /**
@@ -77,47 +114,45 @@ class SchoolBillController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created bill.
      */
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'title' => 'required|min:1|unique:school_bill,title',
+            'title'       => 'required|min:1|unique:school_bill,title',
             'bill_amount' => 'required|numeric|min:1',
-            'description' => 'required',
-            'statusId' => 'required|in:1,2',
+            'description' => 'nullable|string',
+            'statusId'    => 'required|in:1,2',
         ], [
-            'title.required' => 'Please enter a bill title!',
-            'title.unique' => 'This bill title already exists!',
-            'bill_amount.required' => 'Please enter a bill amount!',
-            'bill_amount.numeric' => 'Bill amount must be a number!',
-            'bill_amount.min' => 'Bill amount must be at least 1!',
-            'description.required' => 'Please enter a description!',
-            'statusId.required' => 'Please select a student status!',
-            'statusId.in' => 'Invalid student status selected!',
+            'title.required'       => 'Please enter a bill title.',
+            'title.unique'         => 'This bill title already exists.',
+            'bill_amount.required' => 'Please enter a bill amount.',
+            'bill_amount.numeric'  => 'Bill amount must be a number.',
+            'bill_amount.min'      => 'Bill amount must be at least ₦1.',
+            'statusId.required'    => 'Please select a student status.',
+            'statusId.in'          => 'Invalid student status selected.',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'errors' => $validator->errors()
+                'errors'  => $validator->errors(),
             ], 422);
         }
 
-        $plainNumberString = str_replace(['₦', ','], '', $request->bill_amount);
-        $number = floatval($plainNumberString);
+        $amount = floatval(str_replace(['₦', ','], '', $request->bill_amount));
 
-        $sbill = SchoolBillModel::create([
-            'title' => $request->title,
-            'bill_amount' => $number,
+        $bill = SchoolBillModel::create([
+            'title'       => $request->title,
+            'bill_amount' => $amount,
             'description' => $request->description,
-            'statusId' => $request->statusId,
+            'statusId'    => $request->statusId,
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'School Bill created successfully!',
-            'data' => $sbill
+            'message' => 'School Bill created successfully.',
+            'data'    => $bill,
         ], 201);
     }
 
@@ -130,119 +165,110 @@ class SchoolBillController extends Controller
         if (!$bill) {
             return response()->json([
                 'success' => false,
-                'message' => 'School Bill not found.'
+                'message' => 'Bill not found.',
             ], 404);
         }
-
-        return response()->json([
-            'success' => true,
-            'data' => $bill
-        ]);
+        return response()->json(['success' => true, 'data' => $bill]);
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit($id)
     {
         $bill = SchoolBillModel::find($id);
         if (!$bill) {
             return response()->json([
                 'success' => false,
-                'message' => 'School Bill not found.'
+                'message' => 'Bill not found.',
             ], 404);
         }
-
-        return response()->json([
-            'success' => true,
-            'data' => $bill
-        ]);
+        return response()->json(['success' => true, 'data' => $bill]);
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, $id)
     {
-        $sbill = SchoolBillModel::find($id);
-        if (!$sbill) {
+        $bill = SchoolBillModel::find($id);
+        if (!$bill) {
             return response()->json([
                 'success' => false,
-                'message' => 'School Bill not found.'
+                'message' => 'Bill not found.',
             ], 404);
         }
 
         $validator = Validator::make($request->all(), [
-            'title' => 'required|min:1|unique:school_bill,title,' . $id,
+            'title'       => 'required|min:1|unique:school_bill,title,' . $id,
             'bill_amount' => 'required|numeric|min:1',
-            'description' => 'required',
-            'statusId' => 'required|in:1,2',
+            'description' => 'nullable|string',
+            'statusId'    => 'required|in:1,2',
         ], [
-            'title.required' => 'Please enter a bill title!',
-            'title.unique' => 'This bill title already exists!',
-            'bill_amount.required' => 'Please enter a bill amount!',
-            'bill_amount.numeric' => 'Bill amount must be a number!',
-            'bill_amount.min' => 'Bill amount must be at least 1!',
-            'description.required' => 'Please enter a description!',
-            'statusId.required' => 'Please select a student status!',
-            'statusId.in' => 'Invalid student status selected!',
+            'title.required'       => 'Please enter a bill title.',
+            'title.unique'         => 'This bill title already exists.',
+            'bill_amount.required' => 'Please enter a bill amount.',
+            'bill_amount.numeric'  => 'Bill amount must be a number.',
+            'bill_amount.min'      => 'Bill amount must be at least ₦1.',
+            'statusId.required'    => 'Please select a student status.',
+            'statusId.in'          => 'Invalid student status selected.',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'errors' => $validator->errors()
+                'errors'  => $validator->errors(),
             ], 422);
         }
 
-        $plainNumberString = str_replace(['₦', ','], '', $request->bill_amount);
-        $number = floatval($plainNumberString);
+        $amount = floatval(str_replace(['₦', ','], '', $request->bill_amount));
 
-        $sbill->update([
-            'title' => $request->title,
-            'bill_amount' => $number,
+        $bill->update([
+            'title'       => $request->title,
+            'bill_amount' => $amount,
             'description' => $request->description,
-            'statusId' => $request->statusId,
+            'statusId'    => $request->statusId,
         ]);
 
         return response()->json([
             'success' => true,
-            'message' => 'School Bill updated successfully!',
-            'data' => $sbill
-        ], 200);
+            'message' => 'School Bill updated successfully.',
+            'data'    => $bill,
+        ]);
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy($id)
     {
-        $sbill = SchoolBillModel::find($id);
-        if (!$sbill) {
+        $bill = SchoolBillModel::find($id);
+        if (!$bill) {
             return response()->json([
                 'success' => false,
-                'message' => 'School Bill not found.'
+                'message' => 'Bill not found.',
             ], 404);
         }
 
-        $sbill->delete();
+        $bill->delete();
 
         return response()->json([
             'success' => true,
-            'message' => 'School Bill deleted successfully.'
-        ], 200);
+            'message' => 'Bill deleted successfully.',
+        ]);
     }
 
     /**
-     * Bulk delete school bills.
+     * Bulk delete bills.
      */
     public function bulkDestroy(Request $request)
     {
         $ids = $request->input('ids', []);
+
         if (empty($ids)) {
             return response()->json([
                 'success' => false,
-                'message' => 'No bills selected.'
+                'message' => 'No bills selected.',
             ], 400);
         }
 
@@ -251,7 +277,6 @@ class SchoolBillController extends Controller
         return response()->json([
             'success' => true,
             'message' => $deleted . ' bill(s) deleted successfully.',
-            'count' => $deleted
         ]);
     }
 }
