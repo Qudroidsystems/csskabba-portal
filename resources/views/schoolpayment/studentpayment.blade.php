@@ -77,7 +77,7 @@
 .bill-card .stripe {
     position:absolute; top:0; left:0; right:0; height:3px;
 }
-.bill-card.paid   .stripe { background:linear-gradient(90deg,#16a34a,#15803d); }
+.bill-card.paid    .stripe { background:linear-gradient(90deg,#16a34a,#15803d); }
 .bill-card.partial .stripe { background:linear-gradient(90deg,#2563eb,#1d4ed8); }
 .bill-card.unpaid  .stripe { background:linear-gradient(90deg,#d97706,#b45309); }
 .bill-card.savings .stripe { background:linear-gradient(90deg,#7c3aed,#6d28d9); }
@@ -126,6 +126,13 @@
     border-bottom:1px solid var(--pay-border);
 }
 .rec-table tr:hover td { background:#f0f9ff; }
+
+/* ── Empty state ────────────────────────── */
+.empty-state {
+    text-align:center; padding:48px 24px;
+}
+.empty-state i { font-size:3rem; opacity:.25; color:var(--pay-muted); display:block; margin-bottom:12px; }
+.empty-state p { color:var(--pay-muted); margin:0; font-size:14px; }
 
 /* ── Payment Modal ──────────────────────── */
 #paymentModal .modal-content { border:none; border-radius:16px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.15); }
@@ -181,10 +188,22 @@
         <p>Manage school fee payments for the selected student, term, and session.</p>
     </div>
 
-    {{-- Student info --}}
+    {{-- ── Student info ── --}}
     @if($studentdata)
+    @php
+        $totalBillOriginal = $student_bill_info->sum('amount');
+        $totalBillAdjusted = $student_bill_info->sum('adjusted_amount');
+        $totalPaidSoFar    = $studentpaymentbillbook
+            ->where('student_id', $studentId)
+            ->where('term_id', $termid)
+            ->where('session_id', $sessionid)
+            ->sum('amount_paid');
+        $totalOutstanding  = max(0, $totalBillAdjusted - $totalPaidSoFar);
+        $totalSavings      = $student_bill_info->sum('total_savings');
+    @endphp
     <div class="student-card">
         <div class="d-flex align-items-start gap-4 flex-wrap">
+            {{-- Avatar --}}
             <div>
                 @if($studentdata->avatar)
                     <img src="{{ Storage::url('images/studentavatar/' . $studentdata->avatar) }}"
@@ -195,25 +214,26 @@
                     </div>
                 @endif
             </div>
+
+            {{-- Info --}}
             <div class="flex-grow-1">
                 <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
                     <h5 class="mb-0 fw-bold" style="color:var(--pay-primary)">
                         {{ $studentdata->firstname }} {{ $studentdata->lastname }}
                     </h5>
-                    @if($studentdata->student_status === 'Active')
+                    @if(($studentdata->student_status ?? '') === 'Active')
                         <span class="badge bg-success-subtle text-success px-2 py-1" style="font-size:11px">Active</span>
                     @else
-                        <span class="badge bg-danger-subtle text-danger px-2 py-1" style="font-size:11px">{{ $studentdata->student_status }}</span>
+                        <span class="badge bg-danger-subtle text-danger px-2 py-1" style="font-size:11px">{{ $studentdata->student_status ?? 'Unknown' }}</span>
                     @endif
-                    @if($studentdata->statusId == 1)
+                    @if(($studentdata->statusId ?? 0) == 1)
                         <span class="badge bg-info-subtle text-info px-2 py-1" style="font-size:11px">Returning Student</span>
                     @else
                         <span class="badge bg-warning-subtle text-warning px-2 py-1" style="font-size:11px">New Student</span>
                     @endif
                 </div>
-                <div class="text-muted small mb-3">
-                    <span class="font-monospace">{{ $studentdata->admissionNo }}</span>
-                </div>
+                <div class="text-muted small mb-3 font-monospace">{{ $studentdata->admissionNo }}</div>
+
                 <div class="d-flex flex-wrap gap-2">
                     <div class="info-chip">
                         <i class="ri-building-line text-success"></i>
@@ -227,19 +247,8 @@
                         <i class="ri-time-line text-warning"></i>
                         {{ $schoolsession }}
                     </div>
-                    @php
-                        $totalBillOriginal = $student_bill_info->sum('amount');
-                        $totalBillAdjusted = $student_bill_info->sum('adjusted_amount');
-                        $totalPaidSoFar    = $studentpaymentbillbook
-                            ->where('student_id', $studentId)
-                            ->where('term_id', $termid)
-                            ->where('session_id', $sessionid)
-                            ->sum('amount_paid');
-                        $totalOutstanding  = max(0, $totalBillAdjusted - $totalPaidSoFar);
-                        $totalSavings      = $student_bill_info->sum('total_savings');
-                    @endphp
                     <div class="info-chip">
-                        <i class="ri-money-naira-circle-line text-danger"></i>
+                        <i class="ri-money-dollar-circle-line text-danger"></i>
                         Total: ₦{{ number_format($totalBillAdjusted, 0) }}
                     </div>
                     <div class="info-chip">
@@ -258,7 +267,9 @@
                     @endif
                 </div>
             </div>
-            <div class="d-flex gap-2 flex-wrap">
+
+            {{-- Actions --}}
+            <div class="d-flex gap-2 flex-wrap align-items-start">
                 <a href="{{ route('schoolpayment.index') }}" class="btn btn-outline-secondary btn-sm">
                     <i class="ri-arrow-left-line me-1"></i>Back
                 </a>
@@ -278,6 +289,12 @@
                 </a>
             </div>
         </div>
+    </div>
+    @else
+    <div class="alert alert-warning">
+        <i class="ri-alert-line me-2"></i>
+        Student data could not be loaded. The student may not be enrolled in the current session.
+        <a href="{{ route('schoolpayment.index') }}" class="alert-link ms-2">← Back to students</a>
     </div>
     @endif
 
@@ -328,7 +345,7 @@
     </div>
     @endif
 
-    {{-- Tabs --}}
+    {{-- ── Tabs ── --}}
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white border-bottom pt-3 pb-0">
             <ul class="nav nav-tabs border-0" id="payTabs">
@@ -356,22 +373,27 @@
                 </li>
             </ul>
         </div>
+
         <div class="card-body">
             <div class="tab-content">
 
-                {{-- ═══ Bills Tab ═══ --}}
+                {{-- ══════════════════ BILLS TAB ══════════════════ --}}
                 <div class="tab-pane fade show active" id="tab-bills">
                     @if($student_bill_info->isEmpty())
-                        <div class="text-center py-5">
-                            <i class="ri-inbox-line d-block mb-2" style="font-size:2.5rem;opacity:.3;color:var(--pay-muted)"></i>
-                            <p class="text-muted">No bills assigned for this class, term, and session.</p>
+                        <div class="empty-state">
+                            <i class="ri-inbox-line"></i>
+                            <p>No bills assigned for this class, term, and session.</p>
+                            <p class="text-muted small mt-1">
+                                Class: <strong>{{ $studentdata->schoolclass ?? '—' }} {{ $studentdata->arm ?? '' }}</strong> ·
+                                Term: <strong>{{ $schoolterm }}</strong> ·
+                                Session: <strong>{{ $schoolsession }}</strong>
+                            </p>
                         </div>
                     @else
                         <div class="row g-3 mt-1">
                             @foreach($student_bill_info as $bill)
                             @php
-                                $bookEntry = $studentpaymentbillbook
-                                    ->where('school_bill_id', $bill->schoolbillid)->first();
+                                $bookEntry  = $studentpaymentbillbook->where('school_bill_id', $bill->schoolbillid)->first();
                                 $amountPaid = $bookEntry ? (float)$bookEntry->amount_paid : 0;
                                 $adjustedAmt = (float)$bill->adjusted_amount;
                                 $balance    = max(0, $adjustedAmt - $amountPaid);
@@ -389,6 +411,7 @@
                             <div class="col-xl-4 col-lg-6">
                                 <div class="bill-card {{ $cardClass }}">
                                     <div class="stripe"></div>
+
                                     {{-- Header --}}
                                     <div class="d-flex align-items-start justify-content-between mb-2 mt-1">
                                         <div class="flex-grow-1">
@@ -513,15 +536,17 @@
                             @endforeach
                         </div>
 
-                        {{-- Summary row --}}
-                        @if($totalSavings > 0)
+                        {{-- Total savings summary --}}
+                        @if(isset($totalSavings) && $totalSavings > 0)
                         <div class="mt-4 p-3 rounded-3" style="background:linear-gradient(135deg,#f3e8ff,#ede9fe);border:1px solid #ddd6fe">
                             <div class="d-flex align-items-center gap-2">
-                                <i class="ri-gift-line text-purple" style="font-size:18px;color:#7c3aed"></i>
+                                <i class="ri-gift-line" style="font-size:18px;color:#7c3aed"></i>
                                 <div>
                                     <span class="fw-semibold" style="color:#7c3aed">Total Savings Applied:</span>
                                     <span class="fw-bold ms-1" style="color:#7c3aed">₦{{ number_format($totalSavings, 0) }}</span>
-                                    <span class="text-muted small ms-2">(Original: ₦{{ number_format($totalBillOriginal, 0) }} → Payable: ₦{{ number_format($totalBillAdjusted, 0) }})</span>
+                                    <span class="text-muted small ms-2">
+                                        (Original: ₦{{ number_format($totalBillOriginal, 0) }} → Payable: ₦{{ number_format($totalBillAdjusted, 0) }})
+                                    </span>
                                 </div>
                             </div>
                         </div>
@@ -529,12 +554,12 @@
                     @endif
                 </div>
 
-                {{-- ═══ Records Tab ═══ --}}
+                {{-- ══════════════════ RECORDS TAB ══════════════════ --}}
                 <div class="tab-pane fade" id="tab-records">
                     @if($studentpaymentbill->isEmpty())
-                        <div class="text-center py-5">
-                            <i class="ri-receipt-line d-block mb-2" style="font-size:2.5rem;opacity:.3;color:var(--pay-muted)"></i>
-                            <p class="text-muted">No pending payment records. Make a payment in the Bills tab.</p>
+                        <div class="empty-state">
+                            <i class="ri-receipt-line"></i>
+                            <p>No pending payment records. Make a payment in the Bills tab.</p>
                         </div>
                     @else
                         <div class="table-responsive">
@@ -560,37 +585,37 @@
                                         <td>
                                             <div class="fw-semibold">{{ $sp->title }}</div>
                                             <div class="text-muted small">{{ $sp->description }}</div>
-                                         </td>
+                                        </td>
                                         <td>₦{{ number_format($sp->billAmount, 0) }}</td>
                                         <td class="text-success fw-semibold">₦{{ number_format($sp->totalAmountPaid ?? 0, 0) }}</td>
-                                        <td class="{{ $sp->balance > 0 ? 'text-danger' : 'text-success' }} fw-semibold">
-                                            ₦{{ number_format($sp->balance, 0) }}
-                                         </td>
-                                        <tr>
+                                        <td class="{{ ($sp->balance ?? 0) > 0 ? 'text-danger' : 'text-success' }} fw-semibold">
+                                            ₦{{ number_format($sp->balance ?? 0, 0) }}
+                                        </td>
+                                        <td>
                                             <span class="badge
                                                 {{ $sp->paymentMethod === 'Bank Transfer' ? 'bg-primary-subtle text-primary' :
                                                    ($sp->paymentMethod === 'School POS'   ? 'bg-success-subtle text-success' :
                                                    'bg-secondary-subtle text-secondary') }}">
                                                 {{ $sp->paymentMethod }}
                                             </span>
-                                         </td>
+                                        </td>
                                         <td>{{ $sp->receivedBy }}</td>
                                         <td>
                                             <span class="text-muted small">
                                                 {{ $sp->receivedDate ? \Carbon\Carbon::parse($sp->receivedDate)->format('d M Y') : 'N/A' }}
                                             </span>
-                                         </td>
+                                        </td>
                                         <td>
                                             <span class="badge {{ $sp->paymentStatus === 'Completed' ? 'bg-success' : 'bg-warning text-dark' }}">
                                                 {{ $sp->paymentStatus }}
                                             </span>
-                                         </td>
+                                        </td>
                                         <td>
                                             <button class="btn btn-sm btn-danger delete-payment"
                                                     data-url="{{ route('schoolpayment.deletestudentpayment', ['recordId'=>$sp->recordId]) }}">
                                                 <i class="ri-delete-bin-line"></i>
                                             </button>
-                                         </td>
+                                        </td>
                                     </tr>
                                     @endforeach
                                 </tbody>
@@ -599,12 +624,12 @@
                     @endif
                 </div>
 
-                {{-- ═══ History Tab ═══ --}}
+                {{-- ══════════════════ HISTORY TAB ══════════════════ --}}
                 <div class="tab-pane fade" id="tab-history">
                     @if($paymentHistory->isEmpty())
-                        <div class="text-center py-5">
-                            <i class="ri-history-line d-block mb-2" style="font-size:2.5rem;opacity:.3;color:var(--pay-muted)"></i>
-                            <p class="text-muted">No payment history found for this term and session.</p>
+                        <div class="empty-state">
+                            <i class="ri-history-line"></i>
+                            <p>No payment history found for this term and session.</p>
                         </div>
                     @else
                         <div class="table-responsive">
@@ -630,32 +655,32 @@
                                         <td>
                                             <div class="fw-semibold">{{ $ph->title }}</div>
                                             <div class="text-muted small">{{ $ph->description }}</div>
-                                         </td>
+                                        </td>
                                         <td>₦{{ number_format($ph->billAmount, 0) }}</td>
                                         <td class="text-success fw-semibold">₦{{ number_format($ph->totalAmountPaid ?? 0, 0) }}</td>
-                                        <td class="{{ $ph->balance > 0 ? 'text-danger' : 'text-success' }} fw-semibold">
-                                            ₦{{ number_format($ph->balance, 0) }}
-                                         </td>
+                                        <td class="{{ ($ph->balance ?? 0) > 0 ? 'text-danger' : 'text-success' }} fw-semibold">
+                                            ₦{{ number_format($ph->balance ?? 0, 0) }}
+                                        </td>
                                         <td>
                                             <span class="badge bg-secondary-subtle text-secondary">{{ $ph->paymentMethod }}</span>
-                                         </td>
+                                        </td>
                                         <td>{{ $ph->receivedBy }}</td>
                                         <td>
                                             <span class="text-muted small">
                                                 {{ $ph->receivedDate ? \Carbon\Carbon::parse($ph->receivedDate)->format('d M Y') : 'N/A' }}
                                             </span>
-                                         </td>
+                                        </td>
                                         <td>
-                                            <span class="badge {{ ($ph->paymentStatus ?? '') === 'Completed' || $ph->completePayment == 1 ? 'bg-success' : 'bg-warning text-dark' }}">
-                                                {{ ($ph->paymentStatus ?? '') === 'Completed' || $ph->completePayment == 1 ? 'Completed' : 'Partial' }}
+                                            <span class="badge {{ ($ph->paymentStatus ?? '') === 'Completed' || ($ph->completePayment ?? 0) == 1 ? 'bg-success' : 'bg-warning text-dark' }}">
+                                                {{ ($ph->paymentStatus ?? '') === 'Completed' || ($ph->completePayment ?? 0) == 1 ? 'Completed' : 'Partial' }}
                                             </span>
-                                         </td>
+                                        </td>
                                         <td>
                                             <a href="{{ route('schoolpayment.invoice', ['studentId'=>$studentId,'schoolclassid'=>$ph->classId,'termid'=>$ph->termId,'sessionid'=>$ph->sessionId]) }}"
                                                class="btn btn-sm btn-outline-primary">
                                                 <i class="ri-file-download-line"></i>
                                             </a>
-                                         </td>
+                                        </td>
                                     </tr>
                                     @endforeach
                                 </tbody>
@@ -670,15 +695,15 @@
                     @endif
                 </div>
 
-            </div>
-        </div>
-    </div>
+            </div>{{-- /tab-content --}}
+        </div>{{-- /card-body --}}
+    </div>{{-- /card --}}
 
 </div>
 </div>
 </div>
 
-{{-- ═══════════════════════════ PAYMENT MODAL ═══════════════════════════ --}}
+{{-- ══════════════════════════ PAYMENT MODAL ══════════════════════════ --}}
 <div class="modal fade" id="paymentModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered" style="max-width:500px">
         <div class="modal-content">
@@ -688,16 +713,16 @@
             </div>
             <form id="paymentForm" action="{{ route('schoolpayment.store') }}" method="POST">
                 @csrf
-                <input type="hidden" id="student_id"   name="student_id">
-                <input type="hidden" id="class_id"     name="class_id">
-                <input type="hidden" id="term_id"      name="term_id">
-                <input type="hidden" id="session_id"   name="session_id">
-                <input type="hidden" id="school_bill_id" name="school_bill_id">
-                <input type="hidden" id="actual_amount"  name="actual_amount">
-                <input type="hidden" id="adjusted_amount" name="adjusted_amount">
-                <input type="hidden" id="balance2"       name="balance2">
-                <input type="hidden" id="last_amount_paid" name="last_amount_paid">
-                <input type="hidden" id="payment_amount2"  name="payment_amount2">
+                <input type="hidden" id="student_id"            name="student_id">
+                <input type="hidden" id="class_id"              name="class_id">
+                <input type="hidden" id="term_id"               name="term_id">
+                <input type="hidden" id="session_id"            name="session_id">
+                <input type="hidden" id="school_bill_id"        name="school_bill_id">
+                <input type="hidden" id="actual_amount"         name="actual_amount">
+                <input type="hidden" id="adjusted_amount"       name="adjusted_amount">
+                <input type="hidden" id="balance2"              name="balance2">
+                <input type="hidden" id="last_amount_paid"      name="last_amount_paid">
+                <input type="hidden" id="payment_amount2"       name="payment_amount2">
                 <input type="hidden" id="scholarship_deduction" name="scholarship_deduction">
                 <input type="hidden" id="discount_deduction"    name="discount_deduction">
 
@@ -707,20 +732,20 @@
                         <div class="fw-semibold" style="color:var(--pay-primary);font-size:15px" id="modal-bill-title">—</div>
                     </div>
 
-                    {{-- Savings breakdown (shown only when applicable) --}}
+                    {{-- Savings breakdown --}}
                     <div class="savings-breakdown d-none" id="savingsBreakdown">
                         <div class="title"><i class="ri-gift-line me-1"></i>Savings Applied</div>
                         <div class="savings-row d-none" id="scholRow">
                             <span id="scholLabel">Scholarship</span>
-                            <span class="text-warning fw-semibold" id="scholAmt">-₦0</span>
+                            <span class="fw-semibold" style="color:#92400e" id="scholAmt">-₦0</span>
                         </div>
                         <div class="savings-row d-none" id="discRow">
                             <span id="discLabel">Discount</span>
-                            <span class="text-purple fw-semibold" id="discAmt">-₦0</span>
+                            <span class="fw-semibold" style="color:#6d28d9" id="discAmt">-₦0</span>
                         </div>
                         <div class="savings-row">
                             <span>Total Savings</span>
-                            <span class="text-purple" id="totalSavingsAmt">-₦0</span>
+                            <span style="color:#7c3aed" id="totalSavingsAmt">-₦0</span>
                         </div>
                     </div>
 
@@ -742,7 +767,7 @@
                         <div class="form-text small text-muted">Payment cannot exceed this balance.</div>
                     </div>
 
-                    {{-- Payment amount input --}}
+                    {{-- Payment amount --}}
                     <div class="mb-3">
                         <label class="form-label">Enter Payment Amount <span class="text-danger">*</span></label>
                         <div class="input-group">
@@ -778,7 +803,7 @@
     </div>
 </div>
 
-{{-- ═══════════════════════════ CONFIRM DELETE MODAL ═══════════════════ --}}
+{{-- ══════════════════════ CONFIRM DELETE MODAL ══════════════════════ --}}
 <div class="modal fade" id="confirmDeleteModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered" style="max-width:380px">
         <div class="modal-content border-0" style="border-radius:16px;overflow:hidden">
@@ -800,72 +825,56 @@
     </div>
 </div>
 
-{{-- ═══════════════════════════ MESSAGE MODAL ═══════════════════════════ --}}
-<div class="modal fade" id="messageModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered" style="max-width:380px">
-        <div class="modal-content border-0" style="border-radius:16px;overflow:hidden">
-            <div class="modal-header border-0" id="msgHeader">
-                <h5 class="modal-title" id="msgTitle">Notification</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-center" id="msgBody"></div>
-            <div class="modal-footer border-0 justify-content-center">
-                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-    // Helper function to format currency
     function fmt(n) {
-        return Number(n).toLocaleString('en-NG', {minimumFractionDigits:0});
+        return Number(n).toLocaleString('en-NG', { minimumFractionDigits: 0 });
     }
 
-    // ── Populate payment modal ─────────────────────────────────────────────
-    document.querySelectorAll('.make-payment').forEach(btn => {
+    // ── Populate payment modal ──────────────────────────────────────────
+    document.querySelectorAll('.make-payment').forEach(function (btn) {
         btn.addEventListener('click', function () {
             const d = {
-                student_id:   this.dataset.student_id,
-                amount:       parseFloat(this.dataset.amount),
-                original:     parseFloat(this.dataset.original_amount),
-                amount_paid:  parseFloat(this.dataset.amount_paid.replace(/,/g,'')),
-                balance:      parseFloat(this.dataset.balance),
-                bill_id:      this.dataset.school_bill_id,
-                class_id:     this.dataset.class_id,
-                term_id:      this.dataset.term_id,
-                session_id:   this.dataset.session_id,
-                title:        this.dataset.title,
-                schol_ded:    parseFloat(this.dataset.scholarship_deduction || 0),
-                schol_label:  this.dataset.scholarship_label || 'Scholarship',
-                disc_ded:     parseFloat(this.dataset.discount_deduction || 0),
-                disc_labels:  this.dataset.discount_labels || 'Discount',
-                total_savings:parseFloat(this.dataset.total_savings || 0),
+                student_id:    this.dataset.student_id,
+                amount:        parseFloat(this.dataset.amount),
+                original:      parseFloat(this.dataset.original_amount),
+                amount_paid:   parseFloat((this.dataset.amount_paid || '0').replace(/,/g, '')),
+                balance:       parseFloat(this.dataset.balance),
+                bill_id:       this.dataset.school_bill_id,
+                class_id:      this.dataset.class_id,
+                term_id:       this.dataset.term_id,
+                session_id:    this.dataset.session_id,
+                title:         this.dataset.title,
+                schol_ded:     parseFloat(this.dataset.scholarship_deduction || 0),
+                schol_label:   this.dataset.scholarship_label || 'Scholarship',
+                disc_ded:      parseFloat(this.dataset.discount_deduction || 0),
+                disc_labels:   this.dataset.discount_labels || 'Discount',
+                total_savings: parseFloat(this.dataset.total_savings || 0),
             };
 
-            document.getElementById('modal-bill-title').textContent  = d.title;
-            document.getElementById('student_id').value               = d.student_id;
-            document.getElementById('class_id').value                 = d.class_id;
-            document.getElementById('term_id').value                  = d.term_id;
-            document.getElementById('session_id').value               = d.session_id;
-            document.getElementById('school_bill_id').value           = d.bill_id;
-            document.getElementById('actual_amount').value            = d.original;
-            document.getElementById('adjusted_amount').value          = d.amount;
-            document.getElementById('balance2').value                 = d.balance;
-            document.getElementById('last_amount_paid').value         = d.amount_paid;
-            document.getElementById('scholarship_deduction').value    = d.schol_ded;
-            document.getElementById('discount_deduction').value       = d.disc_ded;
-
-            document.getElementById('amount_d').value      = '₦' + fmt(d.amount);
-            document.getElementById('amount_paid_d').value = '₦' + fmt(d.amount_paid);
-            document.getElementById('balance_d').value     = '₦' + fmt(d.balance);
-            document.getElementById('payment_amount').value = '';
-            document.getElementById('payment_amount2').value = '';
-            document.getElementById('payment_method2').value = '';
+            document.getElementById('modal-bill-title').textContent       = d.title;
+            document.getElementById('student_id').value                   = d.student_id;
+            document.getElementById('class_id').value                     = d.class_id;
+            document.getElementById('term_id').value                      = d.term_id;
+            document.getElementById('session_id').value                   = d.session_id;
+            document.getElementById('school_bill_id').value               = d.bill_id;
+            document.getElementById('actual_amount').value                = d.original;
+            document.getElementById('adjusted_amount').value              = d.amount;
+            document.getElementById('balance2').value                     = d.balance;
+            document.getElementById('last_amount_paid').value             = d.amount_paid;
+            document.getElementById('scholarship_deduction').value        = d.schol_ded;
+            document.getElementById('discount_deduction').value           = d.disc_ded;
+            document.getElementById('amount_d').value                     = '₦' + fmt(d.amount);
+            document.getElementById('amount_paid_d').value                = '₦' + fmt(d.amount_paid);
+            document.getElementById('balance_d').value                    = '₦' + fmt(d.balance);
+            document.getElementById('payment_amount').value               = '';
+            document.getElementById('payment_amount2').value              = '';
+            document.getElementById('payment_method2').value              = '';
             document.getElementById('formErrors').classList.add('d-none');
+            document.getElementById('payment_amount').classList.remove('is-invalid');
+            document.getElementById('amountError').textContent            = '';
 
             // Savings breakdown
             const savBox = document.getElementById('savingsBreakdown');
@@ -880,8 +889,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 } else { scholRow.classList.add('d-none'); }
                 if (d.disc_ded > 0) {
                     discRow.classList.remove('d-none');
-                    document.getElementById('discLabel').textContent = d.disc_labels;
-                    document.getElementById('discAmt').textContent   = '-₦' + fmt(d.disc_ded);
+                    document.getElementById('discLabel').textContent  = d.disc_labels;
+                    document.getElementById('discAmt').textContent    = '-₦' + fmt(d.disc_ded);
                 } else { discRow.classList.add('d-none'); }
                 document.getElementById('totalSavingsAmt').textContent = '-₦' + fmt(d.total_savings);
             } else {
@@ -890,7 +899,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // ── Validate payment amount ─────────────────────────────────────────────
+    // ── Validate payment amount input ───────────────────────────────────
     document.getElementById('payment_amount')?.addEventListener('input', function () {
         const val     = parseFloat(this.value.replace(/[^0-9.]/g, '')) || 0;
         const balance = parseFloat(document.getElementById('balance2').value) || 0;
@@ -908,133 +917,89 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('payment_amount2').value = val > 0 ? val.toFixed(2) : '';
     });
 
-    // ── Form submit ────────────────────────────────────────────────────────
+    // ── Form submit ─────────────────────────────────────────────────────
     document.getElementById('paymentForm')?.addEventListener('submit', function (e) {
         e.preventDefault();
 
         const amtInput = document.getElementById('payment_amount');
-        const val = parseFloat(amtInput.value.replace(/[^0-9.]/g, '')) || 0;
-        const balance = parseFloat(document.getElementById('balance2').value) || 0;
-        const method = document.getElementById('payment_method2').value;
+        const val      = parseFloat(amtInput.value.replace(/[^0-9.]/g, '')) || 0;
+        const balance  = parseFloat(document.getElementById('balance2').value) || 0;
+        const method   = document.getElementById('payment_method2').value;
 
-        // Clear previous errors
         document.getElementById('amountError').textContent = '';
         amtInput.classList.remove('is-invalid');
         document.getElementById('payment_method2').classList.remove('is-invalid');
         document.getElementById('formErrors').classList.add('d-none');
 
-        // Validate amount
         if (val <= 0) {
             amtInput.classList.add('is-invalid');
             document.getElementById('amountError').textContent = 'Enter a valid amount greater than 0.';
             return;
         }
-
         if (val > balance) {
             amtInput.classList.add('is-invalid');
             document.getElementById('amountError').textContent = 'Amount cannot exceed outstanding balance of ₦' + fmt(balance) + '.';
             return;
         }
-
-        // Validate payment method
         if (!method) {
             document.getElementById('payment_method2').classList.add('is-invalid');
-            Swal.fire({
-                icon: 'warning',
-                title: 'Missing Information',
-                text: 'Please select a payment method.',
-                confirmButtonText: 'OK'
-            });
+            Swal.fire({ icon:'warning', title:'Missing Information', text:'Please select a payment method.', confirmButtonText:'OK' });
             return;
         }
 
-        // Set the payment amount value
         document.getElementById('payment_amount2').value = val.toFixed(2);
 
         const btn = document.getElementById('paySubmitBtn');
-        const originalBtnText = btn.innerHTML;
+        const originalHtml = btn.innerHTML;
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Processing...';
 
-        const formData = new FormData(this);
-
         fetch(this.action, {
             method: 'POST',
-            body: formData,
+            body: new FormData(this),
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest'
             }
         })
-        .then(response => {
+        .then(function (response) {
             if (!response.ok) {
-                return response.json().then(data => {
+                return response.json().then(function (data) {
                     throw { status: response.status, data: data };
-                }).catch(() => {
-                    throw { status: response.status, message: 'Server error occurred' };
                 });
             }
             return response.json();
         })
-        .then(data => {
+        .then(function (data) {
             const modal = bootstrap.Modal.getInstance(document.getElementById('paymentModal'));
             if (modal) modal.hide();
 
             if (data.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Success!',
-                    text: data.message,
-                    timer: 2000,
-                    showConfirmButton: false
-                }).then(() => {
-                    if (data.redirect_url) {
-                        window.location.href = data.redirect_url;
-                    } else {
-                        location.reload();
-                    }
-                });
+                Swal.fire({ icon:'success', title:'Success!', text: data.message, timer:2000, showConfirmButton:false })
+                    .then(function () {
+                        window.location.href = data.redirect_url || window.location.href;
+                    });
             } else {
-                let errorMessage = data.message || 'Something went wrong.';
-                if (data.errors) {
-                    errorMessage = Object.values(data.errors).flat().join('<br>');
-                }
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    html: errorMessage,
-                    confirmButtonText: 'OK'
-                });
+                let msg = data.message || 'Something went wrong.';
+                if (data.errors) msg = Object.values(data.errors).flat().join('<br>');
+                Swal.fire({ icon:'error', title:'Error', html: msg, confirmButtonText:'OK' });
             }
         })
-        .catch(error => {
-            console.error('Payment Error:', error);
-
-            let errorMessage = 'An unexpected error occurred. Please try again.';
-
-            if (error.data && error.data.message) {
-                errorMessage = error.data.message;
-            } else if (error.message) {
-                errorMessage = error.message;
-            }
-
-            Swal.fire({
-                icon: 'error',
-                title: 'Payment Failed',
-                html: errorMessage,
-                confirmButtonText: 'OK'
-            });
+        .catch(function (error) {
+            let msg = 'An unexpected error occurred. Please try again.';
+            if (error.data && error.data.message) msg = error.data.message;
+            Swal.fire({ icon:'error', title:'Payment Failed', html: msg, confirmButtonText:'OK' });
         })
-        .finally(() => {
+        .finally(function () {
             btn.disabled = false;
-            btn.innerHTML = originalBtnText;
+            btn.innerHTML = originalHtml;
         });
     });
 
-    // ── Delete payment ─────────────────────────────────────────────────────
+    // ── Delete payment ──────────────────────────────────────────────────
     let deleteUrl = '';
-    document.querySelectorAll('.delete-payment').forEach(btn => {
+    document.querySelectorAll('.delete-payment').forEach(function (btn) {
         btn.addEventListener('click', function () {
             deleteUrl = this.dataset.url;
             new bootstrap.Modal(document.getElementById('confirmDeleteModal')).show();
@@ -1048,33 +1013,29 @@ document.addEventListener('DOMContentLoaded', function () {
         this.disabled = true;
         this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Deleting...';
 
+        const self = this;
         fetch(deleteUrl, {
             method: 'POST',
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                 'Accept': 'application/json',
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({})
         })
-        .then(response => response.json())
-        .then(data => {
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
             if (data.success) {
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Deleted!',
-                    text: data.message,
-                    timer: 1500,
-                    showConfirmButton: false
-                }).then(() => location.reload());
+                Swal.fire({ icon:'success', title:'Deleted!', text: data.message, timer:1500, showConfirmButton:false })
+                    .then(function () { location.reload(); });
             } else {
                 Swal.fire('Error', data.message, 'error');
             }
         })
-        .catch(() => Swal.fire('Error', 'Failed to delete payment.', 'error'))
-        .finally(() => {
-            this.disabled = false;
-            this.innerHTML = '<i class="ri-delete-bin-line me-1"></i>Delete';
+        .catch(function () { Swal.fire('Error', 'Failed to delete payment.', 'error'); })
+        .finally(function () {
+            self.disabled = false;
+            self.innerHTML = '<i class="ri-delete-bin-line me-1"></i>Delete';
             deleteUrl = '';
         });
     });

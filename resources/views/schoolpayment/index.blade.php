@@ -86,6 +86,59 @@
     border-color:var(--pay-accent); outline:none;
     box-shadow:0 0 0 3px rgba(37,99,235,.1);
 }
+
+/* ── Term/Session Modal ── */
+#termSessionModal .modal-content {
+    border:none; border-radius:16px; overflow:hidden;
+    box-shadow:0 20px 60px rgba(0,0,0,.18);
+}
+.ts-modal-hero {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #4f46e5 100%);
+    padding: 22px 28px; position:relative; overflow:hidden;
+}
+.ts-modal-hero::before {
+    content:''; position:absolute; top:-30px; right:-30px;
+    width:120px; height:120px; background:rgba(255,255,255,.07); border-radius:50%;
+}
+.ts-modal-hero h5 { color:#fff; font-weight:700; font-size:15px; margin:0; position:relative; }
+.ts-modal-hero p  { color:rgba(255,255,255,.75); font-size:12px; margin:6px 0 0; position:relative; }
+.ts-modal-hero .btn-close { position:absolute; top:16px; right:20px; filter:invert(1); opacity:.8; }
+
+.ts-student-chip {
+    background: #f0f9ff; border:1px solid #bae6fd;
+    border-radius:10px; padding:10px 16px;
+    display:flex; align-items:center; gap:10px; margin-bottom:20px;
+}
+.ts-student-chip .chip-avatar {
+    width:38px; height:38px; border-radius:50%;
+    background:linear-gradient(135deg,#dbeafe,#93c5fd);
+    display:flex; align-items:center; justify-content:center;
+    font-size:13px; font-weight:700; color:var(--pay-accent); flex-shrink:0;
+}
+.ts-student-chip .chip-name { font-size:14px; font-weight:700; color:var(--pay-primary); }
+.ts-student-chip .chip-meta { font-size:11px; color:var(--pay-muted); }
+
+.ts-select-label { font-size:13px; font-weight:600; color:#374151; margin-bottom:6px; }
+.ts-select {
+    border:1.5px solid var(--pay-border); border-radius:9px;
+    padding:11px 14px; font-size:13px; width:100%;
+    transition:border .15s, box-shadow .15s; appearance:none;
+    background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2.5'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 12px center;
+}
+.ts-select:focus {
+    border-color:var(--pay-accent); outline:none;
+    box-shadow:0 0 0 3px rgba(37,99,235,.1);
+}
+.ts-btn-proceed {
+    background: linear-gradient(135deg, #2563eb, #4f46e5);
+    color:#fff; border:none; border-radius:9px;
+    padding:12px 28px; font-size:14px; font-weight:600;
+    width:100%; cursor:pointer; transition:opacity .15s, transform .1s;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+}
+.ts-btn-proceed:hover  { opacity:.92; transform:translateY(-1px); }
+.ts-btn-proceed:active { transform:translateY(0); }
+.ts-btn-proceed:disabled { opacity:.6; cursor:not-allowed; transform:none; }
 </style>
 
 <div class="main-content">
@@ -207,10 +260,16 @@
                                 </div>
                             </td>
                             <td>
-                                <a href="{{ route('schoolpayment.termsession', $s->id) }}"
-                                   class="btn btn-sm btn-primary">
+                                {{-- Pay button now opens modal instead of redirecting --}}
+                                <button type="button"
+                                        class="btn btn-sm btn-primary open-pay-modal"
+                                        data-student-id="{{ $s->id }}"
+                                        data-student-name="{{ $s->firstname }} {{ $s->lastname }}"
+                                        data-student-class="{{ $s->schoolclass }} {{ $s->arm }}"
+                                        data-student-initials="{{ strtoupper(substr($s->firstname,0,1).substr($s->lastname,0,1)) }}"
+                                        data-student-admission="{{ $s->admissionNo }}">
                                     <i class="ri-wallet-line me-1"></i>Pay
-                                </a>
+                                </button>
                             </td>
                         </tr>
                         @empty
@@ -231,11 +290,80 @@
 </div>
 </div>
 
+{{-- ════════════════════ TERM / SESSION MODAL ════════════════════ --}}
+<div class="modal fade" id="termSessionModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:460px">
+        <div class="modal-content">
+
+            {{-- Hero bar --}}
+            <div class="ts-modal-hero">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                <h5><i class="ri-wallet-3-line me-2"></i>Process Payment</h5>
+                <p>Select the term and session to view payment details.</p>
+            </div>
+
+            <div class="p-4">
+                {{-- Student chip --}}
+                <div class="ts-student-chip">
+                    <div class="chip-avatar" id="tsAvatarInitials">—</div>
+                    <div>
+                        <div class="chip-name" id="tsStudentName">—</div>
+                        <div class="chip-meta">
+                            <span id="tsStudentClass"></span>
+                            <span class="mx-1">·</span>
+                            <span class="font-monospace" id="tsStudentAdmission"></span>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Form --}}
+                <form id="termSessionForm" method="GET" action="{{ route('schoolpayment.termsessionpayments') }}">
+                    <input type="hidden" name="studentId" id="tsStudentId" value="">
+
+                    <div class="mb-3">
+                        <label class="ts-select-label">
+                            <i class="ri-calendar-check-line me-1 text-primary"></i>
+                            Select Term <span class="text-danger">*</span>
+                        </label>
+                        <select name="termid" id="tsTermId" class="ts-select" required>
+                            <option value="">— Choose Term —</option>
+                            @foreach(\App\Models\Schoolterm::all() as $term)
+                                <option value="{{ $term->id }}">{{ $term->term }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="ts-select-label">
+                            <i class="ri-time-line me-1 text-primary"></i>
+                            Select Session <span class="text-danger">*</span>
+                        </label>
+                        <select name="sessionid" id="tsSessionId" class="ts-select" required>
+                            <option value="">— Choose Session —</option>
+                            @foreach(\App\Models\Schoolsession::all() as $session)
+                                <option value="{{ $session->id }}">{{ $session->session }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <button type="submit" class="ts-btn-proceed" id="tsProceedBtn">
+                        <i class="ri-search-eye-line"></i>
+                        View Payment Details
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 $(document).ready(function () {
+    // ── DataTable ────────────────────────────────────────────────────────
     $('#studentsTable').DataTable({
         pageLength: 25,
         order: [[2, 'asc']],
@@ -248,6 +376,51 @@ $(document).ready(function () {
             zeroRecords: 'No matching students',
         },
         columnDefs: [{ orderable: false, targets: [1, 6, 7] }],
+    });
+
+    // ── Open Pay Modal ───────────────────────────────────────────────────
+    document.querySelectorAll('.open-pay-modal').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const studentId   = this.dataset.studentId;
+            const studentName = this.dataset.studentName;
+            const studentClass = this.dataset.studentClass;
+            const initials    = this.dataset.studentInitials;
+            const admission   = this.dataset.studentAdmission;
+
+            // Populate modal fields
+            document.getElementById('tsStudentId').value       = studentId;
+            document.getElementById('tsStudentName').textContent = studentName;
+            document.getElementById('tsStudentClass').textContent = studentClass;
+            document.getElementById('tsStudentAdmission').textContent = admission;
+            document.getElementById('tsAvatarInitials').textContent  = initials;
+
+            // Reset selects
+            document.getElementById('tsTermId').value    = '';
+            document.getElementById('tsSessionId').value = '';
+
+            new bootstrap.Modal(document.getElementById('termSessionModal')).show();
+        });
+    });
+
+    // ── Form submit validation ───────────────────────────────────────────
+    document.getElementById('termSessionForm').addEventListener('submit', function (e) {
+        const termid    = document.getElementById('tsTermId').value;
+        const sessionid = document.getElementById('tsSessionId').value;
+
+        if (!termid || !sessionid) {
+            e.preventDefault();
+            Swal.fire({
+                icon: 'warning',
+                title: 'Incomplete Selection',
+                text: 'Please select both a term and a session to continue.',
+                confirmButtonColor: '#2563eb'
+            });
+            return;
+        }
+
+        const btn = document.getElementById('tsProceedBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
     });
 });
 </script>
