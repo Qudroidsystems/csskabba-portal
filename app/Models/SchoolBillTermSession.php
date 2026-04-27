@@ -1,5 +1,5 @@
 <?php
-// app/Models/SchoolBillTermSession.php (ENHANCED)
+// app/Models/SchoolBillTermSession.php
 
 namespace App\Models;
 
@@ -14,28 +14,38 @@ class SchoolBillTermSession extends Model
     protected $table = 'school_bill_class_term_session';
 
     protected $fillable = [
-        'bill_id', 'class_id', 'termid_id', 'session_id', 'created_by',
-        'is_active', 'display_order', 'is_required'
+        'bill_id',
+        'class_id',
+        'termid_id',
+        'session_id',
+        'created_by',
+        'is_active',
+        'display_order',
+        'is_required',
     ];
 
     protected $casts = [
-        'bill_id' => 'integer',
-        'class_id' => 'integer',
-        'termid_id' => 'integer',
-        'session_id' => 'integer',
-        'created_by' => 'integer',
-        'is_active' => 'boolean',
-        'is_required' => 'boolean',
+        'bill_id'       => 'integer',
+        'class_id'      => 'integer',
+        'termid_id'     => 'integer',
+        'session_id'    => 'integer',
+        'created_by'    => 'integer',
+        'is_active'     => 'boolean',
+        'is_required'   => 'boolean',
         'display_order' => 'integer',
     ];
 
-    // Relationships
+    // ── Relationships ──────────────────────────────────────────────────
+
     public function schoolBill()
     {
         return $this->belongsTo(SchoolBillModel::class, 'bill_id');
     }
 
-    public function class()
+    /**
+     * Note: 'class' is a reserved keyword in PHP — use schoolClass() instead.
+     */
+    public function schoolClass()
     {
         return $this->belongsTo(Schoolclass::class, 'class_id');
     }
@@ -55,10 +65,16 @@ class SchoolBillTermSession extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    // Scopes
+    // ── Scopes ─────────────────────────────────────────────────────────
+
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    public function scopeRequired($query)
+    {
+        return $query->where('is_required', true);
     }
 
     public function scopeForClass($query, $classId)
@@ -76,10 +92,15 @@ class SchoolBillTermSession extends Model
         return $query->where('session_id', $sessionId);
     }
 
-    // Get all bills for a specific student based on their class
+    // ── Static helpers ─────────────────────────────────────────────────
+
+    /**
+     * Get all active bill assignments for a student based on their current class.
+     */
     public static function getBillsForStudent($studentId, $termId, $sessionId)
     {
-        $student = Student::find($studentId);
+        $student = \App\Models\Student::find($studentId);
+
         if (!$student || !$student->currentClass()) {
             return collect([]);
         }
@@ -95,8 +116,11 @@ class SchoolBillTermSession extends Model
             ->get();
     }
 
-    // Check if a bill is assigned
-    public static function isBillAssigned($billId, $classId, $termId, $sessionId)
+    /**
+     * Check whether a specific bill/class/term/session combination already exists
+     * (excluding soft-deleted records).
+     */
+    public static function isBillAssigned($billId, $classId, $termId, $sessionId): bool
     {
         return self::where('bill_id', $billId)
             ->where('class_id', $classId)
@@ -105,11 +129,13 @@ class SchoolBillTermSession extends Model
             ->exists();
     }
 
-    // Get all unique classes for a bill
+    /**
+     * Get all unique classes that have been assigned this bill.
+     */
     public function getAssignedClasses()
     {
-        return Schoolclass::whereIn('id', self::where('bill_id', $this->bill_id)
-            ->pluck('class_id'))
-            ->get();
+        return Schoolclass::whereIn('id',
+            self::where('bill_id', $this->bill_id)->pluck('class_id')
+        )->get();
     }
 }
