@@ -660,6 +660,45 @@
                             </li>
                         @endif
 
+                         @if(auth()->user()->can('View exam') || auth()->user()->can('View cbt-exam'))
+                            <li class="menu-title"><i class="ph-graduation-cap"></i> <span data-key="t-apps">EXAMS AND CBT </span></li>
+                         @endif
+                        @can('View exam')
+                        <li class="nav-item">
+                            <a href="#sidebarExams" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarExams">
+                                <i class="ph-graduation-cap"></i> <span data-key="t-ecommerce">Exams Managment</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarExams">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item">
+                                        <a href="{{ route('exams.index') }}" class="nav-link" data-key="t-products">All Examinations</a>
+                                    </li>
+                                    @can('View question')
+                                    <li class="nav-item">
+                                        <a href="{{ route('questions.all') }}" class="nav-link" data-key="t-questions">Questions Management</a>
+                                    </li>
+                                    @endcan
+                                </ul>
+                            </div>
+                        </li>
+                        @endcan
+
+
+                        @can('View cbt-exam')
+                        <li class="nav-item">
+                            <a href="#sidebarCBT" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarCBT">
+                                <i class="ph-graduation-cap"></i> <span data-key="t-ecommerce">CBT Managment</span>
+                            </a>
+                            <div class="collapse menu-dropdown" id="sidebarCBT">
+                                <ul class="nav nav-sm flex-column">
+                                    <li class="nav-item">
+                                        <a href="{{ route('cbt.index') }}" class="nav-link" data-key="t-products">CBT Exercise</a>
+                                    </li>
+                                </ul>
+                            </div>
+                        </li>
+                        @endcan
+
                         {{-- TIMETABLE MANAGEMENT --}}
                         @if(auth()->user()->can('View timetable') || auth()->user()->can('View my timetable'))
                             <li class="nav-item">
