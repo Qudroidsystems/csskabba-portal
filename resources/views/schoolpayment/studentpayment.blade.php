@@ -2,6 +2,7 @@
 @extends('layouts.master')
 
 @section('content')
+<meta name="csrf-token" content="{{ csrf_token() }}">
 <style>
 :root {
     --pay-primary: #1e3a5f;
@@ -226,7 +227,6 @@
                         <i class="ri-time-line text-warning"></i>
                         {{ $schoolsession }}
                     </div>
-                    {{-- Financial summary --}}
                     @php
                         $totalBillOriginal = $student_bill_info->sum('amount');
                         $totalBillAdjusted = $student_bill_info->sum('adjusted_amount');
@@ -380,7 +380,6 @@
                                 $isPartial  = $amountPaid > 0 && $balance > 0;
                                 $hasSavings = $bill->total_savings > 0;
 
-                                // Invoice pending guard
                                 $pendingPayment = $studentpaymentbill->where('school_bill_id', $bill->schoolbillid)->first();
                                 $invoicePending = $pendingPayment && $pendingPayment->delete_status == '1';
 
@@ -561,37 +560,37 @@
                                         <td>
                                             <div class="fw-semibold">{{ $sp->title }}</div>
                                             <div class="text-muted small">{{ $sp->description }}</div>
-                                        </td>
+                                         </td>
                                         <td>₦{{ number_format($sp->billAmount, 0) }}</td>
                                         <td class="text-success fw-semibold">₦{{ number_format($sp->totalAmountPaid ?? 0, 0) }}</td>
                                         <td class="{{ $sp->balance > 0 ? 'text-danger' : 'text-success' }} fw-semibold">
                                             ₦{{ number_format($sp->balance, 0) }}
-                                        </td>
-                                        <td>
+                                         </td>
+                                        <tr>
                                             <span class="badge
                                                 {{ $sp->paymentMethod === 'Bank Transfer' ? 'bg-primary-subtle text-primary' :
                                                    ($sp->paymentMethod === 'School POS'   ? 'bg-success-subtle text-success' :
                                                    'bg-secondary-subtle text-secondary') }}">
                                                 {{ $sp->paymentMethod }}
                                             </span>
-                                        </td>
+                                         </td>
                                         <td>{{ $sp->receivedBy }}</td>
                                         <td>
                                             <span class="text-muted small">
                                                 {{ $sp->receivedDate ? \Carbon\Carbon::parse($sp->receivedDate)->format('d M Y') : 'N/A' }}
                                             </span>
-                                        </td>
+                                         </td>
                                         <td>
                                             <span class="badge {{ $sp->paymentStatus === 'Completed' ? 'bg-success' : 'bg-warning text-dark' }}">
                                                 {{ $sp->paymentStatus }}
                                             </span>
-                                        </td>
+                                         </td>
                                         <td>
                                             <button class="btn btn-sm btn-danger delete-payment"
                                                     data-url="{{ route('schoolpayment.deletestudentpayment', ['recordId'=>$sp->recordId]) }}">
                                                 <i class="ri-delete-bin-line"></i>
                                             </button>
-                                        </td>
+                                         </td>
                                     </tr>
                                     @endforeach
                                 </tbody>
@@ -631,32 +630,32 @@
                                         <td>
                                             <div class="fw-semibold">{{ $ph->title }}</div>
                                             <div class="text-muted small">{{ $ph->description }}</div>
-                                        </td>
+                                         </td>
                                         <td>₦{{ number_format($ph->billAmount, 0) }}</td>
                                         <td class="text-success fw-semibold">₦{{ number_format($ph->totalAmountPaid ?? 0, 0) }}</td>
                                         <td class="{{ $ph->balance > 0 ? 'text-danger' : 'text-success' }} fw-semibold">
                                             ₦{{ number_format($ph->balance, 0) }}
-                                        </td>
+                                         </td>
                                         <td>
                                             <span class="badge bg-secondary-subtle text-secondary">{{ $ph->paymentMethod }}</span>
-                                        </td>
+                                         </td>
                                         <td>{{ $ph->receivedBy }}</td>
                                         <td>
                                             <span class="text-muted small">
                                                 {{ $ph->receivedDate ? \Carbon\Carbon::parse($ph->receivedDate)->format('d M Y') : 'N/A' }}
                                             </span>
-                                        </td>
+                                         </td>
                                         <td>
                                             <span class="badge {{ ($ph->paymentStatus ?? '') === 'Completed' || $ph->completePayment == 1 ? 'bg-success' : 'bg-warning text-dark' }}">
                                                 {{ ($ph->paymentStatus ?? '') === 'Completed' || $ph->completePayment == 1 ? 'Completed' : 'Partial' }}
                                             </span>
-                                        </td>
+                                         </td>
                                         <td>
                                             <a href="{{ route('schoolpayment.invoice', ['studentId'=>$studentId,'schoolclassid'=>$ph->classId,'termid'=>$ph->termId,'sessionid'=>$ph->sessionId]) }}"
                                                class="btn btn-sm btn-outline-primary">
                                                 <i class="ri-file-download-line"></i>
                                             </a>
-                                        </td>
+                                         </td>
                                     </tr>
                                     @endforeach
                                 </tbody>
@@ -821,6 +820,11 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
+    // Helper function to format currency
+    function fmt(n) {
+        return Number(n).toLocaleString('en-NG', {minimumFractionDigits:0});
+    }
+
     // ── Populate payment modal ─────────────────────────────────────────────
     document.querySelectorAll('.make-payment').forEach(btn => {
         btn.addEventListener('click', function () {
@@ -886,19 +890,20 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    function fmt(n) { return Number(n).toLocaleString('en-NG', {minimumFractionDigits:0}); }
-
     // ── Validate payment amount ─────────────────────────────────────────────
     document.getElementById('payment_amount')?.addEventListener('input', function () {
         const val     = parseFloat(this.value.replace(/[^0-9.]/g, '')) || 0;
         const balance = parseFloat(document.getElementById('balance2').value) || 0;
         const err     = document.getElementById('amountError');
         if (val <= 0) {
-            this.classList.add('is-invalid'); err.textContent = 'Enter a valid amount greater than 0.';
+            this.classList.add('is-invalid');
+            err.textContent = 'Enter a valid amount greater than 0.';
         } else if (val > balance) {
-            this.classList.add('is-invalid'); err.textContent = 'Amount cannot exceed outstanding balance of ₦' + fmt(balance) + '.';
+            this.classList.add('is-invalid');
+            err.textContent = 'Amount cannot exceed outstanding balance of ₦' + fmt(balance) + '.';
         } else {
-            this.classList.remove('is-invalid'); err.textContent = '';
+            this.classList.remove('is-invalid');
+            err.textContent = '';
         }
         document.getElementById('payment_amount2').value = val > 0 ? val.toFixed(2) : '';
     });
@@ -907,56 +912,123 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('paymentForm')?.addEventListener('submit', function (e) {
         e.preventDefault();
 
-        const amtInput  = document.getElementById('payment_amount');
-        const val       = parseFloat(amtInput.value.replace(/[^0-9.]/g, '')) || 0;
-        const balance   = parseFloat(document.getElementById('balance2').value) || 0;
-        const method    = document.getElementById('payment_method2').value;
+        const amtInput = document.getElementById('payment_amount');
+        const val = parseFloat(amtInput.value.replace(/[^0-9.]/g, '')) || 0;
+        const balance = parseFloat(document.getElementById('balance2').value) || 0;
+        const method = document.getElementById('payment_method2').value;
 
-        if (val <= 0 || val > balance) {
-            amtInput.classList.add('is-invalid');
-            document.getElementById('amountError').textContent = val <= 0
-                ? 'Enter a valid amount.' : 'Amount exceeds balance.';
-            return;
-        }
-        if (!method) {
-            document.getElementById('payment_method2').classList.add('is-invalid');
-            return;
-        }
-
-        document.getElementById('payment_amount2').value = val.toFixed(2);
-        const btn = document.getElementById('paySubmitBtn');
-        btn.disabled = true;
-        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Processing...';
+        // Clear previous errors
+        document.getElementById('amountError').textContent = '';
+        amtInput.classList.remove('is-invalid');
+        document.getElementById('payment_method2').classList.remove('is-invalid');
         document.getElementById('formErrors').classList.add('d-none');
 
+        // Validate amount
+        if (val <= 0) {
+            amtInput.classList.add('is-invalid');
+            document.getElementById('amountError').textContent = 'Enter a valid amount greater than 0.';
+            return;
+        }
+
+        if (val > balance) {
+            amtInput.classList.add('is-invalid');
+            document.getElementById('amountError').textContent = 'Amount cannot exceed outstanding balance of ₦' + fmt(balance) + '.';
+            return;
+        }
+
+        // Validate payment method
+        if (!method) {
+            document.getElementById('payment_method2').classList.add('is-invalid');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Missing Information',
+                text: 'Please select a payment method.',
+                confirmButtonText: 'OK'
+            });
+            return;
+        }
+
+        // Set the payment amount value
+        document.getElementById('payment_amount2').value = val.toFixed(2);
+
+        const btn = document.getElementById('paySubmitBtn');
+        const originalBtnText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Processing...';
+
         const formData = new FormData(this);
+
         fetch(this.action, {
             method: 'POST',
-            body:   formData,
-            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
-        })
-        .then(r => r.json().then(data => ({status: r.status, data})))
-        .then(({status, data}) => {
-            bootstrap.Modal.getInstance(document.getElementById('paymentModal'))?.hide();
-            if (status === 200 && data.success) {
-                Swal.fire({ icon:'success', title:'Saved!', text: data.message, timer:2000, showConfirmButton:false })
-                    .then(() => { if (data.redirect_url) window.location.href = data.redirect_url; else location.reload(); });
-            } else {
-                let html = '<ul class="mb-0 ps-3 text-start">';
-                if (data.errors) { Object.values(data.errors).forEach(v => { html += `<li>${Array.isArray(v)?v[0]:v}</li>`; }); }
-                else { html += `<li>${data.message || 'Something went wrong.'}</li>`; }
-                html += '</ul>';
-                document.getElementById('formErrors').classList.remove('d-none');
-                document.getElementById('formErrors').innerHTML = html;
+            body: formData,
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
             }
         })
-        .catch(() => {
-            document.getElementById('formErrors').classList.remove('d-none');
-            document.getElementById('formErrors').innerHTML = 'Unexpected error. Please try again.';
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw { status: response.status, data: data };
+                }).catch(() => {
+                    throw { status: response.status, message: 'Server error occurred' };
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('paymentModal'));
+            if (modal) modal.hide();
+
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: data.message,
+                    timer: 2000,
+                    showConfirmButton: false
+                }).then(() => {
+                    if (data.redirect_url) {
+                        window.location.href = data.redirect_url;
+                    } else {
+                        location.reload();
+                    }
+                });
+            } else {
+                let errorMessage = data.message || 'Something went wrong.';
+                if (data.errors) {
+                    errorMessage = Object.values(data.errors).flat().join('<br>');
+                }
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    html: errorMessage,
+                    confirmButtonText: 'OK'
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Payment Error:', error);
+
+            let errorMessage = 'An unexpected error occurred. Please try again.';
+
+            if (error.data && error.data.message) {
+                errorMessage = error.data.message;
+            } else if (error.message) {
+                errorMessage = error.message;
+            }
+
+            Swal.fire({
+                icon: 'error',
+                title: 'Payment Failed',
+                html: errorMessage,
+                confirmButtonText: 'OK'
+            });
         })
         .finally(() => {
             btn.disabled = false;
-            btn.innerHTML = '<i class="ri-wallet-line me-1"></i>Record Payment';
+            btn.innerHTML = originalBtnText;
         });
     });
 
@@ -970,28 +1042,41 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     document.getElementById('confirmDeleteBtn')?.addEventListener('click', function () {
-        bootstrap.Modal.getInstance(document.getElementById('confirmDeleteModal'))?.hide();
+        const modal = bootstrap.Modal.getInstance(document.getElementById('confirmDeleteModal'));
+        if (modal) modal.hide();
+
         this.disabled = true;
+        this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Deleting...';
 
         fetch(deleteUrl, {
             method: 'POST',
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json', 'Content-Type': 'application/json'
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({})
         })
-        .then(r => r.json())
+        .then(response => response.json())
         .then(data => {
             if (data.success) {
-                Swal.fire({ icon:'success', title:'Deleted!', text:data.message, timer:1500, showConfirmButton:false })
-                    .then(() => location.reload());
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Deleted!',
+                    text: data.message,
+                    timer: 1500,
+                    showConfirmButton: false
+                }).then(() => location.reload());
             } else {
                 Swal.fire('Error', data.message, 'error');
             }
         })
         .catch(() => Swal.fire('Error', 'Failed to delete payment.', 'error'))
-        .finally(() => { this.disabled = false; deleteUrl = ''; });
+        .finally(() => {
+            this.disabled = false;
+            this.innerHTML = '<i class="ri-delete-bin-line me-1"></i>Delete';
+            deleteUrl = '';
+        });
     });
 
 });
