@@ -446,9 +446,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const sessionid = urlParams.get('sessionid') || '{{ $sessionid ?? "" }}';
 
     // ── State ──────────────────────────────────────────────────────────
-    // KEY FIX: store the full bill objects by id, not just IDs
-    // This way the bulk modal always has up-to-date bill data
-    let selectedBillsMap = {};   // { billId: billObject }
+    // KEY: store full bill objects by billId (as string key for consistency)
+    let selectedBillsMap = {};   // { "billId": billObject }
     let billsDataGlobal  = [];
     let currentDeleteUrl = '';
 
@@ -468,10 +467,11 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('loadingOverlay').classList.toggle('active', show);
     }
 
-    function getStorageAvatarUrl(picture) {
+    // ── Build storage URL for student avatar ────────────────────────
+    function getAvatarUrl(picture) {
         if (!picture) return null;
-        // Try both with and without leading slash
-        return '/storage/images/studentavatar/' + picture;
+        // Remove any leading slash and return storage URL
+        return '/storage/images/studentavatar/' + picture.replace(/^\/+/, '');
     }
 
     // ── Load data ──────────────────────────────────────────────────────
@@ -536,23 +536,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
         billsDataGlobal = bills;
 
-        // Rebuild selectedBillsMap to keep selections that are still valid
+        // Rebuild selectedBillsMap — keep previously selected unpaid bills
         const newMap = {};
         Object.keys(selectedBillsMap).forEach(id => {
-            const refreshed = bills.find(b => b.id == id);
-            if (refreshed && !refreshed.is_paid) newMap[id] = refreshed;
+            const refreshed = bills.find(b => String(b.id) === String(id));
+            if (refreshed && !refreshed.is_paid) newMap[String(id)] = refreshed;
         });
         selectedBillsMap = newMap;
 
-        // ── Avatar (with proper Storage URL) ──────────────────────────
+        // ── Avatar ─────────────────────────────────────────────────────
         const initials = (student.name || '??').split(' ').map(n => n[0]).join('').toUpperCase().substring(0,2);
         let avatarHtml;
         if (student.avatar) {
-            const avatarUrl = getStorageAvatarUrl(student.avatar);
+            const avatarUrl = getAvatarUrl(student.avatar);
             avatarHtml = `
-                <img src="${avatarUrl}" alt="${escapeHtml(student.name)}"
+                <img src="${avatarUrl}"
+                     alt="${escapeHtml(student.name)}"
                      class="student-avatar-lg"
-                     onerror="this.style.display='none';this.nextElementSibling.style.display='inline-flex';">
+                     onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='inline-flex';">
                 <div class="avatar-placeholder-lg" style="display:none">${initials}</div>`;
         } else {
             avatarHtml = `<div class="avatar-placeholder-lg">${initials}</div>`;
@@ -560,14 +561,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // ── Bill cards ─────────────────────────────────────────────────
         const billsHtml = bills.map(bill => {
-            const isSelected = !!selectedBillsMap[bill.id];
+            const billKey    = String(bill.id);
+            const isSelected = !!selectedBillsMap[billKey];
+
             const cardClass = bill.is_paid ? 'paid'
                 : bill.is_partial ? 'partial'
                 : bill.total_savings > 0 ? 'savings'
                 : 'unpaid';
-
-            // Store bill data as JSON in a data attribute — encode safely
-            const billJson = encodeURIComponent(JSON.stringify(bill));
 
             return `
             <div class="col-xl-4 col-lg-6">
@@ -623,7 +623,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                    <i class="ri-lock-line me-1"></i>Invoice Pending
                                </button>`
                             : `<button class="btn btn-primary btn-sm w-100 make-payment-btn"
-                                       data-bill="${encodeURIComponent(JSON.stringify(bill))}">
+                                       data-bill-id="${bill.id}">
                                    <i class="ri-wallet-line me-1"></i>Make Payment
                                </button>`)
                         : `<button class="btn btn-success btn-sm w-100" disabled>
@@ -705,10 +705,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const totalOutstanding = totals.outstanding;
         const selectedCount    = Object.keys(selectedBillsMap).length;
-        const hasBulkableBlls  = bills.some(b => !b.is_paid && !b.has_pending_invoice);
+        const hasBulkableBills = bills.some(b => !b.is_paid && !b.has_pending_invoice);
 
         const contentHtml = `
-            {{-- Student card --}}
             <div class="student-card">
                 <div class="d-flex align-items-start gap-4 flex-wrap">
                     <div class="flex-shrink-0">${avatarHtml}</div>
@@ -750,7 +749,7 @@ document.addEventListener('DOMContentLoaded', function () {
                            class="btn btn-outline-primary btn-sm">
                             <i class="ri-file-list-line me-1"></i>Statement
                         </a>
-                        <button class="btn btn-success btn-sm" id="bulkPaymentBtn" ${!hasBulkableBlls?'disabled':''}>
+                        <button class="btn btn-success btn-sm" id="bulkPaymentBtn" ${!hasBulkableBills?'disabled':''}>
                             <i class="ri-wallet-3-line me-1"></i>Bulk Payment
                             <span class="badge bg-white text-success ms-1" id="selectedCount">${selectedCount}</span>
                         </button>
@@ -834,7 +833,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Attach event listeners after DOM update
         attachBillSelectionEvents(bills);
-        attachPaymentButtons();
+        attachPaymentButtons(bills);
         attachDeleteHandlers();
 
         const bulkBtn = document.getElementById('bulkPaymentBtn');
@@ -842,11 +841,13 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ── Bill checkbox selection ────────────────────────────────────────
+    // FIX: Use string keys for map consistency, compare with String()
     function attachBillSelectionEvents(bills) {
         document.querySelectorAll('.bill-select-checkbox').forEach(cb => {
             cb.addEventListener('change', function () {
-                const billId = parseInt(this.dataset.billId);
-                const bill   = bills.find(b => b.id === billId);
+                const billId  = String(this.dataset.billId);
+                // FIX: Compare using String() on both sides to avoid type mismatch
+                const bill    = bills.find(b => String(b.id) === billId);
 
                 if (this.checked && bill) {
                     selectedBillsMap[billId] = bill;
@@ -866,15 +867,16 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // ── Individual payment modal ───────────────────────────────────────
-    function attachPaymentButtons() {
+    // FIX: Look up bill from billsDataGlobal using data-bill-id attribute
+    function attachPaymentButtons(bills) {
         document.querySelectorAll('.make-payment-btn').forEach(btn => {
             btn.addEventListener('click', function () {
-                try {
-                    const bill = JSON.parse(decodeURIComponent(this.dataset.bill));
+                const billId = String(this.dataset.billId);
+                const bill   = bills.find(b => String(b.id) === billId);
+                if (bill) {
                     openPaymentModal(bill);
-                } catch (e) {
-                    console.error('Parse error:', e);
-                    Swal.fire({ icon:'error', title:'Error', text:'Could not open payment modal.' });
+                } else {
+                    Swal.fire({ icon:'error', title:'Error', text:'Could not find bill data. Please refresh.' });
                 }
             });
         });
@@ -960,11 +962,16 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('bulk_payment_method').value         = '';
         document.getElementById('paymentDistribution').style.display = 'none';
 
-        new bootstrap.Modal(document.getElementById('bulkPaymentModal')).show();
+        const bulkModal = new bootstrap.Modal(document.getElementById('bulkPaymentModal'));
+        bulkModal.show();
 
         // Live distribution preview
         const amountInput = document.getElementById('bulk_payment_amount');
-        amountInput.oninput = function () {
+        // Remove old listener to avoid duplicates
+        const newAmountInput = amountInput.cloneNode(true);
+        amountInput.parentNode.replaceChild(newAmountInput, amountInput);
+
+        newAmountInput.addEventListener('input', function () {
             let remaining = parseFloat(this.value.replace(/[^0-9.]/g, '')) || 0;
             let dist = [];
             for (const bill of selectedBills) {
@@ -989,14 +996,19 @@ document.addEventListener('DOMContentLoaded', function () {
             } else {
                 distDiv.style.display = 'none';
             }
-        };
+        });
 
-        document.getElementById('submitBulkPayment').onclick = () => submitBulkPayment(selectedBills);
+        // FIX: Clone submit button to remove stale listeners
+        const oldSubmitBtn = document.getElementById('submitBulkPayment');
+        const newSubmitBtn = oldSubmitBtn.cloneNode(true);
+        oldSubmitBtn.parentNode.replaceChild(newSubmitBtn, oldSubmitBtn);
+        newSubmitBtn.addEventListener('click', () => submitBulkPayment(selectedBills));
     }
 
     // ── Submit bulk payment ────────────────────────────────────────────
     function submitBulkPayment(selectedBills) {
-        const paymentAmount = parseFloat(document.getElementById('bulk_payment_amount').value.replace(/[^0-9.]/g, '')) || 0;
+        const paymentAmountInput = document.getElementById('bulk_payment_amount');
+        const paymentAmount = parseFloat((paymentAmountInput ? paymentAmountInput.value : '').replace(/[^0-9.]/g, '')) || 0;
         const paymentMethod = document.getElementById('bulk_payment_method').value;
         const totalPayable  = selectedBills.reduce((s, b) => s + parseFloat(b.balance || 0), 0);
 
@@ -1009,7 +1021,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         showLoading(true);
 
-        // Use class_id from first bill (they all belong to same class in context)
         const classId = selectedBills[0]?.class_id || 0;
 
         fetch('{{ route("schoolpayment.bulk-store") }}', {
@@ -1041,7 +1052,8 @@ document.addEventListener('DOMContentLoaded', function () {
             if (result.success) {
                 Swal.fire({ icon:'success', title:'Success!', text:result.message, timer:2000, showConfirmButton:false })
                     .then(() => {
-                        bootstrap.Modal.getInstance(document.getElementById('bulkPaymentModal'))?.hide();
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('bulkPaymentModal'));
+                        if (modal) modal.hide();
                         selectedBillsMap = {}; // clear selections
                         loadPaymentData();
                     });
@@ -1075,7 +1087,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const method  = document.getElementById('payment_method2').value;
 
         if (amount <= 0)       return Swal.fire({ icon:'warning', title:'Invalid Amount', text:'Enter a valid amount.', confirmButtonColor:'#2563eb' });
-        if (amount > balance)  return Swal.fire({ icon:'warning', title:'Exceeds Balance', text:`Balance is ₦${fmt(balance)}`, confirmButtonColor:'#2563eb' });
+        if (amount > balance + 0.01)  return Swal.fire({ icon:'warning', title:'Exceeds Balance', text:`Balance is ₦${fmt(balance)}`, confirmButtonColor:'#2563eb' });
         if (!method)           return Swal.fire({ icon:'warning', title:'No Method', text:'Select a payment method.', confirmButtonColor:'#2563eb' });
 
         document.getElementById('payment_amount2').value = amount.toFixed(2);
@@ -1095,7 +1107,8 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(r => r.json())
         .then(data => {
             if (data.success) {
-                bootstrap.Modal.getInstance(document.getElementById('paymentModal'))?.hide();
+                const modal = bootstrap.Modal.getInstance(document.getElementById('paymentModal'));
+                if (modal) modal.hide();
                 Swal.fire({ icon:'success', title:'Recorded!', text:data.message, timer:2000, showConfirmButton:false })
                     .then(() => loadPaymentData());
             } else {
@@ -1111,7 +1124,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // ── Delete confirm ─────────────────────────────────────────────────
     document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
-        bootstrap.Modal.getInstance(document.getElementById('confirmDeleteModal'))?.hide();
+        const modal = bootstrap.Modal.getInstance(document.getElementById('confirmDeleteModal'));
+        if (modal) modal.hide();
 
         const self = this;
         self.disabled = true;
