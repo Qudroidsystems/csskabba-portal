@@ -154,7 +154,6 @@ class SchoolPaymentController extends Controller
 
     private function fetchStudentData(int $studentId, int $termid, int $sessionid): ?object
     {
-        // First try: match by selected term + session
         $student = Student::where('studentRegistration.id', $studentId)
             ->leftJoin('studentclass', function ($join) use ($termid, $sessionid) {
                 $join->on('studentclass.studentId', '=', 'studentRegistration.id')
@@ -185,7 +184,6 @@ class SchoolPaymentController extends Controller
             ])
             ->first();
 
-        // If class not found for that term/session, fall back to Current session
         if (!$student || !$student->schoolclassId) {
             Log::info('SchoolPayment: falling back to Current session for student', [
                 'studentId' => $studentId,
@@ -271,13 +269,31 @@ class SchoolPaymentController extends Controller
         return view('schoolpayment.termSession', compact('pagetitle', 'schoolterms', 'schoolsessions', 'id'));
     }
 
-    // ── AJAX: Get payment details without full page reload ─────────────────
+    // ── Payment detail page ───────────────────────────────────────────────
+
+    public function termsessionpayments(Request $request)
+    {
+        $studentId = (int) $request->get('studentId');
+        $termid    = (int) $request->get('termid');
+        $sessionid = (int) $request->get('sessionid');
+
+        if (!$studentId || !$termid || !$sessionid) {
+            return redirect()->route('schoolpayment.index')
+                ->with('error', 'Invalid student, term, or session selected.');
+        }
+
+        $pagetitle = 'Student Payment Details';
+
+        return view('schoolpayment.studentpayment', compact('pagetitle', 'studentId', 'termid', 'sessionid'));
+    }
+
+    // ── AJAX: Get payment details ─────────────────────────────────────────
 
     public function getPaymentDetailsAjax(Request $request)
     {
         try {
             $studentId = (int) $request->studentId;
-            $termid = (int) $request->termid;
+            $termid    = (int) $request->termid;
             $sessionid = (int) $request->sessionid;
 
             if (!$studentId || !$termid || !$sessionid) {
@@ -292,7 +308,6 @@ class SchoolPaymentController extends Controller
 
             $schoolclassId = $studentdata->schoolclassId;
 
-            // Get bills with adjustments
             $rawBills = DB::table('school_bill_class_term_session')
                 ->where('school_bill_class_term_session.class_id', $schoolclassId)
                 ->where('school_bill_class_term_session.termid_id', $termid)
@@ -317,38 +332,35 @@ class SchoolPaymentController extends Controller
 
             $student_bill_info = $rawBills->map(function ($bill) use ($studentId) {
                 $adj = $this->buildBillAdjustment($studentId, $bill->schoolbillid, (float) $bill->amount);
-                $bill->original_amount = $adj['original_amount'];
+                $bill->original_amount       = $adj['original_amount'];
                 $bill->scholarship_deduction = $adj['scholarship_deduction'];
-                $bill->scholarship_label = $adj['scholarship_label'];
-                $bill->discount_deduction = $adj['discount_deduction'];
-                $bill->discount_labels = $adj['discount_labels'];
-                $bill->total_savings = $adj['total_savings'];
-                $bill->adjusted_amount = $adj['adjusted_amount'];
+                $bill->scholarship_label     = $adj['scholarship_label'];
+                $bill->discount_deduction    = $adj['discount_deduction'];
+                $bill->discount_labels       = $adj['discount_labels'];
+                $bill->total_savings         = $adj['total_savings'];
+                $bill->adjusted_amount       = $adj['adjusted_amount'];
                 return $bill;
             });
 
-            // Get payment books
             $studentpaymentbillbook = StudentBillPaymentBook::where('student_id', $studentId)
                 ->where('term_id', $termid)
                 ->where('session_id', $sessionid)
                 ->get();
 
-            // Prepare bill data with payment info
-            $billsData = [];
+            $billsData     = [];
             $totalAdjusted = 0;
-            $totalPaid = 0;
+            $totalPaid     = 0;
 
             foreach ($student_bill_info as $bill) {
-                $bookEntry = $studentpaymentbillbook->where('school_bill_id', $bill->schoolbillid)->first();
-                $amountPaid = $bookEntry ? (float) $bookEntry->amount_paid : 0;
+                $bookEntry   = $studentpaymentbillbook->where('school_bill_id', $bill->schoolbillid)->first();
+                $amountPaid  = $bookEntry ? (float) $bookEntry->amount_paid : 0;
                 $adjustedAmt = (float) $bill->adjusted_amount;
-                $balance = max(0, $adjustedAmt - $amountPaid);
-                $progress = $adjustedAmt > 0 ? min(100, ($amountPaid / $adjustedAmt) * 100) : 0;
+                $balance     = max(0, $adjustedAmt - $amountPaid);
+                $progress    = $adjustedAmt > 0 ? min(100, ($amountPaid / $adjustedAmt) * 100) : 0;
 
                 $totalAdjusted += $adjustedAmt;
-                $totalPaid += $amountPaid;
+                $totalPaid     += $amountPaid;
 
-                // Check if there's a pending invoice
                 $pendingPayment = StudentBillPayment::where('student_id', $studentId)
                     ->where('school_bill_id', $bill->schoolbillid)
                     ->where('termid_id', $termid)
@@ -357,26 +369,29 @@ class SchoolPaymentController extends Controller
                     ->first();
 
                 $billsData[] = [
-                    'id' => $bill->schoolbillid,
-                    'title' => $bill->title,
-                    'description' => $bill->description,
-                    'original_amount' => $bill->original_amount,
-                    'adjusted_amount' => $adjustedAmt,
-                    'amount_paid' => $amountPaid,
-                    'balance' => $balance,
-                    'progress' => $progress,
+                    'id'                    => $bill->schoolbillid,
+                    'class_id'              => $schoolclassId,        // ← FIXED: was missing
+                    'title'                 => $bill->title,
+                    'description'           => $bill->description,
+                    'original_amount'       => $bill->original_amount,
+                    'adjusted_amount'       => $adjustedAmt,
+                    'amount_paid'           => $amountPaid,
+                    'balance'               => $balance,
+                    'progress'              => $progress,
                     'scholarship_deduction' => $bill->scholarship_deduction,
-                    'discount_deduction' => $bill->discount_deduction,
-                    'total_savings' => $bill->total_savings,
-                    'scholarship_label' => $bill->scholarship_label,
-                    'discount_labels' => $bill->discount_labels,
-                    'has_pending_invoice' => !is_null($pendingPayment),
-                    'is_paid' => $balance <= 0 && $amountPaid > 0,
-                    'is_partial' => $amountPaid > 0 && $balance > 0,
+                    'discount_deduction'    => $bill->discount_deduction,
+                    'total_savings'         => $bill->total_savings,
+                    'scholarship_label'     => $bill->scholarship_label,
+                    'discount_labels'       => is_array($bill->discount_labels)
+                                                ? implode(', ', $bill->discount_labels)
+                                                : ($bill->discount_labels ?? ''),
+                    'has_pending_invoice'   => !is_null($pendingPayment),
+                    'is_paid'               => $balance <= 0 && $amountPaid > 0,
+                    'is_partial'            => $amountPaid > 0 && $balance > 0,
                 ];
             }
 
-            // Get payment records (pending)
+            // Payment records (pending / not yet invoiced)
             $paymentRecords = StudentBillPayment::where('student_bill_payment.student_id', $studentId)
                 ->where('student_bill_payment.termid_id', $termid)
                 ->where('student_bill_payment.session_id', $sessionid)
@@ -406,7 +421,7 @@ class SchoolPaymentController extends Controller
                 ])
                 ->get();
 
-            // Get payment history (completed)
+            // Payment history (invoiced / completed)
             $paymentHistory = StudentBillPayment::where('student_bill_payment.student_id', $studentId)
                 ->where('student_bill_payment.termid_id', $termid)
                 ->where('student_bill_payment.session_id', $sessionid)
@@ -435,7 +450,7 @@ class SchoolPaymentController extends Controller
                 ->orderBy('student_bill_payment_record.created_at', 'desc')
                 ->get();
 
-            // Get scholarship and discount info
+            // Scholarship info
             $scholarshipInfo = ScholarshipAssignment::where('student_id', $studentId)
                 ->where('status', 'active')
                 ->where('effective_from', '<=', now())
@@ -445,6 +460,7 @@ class SchoolPaymentController extends Controller
                 ->with('scholarship')
                 ->first();
 
+            // Discount info
             $discountAssignments = DiscountAssignment::where('student_id', $studentId)
                 ->where('status', 'active')
                 ->where('effective_from', '<=', now())
@@ -455,85 +471,65 @@ class SchoolPaymentController extends Controller
                 ->get();
 
             $totalOutstanding = max(0, $totalAdjusted - $totalPaid);
-            $totalSavings = $student_bill_info->sum('total_savings');
-            $totalOriginal = $student_bill_info->sum('original_amount');
-
-            // Get avatar URL
-            $avatarUrl = null;
-            if ($studentdata->avatar) {
-                $avatarUrl = $studentdata->avatar;
-            }
+            $totalSavings     = $student_bill_info->sum('total_savings');
+            $totalOriginal    = $student_bill_info->sum('original_amount');
 
             return response()->json([
                 'success' => true,
-                'data' => [
+                'data'    => [
                     'student' => [
-                        'id' => $studentdata->id,
-                        'name' => $studentdata->firstname . ' ' . $studentdata->lastname,
-                        'admissionNo' => $studentdata->admissionNo,
-                        'avatar' => $avatarUrl,
-                        'schoolclass' => $studentdata->schoolclass,
-                        'arm' => $studentdata->arm,
+                        'id'             => $studentdata->id,
+                        'name'           => $studentdata->firstname . ' ' . $studentdata->lastname,
+                        'admissionNo'    => $studentdata->admissionNo,
+                        'avatar'         => $studentdata->avatar,
+                        'schoolclass'    => $studentdata->schoolclass,
+                        'schoolclassId'  => $schoolclassId,
+                        'arm'            => $studentdata->arm,
                         'student_status' => $studentdata->student_status,
-                        'statusId' => $studentdata->statusId,
+                        'statusId'       => $studentdata->statusId,
                     ],
-                    'bills' => $billsData,
+                    'bills'           => $billsData,
                     'payment_records' => $paymentRecords,
                     'payment_history' => $paymentHistory,
-                    'scholarship' => $scholarshipInfo ? [
-                        'title' => $scholarshipInfo->scholarship->title ?? 'Scholarship',
-                        'value' => $scholarshipInfo->value,
-                        'value_type' => $scholarshipInfo->value_type,
+                    'scholarship'     => $scholarshipInfo ? [
+                        'title'        => $scholarshipInfo->scholarship->title ?? 'Scholarship',
+                        'value'        => $scholarshipInfo->value,
+                        'value_type'   => $scholarshipInfo->value_type,
                         'effective_to' => $scholarshipInfo->effective_to,
                     ] : null,
-                    'discounts' => $discountAssignments->map(function($da) {
+                    'discounts' => $discountAssignments->map(function ($da) {
                         return $da->discount ? [
-                            'title' => $da->discount->title,
-                            'value' => $da->value,
+                            'title'      => $da->discount->title,
+                            'value'      => $da->value,
                             'value_type' => $da->value_type,
                         ] : null;
-                    })->filter(),
+                    })->filter()->values(),
                     'totals' => [
-                        'original' => $totalOriginal,
-                        'adjusted' => $totalAdjusted,
-                        'paid' => $totalPaid,
+                        'original'    => $totalOriginal,
+                        'adjusted'    => $totalAdjusted,
+                        'paid'        => $totalPaid,
                         'outstanding' => $totalOutstanding,
-                        'savings' => $totalSavings,
+                        'savings'     => $totalSavings,
                     ],
-                    'term' => optional(Schoolterm::find($termid))->term,
+                    'term'    => optional(Schoolterm::find($termid))->term,
                     'session' => optional(Schoolsession::find($sessionid))->session,
-                ]
+                ],
             ]);
 
         } catch (\Exception $e) {
-            Log::error('getPaymentDetailsAjax error: ' . $e->getMessage());
+            Log::error('getPaymentDetailsAjax error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+            ]);
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
 
-    // ── Payment detail page (now redirects to AJAX version) ───────────────
-
-    public function termsessionpayments(Request $request)
-    {
-        $studentId = (int) $request->studentId;
-        $termid    = (int) $request->termid;
-        $sessionid = (int) $request->sessionid;
-
-        if (!$studentId || !$termid || !$sessionid) {
-            return redirect()->route('schoolpayment.index')
-                ->with('error', 'Invalid student, term, or session selected.');
-        }
-
-        // Just return the view - data will be loaded via AJAX
-        return view('schoolpayment.studentpayment', compact('studentId', 'termid', 'sessionid'));
-    }
-
-    // ── Store individual payment ─────────────────────────────────────────
+    // ── Store individual payment ──────────────────────────────────────────
 
     public function store(Request $request)
     {
         try {
-            $validated = $request->validate([
+            $request->validate([
                 'student_id'            => 'required|integer|exists:studentRegistration,id',
                 'class_id'              => 'required|integer|exists:schoolclass,id',
                 'term_id'               => 'required|integer|exists:schoolterm,id',
@@ -551,23 +547,19 @@ class SchoolPaymentController extends Controller
             ]);
 
             if (!Auth::check()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No authenticated user found. Please login again.',
-                ], 401);
+                return response()->json(['success' => false, 'message' => 'Not authenticated. Please login again.'], 401);
             }
 
             DB::beginTransaction();
 
             $studentPayment = StudentBillPayment::where([
-                'student_id'    => $request->student_id,
-                'school_bill_id'=> $request->school_bill_id,
-                'class_id'      => $request->class_id,
-                'termid_id'     => $request->term_id,
-                'session_id'    => $request->session_id,
+                'student_id'     => $request->student_id,
+                'school_bill_id' => $request->school_bill_id,
+                'class_id'       => $request->class_id,
+                'termid_id'      => $request->term_id,
+                'session_id'     => $request->session_id,
             ])->first();
 
-            // Block if pending invoice exists
             if ($studentPayment && $studentPayment->delete_status == '1') {
                 DB::rollBack();
                 return response()->json([
@@ -576,23 +568,18 @@ class SchoolPaymentController extends Controller
                 ], 422);
             }
 
-            // Block if already fully paid
             if ($studentPayment) {
-                $records    = StudentBillPaymentRecord::where('student_bill_payment_id', $studentPayment->id)->get();
-                $totalPaid  = $records->sum('amount_paid');
-                $billAmount = $request->adjusted_amount ?: $request->actual_amount;
-                if ($totalPaid >= $billAmount) {
+                $records   = StudentBillPaymentRecord::where('student_bill_payment_id', $studentPayment->id)->get();
+                $totalPaid = $records->sum('amount_paid');
+                $billAmt   = $request->adjusted_amount ?: $request->actual_amount;
+                if ($totalPaid >= $billAmt) {
                     DB::rollBack();
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'This bill is already fully paid.',
-                    ], 422);
+                    return response()->json(['success' => false, 'message' => 'This bill is already fully paid.'], 422);
                 }
             }
 
             $bill = SchoolBillModel::findOrFail($request->school_bill_id);
 
-            // Recalculate server-side to prevent tampering
             $adj                 = $this->buildBillAdjustment($request->student_id, $request->school_bill_id, (float) $bill->bill_amount);
             $finalAdjustedAmount = $adj['adjusted_amount'] > 0
                 ? $adj['adjusted_amount']
@@ -603,10 +590,7 @@ class SchoolPaymentController extends Controller
 
             if ($balance < 0) {
                 DB::rollBack();
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Payment amount exceeds the outstanding balance.',
-                ], 422);
+                return response()->json(['success' => false, 'message' => 'Payment amount exceeds the outstanding balance.'], 422);
             }
 
             $completePayment = $balance <= 0 ? 1 : 0;
@@ -635,11 +619,11 @@ class SchoolPaymentController extends Controller
                 ]);
 
                 $paymentBook = StudentBillPaymentBook::where([
-                    'student_id'    => $request->student_id,
-                    'school_bill_id'=> $request->school_bill_id,
-                    'class_id'      => $request->class_id,
-                    'term_id'       => $request->term_id,
-                    'session_id'    => $request->session_id,
+                    'student_id'     => $request->student_id,
+                    'school_bill_id' => $request->school_bill_id,
+                    'class_id'       => $request->class_id,
+                    'term_id'        => $request->term_id,
+                    'session_id'     => $request->session_id,
                 ])->first();
 
                 if ($paymentBook) {
@@ -671,15 +655,15 @@ class SchoolPaymentController extends Controller
                 }
             } else {
                 $studentPayment = StudentBillPayment::create([
-                    'student_id'    => $request->student_id,
-                    'school_bill_id'=> $request->school_bill_id,
-                    'class_id'      => $request->class_id,
-                    'termid_id'     => $request->term_id,
-                    'session_id'    => $request->session_id,
-                    'payment_method'=> $request->payment_method2,
-                    'status'        => $status,
-                    'generated_by'  => $generatedBy,
-                    'delete_status' => '1',
+                    'student_id'     => $request->student_id,
+                    'school_bill_id' => $request->school_bill_id,
+                    'class_id'       => $request->class_id,
+                    'termid_id'      => $request->term_id,
+                    'session_id'     => $request->session_id,
+                    'payment_method' => $request->payment_method2,
+                    'status'         => $status,
+                    'generated_by'   => $generatedBy,
+                    'delete_status'  => '1',
                 ]);
 
                 StudentBillPaymentRecord::create([
@@ -713,193 +697,186 @@ class SchoolPaymentController extends Controller
             }
 
             DB::commit();
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Payment recorded successfully.',
-            ], 200);
+            return response()->json(['success' => true, 'message' => 'Payment recorded successfully.']);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors'  => $e->errors(),
-            ], 422);
+            return response()->json(['success' => false, 'message' => 'Validation failed', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Payment store error: ', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to record payment: ' . $e->getMessage(),
-            ], 500);
+            Log::error('Payment store error: ', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return response()->json(['success' => false, 'message' => 'Failed to record payment: ' . $e->getMessage()], 500);
         }
     }
 
-    // ── Bulk store payment (pay multiple bills at once) ───────────────────
+    // ── Bulk store payment ────────────────────────────────────────────────
 
     public function bulkStore(Request $request)
     {
         try {
-            $validated = $request->validate([
-                'student_id' => 'required|integer|exists:studentRegistration,id',
-                'class_id' => 'required|integer|exists:schoolclass,id',
-                'term_id' => 'required|integer|exists:schoolterm,id',
-                'session_id' => 'required|integer|exists:schoolsession,id',
-                'payment_amount' => 'required|numeric|min:0.01',
-                'payment_method' => 'required|string|in:Bank Deposit,School POS,Bank Transfer,Cheque',
-                'bill_payments' => 'required|array',
-                'bill_payments.*.school_bill_id' => 'required|integer|exists:school_bill,id',
-                'bill_payments.*.adjusted_amount' => 'required|numeric|min:0',
-                'bill_payments.*.balance' => 'required|numeric|min:0',
+            $request->validate([
+                'student_id'                          => 'required|integer|exists:studentRegistration,id',
+                'class_id'                            => 'required|integer|exists:schoolclass,id',
+                'term_id'                             => 'required|integer|exists:schoolterm,id',
+                'session_id'                          => 'required|integer|exists:schoolsession,id',
+                'payment_amount'                      => 'required|numeric|min:0.01',
+                'payment_method'                      => 'required|string|in:Bank Deposit,School POS,Bank Transfer,Cheque',
+                'bill_payments'                       => 'required|array|min:1',
+                'bill_payments.*.school_bill_id'      => 'required|integer|exists:school_bill,id',
+                'bill_payments.*.adjusted_amount'     => 'required|numeric|min:0',
+                'bill_payments.*.balance'             => 'required|numeric|min:0',
                 'bill_payments.*.scholarship_deduction' => 'nullable|numeric|min:0',
-                'bill_payments.*.discount_deduction' => 'nullable|numeric|min:0',
+                'bill_payments.*.discount_deduction'  => 'nullable|numeric|min:0',
             ]);
 
             if (!Auth::check()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No authenticated user found. Please login again.',
-                ], 401);
+                return response()->json(['success' => false, 'message' => 'Not authenticated. Please login again.'], 401);
             }
 
             DB::beginTransaction();
 
-            $generatedBy = Auth::id();
+            $generatedBy        = Auth::id();
             $totalPaymentAmount = (float) $request->payment_amount;
-            $remainingAmount = $totalPaymentAmount;
-            $paymentsProcessed = [];
+            $remainingAmount    = $totalPaymentAmount;
+            $paymentsProcessed  = [];
 
-            // Process each bill payment in order
             foreach ($request->bill_payments as $billPayment) {
                 if ($remainingAmount <= 0) break;
 
-                $schoolBillId = $billPayment['school_bill_id'];
-                $adjustedAmount = (float) $billPayment['adjusted_amount'];
-                $currentBalance = (float) $billPayment['balance'];
+                $schoolBillId         = $billPayment['school_bill_id'];
+                $adjustedAmount       = (float) $billPayment['adjusted_amount'];
+                $currentBalance       = (float) $billPayment['balance'];
                 $scholarshipDeduction = (float) ($billPayment['scholarship_deduction'] ?? 0);
-                $discountDeduction = (float) ($billPayment['discount_deduction'] ?? 0);
+                $discountDeduction    = (float) ($billPayment['discount_deduction'] ?? 0);
 
                 if ($currentBalance <= 0) continue;
 
-                // Calculate payment for this bill
                 $paymentForThisBill = min($remainingAmount, $currentBalance);
-
                 if ($paymentForThisBill <= 0) continue;
 
-                $remainingAmount -= $paymentForThisBill;
-                $newBalance = $currentBalance - $paymentForThisBill;
-                $completePayment = $newBalance <= 0 ? 1 : 0;
-                $status = $completePayment ? 'Completed' : 'Pending';
+                $remainingAmount    -= $paymentForThisBill;
+                $newBalance          = $currentBalance - $paymentForThisBill;
+                $completePayment     = $newBalance <= 0 ? 1 : 0;
+                $status              = $completePayment ? 'Completed' : 'Pending';
 
-                // Find or create payment record
                 $studentPayment = StudentBillPayment::where([
-                    'student_id' => $request->student_id,
+                    'student_id'     => $request->student_id,
                     'school_bill_id' => $schoolBillId,
-                    'class_id' => $request->class_id,
-                    'termid_id' => $request->term_id,
-                    'session_id' => $request->session_id,
+                    'class_id'       => $request->class_id,
+                    'termid_id'      => $request->term_id,
+                    'session_id'     => $request->session_id,
                 ])->first();
 
-                // Check if pending invoice exists
                 if ($studentPayment && $studentPayment->delete_status == '1') {
                     DB::rollBack();
                     return response()->json([
                         'success' => false,
-                        'message' => "Cannot make payment for bill - pending invoice exists.",
+                        'message' => 'Cannot make payment — a pending invoice exists for one of the selected bills.',
                     ], 422);
                 }
 
                 if ($studentPayment) {
                     $studentPayment->update([
                         'payment_method' => $request->payment_method,
-                        'status' => $status,
-                        'generated_by' => $generatedBy,
-                        'delete_status' => '1',
+                        'status'         => $status,
+                        'generated_by'   => $generatedBy,
+                        'delete_status'  => '1',
                     ]);
 
                     StudentBillPaymentRecord::create([
                         'student_bill_payment_id' => $studentPayment->id,
-                        'class_id' => $request->class_id,
-                        'termid_id' => $request->term_id,
-                        'session_id' => $request->session_id,
-                        'amount_paid' => $paymentForThisBill,
-                        'last_payment' => $paymentForThisBill,
-                        'amount_owed' => $newBalance,
-                        'total_bill' => $adjustedAmount,
-                        'complete_payment' => $completePayment,
-                        'generated_by' => $generatedBy,
+                        'class_id'                => $request->class_id,
+                        'termid_id'               => $request->term_id,
+                        'session_id'              => $request->session_id,
+                        'amount_paid'             => $paymentForThisBill,
+                        'last_payment'            => $paymentForThisBill,
+                        'amount_owed'             => $newBalance,
+                        'total_bill'              => $adjustedAmount,
+                        'complete_payment'        => $completePayment,
+                        'generated_by'            => $generatedBy,
                     ]);
 
-                    // Update payment book
                     $paymentBook = StudentBillPaymentBook::where([
-                        'student_id' => $request->student_id,
+                        'student_id'     => $request->student_id,
                         'school_bill_id' => $schoolBillId,
-                        'class_id' => $request->class_id,
-                        'term_id' => $request->term_id,
-                        'session_id' => $request->session_id,
+                        'class_id'       => $request->class_id,
+                        'term_id'        => $request->term_id,
+                        'session_id'     => $request->session_id,
                     ])->first();
 
                     if ($paymentBook) {
                         $paymentBook->update([
-                            'amount_paid' => DB::raw('amount_paid + ' . $paymentForThisBill),
-                            'amount_owed' => $newBalance,
-                            'payment_status' => $status,
-                            'generated_by' => $generatedBy,
+                            'amount_paid'           => DB::raw('amount_paid + ' . $paymentForThisBill),
+                            'amount_owed'           => $newBalance,
+                            'payment_status'        => $status,
+                            'generated_by'          => $generatedBy,
                             'scholarship_deduction' => $scholarshipDeduction,
-                            'discount_deduction' => $discountDeduction,
-                            'adjusted_amount' => $adjustedAmount,
+                            'discount_deduction'    => $discountDeduction,
+                            'adjusted_amount'       => $adjustedAmount,
+                        ]);
+                    } else {
+                        StudentBillPaymentBook::create([
+                            'student_id'            => $request->student_id,
+                            'school_bill_id'        => $schoolBillId,
+                            'class_id'              => $request->class_id,
+                            'term_id'               => $request->term_id,
+                            'session_id'            => $request->session_id,
+                            'amount_paid'           => $paymentForThisBill,
+                            'amount_owed'           => $newBalance,
+                            'payment_status'        => $status,
+                            'generated_by'          => $generatedBy,
+                            'original_amount'       => $adjustedAmount,
+                            'scholarship_deduction' => $scholarshipDeduction,
+                            'discount_deduction'    => $discountDeduction,
+                            'adjusted_amount'       => $adjustedAmount,
                         ]);
                     }
                 } else {
                     $studentPayment = StudentBillPayment::create([
-                        'student_id' => $request->student_id,
+                        'student_id'     => $request->student_id,
                         'school_bill_id' => $schoolBillId,
-                        'class_id' => $request->class_id,
-                        'termid_id' => $request->term_id,
-                        'session_id' => $request->session_id,
+                        'class_id'       => $request->class_id,
+                        'termid_id'      => $request->term_id,
+                        'session_id'     => $request->session_id,
                         'payment_method' => $request->payment_method,
-                        'status' => $status,
-                        'generated_by' => $generatedBy,
-                        'delete_status' => '1',
+                        'status'         => $status,
+                        'generated_by'   => $generatedBy,
+                        'delete_status'  => '1',
                     ]);
 
                     StudentBillPaymentRecord::create([
                         'student_bill_payment_id' => $studentPayment->id,
-                        'class_id' => $request->class_id,
-                        'termid_id' => $request->term_id,
-                        'session_id' => $request->session_id,
-                        'amount_paid' => $paymentForThisBill,
-                        'last_payment' => $paymentForThisBill,
-                        'amount_owed' => $newBalance,
-                        'total_bill' => $adjustedAmount,
-                        'complete_payment' => $completePayment,
-                        'generated_by' => $generatedBy,
+                        'class_id'                => $request->class_id,
+                        'termid_id'               => $request->term_id,
+                        'session_id'              => $request->session_id,
+                        'amount_paid'             => $paymentForThisBill,
+                        'last_payment'            => $paymentForThisBill,
+                        'amount_owed'             => $newBalance,
+                        'total_bill'              => $adjustedAmount,
+                        'complete_payment'        => $completePayment,
+                        'generated_by'            => $generatedBy,
                     ]);
 
                     StudentBillPaymentBook::create([
-                        'student_id' => $request->student_id,
-                        'school_bill_id' => $schoolBillId,
-                        'class_id' => $request->class_id,
-                        'term_id' => $request->term_id,
-                        'session_id' => $request->session_id,
-                        'amount_paid' => $paymentForThisBill,
-                        'amount_owed' => $newBalance,
-                        'payment_status' => $status,
-                        'generated_by' => $generatedBy,
-                        'original_amount' => $adjustedAmount,
+                        'student_id'            => $request->student_id,
+                        'school_bill_id'        => $schoolBillId,
+                        'class_id'              => $request->class_id,
+                        'term_id'               => $request->term_id,
+                        'session_id'            => $request->session_id,
+                        'amount_paid'           => $paymentForThisBill,
+                        'amount_owed'           => $newBalance,
+                        'payment_status'        => $status,
+                        'generated_by'          => $generatedBy,
+                        'original_amount'       => $adjustedAmount,
                         'scholarship_deduction' => $scholarshipDeduction,
-                        'discount_deduction' => $discountDeduction,
-                        'adjusted_amount' => $adjustedAmount,
+                        'discount_deduction'    => $discountDeduction,
+                        'adjusted_amount'       => $adjustedAmount,
                     ]);
                 }
 
                 $paymentsProcessed[] = [
-                    'bill_title' => $billPayment['title'] ?? 'Bill',
+                    'bill_title'  => $billPayment['title'] ?? 'Bill',
                     'amount_paid' => $paymentForThisBill,
-                    'balance' => $newBalance,
+                    'balance'     => $newBalance,
                 ];
             }
 
@@ -908,29 +885,19 @@ class SchoolPaymentController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Bulk payment recorded successfully.',
-                'data' => [
+                'data'    => [
                     'payments_processed' => $paymentsProcessed,
-                    'total_paid' => $totalPaymentAmount - $remainingAmount,
-                    'remaining_amount' => $remainingAmount,
+                    'total_paid'         => $totalPaymentAmount - $remainingAmount,
+                    'remaining_amount'   => $remainingAmount,
                 ],
-            ], 200);
+            ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
+            return response()->json(['success' => false, 'message' => 'Validation failed', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Bulk payment store error: ', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to record payment: ' . $e->getMessage(),
-            ], 500);
+            Log::error('Bulk payment store error: ', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return response()->json(['success' => false, 'message' => 'Failed to record payment: ' . $e->getMessage()], 500);
         }
     }
 
@@ -953,11 +920,11 @@ class SchoolPaymentController extends Controller
             }
 
             $paymentBook = StudentBillPaymentBook::where([
-                'student_id'    => $studentPayment->student_id,
-                'school_bill_id'=> $studentPayment->school_bill_id,
-                'class_id'      => $studentPayment->class_id,
-                'term_id'       => $studentPayment->termid_id,
-                'session_id'    => $studentPayment->session_id,
+                'student_id'     => $studentPayment->student_id,
+                'school_bill_id' => $studentPayment->school_bill_id,
+                'class_id'       => $studentPayment->class_id,
+                'term_id'        => $studentPayment->termid_id,
+                'session_id'     => $studentPayment->session_id,
             ])->first();
 
             if ($paymentBook) {
@@ -978,15 +945,12 @@ class SchoolPaymentController extends Controller
             }
 
             DB::commit();
-            return response()->json(['success' => true, 'message' => 'Payment deleted successfully.'], 200);
+            return response()->json(['success' => true, 'message' => 'Payment deleted successfully.']);
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Delete payment error: ', ['error' => $e->getMessage()]);
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to delete payment: ' . $e->getMessage(),
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Failed to delete: ' . $e->getMessage()], 500);
         }
     }
 
@@ -1127,7 +1091,6 @@ class SchoolPaymentController extends Controller
         $schoolterm    = optional(Schoolterm::find($termid))->term ?? 'N/A';
         $schoolsession = optional(Schoolsession::find($sessionid))->session ?? 'N/A';
 
-        // Mark payments as invoiced
         if (!$request->input('historical', false)) {
             StudentBillPayment::where('student_id', $studentId)
                 ->where('class_id', $schoolclassid)

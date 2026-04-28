@@ -603,8 +603,6 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
 
 
 
-
-
     // ============================================
     // LEGACY PAYMENT ROUTES (Backward Compatibility)
     // ============================================
@@ -614,12 +612,11 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
         Route::get('/termsessionpayments', [SchoolPaymentController::class, 'termsessionpayments'])->name('termsessionpayments');
         Route::get('/get-payment-details', [SchoolPaymentController::class, 'getPaymentDetailsAjax'])->name('getPaymentDetailsAjax');
         Route::post('/store', [SchoolPaymentController::class, 'store'])->name('store');
-        Route::post('/bulk-store', [SchoolPaymentController::class, 'bulkStore'])->name('bulk-store'); // Add bulk payment route
+        Route::post('/bulk-store', [SchoolPaymentController::class, 'bulkStore'])->name('bulk-store');
         Route::post('/delete/{recordId}', [SchoolPaymentController::class, 'deletestudentpayment'])->name('deletestudentpayment');
         Route::get('/invoice/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'invoice'])->name('invoice');
         Route::get('/statement/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'statement'])->name('statement');
     });
-
 
 
     // ============================================
