@@ -598,16 +598,12 @@ class SchoolPaymentController extends Controller
             $generatedBy     = Auth::id();
 
             if ($studentPayment) {
-                // FIX: Use DB::table to avoid Eloquent Expression cast issue
-                DB::table('student_bill_payment')
-                    ->where('id', $studentPayment->id)
-                    ->update([
-                        'payment_method' => $request->payment_method2,
-                        'status'         => $status,
-                        'generated_by'   => $generatedBy,
-                        'delete_status'  => '1',
-                        'updated_at'     => now(),
-                    ]);
+                $studentPayment->update([
+                    'payment_method' => $request->payment_method2,
+                    'status'         => $status,
+                    'generated_by'   => $generatedBy,
+                    'delete_status'  => '1',
+                ]);
 
                 StudentBillPaymentRecord::create([
                     'student_bill_payment_id' => $studentPayment->id,
@@ -631,19 +627,15 @@ class SchoolPaymentController extends Controller
                 ])->first();
 
                 if ($paymentBook) {
-                    // FIX: Use DB::table to avoid Eloquent casting Expression object error
-                    DB::table('student_bill_payment_books')
-                        ->where('id', $paymentBook->id)
-                        ->update([
-                            'amount_paid'           => DB::raw('amount_paid + ' . $paymentAmount),
-                            'amount_owed'           => $balance,
-                            'payment_status'        => $status,
-                            'generated_by'          => $generatedBy,
-                            'scholarship_deduction' => $adj['scholarship_deduction'],
-                            'discount_deduction'    => $adj['discount_deduction'],
-                            'adjusted_amount'       => $finalAdjustedAmount,
-                            'updated_at'            => now(),
-                        ]);
+                    $paymentBook->update([
+                        'amount_paid'           => DB::raw('amount_paid + ' . $paymentAmount),
+                        'amount_owed'           => $balance,
+                        'payment_status'        => $status,
+                        'generated_by'          => $generatedBy,
+                        'scholarship_deduction' => $adj['scholarship_deduction'],
+                        'discount_deduction'    => $adj['discount_deduction'],
+                        'adjusted_amount'       => $finalAdjustedAmount,
+                    ]);
                 } else {
                     StudentBillPaymentBook::create([
                         'student_id'            => $request->student_id,
@@ -783,16 +775,12 @@ class SchoolPaymentController extends Controller
                 }
 
                 if ($studentPayment) {
-                    // FIX: Use DB::table to avoid Eloquent Expression cast issue
-                    DB::table('student_bill_payment')
-                        ->where('id', $studentPayment->id)
-                        ->update([
-                            'payment_method' => $request->payment_method,
-                            'status'         => $status,
-                            'generated_by'   => $generatedBy,
-                            'delete_status'  => '1',
-                            'updated_at'     => now(),
-                        ]);
+                    $studentPayment->update([
+                        'payment_method' => $request->payment_method,
+                        'status'         => $status,
+                        'generated_by'   => $generatedBy,
+                        'delete_status'  => '1',
+                    ]);
 
                     StudentBillPaymentRecord::create([
                         'student_bill_payment_id' => $studentPayment->id,
@@ -816,19 +804,15 @@ class SchoolPaymentController extends Controller
                     ])->first();
 
                     if ($paymentBook) {
-                        // FIX: Use DB::table to avoid Eloquent casting Expression object error
-                        DB::table('student_bill_payment_books')
-                            ->where('id', $paymentBook->id)
-                            ->update([
-                                'amount_paid'           => DB::raw('amount_paid + ' . $paymentForThisBill),
-                                'amount_owed'           => $newBalance,
-                                'payment_status'        => $status,
-                                'generated_by'          => $generatedBy,
-                                'scholarship_deduction' => $scholarshipDeduction,
-                                'discount_deduction'    => $discountDeduction,
-                                'adjusted_amount'       => $adjustedAmount,
-                                'updated_at'            => now(),
-                            ]);
+                        $paymentBook->update([
+                            'amount_paid'           => DB::raw('amount_paid + ' . $paymentForThisBill),
+                            'amount_owed'           => $newBalance,
+                            'payment_status'        => $status,
+                            'generated_by'          => $generatedBy,
+                            'scholarship_deduction' => $scholarshipDeduction,
+                            'discount_deduction'    => $discountDeduction,
+                            'adjusted_amount'       => $adjustedAmount,
+                        ]);
                     } else {
                         StudentBillPaymentBook::create([
                             'student_id'            => $request->student_id,
@@ -946,16 +930,11 @@ class SchoolPaymentController extends Controller
             if ($paymentBook) {
                 $newAmountPaid = $paymentBook->amount_paid - $paymentRecord->amount_paid;
                 $newAmountOwed = $paymentBook->amount_owed + $paymentRecord->amount_paid;
-
-                // FIX: Use DB::table to avoid Eloquent Expression cast issue
-                DB::table('student_bill_payment_books')
-                    ->where('id', $paymentBook->id)
-                    ->update([
-                        'amount_paid'    => max(0, $newAmountPaid),
-                        'amount_owed'    => $newAmountOwed,
-                        'payment_status' => $newAmountOwed <= 0 ? 'Completed' : 'Pending',
-                        'updated_at'     => now(),
-                    ]);
+                $paymentBook->update([
+                    'amount_paid'    => max(0, $newAmountPaid),
+                    'amount_owed'    => $newAmountOwed,
+                    'payment_status' => $newAmountOwed <= 0 ? 'Completed' : 'Pending',
+                ]);
             }
 
             $paymentRecord->delete();
@@ -976,6 +955,9 @@ class SchoolPaymentController extends Controller
     }
 
     // ── Invoice ───────────────────────────────────────────────────────────
+    //
+    // FIX: All variables are now consistently named with lowercase ($termid, $sessionid)
+    // so the blade view receives the correct variable names.
 
     public function invoice(Request $request, $studentId, $schoolclassid, $termid, $sessionid)
     {
@@ -987,18 +969,7 @@ class SchoolPaymentController extends Controller
             return redirect()->route('schoolpayment.index')->with('error', 'Student not found or not enrolled.');
         }
 
-        // FIX: Use schoolclassId from student if route param is missing/wrong
-        if (!$schoolclassid && $student->schoolclassId) {
-            $schoolclassid = $student->schoolclassId;
-        }
-
-        if (!$schoolclassid) {
-            return redirect()->route('schoolpayment.index')->with('error', 'Could not resolve student class for invoice.');
-        }
-
-        // FIX: Safe invoice number — strip slashes from admissionNo
-        $safeAdmission = preg_replace('/[\/\\\\]/', '-', $student->admissionNo ?? $studentId);
-        $invoiceNumber = 'INV-' . $safeAdmission . '-' . date('Ymd');
+        $invoiceNumber = 'INV-' . str_pad($studentId, 4, '0', STR_PAD_LEFT) . '-' . date('Ymd');
 
         try {
             $allClassBills = DB::table('school_bill_class_term_session')
@@ -1133,31 +1104,31 @@ class SchoolPaymentController extends Controller
                 ->update(['delete_status' => '0']);
         }
 
+        // Build view data — all variable names are consistent (lowercase)
         $data = [
-            'pagetitle'          => $pagetitle,
-            'invoiceNumber'      => $invoiceNumber,
-            'schoolterm'         => $schoolterm,
-            'schoolsession'      => $schoolsession,
-            'studentId'          => $studentId,
-            'termid'             => $termid,
-            'sessionid'          => $sessionid,
-            'schoolclassid'      => $schoolclassid,
-            'totalBillAmount'    => $totalBillAmount,
-            'totalPreviousPaid'  => $totalPreviousPaid,
-            'totalTodayPaid'     => $totalTodayPaid,
-            'totalSavings'       => $totalSavings,
-            'totalPaid'          => $totalPaid,
-            'totalOutstanding'   => $totalOutstanding,
-            'schoolInfo'         => $schoolInfo,
-            'studentdata'        => $student ? collect([$student]) : collect([]),
-            'studentpaymentbill' => $payments,
+            'pagetitle'         => $pagetitle,
+            'invoiceNumber'     => $invoiceNumber,
+            'schoolterm'        => $schoolterm,
+            'schoolsession'     => $schoolsession,
+            // Pass all three ID variants so the blade has everything it needs
+            'studentId'         => $studentId,
+            'termid'            => $termid,
+            'sessionid'         => $sessionid,
+            'schoolclassid'     => $schoolclassid,
+            'totalBillAmount'   => $totalBillAmount,
+            'totalPreviousPaid' => $totalPreviousPaid,
+            'totalTodayPaid'    => $totalTodayPaid,
+            'totalSavings'      => $totalSavings,
+            'totalPaid'         => $totalPaid,
+            'totalOutstanding'  => $totalOutstanding,
+            'schoolInfo'        => $schoolInfo,
+            'studentdata'       => $student ? collect([$student]) : collect([]),
+            'studentpaymentbill'=> $payments,
         ];
 
         if ($request->has('download_pdf')) {
-            // FIX: Safe filename — no slashes
-            $safeFilename = 'invoice_' . preg_replace('/[\/\\\\]/', '-', $student->admissionNo ?? $studentId) . '.pdf';
             $pdf = PDF::loadView('schoolpayment.studentinvoicepdf', $data);
-            return $pdf->download($safeFilename);
+            return $pdf->download('invoice_' . ($student->admissionNo ?? 'student') . '.pdf');
         }
 
         return view('schoolpayment.studentinvoice', $data);
@@ -1209,13 +1180,9 @@ class SchoolPaymentController extends Controller
         $totalPaid        = $studentpaymentbillbook->sum('amount_paid');
         $totalOutstanding = max(0, $totalSchoolBill - $totalPaid);
         $schoolInfo       = SchoolInformation::first();
-
-        // FIX: Safe statement number — no slashes from admissionNo
-        $safeAdmission   = preg_replace('/[\/\\\\]/', '-', $student->admissionNo ?? $studentId);
-        $statementNumber = 'STMT-' . $safeAdmission . '-' . date('Ymd');
-
-        $schoolterm    = optional(Schoolterm::find($termid))->term    ?? 'N/A';
-        $schoolsession = optional(Schoolsession::find($sessionid))->session ?? 'N/A';
+        $statementNumber  = 'STMT-' . str_pad($studentId, 4, '0', STR_PAD_LEFT) . '-' . date('Ymd');
+        $schoolterm       = optional(Schoolterm::find($termid))->term    ?? 'N/A';
+        $schoolsession    = optional(Schoolsession::find($sessionid))->session ?? 'N/A';
 
         $data = [
             'pagetitle'          => $pagetitle,
@@ -1233,9 +1200,7 @@ class SchoolPaymentController extends Controller
             'studentdata'        => $student ? collect([$student]) : collect([]),
         ];
 
-        // FIX: Safe PDF filename — no slashes
-        $safeFilename = 'statement_' . $safeAdmission . '.pdf';
         $pdf = PDF::loadView('schoolpayment.studentstatement', $data);
-        return $pdf->download($safeFilename);
+        return $pdf->download('statement_' . ($student->admissionNo ?? 'student') . '.pdf');
     }
 }
