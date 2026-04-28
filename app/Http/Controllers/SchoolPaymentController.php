@@ -370,7 +370,7 @@ class SchoolPaymentController extends Controller
 
                 $billsData[] = [
                     'id'                    => $bill->schoolbillid,
-                    'class_id'              => $schoolclassId,
+                    'class_id'              => $schoolclassId,        // ← FIXED: was missing
                     'title'                 => $bill->title,
                     'description'           => $bill->description,
                     'original_amount'       => $bill->original_amount,
@@ -585,8 +585,8 @@ class SchoolPaymentController extends Controller
                 ? $adj['adjusted_amount']
                 : ($request->adjusted_amount ?: $bill->bill_amount);
 
-            $paymentAmount = (float) $request->payment_amount;
-            $balance       = (float) $request->balance2 - $paymentAmount;
+            $paymentAmount   = (float) $request->payment_amount;
+            $balance         = (float) $request->balance2 - $paymentAmount;
 
             if ($balance < 0) {
                 DB::rollBack();
@@ -714,18 +714,18 @@ class SchoolPaymentController extends Controller
     {
         try {
             $request->validate([
-                'student_id'                            => 'required|integer|exists:studentRegistration,id',
-                'class_id'                              => 'required|integer|exists:schoolclass,id',
-                'term_id'                               => 'required|integer|exists:schoolterm,id',
-                'session_id'                            => 'required|integer|exists:schoolsession,id',
-                'payment_amount'                        => 'required|numeric|min:0.01',
-                'payment_method'                        => 'required|string|in:Bank Deposit,School POS,Bank Transfer,Cheque',
-                'bill_payments'                         => 'required|array|min:1',
-                'bill_payments.*.school_bill_id'        => 'required|integer|exists:school_bill,id',
-                'bill_payments.*.adjusted_amount'       => 'required|numeric|min:0',
-                'bill_payments.*.balance'               => 'required|numeric|min:0',
+                'student_id'                          => 'required|integer|exists:studentRegistration,id',
+                'class_id'                            => 'required|integer|exists:schoolclass,id',
+                'term_id'                             => 'required|integer|exists:schoolterm,id',
+                'session_id'                          => 'required|integer|exists:schoolsession,id',
+                'payment_amount'                      => 'required|numeric|min:0.01',
+                'payment_method'                      => 'required|string|in:Bank Deposit,School POS,Bank Transfer,Cheque',
+                'bill_payments'                       => 'required|array|min:1',
+                'bill_payments.*.school_bill_id'      => 'required|integer|exists:school_bill,id',
+                'bill_payments.*.adjusted_amount'     => 'required|numeric|min:0',
+                'bill_payments.*.balance'             => 'required|numeric|min:0',
                 'bill_payments.*.scholarship_deduction' => 'nullable|numeric|min:0',
-                'bill_payments.*.discount_deduction'    => 'nullable|numeric|min:0',
+                'bill_payments.*.discount_deduction'  => 'nullable|numeric|min:0',
             ]);
 
             if (!Auth::check()) {
@@ -753,10 +753,10 @@ class SchoolPaymentController extends Controller
                 $paymentForThisBill = min($remainingAmount, $currentBalance);
                 if ($paymentForThisBill <= 0) continue;
 
-                $remainingAmount -= $paymentForThisBill;
-                $newBalance       = $currentBalance - $paymentForThisBill;
-                $completePayment  = $newBalance <= 0 ? 1 : 0;
-                $status           = $completePayment ? 'Completed' : 'Pending';
+                $remainingAmount    -= $paymentForThisBill;
+                $newBalance          = $currentBalance - $paymentForThisBill;
+                $completePayment     = $newBalance <= 0 ? 1 : 0;
+                $status              = $completePayment ? 'Completed' : 'Pending';
 
                 $studentPayment = StudentBillPayment::where([
                     'student_id'     => $request->student_id,
@@ -955,9 +955,6 @@ class SchoolPaymentController extends Controller
     }
 
     // ── Invoice ───────────────────────────────────────────────────────────
-    //
-    // FIX: All variables are now consistently named with lowercase ($termid, $sessionid)
-    // so the blade view receives the correct variable names.
 
     public function invoice(Request $request, $studentId, $schoolclassid, $termid, $sessionid)
     {
@@ -1085,16 +1082,15 @@ class SchoolPaymentController extends Controller
 
         $totalBillAmount   = $payments->sum('amount');
         $totalPreviousPaid = $payments->sum('previousPaid');
-        $totalTodayPaid    = $payments->sum('todayPaid');
+        $totalLastPayments = $payments->sum('todayPaid');
         $totalPaid         = $payments->sum('amountPaid');
         $totalOutstanding  = $payments->sum('balance');
         $totalSavings      = $payments->sum('total_savings');
 
         $schoolInfo    = SchoolInformation::first();
-        $schoolterm    = optional(Schoolterm::find($termid))->term    ?? 'N/A';
+        $schoolterm    = optional(Schoolterm::find($termid))->term ?? 'N/A';
         $schoolsession = optional(Schoolsession::find($sessionid))->session ?? 'N/A';
 
-        // Mark payments as invoiced (unless viewing historical)
         if (!$request->input('historical', false)) {
             StudentBillPayment::where('student_id', $studentId)
                 ->where('class_id', $schoolclassid)
@@ -1104,27 +1100,15 @@ class SchoolPaymentController extends Controller
                 ->update(['delete_status' => '0']);
         }
 
-        // Build view data — all variable names are consistent (lowercase)
-        $data = [
-            'pagetitle'         => $pagetitle,
-            'invoiceNumber'     => $invoiceNumber,
-            'schoolterm'        => $schoolterm,
-            'schoolsession'     => $schoolsession,
-            // Pass all three ID variants so the blade has everything it needs
-            'studentId'         => $studentId,
-            'termid'            => $termid,
-            'sessionid'         => $sessionid,
-            'schoolclassid'     => $schoolclassid,
-            'totalBillAmount'   => $totalBillAmount,
-            'totalPreviousPaid' => $totalPreviousPaid,
-            'totalTodayPaid'    => $totalTodayPaid,
-            'totalSavings'      => $totalSavings,
-            'totalPaid'         => $totalPaid,
-            'totalOutstanding'  => $totalOutstanding,
-            'schoolInfo'        => $schoolInfo,
-            'studentdata'       => $student ? collect([$student]) : collect([]),
-            'studentpaymentbill'=> $payments,
-        ];
+        $data = compact(
+            'pagetitle', 'invoiceNumber', 'schoolterm', 'schoolsession',
+            'studentId', 'termid', 'sessionid', 'schoolclassid',
+            'totalBillAmount', 'totalPreviousPaid', 'totalSavings',
+            'totalPaid', 'totalOutstanding', 'schoolInfo'
+        );
+        $data['studentdata']        = $student ? collect([$student]) : collect([]);
+        $data['studentpaymentbill'] = $payments;
+        $data['totalTodayPaid']     = $totalLastPayments;
 
         if ($request->has('download_pdf')) {
             $pdf = PDF::loadView('schoolpayment.studentinvoicepdf', $data);
@@ -1181,24 +1165,14 @@ class SchoolPaymentController extends Controller
         $totalOutstanding = max(0, $totalSchoolBill - $totalPaid);
         $schoolInfo       = SchoolInformation::first();
         $statementNumber  = 'STMT-' . str_pad($studentId, 4, '0', STR_PAD_LEFT) . '-' . date('Ymd');
-        $schoolterm       = optional(Schoolterm::find($termid))->term    ?? 'N/A';
+        $schoolterm       = optional(Schoolterm::find($termid))->term ?? 'N/A';
         $schoolsession    = optional(Schoolsession::find($sessionid))->session ?? 'N/A';
 
-        $data = [
-            'pagetitle'          => $pagetitle,
-            'studentpaymentbill' => $studentpaymentbill,
-            'totalSchoolBill'    => $totalSchoolBill,
-            'totalPaid'          => $totalPaid,
-            'totalOutstanding'   => $totalOutstanding,
-            'schoolInfo'         => $schoolInfo,
-            'statementNumber'    => $statementNumber,
-            'schoolterm'         => $schoolterm,
-            'schoolsession'      => $schoolsession,
-            'studentId'          => $studentId,
-            'termid'             => $termid,
-            'sessionid'          => $sessionid,
-            'studentdata'        => $student ? collect([$student]) : collect([]),
-        ];
+        $data = compact(
+            'pagetitle', 'studentpaymentbill', 'totalSchoolBill', 'totalPaid',
+            'totalOutstanding', 'schoolInfo', 'statementNumber', 'schoolterm', 'schoolsession'
+        );
+        $data['studentdata'] = $student ? collect([$student]) : collect([]);
 
         $pdf = PDF::loadView('schoolpayment.studentstatement', $data);
         return $pdf->download('statement_' . ($student->admissionNo ?? 'student') . '.pdf');
