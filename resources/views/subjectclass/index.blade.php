@@ -145,9 +145,146 @@
     display:none; align-items:center; gap:12px; margin-bottom:12px;
 }
 .bulk-bar.show { display:flex; }
+
+/* ── Full-page loader overlay ────────────────────────────── */
+#sc-page-loader {
+    position:fixed; inset:0; z-index:9999;
+    background:rgba(15,23,42,.55);
+    backdrop-filter:blur(3px);
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    opacity:0; visibility:hidden;
+    transition:opacity .22s, visibility .22s;
+}
+#sc-page-loader.active { opacity:1; visibility:visible; }
+
+.sc-loader-card {
+    background:#fff; border-radius:16px;
+    padding:32px 40px; text-align:center;
+    box-shadow:0 24px 64px rgba(0,0,0,.22);
+    min-width:220px;
+}
+.sc-loader-spinner {
+    width:52px; height:52px; margin:0 auto 16px;
+    border:4px solid #e2e8f0;
+    border-top-color:var(--sc-accent);
+    border-radius:50%;
+    animation:sc-spin .75s linear infinite;
+}
+@keyframes sc-spin { to { transform:rotate(360deg); } }
+
+.sc-loader-label {
+    font-size:14px; font-weight:600;
+    color:var(--sc-primary); margin-bottom:12px;
+}
+
+/* ── Progress bar inside loader ──────────────────────────── */
+.sc-progress-wrap {
+    width:160px; height:5px;
+    background:#e2e8f0; border-radius:99px; overflow:hidden;
+    margin:0 auto;
+}
+.sc-progress-bar {
+    height:100%; width:0%;
+    background:linear-gradient(90deg, var(--sc-accent), #4f46e5);
+    border-radius:99px;
+    transition:width .35s ease;
+}
+
+/* ── Modal body loading overlay ──────────────────────────── */
+.modal-body-loader {
+    position:absolute; inset:0; z-index:10;
+    background:rgba(255,255,255,.82);
+    backdrop-filter:blur(2px);
+    display:flex; align-items:center; justify-content:center;
+    border-radius:0 0 16px 16px;
+    opacity:0; visibility:hidden;
+    transition:opacity .18s, visibility .18s;
+}
+.modal-body-loader.active { opacity:1; visibility:visible; }
+.modal-body-loader .inner {
+    display:flex; flex-direction:column;
+    align-items:center; gap:10px;
+}
+.modal-body-loader .mbl-spinner {
+    width:36px; height:36px;
+    border:3px solid #e2e8f0;
+    border-top-color:var(--sc-accent);
+    border-radius:50%;
+    animation:sc-spin .7s linear infinite;
+}
+.modal-body-loader .mbl-text {
+    font-size:13px; font-weight:600; color:var(--sc-primary);
+}
+
+/* ── Toast notifications ──────────────────────────────────── */
+#sc-toast-stack {
+    position:fixed; bottom:24px; right:24px;
+    z-index:10000; display:flex;
+    flex-direction:column-reverse; gap:10px;
+    pointer-events:none;
+}
+.sc-toast {
+    pointer-events:all;
+    background:#fff; border-radius:10px;
+    box-shadow:0 8px 28px rgba(0,0,0,.14);
+    padding:14px 18px; min-width:280px; max-width:360px;
+    display:flex; align-items:flex-start; gap:12px;
+    border-left:4px solid var(--sc-accent);
+    transform:translateX(120%);
+    transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.sc-toast.show { transform:translateX(0); }
+.sc-toast.sc-toast-success { border-left-color:var(--sc-success); }
+.sc-toast.sc-toast-error   { border-left-color:var(--sc-danger);  }
+.sc-toast.sc-toast-warning { border-left-color:var(--sc-warning); }
+.sc-toast .sc-toast-icon { font-size:20px; line-height:1; flex-shrink:0; margin-top:1px; }
+.sc-toast-success .sc-toast-icon { color:var(--sc-success); }
+.sc-toast-error   .sc-toast-icon { color:var(--sc-danger);  }
+.sc-toast-warning .sc-toast-icon { color:var(--sc-warning); }
+.sc-toast .sc-toast-body { flex:1; }
+.sc-toast .sc-toast-title { font-size:13px; font-weight:700; color:#111827; margin-bottom:2px; }
+.sc-toast .sc-toast-msg   { font-size:12px; color:var(--sc-muted); line-height:1.4; }
+.sc-toast .sc-toast-close {
+    background:none; border:none; cursor:pointer;
+    color:var(--sc-muted); font-size:16px; line-height:1;
+    padding:0; flex-shrink:0;
+}
+
+/* ── Button loading state ────────────────────────────────── */
+.btn-loading { position:relative; pointer-events:none; opacity:.85; }
+.btn-loading .btn-text { visibility:hidden; }
+.btn-loading::after {
+    content:'';
+    position:absolute; inset:0;
+    margin:auto; width:16px; height:16px;
+    border:2px solid rgba(255,255,255,.4);
+    border-top-color:#fff;
+    border-radius:50%;
+    animation:sc-spin .65s linear infinite;
+}
+.btn-loading.btn-outline-secondary::after,
+.btn-loading.btn-outline-danger::after {
+    border-top-color:currentColor;
+}
+.btn-loading.btn-light::after { border-top-color:#374151; }
 </style>
 
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+
+{{-- ═══ Full-page loader overlay ═══ --}}
+<div id="sc-page-loader">
+    <div class="sc-loader-card">
+        <div class="sc-loader-spinner"></div>
+        <div class="sc-loader-label" id="sc-loader-label">Processing…</div>
+        <div class="sc-progress-wrap">
+            <div class="sc-progress-bar" id="sc-progress-bar"></div>
+        </div>
+    </div>
+</div>
+
+{{-- ═══ Toast notification stack ═══ --}}
+<div id="sc-toast-stack"></div>
 
 <div class="main-content">
 <div class="page-content">
@@ -367,7 +504,14 @@
             </div>
             <form id="add-subjectclass-form" autocomplete="off">
                 @csrf
-                <div class="modal-body p-4">
+                {{-- Modal body loader --}}
+                <div class="modal-body-loader" id="add-modal-loader">
+                    <div class="inner">
+                        <div class="mbl-spinner"></div>
+                        <div class="mbl-text" id="add-modal-loader-text">Saving…</div>
+                    </div>
+                </div>
+                <div class="modal-body p-4" style="position:relative">
                     <div class="mb-3">
                         <label class="form-label">Class <span class="text-danger">*</span></label>
                         <select name="schoolclassid" id="add-schoolclassid" class="form-select" required>
@@ -441,7 +585,14 @@
             <form id="edit-subjectclass-form" autocomplete="off">
                 @csrf
                 <input type="hidden" id="edit-id">
-                <div class="modal-body p-4">
+                {{-- Modal body loader --}}
+                <div class="modal-body-loader" id="edit-modal-loader">
+                    <div class="inner">
+                        <div class="mbl-spinner"></div>
+                        <div class="mbl-text" id="edit-modal-loader-text">Updating…</div>
+                    </div>
+                </div>
+                <div class="modal-body p-4" style="position:relative">
                     <div class="mb-3">
                         <label class="form-label">Class <span class="text-danger">*</span></label>
                         <select name="schoolclassid" id="edit-schoolclassid" class="form-select" required>
@@ -557,31 +708,128 @@ $(document).ready(function () {
     let deleteUrl  = null;
     let deleteScId = null;
 
-    // ── DataTable ──────────────────────────────────────────────────────
+    // =========================================================================
+    // LOADING HELPERS
+    // =========================================================================
+
+    // ── Page-level overlay (for delete / page-reload operations) ──────
+    const PageLoader = {
+        _prog: 0,
+        _timer: null,
+
+        show(label = 'Processing…') {
+            $('#sc-loader-label').text(label);
+            $('#sc-progress-bar').css('width', '0%');
+            $('#sc-page-loader').addClass('active');
+            this._prog = 0;
+            this._tick();
+        },
+
+        _tick() {
+            // Simulate progress up to 85% — the last jump happens on hide()
+            PageLoader._timer = setInterval(() => {
+                if (PageLoader._prog < 85) {
+                    PageLoader._prog += Math.random() * 8;
+                    $('#sc-progress-bar').css('width', Math.min(PageLoader._prog, 85) + '%');
+                }
+            }, 220);
+        },
+
+        hide() {
+            clearInterval(this._timer);
+            $('#sc-progress-bar').css('width', '100%');
+            setTimeout(() => $('#sc-page-loader').removeClass('active'), 350);
+        },
+    };
+
+    // ── Modal body overlay ─────────────────────────────────────────────
+    function showModalLoader(id, text = 'Processing…') {
+        $(`#${id}-modal-loader-text`).text(text);
+        $(`#${id}-modal-loader`).addClass('active');
+    }
+    function hideModalLoader(id) {
+        $(`#${id}-modal-loader`).removeClass('active');
+    }
+
+    // ── Button loading state ───────────────────────────────────────────
+    function btnLoad(selector, loadingText = '') {
+        const $btn = $(selector);
+        $btn.data('original-html', $btn.html())
+            .prop('disabled', true)
+            .addClass('btn-loading');
+        if (loadingText) {
+            $btn.html(`<span class="btn-text">${loadingText}</span>`);
+        }
+        return $btn;
+    }
+    function btnReset(selector) {
+        const $btn = $(selector);
+        const orig = $btn.data('original-html');
+        if (orig) $btn.html(orig);
+        $btn.prop('disabled', false).removeClass('btn-loading');
+    }
+
+    // ── Toast notifications ────────────────────────────────────────────
+    function toast(type, title, msg, duration = 4000) {
+        const icons = {
+            success: 'ri-checkbox-circle-fill',
+            error:   'ri-close-circle-fill',
+            warning: 'ri-alert-fill',
+            info:    'ri-information-fill',
+        };
+        const id  = 'toast-' + Date.now();
+        const $el = $(`
+            <div class="sc-toast sc-toast-${type}" id="${id}">
+                <span class="sc-toast-icon"><i class="${icons[type] || icons.info}"></i></span>
+                <div class="sc-toast-body">
+                    <div class="sc-toast-title">${title}</div>
+                    ${msg ? `<div class="sc-toast-msg">${msg}</div>` : ''}
+                </div>
+                <button class="sc-toast-close" onclick="$('#${id}').remove()">×</button>
+            </div>
+        `);
+        $('#sc-toast-stack').append($el);
+        // Trigger animation
+        setTimeout(() => $el.addClass('show'), 20);
+        // Auto-dismiss
+        if (duration > 0) {
+            setTimeout(() => {
+                $el.removeClass('show');
+                setTimeout(() => $el.remove(), 350);
+            }, duration);
+        }
+    }
+
+    // =========================================================================
+    // DATATABLE
+    // =========================================================================
+
     const table = $('#subjectClassTable').DataTable({
         dom: "<'row align-items-center mb-3'<'col-sm-6'l><'col-sm-6 text-end'f>>" +
              "<'row'<'col-12'tr>>" +
              "<'row align-items-center mt-3'<'col-sm-5'i><'col-sm-7 text-end'p>>",
         language: {
-            search:           '',
-            searchPlaceholder:'Search assignments…',
-            lengthMenu:       'Show _MENU_ entries',
-            info:             'Showing _START_–_END_ of _TOTAL_ entries',
-            infoEmpty:        'No assignments found',
-            zeroRecords:      'No matching assignments',
-            emptyTable:       'No subject class assignments yet',
+            search:            '',
+            searchPlaceholder: 'Search assignments…',
+            lengthMenu:        'Show _MENU_ entries',
+            info:              'Showing _START_–_END_ of _TOTAL_ entries',
+            infoEmpty:         'No assignments found',
+            zeroRecords:       'No matching assignments',
+            emptyTable:        'No subject class assignments yet',
         },
         order:      [[1, 'asc']],
         pageLength: 15,
         responsive: true,
         drawCallback: function () {
             bindCheckboxes();
-            const info = this.api().page.info();
-            $('#totalBadge').text(info.recordsTotal);
+            $('#totalBadge').text(this.api().page.info().recordsTotal);
         },
     });
 
-    // ── Checkboxes ─────────────────────────────────────────────────────
+    // =========================================================================
+    // CHECKBOXES & BULK BAR
+    // =========================================================================
+
     function bindCheckboxes() {
         $('.row-checkbox').off('change').on('change', updateBulkBar);
     }
@@ -599,47 +847,42 @@ $(document).ready(function () {
         if (count === 0) $('#selectAll').prop('checked', false);
     }
 
-    // ── Teacher filter in modal ────────────────────────────────────────
+    // =========================================================================
+    // TEACHER SEARCH FILTER (inside modals)
+    // =========================================================================
+
     $('#add-teacher-search').on('input', function () {
         const q = $(this).val().toLowerCase();
         $('#add-teacher-list .teacher-item').each(function () {
-            const label = $(this).find('label').text().toLowerCase();
-            $(this).toggle(label.includes(q));
+            $(this).toggle($(this).find('label').text().toLowerCase().includes(q));
         });
     });
 
     $('#edit-teacher-search').on('input', function () {
         const q = $(this).val().toLowerCase();
         $('#edit-teacher-list .teacher-item').each(function () {
-            const label = $(this).find('label').text().toLowerCase();
-            $(this).toggle(label.includes(q));
+            $(this).toggle($(this).find('label').text().toLowerCase().includes(q));
         });
     });
 
-    // ── Add modal: track selected count & enable button ───────────────
+    // =========================================================================
+    // ADD MODAL — selected count & button guard
+    // =========================================================================
+
     $('#add-teacher-list').on('change', '.add-teacher-checkbox', function () {
-        const count = $('.add-teacher-checkbox:checked').length;
-        $('#add-selected-count').text(count);
+        $('#add-selected-count').text($('.add-teacher-checkbox:checked').length);
         updateAddBtn();
     });
 
     $('#add-schoolclassid').on('change', updateAddBtn);
 
     function updateAddBtn() {
-        const hasClass   = $('#add-schoolclassid').val() !== '';
-        const hasTeacher = $('.add-teacher-checkbox:checked').length > 0;
-        $('#add-btn').prop('disabled', !(hasClass && hasTeacher));
+        const ok = $('#add-schoolclassid').val() !== '' &&
+                   $('.add-teacher-checkbox:checked').length > 0;
+        $('#add-btn').prop('disabled', !ok);
     }
 
-    // ── Edit modal: show warning if teacher changes ────────────────────
-    let originalTeacherId = null;
-
-    $('#edit-teacher-list').on('change', '.edit-teacher-radio', function () {
-        const changed = $(this).val() !== String(originalTeacherId);
-        $('#edit-staff-change-warning').toggleClass('d-none', !changed);
-    });
-
-    // ── Open CREATE modal ──────────────────────────────────────────────
+    // ── Open CREATE ────────────────────────────────────────────────────
     $('#createSubjectClassBtn').on('click', function () {
         $('#add-schoolclassid').val('');
         $('.add-teacher-checkbox').prop('checked', false);
@@ -648,12 +891,24 @@ $(document).ready(function () {
         $('#add-error-msg').addClass('d-none').html('');
         $('#add-teacher-search').val('');
         $('#add-teacher-list .teacher-item').show();
+        hideModalLoader('add');
         new bootstrap.Modal(document.getElementById('addSubjectClassModal')).show();
     });
 
-    // ── Open EDIT modal ────────────────────────────────────────────────
+    // =========================================================================
+    // EDIT MODAL
+    // =========================================================================
+
+    let originalTeacherId = null;
+
+    $('#edit-teacher-list').on('change', '.edit-teacher-radio', function () {
+        $('#edit-staff-change-warning').toggleClass('d-none',
+            $(this).val() === String(originalTeacherId));
+    });
+
+    // ── Open EDIT ─────────────────────────────────────────────────────
     $(document).on('click', '.edit-sc-btn', function () {
-        const scid         = $(this).data('scid');
+        const scid          = $(this).data('scid');
         const schoolclassid = $(this).data('schoolclassid');
         const subteacherid  = $(this).data('subteacherid');
 
@@ -667,33 +922,43 @@ $(document).ready(function () {
         $('#edit-error-msg').addClass('d-none').html('');
         $('#edit-teacher-search').val('');
         $('#edit-teacher-list .teacher-item').show();
+        hideModalLoader('edit');
+        btnReset('#update-btn');
 
         new bootstrap.Modal(document.getElementById('editModal')).show();
     });
 
-    // ── Open DELETE modal ──────────────────────────────────────────────
+    // =========================================================================
+    // DELETE MODAL
+    // =========================================================================
+
     $(document).on('click', '.delete-sc-btn', function () {
         deleteUrl  = $(this).data('destroy-url');
         deleteScId = $(this).data('scid');
         $('#delete-subject-name').text($(this).data('subject'));
         $('#delete-teacher-name').text($(this).data('teacher'));
+        btnReset('#confirm-delete-btn');
         new bootstrap.Modal(document.getElementById('deleteModal')).show();
     });
 
-    // ── Image preview ──────────────────────────────────────────────────
-    $(document).on('click', '.staff-image', function () {
-        const img     = $(this).data('image');
-        const name    = $(this).data('teachername');
-        const exists  = $(this).data('file-exists') === 'true';
-        const defEx   = $(this).data('default-exists') === 'true';
+    // =========================================================================
+    // IMAGE PREVIEW
+    // =========================================================================
 
-        $('#preview-image').attr('src', (exists || (!exists && defEx))
-            ? img
-            : '/storage/staff_avatars/unnamed.jpg');
+    $(document).on('click', '.staff-image', function () {
+        const img    = $(this).data('image');
+        const name   = $(this).data('teachername');
+        const exists = $(this).data('file-exists') === 'true';
+        const defEx  = $(this).data('default-exists') === 'true';
+        $('#preview-image').attr('src',
+            (exists || (!exists && defEx)) ? img : '/storage/staff_avatars/unnamed.jpg');
         $('#preview-teachername').text(name || 'Unknown');
     });
 
-    // ── SUBMIT: Add ────────────────────────────────────────────────────
+    // =========================================================================
+    // SUBMIT: ADD
+    // =========================================================================
+
     $('#add-subjectclass-form').on('submit', function (e) {
         e.preventDefault();
 
@@ -709,45 +974,57 @@ $(document).ready(function () {
             return;
         }
 
-        const btn = $('#add-btn');
-        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Adding…');
+        // Show button loader + modal body loader
+        btnLoad('#add-btn', 'Adding…');
+        showModalLoader('add', `Adding ${subjectteacherids.length} assignment(s)…`);
+        $('#add-error-msg').addClass('d-none').html('');
 
         $.ajax({
-            url:  '{{ route("subjectclass.store") }}',
-            type: 'POST',
-            data: { schoolclassid, subjectteacherid: subjectteacherids, _token: CSRF },
+            url:         '{{ route("subjectclass.store") }}',
+            type:        'POST',
+            data:        { schoolclassid, subjectteacherid: subjectteacherids, _token: CSRF },
             traditional: true,
-            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            headers:     { 'X-Requested-With': 'XMLHttpRequest' },
+
             success(res) {
                 if (res.success) {
                     $('#addSubjectClassModal').modal('hide');
-                    Swal.fire({
-                        icon:'success', title:'Added!', text: res.message,
-                        timer:2500, showConfirmButton:false,
-                    }).then(() => location.reload());
+                    toast('success', 'Added!', res.message);
+                    // Show page loader while reloading
+                    setTimeout(() => {
+                        PageLoader.show('Refreshing data…');
+                        setTimeout(() => location.reload(), 400);
+                    }, 600);
                 } else {
+                    hideModalLoader('add');
+                    btnReset('#add-btn');
+                    updateAddBtn();
                     showError('#add-error-msg', res.message || 'Could not add subject class.');
                 }
             },
+
             error(xhr) {
+                hideModalLoader('add');
+                btnReset('#add-btn');
+                updateAddBtn();
                 const msg = xhr.responseJSON?.message
                     || Object.values(xhr.responseJSON?.errors || {}).flat().join(', ')
                     || 'An error occurred.';
                 showError('#add-error-msg', msg);
-            },
-            complete() {
-                btn.prop('disabled', false).html('<i class="ri-save-line me-1"></i>Add Subject Class');
-                updateAddBtn();
+                toast('error', 'Failed', msg);
             },
         });
     });
 
-    // ── SUBMIT: Edit ───────────────────────────────────────────────────
+    // =========================================================================
+    // SUBMIT: EDIT
+    // =========================================================================
+
     $('#edit-subjectclass-form').on('submit', function (e) {
         e.preventDefault();
 
-        const id              = $('#edit-id').val();
-        const schoolclassid   = $('#edit-schoolclassid').val();
+        const id               = $('#edit-id').val();
+        const schoolclassid    = $('#edit-schoolclassid').val();
         const subjectteacherid = $('.edit-teacher-radio:checked').val();
 
         if (!schoolclassid || !subjectteacherid) {
@@ -755,148 +1032,179 @@ $(document).ready(function () {
             return;
         }
 
-        // If teacher changed, confirm
         const teacherChanged = String(subjectteacherid) !== String(originalTeacherId);
 
         const doUpdate = () => {
-            const btn = $('#update-btn');
-            btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Updating…');
+            btnLoad('#update-btn', 'Updating…');
+            showModalLoader('edit',
+                teacherChanged
+                    ? 'Updating assignment & cascading staff records…'
+                    : 'Saving changes…'
+            );
+            $('#edit-error-msg').addClass('d-none').html('');
 
             $.ajax({
-                url:  `{{ url('subjectclass') }}/${id}`,
-                type: 'POST',
-                data: { schoolclassid, subjectteacherid, _token: CSRF, _method: 'PUT' },
+                url:     `{{ url('subjectclass') }}/${id}`,
+                type:    'POST',
+                data:    { schoolclassid, subjectteacherid, _token: CSRF, _method: 'PUT' },
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
+
                 success(res) {
                     if (res.success) {
                         $('#editModal').modal('hide');
-                        Swal.fire({
-                            icon:'success', title:'Updated!', text: res.message,
-                            timer:2500, showConfirmButton:false,
-                        }).then(() => location.reload());
+                        toast('success', 'Updated!', res.message);
+                        setTimeout(() => {
+                            PageLoader.show('Refreshing data…');
+                            setTimeout(() => location.reload(), 400);
+                        }, 600);
                     } else {
+                        hideModalLoader('edit');
+                        btnReset('#update-btn');
                         showError('#edit-error-msg', res.message || 'Could not update.');
                     }
                 },
+
                 error(xhr) {
+                    hideModalLoader('edit');
+                    btnReset('#update-btn');
                     const msg = xhr.responseJSON?.message
                         || Object.values(xhr.responseJSON?.errors || {}).flat().join(', ')
                         || 'An error occurred.';
                     showError('#edit-error-msg', msg);
-                },
-                complete() {
-                    btn.prop('disabled', false).html('<i class="ri-save-line me-1"></i>Update');
+                    toast('error', 'Failed', msg);
                 },
             });
         };
 
         if (teacherChanged) {
             Swal.fire({
-                title:            'Change Teacher?',
-                text:             'This will update the staff assignment across all related broadsheet and registration records. Continue?',
-                icon:             'warning',
-                showCancelButton:  true,
-                confirmButtonColor:'#2563eb',
-                confirmButtonText: 'Yes, update',
+                title:             'Change Teacher?',
+                html:              'This will update the staff assignment across all related <strong>broadsheet</strong> and <strong>registration records</strong>. Continue?',
+                icon:              'warning',
+                showCancelButton:   true,
+                confirmButtonColor: '#2563eb',
+                confirmButtonText:  'Yes, update',
+                cancelButtonText:   'Cancel',
             }).then(result => { if (result.isConfirmed) doUpdate(); });
         } else {
             doUpdate();
         }
     });
 
-    // ── DELETE: single ─────────────────────────────────────────────────
+    // =========================================================================
+    // DELETE: SINGLE
+    // =========================================================================
+
     $('#confirm-delete-btn').on('click', function () {
         if (!deleteUrl) return;
-        const btn = $(this);
-        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+        btnLoad('#confirm-delete-btn', 'Deleting…');
 
         $.ajax({
-            url:  deleteUrl,
-            type: 'POST',
-            data: { _method: 'DELETE', _token: CSRF },
+            url:     deleteUrl,
+            type:    'POST',
+            data:    { _method: 'DELETE', _token: CSRF },
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
+
             success(res) {
+                $('#deleteModal').modal('hide');
                 if (res.success) {
-                    $('#deleteModal').modal('hide');
-                    Swal.fire({
-                        icon:'success', title:'Deleted!', text: res.message,
-                        timer:2000, showConfirmButton:false,
-                    }).then(() => location.reload());
+                    toast('success', 'Deleted!', res.message);
+                    PageLoader.show('Removing record…');
+                    setTimeout(() => location.reload(), 500);
                 } else {
-                    $('#deleteModal').modal('hide');
+                    toast('error', 'Cannot Delete', res.message);
                     Swal.fire({
-                        icon:'error',
-                        title:'Cannot Delete',
-                        text: res.message,
-                        confirmButtonColor:'#2563eb',
+                        icon:               'error',
+                        title:              'Cannot Delete',
+                        text:               res.message,
+                        confirmButtonColor: '#2563eb',
                     });
                 }
             },
+
             error(xhr) {
                 $('#deleteModal').modal('hide');
-                Swal.fire('Error!', xhr.responseJSON?.message || 'Failed to delete.', 'error');
+                const msg = xhr.responseJSON?.message || 'Failed to delete.';
+                toast('error', 'Error', msg);
+                Swal.fire('Error!', msg, 'error');
             },
+
             complete() {
-                btn.prop('disabled', false).html('<i class="ri-delete-bin-line me-1"></i>Delete');
+                btnReset('#confirm-delete-btn');
                 deleteUrl = null;
             },
         });
     });
 
-    // ── DELETE: bulk ───────────────────────────────────────────────────
+    // =========================================================================
+    // DELETE: BULK
+    // =========================================================================
+
     function doBulkDelete() {
         const ids = $('.row-checkbox:checked').map((i, el) => el.value).get();
         if (!ids.length) return;
 
         Swal.fire({
-            title:            `Delete ${ids.length} assignment(s)?`,
-            text:             'Assignments with student records or scores cannot be deleted.',
-            icon:             'warning',
-            showCancelButton:  true,
-            confirmButtonColor:'#dc2626',
-            confirmButtonText: 'Yes, delete',
+            title:             `Delete ${ids.length} assignment(s)?`,
+            text:              'Assignments with student records or scores cannot be deleted.',
+            icon:              'warning',
+            showCancelButton:   true,
+            confirmButtonColor: '#dc2626',
+            confirmButtonText:  'Yes, delete all',
+            cancelButtonText:   'Cancel',
+            showLoaderOnConfirm: true,
+            preConfirm: () => {
+                // Return a promise so Swal shows its own loader
+                return Promise.allSettled(
+                    ids.map(id =>
+                        $.ajax({
+                            url:     `{{ url('subjectclass') }}/${id}`,
+                            type:    'POST',
+                            data:    { _method: 'DELETE', _token: CSRF },
+                            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                        })
+                    )
+                );
+            },
+            allowOutsideClick: () => !Swal.isLoading(),
         }).then(result => {
             if (!result.isConfirmed) return;
 
-            const promises = ids.map(id =>
-                $.ajax({
-                    url:  `{{ url('subjectclass') }}/${id}`,
-                    type: 'POST',
-                    data: { _method: 'DELETE', _token: CSRF },
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
-                })
-            );
+            const results     = result.value;
+            const successList = results.filter(r =>
+                r.status === 'fulfilled' && r.value?.success);
+            const failedList  = results.filter(r =>
+                r.status === 'rejected'  || !r.value?.success);
 
-            Promise.allSettled(promises).then(results => {
-                const failed = results.filter(r => r.status === 'rejected' ||
-                    (r.value && !r.value.success));
-                if (failed.length) {
-                    Swal.fire(
-                        'Partial Success',
-                        `${ids.length - failed.length} deleted. ${failed.length} could not be deleted (records exist).`,
-                        'warning'
-                    ).then(() => location.reload());
-                } else {
-                    Swal.fire({
-                        icon:'success', title:'Deleted!',
-                        text:`${ids.length} assignment(s) removed.`,
-                        timer:2000, showConfirmButton:false,
-                    }).then(() => location.reload());
-                }
-            });
+            if (failedList.length === 0) {
+                toast('success', 'Deleted!', `${ids.length} assignment(s) removed.`);
+            } else if (successList.length > 0) {
+                toast('warning', 'Partial Success',
+                    `${successList.length} deleted. ${failedList.length} blocked (records exist).`);
+            } else {
+                toast('error', 'Cannot Delete',
+                    'All selected assignments have existing records and cannot be deleted.');
+            }
+
+            PageLoader.show('Refreshing…');
+            setTimeout(() => location.reload(), 600);
         });
     }
 
     $('#bulkDeleteBtn, #bulkDeleteBtn2').on('click', doBulkDelete);
 
-    // ── Helper ─────────────────────────────────────────────────────────
+    // =========================================================================
+    // HELPERS
+    // =========================================================================
+
     function showError(selector, msg) {
         $(selector).removeClass('d-none').html(
             `<i class="ri-error-warning-line me-1"></i>${msg}`
         );
     }
 
-    // Init checkboxes on load
+    // Init checkboxes on first render
     bindCheckboxes();
 });
 </script>
