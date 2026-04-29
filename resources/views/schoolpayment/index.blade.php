@@ -17,7 +17,6 @@
     --pay-shadow:   0 2px 8px rgba(0,0,0,.08);
 }
 
-/* ── Hero ── */
 .pay-hero {
     background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #4f46e5 100%);
     border-radius: var(--pay-radius);
@@ -36,7 +35,6 @@
 .pay-hero h1 { font-size: 22px; font-weight: 700; color: #fff; margin: 0 0 6px; position: relative; }
 .pay-hero p  { font-size: 13px; color: rgba(255,255,255,.75); margin: 0; position: relative; }
 
-/* ── Stat cards ── */
 .stat-card {
     background: #fff;
     border: 1px solid var(--pay-border);
@@ -49,7 +47,6 @@
 .stat-card .stat-label { font-size: 12px; color: var(--pay-muted); margin-top: 4px; }
 .stat-card .stat-icon  { font-size: 32px; opacity: .12; float: right; margin-top: -8px; }
 
-/* ── Table ── */
 .pay-table th {
     background: var(--pay-primary);
     color: #fff;
@@ -66,7 +63,6 @@
 }
 .pay-table tr:hover td { background: #f0f9ff; }
 
-/* ── Avatars ── */
 .student-avatar {
     width: 40px; height: 40px;
     border-radius: 50%; object-fit: cover;
@@ -82,7 +78,6 @@
     border: 2px solid var(--pay-border);
 }
 
-/* ── Badges ── */
 .badge-class {
     display: inline-flex; align-items: center; gap: 4px;
     background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0;
@@ -99,7 +94,6 @@
     padding: 2px 7px; border-radius: 20px; font-size: 10px; font-weight: 600;
 }
 
-/* ── DataTable search ── */
 .dataTables_wrapper .dataTables_filter input {
     border: 1.5px solid var(--pay-border);
     border-radius: 8px;
@@ -113,7 +107,6 @@
     box-shadow: 0 0 0 3px rgba(37,99,235,.1);
 }
 
-/* ── Term/Session Modal ── */
 #termSessionModal .modal-content {
     border: none;
     border-radius: 18px;
@@ -205,13 +198,11 @@
 <div class="page-content">
 <div class="container-fluid">
 
-    {{-- Hero --}}
     <div class="pay-hero">
         <h1><i class="ri-wallet-line me-2"></i>Student Payment Portal</h1>
         <p>Select a student to process school fee payments for the current session.</p>
     </div>
 
-    {{-- Stat cards --}}
     <div class="row g-3 mb-4">
         <div class="col-md-3">
             <div class="stat-card">
@@ -245,7 +236,6 @@
         </div>
     </div>
 
-    {{-- Student table --}}
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white py-3 border-bottom">
             <h5 class="mb-0 fw-semibold" style="color:var(--pay-primary)">
@@ -279,22 +269,22 @@
                     <tbody>
                         @forelse($student as $i => $s)
                         @php
-                            // Build proper avatar URL
+                            // Use the EXACT SAME path as working StudentController
                             $avatarUrl = null;
-                            $hasAvatar = false;
                             if(isset($s->picture) && $s->picture && $s->picture != 'unnamed.jpg' && $s->picture != '') {
-                                $avatarUrl = asset('storage/images/studentavatar/' . $s->picture);
-                                $hasAvatar = true;
+                                $avatarUrl = asset('storage/images/student_avatars/' . $s->picture);
                             }
-                            $initials = strtoupper(substr($s->firstname ?? '', 0, 1) . substr($s->lastname ?? '', 0, 1));
+                            $firstName = $s->firstname ?? '';
+                            $lastName = $s->lastname ?? '';
+                            $initials = strtoupper(substr($firstName, 0, 1) . substr($lastName, 0, 1));
                             if(empty($initials)) $initials = 'ST';
                         @endphp
                         <tr>
                             <td>{{ $i + 1 }}</div>
                             <td>
-                                @if($hasAvatar)
+                                @if($avatarUrl)
                                     <img src="{{ $avatarUrl }}"
-                                         alt="{{ $s->firstname }} {{ $s->lastname }}"
+                                         alt="{{ $firstName }} {{ $lastName }}"
                                          class="student-avatar"
                                          onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='inline-flex';">
                                     <div class="avatar-placeholder" style="display: none;">{{ $initials }}</div>
@@ -303,7 +293,7 @@
                                 @endif
                              </div>
                             <td>
-                                <div class="fw-semibold">{{ $s->firstname ?? '' }} {{ $s->lastname ?? '' }}</div>
+                                <div class="fw-semibold">{{ $firstName }} {{ $lastName }}</div>
                                 <div class="text-muted small">{{ $s->term ?? '' }} · {{ $s->session ?? '' }}</div>
                              </div>
                             <td>
@@ -332,11 +322,10 @@
                                 </div>
                              </div>
                             <td>
-                                {{-- Opens inline modal instead of navigating away --}}
                                 <button type="button"
                                         class="btn btn-sm btn-primary open-pay-modal"
                                         data-id="{{ $s->id }}"
-                                        data-name="{{ $s->firstname ?? '' }} {{ $s->lastname ?? '' }}"
+                                        data-name="{{ $firstName }} {{ $lastName }}"
                                         data-class="{{ $s->schoolclass ?? '' }} {{ $s->arm ?? '' }}"
                                         data-admission="{{ $s->admissionNo ?? 'N/A' }}"
                                         data-initials="{{ $initials }}">
@@ -362,19 +351,16 @@
 </div>
 </div>
 
-{{-- ══════════════ TERM / SESSION MODAL ══════════════ --}}
+{{-- TERM / SESSION MODAL --}}
 <div class="modal fade" id="termSessionModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
     <div class="modal-dialog modal-dialog-centered" style="max-width:460px">
         <div class="modal-content">
-
             <div class="ts-hero">
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 <h5><i class="ri-wallet-3-line me-2"></i>Process Payment</h5>
                 <p>Choose a term and session to view and record fees.</p>
             </div>
-
             <div class="p-4">
-                {{-- Student chip --}}
                 <div class="ts-student-chip">
                     <div class="ts-chip-avatar" id="tsInitials">—</div>
                     <div>
@@ -387,7 +373,6 @@
                     </div>
                 </div>
 
-                {{-- Form --}}
                 <form id="tsForm" method="GET" action="{{ route('schoolpayment.termsessionpayments') }}">
                     <input type="hidden" name="studentId" id="tsStudentId">
 
@@ -423,7 +408,6 @@
                     </button>
                 </form>
             </div>
-
         </div>
     </div>
 </div>
@@ -434,8 +418,6 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 $(document).ready(function () {
-
-    // DataTable
     $('#studentsTable').DataTable({
         pageLength: 25,
         order: [[2, 'asc']],
@@ -450,7 +432,6 @@ $(document).ready(function () {
         columnDefs: [{ orderable: false, targets: [1, 6, 7] }],
     });
 
-    // Open modal and populate student info
     document.querySelectorAll('.open-pay-modal').forEach(function (btn) {
         btn.addEventListener('click', function () {
             document.getElementById('tsStudentId').value    = this.dataset.id;
@@ -468,7 +449,6 @@ $(document).ready(function () {
         });
     });
 
-    // Form validation before submit
     document.getElementById('tsForm').addEventListener('submit', function (e) {
         const termid    = document.getElementById('tsTermId').value;
         const sessionid = document.getElementById('tsSessionId').value;
@@ -489,7 +469,6 @@ $(document).ready(function () {
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
     });
-
 });
 </script>
 @endsection

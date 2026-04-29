@@ -27,6 +27,16 @@ use App\Models\Studentpicture;
 
 class SchoolPaymentController extends Controller
 {
+    // Helper method to get student avatar URL (matching working StudentController)
+    private function getStudentAvatarUrl($picture)
+    {
+        if (!$picture || $picture == 'unnamed.jpg' || $picture == '') {
+            return null;
+        }
+        // Use the EXACT SAME path as your working StudentController
+        return asset('storage/images/student_avatars/' . $picture);
+    }
+
     // ── Helpers: scholarship + discount ──────────────────────────────────
 
     private function getScholarshipDeduction(int $studentId, float $billAmount): array
@@ -241,6 +251,7 @@ class SchoolPaymentController extends Controller
                 'studentRegistration.firstname as firstname',
                 'studentRegistration.lastname as lastname',
                 'studentRegistration.gender as gender',
+                'studentRegistration.student_status as student_status',
                 'schoolclass.id as schoolclassid',
                 'schoolclass.schoolclass as schoolclass',
                 'schoolarm.arm as arm',
@@ -598,7 +609,6 @@ class SchoolPaymentController extends Controller
             $generatedBy     = Auth::id();
 
             if ($studentPayment) {
-                // FIX: Use DB::table to avoid Eloquent Expression cast issue
                 DB::table('student_bill_payment')
                     ->where('id', $studentPayment->id)
                     ->update([
@@ -631,7 +641,6 @@ class SchoolPaymentController extends Controller
                 ])->first();
 
                 if ($paymentBook) {
-                    // FIX: Use DB::table with correct singular table name
                     DB::table('student_bill_payment_book')
                         ->where('id', $paymentBook->id)
                         ->update([
@@ -783,7 +792,6 @@ class SchoolPaymentController extends Controller
                 }
 
                 if ($studentPayment) {
-                    // FIX: Use DB::table to avoid Eloquent Expression cast issue
                     DB::table('student_bill_payment')
                         ->where('id', $studentPayment->id)
                         ->update([
@@ -816,7 +824,6 @@ class SchoolPaymentController extends Controller
                     ])->first();
 
                     if ($paymentBook) {
-                        // FIX: Use DB::table with correct singular table name
                         DB::table('student_bill_payment_book')
                             ->where('id', $paymentBook->id)
                             ->update([
@@ -947,7 +954,6 @@ class SchoolPaymentController extends Controller
                 $newAmountPaid = $paymentBook->amount_paid - $paymentRecord->amount_paid;
                 $newAmountOwed = $paymentBook->amount_owed + $paymentRecord->amount_paid;
 
-                // FIX: Use DB::table with correct singular table name
                 DB::table('student_bill_payment_book')
                     ->where('id', $paymentBook->id)
                     ->update([
@@ -987,7 +993,6 @@ class SchoolPaymentController extends Controller
             return redirect()->route('schoolpayment.index')->with('error', 'Student not found or not enrolled.');
         }
 
-        // FIX: Use schoolclassId from student if route param is missing/wrong
         if (!$schoolclassid && $student->schoolclassId) {
             $schoolclassid = $student->schoolclassId;
         }
@@ -996,7 +1001,6 @@ class SchoolPaymentController extends Controller
             return redirect()->route('schoolpayment.index')->with('error', 'Could not resolve student class for invoice.');
         }
 
-        // FIX: Safe invoice number — strip slashes from admissionNo
         $safeAdmission = preg_replace('/[\/\\\\]/', '-', $student->admissionNo ?? $studentId);
         $invoiceNumber = 'INV-' . $safeAdmission . '-' . date('Ymd');
 
@@ -1123,7 +1127,6 @@ class SchoolPaymentController extends Controller
         $schoolterm    = optional(Schoolterm::find($termid))->term    ?? 'N/A';
         $schoolsession = optional(Schoolsession::find($sessionid))->session ?? 'N/A';
 
-        // Mark payments as invoiced (unless viewing historical)
         if (!$request->input('historical', false)) {
             StudentBillPayment::where('student_id', $studentId)
                 ->where('class_id', $schoolclassid)
@@ -1154,7 +1157,6 @@ class SchoolPaymentController extends Controller
         ];
 
         if ($request->has('download_pdf')) {
-            // FIX: Safe filename — no slashes
             $safeFilename = 'invoice_' . preg_replace('/[\/\\\\]/', '-', $student->admissionNo ?? $studentId) . '.pdf';
             $pdf = PDF::loadView('schoolpayment.studentinvoicepdf', $data);
             return $pdf->download($safeFilename);
@@ -1210,7 +1212,6 @@ class SchoolPaymentController extends Controller
         $totalOutstanding = max(0, $totalSchoolBill - $totalPaid);
         $schoolInfo       = SchoolInformation::first();
 
-        // FIX: Safe statement number — no slashes from admissionNo
         $safeAdmission   = preg_replace('/[\/\\\\]/', '-', $student->admissionNo ?? $studentId);
         $statementNumber = 'STMT-' . $safeAdmission . '-' . date('Ymd');
 
@@ -1233,7 +1234,6 @@ class SchoolPaymentController extends Controller
             'studentdata'        => $student ? collect([$student]) : collect([]),
         ];
 
-        // FIX: Safe PDF filename — no slashes
         $safeFilename = 'statement_' . $safeAdmission . '.pdf';
         $pdf = PDF::loadView('schoolpayment.studentstatement', $data);
         return $pdf->download($safeFilename);
