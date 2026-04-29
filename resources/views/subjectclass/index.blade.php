@@ -1,337 +1,903 @@
+{{-- resources/views/subjectclass/index.blade.php --}}
 @extends('layouts.master')
+
 @section('content')
+<style>
+:root {
+    --sc-primary:  #1e3a5f;
+    --sc-accent:   #2563eb;
+    --sc-success:  #16a34a;
+    --sc-warning:  #d97706;
+    --sc-danger:   #dc2626;
+    --sc-muted:    #6b7280;
+    --sc-border:   #e2e8f0;
+    --sc-bg:       #f8fafc;
+    --sc-radius:   12px;
+    --sc-shadow:   0 2px 8px rgba(0,0,0,.08);
+}
+
+/* ── Hero ────────────────────────────────────────────────── */
+.sc-hero {
+    background: linear-gradient(135deg, var(--sc-primary) 0%, #2563eb 60%, #4f46e5 100%);
+    border-radius: var(--sc-radius);
+    padding: 28px 32px; margin-bottom: 24px;
+    position: relative; overflow: hidden;
+}
+.sc-hero::before {
+    content:''; position:absolute; top:-60px; right:-60px;
+    width:220px; height:220px; background:rgba(255,255,255,.06); border-radius:50%;
+}
+.sc-hero::after {
+    content:''; position:absolute; bottom:-80px; left:-30px;
+    width:260px; height:260px; background:rgba(255,255,255,.03); border-radius:50%;
+}
+.sc-hero h1 { font-size:22px; font-weight:700; color:#fff; margin:0 0 6px; position:relative; }
+.sc-hero p  { font-size:13px; color:rgba(255,255,255,.75); margin:0; position:relative; }
+
+/* ── Stat cards ──────────────────────────────────────────── */
+.stat-card {
+    background:#fff; border:1px solid var(--sc-border);
+    border-radius:var(--sc-radius); padding:18px 20px;
+    transition:transform .15s, box-shadow .15s;
+}
+.stat-card:hover { transform:translateY(-2px); box-shadow:var(--sc-shadow); }
+.stat-card .stat-value { font-size:28px; font-weight:700; color:var(--sc-primary); }
+.stat-card .stat-label { font-size:12px; color:var(--sc-muted); margin-top:4px; }
+.stat-card .stat-icon  { font-size:32px; opacity:.12; float:right; margin-top:-8px; }
+
+/* ── Table ───────────────────────────────────────────────── */
+.sc-table th {
+    background:var(--sc-primary); color:#fff;
+    padding:12px 16px; font-weight:600; font-size:13px;
+    white-space:nowrap;
+}
+.sc-table td {
+    padding:11px 16px; vertical-align:middle;
+    border-bottom:1px solid var(--sc-border); font-size:13px;
+}
+.sc-table tr:hover td { background:#eff6ff; }
+
+/* ── Term badges ─────────────────────────────────────────── */
+.term-badge {
+    display:inline-flex; align-items:center;
+    padding:3px 9px; border-radius:20px;
+    font-size:11px; font-weight:600;
+}
+.term-first  { background:#dcfce7; color:#16a34a; }
+.term-second { background:#dbeafe; color:#2563eb; }
+.term-third  { background:#fee2e2; color:#dc2626; }
+.term-other  { background:#f3f4f6; color:#6b7280; }
+
+/* ── Avatar ──────────────────────────────────────────────── */
+.teacher-avatar {
+    width:36px; height:36px; border-radius:50%;
+    object-fit:cover; border:2px solid var(--sc-border);
+    cursor:pointer; transition:border-color .15s;
+}
+.teacher-avatar:hover { border-color:var(--sc-accent); }
+
+/* ── DataTables overrides ────────────────────────────────── */
+.dataTables_wrapper .dataTables_filter input {
+    border:1.5px solid var(--sc-border); border-radius:8px;
+    padding:7px 14px; margin-left:8px; font-size:13px;
+    transition:border .15s;
+}
+.dataTables_wrapper .dataTables_filter input:focus {
+    border-color:var(--sc-accent); outline:none;
+    box-shadow:0 0 0 3px rgba(37,99,235,.1);
+}
+.dataTables_wrapper .dataTables_length select {
+    border:1.5px solid var(--sc-border); border-radius:8px;
+    padding:6px 10px; margin:0 6px; font-size:13px;
+}
+.dataTables_wrapper .dataTables_info  { font-size:13px; color:var(--sc-muted); }
+.dataTables_wrapper .paginate_button  {
+    border-radius:6px !important; font-size:13px !important;
+    padding:4px 10px !important;
+}
+.dataTables_wrapper .paginate_button.current,
+.dataTables_wrapper .paginate_button.current:hover {
+    background:var(--sc-accent) !important;
+    border-color:var(--sc-accent) !important; color:#fff !important;
+}
+
+/* ── Modals ──────────────────────────────────────────────── */
+.sc-modal .modal-content {
+    border:none; border-radius:16px;
+    overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.15);
+}
+.modal-hero-bar {
+    background:linear-gradient(135deg, var(--sc-primary) 0%, #2563eb 100%);
+    padding:22px 28px; position:relative; overflow:hidden;
+}
+.modal-hero-bar::before {
+    content:''; position:absolute; top:-30px; right:-30px;
+    width:120px; height:120px; background:rgba(255,255,255,.07); border-radius:50%;
+}
+.modal-hero-bar h5 { color:#fff; font-weight:700; margin:0; font-size:16px; position:relative; }
+.modal-hero-bar .btn-close { position:absolute; top:18px; right:20px; filter:invert(1); }
+
+.form-label { font-size:13px; font-weight:600; color:#374151; margin-bottom:6px; }
+.form-control, .form-select {
+    border:1.5px solid var(--sc-border); border-radius:8px;
+    font-size:13px; padding:9px 14px; transition:border .15s;
+}
+.form-control:focus, .form-select:focus {
+    border-color:var(--sc-accent);
+    box-shadow:0 0 0 3px rgba(37,99,235,.1);
+}
+
+/* ── Checkbox group scroll ───────────────────────────────── */
+.checkbox-scroll {
+    max-height:220px; overflow-y:auto;
+    border:1.5px solid var(--sc-border); border-radius:8px;
+    padding:10px 14px; background:#fafbfc;
+}
+.checkbox-scroll .form-check { padding:5px 0; border-bottom:1px solid #f0f0f0; }
+.checkbox-scroll .form-check:last-child { border-bottom:none; }
+.checkbox-scroll .form-check-label { font-size:13px; cursor:pointer; }
+.checkbox-scroll .form-check-input:checked { background-color:var(--sc-accent); border-color:var(--sc-accent); }
+
+/* ── Bulk bar ────────────────────────────────────────────── */
+.bulk-bar {
+    background:#fff3cd; border:1px solid #ffc107;
+    border-radius:8px; padding:10px 16px;
+    display:none; align-items:center; gap:12px; margin-bottom:12px;
+}
+.bulk-bar.show { display:flex; }
+</style>
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
 
 <div class="main-content">
-    <div class="page-content">
-        <div class="container-fluid">
-            <!-- Start page title -->
-            <div class="row">
-                <div class="col-12">
-                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                        <h4 class="mb-sm-0">Subject Class Management</h4>
-                        <div class="page-title-right">
-                            <ol class="breadcrumb m-0">
-                                <li class="breadcrumb-item"><a href="javascript:void(0);">Subject Class Management</a></li>
-                                <li class="breadcrumb-item active">Subject Classes</li>
-                            </ol>
-                        </div>
-                    </div>
-                </div>
+<div class="page-content">
+<div class="container-fluid">
+
+    {{-- Hero --}}
+    <div class="sc-hero">
+        <h1><i class="ri-book-open-line me-2"></i>Subject Class Management</h1>
+        <p>Assign subject teachers to classes across terms and sessions.</p>
+    </div>
+
+    {{-- Stat cards --}}
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="ri-book-2-line"></i></div>
+                <div class="stat-value" id="statTotal">{{ $subjectclasses->count() }}</div>
+                <div class="stat-label">Total Assignments</div>
             </div>
-            <!-- End page title -->
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="ri-user-star-line"></i></div>
+                <div class="stat-value text-primary" id="statTeachers">{{ $subjectclasses->pluck('subteacherid')->unique()->count() }}</div>
+                <div class="stat-label">Unique Teachers</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="ri-building-line"></i></div>
+                <div class="stat-value text-success" id="statClasses">{{ $subjectclasses->pluck('schoolclassid')->unique()->count() }}</div>
+                <div class="stat-label">Classes Covered</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="ri-flask-line"></i></div>
+                <div class="stat-value text-warning" id="statSubjects">{{ $subjectclasses->pluck('subjectid')->unique()->count() }}</div>
+                <div class="stat-label">Unique Subjects</div>
+            </div>
+        </div>
+    </div>
 
-            @if ($errors->any())
-                <div class="alert alert-danger">
-                    <strong>Whoops!</strong> There were some problems with your input.<br><br>
-                    <ul>
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
+    {{-- Alerts --}}
+    @if ($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show">
+            <strong>Whoops!</strong> There were some problems with your input.
+            <ul class="mb-0 mt-1">
+                @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+    @if (session('success'))
+        <div class="alert alert-success alert-dismissible fade show">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+    @if (session('danger'))
+        <div class="alert alert-danger alert-dismissible fade show">
+            {{ session('danger') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
 
-            @if (session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
-            @if (session('danger'))
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    {{ session('danger') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
-            @endif
-
-            <div id="subjectClassList">
-                <div class="row">
-                    <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="row g-3">
-                                    <div class="col-xxl-3">
-                                        <div class="search-box">
-                                            <input type="text" class="form-control search" placeholder="Search subject classes">
-                                            <i class="ri-search-line search-icon"></i>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-header d-flex align-items-center">
-                                <div class="flex-grow-1">
-                                    <h5 class="card-title mb-0">Subject Classes <span class="badge bg-dark-subtle text-dark ms-1" id="total-records">{{ $subjectclasses->count() }}</span></h5>
-                                </div>
-                                <div class="flex-shrink-0">
-                                    <div class="d-flex flex-wrap align-items-start gap-2">
-                                        <button class="btn btn-subtle-danger d-none" id="remove-actions" onclick="deleteMultiple()"><i class="ri-delete-bin-2-line"></i></button>
-                                        @can('Create subject-class')
-                                            <button type="button" class="btn btn-primary add-btn" data-bs-toggle="modal" data-bs-target="#addSubjectClassModal" id="create-subject-class-btn"><i class="bi bi-plus-circle align-baseline me-1"></i> Create Subject Class</button>
-                                        @endcan
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table align-middle table-row-dashed fs-6 gy-5 mb-0" id="kt_roles_view_table">
-                                        <thead>
-                                            <tr class="text-start text-muted fw-bold fs-7 text-uppercase gs-0">
-                                                <th class="w-10px pe-2">
-                                                    <div class="form-check form-check-sm form-check-custom form-check-solid me-3">
-                                                        <input class="form-check-input" type="checkbox" id="checkAll" />
-                                                    </div>
-                                                </th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="sn">SN</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="subjectteacher">Subject Teacher</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="subject">Subject</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="sclass">Class</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="schoolarm">Arm</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="term">Term</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="session">Session</th>
-                                                <th class="min-w-125px sort cursor-pointer" data-sort="datereg">Date Updated</th>
-                                                <th class="min-w-100px">Actions</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody class="fw-semibold text-gray-600 list form-check-all">
-                                            @php $i = 0 @endphp
-                                            @forelse ($subjectclasses as $sc)
-                                                <?php
-                                                $picture = $sc->picture ?? 'unnamed.jpg';
-                                                $imagePath = asset('storage/staff_avatars/' . $picture);
-                                                $fileExists = file_exists(storage_path('app/public/staff_avatars/' . $picture));
-                                                $defaultImageExists = file_exists(storage_path('app/public/staff_avatars/unnamed.jpg'));
-                                                ?>
-                                                <tr data-url="{{ route('subjectclass.destroy', $sc->scid) }}">
-                                                    <td class="id" data-id="{{ $sc->scid }}">
-                                                        <div class="form-check form-check-sm form-check-custom form-check-solid">
-                                                            <input class="form-check-input" type="checkbox" name="chk_child" />
-                                                        </div>
-                                                    </td>
-                                                    <td class="sn">{{ ++$i }}</td>
-                                                    <td class="subjectteacher" data-subteacherid="{{ $sc->subteacherid }}">
-                                                        <div class="d-flex align-items-center">
-                                                            <div class="symbol symbol-circle symbol-50px overflow-hidden me-3">
-                                                                <a href="javascript:void(0);">
-                                                                    <div class="symbol-label">
-                                                                        <img src="{{ $imagePath }}"
-                                                                             alt="{{ $sc->teachername }}"
-                                                                             class="rounded-circle avatar-md staff-image"
-                                                                             data-bs-toggle="modal"
-                                                                             data-bs-target="#imageViewModal"
-                                                                             data-image="{{ $imagePath }}"
-                                                                             data-picture="{{ $sc->picture ?? 'none' }}"
-                                                                             data-teachername="{{ $sc->teachername }}"
-                                                                             data-file-exists="{{ $fileExists ? 'true' : 'false' }}"
-                                                                             data-default-exists="{{ $defaultImageExists ? 'true' : 'false' }}"
-                                                                             onerror="this.src='{{ asset('storage/staff_avatars/unnamed.jpg') }}'; console.log('Table image failed to load for teacher: {{ $sc->teachername ?? 'unknown' }}, picture: {{ $sc->picture ?? 'none' }}');" />
-                                                                    </div>
-                                                                </a>
-                                                            </div>
-                                                            <div class="d-flex flex-column">
-                                                                <a href="#" class="text-gray-800 text-hover-primary mb-1">{{ $sc->teachername }}</a>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td class="subject" data-subjectid="{{ $sc->subjectid }}">{{ $sc->subjectname }} ({{ $sc->subjectcode }})</td>
-                                                    <td class="sclass" data-schoolclassid="{{ $sc->schoolclassid }}">{{ $sc->sclass }}</td>
-                                                    <td class="schoolarm">{{ $sc->schoolarm }}</td>
-                                                    <td class="term" data-termid="{{ $sc->termid }}">
-                                                        <span @if($sc->termname === 'First Term') style="color: green"
-                                                            @elseif($sc->termname === 'Second Term') style="color: blue"
-                                                            @elseif($sc->termname === 'Third Term') style="color: red"
-                                                            @else style="color: inherit" @endif>
-                                                            {{ $sc->termname }}
-                                                        </span>
-                                                    </td>
-                                                    <td class="session" data-sessionid="{{ $sc->sessionid }}">{{ $sc->sessionname }}</td>
-                                                    <td class="datereg">{{ $sc->updated_at->format('Y-m-d') }}</td>
-                                                    <td>
-                                                        <ul class="d-flex gap-2 list-unstyled mb-0">
-                                                            @can('Update subject-class')
-                                                                <li>
-                                                                    <a href="javascript:void(0);" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn"><i class="ph-pencil"></i></a>
-                                                                </li>
-                                                            @endcan
-                                                            @can('Delete subject-class')
-                                                                <li>
-                                                                    <a href="javascript:void(0);" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn"><i class="ph-trash"></i></a>
-                                                                </li>
-                                                            @endcan
-                                                        </ul>
-                                                    </td>
-                                                </tr>
-                                            @empty
-                                                <tr class="noresult">
-                                                    <td colspan="10" class="text-center">No results found</td>
-                                                </tr>
-                                            @endforelse
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <!-- Client-side pagination controls -->
-                                <div class="row mt-3 align-items-center" id="pagination-element">
-                                    <div class="col-sm">
-                                        <div class="text-muted text-center text-sm-start">
-                                            Showing <span id="showing-records">0</span> of <span id="total-records-footer">{{ $subjectclasses->count() }}</span> Results
-                                        </div>
-                                    </div>
-                                    <div class="col-sm-auto mt-3 mt-sm-0">
-                                        <div class="pagination-wrap">
-                                            <nav aria-label="Page navigation">
-                                                <ul class="pagination listjs-pagination"></ul>
-                                            </nav>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Add Subject Class Modal -->
-                <div id="addSubjectClassModal" class="modal fade" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true" data-bs-backdrop="static">
-                    <div class="modal-dialog modal-dialog-centered modal-xl">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 id="exampleModalLabel" class="modal-title">Add Subject Class</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <form class="tablelist-form" autocomplete="off" id="add-subjectclass-form">
-                                <div class="modal-body">
-                                    <input type="hidden" id="add-id-field" name="id">
-                                    <div class="mb-3">
-                                        <label for="schoolclassid" class="form-label">Class</label>
-                                        <select name="schoolclassid" id="schoolclassid" class="form-control" required>
-                                            <option value="">Select Class</option>
-                                            @foreach ($schoolclasses as $class)
-                                                <option value="{{ $class->id }}">{{ $class->schoolclass }} ({{ $class->arm }})</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Subject Teachers</label>
-                                        <div class="checkbox-group" style="max-height: 200px; overflow-y: auto;">
-                                            @foreach ($subjectteacher->sortBy(['teachername', 'subject']) as $teacher)
-                                                <div class="form-check me-3">
-                                                    <input class="form-check-input modal-checkbox" type="checkbox" name="subjectteacherid[]" id="add-teacher-{{ $teacher->id }}" value="{{ $teacher->id }}">
-                                                    <label class="form-check-label" for="add-teacher-{{ $teacher->id }}">
-                                                        {{ $teacher->teachername }} ({{ $teacher->subject }} -- {{ $teacher->subjectcode }}) for
-                                                        <span style="color: {{ $teacher->termname === 'First Term' ? 'green' : ($teacher->termname === 'Second Term' || $teacher->termname === 'Third Term' ? 'blue' : 'inherit') }}">
-                                                            {{ $teacher->termname }}
-                                                        </span>
-                                                    </label>
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    </div>
-                                    <div class="alert alert-info alert-dismissible d-none" id="selected-teachers-alert">
-                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                                        <strong>Selected Teachers:</strong>
-                                        <ul id="selected-teachers-list" class="mb-0"></ul>
-                                    </div>
-                                    <div class="alert alert-danger d-none" id="alert-error-msg"></div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                                    <button type="submit" class="btn btn-primary" id="add-btn">Add Subject Class</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Edit Subject Class Modal -->
-                <div id="editModal" class="modal fade" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true" data-bs-backdrop="static">
-                    <div class="modal-dialog modal-dialog-centered modal-lg">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 id="editModalLabel" class="modal-title">Edit Subject Class</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <form class="tablelist-form" autocomplete="off" id="edit-subjectclass-form">
-                                <div class="modal-body">
-                                    <input type="hidden" id="edit-id-field" name="id">
-                                    <div class="mb-3">
-                                        <label for="edit-schoolclassid" class="form-label">Class</label>
-                                        <select name="schoolclassid" id="edit-schoolclassid" class="form-control" required>
-                                            <option value="">Select Class</option>
-                                            @foreach ($schoolclasses as $class)
-                                                <option value="{{ $class->id }}">{{ $class->schoolclass }} ({{ $class->arm }})</option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label class="form-label">Subject Teachers</label>
-                                        <div class="checkbox-group" style="max-height: 150px; overflow-y: auto;">
-                                            @foreach ($subjectteacher->sortBy(['teachername', 'subject']) as $teacher)
-                                                <div class="form-check me-3">
-                                                    <input class="form-check-input modal-checkbox" type="checkbox" name="subjectteacherid[]" id="edit-teacher-{{ $teacher->id }}" value="{{ $teacher->id }}">
-                                                    <label class="form-check-label" for="edit-teacher-{{ $teacher->id }}">
-                                                        {{ $teacher->teachername }} ({{ $teacher->subject }} -- {{ $teacher->subjectcode }}) for 
-                                                        <span style="color: {{ $teacher->termname === 'First Term' ? 'green' : ($teacher->termname === 'Second Term' || $teacher->termname === 'Third Term' ? 'blue' : 'inherit') }}">
-                                                            {{ $teacher->termname }}
-                                                        </span>
-                                                    </label>
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    </div>
-                                    <div class="alert alert-danger d-none" id="edit-alert-error-msg"></div>
-                                </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                                    <button type="submit" class="btn btn-primary" id="update-btn">Update</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Delete Confirmation Modal -->
-                <div id="deleteRecordModal" class="modal fade" tabindex="-1" aria-labelledby="deleteRecordModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-body text-center">
-                                <h4>Are you sure?</h4>
-                                <p>You won't be able to revert this!</p>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                                <button type="button" class="btn btn-danger" id="delete-record">Delete</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Image Preview Modal -->
-                <div id="imageViewModal" class="modal fade" tabindex="-1" aria-labelledby="imageViewModalLabel" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
-                            <div class="modal-header">
-                                <h5 id="imageViewModalLabel" class="modal-title">Staff Image Preview</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                            </div>
-                            <div class="modal-body text-center">
-                                <img id="preview-image" src="" alt="Staff Image" class="img-fluid" style="max-height: 400px;" />
-                                <p id="preview-teachername" class="mt-3"></p>
-                            </div>
-                            <div class="modal-footer">
-                                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                            </div>
-                        </div>
-                    </div>
+    {{-- Table card --}}
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3 border-bottom">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-semibold" style="color:var(--sc-primary)">
+                    <i class="ri-list-check me-2"></i>Subject Class Assignments
+                    <span class="badge bg-primary ms-2" id="totalBadge">{{ $subjectclasses->count() }}</span>
+                </h5>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-danger d-none" id="bulkDeleteBtn">
+                        <i class="ri-delete-bin-line me-1"></i>Delete Selected
+                    </button>
+                    @can('Create subject-class')
+                    <button class="btn btn-primary" id="createSubjectClassBtn">
+                        <i class="ri-add-line me-1"></i>Create Subject Class
+                    </button>
+                    @endcan
                 </div>
             </div>
         </div>
-        <!-- End Page-content -->
+        <div class="card-body">
+
+            {{-- Bulk bar --}}
+            <div class="bulk-bar" id="bulkBar">
+                <i class="ri-checkbox-circle-line text-warning"></i>
+                <span id="bulkCount">0</span> assignment(s) selected
+                <button class="btn btn-sm btn-danger ms-auto" id="bulkDeleteBtn2">
+                    <i class="ri-delete-bin-line me-1"></i>Delete Selected
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table sc-table w-100 mb-0" id="subjectClassTable">
+                    <thead>
+                        <tr>
+                            <th width="40">
+                                <input type="checkbox" id="selectAll" class="form-check-input">
+                            </th>
+                            <th>#</th>
+                            <th>Subject Teacher</th>
+                            <th>Subject</th>
+                            <th>Class</th>
+                            <th>Arm</th>
+                            <th>Term</th>
+                            <th>Session</th>
+                            <th>Updated</th>
+                            <th width="100">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @php $i = 0; @endphp
+                        @forelse ($subjectclasses as $sc)
+                            @php
+                                $picture      = $sc->picture ?? 'unnamed.jpg';
+                                $imagePath    = asset('storage/staff_avatars/' . $picture);
+                                $fileExists   = file_exists(storage_path('app/public/staff_avatars/' . $picture));
+                                $defaultExists= file_exists(storage_path('app/public/staff_avatars/unnamed.jpg'));
+
+                                $termClass = match(true) {
+                                    str_contains($sc->termname ?? '', 'First')  => 'term-first',
+                                    str_contains($sc->termname ?? '', 'Second') => 'term-second',
+                                    str_contains($sc->termname ?? '', 'Third')  => 'term-third',
+                                    default => 'term-other'
+                                };
+                            @endphp
+                            <tr data-scid="{{ $sc->scid }}"
+                                data-destroy-url="{{ route('subjectclass.destroy', $sc->scid) }}"
+                                data-schoolclassid="{{ $sc->schoolclassid }}"
+                                data-subteacherid="{{ $sc->subteacherid }}">
+                                <td>
+                                    <input type="checkbox" class="form-check-input row-checkbox" value="{{ $sc->scid }}">
+                                </td>
+                                <td>{{ ++$i }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <img src="{{ $imagePath }}"
+                                             alt="{{ $sc->teachername }}"
+                                             class="teacher-avatar staff-image"
+                                             data-bs-toggle="modal"
+                                             data-bs-target="#imageViewModal"
+                                             data-image="{{ $imagePath }}"
+                                             data-teachername="{{ $sc->teachername }}"
+                                             data-file-exists="{{ $fileExists ? 'true' : 'false' }}"
+                                             data-default-exists="{{ $defaultExists ? 'true' : 'false' }}"
+                                             data-picture="{{ $sc->picture ?? 'none' }}"
+                                             onerror="this.src='{{ asset('storage/staff_avatars/unnamed.jpg') }}'">
+                                        <span class="fw-semibold text-dark">{{ $sc->teachername }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="fw-semibold">{{ $sc->subjectname }}</span>
+                                    <br><small class="text-muted">{{ $sc->subjectcode }}</small>
+                                </td>
+                                <td>{{ $sc->sclass }}</td>
+                                <td>{{ $sc->schoolarm }}</td>
+                                <td>
+                                    <span class="term-badge {{ $termClass }}">
+                                        {{ $sc->termname }}
+                                    </span>
+                                </td>
+                                <td>{{ $sc->sessionname }}</td>
+                                <td>
+                                    <small class="text-muted">{{ $sc->updated_at->format('d M Y') }}</small>
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-1">
+                                        @can('Update subject-class')
+                                        <button class="btn btn-sm btn-outline-secondary edit-sc-btn" title="Edit"
+                                            data-scid="{{ $sc->scid }}"
+                                            data-schoolclassid="{{ $sc->schoolclassid }}"
+                                            data-subteacherid="{{ $sc->subteacherid }}">
+                                            <i class="ph-pencil"></i>
+                                        </button>
+                                        @endcan
+                                        @can('Delete subject-class')
+                                        <button class="btn btn-sm btn-outline-danger delete-sc-btn" title="Delete"
+                                            data-scid="{{ $sc->scid }}"
+                                            data-subject="{{ $sc->subjectname }}"
+                                            data-teacher="{{ $sc->teachername }}"
+                                            data-destroy-url="{{ route('subjectclass.destroy', $sc->scid) }}">
+                                            <i class="ph-trash"></i>
+                                        </button>
+                                        @endcan
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="10" class="text-center text-muted py-4">No subject class assignments found.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+</div>
+</div>
+
+{{-- ═══════════════════════ ADD MODAL ═══════════════════════ --}}
+<div class="modal fade sc-modal" id="addSubjectClassModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-hero-bar">
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5><i class="ri-add-circle-line me-2"></i>Add Subject Class</h5>
+            </div>
+            <form id="add-subjectclass-form" autocomplete="off">
+                @csrf
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label">Class <span class="text-danger">*</span></label>
+                        <select name="schoolclassid" id="add-schoolclassid" class="form-select" required>
+                            <option value="">— Select Class —</option>
+                            @foreach ($schoolclasses as $class)
+                                <option value="{{ $class->id }}">{{ $class->schoolclass }} ({{ $class->arm }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Subject Teachers <span class="text-danger">*</span></label>
+                        <div class="mb-2">
+                            <input type="text" id="add-teacher-search" class="form-control form-control-sm"
+                                   placeholder="🔍  Filter teachers…">
+                        </div>
+                        <div class="checkbox-scroll" id="add-teacher-list">
+                            @foreach ($subjectteacher->sortBy(['teachername', 'subject']) as $teacher)
+                                @php
+                                    $tColor = match(true) {
+                                        str_contains($teacher->termname ?? '', 'First')  => '#16a34a',
+                                        str_contains($teacher->termname ?? '', 'Second') => '#2563eb',
+                                        str_contains($teacher->termname ?? '', 'Third')  => '#dc2626',
+                                        default => '#6b7280'
+                                    };
+                                @endphp
+                                <div class="form-check teacher-item">
+                                    <input class="form-check-input add-teacher-checkbox"
+                                           type="checkbox"
+                                           name="subjectteacherid[]"
+                                           id="add-t-{{ $teacher->id }}"
+                                           value="{{ $teacher->id }}"
+                                           data-label="{{ $teacher->teachername }} {{ $teacher->subject }}">
+                                    <label class="form-check-label" for="add-t-{{ $teacher->id }}">
+                                        <strong>{{ $teacher->teachername }}</strong>
+                                        — {{ $teacher->subject }}
+                                        <small class="text-muted">({{ $teacher->subjectcode }})</small>
+                                        <span class="ms-1" style="color:{{ $tColor }};font-size:11px;font-weight:600;">
+                                            {{ $teacher->termname }}
+                                        </span>
+                                    </label>
+                                </div>
+                            @endforeach
+                        </div>
+                        <small class="text-muted mt-1 d-block">
+                            <span id="add-selected-count">0</span> teacher(s) selected
+                        </small>
+                    </div>
+
+                    <div class="alert alert-danger d-none" id="add-error-msg"></div>
+                </div>
+                <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="add-btn" disabled>
+                        <i class="ri-save-line me-1"></i>Add Subject Class
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 
+{{-- ═══════════════════════ EDIT MODAL ══════════════════════ --}}
+<div class="modal fade sc-modal" id="editModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-hero-bar">
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5><i class="ri-edit-line me-2"></i>Edit Subject Class</h5>
+            </div>
+            <form id="edit-subjectclass-form" autocomplete="off">
+                @csrf
+                <input type="hidden" id="edit-id">
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label class="form-label">Class <span class="text-danger">*</span></label>
+                        <select name="schoolclassid" id="edit-schoolclassid" class="form-select" required>
+                            <option value="">— Select Class —</option>
+                            @foreach ($schoolclasses as $class)
+                                <option value="{{ $class->id }}">{{ $class->schoolclass }} ({{ $class->arm }})</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Subject Teacher <span class="text-danger">*</span></label>
+                        <div class="mb-2">
+                            <input type="text" id="edit-teacher-search" class="form-control form-control-sm"
+                                   placeholder="🔍  Filter teachers…">
+                        </div>
+                        <div class="checkbox-scroll" id="edit-teacher-list">
+                            @foreach ($subjectteacher->sortBy(['teachername', 'subject']) as $teacher)
+                                @php
+                                    $tColor = match(true) {
+                                        str_contains($teacher->termname ?? '', 'First')  => '#16a34a',
+                                        str_contains($teacher->termname ?? '', 'Second') => '#2563eb',
+                                        str_contains($teacher->termname ?? '', 'Third')  => '#dc2626',
+                                        default => '#6b7280'
+                                    };
+                                @endphp
+                                <div class="form-check teacher-item">
+                                    <input class="form-check-input edit-teacher-radio"
+                                           type="radio"
+                                           name="subjectteacherid"
+                                           id="edit-t-{{ $teacher->id }}"
+                                           value="{{ $teacher->id }}"
+                                           data-label="{{ $teacher->teachername }} {{ $teacher->subject }}">
+                                    <label class="form-check-label" for="edit-t-{{ $teacher->id }}">
+                                        <strong>{{ $teacher->teachername }}</strong>
+                                        — {{ $teacher->subject }}
+                                        <small class="text-muted">({{ $teacher->subjectcode }})</small>
+                                        <span class="ms-1" style="color:{{ $tColor }};font-size:11px;font-weight:600;">
+                                            {{ $teacher->termname }}
+                                        </span>
+                                    </label>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+
+                    <div class="alert alert-warning d-none" id="edit-staff-change-warning">
+                        <i class="ri-alert-line me-1"></i>
+                        <strong>Note:</strong> Changing the teacher will update the staff assignment across all related broadsheet and registration records.
+                    </div>
+                    <div class="alert alert-danger d-none" id="edit-error-msg"></div>
+                </div>
+                <div class="modal-footer border-0 pt-0 px-4 pb-4">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="update-btn">
+                        <i class="ri-save-line me-1"></i>Update
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+{{-- ═══════════════════════ DELETE MODAL ════════════════════ --}}
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:400px">
+        <div class="modal-content border-0" style="border-radius:16px;overflow:hidden">
+            <div class="modal-header bg-danger text-white border-0">
+                <h5 class="modal-title"><i class="ri-delete-bin-line me-2"></i>Confirm Deletion</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Delete the subject class assignment for <strong id="delete-subject-name"></strong> taught by <strong id="delete-teacher-name"></strong>?</p>
+                <p class="text-muted small mb-0">
+                    This will be blocked if students are already registered or scores exist.
+                </p>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirm-delete-btn">
+                    <i class="ri-delete-bin-line me-1"></i>Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ═══════════════════════ IMAGE PREVIEW MODAL ═════════════ --}}
+<div class="modal fade" id="imageViewModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:360px">
+        <div class="modal-content border-0" style="border-radius:16px;overflow:hidden">
+            <div class="modal-header border-0 pb-0">
+                <h6 class="modal-title fw-semibold">Staff Photo</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center pt-2 pb-4">
+                <img id="preview-image" src="" alt="Staff"
+                     class="rounded-circle mb-3"
+                     style="width:160px;height:160px;object-fit:cover;border:4px solid var(--sc-border);">
+                <p id="preview-teachername" class="fw-semibold mb-0" style="color:var(--sc-primary)"></p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+$(document).ready(function () {
+
+    const CSRF = $('meta[name="csrf-token"]').attr('content');
+    let deleteUrl  = null;
+    let deleteScId = null;
+
+    // ── DataTable ──────────────────────────────────────────────────────
+    const table = $('#subjectClassTable').DataTable({
+        dom: "<'row align-items-center mb-3'<'col-sm-6'l><'col-sm-6 text-end'f>>" +
+             "<'row'<'col-12'tr>>" +
+             "<'row align-items-center mt-3'<'col-sm-5'i><'col-sm-7 text-end'p>>",
+        language: {
+            search:           '',
+            searchPlaceholder:'Search assignments…',
+            lengthMenu:       'Show _MENU_ entries',
+            info:             'Showing _START_–_END_ of _TOTAL_ entries',
+            infoEmpty:        'No assignments found',
+            zeroRecords:      'No matching assignments',
+            emptyTable:       'No subject class assignments yet',
+        },
+        order:      [[1, 'asc']],
+        pageLength: 15,
+        responsive: true,
+        drawCallback: function () {
+            bindCheckboxes();
+            const info = this.api().page.info();
+            $('#totalBadge').text(info.recordsTotal);
+        },
+    });
+
+    // ── Checkboxes ─────────────────────────────────────────────────────
+    function bindCheckboxes() {
+        $('.row-checkbox').off('change').on('change', updateBulkBar);
+    }
+
+    $('#selectAll').on('change', function () {
+        $('.row-checkbox').prop('checked', this.checked);
+        updateBulkBar();
+    });
+
+    function updateBulkBar() {
+        const count = $('.row-checkbox:checked').length;
+        $('#bulkBar').toggleClass('show', count > 0);
+        $('#bulkCount').text(count);
+        $('#bulkDeleteBtn').toggleClass('d-none', count === 0);
+        if (count === 0) $('#selectAll').prop('checked', false);
+    }
+
+    // ── Teacher filter in modal ────────────────────────────────────────
+    $('#add-teacher-search').on('input', function () {
+        const q = $(this).val().toLowerCase();
+        $('#add-teacher-list .teacher-item').each(function () {
+            const label = $(this).find('label').text().toLowerCase();
+            $(this).toggle(label.includes(q));
+        });
+    });
+
+    $('#edit-teacher-search').on('input', function () {
+        const q = $(this).val().toLowerCase();
+        $('#edit-teacher-list .teacher-item').each(function () {
+            const label = $(this).find('label').text().toLowerCase();
+            $(this).toggle(label.includes(q));
+        });
+    });
+
+    // ── Add modal: track selected count & enable button ───────────────
+    $('#add-teacher-list').on('change', '.add-teacher-checkbox', function () {
+        const count = $('.add-teacher-checkbox:checked').length;
+        $('#add-selected-count').text(count);
+        updateAddBtn();
+    });
+
+    $('#add-schoolclassid').on('change', updateAddBtn);
+
+    function updateAddBtn() {
+        const hasClass   = $('#add-schoolclassid').val() !== '';
+        const hasTeacher = $('.add-teacher-checkbox:checked').length > 0;
+        $('#add-btn').prop('disabled', !(hasClass && hasTeacher));
+    }
+
+    // ── Edit modal: show warning if teacher changes ────────────────────
+    let originalTeacherId = null;
+
+    $('#edit-teacher-list').on('change', '.edit-teacher-radio', function () {
+        const changed = $(this).val() !== String(originalTeacherId);
+        $('#edit-staff-change-warning').toggleClass('d-none', !changed);
+    });
+
+    // ── Open CREATE modal ──────────────────────────────────────────────
+    $('#createSubjectClassBtn').on('click', function () {
+        $('#add-schoolclassid').val('');
+        $('.add-teacher-checkbox').prop('checked', false);
+        $('#add-selected-count').text(0);
+        $('#add-btn').prop('disabled', true);
+        $('#add-error-msg').addClass('d-none').html('');
+        $('#add-teacher-search').val('');
+        $('#add-teacher-list .teacher-item').show();
+        new bootstrap.Modal(document.getElementById('addSubjectClassModal')).show();
+    });
+
+    // ── Open EDIT modal ────────────────────────────────────────────────
+    $(document).on('click', '.edit-sc-btn', function () {
+        const scid         = $(this).data('scid');
+        const schoolclassid = $(this).data('schoolclassid');
+        const subteacherid  = $(this).data('subteacherid');
+
+        originalTeacherId = subteacherid;
+
+        $('#edit-id').val(scid);
+        $('#edit-schoolclassid').val(schoolclassid);
+        $('.edit-teacher-radio').prop('checked', false);
+        $(`#edit-t-${subteacherid}`).prop('checked', true);
+        $('#edit-staff-change-warning').addClass('d-none');
+        $('#edit-error-msg').addClass('d-none').html('');
+        $('#edit-teacher-search').val('');
+        $('#edit-teacher-list .teacher-item').show();
+
+        new bootstrap.Modal(document.getElementById('editModal')).show();
+    });
+
+    // ── Open DELETE modal ──────────────────────────────────────────────
+    $(document).on('click', '.delete-sc-btn', function () {
+        deleteUrl  = $(this).data('destroy-url');
+        deleteScId = $(this).data('scid');
+        $('#delete-subject-name').text($(this).data('subject'));
+        $('#delete-teacher-name').text($(this).data('teacher'));
+        new bootstrap.Modal(document.getElementById('deleteModal')).show();
+    });
+
+    // ── Image preview ──────────────────────────────────────────────────
+    $(document).on('click', '.staff-image', function () {
+        const img     = $(this).data('image');
+        const name    = $(this).data('teachername');
+        const exists  = $(this).data('file-exists') === 'true';
+        const defEx   = $(this).data('default-exists') === 'true';
+
+        $('#preview-image').attr('src', (exists || (!exists && defEx))
+            ? img
+            : '/storage/staff_avatars/unnamed.jpg');
+        $('#preview-teachername').text(name || 'Unknown');
+    });
+
+    // ── SUBMIT: Add ────────────────────────────────────────────────────
+    $('#add-subjectclass-form').on('submit', function (e) {
+        e.preventDefault();
+
+        const schoolclassid     = $('#add-schoolclassid').val();
+        const subjectteacherids = $('.add-teacher-checkbox:checked').map((i, el) => el.value).get();
+
+        if (!schoolclassid) {
+            showError('#add-error-msg', 'Please select a class.');
+            return;
+        }
+        if (subjectteacherids.length === 0) {
+            showError('#add-error-msg', 'Please select at least one subject teacher.');
+            return;
+        }
+
+        const btn = $('#add-btn');
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Adding…');
+
+        $.ajax({
+            url:  '{{ route("subjectclass.store") }}',
+            type: 'POST',
+            data: { schoolclassid, subjectteacherid: subjectteacherids, _token: CSRF },
+            traditional: true,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            success(res) {
+                if (res.success) {
+                    $('#addSubjectClassModal').modal('hide');
+                    Swal.fire({
+                        icon:'success', title:'Added!', text: res.message,
+                        timer:2500, showConfirmButton:false,
+                    }).then(() => location.reload());
+                } else {
+                    showError('#add-error-msg', res.message || 'Could not add subject class.');
+                }
+            },
+            error(xhr) {
+                const msg = xhr.responseJSON?.message
+                    || Object.values(xhr.responseJSON?.errors || {}).flat().join(', ')
+                    || 'An error occurred.';
+                showError('#add-error-msg', msg);
+            },
+            complete() {
+                btn.prop('disabled', false).html('<i class="ri-save-line me-1"></i>Add Subject Class');
+                updateAddBtn();
+            },
+        });
+    });
+
+    // ── SUBMIT: Edit ───────────────────────────────────────────────────
+    $('#edit-subjectclass-form').on('submit', function (e) {
+        e.preventDefault();
+
+        const id              = $('#edit-id').val();
+        const schoolclassid   = $('#edit-schoolclassid').val();
+        const subjectteacherid = $('.edit-teacher-radio:checked').val();
+
+        if (!schoolclassid || !subjectteacherid) {
+            showError('#edit-error-msg', 'Please select a class and a subject teacher.');
+            return;
+        }
+
+        // If teacher changed, confirm
+        const teacherChanged = String(subjectteacherid) !== String(originalTeacherId);
+
+        const doUpdate = () => {
+            const btn = $('#update-btn');
+            btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Updating…');
+
+            $.ajax({
+                url:  `{{ url('subjectclass') }}/${id}`,
+                type: 'POST',
+                data: { schoolclassid, subjectteacherid, _token: CSRF, _method: 'PUT' },
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                success(res) {
+                    if (res.success) {
+                        $('#editModal').modal('hide');
+                        Swal.fire({
+                            icon:'success', title:'Updated!', text: res.message,
+                            timer:2500, showConfirmButton:false,
+                        }).then(() => location.reload());
+                    } else {
+                        showError('#edit-error-msg', res.message || 'Could not update.');
+                    }
+                },
+                error(xhr) {
+                    const msg = xhr.responseJSON?.message
+                        || Object.values(xhr.responseJSON?.errors || {}).flat().join(', ')
+                        || 'An error occurred.';
+                    showError('#edit-error-msg', msg);
+                },
+                complete() {
+                    btn.prop('disabled', false).html('<i class="ri-save-line me-1"></i>Update');
+                },
+            });
+        };
+
+        if (teacherChanged) {
+            Swal.fire({
+                title:            'Change Teacher?',
+                text:             'This will update the staff assignment across all related broadsheet and registration records. Continue?',
+                icon:             'warning',
+                showCancelButton:  true,
+                confirmButtonColor:'#2563eb',
+                confirmButtonText: 'Yes, update',
+            }).then(result => { if (result.isConfirmed) doUpdate(); });
+        } else {
+            doUpdate();
+        }
+    });
+
+    // ── DELETE: single ─────────────────────────────────────────────────
+    $('#confirm-delete-btn').on('click', function () {
+        if (!deleteUrl) return;
+        const btn = $(this);
+        btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
+
+        $.ajax({
+            url:  deleteUrl,
+            type: 'POST',
+            data: { _method: 'DELETE', _token: CSRF },
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            success(res) {
+                if (res.success) {
+                    $('#deleteModal').modal('hide');
+                    Swal.fire({
+                        icon:'success', title:'Deleted!', text: res.message,
+                        timer:2000, showConfirmButton:false,
+                    }).then(() => location.reload());
+                } else {
+                    $('#deleteModal').modal('hide');
+                    Swal.fire({
+                        icon:'error',
+                        title:'Cannot Delete',
+                        text: res.message,
+                        confirmButtonColor:'#2563eb',
+                    });
+                }
+            },
+            error(xhr) {
+                $('#deleteModal').modal('hide');
+                Swal.fire('Error!', xhr.responseJSON?.message || 'Failed to delete.', 'error');
+            },
+            complete() {
+                btn.prop('disabled', false).html('<i class="ri-delete-bin-line me-1"></i>Delete');
+                deleteUrl = null;
+            },
+        });
+    });
+
+    // ── DELETE: bulk ───────────────────────────────────────────────────
+    function doBulkDelete() {
+        const ids = $('.row-checkbox:checked').map((i, el) => el.value).get();
+        if (!ids.length) return;
+
+        Swal.fire({
+            title:            `Delete ${ids.length} assignment(s)?`,
+            text:             'Assignments with student records or scores cannot be deleted.',
+            icon:             'warning',
+            showCancelButton:  true,
+            confirmButtonColor:'#dc2626',
+            confirmButtonText: 'Yes, delete',
+        }).then(result => {
+            if (!result.isConfirmed) return;
+
+            const promises = ids.map(id =>
+                $.ajax({
+                    url:  `{{ url('subjectclass') }}/${id}`,
+                    type: 'POST',
+                    data: { _method: 'DELETE', _token: CSRF },
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                })
+            );
+
+            Promise.allSettled(promises).then(results => {
+                const failed = results.filter(r => r.status === 'rejected' ||
+                    (r.value && !r.value.success));
+                if (failed.length) {
+                    Swal.fire(
+                        'Partial Success',
+                        `${ids.length - failed.length} deleted. ${failed.length} could not be deleted (records exist).`,
+                        'warning'
+                    ).then(() => location.reload());
+                } else {
+                    Swal.fire({
+                        icon:'success', title:'Deleted!',
+                        text:`${ids.length} assignment(s) removed.`,
+                        timer:2000, showConfirmButton:false,
+                    }).then(() => location.reload());
+                }
+            });
+        });
+    }
+
+    $('#bulkDeleteBtn, #bulkDeleteBtn2').on('click', doBulkDelete);
+
+    // ── Helper ─────────────────────────────────────────────────────────
+    function showError(selector, msg) {
+        $(selector).removeClass('d-none').html(
+            `<i class="ri-error-warning-line me-1"></i>${msg}`
+        );
+    }
+
+    // Init checkboxes on load
+    bindCheckboxes();
+});
+</script>
 @endsection

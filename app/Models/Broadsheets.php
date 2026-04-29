@@ -14,10 +14,10 @@ class Broadsheets extends Model
         'subjectclass_id',
         'term_id',
         'staff_id',
-        'ca1',
-        'ca2',
-        'ca3',
-        'exam',
+        // 'ca1',
+        // 'ca2',
+        // 'ca3',
+        // 'exam',
         'total',
         'bf', // Added brought forward
         'cum', // Added cumulative score
