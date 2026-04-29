@@ -27,14 +27,23 @@ use App\Models\Studentpicture;
 
 class SchoolPaymentController extends Controller
 {
-    // Helper method to get student avatar URL (matching working StudentController)
+    // Helper method to get student avatar URL
     private function getStudentAvatarUrl($picture)
     {
         if (!$picture || $picture == 'unnamed.jpg' || $picture == '') {
             return null;
         }
-        // Use the EXACT SAME path as your working StudentController
         return asset('storage/images/student_avatars/' . $picture);
+    }
+
+    // Helper method to get full name with other name
+    private function getFullNameWithOther($firstname, $lastname, $othername = '')
+    {
+        $fullName = trim($firstname . ' ' . $lastname);
+        if (!empty($othername)) {
+            $fullName .= ' (' . $othername . ')';
+        }
+        return $fullName;
     }
 
     // ── Helpers: scholarship + discount ──────────────────────────────────
@@ -181,6 +190,7 @@ class SchoolPaymentController extends Controller
                 'studentRegistration.admissionNo as admissionNo',
                 'studentRegistration.firstname as firstname',
                 'studentRegistration.lastname as lastname',
+                'studentRegistration.othername as othername',
                 'studentRegistration.home_address2 as homeadd',
                 'parentRegistration.father_phone as phone',
                 'studentRegistration.statusId as statusId',
@@ -215,6 +225,7 @@ class SchoolPaymentController extends Controller
                     'studentRegistration.admissionNo as admissionNo',
                     'studentRegistration.firstname as firstname',
                     'studentRegistration.lastname as lastname',
+                    'studentRegistration.othername as othername',
                     'studentRegistration.home_address2 as homeadd',
                     'parentRegistration.father_phone as phone',
                     'studentRegistration.statusId as statusId',
@@ -250,6 +261,7 @@ class SchoolPaymentController extends Controller
                 'studentRegistration.admissionNo as admissionNo',
                 'studentRegistration.firstname as firstname',
                 'studentRegistration.lastname as lastname',
+                'studentRegistration.othername as othername',
                 'studentRegistration.gender as gender',
                 'studentRegistration.student_status as student_status',
                 'schoolclass.id as schoolclassid',
@@ -264,6 +276,7 @@ class SchoolPaymentController extends Controller
         foreach ($student as $s) {
             $s->has_scholarship = $this->studentHasScholarship($s->id);
             $s->has_discount    = $this->studentHasDiscount($s->id);
+            $s->full_name = $this->getFullNameWithOther($s->firstname, $s->lastname, $s->othername);
         }
 
         return view('schoolpayment.index', compact('pagetitle', 'student'));
@@ -277,7 +290,13 @@ class SchoolPaymentController extends Controller
         $schoolterms    = Schoolterm::all();
         $schoolsessions = Schoolsession::all();
 
-        return view('schoolpayment.termSession', compact('pagetitle', 'schoolterms', 'schoolsessions', 'id'));
+        // Get student details with othername
+        $studentDetails = Student::leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+            ->where('studentRegistration.id', $id)
+            ->select('studentRegistration.*', 'studentpicture.picture as avatar')
+            ->first();
+
+        return view('schoolpayment.termSession', compact('pagetitle', 'schoolterms', 'schoolsessions', 'id', 'studentDetails'));
     }
 
     // ── Payment detail page ───────────────────────────────────────────────
@@ -485,12 +504,17 @@ class SchoolPaymentController extends Controller
             $totalSavings     = $student_bill_info->sum('total_savings');
             $totalOriginal    = $student_bill_info->sum('original_amount');
 
+            $fullName = $this->getFullNameWithOther($studentdata->firstname, $studentdata->lastname, $studentdata->othername ?? '');
+
             return response()->json([
                 'success' => true,
                 'data'    => [
                     'student' => [
                         'id'             => $studentdata->id,
-                        'name'           => $studentdata->firstname . ' ' . $studentdata->lastname,
+                        'name'           => $fullName,
+                        'firstname'      => $studentdata->firstname,
+                        'lastname'       => $studentdata->lastname,
+                        'othername'      => $studentdata->othername ?? '',
                         'admissionNo'    => $studentdata->admissionNo,
                         'avatar'         => $studentdata->avatar,
                         'schoolclass'    => $studentdata->schoolclass,
@@ -1136,6 +1160,8 @@ class SchoolPaymentController extends Controller
                 ->update(['delete_status' => '0']);
         }
 
+        $fullName = $this->getFullNameWithOther($student->firstname, $student->lastname, $student->othername ?? '');
+
         $data = [
             'pagetitle'          => $pagetitle,
             'invoiceNumber'      => $invoiceNumber,
@@ -1154,6 +1180,7 @@ class SchoolPaymentController extends Controller
             'schoolInfo'         => $schoolInfo,
             'studentdata'        => $student ? collect([$student]) : collect([]),
             'studentpaymentbill' => $payments,
+            'studentFullName'    => $fullName,
         ];
 
         if ($request->has('download_pdf')) {
@@ -1218,6 +1245,8 @@ class SchoolPaymentController extends Controller
         $schoolterm    = optional(Schoolterm::find($termid))->term    ?? 'N/A';
         $schoolsession = optional(Schoolsession::find($sessionid))->session ?? 'N/A';
 
+        $fullName = $this->getFullNameWithOther($student->firstname, $student->lastname, $student->othername ?? '');
+
         $data = [
             'pagetitle'          => $pagetitle,
             'studentpaymentbill' => $studentpaymentbill,
@@ -1232,6 +1261,7 @@ class SchoolPaymentController extends Controller
             'termid'             => $termid,
             'sessionid'          => $sessionid,
             'studentdata'        => $student ? collect([$student]) : collect([]),
+            'studentFullName'    => $fullName,
         ];
 
         $safeFilename = 'statement_' . $safeAdmission . '.pdf';
