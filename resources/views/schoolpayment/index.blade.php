@@ -71,13 +71,14 @@
     width: 40px; height: 40px;
     border-radius: 50%; object-fit: cover;
     border: 2px solid var(--pay-border);
+    background: #f0f0f0;
 }
 .avatar-placeholder {
     width: 40px; height: 40px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     display: inline-flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: 700; color: var(--pay-accent);
+    font-size: 14px; font-weight: 700; color: white;
     border: 2px solid var(--pay-border);
 }
 
@@ -147,9 +148,9 @@
 .ts-chip-avatar {
     width: 42px; height: 42px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #dbeafe, #93c5fd);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     display: flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: 700; color: var(--pay-accent);
+    font-size: 16px; font-weight: 700; color: white;
     flex-shrink: 0;
     border: 2px solid #bae6fd;
 }
@@ -277,66 +278,78 @@
                     </thead>
                     <tbody>
                         @forelse($student as $i => $s)
+                        @php
+                            // Build proper avatar URL
+                            $avatarUrl = null;
+                            $hasAvatar = false;
+                            if(isset($s->picture) && $s->picture && $s->picture != 'unnamed.jpg' && $s->picture != '') {
+                                $avatarUrl = asset('storage/images/studentavatar/' . $s->picture);
+                                $hasAvatar = true;
+                            }
+                            $initials = strtoupper(substr($s->firstname ?? '', 0, 1) . substr($s->lastname ?? '', 0, 1));
+                            if(empty($initials)) $initials = 'ST';
+                        @endphp
                         <tr>
-                            <td>{{ $i + 1 }}</td>
+                            <td>{{ $i + 1 }}</div>
                             <td>
-                                @if($s->picture)
-                                    <img src="{{ Storage::url('images/studentavatar/' . $s->picture) }}"
-                                         alt="{{ $s->firstname }}" class="student-avatar">
+                                @if($hasAvatar)
+                                    <img src="{{ $avatarUrl }}"
+                                         alt="{{ $s->firstname }} {{ $s->lastname }}"
+                                         class="student-avatar"
+                                         onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='inline-flex';">
+                                    <div class="avatar-placeholder" style="display: none;">{{ $initials }}</div>
                                 @else
-                                    <div class="avatar-placeholder">
-                                        {{ strtoupper(substr($s->firstname, 0, 1) . substr($s->lastname, 0, 1)) }}
-                                    </div>
+                                    <div class="avatar-placeholder">{{ $initials }}</div>
                                 @endif
-                            </td>
+                             </div>
                             <td>
-                                <div class="fw-semibold">{{ $s->firstname }} {{ $s->lastname }}</div>
-                                <div class="text-muted small">{{ $s->term }} · {{ $s->session }}</div>
-                            </td>
+                                <div class="fw-semibold">{{ $s->firstname ?? '' }} {{ $s->lastname ?? '' }}</div>
+                                <div class="text-muted small">{{ $s->term ?? '' }} · {{ $s->session ?? '' }}</div>
+                             </div>
                             <td>
-                                <span class="text-muted font-monospace small">{{ $s->admissionNo }}</span>
-                            </td>
+                                <span class="text-muted font-monospace small">{{ $s->admissionNo ?? 'N/A' }}</span>
+                             </div>
                             <td>
                                 <span class="badge-class">
                                     <i class="ri-building-line"></i>
-                                    {{ $s->schoolclass }} {{ $s->arm }}
+                                    {{ $s->schoolclass ?? '' }} {{ $s->arm ?? '' }}
                                 </span>
-                            </td>
+                             </div>
                             <td>
                                 <span class="text-muted small">{{ $s->gender ?? '—' }}</span>
-                            </td>
+                             </div>
                             <td>
                                 <div class="d-flex flex-wrap gap-1">
-                                    @if($s->has_scholarship)
+                                    @if($s->has_scholarship ?? false)
                                         <span class="badge-schol"><i class="ri-award-line"></i>Scholarship</span>
                                     @endif
-                                    @if($s->has_discount)
+                                    @if($s->has_discount ?? false)
                                         <span class="badge-disc"><i class="ri-price-tag-3-line"></i>Discount</span>
                                     @endif
-                                    @if(!$s->has_scholarship && !$s->has_discount)
+                                    @if(!($s->has_scholarship ?? false) && !($s->has_discount ?? false))
                                         <span class="text-muted small">—</span>
                                     @endif
                                 </div>
-                            </td>
+                             </div>
                             <td>
                                 {{-- Opens inline modal instead of navigating away --}}
                                 <button type="button"
                                         class="btn btn-sm btn-primary open-pay-modal"
                                         data-id="{{ $s->id }}"
-                                        data-name="{{ $s->firstname }} {{ $s->lastname }}"
-                                        data-class="{{ $s->schoolclass }} {{ $s->arm }}"
-                                        data-admission="{{ $s->admissionNo }}"
-                                        data-initials="{{ strtoupper(substr($s->firstname,0,1).substr($s->lastname,0,1)) }}">
+                                        data-name="{{ $s->firstname ?? '' }} {{ $s->lastname ?? '' }}"
+                                        data-class="{{ $s->schoolclass ?? '' }} {{ $s->arm ?? '' }}"
+                                        data-admission="{{ $s->admissionNo ?? 'N/A' }}"
+                                        data-initials="{{ $initials }}">
                                     <i class="ri-wallet-line me-1"></i>Pay
                                 </button>
-                            </td>
+                             </div>
                         </tr>
                         @empty
                         <tr>
                             <td colspan="8" class="text-center text-muted py-5">
                                 <i class="ri-inbox-line d-block mb-2" style="font-size:2rem;opacity:.4"></i>
                                 No students found in the current session.
-                            </td>
+                            </div>
                         </tr>
                         @endforelse
                     </tbody>
