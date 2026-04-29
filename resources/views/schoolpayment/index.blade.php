@@ -298,6 +298,12 @@
     border-radius: 40px;
     display: inline-block;
 }
+.zoomed-image-details {
+    color: rgba(255,255,255,0.8);
+    margin-top: 8px;
+    font-size: 14px;
+    text-align: center;
+}
 </style>
 
 <div class="main-content">
@@ -382,34 +388,42 @@
                             }
                             $firstName = $s->firstname ?? '';
                             $lastName = $s->lastname ?? '';
+                            $otherName = $s->othername ?? '';
+                            $fullName = trim($firstName . ' ' . $lastName);
+                            $fullNameWithOther = trim($firstName . ' ' . $lastName . ($otherName ? ' (' . $otherName . ')' : ''));
                             $initials = strtoupper(substr($firstName, 0, 1) . substr($lastName, 0, 1));
                             if(empty($initials)) $initials = 'ST';
-                            $fullName = $firstName . ' ' . $lastName;
                         @endphp
                         <tr>
                             <td>{{ $i + 1 }}</div>
                             <td class="text-center">
                                 @if($avatarUrl)
                                     <img src="{{ $avatarUrl }}"
-                                         alt="{{ $fullName }}"
+                                         alt="{{ $fullNameWithOther }}"
                                          class="student-avatar avatar-clickable"
                                          data-bs-toggle="modal"
                                          data-bs-target="#imageZoomModal"
                                          data-image="{{ $avatarUrl }}"
-                                         data-name="{{ $fullName }}"
+                                         data-name="{{ $fullNameWithOther }}"
+                                         data-admission="{{ $s->admissionNo ?? 'N/A' }}"
+                                         data-class="{{ $s->schoolclass ?? '' }} {{ $s->arm ?? '' }}"
+                                         data-gender="{{ $s->gender ?? 'N/A' }}"
                                          style="cursor: pointer;">
                                 @else
                                     <div class="avatar-placeholder avatar-clickable"
                                          data-bs-toggle="modal"
                                          data-bs-target="#imageZoomModal"
-                                         data-name="{{ $fullName }}"
+                                         data-name="{{ $fullNameWithOther }}"
+                                         data-admission="{{ $s->admissionNo ?? 'N/A' }}"
+                                         data-class="{{ $s->schoolclass ?? '' }} {{ $s->arm ?? '' }}"
+                                         data-gender="{{ $s->gender ?? 'N/A' }}"
                                          data-initials="{{ $initials }}">
                                         {{ $initials }}
                                     </div>
                                 @endif
                              </div>
                             <td>
-                                <div class="fw-semibold">{{ $fullName }}</div>
+                                <div class="fw-semibold">{{ $fullNameWithOther }}</div>
                                 <div class="text-muted small">{{ $s->term ?? '' }} · {{ $s->session ?? '' }}</div>
                              </div>
                             <td>
@@ -441,7 +455,7 @@
                                 <button type="button"
                                         class="btn btn-sm btn-primary open-pay-modal"
                                         data-id="{{ $s->id }}"
-                                        data-name="{{ $fullName }}"
+                                        data-name="{{ $fullNameWithOther }}"
                                         data-class="{{ $s->schoolclass ?? '' }} {{ $s->arm ?? '' }}"
                                         data-admission="{{ $s->admissionNo ?? 'N/A' }}"
                                         data-initials="{{ $initials }}"
@@ -512,7 +526,7 @@
                     <div class="mb-4">
                         <label class="ts-label">
                             <i class="ri-time-line"></i>Session
-                           <span class="text-danger ms-1">*</span>
+                            <span class="text-danger ms-1">*</span>
                         </label>
                         <select name="sessionid" id="tsSessionId" class="ts-select" required>
                             <option value="">— Select Session —</option>
@@ -540,6 +554,7 @@
             <div class="modal-body text-center">
                 <img id="zoomedImage" src="" alt="Student Photo" class="zoomed-image">
                 <div class="zoomed-image-name" id="zoomedImageName"></div>
+                <div class="zoomed-image-details" id="zoomedImageDetails"></div>
             </div>
         </div>
     </div>
@@ -573,11 +588,21 @@ $(document).ready(function () {
             e.stopPropagation();
             const imageUrl = $(this).data('image');
             const studentName = $(this).data('name');
+            const admissionNo = $(this).data('admission') || 'N/A';
+            const studentClass = $(this).data('class') || 'N/A';
+            const gender = $(this).data('gender') || 'N/A';
             const initials = $(this).data('initials');
+
+            // Set the zoomed image name with full details
+            $('#zoomedImageName').text(studentName || 'Student Photo');
+            $('#zoomedImageDetails').html(`
+                <i class="fas fa-id-card me-1"></i> ${admissionNo} &nbsp;|&nbsp;
+                <i class="fas fa-school me-1"></i> ${studentClass} &nbsp;|&nbsp;
+                <i class="fas fa-${gender === 'Male' ? 'mars' : 'venus'} me-1"></i> ${gender}
+            `);
 
             if (imageUrl && imageUrl !== '' && imageUrl !== 'null') {
                 $('#zoomedImage').attr('src', imageUrl).show();
-                $('#zoomedImageName').text(studentName || 'Student Photo');
             } else {
                 // If no image, create a canvas with initials
                 const canvas = document.createElement('canvas');
@@ -606,7 +631,6 @@ $(document).ready(function () {
                 ctx.fillText(displayInitials, canvas.width/2, canvas.height/2);
 
                 $('#zoomedImage').attr('src', canvas.toDataURL()).show();
-                $('#zoomedImageName').text(studentName || 'Student');
             }
         });
     }
@@ -636,17 +660,23 @@ $(document).ready(function () {
             // Set up zoom for modal avatar
             avatarContainer.setAttribute('data-name', studentName);
             avatarContainer.setAttribute('data-initials', studentInitials);
+            avatarContainer.setAttribute('data-admission', studentAdmission);
+            avatarContainer.setAttribute('data-class', studentClass);
 
             // Remove existing click handler and add new one
-            avatarContainer.offclick = null;
             avatarContainer.onclick = function(e) {
                 e.stopPropagation();
                 const imgSrc = avatarImg.src;
                 const hasImage = avatarImg.style.display === 'block' && imgSrc && imgSrc !== '';
 
+                $('#zoomedImageName').text(studentName);
+                $('#zoomedImageDetails').html(`
+                    <i class="fas fa-id-card me-1"></i> ${studentAdmission} &nbsp;|&nbsp;
+                    <i class="fas fa-school me-1"></i> ${studentClass}
+                `);
+
                 if (hasImage) {
                     $('#zoomedImage').attr('src', imgSrc).show();
-                    $('#zoomedImageName').text(studentName);
                 } else {
                     const canvas = document.createElement('canvas');
                     canvas.width = 400;
@@ -663,7 +693,6 @@ $(document).ready(function () {
                     ctx.textBaseline = 'middle';
                     ctx.fillText(studentInitials || 'ST', canvas.width/2, canvas.height/2);
                     $('#zoomedImage').attr('src', canvas.toDataURL()).show();
-                    $('#zoomedImageName').text(studentName);
                 }
                 $('#imageZoomModal').modal('show');
             };
