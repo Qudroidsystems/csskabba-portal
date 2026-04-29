@@ -63,19 +63,41 @@
 }
 .pay-table tr:hover td { background: #f0f9ff; }
 
+/* Clickable Avatar Styles */
+.avatar-clickable {
+    cursor: pointer;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.avatar-clickable:hover {
+    transform: scale(1.1);
+    opacity: 0.9;
+}
+
 .student-avatar {
-    width: 40px; height: 40px;
-    border-radius: 50%; object-fit: cover;
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
     border: 2px solid var(--pay-border);
     background: #f0f0f0;
 }
 .avatar-placeholder {
-    width: 40px; height: 40px;
+    width: 45px;
+    height: 45px;
     border-radius: 50%;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    display: inline-flex; align-items: center; justify-content: center;
-    font-size: 14px; font-weight: 700; color: white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
     border: 2px solid var(--pay-border);
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+.avatar-placeholder:hover {
+    transform: scale(1.1);
 }
 
 .badge-class {
@@ -107,6 +129,7 @@
     box-shadow: 0 0 0 3px rgba(37,99,235,.1);
 }
 
+/* Term Session Modal */
 #termSessionModal .modal-content {
     border: none;
     border-radius: 18px;
@@ -135,22 +158,30 @@
     border: 1px solid #bae6fd;
     border-radius: 12px;
     padding: 12px 16px;
-    display: flex; align-items: center; gap: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
     margin-bottom: 22px;
 }
 .ts-chip-avatar {
-    width: 42px; height: 42px;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
+    font-size: 18px;
     font-weight: 700;
     color: white;
     flex-shrink: 0;
     border: 2px solid #bae6fd;
     overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+.ts-chip-avatar:hover {
+    transform: scale(1.05);
 }
 .ts-chip-avatar img {
     width: 100%;
@@ -202,6 +233,71 @@
 .ts-btn:hover  { opacity: .91; transform: translateY(-1px); }
 .ts-btn:active { transform: translateY(0); }
 .ts-btn:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+
+/* Image Zoom Modal */
+.image-zoom-modal .modal-content {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+.image-zoom-modal .modal-dialog {
+    max-width: 90vw;
+    margin: 1.75rem auto;
+}
+.image-zoom-modal .modal-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+    padding: 20px;
+}
+.zoomed-image {
+    max-width: 90vw;
+    max-height: 75vh;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+    border: 4px solid white;
+    cursor: pointer;
+    animation: zoomIn 0.3s ease;
+    object-fit: contain;
+}
+@keyframes zoomIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+.image-zoom-modal .btn-close {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    background-color: rgba(0,0,0,0.7);
+    border-radius: 50%;
+    padding: 12px;
+    opacity: 1;
+    z-index: 1060;
+    filter: brightness(0) invert(1);
+}
+.image-zoom-modal .btn-close:hover {
+    background-color: rgba(0,0,0,0.9);
+    transform: scale(1.1);
+}
+.zoomed-image-name {
+    color: white;
+    margin-top: 20px;
+    font-size: 18px;
+    font-weight: 600;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    background: rgba(0,0,0,0.5);
+    padding: 8px 20px;
+    border-radius: 40px;
+    display: inline-block;
+}
 </style>
 
 <div class="main-content">
@@ -267,7 +363,7 @@
                     <thead>
                         <tr>
                             <th width="50">#</th>
-                            <th width="55">Photo</th>
+                            <th width="60">Photo</th>
                             <th>Student Name</th>
                             <th>Admission No</th>
                             <th>Class</th>
@@ -288,22 +384,32 @@
                             $lastName = $s->lastname ?? '';
                             $initials = strtoupper(substr($firstName, 0, 1) . substr($lastName, 0, 1));
                             if(empty($initials)) $initials = 'ST';
+                            $fullName = $firstName . ' ' . $lastName;
                         @endphp
                         <tr>
                             <td>{{ $i + 1 }}</div>
-                            <td>
+                            <td class="text-center">
                                 @if($avatarUrl)
                                     <img src="{{ $avatarUrl }}"
-                                         alt="{{ $firstName }} {{ $lastName }}"
-                                         class="student-avatar"
-                                         onerror="this.onerror=null; this.style.display='none'; this.nextElementSibling.style.display='inline-flex';">
-                                    <div class="avatar-placeholder" style="display: none;">{{ $initials }}</div>
+                                         alt="{{ $fullName }}"
+                                         class="student-avatar avatar-clickable"
+                                         data-bs-toggle="modal"
+                                         data-bs-target="#imageZoomModal"
+                                         data-image="{{ $avatarUrl }}"
+                                         data-name="{{ $fullName }}"
+                                         style="cursor: pointer;">
                                 @else
-                                    <div class="avatar-placeholder">{{ $initials }}</div>
+                                    <div class="avatar-placeholder avatar-clickable"
+                                         data-bs-toggle="modal"
+                                         data-bs-target="#imageZoomModal"
+                                         data-name="{{ $fullName }}"
+                                         data-initials="{{ $initials }}">
+                                        {{ $initials }}
+                                    </div>
                                 @endif
                              </div>
                             <td>
-                                <div class="fw-semibold">{{ $firstName }} {{ $lastName }}</div>
+                                <div class="fw-semibold">{{ $fullName }}</div>
                                 <div class="text-muted small">{{ $s->term ?? '' }} · {{ $s->session ?? '' }}</div>
                              </div>
                             <td>
@@ -335,7 +441,7 @@
                                 <button type="button"
                                         class="btn btn-sm btn-primary open-pay-modal"
                                         data-id="{{ $s->id }}"
-                                        data-name="{{ $firstName }} {{ $lastName }}"
+                                        data-name="{{ $fullName }}"
                                         data-class="{{ $s->schoolclass ?? '' }} {{ $s->arm ?? '' }}"
                                         data-admission="{{ $s->admissionNo ?? 'N/A' }}"
                                         data-initials="{{ $initials }}"
@@ -406,7 +512,7 @@
                     <div class="mb-4">
                         <label class="ts-label">
                             <i class="ri-time-line"></i>Session
-                            <span class="text-danger ms-1">*</span>
+                           <span class="text-danger ms-1">*</span>
                         </label>
                         <select name="sessionid" id="tsSessionId" class="ts-select" required>
                             <option value="">— Select Session —</option>
@@ -426,12 +532,26 @@
     </div>
 </div>
 
+{{-- IMAGE ZOOM MODAL --}}
+<div class="modal fade image-zoom-modal" id="imageZoomModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content bg-transparent border-0">
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-body text-center">
+                <img id="zoomedImage" src="" alt="Student Photo" class="zoomed-image">
+                <div class="zoomed-image-name" id="zoomedImageName"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 $(document).ready(function () {
+    // Initialize DataTable
     $('#studentsTable').DataTable({
         pageLength: 25,
         order: [[2, 'asc']],
@@ -446,6 +566,54 @@ $(document).ready(function () {
         columnDefs: [{ orderable: false, targets: [1, 6, 7] }],
     });
 
+    // Image Zoom Functionality
+    function setupImageZoom() {
+        // For images in table
+        $('.avatar-clickable').off('click').on('click', function(e) {
+            e.stopPropagation();
+            const imageUrl = $(this).data('image');
+            const studentName = $(this).data('name');
+            const initials = $(this).data('initials');
+
+            if (imageUrl && imageUrl !== '' && imageUrl !== 'null') {
+                $('#zoomedImage').attr('src', imageUrl).show();
+                $('#zoomedImageName').text(studentName || 'Student Photo');
+            } else {
+                // If no image, create a canvas with initials
+                const canvas = document.createElement('canvas');
+                canvas.width = 400;
+                canvas.height = 400;
+                const ctx = canvas.getContext('2d');
+
+                // Draw gradient background
+                const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                gradient.addColorStop(0, '#667eea');
+                gradient.addColorStop(1, '#764ba2');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                // Draw circle background
+                ctx.beginPath();
+                ctx.arc(canvas.width/2, canvas.height/2, canvas.width/2, 0, 2 * Math.PI);
+                ctx.fill();
+
+                // Draw text
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 160px "Segoe UI", Arial, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                const displayInitials = (initials && initials !== 'null') ? initials.substring(0, 2) : 'ST';
+                ctx.fillText(displayInitials, canvas.width/2, canvas.height/2);
+
+                $('#zoomedImage').attr('src', canvas.toDataURL()).show();
+                $('#zoomedImageName').text(studentName || 'Student');
+            }
+        });
+    }
+
+    setupImageZoom();
+
+    // Open Payment Modal
     document.querySelectorAll('.open-pay-modal').forEach(function (btn) {
         btn.addEventListener('click', function () {
             const studentId = this.dataset.id;
@@ -465,22 +633,60 @@ $(document).ready(function () {
             const initialsSpan = document.getElementById('tsInitials');
             const avatarImg = document.getElementById('tsAvatarImg');
 
+            // Set up zoom for modal avatar
+            avatarContainer.setAttribute('data-name', studentName);
+            avatarContainer.setAttribute('data-initials', studentInitials);
+
+            // Remove existing click handler and add new one
+            avatarContainer.offclick = null;
+            avatarContainer.onclick = function(e) {
+                e.stopPropagation();
+                const imgSrc = avatarImg.src;
+                const hasImage = avatarImg.style.display === 'block' && imgSrc && imgSrc !== '';
+
+                if (hasImage) {
+                    $('#zoomedImage').attr('src', imgSrc).show();
+                    $('#zoomedImageName').text(studentName);
+                } else {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 400;
+                    canvas.height = 400;
+                    const ctx = canvas.getContext('2d');
+                    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                    gradient.addColorStop(0, '#667eea');
+                    gradient.addColorStop(1, '#764ba2');
+                    ctx.fillStyle = gradient;
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.font = 'bold 160px "Segoe UI", Arial, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(studentInitials || 'ST', canvas.width/2, canvas.height/2);
+                    $('#zoomedImage').attr('src', canvas.toDataURL()).show();
+                    $('#zoomedImageName').text(studentName);
+                }
+                $('#imageZoomModal').modal('show');
+            };
+
             if (studentAvatar && studentAvatar !== '' && studentAvatar !== 'null') {
                 // Show image, hide initials
                 avatarImg.src = studentAvatar;
                 avatarImg.style.display = 'block';
                 initialsSpan.style.display = 'none';
+                avatarContainer.setAttribute('data-image', studentAvatar);
                 // Add error handling for broken images
                 avatarImg.onerror = function() {
                     this.style.display = 'none';
                     initialsSpan.style.display = 'flex';
                     initialsSpan.textContent = studentInitials;
+                    avatarContainer.setAttribute('data-image', '');
                 };
             } else {
                 // Show initials, hide image
                 avatarImg.style.display = 'none';
                 initialsSpan.style.display = 'flex';
                 initialsSpan.textContent = studentInitials;
+                avatarContainer.setAttribute('data-image', '');
             }
 
             document.getElementById('tsTermId').value = '';
@@ -493,6 +699,7 @@ $(document).ready(function () {
         });
     });
 
+    // Form validation before submit
     document.getElementById('tsForm').addEventListener('submit', function (e) {
         const termid    = document.getElementById('tsTermId').value;
         const sessionid = document.getElementById('tsSessionId').value;
@@ -512,6 +719,23 @@ $(document).ready(function () {
         const btn = document.getElementById('tsProceedBtn');
         btn.disabled = true;
         btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
+    });
+
+    // Re-attach image zoom after DataTable redraw
+    $('#studentsTable').on('draw.dt', function() {
+        setupImageZoom();
+    });
+
+    // Also handle clicks on zoomed image to close
+    $(document).on('click', '.zoomed-image', function() {
+        $('#imageZoomModal').modal('hide');
+    });
+
+    // Close zoom modal on escape key
+    $(document).on('keydown', function(e) {
+        if (e.key === 'Escape') {
+            $('#imageZoomModal').modal('hide');
+        }
     });
 });
 </script>
