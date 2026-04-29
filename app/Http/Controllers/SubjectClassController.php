@@ -79,6 +79,7 @@ class SubjectClassController extends Controller
                 'subject.id as subjectid',
                 'subject.subject as subjectname',
                 'subject.subject_code as subjectcode',
+                'users.id as staffid',
                 'users.name as teachername',
                 'users.avatar as picture',
                 'schoolterm.id as termid',
@@ -90,10 +91,14 @@ class SubjectClassController extends Controller
             ->orderBy('sclass')
             ->get();
 
+        // Pass all staff for the edit teacher dropdown
+        $allStaff = User::orderBy('name')->get(['id', 'name']);
+
         return view('subjectclass.index')
             ->with('subjectclasses', $subjectclasses)
             ->with('schoolclasses', $schoolclasses)
             ->with('subjectteacher', $subjectteacher)
+            ->with('allStaff', $allStaff)
             ->with('pagetitle', $pagetitle);
     }
 
@@ -156,7 +161,7 @@ class SubjectClassController extends Controller
             ], 422);
         }
 
-        $schoolClassId    = $request->input('schoolclassid');
+        $schoolClassId     = $request->input('schoolclassid');
         $subjectTeacherIds = $request->input('subjectteacherid', []);
 
         if (empty($subjectTeacherIds)) {
@@ -335,10 +340,10 @@ class SubjectClassController extends Controller
             ], 404);
         }
 
-        $oldStaffId  = (int) $currentSubjectTeacher->staffid;
-        $subjectId   = $currentSubjectTeacher->subjectid;
-        $termId      = $currentSubjectTeacher->termid;
-        $sessionId   = $currentSubjectTeacher->sessionid;
+        $oldStaffId = (int) $currentSubjectTeacher->staffid;
+        $subjectId  = $currentSubjectTeacher->subjectid;
+        $termId     = $currentSubjectTeacher->termid;
+        $sessionId  = $currentSubjectTeacher->sessionid;
 
         // No-op: same teacher
         if ($oldStaffId === $newStaffId) {
@@ -377,7 +382,6 @@ class SubjectClassController extends Controller
             // ── 5. Update the subjectclass row ────────────────────────
             $subjectclass->update([
                 'subjectteacherid' => $newSubjectTeacher->id,
-                // subjectid, schoolclassid stay the same — no change needed
             ]);
 
             // ── 6. Cascade staff_id to all related records ────────────
@@ -399,7 +403,6 @@ class SubjectClassController extends Controller
 
             DB::commit();
 
-            // Fetch new staff name for the response message
             $newStaff = User::find($newStaffId);
             $oldStaff = User::find($oldStaffId);
 
@@ -507,10 +510,9 @@ class SubjectClassController extends Controller
             ], 404);
         }
 
-        // ── Guard: block deletion if related records exist ────────────
-        $hasBroadsheets    = Broadsheets::where('subjectclass_id', $id)->exists();
-        $hasRegistrations  = SubjectRegistrationStatus::where('subjectclassid', $id)->exists();
-        $hasMockRecords    = BroadsheetsMock::where('subjectclass_id', $id)->exists();
+        $hasBroadsheets   = Broadsheets::where('subjectclass_id', $id)->exists();
+        $hasRegistrations = SubjectRegistrationStatus::where('subjectclassid', $id)->exists();
+        $hasMockRecords   = BroadsheetsMock::where('subjectclass_id', $id)->exists();
 
         if ($hasBroadsheets || $hasRegistrations || $hasMockRecords) {
             $details = [];
@@ -549,7 +551,6 @@ class SubjectClassController extends Controller
             ], 404);
         }
 
-        // ── Guard: block deletion if related records exist ────────────
         $hasBroadsheets   = Broadsheets::where('subjectclass_id', $request->subjectclassid)->exists();
         $hasRegistrations = SubjectRegistrationStatus::where('subjectclassid', $request->subjectclassid)->exists();
         $hasMockRecords   = BroadsheetsMock::where('subjectclass_id', $request->subjectclassid)->exists();
