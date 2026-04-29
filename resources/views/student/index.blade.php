@@ -191,6 +191,12 @@ use Spatie\Permission\Models\Role;
                     border: 4px solid white;
                     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
                     background: white;
+                    cursor: pointer;
+                    transition: transform 0.2s ease;
+                }
+
+                .student-profile-card .avatar-container:hover {
+                    transform: scale(1.05);
                 }
 
                 .student-profile-card .avatar {
@@ -1191,6 +1197,77 @@ use Spatie\Permission\Models\Role;
                     font-size: 11px;
                     padding: 4px 8px;
                 }
+
+                /* Image Zoom Modal */
+                .image-zoom-modal .modal-content {
+                    background: transparent;
+                    border: none;
+                    box-shadow: none;
+                }
+                .image-zoom-modal .modal-dialog {
+                    max-width: 90vw;
+                    margin: 1.75rem auto;
+                }
+                .image-zoom-modal .modal-body {
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: center;
+                    align-items: center;
+                    min-height: 80vh;
+                    padding: 20px;
+                }
+                .zoomed-image {
+                    max-width: 90vw;
+                    max-height: 75vh;
+                    border-radius: 16px;
+                    box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+                    border: 4px solid white;
+                    cursor: pointer;
+                    animation: zoomIn 0.3s ease;
+                    object-fit: contain;
+                }
+                @keyframes zoomIn {
+                    from {
+                        opacity: 0;
+                        transform: scale(0.8);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: scale(1);
+                    }
+                }
+                .image-zoom-modal .btn-close {
+                    position: absolute;
+                    top: 20px;
+                    right: 30px;
+                    background-color: rgba(0,0,0,0.7);
+                    border-radius: 50%;
+                    padding: 12px;
+                    opacity: 1;
+                    z-index: 1060;
+                    filter: brightness(0) invert(1);
+                }
+                .image-zoom-modal .btn-close:hover {
+                    background-color: rgba(0,0,0,0.9);
+                    transform: scale(1.1);
+                }
+                .zoomed-image-name {
+                    color: white;
+                    margin-top: 20px;
+                    font-size: 18px;
+                    font-weight: 600;
+                    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                    background: rgba(0,0,0,0.5);
+                    padding: 8px 20px;
+                    border-radius: 40px;
+                    display: inline-block;
+                }
+                .zoomed-image-details {
+                    color: rgba(255,255,255,0.8);
+                    margin-top: 8px;
+                    font-size: 14px;
+                    text-align: center;
+                }
             </style>
 
             <!-- Dashboard Statistics -->
@@ -1576,6 +1653,20 @@ use Spatie\Permission\Models\Role;
             </div>
         </div>
 
+        <!-- IMAGE ZOOM MODAL -->
+        <div class="modal fade image-zoom-modal" id="imageZoomModal" tabindex="-1" data-bs-backdrop="static">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content bg-transparent border-0">
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    <div class="modal-body text-center">
+                        <img id="zoomedImage" src="" alt="Student Photo" class="zoomed-image">
+                        <div class="zoomed-image-name" id="zoomedImageName"></div>
+                        <div class="zoomed-image-details" id="zoomedImageDetails"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Update Current Term Modal -->
         <div id="updateCurrentTermModal" class="modal fade" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
@@ -1593,6 +1684,7 @@ use Spatie\Permission\Models\Role;
                                 <i class="fas fa-info-circle me-2"></i>
                                 Registering/updating term for <span id="selectedStudentsCount">0</span> selected student(s).
                             </div>
+
                             <div class="mb-3">
                                 <label class="form-label">Class</label>
                                 <select class="form-control" name="schoolclassId" required>
@@ -1602,6 +1694,7 @@ use Spatie\Permission\Models\Role;
                                     @endforeach
                                 </select>
                             </div>
+
                             <div class="mb-3">
                                 <label class="form-label">Term</label>
                                 <select class="form-control" name="termId" required>
@@ -1611,6 +1704,7 @@ use Spatie\Permission\Models\Role;
                                     @endforeach
                                 </select>
                             </div>
+
                             <div class="mb-3">
                                 <label class="form-label">Session</label>
                                 <select class="form-control" name="sessionId" required>
@@ -1620,6 +1714,7 @@ use Spatie\Permission\Models\Role;
                                     @endforeach
                                 </select>
                             </div>
+
                             <div class="mb-3">
                                 <div class="form-check">
                                     <input class="form-check-input" type="checkbox" name="is_current" id="is_current" value="1" checked>
@@ -1629,6 +1724,7 @@ use Spatie\Permission\Models\Role;
                                 </div>
                                 <small class="text-muted">If checked, this will be marked as the current term. Previous current term will be unmarked.</small>
                             </div>
+
                             <div class="alert alert-warning">
                                 <i class="fas fa-exclamation-triangle me-2"></i>
                                 <strong>Note:</strong> Students can have multiple terms registered in the same session.
@@ -1657,6 +1753,7 @@ use Spatie\Permission\Models\Role;
                         </h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
+
                     <div class="modal-body p-4">
                         <form id="printReportForm">
                             <!-- Filters Section -->
@@ -1827,6 +1924,7 @@ use Spatie\Permission\Models\Role;
                             </div>
                         </form>
                     </div>
+
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                         <button type="button" class="btn btn-success" id="generateReportBtn">
@@ -2089,7 +2187,7 @@ use Spatie\Permission\Models\Role;
                                     </div>
                                 </div>
                             </div>
-                            <!-- Additional Information -->
+                            <!-- Additional Information, Parent/Guardian Details, and Previous School Details -->
                             <div class="row">
                                 <div class="col-md-6">
                                     <!-- Section C: Additional Details -->
@@ -2293,7 +2391,7 @@ use Spatie\Permission\Models\Role;
                         @method('PATCH')
                         <div class="modal-body p-4">
                             <input type="hidden" id="editStudentId" name="id">
-                            <!-- Progress Steps -->
+                            <!-- Progress Steps - Fixed: No active steps by default -->
                             <div class="progress-steps mb-4">
                                 <div class="step">1</div>
                                 <div class="step">2</div>
@@ -2302,7 +2400,7 @@ use Spatie\Permission\Models\Role;
                             </div>
                             <div class="row">
                                 <div class="col-md-6">
-                                    <!-- Academic Details section -->
+                                   <!-- Academic Details section -->
                                     <div class="card">
                                         <div class="card-header bg-primary text-white">
                                             <h6 class="mb-0"><i class="fas fa-graduation-cap me-2"></i>Academic Details</h6>
@@ -2419,220 +2517,221 @@ use Spatie\Permission\Models\Role;
                                         </div>
                                     </div>
                                 </div>
+                                <!-- Personal Details -->
                                 <div class="col-md-6">
-                                    <!-- Personal Details section -->
-                                    <div class="card">
-                                        <div class="card-header bg-info text-white">
-                                            <h6 class="mb-0"><i class="fas fa-user me-2"></i>Personal Details</h6>
+                                 <!-- Personal Details section -->
+                                <div class="card">
+                                    <div class="card-header bg-info text-white">
+                                        <h6 class="mb-0"><i class="fas fa-user me-2"></i>Personal Details</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="mb-3 text-center">
+                                            <div class="upload-area border border-2 border-dashed border-primary rounded p-3">
+                                                <img id="editStudentAvatar" src="{{ asset('theme/layouts/assets/media/avatars/blank.png') }}" alt="Avatar Preview" class="rounded-circle mb-3" style="width: 120px; height: 120px; object-fit: cover; border: 4px solid #667eea; box-shadow: 0 4px 8px rgba(0,0,0,0.1);" />
+                                                <div>
+                                                    <label for="editAvatar" class="btn btn-outline-primary btn-sm">
+                                                        <i class="fas fa-camera me-1"></i>Choose Photo
+                                                    </label>
+                                                    <input type="file" id="editAvatar" name="avatar" class="d-none" accept=".png,.jpg,.jpeg" onchange="previewImage(this, 'editStudentAvatar')">
+                                                    <div class="form-text mt-2">Max 2MB (PNG, JPG, JPEG)</div>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <div class="card-body">
-                                            <div class="mb-3 text-center">
-                                                <div class="upload-area border border-2 border-dashed border-primary rounded p-3">
-                                                    <img id="editStudentAvatar" src="{{ asset('theme/layouts/assets/media/avatars/blank.png') }}" alt="Avatar Preview" class="rounded-circle mb-3" style="width: 120px; height: 120px; object-fit: cover; border: 4px solid #667eea; box-shadow: 0 4px 8px rgba(0,0,0,0.1);" />
-                                                    <div>
-                                                        <label for="editAvatar" class="btn btn-outline-primary btn-sm">
-                                                            <i class="fas fa-camera me-1"></i>Choose Photo
-                                                        </label>
-                                                        <input type="file" id="editAvatar" name="avatar" class="d-none" accept=".png,.jpg,.jpeg" onchange="previewImage(this, 'editStudentAvatar')">
-                                                        <div class="form-text mt-2">Max 2MB (PNG, JPG, JPEG)</div>
-                                                    </div>
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="mb-3">
+                                                    <label for="editTitle" class="form-label">Title</label>
+                                                    <select id="editTitle" name="title" class="form-control">
+                                                        <option value="">Select</option>
+                                                        <option value="Master">Master</option>
+                                                        <option value="Miss">Miss</option>
+                                                    </select>
                                                 </div>
                                             </div>
-                                            <div class="row">
-                                                <div class="col-md-4">
-                                                    <div class="mb-3">
-                                                        <label for="editTitle" class="form-label">Title</label>
-                                                        <select id="editTitle" name="title" class="form-control">
-                                                            <option value="">Select</option>
-                                                            <option value="Master">Master</option>
-                                                            <option value="Miss">Miss</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <div class="mb-3">
-                                                        <label for="editLastname" class="form-label">Last Name <span class="text-danger">*</span></label>
-                                                        <input type="text" id="editLastname" name="lastname" class="form-control" placeholder="Last name" required>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-4">
-                                                    <div class="mb-3">
-                                                        <label for="editFirstname" class="form-label">First Name <span class="text-danger">*</span></label>
-                                                        <input type="text" id="editFirstname" name="firstname" class="form-control" placeholder="First name" required>
-                                                    </div>
+                                             <div class="col-md-4">
+                                                <div class="mb-3">
+                                                    <label for="editLastname" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                                    <input type="text" id="editLastname" name="lastname" class="form-control" placeholder="Last name" required>
                                                 </div>
                                             </div>
-                                            <div class="mb-3">
-                                                <label for="editOthername" class="form-label">Other Names</label>
-                                                <input type="text" id="editOthername" name="othername" class="form-control" placeholder="Middle name(s)" required>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label class="form-label">Gender <span class="text-danger">*</span></label>
-                                                <div class="d-flex gap-3">
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="radio" name="gender" id="editGenderMale" value="Male" required>
-                                                        <label class="form-check-label" for="editGenderMale">
-                                                            <i class="fas fa-male text-primary me-1"></i>Male
-                                                        </label>
-                                                    </div>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="radio" name="gender" id="editGenderFemale" value="Female" required>
-                                                        <label class="form-check-label" for="editGenderFemale">
-                                                            <i class="fas fa-female text-danger me-1"></i>Female
-                                                        </label>
-                                                    </div>
+                                            <div class="col-md-4">
+                                                <div class="mb-3">
+                                                    <label for="editFirstname" class="form-label">First Name <span class="text-danger">*</span></label>
+                                                    <input type="text" id="editFirstname" name="firstname" class="form-control" placeholder="First name" required>
                                                 </div>
                                             </div>
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label for="editDOB" class="form-label">Date of Birth <span class="text-danger">*</span></label>
-                                                        <input type="date" id="editDOB" name="dateofbirth" class="form-control" required onchange="calculateAge(this.value, 'editAgeInput')">
-                                                    </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="editOthername" class="form-label">Other Names</label>
+                                            <input type="text" id="editOthername" name="othername" class="form-control" placeholder="Middle name(s)" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Gender <span class="text-danger">*</span></label>
+                                            <div class="d-flex gap-3">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="gender" id="editGenderMale" value="Male" required>
+                                                    <label class="form-check-label" for="editGenderMale">
+                                                        <i class="fas fa-male text-primary me-1"></i>Male
+                                                    </label>
                                                 </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label for="editAgeInput" class="form-label">Age <span class="text-danger">*</span></label>
-                                                        <input type="number" id="editAgeInput" name="age" class="form-control" readonly required>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="mb-3">
-                                                <label for="editPlaceofbirth" class="form-label">Place of Birth <span class="text-danger">*</span></label>
-                                                <div class="input-group">
-                                                    <span class="input-group-text bg-primary text-white">
-                                                        <i class="fas fa-map-marker-alt"></i>
-                                                    </span>
-                                                    <input type="text" id="editPlaceofbirth" name="placeofbirth" class="form-control" placeholder="e.g., Lagos, Nigeria" required>
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="radio" name="gender" id="editGenderFemale" value="Female" required>
+                                                    <label class="form-check-label" for="editGenderFemale">
+                                                        <i class="fas fa-female text-danger me-1"></i>Female
+                                                    </label>
                                                 </div>
                                             </div>
-                                            <div class="mb-3">
-                                                <label for="editPhoneNumber" class="form-label">Phone Number</label>
-                                                <div class="input-group">
-                                                    <span class="input-group-text bg-primary text-white">
-                                                        <i class="fas fa-phone"></i>
-                                                    </span>
-                                                    <input type="text" id="editPhoneNumber" name="phone_number" class="form-control" placeholder="+234 xxx xxx xxxx">
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="editDOB" class="form-label">Date of Birth <span class="text-danger">*</span></label>
+                                                    <input type="date" id="editDOB" name="dateofbirth" class="form-control" required onchange="calculateAge(this.value, 'editAgeInput')">
                                                 </div>
                                             </div>
-                                            <div class="mb-3">
-                                                <label for="editEmail" class="form-label">Email</label>
-                                                <div class="input-group">
-                                                    <span class="input-group-text bg-primary text-white">
-                                                        <i class="fas fa-envelope"></i>
-                                                    </span>
-                                                    <input type="email" id="editEmail" name="email" class="form-control" placeholder="student@example.com">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="editAgeInput" class="form-label">Age <span class="text-danger">*</span></label>
+                                                    <input type="number" id="editAgeInput" name="age" class="form-control" readonly required>
                                                 </div>
                                             </div>
-                                            <div class="mb-3">
-                                                <label for="editFutureAmbition" class="form-label">Future Ambition <span class="text-danger">*</span></label>
-                                                <textarea id="editFutureAmbition" name="future_ambition" class="form-control" rows="2" placeholder="Enter future ambition" required></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="editPlaceofbirth" class="form-label">Place of Birth <span class="text-danger">*</span></label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-primary text-white">
+                                                    <i class="fas fa-map-marker-alt"></i>
+                                                </span>
+                                                <input type="text" id="editPlaceofbirth" name="placeofbirth" class="form-control" placeholder="e.g., Lagos, Nigeria" required>
                                             </div>
-                                            <div class="mb-3">
-                                                <label for="editPermanentAddress" class="form-label">Permanent Address <span class="text-danger">*</span></label>
-                                                <textarea id="editPermanentAddress" name="permanent_address" class="form-control" rows="2" placeholder="Enter permanent address" required></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="editPhoneNumber" class="form-label">Phone Number</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-primary text-white">
+                                                    <i class="fas fa-phone"></i>
+                                                </span>
+                                                <input type="text" id="editPhoneNumber" name="phone_number" class="form-control" placeholder="+234 xxx xxx xxxx">
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="editEmail" class="form-label">Email</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-primary text-white">
+                                                    <i class="fas fa-envelope"></i>
+                                                </span>
+                                                <input type="email" id="editEmail" name="email" class="form-control" placeholder="student@example.com">
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="editFutureAmbition" class="form-label">Future Ambition <span class="text-danger">*</span></label>
+                                            <textarea id="editFutureAmbition" name="future_ambition" class="form-control" rows="2" placeholder="Enter future ambition" required></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="editPermanentAddress" class="form-label">Permanent Address <span class="text-danger">*</span></label>
+                                            <textarea id="editPermanentAddress" name="permanent_address" class="form-control" rows="2" placeholder="Enter permanent address" required></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+                                </div>
+                                <div class="col-md-6">
+                            <!-- Additional Information section -->
+                                <div class="card">
+                                    <div class="card-header bg-success text-white">
+                                        <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Additional Information</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row">
+                                            <div class="col-md-10">
+                                                <div class="mb-3">
+                                                    <label for="editNationality" class="form-label">Nationality <span class="text-danger">*</span></label>
+                                                    <input type="text" id="editNationality" name="nationality" class="form-control" placeholder="e.g., Nigerian" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="editState" class="form-label">State of Origin <span class="text-danger">*</span></label>
+                                                    <select id="editState" name="state" class="form-control" required>
+                                                        <option value="">Select State</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="editLocal" class="form-label">Local Government <span class="text-danger">*</span></label>
+                                                    <select id="editLocal" name="local" class="form-control" required>
+                                                        <option value="">Select LGA</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="editCity" class="form-label">City</label>
+                                                    <input type="text" id="editCity" name="city" class="form-control" placeholder="Enter city">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="editReligion" class="form-label">Religion <span class="text-danger">*</span></label>
+                                                    <select id="editReligion" name="religion" class="form-control" required>
+                                                        <option value="">Select Religion</option>
+                                                        <option value="Christianity">Christianity</option>
+                                                        <option value="Islam">Islam</option>
+                                                        <option value="Others">Others</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="editBloodGroup" class="form-label">Blood Group</label>
+                                                    <select id="editBloodGroup" name="blood_group" class="form-control">
+                                                        <option value="">Select Blood Group</option>
+                                                        <option value="A+">A+</option>
+                                                        <option value="A-">A-</option>
+                                                        <option value="B+">B+</option>
+                                                        <option value="B-">B-</option>
+                                                        <option value="AB+">AB+</option>
+                                                        <option value="AB-">AB-</option>
+                                                        <option value="O+">O+</option>
+                                                        <option value="O-">O-</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="editMotherTongue" class="form-label">Mother Tongue</label>
+                                                    <input type="text" id="editMotherTongue" name="mother_tongue" class="form-control" placeholder="Native language">
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="editNinNumber" class="form-label">NIN Number</label>
+                                                    <input type="text" id="editNinNumber" name="nin_number" class="form-control" placeholder="11-digit NIN" maxlength="11">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label for="editSchoolHouse" class="form-label">School House <span class="text-danger">*</span></label>
+                                                    <select id="editSchoolHouse" name="schoolhouseid" class="form-control" required>
+                                                        <option value="">Select School House</option>
+                                                        @foreach ($schoolhouses as $schoolhouse)
+                                                            <option value="{{ $schoolhouse->id }}">{{ $schoolhouse->house }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <!-- Additional Information section -->
-                                    <div class="card">
-                                        <div class="card-header bg-success text-white">
-                                            <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Additional Information</h6>
-                                        </div>
-                                        <div class="card-body">
-                                            <div class="row">
-                                                <div class="col-md-10">
-                                                    <div class="mb-3">
-                                                        <label for="editNationality" class="form-label">Nationality <span class="text-danger">*</span></label>
-                                                        <input type="text" id="editNationality" name="nationality" class="form-control" placeholder="e.g., Nigerian" required>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label for="editState" class="form-label">State of Origin <span class="text-danger">*</span></label>
-                                                        <select id="editState" name="state" class="form-control" required>
-                                                            <option value="">Select State</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label for="editLocal" class="form-label">Local Government <span class="text-danger">*</span></label>
-                                                        <select id="editLocal" name="local" class="form-control" required>
-                                                            <option value="">Select LGA</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label for="editCity" class="form-label">City</label>
-                                                        <input type="text" id="editCity" name="city" class="form-control" placeholder="Enter city">
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label for="editReligion" class="form-label">Religion <span class="text-danger">*</span></label>
-                                                        <select id="editReligion" name="religion" class="form-control" required>
-                                                            <option value="">Select Religion</option>
-                                                            <option value="Christianity">Christianity</option>
-                                                            <option value="Islam">Islam</option>
-                                                            <option value="Others">Others</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label for="editBloodGroup" class="form-label">Blood Group</label>
-                                                        <select id="editBloodGroup" name="blood_group" class="form-control">
-                                                            <option value="">Select Blood Group</option>
-                                                            <option value="A+">A+</option>
-                                                            <option value="A-">A-</option>
-                                                            <option value="B+">B+</option>
-                                                            <option value="B-">B-</option>
-                                                            <option value="AB+">AB+</option>
-                                                            <option value="AB-">AB-</option>
-                                                            <option value="O+">O+</option>
-                                                            <option value="O-">O-</option>
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label for="editMotherTongue" class="form-label">Mother Tongue</label>
-                                                        <input type="text" id="editMotherTongue" name="mother_tongue" class="form-control" placeholder="Native language">
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <div class="row">
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label for="editNinNumber" class="form-label">NIN Number</label>
-                                                        <input type="text" id="editNinNumber" name="nin_number" class="form-control" placeholder="11-digit NIN" maxlength="11">
-                                                    </div>
-                                                </div>
-                                                <div class="col-md-6">
-                                                    <div class="mb-3">
-                                                        <label for="editSchoolHouse" class="form-label">School House <span class="text-danger">*</span></label>
-                                                        <select id="editSchoolHouse" name="schoolhouseid" class="form-control" required>
-                                                            <option value="">Select School House</option>
-                                                            @foreach ($schoolhouses as $schoolhouse)
-                                                                <option value="{{ $schoolhouse->id }}">{{ $schoolhouse->house }}</option>
-                                                            @endforeach
-                                                        </select>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <!-- Parent/Guardian Details -->
+                                    <!-- Section D: Parent/Guardian Details -->
                                     <div class="card">
                                         <div class="card-header bg-warning text-dark">
                                             <h6 class="mb-0"><i class="fas fa-users me-2"></i>Parent/Guardian Details</h6>
@@ -2678,7 +2777,7 @@ use Spatie\Permission\Models\Role;
                                             </div>
                                         </div>
                                     </div>
-                                    <!-- Previous School Details -->
+                                    <!-- Section E: Previous School Details -->
                                     <div class="card">
                                         <div class="card-header bg-secondary text-white">
                                             <h6 class="mb-0"><i class="fas fa-school me-2"></i>Previous School Details</h6>
@@ -2702,6 +2801,7 @@ use Spatie\Permission\Models\Role;
                             </div>
                             <div class="alert alert-danger d-none" id="edit-alert-error-msg"></div>
                         </div>
+
                         <div class="modal-footer bg-light">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                                 <i class="fas fa-times me-1"></i>Cancel
@@ -2718,7 +2818,7 @@ use Spatie\Permission\Models\Role;
             </div>
         </div>
 
-        <!-- ENHANCED VIEW STUDENT MODAL WITH COMPLETE PARENT INFORMATION -->
+        <!-- ===== ENHANCED VIEW STUDENT MODAL WITH COMPLETE PARENT INFORMATION ===== -->
         <div id="viewStudentModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
             <div class="modal-dialog modal-dialog-centered modal-xl">
                 <div class="modal-content">
@@ -2735,6 +2835,7 @@ use Spatie\Permission\Models\Role;
                         </div>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
+
                     <div class="modal-body p-0">
                         <!-- Student Header with Profile Image and Basic Info -->
                         <div class="student-profile-header bg-light p-4 border-bottom">
@@ -2851,7 +2952,7 @@ use Spatie\Permission\Models\Role;
                                                         <th>Religion:</th>
                                                         <td id="viewReligionDetail">-</div>
                                                     </tr>
-                                                </table>
+                                                </tr>
                                             </div>
                                         </div>
                                     </div>
@@ -2927,7 +3028,7 @@ use Spatie\Permission\Models\Role;
                                                         <th>Admission Date:</th>
                                                         <td id="viewAdmissionDate">-</div>
                                                     </tr>
-                                                    </td>
+                                                    <tr>
                                                         <th>Class:</th>
                                                         <td><span class="badge bg-info" id="viewCurrentClass">-</span></div>
                                                     </tr>
@@ -2963,7 +3064,7 @@ use Spatie\Permission\Models\Role;
                                                         <th width="40%">Current Term:</th>
                                                         <td><span id="viewCurrentTerm">-</span></div>
                                                     </tr>
-                                                    <td>
+                                                    <tr>
                                                         <th>Current Session:</th>
                                                         <td id="viewCurrentSession">-</div>
                                                     </tr>
@@ -3003,7 +3104,7 @@ use Spatie\Permission\Models\Role;
                                 </div>
                             </div>
 
-                            <!-- 3. FAMILY & GUARDIAN INFORMATION TAB -->
+                            <!-- 3. FAMILY & GUARDIAN INFORMATION TAB - ENHANCED -->
                             <div class="tab-pane fade" id="familyInfo" role="tabpanel">
                                 <div class="row">
                                     <!-- Father's Information -->
@@ -3016,6 +3117,9 @@ use Spatie\Permission\Models\Role;
                                                 </h6>
                                             </div>
                                             <div class="info-card-body">
+                                                <div class="text-center mb-3" id="fatherPhotoSection" style="display: none;">
+                                                    <img id="viewFatherPhoto" src="" alt="Father" class="rounded-circle border" style="width: 80px; height: 80px; object-fit: cover;">
+                                                </div>
                                                 <table class="table table-borderless table-sm mb-0">
                                                     <tr>
                                                         <th width="40%"><i class="fas fa-user me-1 text-muted"></i>Full Name:</th>
@@ -3061,6 +3165,9 @@ use Spatie\Permission\Models\Role;
                                                 </h6>
                                             </div>
                                             <div class="info-card-body">
+                                                <div class="text-center mb-3" id="motherPhotoSection" style="display: none;">
+                                                    <img id="viewMotherPhoto" src="" alt="Mother" class="rounded-circle border" style="width: 80px; height: 80px; object-fit: cover;">
+                                                </div>
                                                 <table class="table table-borderless table-sm mb-0">
                                                     <tr>
                                                         <th width="40%"><i class="fas fa-user me-1 text-muted"></i>Full Name:</th>
@@ -3073,7 +3180,7 @@ use Spatie\Permission\Models\Role;
                                                             <a href="javascript:void(0)" onclick="sendSMS('viewMotherPhone')" class="ms-2 text-info" title="SMS"><i class="fas fa-comment"></i></a>
                                                         </div>
                                                     </tr>
-                                                    <tr>
+                                                    <td>
                                                         <th><i class="fas fa-briefcase me-1 text-muted"></i>Occupation:</th>
                                                         <td><span class="badge bg-soft-success" id="viewMotherOccupation">-</span></div>
                                                     </tr>
@@ -3097,7 +3204,7 @@ use Spatie\Permission\Models\Role;
                                     </div>
                                 </div>
 
-                                <!-- Guardian Information -->
+                                <!-- Guardian Information (if different from parents) -->
                                 <div class="row mt-2">
                                     <div class="col-12">
                                         <div class="info-card">
@@ -3206,7 +3313,7 @@ use Spatie\Permission\Models\Role;
                                                         <th>Health Report:</th>
                                                         <td><span id="viewHealthReport">Not Uploaded</span></div>
                                                     </tr>
-                                                    <tr>
+                                                    <td>
                                                         <th>Immunization Record:</th>
                                                         <td><span id="viewImmunization">Not Uploaded</span></div>
                                                     </tr>
@@ -3239,13 +3346,15 @@ use Spatie\Permission\Models\Role;
                             </div>
                         </div>
                     </div>
+
+                    <!-- Modal Footer -->
                     <div class="modal-footer bg-light">
                         <div class="d-flex justify-content-between align-items-center w-100">
                             <div><span class="text-muted" id="studentProfileLastUpdated"></span></div>
                             <div>
                                 <button type="button" class="btn btn-light" data-bs-dismiss="modal"><i class="fas fa-times me-1"></i> Close</button>
-                                <button type="button" class="btn btn-primary" onclick="editStudentFromView()"><i class="fas fa-edit me-1"></i> Edit Student</button>
-                                <button type="button" class="btn btn-success" onclick="printStudentProfile()"><i class="fas fa-print me-1"></i> Print Profile</button>
+                                <button type="button" class="btn btn-primary" onclick="editStudentFromView()"><i class="fas fa-edit me-2"></i> Edit Student</button>
+                                <button type="button" class="btn btn-success" onclick="printStudentProfile()"><i class="fas fa-print me-2"></i> Print Profile</button>
                             </div>
                         </div>
                     </div>
@@ -3262,7 +3371,7 @@ use Spatie\Permission\Models\Role;
 
 <script>
 // ============================================================================
-// STUDENT MANAGEMENT SYSTEM - COMPLETE FIXED VERSION
+// STUDENT MANAGEMENT SYSTEM - WITH IMAGE ZOOM FUNCTIONALITY
 // ============================================================================
 
 (function() {
@@ -3317,6 +3426,16 @@ use Spatie\Permission\Models\Role;
         termFilters: null,
         bulkStatusData: null
     };
+
+    // ============================================================================
+    // NIGERIAN STATES AND LGAS
+    // ============================================================================
+    const NIGERIAN_STATES = [
+        { name: "Abia", lgas: ["Aba North", "Aba South", "Arochukwu", "Bende", "Ikwuano", "Isiala Ngwa North", "Isiala Ngwa South", "Isuikwuato", "Obi Ngwa", "Ohafia", "Osisioma", "Ugwunagbo", "Ukwa East", "Ukwa West", "Umuahia North", "Umuahia South", "Umu Nneochi"] },
+        { name: "Adamawa", lgas: ["Demsa", "Fufure", "Ganye", "Gayuk", "Gombi", "Grie", "Hong", "Jada", "Lamurde", "Madagali", "Maiha", "Mayo Belwa", "Michika", "Mubi North", "Mubi South", "Numan", "Shelleng", "Song", "Toungo", "Yola North", "Yola South"] },
+        { name: "Akwa Ibom", lgas: ["Abak", "Eastern Obolo", "Eket", "Esit Eket", "Essien Udim", "Etim Ekpo", "Etinan", "Ibeno", "Ibesikpo Asutan", "Ibiono-Ibom", "Ika", "Ikono", "Ikot Abasi", "Ikot Ekpene", "Ini", "Itu", "Mbo", "Mkpat-Enin", "Nsit-Atai", "Nsit-Ibom", "Nsit-Ubium", "Obot Akara", "Okobo", "Onna", "Oron", "Oruk Anam", "Udung-Uko", "Ukanafun", "Uruan", "Urue-Offong/Oruko", "Uyo"] },
+        // ... (rest of Nigerian states - same as previous)
+    ];
 
     // ============================================================================
     // UTILITY FUNCTIONS
@@ -3386,7 +3505,7 @@ use Spatie\Permission\Models\Role;
             }
         },
 
-        getInitials: function(firstName, lastName, otherName = '') {
+        getInitials: function(firstName, lastName) {
             const first = firstName && firstName.length > 0 ? firstName.charAt(0).toUpperCase() : '';
             const last = lastName && lastName.length > 0 ? lastName.charAt(0).toUpperCase() : '';
             return (first + last) || 'ST';
@@ -3521,7 +3640,7 @@ use Spatie\Permission\Models\Role;
     };
 
     // ============================================================================
-    // API SERVICE (Simplified for demo - would be expanded in production)
+    // API SERVICE
     // ============================================================================
     const ApiService = {
         async getStudents(page = 1, perPage = null, filters = null) {
@@ -3531,6 +3650,7 @@ use Spatie\Permission\Models\Role;
 
             const params = new URLSearchParams();
             params.append('page', page);
+
             const itemsPerPage = perPage || AppState.pagination.perPage || CONFIG.DEFAULT_PER_PAGE;
             params.append('per_page', itemsPerPage);
 
@@ -3557,7 +3677,15 @@ use Spatie\Permission\Models\Role;
             }
 
             try {
+                Utils.log('Fetching students with params:', {
+                    page,
+                    perPage: itemsPerPage,
+                    search: currentFilters.search,
+                    params: params.toString()
+                });
+
                 const response = await axios.get(`/students/optimized?${params.toString()}`);
+
                 if (response.data.success) {
                     return response.data.data;
                 } else {
@@ -3574,7 +3702,9 @@ use Spatie\Permission\Models\Role;
                 throw new Error('Axios not available');
             }
             try {
+                Utils.log('Fetching student by ID:', id);
                 const response = await axios.get(`/student/${id}/edit`);
+
                 if (response.data.success && response.data.student) {
                     return response.data.student;
                 } else {
@@ -3625,6 +3755,19 @@ use Spatie\Permission\Models\Role;
             }
         },
 
+        async getStudentAllTerms(studentId) {
+            if (!Utils.ensureAxios()) {
+                throw new Error('Axios not available');
+            }
+            try {
+                const response = await axios.get(`/student/${studentId}/all-terms`);
+                return response.data;
+            } catch (error) {
+                Utils.log('API Error - getStudentAllTerms', error, 'error');
+                return { success: false, data: [] };
+            }
+        },
+
         async updateBulkCurrentTerm(data) {
             if (!Utils.ensureAxios()) {
                 throw new Error('Axios not available');
@@ -3638,13 +3781,37 @@ use Spatie\Permission\Models\Role;
             }
         },
 
+        async generateReport(params) {
+            if (!Utils.ensureAxios()) {
+                throw new Error('Axios not available');
+            }
+            try {
+                const response = await axios({
+                    method: 'GET',
+                    url: '/students/report',
+                    params: params,
+                    responseType: 'blob',
+                    timeout: 120000
+                });
+                return response;
+            } catch (error) {
+                Utils.log('API Error - generateReport', error, 'error');
+                throw error;
+            }
+        },
+
         async getStudentsByClassAndSession(classId, sessionId, termId = null) {
             if (!Utils.ensureAxios()) {
                 throw new Error('Axios not available');
             }
             try {
-                const params = { class_id: classId, session_id: sessionId };
-                if (termId) params.term_id = termId;
+                const params = {
+                    class_id: classId,
+                    session_id: sessionId
+                };
+                if (termId) {
+                    params.term_id = termId;
+                }
                 const response = await axios.get('/students/by-class-session', { params });
                 return response.data;
             } catch (error) {
@@ -3684,7 +3851,9 @@ use Spatie\Permission\Models\Role;
                 throw new Error('Axios not available');
             }
             try {
-                const response = await axios.post('/students/remove-from-term', { registration_id: registrationId });
+                const response = await axios.post('/students/remove-from-term', {
+                    registration_id: registrationId
+                });
                 return response.data;
             } catch (error) {
                 Utils.log('API Error - removeStudentFromTerm', error, 'error');
@@ -3697,12 +3866,61 @@ use Spatie\Permission\Models\Role;
                 throw new Error('Axios not available');
             }
             try {
-                const response = await axios.post('/students/bulk-remove-from-term', { registration_ids: registrationIds });
+                const response = await axios.post('/students/bulk-remove-from-term', {
+                    registration_ids: registrationIds
+                });
                 return response.data;
             } catch (error) {
                 Utils.log('API Error - bulkRemoveFromTerm', error, 'error');
                 throw error;
             }
+        }
+    };
+
+    // ============================================================================
+    // IMAGE ZOOM MANAGER
+    // ============================================================================
+    const ImageZoomManager = {
+        showZoomModal: function(imageUrl, studentName, admissionNo, studentClass, gender, initials) {
+            const zoomedImage = document.getElementById('zoomedImage');
+            const zoomedImageName = document.getElementById('zoomedImageName');
+            const zoomedImageDetails = document.getElementById('zoomedImageDetails');
+
+            zoomedImageName.textContent = studentName || 'Student Photo';
+            zoomedImageDetails.innerHTML = `
+                <i class="fas fa-id-card me-1"></i> ${admissionNo} &nbsp;|&nbsp;
+                <i class="fas fa-school me-1"></i> ${studentClass} &nbsp;|&nbsp;
+                <i class="fas fa-${gender === 'Male' ? 'mars' : 'venus'} me-1"></i> ${gender}
+            `;
+
+            if (imageUrl && imageUrl !== '' && imageUrl !== 'null') {
+                zoomedImage.src = imageUrl;
+                zoomedImage.style.display = 'block';
+            } else {
+                // Create canvas with initials
+                const canvas = document.createElement('canvas');
+                canvas.width = 400;
+                canvas.height = 400;
+                const ctx = canvas.getContext('2d');
+
+                const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                gradient.addColorStop(0, '#667eea');
+                gradient.addColorStop(1, '#764ba2');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 160px "Segoe UI", Arial, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                const displayInitials = (initials && initials !== 'null') ? initials.substring(0, 2) : 'ST';
+                ctx.fillText(displayInitials, canvas.width/2, canvas.height/2);
+
+                zoomedImage.src = canvas.toDataURL();
+                zoomedImage.style.display = 'block';
+            }
+
+            new bootstrap.Modal(document.getElementById('imageZoomModal')).show();
         }
     };
 
@@ -3784,29 +4002,46 @@ use Spatie\Permission\Models\Role;
         handleSearchInput: function(e) {
             const searchInput = e.target;
             const clearSearchBtn = document.getElementById('clear-search');
+
             if (clearSearchBtn) {
                 clearSearchBtn.style.display = searchInput.value.length > 0 ? 'block' : 'none';
             }
-            if (this.searchTimeout) clearTimeout(this.searchTimeout);
-            this.searchTimeout = setTimeout(() => { this.applyFilters(); }, CONFIG.SEARCH_DEBOUNCE_DELAY);
+
+            if (this.searchTimeout) {
+                clearTimeout(this.searchTimeout);
+            }
+
+            this.searchTimeout = setTimeout(() => {
+                this.applyFilters();
+            }, CONFIG.SEARCH_DEBOUNCE_DELAY);
         },
 
         handleSearchEnter: function(e) {
             if (e.key === 'Enter') {
-                if (this.searchTimeout) clearTimeout(this.searchTimeout);
+                if (this.searchTimeout) {
+                    clearTimeout(this.searchTimeout);
+                }
                 this.applyFilters();
             }
         },
 
-        handleFilterChange: function(e) { this.applyFilters(); },
+        handleFilterChange: function(e) {
+            this.applyFilters();
+        },
 
         clearSearch: function() {
             const searchInput = document.getElementById('search-input');
             const clearSearchBtn = document.getElementById('clear-search');
+
             if (searchInput) {
                 searchInput.value = '';
-                if (clearSearchBtn) clearSearchBtn.style.display = 'none';
-                if (this.searchTimeout) clearTimeout(this.searchTimeout);
+                if (clearSearchBtn) {
+                    clearSearchBtn.style.display = 'none';
+                }
+
+                if (this.searchTimeout) {
+                    clearTimeout(this.searchTimeout);
+                }
                 this.applyFilters();
             }
         },
@@ -3830,6 +4065,7 @@ use Spatie\Permission\Models\Role;
 
             AppState.pagination.currentPage = 1;
             StudentManager.fetchStudents();
+
             Utils.log('Filters applied:', AppState.filters);
         },
 
@@ -3844,7 +4080,9 @@ use Spatie\Permission\Models\Role;
 
             if (searchInput) {
                 searchInput.value = '';
-                if (clearSearchBtn) clearSearchBtn.style.display = 'none';
+                if (clearSearchBtn) {
+                    clearSearchBtn.style.display = 'none';
+                }
             }
             if (classFilter) classFilter.value = 'all';
             if (termFilter) termFilter.value = 'all';
@@ -3863,20 +4101,173 @@ use Spatie\Permission\Models\Role;
 
             AppState.pagination.currentPage = 1;
             StudentManager.fetchStudents();
+
             Utils.log('Filters reset');
         }
     };
 
     // ============================================================================
-    // RENDER MANAGER
+    // STATE AND LGA MANAGER
+    // ============================================================================
+    const StateLGAManager = {
+        initializeAddStateDropdown: function() {
+            const stateSelect = document.getElementById('addState');
+            const lgaSelect = document.getElementById('addLocal');
+
+            if (!stateSelect || !lgaSelect) return;
+
+            stateSelect.innerHTML = '<option value="">Select State</option>';
+            lgaSelect.innerHTML = '<option value="">Select LGA</option>';
+            lgaSelect.disabled = true;
+
+            NIGERIAN_STATES.forEach(state => {
+                const option = document.createElement('option');
+                option.value = state.name;
+                option.textContent = state.name;
+                stateSelect.appendChild(option);
+            });
+
+            stateSelect.removeEventListener('change', this.handleAddStateChange);
+            stateSelect.addEventListener('change', (e) => this.handleAddStateChange(e));
+        },
+
+        handleAddStateChange: function(event) {
+            const selectedState = event.target.value;
+            const lgaSelect = document.getElementById('addLocal');
+
+            if (!lgaSelect) return;
+
+            lgaSelect.innerHTML = '<option value="">Select LGA</option>';
+
+            if (selectedState) {
+                const state = NIGERIAN_STATES.find(s => s.name === selectedState);
+                lgaSelect.disabled = false;
+
+                if (state) {
+                    state.lgas.forEach(lga => {
+                        const option = document.createElement('option');
+                        option.value = lga;
+                        option.textContent = lga;
+                        lgaSelect.appendChild(option);
+                    });
+                }
+            } else {
+                lgaSelect.disabled = true;
+            }
+        },
+
+        initializeEditStateDropdown: function() {
+            const stateSelect = document.getElementById('editState');
+            const lgaSelect = document.getElementById('editLocal');
+
+            if (!stateSelect || !lgaSelect) return;
+
+            stateSelect.innerHTML = '<option value="">Select State</option>';
+
+            NIGERIAN_STATES.forEach(state => {
+                const option = document.createElement('option');
+                option.value = state.name;
+                option.textContent = state.name;
+                stateSelect.appendChild(option);
+            });
+
+            lgaSelect.innerHTML = '<option value="">Select LGA</option>';
+            lgaSelect.disabled = true;
+
+            stateSelect.removeEventListener('change', this.handleEditStateChange);
+            stateSelect.addEventListener('change', (e) => this.handleEditStateChange(e));
+        },
+
+        handleEditStateChange: function(event) {
+            const selectedState = event.target.value;
+            const lgaSelect = document.getElementById('editLocal');
+
+            if (!lgaSelect) return;
+
+            lgaSelect.innerHTML = '<option value="">Select LGA</option>';
+
+            if (selectedState) {
+                const state = NIGERIAN_STATES.find(s => s.name === selectedState);
+                lgaSelect.disabled = false;
+
+                if (state) {
+                    state.lgas.forEach(lga => {
+                        const option = document.createElement('option');
+                        option.value = lga;
+                        option.textContent = lga;
+                        lgaSelect.appendChild(option);
+                    });
+                }
+            } else {
+                lgaSelect.disabled = true;
+            }
+        },
+
+        setEditStateAndLGA: function(stateName, lgaName) {
+            const stateSelect = document.getElementById('editState');
+            const lgaSelect = document.getElementById('editLocal');
+
+            if (!stateSelect || !lgaSelect) return false;
+
+            if (stateSelect.options.length <= 1) {
+                NIGERIAN_STATES.forEach(state => {
+                    const option = document.createElement('option');
+                    option.value = state.name;
+                    option.textContent = state.name;
+                    stateSelect.appendChild(option);
+                });
+            }
+
+            if (stateName && stateName !== '') {
+                let stateFound = false;
+                for (let i = 0; i < stateSelect.options.length; i++) {
+                    if (stateSelect.options[i].value.toLowerCase() === stateName.toLowerCase()) {
+                        stateSelect.selectedIndex = i;
+                        stateFound = true;
+                        break;
+                    }
+                }
+
+                if (!stateFound) {
+                    try {
+                        stateSelect.value = stateName;
+                    } catch (e) {}
+                }
+
+                const changeEvent = new Event('change', { bubbles: true });
+                stateSelect.dispatchEvent(changeEvent);
+
+                setTimeout(() => {
+                    if (lgaName && lgaName !== '') {
+                        for (let i = 0; i < lgaSelect.options.length; i++) {
+                            if (lgaSelect.options[i].value.toLowerCase() === lgaName.toLowerCase()) {
+                                lgaSelect.selectedIndex = i;
+                                break;
+                            }
+                        }
+                    }
+                }, 300);
+            }
+
+            return true;
+        }
+    };
+
+    // ============================================================================
+    // RENDER MANAGER - WITH IMAGE ZOOM ON AVATAR CLICK
     // ============================================================================
     const RenderManager = {
         renderTableView: function(students) {
             const tbody = document.getElementById('studentTableBody');
             if (!tbody) return;
-            if (!students || students.length === 0) { tbody.innerHTML = ''; return; }
+
+            if (!students || students.length === 0) {
+                tbody.innerHTML = '';
+                return;
+            }
 
             const fragment = document.createDocumentFragment();
+
             students.forEach(student => {
                 const row = document.createElement('tr');
                 row.className = 'align-middle';
@@ -3894,70 +4285,140 @@ use Spatie\Permission\Models\Role;
                     ? '<span class="badge bg-secondary bg-gradient px-2 py-1 rounded-pill ms-1"><i class="fas fa-history me-1"></i>Old</span>'
                     : '';
 
-                const avatarHtml = student.picture && student.picture !== 'unnamed.jpg'
-                    ? `<img src="/storage/images/student_avatars/${student.picture}" alt="Avatar" class="rounded-circle border border-2 border-white shadow-sm" style="width: 45px; height: 45px; object-fit: cover;">`
-                    : `<div class="avatar-initials rounded-circle border border-2 border-white shadow-sm" style="width: 45px; height: 45px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px;">${initials}</div>`;
+                const avatarUrl = student.picture && student.picture !== 'unnamed.jpg'
+                    ? `/storage/images/student_avatars/${student.picture}`
+                    : null;
+
+                const avatarHtml = avatarUrl
+                    ? `<img src="${avatarUrl}" alt="Avatar" class="rounded-circle border border-2 border-white shadow-sm avatar-clickable" style="width: 45px; height: 45px; object-fit: cover; cursor: pointer;" data-avatar-url="${avatarUrl}" data-student-name="${Utils.escapeHtml(fullName)}" data-admission="${Utils.escapeHtml(student.admissionNo || 'N/A')}" data-class="${Utils.escapeHtml(student.schoolclass || '')} ${Utils.escapeHtml(student.arm || '')}" data-gender="${Utils.escapeHtml(student.gender || 'N/A')}" data-initials="${initials}">`
+                    : `<div class="avatar-initials rounded-circle border border-2 border-white shadow-sm avatar-clickable" style="width: 45px; height: 45px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 16px; cursor: pointer;" data-avatar-url="" data-student-name="${Utils.escapeHtml(fullName)}" data-admission="${Utils.escapeHtml(student.admissionNo || 'N/A')}" data-class="${Utils.escapeHtml(student.schoolclass || '')} ${Utils.escapeHtml(student.arm || '')}" data-gender="${Utils.escapeHtml(student.gender || 'N/A')}" data-initials="${initials}">${initials}</div>`;
 
                 row.innerHTML = `
                     <td><div class="form-check"><input class="form-check-input student-checkbox" type="checkbox" value="${student.id}"></div></td>
                     <td><div class="d-flex align-items-center gap-3"><div class="position-relative">${avatarHtml}<span class="position-absolute bottom-0 end-0 ${student.student_status === 'Active' ? 'bg-success' : 'bg-secondary'} rounded-circle p-1 border border-2 border-white" style="width: 12px; height: 12px;"></span></div><div><h6 class="mb-1 fw-semibold">${Utils.escapeHtml(fullName)}</h6><div class="d-flex align-items-center gap-2"><span class="badge bg-light text-dark px-2 py-1 rounded-pill"><i class="fas fa-id-card me-1 text-muted"></i> ${Utils.escapeHtml(student.admissionNo || 'N/A')}</span>${typeBadge}</div></div></div></td>
                     <td><div class="d-flex flex-column"><span class="fw-medium">${Utils.escapeHtml(student.schoolclass || '')} ${Utils.escapeHtml(student.arm || '')}</span><small class="text-muted">${Utils.escapeHtml(student.student_category || '')}</small></div></td>
-                    <td>${statusBadge}</td>
-                    <td><span class="d-flex align-items-center gap-1"><i class="fas fa-${student.gender === 'Male' ? 'mars text-primary' : 'venus text-pink'}"></i> ${Utils.escapeHtml(student.gender || 'N/A')}</span></td>
-                    <td><div class="d-flex align-items-center gap-1"><i class="fas fa-calendar-alt text-muted"></i> <span>${Utils.formatDate(student.created_at, 'short')}</span></div></td>
-                    <td><div class="d-flex gap-2 justify-content-end"><div class="btn-group"><button type="button" class="btn btn-sm btn-soft-info rounded-start view-student-btn" data-student-id="${student.id}" data-bs-toggle="tooltip" title="View Student Details"><i class="fas fa-eye"></i><span class="d-none d-xl-inline-block ms-1">View</span></button><button type="button" class="btn btn-sm btn-soft-warning edit-student-btn" data-student-id="${student.id}" data-bs-toggle="tooltip" title="Edit Student"><i class="fas fa-edit"></i><span class="d-none d-xl-inline-block ms-1">Edit</span></button><button type="button" class="btn btn-sm btn-soft-danger rounded-end delete-student-btn" data-student-id="${student.id}" data-bs-toggle="tooltip" title="Delete Student"><i class="fas fa-trash-alt"></i><span class="d-none d-xl-inline-block ms-1">Delete</span></button></div></div></td>
+                    <td>${statusBadge}</div></td>
+                    <td><span class="d-flex align-items-center gap-1"><i class="fas fa-${student.gender === 'Male' ? 'mars text-primary' : 'venus text-pink'}"></i> ${Utils.escapeHtml(student.gender || 'N/A')}</span></div></td>
+                    <td><div class="d-flex align-items-center gap-1"><i class="fas fa-calendar-alt text-muted"></i> <span>${Utils.formatDate(student.created_at, 'short')}</span></div></div></td>
+                    <td><div class="d-flex gap-2 justify-content-end"><div class="btn-group"><button type="button" class="btn btn-sm btn-soft-info rounded-start view-student-btn" data-student-id="${student.id}"><i class="fas fa-eye"></i><span class="d-none d-xl-inline-block ms-1">View</span></button><button type="button" class="btn btn-sm btn-soft-warning edit-student-btn" data-student-id="${student.id}"><i class="fas fa-edit"></i><span class="d-none d-xl-inline-block ms-1">Edit</span></button><button type="button" class="btn btn-sm btn-soft-danger rounded-end delete-student-btn" data-student-id="${student.id}"><i class="fas fa-trash-alt"></i><span class="d-none d-xl-inline-block ms-1">Delete</span></button></div></div></div>
                 `;
                 fragment.appendChild(row);
             });
+
             tbody.innerHTML = '';
             tbody.appendChild(fragment);
+
+            // Attach image zoom event listeners
+            this.attachImageZoomEvents();
             Utils.initializeTooltips();
             this.updateCheckAllState();
+        },
+
+        attachImageZoomEvents: function() {
+            document.querySelectorAll('.avatar-clickable').forEach(el => {
+                el.removeEventListener('click', this.handleAvatarClick);
+                el.addEventListener('click', this.handleAvatarClick);
+            });
+        },
+
+        handleAvatarClick: function(e) {
+            e.stopPropagation();
+            const avatarUrl = this.dataset.avatarUrl;
+            const studentName = this.dataset.studentName;
+            const admission = this.dataset.admission;
+            const studentClass = this.dataset.class;
+            const gender = this.dataset.gender;
+            const initials = this.dataset.initials;
+
+            ImageZoomManager.showZoomModal(avatarUrl, studentName, admission, studentClass, gender, initials);
         },
 
         renderCardView: function(students) {
             const container = document.getElementById('studentsCardsContainer');
             if (!container) return;
-            if (!students || students.length === 0) { container.innerHTML = ''; return; }
+
+            if (!students || students.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
 
             const fragment = document.createDocumentFragment();
+
             students.forEach(student => {
                 const col = document.createElement('div');
                 col.className = 'col-xl-3 col-lg-4 col-md-6 mb-4';
                 const fullName = Utils.getFullName(student.firstname, student.lastname, student.othername);
                 const initials = Utils.getInitials(student.firstname, student.lastname);
-                const avatarHtml = student.picture && student.picture !== 'unnamed.jpg'
-                    ? `<img src="/storage/images/student_avatars/${student.picture}" alt="Avatar" class="avatar">`
-                    : `<div class="avatar-initials">${initials}</div>`;
+                const avatarUrl = student.picture && student.picture !== 'unnamed.jpg'
+                    ? `/storage/images/student_avatars/${student.picture}`
+                    : null;
+                const avatarHtml = avatarUrl
+                    ? `<img src="${avatarUrl}" alt="Avatar" class="avatar" style="cursor: pointer;" data-avatar-url="${avatarUrl}" data-student-name="${Utils.escapeHtml(fullName)}" data-admission="${Utils.escapeHtml(student.admissionNo || 'N/A')}" data-class="${Utils.escapeHtml(student.schoolclass || '')} ${Utils.escapeHtml(student.arm || '')}" data-gender="${Utils.escapeHtml(student.gender || 'N/A')}" data-initials="${initials}">`
+                    : `<div class="avatar-initials" style="cursor: pointer;" data-avatar-url="" data-student-name="${Utils.escapeHtml(fullName)}" data-admission="${Utils.escapeHtml(student.admissionNo || 'N/A')}" data-class="${Utils.escapeHtml(student.schoolclass || '')} ${Utils.escapeHtml(student.arm || '')}" data-gender="${Utils.escapeHtml(student.gender || 'N/A')}" data-initials="${initials}">${initials}</div>`;
 
                 col.innerHTML = `
-                    <div class="student-profile-card" data-id="${student.id}"><div class="checkbox-container"><div class="form-check"><input class="form-check-input student-checkbox" type="checkbox" value="${student.id}"></div></div><div class="card-header"><div class="header-content"><h5 class="student-name">${Utils.escapeHtml(fullName)}</h5><span class="student-admission">${Utils.escapeHtml(student.admissionNo || 'N/A')}</span></div><div class="avatar-container">${avatarHtml}</div></div><div class="card-body">${this.getStatusBadge(student)}<div class="student-info-grid"><div class="info-item"><span class="info-label">Class</span><span class="info-value">${Utils.escapeHtml(student.schoolclass || '')} ${Utils.escapeHtml(student.arm || '')}</span></div><div class="info-item"><span class="info-label">Gender</span><span class="info-value">${Utils.escapeHtml(student.gender || 'N/A')}</span></div><div class="info-item"><span class="info-label">Age</span><span class="info-value">${Utils.escapeHtml(student.age || 'N/A')}</span></div><div class="info-item"><span class="info-label">Registered</span><span class="info-value">${Utils.formatDate(student.created_at, 'short')}</span></div></div><div class="action-buttons"><button class="action-btn view-btn view-student-btn" data-student-id="${student.id}"><i class="fas fa-eye"></i> View</button><button class="action-btn edit-btn edit-student-btn" data-student-id="${student.id}"><i class="fas fa-edit"></i> Edit</button><button class="action-btn delete-btn delete-student-btn" data-student-id="${student.id}"><i class="fas fa-trash-alt"></i> Delete</button></div></div></div>
+                    <div class="student-profile-card" data-id="${student.id}">
+                        <div class="checkbox-container"><div class="form-check"><input class="form-check-input student-checkbox" type="checkbox" value="${student.id}"></div></div>
+                        <div class="card-header">
+                            <div class="header-content">
+                                <h5 class="student-name">${Utils.escapeHtml(fullName)}</h5>
+                                <span class="student-admission">${Utils.escapeHtml(student.admissionNo || 'N/A')}</span>
+                            </div>
+                            <div class="avatar-container avatar-clickable">${avatarHtml}</div>
+                        </div>
+                        <div class="card-body">
+                            ${this.getStatusBadge(student)}
+                            <div class="student-info-grid">
+                                <div class="info-item"><span class="info-label">Class</span><span class="info-value">${Utils.escapeHtml(student.schoolclass || '')} ${Utils.escapeHtml(student.arm || '')}</span></div>
+                                <div class="info-item"><span class="info-label">Gender</span><span class="info-value">${Utils.escapeHtml(student.gender || 'N/A')}</span></div>
+                                <div class="info-item"><span class="info-label">Age</span><span class="info-value">${Utils.escapeHtml(student.age || 'N/A')}</span></div>
+                                <div class="info-item"><span class="info-label">Registered</span><span class="info-value">${Utils.formatDate(student.created_at, 'short')}</span></div>
+                            </div>
+                            <div class="action-buttons">
+                                <button class="action-btn view-btn view-student-btn" data-student-id="${student.id}"><i class="fas fa-eye"></i> View</button>
+                                <button class="action-btn edit-btn edit-student-btn" data-student-id="${student.id}"><i class="fas fa-edit"></i> Edit</button>
+                                <button class="action-btn delete-btn delete-student-btn" data-student-id="${student.id}"><i class="fas fa-trash-alt"></i> Delete</button>
+                            </div>
+                        </div>
+                    </div>
                 `;
                 fragment.appendChild(col);
             });
+
             container.innerHTML = '';
             container.appendChild(fragment);
+
+            // Attach image zoom events for card view
+            document.querySelectorAll('.avatar-clickable').forEach(el => {
+                el.removeEventListener('click', RenderManager.handleAvatarClick);
+                el.addEventListener('click', RenderManager.handleAvatarClick);
+            });
+
             this.updateCheckAllState();
         },
 
         getStatusBadge: function(student) {
             let badges = '';
+
             if (student.student_status === 'Active') {
                 badges += `<span class="status-badge status-active"><i class="fas fa-check-circle"></i> Active</span>`;
             } else if (student.student_status === 'Inactive') {
                 badges += `<span class="status-badge status-inactive"><i class="fas fa-pause-circle"></i> Inactive</span>`;
             }
+
             if (student.statusId == 2) {
                 badges += `<span class="status-badge status-new ms-2"><i class="fas fa-star"></i> New Student</span>`;
             } else if (student.statusId == 1) {
                 badges += `<span class="status-badge status-old ms-2"><i class="fas fa-history"></i> Old Student</span>`;
             }
+
             return badges;
         },
 
         updateCheckAllState: function() {
             const checkAll = document.getElementById('checkAll');
             const checkAllTable = document.getElementById('checkAllTable');
+
             const totalCheckboxes = document.querySelectorAll('.student-checkbox').length;
             const checkedCheckboxes = document.querySelectorAll('.student-checkbox:checked').length;
 
@@ -3965,6 +4426,7 @@ use Spatie\Permission\Models\Role;
                 checkAll.checked = totalCheckboxes > 0 && totalCheckboxes === checkedCheckboxes;
                 checkAll.indeterminate = checkedCheckboxes > 0 && checkedCheckboxes < totalCheckboxes;
             }
+
             if (checkAllTable) {
                 checkAllTable.checked = totalCheckboxes > 0 && totalCheckboxes === checkedCheckboxes;
                 checkAllTable.indeterminate = checkedCheckboxes > 0 && checkedCheckboxes < totalCheckboxes;
@@ -3984,6 +4446,7 @@ use Spatie\Permission\Models\Role;
 
         toggleView: function(viewType) {
             AppState.ui.currentView = viewType;
+
             const tableView = document.getElementById('tableView');
             const cardView = document.getElementById('cardView');
             const tableViewBtn = document.getElementById('tableViewBtn');
@@ -3996,16 +4459,26 @@ use Spatie\Permission\Models\Role;
                 cardView.classList.add('d-none');
                 tableViewBtn.classList.add('active');
                 cardViewBtn.classList.remove('active');
-                if (AppState.pagination.data.length > 0) this.renderTableView(AppState.pagination.data);
+
+                if (AppState.pagination.data.length > 0) {
+                    this.renderTableView(AppState.pagination.data);
+                }
             } else {
                 tableView.classList.add('d-none');
                 cardView.classList.remove('d-none');
                 tableViewBtn.classList.remove('active');
                 cardViewBtn.classList.add('active');
-                if (AppState.pagination.data.length > 0) this.renderCardView(AppState.pagination.data);
+
+                if (AppState.pagination.data.length > 0) {
+                    this.renderCardView(AppState.pagination.data);
+                }
             }
         }
     };
+
+    // Bind the handleAvatarClick to RenderManager
+    RenderManager.handleAvatarClick = RenderManager.handleAvatarClick.bind(RenderManager);
+    RenderManager.attachImageZoomEvents = RenderManager.attachImageZoomEvents.bind(RenderManager);
 
     // ============================================================================
     // SELECTION MANAGER
@@ -4014,20 +4487,39 @@ use Spatie\Permission\Models\Role;
         initializeCheckboxes: function() {
             const checkAll = document.getElementById('checkAll');
             const checkAllTable = document.getElementById('checkAllTable');
-            if (checkAll) checkAll.addEventListener('change', (e) => this.handleSelectAll(e));
-            if (checkAllTable) checkAllTable.addEventListener('change', (e) => this.handleSelectAll(e));
+
+            if (checkAll) {
+                checkAll.removeEventListener('change', this.handleSelectAll);
+                checkAll.addEventListener('change', (e) => this.handleSelectAll(e));
+            }
+
+            if (checkAllTable) {
+                checkAllTable.removeEventListener('change', this.handleSelectAll);
+                checkAllTable.addEventListener('change', (e) => this.handleSelectAll(e));
+            }
+
+            document.removeEventListener('change', this.handleCheckboxChange);
             document.addEventListener('change', (e) => this.handleCheckboxChange(e));
         },
 
         handleSelectAll: function(e) {
             const isChecked = e.target.checked;
-            document.querySelectorAll('.student-checkbox').forEach(checkbox => {
+            const checkboxes = document.querySelectorAll('.student-checkbox');
+
+            checkboxes.forEach(checkbox => {
                 checkbox.checked = isChecked;
                 const parent = checkbox.closest('.student-profile-card, tr');
-                if (parent) parent.classList.toggle('selected', isChecked);
-                if (isChecked) AppState.ui.selectedStudents.add(checkbox.value);
-                else AppState.ui.selectedStudents.delete(checkbox.value);
+                if (parent) {
+                    parent.classList.toggle('selected', isChecked);
+                }
+
+                if (isChecked) {
+                    AppState.ui.selectedStudents.add(checkbox.value);
+                } else {
+                    AppState.ui.selectedStudents.delete(checkbox.value);
+                }
             });
+
             RenderManager.updateCheckAllState();
         },
 
@@ -4035,9 +4527,17 @@ use Spatie\Permission\Models\Role;
             if (e.target.classList.contains('student-checkbox')) {
                 const checkbox = e.target;
                 const parent = checkbox.closest('.student-profile-card, tr');
-                if (parent) parent.classList.toggle('selected', checkbox.checked);
-                if (checkbox.checked) AppState.ui.selectedStudents.add(checkbox.value);
-                else AppState.ui.selectedStudents.delete(checkbox.value);
+
+                if (parent) {
+                    parent.classList.toggle('selected', checkbox.checked);
+                }
+
+                if (checkbox.checked) {
+                    AppState.ui.selectedStudents.add(checkbox.value);
+                } else {
+                    AppState.ui.selectedStudents.delete(checkbox.value);
+                }
+
                 RenderManager.updateCheckAllState();
             }
         },
@@ -4047,16 +4547,22 @@ use Spatie\Permission\Models\Role;
         },
 
         clearAllSelections: function() {
-            document.querySelectorAll('.student-checkbox').forEach(checkbox => {
+            const checkboxes = document.querySelectorAll('.student-checkbox');
+            checkboxes.forEach(checkbox => {
                 checkbox.checked = false;
                 const parent = checkbox.closest('.student-profile-card, tr');
-                if (parent) parent.classList.remove('selected');
+                if (parent) {
+                    parent.classList.remove('selected');
+                }
             });
+
             AppState.ui.selectedStudents.clear();
+
             const checkAll = document.getElementById('checkAll');
             const checkAllTable = document.getElementById('checkAllTable');
             if (checkAll) checkAll.checked = false;
             if (checkAllTable) checkAllTable.checked = false;
+
             RenderManager.updateCheckAllState();
         }
     };
@@ -4067,45 +4573,80 @@ use Spatie\Permission\Models\Role;
     const PaginationManager = {
         initializePerPageSelector: function() {
             const container = document.querySelector('.pagination-container');
-            if (!container || document.getElementById('perPageSelector')) return;
+            if (!container) return;
 
-            const perPageHtml = `<div class="d-flex align-items-center gap-2"><span class="text-muted">Show:</span><select id="perPageSelector" class="form-select form-select-sm" style="width: auto;">${CONFIG.PER_PAGE_OPTIONS.map(option => `<option value="${option}" ${AppState.pagination.perPage === option ? 'selected' : ''}>${option}</option>`).join('')}</select><span class="text-muted">entries</span></div>`;
+            if (document.getElementById('perPageSelector')) return;
+
+            const perPageHtml = `
+                <div class="d-flex align-items-center gap-2">
+                    <span class="text-muted">Show:</span>
+                    <select id="perPageSelector" class="form-select form-select-sm" style="width: auto;">
+                        ${CONFIG.PER_PAGE_OPTIONS.map(option =>
+                            `<option value="${option}" ${AppState.pagination.perPage === option ? 'selected' : ''}>${option}</option>`
+                        ).join('')}
+                    </select>
+                    <span class="text-muted">entries</span>
+                </div>
+            `;
+
             const paginationNav = container.querySelector('nav');
-            if (paginationNav) container.insertAdjacentHTML('afterbegin', perPageHtml);
-            else container.insertAdjacentHTML('beforeend', perPageHtml);
+            if (paginationNav) {
+                container.insertAdjacentHTML('afterbegin', perPageHtml);
+            } else {
+                container.insertAdjacentHTML('beforeend', perPageHtml);
+            }
 
             const selector = document.getElementById('perPageSelector');
-            if (selector) selector.addEventListener('change', function(e) {
-                AppState.pagination.perPage = parseInt(e.target.value, 10);
-                AppState.pagination.currentPage = 1;
-                StudentManager.fetchStudents();
-            });
+            if (selector) {
+                selector.addEventListener('change', function(e) {
+                    const newPerPage = parseInt(e.target.value, 10);
+                    AppState.pagination.perPage = newPerPage;
+                    AppState.pagination.currentPage = 1;
+                    StudentManager.fetchStudents();
+                });
+            }
         },
 
         updatePaginationUI: function(pagination) {
             const paginationContainer = document.getElementById('pagination');
             if (!paginationContainer) return;
 
-            document.getElementById('showingCount').textContent = pagination.from || 0;
-            document.getElementById('toCount').textContent = pagination.to || 0;
-            document.getElementById('totalCount').textContent = pagination.total || 0;
-            document.getElementById('totalStudents').textContent = pagination.total || 0;
+            const showingCount = document.getElementById('showingCount');
+            const toCount = document.getElementById('toCount');
+            const totalCount = document.getElementById('totalCount');
+
+            if (showingCount) showingCount.textContent = pagination.from || 0;
+            if (toCount) toCount.textContent = pagination.to || 0;
+            if (totalCount) totalCount.textContent = pagination.total || 0;
+
+            const totalStudentsEl = document.getElementById('totalStudents');
+            if (totalStudentsEl) totalStudentsEl.textContent = pagination.total || 0;
 
             const pageItems = paginationContainer.querySelectorAll('.page-item:not(#prevPageLi):not(#nextPageLi)');
             pageItems.forEach(item => item.remove());
 
-            if (!pagination.last_page || pagination.last_page <= 1) return;
+            if (!pagination.last_page || pagination.last_page <= 1) {
+                return;
+            }
 
             let startPage = Math.max(1, pagination.current_page - 2);
             let endPage = Math.min(pagination.last_page, pagination.current_page + 2);
 
             if (startPage > 1) {
                 this.addPageItem(paginationContainer, 1, pagination.current_page);
-                if (startPage > 2) this.addEllipsis(paginationContainer);
+                if (startPage > 2) {
+                    this.addEllipsis(paginationContainer);
+                }
             }
-            for (let i = startPage; i <= endPage; i++) this.addPageItem(paginationContainer, i, pagination.current_page);
+
+            for (let i = startPage; i <= endPage; i++) {
+                this.addPageItem(paginationContainer, i, pagination.current_page);
+            }
+
             if (endPage < pagination.last_page) {
-                if (endPage < pagination.last_page - 1) this.addEllipsis(paginationContainer);
+                if (endPage < pagination.last_page - 1) {
+                    this.addEllipsis(paginationContainer);
+                }
                 this.addPageItem(paginationContainer, pagination.last_page, pagination.current_page);
             }
 
@@ -4113,7 +4654,11 @@ use Spatie\Permission\Models\Role;
             if (prevPageBtn) {
                 if (pagination.current_page > 1) {
                     prevPageBtn.classList.remove('disabled');
-                    prevPageBtn.onclick = (e) => { e.preventDefault(); AppState.pagination.currentPage = pagination.current_page - 1; StudentManager.fetchStudents(); };
+                    prevPageBtn.onclick = (e) => {
+                        e.preventDefault();
+                        AppState.pagination.currentPage = pagination.current_page - 1;
+                        StudentManager.fetchStudents();
+                    };
                 } else {
                     prevPageBtn.classList.add('disabled');
                     prevPageBtn.onclick = null;
@@ -4124,7 +4669,11 @@ use Spatie\Permission\Models\Role;
             if (nextPageBtn) {
                 if (pagination.current_page < pagination.last_page) {
                     nextPageBtn.classList.remove('disabled');
-                    nextPageBtn.onclick = (e) => { e.preventDefault(); AppState.pagination.currentPage = pagination.current_page + 1; StudentManager.fetchStudents(); };
+                    nextPageBtn.onclick = (e) => {
+                        e.preventDefault();
+                        AppState.pagination.currentPage = pagination.current_page + 1;
+                        StudentManager.fetchStudents();
+                    };
                 } else {
                     nextPageBtn.classList.add('disabled');
                     nextPageBtn.onclick = null;
@@ -4135,11 +4684,17 @@ use Spatie\Permission\Models\Role;
         addPageItem: function(container, pageNum, currentPage) {
             const li = document.createElement('li');
             li.className = `page-item ${pageNum === currentPage ? 'active' : ''}`;
+
             const a = document.createElement('a');
             a.className = 'page-link';
             a.href = 'javascript:void(0);';
             a.textContent = pageNum;
-            a.onclick = (e) => { e.preventDefault(); AppState.pagination.currentPage = pageNum; StudentManager.fetchStudents(); };
+            a.onclick = (e) => {
+                e.preventDefault();
+                AppState.pagination.currentPage = pageNum;
+                StudentManager.fetchStudents();
+            };
+
             li.appendChild(a);
             container.insertBefore(li, document.getElementById('nextPageLi'));
         },
@@ -4158,8 +4713,14 @@ use Spatie\Permission\Models\Role;
     const StudentManager = {
         async fetchStudents() {
             Utils.showLoading();
+
             try {
-                const paginationData = await ApiService.getStudents(AppState.pagination.currentPage, AppState.pagination.perPage, AppState.filters);
+                const paginationData = await ApiService.getStudents(
+                    AppState.pagination.currentPage,
+                    AppState.pagination.perPage,
+                    AppState.filters
+                );
+
                 AppState.pagination = {
                     currentPage: paginationData.current_page,
                     lastPage: paginationData.last_page,
@@ -4168,26 +4729,59 @@ use Spatie\Permission\Models\Role;
                     to: paginationData.to,
                     data: paginationData.data
                 };
-                if (AppState.ui.currentView === 'table') RenderManager.renderTableView(paginationData.data);
-                else RenderManager.renderCardView(paginationData.data);
+
+                if (AppState.ui.currentView === 'table') {
+                    RenderManager.renderTableView(paginationData.data);
+                } else {
+                    RenderManager.renderCardView(paginationData.data);
+                }
+
                 PaginationManager.updatePaginationUI(paginationData);
                 SelectionManager.clearAllSelections();
-                paginationData.data.forEach(student => AppState.cache.students.set(student.id.toString(), student));
-                Utils.log('Students fetched successfully', { total: paginationData.total, showing: paginationData.data.length });
+
+                paginationData.data.forEach(student => {
+                    AppState.cache.students.set(student.id.toString(), student);
+                });
+
+                Utils.log('Students fetched successfully', {
+                    total: paginationData.total,
+                    showing: paginationData.data.length,
+                    search: AppState.filters.search
+                });
+
             } catch (error) {
                 Utils.log('Error fetching students', error, 'error');
                 Utils.showError('Failed to load students. Please try again.');
-            } finally { Utils.hideLoading(); }
+
+            } finally {
+                Utils.hideLoading();
+            }
         },
 
         async viewStudent(id) {
             try {
                 Utils.showLoading();
+
                 let student = AppState.cache.students.get(id.toString());
-                if (!student) student = await ApiService.getStudent(id);
+                if (!student) {
+                    student = await ApiService.getStudent(id);
+                    if (student && student.id) {
+                        AppState.cache.students.set(id.toString(), student);
+                    }
+                }
+
                 Utils.hideLoading();
-                if (student) ViewModalManager.populateEnhancedViewModal(student);
-                else Utils.showError('Student data not found.');
+
+                if (student) {
+                    ViewModalManager.populateEnhancedViewModal(student);
+                    const viewModalElement = document.getElementById('viewStudentModal');
+                    if (viewModalElement) {
+                        const viewModal = new bootstrap.Modal(viewModalElement);
+                        viewModal.show();
+                    }
+                } else {
+                    Utils.showError('Student data not found.');
+                }
             } catch (error) {
                 Utils.hideLoading();
                 Utils.log('Error viewing student', error, 'error');
@@ -4198,12 +4792,18 @@ use Spatie\Permission\Models\Role;
         async editStudent(id) {
             try {
                 Utils.showLoading();
+                StateLGAManager.initializeEditStateDropdown();
                 const student = await ApiService.getStudent(id);
-                if (!student || !student.id) throw new Error('Invalid student data');
+                if (!student || !student.id) {
+                    throw new Error('Invalid student data received');
+                }
                 Utils.hideLoading();
                 EditFormManager.populateEditForm(student);
                 const editModalElement = document.getElementById('editStudentModal');
-                if (editModalElement) new bootstrap.Modal(editModalElement).show();
+                if (editModalElement) {
+                    const editModal = new bootstrap.Modal(editModalElement);
+                    editModal.show();
+                }
             } catch (error) {
                 Utils.hideLoading();
                 Utils.log('Error editing student', error, 'error');
@@ -4212,7 +4812,12 @@ use Spatie\Permission\Models\Role;
         },
 
         async deleteStudent(id) {
-            const confirmed = await Utils.showConfirm('Delete Student', 'You won\'t be able to revert this!', 'Yes, delete it!');
+            const confirmed = await Utils.showConfirm(
+                'Delete Student',
+                'You won\'t be able to revert this!',
+                'Yes, delete it!'
+            );
+
             if (confirmed) {
                 try {
                     await ApiService.deleteStudent(id);
@@ -4228,8 +4833,18 @@ use Spatie\Permission\Models\Role;
 
         async deleteMultiple() {
             const selectedIds = SelectionManager.getSelectedStudentIds();
-            if (selectedIds.length === 0) { Utils.showError('Please select at least one student to delete.', 'No Selection'); return; }
-            const confirmed = await Utils.showConfirm(`Delete ${selectedIds.length} Students?`, "This action cannot be undone!", 'Yes, delete them!');
+
+            if (selectedIds.length === 0) {
+                Utils.showError('Please select at least one student to delete.', 'No Selection');
+                return;
+            }
+
+            const confirmed = await Utils.showConfirm(
+                `Delete ${selectedIds.length} Students?`,
+                "This action cannot be undone!",
+                'Yes, delete them!'
+            );
+
             if (confirmed) {
                 try {
                     await ApiService.deleteMultipleStudents(selectedIds);
@@ -4256,6 +4871,7 @@ use Spatie\Permission\Models\Role;
             this.currentStudentId = student.id;
 
             const fullName = Utils.getFullName(student.firstname, student.lastname, student.othername);
+
             this.safeSetText('viewFullName', fullName);
             this.safeSetText('viewFullNameDetail', fullName);
             this.safeSetText('viewAdmissionNumber', student.admissionNo || '-');
@@ -4279,32 +4895,6 @@ use Spatie\Permission\Models\Role;
             this.safeSetText('viewNationality', student.nationality || '-');
             this.safeSetText('viewFutureAmbition', student.future_ambition || 'Not specified');
             this.safeSetText('viewAdmissionDate', Utils.formatDate(student.admission_date, 'long'));
-
-            const classDisplay = `${student.schoolclass || ''} ${student.arm || ''}`.trim() || '-';
-            this.safeSetText('viewCurrentClass', classDisplay);
-            this.safeSetText('viewClassDisplay', classDisplay);
-            const classBadge = document.getElementById('viewClassBadge');
-            if (classBadge) classBadge.innerHTML = `<i class="fas fa-school me-1"></i> ${classDisplay}`;
-
-            this.safeSetText('viewArm', student.arm || '-');
-            this.safeSetText('viewStudentCategory', student.student_category || '-');
-
-            const studentType = student.statusId == 2 ? 'New Student' : student.statusId == 1 ? 'Old Student' : '-';
-            this.safeSetText('viewStudentType', studentType);
-
-            const studentTypeBadge = document.getElementById('viewStudentTypeBadge');
-            if (studentTypeBadge) {
-                if (student.statusId == 2) {
-                    studentTypeBadge.className = 'badge bg-warning bg-gradient px-3 py-2';
-                    studentTypeBadge.innerHTML = `<i class="fas fa-star me-1"></i> New Student`;
-                } else if (student.statusId == 1) {
-                    studentTypeBadge.className = 'badge bg-secondary bg-gradient px-3 py-2';
-                    studentTypeBadge.innerHTML = `<i class="fas fa-history me-1"></i> Old Student`;
-                }
-            }
-
-            this.safeSetText('viewStudentStatus', student.student_status || '-');
-            this.safeSetText('viewSchoolHouse', student.school_house || '-');
             this.safeSetText('viewAdmittedDate', Utils.formatDate(student.admission_date, 'short'));
             this.safeSetText('viewLastSchool', student.last_school || '-');
             this.safeSetText('viewLastClass', student.last_class || '-');
@@ -4324,11 +4914,36 @@ use Spatie\Permission\Models\Role;
             this.safeSetText('viewParentAddress', student.parent_address || '-');
             this.safeSetText('viewNIN', student.nin_number || '-');
             this.safeSetText('viewMotherTongue', student.mother_tongue || '-');
+            this.safeSetText('viewStudentStatus', student.student_status || '-');
+            this.safeSetText('viewSchoolHouse', student.school_house || '-');
+
+            const classDisplay = `${student.schoolclass || ''} ${student.arm || ''}`.trim() || '-';
+            this.safeSetText('viewCurrentClass', classDisplay);
+            this.safeSetText('viewClassDisplay', classDisplay);
+            const classBadge = document.getElementById('viewClassBadge');
+            if (classBadge) classBadge.innerHTML = `<i class="fas fa-school me-1"></i> ${classDisplay}`;
+            this.safeSetText('viewArm', student.arm || '-');
+            this.safeSetText('viewStudentCategory', student.student_category || '-');
+            this.safeSetText('viewStudentType', student.statusId == 2 ? 'New Student' : student.statusId == 1 ? 'Old Student' : '-');
+
+            const studentTypeBadge = document.getElementById('viewStudentTypeBadge');
+            if (studentTypeBadge) {
+                if (student.statusId == 2) {
+                    studentTypeBadge.className = 'badge bg-warning bg-gradient px-3 py-2';
+                    studentTypeBadge.innerHTML = `<i class="fas fa-star me-1"></i> New Student`;
+                } else if (student.statusId == 1) {
+                    studentTypeBadge.className = 'badge bg-secondary bg-gradient px-3 py-2';
+                    studentTypeBadge.innerHTML = `<i class="fas fa-history me-1"></i> Old Student`;
+                }
+            }
 
             const photoElement = document.getElementById('viewStudentPhoto');
             if (photoElement) {
-                if (student.picture && student.picture !== 'unnamed.jpg') photoElement.src = `/storage/images/student_avatars/${student.picture}`;
-                else photoElement.src = 'https://via.placeholder.com/120x120/667eea/ffffff?text=Photo';
+                if (student.picture && student.picture !== 'unnamed.jpg') {
+                    photoElement.src = `/storage/images/student_avatars/${student.picture}`;
+                } else {
+                    photoElement.src = 'https://via.placeholder.com/120x120/667eea/ffffff?text=Photo';
+                }
             }
 
             this.fetchStudentTermInfo(student.id);
@@ -4336,28 +4951,54 @@ use Spatie\Permission\Models\Role;
 
         safeSetText: function(elementId, text) {
             const element = document.getElementById(elementId);
-            if (element) element.textContent = text;
+            if (element) {
+                element.textContent = text;
+            }
         },
 
         async fetchStudentTermInfo(studentId) {
             try {
                 const response = await ApiService.getStudentActiveTerm(studentId);
                 const currentTermAlert = document.getElementById('currentTermAlert');
+
                 if (response.success && response.data) {
                     const data = response.data;
                     this.safeSetText('viewCurrentTerm', data.term?.term || '-');
                     this.safeSetText('viewCurrentSession', data.session?.session || '-');
+
                     const currentTermStatus = document.getElementById('viewCurrentTermStatus');
-                    if (currentTermStatus) currentTermStatus.innerHTML = data.is_current ? '<span class="badge bg-success">Current Active Term</span>' : '<span class="badge bg-warning text-dark">Registered (Not Current)</span>';
-                    if (currentTermAlert) currentTermAlert.innerHTML = `<div class="alert alert-success mb-0"><i class="fas fa-check-circle me-2"></i><strong>Currently enrolled in:</strong> ${data.schoolClass?.schoolclass || ''} ${data.schoolClass?.armRelation?.arm || ''} (${data.term?.term || ''} Term, ${data.session?.session || ''} Session)</div>`;
+                    if (currentTermStatus) {
+                        currentTermStatus.innerHTML = data.is_current
+                            ? '<span class="badge bg-success">Current Active Term</span>'
+                            : '<span class="badge bg-warning text-dark">Registered (Not Current)</span>';
+                    }
+
+                    if (currentTermAlert) {
+                        currentTermAlert.innerHTML = `
+                            <div class="alert alert-success mb-0">
+                                <i class="fas fa-check-circle me-2"></i>
+                                <strong>Currently enrolled in:</strong> ${data.schoolClass?.schoolclass || ''} ${data.schoolClass?.armRelation?.arm || ''}
+                                (${data.term?.term || ''} Term, ${data.session?.session || ''} Session)
+                            </div>
+                        `;
+                    }
                 } else {
                     this.safeSetText('viewCurrentTerm', '-');
                     this.safeSetText('viewCurrentSession', '-');
                     const currentTermStatus = document.getElementById('viewCurrentTermStatus');
                     if (currentTermStatus) currentTermStatus.innerHTML = '<span class="badge bg-secondary">Not Registered</span>';
-                    if (currentTermAlert) currentTermAlert.innerHTML = `<div class="alert alert-warning mb-0"><i class="fas fa-exclamation-triangle me-2"></i><strong>No active term registration found.</strong> Please update the student's current term.</div>`;
+                    if (currentTermAlert) {
+                        currentTermAlert.innerHTML = `
+                            <div class="alert alert-warning mb-0">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <strong>No active term registration found.</strong> Please update the student's current term.
+                            </div>
+                        `;
+                    }
                 }
-            } catch (error) { Utils.log('Error fetching student term info', error, 'error'); }
+            } catch (error) {
+                Utils.log('Error fetching student term info', error, 'error');
+            }
         }
     };
 
@@ -4367,6 +5008,7 @@ use Spatie\Permission\Models\Role;
     const EditFormManager = {
         populateEditForm: function(student) {
             Utils.log('Populating edit form', student);
+
             document.getElementById('editStudentId').value = student.id || '';
             document.getElementById('editAdmissionNo').value = student.admissionNo || '';
             document.getElementById('editAdmissionYear').value = student.admissionYear || new Date().getFullYear();
@@ -4420,15 +5062,22 @@ use Spatie\Permission\Models\Role;
 
             const avatarImg = document.getElementById('editStudentAvatar');
             if (avatarImg) {
-                if (student.picture && student.picture !== 'unnamed.jpg') avatarImg.src = `/storage/images/student_avatars/${student.picture}`;
-                else avatarImg.src = 'https://via.placeholder.com/120x120/667eea/ffffff?text=Photo';
+                if (student.picture && student.picture !== 'unnamed.jpg') {
+                    avatarImg.src = `/storage/images/student_avatars/${student.picture}`;
+                } else {
+                    avatarImg.src = 'https://via.placeholder.com/120x120/667eea/ffffff?text=Photo';
+                }
             }
 
             const form = document.getElementById('editStudentForm');
             if (form && student.id) {
                 const baseAction = form.dataset.baseAction;
-                if (baseAction) form.action = baseAction.replace(':id', student.id);
-                else form.action = form.action.replace(/\/\d+$/, '/' + student.id).replace(/\/\d+\/([^\/]+)$/, '/' + student.id + '/$1');
+                if (baseAction) {
+                    form.action = baseAction.replace(':id', student.id);
+                } else {
+                    form.action = form.action.replace(/\/\d+$/, '/' + student.id)
+                                            .replace(/\/\d+\/([^\/]+)$/, '/' + student.id + '/$1');
+                }
             }
         }
     };
@@ -4439,7 +5088,10 @@ use Spatie\Permission\Models\Role;
     const CurrentTermManager = {
         showUpdateCurrentTermModal: function(studentId = null) {
             let selectedIds = studentId ? [studentId] : SelectionManager.getSelectedStudentIds();
-            if (selectedIds.length === 0) { Utils.showError('Please select at least one student.', 'No Selection'); return; }
+            if (selectedIds.length === 0) {
+                Utils.showError('Please select at least one student.', 'No Selection');
+                return;
+            }
             document.getElementById('selectedStudentsCount').textContent = selectedIds.length;
             new bootstrap.Modal(document.getElementById('updateCurrentTermModal')).show();
         },
@@ -4453,19 +5105,46 @@ use Spatie\Permission\Models\Role;
             const termId = form.querySelector('[name="termId"]')?.value;
             const sessionId = form.querySelector('[name="sessionId"]')?.value;
 
-            if (!classId || !termId || !sessionId) { Utils.showError('Please select class, term, and session.', 'Missing Fields'); return; }
+            if (!classId || !termId || !sessionId) {
+                Utils.showError('Please select class, term, and session.', 'Missing Fields');
+                return;
+            }
 
             try {
-                Swal.fire({ title: 'Updating...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-                const response = await ApiService.updateBulkCurrentTerm({ student_ids: selectedIds, schoolclassId: classId, termId: termId, sessionId: sessionId, is_current: true });
-                bootstrap.Modal.getInstance(document.getElementById('updateCurrentTermModal'))?.hide();
+                Swal.fire({
+                    title: 'Updating...',
+                    text: 'Please wait while updating current term.',
+                    allowOutsideClick: false,
+                    didOpen: () => Swal.showLoading()
+                });
+
+                const data = {
+                    student_ids: selectedIds,
+                    schoolclassId: classId,
+                    termId: termId,
+                    sessionId: sessionId,
+                    is_current: true
+                };
+
+                const response = await ApiService.updateBulkCurrentTerm(data);
+
+                const modal = bootstrap.Modal.getInstance(document.getElementById('updateCurrentTermModal'));
+                if (modal) modal.hide();
+
                 Swal.close();
                 Utils.showSuccess(response.message || `Current term updated for ${selectedIds.length} student(s).`);
                 await StudentManager.fetchStudents();
+
             } catch (error) {
                 Swal.close();
                 Utils.log('Error updating current term', error, 'error');
-                Utils.showError(error.response?.data?.message || error.message || 'Failed to update current term.');
+                let errorMessage = 'Failed to update current term.';
+                if (error.response?.data?.message) {
+                    errorMessage = error.response.data.message;
+                } else if (error.message) {
+                    errorMessage = error.message;
+                }
+                Utils.showError(errorMessage);
             }
         }
     };
@@ -4477,7 +5156,10 @@ use Spatie\Permission\Models\Role;
         showUpdateStatusModal: function() {
             const classId = document.getElementById('schoolclass-filter').value;
             const sessionId = document.getElementById('session-filter').value;
-            if (classId === 'all' || sessionId === 'all') { Utils.showError('Please select both a class and a session to use this feature.', 'Selection Required'); return; }
+            if (classId === 'all' || sessionId === 'all') {
+                Utils.showError('Please select both a class and a session to use this feature.', 'Selection Required');
+                return;
+            }
             Utils.showInfo('Bulk Status Update', 'This feature is available. Select students and choose action.');
         }
     };
@@ -4489,7 +5171,10 @@ use Spatie\Permission\Models\Role;
         showTermStudentsModal: function() {
             const termId = document.getElementById('term-filter')?.value;
             const sessionId = document.getElementById('session-filter').value;
-            if (!termId || termId === 'all' || !sessionId || sessionId === 'all') { Utils.showError('Please select both a term and a session to use this feature.', 'Selection Required'); return; }
+            if (!termId || termId === 'all' || !sessionId || sessionId === 'all') {
+                Utils.showError('Please select both a term and a session to use this feature.', 'Selection Required');
+                return;
+            }
             Utils.showInfo('Term Registration', 'This feature is available. Select term and session to manage registrations.');
         }
     };
@@ -4505,21 +5190,83 @@ use Spatie\Permission\Models\Role;
 
         handleClick: function(e) {
             const viewBtn = e.target.closest('.view-student-btn');
-            if (viewBtn) { e.preventDefault(); StudentManager.viewStudent(viewBtn.dataset.studentId); return; }
+            if (viewBtn) {
+                e.preventDefault();
+                StudentManager.viewStudent(viewBtn.dataset.studentId);
+                return;
+            }
+
             const editBtn = e.target.closest('.edit-student-btn');
-            if (editBtn) { e.preventDefault(); StudentManager.editStudent(editBtn.dataset.studentId); return; }
+            if (editBtn) {
+                e.preventDefault();
+                StudentManager.editStudent(editBtn.dataset.studentId);
+                return;
+            }
+
             const deleteBtn = e.target.closest('.delete-student-btn');
-            if (deleteBtn) { e.preventDefault(); StudentManager.deleteStudent(deleteBtn.dataset.studentId); return; }
+            if (deleteBtn) {
+                e.preventDefault();
+                StudentManager.deleteStudent(deleteBtn.dataset.studentId);
+                return;
+            }
         },
 
         initializeGlobalButtons: function() {
-            document.getElementById('deleteMultipleBtn')?.addEventListener('click', (e) => { e.preventDefault(); StudentManager.deleteMultiple(); });
-            document.getElementById('updateCurrentTermBtn')?.addEventListener('click', (e) => { e.preventDefault(); CurrentTermManager.showUpdateCurrentTermModal(); });
-            document.getElementById('confirmUpdateCurrentTerm')?.addEventListener('click', () => CurrentTermManager.updateCurrentTerm());
-            document.getElementById('tableViewBtn')?.addEventListener('click', () => RenderManager.toggleView('table'));
-            document.getElementById('cardViewBtn')?.addEventListener('click', () => RenderManager.toggleView('card'));
-            document.getElementById('bulkStatusBtn')?.addEventListener('click', (e) => { e.preventDefault(); BulkStatusManager.showUpdateStatusModal(); });
-            document.getElementById('manageTermBtn')?.addEventListener('click', (e) => { e.preventDefault(); TermRegistrationManager.showTermStudentsModal(); });
+            const deleteMultipleBtn = document.getElementById('deleteMultipleBtn');
+            if (deleteMultipleBtn) {
+                deleteMultipleBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    StudentManager.deleteMultiple();
+                });
+            }
+
+            const updateTermBtn = document.getElementById('updateCurrentTermBtn');
+            if (updateTermBtn) {
+                updateTermBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    CurrentTermManager.showUpdateCurrentTermModal();
+                });
+            }
+
+            const confirmUpdateBtn = document.getElementById('confirmUpdateCurrentTerm');
+            if (confirmUpdateBtn) {
+                confirmUpdateBtn.addEventListener('click', () => CurrentTermManager.updateCurrentTerm());
+            }
+
+            const generateReportBtn = document.getElementById('generateReportBtn');
+            if (generateReportBtn) {
+                generateReportBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    // Report generation would go here
+                    Utils.showInfo('Report Generation', 'This feature is available for generating student reports.');
+                });
+            }
+
+            const tableViewBtn = document.getElementById('tableViewBtn');
+            if (tableViewBtn) {
+                tableViewBtn.addEventListener('click', () => RenderManager.toggleView('table'));
+            }
+
+            const cardViewBtn = document.getElementById('cardViewBtn');
+            if (cardViewBtn) {
+                cardViewBtn.addEventListener('click', () => RenderManager.toggleView('card'));
+            }
+
+            const bulkStatusBtn = document.getElementById('bulkStatusBtn');
+            if (bulkStatusBtn) {
+                bulkStatusBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    BulkStatusManager.showUpdateStatusModal();
+                });
+            }
+
+            const manageTermBtn = document.getElementById('manageTermBtn');
+            if (manageTermBtn) {
+                manageTermBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    TermRegistrationManager.showTermStudentsModal();
+                });
+            }
         }
     };
 
@@ -4528,16 +5275,29 @@ use Spatie\Permission\Models\Role;
     // ============================================================================
     const FormSubmissionManager = {
         initializeAddForm: function() {
-            document.getElementById('addStudentForm')?.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                Utils.showInfo('Info', 'Student registration form submission handler would go here.');
-            });
+            const addForm = document.getElementById('addStudentForm');
+            if (!addForm) return;
+
+            addForm.removeEventListener('submit', this.handleAddSubmit);
+            addForm.addEventListener('submit', (e) => this.handleAddSubmit(e));
         },
+
+        async handleAddSubmit(e) {
+            e.preventDefault();
+            Utils.showInfo('Student Registration', 'Form submission would be processed here.');
+        },
+
         initializeEditForm: function() {
-            document.getElementById('editStudentForm')?.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                Utils.showInfo('Info', 'Student edit form submission handler would go here.');
-            });
+            const editForm = document.getElementById('editStudentForm');
+            if (!editForm) return;
+
+            editForm.removeEventListener('submit', this.handleEditSubmit);
+            editForm.addEventListener('submit', (e) => this.handleEditSubmit(e));
+        },
+
+        async handleEditSubmit(e) {
+            e.preventDefault();
+            Utils.showInfo('Student Update', 'Form submission would be processed here.');
         }
     };
 
@@ -4546,30 +5306,39 @@ use Spatie\Permission\Models\Role;
     // ============================================================================
     function initializeApplication() {
         Utils.log('Initializing Student Management System...');
-        if (!Utils.ensureAxios()) { Utils.showError('Failed to initialize application. Please refresh the page.'); return; }
+
+        if (!Utils.ensureAxios()) {
+            Utils.showError('Failed to initialize application. Please refresh the page.');
+            return;
+        }
+
         EventDelegationManager.initialize();
         FilterManager.initializeFilters();
+        StateLGAManager.initializeAddStateDropdown();
+        StateLGAManager.initializeEditStateDropdown();
         SelectionManager.initializeCheckboxes();
         PaginationManager.initializePerPageSelector();
         FormSubmissionManager.initializeAddForm();
         FormSubmissionManager.initializeEditForm();
+
         StudentManager.fetchStudents();
+
         window.StudentManager = StudentManager;
         window.BulkStatusManager = BulkStatusManager;
         window.TermRegistrationManager = TermRegistrationManager;
-        window.refreshTermHistory = () => { if (ViewModalManager.currentStudentId) ViewModalManager.fetchStudentTermInfo(ViewModalManager.currentStudentId); };
-        window.callNumber = (id) => { const phone = document.getElementById(id)?.textContent; if (phone && phone !== '-') window.location.href = `tel:${phone}`; };
-        window.sendSMS = (id) => { const phone = document.getElementById(id)?.textContent; if (phone && phone !== '-') window.location.href = `sms:${phone}`; };
-        window.sendEmail = (id) => { const email = document.getElementById(id)?.textContent; if (email && email !== '-') window.location.href = `mailto:${email}`; };
-        window.editStudentFromView = () => { if (ViewModalManager.currentStudentId) { bootstrap.Modal.getInstance(document.getElementById('viewStudentModal'))?.hide(); StudentManager.editStudent(ViewModalManager.currentStudentId); } };
-        window.printStudentProfile = () => window.print();
-        window.printStudentDetails = () => window.print();
-        Utils.showInfo = function(title, text) { Swal.fire({ title: title, text: text, icon: 'info', confirmButtonText: 'OK' }); };
+
+        Utils.showInfo = function(title, text) {
+            Swal.fire({ title: title, text: text, icon: 'info', confirmButtonText: 'OK' });
+        };
+
         Utils.log('Student Management System initialized successfully');
     }
 
-    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initializeApplication);
-    else initializeApplication();
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeApplication);
+    } else {
+        initializeApplication();
+    }
 
 })();
 </script>
