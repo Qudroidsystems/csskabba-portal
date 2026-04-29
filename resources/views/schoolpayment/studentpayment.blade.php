@@ -69,11 +69,15 @@
     margin-bottom: 20px; box-shadow: var(--pay-shadow);
 }
 .student-avatar-lg {
-    width: 72px; height: 72px; border-radius: 50%; object-fit: cover;
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    object-fit: cover;
     border: 3px solid var(--pay-border);
+    background: #f0f0f0;
 }
 .avatar-placeholder-lg {
-    width: 72px; height: 72px; border-radius: 50%;
+    width: 72px; height: 72px;
+    border-radius: 50%;
     background: linear-gradient(135deg, #dbeafe, #93c5fd);
     display: inline-flex; align-items: center; justify-content: center;
     font-size: 22px; font-weight: 700; color: var(--pay-accent);
@@ -466,11 +470,12 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('loadingOverlay').classList.toggle('active', show);
     }
 
-    // Build storage URL for student avatar
+    // Build storage URL for student avatar - USING CORRECT PATH (matches working StudentController)
     function getAvatarUrl(picture) {
-        if (!picture || picture === 'unnamed.jpg') return null;
+        if (!picture || picture === 'unnamed.jpg' || picture === '') return null;
         // Remove any leading slash and return storage URL
-        return '/storage/images/studentavatar/' + picture.replace(/^\/+/, '');
+        // IMPORTANT: Must match the path in your working StudentController
+        return '/storage/images/student_avatars/' + picture.replace(/^\/+/, '');
     }
 
     // Load data
@@ -542,18 +547,20 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         selectedBillsMap = newMap;
 
-        // Avatar
+        // Avatar - USING CORRECT PATH (matches working StudentController)
         const initials = (student.name || '??').split(' ').map(n => n[0]).join('').toUpperCase().substring(0,2);
         let avatarHtml;
 
-        if (student.avatar && student.avatar !== 'unnamed.jpg') {
+        // Check if avatar exists and is not the default
+        if (student.avatar && student.avatar !== 'unnamed.jpg' && student.avatar !== '') {
             const avatarUrl = getAvatarUrl(student.avatar);
             avatarHtml = `
                 <img src="${avatarUrl}"
                      alt="${escapeHtml(student.name)}"
                      class="student-avatar-lg"
                      onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='inline-flex';">
-                <div class="avatar-placeholder-lg" style="display:none">${escapeHtml(initials)}</div>`;
+                <div class="avatar-placeholder-lg" style="display:none">${escapeHtml(initials)}</div>
+            `;
         } else {
             avatarHtml = `<div class="avatar-placeholder-lg">${escapeHtml(initials)}</div>`;
         }
@@ -640,31 +647,33 @@ document.addEventListener('DOMContentLoaded', function () {
         const paymentRecordsHtml = paymentRecords.length > 0
             ? `<div class="table-responsive">
                 <table class="table rec-table w-100 mb-0">
-                    <thead><tr>
-                        <th>#</th><th>Bill</th><th>Bill Amt</th><th>Paid</th>
-                        <th>Balance</th><th>Method</th><th>Received By</th>
-                        <th>Date</th><th>Status</th><th>Action</th>
-                    </tr></thead>
+                    <thead>
+                        <tr>
+                            <th>#</th><th>Bill</th><th>Bill Amt</th><th>Paid</th>
+                            <th>Balance</th><th>Method</th><th>Received By</th>
+                            <th>Date</th><th>Status</th><th>Action</th>
+                         </div>
+                    </thead>
                     <tbody>
                     ${paymentRecords.map((sp, i) => `
                         <tr>
-                            <td>${i+1}</td>
+                            <td>${i+1} </div>
                             <td><div class="fw-semibold">${escapeHtml(sp.title)}</div>
-                                ${sp.description ? `<div class="text-muted small">${escapeHtml(sp.description)}</div>` : ''}</div></td>
-                            <td>₦${fmt(sp.billAmount)}</div></td>
-                            <td class="text-success fw-semibold">₦${fmt(sp.totalAmountPaid)}</div></td>
-                            <td class="${sp.balance > 0 ? 'text-danger' : 'text-success'} fw-semibold">₦${fmt(sp.balance)}</div></td>
-                            <td><span class="badge bg-secondary-subtle text-secondary">${escapeHtml(sp.paymentMethod||'—')}</span></div></td>
-                            <td class="text-muted small">${escapeHtml(sp.receivedBy||'—')}</div></td>
-                            <td class="text-muted small">${sp.receivedDate ? new Date(sp.receivedDate).toLocaleDateString('en-GB') : 'N/A'}</div></td>
-                            <td><span class="badge ${sp.paymentStatus==='Completed'?'bg-success':'bg-warning text-dark'}">${escapeHtml(sp.paymentStatus||'Pending')}</span></div></td>
+                                ${sp.description ? `<div class="text-muted small">${escapeHtml(sp.description)}</div>` : ''}</div> </div>
+                            <td>₦${fmt(sp.billAmount)}</div> </div>
+                            <td class="text-success fw-semibold">₦${fmt(sp.totalAmountPaid)}</div> </div>
+                            <td class="${sp.balance > 0 ? 'text-danger' : 'text-success'} fw-semibold">₦${fmt(sp.balance)}</div> </div>
+                            <td><span class="badge bg-secondary-subtle text-secondary">${escapeHtml(sp.paymentMethod||'—')}</span></div> </div>
+                            <td class="text-muted small">${escapeHtml(sp.receivedBy||'—')}</div> </div>
+                            <td class="text-muted small">${sp.receivedDate ? new Date(sp.receivedDate).toLocaleDateString('en-GB') : 'N/A'}</div> </div>
+                            <td><span class="badge ${sp.paymentStatus==='Completed'?'bg-success':'bg-warning text-dark'}">${escapeHtml(sp.paymentStatus||'Pending')}</span></div> </div>
                             <td>${sp.recordId
                                 ? `<button class="btn btn-sm btn-danger delete-payment" data-record-id="${sp.recordId}">
                                        <i class="ri-delete-bin-line"></i></button>`
                                 : '<span class="text-muted small">—</span>'} </div>
                         </tr>`).join('')}
                     </tbody>
-                </table>
+                 </div>
                </div>`
             : '<div class="empty-state"><i class="ri-receipt-line"></i><p>No pending payment records.</p></div>';
 
@@ -672,11 +681,13 @@ document.addEventListener('DOMContentLoaded', function () {
         const historyHtml = paymentHistory.length > 0
             ? `<div class="table-responsive">
                 <table class="table rec-table w-100 mb-0">
-                    <thead><tr>
-                        <th>#</th><th>Bill</th><th>Bill Amt</th><th>Paid</th>
-                        <th>Balance</th><th>Method</th><th>Received By</th>
-                        <th>Date</th><th>Status</th><th>Invoice</th>
-                     </div>
+                    <thead>
+                        <tr>
+                            <th>#</th><th>Bill</th><th>Bill Amt</th><th>Paid</th>
+                            <th>Balance</th><th>Method</th><th>Received By</th>
+                            <th>Date</th><th>Status</th><th>Invoice</th>
+                         </div>
+                    </thead>
                     <tbody>
                     ${paymentHistory.map((ph, i) => `
                         <tr>
@@ -698,7 +709,7 @@ document.addEventListener('DOMContentLoaded', function () {
                              </div>
                         </tr>`).join('')}
                     </tbody>
-                </table>
+                 </div>
                </div>`
             : '<div class="empty-state"><i class="ri-history-line"></i><p>No payment history found.</p></div>';
 
@@ -837,6 +848,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
         const bulkBtn = document.getElementById('bulkPaymentBtn');
         if (bulkBtn) bulkBtn.addEventListener('click', () => openBulkPaymentModal());
+
+        // Initialize tooltips
+        if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        }
     }
 
     // Bill checkbox selection
@@ -1101,7 +1120,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (data.success) {
                 const modal = bootstrap.Modal.getInstance(document.getElementById('paymentModal'));
                 if (modal) modal.hide();
-                     Swal.fire({ icon:'success', title:'Recorded!', text:data.message, timer:2000, showConfirmButton:false })
+                Swal.fire({ icon:'success', title:'Recorded!', text:data.message, timer:2000, showConfirmButton:false })
                     .then(() => loadPaymentData());
             } else {
                 Swal.fire({ icon:'error', title:'Error', text:data.message||'Payment failed.' });
