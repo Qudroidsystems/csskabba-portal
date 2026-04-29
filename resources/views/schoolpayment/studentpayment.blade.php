@@ -18,7 +18,7 @@
     --pay-shadow:  0 2px 8px rgba(0,0,0,.08);
 }
 
-/* ── Loading overlay ─────────────────────────────────── */
+/* Loading overlay */
 .loading-overlay {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
     background: rgba(0,0,0,0.5); z-index: 9999;
@@ -32,7 +32,7 @@
 .loading-spinner .spinner-border { width: 2.5rem; height: 2.5rem; }
 .loading-spinner p { margin: 10px 0 0; font-size: 14px; font-weight: 600; color: var(--pay-primary); }
 
-/* ── DataTable-style processing overlay ──────────────── */
+/* DataTable-style processing overlay */
 .dt-processing {
     position: relative; min-height: 120px;
 }
@@ -49,7 +49,7 @@
     font-size: 13px; font-weight: 600; color: var(--pay-primary);
 }
 
-/* ── Hero ────────────────────────────────────────────── */
+/* Hero */
 .pay-hero {
     background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #4f46e5 100%);
     border-radius: var(--pay-radius); padding: 24px 32px; margin-bottom: 24px;
@@ -62,7 +62,7 @@
 .pay-hero h1 { font-size: 20px; font-weight: 700; color: #fff; margin: 0 0 4px; position: relative; }
 .pay-hero p  { font-size: 13px; color: rgba(255,255,255,.75); margin: 0; position: relative; }
 
-/* ── Student card ─────────────────────────────────────── */
+/* Student card */
 .student-card {
     background: #fff; border: 1px solid var(--pay-border);
     border-radius: var(--pay-radius); padding: 20px 24px;
@@ -86,7 +86,7 @@
 }
 .info-chip i { opacity: .7; }
 
-/* ── Benefit banners ──────────────────────────────────── */
+/* Benefit banners */
 .benefit-banner {
     border-radius: 10px; padding: 12px 16px; margin-bottom: 16px;
     display: flex; align-items: flex-start; gap: 12px; font-size: 13px;
@@ -95,7 +95,7 @@
 .benefit-banner.disc  { background: #ede9fe; border: 1px solid #ddd6fe; color: #6d28d9; }
 .benefit-banner .icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
 
-/* ── Bill cards ───────────────────────────────────────── */
+/* Bill cards */
 .bill-card {
     background: #fff; border: 1px solid var(--pay-border);
     border-radius: 12px; padding: 18px 20px; height: 100%;
@@ -130,12 +130,12 @@
     font-size: 11px; font-weight: 600;
 }
 
-/* ── Progress bar ─────────────────────────────────────── */
+/* Progress bar */
 .progress { height: 6px; border-radius: 10px; background: #e2e8f0; overflow: hidden; }
 .progress-bar-paid    { background: linear-gradient(90deg, #16a34a, #15803d); border-radius: 10px; height: 6px; }
 .progress-bar-partial { background: linear-gradient(90deg, #2563eb, #1d4ed8); border-radius: 10px; height: 6px; }
 
-/* ── Tabs ─────────────────────────────────────────────── */
+/* Tabs */
 .nav-tabs .nav-link {
     color: var(--pay-muted); font-size: 13px; font-weight: 600;
     border: none; border-bottom: 2px solid transparent; padding: 10px 16px;
@@ -144,7 +144,7 @@
     color: var(--pay-accent); border-bottom-color: var(--pay-accent); background: transparent;
 }
 
-/* ── Record tables ────────────────────────────────────── */
+/* Record tables */
 .rec-table th {
     background: var(--pay-bg); color: var(--pay-primary);
     padding: 10px 14px; font-size: 12px; font-weight: 700;
@@ -156,14 +156,14 @@
 }
 .rec-table tr:hover td { background: #f0f9ff; }
 
-/* ── Empty state ──────────────────────────────────────── */
+/* Empty state */
 .empty-state {
     text-align: center; padding: 52px 24px; color: var(--pay-muted);
 }
 .empty-state i { font-size: 3rem; opacity: .25; display: block; margin-bottom: 14px; }
 .empty-state p { margin: 0; font-size: 14px; }
 
-/* ── Modals ───────────────────────────────────────────── */
+/* Modals */
 #paymentModal .modal-content,
 #bulkPaymentModal .modal-content {
     border: none; border-radius: 16px; overflow: hidden;
@@ -199,7 +199,7 @@
 }
 .form-control[readonly] { background: var(--pay-bg); cursor: default; }
 
-/* ── Bulk payment ─────────────────────────────────────── */
+/* Bulk payment */
 .bulk-summary {
     background: #f0fdf4; border: 1px solid #bbf7d0;
     border-radius: 12px; padding: 16px; margin-bottom: 20px;
@@ -264,7 +264,7 @@
 </div>
 </div>
 
-{{-- ══════════ BULK PAYMENT MODAL ══════════ --}}
+{{-- BULK PAYMENT MODAL --}}
 <div class="modal fade" id="bulkPaymentModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered" style="max-width:620px">
         <div class="modal-content">
@@ -320,7 +320,7 @@
     </div>
 </div>
 
-{{-- ══════════ INDIVIDUAL PAYMENT MODAL ══════════ --}}
+{{-- INDIVIDUAL PAYMENT MODAL --}}
 <div class="modal fade" id="paymentModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered" style="max-width:500px">
         <div class="modal-content">
@@ -413,7 +413,7 @@
     </div>
 </div>
 
-{{-- ══════════ DELETE CONFIRM MODAL ══════════ --}}
+{{-- DELETE CONFIRM MODAL --}}
 <div class="modal fade" id="confirmDeleteModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered" style="max-width:380px">
         <div class="modal-content border-0" style="border-radius:16px;overflow:hidden">
@@ -439,19 +439,18 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-    // ── Read params (URL first, then PHP fallback) ─────────────────────
+    // Read params
     const urlParams = new URLSearchParams(window.location.search);
     const studentId = urlParams.get('studentId') || '{{ $studentId ?? "" }}';
     const termid    = urlParams.get('termid')    || '{{ $termid ?? "" }}';
     const sessionid = urlParams.get('sessionid') || '{{ $sessionid ?? "" }}';
 
-    // ── State ──────────────────────────────────────────────────────────
-    // KEY: store full bill objects by billId (as string key for consistency)
-    let selectedBillsMap = {};   // { "billId": billObject }
+    // State
+    let selectedBillsMap = {};
     let billsDataGlobal  = [];
     let currentDeleteUrl = '';
 
-    // ── Helpers ────────────────────────────────────────────────────────
+    // Helpers
     function fmt(n) {
         return Number(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 0 });
     }
@@ -467,14 +466,14 @@ document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('loadingOverlay').classList.toggle('active', show);
     }
 
-    // ── Build storage URL for student avatar ────────────────────────
+    // Build storage URL for student avatar
     function getAvatarUrl(picture) {
-        if (!picture) return null;
+        if (!picture || picture === 'unnamed.jpg') return null;
         // Remove any leading slash and return storage URL
         return '/storage/images/studentavatar/' + picture.replace(/^\/+/, '');
     }
 
-    // ── Load data ──────────────────────────────────────────────────────
+    // Load data
     function loadPaymentData() {
         if (!studentId || !termid || !sessionid) {
             document.getElementById('paymentContent').innerHTML = `
@@ -485,7 +484,6 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
-        // Show DataTable-style processing overlay on the content div
         const content = document.getElementById('paymentContent');
         if (!content.querySelector('#initialLoader')) {
             content.classList.add('dt-processing');
@@ -524,7 +522,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // ── Render ─────────────────────────────────────────────────────────
+    // Render
     function renderPaymentContent(data) {
         const student        = data.student;
         const bills          = data.bills;
@@ -536,7 +534,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         billsDataGlobal = bills;
 
-        // Rebuild selectedBillsMap — keep previously selected unpaid bills
+        // Rebuild selectedBillsMap
         const newMap = {};
         Object.keys(selectedBillsMap).forEach(id => {
             const refreshed = bills.find(b => String(b.id) === String(id));
@@ -544,22 +542,23 @@ document.addEventListener('DOMContentLoaded', function () {
         });
         selectedBillsMap = newMap;
 
-        // ── Avatar ─────────────────────────────────────────────────────
+        // Avatar
         const initials = (student.name || '??').split(' ').map(n => n[0]).join('').toUpperCase().substring(0,2);
         let avatarHtml;
-        if (student.avatar) {
+
+        if (student.avatar && student.avatar !== 'unnamed.jpg') {
             const avatarUrl = getAvatarUrl(student.avatar);
             avatarHtml = `
                 <img src="${avatarUrl}"
                      alt="${escapeHtml(student.name)}"
                      class="student-avatar-lg"
                      onerror="this.onerror=null;this.style.display='none';this.nextElementSibling.style.display='inline-flex';">
-                <div class="avatar-placeholder-lg" style="display:none">${initials}</div>`;
+                <div class="avatar-placeholder-lg" style="display:none">${escapeHtml(initials)}</div>`;
         } else {
-            avatarHtml = `<div class="avatar-placeholder-lg">${initials}</div>`;
+            avatarHtml = `<div class="avatar-placeholder-lg">${escapeHtml(initials)}</div>`;
         }
 
-        // ── Bill cards ─────────────────────────────────────────────────
+        // Bill cards
         const billsHtml = bills.map(bill => {
             const billKey    = String(bill.id);
             const isSelected = !!selectedBillsMap[billKey];
@@ -637,7 +636,7 @@ document.addEventListener('DOMContentLoaded', function () {
             </div>`;
         }).join('');
 
-        // ── Payment Records table ──────────────────────────────────────
+        // Payment Records table
         const paymentRecordsHtml = paymentRecords.length > 0
             ? `<div class="table-responsive">
                 <table class="table rec-table w-100 mb-0">
@@ -651,25 +650,25 @@ document.addEventListener('DOMContentLoaded', function () {
                         <tr>
                             <td>${i+1}</td>
                             <td><div class="fw-semibold">${escapeHtml(sp.title)}</div>
-                                ${sp.description ? `<div class="text-muted small">${escapeHtml(sp.description)}</div>` : ''}</td>
-                            <td>₦${fmt(sp.billAmount)}</td>
-                            <td class="text-success fw-semibold">₦${fmt(sp.totalAmountPaid)}</td>
-                            <td class="${sp.balance > 0 ? 'text-danger' : 'text-success'} fw-semibold">₦${fmt(sp.balance)}</td>
-                            <td><span class="badge bg-secondary-subtle text-secondary">${escapeHtml(sp.paymentMethod||'—')}</span></td>
-                            <td class="text-muted small">${escapeHtml(sp.receivedBy||'—')}</td>
-                            <td class="text-muted small">${sp.receivedDate ? new Date(sp.receivedDate).toLocaleDateString('en-GB') : 'N/A'}</td>
-                            <td><span class="badge ${sp.paymentStatus==='Completed'?'bg-success':'bg-warning text-dark'}">${escapeHtml(sp.paymentStatus||'Pending')}</span></td>
+                                ${sp.description ? `<div class="text-muted small">${escapeHtml(sp.description)}</div>` : ''}</div></td>
+                            <td>₦${fmt(sp.billAmount)}</div></td>
+                            <td class="text-success fw-semibold">₦${fmt(sp.totalAmountPaid)}</div></td>
+                            <td class="${sp.balance > 0 ? 'text-danger' : 'text-success'} fw-semibold">₦${fmt(sp.balance)}</div></td>
+                            <td><span class="badge bg-secondary-subtle text-secondary">${escapeHtml(sp.paymentMethod||'—')}</span></div></td>
+                            <td class="text-muted small">${escapeHtml(sp.receivedBy||'—')}</div></td>
+                            <td class="text-muted small">${sp.receivedDate ? new Date(sp.receivedDate).toLocaleDateString('en-GB') : 'N/A'}</div></td>
+                            <td><span class="badge ${sp.paymentStatus==='Completed'?'bg-success':'bg-warning text-dark'}">${escapeHtml(sp.paymentStatus||'Pending')}</span></div></td>
                             <td>${sp.recordId
                                 ? `<button class="btn btn-sm btn-danger delete-payment" data-record-id="${sp.recordId}">
                                        <i class="ri-delete-bin-line"></i></button>`
-                                : '<span class="text-muted small">—</span>'}</td>
+                                : '<span class="text-muted small">—</span>'} </div>
                         </tr>`).join('')}
                     </tbody>
                 </table>
                </div>`
             : '<div class="empty-state"><i class="ri-receipt-line"></i><p>No pending payment records.</p></div>';
 
-        // ── Payment History table ──────────────────────────────────────
+        // Payment History table
         const historyHtml = paymentHistory.length > 0
             ? `<div class="table-responsive">
                 <table class="table rec-table w-100 mb-0">
@@ -677,26 +676,26 @@ document.addEventListener('DOMContentLoaded', function () {
                         <th>#</th><th>Bill</th><th>Bill Amt</th><th>Paid</th>
                         <th>Balance</th><th>Method</th><th>Received By</th>
                         <th>Date</th><th>Status</th><th>Invoice</th>
-                    </tr></thead>
+                     </div>
                     <tbody>
                     ${paymentHistory.map((ph, i) => `
                         <tr>
-                            <td>${i+1}</td>
+                            <td>${i+1} </div>
                             <td><div class="fw-semibold">${escapeHtml(ph.title)}</div>
-                                ${ph.description ? `<div class="text-muted small">${escapeHtml(ph.description)}</div>` : ''}</td>
-                            <td>₦${fmt(ph.billAmount)}</td>
-                            <td class="text-success fw-semibold">₦${fmt(ph.totalAmountPaid)}</td>
-                            <td class="${ph.balance > 0 ? 'text-danger' : 'text-success'} fw-semibold">₦${fmt(ph.balance)}</td>
-                            <td><span class="badge bg-secondary-subtle text-secondary">${escapeHtml(ph.paymentMethod||'—')}</span></td>
-                            <td class="text-muted small">${escapeHtml(ph.receivedBy||'—')}</td>
-                            <td class="text-muted small">${ph.receivedDate ? new Date(ph.receivedDate).toLocaleDateString('en-GB') : 'N/A'}</td>
-                            <td><span class="badge ${(ph.paymentStatus==='Completed'||ph.completePayment)?'bg-success':'bg-warning text-dark'}">${(ph.paymentStatus==='Completed'||ph.completePayment)?'Completed':'Partial'}</span></td>
+                                ${ph.description ? `<div class="text-muted small">${escapeHtml(ph.description)}</div>` : ''}</div> </div>
+                            <td>₦${fmt(ph.billAmount)}</div> </div>
+                            <td class="text-success fw-semibold">₦${fmt(ph.totalAmountPaid)}</div> </div>
+                            <td class="${ph.balance > 0 ? 'text-danger' : 'text-success'} fw-semibold">₦${fmt(ph.balance)}</div> </div>
+                            <td><span class="badge bg-secondary-subtle text-secondary">${escapeHtml(ph.paymentMethod||'—')}</span></div> </div>
+                            <td class="text-muted small">${escapeHtml(ph.receivedBy||'—')}</div> </div>
+                            <td class="text-muted small">${ph.receivedDate ? new Date(ph.receivedDate).toLocaleDateString('en-GB') : 'N/A'}</div> </div>
+                            <td><span class="badge ${(ph.paymentStatus==='Completed'||ph.completePayment)?'bg-success':'bg-warning text-dark'}">${(ph.paymentStatus==='Completed'||ph.completePayment)?'Completed':'Partial'}</span></div> </div>
                             <td>
                                 <a href="{{ url('schoolpayment/invoice') }}/${studentId}/${ph.classId || student.schoolclassId || ''}/${ph.termId || termid}/${ph.sessionId || sessionid}"
                                    class="btn btn-sm btn-outline-primary" title="View Invoice">
                                     <i class="ri-file-download-line"></i>
                                 </a>
-                            </td>
+                             </div>
                         </tr>`).join('')}
                     </tbody>
                 </table>
@@ -831,7 +830,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         document.getElementById('paymentContent').innerHTML = contentHtml;
 
-        // Attach event listeners after DOM update
+        // Attach event listeners
         attachBillSelectionEvents(bills);
         attachPaymentButtons(bills);
         attachDeleteHandlers();
@@ -840,13 +839,11 @@ document.addEventListener('DOMContentLoaded', function () {
         if (bulkBtn) bulkBtn.addEventListener('click', () => openBulkPaymentModal());
     }
 
-    // ── Bill checkbox selection ────────────────────────────────────────
-    // FIX: Use string keys for map consistency, compare with String()
+    // Bill checkbox selection
     function attachBillSelectionEvents(bills) {
         document.querySelectorAll('.bill-select-checkbox').forEach(cb => {
             cb.addEventListener('change', function () {
                 const billId  = String(this.dataset.billId);
-                // FIX: Compare using String() on both sides to avoid type mismatch
                 const bill    = bills.find(b => String(b.id) === billId);
 
                 if (this.checked && bill) {
@@ -855,19 +852,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     delete selectedBillsMap[billId];
                 }
 
-                // Update card border
                 const card = document.querySelector(`.bill-card[data-bill-id="${billId}"]`);
                 if (card) card.classList.toggle('selected', !!selectedBillsMap[billId]);
 
-                // Update counter badge
                 const badge = document.getElementById('selectedCount');
                 if (badge) badge.textContent = Object.keys(selectedBillsMap).length;
             });
         });
     }
 
-    // ── Individual payment modal ───────────────────────────────────────
-    // FIX: Look up bill from billsDataGlobal using data-bill-id attribute
+    // Individual payment modal
     function attachPaymentButtons(bills) {
         document.querySelectorAll('.make-payment-btn').forEach(btn => {
             btn.addEventListener('click', function () {
@@ -924,7 +918,7 @@ document.addEventListener('DOMContentLoaded', function () {
         new bootstrap.Modal(document.getElementById('paymentModal')).show();
     }
 
-    // ── Bulk payment modal ─────────────────────────────────────────────
+    // Bulk payment modal
     function openBulkPaymentModal() {
         const selectedBills = Object.values(selectedBillsMap);
 
@@ -967,7 +961,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Live distribution preview
         const amountInput = document.getElementById('bulk_payment_amount');
-        // Remove old listener to avoid duplicates
         const newAmountInput = amountInput.cloneNode(true);
         amountInput.parentNode.replaceChild(newAmountInput, amountInput);
 
@@ -998,14 +991,13 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         });
 
-        // FIX: Clone submit button to remove stale listeners
         const oldSubmitBtn = document.getElementById('submitBulkPayment');
         const newSubmitBtn = oldSubmitBtn.cloneNode(true);
         oldSubmitBtn.parentNode.replaceChild(newSubmitBtn, oldSubmitBtn);
         newSubmitBtn.addEventListener('click', () => submitBulkPayment(selectedBills));
     }
 
-    // ── Submit bulk payment ────────────────────────────────────────────
+    // Submit bulk payment
     function submitBulkPayment(selectedBills) {
         const paymentAmountInput = document.getElementById('bulk_payment_amount');
         const paymentAmount = parseFloat((paymentAmountInput ? paymentAmountInput.value : '').replace(/[^0-9.]/g, '')) || 0;
@@ -1054,7 +1046,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     .then(() => {
                         const modal = bootstrap.Modal.getInstance(document.getElementById('bulkPaymentModal'));
                         if (modal) modal.hide();
-                        selectedBillsMap = {}; // clear selections
+                        selectedBillsMap = {};
                         loadPaymentData();
                     });
             } else {
@@ -1065,7 +1057,7 @@ document.addEventListener('DOMContentLoaded', function () {
         .finally(() => showLoading(false));
     }
 
-    // ── Delete handlers ────────────────────────────────────────────────
+    // Delete handlers
     function attachDeleteHandlers() {
         document.querySelectorAll('.delete-payment').forEach(btn => {
             btn.addEventListener('click', function () {
@@ -1078,7 +1070,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // ── Individual payment form ────────────────────────────────────────
+    // Individual payment form
     document.getElementById('paymentForm').addEventListener('submit', function (e) {
         e.preventDefault();
 
@@ -1109,7 +1101,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (data.success) {
                 const modal = bootstrap.Modal.getInstance(document.getElementById('paymentModal'));
                 if (modal) modal.hide();
-                Swal.fire({ icon:'success', title:'Recorded!', text:data.message, timer:2000, showConfirmButton:false })
+                     Swal.fire({ icon:'success', title:'Recorded!', text:data.message, timer:2000, showConfirmButton:false })
                     .then(() => loadPaymentData());
             } else {
                 Swal.fire({ icon:'error', title:'Error', text:data.message||'Payment failed.' });
@@ -1122,7 +1114,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // ── Delete confirm ─────────────────────────────────────────────────
+    // Delete confirm
     document.getElementById('confirmDeleteBtn').addEventListener('click', function () {
         const modal = bootstrap.Modal.getInstance(document.getElementById('confirmDeleteModal'));
         if (modal) modal.hide();
@@ -1157,7 +1149,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    // ── Boot ───────────────────────────────────────────────────────────
+    // Boot
     loadPaymentData();
 });
 </script>
