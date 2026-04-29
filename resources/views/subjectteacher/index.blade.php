@@ -640,16 +640,17 @@
 </div>
 
 {{-- ═══════════════════════ EDIT MODAL ══════════════════════ --}}
-<div class="modal fade st-modal" id="editModal" tabindex="-1" data-bs-backdrop="static">
+<div class="modal fade sc-modal" id="editModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
             <div class="modal-hero-bar">
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                <h5><i class="ri-edit-line me-2"></i>Edit Subject Teacher</h5>
+                <h5><i class="ri-edit-line me-2"></i>Change Subject Teacher</h5>
             </div>
-            <form id="edit-subjectteacher-form" autocomplete="off">
+            <form id="edit-subjectclass-form" autocomplete="off">
                 @csrf
                 <input type="hidden" id="edit-id">
+                <input type="hidden" id="edit-old-staffid">
                 <div class="modal-body-loader" id="edit-modal-loader">
                     <div class="inner">
                         <div class="mbl-spinner"></div>
@@ -658,93 +659,50 @@
                 </div>
                 <div class="modal-body p-4" style="position:relative">
 
-                    {{-- Teacher --}}
+                    {{-- Locked context info --}}
+                    <div class="mb-4 p-3 rounded-3" style="background:var(--sc-bg);border:1.5px solid var(--sc-border);">
+                        <div class="row g-2 text-center">
+                            <div class="col-4">
+                                <div style="font-size:11px;color:var(--sc-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Subject</div>
+                                <div id="edit-subject-name" style="font-size:13px;font-weight:600;color:var(--sc-primary)">—</div>
+                                <div id="edit-subject-code" style="font-size:11px;color:var(--sc-muted)"></div>
+                            </div>
+                            <div class="col-4">
+                                <div style="font-size:11px;color:var(--sc-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Term</div>
+                                <div id="edit-term-name" style="font-size:13px;font-weight:600;color:var(--sc-primary)">—</div>
+                            </div>
+                            <div class="col-4">
+                                <div style="font-size:11px;color:var(--sc-muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Session</div>
+                                <div id="edit-session-name" style="font-size:13px;font-weight:600;color:var(--sc-primary)">—</div>
+                            </div>
+                        </div>
+                        <div class="text-center mt-2">
+                            <small class="text-muted"><i class="ri-lock-line me-1"></i>Subject, term and session remain unchanged — only the teacher changes.</small>
+                        </div>
+                    </div>
+
+                    {{-- New staff picker --}}
                     <div class="mb-3">
-                        <label class="form-label">Teacher <span class="text-danger">*</span></label>
-                        <select name="staffid" id="edit-staffid" class="form-select" required>
+                        <label class="form-label">New Teacher <span class="text-danger">*</span></label>
+                        <select name="new_staffid" id="edit-new-staffid" class="form-select" required>
                             <option value="">— Select Teacher —</option>
-                            @foreach ($staffs as $staff)
-                                <option value="{{ $staff->userid }}">{{ $staff->name }}</option>
+                            @foreach (\App\Models\User::orderBy('name')->get() as $staff)
+                                <option value="{{ $staff->id }}">{{ $staff->name }}</option>
                             @endforeach
                         </select>
+                        <small class="text-muted d-block mt-1">Pick the person who will now teach this subject.</small>
                     </div>
 
-                    {{-- Subjects --}}
-                    <div class="mb-3">
-                        <label class="form-label">Subject(s) <span class="text-danger">*</span></label>
-                        <input type="text" id="edit-subject-search" class="modal-search-input"
-                               placeholder="🔍  Filter subjects…">
-                        <div class="checkbox-scroll" id="edit-subject-list">
-                            @foreach ($subjects->sortBy('subject') as $subject)
-                                <div class="form-check subject-item">
-                                    <input class="form-check-input edit-subject-checkbox"
-                                           type="checkbox"
-                                           name="subjectids[]"
-                                           id="edit-subj-{{ $subject->id }}"
-                                           value="{{ $subject->id }}"
-                                           data-label="{{ $subject->subject }}">
-                                    <label class="form-check-label" for="edit-subj-{{ $subject->id }}">
-                                        <strong>{{ $subject->subject }}</strong>
-                                        <small class="text-muted">({{ $subject->subject_code }})</small>
-                                    </label>
-                                </div>
-                            @endforeach
-                        </div>
+                    <div class="alert alert-warning d-none" id="edit-staff-change-warning">
+                        <i class="ri-alert-line me-1"></i>
+                        <strong>Note:</strong> This will update the staff assignment across all related broadsheet and registration records.
                     </div>
-
-                    {{-- Terms --}}
-                    <div class="mb-3">
-                        <label class="form-label">Term(s) <span class="text-danger">*</span></label>
-                        <div class="inline-check-group">
-                            @foreach ($terms as $term)
-                                @php
-                                    $tColor = match(true) {
-                                        str_contains($term->term, 'First')  => 'term-first',
-                                        str_contains($term->term, 'Second') => 'term-second',
-                                        str_contains($term->term, 'Third')  => 'term-third',
-                                        default => 'term-other'
-                                    };
-                                @endphp
-                                <div class="form-check">
-                                    <input class="form-check-input edit-term-checkbox"
-                                           type="checkbox"
-                                           name="termid[]"
-                                           id="edit-term-{{ $term->id }}"
-                                           value="{{ $term->id }}">
-                                    <label class="form-check-label" for="edit-term-{{ $term->id }}">
-                                        <span class="term-badge {{ $tColor }}">{{ $term->term }}</span>
-                                    </label>
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-
-                    {{-- Session --}}
-                    <div class="mb-3">
-                        <label class="form-label">Session <span class="text-danger">*</span></label>
-                        <div class="inline-check-group">
-                            @foreach ($schoolsessions as $session)
-                                <div class="form-check">
-                                    <input class="form-check-input"
-                                           type="radio"
-                                           name="sessionid"
-                                           id="edit-session-{{ $session->id }}"
-                                           value="{{ $session->id }}"
-                                           required>
-                                    <label class="form-check-label" for="edit-session-{{ $session->id }}">
-                                        {{ $session->session }}
-                                    </label>
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-
                     <div class="alert alert-danger d-none" id="edit-error-msg"></div>
                 </div>
                 <div class="modal-footer border-0 pt-0 px-4 pb-4">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="update-btn">
-                        <i class="ri-save-line me-1"></i>Update
+                        <i class="ri-save-line me-1"></i>Update Teacher
                     </button>
                 </div>
             </form>
@@ -962,37 +920,76 @@ $(document).ready(function () {
         new bootstrap.Modal(document.getElementById('addSubjectTeacherModal')).show();
     });
 
+
+
+
+
+
     // =========================================================================
-    // EDIT MODAL
-    // =========================================================================
+// EDIT MODAL
+// =========================================================================
 
-    $(document).on('click', '.edit-st-btn', function () {
-        const id        = $(this).data('id');
-        const staffid   = $(this).data('staffid');
-        const subjectid = $(this).data('subjectid');
-        const sessionid = $(this).data('sessionid');
-        const termids   = String($(this).data('termids')).split(',').map(s => s.trim());
+$(document).on('click', '.edit-sc-btn', function () {
+    const scid        = $(this).data('scid');
+    const subteacherid = $(this).data('subteacherid');
 
-        $('#edit-id').val(id);
-        $('#edit-staffid').val(staffid);
+    $('#edit-id').val(scid);
+    $('#edit-error-msg').addClass('d-none').html('');
+    $('#edit-staff-change-warning').addClass('d-none');
+    $('#edit-new-staffid').val('');
+    $('#edit-modal-loader').removeClass('active');
+    btnReset('#update-btn');
 
-        // Reset all checkboxes/radios then restore saved values
-        $('.edit-subject-checkbox').prop('checked', false);
-        $('.edit-term-checkbox').prop('checked', false);
-        $('input[name="sessionid"]').prop('checked', false);
+    // Reset locked-context display
+    $('#edit-subject-name, #edit-subject-code, #edit-term-name, #edit-session-name').text('—');
 
-        $(`#edit-subj-${subjectid}`).prop('checked', true);
-        termids.forEach(tid => $(`#edit-term-${tid}`).prop('checked', true));
-        $(`#edit-session-${sessionid}`).prop('checked', true);
+    // Pull subject/term/session from the subjectteacher record via API
+    $.getJSON(`{{ url('subjectclass') }}/assignments/${scid}`, function () {})
+     .always(function () {});
 
-        $('#edit-error-msg').addClass('d-none').html('');
-        $('#edit-subject-search').val('');
-        $('#edit-subject-list .subject-item').show();
-        hideModalLoader('edit');
-        btnReset('#update-btn');
+    // Read info already on the row
+    const $row = $(`tr[data-scid="${scid}"]`);
+    $('#edit-old-staffid').val('');
 
-        new bootstrap.Modal(document.getElementById('editModal')).show();
+    // Populate locked info from the table row's rendered cells
+    // The row data attrs give us the subteacherid — we use the displayed cells for labels
+    const cells = $row.find('td');
+    // cells: [0]=checkbox [1]=# [2]=teacher [3]=subject [4]=class [5]=arm [6]=term [7]=session
+    const subjectText = cells.eq(3).find('.fw-semibold').text().trim();
+    const subjectCode = cells.eq(3).find('small').text().trim();
+    const termText    = cells.eq(6).text().trim();
+    const sessionText = cells.eq(7).text().trim();
+
+    $('#edit-subject-name').text(subjectText || '—');
+    $('#edit-subject-code').text(subjectCode || '');
+    $('#edit-term-name').text(termText || '—');
+    $('#edit-session-name').text(sessionText || '—');
+
+    // Pre-select current staff — read staffid from subjectteacher data
+    // We stored subteacherid on the row; fetch current staffid from a hidden cell or data attr
+    // The row has data-subteacherid but not staffid directly — we look it up via the teacher name
+    // to pre-select the right option in the dropdown
+    const currentTeacherName = cells.eq(2).find('.fw-semibold').text().trim();
+    $('#edit-new-staffid option').each(function () {
+        if ($(this).text().trim() === currentTeacherName) {
+            $(this).prop('selected', true);
+            $('#edit-old-staffid').val($(this).val());
+            return false;
+        }
     });
+
+    new bootstrap.Modal(document.getElementById('editModal')).show();
+});
+
+$('#edit-new-staffid').on('change', function () {
+    const oldStaffId = $('#edit-old-staffid').val();
+    const changed    = $(this).val() && $(this).val() !== oldStaffId;
+    $('#edit-staff-change-warning').toggleClass('d-none', !changed);
+});
+
+
+
+
 
     // =========================================================================
     // DELETE MODAL
@@ -1079,40 +1076,42 @@ $(document).ready(function () {
         });
     });
 
+
+
+
+
+
     // =========================================================================
-    // SUBMIT: EDIT
-    // =========================================================================
+// SUBMIT: EDIT
+// =========================================================================
 
-    $('#edit-subjectteacher-form').on('submit', function (e) {
-        e.preventDefault();
+$('#edit-subjectclass-form').on('submit', function (e) {
+    e.preventDefault();
 
-        const id         = $('#edit-id').val();
-        const staffid    = $('#edit-staffid').val();
-        const subjectids = $('.edit-subject-checkbox:checked').map((i, el) => el.value).get();
-        const termids    = $('.edit-term-checkbox:checked').map((i, el) => el.value).get();
-        const sessionid  = $('input[name="sessionid"]:checked').val();
+    const id         = $('#edit-id').val();
+    const newStaffId = $('#edit-new-staffid').val();
+    const oldStaffId = $('#edit-old-staffid').val();
 
-        if (!staffid) { showError('#edit-error-msg', 'Please select a teacher.'); return; }
-        if (!subjectids.length) { showError('#edit-error-msg', 'Please select at least one subject.'); return; }
-        if (!termids.length) { showError('#edit-error-msg', 'Please select at least one term.'); return; }
-        if (!sessionid) { showError('#edit-error-msg', 'Please select a session.'); return; }
+    if (!newStaffId) {
+        showError('#edit-error-msg', 'Please select a teacher.');
+        return;
+    }
 
+    const teacherChanged = newStaffId !== oldStaffId;
+
+    const doUpdate = () => {
         btnLoad('#update-btn', 'Updating…');
-        showModalLoader('edit', 'Saving changes…');
+        showModalLoader('edit',
+            teacherChanged
+                ? 'Updating teacher & cascading records…'
+                : 'Saving changes…'
+        );
         $('#edit-error-msg').addClass('d-none').html('');
 
         $.ajax({
-            url:  `{{ url('subjectteacher') }}/${id}`,
-            type: 'POST',
-            data: {
-                staffid,
-                'subjectids[]': subjectids,
-                'termid[]':     termids,
-                sessionid,
-                _token: CSRF,
-                _method: 'PUT',
-            },
-            traditional: true,
+            url:     `{{ url('subjectclass') }}/${id}`,
+            type:    'POST',
+            data:    { new_staffid: newStaffId, _token: CSRF, _method: 'PUT' },
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
 
             success(res) {
@@ -1124,13 +1123,15 @@ $(document).ready(function () {
                         setTimeout(() => location.reload(), 400);
                     }, 600);
                 } else {
-                    hideModalLoader('edit'); btnReset('#update-btn');
+                    hideModalLoader('edit');
+                    btnReset('#update-btn');
                     showError('#edit-error-msg', res.message || 'Could not update.');
                 }
             },
 
             error(xhr) {
-                hideModalLoader('edit'); btnReset('#update-btn');
+                hideModalLoader('edit');
+                btnReset('#update-btn');
                 const msg = xhr.responseJSON?.message
                     || Object.values(xhr.responseJSON?.errors || {}).flat().join(', ')
                     || 'An error occurred.';
@@ -1138,7 +1139,24 @@ $(document).ready(function () {
                 toast('error', 'Failed', msg);
             },
         });
-    });
+    };
+
+    if (teacherChanged) {
+        Swal.fire({
+            title:             'Change Teacher?',
+            html:              'This will update the staff assignment across all related <strong>broadsheet</strong> and <strong>registration records</strong>. Continue?',
+            icon:              'warning',
+            showCancelButton:   true,
+            confirmButtonColor: '#2563eb',
+            confirmButtonText:  'Yes, update',
+            cancelButtonText:   'Cancel',
+        }).then(result => { if (result.isConfirmed) doUpdate(); });
+    } else {
+        doUpdate();
+    }
+});
+
+
 
     // =========================================================================
     // DELETE: SINGLE
