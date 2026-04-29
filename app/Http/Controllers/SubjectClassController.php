@@ -283,19 +283,29 @@ class SubjectClassController extends Controller
     }
 
     // =========================================================================
-    // UPDATE
+    // UPDATE — swap the STAFF MEMBER on an existing subject-class assignment.
+    //
+    // What stays the same:  subject, term, session, class
+    // What changes:         the person (staff) teaching that subject
+    //
+    // Flow:
+    //  1. Load the current subjectclass → get its current subjectteacher record
+    //     to know subjectid + termid + sessionid (these never change).
+    //  2. Accept only `new_staffid` from the request.
+    //  3. Find or create a subjectteacher row for
+    //     (new_staffid + same subjectid + same termid + same sessionid).
+    //  4. Check the new combo isn't already assigned to this class.
+    //  5. Point subjectclass.subjectteacherid at the new subjectteacher row.
+    //  6. Cascade staff_id across broadsheets, mock, registrations, student records.
     // =========================================================================
 
     public function update(Request $request, $id): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'schoolclassid'    => 'required|exists:schoolclass,id',
-            'subjectteacherid' => 'required|exists:subjectteacher,id',
+            'new_staffid' => 'required|exists:users,id',
         ], [
-            'schoolclassid.required'    => 'Please select a class!',
-            'schoolclassid.exists'      => 'Selected class does not exist!',
-            'subjectteacherid.required' => 'Please select a subject teacher!',
-            'subjectteacherid.exists'   => 'Selected subject teacher does not exist!',
+            'new_staffid.required' => 'Please select a staff member!',
+            'new_staffid.exists'   => 'Selected staff member does not exist!',
         ]);
 
         if ($validator->fails()) {
@@ -305,19 +315,9 @@ class SubjectClassController extends Controller
             ], 422);
         }
 
-        $schoolClassId    = $request->input('schoolclassid');
-        $subjectTeacherId = $request->input('subjectteacherid');
+        $newStaffId = (int) $request->input('new_staffid');
 
-        // Find the new subject teacher
-        $newSubjectTeacher = SubjectTeacher::find($subjectTeacherId);
-        if (!$newSubjectTeacher) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Subject teacher not found.',
-            ], 404);
-        }
-
-        // Find the subject class being updated
+        // ── 1. Load the subject class ─────────────────────────────────
         $subjectclass = Subjectclass::find($id);
         if (!$subjectclass) {
             return response()->json([
@@ -326,81 +326,100 @@ class SubjectClassController extends Controller
             ], 404);
         }
 
-        // Check for duplicate assignment (excluding current record)
-        $duplicate = Subjectclass::where('schoolclassid', $schoolClassId)
-            ->where('subjectteacherid', $subjectTeacherId)
+        // ── 2. Load the current subjectteacher to extract fixed fields ─
+        $currentSubjectTeacher = SubjectTeacher::find($subjectclass->subjectteacherid);
+        if (!$currentSubjectTeacher) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Current subject teacher record not found.',
+            ], 404);
+        }
+
+        $oldStaffId  = (int) $currentSubjectTeacher->staffid;
+        $subjectId   = $currentSubjectTeacher->subjectid;
+        $termId      = $currentSubjectTeacher->termid;
+        $sessionId   = $currentSubjectTeacher->sessionid;
+
+        // No-op: same teacher
+        if ($oldStaffId === $newStaffId) {
+            return response()->json([
+                'success' => true,
+                'message' => 'No change — the selected teacher is already assigned.',
+            ], 200);
+        }
+
+        // ── 3. Find or create subjectteacher for (newStaff + same subject/term/session) ─
+        $newSubjectTeacher = SubjectTeacher::firstOrCreate(
+            [
+                'staffid'   => $newStaffId,
+                'subjectid' => $subjectId,
+                'termid'    => $termId,
+                'sessionid' => $sessionId,
+            ]
+        );
+
+        // ── 4. Check the new combo isn't already on this class ────────
+        $duplicate = Subjectclass::where('schoolclassid', $subjectclass->schoolclassid)
+            ->where('subjectteacherid', $newSubjectTeacher->id)
             ->where('id', '!=', $id)
             ->exists();
 
         if ($duplicate) {
             return response()->json([
                 'success' => false,
-                'message' => 'This subject teacher is already assigned to this class.',
+                'message' => 'The selected teacher is already assigned to this subject and class for the same term and session.',
             ], 422);
         }
-
-        // Determine old staff for cascade update
-        $oldSubjectTeacher = SubjectTeacher::find($subjectclass->subjectteacherid);
-        $oldStaffId        = $oldSubjectTeacher?->staffid;
-        $newStaffId        = $newSubjectTeacher->staffid;
-        $teacherChanged    = $oldStaffId && $newStaffId && ($oldStaffId !== $newStaffId);
 
         try {
             DB::beginTransaction();
 
-            // 1. Update the subject class record itself
+            // ── 5. Update the subjectclass row ────────────────────────
             $subjectclass->update([
-                'schoolclassid'    => $schoolClassId,
-                'subjectteacherid' => $subjectTeacherId,
-                'subjectid'        => $newSubjectTeacher->subjectid,
+                'subjectteacherid' => $newSubjectTeacher->id,
+                // subjectid, schoolclassid stay the same — no change needed
             ]);
 
-            // 2. If the assigned staff member changed, cascade the update
-            //    to all related records — scores are NEVER touched, only
-            //    the staff_id / staffid assignment column is updated.
-            if ($teacherChanged) {
+            // ── 6. Cascade staff_id to all related records ────────────
+            //    Scores (total, grade, etc.) are NEVER touched —
+            //    only the staff assignment column is updated.
 
-                // Broadsheet score records for this subject class
-                Broadsheets::where('subjectclass_id', $id)
-                    ->update(['staff_id' => $newStaffId]);
+            Broadsheets::where('subjectclass_id', $id)
+                ->update(['staff_id' => $newStaffId]);
 
-                // Mock broadsheet records for this subject class
-                BroadsheetsMock::where('subjectclass_id', $id)
-                    ->update(['staff_id' => $newStaffId]);
+            BroadsheetsMock::where('subjectclass_id', $id)
+                ->update(['staff_id' => $newStaffId]);
 
-                // Subject registration status records
-                SubjectRegistrationStatus::where('subjectclassid', $id)
-                    ->update(['staffid' => $newStaffId]);
+            SubjectRegistrationStatus::where('subjectclassid', $id)
+                ->update(['staffid' => $newStaffId]);
 
-                // Student subject register records
-                DB::table('student_subject_register_record')
-                    ->where('subjectclassid', $id)
-                    ->update(['staffid' => $newStaffId]);
-
-                Log::info('SubjectClass teacher changed — cascaded staff_id update', [
-                    'subjectclass_id' => $id,
-                    'old_staff_id'    => $oldStaffId,
-                    'new_staff_id'    => $newStaffId,
-                ]);
-            }
+            DB::table('student_subject_register_record')
+                ->where('subjectclassid', $id)
+                ->update(['staffid' => $newStaffId]);
 
             DB::commit();
 
-            $message = 'Subject Class updated successfully.';
-            if ($teacherChanged) {
-                $message .= ' Staff assignment updated across all related records.';
-            }
+            // Fetch new staff name for the response message
+            $newStaff = User::find($newStaffId);
+            $oldStaff = User::find($oldStaffId);
+
+            Log::info('SubjectClass staff swapped', [
+                'subjectclass_id'       => $id,
+                'old_staff_id'          => $oldStaffId,
+                'new_staff_id'          => $newStaffId,
+                'new_subjectteacher_id' => $newSubjectTeacher->id,
+            ]);
 
             return response()->json([
                 'success' => true,
-                'message' => $message,
+                'message' => "Teacher changed from {$oldStaff?->name} to {$newStaff?->name} successfully. All related records updated.",
                 'data'    => $subjectclass->fresh(),
             ], 200);
 
         } catch (\Exception $e) {
             DB::rollBack();
 
-            Log::error('SubjectClass update failed', [
+            Log::error('SubjectClass staff swap failed', [
                 'subjectclass_id' => $id,
                 'error'           => $e->getMessage(),
                 'trace'           => $e->getTraceAsString(),
@@ -408,7 +427,7 @@ class SubjectClassController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update Subject Class: ' . $e->getMessage(),
+                'message' => 'Failed to update teacher: ' . $e->getMessage(),
             ], 500);
         }
     }
