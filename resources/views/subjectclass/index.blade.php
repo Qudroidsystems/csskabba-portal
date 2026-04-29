@@ -138,6 +138,37 @@
 .checkbox-scroll .form-check-label { font-size:13px; cursor:pointer; }
 .checkbox-scroll .form-check-input:checked { background-color:var(--sc-accent); border-color:var(--sc-accent); }
 
+/* ── Context info box ────────────────────────────────────── */
+.sc-context-box {
+    background: var(--sc-bg);
+    border: 1.5px solid var(--sc-border);
+    border-radius: 10px;
+    padding: 14px 18px;
+}
+.sc-context-box .context-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    color: var(--sc-muted);
+    margin-bottom: 4px;
+}
+.sc-context-box .context-value {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--sc-primary);
+}
+.sc-context-box .context-sub {
+    font-size: 11px;
+    color: var(--sc-muted);
+}
+.sc-lock-note {
+    font-size: 11px;
+    color: var(--sc-muted);
+    text-align: center;
+    margin-top: 8px;
+}
+
 /* ── Bulk bar ────────────────────────────────────────────── */
 .bulk-bar {
     background:#fff3cd; border:1px solid #ffc107;
@@ -406,10 +437,10 @@
                         @php $i = 0; @endphp
                         @forelse ($subjectclasses as $sc)
                             @php
-                                $picture      = $sc->picture ?? 'unnamed.jpg';
-                                $imagePath    = asset('storage/staff_avatars/' . $picture);
-                                $fileExists   = file_exists(storage_path('app/public/staff_avatars/' . $picture));
-                                $defaultExists= file_exists(storage_path('app/public/staff_avatars/unnamed.jpg'));
+                                $picture       = $sc->picture ?? 'unnamed.jpg';
+                                $imagePath     = asset('storage/staff_avatars/' . $picture);
+                                $fileExists    = file_exists(storage_path('app/public/staff_avatars/' . $picture));
+                                $defaultExists = file_exists(storage_path('app/public/staff_avatars/unnamed.jpg'));
 
                                 $termClass = match(true) {
                                     str_contains($sc->termname ?? '', 'First')  => 'term-first',
@@ -421,7 +452,8 @@
                             <tr data-scid="{{ $sc->scid }}"
                                 data-destroy-url="{{ route('subjectclass.destroy', $sc->scid) }}"
                                 data-schoolclassid="{{ $sc->schoolclassid }}"
-                                data-subteacherid="{{ $sc->subteacherid }}">
+                                data-subteacherid="{{ $sc->subteacherid }}"
+                                data-staffid="{{ $sc->staffid }}">
                                 <td>
                                     <input type="checkbox" class="form-check-input row-checkbox" value="{{ $sc->scid }}">
                                 </td>
@@ -460,10 +492,15 @@
                                 <td>
                                     <div class="d-flex gap-1">
                                         @can('Update subject-class')
-                                        <button class="btn btn-sm btn-outline-secondary edit-sc-btn" title="Edit"
+                                        <button class="btn btn-sm btn-outline-secondary edit-sc-btn" title="Change Teacher"
                                             data-scid="{{ $sc->scid }}"
-                                            data-schoolclassid="{{ $sc->schoolclassid }}"
-                                            data-subteacherid="{{ $sc->subteacherid }}">
+                                            data-staffid="{{ $sc->staffid }}"
+                                            data-teachername="{{ $sc->teachername }}"
+                                            data-subjectname="{{ $sc->subjectname }}"
+                                            data-subjectcode="{{ $sc->subjectcode }}"
+                                            data-termname="{{ $sc->termname }}"
+                                            data-sessionname="{{ $sc->sessionname }}"
+                                            data-classname="{{ $sc->sclass }} ({{ $sc->schoolarm }})">
                                             <i class="ph-pencil"></i>
                                         </button>
                                         @endcan
@@ -574,17 +611,19 @@
     </div>
 </div>
 
-{{-- ═══════════════════════ EDIT MODAL ══════════════════════ --}}
+{{-- ═══════════════════════ EDIT MODAL (Change Teacher Only) ══════════════════════ --}}
 <div class="modal fade sc-modal" id="editModal" tabindex="-1" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-hero-bar">
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                <h5><i class="ri-edit-line me-2"></i>Edit Subject Class</h5>
+                <h5><i class="ri-user-follow-line me-2"></i>Change Subject Teacher</h5>
             </div>
             <form id="edit-subjectclass-form" autocomplete="off">
                 @csrf
                 <input type="hidden" id="edit-id">
+                <input type="hidden" id="edit-old-staffid">
+
                 {{-- Modal body loader --}}
                 <div class="modal-body-loader" id="edit-modal-loader">
                     <div class="inner">
@@ -592,63 +631,71 @@
                         <div class="mbl-text" id="edit-modal-loader-text">Updating…</div>
                     </div>
                 </div>
+
                 <div class="modal-body p-4" style="position:relative">
+
+                    {{-- Locked context — subject / term / session / class --}}
+                    <div class="sc-context-box mb-4">
+                        <div class="row g-3 text-center">
+                            <div class="col-6">
+                                <div class="context-label">Subject</div>
+                                <div class="context-value" id="ctx-subject">—</div>
+                                <div class="context-sub" id="ctx-subject-code"></div>
+                            </div>
+                            <div class="col-6">
+                                <div class="context-label">Class</div>
+                                <div class="context-value" id="ctx-class">—</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="context-label">Term</div>
+                                <div class="context-value" id="ctx-term">—</div>
+                            </div>
+                            <div class="col-6">
+                                <div class="context-label">Session</div>
+                                <div class="context-value" id="ctx-session">—</div>
+                            </div>
+                        </div>
+                        <p class="sc-lock-note mt-3 mb-0">
+                            <i class="ri-lock-line me-1"></i>
+                            Subject, class, term and session are fixed — only the teacher will change.
+                        </p>
+                    </div>
+
+                    {{-- Current teacher display --}}
                     <div class="mb-3">
-                        <label class="form-label">Class <span class="text-danger">*</span></label>
-                        <select name="schoolclassid" id="edit-schoolclassid" class="form-select" required>
-                            <option value="">— Select Class —</option>
-                            @foreach ($schoolclasses as $class)
-                                <option value="{{ $class->id }}">{{ $class->schoolclass }} ({{ $class->arm }})</option>
+                        <label class="form-label text-muted" style="font-size:11px;text-transform:uppercase;letter-spacing:.5px;">Current Teacher</label>
+                        <div class="d-flex align-items-center gap-2 p-2 rounded-3" style="background:#f0fdf4;border:1.5px solid #bbf7d0;">
+                            <i class="ri-user-3-line text-success fs-5"></i>
+                            <span class="fw-semibold" id="ctx-current-teacher" style="color:#15803d;">—</span>
+                        </div>
+                    </div>
+
+                    {{-- New teacher picker --}}
+                    <div class="mb-3">
+                        <label class="form-label">New Teacher <span class="text-danger">*</span></label>
+                        <select name="new_staffid" id="edit-new-staffid" class="form-select" required>
+                            <option value="">— Select new teacher —</option>
+                            @foreach ($allStaff as $staff)
+                                <option value="{{ $staff->id }}">{{ $staff->name }}</option>
                             @endforeach
                         </select>
+                        <small class="text-muted d-block mt-1">
+                            Select the person who will now teach this subject for this class, term and session.
+                        </small>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Subject Teacher <span class="text-danger">*</span></label>
-                        <div class="mb-2">
-                            <input type="text" id="edit-teacher-search" class="form-control form-control-sm"
-                                   placeholder="🔍  Filter teachers…">
-                        </div>
-                        <div class="checkbox-scroll" id="edit-teacher-list">
-                            @foreach ($subjectteacher->sortBy(['teachername', 'subject']) as $teacher)
-                                @php
-                                    $tColor = match(true) {
-                                        str_contains($teacher->termname ?? '', 'First')  => '#16a34a',
-                                        str_contains($teacher->termname ?? '', 'Second') => '#2563eb',
-                                        str_contains($teacher->termname ?? '', 'Third')  => '#dc2626',
-                                        default => '#6b7280'
-                                    };
-                                @endphp
-                                <div class="form-check teacher-item">
-                                    <input class="form-check-input edit-teacher-radio"
-                                           type="radio"
-                                           name="subjectteacherid"
-                                           id="edit-t-{{ $teacher->id }}"
-                                           value="{{ $teacher->id }}"
-                                           data-label="{{ $teacher->teachername }} {{ $teacher->subject }}">
-                                    <label class="form-check-label" for="edit-t-{{ $teacher->id }}">
-                                        <strong>{{ $teacher->teachername }}</strong>
-                                        — {{ $teacher->subject }}
-                                        <small class="text-muted">({{ $teacher->subjectcode }})</small>
-                                        <span class="ms-1" style="color:{{ $tColor }};font-size:11px;font-weight:600;">
-                                            {{ $teacher->termname }}
-                                        </span>
-                                    </label>
-                                </div>
-                            @endforeach
-                        </div>
-                    </div>
-
-                    <div class="alert alert-warning d-none" id="edit-staff-change-warning">
+                    <div class="alert alert-warning d-none mb-2" id="edit-staff-change-warning">
                         <i class="ri-alert-line me-1"></i>
-                        <strong>Note:</strong> Changing the teacher will update the staff assignment across all related broadsheet and registration records.
+                        <strong>Heads up:</strong> Saving will update the staff assignment across all related broadsheet and registration records for this subject class.
                     </div>
+
                     <div class="alert alert-danger d-none" id="edit-error-msg"></div>
                 </div>
+
                 <div class="modal-footer border-0 pt-0 px-4 pb-4">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                     <button type="submit" class="btn btn-primary" id="update-btn">
-                        <i class="ri-save-line me-1"></i>Update
+                        <i class="ri-save-line me-1"></i>Update Teacher
                     </button>
                 </div>
             </form>
@@ -712,7 +759,6 @@ $(document).ready(function () {
     // LOADING HELPERS
     // =========================================================================
 
-    // ── Page-level overlay (for delete / page-reload operations) ──────
     const PageLoader = {
         _prog: 0,
         _timer: null,
@@ -726,7 +772,6 @@ $(document).ready(function () {
         },
 
         _tick() {
-            // Simulate progress up to 85% — the last jump happens on hide()
             PageLoader._timer = setInterval(() => {
                 if (PageLoader._prog < 85) {
                     PageLoader._prog += Math.random() * 8;
@@ -742,7 +787,6 @@ $(document).ready(function () {
         },
     };
 
-    // ── Modal body overlay ─────────────────────────────────────────────
     function showModalLoader(id, text = 'Processing…') {
         $(`#${id}-modal-loader-text`).text(text);
         $(`#${id}-modal-loader`).addClass('active');
@@ -751,7 +795,6 @@ $(document).ready(function () {
         $(`#${id}-modal-loader`).removeClass('active');
     }
 
-    // ── Button loading state ───────────────────────────────────────────
     function btnLoad(selector, loadingText = '') {
         const $btn = $(selector);
         $btn.data('original-html', $btn.html())
@@ -769,7 +812,6 @@ $(document).ready(function () {
         $btn.prop('disabled', false).removeClass('btn-loading');
     }
 
-    // ── Toast notifications ────────────────────────────────────────────
     function toast(type, title, msg, duration = 4000) {
         const icons = {
             success: 'ri-checkbox-circle-fill',
@@ -789,9 +831,7 @@ $(document).ready(function () {
             </div>
         `);
         $('#sc-toast-stack').append($el);
-        // Trigger animation
         setTimeout(() => $el.addClass('show'), 20);
-        // Auto-dismiss
         if (duration > 0) {
             setTimeout(() => {
                 $el.removeClass('show');
@@ -848,19 +888,12 @@ $(document).ready(function () {
     }
 
     // =========================================================================
-    // TEACHER SEARCH FILTER (inside modals)
+    // TEACHER SEARCH FILTER (inside add modal)
     // =========================================================================
 
     $('#add-teacher-search').on('input', function () {
         const q = $(this).val().toLowerCase();
         $('#add-teacher-list .teacher-item').each(function () {
-            $(this).toggle($(this).find('label').text().toLowerCase().includes(q));
-        });
-    });
-
-    $('#edit-teacher-search').on('input', function () {
-        const q = $(this).val().toLowerCase();
-        $('#edit-teacher-list .teacher-item').each(function () {
             $(this).toggle($(this).find('label').text().toLowerCase().includes(q));
         });
     });
@@ -882,7 +915,6 @@ $(document).ready(function () {
         $('#add-btn').prop('disabled', !ok);
     }
 
-    // ── Open CREATE ────────────────────────────────────────────────────
     $('#createSubjectClassBtn').on('click', function () {
         $('#add-schoolclassid').val('');
         $('.add-teacher-checkbox').prop('checked', false);
@@ -896,36 +928,51 @@ $(document).ready(function () {
     });
 
     // =========================================================================
-    // EDIT MODAL
+    // EDIT MODAL — open: populate context info + pre-select current teacher
     // =========================================================================
 
-    let originalTeacherId = null;
-
-    $('#edit-teacher-list').on('change', '.edit-teacher-radio', function () {
-        $('#edit-staff-change-warning').toggleClass('d-none',
-            $(this).val() === String(originalTeacherId));
-    });
-
-    // ── Open EDIT ─────────────────────────────────────────────────────
     $(document).on('click', '.edit-sc-btn', function () {
-        const scid          = $(this).data('scid');
-        const schoolclassid = $(this).data('schoolclassid');
-        const subteacherid  = $(this).data('subteacherid');
+        const $btn = $(this);
 
-        originalTeacherId = subteacherid;
+        const scid        = $btn.data('scid');
+        const staffId     = $btn.data('staffid');
+        const teacherName = $btn.data('teachername');
+        const subjectName = $btn.data('subjectname');
+        const subjectCode = $btn.data('subjectcode');
+        const termName    = $btn.data('termname');
+        const sessionName = $btn.data('sessionname');
+        const className   = $btn.data('classname');
 
+        // Store IDs
         $('#edit-id').val(scid);
-        $('#edit-schoolclassid').val(schoolclassid);
-        $('.edit-teacher-radio').prop('checked', false);
-        $(`#edit-t-${subteacherid}`).prop('checked', true);
+        $('#edit-old-staffid').val(staffId);
+
+        // Populate locked context display
+        $('#ctx-subject').text(subjectName || '—');
+        $('#ctx-subject-code').text(subjectCode || '');
+        $('#ctx-class').text(className || '—');
+        $('#ctx-term').text(termName || '—');
+        $('#ctx-session').text(sessionName || '—');
+        $('#ctx-current-teacher').text(teacherName || '—');
+
+        // Pre-select current staff in dropdown, but leave blank so user must consciously pick
+        $('#edit-new-staffid').val('');
+
+        // Reset UI
         $('#edit-staff-change-warning').addClass('d-none');
         $('#edit-error-msg').addClass('d-none').html('');
-        $('#edit-teacher-search').val('');
-        $('#edit-teacher-list .teacher-item').show();
         hideModalLoader('edit');
         btnReset('#update-btn');
 
         new bootstrap.Modal(document.getElementById('editModal')).show();
+    });
+
+    // Show warning when a different teacher is selected
+    $('#edit-new-staffid').on('change', function () {
+        const oldStaffId = $('#edit-old-staffid').val();
+        const newVal     = $(this).val();
+        const isDifferent = newVal && newVal !== String(oldStaffId);
+        $('#edit-staff-change-warning').toggleClass('d-none', !isDifferent);
     });
 
     // =========================================================================
@@ -974,7 +1021,6 @@ $(document).ready(function () {
             return;
         }
 
-        // Show button loader + modal body loader
         btnLoad('#add-btn', 'Adding…');
         showModalLoader('add', `Adding ${subjectteacherids.length} assignment(s)…`);
         $('#add-error-msg').addClass('d-none').html('');
@@ -990,7 +1036,6 @@ $(document).ready(function () {
                 if (res.success) {
                     $('#addSubjectClassModal').modal('hide');
                     toast('success', 'Added!', res.message);
-                    // Show page loader while reloading
                     setTimeout(() => {
                         PageLoader.show('Refreshing data…');
                         setTimeout(() => location.reload(), 400);
@@ -1017,36 +1062,32 @@ $(document).ready(function () {
     });
 
     // =========================================================================
-    // SUBMIT: EDIT
+    // SUBMIT: EDIT — sends only new_staffid to the update() endpoint
     // =========================================================================
 
     $('#edit-subjectclass-form').on('submit', function (e) {
         e.preventDefault();
 
-        const id               = $('#edit-id').val();
-        const schoolclassid    = $('#edit-schoolclassid').val();
-        const subjectteacherid = $('.edit-teacher-radio:checked').val();
+        const id         = $('#edit-id').val();
+        const newStaffId = $('#edit-new-staffid').val();
+        const oldStaffId = $('#edit-old-staffid').val();
 
-        if (!schoolclassid || !subjectteacherid) {
-            showError('#edit-error-msg', 'Please select a class and a subject teacher.');
+        if (!newStaffId) {
+            showError('#edit-error-msg', 'Please select a new teacher.');
             return;
         }
 
-        const teacherChanged = String(subjectteacherid) !== String(originalTeacherId);
+        const teacherChanged = String(newStaffId) !== String(oldStaffId);
 
         const doUpdate = () => {
             btnLoad('#update-btn', 'Updating…');
-            showModalLoader('edit',
-                teacherChanged
-                    ? 'Updating assignment & cascading staff records…'
-                    : 'Saving changes…'
-            );
+            showModalLoader('edit', 'Updating teacher & cascading records…');
             $('#edit-error-msg').addClass('d-none').html('');
 
             $.ajax({
                 url:     `{{ url('subjectclass') }}/${id}`,
                 type:    'POST',
-                data:    { schoolclassid, subjectteacherid, _token: CSRF, _method: 'PUT' },
+                data:    { new_staffid: newStaffId, _token: CSRF, _method: 'PUT' },
                 headers: { 'X-Requested-With': 'XMLHttpRequest' },
 
                 success(res) {
@@ -1079,7 +1120,7 @@ $(document).ready(function () {
         if (teacherChanged) {
             Swal.fire({
                 title:             'Change Teacher?',
-                html:              'This will update the staff assignment across all related <strong>broadsheet</strong> and <strong>registration records</strong>. Continue?',
+                html:              'This will update the staff assignment on all related <strong>broadsheet</strong> and <strong>registration records</strong> for this subject class. Continue?',
                 icon:              'warning',
                 showCancelButton:   true,
                 confirmButtonColor: '#2563eb',
@@ -1087,7 +1128,9 @@ $(document).ready(function () {
                 cancelButtonText:   'Cancel',
             }).then(result => { if (result.isConfirmed) doUpdate(); });
         } else {
-            doUpdate();
+            // Same teacher selected — no-op, just close
+            toast('info', 'No Change', 'The selected teacher is already assigned to this subject class.');
+            $('#editModal').modal('hide');
         }
     });
 
@@ -1155,7 +1198,6 @@ $(document).ready(function () {
             cancelButtonText:   'Cancel',
             showLoaderOnConfirm: true,
             preConfirm: () => {
-                // Return a promise so Swal shows its own loader
                 return Promise.allSettled(
                     ids.map(id =>
                         $.ajax({
@@ -1204,7 +1246,6 @@ $(document).ready(function () {
         );
     }
 
-    // Init checkboxes on first render
     bindCheckboxes();
 });
 </script>
