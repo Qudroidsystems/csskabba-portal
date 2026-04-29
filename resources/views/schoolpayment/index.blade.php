@@ -142,10 +142,20 @@
     width: 42px; height: 42px;
     border-radius: 50%;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px; font-weight: 700; color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
     flex-shrink: 0;
     border: 2px solid #bae6fd;
+    overflow: hidden;
+}
+.ts-chip-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 .ts-chip-name { font-size: 14px; font-weight: 700; color: var(--pay-primary); line-height: 1.3; }
 .ts-chip-meta { font-size: 11px; color: var(--pay-muted); margin-top: 2px; }
@@ -328,7 +338,8 @@
                                         data-name="{{ $firstName }} {{ $lastName }}"
                                         data-class="{{ $s->schoolclass ?? '' }} {{ $s->arm ?? '' }}"
                                         data-admission="{{ $s->admissionNo ?? 'N/A' }}"
-                                        data-initials="{{ $initials }}">
+                                        data-initials="{{ $initials }}"
+                                        data-avatar="{{ $avatarUrl ?? '' }}">
                                     <i class="ri-wallet-line me-1"></i>Pay
                                 </button>
                              </div>
@@ -362,7 +373,10 @@
             </div>
             <div class="p-4">
                 <div class="ts-student-chip">
-                    <div class="ts-chip-avatar" id="tsInitials">—</div>
+                    <div class="ts-chip-avatar" id="tsAvatarContainer">
+                        <span id="tsInitials">—</span>
+                        <img id="tsAvatarImg" src="" alt="Student Avatar" style="display: none;">
+                    </div>
                     <div>
                         <div class="ts-chip-name" id="tsName">—</div>
                         <div class="ts-chip-meta">
@@ -434,13 +448,43 @@ $(document).ready(function () {
 
     document.querySelectorAll('.open-pay-modal').forEach(function (btn) {
         btn.addEventListener('click', function () {
-            document.getElementById('tsStudentId').value    = this.dataset.id;
-            document.getElementById('tsName').textContent   = this.dataset.name;
-            document.getElementById('tsClass').textContent  = this.dataset.class;
-            document.getElementById('tsAdmission').textContent = this.dataset.admission;
-            document.getElementById('tsInitials').textContent  = this.dataset.initials;
-            document.getElementById('tsTermId').value        = '';
-            document.getElementById('tsSessionId').value     = '';
+            const studentId = this.dataset.id;
+            const studentName = this.dataset.name;
+            const studentClass = this.dataset.class;
+            const studentAdmission = this.dataset.admission;
+            const studentInitials = this.dataset.initials;
+            const studentAvatar = this.dataset.avatar;
+
+            document.getElementById('tsStudentId').value = studentId;
+            document.getElementById('tsName').textContent = studentName;
+            document.getElementById('tsClass').textContent = studentClass;
+            document.getElementById('tsAdmission').textContent = studentAdmission;
+
+            // Handle avatar display in modal
+            const avatarContainer = document.getElementById('tsAvatarContainer');
+            const initialsSpan = document.getElementById('tsInitials');
+            const avatarImg = document.getElementById('tsAvatarImg');
+
+            if (studentAvatar && studentAvatar !== '' && studentAvatar !== 'null') {
+                // Show image, hide initials
+                avatarImg.src = studentAvatar;
+                avatarImg.style.display = 'block';
+                initialsSpan.style.display = 'none';
+                // Add error handling for broken images
+                avatarImg.onerror = function() {
+                    this.style.display = 'none';
+                    initialsSpan.style.display = 'flex';
+                    initialsSpan.textContent = studentInitials;
+                };
+            } else {
+                // Show initials, hide image
+                avatarImg.style.display = 'none';
+                initialsSpan.style.display = 'flex';
+                initialsSpan.textContent = studentInitials;
+            }
+
+            document.getElementById('tsTermId').value = '';
+            document.getElementById('tsSessionId').value = '';
             document.getElementById('tsProceedBtn').disabled = false;
             document.getElementById('tsProceedBtn').innerHTML =
                 '<i class="ri-search-eye-line"></i> View Payment Details';
