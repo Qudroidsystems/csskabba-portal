@@ -1,5 +1,3 @@
-
-     <!-- former student-->
 @extends('layouts.master')
 @section('content')
 <?php
