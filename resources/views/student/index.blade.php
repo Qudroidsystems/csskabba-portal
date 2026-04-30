@@ -1,13 +1,13 @@
 @extends('layouts.master')
 @section('content')
-<?php use Spatie\Permission\Models\Role; ?>
-
+<?php
+use Spatie\Permission\Models\Role;
+?>
 <div class="main-content">
     <div class="page-content">
         <div class="container-fluid">
-
-            <!-- Page Title -->
-            <div class="row mb-3">
+            <!-- Start page title -->
+            <div class="row">
                 <div class="col-12">
                     <div class="page-title-box d-sm-flex align-items-center justify-content-between">
                         <h4 class="mb-sm-0">Student Management</h4>
@@ -20,11 +20,12 @@
                     </div>
                 </div>
             </div>
+            <!-- End page title -->
 
             <style>
-                /* ====================================================
-                   CSS VARIABLES & BASE
-                   ==================================================== */
+                /* ========================================================
+                   ROOT VARIABLES
+                   ======================================================== */
                 :root {
                     --sm-primary:   #1e3a5f;
                     --sm-accent:    #2563eb;
@@ -42,43 +43,30 @@
                     --sm-shadow-lg: 0 8px 32px rgba(0,0,0,.12);
                 }
 
-                /* ====================================================
+                /* ========================================================
                    HERO BANNER
-                   ==================================================== */
+                   ======================================================== */
                 .sm-hero {
                     background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 55%, #4f46e5 100%);
                     border-radius: var(--sm-radius);
-                    padding: 28px 32px;
-                    margin-bottom: 24px;
+                    padding: 26px 30px;
+                    margin-bottom: 22px;
                     position: relative;
                     overflow: hidden;
                 }
                 .sm-hero::before {
                     content: '';
                     position: absolute; top: -70px; right: -70px;
-                    width: 240px; height: 240px;
+                    width: 220px; height: 220px;
                     background: rgba(255,255,255,.06);
                     border-radius: 50%;
                 }
-                .sm-hero::after {
-                    content: '';
-                    position: absolute; bottom: -40px; left: 180px;
-                    width: 150px; height: 150px;
-                    background: rgba(255,255,255,.04);
-                    border-radius: 50%;
-                }
-                .sm-hero h1 {
-                    font-size: 22px; font-weight: 700; color: #fff;
-                    margin: 0 0 6px; position: relative; z-index: 1;
-                }
-                .sm-hero p {
-                    font-size: 13px; color: rgba(255,255,255,.75);
-                    margin: 0; position: relative; z-index: 1;
-                }
+                .sm-hero h1 { font-size: 21px; font-weight: 700; color: #fff; margin: 0 0 5px; position: relative; z-index: 1; }
+                .sm-hero p  { font-size: 13px; color: rgba(255,255,255,.75); margin: 0; position: relative; z-index: 1; }
 
-                /* ====================================================
+                /* ========================================================
                    STAT CARDS
-                   ==================================================== */
+                   ======================================================== */
                 .sm-stat {
                     background: #fff;
                     border: 1px solid var(--sm-border);
@@ -93,492 +81,428 @@
                 .sm-stat::before {
                     content: '';
                     position: absolute; top: 0; left: 0; right: 0; height: 3px;
-                    background: var(--sm-stat-color, var(--sm-accent));
+                    background: var(--sc, var(--sm-accent));
                 }
                 .sm-stat-icon {
-                    width: 52px; height: 52px; border-radius: 12px;
+                    width: 50px; height: 50px; border-radius: 12px;
                     display: flex; align-items: center; justify-content: center;
-                    font-size: 22px; color: #fff; margin-bottom: 14px;
-                    background: var(--sm-stat-color, var(--sm-accent));
+                    font-size: 20px; color: #fff; margin-bottom: 14px;
+                    background: var(--sc, var(--sm-accent));
                     box-shadow: 0 4px 12px rgba(0,0,0,.12);
                 }
-                .sm-stat-value { font-size: 30px; font-weight: 800; color: var(--sm-primary); line-height: 1; margin-bottom: 4px; }
-                .sm-stat-label { font-size: 12px; font-weight: 600; color: var(--sm-muted); text-transform: uppercase; letter-spacing: .04em; }
+                .sm-stat-value { font-size: 28px; font-weight: 800; color: var(--sm-primary); line-height: 1; margin-bottom: 4px; }
+                .sm-stat-label { font-size: 11px; font-weight: 600; color: var(--sm-muted); text-transform: uppercase; letter-spacing: .04em; }
                 .sm-stat-sub   { font-size: 11px; color: var(--sm-muted); margin-top: 4px; }
                 .sm-stat-sub .up   { color: var(--sm-success); }
-                .sm-stat-sub .down { color: var(--sm-danger);  }
-                /* color variants */
-                .sm-stat.c-blue   { --sm-stat-color: #2563eb; }
-                .sm-stat.c-green  { --sm-stat-color: #16a34a; }
-                .sm-stat.c-amber  { --sm-stat-color: #d97706; }
-                .sm-stat.c-purple { --sm-stat-color: #7c3aed; }
-                .sm-stat.c-sky    { --sm-stat-color: #0284c7; }
-                .sm-stat.c-pink   { --sm-stat-color: #db2777; }
-                .sm-stat.c-teal   { --sm-stat-color: #0d9488; }
-                .sm-stat.c-orange { --sm-stat-color: #ea580c; }
+                .sm-stat-sub .down { color: var(--sm-danger); }
 
-                /* ====================================================
-                   MAIN PANEL
-                   ==================================================== */
-                .sm-panel {
-                    background: #fff;
-                    border: 1px solid var(--sm-border);
-                    border-radius: var(--sm-radius);
+                /* ========================================================
+                   DASHBOARD STATS CARD (legacy class kept for compat)
+                   ======================================================== */
+                .dashboard-stats-card {
+                    border: none;
+                    border-radius: 16px;
+                    box-shadow: 0 4px 20px rgba(0,0,0,.08);
+                    transition: all .3s ease;
+                    margin-bottom: 24px;
+                    position: relative;
                     overflow: hidden;
-                    box-shadow: var(--sm-shadow);
                 }
-                .sm-panel-header {
-                    padding: 16px 20px;
-                    border-bottom: 1px solid var(--sm-border);
-                    display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
+                .dashboard-stats-card:hover { transform: translateY(-8px); box-shadow: 0 12px 30px rgba(0,0,0,.15); }
+                .dashboard-stats-card::before {
+                    content: '';
+                    position: absolute; top: 0; left: 0; right: 0; height: 4px;
+                    background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
                 }
-                .sm-panel-title {
-                    font-size: 15px; font-weight: 700; color: var(--sm-primary);
-                    display: flex; align-items: center; gap: 8px;
+                .dashboard-stats-card .card-body { padding: 24px; position: relative; z-index: 1; }
+                .dashboard-stats-card .stats-icon {
+                    width: 64px; height: 64px; border-radius: 16px;
+                    display: flex; align-items: center; justify-content: center;
+                    margin-bottom: 20px; font-size: 28px;
+                    background: rgba(255,255,255,.2); backdrop-filter: blur(10px); color: white;
                 }
+                .dashboard-stats-card .stats-content { display: flex; flex-direction: column; gap: 8px; }
+                .dashboard-stats-card .stats-label { font-size: 14px; font-weight: 500; color: rgba(255,255,255,.9); text-transform: uppercase; letter-spacing: .5px; }
+                .dashboard-stats-card .stats-value { font-size: 32px; font-weight: 700; color: white; line-height: 1; }
+                .dashboard-stats-card .stats-change { font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 4px; color: rgba(255,255,255,.8); }
+                .dashboard-stats-card .stats-change.positive { color: #10b981; }
+                .stats-primary { --gradient-start:#4361ee; --gradient-end:#3a0ca3; background: linear-gradient(135deg,#4361ee 0%,#3a0ca3 100%); }
+                .stats-success { --gradient-start:#10b981; --gradient-end:#047857; background: linear-gradient(135deg,#10b981 0%,#047857 100%); }
+                .stats-warning { --gradient-start:#f59e0b; --gradient-end:#b45309; background: linear-gradient(135deg,#f59e0b 0%,#b45309 100%); }
+                .stats-info    { --gradient-start:#0ea5e9; --gradient-end:#0369a1; background: linear-gradient(135deg,#0ea5e9 0%,#0369a1 100%); }
+                .stats-purple  { --gradient-start:#8b5cf6; --gradient-end:#7c3aed; background: linear-gradient(135deg,#8b5cf6 0%,#7c3aed 100%); }
+                .stats-pink    { --gradient-start:#ec4899; --gradient-end:#be185d; background: linear-gradient(135deg,#ec4899 0%,#be185d 100%); }
+                .stats-teal    { --gradient-start:#14b8a6; --gradient-end:#0d9488; background: linear-gradient(135deg,#14b8a6 0%,#0d9488 100%); }
 
-                /* ====================================================
-                   FILTER BAR
-                   ==================================================== */
-                .sm-filter {
-                    padding: 16px 20px;
-                    border-bottom: 1px solid var(--sm-border);
-                    background: #fafbfc;
-                }
-                .sm-search { position: relative; }
-                .sm-search i.icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 15px; }
-                .sm-search input {
-                    padding-left: 38px; padding-right: 36px;
-                    border-radius: 10px; border: 1.5px solid var(--sm-border);
-                    height: 42px; font-size: 13px;
-                    transition: border .2s, box-shadow .2s; width: 100%;
-                }
-                .sm-search input:focus {
-                    border-color: var(--sm-accent);
-                    box-shadow: 0 0 0 3px rgba(37,99,235,.1); outline: none;
-                }
-                .sm-search .clear-btn {
-                    position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
-                    background: transparent; border: none; color: #9ca3af;
-                    font-size: 15px; padding: 4px 7px; cursor: pointer; display: none;
-                }
-                .sm-search .clear-btn:hover { color: var(--sm-danger); }
-                .sm-filter select {
-                    border-radius: 10px; border: 1.5px solid var(--sm-border);
-                    height: 42px; font-size: 13px; padding: 0 12px; width: 100%;
-                    transition: border .2s; background: #fff;
-                }
-                .sm-filter select:focus { border-color: var(--sm-accent); outline: none; }
-
-                /* ====================================================
-                   TABLE
-                   ==================================================== */
-                .sm-table thead th {
-                    background: var(--sm-primary);
-                    color: #fff; padding: 13px 14px;
-                    font-weight: 600; font-size: 12px;
-                    text-transform: uppercase; letter-spacing: .04em;
-                    border: none; white-space: nowrap;
-                }
-                .sm-table tbody tr {
-                    border-bottom: 1px solid var(--sm-border);
-                    transition: background .15s;
-                }
-                .sm-table tbody tr:hover { background: #f0f7ff; }
-                .sm-table tbody td { padding: 13px 14px; vertical-align: middle; font-size: 13px; }
-
-                /* ====================================================
-                   AVATAR
-                   ==================================================== */
-                .sm-avatar {
-                    width: 44px; height: 44px; border-radius: 12px;
-                    object-fit: cover;
-                    border: 2px solid var(--sm-border);
-                    cursor: pointer;
-                    transition: transform .2s, box-shadow .2s;
-                }
-                .sm-avatar:hover { transform: scale(1.08); box-shadow: 0 4px 14px rgba(0,0,0,.15); }
-                .sm-avatar-init {
-                    width: 44px; height: 44px; border-radius: 12px;
-                    background: linear-gradient(135deg, #667eea, #764ba2);
-                    display: inline-flex; align-items: center; justify-content: center;
-                    font-size: 16px; font-weight: 700; color: #fff;
-                    border: 2px solid var(--sm-border); cursor: pointer;
-                    transition: transform .2s, box-shadow .2s;
-                }
-                .sm-avatar-init:hover { transform: scale(1.08); box-shadow: 0 4px 14px rgba(0,0,0,.15); }
-
-                /* ====================================================
-                   STUDENT INFO IN TABLE ROW
-                   ==================================================== */
-                .stu-name    { font-weight: 600; font-size: 13px; color: #1e293b; margin-bottom: 2px; }
-                .stu-meta    { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-                .stu-chip    {
-                    background: #f1f5f9; color: #475569;
-                    padding: 2px 7px; border-radius: 20px; font-size: 11px;
-                    display: inline-flex; align-items: center; gap: 3px;
-                }
-
-                /* ====================================================
-                   BADGES
-                   ==================================================== */
-                .badge-active   { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
-                .badge-inactive { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
-                .badge-new      { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
-                .badge-old      { background: #ede9fe; color: #5b21b6; border: 1px solid #ddd6fe; }
-                .sm-badge {
-                    display: inline-flex; align-items: center; gap: 4px;
-                    padding: 4px 10px; border-radius: 20px;
-                    font-size: 11px; font-weight: 600;
-                }
-
-                /* ====================================================
-                   ACTION BUTTONS
-                   ==================================================== */
-                .act-btn {
-                    width: 32px; height: 32px; border-radius: 8px; border: none;
-                    display: inline-flex; align-items: center; justify-content: center;
-                    font-size: 14px; cursor: pointer; transition: all .15s;
-                }
-                .act-view   { background: #e0f2fe; color: #0284c7; }
-                .act-view:hover  { background: #0284c7; color: #fff; transform: translateY(-1px); }
-                .act-edit   { background: #fef9c3; color: #a16207; }
-                .act-edit:hover  { background: #d97706; color: #fff; transform: translateY(-1px); }
-                .act-delete { background: #fee2e2; color: #dc2626; }
-                .act-delete:hover { background: #dc2626; color: #fff; transform: translateY(-1px); }
-
-                /* ====================================================
+                /* ========================================================
                    STUDENT PROFILE CARD (card view)
-                   ==================================================== */
-                .stu-card {
-                    background: #fff;
-                    border: 1px solid var(--sm-border);
-                    border-radius: var(--sm-radius);
+                   ======================================================== */
+                .student-profile-card {
+                    border: 1px solid #e5e7eb;
+                    border-radius: 16px;
                     overflow: hidden;
-                    transition: transform .2s, box-shadow .2s, border-color .2s;
+                    transition: all .3s ease;
+                    background: white;
                     height: 100%;
                     position: relative;
+                    box-shadow: 0 2px 8px rgba(0,0,0,.04);
                 }
-                .stu-card:hover {
-                    transform: translateY(-4px);
-                    box-shadow: var(--sm-shadow-lg);
-                    border-color: var(--sm-accent);
+                .student-profile-card:hover { border-color: #3b82f6; box-shadow: 0 8px 30px rgba(59,130,246,.15); transform: translateY(-4px); }
+                .student-profile-card.selected { border-color: #3b82f6; background-color: #f0f9ff; }
+                .student-profile-card .card-header {
+                    background: linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+                    padding: 20px; position: relative; min-height: 120px;
                 }
-                .stu-card-header {
-                    background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #4f46e5 100%);
-                    padding: 18px 16px 14px;
-                    position: relative;
-                    min-height: 110px;
+                .student-profile-card .avatar-container {
+                    position: absolute; top: 16px; right: 16px;
+                    width: 76px; height: 76px; border-radius: 14px;
+                    overflow: hidden; border: 3px solid white;
+                    box-shadow: 0 4px 12px rgba(0,0,0,.15); background: white;
+                    cursor: pointer; transition: transform .2s;
                 }
-                .stu-card-avatar {
-                    position: absolute; top: 14px; right: 14px;
-                    width: 68px; height: 68px; border-radius: 12px;
-                    border: 3px solid rgba(255,255,255,.9);
-                    overflow: hidden; background: #fff;
-                    box-shadow: 0 4px 12px rgba(0,0,0,.2);
-                    cursor: pointer;
-                    transition: transform .2s;
-                }
-                .stu-card-avatar:hover { transform: scale(1.06); }
-                .stu-card-avatar img  { width: 100%; height: 100%; object-fit: cover; }
-                .stu-card-avatar-init {
+                .student-profile-card .avatar-container:hover { transform: scale(1.06); }
+                .student-profile-card .avatar { width: 100%; height: 100%; object-fit: cover; }
+                .student-profile-card .avatar-initials {
                     width: 100%; height: 100%;
                     display: flex; align-items: center; justify-content: center;
-                    font-size: 24px; font-weight: 700; color: #667eea;
-                    background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+                    font-size: 26px; font-weight: 700; color: #667eea;
+                    background: linear-gradient(135deg,#f3f4f6 0%,#e5e7eb 100%);
+                    cursor: pointer;
                 }
-                .stu-card-name {
-                    font-size: 15px; font-weight: 700; color: #fff;
-                    padding-right: 82px; margin-bottom: 5px; line-height: 1.3;
+                .student-profile-card .header-content { padding-right: 96px; }
+                .student-profile-card .student-name { font-size: 18px; font-weight: 700; color: white; margin-bottom: 5px; line-height: 1.3; }
+                .student-profile-card .student-admission {
+                    font-size: 12px; color: rgba(255,255,255,.9);
+                    background: rgba(255,255,255,.15); padding: 3px 10px;
+                    border-radius: 20px; display: inline-block; backdrop-filter: blur(10px);
                 }
-                .stu-card-adm {
-                    display: inline-block; background: rgba(255,255,255,.15);
-                    backdrop-filter: blur(6px); color: rgba(255,255,255,.95);
-                    padding: 3px 10px; border-radius: 20px; font-size: 11px;
+                .student-profile-card .card-body { padding: 16px; }
+                .student-profile-card .student-info-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; margin-bottom: 16px; }
+                .student-profile-card .info-item { display: flex; flex-direction: column; gap: 3px; }
+                .student-profile-card .info-label { font-size: 10px; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: .5px; }
+                .student-profile-card .info-value { font-size: 13px; font-weight: 600; color: #374151; }
+                .student-profile-card .status-badge {
+                    display: inline-flex; align-items: center; gap: 5px;
+                    padding: 5px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; margin-bottom: 14px;
                 }
-                .stu-card-checkbox {
-                    position: absolute; top: 12px; left: 12px; z-index: 2;
-                }
-                .stu-card-body { padding: 14px 16px; }
-                .stu-card-grid {
-                    display: grid; grid-template-columns: 1fr 1fr;
-                    gap: 10px; margin-bottom: 12px;
-                }
-                .stu-card-info-label { font-size: 10px; font-weight: 700; color: var(--sm-muted); text-transform: uppercase; letter-spacing: .04em; }
-                .stu-card-info-val   { font-size: 13px; font-weight: 600; color: #374151; margin-top: 2px; }
-                .stu-card-actions {
-                    display: flex; gap: 6px;
-                    padding-top: 12px; border-top: 1px solid var(--sm-border);
-                }
-                .stu-card-actions button {
-                    flex: 1; padding: 8px 4px; border-radius: 8px; border: none;
+                .student-profile-card .status-active   { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+                .student-profile-card .status-inactive { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+                .student-profile-card .status-new      { background: #dbeafe; color: #1e40af; border: 1px solid #bfdbfe; }
+                .student-profile-card .status-old      { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+                .student-profile-card .action-buttons  { display: flex; gap: 7px; padding-top: 14px; border-top: 1px solid #e5e7eb; }
+                .student-profile-card .action-btn {
+                    flex: 1; padding: 9px 4px; border-radius: 10px; border: none;
                     font-size: 12px; font-weight: 600; cursor: pointer;
-                    display: flex; align-items: center; justify-content: center; gap: 4px;
-                    transition: all .15s;
+                    transition: all .2s; display: flex; align-items: center; justify-content: center; gap: 5px;
                 }
-                .stu-card-view   { background: var(--sm-accent); color: #fff; }
-                .stu-card-view:hover   { background: #1d4ed8; }
-                .stu-card-edit   { background: #f3f4f6; color: #374151; border: 1px solid var(--sm-border); }
-                .stu-card-edit:hover   { background: #e5e7eb; }
-                .stu-card-delete { background: #fef2f2; color: var(--sm-danger); border: 1px solid #fecaca; }
-                .stu-card-delete:hover { background: #fee2e2; }
+                .student-profile-card .view-btn   { background-color: #3b82f6; color: white; }
+                .student-profile-card .view-btn:hover   { background-color: #2563eb; transform: translateY(-2px); }
+                .student-profile-card .edit-btn   { background-color: #f3f4f6; color: #374151; border: 1px solid #e5e7eb; }
+                .student-profile-card .edit-btn:hover   { background-color: #e5e7eb; transform: translateY(-2px); }
+                .student-profile-card .delete-btn { background-color: #fef2f2; color: #dc2626; border: 1px solid #fee2e2; }
+                .student-profile-card .delete-btn:hover { background-color: #fee2e2; transform: translateY(-2px); }
+                .student-profile-card .checkbox-container { position: absolute; top: 14px; left: 14px; z-index: 2; }
+                .student-profile-card .form-check-input { width: 18px; height: 18px; cursor: pointer; border: 2px solid white; background-color: rgba(255,255,255,.2); }
+                .student-profile-card .form-check-input:checked { background-color: #3b82f6; border-color: #3b82f6; }
 
-                /* ====================================================
-                   IMAGE ZOOM MODAL
-                   ==================================================== */
-                .img-zoom-modal .modal-content { background: transparent; border: none; }
-                .img-zoom-modal .modal-dialog  { max-width: 90vw; }
-                .img-zoom-modal .modal-body    {
-                    display: flex; flex-direction: column;
-                    align-items: center; justify-content: center;
-                    min-height: 80vh; padding: 20px;
-                }
-                .img-zoomed {
-                    max-width: 90vw; max-height: 72vh;
-                    border-radius: 16px; border: 4px solid #fff;
-                    box-shadow: 0 24px 64px rgba(0,0,0,.4);
-                    object-fit: contain; cursor: pointer;
-                    animation: zoomIn .25s ease;
-                }
-                @keyframes zoomIn {
-                    from { opacity: 0; transform: scale(.85); }
-                    to   { opacity: 1; transform: scale(1); }
-                }
-                .img-zoom-modal .btn-close {
-                    position: fixed; top: 20px; right: 28px;
-                    background: rgba(0,0,0,.7); border-radius: 50%;
-                    padding: 12px; filter: brightness(0) invert(1);
-                    opacity: 1; z-index: 9999;
-                }
-                .img-zoom-modal .btn-close:hover { background: rgba(0,0,0,.9); transform: scale(1.1); }
-                .zoom-name {
-                    color: #fff; margin-top: 18px; font-size: 17px; font-weight: 700;
-                    background: rgba(0,0,0,.5); padding: 7px 22px;
-                    border-radius: 40px; text-shadow: 0 1px 4px rgba(0,0,0,.3);
-                }
-                .zoom-detail {
-                    color: rgba(255,255,255,.78); margin-top: 6px;
-                    font-size: 13px; text-align: center;
-                }
+                /* ========================================================
+                   TABLE
+                   ======================================================== */
+                .data-table-container { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.04); }
+                .data-table { margin-bottom: 0; }
+                .data-table thead { background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); }
+                .data-table thead th { border: none; color: white; font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: .5px; padding: 14px 12px; }
+                .data-table tbody tr { transition: all .2s ease; border-bottom: 1px solid #e5e7eb; }
+                .data-table tbody tr:hover { background-color: #f9fafb; }
+                .data-table tbody tr.selected { background-color: #f0f9ff; }
+                .data-table tbody td { padding: 14px 12px; vertical-align: middle; }
 
-                /* ====================================================
-                   VIEW TOGGLE BUTTONS
-                   ==================================================== */
-                .view-toggle .btn {
-                    border-radius: 10px; padding: 8px 16px;
-                    font-weight: 600; font-size: 13px;
-                    transition: all .2s;
+                /* avatar in table */
+                .tbl-avatar {
+                    width: 44px; height: 44px; border-radius: 11px;
+                    object-fit: cover; border: 2px solid #e5e7eb;
+                    cursor: pointer; transition: transform .2s, box-shadow .2s;
                 }
-                .view-toggle .btn.active {
-                    background: linear-gradient(135deg, #1e3a5f, #2563eb);
-                    border-color: #2563eb; color: #fff;
-                    box-shadow: 0 4px 12px rgba(37,99,235,.3);
+                .tbl-avatar:hover { transform: scale(1.08); box-shadow: 0 4px 14px rgba(0,0,0,.15); }
+                .tbl-avatar-init {
+                    width: 44px; height: 44px; border-radius: 11px;
+                    background: linear-gradient(135deg,#667eea,#764ba2);
+                    display: inline-flex; align-items: center; justify-content: center;
+                    font-size: 16px; font-weight: 700; color: #fff;
+                    border: 2px solid #e5e7eb; cursor: pointer;
+                    transition: transform .2s, box-shadow .2s;
                 }
+                .tbl-avatar-init:hover { transform: scale(1.08); box-shadow: 0 4px 14px rgba(0,0,0,.15); }
 
-                /* ====================================================
+                /* ========================================================
+                   FILTER BAR
+                   ======================================================== */
+                .filter-bar { background: white; padding: 18px 20px; border-radius: 0; margin-bottom: 0; border-bottom: 1px solid #e5e7eb; background: #fafbfc; }
+                .search-box { position: relative; }
+                .search-box input { padding-left: 42px; padding-right: 38px; border-radius: 10px; border: 1.5px solid #e5e7eb; height: 44px; font-size: 13px; transition: all .3s ease; width: 100%; }
+                .search-box input:focus { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102,126,234,.1); outline: none; }
+                .search-box .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 16px; }
+                .search-box .clear-search { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); background: transparent; border: none; color: #6b7280; font-size: 15px; padding: 4px 8px; cursor: pointer; display: none; z-index: 10; }
+                .search-box .clear-search:hover { color: #dc2626; }
+                .filter-bar select { border-radius: 10px; border: 1.5px solid #e5e7eb; height: 44px; font-size: 13px; padding: 0 12px; width: 100%; transition: border .2s; background: #fff; }
+                .filter-bar select:focus { border-color: #667eea; outline: none; }
+
+                /* ========================================================
                    PAGINATION
-                   ==================================================== */
-                .sm-pagination { padding: 16px 20px; border-top: 1px solid var(--sm-border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
-                .sm-pagination .page-link { border: none; border-radius: 9px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px; margin: 0 2px; transition: all .15s; color: #374151; }
-                .sm-pagination .page-link:hover { background: #f3f4f6; color: var(--sm-accent); }
-                .sm-pagination .page-item.active .page-link { background: linear-gradient(135deg, #1e3a5f, #2563eb); color: #fff; }
+                   ======================================================== */
+                .pagination-container { display: flex; justify-content: space-between; align-items: center; padding: 18px 20px; background: white; border-top: 1px solid #e5e7eb; flex-wrap: wrap; gap: 10px; }
+                .pagination .page-link { border: none; color: #374151; margin: 0 3px; border-radius: 9px; width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px; transition: all .3s ease; }
+                .pagination .page-link:hover { background-color: #f3f4f6; color: #667eea; }
+                .pagination .page-item.active .page-link { background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); color: white; }
 
-                /* ====================================================
+                /* ========================================================
                    EMPTY / LOADING STATES
-                   ==================================================== */
-                .sm-empty { padding: 60px 20px; text-align: center; }
-                .sm-empty-icon { font-size: 60px; color: #d1d5db; margin-bottom: 16px; }
-                .sm-empty-title { font-size: 18px; font-weight: 700; color: #374151; margin-bottom: 6px; }
-                .sm-empty-desc  { color: var(--sm-muted); font-size: 13px; max-width: 360px; margin: 0 auto 20px; }
-                .sm-loading { padding: 60px 20px; text-align: center; }
-                .spin-ring {
-                    width: 60px; height: 60px; margin: 0 auto;
-                    border: 4px solid #f3f4f6; border-top-color: var(--sm-accent);
-                    border-radius: 50%; animation: spin 1s linear infinite;
-                }
+                   ======================================================== */
+                .empty-state { padding: 60px 20px; text-align: center; }
+                .empty-state-icon { font-size: 60px; color: #d1d5db; margin-bottom: 16px; }
+                .empty-state-title { font-size: 18px; font-weight: 600; color: #374151; margin-bottom: 6px; }
+                .empty-state-description { color: #6b7280; font-size: 13px; max-width: 380px; margin: 0 auto 20px; }
+                .loading-state { padding: 60px 20px; text-align: center; }
+                .spinner-container { display: inline-block; position: relative; width: 70px; height: 70px; }
+                .spinner-ring { position: absolute; width: 100%; height: 100%; border: 4px solid #f3f4f6; border-top-color: #667eea; border-radius: 50%; animation: spin 1s linear infinite; }
                 @keyframes spin { to { transform: rotate(360deg); } }
 
-                /* ====================================================
+                /* ========================================================
+                   SOFT BUTTONS
+                   ======================================================== */
+                .btn-soft-info    { color: #0dcaf0; background-color: rgba(13,202,240,.1); border-color: transparent; transition: all .2s ease; }
+                .btn-soft-info:hover    { color: #fff; background-color: #0dcaf0; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(13,202,240,.2); }
+                .btn-soft-warning { color: #ffc107; background-color: rgba(255,193,7,.1);  border-color: transparent; transition: all .2s ease; }
+                .btn-soft-warning:hover { color: #fff; background-color: #ffc107; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255,193,7,.2); }
+                .btn-soft-danger  { color: #dc3545; background-color: rgba(220,53,69,.1);  border-color: transparent; transition: all .2s ease; }
+                .btn-soft-danger:hover  { color: #fff; background-color: #dc3545; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(220,53,69,.2); }
+                .btn-soft-primary { color: #0d6efd; background-color: rgba(13,110,253,.1); border-color: transparent; transition: all .2s ease; }
+                .btn-soft-primary:hover { color: #fff; background-color: #0d6efd; transform: translateY(-2px); }
+
+                /* ========================================================
+                   VIEW TOGGLE BUTTONS
+                   ======================================================== */
+                .btn-group-toggle .btn { border-radius: 10px; padding: 9px 18px; font-weight: 600; font-size: 13px; transition: all .3s ease; }
+                .btn-group-toggle .btn.active { background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); border-color: #667eea; color: white; box-shadow: 0 4px 12px rgba(102,126,234,.3); }
+
+                /* ========================================================
+                   PRIMARY GRADIENT BUTTON
+                   ======================================================== */
+                .btn-primary-gradient { background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); border: none; color: white; padding: 10px 22px; border-radius: 11px; font-weight: 600; font-size: 13px; transition: all .3s ease; }
+                .btn-primary-gradient:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(102,126,234,.3); color: white; }
+
+                /* ========================================================
                    MODAL HEADERS
-                   ==================================================== */
-                .modal-hdr {
-                    background: linear-gradient(135deg, #1e3a5f, #2563eb 55%, #4f46e5 100%);
-                    padding: 22px 28px; color: #fff; border: none;
-                    position: relative; overflow: hidden;
-                }
-                .modal-hdr::before { content: ''; position: absolute; top: -50px; right: -50px; width: 160px; height: 160px; background: rgba(255,255,255,.06); border-radius: 50%; }
-                .modal-hdr .modal-title { font-weight: 700; font-size: 16px; position: relative; }
-                .modal-hdr .btn-close   { filter: brightness(0) invert(1); opacity: .8; position: relative; }
-                .modal-hdr .btn-close:hover { opacity: 1; }
+                   ======================================================== */
+                .modal-header-gradient { background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); color: white; padding: 22px 28px; border: none; position: relative; overflow: hidden; }
+                .modal-header-gradient::before { content: ''; position: absolute; top: -50px; right: -50px; width: 160px; height: 160px; background: rgba(255,255,255,.06); border-radius: 50%; }
+                .modal-header-gradient .modal-title { font-weight: 700; font-size: 16px; position: relative; }
+                .modal-header-gradient .btn-close { filter: brightness(0) invert(1); opacity: .8; position: relative; }
+                .modal-header-gradient .btn-close:hover { opacity: 1; }
 
-                /* ====================================================
+                /* ========================================================
                    PROGRESS STEPS
-                   ==================================================== */
-                .progress-steps { display: flex; justify-content: space-between; position: relative; margin-bottom: 28px; counter-reset: step; }
-                .progress-steps::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 2px; background: #e5e7eb; transform: translateY(-50%); z-index: 0; }
-                .progress-steps .step { width: 38px; height: 38px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #9ca3af; position: relative; z-index: 1; border: 2px solid #e5e7eb; }
-                .progress-steps .step.active { background: var(--sm-accent); color: #fff; border-color: var(--sm-accent); box-shadow: 0 0 0 4px rgba(37,99,235,.15); }
+                   ======================================================== */
+                .progress-steps { display: flex; justify-content: space-between; position: relative; margin-bottom: 28px; }
+                .progress-steps::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 2px; background: #e9ecef; transform: translateY(-50%); z-index: 1; }
+                .progress-steps .step { width: 38px; height: 38px; border-radius: 50%; background: #e9ecef; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 14px; color: #6b7280; position: relative; z-index: 2; border: 2px solid #e9ecef; }
+                .progress-steps .step.active { background: #405189; color: white; border-color: #405189; }
 
-                /* ====================================================
-                   DRAG AND DROP COLUMNS (SORTABLE FIX)
-                   ==================================================== */
+                /* ========================================================
+                   INFO CARD (view modal)
+                   ======================================================== */
+                .info-card { border: 1px solid #e5e7eb; border-radius: 12px; overflow: hidden; margin-bottom: 14px; }
+                .info-card-header { background: #f8fafc; padding: 11px 16px; border-bottom: 1px solid #e5e7eb; }
+                .info-card-header h6 { margin: 0; font-size: 13px; font-weight: 700; }
+                .info-card-body { padding: 12px 16px; }
+                .info-card-body .table th { font-size: 12px; color: #6b7280; font-weight: 600; width: 42%; padding: 5px 0; }
+                .info-card-body .table td { font-size: 13px; padding: 5px 0; }
+
+                /* ========================================================
+                   DRAG & DROP COLUMNS (SORTABLE FIX)
+                   ======================================================== */
                 #columnsContainer {
-                    display: flex;
-                    flex-wrap: wrap;
-                    gap: 0;
-                }
-                #columnsContainer .col-md-4 {
-                    transition: none;
+                    display: flex !important;
+                    flex-wrap: wrap !important;
+                    gap: 8px !important;
+                    min-height: 52px;
+                    padding: 10px;
+                    background: #f8fafc;
+                    border: 1.5px solid #e2e8f0;
+                    border-radius: 12px;
+                    list-style: none;
                 }
                 .draggable-item {
+                    display: inline-flex !important;
+                    align-items: center;
+                    gap: 6px;
                     background: #fff;
-                    border: 1.5px solid var(--sm-border) !important;
-                    border-radius: 10px !important;
-                    padding: 10px 12px !important;
+                    border: 1.5px solid #e2e8f0 !important;
+                    border-radius: 9px !important;
+                    padding: 7px 10px !important;
                     cursor: default;
                     user-select: none;
+                    white-space: nowrap;
                     transition: box-shadow .15s;
-                    position: relative;
+                    margin: 0 !important;
+                    /* override the col-md-4 wrapping that broke drag */
+                    width: auto !important;
+                    flex: none !important;
                 }
                 .draggable-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); }
-                .drag-handle {
-                    cursor: grab !important;
-                    color: #9ca3af; padding: 4px 6px; margin-right: 6px;
-                    border-radius: 6px; display: inline-flex; align-items: center;
-                    transition: color .15s, background .15s;
-                    font-size: 16px;
-                }
-                .drag-handle:hover  { color: var(--sm-accent); background: rgba(37,99,235,.08); }
+                .drag-handle { cursor: grab !important; color: #9ca3af; padding: 2px 5px; border-radius: 5px; display: inline-flex; align-items: center; font-size: 15px; transition: color .15s, background .15s; }
+                .drag-handle:hover { color: #667eea; background: rgba(102,126,234,.1); }
                 .drag-handle:active { cursor: grabbing !important; }
-                .sortable-ghost    { opacity: .4; background: #e0f2fe !important; border: 2px dashed var(--sm-accent) !important; }
-                .sortable-chosen   { box-shadow: 0 8px 24px rgba(0,0,0,.18) !important; transform: scale(1.02); border-color: var(--sm-accent) !important; z-index: 1000; }
-                .sortable-drag     { opacity: .85; }
-                .order-badge       { font-size: 10px; padding: 1px 5px; border-radius: 8px; float: right; background: var(--sm-accent); color: #fff; }
+                .sortable-ghost  { opacity: .4; background: #e0f2fe !important; border: 2px dashed #667eea !important; }
+                .sortable-chosen { box-shadow: 0 8px 24px rgba(0,0,0,.18) !important; transform: scale(1.02); border-color: #667eea !important; z-index: 1000; }
+                .sortable-drag   { opacity: .85; }
+                .order-badge { font-size: 10px; padding: 1px 5px; border-radius: 8px; background: #667eea; color: #fff; margin-left: 4px; }
 
-                /* ====================================================
-                   BULK STATUS CARDS
-                   ==================================================== */
-                .bsc-card {
-                    border: 1.5px solid var(--sm-border);
-                    border-radius: 12px; overflow: hidden;
-                    transition: transform .15s, box-shadow .15s, border-color .15s;
-                    background: #fff;
-                }
-                .bsc-card:hover { transform: translateY(-3px); box-shadow: var(--sm-shadow); border-color: var(--sm-accent); }
-                .bsc-avatar {
-                    width: 56px; height: 56px; border-radius: 50%;
-                    margin: 0 auto 10px;
-                    background: linear-gradient(135deg, #667eea, #764ba2);
-                    display: flex; align-items: center; justify-content: center;
-                    font-size: 22px; font-weight: 700; color: #fff;
-                    border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,.12);
-                }
+                /* ========================================================
+                   IMAGE ZOOM MODAL
+                   ======================================================== */
+                .img-zoom-modal .modal-content { background: transparent; border: none; box-shadow: none; }
+                .img-zoom-modal .modal-dialog  { max-width: 90vw; margin: 1.5rem auto; }
+                .img-zoom-modal .modal-body    { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh; padding: 20px; }
+                .img-zoomed { max-width: 90vw; max-height: 72vh; border-radius: 16px; border: 4px solid #fff; box-shadow: 0 24px 64px rgba(0,0,0,.4); object-fit: contain; cursor: pointer; animation: zoomInAnim .25s ease; }
+                @keyframes zoomInAnim { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: scale(1); } }
+                .img-zoom-modal .btn-close { position: fixed; top: 18px; right: 26px; background: rgba(0,0,0,.7); border-radius: 50%; padding: 12px; filter: brightness(0) invert(1); opacity: 1; z-index: 9999; }
+                .img-zoom-modal .btn-close:hover { background: rgba(0,0,0,.9); transform: scale(1.1); }
+                .zoom-name { color: #fff; margin-top: 16px; font-size: 17px; font-weight: 700; background: rgba(0,0,0,.5); padding: 7px 22px; border-radius: 40px; }
+                .zoom-detail { color: rgba(255,255,255,.78); margin-top: 6px; font-size: 13px; text-align: center; }
 
-                /* ====================================================
-                   INFO CARD (view modal)
-                   ==================================================== */
-                .info-card { border: 1px solid var(--sm-border); border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
-                .info-card-header { background: #f8fafc; padding: 12px 16px; border-bottom: 1px solid var(--sm-border); }
-                .info-card-header h6 { margin: 0; font-size: 13px; font-weight: 700; color: var(--sm-primary); }
-                .info-card-body { padding: 14px 16px; }
-                .info-card-body .table th { font-size: 12px; color: var(--sm-muted); font-weight: 600; width: 42%; padding: 6px 0; }
-                .info-card-body .table td { font-size: 13px; padding: 6px 0; }
-
-                /* ====================================================
-                   MISC UTILITIES
-                   ==================================================== */
-                .btn-pg { background: linear-gradient(135deg, #1e3a5f, #2563eb); border: none; color: #fff; padding: 10px 22px; border-radius: 10px; font-weight: 600; font-size: 13px; transition: opacity .15s, transform .1s; }
-                .btn-pg:hover { opacity: .9; transform: translateY(-1px); color: #fff; }
+                /* ========================================================
+                   MISC
+                   ======================================================== */
+                .dropdown-menu { border: none; box-shadow: 0 10px 40px rgba(0,0,0,.08); border-radius: 12px; padding: 8px; }
+                .dropdown-item { border-radius: 8px; padding: 8px 14px; font-size: 13px; transition: all .2s ease; }
+                .dropdown-item:hover { background-color: #f8f9fa; }
+                .bg-soft-primary { background-color: rgba(67,97,238,.1); color: #4361ee; }
+                .bg-soft-success { background-color: rgba(40,167,69,.1);  color: #28a745; }
+                .avatar-xl { width: 80px; height: 80px; }
+                .avatar-title { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
                 @media(max-width:768px) { .sm-stat-value { font-size: 22px; } }
             </style>
 
-            <!-- ========================================================
+            <!-- ============================================================
                  HERO
-                 ======================================================== -->
+                 ============================================================ -->
             <div class="sm-hero">
                 <h1><i class="ri-group-line me-2"></i>Student Management</h1>
-                <p>Manage student records, registrations, status, and term enrolments from one place.</p>
+                <p>Manage records, registrations, status and term enrolments from one place.</p>
             </div>
 
-            <!-- ========================================================
+            <!-- ============================================================
                  STAT CARDS — ROW 1
-                 ======================================================== -->
-            <div class="row g-3 mb-2">
-                <div class="col-6 col-md-3">
-                    <div class="sm-stat c-blue">
-                        <div class="sm-stat-icon"><i class="fas fa-users"></i></div>
-                        <div class="sm-stat-value">{{ $total_population }}</div>
-                        <div class="sm-stat-label">Total Students</div>
-                        <div class="sm-stat-sub"><span class="up"><i class="fas fa-arrow-up"></i> 12%</span> from last term</div>
+                 ============================================================ -->
+            <div class="row mb-2">
+                <div class="col-md-3">
+                    <div class="dashboard-stats-card stats-primary">
+                        <div class="card-body">
+                            <div class="stats-icon"><i class="fas fa-users"></i></div>
+                            <div class="stats-content">
+                                <span class="stats-label">Total Students</span>
+                                <span class="stats-value">{{ $total_population }}</span>
+                                <span class="stats-change positive"><i class="fas fa-arrow-up"></i>12% from last term</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-6 col-md-3">
-                    <div class="sm-stat c-green">
-                        <div class="sm-stat-icon"><i class="fas fa-user-graduate"></i></div>
-                        <div class="sm-stat-value">{{ $student_status_counts['Active'] ?? 0 }}</div>
-                        <div class="sm-stat-label">Active Students</div>
-                        <div class="sm-stat-sub"><span class="up"><i class="fas fa-arrow-up"></i> 8%</span> from last term</div>
+                <div class="col-md-3">
+                    <div class="dashboard-stats-card stats-success">
+                        <div class="card-body">
+                            <div class="stats-icon"><i class="fas fa-user-graduate"></i></div>
+                            <div class="stats-content">
+                                <span class="stats-label">Active Students</span>
+                                <span class="stats-value">{{ $student_status_counts['Active'] ?? 0 }}</span>
+                                <span class="stats-change positive"><i class="fas fa-arrow-up"></i>8% from last term</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-6 col-md-3">
-                    <div class="sm-stat c-amber">
-                        <div class="sm-stat-icon"><i class="fas fa-user-plus"></i></div>
-                        <div class="sm-stat-value">{{ $status_counts['New Student'] ?? 0 }}</div>
-                        <div class="sm-stat-label">New Admissions</div>
-                        <div class="sm-stat-sub"><span class="up"><i class="fas fa-arrow-up"></i> 15%</span> from last term</div>
+                <div class="col-md-3">
+                    <div class="dashboard-stats-card stats-warning">
+                        <div class="card-body">
+                            <div class="stats-icon"><i class="fas fa-user-plus"></i></div>
+                            <div class="stats-content">
+                                <span class="stats-label">New Admissions</span>
+                                <span class="stats-value">{{ $status_counts['New Student'] ?? 0 }}</span>
+                                <span class="stats-change positive"><i class="fas fa-arrow-up"></i>15% from last term</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-6 col-md-3">
-                    <div class="sm-stat c-purple">
-                        <div class="sm-stat-icon"><i class="fas fa-chalkboard-teacher"></i></div>
-                        <div class="sm-stat-value">{{ $staff_count }}</div>
-                        <div class="sm-stat-label">Staff Count</div>
-                        <div class="sm-stat-sub"><span class="up"><i class="fas fa-arrow-up"></i> 5%</span> from last term</div>
+                <div class="col-md-3">
+                    <div class="dashboard-stats-card stats-purple">
+                        <div class="card-body">
+                            <div class="stats-icon"><i class="fas fa-chalkboard-teacher"></i></div>
+                            <div class="stats-content">
+                                <span class="stats-label">Staff Count</span>
+                                <span class="stats-value">{{ $staff_count }}</span>
+                                <span class="stats-change positive"><i class="fas fa-arrow-up"></i>5% from last term</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- ========================================================
+            <!-- ============================================================
                  STAT CARDS — ROW 2
-                 ======================================================== -->
-            <div class="row g-3 mb-4">
-                <div class="col-6 col-md-3">
-                    <div class="sm-stat c-sky">
-                        <div class="sm-stat-icon"><i class="fas fa-mars"></i></div>
-                        <div class="sm-stat-value">{{ $gender_counts['Male'] ?? 0 }}</div>
-                        <div class="sm-stat-label">Male Students</div>
-                        <div class="sm-stat-sub">{{ $total_population > 0 ? number_format(($gender_counts['Male'] / $total_population) * 100, 1) : 0 }}% of total</div>
+                 ============================================================ -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="dashboard-stats-card stats-info">
+                        <div class="card-body">
+                            <div class="stats-icon"><i class="fas fa-mars"></i></div>
+                            <div class="stats-content">
+                                <span class="stats-label">Male Students</span>
+                                <span class="stats-value">{{ $gender_counts['Male'] ?? 0 }}</span>
+                                <span class="stats-change">{{ $total_population > 0 ? number_format(($gender_counts['Male'] / $total_population) * 100, 1) : 0 }}%</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-6 col-md-3">
-                    <div class="sm-stat c-pink">
-                        <div class="sm-stat-icon"><i class="fas fa-venus"></i></div>
-                        <div class="sm-stat-value">{{ $gender_counts['Female'] ?? 0 }}</div>
-                        <div class="sm-stat-label">Female Students</div>
-                        <div class="sm-stat-sub">{{ $total_population > 0 ? number_format(($gender_counts['Female'] / $total_population) * 100, 1) : 0 }}% of total</div>
+                <div class="col-md-3">
+                    <div class="dashboard-stats-card stats-pink">
+                        <div class="card-body">
+                            <div class="stats-icon"><i class="fas fa-venus"></i></div>
+                            <div class="stats-content">
+                                <span class="stats-label">Female Students</span>
+                                <span class="stats-value">{{ $gender_counts['Female'] ?? 0 }}</span>
+                                <span class="stats-change">{{ $total_population > 0 ? number_format(($gender_counts['Female'] / $total_population) * 100, 1) : 0 }}%</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-6 col-md-3">
-                    <div class="sm-stat c-teal">
-                        <div class="sm-stat-icon"><i class="fas fa-cross"></i></div>
-                        <div class="sm-stat-value">{{ $religion_counts['Christianity'] ?? 0 }}</div>
-                        <div class="sm-stat-label">Christians</div>
-                        <div class="sm-stat-sub">{{ $total_population > 0 ? number_format(($religion_counts['Christianity'] / $total_population) * 100, 1) : 0 }}% of total</div>
+                <div class="col-md-3">
+                    <div class="dashboard-stats-card stats-teal">
+                        <div class="card-body">
+                            <div class="stats-icon"><i class="fas fa-cross"></i></div>
+                            <div class="stats-content">
+                                <span class="stats-label">Christians</span>
+                                <span class="stats-value">{{ $religion_counts['Christianity'] ?? 0 }}</span>
+                                <span class="stats-change">{{ $total_population > 0 ? number_format(($religion_counts['Christianity'] / $total_population) * 100, 1) : 0 }}%</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-6 col-md-3">
-                    <div class="sm-stat c-orange">
-                        <div class="sm-stat-icon"><i class="fas fa-moon"></i></div>
-                        <div class="sm-stat-value">{{ $religion_counts['Islam'] ?? 0 }}</div>
-                        <div class="sm-stat-label">Muslims</div>
-                        <div class="sm-stat-sub">{{ $total_population > 0 ? number_format(($religion_counts['Islam'] / $total_population) * 100, 1) : 0 }}% of total</div>
+                <div class="col-md-3">
+                    <div class="dashboard-stats-card stats-warning">
+                        <div class="card-body">
+                            <div class="stats-icon"><i class="fas fa-moon"></i></div>
+                            <div class="stats-content">
+                                <span class="stats-label">Muslims</span>
+                                <span class="stats-value">{{ $religion_counts['Islam'] ?? 0 }}</span>
+                                <span class="stats-change">{{ $total_population > 0 ? number_format(($religion_counts['Islam'] / $total_population) * 100, 1) : 0 }}%</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- ========================================================
+            <!-- ============================================================
                  ALERTS
-                 ======================================================== -->
+                 ============================================================ -->
             @if(session('success'))
                 <div class="alert alert-success alert-dismissible fade show"><i class="fas fa-check-circle me-2"></i>{{ session('success') }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
             @endif
@@ -592,26 +516,28 @@
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             @endif
+            @if(session('status'))
+                <div class="alert alert-success alert-dismissible fade show"><i class="fas fa-check-circle me-2"></i>{{ session('status') }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+            @endif
 
-            <!-- ========================================================
+            <!-- ============================================================
                  MAIN PANEL
-                 ======================================================== -->
-            <div class="sm-panel">
+                 ============================================================ -->
+            <div class="data-table-container">
 
                 <!-- Panel Header -->
-                <div class="sm-panel-header">
+                <div class="card-header d-flex align-items-center justify-content-between py-3 px-4 border-bottom flex-wrap gap-2">
                     <div class="d-flex align-items-center gap-3">
                         <div class="form-check mb-0">
                             <input class="form-check-input" type="checkbox" id="checkAll">
+                            <label class="form-check-label" for="checkAll"></label>
                         </div>
-                        <div class="sm-panel-title">
-                            <i class="fas fa-list"></i> Student Records
-                            <span class="badge bg-primary rounded-pill" id="totalStudents">0</span>
-                        </div>
+                        <h5 class="mb-0 fw-bold">Student Records</h5>
+                        <span class="badge bg-primary bg-gradient rounded-pill" id="totalStudents">0</span>
                     </div>
-                    <div class="d-flex flex-wrap align-items-center gap-2">
+                    <div class="d-flex align-items-center gap-2 flex-wrap">
                         <!-- View Toggle -->
-                        <div class="btn-group view-toggle" role="group">
+                        <div class="btn-group btn-group-toggle" role="group">
                             <button type="button" class="btn btn-outline-primary active" id="tableViewBtn">
                                 <i class="fas fa-table me-1"></i>Table
                             </button>
@@ -622,43 +548,39 @@
                         <!-- Bulk Actions -->
                         @can('Delete student')
                         <div class="dropdown">
-                            <button class="btn btn-light btn-sm dropdown-toggle" type="button" id="bulkActionsDropdown"
+                            <button class="btn btn-light dropdown-toggle" type="button" id="bulkActionsDropdown"
                                     data-bs-toggle="dropdown" aria-expanded="false" disabled>
                                 <i class="fas fa-cog me-1"></i>Actions
                             </button>
-                            <ul class="dropdown-menu shadow-sm border-0 rounded-3 p-2">
-                                <li><a class="dropdown-item rounded-2" href="javascript:void(0);" id="deleteMultipleBtn">
-                                    <i class="fas fa-trash text-danger me-2"></i>Delete Selected
-                                </a></li>
-                                <li><a class="dropdown-item rounded-2" href="javascript:void(0);" id="updateCurrentTermBtn">
-                                    <i class="fas fa-calendar-alt text-primary me-2"></i>Update Current Term
-                                </a></li>
+                            <ul class="dropdown-menu" aria-labelledby="bulkActionsDropdown">
+                                <li><a class="dropdown-item text-danger" href="javascript:void(0);" id="deleteMultipleBtn"><i class="fas fa-trash me-2"></i>Delete Selected</a></li>
+                                <li><a class="dropdown-item text-primary" href="javascript:void(0);" id="updateCurrentTermBtn"><i class="fas fa-calendar-alt me-2"></i>Update Current Term</a></li>
                             </ul>
                         </div>
                         @endcan
                         @can('Create student')
-                        <button type="button" class="btn-pg" data-bs-toggle="modal" data-bs-target="#addStudentModal">
+                        <button type="button" class="btn btn-primary-gradient" data-bs-toggle="modal" data-bs-target="#addStudentModal">
                             <i class="fas fa-user-plus me-1"></i>Add Student
                         </button>
                         @endcan
-                        <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#printStudentReportModal">
+                        <button type="button" class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#printStudentReportModal">
                             <i class="fas fa-file-export me-1"></i>Export
                         </button>
                     </div>
                 </div>
 
                 <!-- Filter Bar -->
-                <div class="sm-filter">
-                    <div class="row g-2 align-items-end">
+                <div class="filter-bar">
+                    <div class="row g-2">
                         <div class="col-md-3 col-sm-6">
-                            <div class="sm-search">
-                                <i class="fas fa-search icon"></i>
-                                <input type="text" id="search-input" placeholder="Search name or admission no…">
-                                <button class="clear-btn" id="clear-search" title="Clear"><i class="fas fa-times"></i></button>
+                            <div class="search-box">
+                                <i class="fas fa-search search-icon"></i>
+                                <input type="text" class="form-control" id="search-input" placeholder="Search name or admission…">
+                                <button type="button" class="clear-search" id="clear-search" title="Clear search"><i class="fas fa-times"></i></button>
                             </div>
                         </div>
                         <div class="col-md-2 col-sm-6">
-                            <select id="schoolclass-filter">
+                            <select class="form-control" id="schoolclass-filter">
                                 <option value="all">All Classes</option>
                                 @foreach($schoolclasses as $class)
                                     <option value="{{ $class->id }}">{{ $class->schoolclass }} - {{ $class->arm }}</option>
@@ -666,7 +588,7 @@
                             </select>
                         </div>
                         <div class="col-md-2 col-sm-6">
-                            <select id="term-filter">
+                            <select class="form-control" id="term-filter">
                                 <option value="all">All Terms</option>
                                 @foreach($schoolterms as $term)
                                     <option value="{{ $term->id }}">{{ $term->name }}</option>
@@ -674,30 +596,30 @@
                             </select>
                         </div>
                         <div class="col-md-2 col-sm-6">
-                            <select id="session-filter">
+                            <select class="form-control" id="session-filter">
                                 <option value="all">All Sessions</option>
                                 @foreach($schoolsessions as $session)
-                                    <option value="{{ $session->id }}">{{ $session->name }}</option>
+                                    <option value="{{ $session->id }}">{{ $session->session ?? $session->name ?? 'Session '.$session->id }}</option>
                                 @endforeach
                             </select>
                         </div>
                         <div class="col-md-1 col-6">
-                            <button class="btn btn-primary w-100" id="filterBtn" style="height:42px;border-radius:10px;">
-                                <i class="fas fa-filter"></i>
+                            <button type="button" class="btn btn-primary w-100" id="filterBtn" style="height:44px;border-radius:10px;">
+                                <i class="fas fa-filter me-1"></i>Filter
                             </button>
                         </div>
                         <div class="col-md-1 col-6">
-                            <button class="btn btn-outline-secondary w-100" id="resetFiltersBtn" style="height:42px;border-radius:10px;">
+                            <button type="button" class="btn btn-outline-secondary w-100" id="resetFiltersBtn" style="height:44px;border-radius:10px;" title="Reset filters">
                                 <i class="fas fa-redo-alt"></i>
                             </button>
                         </div>
                         <div class="col-md-1 col-6">
-                            <button class="btn btn-warning w-100" id="bulkStatusBtn" title="Bulk Update Status" style="height:42px;border-radius:10px;font-size:12px;">
+                            <button type="button" class="btn btn-warning w-100" id="bulkStatusBtn" title="Bulk update status" style="height:44px;border-radius:10px;">
                                 <i class="fas fa-sync-alt"></i>
                             </button>
                         </div>
                         <div class="col-md-1 col-6">
-                            <button class="btn btn-info w-100 text-white" id="manageTermBtn" title="Manage Term" style="height:42px;border-radius:10px;font-size:12px;">
+                            <button type="button" class="btn btn-info text-white w-100" id="manageTermBtn" title="Manage term" style="height:44px;border-radius:10px;">
                                 <i class="fas fa-calendar-alt"></i>
                             </button>
                         </div>
@@ -707,65 +629,85 @@
                 <!-- TABLE VIEW -->
                 <div id="tableView" class="view-container">
                     <div class="table-responsive">
-                        <table class="table sm-table mb-0">
+                        <table class="table data-table" id="studentTable">
                             <thead>
                                 <tr>
-                                    <th width="46"><div class="form-check"><input class="form-check-input" type="checkbox" id="checkAllTable"></div></th>
-                                    <th width="56">Photo</th>
+                                    <th width="50">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="checkAllTable">
+                                        </div>
+                                    </th>
+                                    <th width="58">Photo</th>
                                     <th>Student</th>
                                     <th>Class</th>
                                     <th>Status</th>
                                     <th>Gender</th>
                                     <th>Registered</th>
-                                    <th width="120" class="text-end">Actions</th>
+                                    <th width="200" class="text-end">Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="studentTableBody"></tbody>
+                            <tbody id="studentTableBody">
+                                <!-- populated by JS -->
+                            </tbody>
                         </table>
                     </div>
                 </div>
 
                 <!-- CARD VIEW -->
                 <div id="cardView" class="view-container d-none p-4">
-                    <div class="row g-3" id="studentsCardsContainer"></div>
+                    <div class="row" id="studentsCardsContainer">
+                        <!-- populated by JS -->
+                    </div>
                 </div>
 
                 <!-- EMPTY STATE -->
-                <div id="emptyState" class="sm-empty d-none">
-                    <div class="sm-empty-icon"><i class="fas fa-users-slash"></i></div>
-                    <div class="sm-empty-title">No Students Found</div>
-                    <div class="sm-empty-desc">Try adjusting your search or filters to find what you're looking for.</div>
-                    <button class="btn-pg" id="resetFromEmptyBtn"><i class="fas fa-redo me-1"></i>Reset Filters</button>
+                <div id="emptyState" class="empty-state d-none">
+                    <div class="empty-state-icon"><i class="fas fa-users-slash"></i></div>
+                    <h5 class="empty-state-title">No Students Found</h5>
+                    <p class="empty-state-description">Try adjusting your search or filters to find what you're looking for.</p>
+                    <button class="btn btn-primary-gradient" id="resetFromEmptyBtn"><i class="fas fa-redo me-2"></i>Reset Filters</button>
                 </div>
 
                 <!-- LOADING STATE -->
-                <div id="loadingState" class="sm-loading">
-                    <div class="spin-ring"></div>
+                <div id="loadingState" class="loading-state">
+                    <div class="spinner-container"><div class="spinner-ring"></div></div>
                     <p class="mt-3 text-muted">Loading students…</p>
                 </div>
 
                 <!-- PAGINATION -->
-                <div class="sm-pagination">
-                    <div class="text-muted" style="font-size:13px;">
-                        Showing <strong id="showingCount">0</strong>–<strong id="toCount">0</strong> of <strong id="totalCount">0</strong> students
+                <div class="pagination-container">
+                    <div>
+                        <span class="text-muted" style="font-size:13px;">
+                            Showing <span class="fw-bold" id="showingCount">0</span> to
+                            <span class="fw-bold" id="toCount">0</span> of
+                            <span class="fw-bold" id="totalCount">0</span> students
+                        </span>
                     </div>
-                    <nav><ul class="pagination mb-0" id="pagination">
-                        <li class="page-item" id="prevPageLi"><a class="page-link" href="javascript:void(0);" id="prevPage"><i class="fas fa-chevron-left"></i></a></li>
-                        <li class="page-item" id="nextPageLi"><a class="page-link" href="javascript:void(0);" id="nextPage"><i class="fas fa-chevron-right"></i></a></li>
-                    </ul></nav>
+                    <nav>
+                        <ul class="pagination mb-0" id="pagination">
+                            <li class="page-item" id="prevPageLi">
+                                <a class="page-link" href="javascript:void(0);" id="prevPage"><i class="fas fa-chevron-left"></i></a>
+                            </li>
+                            <li class="page-item" id="nextPageLi">
+                                <a class="page-link" href="javascript:void(0);" id="nextPage"><i class="fas fa-chevron-right"></i></a>
+                            </li>
+                        </ul>
+                    </nav>
                 </div>
-            </div><!-- /sm-panel -->
+            </div><!-- /data-table-container -->
+
         </div><!-- /container-fluid -->
 
-        <!-- ============================================================
+        <!-- ================================================================
              IMAGE ZOOM MODAL
-             ============================================================ -->
-        <div class="modal fade img-zoom-modal" id="imageZoomModal" tabindex="-1" data-bs-backdrop="static">
+             ================================================================ -->
+        <div class="modal fade img-zoom-modal" id="imageZoomModal" tabindex="-1" data-bs-backdrop="true">
             <div class="modal-dialog modal-dialog-centered modal-lg">
                 <div class="modal-content">
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     <div class="modal-body text-center">
-                        <img id="zoomedStudentImg" src="" alt="Student Photo" class="img-zoomed" onclick="bootstrap.Modal.getInstance(document.getElementById('imageZoomModal')).hide()">
+                        <img id="zoomedStudentImg" src="" alt="Student Photo" class="img-zoomed"
+                             onclick="bootstrap.Modal.getInstance(document.getElementById('imageZoomModal')).hide()">
                         <div class="zoom-name" id="zoomedStudentName"></div>
                         <div class="zoom-detail" id="zoomedStudentDetail"></div>
                     </div>
@@ -773,13 +715,13 @@
             </div>
         </div>
 
-        <!-- ============================================================
+        <!-- ================================================================
              UPDATE CURRENT TERM MODAL
-             ============================================================ -->
+             ================================================================ -->
         <div id="updateCurrentTermModal" class="modal fade" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
-                    <div class="modal-header modal-hdr">
+                    <div class="modal-header modal-header-gradient">
                         <h5 class="modal-title"><i class="fas fa-calendar-alt me-2"></i>Register / Update Term</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
@@ -788,11 +730,11 @@
                             @csrf
                             <div class="alert alert-info border-0 rounded-3">
                                 <i class="fas fa-info-circle me-2"></i>
-                                Registering term for <strong><span id="selectedStudentsCount">0</span></strong> selected student(s).
+                                Registering/updating term for <strong><span id="selectedStudentsCount">0</span></strong> selected student(s).
                             </div>
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">Class</label>
-                                <select class="form-control rounded-3" name="schoolclassId" required>
+                                <select class="form-control" name="schoolclassId" required>
                                     <option value="">Select Class</option>
                                     @foreach($schoolclasses as $class)
                                         <option value="{{ $class->id }}">{{ $class->class_display }}</option>
@@ -801,7 +743,7 @@
                             </div>
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">Term</label>
-                                <select class="form-control rounded-3" name="termId" required>
+                                <select class="form-control" name="termId" required>
                                     <option value="">Select Term</option>
                                     @foreach($schoolterms as $term)
                                         <option value="{{ $term->id }}">{{ $term->name }}</option>
@@ -810,36 +752,41 @@
                             </div>
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">Session</label>
-                                <select class="form-control rounded-3" name="sessionId" required>
+                                <select class="form-control" name="sessionId" required>
                                     <option value="">Select Session</option>
                                     @foreach($schoolsessions as $session)
                                         <option value="{{ $session->id }}">{{ $session->name }}</option>
                                     @endforeach
                                 </select>
                             </div>
-                            <div class="form-check mb-2">
+                            <div class="form-check mb-1">
                                 <input class="form-check-input" type="checkbox" name="is_current" id="is_current" value="1" checked>
-                                <label class="form-check-label" for="is_current">Mark as current term</label>
+                                <label class="form-check-label" for="is_current">Mark as current term for student(s)</label>
+                            </div>
+                            <small class="text-muted d-block mb-2">If checked, previous current term will be unmarked.</small>
+                            <div class="alert alert-warning border-0 rounded-3 mb-0">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                If a term already exists for a student in this session it will be updated; otherwise a new registration is created.
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn-pg" id="confirmUpdateCurrentTerm">
-                            <i class="fas fa-save me-1"></i>Register / Update
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                        <button type="button" class="btn btn-primary-gradient" id="confirmUpdateCurrentTerm">
+                            <i class="fas fa-save me-1"></i>Register / Update Term
                         </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- ============================================================
+        <!-- ================================================================
              EXPORT / REPORT MODAL
-             ============================================================ -->
+             ================================================================ -->
         <div id="printStudentReportModal" class="modal fade" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content">
-                    <div class="modal-header modal-hdr">
+                    <div class="modal-header modal-header-gradient">
                         <h5 class="modal-title"><i class="fas fa-file-export me-2"></i>Generate Report</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
@@ -848,7 +795,7 @@
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Class</label>
-                                    <select class="form-select rounded-3" name="class_id">
+                                    <select class="form-select" name="class_id">
                                         <option value="">— All Classes —</option>
                                         @foreach($schoolclasses as $class)
                                             <option value="{{ $class->id }}">{{ $class->class_display }}</option>
@@ -857,7 +804,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Status</label>
-                                    <select class="form-select rounded-3" name="status">
+                                    <select class="form-select" name="status">
                                         <option value="">— All —</option>
                                         <option value="1">Old Students</option>
                                         <option value="2">New Students</option>
@@ -869,7 +816,7 @@
                             <div class="row mb-3">
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Term</label>
-                                    <select class="form-select rounded-3" name="term_id">
+                                    <select class="form-select" name="term_id">
                                         <option value="">— All Terms —</option>
                                         @foreach($schoolterms as $term)
                                             <option value="{{ $term->id }}">{{ $term->name }}</option>
@@ -878,7 +825,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label fw-semibold">Session</label>
-                                    <select class="form-select rounded-3" name="session_id">
+                                    <select class="form-select" name="session_id">
                                         <option value="">— All Sessions —</option>
                                         @foreach($schoolsessions as $session)
                                             <option value="{{ $session->id }}">{{ $session->name }}</option>
@@ -887,19 +834,19 @@
                                 </div>
                             </div>
 
-                            <!-- ─── DRAG & DROP COLUMNS ─── -->
+                            <!-- ── DRAG & DROP COLUMNS ── -->
                             <div class="mb-4">
-                                <label class="form-label fw-semibold d-flex align-items-center gap-2">
-                                    <i class="fas fa-grip-vertical text-primary"></i>
+                                <label class="form-label fw-semibold">
+                                    <i class="fas fa-grip-vertical text-primary me-1"></i>
                                     Select &amp; Arrange Columns
-                                    <small class="text-muted fw-normal">— drag handle to reorder</small>
+                                    <small class="text-muted fw-normal ms-1">— drag the handle to reorder</small>
                                 </label>
-                                <div class="alert alert-info py-2 px-3 mb-2" style="font-size:12px;">
+                                <div class="alert alert-info border-0 rounded-3 py-2 px-3 mb-2" style="font-size:12px;">
                                     <i class="fas fa-info-circle me-1"></i>
-                                    Drag the <i class="fas fa-grip-vertical"></i> handle on any column chip to reorder. Check to include in report.
+                                    Drag the <i class="fas fa-grip-vertical"></i> handle on any item to reorder. Tick to include in report.
                                 </div>
-                                <!-- Sortable container: items sit directly inside, no nested grid wrappers -->
-                                <div id="columnsContainer" style="display:flex;flex-wrap:wrap;gap:8px;min-height:48px;padding:8px;background:#f8fafc;border:1.5px solid var(--sm-border);border-radius:12px;">
+                                <!-- Flat flex container — Sortable works directly on inline children -->
+                                <div id="columnsContainer">
                                     <input type="hidden" name="columns_order" id="columnsOrderInput" value="">
                                     @php
                                         $availableColumns = [
@@ -927,9 +874,7 @@
                                         ];
                                     @endphp
                                     @foreach($availableColumns as $key => $label)
-                                        <div class="draggable-item d-inline-flex align-items-center gap-2 px-2 py-2"
-                                             data-column="{{ $key }}"
-                                             style="background:#fff;border:1.5px solid #e2e8f0;border-radius:10px;cursor:default;user-select:none;white-space:nowrap;">
+                                        <div class="draggable-item" data-column="{{ $key }}">
                                             <span class="drag-handle" title="Drag to reorder">
                                                 <i class="fas fa-grip-vertical"></i>
                                             </span>
@@ -943,12 +888,12 @@
                                     @endforeach
                                 </div>
                                 <div class="mt-2 d-flex gap-2">
-                                    <button type="button" class="btn btn-sm btn-outline-primary rounded-3" id="selectAllColumnsBtn">Check All</button>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary rounded-3" id="deselectAllColumnsBtn">Uncheck All</button>
+                                    <button type="button" class="btn btn-sm btn-outline-primary" id="selectAllColumnsBtn">Check All</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="deselectAllColumnsBtn">Uncheck All</button>
                                 </div>
                             </div>
 
-                            <!-- Report Header -->
+                            <!-- Report Header Options -->
                             <div class="card border-0 bg-light rounded-3 mb-4">
                                 <div class="card-body">
                                     <h6 class="fw-bold mb-3"><i class="ri-file-info-line me-1 text-primary"></i>Report Options</h6>
@@ -967,7 +912,7 @@
                                         </div>
                                         <div class="col-md-4">
                                             <label class="form-label fw-semibold">Page Orientation</label>
-                                            <select class="form-select form-select-sm rounded-3" name="orientation" id="orientation">
+                                            <select class="form-select form-select-sm" name="orientation" id="orientation">
                                                 <option value="portrait">Portrait</option>
                                                 <option value="landscape">Landscape</option>
                                             </select>
@@ -976,7 +921,7 @@
                                 </div>
                             </div>
 
-                            <!-- Format -->
+                            <!-- Export Format -->
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">Export Format</label>
                                 <div class="d-flex gap-4">
@@ -994,14 +939,14 @@
                             <!-- Preview -->
                             <div class="alert alert-info border-0 rounded-3 small mb-0">
                                 <i class="ri-information-fill me-1"></i>
-                                <strong>Selected columns:</strong>
+                                <strong>Column order preview:</strong>
                                 <span id="columnOrderPreview">admissionNo, lastname, firstname, class, gender</span>
                             </div>
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-success rounded-3" id="generateReportBtn">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-success" id="generateReportBtn">
                             <i class="ri-printer-line me-1"></i>Generate &amp; Download
                         </button>
                     </div>
@@ -1009,17 +954,17 @@
             </div>
         </div>
 
-        <!-- ============================================================
+        <!-- ================================================================
              ADD STUDENT MODAL
-             ============================================================ -->
+             ================================================================ -->
         <div id="addStudentModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
             <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
                 <div class="modal-content">
-                    <div class="modal-header modal-hdr">
+                    <div class="modal-header modal-header-gradient">
                         <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>Student Registration</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <form id="addStudentForm" enctype="multipart/form-data" autocomplete="off" method="POST" action="{{ route('student.store') }}">
+                    <form class="tablelist-form" id="addStudentForm" enctype="multipart/form-data" autocomplete="off" method="POST" action="{{ route('student.store') }}">
                         @csrf
                         <div class="modal-body p-4">
                             <div class="progress-steps mb-4">
@@ -1028,25 +973,19 @@
                                 <div class="step">3</div>
                                 <div class="step">4</div>
                             </div>
-                            <div class="row g-4">
+                            <div class="row g-3">
                                 <!-- Academic Details -->
                                 <div class="col-md-6">
                                     <div class="card border-0 shadow-sm h-100">
-                                        <div class="card-header bg-primary text-white rounded-top-3">
+                                        <div class="card-header bg-primary text-white">
                                             <h6 class="mb-0"><i class="fas fa-graduation-cap me-2"></i>Academic Details</h6>
                                         </div>
                                         <div class="card-body">
                                             <div class="mb-3">
                                                 <label class="form-label fw-semibold">Admission Number Mode <span class="text-danger">*</span></label>
                                                 <div class="d-flex gap-3">
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="radio" name="admissionMode" id="admissionAuto" value="auto" required onchange="toggleAdmissionInput()">
-                                                        <label class="form-check-label" for="admissionAuto"><i class="fas fa-magic me-1"></i>Auto Generate</label>
-                                                    </div>
-                                                    <div class="form-check">
-                                                        <input class="form-check-input" type="radio" name="admissionMode" id="admissionManual" value="manual" required onchange="toggleAdmissionInput()">
-                                                        <label class="form-check-label" for="admissionManual"><i class="fas fa-edit me-1"></i>Manual Entry</label>
-                                                    </div>
+                                                    <div class="form-check"><input class="form-check-input" type="radio" name="admissionMode" id="admissionAuto" value="auto" required onchange="toggleAdmissionInput()"><label class="form-check-label" for="admissionAuto"><i class="fas fa-magic me-1"></i>Auto Generate</label></div>
+                                                    <div class="form-check"><input class="form-check-input" type="radio" name="admissionMode" id="admissionManual" value="manual" required onchange="toggleAdmissionInput()"><label class="form-check-label" for="admissionManual"><i class="fas fa-edit me-1"></i>Manual Entry</label></div>
                                                 </div>
                                             </div>
                                             <div class="mb-3">
@@ -1057,7 +996,7 @@
                                                     </select>
                                                     <input type="text" id="admissionNo" name="admissionNo" class="form-control" placeholder="TCC/YYYY/0001" required>
                                                 </div>
-                                                <small class="text-muted">Format: TCC/YYYY/0001</small>
+                                                <small class="text-muted">Format: TCC/YYYY/0001 (e.g., TCC/2024/0871)</small>
                                             </div>
                                             <div class="mb-3">
                                                 <label class="form-label fw-semibold">Admission Date <span class="text-danger">*</span></label>
@@ -1070,7 +1009,7 @@
                                                     @foreach($schoolclasses as $class)<option value="{{ $class->id }}">{{ $class->schoolclass }} - {{ $class->arm }}</option>@endforeach
                                                 </select>
                                             </div>
-                                            <div class="row">
+                                            <div class="row g-2">
                                                 <div class="col-6">
                                                     <div class="mb-3">
                                                         <label class="form-label fw-semibold">Term <span class="text-danger">*</span></label>
@@ -1118,45 +1057,45 @@
                                 <!-- Personal Details -->
                                 <div class="col-md-6">
                                     <div class="card border-0 shadow-sm h-100">
-                                        <div class="card-header bg-info text-white rounded-top-3">
+                                        <div class="card-header bg-info text-white">
                                             <h6 class="mb-0"><i class="fas fa-user me-2"></i>Personal Details</h6>
                                         </div>
                                         <div class="card-body">
                                             <div class="mb-3 text-center">
                                                 <div class="upload-area border border-2 border-dashed border-primary rounded p-3">
-                                                    <img id="addStudentAvatar" src="https://via.placeholder.com/120x120/2563eb/ffffff?text=Photo" alt="Avatar Preview" class="rounded-circle mb-2" style="width:100px;height:100px;object-fit:cover;border:4px solid #2563eb;"/>
+                                                    <img id="addStudentAvatar" src="https://via.placeholder.com/120x120/667eea/ffffff?text=Photo" alt="Avatar Preview" class="rounded-circle mb-2" style="width:110px;height:110px;object-fit:cover;border:4px solid #667eea;box-shadow:0 4px 8px rgba(0,0,0,.1);" />
                                                     <div>
                                                         <label for="avatar" class="btn btn-outline-primary btn-sm"><i class="fas fa-camera me-1"></i>Choose Photo</label>
                                                         <input type="file" id="avatar" name="avatar" class="d-none" accept=".png,.jpg,.jpeg" onchange="previewImage(this)">
-                                                        <div class="form-text">Max 2MB (PNG, JPG)</div>
+                                                        <div class="form-text mt-1">Max 2MB (PNG, JPG, JPEG)</div>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="row g-2 mb-3">
-                                                <div class="col-3">
+                                            <div class="row g-2">
+                                                <div class="col-3 mb-3">
                                                     <label class="form-label fw-semibold">Title</label>
                                                     <select id="title" name="title" class="form-control"><option value="">—</option><option value="Master">Master</option><option value="Miss">Miss</option></select>
                                                 </div>
-                                                <div class="col-9">
+                                                <div class="col-9 mb-3">
                                                     <label class="form-label fw-semibold">Last Name <span class="text-danger">*</span></label>
                                                     <input type="text" id="lastname" name="lastname" class="form-control" placeholder="Last name" required>
                                                 </div>
                                             </div>
-                                            <div class="row g-2 mb-3">
-                                                <div class="col-6">
+                                            <div class="row g-2">
+                                                <div class="col-6 mb-3">
                                                     <label class="form-label fw-semibold">First Name <span class="text-danger">*</span></label>
                                                     <input type="text" id="firstname" name="firstname" class="form-control" placeholder="First name" required>
                                                 </div>
-                                                <div class="col-6">
+                                                <div class="col-6 mb-3">
                                                     <label class="form-label fw-semibold">Other Names</label>
-                                                    <input type="text" id="othername" name="othername" class="form-control" placeholder="Middle name">
+                                                    <input type="text" id="othername" name="othername" class="form-control" placeholder="Middle name(s)">
                                                 </div>
                                             </div>
                                             <div class="mb-3">
                                                 <label class="form-label fw-semibold">Gender <span class="text-danger">*</span></label>
                                                 <div class="d-flex gap-3">
-                                                    <div class="form-check"><input class="form-check-input" type="radio" name="gender" id="genderMale" value="Male" required><label class="form-check-label" for="genderMale">Male</label></div>
-                                                    <div class="form-check"><input class="form-check-input" type="radio" name="gender" id="genderFemale" value="Female" required><label class="form-check-label" for="genderFemale">Female</label></div>
+                                                    <div class="form-check"><input class="form-check-input" type="radio" name="gender" id="genderMale" value="Male" required><label class="form-check-label" for="genderMale"><i class="fas fa-male text-primary me-1"></i>Male</label></div>
+                                                    <div class="form-check"><input class="form-check-input" type="radio" name="gender" id="genderFemale" value="Female" required><label class="form-check-label" for="genderFemale"><i class="fas fa-female text-danger me-1"></i>Female</label></div>
                                                 </div>
                                             </div>
                                             <div class="row g-2 mb-3">
@@ -1165,21 +1104,21 @@
                                                     <input type="date" id="addDOB" name="dateofbirth" class="form-control" required onchange="calculateAge(this.value,'addAgeInput')">
                                                 </div>
                                                 <div class="col-5">
-                                                    <label class="form-label fw-semibold">Age</label>
-                                                    <input type="number" id="addAgeInput" name="age" class="form-control" readonly>
+                                                    <label class="form-label fw-semibold">Age <span class="text-danger">*</span></label>
+                                                    <input type="number" id="addAgeInput" name="age" class="form-control" readonly required>
                                                 </div>
                                             </div>
                                             <div class="mb-3">
                                                 <label class="form-label fw-semibold">Place of Birth <span class="text-danger">*</span></label>
-                                                <input type="text" id="placeofbirth" name="placeofbirth" class="form-control" required>
+                                                <input type="text" id="placeofbirth" name="placeofbirth" class="form-control" placeholder="e.g., Lagos, Nigeria" required>
                                             </div>
                                             <div class="mb-3">
                                                 <label class="form-label fw-semibold">Phone Number</label>
-                                                <input type="text" id="phone_number" name="phone_number" class="form-control" placeholder="+234 …">
+                                                <input type="text" id="phone_number" name="phone_number" class="form-control" placeholder="+234 xxx xxx xxxx">
                                             </div>
                                             <div class="mb-3">
                                                 <label class="form-label fw-semibold">Email</label>
-                                                <input type="email" id="email" name="email" class="form-control">
+                                                <input type="email" id="email" name="email" class="form-control" placeholder="student@example.com">
                                             </div>
                                             <div class="mb-3">
                                                 <label class="form-label fw-semibold">Future Ambition <span class="text-danger">*</span></label>
@@ -1195,14 +1134,14 @@
                                 <!-- Additional Info -->
                                 <div class="col-md-6">
                                     <div class="card border-0 shadow-sm">
-                                        <div class="card-header bg-success text-white rounded-top-3">
+                                        <div class="card-header bg-success text-white">
                                             <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Additional Information</h6>
                                         </div>
                                         <div class="card-body">
                                             <div class="mb-3"><label class="form-label fw-semibold">Nationality <span class="text-danger">*</span></label><input type="text" id="nationality" name="nationality" class="form-control" required></div>
                                             <div class="row g-2">
-                                                <div class="col-6 mb-3"><label class="form-label fw-semibold">State <span class="text-danger">*</span></label><select id="addState" name="state" class="form-control" required><option value="">Select State</option></select></div>
-                                                <div class="col-6 mb-3"><label class="form-label fw-semibold">LGA <span class="text-danger">*</span></label><select id="addLocal" name="local" class="form-control" required disabled><option value="">Select LGA</option></select></div>
+                                                <div class="col-6 mb-3"><label class="form-label fw-semibold">State of Origin <span class="text-danger">*</span></label><select id="addState" name="state" class="form-control" required><option value="">Select State</option></select></div>
+                                                <div class="col-6 mb-3"><label class="form-label fw-semibold">Local Government <span class="text-danger">*</span></label><select id="addLocal" name="local" class="form-control" required disabled><option value="">Select LGA</option></select></div>
                                             </div>
                                             <div class="row g-2">
                                                 <div class="col-6 mb-3"><label class="form-label fw-semibold">City</label><input type="text" id="city" name="city" class="form-control"></div>
@@ -1214,7 +1153,13 @@
                                             </div>
                                             <div class="row g-2">
                                                 <div class="col-6 mb-3"><label class="form-label fw-semibold">NIN Number</label><input type="text" id="nin_number" name="nin_number" class="form-control" maxlength="11"></div>
-                                                <div class="col-6 mb-3"><label class="form-label fw-semibold">School House <span class="text-danger">*</span></label><select id="school_house" name="schoolhouseid" class="form-control" required><option value="">Select House</option>@foreach($schoolhouses as $h)<option value="{{ $h->id }}">{{ $h->house }}</option>@endforeach</select></div>
+                                                <div class="col-6 mb-3">
+                                                    <label class="form-label fw-semibold">School House <span class="text-danger">*</span></label>
+                                                    <select id="school_house" name="schoolhouseid" class="form-control" required>
+                                                        <option value="">Select House</option>
+                                                        @foreach($schoolhouses as $schoolhouse)<option value="{{ $schoolhouse->id }}">{{ $schoolhouse->house }}</option>@endforeach
+                                                    </select>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -1222,7 +1167,7 @@
                                 <!-- Parent & Previous School -->
                                 <div class="col-md-6">
                                     <div class="card border-0 shadow-sm mb-3">
-                                        <div class="card-header bg-warning text-dark rounded-top-3">
+                                        <div class="card-header bg-warning text-dark">
                                             <h6 class="mb-0"><i class="fas fa-users me-2"></i>Parent / Guardian Details</h6>
                                         </div>
                                         <div class="card-body">
@@ -1234,13 +1179,13 @@
                                             <div class="mb-3"><label class="form-label fw-semibold">Father's City</label><input type="text" id="father_city" name="father_city" class="form-control"></div>
                                             <div class="mb-3"><label class="form-label fw-semibold">Mother's Name</label><input type="text" id="mother_name" name="mother_name" class="form-control"></div>
                                             <div class="mb-3"><label class="form-label fw-semibold">Mother's Phone</label><input type="text" id="mother_phone" name="mother_phone" class="form-control"></div>
-                                            <div class="mb-3"><label class="form-label fw-semibold">Parent Email</label><input type="email" id="parent_email" name="parent_email" class="form-control"></div>
-                                            <div class="mb-3"><label class="form-label fw-semibold">Parent Address</label><textarea id="parent_address" name="parent_address" class="form-control" rows="2"></textarea></div>
+                                            <div class="mb-3"><label class="form-label fw-semibold">Parent's Email</label><input type="email" id="parent_email" name="parent_email" class="form-control"></div>
+                                            <div class="mb-3"><label class="form-label fw-semibold">Parent's Address</label><textarea id="parent_address" name="parent_address" class="form-control" rows="2"></textarea></div>
                                         </div>
                                     </div>
                                     <div class="card border-0 shadow-sm">
-                                        <div class="card-header bg-secondary text-white rounded-top-3">
-                                            <h6 class="mb-0"><i class="fas fa-school me-2"></i>Previous School</h6>
+                                        <div class="card-header bg-secondary text-white">
+                                            <h6 class="mb-0"><i class="fas fa-school me-2"></i>Previous School Details</h6>
                                         </div>
                                         <div class="card-body">
                                             <div class="mb-3"><label class="form-label fw-semibold">Last School Attended</label><input type="text" id="last_school" name="last_school" class="form-control"></div>
@@ -1250,27 +1195,28 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="alert alert-danger d-none mt-3" id="alert-error-msg"></div>
                         </div>
                         <div class="modal-footer bg-light">
-                            <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal"><i class="fas fa-times me-1"></i>Cancel</button>
-                            <button type="submit" class="btn-pg" id="add-btn"><i class="fas fa-save me-1"></i>Register Student</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-times me-1"></i>Cancel</button>
+                            <button type="submit" class="btn btn-primary" id="add-btn"><i class="fas fa-save me-1"></i>Register Student</button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
 
-        <!-- ============================================================
+        <!-- ================================================================
              EDIT STUDENT MODAL
-             ============================================================ -->
+             ================================================================ -->
         <div id="editStudentModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
             <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
                 <div class="modal-content">
-                    <div class="modal-header modal-hdr">
+                    <div class="modal-header modal-header-gradient">
                         <h5 class="modal-title"><i class="fas fa-user-edit me-2"></i>Edit Student</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <form id="editStudentForm" enctype="multipart/form-data" autocomplete="off" method="POST"
+                    <form class="tablelist-form" id="editStudentForm" enctype="multipart/form-data" autocomplete="off" method="POST"
                           action="{{ route('student.update', ':id') }}"
                           data-base-action="{{ route('student.update', ':id') }}">
                         @csrf
@@ -1280,19 +1226,19 @@
                             <div class="progress-steps mb-4">
                                 <div class="step">1</div><div class="step">2</div><div class="step">3</div><div class="step">4</div>
                             </div>
-                            <div class="row g-4">
+                            <div class="row g-3">
                                 <!-- Academic Details -->
                                 <div class="col-md-6">
                                     <div class="card border-0 shadow-sm h-100">
-                                        <div class="card-header bg-primary text-white rounded-top-3">
+                                        <div class="card-header bg-primary text-white">
                                             <h6 class="mb-0"><i class="fas fa-graduation-cap me-2"></i>Academic Details</h6>
                                         </div>
                                         <div class="card-body">
                                             <div class="mb-3">
                                                 <label class="form-label fw-semibold">Admission Number Mode <span class="text-danger">*</span></label>
                                                 <div class="d-flex gap-3">
-                                                    <div class="form-check"><input class="form-check-input" type="radio" name="admissionMode" id="editAdmissionAuto" value="auto" required onchange="toggleAdmissionInput('edit')"><label class="form-check-label" for="editAdmissionAuto">Auto</label></div>
-                                                    <div class="form-check"><input class="form-check-input" type="radio" name="admissionMode" id="editAdmissionManual" value="manual" required onchange="toggleAdmissionInput('edit')"><label class="form-check-label" for="editAdmissionManual">Manual</label></div>
+                                                    <div class="form-check"><input class="form-check-input" type="radio" name="admissionMode" id="editAdmissionAuto" value="auto" required onchange="toggleAdmissionInput('edit')"><label class="form-check-label" for="editAdmissionAuto"><i class="fas fa-magic me-1"></i>Auto Generate</label></div>
+                                                    <div class="form-check"><input class="form-check-input" type="radio" name="admissionMode" id="editAdmissionManual" value="manual" required onchange="toggleAdmissionInput('edit')"><label class="form-check-label" for="editAdmissionManual"><i class="fas fa-edit me-1"></i>Manual Entry</label></div>
                                                 </div>
                                             </div>
                                             <div class="mb-3">
@@ -1303,18 +1249,44 @@
                                                     </select>
                                                     <input type="text" id="editAdmissionNo" name="admissionNo" class="form-control" placeholder="TCC/YYYY/0001" required>
                                                 </div>
+                                                <small class="text-muted">Format: TCC/YYYY/0001</small>
                                             </div>
-                                            <div class="mb-3"><label class="form-label fw-semibold">Admission Date <span class="text-danger">*</span></label><input type="date" id="editAdmissionDate" name="admissionDate" class="form-control" required max="{{ date('Y-m-d') }}"></div>
-                                            <div class="mb-3"><label class="form-label fw-semibold">Class <span class="text-danger">*</span></label><select id="editSchoolclassid" name="schoolclassid" class="form-control" required><option value="">Select Class</option>@foreach($schoolclasses as $class)<option value="{{ $class->id }}">{{ $class->schoolclass }} - {{ $class->arm }}</option>@endforeach</select></div>
+                                            <div class="mb-3">
+                                                <label class="form-label fw-semibold">Admission Date <span class="text-danger">*</span></label>
+                                                <input type="date" id="editAdmissionDate" name="admissionDate" class="form-control" required max="{{ date('Y-m-d') }}">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label fw-semibold">Class <span class="text-danger">*</span></label>
+                                                <select id="editSchoolclassid" name="schoolclassid" class="form-control" required>
+                                                    <option value="">Select Class</option>
+                                                    @foreach($schoolclasses as $class)<option value="{{ $class->id }}">{{ $class->schoolclass }} - {{ $class->arm }}</option>@endforeach
+                                                </select>
+                                            </div>
                                             <div class="row g-2">
-                                                <div class="col-6 mb-3"><label class="form-label fw-semibold">Term <span class="text-danger">*</span></label><select id="editTermid" name="termid" class="form-control" required><option value="">Select Term</option>@foreach($schoolterms as $term)<option value="{{ $term->id }}">{{ $term->name }}</option>@endforeach</select></div>
-                                                <div class="col-6 mb-3"><label class="form-label fw-semibold">Session <span class="text-danger">*</span></label><select id="editSessionid" name="sessionid" class="form-control" required><option value="">Select Session</option>@foreach($schoolsessions as $session)<option value="{{ $session->id }}">{{ $session->name }}</option>@endforeach</select></div>
+                                                <div class="col-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-semibold">Term <span class="text-danger">*</span></label>
+                                                        <select id="editTermid" name="termid" class="form-control" required>
+                                                            <option value="">Select Term</option>
+                                                            @foreach($schoolterms as $term)<option value="{{ $term->id }}">{{ $term->name }}</option>@endforeach
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="col-6">
+                                                    <div class="mb-3">
+                                                        <label class="form-label fw-semibold">Session <span class="text-danger">*</span></label>
+                                                        <select id="editSessionid" name="sessionid" class="form-control" required>
+                                                            <option value="">Select Session</option>
+                                                            @foreach($schoolsessions as $session)<option value="{{ $session->id }}">{{ $session->name }}</option>@endforeach
+                                                        </select>
+                                                    </div>
+                                                </div>
                                             </div>
                                             <div class="mb-3">
                                                 <label class="form-label fw-semibold">Student Status <span class="text-danger">*</span></label>
                                                 <div class="d-flex gap-3">
-                                                    <div class="form-check"><input class="form-check-input" type="radio" name="statusId" id="editStatusOld" value="1" required><label class="form-check-label" for="editStatusOld">Old</label></div>
-                                                    <div class="form-check"><input class="form-check-input" type="radio" name="statusId" id="editStatusNew" value="2" required><label class="form-check-label" for="editStatusNew">New</label></div>
+                                                    <div class="form-check"><input class="form-check-input" type="radio" name="statusId" id="editStatusOld" value="1" required><label class="form-check-label" for="editStatusOld">Old Student</label></div>
+                                                    <div class="form-check"><input class="form-check-input" type="radio" name="statusId" id="editStatusNew" value="2" required><label class="form-check-label" for="editStatusNew">New Student</label></div>
                                                 </div>
                                             </div>
                                             <div class="mb-3">
@@ -1324,39 +1296,70 @@
                                                     <div class="form-check"><input class="form-check-input" type="radio" name="student_status" id="editStatusInactive" value="Inactive" required><label class="form-check-label" for="editStatusInactive">Inactive</label></div>
                                                 </div>
                                             </div>
-                                            <div class="mb-3"><label class="form-label fw-semibold">Category <span class="text-danger">*</span></label><select id="editStudentCategory" name="student_category" class="form-control" required><option value="">Select</option><option value="Day">Day</option><option value="Boarding">Boarding</option></select></div>
+                                            <div class="mb-3">
+                                                <label class="form-label fw-semibold">Student Category <span class="text-danger">*</span></label>
+                                                <select id="editStudentCategory" name="student_category" class="form-control" required>
+                                                    <option value="">Select Category</option>
+                                                    <option value="Day">Day Student</option>
+                                                    <option value="Boarding">Boarding Student</option>
+                                                </select>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                                 <!-- Personal Details -->
                                 <div class="col-md-6">
                                     <div class="card border-0 shadow-sm h-100">
-                                        <div class="card-header bg-info text-white rounded-top-3">
+                                        <div class="card-header bg-info text-white">
                                             <h6 class="mb-0"><i class="fas fa-user me-2"></i>Personal Details</h6>
                                         </div>
                                         <div class="card-body">
                                             <div class="mb-3 text-center">
-                                                <img id="editStudentAvatar" src="{{ asset('theme/layouts/assets/media/avatars/blank.png') }}" alt="Avatar Preview" class="rounded-circle mb-2" style="width:100px;height:100px;object-fit:cover;border:4px solid #0dcaf0;cursor:pointer;" onclick="document.getElementById('editAvatar').click()"/>
-                                                <div><label for="editAvatar" class="btn btn-outline-info btn-sm"><i class="fas fa-camera me-1"></i>Choose Photo</label><input type="file" id="editAvatar" name="avatar" class="d-none" accept=".png,.jpg,.jpeg" onchange="previewImage(this,'editStudentAvatar')"></div>
+                                                <div class="upload-area border border-2 border-dashed border-info rounded p-3">
+                                                    <img id="editStudentAvatar" src="{{ asset('theme/layouts/assets/media/avatars/blank.png') }}" alt="Avatar Preview" class="rounded-circle mb-2" style="width:110px;height:110px;object-fit:cover;border:4px solid #0dcaf0;box-shadow:0 4px 8px rgba(0,0,0,.1);cursor:pointer;" onclick="document.getElementById('editAvatar').click()" />
+                                                    <div>
+                                                        <label for="editAvatar" class="btn btn-outline-info btn-sm"><i class="fas fa-camera me-1"></i>Choose Photo</label>
+                                                        <input type="file" id="editAvatar" name="avatar" class="d-none" accept=".png,.jpg,.jpeg" onchange="previewImage(this,'editStudentAvatar')">
+                                                        <div class="form-text mt-1">Max 2MB (PNG, JPG, JPEG)</div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="row g-2">
+                                                <div class="col-3 mb-3">
+                                                    <label class="form-label fw-semibold">Title</label>
+                                                    <select id="editTitle" name="title" class="form-control"><option value="">—</option><option value="Master">Master</option><option value="Miss">Miss</option></select>
+                                                </div>
+                                                <div class="col-9 mb-3">
+                                                    <label class="form-label fw-semibold">Last Name <span class="text-danger">*</span></label>
+                                                    <input type="text" id="editLastname" name="lastname" class="form-control" required>
+                                                </div>
                                             </div>
                                             <div class="row g-2 mb-3">
-                                                <div class="col-3"><label class="form-label fw-semibold">Title</label><select id="editTitle" name="title" class="form-control"><option value="">—</option><option value="Master">Master</option><option value="Miss">Miss</option></select></div>
-                                                <div class="col-9"><label class="form-label fw-semibold">Last Name <span class="text-danger">*</span></label><input type="text" id="editLastname" name="lastname" class="form-control" required></div>
-                                            </div>
-                                            <div class="row g-2 mb-3">
-                                                <div class="col-6"><label class="form-label fw-semibold">First Name <span class="text-danger">*</span></label><input type="text" id="editFirstname" name="firstname" class="form-control" required></div>
-                                                <div class="col-6"><label class="form-label fw-semibold">Other Names</label><input type="text" id="editOthername" name="othername" class="form-control"></div>
+                                                <div class="col-6">
+                                                    <label class="form-label fw-semibold">First Name <span class="text-danger">*</span></label>
+                                                    <input type="text" id="editFirstname" name="firstname" class="form-control" required>
+                                                </div>
+                                                <div class="col-6">
+                                                    <label class="form-label fw-semibold">Other Names</label>
+                                                    <input type="text" id="editOthername" name="othername" class="form-control">
+                                                </div>
                                             </div>
                                             <div class="mb-3">
                                                 <label class="form-label fw-semibold">Gender <span class="text-danger">*</span></label>
                                                 <div class="d-flex gap-3">
-                                                    <div class="form-check"><input class="form-check-input" type="radio" name="gender" id="editGenderMale" value="Male" required><label class="form-check-label" for="editGenderMale">Male</label></div>
-                                                    <div class="form-check"><input class="form-check-input" type="radio" name="gender" id="editGenderFemale" value="Female" required><label class="form-check-label" for="editGenderFemale">Female</label></div>
+                                                    <div class="form-check"><input class="form-check-input" type="radio" name="gender" id="editGenderMale" value="Male" required><label class="form-check-label" for="editGenderMale"><i class="fas fa-male text-primary me-1"></i>Male</label></div>
+                                                    <div class="form-check"><input class="form-check-input" type="radio" name="gender" id="editGenderFemale" value="Female" required><label class="form-check-label" for="editGenderFemale"><i class="fas fa-female text-danger me-1"></i>Female</label></div>
                                                 </div>
                                             </div>
                                             <div class="row g-2 mb-3">
-                                                <div class="col-7"><label class="form-label fw-semibold">Date of Birth <span class="text-danger">*</span></label><input type="date" id="editDOB" name="dateofbirth" class="form-control" required onchange="calculateAge(this.value,'editAgeInput')"></div>
-                                                <div class="col-5"><label class="form-label fw-semibold">Age</label><input type="number" id="editAgeInput" name="age" class="form-control" readonly></div>
+                                                <div class="col-7">
+                                                    <label class="form-label fw-semibold">Date of Birth <span class="text-danger">*</span></label>
+                                                    <input type="date" id="editDOB" name="dateofbirth" class="form-control" required onchange="calculateAge(this.value,'editAgeInput')">
+                                                </div>
+                                                <div class="col-5">
+                                                    <label class="form-label fw-semibold">Age <span class="text-danger">*</span></label>
+                                                    <input type="number" id="editAgeInput" name="age" class="form-control" readonly required>
+                                                </div>
                                             </div>
                                             <div class="mb-3"><label class="form-label fw-semibold">Place of Birth <span class="text-danger">*</span></label><input type="text" id="editPlaceofbirth" name="placeofbirth" class="form-control" required></div>
                                             <div class="mb-3"><label class="form-label fw-semibold">Phone Number</label><input type="text" id="editPhoneNumber" name="phone_number" class="form-control"></div>
@@ -1369,14 +1372,14 @@
                                 <!-- Additional Info -->
                                 <div class="col-md-6">
                                     <div class="card border-0 shadow-sm">
-                                        <div class="card-header bg-success text-white rounded-top-3">
+                                        <div class="card-header bg-success text-white">
                                             <h6 class="mb-0"><i class="fas fa-info-circle me-2"></i>Additional Information</h6>
                                         </div>
                                         <div class="card-body">
                                             <div class="mb-3"><label class="form-label fw-semibold">Nationality <span class="text-danger">*</span></label><input type="text" id="editNationality" name="nationality" class="form-control" required></div>
                                             <div class="row g-2">
-                                                <div class="col-6 mb-3"><label class="form-label fw-semibold">State <span class="text-danger">*</span></label><select id="editState" name="state" class="form-control" required><option value="">Select State</option></select></div>
-                                                <div class="col-6 mb-3"><label class="form-label fw-semibold">LGA <span class="text-danger">*</span></label><select id="editLocal" name="local" class="form-control" required disabled><option value="">Select LGA</option></select></div>
+                                                <div class="col-6 mb-3"><label class="form-label fw-semibold">State of Origin <span class="text-danger">*</span></label><select id="editState" name="state" class="form-control" required><option value="">Select State</option></select></div>
+                                                <div class="col-6 mb-3"><label class="form-label fw-semibold">Local Government <span class="text-danger">*</span></label><select id="editLocal" name="local" class="form-control" required disabled><option value="">Select LGA</option></select></div>
                                             </div>
                                             <div class="row g-2">
                                                 <div class="col-6 mb-3"><label class="form-label fw-semibold">City</label><input type="text" id="editCity" name="city" class="form-control"></div>
@@ -1388,7 +1391,13 @@
                                             </div>
                                             <div class="row g-2">
                                                 <div class="col-6 mb-3"><label class="form-label fw-semibold">NIN Number</label><input type="text" id="editNinNumber" name="nin_number" class="form-control" maxlength="11"></div>
-                                                <div class="col-6 mb-3"><label class="form-label fw-semibold">School House <span class="text-danger">*</span></label><select id="editSchoolHouse" name="schoolhouseid" class="form-control" required><option value="">Select House</option>@foreach($schoolhouses as $h)<option value="{{ $h->id }}">{{ $h->house }}</option>@endforeach</select></div>
+                                                <div class="col-6 mb-3">
+                                                    <label class="form-label fw-semibold">School House <span class="text-danger">*</span></label>
+                                                    <select id="editSchoolHouse" name="schoolhouseid" class="form-control" required>
+                                                        <option value="">Select House</option>
+                                                        @foreach($schoolhouses as $schoolhouse)<option value="{{ $schoolhouse->id }}">{{ $schoolhouse->house }}</option>@endforeach
+                                                    </select>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
@@ -1396,8 +1405,8 @@
                                 <!-- Parent & Previous School -->
                                 <div class="col-md-6">
                                     <div class="card border-0 shadow-sm mb-3">
-                                        <div class="card-header bg-warning text-dark rounded-top-3">
-                                            <h6 class="mb-0"><i class="fas fa-users me-2"></i>Parent / Guardian</h6>
+                                        <div class="card-header bg-warning text-dark">
+                                            <h6 class="mb-0"><i class="fas fa-users me-2"></i>Parent / Guardian Details</h6>
                                         </div>
                                         <div class="card-body">
                                             <div class="mb-3"><label class="form-label fw-semibold">Father's Name</label><input type="text" id="editFatherName" name="father_name" class="form-control"></div>
@@ -1408,98 +1417,104 @@
                                             <div class="mb-3"><label class="form-label fw-semibold">Father's City</label><input type="text" id="editFatherCity" name="father_city" class="form-control"></div>
                                             <div class="mb-3"><label class="form-label fw-semibold">Mother's Name</label><input type="text" id="editMotherName" name="mother_name" class="form-control"></div>
                                             <div class="mb-3"><label class="form-label fw-semibold">Mother's Phone</label><input type="text" id="editMotherPhone" name="mother_phone" class="form-control"></div>
-                                            <div class="mb-3"><label class="form-label fw-semibold">Parent Email</label><input type="email" id="editParentEmail" name="parent_email" class="form-control"></div>
-                                            <div class="mb-3"><label class="form-label fw-semibold">Parent Address</label><textarea id="editParentAddress" name="parent_address" class="form-control" rows="2"></textarea></div>
+                                            <div class="mb-3"><label class="form-label fw-semibold">Parent's Email</label><input type="email" id="editParentEmail" name="parent_email" class="form-control"></div>
+                                            <div class="mb-3"><label class="form-label fw-semibold">Parent's Address</label><textarea id="editParentAddress" name="parent_address" class="form-control" rows="2"></textarea></div>
                                         </div>
                                     </div>
                                     <div class="card border-0 shadow-sm">
-                                        <div class="card-header bg-secondary text-white rounded-top-3">
-                                            <h6 class="mb-0"><i class="fas fa-school me-2"></i>Previous School</h6>
+                                        <div class="card-header bg-secondary text-white">
+                                            <h6 class="mb-0"><i class="fas fa-school me-2"></i>Previous School Details</h6>
                                         </div>
                                         <div class="card-body">
-                                            <div class="mb-3"><label class="form-label fw-semibold">Last School</label><input type="text" id="editLastSchool" name="last_school" class="form-control"></div>
-                                            <div class="mb-3"><label class="form-label fw-semibold">Last Class</label><input type="text" id="editLastClass" name="last_class" class="form-control"></div>
+                                            <div class="mb-3"><label class="form-label fw-semibold">Last School Attended</label><input type="text" id="editLastSchool" name="last_school" class="form-control"></div>
+                                            <div class="mb-3"><label class="form-label fw-semibold">Last Class Attended</label><input type="text" id="editLastClass" name="last_class" class="form-control"></div>
                                             <div class="mb-3"><label class="form-label fw-semibold">Reason for Leaving</label><textarea id="editReasonForLeaving" name="reason_for_leaving" class="form-control" rows="2"></textarea></div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                            <div class="alert alert-danger d-none mt-3" id="edit-alert-error-msg"></div>
                         </div>
                         <div class="modal-footer bg-light">
-                            <button type="button" class="btn btn-secondary rounded-3" data-bs-dismiss="modal"><i class="fas fa-times me-1"></i>Cancel</button>
-                            <button type="submit" class="btn-pg" id="edit-btn"><i class="fas fa-save me-1"></i>Update Student</button>
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-times me-1"></i>Cancel</button>
+                            <button type="submit" class="btn btn-primary" id="edit-btn"><i class="fas fa-save me-1"></i>Update Student</button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
 
-        <!-- ============================================================
+        <!-- ================================================================
              VIEW STUDENT MODAL
-             ============================================================ -->
+             ================================================================ -->
         <div id="viewStudentModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
             <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
                 <div class="modal-content">
-                    <div class="modal-header modal-hdr">
+                    <div class="modal-header modal-header-gradient">
                         <div class="d-flex align-items-center gap-3">
                             <i class="fas fa-graduation-cap fa-xl"></i>
                             <div>
-                                <h5 class="modal-title mb-0">Student Profile</h5>
-                                <small style="color:rgba(255,255,255,.7)">Complete student information</small>
+                                <h4 class="modal-title mb-0">Student Profile</h4>
+                                <small style="color:rgba(255,255,255,.7)">Complete student information and records</small>
                             </div>
                         </div>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body p-0">
                         <!-- Profile Header -->
                         <div class="bg-light p-4 border-bottom">
-                            <div class="d-flex align-items-center gap-4">
-                                <div class="position-relative" style="flex-shrink:0;">
-                                    <img id="viewStudentPhoto"
-                                         src="{{ asset('theme/layouts/assets/media/avatars/blank.png') }}"
-                                         alt="Student Photo"
-                                         class="rounded-circle border border-3 shadow"
-                                         style="width:110px;height:110px;object-fit:cover;border-color:#fff!important;cursor:pointer;"
-                                         onclick="openZoomFromView(this)">
-                                    <span id="studentStatusIndicator" class="position-absolute bottom-0 end-0 bg-success rounded-circle border border-2 border-white" style="width:18px;height:18px;"></span>
+                            <div class="row align-items-center">
+                                <div class="col-auto">
+                                    <div class="position-relative">
+                                        <img id="viewStudentPhoto"
+                                             src="{{ asset('theme/layouts/assets/media/avatars/blank.png') }}"
+                                             alt="Student Photo"
+                                             class="rounded-circle border border-4 border-white shadow"
+                                             style="width:110px;height:110px;object-fit:cover;cursor:pointer;"
+                                             onclick="openZoomFromViewPhoto(this)">
+                                        <span class="position-absolute bottom-0 end-0 rounded-circle border border-2 border-white"
+                                              id="studentStatusIndicator"
+                                              style="width:18px;height:18px;background:#16a34a;display:block;"></span>
+                                    </div>
                                 </div>
-                                <div class="flex-grow-1">
-                                    <h3 class="fw-bold mb-2" id="viewFullName" style="color:var(--sm-primary)">—</h3>
+                                <div class="col">
+                                    <h2 class="fw-bold mb-2" id="viewFullName" style="color:var(--sm-primary,#1e3a5f)">—</h2>
                                     <div class="d-flex flex-wrap gap-2 mb-2">
-                                        <span class="badge bg-primary px-3 py-2"><i class="fas fa-id-card me-1"></i><span id="viewAdmissionNumber">—</span></span>
-                                        <span class="badge bg-info px-3 py-2"><i class="fas fa-school me-1"></i><span id="viewClassDisplay">—</span></span>
+                                        <span class="badge bg-primary bg-gradient px-3 py-2"><i class="fas fa-id-card me-1"></i><span id="viewAdmissionNumber">—</span></span>
+                                        <span class="badge bg-info bg-gradient px-3 py-2" id="viewClassBadge"><i class="fas fa-school me-1"></i><span id="viewClassDisplay">—</span></span>
                                         <span class="badge px-3 py-2" id="viewStudentTypeBadge" style="background:#fef3c7;color:#92400e;"><i class="fas fa-user-tag me-1"></i><span id="viewStudentType">—</span></span>
                                     </div>
                                     <div class="d-flex flex-wrap gap-4 text-muted" style="font-size:13px;">
                                         <div><i class="fas fa-calendar-alt me-1"></i>Admitted: <span id="viewAdmittedDate">—</span></div>
                                         <div><i class="fas fa-venus-mars me-1"></i><span id="viewGenderText">—</span></div>
-                                        <div><i class="fas fa-birthday-cake me-1"></i>Age: <span id="viewAge">—</span> yrs</div>
+                                        <div><i class="fas fa-birthday-cake me-1"></i>Age: <span id="viewAge">—</span> years</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         <!-- Tabs -->
                         <div class="px-4 pt-3">
-                            <ul class="nav nav-tabs" role="tablist">
-                                <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#vPersonal" role="tab"><i class="fas fa-user-circle me-1"></i>Personal</a></li>
-                                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#vAcademic" role="tab"><i class="fas fa-graduation-cap me-1"></i>Academic</a></li>
-                                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#vFamily" role="tab"><i class="fas fa-users me-1"></i>Family</a></li>
-                                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#vAdditional" role="tab"><i class="fas fa-info-circle me-1"></i>Additional</a></li>
-                                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#vTerms" role="tab"><i class="fas fa-history me-1"></i>Term History</a></li>
+                            <ul class="nav nav-tabs nav-tabs-custom nav-justified" role="tablist">
+                                <li class="nav-item"><a class="nav-link active" data-bs-toggle="tab" href="#personalInfo" role="tab"><i class="fas fa-user-circle me-1"></i>Personal Details</a></li>
+                                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#academicInfo" role="tab"><i class="fas fa-graduation-cap me-1"></i>Academic Info</a></li>
+                                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#familyInfo" role="tab"><i class="fas fa-users me-1"></i>Family &amp; Guardian</a></li>
+                                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#additionalInfo" role="tab"><i class="fas fa-info-circle me-1"></i>Additional Info</a></li>
+                                <li class="nav-item"><a class="nav-link" data-bs-toggle="tab" href="#termHistory" role="tab"><i class="fas fa-history me-1"></i>Term History</a></li>
                             </ul>
                         </div>
+                        <!-- Tab Content -->
                         <div class="tab-content p-4">
-                            <!-- Personal -->
-                            <div class="tab-pane fade show active" id="vPersonal">
-                                <div class="row g-3">
+                            <!-- 1. Personal -->
+                            <div class="tab-pane fade show active" id="personalInfo" role="tabpanel">
+                                <div class="row">
                                     <div class="col-md-6">
                                         <div class="info-card">
                                             <div class="info-card-header"><h6><i class="fas fa-id-badge me-2 text-primary"></i>Basic Information</h6></div>
                                             <div class="info-card-body">
-                                                <table class="table table-borderless table-sm">
-                                                    <tr><th>Full Name:</th><td id="viewFullNameDetail">—</td></tr>
+                                                <table class="table table-borderless table-sm mb-0">
+                                                    <tr><th>Full Name:</th><td class="fw-semibold" id="viewFullNameDetail">—</td></tr>
                                                     <tr><th>Title:</th><td id="viewTitle">—</td></tr>
-                                                    <tr><th>Date of Birth:</th><td><span id="viewDOB">—</span> (<span id="viewAgeDetail">—</span> yrs)</td></tr>
+                                                    <tr><th>Date of Birth:</th><td><span id="viewDOB">—</span> (<span id="viewAgeDetail">—</span> years)</td></tr>
                                                     <tr><th>Place of Birth:</th><td id="viewPlaceOfBirth">—</td></tr>
                                                     <tr><th>Gender:</th><td id="viewGenderDetail">—</td></tr>
                                                     <tr><th>Blood Group:</th><td id="viewBloodGroupDetail">—</td></tr>
@@ -1510,20 +1525,22 @@
                                     </div>
                                     <div class="col-md-6">
                                         <div class="info-card">
-                                            <div class="info-card-header"><h6><i class="fas fa-address-card me-2 text-primary"></i>Contact</h6></div>
+                                            <div class="info-card-header"><h6><i class="fas fa-address-card me-2 text-primary"></i>Contact Information</h6></div>
                                             <div class="info-card-body">
-                                                <table class="table table-borderless table-sm">
-                                                    <tr><th>Phone:</th><td id="viewPhoneNumber">—</td></tr>
-                                                    <tr><th>Email:</th><td id="viewEmailAddress">—</td></tr>
+                                                <table class="table table-borderless table-sm mb-0">
+                                                    <tr><th>Phone:</th><td><i class="fas fa-phone-alt me-1 text-muted"></i><span id="viewPhoneNumber">—</span></td></tr>
+                                                    <tr><th>Email:</th><td><i class="fas fa-envelope me-1 text-muted"></i><span id="viewEmailAddress">—</span></td></tr>
                                                     <tr><th>Address:</th><td id="viewPermanentAddress">—</td></tr>
                                                     <tr><th>City:</th><td id="viewCity">—</td></tr>
-                                                    <tr><th>State:</th><td id="viewStateOrigin">—</td></tr>
+                                                    <tr><th>State of Origin:</th><td id="viewStateOrigin">—</td></tr>
                                                     <tr><th>LGA:</th><td id="viewLGA">—</td></tr>
                                                     <tr><th>Nationality:</th><td id="viewNationality">—</td></tr>
                                                 </table>
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                                <div class="row mt-2">
                                     <div class="col-12">
                                         <div class="info-card">
                                             <div class="info-card-header"><h6><i class="fas fa-rocket me-2 text-primary"></i>Future Ambition</h6></div>
@@ -1532,20 +1549,20 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- Academic -->
-                            <div class="tab-pane fade" id="vAcademic">
-                                <div class="row g-3">
+                            <!-- 2. Academic -->
+                            <div class="tab-pane fade" id="academicInfo" role="tabpanel">
+                                <div class="row">
                                     <div class="col-md-6">
                                         <div class="info-card">
                                             <div class="info-card-header"><h6><i class="fas fa-graduation-cap me-2 text-success"></i>Current Academic Status</h6></div>
                                             <div class="info-card-body">
-                                                <table class="table table-borderless table-sm">
+                                                <table class="table table-borderless table-sm mb-0">
                                                     <tr><th>Admission No:</th><td class="fw-bold text-primary" id="viewAdmissionNo">—</td></tr>
                                                     <tr><th>Admission Date:</th><td id="viewAdmissionDate">—</td></tr>
                                                     <tr><th>Class:</th><td><span class="badge bg-info" id="viewCurrentClass">—</span></td></tr>
                                                     <tr><th>Arm:</th><td id="viewArm">—</td></tr>
-                                                    <tr><th>Category:</th><td><span class="badge bg-secondary" id="viewStudentCategory">—</span></td></tr>
-                                                    <tr><th>Status:</th><td id="viewStudentStatus">—</td></tr>
+                                                    <tr><th>Student Category:</th><td><span class="badge bg-secondary" id="viewStudentCategory">—</span></td></tr>
+                                                    <tr><th>Student Status:</th><td id="viewStudentStatus">—</td></tr>
                                                     <tr><th>School House:</th><td id="viewSchoolHouse">—</td></tr>
                                                 </table>
                                             </div>
@@ -1553,42 +1570,39 @@
                                     </div>
                                     <div class="col-md-6">
                                         <div class="info-card">
-                                            <div class="info-card-header"><h6><i class="fas fa-calendar-alt me-2 text-success"></i>Current Term</h6></div>
+                                            <div class="info-card-header"><h6><i class="fas fa-calendar-alt me-2 text-success"></i>Current Term Information</h6></div>
                                             <div class="info-card-body">
                                                 <div id="currentTermAlert" class="mb-3"></div>
-                                                <table class="table table-borderless table-sm">
-                                                    <tr><th>Term:</th><td id="viewCurrentTerm">—</td></tr>
-                                                    <tr><th>Session:</th><td id="viewCurrentSession">—</td></tr>
-                                                    <tr><th>Term Status:</th><td id="viewCurrentTermStatus">—</td></tr>
+                                                <table class="table table-borderless table-sm mb-0">
+                                                    <tr><th>Current Term:</th><td id="viewCurrentTerm">—</td></tr>
+                                                    <tr><th>Current Session:</th><td id="viewCurrentSession">—</td></tr>
+                                                    <tr><th>Status in Current Term:</th><td id="viewCurrentTermStatus">—</td></tr>
                                                 </table>
                                             </div>
                                         </div>
                                         <div class="info-card">
                                             <div class="info-card-header"><h6><i class="fas fa-school me-2 text-success"></i>Previous School</h6></div>
                                             <div class="info-card-body">
-                                                <table class="table table-borderless table-sm">
+                                                <table class="table table-borderless table-sm mb-0">
                                                     <tr><th>Last School:</th><td id="viewLastSchool">—</td></tr>
                                                     <tr><th>Last Class:</th><td id="viewLastClass">—</td></tr>
-                                                    <tr><th>Reason:</th><td id="viewReasonForLeaving">—</td></tr>
+                                                    <tr><th>Reason for Leaving:</th><td><em id="viewReasonForLeaving">—</em></td></tr>
                                                 </table>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                            <!-- Family -->
-                            <div class="tab-pane fade" id="vFamily">
-                                <div class="row g-3">
+                            <!-- 3. Family -->
+                            <div class="tab-pane fade" id="familyInfo" role="tabpanel">
+                                <div class="row">
                                     <div class="col-md-6">
                                         <div class="info-card">
                                             <div class="info-card-header"><h6><i class="fas fa-user-tie me-2 text-primary"></i>Father's Information <span class="badge bg-primary ms-1" id="fatherStatusBadge"></span></h6></div>
                                             <div class="info-card-body">
-                                                <table class="table table-borderless table-sm">
-                                                    <tr><th>Name:</th><td class="fw-semibold" id="viewFatherFullName">—</td></tr>
-                                                    <tr><th>Phone:</th><td>
-                                                        <span id="viewFatherPhone">—</span>
-                                                        <a href="javascript:void(0)" onclick="callNumber('viewFatherPhone')" class="ms-2 text-success" title="Call"><i class="fas fa-phone-alt"></i></a>
-                                                    </td></tr>
+                                                <table class="table table-borderless table-sm mb-0">
+                                                    <tr><th>Full Name:</th><td class="fw-semibold" id="viewFatherFullName">—</td></tr>
+                                                    <tr><th>Phone:</th><td><span id="viewFatherPhone">—</span><a href="javascript:void(0)" onclick="callNumber('viewFatherPhone')" class="ms-2 text-success"><i class="fas fa-phone-alt"></i></a></td></tr>
                                                     <tr><th>Occupation:</th><td id="viewFatherOccupation">—</td></tr>
                                                     <tr><th>City:</th><td id="viewFatherCityState">—</td></tr>
                                                     <tr><th>Email:</th><td id="viewFatherEmail">—</td></tr>
@@ -1601,12 +1615,9 @@
                                         <div class="info-card">
                                             <div class="info-card-header"><h6><i class="fas fa-user-tie me-2 text-danger"></i>Mother's Information <span class="badge bg-danger ms-1" id="motherStatusBadge"></span></h6></div>
                                             <div class="info-card-body">
-                                                <table class="table table-borderless table-sm">
-                                                    <tr><th>Name:</th><td class="fw-semibold" id="viewMotherFullName">—</td></tr>
-                                                    <tr><th>Phone:</th><td>
-                                                        <span id="viewMotherPhone">—</span>
-                                                        <a href="javascript:void(0)" onclick="callNumber('viewMotherPhone')" class="ms-2 text-success" title="Call"><i class="fas fa-phone-alt"></i></a>
-                                                    </td></tr>
+                                                <table class="table table-borderless table-sm mb-0">
+                                                    <tr><th>Full Name:</th><td class="fw-semibold" id="viewMotherFullName">—</td></tr>
+                                                    <tr><th>Phone:</th><td><span id="viewMotherPhone">—</span><a href="javascript:void(0)" onclick="callNumber('viewMotherPhone')" class="ms-2 text-success"><i class="fas fa-phone-alt"></i></a></td></tr>
                                                     <tr><th>Occupation:</th><td id="viewMotherOccupation">—</td></tr>
                                                     <tr><th>Email:</th><td id="viewMotherEmail">—</td></tr>
                                                     <tr><th>Address:</th><td id="viewMotherAddress">—</td></tr>
@@ -1614,15 +1625,23 @@
                                             </div>
                                         </div>
                                     </div>
+                                </div>
+                                <div class="row mt-2">
                                     <div class="col-12">
                                         <div class="info-card">
-                                            <div class="info-card-header"><h6><i class="fas fa-user-shield me-2 text-warning"></i>Emergency Contact</h6></div>
+                                            <div class="info-card-header"><h6><i class="fas fa-user-shield me-2 text-warning"></i>Emergency Contact / Guardian</h6></div>
                                             <div class="info-card-body">
                                                 <div class="row">
                                                     <div class="col-md-6">
-                                                        <table class="table table-borderless table-sm">
-                                                            <tr><th>Parent Email:</th><td id="viewParentEmail">—</td></tr>
-                                                            <tr><th>Parent Address:</th><td id="viewParentAddress">—</td></tr>
+                                                        <table class="table table-borderless table-sm mb-0">
+                                                            <tr><th>Guardian Name:</th><td class="fw-semibold" id="viewGuardianName">—</td></tr>
+                                                            <tr><th>Phone:</th><td id="viewGuardianPhone">—</td></tr>
+                                                        </table>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <table class="table table-borderless table-sm mb-0">
+                                                            <tr><th>Parent's Email:</th><td id="viewParentEmail">—</td></tr>
+                                                            <tr><th>Parent's Address:</th><td id="viewParentAddress">—</td></tr>
                                                         </table>
                                                     </div>
                                                 </div>
@@ -1631,14 +1650,14 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- Additional -->
-                            <div class="tab-pane fade" id="vAdditional">
-                                <div class="row g-3">
+                            <!-- 4. Additional -->
+                            <div class="tab-pane fade" id="additionalInfo" role="tabpanel">
+                                <div class="row">
                                     <div class="col-md-6">
                                         <div class="info-card">
-                                            <div class="info-card-header"><h6><i class="fas fa-notes-medical me-2 text-info"></i>Medical & Personal</h6></div>
+                                            <div class="info-card-header"><h6><i class="fas fa-notes-medical me-2 text-info"></i>Medical &amp; Personal</h6></div>
                                             <div class="info-card-body">
-                                                <table class="table table-borderless table-sm">
+                                                <table class="table table-borderless table-sm mb-0">
                                                     <tr><th>Blood Group:</th><td id="viewBloodGroupAdditional">—</td></tr>
                                                     <tr><th>NIN Number:</th><td id="viewNIN">—</td></tr>
                                                     <tr><th>Mother Tongue:</th><td id="viewMotherTongue">—</td></tr>
@@ -1648,16 +1667,16 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- Term History -->
-                            <div class="tab-pane fade" id="vTerms">
+                            <!-- 5. Term History -->
+                            <div class="tab-pane fade" id="termHistory" role="tabpanel">
                                 <div class="info-card">
                                     <div class="info-card-header d-flex justify-content-between align-items-center">
                                         <h6 class="mb-0"><i class="fas fa-history me-2 text-primary"></i>Term Registration History</h6>
-                                        <button class="btn btn-sm btn-outline-primary rounded-3" onclick="refreshTermHistory()"><i class="fas fa-sync-alt me-1"></i>Refresh</button>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="refreshTermHistory()"><i class="fas fa-sync-alt me-1"></i>Refresh</button>
                                     </div>
                                     <div class="info-card-body">
                                         <div id="termHistoryLoading" class="text-center py-4">
-                                            <div class="spin-ring"></div>
+                                            <div class="spinner-container"><div class="spinner-ring"></div></div>
                                             <p class="mt-2 text-muted">Loading term history…</p>
                                         </div>
                                         <div id="termHistoryContent" style="display:none;"></div>
@@ -1667,9 +1686,14 @@
                         </div>
                     </div>
                     <div class="modal-footer bg-light">
-                        <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal"><i class="fas fa-times me-1"></i>Close</button>
-                        <button type="button" class="btn btn-primary rounded-3" onclick="editStudentFromView()"><i class="fas fa-edit me-1"></i>Edit Student</button>
-                        <button type="button" class="btn btn-success rounded-3" onclick="printStudentProfile()"><i class="fas fa-print me-1"></i>Print</button>
+                        <div class="d-flex justify-content-between align-items-center w-100">
+                            <span class="text-muted small" id="studentProfileLastUpdated"></span>
+                            <div>
+                                <button type="button" class="btn btn-light" data-bs-dismiss="modal"><i class="fas fa-times me-1"></i>Close</button>
+                                <button type="button" class="btn btn-primary" onclick="editStudentFromView()"><i class="fas fa-edit me-1"></i>Edit Student</button>
+                                <button type="button" class="btn btn-success" onclick="printStudentProfile()"><i class="fas fa-print me-1"></i>Print Profile</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1678,39 +1702,74 @@
     </div><!-- /page-content -->
 </div><!-- /main-content -->
 
-<!-- ================================================================
+<!-- ====================================================================
      SCRIPTS
-     ================================================================ -->
+     ==================================================================== -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
 <script>
-(function () {
+// ============================================================================
+// STUDENT MANAGEMENT SYSTEM — COMPLETE FIXED VERSION WITH NEW FEATURES
+// ============================================================================
+
+(function() {
     'use strict';
 
-    // ================================================================
-    // CONFIGURATION & STATE
-    // ================================================================
+    // ============================================================================
+    // GLOBAL CONFIGURATION
+    // ============================================================================
     const CONFIG = {
         DEFAULT_PER_PAGE: 25,
-        PER_PAGE_OPTIONS: [25, 50, 100, 250],
-        SEARCH_DEBOUNCE: 500,
-        ENABLE_LOG: true
+        PER_PAGE_OPTIONS: [25, 50, 100, 250, 500],
+        SEARCH_DEBOUNCE_DELAY: 500,
+        MAX_API_RETRIES: 3,
+        CACHE_DURATION: 300000,
+        LAZY_LOAD_IMAGES: true,
+        ENABLE_LOGGING: true
     };
 
+    // ============================================================================
+    // STATE MANAGEMENT
+    // ============================================================================
     const AppState = {
-        pagination:  { currentPage: 1, perPage: CONFIG.DEFAULT_PER_PAGE, total: 0, lastPage: 1, from: 0, to: 0, data: [] },
-        filters:     { search: '', class: 'all', status: 'all', gender: 'all', session: 'all', term: 'all' },
-        ui:          { currentView: 'table', isLoading: false, selectedStudents: new Set() },
-        cache:       { students: new Map() },
+        pagination: {
+            currentPage: 1,
+            perPage: CONFIG.DEFAULT_PER_PAGE,
+            total: 0,
+            lastPage: 1,
+            from: 0,
+            to: 0,
+            data: []
+        },
+        filters: {
+            search: '',
+            class: 'all',
+            status: 'all',
+            gender: 'all',
+            session: 'all',
+            term: 'all'
+        },
+        ui: {
+            currentView: 'table',
+            isLoading: false,
+            selectedStudents: new Set(),
+            lastUpdated: null
+        },
+        cache: {
+            students: new Map(),
+            stats: null,
+            classes: null
+        },
         bulkStatusFilters: null,
-        termFilters:       null
+        termFilters: null,
+        bulkStatusData: null
     };
 
-    // ================================================================
-    // NIGERIAN STATES / LGAS
-    // ================================================================
+    // ============================================================================
+    // NIGERIAN STATES AND LGAS
+    // ============================================================================
     const NIGERIAN_STATES = [
         { name: "Abia", lgas: ["Aba North","Aba South","Arochukwu","Bende","Ikwuano","Isiala Ngwa North","Isiala Ngwa South","Isuikwuato","Obi Ngwa","Ohafia","Osisioma","Ugwunagbo","Ukwa East","Ukwa West","Umuahia North","Umuahia South","Umu Nneochi"] },
         { name: "Adamawa", lgas: ["Demsa","Fufure","Ganye","Gayuk","Gombi","Grie","Hong","Jada","Lamurde","Madagali","Maiha","Mayo Belwa","Michika","Mubi North","Mubi South","Numan","Shelleng","Song","Toungo","Yola North","Yola South"] },
@@ -1719,6 +1778,7 @@
         { name: "Bauchi", lgas: ["Alkaleri","Bauchi","Bogoro","Damban","Darazo","Dass","Gamawa","Ganjuwa","Giade","Itas/Gadau","Jama'are","Katagum","Kirfi","Misau","Ningi","Shira","Tafawa Balewa","Toro","Warji","Zaki"] },
         { name: "Bayelsa", lgas: ["Brass","Ekeremor","Kolokuma/Opokuma","Nembe","Ogbia","Sagbama","Southern Ijaw","Yenagoa"] },
         { name: "Benue", lgas: ["Ado","Agatu","Apa","Buruku","Gboko","Guma","Gwer East","Gwer West","Katsina-Ala","Konshisha","Kwande","Logo","Makurdi","Obi","Ogbadibo","Ohimini","Oju","Okpokwu","Oturkpo","Tarka","Ukum","Ushongo","Vandeikya"] },
+        { name: "Borno", lgas: ["Abadam","Askira/Uba","Bama","Bayo","Biu","Chibok","Damboa","Dikwa","Gubio","Guzamala","Gwoza","Hawul","Jere","Kaga","Kala/Balge","Konduga","Kukawa","Kwaya Kusar","Mafa","Magumeri","Maiduguri","Marte","Mobbar","Monguno","Ngala","Nganzai","Shani"] },
         { name: "Cross River", lgas: ["Abi","Akamkpa","Akpabuyo","Bakassi","Bekwarra","Biase","Boki","Calabar Municipal","Calabar South","Etung","Ikom","Obanliku","Obubra","Obudu","Odukpani","Ogoja","Yakuur","Yala"] },
         { name: "Delta", lgas: ["Aniocha North","Aniocha South","Bomadi","Burutu","Ethiope East","Ethiope West","Ika North East","Ika South","Isoko North","Isoko South","Ndokwa East","Ndokwa West","Okpe","Oshimili North","Oshimili South","Patani","Sapele","Udu","Ughelli North","Ughelli South","Ukwuani","Uvwie","Warri North","Warri South","Warri South West"] },
         { name: "Ebonyi", lgas: ["Abakaliki","Afikpo North","Afikpo South","Ebonyi","Ezza North","Ezza South","Ikwo","Ishielu","Ivo","Izzi","Ohaozara","Ohaukwu","Onicha"] },
@@ -1750,1030 +1810,1479 @@
         { name: "Zamfara", lgas: ["Anka","Bakura","Birnin Magaji/Kiyaw","Bukkuyum","Bungudu","Gummi","Gusau","Kaura Namoda","Maradun","Maru","Shinkafi","Talata Mafara","Chafe","Zurmi"] }
     ];
 
-    // ================================================================
-    // UTILS
-    // ================================================================
-    const U = {
-        log: (m, d) => CONFIG.ENABLE_LOG && (d ? console.log(m, d) : console.log(m)),
-        esc: t => !t ? '' : t.toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])),
-        date: (v, fmt='short') => {
-            if (!v) return 'N/A';
+    // ============================================================================
+    // UTILITY FUNCTIONS
+    // ============================================================================
+    const Utils = {
+        log: function(message, data, level = 'info') {
+            if (!CONFIG.ENABLE_LOGGING) return;
+            const ts = new Date().toISOString();
+            const fn = level === 'error' ? console.error : console.log;
+            data ? fn(`[${ts}] ${message}:`, data) : fn(`[${ts}] ${message}`);
+        },
+        escapeHtml: function(text) {
+            if (!text) return '';
+            return text.toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+        },
+        formatDate: function(dateString, format = 'short') {
+            if (!dateString) return 'N/A';
             try {
-                const d = new Date(v); if (isNaN(d.getTime())) return 'N/A';
-                return d.toLocaleDateString('en-US', fmt === 'long' ? {year:'numeric',month:'long',day:'numeric'} : {year:'numeric',month:'short',day:'numeric'});
+                const date = new Date(dateString);
+                if (isNaN(date.getTime())) return 'N/A';
+                return format === 'long'
+                    ? date.toLocaleDateString('en-US', {year:'numeric',month:'long',day:'numeric'})
+                    : date.toLocaleDateString('en-US', {year:'numeric',month:'short',day:'numeric'});
             } catch { return 'N/A'; }
         },
-        age: dob => {
-            if (!dob) return 'N/A';
+        calculateAge: function(dateOfBirth) {
+            if (!dateOfBirth) return 'N/A';
             try {
-                const d = new Date(dob); if (isNaN(d.getTime())) return 'N/A';
-                const t = new Date(); let a = t.getFullYear() - d.getFullYear();
-                if (t.getMonth() - d.getMonth() < 0 || (t.getMonth() === d.getMonth() && t.getDate() < d.getDate())) a--;
-                return a;
+                const dob = new Date(dateOfBirth);
+                if (isNaN(dob.getTime())) return 'N/A';
+                const today = new Date();
+                let age = today.getFullYear() - dob.getFullYear();
+                const m = today.getMonth() - dob.getMonth();
+                if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+                return age;
             } catch { return 'N/A'; }
         },
-        initials: (f, l) => ((f||'').charAt(0) + (l||'').charAt(0)).toUpperCase() || 'ST',
-        debounce: (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; },
-        showLoading: () => {
-            ['tableView','cardView','emptyState'].forEach(id => document.getElementById(id)?.classList.add('d-none'));
-            document.getElementById('loadingState')?.classList.remove('d-none');
+        getInitials: function(firstName, lastName) {
+            const f = firstName && firstName.length > 0 ? firstName.charAt(0).toUpperCase() : '';
+            const l = lastName  && lastName.length  > 0 ? lastName.charAt(0).toUpperCase()  : '';
+            return (f + l) || 'ST';
+        },
+        debounce: function(func, wait) {
+            let timeout;
+            return function(...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        },
+        showLoading: function() {
+            const loadingEl  = document.getElementById('loadingState');
+            const tableView  = document.getElementById('tableView');
+            const cardView   = document.getElementById('cardView');
+            const emptyState = document.getElementById('emptyState');
+            if (loadingEl)  loadingEl.classList.remove('d-none');
+            if (tableView)  tableView.classList.add('d-none');
+            if (cardView)   cardView.classList.add('d-none');
+            if (emptyState) emptyState.classList.add('d-none');
             AppState.ui.isLoading = true;
         },
-        hideLoading: () => {
-            document.getElementById('loadingState')?.classList.add('d-none');
-            const hasData = AppState.pagination.data?.length > 0;
-            if (hasData) {
-                const tv = document.getElementById('tableView'), cv = document.getElementById('cardView');
-                if (AppState.ui.currentView === 'table') tv?.classList.remove('d-none');
-                else cv?.classList.remove('d-none');
-                document.getElementById('emptyState')?.classList.add('d-none');
+        hideLoading: function() {
+            const loadingEl  = document.getElementById('loadingState');
+            if (loadingEl)   loadingEl.classList.add('d-none');
+            const tableView  = document.getElementById('tableView');
+            const cardView   = document.getElementById('cardView');
+            const emptyState = document.getElementById('emptyState');
+            if (AppState.pagination.data && AppState.pagination.data.length > 0) {
+                if (tableView && AppState.ui.currentView === 'table') tableView.classList.remove('d-none');
+                if (cardView  && AppState.ui.currentView === 'card')  cardView.classList.remove('d-none');
+                if (emptyState) emptyState.classList.add('d-none');
             } else {
-                ['tableView','cardView'].forEach(id => document.getElementById(id)?.classList.add('d-none'));
-                document.getElementById('emptyState')?.classList.remove('d-none');
+                if (tableView)  tableView.classList.add('d-none');
+                if (cardView)   cardView.classList.add('d-none');
+                if (emptyState) emptyState.classList.remove('d-none');
             }
             AppState.ui.isLoading = false;
         },
-        err:  (msg, title='Error')   => Swal.fire({title,text:msg,icon:'error',confirmButtonText:'OK',customClass:{confirmButton:'btn btn-primary'}}),
-        ok:   (msg, title='Success') => Swal.fire({title,text:msg,icon:'success',timer:2000,timerProgressBar:true,showConfirmButton:false}),
-        confirm: async (title, text, confirmText='Yes') => {
-            const r = await Swal.fire({title,text,icon:'warning',showCancelButton:true,confirmButtonText:confirmText,cancelButtonText:'Cancel',customClass:{confirmButton:'btn btn-danger',cancelButton:'btn btn-light'}});
-            return r.isConfirmed;
+        showError: function(message, title = 'Error') {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ title, text: message, icon: 'error', confirmButtonText: 'OK', customClass: { confirmButton: 'btn btn-primary' } });
+            } else { alert(`${title}: ${message}`); }
         },
-        csrf: () => {
-            const t = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-            if (t) { axios.defaults.headers.common['X-CSRF-TOKEN'] = t; axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest'; }
-            return !!t;
+        showSuccess: function(message, title = 'Success') {
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ title, text: message, icon: 'success', confirmButtonText: 'OK', timer: 2000, timerProgressBar: true });
+            } else { alert(`${title}: ${message}`); }
         },
-        setText: (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; },
-        /* zoom helper */
-        openZoom: (imgSrc, name, initials, detail) => {
-            const zImg  = document.getElementById('zoomedStudentImg');
-            const zName = document.getElementById('zoomedStudentName');
-            const zDet  = document.getElementById('zoomedStudentDetail');
-            if (imgSrc) {
-                zImg.src = imgSrc; zImg.style.display = 'block';
-            } else {
-                // Draw initials on canvas
-                const cv = document.createElement('canvas'); cv.width = 400; cv.height = 400;
-                const ctx = cv.getContext('2d');
-                const g = ctx.createLinearGradient(0,0,400,400); g.addColorStop(0,'#667eea'); g.addColorStop(1,'#764ba2');
-                ctx.fillStyle = g; ctx.beginPath(); ctx.arc(200,200,200,0,2*Math.PI); ctx.fill();
-                ctx.fillStyle = '#fff'; ctx.font = 'bold 160px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.fillText((initials||'ST').substring(0,2), 200, 200);
-                zImg.src = cv.toDataURL(); zImg.style.display = 'block';
+        showConfirm: async function(title, text, confirmText = 'Yes', cancelText = 'Cancel') {
+            if (typeof Swal !== 'undefined') {
+                const result = await Swal.fire({ title, text, icon: 'warning', showCancelButton: true, confirmButtonText: confirmText, cancelButtonText, customClass: { confirmButton: 'btn btn-danger', cancelButton: 'btn btn-light' } });
+                return result.isConfirmed;
             }
-            if (zName) zName.textContent = name || '';
-            if (zDet)  zDet.innerHTML = detail || '';
-            const m = new bootstrap.Modal(document.getElementById('imageZoomModal'));
-            m.show();
+            return confirm(`${title}: ${text}`);
+        },
+        initializeTooltips: function() {
+            if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+                document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => new bootstrap.Tooltip(el));
+            }
+        },
+        ensureAxios: function() {
+            if (typeof axios === 'undefined') { this.showError('Axios library is missing. Please refresh the page.'); return false; }
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            if (!csrfToken) { this.showError('CSRF token not found. Please refresh the page.'); return false; }
+            axios.defaults.headers.common['X-CSRF-TOKEN'] = csrfToken;
+            axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
+            return true;
         }
     };
 
-    // ================================================================
+    // ============================================================================
     // API SERVICE
-    // ================================================================
-    const API = {
-        async get(url, params) {
-            U.csrf();
-            const q = new URLSearchParams(params).toString();
-            return (await axios.get(`${url}?${q}`)).data;
+    // ============================================================================
+    const ApiService = {
+        async getStudents(page = 1, perPage = null, filters = null) {
+            if (!Utils.ensureAxios()) throw new Error('Axios not available');
+            const params = new URLSearchParams();
+            params.append('page', page);
+            const itemsPerPage = perPage || AppState.pagination.perPage || CONFIG.DEFAULT_PER_PAGE;
+            params.append('per_page', itemsPerPage);
+            const currentFilters = filters || AppState.filters;
+            if (currentFilters.search && currentFilters.search.trim() !== '') params.append('search', currentFilters.search.trim());
+            if (currentFilters.class   !== 'all' && currentFilters.class)   params.append('class_id',   currentFilters.class);
+            if (currentFilters.status  !== 'all' && currentFilters.status)  params.append('status',      currentFilters.status);
+            if (currentFilters.gender  !== 'all' && currentFilters.gender)  params.append('gender',      currentFilters.gender);
+            if (currentFilters.session !== 'all' && currentFilters.session) params.append('session_id',  currentFilters.session);
+            try {
+                const response = await axios.get(`/students/optimized?${params.toString()}`);
+                if (response.data.success) return response.data.data;
+                throw new Error(response.data.message || 'Failed to fetch students');
+            } catch (error) { Utils.log('API Error - getStudents', error, 'error'); throw error; }
         },
-        async post(url, data) { U.csrf(); return (await axios.post(url, data)).data; },
-        async del(url)        { U.csrf(); return (await axios.delete(url)).data; },
-
-        students: (page, perPage, filters) => {
-            const p = { page, per_page: perPage };
-            if (filters.search && filters.search.trim()) p.search = filters.search.trim();
-            if (filters.class   !== 'all') p.class_id   = filters.class;
-            if (filters.status  !== 'all') p.status      = filters.status;
-            if (filters.gender  !== 'all') p.gender      = filters.gender;
-            if (filters.session !== 'all') p.session_id  = filters.session;
-            return API.get('/students/optimized', p);
+        async getStudent(id) {
+            if (!Utils.ensureAxios()) throw new Error('Axios not available');
+            try {
+                const response = await axios.get(`/student/${id}/edit`);
+                if (response.data.success && response.data.student) return response.data.student;
+                throw new Error(response.data.message || 'Failed to fetch student');
+            } catch (error) { Utils.log('API Error - getStudent', error, 'error'); throw error; }
         },
-        student:  id => API.get(`/student/${id}/edit`, {}),
-        delete:   id => API.del(`/student/${id}/destroy`),
-        delMany:  ids => API.post('/students/destroy-multiple', {ids}),
-        activeTerm: sid => API.get(`/student-current-term/student/${sid}/active`, {}),
-        bulkTerm:   d  => API.post('/student-current-term/bulk-update', d),
-        byClassSession: (cid, sid) => API.get('/students/by-class-session', {class_id:cid,session_id:sid}),
-        bulkStatus: d  => API.post('/students/bulk-update-status', d),
-        inTerm:     p  => API.get('/students-in-term', p),
-        rmTerm:     id => API.post('/students/remove-from-term', {registration_id:id}),
-        rmTermMany: ids=> API.post('/students/bulk-remove-from-term', {registration_ids:ids})
+        async deleteStudent(id) {
+            if (!Utils.ensureAxios()) throw new Error('Axios not available');
+            try { return (await axios.delete(`/student/${id}/destroy`)).data; }
+            catch (error) { Utils.log('API Error - deleteStudent', error, 'error'); throw error; }
+        },
+        async deleteMultipleStudents(ids) {
+            if (!Utils.ensureAxios()) throw new Error('Axios not available');
+            try { return (await axios.post('/students/destroy-multiple', { ids })).data; }
+            catch (error) { Utils.log('API Error - deleteMultipleStudents', error, 'error'); throw error; }
+        },
+        async getStudentActiveTerm(studentId) {
+            if (!Utils.ensureAxios()) throw new Error('Axios not available');
+            try { return (await axios.get(`/student-current-term/student/${studentId}/active`)).data; }
+            catch (error) { Utils.log('API Error - getStudentActiveTerm', error, 'error'); return { success: false, data: null }; }
+        },
+        async getStudentAllTerms(studentId) {
+            if (!Utils.ensureAxios()) throw new Error('Axios not available');
+            try { return (await axios.get(`/student/${studentId}/all-terms`)).data; }
+            catch (error) { Utils.log('API Error - getStudentAllTerms', error, 'error'); return { success: false, data: [] }; }
+        },
+        async updateBulkCurrentTerm(data) {
+            if (!Utils.ensureAxios()) throw new Error('Axios not available');
+            try { return (await axios.post('/student-current-term/bulk-update', data)).data; }
+            catch (error) { Utils.log('API Error - updateBulkCurrentTerm', error, 'error'); throw error; }
+        },
+        async getStudentsByClassAndSession(classId, sessionId, termId = null) {
+            if (!Utils.ensureAxios()) throw new Error('Axios not available');
+            try {
+                const params = { class_id: classId, session_id: sessionId };
+                if (termId) params.term_id = termId;
+                return (await axios.get('/students/by-class-session', { params })).data;
+            } catch (error) { Utils.log('API Error - getStudentsByClassAndSession', error, 'error'); throw error; }
+        },
+        async bulkUpdateStatus(data) {
+            if (!Utils.ensureAxios()) throw new Error('Axios not available');
+            try { return (await axios.post('/students/bulk-update-status', data)).data; }
+            catch (error) { Utils.log('API Error - bulkUpdateStatus', error, 'error'); throw error; }
+        },
+        async getStudentsInTerm(params) {
+            if (!Utils.ensureAxios()) throw new Error('Axios not available');
+            try { return (await axios.get('/students-in-term', { params })).data; }
+            catch (error) { Utils.log('API Error - getStudentsInTerm', error, 'error'); throw error; }
+        },
+        async removeStudentFromTerm(registrationId) {
+            if (!Utils.ensureAxios()) throw new Error('Axios not available');
+            try { return (await axios.post('/students/remove-from-term', { registration_id: registrationId })).data; }
+            catch (error) { Utils.log('API Error - removeStudentFromTerm', error, 'error'); throw error; }
+        },
+        async bulkRemoveFromTerm(registrationIds) {
+            if (!Utils.ensureAxios()) throw new Error('Axios not available');
+            try { return (await axios.post('/students/bulk-remove-from-term', { registration_ids: registrationIds })).data; }
+            catch (error) { Utils.log('API Error - bulkRemoveFromTerm', error, 'error'); throw error; }
+        }
     };
 
-    // ================================================================
-    // STATE / LGA MANAGER
-    // ================================================================
-    const SLM = {
-        populate: (selectId, lgaId) => {
-            const sel = document.getElementById(selectId);
-            if (!sel) return;
-            sel.innerHTML = '<option value="">Select State</option>';
-            NIGERIAN_STATES.forEach(s => { const o = document.createElement('option'); o.value = s.name; o.textContent = s.name; sel.appendChild(o); });
-            const lgaSel = document.getElementById(lgaId);
-            if (lgaSel) { lgaSel.innerHTML = '<option value="">Select LGA</option>'; lgaSel.disabled = true; }
-            sel.onchange = () => SLM.updateLGA(sel.value, lgaId);
+    // ============================================================================
+    // FILTER MANAGER
+    // ============================================================================
+    const FilterManager = {
+        searchTimeout: null,
+        initializeFilters: function() {
+            const searchInput  = document.getElementById('search-input');
+            const classFilter  = document.getElementById('schoolclass-filter');
+            const sessionFilter= document.getElementById('session-filter');
+            const termFilter   = document.getElementById('term-filter');
+            const filterBtn    = document.getElementById('filterBtn');
+            const resetBtn     = document.getElementById('resetFiltersBtn');
+            const clearSearchBtn = document.getElementById('clear-search');
+            const resetFromEmptyBtn = document.getElementById('resetFromEmptyBtn');
+            if (searchInput) {
+                searchInput.addEventListener('input', (e) => {
+                    if (clearSearchBtn) clearSearchBtn.style.display = e.target.value.length > 0 ? 'block' : 'none';
+                    if (this.searchTimeout) clearTimeout(this.searchTimeout);
+                    this.searchTimeout = setTimeout(() => this.applyFilters(), CONFIG.SEARCH_DEBOUNCE_DELAY);
+                });
+                searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { clearTimeout(this.searchTimeout); this.applyFilters(); } });
+            }
+            if (clearSearchBtn) clearSearchBtn.addEventListener('click', () => this.clearSearch());
+            if (classFilter)   classFilter.addEventListener('change',  () => this.applyFilters());
+            if (termFilter)    termFilter.addEventListener('change',   () => this.applyFilters());
+            if (sessionFilter) sessionFilter.addEventListener('change',() => this.applyFilters());
+            if (filterBtn)     filterBtn.addEventListener('click',     () => this.applyFilters());
+            if (resetBtn)      resetBtn.addEventListener('click',      () => this.resetFilters());
+            if (resetFromEmptyBtn) resetFromEmptyBtn.addEventListener('click', () => this.resetFilters());
+            if (searchInput && clearSearchBtn) clearSearchBtn.style.display = searchInput.value.length > 0 ? 'block' : 'none';
         },
-        updateLGA: (stateName, lgaId) => {
-            const lgaSel = document.getElementById(lgaId);
-            if (!lgaSel) return;
-            lgaSel.innerHTML = '<option value="">Select LGA</option>';
-            const state = NIGERIAN_STATES.find(s => s.name === stateName);
-            if (state) { lgaSel.disabled = false; state.lgas.forEach(l => { const o = document.createElement('option'); o.value = l; o.textContent = l; lgaSel.appendChild(o); }); }
-            else lgaSel.disabled = true;
+        clearSearch: function() {
+            const searchInput  = document.getElementById('search-input');
+            const clearSearchBtn = document.getElementById('clear-search');
+            if (searchInput) { searchInput.value = ''; if (clearSearchBtn) clearSearchBtn.style.display = 'none'; }
+            if (this.searchTimeout) clearTimeout(this.searchTimeout);
+            this.applyFilters();
         },
-        set: (stateId, lgaId, stateVal, lgaVal) => {
-            SLM.populate(stateId, lgaId);
-            if (stateVal) {
-                const sel = document.getElementById(stateId);
-                if (sel) { sel.value = stateVal; SLM.updateLGA(stateVal, lgaId); }
-                setTimeout(() => { const ls = document.getElementById(lgaId); if (ls && lgaVal) ls.value = lgaVal; }, 350);
+        applyFilters: function() {
+            const searchInput  = document.getElementById('search-input');
+            const classFilter  = document.getElementById('schoolclass-filter');
+            const sessionFilter= document.getElementById('session-filter');
+            const termFilter   = document.getElementById('term-filter');
+            AppState.filters = {
+                search:  searchInput  ? searchInput.value.trim()  : '',
+                class:   classFilter  ? classFilter.value         : 'all',
+                session: sessionFilter? sessionFilter.value       : 'all',
+                term:    termFilter   ? termFilter.value          : 'all',
+                status:  'all',
+                gender:  'all'
+            };
+            AppState.pagination.currentPage = 1;
+            StudentManager.fetchStudents();
+        },
+        resetFilters: function() {
+            const searchInput  = document.getElementById('search-input');
+            const classFilter  = document.getElementById('schoolclass-filter');
+            const sessionFilter= document.getElementById('session-filter');
+            const termFilter   = document.getElementById('term-filter');
+            const clearSearchBtn = document.getElementById('clear-search');
+            if (searchInput)   searchInput.value  = '';
+            if (classFilter)   classFilter.value  = 'all';
+            if (termFilter)    termFilter.value   = 'all';
+            if (sessionFilter) sessionFilter.value= 'all';
+            if (clearSearchBtn) clearSearchBtn.style.display = 'none';
+            AppState.filters = { search:'', class:'all', status:'all', gender:'all', session:'all', term:'all' };
+            AppState.pagination.currentPage = 1;
+            StudentManager.fetchStudents();
+        }
+    };
+
+    // ============================================================================
+    // STATE AND LGA MANAGER
+    // ============================================================================
+    const StateLGAManager = {
+        initializeAddStateDropdown: function() {
+            const stateSelect = document.getElementById('addState');
+            const lgaSelect   = document.getElementById('addLocal');
+            if (!stateSelect || !lgaSelect) return;
+            stateSelect.innerHTML = '<option value="">Select State</option>';
+            lgaSelect.innerHTML = '<option value="">Select LGA</option>';
+            lgaSelect.disabled = true;
+            NIGERIAN_STATES.forEach(state => {
+                const option = document.createElement('option');
+                option.value = state.name; option.textContent = state.name;
+                stateSelect.appendChild(option);
+            });
+            stateSelect.addEventListener('change', (e) => {
+                const selectedState = e.target.value;
+                lgaSelect.innerHTML = '<option value="">Select LGA</option>';
+                if (selectedState) {
+                    const state = NIGERIAN_STATES.find(s => s.name === selectedState);
+                    lgaSelect.disabled = false;
+                    if (state) state.lgas.forEach(lga => {
+                        const option = document.createElement('option');
+                        option.value = lga; option.textContent = lga;
+                        lgaSelect.appendChild(option);
+                    });
+                } else { lgaSelect.disabled = true; }
+            });
+        },
+        initializeEditStateDropdown: function() {
+            const stateSelect = document.getElementById('editState');
+            const lgaSelect   = document.getElementById('editLocal');
+            if (!stateSelect || !lgaSelect) return;
+            stateSelect.innerHTML = '<option value="">Select State</option>';
+            NIGERIAN_STATES.forEach(state => {
+                const option = document.createElement('option');
+                option.value = state.name; option.textContent = state.name;
+                stateSelect.appendChild(option);
+            });
+            lgaSelect.innerHTML = '<option value="">Select LGA</option>';
+            lgaSelect.disabled = true;
+            stateSelect.addEventListener('change', (e) => {
+                const selectedState = e.target.value;
+                lgaSelect.innerHTML = '<option value="">Select LGA</option>';
+                if (selectedState) {
+                    const state = NIGERIAN_STATES.find(s => s.name === selectedState);
+                    lgaSelect.disabled = false;
+                    if (state) state.lgas.forEach(lga => {
+                        const option = document.createElement('option');
+                        option.value = lga; option.textContent = lga;
+                        lgaSelect.appendChild(option);
+                    });
+                } else { lgaSelect.disabled = true; }
+            });
+        },
+        setEditStateAndLGA: function(stateName, lgaName) {
+            const stateSelect = document.getElementById('editState');
+            const lgaSelect   = document.getElementById('editLocal');
+            if (!stateSelect || !lgaSelect) return false;
+            if (stateSelect.options.length <= 1) {
+                NIGERIAN_STATES.forEach(state => {
+                    const option = document.createElement('option');
+                    option.value = state.name; option.textContent = state.name;
+                    stateSelect.appendChild(option);
+                });
+            }
+            if (stateName && stateName !== '') {
+                stateSelect.value = stateName;
+                const changeEvent = new Event('change', { bubbles: true });
+                stateSelect.dispatchEvent(changeEvent);
+                setTimeout(() => {
+                    if (lgaName && lgaName !== '') lgaSelect.value = lgaName;
+                }, 300);
+            }
+            return true;
+        }
+    };
+
+    // ============================================================================
+    // ADMISSION NUMBER MANAGER
+    // ============================================================================
+    const AdmissionNumberManager = {
+        async updateAdmissionNumber(prefix = '') {
+            const yearSelect   = document.getElementById(`${prefix ? prefix + 'A' : 'a'}dmissionYear`);
+            const admissionNoInput = document.getElementById(`${prefix ? prefix + 'A' : 'a'}dmissionNo`);
+            const modeSelector = prefix
+                ? `input[name="admissionMode"][id^="${prefix}"]:checked`
+                : 'input[name="admissionMode"]:checked';
+            const admissionMode = document.querySelector(modeSelector) ||
+                document.querySelector(`#${prefix}AdmissionAuto`) ||
+                document.querySelector(`#${prefix}admissionAuto`);
+            if (!yearSelect || !admissionNoInput) return;
+            const year = yearSelect.value;
+            const baseFormat = `TCC/${year}/`;
+            if (admissionMode && admissionMode.value === 'auto' && admissionMode.checked) {
+                admissionNoInput.readOnly = true;
+                try {
+                    const response = await axios.get(`/students/last-admission-number?year=${year}`);
+                    if (response.data.success) admissionNoInput.value = response.data.admissionNo;
+                    else admissionNoInput.value = `${baseFormat}0871`;
+                } catch { admissionNoInput.value = `${baseFormat}0871`; }
+            } else {
+                admissionNoInput.readOnly = false;
+                if (!admissionNoInput.value || admissionNoInput.value === `${baseFormat}AUTO`) {
+                    admissionNoInput.value = `${baseFormat}0871`;
+                } else if (!admissionNoInput.value.startsWith(baseFormat)) {
+                    const numericPart = admissionNoInput.value.split('/').pop() || '0871';
+                    const numericValue = Math.max(871, parseInt(numericPart) || 871);
+                    admissionNoInput.value = `${baseFormat}${numericValue.toString().padStart(4, '0')}`;
+                }
+            }
+        },
+        toggleAdmissionInput: function(prefix = '') {
+            const modeId = prefix ? `${prefix}AdmissionAuto` : 'admissionAuto';
+            const modeEl = document.getElementById(modeId);
+            const admissionNoInput = document.getElementById(`${prefix ? prefix + 'A' : 'a'}dmissionNo`);
+            const yearSelect = document.getElementById(`${prefix ? prefix + 'A' : 'a'}dmissionYear`);
+            if (!admissionNoInput || !yearSelect) return;
+            const year = yearSelect.value;
+            const baseFormat = `TCC/${year}/`;
+            if (modeEl && modeEl.checked) {
+                admissionNoInput.readOnly = true;
+                this.updateAdmissionNumber(prefix);
+            } else {
+                admissionNoInput.readOnly = false;
+                if (!admissionNoInput.value || admissionNoInput.value === `${baseFormat}AUTO`) {
+                    admissionNoInput.value = `${baseFormat}0871`;
+                } else if (!admissionNoInput.value.startsWith(baseFormat)) {
+                    const numericPart = admissionNoInput.value.split('/').pop() || '0871';
+                    const numericValue = Math.max(871, parseInt(numericPart) || 871);
+                    admissionNoInput.value = `${baseFormat}${numericValue.toString().padStart(4, '0')}`;
+                }
             }
         }
     };
 
-    // ================================================================
-    // RENDER MANAGER — TABLE & CARDS (othername included)
-    // ================================================================
-    const Render = {
-        table: students => {
+    // ============================================================================
+    // EDIT FORM MANAGER
+    // ============================================================================
+    const EditFormManager = {
+        populateEditForm: function(student) {
+            Utils.log('Populating edit form', student);
+
+            const studentIdField = document.getElementById('editStudentId');
+            if (studentIdField) studentIdField.value = student.id || '';
+
+            // Update form action
+            const form = document.getElementById('editStudentForm');
+            if (form && student.id) {
+                const baseAction = form.dataset.baseAction;
+                if (baseAction) form.action = baseAction.replace(':id', student.id);
+                else form.action = form.action.replace(/\/\d+\/([^\/]+)$/, '/' + student.id + '/$1').replace(/\/\d+$/, '/' + student.id);
+            }
+
+            const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+            const chk = (name, v) => { const el = document.querySelector(`input[name="${name}"][value="${v}"]`); if (el) el.checked = true; };
+
+            set('editAdmissionNo',    student.admissionNo);
+            set('editAdmissionYear',  student.admissionYear || new Date().getFullYear());
+
+            const admissionDate = student.admissionDate || student.admission_date || '';
+            if (admissionDate) set('editAdmissionDate', admissionDate.split(' ')[0].split('T')[0]);
+
+            // Admission mode — default to manual so existing no is shown
+            const manualEl = document.getElementById('editAdmissionManual');
+            const autoEl   = document.getElementById('editAdmissionAuto');
+            if (manualEl) { manualEl.checked = true; }
+            if (autoEl)   { autoEl.checked = false; }
+            const admissionNoInput = document.getElementById('editAdmissionNo');
+            if (admissionNoInput) admissionNoInput.readOnly = false;
+
+            set('editSchoolclassid',  student.schoolclassid);
+            set('editTermid',         student.termid);
+            set('editSessionid',      student.sessionid);
+            set('editStudentCategory',student.student_category);
+            set('editTitle',          student.title);
+            set('editLastname',       student.lastname);
+            set('editFirstname',      student.firstname);
+            set('editOthername',      student.othername);
+            set('editPlaceofbirth',   student.placeofbirth);
+            set('editPhoneNumber',    student.phone_number);
+            set('editEmail',          student.email);
+            set('editFutureAmbition', student.future_ambition);
+            set('editPermanentAddress', student.permanent_address);
+            set('editNationality',    student.nationality);
+            set('editCity',           student.city);
+            set('editReligion',       student.religion);
+            set('editBloodGroup',     student.blood_group);
+            set('editMotherTongue',   student.mother_tongue);
+            set('editNinNumber',      student.nin_number);
+            set('editFatherName',     student.father_name);
+            set('editFatherPhone',    student.father_phone);
+            set('editFatherOccupation',student.father_occupation);
+            set('editFatherCity',     student.father_city);
+            set('editMotherName',     student.mother_name);
+            set('editMotherPhone',    student.mother_phone);
+            set('editParentEmail',    student.parent_email);
+            set('editParentAddress',  student.parent_address);
+            set('editLastSchool',     student.last_school);
+            set('editLastClass',      student.last_class);
+            set('editReasonForLeaving',student.reason_for_leaving);
+
+            // DOB & age
+            const dobInput = document.getElementById('editDOB');
+            if (dobInput && student.dateofbirth) {
+                const dv = student.dateofbirth.split(' ')[0].split('T')[0];
+                dobInput.value = dv;
+                const ageEl = document.getElementById('editAgeInput');
+                if (ageEl) ageEl.value = Utils.calculateAge(dv) || student.age || '';
+            }
+
+            // Radio buttons
+            if (student.statusId == 1) chk('statusId', '1');
+            else if (student.statusId == 2) chk('statusId', '2');
+            if (student.student_status === 'Active') chk('student_status', 'Active');
+            else if (student.student_status === 'Inactive') chk('student_status', 'Inactive');
+            if (student.gender === 'Male') chk('gender', 'Male');
+            else if (student.gender === 'Female') chk('gender', 'Female');
+
+            // School House
+            const houseEl = document.getElementById('editSchoolHouse');
+            if (houseEl) {
+                const houseValue = student.schoolhouseid || student.schoolhouse || student.school_house || null;
+                if (houseValue) houseEl.value = houseValue;
+            }
+
+            // State and LGA
+            if (student.state) StateLGAManager.setEditStateAndLGA(student.state, student.local);
+
+            // Avatar
+            const avatarImg = document.getElementById('editStudentAvatar');
+            if (avatarImg) {
+                avatarImg.src = (student.picture && student.picture !== 'unnamed.jpg')
+                    ? `/storage/images/student_avatars/${student.picture}`
+                    : '{{ asset("theme/layouts/assets/media/avatars/blank.png") }}';
+            }
+
+            Utils.log('Edit form populated successfully');
+        }
+    };
+
+    // ============================================================================
+    // VIEW MODAL MANAGER
+    // ============================================================================
+    const ViewModalManager = {
+        currentStudentId: null,
+        populateEnhancedViewModal: function(student) {
+            Utils.log('Populating view modal', student);
+            this.currentStudentId = student.id;
+
+            const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+            const fullName = [student.lastname, student.firstname, student.othername].filter(Boolean).join(' ') || '—';
+
+            setText('viewFullName',        fullName);
+            setText('viewFullNameDetail',  fullName);
+            setText('viewAdmissionNumber', student.admissionNo || '—');
+            setText('viewAdmissionNo',     student.admissionNo || '—');
+            setText('viewTitle',           student.title       || '—');
+            setText('viewDOB',             Utils.formatDate(student.dateofbirth, 'long'));
+            setText('viewAge',             student.age || Utils.calculateAge(student.dateofbirth));
+            setText('viewAgeDetail',       student.age || Utils.calculateAge(student.dateofbirth));
+            setText('viewPlaceOfBirth',    student.placeofbirth    || '—');
+            setText('viewGenderDetail',    student.gender          || '—');
+            setText('viewGenderText',      student.gender          || '—');
+            setText('viewBloodGroupDetail',    student.blood_group || '—');
+            setText('viewBloodGroupAdditional',student.blood_group || '—');
+            setText('viewReligionDetail',  student.religion        || '—');
+            setText('viewPhoneNumber',     student.phone_number    || '—');
+            setText('viewEmailAddress',    student.email           || '—');
+            setText('viewPermanentAddress',student.permanent_address || '—');
+            setText('viewCity',            student.city            || '—');
+            setText('viewStateOrigin',     student.state           || '—');
+            setText('viewLGA',             student.local           || '—');
+            setText('viewNationality',     student.nationality     || '—');
+            setText('viewFutureAmbition',  student.future_ambition || '—');
+            setText('viewAdmissionDate',   Utils.formatDate(student.admission_date || student.admissionDate, 'long'));
+            setText('viewAdmittedDate',    Utils.formatDate(student.admission_date || student.admissionDate, 'short'));
+            const classDisplay = `${student.schoolclass || ''} ${student.arm || ''}`.trim() || '—';
+            setText('viewCurrentClass',    classDisplay);
+            setText('viewClassDisplay',    classDisplay);
+            const classBadge = document.getElementById('viewClassBadge');
+            if (classBadge) classBadge.innerHTML = `<i class="fas fa-school me-1"></i>${classDisplay}`;
+            setText('viewArm',             student.arm             || '—');
+            setText('viewStudentCategory', student.student_category|| '—');
+            const studentType = student.statusId == 2 ? 'New Student' : student.statusId == 1 ? 'Old Student' : '—';
+            setText('viewStudentType',     studentType);
+            const typeBadge = document.getElementById('viewStudentTypeBadge');
+            if (typeBadge) {
+                if (student.statusId == 2) { typeBadge.style.background = '#fef3c7'; typeBadge.style.color = '#92400e'; typeBadge.innerHTML = `<i class="fas fa-star me-1"></i><span id="viewStudentType">New Student</span>`; }
+                else { typeBadge.style.background = '#ede9fe'; typeBadge.style.color = '#5b21b6'; typeBadge.innerHTML = `<i class="fas fa-history me-1"></i><span id="viewStudentType">Old Student</span>`; }
+            }
+            setText('viewStudentStatus',   student.student_status  || '—');
+            setText('viewSchoolHouse',     student.school_house    || '—');
+            setText('viewLastSchool',      student.last_school     || '—');
+            setText('viewLastClass',       student.last_class      || '—');
+            setText('viewReasonForLeaving',student.reason_for_leaving || '—');
+            setText('viewFatherFullName',  student.father_name     || '—');
+            setText('viewFatherPhone',     student.father_phone    || '—');
+            setText('viewFatherOccupation',student.father_occupation || '—');
+            setText('viewFatherCityState', student.father_city     || '—');
+            setText('viewFatherEmail',     student.parent_email    || '—');
+            setText('viewFatherAddress',   student.parent_address  || '—');
+            setText('viewMotherFullName',  student.mother_name     || '—');
+            setText('viewMotherPhone',     student.mother_phone    || '—');
+            setText('viewMotherOccupation',student.mother_occupation || '—');
+            setText('viewMotherEmail',     student.parent_email    || '—');
+            setText('viewMotherAddress',   student.parent_address  || '—');
+            setText('viewParentEmail',     student.parent_email    || '—');
+            setText('viewParentAddress',   student.parent_address  || '—');
+            setText('viewNIN',             student.nin_number      || '—');
+            setText('viewMotherTongue',    student.mother_tongue   || '—');
+            setText('viewGuardianName',    student.guardian_name   || (student.father_name || student.mother_name || '—'));
+            setText('viewGuardianPhone',   student.guardian_phone  || student.father_phone || '—');
+
+            const fatherBadge = document.getElementById('fatherStatusBadge');
+            if (fatherBadge) { fatherBadge.textContent = student.father_name ? 'Available' : 'Not Provided'; fatherBadge.className = `badge ms-1 ${student.father_name ? 'bg-success' : 'bg-secondary'}`; }
+            const motherBadge = document.getElementById('motherStatusBadge');
+            if (motherBadge) { motherBadge.textContent = student.mother_name ? 'Available' : 'Not Provided'; motherBadge.className = `badge ms-1 ${student.mother_name ? 'bg-success' : 'bg-secondary'}`; }
+
+            // Status indicator
+            const si = document.getElementById('studentStatusIndicator');
+            if (si) si.style.background = student.student_status === 'Active' ? '#16a34a' : '#6b7280';
+
+            // Photo
+            const photoEl = document.getElementById('viewStudentPhoto');
+            if (photoEl) {
+                const initials = Utils.getInitials(student.firstname, student.lastname);
+                if (student.picture && student.picture !== 'unnamed.jpg') {
+                    photoEl.src = `/storage/images/student_avatars/${student.picture}`;
+                    photoEl.dataset.zoomSrc    = `/storage/images/student_avatars/${student.picture}`;
+                } else {
+                    photoEl.src = '{{ asset("theme/layouts/assets/media/avatars/blank.png") }}';
+                    photoEl.dataset.zoomSrc    = '';
+                }
+                photoEl.dataset.zoomName   = fullName;
+                photoEl.dataset.zoomInit   = initials;
+                photoEl.dataset.zoomDetail = `${Utils.escapeHtml(student.admissionNo || '')} &bull; ${Utils.escapeHtml(classDisplay)} &bull; ${Utils.escapeHtml(student.gender || '')}`;
+            }
+
+            // Fetch term info
+            this.fetchStudentTermInfo(student.id);
+
+            // Reset term history
+            const thc = document.getElementById('termHistoryContent');
+            const thl = document.getElementById('termHistoryLoading');
+            if (thc) { thc.style.display = 'none'; thc.innerHTML = ''; }
+            if (thl) thl.style.display = 'block';
+        },
+        async fetchStudentTermInfo(studentId) {
+            try {
+                const response = await ApiService.getStudentActiveTerm(studentId);
+                const currentTermAlert = document.getElementById('currentTermAlert');
+                if (response.success && response.data) {
+                    const d = response.data;
+                    const setText = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v || '—'; };
+                    setText('viewCurrentTerm',   d.term?.term    || '—');
+                    setText('viewCurrentSession',d.session?.session || '—');
+                    const status = document.getElementById('viewCurrentTermStatus');
+                    if (status) status.innerHTML = d.is_current
+                        ? '<span class="badge bg-success">Current Active Term</span>'
+                        : '<span class="badge bg-warning text-dark">Registered (Not Current)</span>';
+                    if (currentTermAlert) currentTermAlert.innerHTML = `<div class="alert alert-success border-0 rounded-3 py-2 small"><i class="fas fa-check-circle me-1"></i><strong>Enrolled:</strong> ${d.schoolClass?.schoolclass || ''} ${d.schoolClass?.armRelation?.arm || ''} &bull; ${d.term?.term || ''} &bull; ${d.session?.session || ''}</div>`;
+                } else {
+                    ['viewCurrentTerm','viewCurrentSession'].forEach(id => { const el = document.getElementById(id); if (el) el.textContent = '—'; });
+                    const status = document.getElementById('viewCurrentTermStatus');
+                    if (status) status.innerHTML = '<span class="badge bg-secondary">Not Registered</span>';
+                    if (currentTermAlert) currentTermAlert.innerHTML = `<div class="alert alert-warning border-0 rounded-3 py-2 small"><i class="fas fa-exclamation-triangle me-1"></i>No active term registration found.</div>`;
+                }
+            } catch (e) { Utils.log('Error fetching term info', e, 'error'); }
+        }
+    };
+
+    // ============================================================================
+    // PAGINATION MANAGER
+    // ============================================================================
+    const PaginationManager = {
+        updatePaginationUI: function(pagination) {
+            const paginationContainer = document.getElementById('pagination');
+            if (!paginationContainer) return;
+
+            const showingCount = document.getElementById('showingCount');
+            const toCount      = document.getElementById('toCount');
+            const totalCount   = document.getElementById('totalCount');
+            const totalStudentsEl = document.getElementById('totalStudents');
+
+            if (showingCount) showingCount.textContent = pagination.from   || 0;
+            if (toCount)      toCount.textContent      = pagination.to     || 0;
+            if (totalCount)   totalCount.textContent   = pagination.total  || 0;
+            if (totalStudentsEl) totalStudentsEl.textContent = pagination.total || 0;
+
+            // Remove existing page number items only (keep prev/next)
+            paginationContainer.querySelectorAll('.page-item:not(#prevPageLi):not(#nextPageLi)').forEach(el => el.remove());
+
+            if (pagination.last_page > 1) {
+                const startPage = Math.max(1, pagination.current_page - 2);
+                const endPage   = Math.min(pagination.last_page, pagination.current_page + 2);
+                const addItem = (n) => {
+                    const li = document.createElement('li');
+                    li.className = `page-item ${n === pagination.current_page ? 'active' : ''}`;
+                    const a = document.createElement('a');
+                    a.className = 'page-link'; a.href = 'javascript:void(0);'; a.textContent = n;
+                    a.onclick = (e) => { e.preventDefault(); AppState.pagination.currentPage = n; StudentManager.fetchStudents(); };
+                    li.appendChild(a);
+                    paginationContainer.querySelector('#nextPageLi').before(li);
+                };
+                const addEllipsis = () => {
+                    const li = document.createElement('li'); li.className = 'page-item disabled';
+                    li.innerHTML = '<span class="page-link">…</span>';
+                    paginationContainer.querySelector('#nextPageLi').before(li);
+                };
+                if (startPage > 1) { addItem(1); if (startPage > 2) addEllipsis(); }
+                for (let i = startPage; i <= endPage; i++) addItem(i);
+                if (endPage < pagination.last_page) { if (endPage < pagination.last_page - 1) addEllipsis(); addItem(pagination.last_page); }
+            }
+
+            // Prev/Next
+            const prevPageBtn = document.getElementById('prevPage');
+            const nextPageBtn = document.getElementById('nextPage');
+            if (prevPageBtn) {
+                prevPageBtn.parentElement.classList.toggle('disabled', pagination.current_page <= 1);
+                prevPageBtn.onclick = (e) => { e.preventDefault(); if (pagination.current_page > 1) { AppState.pagination.currentPage = pagination.current_page - 1; StudentManager.fetchStudents(); } };
+            }
+            if (nextPageBtn) {
+                nextPageBtn.parentElement.classList.toggle('disabled', pagination.current_page >= pagination.last_page);
+                nextPageBtn.onclick = (e) => { e.preventDefault(); if (pagination.current_page < pagination.last_page) { AppState.pagination.currentPage = pagination.current_page + 1; StudentManager.fetchStudents(); } };
+            }
+        }
+    };
+
+    // ============================================================================
+    // RENDER MANAGER
+    // ============================================================================
+    const RenderManager = {
+        renderTableView: function(students) {
             const tbody = document.getElementById('studentTableBody');
             if (!tbody) return;
-            if (!students?.length) { tbody.innerHTML = ''; return; }
-            const frag = document.createDocumentFragment();
-            students.forEach(s => {
-                const tr = document.createElement('tr');
-                tr.dataset.id = s.id;
-                const init    = U.initials(s.firstname, s.lastname);
-                const fullName= [s.lastname, s.firstname, s.othername].filter(Boolean).join(' ');
-                const imgHtml = s.picture && s.picture !== 'unnamed.jpg'
-                    ? `<img src="/storage/images/student_avatars/${s.picture}" class="sm-avatar" alt="${U.esc(fullName)}"
-                           data-zoom-src="/storage/images/student_avatars/${s.picture}"
-                           data-zoom-name="${U.esc(fullName)}" data-zoom-init="${U.esc(init)}"
-                           data-zoom-detail="${U.esc(s.admissionNo||'')} &bull; ${U.esc(s.schoolclass||'')} ${U.esc(s.arm||'')} &bull; ${U.esc(s.gender||'')}
-                           " onclick="handleAvatarZoom(this)">`
-                    : `<div class="sm-avatar-init" data-zoom-src="" data-zoom-name="${U.esc(fullName)}" data-zoom-init="${U.esc(init)}"
-                            data-zoom-detail="${U.esc(s.admissionNo||'')} &bull; ${U.esc(s.schoolclass||'')} ${U.esc(s.arm||'')} &bull; ${U.esc(s.gender||'')}"
-                            onclick="handleAvatarZoom(this)">${U.esc(init)}</div>`;
-                const actBadge = s.student_status === 'Active'
-                    ? `<span class="sm-badge badge-active"><i class="fas fa-circle" style="font-size:7px"></i>${U.esc(s.student_status)}</span>`
-                    : `<span class="sm-badge badge-inactive"><i class="fas fa-circle" style="font-size:7px"></i>${U.esc(s.student_status||'—')}</span>`;
-                const typeBadge = s.statusId == 2
-                    ? `<span class="sm-badge badge-new"><i class="fas fa-star" style="font-size:9px"></i>New</span>`
-                    : `<span class="sm-badge badge-old"><i class="fas fa-history" style="font-size:9px"></i>Old</span>`;
+            if (!students || students.length === 0) { tbody.innerHTML = ''; return; }
+            const fragment = document.createDocumentFragment();
+            students.forEach(student => {
+                const row = document.createElement('tr');
+                row.dataset.id = student.id;
 
-                tr.innerHTML = `
-                    <td><div class="form-check"><input class="form-check-input student-checkbox" type="checkbox" value="${s.id}"></div></td>
-                    <td>${imgHtml}</td>
+                const initials  = Utils.getInitials(student.firstname, student.lastname);
+                // Full name includes othername
+                const fullName  = [student.lastname, student.firstname, student.othername].filter(Boolean).join(' ');
+                const avatarSrc = student.picture && student.picture !== 'unnamed.jpg'
+                    ? `/storage/images/student_avatars/${student.picture}` : null;
+
+                const avatarHtml = avatarSrc
+                    ? `<img src="${avatarSrc}" alt="${Utils.escapeHtml(fullName)}"
+                            class="tbl-avatar"
+                            data-zoom-src="${avatarSrc}"
+                            data-zoom-name="${Utils.escapeHtml(fullName)}"
+                            data-zoom-init="${Utils.escapeHtml(initials)}"
+                            data-zoom-detail="${Utils.escapeHtml(student.admissionNo||'')} &bull; ${Utils.escapeHtml(student.schoolclass||'')} ${Utils.escapeHtml(student.arm||'')} &bull; ${Utils.escapeHtml(student.gender||'')}"
+                            onclick="handleAvatarZoom(this)">`
+                    : `<div class="tbl-avatar-init"
+                             data-zoom-src=""
+                             data-zoom-name="${Utils.escapeHtml(fullName)}"
+                             data-zoom-init="${Utils.escapeHtml(initials)}"
+                             data-zoom-detail="${Utils.escapeHtml(student.admissionNo||'')} &bull; ${Utils.escapeHtml(student.schoolclass||'')} ${Utils.escapeHtml(student.arm||'')} &bull; ${Utils.escapeHtml(student.gender||'')}"
+                             onclick="handleAvatarZoom(this)">${Utils.escapeHtml(initials)}</div>`;
+
+                const statusBadge = student.student_status === 'Active'
+                    ? `<span class="badge bg-success bg-gradient px-2 py-1 rounded-pill"><i class="fas fa-circle me-1" style="font-size:7px;"></i>Active</span>`
+                    : `<span class="badge bg-secondary bg-gradient px-2 py-1 rounded-pill"><i class="fas fa-circle me-1" style="font-size:7px;"></i>${Utils.escapeHtml(student.student_status || 'Inactive')}</span>`;
+
+                const typeBadge = student.statusId == 2
+                    ? `<span class="badge bg-warning text-dark px-2 py-1 rounded-pill ms-1" style="font-size:10px;"><i class="fas fa-star me-1" style="font-size:9px;"></i>New</span>`
+                    : `<span class="badge bg-light text-secondary px-2 py-1 rounded-pill ms-1" style="font-size:10px;border:1px solid #dee2e6;"><i class="fas fa-history me-1" style="font-size:9px;"></i>Old</span>`;
+
+                row.innerHTML = `
+                    <td><div class="form-check"><input class="form-check-input student-checkbox" type="checkbox" value="${student.id}"></div></td>
+                    <td>${avatarHtml}</td>
                     <td>
-                        <div class="stu-name">${U.esc(fullName)}</div>
-                        <div class="stu-meta">
-                            <span class="stu-chip"><i class="fas fa-id-card" style="font-size:9px"></i>${U.esc(s.admissionNo||'N/A')}</span>
+                        <div style="font-weight:600;font-size:13px;color:#1e293b;">${Utils.escapeHtml(fullName)}</div>
+                        <div style="display:flex;gap:6px;align-items:center;margin-top:3px;flex-wrap:wrap;">
+                            <span style="background:#f1f5f9;color:#475569;padding:2px 7px;border-radius:20px;font-size:11px;">
+                                <i class="fas fa-id-card" style="font-size:9px;margin-right:3px;"></i>${Utils.escapeHtml(student.admissionNo || 'N/A')}
+                            </span>
                             ${typeBadge}
                         </div>
                     </td>
                     <td>
-                        <div style="font-weight:600;font-size:13px;">${U.esc(s.schoolclass||'')} ${U.esc(s.arm||'')}</div>
-                        <small class="text-muted">${U.esc(s.student_category||'')}</small>
+                        <div style="font-weight:600;font-size:13px;">${Utils.escapeHtml(student.schoolclass || '')} ${Utils.escapeHtml(student.arm || '')}</div>
+                        <small class="text-muted">${Utils.escapeHtml(student.student_category || '')}</small>
                     </td>
-                    <td>${actBadge}</td>
-                    <td>
-                        <span style="display:flex;align-items:center;gap:5px;font-size:13px;">
-                            <i class="fas fa-${s.gender==='Male'?'mars text-primary':'venus text-danger'}"></i>
-                            ${U.esc(s.gender||'N/A')}
-                        </span>
-                    </td>
-                    <td style="font-size:12px;color:var(--sm-muted);">${U.date(s.created_at,'short')}</td>
+                    <td>${statusBadge}</td>
+                    <td><span style="display:flex;align-items:center;gap:5px;font-size:13px;"><i class="fas fa-${student.gender === 'Male' ? 'mars text-primary' : 'venus text-danger'}"></i>${Utils.escapeHtml(student.gender || 'N/A')}</span></td>
+                    <td style="font-size:12px;color:#6b7280;">${Utils.formatDate(student.created_at, 'short')}</td>
                     <td>
                         <div class="d-flex gap-1 justify-content-end">
-                            <button class="act-btn act-view view-student-btn" data-student-id="${s.id}" title="View"><i class="fas fa-eye"></i></button>
-                            <button class="act-btn act-edit edit-student-btn"  data-student-id="${s.id}" title="Edit"><i class="fas fa-edit"></i></button>
-                            <button class="act-btn act-delete delete-student-btn" data-student-id="${s.id}" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                            <button class="btn btn-sm btn-soft-info view-student-btn" data-student-id="${student.id}" title="View"><i class="fas fa-eye"></i></button>
+                            <button class="btn btn-sm btn-soft-warning edit-student-btn" data-student-id="${student.id}" title="Edit"><i class="fas fa-edit"></i></button>
+                            <button class="btn btn-sm btn-soft-danger delete-student-btn" data-student-id="${student.id}" title="Delete"><i class="fas fa-trash-alt"></i></button>
                         </div>
                     </td>`;
-                frag.appendChild(tr);
+                fragment.appendChild(row);
             });
-            tbody.innerHTML = ''; tbody.appendChild(frag);
-            Render.updateCheckAll();
+            tbody.innerHTML = '';
+            tbody.appendChild(fragment);
+            this.updateCheckAllState();
         },
 
-        cards: students => {
+        renderCardView: function(students) {
             const container = document.getElementById('studentsCardsContainer');
             if (!container) return;
-            if (!students?.length) { container.innerHTML = ''; return; }
-            const frag = document.createDocumentFragment();
-            students.forEach(s => {
+            if (!students || students.length === 0) { container.innerHTML = ''; return; }
+            const fragment = document.createDocumentFragment();
+            students.forEach(student => {
                 const col = document.createElement('div');
-                col.className = 'col-xl-3 col-lg-4 col-md-6';
-                const init = U.initials(s.firstname, s.lastname);
-                const fullName = [s.lastname, s.firstname, s.othername].filter(Boolean).join(' ');
-                const avatarHtml = s.picture && s.picture !== 'unnamed.jpg'
-                    ? `<div class="stu-card-avatar" onclick="handleAvatarZoom(this)"
-                             data-zoom-src="/storage/images/student_avatars/${s.picture}"
-                             data-zoom-name="${U.esc(fullName)}" data-zoom-init="${U.esc(init)}"
-                             data-zoom-detail="${U.esc(s.admissionNo||'')} &bull; ${U.esc(s.schoolclass||'')} ${U.esc(s.arm||'')}">
-                           <img src="/storage/images/student_avatars/${s.picture}" alt="${U.esc(fullName)}">
+                col.className = 'col-xl-3 col-lg-4 col-md-6 mb-4';
+                const initials  = Utils.getInitials(student.firstname, student.lastname);
+                const fullName  = [student.lastname, student.firstname, student.othername].filter(Boolean).join(' ');
+                const avatarSrc = student.picture && student.picture !== 'unnamed.jpg'
+                    ? `/storage/images/student_avatars/${student.picture}` : null;
+
+                const avatarHtml = avatarSrc
+                    ? `<div class="avatar-container"
+                             data-zoom-src="${avatarSrc}"
+                             data-zoom-name="${Utils.escapeHtml(fullName)}"
+                             data-zoom-init="${Utils.escapeHtml(initials)}"
+                             data-zoom-detail="${Utils.escapeHtml(student.admissionNo||'')} &bull; ${Utils.escapeHtml(student.schoolclass||'')} ${Utils.escapeHtml(student.arm||'')}"
+                             onclick="handleAvatarZoom(this)">
+                            <img src="${avatarSrc}" alt="${Utils.escapeHtml(fullName)}" class="avatar">
                        </div>`
-                    : `<div class="stu-card-avatar" onclick="handleAvatarZoom(this)"
-                             data-zoom-src="" data-zoom-name="${U.esc(fullName)}" data-zoom-init="${U.esc(init)}"
-                             data-zoom-detail="${U.esc(s.admissionNo||'')} &bull; ${U.esc(s.schoolclass||'')} ${U.esc(s.arm||'')}">
-                           <div class="stu-card-avatar-init">${U.esc(init)}</div>
+                    : `<div class="avatar-container"
+                             data-zoom-src=""
+                             data-zoom-name="${Utils.escapeHtml(fullName)}"
+                             data-zoom-init="${Utils.escapeHtml(initials)}"
+                             data-zoom-detail="${Utils.escapeHtml(student.admissionNo||'')} &bull; ${Utils.escapeHtml(student.schoolclass||'')} ${Utils.escapeHtml(student.arm||'')}"
+                             onclick="handleAvatarZoom(this)">
+                            <div class="avatar-initials">${Utils.escapeHtml(initials)}</div>
                        </div>`;
-                const actBadge = s.student_status === 'Active'
-                    ? `<span class="sm-badge badge-active" style="font-size:11px;"><i class="fas fa-circle" style="font-size:7px"></i>Active</span>`
-                    : `<span class="sm-badge badge-inactive" style="font-size:11px;"><i class="fas fa-circle" style="font-size:7px"></i>Inactive</span>`;
-                const typeBadge = s.statusId == 2
-                    ? `<span class="sm-badge badge-new ms-1" style="font-size:11px;">New</span>`
-                    : `<span class="sm-badge badge-old ms-1" style="font-size:11px;">Old</span>`;
+
+                const actBadge  = student.student_status === 'Active'
+                    ? `<span class="status-badge status-active"><i class="fas fa-check-circle"></i>Active</span>`
+                    : `<span class="status-badge status-inactive"><i class="fas fa-pause-circle"></i>Inactive</span>`;
+                const typeBadge = student.statusId == 2
+                    ? `<span class="status-badge status-new ms-1"><i class="fas fa-star"></i>New Student</span>`
+                    : `<span class="status-badge status-old ms-1"><i class="fas fa-history"></i>Old Student</span>`;
 
                 col.innerHTML = `
-                    <div class="stu-card mb-3" data-id="${s.id}">
-                        <div class="stu-card-checkbox">
-                            <input class="form-check-input student-checkbox" type="checkbox" value="${s.id}" style="width:18px;height:18px;border:2px solid rgba(255,255,255,.8);">
+                    <div class="student-profile-card" data-id="${student.id}">
+                        <div class="checkbox-container">
+                            <div class="form-check"><input class="form-check-input student-checkbox" type="checkbox" value="${student.id}"></div>
                         </div>
                         ${avatarHtml}
-                        <div class="stu-card-header" style="min-height:100px;">
-                            <div class="stu-card-name">${U.esc(fullName)}</div>
-                            <span class="stu-card-adm">${U.esc(s.admissionNo||'N/A')}</span>
-                        </div>
-                        <div class="stu-card-body">
-                            <div class="mb-2">${actBadge}${typeBadge}</div>
-                            <div class="stu-card-grid">
-                                <div>
-                                    <div class="stu-card-info-label">Class</div>
-                                    <div class="stu-card-info-val">${U.esc(s.schoolclass||'—')} ${U.esc(s.arm||'')}</div>
-                                </div>
-                                <div>
-                                    <div class="stu-card-info-label">Gender</div>
-                                    <div class="stu-card-info-val">${U.esc(s.gender||'—')}</div>
-                                </div>
-                                <div>
-                                    <div class="stu-card-info-label">Age</div>
-                                    <div class="stu-card-info-val">${s.age||U.age(s.dateofbirth)||'—'}</div>
-                                </div>
-                                <div>
-                                    <div class="stu-card-info-label">Registered</div>
-                                    <div class="stu-card-info-val">${U.date(s.created_at,'short')}</div>
-                                </div>
+                        <div class="card-header">
+                            <div class="header-content">
+                                <h5 class="student-name">${Utils.escapeHtml(fullName)}</h5>
+                                <span class="student-admission">${Utils.escapeHtml(student.admissionNo || 'N/A')}</span>
                             </div>
-                            <div class="stu-card-actions">
-                                <button class="stu-card-view view-student-btn"   data-student-id="${s.id}"><i class="fas fa-eye"></i> View</button>
-                                <button class="stu-card-edit edit-student-btn"   data-student-id="${s.id}"><i class="fas fa-edit"></i> Edit</button>
-                                <button class="stu-card-delete delete-student-btn" data-student-id="${s.id}"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                        <div class="card-body">
+                            <div>${actBadge}${typeBadge}</div>
+                            <div class="student-info-grid mt-2">
+                                <div class="info-item"><span class="info-label">Class</span><span class="info-value">${Utils.escapeHtml(student.schoolclass || '')} ${Utils.escapeHtml(student.arm || '')}</span></div>
+                                <div class="info-item"><span class="info-label">Gender</span><span class="info-value">${Utils.escapeHtml(student.gender || 'N/A')}</span></div>
+                                <div class="info-item"><span class="info-label">Age</span><span class="info-value">${Utils.escapeHtml(String(student.age || Utils.calculateAge(student.dateofbirth) || 'N/A'))}</span></div>
+                                <div class="info-item"><span class="info-label">Registered</span><span class="info-value">${Utils.formatDate(student.created_at, 'short')}</span></div>
+                            </div>
+                            <div class="action-buttons">
+                                <button class="action-btn view-btn view-student-btn" data-student-id="${student.id}"><i class="fas fa-eye me-1"></i>View</button>
+                                <button class="action-btn edit-btn edit-student-btn" data-student-id="${student.id}"><i class="fas fa-edit me-1"></i>Edit</button>
+                                <button class="action-btn delete-btn delete-student-btn" data-student-id="${student.id}"><i class="fas fa-trash-alt"></i></button>
                             </div>
                         </div>
                     </div>`;
-                frag.appendChild(col);
+                fragment.appendChild(col);
             });
-            container.innerHTML = ''; container.appendChild(frag);
-            Render.updateCheckAll();
+            container.innerHTML = '';
+            container.appendChild(fragment);
+            this.updateCheckAllState();
         },
 
-        updateCheckAll: () => {
-            const all = document.querySelectorAll('.student-checkbox').length;
-            const ch  = document.querySelectorAll('.student-checkbox:checked').length;
+        updateCheckAllState: function() {
+            const totalCheckboxes   = document.querySelectorAll('.student-checkbox').length;
+            const checkedCheckboxes = document.querySelectorAll('.student-checkbox:checked').length;
             ['checkAll','checkAllTable'].forEach(id => {
                 const el = document.getElementById(id);
-                if (el) { el.checked = all > 0 && all === ch; el.indeterminate = ch > 0 && ch < all; }
+                if (el) { el.checked = totalCheckboxes > 0 && totalCheckboxes === checkedCheckboxes; el.indeterminate = checkedCheckboxes > 0 && checkedCheckboxes < totalCheckboxes; }
             });
-            const bulkBtn = document.getElementById('bulkActionsDropdown');
-            if (bulkBtn) {
-                bulkBtn.disabled = ch === 0;
-                bulkBtn.innerHTML = ch > 0 ? `<i class="fas fa-cog me-1"></i>Actions (${ch})` : '<i class="fas fa-cog me-1"></i>Actions';
+            const bulkActionsDropdown = document.getElementById('bulkActionsDropdown');
+            if (bulkActionsDropdown) {
+                bulkActionsDropdown.disabled = checkedCheckboxes === 0;
+                bulkActionsDropdown.innerHTML = checkedCheckboxes > 0
+                    ? `<i class="fas fa-cog me-1"></i>Actions (${checkedCheckboxes})`
+                    : `<i class="fas fa-cog me-1"></i>Actions`;
             }
         },
 
-        toggleView: type => {
-            AppState.ui.currentView = type;
-            const tv = document.getElementById('tableView'), cv = document.getElementById('cardView');
-            const tvb = document.getElementById('tableViewBtn'), cvb = document.getElementById('cardViewBtn');
-            if (type === 'table') {
-                tv?.classList.remove('d-none'); cv?.classList.add('d-none');
-                tvb?.classList.add('active');   cvb?.classList.remove('active');
-                if (AppState.pagination.data.length) Render.table(AppState.pagination.data);
+        toggleView: function(viewType) {
+            AppState.ui.currentView = viewType;
+            const tableView   = document.getElementById('tableView');
+            const cardView    = document.getElementById('cardView');
+            const tableViewBtn= document.getElementById('tableViewBtn');
+            const cardViewBtn = document.getElementById('cardViewBtn');
+            if (!tableView || !cardView) return;
+            if (viewType === 'table') {
+                tableView.classList.remove('d-none'); cardView.classList.add('d-none');
+                tableViewBtn?.classList.add('active'); cardViewBtn?.classList.remove('active');
+                if (AppState.pagination.data.length > 0) this.renderTableView(AppState.pagination.data);
             } else {
-                tv?.classList.add('d-none'); cv?.classList.remove('d-none');
-                tvb?.classList.remove('active'); cvb?.classList.add('active');
-                if (AppState.pagination.data.length) Render.cards(AppState.pagination.data);
+                tableView.classList.add('d-none'); cardView.classList.remove('d-none');
+                tableViewBtn?.classList.remove('active'); cardViewBtn?.classList.add('active');
+                if (AppState.pagination.data.length > 0) this.renderCardView(AppState.pagination.data);
             }
         }
     };
 
-    // ================================================================
-    // STUDENT MANAGER
-    // ================================================================
-    const SM = {
-        async fetch() {
-            U.showLoading();
-            try {
-                const resp = await API.students(AppState.pagination.currentPage, AppState.pagination.perPage, AppState.filters);
-                if (!resp.success) throw new Error(resp.message || 'Failed');
-                const pd = resp.data;
-                AppState.pagination = { currentPage: pd.current_page, lastPage: pd.last_page, total: pd.total, from: pd.from, to: pd.to, data: pd.data };
-                AppState.ui.currentView === 'table' ? Render.table(pd.data) : Render.cards(pd.data);
-                Pagination.update(pd);
-                Selection.clearAll();
-                pd.data.forEach(s => AppState.cache.students.set(String(s.id), s));
-            } catch (e) {
-                U.log('Fetch error', e, 'error');
-                U.err('Failed to load students. Please try again.');
-            } finally { U.hideLoading(); }
-        },
-
-        async view(id) {
-            try {
-                Swal.fire({title:'Loading…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
-                let s = AppState.cache.students.get(String(id));
-                if (!s) { const r = await API.student(id); if (r.success) { s = r.student; AppState.cache.students.set(String(id), s); } }
-                Swal.close();
-                if (s) {
-                    ViewModal.populate(s);
-                    new bootstrap.Modal(document.getElementById('viewStudentModal')).show();
-                } else U.err('Student not found.');
-            } catch (e) { Swal.close(); U.err('Failed to load student.'); }
-        },
-
-        async edit(id) {
-            try {
-                Swal.fire({title:'Loading…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
-                SLM.populate('editState','editLocal');
-                const r = await API.student(id);
-                Swal.close();
-                if (!r.success || !r.student) throw new Error(r.message||'Not found');
-                EditForm.populate(r.student);
-                new bootstrap.Modal(document.getElementById('editStudentModal')).show();
-            } catch(e) { Swal.close(); U.err('Failed to load student: ' + (e.message||'')); }
-        },
-
-        async delete(id) {
-            if (!await U.confirm('Delete Student?', "You won't be able to revert this!", 'Yes, delete it!')) return;
-            try { await API.delete(id); AppState.cache.students.delete(String(id)); await SM.fetch(); U.ok('Student deleted.'); }
-            catch(e) { U.err('Failed to delete student.'); }
-        },
-
-        async deleteMany() {
-            const ids = Selection.getIds();
-            if (!ids.length) { U.err('Please select at least one student.', 'No Selection'); return; }
-            if (!await U.confirm(`Delete ${ids.length} Students?`, 'This cannot be undone!', 'Yes, delete them!')) return;
-            try { await API.delMany(ids); ids.forEach(id => AppState.cache.students.delete(String(id))); await SM.fetch(); U.ok(`${ids.length} student(s) deleted.`); Selection.clearAll(); }
-            catch(e) { U.err('Failed to delete selected students.'); }
-        }
-    };
-
-    // ================================================================
+    // ============================================================================
     // SELECTION MANAGER
-    // ================================================================
-    const Selection = {
-        getIds: () => Array.from(document.querySelectorAll('.student-checkbox:checked')).map(cb => cb.value),
-        clearAll: () => {
-            document.querySelectorAll('.student-checkbox').forEach(cb => { cb.checked = false; cb.closest('tr,div[data-id]')?.classList.remove('selected'); });
+    // ============================================================================
+    const SelectionManager = {
+        initializeCheckboxes: function() {
+            document.getElementById('checkAll')?.addEventListener('change', (e) => this.handleSelectAll(e));
+            document.getElementById('checkAllTable')?.addEventListener('change', (e) => this.handleSelectAll(e));
+            document.addEventListener('change', (e) => {
+                if (e.target.classList.contains('student-checkbox')) {
+                    const parent = e.target.closest('.student-profile-card, tr');
+                    if (parent) parent.classList.toggle('selected', e.target.checked);
+                    RenderManager.updateCheckAllState();
+                }
+            });
+        },
+        handleSelectAll: function(e) {
+            const isChecked = e.target.checked;
+            document.querySelectorAll('.student-checkbox').forEach(checkbox => {
+                checkbox.checked = isChecked;
+                const parent = checkbox.closest('.student-profile-card, tr');
+                if (parent) parent.classList.toggle('selected', isChecked);
+            });
+            RenderManager.updateCheckAllState();
+        },
+        getSelectedStudentIds: function() {
+            return Array.from(document.querySelectorAll('.student-checkbox:checked')).map(cb => cb.value);
+        },
+        clearAllSelections: function() {
+            document.querySelectorAll('.student-checkbox').forEach(checkbox => {
+                checkbox.checked = false;
+                const parent = checkbox.closest('.student-profile-card, tr');
+                if (parent) parent.classList.remove('selected');
+            });
             AppState.ui.selectedStudents.clear();
             ['checkAll','checkAllTable'].forEach(id => { const el = document.getElementById(id); if (el) { el.checked = false; el.indeterminate = false; } });
-            Render.updateCheckAll();
-        },
-        init: () => {
-            ['checkAll','checkAllTable'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.onchange = e => {
-                    document.querySelectorAll('.student-checkbox').forEach(cb => { cb.checked = e.target.checked; });
-                    Render.updateCheckAll();
-                };
-            });
-            document.addEventListener('change', e => {
-                if (e.target.classList.contains('student-checkbox')) Render.updateCheckAll();
-            });
+            RenderManager.updateCheckAllState();
         }
     };
 
-    // ================================================================
-    // PAGINATION
-    // ================================================================
-    const Pagination = {
-        update: pd => {
-            U.setText('showingCount', pd.from || 0);
-            U.setText('toCount',      pd.to   || 0);
-            U.setText('totalCount',   pd.total|| 0);
-            U.setText('totalStudents',pd.total|| 0);
-
-            const ul = document.getElementById('pagination');
-            if (!ul) return;
-            ul.querySelectorAll('.page-item:not(#prevPageLi):not(#nextPageLi)').forEach(el => el.remove());
-
-            if (pd.last_page > 1) {
-                const start = Math.max(1, pd.current_page - 2);
-                const end   = Math.min(pd.last_page, pd.current_page + 2);
-                const addItem = (n, label=n) => {
-                    const li = document.createElement('li');
-                    li.className = `page-item ${n === pd.current_page ? 'active' : ''}`;
-                    const a = document.createElement('a'); a.className = 'page-link'; a.href = 'javascript:void(0);';
-                    a.textContent = label;
-                    a.onclick = () => { AppState.pagination.currentPage = n; SM.fetch(); };
-                    li.appendChild(a);
-                    ul.querySelector('#nextPageLi').before(li);
-                };
-                if (start > 1) { addItem(1); if (start > 2) { const li = document.createElement('li'); li.className='page-item disabled'; li.innerHTML='<span class="page-link">…</span>'; ul.querySelector('#nextPageLi').before(li); } }
-                for (let i = start; i <= end; i++) addItem(i);
-                if (end < pd.last_page) { if (end < pd.last_page-1) { const li = document.createElement('li'); li.className='page-item disabled'; li.innerHTML='<span class="page-link">…</span>'; ul.querySelector('#nextPageLi').before(li); } addItem(pd.last_page); }
-            }
-            const prev = document.getElementById('prevPage');
-            const next = document.getElementById('nextPage');
-            if (prev) { prev.classList.toggle('disabled', pd.current_page <= 1); prev.onclick = e => { e.preventDefault(); if (pd.current_page > 1) { AppState.pagination.currentPage--; SM.fetch(); } }; }
-            if (next) { next.classList.toggle('disabled', pd.current_page >= pd.last_page); next.onclick = e => { e.preventDefault(); if (pd.current_page < pd.last_page) { AppState.pagination.currentPage++; SM.fetch(); } }; }
-        }
-    };
-
-    // ================================================================
-    // VIEW MODAL
-    // ================================================================
-    const ViewModal = {
-        currentId: null,
-        populate: s => {
-            ViewModal.currentId = s.id;
-            const full = [s.lastname, s.firstname, s.othername].filter(Boolean).join(' ');
-            U.setText('viewFullName',       full||'—');
-            U.setText('viewFullNameDetail', full||'—');
-            U.setText('viewAdmissionNumber',s.admissionNo||'—');
-            U.setText('viewAdmissionNo',    s.admissionNo||'—');
-            U.setText('viewTitle',          s.title||'—');
-            U.setText('viewDOB',            U.date(s.dateofbirth,'long'));
-            U.setText('viewAge',            s.age||U.age(s.dateofbirth));
-            U.setText('viewAgeDetail',      s.age||U.age(s.dateofbirth));
-            U.setText('viewPlaceOfBirth',   s.placeofbirth||'—');
-            U.setText('viewGenderDetail',   s.gender||'—');
-            U.setText('viewGenderText',     s.gender||'—');
-            U.setText('viewBloodGroupDetail',   s.blood_group||'—');
-            U.setText('viewBloodGroupAdditional',s.blood_group||'—');
-            U.setText('viewReligionDetail', s.religion||'—');
-            U.setText('viewPhoneNumber',    s.phone_number||'—');
-            U.setText('viewEmailAddress',   s.email||'—');
-            U.setText('viewPermanentAddress',s.permanent_address||'—');
-            U.setText('viewCity',           s.city||'—');
-            U.setText('viewStateOrigin',    s.state||'—');
-            U.setText('viewLGA',            s.local||'—');
-            U.setText('viewNationality',    s.nationality||'—');
-            U.setText('viewFutureAmbition', s.future_ambition||'—');
-            U.setText('viewAdmissionDate',  U.date(s.admission_date||s.admissionDate,'long'));
-            U.setText('viewAdmittedDate',   U.date(s.admission_date||s.admissionDate,'short'));
-            const cls = `${s.schoolclass||''} ${s.arm||''}`.trim() || '—';
-            U.setText('viewCurrentClass',   cls);
-            U.setText('viewClassDisplay',   cls);
-            U.setText('viewArm',            s.arm||'—');
-            U.setText('viewStudentCategory',s.student_category||'—');
-            const type = s.statusId==2 ? 'New Student' : s.statusId==1 ? 'Old Student' : '—';
-            U.setText('viewStudentType',    type);
-            U.setText('viewStudentStatus',  s.student_status||'—');
-            U.setText('viewSchoolHouse',    s.school_house||'—');
-            U.setText('viewLastSchool',     s.last_school||'—');
-            U.setText('viewLastClass',      s.last_class||'—');
-            U.setText('viewReasonForLeaving',s.reason_for_leaving||'—');
-            U.setText('viewFatherFullName', s.father_name||'—');
-            U.setText('viewFatherPhone',    s.father_phone||'—');
-            U.setText('viewFatherOccupation',s.father_occupation||'—');
-            U.setText('viewFatherCityState',s.father_city||'—');
-            U.setText('viewFatherEmail',    s.parent_email||'—');
-            U.setText('viewFatherAddress',  s.parent_address||'—');
-            U.setText('viewMotherFullName', s.mother_name||'—');
-            U.setText('viewMotherPhone',    s.mother_phone||'—');
-            U.setText('viewMotherOccupation',s.mother_occupation||'—');
-            U.setText('viewMotherEmail',    s.parent_email||'—');
-            U.setText('viewMotherAddress',  s.parent_address||'—');
-            U.setText('viewParentEmail',    s.parent_email||'—');
-            U.setText('viewParentAddress',  s.parent_address||'—');
-            U.setText('viewNIN',            s.nin_number||'—');
-            U.setText('viewMotherTongue',   s.mother_tongue||'—');
-
-            // Father/Mother status badges
-            const fb = document.getElementById('fatherStatusBadge'); if (fb) { fb.textContent = s.father_name ? 'Available' : 'Not Provided'; fb.className = `badge ms-1 ${s.father_name ? 'bg-success' : 'bg-secondary'}`; }
-            const mb = document.getElementById('motherStatusBadge'); if (mb) { mb.textContent = s.mother_name ? 'Available' : 'Not Provided'; mb.className = `badge ms-1 ${s.mother_name ? 'bg-success' : 'bg-secondary'}`; }
-
-            // Type badge styling
-            const tb = document.getElementById('viewStudentTypeBadge');
-            if (tb) { if (s.statusId==2) { tb.style.background='#fef3c7'; tb.style.color='#92400e'; } else { tb.style.background='#ede9fe'; tb.style.color='#5b21b6'; } }
-
-            // Status indicator
-            const si = document.getElementById('studentStatusIndicator');
-            if (si) si.className = `position-absolute bottom-0 end-0 rounded-circle border border-2 border-white ${s.student_status==='Active'?'bg-success':'bg-secondary'}`;
-            si.style.cssText = 'width:18px;height:18px;';
-
-            // Photo
-            const photo = document.getElementById('viewStudentPhoto');
-            if (photo) {
-                const src = s.picture && s.picture !== 'unnamed.jpg' ? `/storage/images/student_avatars/${s.picture}` : null;
-                photo.src = src || '{{ asset("theme/layouts/assets/media/avatars/blank.png") }}';
-                photo.dataset.zoomSrc  = src || '';
-                photo.dataset.zoomName = full;
-                photo.dataset.zoomInit = U.initials(s.firstname, s.lastname);
-                photo.dataset.zoomDetail = `${s.admissionNo||''} &bull; ${cls} &bull; ${s.gender||''}`;
-            }
-
-            ViewModal.fetchTerm(s.id);
-            // Reset term history
-            const thc = document.getElementById('termHistoryContent'); if (thc) { thc.style.display = 'none'; thc.innerHTML = ''; }
-            const thl = document.getElementById('termHistoryLoading'); if (thl) thl.style.display = 'block';
-        },
-
-        fetchTerm: async id => {
+    // ============================================================================
+    // STUDENT MANAGER
+    // ============================================================================
+    const StudentManager = {
+        async fetchStudents() {
+            Utils.showLoading();
             try {
-                const r = await API.activeTerm(id);
-                if (r.success && r.data) {
-                    const d = r.data;
-                    U.setText('viewCurrentTerm',   d.term?.term||'—');
-                    U.setText('viewCurrentSession', d.session?.session||'—');
-                    const status = document.getElementById('viewCurrentTermStatus');
-                    if (status) status.innerHTML = d.is_current ? '<span class="badge bg-success">Active Term</span>' : '<span class="badge bg-warning text-dark">Registered</span>';
-                    const alert = document.getElementById('currentTermAlert');
-                    if (alert) alert.innerHTML = `<div class="alert alert-success border-0 rounded-3 py-2 small"><i class="fas fa-check-circle me-1"></i><strong>Enrolled:</strong> ${d.schoolClass?.schoolclass||''} ${d.schoolClass?.armRelation?.arm||''} &bull; ${d.term?.term||''} Term &bull; ${d.session?.session||''}</div>`;
-                } else {
-                    ['viewCurrentTerm','viewCurrentSession'].forEach(id => U.setText(id, '—'));
-                    const status = document.getElementById('viewCurrentTermStatus'); if (status) status.innerHTML = '<span class="badge bg-secondary">Not Registered</span>';
-                    const alert = document.getElementById('currentTermAlert'); if (alert) alert.innerHTML = '<div class="alert alert-warning border-0 rounded-3 py-2 small"><i class="fas fa-exclamation-triangle me-1"></i>No active term registration found.</div>';
+                const paginationData = await ApiService.getStudents(
+                    AppState.pagination.currentPage,
+                    AppState.pagination.perPage,
+                    AppState.filters
+                );
+                AppState.pagination = {
+                    currentPage: paginationData.current_page,
+                    lastPage:    paginationData.last_page,
+                    total:       paginationData.total,
+                    from:        paginationData.from,
+                    to:          paginationData.to,
+                    data:        paginationData.data
+                };
+                if (AppState.ui.currentView === 'table') RenderManager.renderTableView(paginationData.data);
+                else RenderManager.renderCardView(paginationData.data);
+                PaginationManager.updatePaginationUI(paginationData);
+                SelectionManager.clearAllSelections();
+                paginationData.data.forEach(s => AppState.cache.students.set(s.id.toString(), s));
+            } catch (error) {
+                Utils.log('Error fetching students', error, 'error');
+                Utils.showError('Failed to load students. Please try again.');
+            } finally { Utils.hideLoading(); }
+        },
+
+        async viewStudent(id) {
+            try {
+                Utils.showLoading();
+                let student = AppState.cache.students.get(id.toString());
+                if (!student) {
+                    student = await ApiService.getStudent(id);
+                    if (student && student.id) AppState.cache.students.set(id.toString(), student);
                 }
-            } catch {}
-        }
-    };
-
-    // ================================================================
-    // EDIT FORM MANAGER
-    // ================================================================
-    const EditForm = {
-        populate: s => {
-            const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v||''; };
-            const chk = (name, v) => { const el = document.querySelector(`input[name="${name}"][value="${v}"]`); if (el) el.checked = true; };
-
-            document.getElementById('editStudentId').value = s.id||'';
-
-            // Form action
-            const form = document.getElementById('editStudentForm');
-            if (form) { const base = form.dataset.baseAction; if (base) form.action = base.replace(':id', s.id); }
-
-            set('editAdmissionNo',   s.admissionNo);
-            set('editAdmissionYear', s.admissionYear||new Date().getFullYear());
-            set('editAdmissionDate', (s.admissionDate||s.admission_date||'').split(' ')[0].split('T')[0]);
-            set('editSchoolclassid', s.schoolclassid);
-            set('editTermid',        s.termid);
-            set('editSessionid',     s.sessionid);
-            set('editStudentCategory',s.student_category);
-            set('editTitle',         s.title);
-            set('editLastname',      s.lastname);
-            set('editFirstname',     s.firstname);
-            set('editOthername',     s.othername);
-            set('editPlaceofbirth',  s.placeofbirth);
-            set('editPhoneNumber',   s.phone_number);
-            set('editEmail',         s.email);
-            set('editFutureAmbition',s.future_ambition);
-            set('editPermanentAddress',s.permanent_address);
-            set('editNationality',   s.nationality);
-            set('editCity',          s.city);
-            set('editReligion',      s.religion);
-            set('editBloodGroup',    s.blood_group);
-            set('editMotherTongue',  s.mother_tongue);
-            set('editNinNumber',     s.nin_number);
-            set('editFatherName',    s.father_name);
-            set('editFatherPhone',   s.father_phone);
-            set('editFatherOccupation',s.father_occupation);
-            set('editFatherCity',    s.father_city);
-            set('editMotherName',    s.mother_name);
-            set('editMotherPhone',   s.mother_phone);
-            set('editParentEmail',   s.parent_email);
-            set('editParentAddress', s.parent_address);
-            set('editLastSchool',    s.last_school);
-            set('editLastClass',     s.last_class);
-            set('editReasonForLeaving',s.reason_for_leaving);
-
-            // DOB & age
-            const dobInput = document.getElementById('editDOB');
-            if (dobInput && s.dateofbirth) {
-                const dv = s.dateofbirth.split(' ')[0].split('T')[0];
-                dobInput.value = dv;
-                const ageEl = document.getElementById('editAgeInput');
-                if (ageEl) ageEl.value = U.age(dv)||s.age||'';
-            }
-
-            // Radio buttons
-            if (s.statusId==1) chk('statusId','1'); else if (s.statusId==2) chk('statusId','2');
-            if (s.student_status==='Active') chk('student_status','Active'); else chk('student_status','Inactive');
-            if (s.gender==='Male') chk('gender','Male'); else if (s.gender==='Female') chk('gender','Female');
-
-            // Admission mode
-            const manualRadio = document.getElementById('editAdmissionManual');
-            if (manualRadio) { manualRadio.checked = true; const noEl = document.getElementById('editAdmissionNo'); if (noEl) noEl.readOnly = false; }
-
-            // School House
-            const houseEl = document.getElementById('editSchoolHouse');
-            if (houseEl && s.schoolhouseid) houseEl.value = s.schoolhouseid;
-
-            // State & LGA
-            if (s.state) SLM.set('editState','editLocal', s.state, s.local);
-
-            // Avatar
-            const avatar = document.getElementById('editStudentAvatar');
-            if (avatar) avatar.src = s.picture && s.picture !== 'unnamed.jpg' ? `/storage/images/student_avatars/${s.picture}` : '{{ asset("theme/layouts/assets/media/avatars/blank.png") }}';
-        }
-    };
-
-    // ================================================================
-    // FILTERS
-    // ================================================================
-    const Filters = {
-        searchDebounce: null,
-        init: () => {
-            const si = document.getElementById('search-input');
-            const cl = document.getElementById('clear-search');
-            if (si) {
-                si.addEventListener('input', e => {
-                    if (cl) cl.style.display = e.target.value ? 'block' : 'none';
-                    clearTimeout(Filters.searchDebounce);
-                    Filters.searchDebounce = setTimeout(() => Filters.apply(), CONFIG.SEARCH_DEBOUNCE);
-                });
-                si.addEventListener('keypress', e => { if (e.key==='Enter') { clearTimeout(Filters.searchDebounce); Filters.apply(); } });
-            }
-            if (cl) cl.addEventListener('click', () => { if (si) { si.value = ''; cl.style.display='none'; } Filters.apply(); });
-            ['schoolclass-filter','term-filter','session-filter'].forEach(id => { const el=document.getElementById(id); if (el) el.addEventListener('change', () => Filters.apply()); });
-            document.getElementById('filterBtn')?.addEventListener('click', () => Filters.apply());
-            document.getElementById('resetFiltersBtn')?.addEventListener('click', () => Filters.reset());
-            document.getElementById('resetFromEmptyBtn')?.addEventListener('click', () => Filters.reset());
+                Utils.hideLoading();
+                if (student) {
+                    ViewModalManager.populateEnhancedViewModal(student);
+                    new bootstrap.Modal(document.getElementById('viewStudentModal')).show();
+                } else { Utils.showError('Student data not found.'); }
+            } catch (error) { Utils.hideLoading(); Utils.log('Error viewing student', error, 'error'); Utils.showError('Failed to load student data.'); }
         },
-        apply: () => {
-            AppState.filters = {
-                search:  document.getElementById('search-input')?.value.trim()||'',
-                class:   document.getElementById('schoolclass-filter')?.value||'all',
-                term:    document.getElementById('term-filter')?.value||'all',
-                session: document.getElementById('session-filter')?.value||'all',
-                status:  'all', gender: 'all'
-            };
-            AppState.pagination.currentPage = 1;
-            SM.fetch();
+
+        async editStudent(id) {
+            try {
+                Utils.showLoading();
+                StateLGAManager.initializeEditStateDropdown();
+                const student = await ApiService.getStudent(id);
+                if (!student || !student.id) throw new Error('Invalid student data');
+                Utils.hideLoading();
+                EditFormManager.populateEditForm(student);
+                new bootstrap.Modal(document.getElementById('editStudentModal')).show();
+            } catch (error) { Utils.hideLoading(); Utils.log('Error editing student', error, 'error'); Utils.showError('Failed to load student for editing: ' + (error.message || '')); }
         },
-        reset: () => {
-            ['search-input'].forEach(id => { const el=document.getElementById(id); if (el) el.value=''; });
-            ['schoolclass-filter','term-filter','session-filter'].forEach(id => { const el=document.getElementById(id); if (el) el.value='all'; });
-            const cl = document.getElementById('clear-search'); if (cl) cl.style.display='none';
-            AppState.filters = { search:'',class:'all',status:'all',gender:'all',session:'all',term:'all' };
-            AppState.pagination.currentPage = 1;
-            SM.fetch();
+
+        async deleteStudent(id) {
+            if (!await Utils.showConfirm('Delete Student', "You won't be able to revert this!", 'Yes, delete it!')) return;
+            try {
+                await ApiService.deleteStudent(id);
+                AppState.cache.students.delete(id.toString());
+                await this.fetchStudents();
+                Utils.showSuccess('Student has been deleted.');
+            } catch (error) { Utils.log('Error deleting student', error, 'error'); Utils.showError('Failed to delete student.'); }
+        },
+
+        async deleteMultiple() {
+            const selectedIds = SelectionManager.getSelectedStudentIds();
+            if (selectedIds.length === 0) { Utils.showError('Please select at least one student.', 'No Selection'); return; }
+            if (!await Utils.showConfirm(`Delete ${selectedIds.length} Students?`, "This action cannot be undone!", 'Yes, delete them!')) return;
+            try {
+                await ApiService.deleteMultipleStudents(selectedIds);
+                selectedIds.forEach(id => AppState.cache.students.delete(id.toString()));
+                await this.fetchStudents();
+                Utils.showSuccess(`${selectedIds.length} student(s) have been deleted.`);
+                SelectionManager.clearAllSelections();
+            } catch (error) { Utils.log('Error deleting multiple', error, 'error'); Utils.showError('Failed to delete selected students.'); }
         }
     };
 
-    // ================================================================
+    // ============================================================================
     // CURRENT TERM MANAGER
-    // ================================================================
-    const CTM = {
-        show: () => {
-            const ids = Selection.getIds();
-            if (!ids.length) { U.err('Please select at least one student.','No Selection'); return; }
-            U.setText('selectedStudentsCount', ids.length);
+    // ============================================================================
+    const CurrentTermManager = {
+        showUpdateCurrentTermModal: function() {
+            const selectedIds = SelectionManager.getSelectedStudentIds();
+            if (selectedIds.length === 0) { Utils.showError('Please select at least one student.', 'No Selection'); return; }
+            document.getElementById('updateCurrentTermForm')?.reset();
+            const selectedCountEl = document.getElementById('selectedStudentsCount');
+            if (selectedCountEl) selectedCountEl.textContent = selectedIds.length;
             new bootstrap.Modal(document.getElementById('updateCurrentTermModal')).show();
         },
-        update: async () => {
-            const form = document.getElementById('updateCurrentTermForm');
-            const classId   = form?.querySelector('[name="schoolclassId"]')?.value;
-            const termId    = form?.querySelector('[name="termId"]')?.value;
-            const sessionId = form?.querySelector('[name="sessionId"]')?.value;
-            if (!classId||!termId||!sessionId) { U.err('Please select class, term, and session.','Missing Fields'); return; }
-            const ids = Selection.getIds();
-            Swal.fire({title:'Updating…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+        async updateCurrentTerm() {
+            const selectedIds = SelectionManager.getSelectedStudentIds();
+            const form  = document.getElementById('updateCurrentTermForm');
+            if (!form) return;
+            const classId   = form.querySelector('[name="schoolclassId"]')?.value;
+            const termId    = form.querySelector('[name="termId"]')?.value;
+            const sessionId = form.querySelector('[name="sessionId"]')?.value;
+            if (!classId || !termId || !sessionId) { Utils.showError('Please select class, term, and session.', 'Missing Fields'); return; }
+            Swal.fire({ title: 'Updating…', text: 'Please wait…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
             try {
-                const r = await API.bulkTerm({student_ids:ids,schoolclassId:classId,termId,sessionId,is_current:true});
+                const response = await ApiService.updateBulkCurrentTerm({ student_ids: selectedIds, schoolclassId: classId, termId, sessionId, is_current: true });
                 bootstrap.Modal.getInstance(document.getElementById('updateCurrentTermModal'))?.hide();
-                Swal.close(); U.ok(r.message||'Term updated.'); await SM.fetch();
-            } catch(e) { Swal.close(); U.err(e.response?.data?.message||'Failed to update term.'); }
+                Swal.close();
+                Utils.showSuccess(response.message || `Term updated for ${selectedIds.length} student(s).`);
+                await StudentManager.fetchStudents();
+            } catch (error) {
+                Swal.close();
+                Utils.showError(error.response?.data?.message || error.message || 'Failed to update term.');
+            }
         }
     };
 
-    // ================================================================
+    // ============================================================================
     // BULK STATUS MANAGER
-    // ================================================================
-    const BSM = {
-        show: () => {
-            const cid = document.getElementById('schoolclass-filter')?.value;
-            const sid = document.getElementById('session-filter')?.value;
-            if (!cid||cid==='all'||!sid||sid==='all') { U.err('Please select both a class and a session first.','Selection Required'); return; }
-            AppState.bulkStatusFilters = {class_id:cid,session_id:sid};
-            Swal.fire({title:'Loading Students…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
-            API.byClassSession(cid,sid).then(r => {
-                Swal.close();
-                if (r.success) BSM.render(r.students, r.stats);
-                else U.err(r.message||'Failed to load.');
-            }).catch(e => { Swal.close(); U.err(e.response?.data?.message||e.message); });
+    // ============================================================================
+    const BulkStatusManager = {
+        showUpdateStatusModal: function() {
+            const classId   = document.getElementById('schoolclass-filter')?.value;
+            const sessionId = document.getElementById('session-filter')?.value;
+            if (!classId || classId === 'all' || !sessionId || sessionId === 'all') {
+                Utils.showError('Please select both a class and a session first.', 'Selection Required'); return;
+            }
+            AppState.bulkStatusFilters = { class_id: classId, session_id: sessionId };
+            Swal.fire({ title: 'Loading Students…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            ApiService.getStudentsByClassAndSession(classId, sessionId)
+                .then(response => {
+                    Swal.close();
+                    if (response.success) { AppState.bulkStatusData = response; this.renderStatusUpdateModal(response.students, response.stats); }
+                    else Utils.showError(response.message || 'Failed to load students.');
+                })
+                .catch(error => { Swal.close(); Utils.showError(error.response?.data?.message || error.message); });
         },
-        render: (students, stats) => {
+        renderStatusUpdateModal: function(students, stats) {
             document.getElementById('bulkStatusUpdateModal')?.remove();
-            const html = `
-            <div class="modal fade" id="bulkStatusUpdateModal" tabindex="-1" data-bs-backdrop="static">
-              <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-                <div class="modal-content">
-                  <div class="modal-header modal-hdr">
-                    <h5 class="modal-title"><i class="fas fa-sync-alt me-2"></i>Bulk Update Student Status</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                  </div>
-                  <div class="modal-body p-4">
-                    <div class="row g-3 mb-4">
-                      <div class="col-6 col-md-3"><div class="sm-stat c-blue"><div class="sm-stat-value">${stats.total}</div><div class="sm-stat-label">Total</div></div></div>
-                      <div class="col-6 col-md-3"><div class="sm-stat c-green"><div class="sm-stat-value">${stats.active}</div><div class="sm-stat-label">Active</div></div></div>
-                      <div class="col-6 col-md-3"><div class="sm-stat c-orange" style="--sm-stat-color:#6b7280"><div class="sm-stat-value">${stats.inactive}</div><div class="sm-stat-label">Inactive</div></div></div>
-                      <div class="col-6 col-md-3"><div class="sm-stat c-amber"><div class="sm-stat-value">${stats.new_students}</div><div class="sm-stat-label">New</div></div></div>
-                    </div>
-                    <div class="sm-panel mb-3">
-                      <div class="sm-panel-header">
-                        <div class="d-flex align-items-center gap-3">
-                          <div class="form-check mb-0"><input class="form-check-input" type="checkbox" id="bsSelectAll"><label class="form-check-label fw-semibold" for="bsSelectAll">Select All</label></div>
+            const modalHtml = `
+            <div class="modal fade" id="bulkStatusUpdateModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+                <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header modal-header-gradient">
+                            <h5 class="modal-title"><i class="fas fa-sync-alt me-2"></i>Bulk Update Student Status</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
-                        <div class="d-flex flex-wrap gap-2">
-                          <div class="dropdown"><button class="btn btn-outline-success btn-sm dropdown-toggle" data-bs-toggle="dropdown"><i class="fas fa-user-check me-1"></i>Activity Status</button>
-                            <ul class="dropdown-menu shadow border-0 rounded-3 p-2">
-                              <li><a class="dropdown-item rounded-2" href="#" onclick="BulkStatusManager.bulkUpdateStatus('activity_status','Active')"><i class="fas fa-check-circle text-success me-2"></i>Active</a></li>
-                              <li><a class="dropdown-item rounded-2" href="#" onclick="BulkStatusManager.bulkUpdateStatus('activity_status','Inactive')"><i class="fas fa-pause-circle text-secondary me-2"></i>Inactive</a></li>
-                            </ul>
-                          </div>
-                          <div class="dropdown"><button class="btn btn-outline-warning btn-sm dropdown-toggle" data-bs-toggle="dropdown"><i class="fas fa-user-tag me-1"></i>Student Type</button>
-                            <ul class="dropdown-menu shadow border-0 rounded-3 p-2">
-                              <li><a class="dropdown-item rounded-2" href="#" onclick="BulkStatusManager.bulkUpdateStatus('student_type','old')"><i class="fas fa-history text-secondary me-2"></i>Old Student</a></li>
-                              <li><a class="dropdown-item rounded-2" href="#" onclick="BulkStatusManager.bulkUpdateStatus('student_type','new')"><i class="fas fa-star text-warning me-2"></i>New Student</a></li>
-                            </ul>
-                          </div>
+                        <div class="modal-body p-4">
+                            <div class="row g-3 mb-4">
+                                <div class="col-6 col-md-3"><div class="card text-center border-0 shadow-sm"><div class="card-body py-3"><h2 class="text-primary fw-bold mb-1">${stats.total}</h2><div class="text-muted small">Total</div></div></div></div>
+                                <div class="col-6 col-md-3"><div class="card text-center border-0 shadow-sm"><div class="card-body py-3"><h2 class="text-success fw-bold mb-1">${stats.active}</h2><div class="text-muted small">Active</div></div></div></div>
+                                <div class="col-6 col-md-3"><div class="card text-center border-0 shadow-sm"><div class="card-body py-3"><h2 class="text-secondary fw-bold mb-1">${stats.inactive}</h2><div class="text-muted small">Inactive</div></div></div></div>
+                                <div class="col-6 col-md-3"><div class="card text-center border-0 shadow-sm"><div class="card-body py-3"><h2 class="text-warning fw-bold mb-1">${stats.new_students}</h2><div class="text-muted small">New Students</div></div></div></div>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                                <div class="form-check"><input class="form-check-input" type="checkbox" id="selectAllBSCheckbox"><label class="form-check-label fw-semibold" for="selectAllBSCheckbox">Select All</label></div>
+                                <div class="d-flex gap-2">
+                                    <div class="dropdown">
+                                        <button class="btn btn-outline-success btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="fas fa-user-check me-1"></i>Activity Status</button>
+                                        <ul class="dropdown-menu shadow border-0">
+                                            <li><a class="dropdown-item" href="#" onclick="BulkStatusManager.bulkUpdateStatus('activity_status','Active')"><i class="fas fa-check-circle text-success me-2"></i>Active</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="BulkStatusManager.bulkUpdateStatus('activity_status','Inactive')"><i class="fas fa-pause-circle text-secondary me-2"></i>Inactive</a></li>
+                                        </ul>
+                                    </div>
+                                    <div class="dropdown">
+                                        <button class="btn btn-outline-warning btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown"><i class="fas fa-user-tag me-1"></i>Student Type</button>
+                                        <ul class="dropdown-menu shadow border-0">
+                                            <li><a class="dropdown-item" href="#" onclick="BulkStatusManager.bulkUpdateStatus('student_type','old')"><i class="fas fa-history text-secondary me-2"></i>Old Student</a></li>
+                                            <li><a class="dropdown-item" href="#" onclick="BulkStatusManager.bulkUpdateStatus('student_type','new')"><i class="fas fa-star text-warning me-2"></i>New Student</a></li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table data-table align-middle">
+                                    <thead><tr><th width="50"><div class="form-check"><input class="form-check-input" type="checkbox" id="selectAllBSTable"></div></th><th>Student</th><th>Admission No</th><th>Class</th><th>Activity</th><th>Type</th><th>Actions</th></tr></thead>
+                                    <tbody id="statusUpdateTableBody">${this.renderStudentRows(students)}</tbody>
+                                </table>
+                            </div>
                         </div>
-                      </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary" onclick="BulkStatusManager.refreshData()"><i class="fas fa-sync-alt me-1"></i>Refresh</button>
+                        </div>
                     </div>
-                    <div class="table-responsive">
-                      <table class="table sm-table mb-0">
-                        <thead><tr><th width="46"><input class="form-check-input" type="checkbox" id="bsSelectAllTable"></th><th>Student</th><th>Admission No</th><th>Class</th><th>Activity Status</th><th>Type</th><th>Actions</th></tr></thead>
-                        <tbody>${BSM.rows(students)}</tbody>
-                      </table>
-                    </div>
-                  </div>
-                  <div class="modal-footer">
-                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn-pg" onclick="BulkStatusManager.refreshData()"><i class="fas fa-sync-alt me-1"></i>Refresh</button>
-                  </div>
                 </div>
-              </div>
             </div>`;
-            document.body.insertAdjacentHTML('beforeend', html);
-            // Select all
-            document.getElementById('bsSelectAll')?.addEventListener('change', e => { document.querySelectorAll('.bs-checkbox').forEach(cb => cb.checked = e.target.checked); });
-            document.getElementById('bsSelectAllTable')?.addEventListener('change', e => { document.querySelectorAll('.bs-checkbox').forEach(cb => cb.checked = e.target.checked); });
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            // Select all checkboxes
+            document.getElementById('selectAllBSCheckbox')?.addEventListener('change', e => { document.querySelectorAll('.bs-checkbox').forEach(cb => cb.checked = e.target.checked); });
+            document.getElementById('selectAllBSTable')?.addEventListener('change',    e => { document.querySelectorAll('.bs-checkbox').forEach(cb => cb.checked = e.target.checked); });
             new bootstrap.Modal(document.getElementById('bulkStatusUpdateModal')).show();
         },
-        rows: students => {
-            if (!students?.length) return '<tr><td colspan="7" class="text-center py-4 text-muted">No students found</td></tr>';
-            return students.map(s => {
-                const init = U.initials(s.firstname, s.lastname);
-                const act = s.student_status==='Active' ? '<span class="sm-badge badge-active" style="font-size:11px;">Active</span>' : '<span class="sm-badge badge-inactive" style="font-size:11px;">Inactive</span>';
-                const type= s.statusId==2 ? '<span class="sm-badge badge-new" style="font-size:11px;">New</span>' : '<span class="sm-badge badge-old" style="font-size:11px;">Old</span>';
-                return `<tr data-student-id="${s.id}">
-                  <td><input class="form-check-input bs-checkbox" type="checkbox" value="${s.id}"></td>
-                  <td><div class="d-flex align-items-center gap-2">
-                    <div class="sm-avatar-init" style="width:36px;height:36px;border-radius:8px;font-size:14px;">${U.esc(init)}</div>
-                    <div><div class="stu-name">${U.esc(s.lastname||'')} ${U.esc(s.firstname||'')}</div><small class="text-muted">${U.esc(s.othername||'')}</small></div>
-                  </div></td>
-                  <td><span style="font-family:monospace;font-size:12px;">${U.esc(s.admissionNo||'N/A')}</span></td>
-                  <td>${U.esc(s.schoolclass||'')} ${U.esc(s.arm||'')}</td>
-                  <td><div class="d-flex align-items-center gap-1">${act}<button class="act-btn act-edit" style="width:26px;height:26px;" onclick="BulkStatusManager.toggleOne(${s.id},'activity')"><i class="fas fa-exchange-alt" style="font-size:11px;"></i></button></div></td>
-                  <td><div class="d-flex align-items-center gap-1">${type}<button class="act-btn act-edit" style="width:26px;height:26px;" onclick="BulkStatusManager.toggleOne(${s.id},'type')"><i class="fas fa-exchange-alt" style="font-size:11px;"></i></button></div></td>
-                  <td><button class="act-btn act-view" onclick="StudentManager.viewStudent(${s.id})"><i class="fas fa-eye"></i></button></td>
-                </tr>`;
+        renderStudentRows: function(students) {
+            if (!students || students.length === 0) return '<tr><td colspan="7" class="text-center py-4 text-muted">No students found</td></tr>';
+            return students.map(student => {
+                const studentId = student.id ? parseInt(student.id) : null;
+                if (!studentId) return '';
+                const initials = Utils.getInitials(student.firstname, student.lastname);
+                const fullName = [student.lastname, student.firstname, student.othername].filter(Boolean).join(' ');
+                const actBadge = student.student_status === 'Active'
+                    ? '<span class="badge bg-success px-2 py-1"><i class="fas fa-check-circle me-1" style="font-size:9px;"></i>Active</span>'
+                    : '<span class="badge bg-secondary px-2 py-1"><i class="fas fa-pause-circle me-1" style="font-size:9px;"></i>Inactive</span>';
+                const typeBadge = student.statusId == 2
+                    ? '<span class="badge bg-warning text-dark px-2 py-1"><i class="fas fa-star me-1" style="font-size:9px;"></i>New</span>'
+                    : '<span class="badge bg-light text-secondary px-2 py-1" style="border:1px solid #dee2e6;"><i class="fas fa-history me-1" style="font-size:9px;"></i>Old</span>';
+                return `
+                    <tr data-student-id="${studentId}">
+                        <td><div class="form-check"><input class="form-check-input bs-checkbox" type="checkbox" value="${studentId}"></div></td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="tbl-avatar-init" style="width:36px;height:36px;border-radius:8px;font-size:13px;flex-shrink:0;">${Utils.escapeHtml(initials)}</div>
+                                <div><div style="font-weight:600;font-size:13px;">${Utils.escapeHtml(fullName)}</div></div>
+                            </div>
+                        </td>
+                        <td style="font-size:12px;font-family:monospace;">${Utils.escapeHtml(student.admissionNo || 'N/A')}</td>
+                        <td style="font-size:13px;">${Utils.escapeHtml(student.schoolclass || '')} ${Utils.escapeHtml(student.arm || '')}</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-1">
+                                ${actBadge}
+                                <button class="btn btn-sm btn-soft-warning ms-1" style="padding:2px 7px;" onclick="BulkStatusManager.toggleIndividualStatus(this,'activity')" data-student-id="${studentId}" data-current="${student.student_status || 'Inactive'}" title="Toggle"><i class="fas fa-exchange-alt" style="font-size:11px;"></i></button>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-1">
+                                ${typeBadge}
+                                <button class="btn btn-sm btn-soft-info ms-1" style="padding:2px 7px;" onclick="BulkStatusManager.toggleIndividualStatus(this,'type')" data-student-id="${studentId}" data-current="${student.statusId || 1}" title="Toggle"><i class="fas fa-exchange-alt" style="font-size:11px;"></i></button>
+                            </div>
+                        </td>
+                        <td><button class="btn btn-sm btn-soft-info" onclick="StudentManager.viewStudent(${studentId})"><i class="fas fa-eye"></i></button></td>
+                    </tr>`;
             }).join('');
         },
-        getSelectedIds: () => Array.from(document.querySelectorAll('.bs-checkbox:checked')).map(cb=>parseInt(cb.value)).filter(v=>!isNaN(v)),
-        bulkUpdateStatus: async (type, value) => {
-            const ids = BSM.getSelectedIds();
-            if (!ids.length) { U.err('Please select at least one student.','No Selection'); return; }
-            const displayValue = type==='student_type' ? (value==='old'?'Old Student':'New Student') : value;
-            if (!await U.confirm(`Update ${ids.length} student(s)?`, `Set to "${displayValue}"`, 'Yes, update')) return;
-            Swal.fire({title:'Updating…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
-            try {
-                const r = await API.bulkStatus({student_ids:ids,update_type:type,value});
-                Swal.close(); if (r.success) { U.ok(r.message); BSM.refreshData(); }
-            } catch(e) { Swal.close(); U.err(e.response?.data?.message||e.message); }
+        getBSSelectedIds: function() {
+            return Array.from(document.querySelectorAll('.bs-checkbox:checked'))
+                .map(cb => parseInt(cb.value)).filter(v => !isNaN(v));
         },
-        toggleOne: async (id, type) => {
-            const row = document.querySelector(`tr[data-student-id="${id}"]`);
-            const s = AppState.cache.students.get(String(id));
-            if (!s) { U.err('Cannot find student data.'); return; }
-            const updateType = type==='activity' ? 'activity_status' : 'student_type';
-            const newVal = type==='activity' ? (s.student_status==='Active'?'Inactive':'Active') : (s.statusId==1?'new':'old');
-            if (!await U.confirm('Confirm Update', `Change to ${newVal}?`, 'Yes, update')) return;
-            Swal.fire({title:'Updating…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+        async toggleIndividualStatus(button, type) {
+            const studentId  = button.dataset.studentId;
+            const current    = button.dataset.current;
+            const updateType = type === 'activity' ? 'activity_status' : 'student_type';
+            const newValue   = type === 'activity'
+                ? (current === 'Active' ? 'Inactive' : 'Active')
+                : (current == 1 ? 'new' : 'old');
+            const displayVal = type === 'activity' ? newValue : (newValue === 'new' ? 'New Student' : 'Old Student');
+            const result = await Swal.fire({ title:'Confirm Update', text:`Change status to "${displayVal}"?`, icon:'question', showCancelButton:true, confirmButtonText:'Yes, update' });
+            if (!result.isConfirmed) return;
+            Swal.fire({ title:'Updating…', allowOutsideClick:false, didOpen:()=>Swal.showLoading() });
             try {
-                const r = await API.bulkStatus({student_ids:[id],update_type:updateType,value:newVal});
-                Swal.close(); if (r.success) { U.ok('Updated'); BSM.refreshData(); }
-            } catch(e) { Swal.close(); U.err('Failed.'); }
+                const response = await ApiService.bulkUpdateStatus({ student_ids:[studentId], update_type:updateType, value:newValue });
+                Swal.close();
+                if (response.success) { Utils.showSuccess('Status updated.'); this.refreshData(); }
+            } catch (error) { Swal.close(); Utils.showError('Failed to update status.'); }
         },
-        refreshData: async () => {
+        async bulkUpdateStatus(updateType, value) {
+            const selectedIds = this.getBSSelectedIds();
+            if (selectedIds.length === 0) { Utils.showError('Please select at least one student.', 'No Selection'); return; }
+            const displayValue = updateType === 'student_type' ? (value === 'old' ? 'Old Student' : 'New Student') : value;
+            if (!await Utils.showConfirm(`Update ${selectedIds.length} student(s)?`, `Set to "${displayValue}"?`, 'Yes, update')) return;
+            Swal.fire({ title:'Updating…', html:`Updating ${selectedIds.length} student(s)…`, allowOutsideClick:false, didOpen:()=>Swal.showLoading() });
+            try {
+                const response = await ApiService.bulkUpdateStatus({ student_ids: selectedIds, update_type: updateType, value });
+                Swal.close();
+                if (response.success) { Utils.showSuccess(response.message); this.refreshData(); }
+            } catch (error) { Swal.close(); Utils.showError(error.response?.data?.message || error.message || 'Failed to update.'); }
+        },
+        async refreshData() {
             if (!AppState.bulkStatusFilters) return;
-            Swal.fire({title:'Refreshing…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+            Swal.fire({ title:'Refreshing…', allowOutsideClick:false, didOpen:()=>Swal.showLoading() });
             try {
-                const r = await API.byClassSession(AppState.bulkStatusFilters.class_id, AppState.bulkStatusFilters.session_id);
-                if (r.success) {
-                    const tbody = document.querySelector('#bulkStatusUpdateModal tbody');
-                    if (tbody) tbody.innerHTML = BSM.rows(r.students);
-                    // Update stats
-                    const vals = document.querySelectorAll('#bulkStatusUpdateModal .sm-stat-value');
-                    if (vals.length >= 4) { vals[0].textContent=r.stats.total; vals[1].textContent=r.stats.active; vals[2].textContent=r.stats.inactive; vals[3].textContent=r.stats.new_students; }
+                const response = await ApiService.getStudentsByClassAndSession(AppState.bulkStatusFilters.class_id, AppState.bulkStatusFilters.session_id);
+                if (response.success) {
+                    const tbody = document.getElementById('statusUpdateTableBody');
+                    if (tbody) tbody.innerHTML = this.renderStudentRows(response.students);
+                    const cards = document.querySelectorAll('#bulkStatusUpdateModal .card-body h2');
+                    const s = response.stats;
+                    if (cards.length >= 4) { cards[0].textContent=s.total; cards[1].textContent=s.active; cards[2].textContent=s.inactive; cards[3].textContent=s.new_students; }
                 }
                 Swal.close();
-            } catch(e) { Swal.close(); U.err('Failed to refresh.'); }
+            } catch (error) { Swal.close(); Utils.showError('Failed to refresh data.'); }
         }
     };
 
-    // ================================================================
+    // ============================================================================
     // TERM REGISTRATION MANAGER
-    // ================================================================
-    const TRM = {
-        show: () => {
-            const tid = document.getElementById('term-filter')?.value;
-            const sid = document.getElementById('session-filter')?.value;
-            if (!tid||tid==='all'||!sid||sid==='all') { U.err('Please select both a term and a session first.','Selection Required'); return; }
-            AppState.termFilters = {term_id:tid, session_id:sid, class_id: document.getElementById('schoolclass-filter')?.value !== 'all' ? document.getElementById('schoolclass-filter')?.value : null};
-            Swal.fire({title:'Loading…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
-            API.inTerm(AppState.termFilters).then(r => {
-                Swal.close();
-                if (r.success) TRM.render(r.students, r.total);
-                else U.err(r.message||'Failed.');
-            }).catch(e => { Swal.close(); U.err(e.response?.data?.message||e.message); });
+    // ============================================================================
+    const TermRegistrationManager = {
+        showTermStudentsModal: function() {
+            const termId    = document.getElementById('term-filter')?.value;
+            const sessionId = document.getElementById('session-filter')?.value;
+            if (!termId || termId === 'all' || !sessionId || sessionId === 'all') {
+                Utils.showError('Please select both a term and a session first.', 'Selection Required'); return;
+            }
+            AppState.termFilters = {
+                term_id:    termId,
+                session_id: sessionId,
+                class_id:   document.getElementById('schoolclass-filter')?.value !== 'all' ? document.getElementById('schoolclass-filter')?.value : null
+            };
+            Swal.fire({ title:'Loading…', allowOutsideClick:false, didOpen:()=>Swal.showLoading() });
+            ApiService.getStudentsInTerm(AppState.termFilters)
+                .then(response => {
+                    Swal.close();
+                    if (response.success) this.renderTermStudentsModal(response.students, response.total);
+                    else Utils.showError(response.message || 'Failed to load students.');
+                })
+                .catch(error => { Swal.close(); Utils.showError(error.response?.data?.message || error.message); });
         },
-        render: (students, total) => {
+        renderTermStudentsModal: function(students, total) {
             document.getElementById('termStudentsModal')?.remove();
-            const html = `
-            <div class="modal fade" id="termStudentsModal" tabindex="-1" data-bs-backdrop="static">
-              <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
-                <div class="modal-content">
-                  <div class="modal-header modal-hdr">
-                    <h5 class="modal-title"><i class="fas fa-calendar-alt me-2"></i>Term Registration Management</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                  </div>
-                  <div class="modal-body p-4">
-                    <div class="alert alert-info border-0 rounded-3 d-flex align-items-center gap-3 mb-4">
-                      <i class="fas fa-info-circle fa-2x"></i>
-                      <div><strong>Total Registered: ${total}</strong><br><small>Manage term registrations below</small></div>
+            const modalHtml = `
+            <div class="modal fade" id="termStudentsModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+                <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header modal-header-gradient">
+                            <h5 class="modal-title"><i class="fas fa-calendar-alt me-2"></i>Term Registration Management</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <div class="alert alert-info border-0 rounded-3 d-flex align-items-center gap-3 mb-4">
+                                <i class="fas fa-info-circle fa-2x"></i>
+                                <div><strong>Total Registered: ${total}</strong><br><small>Manage term registrations below.</small></div>
+                            </div>
+                            <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                                <div class="form-check"><input class="form-check-input" type="checkbox" id="selectAllTRMCheckbox"><label class="form-check-label fw-semibold" for="selectAllTRMCheckbox">Select All</label></div>
+                                <button class="btn btn-danger btn-sm" onclick="TermRegistrationManager.bulkRemoveFromTerm()"><i class="fas fa-user-minus me-1"></i>Remove Selected</button>
+                            </div>
+                            <div class="row" id="termStudentsContainer">${this.renderStudentCards(students)}</div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                            <button type="button" class="btn btn-primary" onclick="TermRegistrationManager.refreshData()"><i class="fas fa-sync-alt me-1"></i>Refresh</button>
+                        </div>
                     </div>
-                    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
-                      <div class="form-check"><input class="form-check-input" type="checkbox" id="trmSelectAll"><label class="form-check-label fw-semibold" for="trmSelectAll">Select All</label></div>
-                      <button class="btn btn-danger btn-sm rounded-3" onclick="TermRegistrationManager.bulkRemove()"><i class="fas fa-user-minus me-1"></i>Remove Selected from Term</button>
-                    </div>
-                    <div class="row g-3" id="termStudentsContainer">${TRM.cards(students)}</div>
-                  </div>
-                  <div class="modal-footer">
-                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Close</button>
-                    <button type="button" class="btn-pg" onclick="TermRegistrationManager.refreshData()"><i class="fas fa-sync-alt me-1"></i>Refresh</button>
-                  </div>
                 </div>
-              </div>
             </div>`;
-            document.body.insertAdjacentHTML('beforeend', html);
-            document.getElementById('trmSelectAll')?.addEventListener('change', e => { document.querySelectorAll('.trm-checkbox').forEach(cb => cb.checked = e.target.checked); });
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            document.getElementById('selectAllTRMCheckbox')?.addEventListener('change', e => { document.querySelectorAll('.term-student-checkbox').forEach(cb => cb.checked = e.target.checked); });
             new bootstrap.Modal(document.getElementById('termStudentsModal')).show();
         },
-        cards: students => {
-            if (!students?.length) return '<div class="col-12"><div class="alert alert-warning rounded-3 text-center">No students registered for this term.</div></div>';
-            return students.map(s => {
-                const init = ((s.firstname||'').charAt(0)+(s.lastname||'').charAt(0)).toUpperCase()||'ST';
-                const cur  = s.is_current ? '<span class="badge bg-success position-absolute top-0 end-0 m-2" style="font-size:10px;">Current</span>' : '';
-                return `<div class="col-md-4 col-lg-3">
-                  <div class="stu-card" data-registration-id="${s.registration_id}" style="margin-bottom:12px;">
-                    <div class="stu-card-header" style="min-height:80px;">
-                      ${cur}
-                      <div class="stu-card-checkbox"><input class="form-check-input trm-checkbox" type="checkbox" value="${s.registration_id}" style="border:2px solid rgba(255,255,255,.8);width:18px;height:18px;"></div>
-                      <div class="stu-card-name">${U.esc(s.fullname||'')}</div>
-                      <span class="stu-card-adm">${U.esc(s.admissionNo||'N/A')}</span>
+        renderStudentCards: function(students) {
+            if (!students || students.length === 0) return '<div class="col-12"><div class="alert alert-warning rounded-3 text-center">No students registered for this term.</div></div>';
+            return students.map(student => {
+                const initials = ((student.firstname||'').charAt(0) + (student.lastname||'').charAt(0)).toUpperCase() || 'ST';
+                const currentBadge = student.is_current ? '<span class="badge bg-success position-absolute top-0 end-0 m-2" style="font-size:10px;">Current</span>' : '';
+                return `<div class="col-xl-3 col-lg-4 col-md-6 mb-3">
+                    <div class="student-profile-card" data-registration-id="${student.registration_id}">
+                        <div class="checkbox-container">
+                            <div class="form-check"><input class="form-check-input term-student-checkbox" type="checkbox" value="${student.registration_id}"></div>
+                        </div>
+                        <div class="card-header" style="position:relative;">
+                            ${currentBadge}
+                            <div class="avatar-container" style="position:absolute;top:12px;right:12px;width:62px;height:62px;">
+                                <div class="avatar-initials" style="font-size:22px;">${Utils.escapeHtml(initials)}</div>
+                            </div>
+                            <div class="header-content">
+                                <h5 class="student-name" style="font-size:15px;">${Utils.escapeHtml(student.fullname || '')}</h5>
+                                <span class="student-admission">${Utils.escapeHtml(student.admissionNo || 'N/A')}</span>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="student-info-grid">
+                                <div class="info-item"><span class="info-label">Class</span><span class="info-value">${Utils.escapeHtml(student.class || '')} ${Utils.escapeHtml(student.arm || '')}</span></div>
+                                <div class="info-item"><span class="info-label">Gender</span><span class="info-value">${Utils.escapeHtml(student.gender || '—')}</span></div>
+                            </div>
+                            <button class="btn btn-outline-danger btn-sm w-100 mt-2"
+                                    onclick="TermRegistrationManager.removeSingleStudent(${student.registration_id},'${Utils.escapeHtml(student.fullname || '')}')">
+                                <i class="fas fa-user-minus me-1"></i>Remove from Term
+                            </button>
+                        </div>
                     </div>
-                    <div class="stu-card-body">
-                      <div class="stu-card-grid">
-                        <div><div class="stu-card-info-label">Class</div><div class="stu-card-info-val">${U.esc(s.class||'')} ${U.esc(s.arm||'')}</div></div>
-                        <div><div class="stu-card-info-label">Gender</div><div class="stu-card-info-val">${U.esc(s.gender||'—')}</div></div>
-                      </div>
-                      <button class="btn btn-outline-danger btn-sm w-100 rounded-3" style="font-size:12px;"
-                              onclick="TermRegistrationManager.removeOne(${s.registration_id}, '${U.esc(s.fullname)}')">
-                        <i class="fas fa-user-minus me-1"></i>Remove from Term
-                      </button>
-                    </div>
-                  </div>
                 </div>`;
             }).join('');
         },
-        removeOne: async (regId, name) => {
-            if (!await U.confirm('Remove Student?', `Remove ${name} from this term?`, 'Yes, remove')) return;
-            Swal.fire({title:'Removing…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
-            try {
-                const r = await API.rmTerm(regId); Swal.close();
-                if (r.success) { U.ok(r.message); const card = document.querySelector(`.stu-card[data-registration-id="${regId}"]`); card?.closest('.col-md-4,.col-lg-3')?.remove(); }
-            } catch(e) { Swal.close(); U.err('Failed to remove.'); }
+        getTRMSelectedIds: function() {
+            return Array.from(document.querySelectorAll('.term-student-checkbox:checked')).map(cb => cb.value);
         },
-        bulkRemove: async () => {
-            const ids = Array.from(document.querySelectorAll('.trm-checkbox:checked')).map(cb=>cb.value);
-            if (!ids.length) { U.err('Please select at least one student.','No Selection'); return; }
-            if (!await U.confirm(`Remove ${ids.length} student(s)?`, 'This will remove their term registration.', 'Yes, remove all')) return;
-            Swal.fire({title:'Removing…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+        async removeSingleStudent(registrationId, studentName) {
+            if (!await Utils.showConfirm('Remove Student?', `Remove "${studentName}" from this term?`, 'Yes, remove')) return;
+            Swal.fire({ title:'Removing…', allowOutsideClick:false, didOpen:()=>Swal.showLoading() });
             try {
-                const r = await API.rmTermMany(ids); Swal.close();
-                if (r.success) { U.ok(r.message); TRM.refreshData(); }
-            } catch(e) { Swal.close(); U.err('Failed to remove.'); }
-        },
-        refreshData: async () => {
-            if (!AppState.termFilters) return;
-            Swal.fire({title:'Refreshing…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
-            try {
-                const r = await API.inTerm(AppState.termFilters);
-                if (r.success) { const c = document.getElementById('termStudentsContainer'); if (c) c.innerHTML = TRM.cards(r.students); }
+                const response = await ApiService.removeStudentFromTerm(registrationId);
                 Swal.close();
-            } catch(e) { Swal.close(); U.err('Failed.'); }
+                if (response.success) {
+                    Utils.showSuccess(response.message);
+                    const card = document.querySelector(`.student-profile-card[data-registration-id="${registrationId}"]`);
+                    card?.closest('.col-xl-3,.col-lg-4,.col-md-6')?.remove();
+                }
+            } catch (error) { Swal.close(); Utils.showError('Failed to remove student.'); }
+        },
+        async bulkRemoveFromTerm() {
+            const selectedIds = this.getTRMSelectedIds();
+            if (selectedIds.length === 0) { Utils.showError('Please select at least one student.', 'No Selection'); return; }
+            if (!await Utils.showConfirm(`Remove ${selectedIds.length} student(s)?`, 'This will remove their term registration.', 'Yes, remove all')) return;
+            Swal.fire({ title:'Removing…', html:`Removing ${selectedIds.length} student(s)…`, allowOutsideClick:false, didOpen:()=>Swal.showLoading() });
+            try {
+                const response = await ApiService.bulkRemoveFromTerm(selectedIds);
+                Swal.close();
+                if (response.success) { Utils.showSuccess(response.message); this.refreshData(); }
+            } catch (error) { Swal.close(); Utils.showError('Failed to remove students.'); }
+        },
+        async refreshData() {
+            if (!AppState.termFilters) return;
+            Swal.fire({ title:'Refreshing…', allowOutsideClick:false, didOpen:()=>Swal.showLoading() });
+            try {
+                const response = await ApiService.getStudentsInTerm(AppState.termFilters);
+                if (response.success) {
+                    const container = document.getElementById('termStudentsContainer');
+                    if (container) container.innerHTML = this.renderStudentCards(response.students);
+                }
+                Swal.close();
+            } catch (error) { Swal.close(); Utils.showError('Failed to refresh data.'); }
         }
     };
 
-    // ================================================================
-    // REPORT MANAGER — FIXED DRAG & DROP
-    // ================================================================
-    const Report = {
-        sortable: null,
-        init: () => {
+    // ============================================================================
+    // REPORT MANAGER — FIXED SORTABLE (flat flex items, no col wrappers)
+    // ============================================================================
+    const ReportManager = {
+        sortableInstance: null,
+
+        initializeReportModal: function() {
             const container = document.getElementById('columnsContainer');
             if (!container) return;
-            if (typeof Sortable === 'undefined') { console.error('Sortable not loaded'); return; }
-            if (Report.sortable) { try { Report.sortable.destroy(); } catch {} }
-            Report.sortable = new Sortable(container, {
+
+            if (typeof Sortable === 'undefined') {
+                console.error('Sortable library not loaded!');
+                return;
+            }
+
+            // Destroy existing instance
+            if (this.sortableInstance) {
+                try { this.sortableInstance.destroy(); } catch(e) {}
+                this.sortableInstance = null;
+            }
+
+            // Create Sortable on the flat flex container
+            // The draggable items are direct children with class .draggable-item
+            this.sortableInstance = new Sortable(container, {
                 animation: 200,
                 handle: '.drag-handle',
                 draggable: '.draggable-item',
                 ghostClass: 'sortable-ghost',
                 chosenClass: 'sortable-chosen',
                 dragClass: 'sortable-drag',
-                onEnd: () => { Report.updateOrder(); Report.updatePreview(); }
+                filter: 'input, label',  // do not start drag on input/label clicks
+                preventOnFilter: false,
+                onStart: function() { document.body.style.cursor = 'grabbing'; },
+                onEnd: () => { document.body.style.cursor = ''; this.updateColumnOrder(); this.updatePreview(); }
             });
-            container.querySelectorAll('.column-checkbox').forEach(cb => { cb.onchange = () => { Report.updateOrder(); Report.updatePreview(); }; });
-            // Select/deselect all buttons
+
+            // Checkbox change events
+            container.querySelectorAll('.column-checkbox').forEach(cb => {
+                cb.addEventListener('change', () => { this.updateColumnOrder(); this.updatePreview(); });
+            });
+
+            // Select/Deselect all
             document.getElementById('selectAllColumnsBtn')?.addEventListener('click', () => {
                 container.querySelectorAll('.column-checkbox').forEach(cb => cb.checked = true);
-                Report.updateOrder(); Report.updatePreview();
+                this.updateColumnOrder(); this.updatePreview();
             });
             document.getElementById('deselectAllColumnsBtn')?.addEventListener('click', () => {
                 container.querySelectorAll('.column-checkbox').forEach(cb => cb.checked = false);
-                Report.updateOrder(); Report.updatePreview();
+                this.updateColumnOrder(); this.updatePreview();
             });
-            Report.updateOrder();
-            Report.updatePreview();
+
+            this.updateColumnOrder();
+            this.updatePreview();
         },
-        updateOrder: () => {
-            const container = document.getElementById('columnsContainer');
+
+        updateColumnOrder: function() {
+            const container  = document.getElementById('columnsContainer');
             const orderInput = document.getElementById('columnsOrderInput');
             if (!container || !orderInput) return;
             const items = container.querySelectorAll('.draggable-item');
-            const checked = Array.from(items).filter(el => el.querySelector('.column-checkbox')?.checked).map(el => el.dataset.column);
-            orderInput.value = checked.join(',');
-            // Badge numbers
+            const checkedInOrder = Array.from(items)
+                .filter(el => el.querySelector('.column-checkbox')?.checked)
+                .map(el => el.dataset.column);
+            orderInput.value = checkedInOrder.join(',');
+            // Update order badges
             let n = 0;
             items.forEach(el => {
                 let badge = el.querySelector('.order-badge');
                 if (el.querySelector('.column-checkbox')?.checked) {
                     n++;
-                    if (!badge) { badge = document.createElement('span'); badge.className = 'order-badge'; el.style.position='relative'; el.appendChild(badge); }
+                    if (!badge) {
+                        badge = document.createElement('span');
+                        badge.className = 'order-badge';
+                        el.appendChild(badge);
+                    }
                     badge.textContent = n;
-                } else { badge?.remove(); }
+                } else {
+                    badge?.remove();
+                }
             });
         },
-        updatePreview: () => {
-            const preview = document.getElementById('columnOrderPreview');
-            if (!preview) return;
-            const labels = Array.from(document.querySelectorAll('.column-checkbox:checked')).map(cb => {
-                const label = document.querySelector(`label[for="${cb.id}"]`);
-                return label ? label.textContent.trim() : cb.value;
-            });
-            preview.textContent = labels.length ? labels.join(', ') : 'No columns selected';
+
+        updatePreview: function() {
+            const previewEl = document.getElementById('columnOrderPreview');
+            if (!previewEl) return;
+            const container = document.getElementById('columnsContainer');
+            if (!container) return;
+            const items = container.querySelectorAll('.draggable-item');
+            const labels = Array.from(items)
+                .filter(el => el.querySelector('.column-checkbox')?.checked)
+                .map(el => {
+                    const key   = el.dataset.column;
+                    const label = el.querySelector('label');
+                    return label ? label.textContent.trim() : key;
+                });
+            previewEl.textContent = labels.length ? labels.join(', ') : 'No columns selected';
         },
-        generate: async () => {
+
+        async generateReport() {
             const form = document.getElementById('printReportForm');
-            if (!form) return;
+            if (!form) { Utils.showError('Report form not found'); return; }
+
             const selectedColumns = Array.from(form.querySelectorAll('.column-checkbox:checked')).map(cb => cb.value);
-            if (!selectedColumns.length) { U.err('Please select at least one column.','No Columns Selected'); return; }
-            const fd = new FormData(form);
-            const params = {};
-            for (const [k, v] of fd.entries()) {
-                if (k==='columns[]') { params.columns = params.columns ? params.columns+','+v : v; }
-                else if (k==='columns_order') { params.columns_order = document.getElementById('columnsOrderInput')?.value||v; }
-                else if (v) params[k] = v;
+            if (selectedColumns.length === 0) { Utils.showError('Please select at least one column.', 'No Columns Selected'); return; }
+
+            const formData = new FormData(form);
+            const params   = {};
+            for (const [k, v] of formData.entries()) {
+                if (k === 'columns[]') { params.columns = params.columns ? params.columns + ',' + v : v; }
+                else if (k === 'columns_order') { const oi = document.getElementById('columnsOrderInput'); params.columns_order = oi?.value || v; }
+                else if (v) { params[k] = v; }
             }
-            if (!params.format) { const r = form.querySelector('input[name="format"]:checked'); params.format = r?.value||'pdf'; }
-            if (!params.orientation) { const o = form.querySelector('#orientation'); params.orientation = o?.value||'portrait'; }
+            if (!params.format) { const r = form.querySelector('input[name="format"]:checked'); params.format = r?.value || 'pdf'; }
+            if (!params.orientation) { params.orientation = document.getElementById('orientation')?.value || 'portrait'; }
             params.include_header = form.querySelector('input[name="include_header"]')?.checked ? '1' : '0';
             params.include_logo   = form.querySelector('input[name="include_logo"]')?.checked   ? '1' : '0';
+            params.exclude_photos = '0';
+
             bootstrap.Modal.getInstance(document.getElementById('printStudentReportModal'))?.hide();
-            Swal.fire({title:'Generating Report…',html:'Please wait…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+
+            Swal.fire({ title:'Generating Report…', html:'Please wait while your report is being generated…', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
             try {
-                const r = await axios({method:'GET',url:'/students/report',params,responseType:'blob',timeout:120000});
+                const response = await axios({ method:'GET', url:'/students/report', params, responseType:'blob', timeout: 120000 });
                 Swal.close();
-                const url = window.URL.createObjectURL(new Blob([r.data]));
-                const a = document.createElement('a'); a.href = url;
-                let fn = `student-report-${new Date().toISOString().split('T')[0]}.${params.format==='excel'?'xlsx':'pdf'}`;
-                const cd = r.headers['content-disposition'];
-                if (cd) { const m = cd.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/); if (m) fn = m[1].replace(/['"]/g,''); }
-                a.download = fn; document.body.appendChild(a); a.click(); document.body.removeChild(a); window.URL.revokeObjectURL(url);
-                U.ok(`Report generated: ${fn}`);
-            } catch(e) {
+                const url  = window.URL.createObjectURL(new Blob([response.data]));
+                const link = document.createElement('a');
+                link.href  = url;
+                let filename = `student-report-${new Date().toISOString().split('T')[0]}.${params.format === 'excel' ? 'xlsx' : 'pdf'}`;
+                const cd = response.headers['content-disposition'];
+                if (cd) { const m = cd.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/); if (m && m[1]) filename = m[1].replace(/['"]/g, ''); }
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+                Utils.showSuccess(`Report generated: ${filename}`);
+            } catch (error) {
                 Swal.close();
-                let msg = 'Failed to generate report.';
-                if (e.response?.data instanceof Blob) { try { const t = await e.response.data.text(); msg = JSON.parse(t).message||msg; } catch {} }
-                else if (e.response?.data?.message) msg = e.response.data.message;
-                U.err(msg, 'Report Generation Failed');
+                let errorMessage = 'Failed to generate report.';
+                if (error.response?.data instanceof Blob) {
+                    try { const t = await error.response.data.text(); const j = JSON.parse(t); errorMessage = j.message || errorMessage; } catch(e) {}
+                } else if (error.response?.data?.message) { errorMessage = error.response.data.message; }
+                Utils.showError(errorMessage, 'Report Generation Failed');
             }
         }
     };
