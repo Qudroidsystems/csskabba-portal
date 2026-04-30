@@ -42,32 +42,6 @@
                     --sm-shadow-lg: 0 8px 32px rgba(0,0,0,.12);
                 }
 
-                /* Modal scrolling fixes */
-                .modal-content {
-                    max-height: 90vh;
-                    display: flex;
-                    flex-direction: column;
-                }
-
-                .modal-body {
-                    flex: 1;
-                    overflow-y: auto;
-                    padding: 1rem;
-                }
-
-                #editStudentForm .modal-body,
-                #addStudentForm .modal-body {
-                    overflow-y: auto;
-                    max-height: calc(90vh - 120px);
-                }
-
-                #editStudentForm,
-                #addStudentForm {
-                    display: flex;
-                    flex-direction: column;
-                    height: 100%;
-                }
-
                 /* ====================================================
                    HERO BANNER
                    ==================================================== */
@@ -261,7 +235,7 @@
                 }
 
                 /* ====================================================
-                   ACTION BUTTONS
+                   ACTION BUTTONS — FULLY VISIBLE PROFESSIONAL STYLE
                    ==================================================== */
                 .act-btn {
                     width: 34px; height: 34px; border-radius: 8px; border: 1px solid transparent;
@@ -276,8 +250,19 @@
                 .act-delete { background: #fee2e2; color: #dc2626; border-color: #fecaca; }
                 .act-delete:hover { background: #dc2626; color: #fff; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(220,38,38,.3); }
 
+                /* Action button text labels */
+                .act-label { font-size: 11px; font-weight: 600; margin-left: 4px; }
+
+                /* Wide action buttons (with text) */
+                .act-btn-wide {
+                    height: 34px; border-radius: 8px; border: 1px solid transparent;
+                    display: inline-flex; align-items: center; justify-content: center;
+                    font-size: 12px; font-weight: 600; cursor: pointer; transition: all .18s;
+                    padding: 0 12px; gap: 5px; white-space: nowrap;
+                }
+
                 /* ====================================================
-                   STUDENT PROFILE CARD
+                   STUDENT PROFILE CARD (card view)
                    ==================================================== */
                 .stu-card {
                     background: #fff;
@@ -380,6 +365,15 @@
                     opacity: 1; z-index: 9999;
                 }
                 .img-zoom-modal .btn-close:hover { background: rgba(0,0,0,.9); transform: scale(1.1); }
+                .zoom-name {
+                    color: #fff; margin-top: 18px; font-size: 17px; font-weight: 700;
+                    background: rgba(0,0,0,.5); padding: 7px 22px;
+                    border-radius: 40px; text-shadow: 0 1px 4px rgba(0,0,0,.3);
+                }
+                .zoom-detail {
+                    color: rgba(255,255,255,.78); margin-top: 6px;
+                    font-size: 13px; text-align: center;
+                }
 
                 /* ====================================================
                    VIEW TOGGLE BUTTONS
@@ -490,22 +484,37 @@
                 .order-badge       { font-size: 10px; padding: 1px 5px; border-radius: 8px; background: var(--sm-accent); color: #fff; }
 
                 /* ====================================================
+                   BULK STATUS CARDS
+                   ==================================================== */
+                .bsc-card {
+                    border: 1.5px solid var(--sm-border);
+                    border-radius: 12px; overflow: hidden;
+                    transition: transform .15s, box-shadow .15s, border-color .15s;
+                    background: #fff;
+                }
+                .bsc-card:hover { transform: translateY(-3px); box-shadow: var(--sm-shadow); border-color: var(--sm-accent); }
+
+                /* ====================================================
                    MISC UTILITIES
                    ==================================================== */
                 .btn-pg { background: linear-gradient(135deg, #1e3a5f, #2563eb); border: none; color: #fff; padding: 10px 22px; border-radius: 10px; font-weight: 600; font-size: 13px; transition: opacity .15s, transform .1s; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
                 .btn-pg:hover { opacity: .9; transform: translateY(-1px); color: #fff; }
                 .btn-pg:disabled { opacity: .6; cursor: not-allowed; }
 
-                @media(max-width:768px) { .sm-stat-value { font-size: 22px; } }
+                @media(max-width:768px) { .sm-stat-value { font-size: 22px; } .act-label { display: none; } }
             </style>
 
-            <!-- HERO -->
+            <!-- ========================================================
+                 HERO
+                 ======================================================== -->
             <div class="sm-hero">
                 <h1><i class="ri-group-line me-2"></i>Student Management</h1>
                 <p>Manage student records, registrations, status, and term enrolments from one place.</p>
             </div>
 
-            <!-- STAT CARDS -->
+            <!-- ========================================================
+                 STAT CARDS — ROW 1
+                 ======================================================== -->
             <div class="row g-3 mb-2">
                 <div class="col-6 col-md-3">
                     <div class="sm-stat c-blue">
@@ -541,6 +550,9 @@
                 </div>
             </div>
 
+            <!-- ========================================================
+                 STAT CARDS — ROW 2
+                 ======================================================== -->
             <div class="row g-3 mb-4">
                 <div class="col-6 col-md-3">
                     <div class="sm-stat c-sky">
@@ -576,7 +588,9 @@
                 </div>
             </div>
 
-            <!-- ALERTS -->
+            <!-- ========================================================
+                 ALERTS
+                 ======================================================== -->
             @if(session('success'))
                 <div class="alert alert-success alert-dismissible fade show"><i class="fas fa-check-circle me-2"></i>{{ session('success') }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
             @endif
@@ -591,8 +605,12 @@
                 </div>
             @endif
 
-            <!-- MAIN PANEL -->
+            <!-- ========================================================
+                 MAIN PANEL
+                 ======================================================== -->
             <div class="sm-panel">
+
+                <!-- Panel Header -->
                 <div class="sm-panel-header">
                     <div class="d-flex align-items-center gap-3">
                         <div class="form-check mb-0">
@@ -604,6 +622,7 @@
                         </div>
                     </div>
                     <div class="d-flex flex-wrap align-items-center gap-2">
+                        <!-- View Toggle -->
                         <div class="btn-group view-toggle" role="group">
                             <button type="button" class="btn btn-outline-primary active" id="tableViewBtn">
                                 <i class="fas fa-table me-1"></i>Table
@@ -612,6 +631,7 @@
                                 <i class="fas fa-th-large me-1"></i>Cards
                             </button>
                         </div>
+                        <!-- Bulk Actions -->
                         @can('Delete student')
                         <div class="dropdown">
                             <button class="btn btn-light btn-sm dropdown-toggle" type="button" id="bulkActionsDropdown"
@@ -752,10 +772,12 @@
                         </ul>
                     </nav>
                 </div>
-            </div>
-        </div>
+            </div><!-- /sm-panel -->
+        </div><!-- /container-fluid -->
 
-        <!-- IMAGE ZOOM MODAL -->
+        <!-- ============================================================
+             IMAGE ZOOM MODAL
+             ============================================================ -->
         <div class="modal fade img-zoom-modal" id="imageZoomModal" tabindex="-1" data-bs-backdrop="static">
             <div class="modal-dialog modal-dialog-centered modal-lg">
                 <div class="modal-content">
@@ -769,7 +791,9 @@
             </div>
         </div>
 
-        <!-- UPDATE CURRENT TERM MODAL -->
+        <!-- ============================================================
+             UPDATE CURRENT TERM MODAL
+             ============================================================ -->
         <div id="updateCurrentTermModal" class="modal fade" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
@@ -827,7 +851,9 @@
             </div>
         </div>
 
-        <!-- EXPORT / REPORT MODAL -->
+        <!-- ============================================================
+             EXPORT / REPORT MODAL
+             ============================================================ -->
         <div id="printStudentReportModal" class="modal fade" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                 <div class="modal-content">
@@ -998,17 +1024,19 @@
             </div>
         </div>
 
-        <!-- ADD STUDENT MODAL -->
+        <!-- ============================================================
+             ADD STUDENT MODAL
+             ============================================================ -->
         <div id="addStudentModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-            <div class="modal-dialog modal-dialog-centered modal-xl" style="max-height: 90vh;">
-                <div class="modal-content" style="max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+                <div class="modal-content">
                     <div class="modal-header modal-hdr">
                         <h5 class="modal-title"><i class="fas fa-user-plus me-2"></i>Student Registration</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <form id="addStudentForm" enctype="multipart/form-data" autocomplete="off" method="POST" action="{{ route('student.store') }}">
                         @csrf
-                        <div class="modal-body p-4" style="overflow-y: auto;">
+                        <div class="modal-body p-4">
                             <div class="progress-steps mb-4">
                                 <div class="step active">1</div>
                                 <div class="step">2</div>
@@ -1040,9 +1068,7 @@
                                                 <label class="form-label fw-semibold">Admission Number <span class="text-danger">*</span></label>
                                                 <div class="input-group">
                                                     <select class="form-control" id="admissionYear" name="admissionYear" required onchange="updateAdmissionNumber()">
-                                                        @for($year = date('Y'); $year >= date('Y') - 5; $year--)
-                                                            <option value="{{ $year }}" {{ $year == date('Y') ? 'selected' : '' }}>{{ $year }}</option>
-                                                        @endfor
+                                                        @for($year = date('Y'); $year >= date('Y') - 5; $year--)<option value="{{ $year }}" {{ $year == date('Y') ? 'selected' : '' }}>{{ $year }}</option>@endfor
                                                     </select>
                                                     <input type="text" id="admissionNo" name="admissionNo" class="form-control" placeholder="TCC/YYYY/0001" required>
                                                 </div>
@@ -1056,9 +1082,7 @@
                                                 <label class="form-label fw-semibold">Class <span class="text-danger">*</span></label>
                                                 <select id="schoolclassid" name="schoolclassid" class="form-control" required>
                                                     <option value="">Select Class</option>
-                                                    @foreach($schoolclasses as $class)
-                                                        <option value="{{ $class->id }}">{{ $class->schoolclass }} - {{ $class->arm }}</option>
-                                                    @endforeach
+                                                    @foreach($schoolclasses as $class)<option value="{{ $class->id }}">{{ $class->schoolclass }} - {{ $class->arm }}</option>@endforeach
                                                 </select>
                                             </div>
                                             <div class="row">
@@ -1067,9 +1091,7 @@
                                                         <label class="form-label fw-semibold">Term <span class="text-danger">*</span></label>
                                                         <select id="termid" name="termid" class="form-control" required>
                                                             <option value="">Select Term</option>
-                                                            @foreach($schoolterms as $term)
-                                                                <option value="{{ $term->id }}">{{ $term->name }}</option>
-                                                            @endforeach
+                                                            @foreach($schoolterms as $term)<option value="{{ $term->id }}">{{ $term->name }}</option>@endforeach
                                                         </select>
                                                     </div>
                                                 </div>
@@ -1078,9 +1100,7 @@
                                                         <label class="form-label fw-semibold">Session <span class="text-danger">*</span></label>
                                                         <select id="sessionid" name="sessionid" class="form-control" required>
                                                             <option value="">Select Session</option>
-                                                            @foreach($schoolsessions as $session)
-                                                                <option value="{{ $session->id }}">{{ $session->name }}</option>
-                                                            @endforeach
+                                                            @foreach($schoolsessions as $session)<option value="{{ $session->id }}">{{ $session->name }}</option>@endforeach
                                                         </select>
                                                     </div>
                                                 </div>
@@ -1255,10 +1275,12 @@
             </div>
         </div>
 
-        <!-- EDIT STUDENT MODAL -->
+        <!-- ============================================================
+             EDIT STUDENT MODAL
+             ============================================================ -->
         <div id="editStudentModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-            <div class="modal-dialog modal-dialog-centered modal-xl" style="max-height: 90vh;">
-                <div class="modal-content" style="max-height: 90vh; display: flex; flex-direction: column;">
+            <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
+                <div class="modal-content">
                     <div class="modal-header modal-hdr">
                         <h5 class="modal-title"><i class="fas fa-user-edit me-2"></i>Edit Student</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
@@ -1268,7 +1290,7 @@
                           data-base-action="{{ route('student.update', ':id') }}">
                         @csrf
                         @method('PATCH')
-                        <div class="modal-body p-4" style="overflow-y: auto;">
+                        <div class="modal-body p-4">
                             <input type="hidden" id="editStudentId" name="id">
                             <div class="progress-steps mb-4">
                                 <div class="step active">1</div><div class="step">2</div><div class="step">3</div><div class="step">4</div>
@@ -1292,9 +1314,7 @@
                                                 <label class="form-label fw-semibold">Admission Number <span class="text-danger">*</span></label>
                                                 <div class="input-group">
                                                     <select class="form-control" id="editAdmissionYear" name="admissionYear" required onchange="updateAdmissionNumber('edit')">
-                                                        @for($year = date('Y'); $year >= date('Y') - 5; $year--)
-                                                            <option value="{{ $year }}" {{ $year == date('Y') ? 'selected' : '' }}>{{ $year }}</option>
-                                                        @endfor
+                                                        @for($year = date('Y'); $year >= date('Y') - 5; $year--)<option value="{{ $year }}" {{ $year == date('Y') ? 'selected' : '' }}>{{ $year }}</option>@endfor
                                                     </select>
                                                     <input type="text" id="editAdmissionNo" name="admissionNo" class="form-control" placeholder="TCC/YYYY/0001" required>
                                                 </div>
@@ -1429,7 +1449,9 @@
             </div>
         </div>
 
-        <!-- VIEW STUDENT MODAL -->
+        <!-- ============================================================
+             VIEW STUDENT MODAL
+             ============================================================ -->
         <div id="viewStudentModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
             <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
                 <div class="modal-content">
@@ -1482,7 +1504,7 @@
                             </ul>
                         </div>
                         <div class="tab-content p-4">
-                            <!-- Personal Tab -->
+                            <!-- Personal -->
                             <div class="tab-pane fade show active" id="vPersonal">
                                 <div class="row g-3">
                                     <div class="col-md-6">
@@ -1525,7 +1547,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- Academic Tab -->
+                            <!-- Academic -->
                             <div class="tab-pane fade" id="vAcademic">
                                 <div class="row g-3">
                                     <div class="col-md-6">
@@ -1569,7 +1591,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- Family Tab -->
+                            <!-- Family -->
                             <div class="tab-pane fade" id="vFamily">
                                 <div class="row g-3">
                                     <div class="col-md-6">
@@ -1601,9 +1623,24 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <div class="col-12">
+                                        <div class="info-card">
+                                            <div class="info-card-header"><h6><i class="fas fa-user-shield me-2 text-warning"></i>Emergency Contact</h6></div>
+                                            <div class="info-card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <table class="table table-borderless table-sm">
+                                                            <tr><th>Parent Email:</th><td id="viewParentEmail">—</td></tr>
+                                                            <tr><th>Parent Address:</th><td id="viewParentAddress">—</td></tr>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                            <!-- Additional Tab -->
+                            <!-- Additional -->
                             <div class="tab-pane fade" id="vAdditional">
                                 <div class="row g-3">
                                     <div class="col-md-6">
@@ -1620,7 +1657,7 @@
                                     </div>
                                 </div>
                             </div>
-                            <!-- Term History Tab -->
+                            <!-- Term History -->
                             <div class="tab-pane fade" id="vTerms">
                                 <div class="info-card">
                                     <div class="info-card-header d-flex justify-content-between align-items-center">
@@ -1647,9 +1684,12 @@
             </div>
         </div>
 
-    </div>
-</div>
+    </div><!-- /page-content -->
+</div><!-- /main-content -->
 
+<!-- ================================================================
+     SCRIPTS
+     ================================================================ -->
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
@@ -1677,17 +1717,49 @@
     };
 
     // ================================================================
-    // NIGERIAN STATES / LGAS (complete array - keep as in original)
+    // NIGERIAN STATES / LGAS
     // ================================================================
     const NIGERIAN_STATES = [
         { name: "Abia", lgas: ["Aba North","Aba South","Arochukwu","Bende","Ikwuano","Isiala Ngwa North","Isiala Ngwa South","Isuikwuato","Obi Ngwa","Ohafia","Osisioma","Ugwunagbo","Ukwa East","Ukwa West","Umuahia North","Umuahia South","Umu Nneochi"] },
         { name: "Adamawa", lgas: ["Demsa","Fufure","Ganye","Gayuk","Gombi","Grie","Hong","Jada","Lamurde","Madagali","Maiha","Mayo Belwa","Michika","Mubi North","Mubi South","Numan","Shelleng","Song","Toungo","Yola North","Yola South"] },
         { name: "Akwa Ibom", lgas: ["Abak","Eastern Obolo","Eket","Esit Eket","Essien Udim","Etim Ekpo","Etinan","Ibeno","Ibesikpo Asutan","Ibiono-Ibom","Ika","Ikono","Ikot Abasi","Ikot Ekpene","Ini","Itu","Mbo","Mkpat-Enin","Nsit-Atai","Nsit-Ibom","Nsit-Ubium","Obot Akara","Okobo","Onna","Oron","Oruk Anam","Udung-Uko","Ukanafun","Uruan","Urue-Offong/Oruko","Uyo"] },
-        // ... (keep all other states from your original code)
+        { name: "Anambra", lgas: ["Aguata","Anambra East","Anambra West","Anaocha","Awka North","Awka South","Ayamelum","Dunukofia","Ekwusigo","Idemili North","Idemili South","Ihiala","Njikoka","Nnewi North","Nnewi South","Ogbaru","Onitsha North","Onitsha South","Orumba North","Orumba South","Oyi"] },
+        { name: "Bauchi", lgas: ["Alkaleri","Bauchi","Bogoro","Damban","Darazo","Dass","Gamawa","Ganjuwa","Giade","Itas/Gadau","Jama'are","Katagum","Kirfi","Misau","Ningi","Shira","Tafawa Balewa","Toro","Warji","Zaki"] },
+        { name: "Bayelsa", lgas: ["Brass","Ekeremor","Kolokuma/Opokuma","Nembe","Ogbia","Sagbama","Southern Ijaw","Yenagoa"] },
+        { name: "Benue", lgas: ["Ado","Agatu","Apa","Buruku","Gboko","Guma","Gwer East","Gwer West","Katsina-Ala","Konshisha","Kwande","Logo","Makurdi","Obi","Ogbadibo","Ohimini","Oju","Okpokwu","Oturkpo","Tarka","Ukum","Ushongo","Vandeikya"] },
+        { name: "Cross River", lgas: ["Abi","Akamkpa","Akpabuyo","Bakassi","Bekwarra","Biase","Boki","Calabar Municipal","Calabar South","Etung","Ikom","Obanliku","Obubra","Obudu","Odukpani","Ogoja","Yakuur","Yala"] },
+        { name: "Delta", lgas: ["Aniocha North","Aniocha South","Bomadi","Burutu","Ethiope East","Ethiope West","Ika North East","Ika South","Isoko North","Isoko South","Ndokwa East","Ndokwa West","Okpe","Oshimili North","Oshimili South","Patani","Sapele","Udu","Ughelli North","Ughelli South","Ukwuani","Uvwie","Warri North","Warri South","Warri South West"] },
+        { name: "Ebonyi", lgas: ["Abakaliki","Afikpo North","Afikpo South","Ebonyi","Ezza North","Ezza South","Ikwo","Ishielu","Ivo","Izzi","Ohaozara","Ohaukwu","Onicha"] },
+        { name: "Edo", lgas: ["Akoko-Edo","Egor","Esan Central","Esan North-East","Esan South-East","Esan West","Etsako Central","Etsako East","Etsako West","Igueben","Ikpoba Okha","Orhionmwon","Oredo","Ovia North-East","Ovia South-West","Owan East","Owan West","Uhunmwonde"] },
+        { name: "Ekiti", lgas: ["Ado Ekiti","Efon","Ekiti East","Ekiti South-West","Ekiti West","Emure","Gbonyin","Ido Osi","Ijero","Ikere","Ilejemeje","Irepodun/Ifelodun","Ise/Orun","Moba","Oye"] },
+        { name: "Enugu", lgas: ["Aninri","Awgu","Enugu East","Enugu North","Enugu South","Ezeagu","Igbo Etiti","Igbo Eze North","Igbo Eze South","Isi Uzo","Nkanu East","Nkanu West","Nsukka","Oji River","Udenu","Udi","Uzo Uwani"] },
+        { name: "FCT", lgas: ["Abaji","Bwari","Gwagwalada","Kuje","Kwali","Municipal Area Council"] },
+        { name: "Gombe", lgas: ["Akko","Balanga","Billiri","Dukku","Funakaye","Gombe","Kaltungo","Kwami","Nafada","Shongom","Yamaltu/Deba"] },
+        { name: "Imo", lgas: ["Aboh Mbaise","Ahiazu Mbaise","Ehime Mbano","Ezinihitte","Ideato North","Ideato South","Ihitte/Uboma","Ikeduru","Isiala Mbano","Isu","Mbaitoli","Ngor Okpala","Njaba","Nkwerre","Nwangele","Obowo","Oguta","Ohaji/Egbema","Okigwe","Orlu","Orsu","Oru East","Oru West","Owerri Municipal","Owerri North","Owerri West","Unuimo"] },
+        { name: "Jigawa", lgas: ["Auyo","Babura","Biriniwa","Birnin Kudu","Buji","Dutse","Gagarawa","Garki","Gumel","Guri","Gwaram","Gwiwa","Hadejia","Jahun","Kafin Hausa","Kazaure","Kiri Kasama","Kiyawa","Kaugama","Maigatari","Malam Madori","Miga","Ringim","Roni","Sule Tankarkar","Taura","Yankwashi"] },
+        { name: "Kaduna", lgas: ["Birnin Gwari","Chikun","Giwa","Igabi","Ikara","Jaba","Jema'a","Kachia","Kaduna North","Kaduna South","Kagarko","Kajuru","Kaura","Kauru","Kubau","Kudan","Lere","Makarfi","Sabon Gari","Sanga","Soba","Zangon Kataf","Zaria"] },
+        { name: "Kano", lgas: ["Ajingi","Albasu","Bagwai","Bebeji","Bichi","Bunkure","Dala","Dambatta","Dawakin Kudu","Dawakin Tofa","Doguwa","Fagge","Gabasawa","Garko","Garun Mallam","Gaya","Gezawa","Gwale","Gwarzo","Kabo","Kano Municipal","Karaye","Kibiya","Kiru","Kumbotso","Kunchi","Kura","Madobi","Makoda","Minjibir","Nasarawa","Rano","Rimin Gado","Rogo","Shanono","Sumaila","Takai","Tarauni","Tofa","Tsanyawa","Tudun Wada","Ungogo","Warawa","Wudil"] },
+        { name: "Katsina", lgas: ["Bakori","Batagarawa","Batsari","Baure","Bindawa","Charanchi","Dan Musa","Dandume","Danja","Daura","Dutsi","Dutsin Ma","Faskari","Funtua","Ingawa","Jibia","Kafur","Kaita","Kankara","Kankia","Katsina","Kurfi","Kusada","Mai'Adua","Malumfashi","Mani","Mashi","Matazu","Musawa","Rimi","Sabuwa","Safana","Sandamu","Zango"] },
+        { name: "Kebbi", lgas: ["Aleiro","Arewa Dandi","Argungu","Augie","Bagudo","Birnin Kebbi","Bunza","Dandi","Fakai","Gwandu","Jega","Kalgo","Koko/Besse","Maiyama","Ngaski","Sakaba","Shanga","Suru","Danko/Wasagu","Yauri","Zuru"] },
+        { name: "Kogi", lgas: ["Adavi","Ajaokuta","Ankpa","Bassa","Dekina","Ibaji","Idah","Igalamela Odolu","Ijumu","Kabba/Bunu","Kogi","Lokoja","Mopa Muro","Ofu","Ogori/Magongo","Okehi","Okene","Olamaboro","Omala","Yagba East","Yagba West"] },
+        { name: "Kwara", lgas: ["Asa","Baruten","Edu","Ekiti","Ifelodun","Ilorin East","Ilorin South","Ilorin West","Irepodun","Isin","Kaiama","Moro","Offa","Oke Ero","Oyun","Pategi"] },
+        { name: "Lagos", lgas: ["Agege","Ajeromi-Ifelodun","Alimosho","Amuwo-Odofin","Apapa","Badagry","Epe","Eti Osa","Ibeju-Lekki","Ifako-Ijaiye","Ikeja","Ikorodu","Kosofe","Lagos Island","Lagos Mainland","Mushin","Ojo","Oshodi-Isolo","Shomolu","Surulere"] },
+        { name: "Nasarawa", lgas: ["Akwanga","Awe","Doma","Karu","Keana","Keffi","Kokona","Lafia","Nasarawa","Nasarawa Egon","Obi","Toto","Wamba"] },
+        { name: "Niger", lgas: ["Agaie","Agwara","Bida","Borgu","Bosso","Chanchaga","Edati","Gbako","Gurara","Katcha","Kontagora","Lapai","Lavun","Magama","Mariga","Mashegu","Mokwa","Moya","Paikoro","Rafi","Rijau","Shiroro","Suleja","Tafa","Wushishi"] },
+        { name: "Ogun", lgas: ["Abeokuta North","Abeokuta South","Ado-Odo/Ota","Egbado North","Egbado South","Ewekoro","Ifo","Ijebu East","Ijebu North","Ijebu North East","Ijebu Ode","Ikenne","Imeko Afon","Ipokia","Obafemi Owode","Odeda","Odogbolu","Ogun Waterside","Remo North","Shagamu"] },
+        { name: "Ondo", lgas: ["Akoko North-East","Akoko North-West","Akoko South-East","Akoko South-West","Akure North","Akure South","Ese Odo","Idanre","Ifedore","Ilaje","Ile Oluji/Okeigbo","Irele","Odigbo","Okitipupa","Ondo East","Ondo West","Ose","Owo"] },
+        { name: "Osun", lgas: ["Aiyedade","Aiyedire","Atakunmosa East","Atakunmosa West","Boluwaduro","Boripe","Ede North","Ede South","Egbedore","Ejigbo","Ife Central","Ife East","Ife North","Ife South","Ifedayo","Ifelodun","Ila","Ilesa East","Ilesa West","Irepodun","Irewole","Isokan","Iwo","Obokun","Odo Otin","Ola Oluwa","Olorunda","Oriade","Orolu","Osogbo"] },
+        { name: "Oyo", lgas: ["Afijio","Akinyele","Atiba","Atisbo","Egbeda","Ibadan North","Ibadan North-East","Ibadan North-West","Ibadan South-East","Ibadan South-West","Ibarapa Central","Ibarapa East","Ibarapa North","Ido","Irepo","Iseyin","Itesiwaju","Iwajowa","Kajola","Lagelu","Ogbomosho North","Ogbomosho South","Ogo Oluwa","Olorunsogo","Oluyole","Ona Ara","Orelope","Ori Ire","Oyo East","Oyo West","Saki East","Saki West","Surulere"] },
+        { name: "Plateau", lgas: ["Bokkos","Barkin Ladi","Bassa","Jos East","Jos North","Jos South","Kanam","Kanke","Langtang North","Langtang South","Mangu","Mikang","Pankshin","Qua'an Pan","Riyom","Shendam","Wase"] },
+        { name: "Rivers", lgas: ["Abua/Odual","Ahoada East","Ahoada West","Akuku-Toru","Andoni","Asari-Toru","Bonny","Degema","Eleme","Emohua","Etche","Gokana","Ikwerre","Khana","Obio/Akpor","Ogba/Egbema/Ndoni","Ogu/Bolo","Okrika","Omuma","Opobo/Nkoro","Oyigbo","Port Harcourt","Tai"] },
+        { name: "Sokoto", lgas: ["Binji","Bodinga","Dange Shuni","Gada","Goronyo","Gudu","Gwadabawa","Illela","Isa","Kebbe","Kware","Rabah","Sabon Birni","Shagari","Silame","Sokoto North","Sokoto South","Tambuwal","Tangaza","Tureta","Wamako","Wurno","Yabo"] },
+        { name: "Taraba", lgas: ["Ardo Kola","Bali","Donga","Gashaka","Gassol","Ibi","Jalingo","Karim Lamido","Kumi","Lau","Sardauna","Takum","Ussa","Wukari","Yorro","Zing"] },
+        { name: "Yobe", lgas: ["Bade","Bursari","Damaturu","Fika","Fune","Geidam","Gujba","Gulani","Jakusko","Karasuwa","Machina","Nangere","Nguru","Potiskum","Tarmuwa","Yunusari","Yusufari"] },
+        { name: "Zamfara", lgas: ["Anka","Bakura","Birnin Magaji/Kiyaw","Bukkuyum","Bungudu","Gummi","Gusau","Kaura Namoda","Maradun","Maru","Shinkafi","Talata Mafara","Chafe","Zurmi"] }
     ];
 
     // ================================================================
-    // UTILITIES
+    // UTILS
     // ================================================================
     const U = {
         log: (m, d) => CONFIG.ENABLE_LOG && (d !== undefined ? console.log(m, d) : console.log(m)),
@@ -1711,61 +1783,40 @@
         initials: (f, l) => ((f||'').charAt(0) + (l||'').charAt(0)).toUpperCase() || 'ST',
         debounce: (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; },
         showLoading: () => {
-            const tableView = document.getElementById('tableView');
-            const cardView = document.getElementById('cardView');
-            const emptyState = document.getElementById('emptyState');
-            const loadingState = document.getElementById('loadingState');
-
-            if (tableView) tableView.classList.add('d-none');
-            if (cardView) cardView.classList.add('d-none');
-            if (emptyState) emptyState.classList.add('d-none');
-            if (loadingState) loadingState.classList.remove('d-none');
-
+            ['tableView','cardView','emptyState'].forEach(id => document.getElementById(id)?.classList.add('d-none'));
+            document.getElementById('loadingState')?.classList.remove('d-none');
             AppState.ui.isLoading = true;
         },
         hideLoading: () => {
-            const loadingState = document.getElementById('loadingState');
-            if (loadingState) loadingState.classList.add('d-none');
-
+            document.getElementById('loadingState')?.classList.add('d-none');
             const hasData = AppState.pagination.data?.length > 0;
             if (hasData) {
-                const tableView = document.getElementById('tableView');
-                const cardView = document.getElementById('cardView');
-                const emptyState = document.getElementById('emptyState');
-
-                if (AppState.ui.currentView === 'table' && tableView) tableView.classList.remove('d-none');
-                else if (cardView) cardView.classList.remove('d-none');
-                if (emptyState) emptyState.classList.add('d-none');
+                const tv = document.getElementById('tableView'), cv = document.getElementById('cardView');
+                if (AppState.ui.currentView === 'table') tv?.classList.remove('d-none');
+                else cv?.classList.remove('d-none');
+                document.getElementById('emptyState')?.classList.add('d-none');
             } else {
-                const tableView = document.getElementById('tableView');
-                const cardView = document.getElementById('cardView');
-                const emptyState = document.getElementById('emptyState');
-
-                if (tableView) tableView.classList.add('d-none');
-                if (cardView) cardView.classList.add('d-none');
-                if (emptyState) emptyState.classList.remove('d-none');
+                ['tableView','cardView'].forEach(id => document.getElementById(id)?.classList.add('d-none'));
+                document.getElementById('emptyState')?.classList.remove('d-none');
             }
             AppState.ui.isLoading = false;
         },
-        err: (msg, title='Error') => Swal.fire({title,text:msg,icon:'error',confirmButtonText:'OK',customClass:{confirmButton:'btn btn-primary'}}),
-        ok: (msg, title='Success') => Swal.fire({title,text:msg,icon:'success',timer:2000,timerProgressBar:true,showConfirmButton:false}),
+        err:  (msg, title='Error')   => Swal.fire({title,text:msg,icon:'error',confirmButtonText:'OK',customClass:{confirmButton:'btn btn-primary'}}),
+        ok:   (msg, title='Success') => Swal.fire({title,text:msg,icon:'success',timer:2000,timerProgressBar:true,showConfirmButton:false}),
         confirm: async (title, text, confirmText='Yes') => {
             const r = await Swal.fire({title,text,icon:'warning',showCancelButton:true,confirmButtonText:confirmText,cancelButtonText:'Cancel',customClass:{confirmButton:'btn btn-danger',cancelButton:'btn btn-light'}});
             return r.isConfirmed;
         },
         csrf: () => {
             const t = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-            if (t) {
-                axios.defaults.headers.common['X-CSRF-TOKEN'] = t;
-                axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
-            }
+            if (t) { axios.defaults.headers.common['X-CSRF-TOKEN'] = t; axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest'; }
             return !!t;
         },
         setText: (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v ?? '—'; },
         openZoom: (imgSrc, name, initials, detail) => {
-            const zImg = document.getElementById('zoomedStudentImg');
+            const zImg  = document.getElementById('zoomedStudentImg');
             const zName = document.getElementById('zoomedStudentName');
-            const zDet = document.getElementById('zoomedStudentDetail');
+            const zDet  = document.getElementById('zoomedStudentDetail');
             if (imgSrc) {
                 zImg.src = imgSrc;
             } else {
@@ -1778,7 +1829,7 @@
                 zImg.src = cv.toDataURL();
             }
             if (zName) zName.textContent = name || '';
-            if (zDet) zDet.innerHTML = detail || '';
+            if (zDet)  zDet.innerHTML = detail || '';
             new bootstrap.Modal(document.getElementById('imageZoomModal')).show();
         }
     };
@@ -1793,47 +1844,82 @@
             return (await axios.get(`${url}?${q}`)).data;
         },
         async post(url, data) { U.csrf(); return (await axios.post(url, data)).data; },
-        async del(url) { U.csrf(); return (await axios.delete(url)).data; },
+        async del(url)        { U.csrf(); return (await axios.delete(url)).data; },
 
         students: (page, perPage, filters) => {
             const p = { page, per_page: perPage };
             if (filters.search && filters.search.trim()) p.search = filters.search.trim();
-            if (filters.class !== 'all') p.class_id = filters.class;
-            if (filters.status !== 'all') p.status = filters.status;
-            if (filters.gender !== 'all') p.gender = filters.gender;
-            if (filters.session !== 'all') p.session_id = filters.session;
-            if (filters.term !== 'all') p.term_id = filters.term;
+            if (filters.class   !== 'all') p.class_id   = filters.class;
+            if (filters.status  !== 'all') p.status      = filters.status;
+            if (filters.gender  !== 'all') p.gender      = filters.gender;
+            if (filters.session !== 'all') p.session_id  = filters.session;
+            if (filters.term    !== 'all') p.term_id     = filters.term;
             return API.get('/students/optimized', p);
         },
-        student: id => API.get(`/student/${id}/edit`, {}),
-        delete: id => API.del(`/student/${id}/destroy`),
-        delMany: ids => API.post('/students/destroy-multiple', {ids}),
+        student:  id => API.get(`/student/${id}/edit`, {}),
+        delete:   id => API.del(`/student/${id}/destroy`),
+        delMany:  ids => API.post('/students/destroy-multiple', {ids}),
         activeTerm: sid => API.get(`/student-current-term/student/${sid}/active`, {}),
-        bulkTerm: d => API.post('/student-current-term/bulk-update', d),
+        bulkTerm:   d  => API.post('/student-current-term/bulk-update', d),
         byClassSession: (cid, sid) => API.get('/students/by-class-session', {class_id:cid,session_id:sid}),
-        bulkStatus: d => API.post('/students/bulk-update-status', d),
-        inTerm: p => API.get('/students-in-term', p),
-        rmTerm: id => API.post('/students/remove-from-term', {registration_id:id}),
+        bulkStatus: d  => API.post('/students/bulk-update-status', d),
+        inTerm:     p  => API.get('/students-in-term', p),
+        rmTerm:     id => API.post('/students/remove-from-term', {registration_id:id}),
         rmTermMany: ids=> API.post('/students/bulk-remove-from-term', {registration_ids:ids})
     };
 
     // ================================================================
-    // RENDER FUNCTIONS
+    // STATE / LGA MANAGER
+    // ================================================================
+    const SLM = {
+        populate: (selectId, lgaId) => {
+            const sel = document.getElementById(selectId);
+            if (!sel) return;
+            sel.innerHTML = '<option value="">Select State</option>';
+            NIGERIAN_STATES.forEach(s => {
+                const o = document.createElement('option');
+                o.value = s.name; o.textContent = s.name; sel.appendChild(o);
+            });
+            const lgaSel = document.getElementById(lgaId);
+            if (lgaSel) { lgaSel.innerHTML = '<option value="">Select LGA</option>'; lgaSel.disabled = true; }
+            sel.onchange = () => SLM.updateLGA(sel.value, lgaId);
+        },
+        updateLGA: (stateName, lgaId) => {
+            const lgaSel = document.getElementById(lgaId);
+            if (!lgaSel) return;
+            lgaSel.innerHTML = '<option value="">Select LGA</option>';
+            const state = NIGERIAN_STATES.find(s => s.name === stateName);
+            if (state) {
+                lgaSel.disabled = false;
+                state.lgas.forEach(l => {
+                    const o = document.createElement('option'); o.value = l; o.textContent = l; lgaSel.appendChild(o);
+                });
+            } else lgaSel.disabled = true;
+        },
+        set: (stateId, lgaId, stateVal, lgaVal) => {
+            SLM.populate(stateId, lgaId);
+            if (stateVal) {
+                const sel = document.getElementById(stateId);
+                if (sel) { sel.value = stateVal; SLM.updateLGA(stateVal, lgaId); }
+                setTimeout(() => { const ls = document.getElementById(lgaId); if (ls && lgaVal) ls.value = lgaVal; }, 350);
+            }
+        }
+    };
+
+    // ================================================================
+    // RENDER MANAGER
     // ================================================================
     const Render = {
         table: students => {
             const tbody = document.getElementById('studentTableBody');
             if (!tbody) return;
-            if (!students?.length) {
-                tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5 text-muted">No students found</td></tr>';
-                return;
-            }
+            if (!students?.length) { tbody.innerHTML = '<tr><td colspan="8" class="text-center py-5 text-muted">No students found</td></tr>'; return; }
             const frag = document.createDocumentFragment();
             students.forEach(s => {
                 const tr = document.createElement('tr');
                 tr.dataset.id = s.id;
-                const init = U.initials(s.firstname, s.lastname);
-                const fullName = [s.lastname, s.firstname, s.othername].filter(Boolean).join(' ');
+                const init    = U.initials(s.firstname, s.lastname);
+                const fullName= [s.lastname, s.firstname, s.othername].filter(Boolean).join(' ');
                 const imgHtml = s.picture && s.picture !== 'unnamed.jpg'
                     ? `<img src="/storage/images/student_avatars/${s.picture}" class="sm-avatar" alt="${U.esc(fullName)}"
                            data-zoom-src="/storage/images/student_avatars/${s.picture}"
@@ -1887,18 +1973,14 @@
                     </td>`;
                 frag.appendChild(tr);
             });
-            tbody.innerHTML = '';
-            tbody.appendChild(frag);
+            tbody.innerHTML = ''; tbody.appendChild(frag);
             Render.updateCheckAll();
         },
 
         cards: students => {
             const container = document.getElementById('studentsCardsContainer');
             if (!container) return;
-            if (!students?.length) {
-                container.innerHTML = '<div class="col-12 text-center py-5 text-muted">No students found</div>';
-                return;
-            }
+            if (!students?.length) { container.innerHTML = '<div class="col-12 text-center py-5 text-muted">No students found</div>'; return; }
             const frag = document.createDocumentFragment();
             students.forEach(s => {
                 const col = document.createElement('div');
@@ -1963,54 +2045,37 @@
                     </div>`;
                 frag.appendChild(col);
             });
-            container.innerHTML = '';
-            container.appendChild(frag);
+            container.innerHTML = ''; container.appendChild(frag);
             Render.updateCheckAll();
         },
 
         updateCheckAll: () => {
-            const checkboxes = document.querySelectorAll('.student-checkbox');
-            const all = checkboxes.length;
-            const ch = document.querySelectorAll('.student-checkbox:checked').length;
-
-            ['checkAll', 'checkAllTable'].forEach(id => {
+            const all = document.querySelectorAll('.student-checkbox').length;
+            const ch  = document.querySelectorAll('.student-checkbox:checked').length;
+            ['checkAll','checkAllTable'].forEach(id => {
                 const el = document.getElementById(id);
-                if (el) {
-                    el.checked = all > 0 && all === ch;
-                    el.indeterminate = ch > 0 && ch < all;
-                }
+                if (el) { el.checked = all > 0 && all === ch; el.indeterminate = ch > 0 && ch < all; }
             });
-
             const bulkBtn = document.getElementById('bulkActionsDropdown');
             if (bulkBtn) {
                 bulkBtn.disabled = ch === 0;
-                const btnSpan = bulkBtn.querySelector('button, .dropdown-toggle');
-                if (btnSpan) {
-                    btnSpan.innerHTML = ch > 0
-                        ? `<i class="fas fa-cog me-1"></i>Bulk Actions (${ch})`
-                        : '<i class="fas fa-cog me-1"></i>Bulk Actions';
-                }
+                bulkBtn.innerHTML = ch > 0
+                    ? `<i class="fas fa-cog me-1"></i>Bulk Actions (${ch})`
+                    : '<i class="fas fa-cog me-1"></i>Bulk Actions';
             }
         },
 
         toggleView: type => {
             AppState.ui.currentView = type;
-            const tableView = document.getElementById('tableView');
-            const cardView = document.getElementById('cardView');
-            const tableViewBtn = document.getElementById('tableViewBtn');
-            const cardViewBtn = document.getElementById('cardViewBtn');
-
+            const tv = document.getElementById('tableView'), cv = document.getElementById('cardView');
+            const tvb = document.getElementById('tableViewBtn'), cvb = document.getElementById('cardViewBtn');
             if (type === 'table') {
-                if (tableView) tableView.classList.remove('d-none');
-                if (cardView) cardView.classList.add('d-none');
-                if (tableViewBtn) tableViewBtn.classList.add('active');
-                if (cardViewBtn) cardViewBtn.classList.remove('active');
+                tv?.classList.remove('d-none'); cv?.classList.add('d-none');
+                tvb?.classList.add('active');   cvb?.classList.remove('active');
                 if (AppState.pagination.data.length) Render.table(AppState.pagination.data);
             } else {
-                if (tableView) tableView.classList.add('d-none');
-                if (cardView) cardView.classList.remove('d-none');
-                if (tableViewBtn) tableViewBtn.classList.remove('active');
-                if (cardViewBtn) cardViewBtn.classList.add('active');
+                tv?.classList.add('d-none'); cv?.classList.remove('d-none');
+                tvb?.classList.remove('active'); cvb?.classList.add('active');
                 if (AppState.pagination.data.length) Render.cards(AppState.pagination.data);
             }
         }
@@ -2026,15 +2091,8 @@
                 const resp = await API.students(AppState.pagination.currentPage, AppState.pagination.perPage, AppState.filters);
                 if (!resp.success) throw new Error(resp.message || 'Failed');
                 const pd = resp.data;
-                AppState.pagination = {
-                    currentPage: pd.current_page,
-                    lastPage: pd.last_page,
-                    total: pd.total,
-                    from: pd.from,
-                    to: pd.to,
-                    data: pd.data
-                };
-                Render[AppState.ui.currentView === 'table' ? 'table' : 'cards'](pd.data);
+                AppState.pagination = { currentPage: pd.current_page, lastPage: pd.last_page, total: pd.total, from: pd.from, to: pd.to, data: pd.data };
+                AppState.ui.currentView === 'table' ? Render.table(pd.data) : Render.cards(pd.data);
                 Pagination.update(pd);
                 Selection.clearAll();
                 pd.data.forEach(s => AppState.cache.students.set(String(s.id), s));
@@ -2042,45 +2100,32 @@
             } catch (e) {
                 U.log('Fetch error', e);
                 U.err('Failed to load students. Please try again.');
-            } finally {
-                U.hideLoading();
-            }
+            } finally { U.hideLoading(); }
         },
 
         async view(id) {
             try {
                 Swal.fire({title:'Loading…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
                 let s = AppState.cache.students.get(String(id));
-                if (!s) {
-                    const r = await API.student(id);
-                    if (r.success) {
-                        s = r.student;
-                        AppState.cache.students.set(String(id), s);
-                    }
-                }
+                if (!s) { const r = await API.student(id); if (r.success) { s = r.student; AppState.cache.students.set(String(id), s); } }
                 Swal.close();
                 if (s) {
                     ViewModal.populate(s);
                     new bootstrap.Modal(document.getElementById('viewStudentModal')).show();
                 } else U.err('Student not found.');
-            } catch (e) {
-                Swal.close();
-                U.err('Failed to load student.');
-            }
+            } catch (e) { Swal.close(); U.err('Failed to load student.'); }
         },
 
         async edit(id) {
             try {
                 Swal.fire({title:'Loading…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+                SLM.populate('editState','editLocal');
                 const r = await API.student(id);
                 Swal.close();
                 if (!r.success || !r.student) throw new Error(r.message||'Not found');
                 EditForm.populate(r.student);
                 new bootstrap.Modal(document.getElementById('editStudentModal')).show();
-            } catch(e) {
-                Swal.close();
-                U.err('Failed to load student: ' + (e.message||''));
-            }
+            } catch(e) { Swal.close(); U.err('Failed to load student: ' + (e.message||'')); }
         },
 
         async delete(id) {
@@ -2090,17 +2135,12 @@
                 AppState.cache.students.delete(String(id));
                 await SM.fetch();
                 U.ok('Student deleted successfully.');
-            } catch(e) {
-                U.err('Failed to delete student.');
-            }
+            } catch(e) { U.err('Failed to delete student.'); }
         },
 
         async deleteMany() {
             const ids = Selection.getIds();
-            if (!ids.length) {
-                U.err('Please select at least one student.', 'No Selection');
-                return;
-            }
+            if (!ids.length) { U.err('Please select at least one student.', 'No Selection'); return; }
             if (!await U.confirm(`Delete ${ids.length} Students?`, 'This cannot be undone!', 'Yes, delete them!')) return;
             try {
                 await API.delMany(ids);
@@ -2108,9 +2148,7 @@
                 await SM.fetch();
                 U.ok(`${ids.length} student(s) deleted.`);
                 Selection.clearAll();
-            } catch(e) {
-                U.err('Failed to delete selected students.');
-            }
+            } catch(e) { U.err('Failed to delete selected students.'); }
         }
     };
 
@@ -2122,131 +2160,84 @@
         clearAll: () => {
             document.querySelectorAll('.student-checkbox').forEach(cb => cb.checked = false);
             AppState.ui.selectedStudents.clear();
-            ['checkAll', 'checkAllTable'].forEach(id => {
+            ['checkAll','checkAllTable'].forEach(id => {
                 const el = document.getElementById(id);
-                if (el) {
-                    el.checked = false;
-                    el.indeterminate = false;
-                }
+                if (el) { el.checked = false; el.indeterminate = false; }
             });
             Render.updateCheckAll();
         },
         init: () => {
-            ['checkAll', 'checkAllTable'].forEach(id => {
+            ['checkAll','checkAllTable'].forEach(id => {
                 const el = document.getElementById(id);
-                if (el) {
-                    el.onchange = e => {
-                        document.querySelectorAll('.student-checkbox').forEach(cb => {
-                            cb.checked = e.target.checked;
-                        });
-                        Render.updateCheckAll();
-                    };
-                }
+                if (el) el.onchange = e => {
+                    document.querySelectorAll('.student-checkbox').forEach(cb => { cb.checked = e.target.checked; });
+                    Render.updateCheckAll();
+                };
             });
             document.addEventListener('change', e => {
-                if (e.target.classList && e.target.classList.contains('student-checkbox')) Render.updateCheckAll();
+                if (e.target.classList.contains('student-checkbox')) Render.updateCheckAll();
             });
         }
     };
 
     // ================================================================
-    // PAGINATION (FIXED)
+    // PAGINATION
     // ================================================================
     const Pagination = {
         update: pd => {
             // Update text counters
-            const showingSpan = document.getElementById('showingCount');
-            const toSpan = document.getElementById('toCount');
-            const totalSpan = document.getElementById('totalCount');
-            const totalStudentsSpan = document.getElementById('totalStudents');
-
-            if (showingSpan) showingSpan.textContent = pd.from || 0;
-            if (toSpan) toSpan.textContent = pd.to || 0;
-            if (totalSpan) totalSpan.textContent = pd.total || 0;
-            if (totalStudentsSpan) totalStudentsSpan.textContent = pd.total || 0;
+            U.setText('showingCount', pd.from || 0);
+            U.setText('toCount',      pd.to   || 0);
+            U.setText('totalCount',   pd.total|| 0);
+            U.setText('totalStudents',pd.total|| 0);
 
             const ul = document.getElementById('pagination');
             if (!ul) return;
 
             // Remove existing page number items (keep prev/next)
-            const pageItems = ul.querySelectorAll('.page-item:not(#prevPageLi):not(#nextPageLi)');
-            pageItems.forEach(el => el.remove());
+            ul.querySelectorAll('.page-item:not(#prevPageLi):not(#nextPageLi)').forEach(el => el.remove());
 
             if (pd.last_page > 1) {
                 const start = Math.max(1, pd.current_page - 2);
-                const end = Math.min(pd.last_page, pd.current_page + 2);
-                const nextLi = ul.querySelector('#nextPageLi');
-
-                if (!nextLi) return;
+                const end   = Math.min(pd.last_page, pd.current_page + 2);
 
                 const addItem = (n, label) => {
                     const li = document.createElement('li');
                     li.className = `page-item ${n === pd.current_page ? 'active' : ''}`;
                     const a = document.createElement('a');
-                    a.className = 'page-link';
-                    a.href = 'javascript:void(0);';
+                    a.className = 'page-link'; a.href = 'javascript:void(0);';
                     a.textContent = label !== undefined ? label : n;
-                    a.onclick = (e) => {
-                        e.preventDefault();
-                        AppState.pagination.currentPage = n;
-                        SM.fetch();
-                    };
+                    a.onclick = () => { AppState.pagination.currentPage = n; SM.fetch(); };
                     li.appendChild(a);
-                    nextLi.before(li);
+                    ul.querySelector('#nextPageLi').before(li);
                 };
 
                 const addEllipsis = () => {
                     const li = document.createElement('li');
                     li.className = 'page-item disabled';
                     li.innerHTML = '<span class="page-link">…</span>';
-                    nextLi.before(li);
+                    ul.querySelector('#nextPageLi').before(li);
                 };
 
-                if (start > 1) {
-                    addItem(1);
-                    if (start > 2) addEllipsis();
-                }
+                if (start > 1) { addItem(1); if (start > 2) addEllipsis(); }
                 for (let i = start; i <= end; i++) addItem(i);
-                if (end < pd.last_page) {
-                    if (end < pd.last_page - 1) addEllipsis();
-                    addItem(pd.last_page);
-                }
+                if (end < pd.last_page) { if (end < pd.last_page - 1) addEllipsis(); addItem(pd.last_page); }
             }
 
             // Prev button
             const prevLi = document.getElementById('prevPageLi');
-            const prevA = document.getElementById('prevPage');
+            const prevA  = document.getElementById('prevPage');
             if (prevLi && prevA) {
-                if (pd.current_page <= 1) {
-                    prevLi.classList.add('disabled');
-                } else {
-                    prevLi.classList.remove('disabled');
-                }
-                prevA.onclick = (e) => {
-                    e.preventDefault();
-                    if (pd.current_page > 1) {
-                        AppState.pagination.currentPage--;
-                        SM.fetch();
-                    }
-                };
+                if (pd.current_page <= 1) prevLi.classList.add('disabled'); else prevLi.classList.remove('disabled');
+                prevA.onclick = e => { e.preventDefault(); if (pd.current_page > 1) { AppState.pagination.currentPage--; SM.fetch(); } };
             }
 
             // Next button
             const nextLi = document.getElementById('nextPageLi');
-            const nextA = document.getElementById('nextPage');
+            const nextA  = document.getElementById('nextPage');
             if (nextLi && nextA) {
-                if (pd.current_page >= pd.last_page) {
-                    nextLi.classList.add('disabled');
-                } else {
-                    nextLi.classList.remove('disabled');
-                }
-                nextA.onclick = (e) => {
-                    e.preventDefault();
-                    if (pd.current_page < pd.last_page) {
-                        AppState.pagination.currentPage++;
-                        SM.fetch();
-                    }
-                };
+                if (pd.current_page >= pd.last_page) nextLi.classList.add('disabled'); else nextLi.classList.remove('disabled');
+                nextA.onclick = e => { e.preventDefault(); if (pd.current_page < pd.last_page) { AppState.pagination.currentPage++; SM.fetch(); } };
             }
         }
     };
@@ -2259,96 +2250,85 @@
         populate: s => {
             ViewModal.currentId = s.id;
             const full = [s.lastname, s.firstname, s.othername].filter(Boolean).join(' ');
-            U.setText('viewFullName', full||'—');
+            U.setText('viewFullName',       full||'—');
             U.setText('viewFullNameDetail', full||'—');
             U.setText('viewAdmissionNumber',s.admissionNo||'—');
-            U.setText('viewAdmissionNo', s.admissionNo||'—');
-            U.setText('viewTitle', s.title||'—');
-            U.setText('viewDOB', U.date(s.dateofbirth,'long'));
-            U.setText('viewAge', s.age||U.age(s.dateofbirth)||'—');
-            U.setText('viewAgeDetail', s.age||U.age(s.dateofbirth)||'—');
-            U.setText('viewPlaceOfBirth', s.placeofbirth||'—');
-            U.setText('viewGenderDetail', s.gender||'—');
-            U.setText('viewGenderText', s.gender||'—');
-            U.setText('viewBloodGroupDetail', s.blood_group||'—');
+            U.setText('viewAdmissionNo',    s.admissionNo||'—');
+            U.setText('viewTitle',          s.title||'—');
+            U.setText('viewDOB',            U.date(s.dateofbirth,'long'));
+            U.setText('viewAge',            s.age||U.age(s.dateofbirth)||'—');
+            U.setText('viewAgeDetail',      s.age||U.age(s.dateofbirth)||'—');
+            U.setText('viewPlaceOfBirth',   s.placeofbirth||'—');
+            U.setText('viewGenderDetail',   s.gender||'—');
+            U.setText('viewGenderText',     s.gender||'—');
+            U.setText('viewBloodGroupDetail',    s.blood_group||'—');
             U.setText('viewBloodGroupAdditional',s.blood_group||'—');
             U.setText('viewReligionDetail', s.religion||'—');
-            U.setText('viewPhoneNumber', s.phone_number||'—');
-            U.setText('viewEmailAddress', s.email||'—');
-            U.setText('viewPermanentAddress', s.permanent_address||'—');
-            U.setText('viewCity', s.city||'—');
-            U.setText('viewStateOrigin', s.state||'—');
-            U.setText('viewLGA', s.local||'—');
-            U.setText('viewNationality', s.nationality||'—');
+            U.setText('viewPhoneNumber',    s.phone_number||'—');
+            U.setText('viewEmailAddress',   s.email||'—');
+            U.setText('viewPermanentAddress',s.permanent_address||'—');
+            U.setText('viewCity',           s.city||'—');
+            U.setText('viewStateOrigin',    s.state||'—');
+            U.setText('viewLGA',            s.local||'—');
+            U.setText('viewNationality',    s.nationality||'—');
             U.setText('viewFutureAmbition', s.future_ambition||'—');
-            U.setText('viewAdmissionDate', U.date(s.admission_date||s.admissionDate,'long'));
-            U.setText('viewAdmittedDate', U.date(s.admission_date||s.admissionDate,'short'));
+            U.setText('viewAdmissionDate',  U.date(s.admission_date||s.admissionDate,'long'));
+            U.setText('viewAdmittedDate',   U.date(s.admission_date||s.admissionDate,'short'));
             const cls = `${s.schoolclass||''} ${s.arm||''}`.trim() || '—';
-            U.setText('viewCurrentClass', cls);
-            U.setText('viewClassDisplay', cls);
-            U.setText('viewArm', s.arm||'—');
+            U.setText('viewCurrentClass',   cls);
+            U.setText('viewClassDisplay',   cls);
+            U.setText('viewArm',            s.arm||'—');
             U.setText('viewStudentCategory',s.student_category||'—');
             const type = s.statusId==2 ? 'New Student' : s.statusId==1 ? 'Old Student' : '—';
-            U.setText('viewStudentType', type);
-            U.setText('viewStudentStatus', s.student_status||'—');
-            U.setText('viewSchoolHouse', s.school_house||'—');
-            U.setText('viewLastSchool', s.last_school||'—');
-            U.setText('viewLastClass', s.last_class||'—');
-            U.setText('viewReasonForLeaving', s.reason_for_leaving||'—');
+            U.setText('viewStudentType',    type);
+            U.setText('viewStudentStatus',  s.student_status||'—');
+            U.setText('viewSchoolHouse',    s.school_house||'—');
+            U.setText('viewLastSchool',     s.last_school||'—');
+            U.setText('viewLastClass',      s.last_class||'—');
+            U.setText('viewReasonForLeaving',s.reason_for_leaving||'—');
             U.setText('viewFatherFullName', s.father_name||'—');
-            U.setText('viewFatherPhone', s.father_phone||'—');
-            U.setText('viewFatherOccupation', s.father_occupation||'—');
-            U.setText('viewFatherCityState', s.father_city||'—');
-            U.setText('viewFatherEmail', s.parent_email||'—');
-            U.setText('viewFatherAddress', s.parent_address||'—');
+            U.setText('viewFatherPhone',    s.father_phone||'—');
+            U.setText('viewFatherOccupation',s.father_occupation||'—');
+            U.setText('viewFatherCityState',s.father_city||'—');
+            U.setText('viewFatherEmail',    s.parent_email||'—');
+            U.setText('viewFatherAddress',  s.parent_address||'—');
             U.setText('viewMotherFullName', s.mother_name||'—');
-            U.setText('viewMotherPhone', s.mother_phone||'—');
-            U.setText('viewMotherOccupation', s.mother_occupation||'—');
-            U.setText('viewMotherEmail', s.parent_email||'—');
-            U.setText('viewMotherAddress', s.parent_address||'—');
-            U.setText('viewParentEmail', s.parent_email||'—');
-            U.setText('viewParentAddress', s.parent_address||'—');
-            U.setText('viewNIN', s.nin_number||'—');
-            U.setText('viewMotherTongue', s.mother_tongue||'—');
+            U.setText('viewMotherPhone',    s.mother_phone||'—');
+            U.setText('viewMotherOccupation',s.mother_occupation||'—');
+            U.setText('viewMotherEmail',    s.parent_email||'—');
+            U.setText('viewMotherAddress',  s.parent_address||'—');
+            U.setText('viewParentEmail',    s.parent_email||'—');
+            U.setText('viewParentAddress',  s.parent_address||'—');
+            U.setText('viewNIN',            s.nin_number||'—');
+            U.setText('viewMotherTongue',   s.mother_tongue||'—');
 
             const fb = document.getElementById('fatherStatusBadge');
-            if (fb) {
-                fb.textContent = s.father_name ? 'Available' : 'Not Provided';
-                fb.className = `badge ms-1 ${s.father_name ? 'bg-success' : 'bg-secondary'}`;
-            }
+            if (fb) { fb.textContent = s.father_name ? 'Available' : 'Not Provided'; fb.className = `badge ms-1 ${s.father_name ? 'bg-success' : 'bg-secondary'}`; }
             const mb = document.getElementById('motherStatusBadge');
-            if (mb) {
-                mb.textContent = s.mother_name ? 'Available' : 'Not Provided';
-                mb.className = `badge ms-1 ${s.mother_name ? 'bg-success' : 'bg-secondary'}`;
-            }
+            if (mb) { mb.textContent = s.mother_name ? 'Available' : 'Not Provided'; mb.className = `badge ms-1 ${s.mother_name ? 'bg-success' : 'bg-secondary'}`; }
 
             const tb = document.getElementById('viewStudentTypeBadge');
             if (tb) {
-                if (s.statusId==2) {
-                    tb.style.background='#fef3c7';
-                    tb.style.color='#92400e';
-                } else {
-                    tb.style.background='#ede9fe';
-                    tb.style.color='#5b21b6';
-                }
+                if (s.statusId==2) { tb.style.background='#fef3c7'; tb.style.color='#92400e'; }
+                else { tb.style.background='#ede9fe'; tb.style.color='#5b21b6'; }
             }
 
             const si = document.getElementById('studentStatusIndicator');
-            if (si) {
-                si.className = `position-absolute bottom-0 end-0 ${s.student_status==='Active'?'bg-success':'bg-secondary'} rounded-circle border border-2 border-white`;
-            }
+            if (si) { si.className = `position-absolute bottom-0 end-0 ${s.student_status==='Active'?'bg-success':'bg-secondary'} rounded-circle border border-2 border-white`; si.style.cssText='width:18px;height:18px;'; }
 
             const photo = document.getElementById('viewStudentPhoto');
             if (photo) {
                 const src = s.picture && s.picture !== 'unnamed.jpg' ? `/storage/images/student_avatars/${s.picture}` : null;
                 photo.src = src || '{{ asset("theme/layouts/assets/media/avatars/blank.png") }}';
-                photo.dataset.zoomSrc = src || '';
-                photo.dataset.zoomName = full;
-                photo.dataset.zoomInit = U.initials(s.firstname, s.lastname);
-                photo.dataset.zoomDetail = `${s.admissionNo||''} &bull; ${cls} &bull; ${s.gender||''}`;
+                photo.dataset.zoomSrc   = src || '';
+                photo.dataset.zoomName  = full;
+                photo.dataset.zoomInit  = U.initials(s.firstname, s.lastname);
+                photo.dataset.zoomDetail= `${s.admissionNo||''} &bull; ${cls} &bull; ${s.gender||''}`;
             }
 
             ViewModal.fetchTerm(s.id);
+            const thc = document.getElementById('termHistoryContent'); if (thc) { thc.style.display='none'; thc.innerHTML=''; }
+            const thl = document.getElementById('termHistoryLoading'); if (thl) thl.style.display='block';
         },
 
         fetchTerm: async id => {
@@ -2356,21 +2336,28 @@
                 const r = await API.activeTerm(id);
                 if (r.success && r.data) {
                     const d = r.data;
-                    U.setText('viewCurrentTerm', d.term?.term||d.term?.name||'—');
+                    U.setText('viewCurrentTerm',   d.term?.term||d.term?.name||'—');
                     U.setText('viewCurrentSession', d.session?.session||d.session?.name||'—');
                     const status = document.getElementById('viewCurrentTermStatus');
                     if (status) status.innerHTML = d.is_current ? '<span class="badge bg-success">Active Term</span>' : '<span class="badge bg-warning text-dark">Registered</span>';
                     const alert = document.getElementById('currentTermAlert');
                     if (alert) alert.innerHTML = `<div class="alert alert-success border-0 rounded-3 py-2 small"><i class="fas fa-check-circle me-1"></i><strong>Enrolled:</strong> ${d.schoolClass?.schoolclass||''} ${d.schoolClass?.armRelation?.arm||''} &bull; ${d.term?.term||d.term?.name||''} Term &bull; ${d.session?.session||d.session?.name||''}</div>`;
+                    const thc = document.getElementById('termHistoryContent');
+                    const thl = document.getElementById('termHistoryLoading');
+                    if (thl) thl.style.display = 'none';
+                    if (thc) { thc.style.display='block'; thc.innerHTML=`<div class="alert alert-success">Active term found. Use Refresh to see full history.</div>`; }
                 } else {
                     ['viewCurrentTerm','viewCurrentSession'].forEach(id => U.setText(id, '—'));
-                    const status = document.getElementById('viewCurrentTermStatus');
-                    if (status) status.innerHTML='<span class="badge bg-secondary">Not Registered</span>';
-                    const alert = document.getElementById('currentTermAlert');
-                    if (alert) alert.innerHTML='<div class="alert alert-warning border-0 rounded-3 py-2 small"><i class="fas fa-exclamation-triangle me-1"></i>No active term registration found.</div>';
+                    const status = document.getElementById('viewCurrentTermStatus'); if (status) status.innerHTML='<span class="badge bg-secondary">Not Registered</span>';
+                    const alert  = document.getElementById('currentTermAlert');      if (alert)  alert.innerHTML='<div class="alert alert-warning border-0 rounded-3 py-2 small"><i class="fas fa-exclamation-triangle me-1"></i>No active term registration found.</div>';
+                    const thc = document.getElementById('termHistoryContent');
+                    const thl = document.getElementById('termHistoryLoading');
+                    if (thl) thl.style.display='none';
+                    if (thc) { thc.style.display='block'; thc.innerHTML='<p class="text-muted text-center py-3">No term history found.</p>'; }
                 }
             } catch(e) {
-                U.log('Term fetch error', e);
+                const thl = document.getElementById('termHistoryLoading'); if (thl) thl.style.display='none';
+                const thc = document.getElementById('termHistoryContent'); if (thc) { thc.style.display='block'; thc.innerHTML='<p class="text-danger text-center py-3">Failed to load term history.</p>'; }
             }
         }
     };
@@ -2380,61 +2367,54 @@
     // ================================================================
     const EditForm = {
         populate: s => {
-            const set = (id, v) => {
-                const el = document.getElementById(id);
-                if (el) el.value = v || '';
-            };
+            const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v||''; };
             const chk = (name, v) => {
                 const el = document.querySelector(`#editStudentModal input[name="${name}"][value="${v}"]`);
                 if (el) el.checked = true;
             };
 
-            const studentId = document.getElementById('editStudentId');
-            if (studentId) studentId.value = s.id || '';
+            document.getElementById('editStudentId').value = s.id||'';
 
-            // Fix form action
+            // Fix form action — always rebuild from data-base-action
             const form = document.getElementById('editStudentForm');
             if (form && s.id) {
                 const base = form.dataset.baseAction;
-                if (base) {
-                    form.action = base.replace(':id', s.id);
-                }
+                if (base) form.action = base.replace(':id', s.id);
             }
 
-            set('editAdmissionNo', s.admissionNo);
-            set('editAdmissionYear', s.admissionYear || new Date().getFullYear());
-            set('editAdmissionDate', (s.admissionDate||s.admission_date||'').split(/[ T]/)[0]);
-            set('editSchoolclassid', s.schoolclassid);
-            set('editTermid', s.termid);
-            set('editSessionid', s.sessionid);
-            set('editStudentCategory', s.student_category);
-            set('editTitle', s.title);
-            set('editLastname', s.lastname);
-            set('editFirstname', s.firstname);
-            set('editOthername', s.othername);
-            set('editPlaceofbirth', s.placeofbirth);
-            set('editPhoneNumber', s.phone_number);
-            set('editEmail', s.email);
+            set('editAdmissionNo',    s.admissionNo);
+            set('editAdmissionYear',  s.admissionYear || new Date().getFullYear());
+            set('editAdmissionDate',  (s.admissionDate||s.admission_date||'').split(/[ T]/)[0]);
+            set('editSchoolclassid',  s.schoolclassid);
+            set('editTermid',         s.termid);
+            set('editSessionid',      s.sessionid);
+            set('editStudentCategory',s.student_category);
+            set('editTitle',          s.title);
+            set('editLastname',       s.lastname);
+            set('editFirstname',      s.firstname);
+            set('editOthername',      s.othername);
+            set('editPlaceofbirth',   s.placeofbirth);
+            set('editPhoneNumber',    s.phone_number);
+            set('editEmail',          s.email);
             set('editFutureAmbition', s.future_ambition);
-            set('editPermanentAddress', s.permanent_address);
-            set('editNationality', s.nationality);
-            set('editCity', s.city);
-            set('editReligion', s.religion);
-            set('editBloodGroup', s.blood_group);
-            set('editMotherTongue', s.mother_tongue);
-            set('editNinNumber', s.nin_number);
-            set('editFatherName', s.father_name);
-            set('editFatherPhone', s.father_phone);
-            set('editFatherOccupation', s.father_occupation);
-            set('editFatherCity', s.father_city);
-            set('editMotherName', s.mother_name);
-            set('editMotherPhone', s.mother_phone);
-            set('editParentEmail', s.parent_email);
-            set('editParentAddress', s.parent_address);
-            set('editLastSchool', s.last_school);
-            set('editLastClass', s.last_class);
-            set('editReasonForLeaving', s.reason_for_leaving);
-            set('editSchoolHouse', s.schoolhouseid || s.school_house);
+            set('editPermanentAddress',s.permanent_address);
+            set('editNationality',    s.nationality);
+            set('editCity',           s.city);
+            set('editReligion',       s.religion);
+            set('editBloodGroup',     s.blood_group);
+            set('editMotherTongue',   s.mother_tongue);
+            set('editNinNumber',      s.nin_number);
+            set('editFatherName',     s.father_name);
+            set('editFatherPhone',    s.father_phone);
+            set('editFatherOccupation',s.father_occupation);
+            set('editFatherCity',     s.father_city);
+            set('editMotherName',     s.mother_name);
+            set('editMotherPhone',    s.mother_phone);
+            set('editParentEmail',    s.parent_email);
+            set('editParentAddress',  s.parent_address);
+            set('editLastSchool',     s.last_school);
+            set('editLastClass',      s.last_class);
+            set('editReasonForLeaving',s.reason_for_leaving);
 
             // DOB & age
             if (s.dateofbirth) {
@@ -2445,28 +2425,26 @@
             }
 
             // Radios
-            if (s.statusId==1) chk('statusId','1');
-            else if (s.statusId==2) chk('statusId','2');
-            if (s.student_status==='Active') chk('student_status','Active');
-            else chk('student_status','Inactive');
-            if (s.gender==='Male') chk('gender','Male');
-            else if (s.gender==='Female') chk('gender','Female');
+            if (s.statusId==1) chk('statusId','1'); else if (s.statusId==2) chk('statusId','2');
+            if (s.student_status==='Active') chk('student_status','Active'); else chk('student_status','Inactive');
+            if (s.gender==='Male') chk('gender','Male'); else if (s.gender==='Female') chk('gender','Female');
 
             // Admission mode → default to manual
             const manualRadio = document.getElementById('editAdmissionManual');
-            if (manualRadio) {
-                manualRadio.checked = true;
-                const noEl = document.getElementById('editAdmissionNo');
-                if (noEl) noEl.readOnly = false;
-            }
+            if (manualRadio) { manualRadio.checked = true; const noEl = document.getElementById('editAdmissionNo'); if (noEl) noEl.readOnly = false; }
+
+            // School House
+            const houseEl = document.getElementById('editSchoolHouse');
+            if (houseEl && (s.schoolhouseid||s.school_house)) houseEl.value = s.schoolhouseid||s.school_house;
+
+            // State & LGA
+            if (s.state) SLM.set('editState','editLocal', s.state, s.local);
 
             // Avatar
             const avatar = document.getElementById('editStudentAvatar');
-            if (avatar) {
-                avatar.src = s.picture && s.picture!=='unnamed.jpg'
-                    ? `/storage/images/student_avatars/${s.picture}`
-                    : '{{ asset("theme/layouts/assets/media/avatars/blank.png") }}';
-            }
+            if (avatar) avatar.src = s.picture && s.picture!=='unnamed.jpg'
+                ? `/storage/images/student_avatars/${s.picture}`
+                : '{{ asset("theme/layouts/assets/media/avatars/blank.png") }}';
         }
     };
 
@@ -2487,49 +2465,28 @@
                 si.addEventListener('keypress', e => { if (e.key==='Enter') { clearTimeout(Filters.searchDebounce); Filters.apply(); } });
             }
             if (cl) cl.addEventListener('click', () => { if (si) { si.value=''; cl.style.display='none'; } Filters.apply(); });
-
             ['schoolclass-filter','term-filter','session-filter'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.addEventListener('change', () => Filters.apply());
+                const el=document.getElementById(id); if (el) el.addEventListener('change', () => Filters.apply());
             });
-
-            const filterBtn = document.getElementById('filterBtn');
-            if (filterBtn) filterBtn.addEventListener('click', () => Filters.apply());
-
-            const resetBtn = document.getElementById('resetFiltersBtn');
-            if (resetBtn) resetBtn.addEventListener('click', () => Filters.reset());
-
-            const resetEmptyBtn = document.getElementById('resetFromEmptyBtn');
-            if (resetEmptyBtn) resetEmptyBtn.addEventListener('click', () => Filters.reset());
+            document.getElementById('filterBtn')?.addEventListener('click', () => Filters.apply());
+            document.getElementById('resetFiltersBtn')?.addEventListener('click', () => Filters.reset());
+            document.getElementById('resetFromEmptyBtn')?.addEventListener('click', () => Filters.reset());
         },
         apply: () => {
-            const searchInput = document.getElementById('search-input');
-            const classFilter = document.getElementById('schoolclass-filter');
-            const termFilter = document.getElementById('term-filter');
-            const sessionFilter = document.getElementById('session-filter');
-
             AppState.filters = {
-                search: searchInput ? searchInput.value.trim() : '',
-                class: classFilter ? classFilter.value : 'all',
-                term: termFilter ? termFilter.value : 'all',
-                session: sessionFilter ? sessionFilter.value : 'all',
-                status: 'all',
-                gender: 'all'
+                search:  document.getElementById('search-input')?.value.trim()||'',
+                class:   document.getElementById('schoolclass-filter')?.value||'all',
+                term:    document.getElementById('term-filter')?.value||'all',
+                session: document.getElementById('session-filter')?.value||'all',
+                status:  'all', gender: 'all'
             };
             AppState.pagination.currentPage = 1;
             SM.fetch();
         },
         reset: () => {
-            const si = document.getElementById('search-input');
-            if (si) si.value='';
-            const cl = document.getElementById('clear-search');
-            if (cl) cl.style.display='none';
-
-            ['schoolclass-filter','term-filter','session-filter'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.value='all';
-            });
-
+            const si = document.getElementById('search-input'); if (si) si.value='';
+            const cl = document.getElementById('clear-search'); if (cl) cl.style.display='none';
+            ['schoolclass-filter','term-filter','session-filter'].forEach(id => { const el=document.getElementById(id); if (el) el.value='all'; });
             AppState.filters = { search:'',class:'all',status:'all',gender:'all',session:'all',term:'all' };
             AppState.pagination.currentPage = 1;
             SM.fetch();
@@ -2542,40 +2499,444 @@
     const CTM = {
         show: () => {
             const ids = Selection.getIds();
-            if (!ids.length) {
-                U.err('Please select at least one student.', 'No Selection');
-                return;
-            }
-            const selectedSpan = document.getElementById('selectedStudentsCount');
-            if (selectedSpan) selectedSpan.textContent = ids.length;
+            if (!ids.length) { U.err('Please select at least one student.','No Selection'); return; }
+            U.setText('selectedStudentsCount', ids.length);
             new bootstrap.Modal(document.getElementById('updateCurrentTermModal')).show();
         },
         update: async () => {
             const form = document.getElementById('updateCurrentTermForm');
-            const classId = form?.querySelector('[name="schoolclassId"]')?.value;
-            const termId = form?.querySelector('[name="termId"]')?.value;
+            const classId   = form?.querySelector('[name="schoolclassId"]')?.value;
+            const termId    = form?.querySelector('[name="termId"]')?.value;
             const sessionId = form?.querySelector('[name="sessionId"]')?.value;
-            if (!classId||!termId||!sessionId) {
-                U.err('Please select class, term, and session.', 'Missing Fields');
-                return;
-            }
+            if (!classId||!termId||!sessionId) { U.err('Please select class, term, and session.','Missing Fields'); return; }
             const ids = Selection.getIds();
             Swal.fire({title:'Updating…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
             try {
                 const r = await API.bulkTerm({student_ids:ids,schoolclassId:classId,termId,sessionId,is_current:true});
                 bootstrap.Modal.getInstance(document.getElementById('updateCurrentTermModal'))?.hide();
+                Swal.close(); U.ok(r.message||'Term updated successfully.'); await SM.fetch();
+            } catch(e) { Swal.close(); U.err(e.response?.data?.message||'Failed to update term.'); }
+        }
+    };
+
+    // ================================================================
+    // BULK STATUS MANAGER
+    // ================================================================
+    const BSM = {
+        show: () => {
+            const cid = document.getElementById('schoolclass-filter')?.value;
+            const sid = document.getElementById('session-filter')?.value;
+            if (!cid||cid==='all'||!sid||sid==='all') { U.err('Please select both a class and a session first.','Selection Required'); return; }
+            AppState.bulkStatusFilters = {class_id:cid,session_id:sid};
+            Swal.fire({title:'Loading Students…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+            API.byClassSession(cid,sid).then(r => {
                 Swal.close();
-                U.ok(r.message||'Term updated successfully.');
-                await SM.fetch();
+                if (r.success) BSM.render(r.students, r.stats);
+                else U.err(r.message||'Failed to load.');
+            }).catch(e => { Swal.close(); U.err(e.response?.data?.message||e.message); });
+        },
+
+        render: (students, stats) => {
+            document.getElementById('bulkStatusUpdateModal')?.remove();
+            const html = `
+            <div class="modal fade" id="bulkStatusUpdateModal" tabindex="-1" data-bs-backdrop="static">
+              <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content">
+                  <div class="modal-header modal-hdr">
+                    <h5 class="modal-title"><i class="fas fa-sync-alt me-2"></i>Bulk Update Student Status</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body p-4">
+                    <div class="row g-3 mb-4">
+                      <div class="col-6 col-md-3"><div class="sm-stat c-blue"><div class="sm-stat-value">${stats?.total||0}</div><div class="sm-stat-label">Total</div></div></div>
+                      <div class="col-6 col-md-3"><div class="sm-stat c-green"><div class="sm-stat-value">${stats?.active||0}</div><div class="sm-stat-label">Active</div></div></div>
+                      <div class="col-6 col-md-3"><div class="sm-stat" style="--sm-stat-color:#6b7280"><div class="sm-stat-value">${stats?.inactive||0}</div><div class="sm-stat-label">Inactive</div></div></div>
+                      <div class="col-6 col-md-3"><div class="sm-stat c-amber"><div class="sm-stat-value">${stats?.new_students||0}</div><div class="sm-stat-label">New</div></div></div>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                      <div class="form-check mb-0"><input class="form-check-input" type="checkbox" id="bsSelectAll"><label class="form-check-label fw-semibold" for="bsSelectAll">Select All</label></div>
+                      <div class="d-flex gap-2 flex-wrap">
+                        <div class="dropdown"><button class="btn btn-outline-success btn-sm dropdown-toggle" data-bs-toggle="dropdown"><i class="fas fa-user-check me-1"></i>Activity Status</button>
+                          <ul class="dropdown-menu shadow border-0 rounded-3 p-2">
+                            <li><a class="dropdown-item rounded-2" href="javascript:void(0);" onclick="window.BulkStatusManager.bulkUpdateStatus('activity_status','Active')"><i class="fas fa-check-circle text-success me-2"></i>Set Active</a></li>
+                            <li><a class="dropdown-item rounded-2" href="javascript:void(0);" onclick="window.BulkStatusManager.bulkUpdateStatus('activity_status','Inactive')"><i class="fas fa-pause-circle text-secondary me-2"></i>Set Inactive</a></li>
+                          </ul>
+                        </div>
+                        <div class="dropdown"><button class="btn btn-outline-warning btn-sm dropdown-toggle" data-bs-toggle="dropdown"><i class="fas fa-user-tag me-1"></i>Student Type</button>
+                          <ul class="dropdown-menu shadow border-0 rounded-3 p-2">
+                            <li><a class="dropdown-item rounded-2" href="javascript:void(0);" onclick="window.BulkStatusManager.bulkUpdateStatus('student_type','old')"><i class="fas fa-history text-secondary me-2"></i>Set Old Student</a></li>
+                            <li><a class="dropdown-item rounded-2" href="javascript:void(0);" onclick="window.BulkStatusManager.bulkUpdateStatus('student_type','new')"><i class="fas fa-star text-warning me-2"></i>Set New Student</a></li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="table-responsive">
+                      <table class="table sm-table mb-0">
+                        <thead><tr><th width="46"><input class="form-check-input" type="checkbox" id="bsSelectAllTable"></th><th>Student</th><th>Admission No</th><th>Class</th><th>Activity Status</th><th>Type</th><th>Action</th></tr></thead>
+                        <tbody>${BSM.rows(students)}</tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal"><i class="fas fa-times me-1"></i>Close</button>
+                    <button type="button" class="btn-pg" onclick="window.BulkStatusManager.refreshData()"><i class="fas fa-sync-alt me-1"></i>Refresh Data</button>
+                  </div>
+                </div>
+              </div>
+            </div>`;
+            document.body.insertAdjacentHTML('beforeend', html);
+            ['bsSelectAll','bsSelectAllTable'].forEach(id => {
+                document.getElementById(id)?.addEventListener('change', e => {
+                    document.querySelectorAll('.bs-checkbox').forEach(cb => cb.checked = e.target.checked);
+                });
+            });
+            new bootstrap.Modal(document.getElementById('bulkStatusUpdateModal')).show();
+        },
+
+        rows: students => {
+            if (!students?.length) return '<tr><td colspan="7" class="text-center py-4 text-muted">No students found</td></tr>';
+            return students.map(s => {
+                const init = U.initials(s.firstname, s.lastname);
+                const act  = s.student_status==='Active' ? '<span class="sm-badge badge-active">Active</span>' : '<span class="sm-badge badge-inactive">Inactive</span>';
+                const type = s.statusId==2 ? '<span class="sm-badge badge-new">New</span>' : '<span class="sm-badge badge-old">Old</span>';
+                return `<tr data-student-id="${s.id}">
+                  <td><input class="form-check-input bs-checkbox" type="checkbox" value="${s.id}"></td>
+                  <td><div class="d-flex align-items-center gap-2">
+                    <div class="sm-avatar-init" style="width:36px;height:36px;border-radius:8px;font-size:14px;">${U.esc(init)}</div>
+                    <div><div class="stu-name">${U.esc(s.lastname||'')} ${U.esc(s.firstname||'')}</div><small class="text-muted">${U.esc(s.othername||'')}</small></div>
+                  </div></td>
+                  <td><span style="font-family:monospace;font-size:12px;">${U.esc(s.admissionNo||'N/A')}</span></td>
+                  <td>${U.esc(s.schoolclass||'')} ${U.esc(s.arm||'')}</td>
+                  <td>${act}</td>
+                  <td>${type}</td>
+                  <td><button class="act-btn act-view" onclick="window.StudentManager.viewStudent(${s.id})" title="View Student"><i class="fas fa-eye"></i></button></td>
+                </tr>`;
+            }).join('');
+        },
+
+        getSelectedIds: () => Array.from(document.querySelectorAll('.bs-checkbox:checked')).map(cb=>parseInt(cb.value)).filter(v=>!isNaN(v)),
+
+        bulkUpdateStatus: async (type, value) => {
+            const ids = BSM.getSelectedIds();
+            if (!ids.length) { U.err('Please select at least one student.','No Selection'); return; }
+            const displayValue = type==='student_type' ? (value==='old'?'Old Student':'New Student') : value;
+            if (!await U.confirm(`Update ${ids.length} student(s)?`, `Set to "${displayValue}"`, 'Yes, update')) return;
+            Swal.fire({title:'Updating…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+            try {
+                const r = await API.bulkStatus({student_ids:ids,update_type:type,value});
+                Swal.close();
+                if (r.success) { U.ok(r.message||'Updated successfully.'); BSM.refreshData(); }
+            } catch(e) { Swal.close(); U.err(e.response?.data?.message||e.message||'Failed.'); }
+        },
+
+        refreshData: async () => {
+            if (!AppState.bulkStatusFilters) return;
+            Swal.fire({title:'Refreshing…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+            try {
+                const r = await API.byClassSession(AppState.bulkStatusFilters.class_id, AppState.bulkStatusFilters.session_id);
+                if (r.success) {
+                    const tbody = document.querySelector('#bulkStatusUpdateModal tbody');
+                    if (tbody) tbody.innerHTML = BSM.rows(r.students);
+                    const vals = document.querySelectorAll('#bulkStatusUpdateModal .sm-stat-value');
+                    if (vals.length >= 4 && r.stats) { vals[0].textContent=r.stats.total; vals[1].textContent=r.stats.active; vals[2].textContent=r.stats.inactive; vals[3].textContent=r.stats.new_students; }
+                }
+                Swal.close();
+            } catch(e) { Swal.close(); U.err('Failed to refresh.'); }
+        }
+    };
+
+    // ================================================================
+    // TERM REGISTRATION MANAGER
+    // ================================================================
+    const TRM = {
+        show: () => {
+            const tid = document.getElementById('term-filter')?.value;
+            const sid = document.getElementById('session-filter')?.value;
+            if (!tid||tid==='all'||!sid||sid==='all') { U.err('Please select both a term and a session first.','Selection Required'); return; }
+            AppState.termFilters = {
+                term_id: tid, session_id: sid,
+                class_id: document.getElementById('schoolclass-filter')?.value !== 'all' ? document.getElementById('schoolclass-filter')?.value : null
+            };
+            Swal.fire({title:'Loading…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+            API.inTerm(AppState.termFilters).then(r => {
+                Swal.close();
+                if (r.success) TRM.render(r.students, r.total);
+                else U.err(r.message||'Failed.');
+            }).catch(e => { Swal.close(); U.err(e.response?.data?.message||e.message); });
+        },
+
+        render: (students, total) => {
+            document.getElementById('termStudentsModal')?.remove();
+            const html = `
+            <div class="modal fade" id="termStudentsModal" tabindex="-1" data-bs-backdrop="static">
+              <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+                <div class="modal-content">
+                  <div class="modal-header modal-hdr">
+                    <h5 class="modal-title"><i class="fas fa-calendar-alt me-2"></i>Term Registration Management</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                  </div>
+                  <div class="modal-body p-4">
+                    <div class="alert alert-info border-0 rounded-3 d-flex align-items-center gap-3 mb-4">
+                      <i class="fas fa-info-circle fa-2x"></i>
+                      <div><strong>Total Registered: ${total}</strong><br><small>Manage term registrations. Remove students from the current term selection.</small></div>
+                    </div>
+                    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                      <div class="form-check mb-0"><input class="form-check-input" type="checkbox" id="trmSelectAll"><label class="form-check-label fw-semibold" for="trmSelectAll">Select All</label></div>
+                      <button class="btn btn-danger btn-sm rounded-3" onclick="window.TermRegistrationManager.bulkRemove()"><i class="fas fa-user-minus me-1"></i>Remove Selected from Term</button>
+                    </div>
+                    <div class="row g-3" id="termStudentsContainer">${TRM.cards(students)}</div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal"><i class="fas fa-times me-1"></i>Close</button>
+                    <button type="button" class="btn-pg" onclick="window.TermRegistrationManager.refreshData()"><i class="fas fa-sync-alt me-1"></i>Refresh</button>
+                  </div>
+                </div>
+              </div>
+            </div>`;
+            document.body.insertAdjacentHTML('beforeend', html);
+            document.getElementById('trmSelectAll')?.addEventListener('change', e => {
+                document.querySelectorAll('.trm-checkbox').forEach(cb => cb.checked = e.target.checked);
+            });
+            new bootstrap.Modal(document.getElementById('termStudentsModal')).show();
+        },
+
+        cards: students => {
+            if (!students?.length) return '<div class="col-12"><div class="alert alert-warning rounded-3 text-center">No students registered for this term.</div></div>';
+            return students.map(s => {
+                const init = ((s.firstname||'').charAt(0)+(s.lastname||'').charAt(0)).toUpperCase()||'ST';
+                const cur  = s.is_current ? '<span class="badge bg-success position-absolute top-0 end-0 m-2" style="font-size:10px;">Current</span>' : '';
+                return `<div class="col-md-4 col-lg-3">
+                  <div class="stu-card mb-2" data-registration-id="${s.registration_id}" style="position:relative;">
+                    <div style="position:absolute;top:10px;left:10px;z-index:5;">
+                      <input class="form-check-input trm-checkbox" type="checkbox" value="${s.registration_id}" style="border:2px solid rgba(255,255,255,.8);width:18px;height:18px;background:rgba(255,255,255,.2);">
+                    </div>
+                    <div class="stu-card-header" style="min-height:80px;">
+                      ${cur}
+                      <div class="stu-card-name" style="padding-right:10px;padding-left:30px;">${U.esc(s.fullname||'')}</div>
+                      <span class="stu-card-adm">${U.esc(s.admissionNo||'N/A')}</span>
+                    </div>
+                    <div class="stu-card-body">
+                      <div class="stu-card-grid">
+                        <div><div class="stu-card-info-label">Class</div><div class="stu-card-info-val">${U.esc(s.class||'')} ${U.esc(s.arm||'')}</div></div>
+                        <div><div class="stu-card-info-label">Gender</div><div class="stu-card-info-val">${U.esc(s.gender||'—')}</div></div>
+                      </div>
+                      <button class="btn btn-outline-danger btn-sm w-100 rounded-3" style="font-size:12px;"
+                              onclick="window.TermRegistrationManager.removeOne(${s.registration_id}, '${U.esc(s.fullname||'')}')">
+                        <i class="fas fa-user-minus me-1"></i>Remove from Term
+                      </button>
+                    </div>
+                  </div>
+                </div>`;
+            }).join('');
+        },
+
+        removeOne: async (regId, name) => {
+            if (!await U.confirm('Remove Student?', `Remove ${name} from this term?`, 'Yes, remove')) return;
+            Swal.fire({title:'Removing…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+            try {
+                const r = await API.rmTerm(regId); Swal.close();
+                if (r.success) {
+                    U.ok(r.message||'Removed successfully.');
+                    const card = document.querySelector(`.stu-card[data-registration-id="${regId}"]`);
+                    card?.closest('.col-md-4,.col-lg-3')?.remove();
+                }
+            } catch(e) { Swal.close(); U.err('Failed to remove.'); }
+        },
+
+        bulkRemove: async () => {
+            const ids = Array.from(document.querySelectorAll('.trm-checkbox:checked')).map(cb=>cb.value);
+            if (!ids.length) { U.err('Please select at least one student.','No Selection'); return; }
+            if (!await U.confirm(`Remove ${ids.length} student(s)?`, 'This will remove their term registration.', 'Yes, remove all')) return;
+            Swal.fire({title:'Removing…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+            try {
+                const r = await API.rmTermMany(ids); Swal.close();
+                if (r.success) { U.ok(r.message||'Removed successfully.'); TRM.refreshData(); }
+            } catch(e) { Swal.close(); U.err('Failed to remove.'); }
+        },
+
+        refreshData: async () => {
+            if (!AppState.termFilters) return;
+            Swal.fire({title:'Refreshing…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+            try {
+                const r = await API.inTerm(AppState.termFilters);
+                if (r.success) { const c = document.getElementById('termStudentsContainer'); if (c) c.innerHTML = TRM.cards(r.students); }
+                Swal.close();
+            } catch(e) { Swal.close(); U.err('Failed.'); }
+        }
+    };
+
+    // ================================================================
+    // REPORT MANAGER
+    // ================================================================
+    const Report = {
+        sortable: null,
+        init: () => {
+            const container = document.getElementById('columnsContainer');
+            if (!container || typeof Sortable === 'undefined') return;
+            if (Report.sortable) { try { Report.sortable.destroy(); } catch {} }
+            Report.sortable = new Sortable(container, {
+                animation: 200,
+                handle: '.drag-handle',
+                draggable: '.draggable-item',
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                onEnd: () => { Report.updateOrder(); Report.updatePreview(); }
+            });
+            container.querySelectorAll('.column-checkbox').forEach(cb => {
+                cb.onchange = () => { Report.updateOrder(); Report.updatePreview(); };
+            });
+            document.getElementById('selectAllColumnsBtn')?.addEventListener('click', () => {
+                container.querySelectorAll('.column-checkbox').forEach(cb => cb.checked = true);
+                Report.updateOrder(); Report.updatePreview();
+            });
+            document.getElementById('deselectAllColumnsBtn')?.addEventListener('click', () => {
+                container.querySelectorAll('.column-checkbox').forEach(cb => cb.checked = false);
+                Report.updateOrder(); Report.updatePreview();
+            });
+            Report.updateOrder(); Report.updatePreview();
+        },
+        updateOrder: () => {
+            const container = document.getElementById('columnsContainer');
+            const orderInput = document.getElementById('columnsOrderInput');
+            if (!container || !orderInput) return;
+            const items = container.querySelectorAll('.draggable-item');
+            const checked = Array.from(items).filter(el => el.querySelector('.column-checkbox')?.checked).map(el => el.dataset.column);
+            orderInput.value = checked.join(',');
+            let n = 0;
+            items.forEach(el => {
+                let badge = el.querySelector('.order-badge');
+                if (el.querySelector('.column-checkbox')?.checked) {
+                    n++;
+                    if (!badge) { badge = document.createElement('span'); badge.className='order-badge'; el.appendChild(badge); }
+                    badge.textContent = n;
+                } else { badge?.remove(); }
+            });
+        },
+        updatePreview: () => {
+            const preview = document.getElementById('columnOrderPreview');
+            if (!preview) return;
+            const labels = Array.from(document.querySelectorAll('.column-checkbox:checked')).map(cb => {
+                const label = document.querySelector(`label[for="${cb.id}"]`);
+                return label ? label.textContent.trim() : cb.value;
+            });
+            preview.textContent = labels.length ? labels.join(', ') : 'No columns selected';
+        },
+        generate: async () => {
+            const form = document.getElementById('printReportForm');
+            if (!form) return;
+            const selected = Array.from(form.querySelectorAll('.column-checkbox:checked')).map(cb => cb.value);
+            if (!selected.length) { U.err('Please select at least one column.','No Columns Selected'); return; }
+            const fd = new FormData(form);
+            const params = {};
+            for (const [k, v] of fd.entries()) {
+                if (k==='columns[]') { params.columns = params.columns ? params.columns+','+v : v; }
+                else if (k==='columns_order') { params.columns_order = document.getElementById('columnsOrderInput')?.value||v; }
+                else if (v) params[k] = v;
+            }
+            if (!params.format) { const r = form.querySelector('input[name="format"]:checked'); params.format = r?.value||'pdf'; }
+            if (!params.orientation) { params.orientation = document.getElementById('orientation')?.value||'portrait'; }
+            params.include_header = form.querySelector('input[name="include_header"]')?.checked ? '1':'0';
+            params.include_logo   = form.querySelector('input[name="include_logo"]')?.checked   ? '1':'0';
+            bootstrap.Modal.getInstance(document.getElementById('printStudentReportModal'))?.hide();
+            Swal.fire({title:'Generating Report…',html:'Please wait…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+            try {
+                const r = await axios({method:'GET',url:'/students/report',params,responseType:'blob',timeout:120000});
+                Swal.close();
+                const url = window.URL.createObjectURL(new Blob([r.data]));
+                const a = document.createElement('a'); a.href = url;
+                let fn = `student-report-${new Date().toISOString().split('T')[0]}.${params.format==='excel'?'xlsx':'pdf'}`;
+                const cd = r.headers['content-disposition'];
+                if (cd) { const m = cd.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/); if (m) fn = m[1].replace(/['"]/g,''); }
+                a.download = fn; document.body.appendChild(a); a.click(); document.body.removeChild(a); window.URL.revokeObjectURL(url);
+                U.ok(`Report generated: ${fn}`);
             } catch(e) {
                 Swal.close();
-                U.err(e.response?.data?.message||'Failed to update term.');
+                let msg = 'Failed to generate report.';
+                if (e.response?.data instanceof Blob) { try { const t = await e.response.data.text(); msg = JSON.parse(t).message||msg; } catch {} }
+                else if (e.response?.data?.message) msg = e.response.data.message;
+                U.err(msg, 'Report Generation Failed');
             }
         }
     };
 
     // ================================================================
-    // GLOBAL FUNCTIONS
+    // FORM SUBMISSIONS
+    // ================================================================
+    document.getElementById('addStudentForm')?.addEventListener('submit', async e => {
+        e.preventDefault();
+        const form = e.target;
+        const fd = new FormData(form);
+        const btn = document.getElementById('add-btn');
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Saving…'; }
+        Swal.fire({title:'Saving…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+        try {
+            const r = await axios.post(form.action, fd, {headers:{'Content-Type':'multipart/form-data'}});
+            if (r.data.success) {
+                bootstrap.Modal.getInstance(document.getElementById('addStudentModal'))?.hide();
+                await SM.fetch(); U.ok(r.data.message||'Student registered successfully.');
+                form.reset();
+                const av = document.getElementById('addStudentAvatar'); if (av) av.src='https://via.placeholder.com/120x120/2563eb/ffffff?text=Photo';
+            } else {
+                Swal.close(); U.err(r.data.message||'Failed to save student.');
+            }
+        } catch(err) {
+            Swal.close();
+            const msg = err.response?.data?.message || err.response?.data?.errors ? Object.values(err.response.data.errors||{}).flat().join(' ') : 'Failed to save student.';
+            U.err(msg);
+        } finally {
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save me-1"></i>Register Student'; }
+        }
+    });
+
+    document.getElementById('editStudentForm')?.addEventListener('submit', async e => {
+        e.preventDefault();
+        const form = e.target;
+        const fd = new FormData(form);
+        fd.append('_method','PATCH');
+        const btn = document.getElementById('edit-btn');
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Updating…'; }
+        Swal.fire({title:'Updating…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
+        try {
+            const r = await axios.post(form.action, fd, {headers:{'Content-Type':'multipart/form-data'}});
+            if (r.data.success) {
+                bootstrap.Modal.getInstance(document.getElementById('editStudentModal'))?.hide();
+                await SM.fetch(); U.ok(r.data.message||'Student updated successfully.');
+            } else {
+                Swal.close(); U.err(r.data.message||'Failed.');
+            }
+        } catch(err) {
+            Swal.close();
+            const msg = err.response?.data?.message || 'Failed to update student.';
+            U.err(msg);
+        } finally {
+            if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-save me-1"></i>Update Student'; }
+        }
+    });
+
+    // ================================================================
+    // EVENT DELEGATION & BUTTON WIRING
+    // ================================================================
+    document.addEventListener('click', e => {
+        const vb = e.target.closest('.view-student-btn');   if (vb) { e.preventDefault(); SM.view(vb.dataset.studentId); return; }
+        const eb = e.target.closest('.edit-student-btn');   if (eb) { e.preventDefault(); SM.edit(eb.dataset.studentId); return; }
+        const db = e.target.closest('.delete-student-btn'); if (db) { e.preventDefault(); SM.delete(db.dataset.studentId); return; }
+    });
+
+    document.getElementById('deleteMultipleBtn')?.addEventListener('click', e => { e.preventDefault(); SM.deleteMany(); });
+    document.getElementById('updateCurrentTermBtn')?.addEventListener('click', e => { e.preventDefault(); CTM.show(); });
+    document.getElementById('confirmUpdateCurrentTerm')?.addEventListener('click', () => CTM.update());
+    document.getElementById('generateReportBtn')?.addEventListener('click', e => { e.preventDefault(); Report.generate(); });
+    document.getElementById('tableViewBtn')?.addEventListener('click', () => Render.toggleView('table'));
+    document.getElementById('cardViewBtn')?.addEventListener('click',  () => Render.toggleView('card'));
+    document.getElementById('bulkStatusBtn')?.addEventListener('click', e => { e.preventDefault(); BSM.show(); });
+    document.getElementById('manageTermBtn')?.addEventListener('click',  e => { e.preventDefault(); TRM.show(); });
+
+    document.getElementById('printStudentReportModal')?.addEventListener('show.bs.modal', () => {
+        setTimeout(() => Report.init(), 200);
+    });
+
+    // ================================================================
+    // GLOBAL FUNCTIONS (inline onclick handlers)
     // ================================================================
     window.handleAvatarZoom = el => {
         U.openZoom(el.dataset.zoomSrc||null, el.dataset.zoomName, el.dataset.zoomInit, el.dataset.zoomDetail);
@@ -2585,175 +2946,53 @@
     };
     window.updateAdmissionNumber = (prefix) => {
         prefix = prefix || '';
-        const yearId = prefix ? `${prefix}AdmissionYear` : 'admissionYear';
-        const noId = prefix ? `${prefix}AdmissionNo` : 'admissionNo';
-        const yr = document.getElementById(yearId)?.value || new Date().getFullYear();
-        const input = document.getElementById(noId);
-        if (input) {
-            const base = `TCC/${yr}/`;
-            if (!input.value.startsWith(base)) input.value = `${base}0001`;
-        }
+        const yr = document.getElementById(`${prefix?prefix+'A':'a'}dmissionYear`)?.value || new Date().getFullYear();
+        const input = document.getElementById(`${prefix?prefix+'A':'a'}dmissionNo`);
+        if (input) { const base = `TCC/${yr}/`; if (!input.value.startsWith(base)) input.value = `${base}0001`; }
     };
     window.toggleAdmissionInput = (prefix) => {
         prefix = prefix || '';
-        const modalId = prefix ? '#editStudentModal' : '#addStudentModal';
-        const checkedMode = document.querySelector(`${modalId} input[name="admissionMode"]:checked`);
-        const input = document.getElementById(`${prefix}AdmissionNo`);
+        const selMode = document.querySelector(`input[name="admissionMode"]#${prefix}AdmissionAuto, input[name="admissionMode"]#admissionAuto`);
+        const checkedMode = prefix
+            ? document.querySelector(`#editStudentModal input[name="admissionMode"]:checked`)
+            : document.querySelector(`#addStudentModal input[name="admissionMode"]:checked`);
+        const input = document.getElementById(`${prefix?prefix+'A':'a'}dmissionNo`);
         if (input && checkedMode) input.readOnly = checkedMode.value === 'auto';
     };
     window.previewImage = (input, targetId) => {
         targetId = targetId || 'addStudentAvatar';
-        const f = input.files[0];
-        if (!f) return;
+        const f = input.files[0]; if (!f) return;
         const reader = new FileReader();
-        reader.onload = e => {
-            const img = document.getElementById(targetId);
-            if (img) img.src = e.target.result;
-        };
+        reader.onload = e => { const img = document.getElementById(targetId); if (img) img.src = e.target.result; };
         reader.readAsDataURL(f);
     };
     window.calculateAge = (dob, ageInputId) => {
-        const el = document.getElementById(ageInputId);
-        if (el) el.value = U.age(dob)||'';
+        const el = document.getElementById(ageInputId); if (el) el.value = U.age(dob)||'';
     };
-    window.callNumber = id => {
-        const p = document.getElementById(id)?.textContent;
-        if (p && p!=='—') window.location.href=`tel:${p}`;
-    };
+    window.callNumber = id => { const p = document.getElementById(id)?.textContent; if (p && p!=='—') window.location.href=`tel:${p}`; };
+    window.sendSMS    = id => { const p = document.getElementById(id)?.textContent; if (p && p!=='—') window.location.href=`sms:${p}`; };
+    window.sendEmail  = id => { const em = document.getElementById(id)?.textContent; if (em && em!=='—') window.location.href=`mailto:${em}`; };
     window.editStudentFromView = () => {
         const id = ViewModal.currentId;
-        if (id) {
-            bootstrap.Modal.getInstance(document.getElementById('viewStudentModal'))?.hide();
-            setTimeout(()=>SM.edit(id), 350);
-        }
+        if (id) { bootstrap.Modal.getInstance(document.getElementById('viewStudentModal'))?.hide(); setTimeout(()=>SM.edit(id), 350); }
     };
     window.printStudentProfile = () => window.print();
-    window.refreshTermHistory = () => { if (ViewModal.currentId) ViewModal.fetchTerm(ViewModal.currentId); };
+    window.refreshTermHistory  = () => { if (ViewModal.currentId) ViewModal.fetchTerm(ViewModal.currentId); };
+
+    // Expose managers for dynamically created modal buttons
+    window.BulkStatusManager       = BSM;
+    window.TermRegistrationManager = TRM;
+    window.StudentManager          = { viewStudent: id => SM.view(id) };
 
     // ================================================================
-    // EVENT LISTENERS
-    // ================================================================
-    document.addEventListener('click', e => {
-        const vb = e.target.closest('.view-student-btn');
-        if (vb) {
-            e.preventDefault();
-            SM.view(vb.dataset.studentId);
-            return;
-        }
-        const eb = e.target.closest('.edit-student-btn');
-        if (eb) {
-            e.preventDefault();
-            const studentId = eb.dataset.studentId;
-            if (studentId) SM.edit(studentId);
-            return;
-        }
-        const db = e.target.closest('.delete-student-btn');
-        if (db) {
-            e.preventDefault();
-            SM.delete(db.dataset.studentId);
-            return;
-        }
-    });
-
-    const deleteMultipleBtn = document.getElementById('deleteMultipleBtn');
-    if (deleteMultipleBtn) deleteMultipleBtn.addEventListener('click', e => { e.preventDefault(); SM.deleteMany(); });
-
-    const updateTermBtn = document.getElementById('updateCurrentTermBtn');
-    if (updateTermBtn) updateTermBtn.addEventListener('click', e => { e.preventDefault(); CTM.show(); });
-
-    const confirmUpdateBtn = document.getElementById('confirmUpdateCurrentTerm');
-    if (confirmUpdateBtn) confirmUpdateBtn.addEventListener('click', () => CTM.update());
-
-    const tableViewBtn = document.getElementById('tableViewBtn');
-    if (tableViewBtn) tableViewBtn.addEventListener('click', () => Render.toggleView('table'));
-
-    const cardViewBtn = document.getElementById('cardViewBtn');
-    if (cardViewBtn) cardViewBtn.addEventListener('click', () => Render.toggleView('card'));
-
-    // ================================================================
-    // FORM SUBMISSIONS
-    // ================================================================
-    const addForm = document.getElementById('addStudentForm');
-    if (addForm) {
-        addForm.addEventListener('submit', async e => {
-            e.preventDefault();
-            const form = e.target;
-            const fd = new FormData(form);
-            const btn = document.getElementById('add-btn');
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Saving…';
-            }
-            Swal.fire({title:'Saving…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
-            try {
-                const r = await axios.post(form.action, fd, {headers:{'Content-Type':'multipart/form-data'}});
-                if (r.data.success) {
-                    bootstrap.Modal.getInstance(document.getElementById('addStudentModal'))?.hide();
-                    await SM.fetch();
-                    U.ok(r.data.message||'Student registered successfully.');
-                    form.reset();
-                    const av = document.getElementById('addStudentAvatar');
-                    if (av) av.src='https://via.placeholder.com/120x120/2563eb/ffffff?text=Photo';
-                } else {
-                    Swal.close();
-                    U.err(r.data.message||'Failed to save student.');
-                }
-            } catch(err) {
-                Swal.close();
-                const msg = err.response?.data?.message || err.response?.data?.errors ? Object.values(err.response.data.errors||{}).flat().join(' ') : 'Failed to save student.';
-                U.err(msg);
-            } finally {
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-save me-1"></i>Register Student';
-                }
-            }
-        });
-    }
-
-    const editForm = document.getElementById('editStudentForm');
-    if (editForm) {
-        editForm.addEventListener('submit', async e => {
-            e.preventDefault();
-            const form = e.target;
-            const fd = new FormData(form);
-            fd.append('_method','PATCH');
-            const btn = document.getElementById('edit-btn');
-            if (btn) {
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Updating…';
-            }
-            Swal.fire({title:'Updating…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
-            try {
-                const r = await axios.post(form.action, fd, {headers:{'Content-Type':'multipart/form-data'}});
-                if (r.data.success) {
-                    bootstrap.Modal.getInstance(document.getElementById('editStudentModal'))?.hide();
-                    await SM.fetch();
-                    U.ok(r.data.message||'Student updated successfully.');
-                } else {
-                    Swal.close();
-                    U.err(r.data.message||'Failed.');
-                }
-            } catch(err) {
-                Swal.close();
-                const msg = err.response?.data?.message || 'Failed to update student.';
-                U.err(msg);
-            } finally {
-                if (btn) {
-                    btn.disabled = false;
-                    btn.innerHTML = '<i class="fas fa-save me-1"></i>Update Student';
-                }
-            }
-        });
-    }
-
-    // ================================================================
-    // BOOTSTRAP
+    // BOOT
     // ================================================================
     function boot() {
         U.csrf();
         Filters.init();
         Selection.init();
+        SLM.populate('addState','addLocal');
+        SLM.populate('editState','editLocal');
         SM.fetch();
     }
 
