@@ -16,7 +16,7 @@
             line-height: 1.35;
             color: #000;
             background: #f5f5f5;
-            padding: 8mm 0;
+            padding: 4mm 0; /* FIX 3: was 8mm 0 — reduced to cut blank space */
             text-align: center;
         }
 
@@ -75,7 +75,8 @@
             position: relative;
             text-align: left;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
+            overflow: visible; /* FIX 2: was 'hidden' — was clipping stamp & QR code */
+            padding-bottom: 130px; /* FIX 3: reserve space at bottom for stamp + QR */
         }
 
         .student-section:last-child {
@@ -156,13 +157,18 @@
             padding-left: 4px;
         }
 
-        /* RESULT TABLE - Bolder Text */
+        /* FIX 4: RESULT TABLE - margin moved from table to wrapper */
+        .result-table {
+            padding: 0 10px; /* FIX 4: was margin on table itself; now padding on wrapper */
+            margin: 8px 0;
+        }
+
         .result-table table {
-            width: 100%;
+            width: 100%; /* FIX 4: now truly 100% of wrapper (not card minus 2×10px margin) */
             border: 2px solid #000000;
             border-collapse: collapse;
             font-size: 7.8px;
-            margin: 8px 10px;
+            margin: 0; /* FIX 4: was margin: 8px 10px — removed from table */
         }
 
         .result-table thead th {
@@ -180,14 +186,14 @@
             text-align: center;
             font-size: 7.7px;
             background: white;
-            font-weight: 700;           /* Bolder scores */
+            font-weight: 700;
             height: 17px;
             line-height: 17px;
         }
 
         .result-table tbody td.subject-name {
             text-align: left;
-            font-weight: 700;           /* Bolder subject names */
+            font-weight: 700;
             padding-left: 7px;
         }
 
@@ -205,8 +211,9 @@
         .col-position { width: 38px; }
         .col-class-average { width: 42px; }
 
+        /* FIX 4: totals bar aligned to match table wrapper padding */
         .totals-summary {
-            width: 98%;
+            width: calc(100% - 20px); /* FIX 4: was 98% — now matches 10px padding on each side */
             background: #0d1a3d;
             color: #ffffff;
             font-weight: 900;
@@ -215,11 +222,11 @@
             border: 2px solid #000000;
             border-top: none;
             text-align: center;
-            margin: 8px auto;
+            margin: 0 10px 8px 10px; /* FIX 4: was 8px auto — now aligned with table */
         }
 
         .remarks-table {
-            width: 100%;
+            width: calc(100% - 20px); /* align with table */
             border: 2px solid #000000;
             border-collapse: collapse;
             margin: 8px 10px 4px;
@@ -242,12 +249,13 @@
         }
 
         /* FOOTER */
+        /* FIX 3: margin-bottom increased to 130px to leave room for QR + stamp */
         .footer-section {
             background: #f1f5f9;
             padding: 9px 12px 6px;
             border-top: 1px solid #cbd5e1;
             text-align: center;
-            margin: 0 10px 8px;
+            margin: 0 10px 130px; /* FIX 3: was 0 10px 8px — now clears absolute elements */
             font-size: 8.6px;
         }
 
@@ -273,38 +281,39 @@
             color: #64748b;
         }
 
-        /* STAMPS & QR */
+        /* FIX 2: APPROVED STAMP — repositioned to sit inside card bottom-right */
         .approved-stamp {
             position: absolute;
-            bottom: 95px;
-            right: 48px;
-            width: 135px;
-            height: 135px;
-            opacity: 0.85;
+            bottom: 10px;   /* FIX 2: was 95px — now anchored near bottom edge */
+            right: 14px;    /* FIX 2: was 48px — tucked into right corner */
+            width: 110px;   /* FIX 2: was 135px — slightly smaller to fit cleanly */
+            height: 110px;
+            opacity: 0.82;
             z-index: 10;
             pointer-events: none;
             transform: rotate(-8deg);
         }
 
+        /* FIX 1: QR CODE — repositioned to bottom-left, visible inside card */
         .qr-code-container {
             position: absolute;
-            bottom: 48px;
-            left: 38px;
+            bottom: 12px;   /* FIX 1: was 48px — now sits at bottom edge */
+            left: 12px;     /* FIX 1: was 38px — tucked into left corner */
             text-align: center;
             z-index: 11;
-            background: rgba(255,255,255,0.9);
-            padding: 5px 6px;
-            border: 1px solid #ddd;
+            background: rgba(255,255,255,0.95);
+            padding: 4px 5px;
+            border: 1px solid #ccc;
             border-radius: 4px;
         }
 
         .qr-code-container img {
-            width: 82px;
-            height: 82px;
+            width: 70px;    /* FIX 1: was 82px — slightly smaller for cleaner fit */
+            height: 70px;
         }
 
         .qr-label {
-            font-size: 6.8px;
+            font-size: 6px; /* FIX 1: was 6.8px */
             color: #333;
             margin-top: 2px;
             font-weight: 600;
@@ -365,10 +374,10 @@
 
         <div class="student-section">
 
-            <!-- APPROVED STAMP (Right) -->
+            <!-- APPROVED STAMP (Bottom-Right) — FIX 2: repositioned + overflow:visible on parent -->
             <img src="{{ asset('stamp.jpeg') }}" alt="Approved Stamp" class="approved-stamp">
 
-            <!-- QR CODE (Left) -->
+            <!-- QR CODE (Bottom-Left) — FIX 1: repositioned + overflow:visible on parent -->
             <div class="qr-code-container">
                 <img src="data:image/png;base64,{{ $qrCodeBase64 }}" alt="QR Code">
                 <div class="qr-label">Scan for Verification</div>
@@ -380,7 +389,7 @@
                 <div class="motto">{{ $schoolInfo->school_motto ?? 'KNOWLEDGE AND VIRTUE' }}</div>
             </div>
 
-            <!-- HEADER: Logo + Info + Photo (Photo moved right) -->
+            <!-- HEADER: Logo + Info + Photo -->
             <table class="header-table">
                 <tr>
                     <td width="20%" style="text-align:center;">
@@ -453,7 +462,7 @@
                 </div>
             @endif
 
-            <!-- RESULT TABLE -->
+            <!-- RESULT TABLE — FIX 4: wrapper has padding, table has no margin -->
             <div class="result-table">
                 <table>
                     <thead>
@@ -541,7 +550,7 @@
                 </table>
             </div>
 
-            <!-- TOTALS -->
+            <!-- TOTALS — FIX 4: width and margin aligned with table -->
             <div class="totals-summary">
                 TOTAL OBTAINED: {{ number_format($totals['obtained'] ?? 0, 1) }} &nbsp;&nbsp;|&nbsp;&nbsp;
                 TOTAL OBTAINABLE: {{ $totals['obtainable'] ?? 0 }} &nbsp;&nbsp;|&nbsp;&nbsp;
@@ -564,7 +573,7 @@
                 </tbody>
             </table>
 
-            <!-- FOOTER -->
+            <!-- FOOTER — FIX 3: margin-bottom:130px makes room for QR + stamp below -->
             <div class="footer-section">
                 <div class="footer-content">
                     <div>
@@ -585,6 +594,7 @@
                 </div>
                 <div class="powered-by">Powered by Qudroid Systems</div>
             </div>
+
         </div>
     @endforeach
 </body>
