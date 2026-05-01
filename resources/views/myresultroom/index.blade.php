@@ -45,161 +45,93 @@
 .stat-card .stat-label { font-size:12px; color:var(--s-muted); margin-top:4px; }
 .stat-card .stat-icon  { font-size:32px; opacity:.12; float:right; margin-top:-8px; }
 
-/* ── Filter Bar ─────────────────────────────────────────── */
-.filter-card {
-    background:#fff; border-radius:var(--s-radius);
-    border:1px solid var(--s-border); padding:20px 24px;
-    margin-bottom:24px;
+/* ── Table ───────────────────────────────────────────────── */
+.s-table th {
+    background:var(--s-primary); color:#fff;
+    padding:12px 16px; font-weight:600; font-size:13px;
+    white-space:nowrap;
 }
-.filter-label {
-    font-size:13px; font-weight:600; color:#374151;
-    margin-bottom:6px; display:block;
+.s-table td {
+    padding:11px 16px; vertical-align:middle;
+    border-bottom:1px solid var(--s-border); font-size:13px;
+}
+.s-table tr:hover td { background:#eff6ff; }
+
+/* ── Status badges ───────────────────────────────────────── */
+.status-badge {
+    display:inline-flex; align-items:center;
+    padding:4px 12px; border-radius:20px;
+    font-size:11px; font-weight:600;
+}
+.status-badge.completed { background:#e8f5e9; color:#2e7d32; }
+.status-badge.pending { background:#fff3e0; color:#ef6c00; }
+.status-badge.not-started { background:#f3e5f5; color:#7b1fa2; }
+
+/* ── Action buttons ──────────────────────────────────────── */
+.action-btn {
+    background:none; border:none; font-size:18px;
+    width:32px; height:32px; border-radius:8px;
+    display:inline-flex; align-items:center; justify-content:center;
+    transition:all .15s; color:var(--s-muted);
+}
+.action-btn:hover { background:#e2e8f0; color:var(--s-primary); }
+.action-btn.enter:hover { background:#e8f5e9; color:#2e7d32; }
+.action-btn.mock:hover { background:#fff3e0; color:#ef6c00; }
+
+/* ── DataTables overrides ────────────────────────────────── */
+.dataTables_wrapper .dataTables_filter input {
+    border:1.5px solid var(--s-border); border-radius:8px;
+    padding:7px 14px; margin-left:8px; font-size:13px;
+    transition:border .15s;
+}
+.dataTables_wrapper .dataTables_filter input:focus {
+    border-color:var(--s-accent); outline:none;
+    box-shadow:0 0 0 3px rgba(37,99,235,.1);
+}
+.dataTables_wrapper .dataTables_length select {
+    border:1.5px solid var(--s-border); border-radius:8px;
+    padding:6px 10px; margin:0 6px; font-size:13px;
+}
+.dataTables_wrapper .dataTables_info  { font-size:13px; color:var(--s-muted); }
+.dataTables_wrapper .paginate_button  {
+    border-radius:6px !important; font-size:13px !important;
+    padding:4px 10px !important;
+}
+.dataTables_wrapper .paginate_button.current,
+.dataTables_wrapper .paginate_button.current:hover {
+    background:var(--s-accent) !important;
+    border-color:var(--s-accent) !important; color:#fff !important;
+}
+
+/* ── Filter card ─────────────────────────────────────────── */
+.filter-card {
+    background:#fff; border:1px solid var(--s-border);
+    border-radius:var(--s-radius); margin-bottom:24px;
+    transition:box-shadow .15s;
+}
+.filter-card:hover { box-shadow:var(--s-shadow); }
+.filter-card .card-header {
+    background:var(--s-bg); border-bottom:1px solid var(--s-border);
+    padding:14px 20px; font-weight:600; font-size:14px;
 }
 .filter-select {
     border:1.5px solid var(--s-border); border-radius:8px;
     padding:9px 14px; font-size:13px; width:100%;
-    transition:border .15s;
+    transition:border .15s, box-shadow .15s;
 }
 .filter-select:focus {
     border-color:var(--s-accent); outline:none;
     box-shadow:0 0 0 3px rgba(37,99,235,.1);
 }
+.filter-btn {
+    background:var(--s-primary); border:none;
+    border-radius:8px; padding:9px 20px;
+    font-size:13px; font-weight:500; color:#fff;
+    transition:background .15s, transform .1s;
+}
+.filter-btn:hover { background:#0f2b44; transform:translateY(-1px); }
 
-/* ── Subject Cards Grid ────────────────────────────────── */
-.subjects-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-    gap: 20px;
-    margin-top: 8px;
-}
-.subject-card {
-    background:#fff; border:1px solid var(--s-border);
-    border-radius:var(--s-radius); overflow:hidden;
-    transition:transform .18s, box-shadow .18s;
-    position:relative;
-}
-.subject-card:hover {
-    transform:translateY(-3px);
-    box-shadow:0 12px 28px rgba(0,0,0,.1);
-}
-.subject-card-header {
-    background:linear-gradient(135deg, #f1f5f9 0%, #e9eef3 100%);
-    padding:14px 20px;
-    border-bottom:1px solid var(--s-border);
-    display:flex; justify-content:space-between; align-items:center;
-}
-.subject-card-header .subject-name {
-    font-weight:700; color:var(--s-primary);
-    font-size:16px; margin:0;
-}
-.subject-card-header .subject-code {
-    background:#fff; padding:3px 10px;
-    border-radius:20px; font-size:11px;
-    font-weight:600; color:var(--s-accent);
-    border:1px solid #cbd5e1;
-}
-.subject-card-body {
-    padding:16px 20px;
-}
-.subject-info-row {
-    display:flex; align-items:center;
-    margin-bottom:12px; font-size:13px;
-}
-.subject-info-row i {
-    width:24px; color:var(--s-muted);
-    font-size:16px;
-}
-.subject-info-row span {
-    color:#374151;
-}
-.subject-badge {
-    display:inline-flex; align-items:center;
-    padding:4px 12px; border-radius:20px;
-    font-size:11px; font-weight:600;
-    margin-right:8px; margin-bottom:8px;
-}
-.badge-class {
-    background:#e0f2fe; color:#0369a1;
-}
-.badge-category {
-    background:#f1f5f9; color:#475569;
-}
-.badge-term {
-    background:#fef3c7; color:#b45309;
-}
-.badge-session {
-    background:#e0e7ff; color:#3730a3;
-}
-.subject-card-footer {
-    background:#fafcff;
-    padding:14px 20px;
-    border-top:1px solid var(--s-border);
-    display:flex; gap:12px;
-}
-.btn-action {
-    flex:1; padding:8px; border-radius:8px;
-    font-size:12px; font-weight:600;
-    text-align:center; transition:all .15s;
-    cursor:pointer; border:none;
-    text-decoration: none;
-    display: inline-block;
-}
-.btn-enter {
-    background:var(--s-accent); color:#fff;
-}
-.btn-enter:hover { background:#1d4ed8; transform:translateY(-1px); color:#fff; }
-.btn-edit {
-    background:#f1f5f9; color:#334155;
-    border:1px solid #e2e8f0;
-}
-.btn-edit:hover { background:#e2e8f0; }
-.btn-mock {
-    background:#fef3c7; color:#b45309;
-    border:1px solid #fde68a;
-}
-.btn-mock:hover { background:#fde68a; color:#b45309; }
-
-/* ── Empty State ───────────────────────────────────────── */
-.empty-state {
-    text-align:center; padding:60px 20px;
-    background:#fff; border-radius:var(--s-radius);
-    border:1px solid var(--s-border);
-}
-.empty-state i {
-    font-size:64px; color:#cbd5e1; margin-bottom:16px;
-}
-.empty-state h5 {
-    font-size:18px; font-weight:600; color:#64748b;
-    margin-bottom:8px;
-}
-.empty-state p {
-    font-size:13px; color:var(--s-muted);
-}
-
-/* ── Toast notifications ───────────────────────────────── */
-#s-toast-stack {
-    position:fixed; bottom:24px; right:24px;
-    z-index:10000; display:flex;
-    flex-direction:column-reverse; gap:10px;
-    pointer-events:none;
-}
-.s-toast {
-    pointer-events:all;
-    background:#fff; border-radius:10px;
-    box-shadow:0 8px 28px rgba(0,0,0,.14);
-    padding:14px 18px; min-width:280px; max-width:360px;
-    display:flex; align-items:flex-start; gap:12px;
-    border-left:4px solid var(--s-accent);
-    transform:translateX(120%);
-    transition:transform .3s cubic-bezier(.34,1.56,.64,1);
-}
-.s-toast.show { transform:translateX(0); }
-.s-toast.s-toast-success { border-left-color:var(--s-success); }
-.s-toast.s-toast-error   { border-left-color:var(--s-danger);  }
-.s-toast.s-toast-warning { border-left-color:var(--s-warning); }
-.s-toast .s-toast-icon { font-size:20px; line-height:1; flex-shrink:0; margin-top:1px; }
-
-/* ── Full-page loader ──────────────────────────────────── */
+/* ── Full-page loader overlay ────────────────────────────── */
 #s-page-loader {
     position:fixed; inset:0; z-index:9999;
     background:rgba(15,23,42,.55);
@@ -224,24 +156,78 @@
     animation:s-spin .75s linear infinite;
 }
 @keyframes s-spin { to { transform:rotate(360deg); } }
-.s-loader-label { font-size:14px; font-weight:600; color:var(--s-primary); }
+.s-loader-label {
+    font-size:14px; font-weight:600;
+    color:var(--s-primary); margin-bottom:12px;
+}
+.s-progress-wrap {
+    width:160px; height:5px;
+    background:#e2e8f0; border-radius:99px; overflow:hidden;
+    margin:0 auto;
+}
+.s-progress-bar {
+    height:100%; width:0%;
+    background:linear-gradient(90deg, var(--s-accent), #7c3aed);
+    border-radius:99px;
+    transition:width .35s ease;
+}
 
-/* Alert styles */
-.alert { border-radius: var(--s-radius); border: none; }
-.alert-danger { background: #fef2f2; color: #dc2626; border-left: 4px solid #dc2626; }
+/* ── Toast notifications ─────────────────────────────────── */
+#s-toast-stack {
+    position:fixed; bottom:24px; right:24px;
+    z-index:10000; display:flex;
+    flex-direction:column-reverse; gap:10px;
+    pointer-events:none;
+}
+.s-toast {
+    pointer-events:all;
+    background:#fff; border-radius:10px;
+    box-shadow:0 8px 28px rgba(0,0,0,.14);
+    padding:14px 18px; min-width:280px; max-width:360px;
+    display:flex; align-items:flex-start; gap:12px;
+    border-left:4px solid var(--s-accent);
+    transform:translateX(120%);
+    transition:transform .3s cubic-bezier(.34,1.56,.64,1);
+}
+.s-toast.show { transform:translateX(0); }
+.s-toast.s-toast-success { border-left-color:var(--s-success); }
+.s-toast.s-toast-error   { border-left-color:var(--s-danger);  }
+.s-toast.s-toast-warning { border-left-color:var(--s-warning); }
+.s-toast .s-toast-icon { font-size:20px; line-height:1; flex-shrink:0; margin-top:1px; }
+.s-toast-success .s-toast-icon { color:var(--s-success); }
+.s-toast-error   .s-toast-icon { color:var(--s-danger);  }
+.s-toast-warning .s-toast-icon { color:var(--s-warning); }
+.s-toast .s-toast-body { flex:1; }
+.s-toast .s-toast-title { font-size:13px; font-weight:700; color:#111827; margin-bottom:2px; }
+.s-toast .s-toast-msg   { font-size:12px; color:var(--s-muted); line-height:1.4; }
+.s-toast .s-toast-close {
+    background:none; border:none; cursor:pointer;
+    color:var(--s-muted); font-size:16px; line-height:1;
+    padding:0; flex-shrink:0;
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width:768px) {
+    .stat-card .stat-value { font-size:22px; }
+    .s-hero { padding:20px 24px; }
+    .filter-card .row > div { margin-bottom:12px; }
+}
 </style>
 
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css">
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
 
-{{-- Full-page loader overlay --}}
+{{-- ═══ Full-page loader overlay ═══ --}}
 <div id="s-page-loader">
     <div class="s-loader-card">
         <div class="s-loader-spinner"></div>
-        <div class="s-loader-label" id="s-loader-label">Loading subjects...</div>
+        <div class="s-loader-label" id="s-loader-label">Loading subjects…</div>
+        <div class="s-progress-wrap">
+            <div class="s-progress-bar" id="s-progress-bar"></div>
+        </div>
     </div>
 </div>
 
-{{-- Toast notification stack --}}
+{{-- ═══ Toast notification stack ═══ --}}
 <div id="s-toast-stack"></div>
 
 <div class="main-content">
@@ -250,182 +236,146 @@
 
     {{-- Hero Section --}}
     <div class="s-hero">
-        <h1><i class="ri-dashboard-line me-2"></i>My Result Room</h1>
-        <p>View and manage your assigned subjects, enter results, and track academic performance.</p>
+        <h1><i class="ri-file-list-line me-2"></i>My Result Room</h1>
+        <p>View and manage results for subjects assigned to you across different terms and sessions.</p>
     </div>
 
-    {{-- Stat Cards --}}
+    {{-- Statistics Cards (dynamic) --}}
     <div class="row g-3 mb-4">
         <div class="col-md-3">
             <div class="stat-card">
                 <div class="stat-icon"><i class="ri-book-open-line"></i></div>
-                <div class="stat-value" id="statTotal">0</div>
-                <div class="stat-label">My Subjects</div>
+                <div class="stat-value" id="statTotalSubjects">0</div>
+                <div class="stat-label">Total Subjects</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="stat-card">
                 <div class="stat-icon"><i class="ri-checkbox-circle-line"></i></div>
-                <div class="stat-value text-success" id="statEntered">0</div>
-                <div class="stat-label">Results Entered</div>
+                <div class="stat-value text-success" id="statCompleted">0</div>
+                <div class="stat-label">Completed</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="stat-card">
                 <div class="stat-icon"><i class="ri-time-line"></i></div>
                 <div class="stat-value text-warning" id="statPending">0</div>
-                <div class="stat-label">Pending Entry</div>
+                <div class="stat-label">In Progress</div>
             </div>
         </div>
         <div class="col-md-3">
             <div class="stat-card">
                 <div class="stat-icon"><i class="ri-flask-line"></i></div>
                 <div class="stat-value text-info" id="statMock">0</div>
-                <div class="stat-label">Mock Results</div>
+                <div class="stat-label">Mock Available</div>
             </div>
         </div>
     </div>
+
+    {{-- Alerts --}}
+    @if ($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show">
+            <strong>Whoops!</strong> There were some problems.
+            <ul class="mb-0 mt-1">@foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+    @if (session('success'))
+        <div class="alert alert-success alert-dismissible fade show">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
 
     {{-- Filter Card --}}
-    <div class="filter-card">
-        <form id="filterForm" method="POST" action="{{ route('myresultroom.index') }}">
-            @csrf
-            <div class="row g-3 align-items-end">
-                <div class="col-md-5">
-                    <label class="filter-label"><i class="ri-calendar-line me-1"></i> Academic Session</label>
-                    <select name="sessionid" id="sessionid" class="filter-select" required>
-                        <option value="">Select Session</option>
-                        @foreach($sessions as $session)
-                            <option value="{{ $session->id }}" {{ old('sessionid', request('sessionid')) == $session->id ? 'selected' : '' }}>
-                                {{ $session->session }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-5">
-                    <label class="filter-label"><i class="ri-survey-line me-1"></i> Term</label>
-                    <select name="termid" id="termid" class="filter-select" required>
-                        <option value="">Select Term</option>
-                        @foreach($terms as $term)
-                            <option value="{{ $term->id }}" {{ old('termid', request('termid')) == $term->id ? 'selected' : '' }}>
-                                {{ $term->term }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <button type="submit" class="btn btn-primary w-100" id="filterBtn">
-                        <i class="ri-filter-3-line me-1"></i>Load Subjects
-                    </button>
-                </div>
-            </div>
-        </form>
-    </div>
-
-    {{-- Alert Messages --}}
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show mb-3">
-            <i class="ri-error-warning-line me-1"></i> {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <div class="card filter-card">
+        <div class="card-header">
+            <i class="ri-filter-3-line me-2"></i>Filter Subjects
         </div>
-    @endif
-
-    @if($errors->any())
-        <div class="alert alert-danger alert-dismissible fade show mb-3">
-            <i class="ri-error-warning-line me-1"></i>
-            @foreach($errors->all() as $error)
-                {{ $error }}<br>
-            @endforeach
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-
-    {{-- Subjects Grid --}}
-    <div id="subjectsContainer">
-        @if(isset($mysubjects) && $mysubjects->count() > 0)
-            <div class="subjects-grid">
-                @foreach($mysubjects as $subject)
-                    <div class="subject-card" data-subject-id="{{ $subject->id }}">
-                        <div class="subject-card-header">
-                            <h4 class="subject-name">{{ $subject->subject }}</h4>
-                            <span class="subject-code">{{ $subject->subjectcode }}</span>
-                        </div>
-                        <div class="subject-card-body">
-                            <div class="subject-info-row">
-                                <i class="ri-group-line"></i>
-                                <span><strong>Class:</strong> {{ $subject->schoolclass }}</span>
-                            </div>
-                            @if($subject->classcategories && $subject->classcategories != 'N/A')
-                            <div class="subject-info-row">
-                                <i class="ri-price-tag-3-line"></i>
-                                <span><strong>Categories:</strong> {{ $subject->classcategories }}</span>
-                            </div>
-                            @endif
-                            <div class="subject-info-row">
-                                <i class="ri-calendar-event-line"></i>
-                                <span><strong>Term:</strong> {{ $subject->term }} | <strong>Session:</strong> {{ $subject->session }}</span>
-                            </div>
-                            <div class="mt-2">
-                                @if($subject->broadsheet_exists)
-                                    <span class="subject-badge badge-class"><i class="ri-check-line me-1"></i>Results Entered</span>
-                                @else
-                                    <span class="subject-badge" style="background:#fed7aa; color:#9a3412;"><i class="ri-time-line me-1"></i>Pending Entry</span>
-                                @endif
-                                @if($subject->broadsheet_mock_exists)
-                                    <span class="subject-badge badge-term"><i class="ri-flask-line me-1"></i>Mock Results Done</span>
-                                @endif
-                            </div>
-                        </div>
-                        <div class="subject-card-footer">
-                            {{-- Replace route() with direct URL or placeholder --}}
-                            <a href="#" class="btn-action btn-enter" onclick="showComingSoon('Enter Results')">
-                                <i class="ri-edit-box-line me-1"></i> Enter Results
-                            </a>
-                            <a href="#" class="btn-action btn-mock" onclick="showComingSoon('Mock Results')">
-                                <i class="ri-flask-line me-1"></i> Mock
-                            </a>
-                        </div>
+        <div class="card-body">
+            <form method="POST" id="filterForm" autocomplete="off">
+                @csrf
+                <div class="row align-items-end g-3">
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold small">Term <span class="text-danger">*</span></label>
+                        <select name="termid" id="termid" class="filter-select" required>
+                            <option value="">-- Select Term --</option>
+                            @foreach($terms as $term)
+                                <option value="{{ $term->id }}">{{ $term->term }}</option>
+                            @endforeach
+                        </select>
                     </div>
-                @endforeach
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold small">Session <span class="text-danger">*</span></label>
+                        <select name="sessionid" id="sessionid" class="filter-select" required>
+                            <option value="">-- Select Session --</option>
+                            @foreach($sessions as $session)
+                                <option value="{{ $session->id }}">{{ $session->session }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="filter-btn w-100" id="filterBtn">
+                            <i class="ri-search-line me-2"></i>Load Subjects
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {{-- Subjects Table Card --}}
+    <div class="card border-0 shadow-sm" id="tableCard" style="display: none;">
+        <div class="card-header bg-white py-3 border-bottom">
+            <div class="d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-semibold" style="color:var(--s-primary)">
+                    <i class="ri-list-check me-2"></i>My Assigned Subjects
+                    <span class="badge bg-primary ms-2" id="totalBadge">0</span>
+                </h5>
             </div>
-        @else
-            <div class="empty-state">
-                <i class="ri-book-open-line"></i>
-                <h5>No subjects assigned yet</h5>
-                <p>Please select a session and term to view your assigned subjects.<br>If you have selected filters, no subjects are assigned to you for this period.</p>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table s-table w-100 mb-0" id="subjectTable">
+                    <thead>
+                        <table>
+                            <th>#</th>
+                            <th>Class</th>
+                            <th>Category</th>
+                            <th>Subject</th>
+                            <th>Code</th>
+                            <th>Term</th>
+                            <th>Status</th>
+                            <th width="120">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">
+                                <i class="ri-information-line me-1"></i> Select a term and session to view subjects.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
-        @endif
+        </div>
     </div>
 
 </div>
 </div>
 </div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
 <script>
-$(document).ready(function() {
-    const CSRF = $('meta[name="csrf-token"]').attr('content') || '{{ csrf_token() }}';
+$(document).ready(function () {
+    let dataTable = null;
+    let subjectsData = [];
 
-    // Page loader
-    const PageLoader = {
-        show(label = 'Loading...') {
-            $('#s-loader-label').text(label);
-            $('#s-page-loader').addClass('active');
-        },
-        hide() {
-            setTimeout(() => $('#s-page-loader').removeClass('active'), 200);
-        }
-    };
-
-    // Toast notification
+    // Toast notification system
     function toast(type, title, msg, duration = 4000) {
-        const icons = {
-            success: 'ri-checkbox-circle-fill',
-            error: 'ri-close-circle-fill',
-            warning: 'ri-alert-fill',
-            info: 'ri-information-fill'
-        };
+        const icons = { success:'ri-checkbox-circle-fill', error:'ri-close-circle-fill',
+                        warning:'ri-alert-fill', info:'ri-information-fill' };
         const id = 'toast-' + Date.now();
         const $el = $(`
             <div class="s-toast s-toast-${type}" id="${id}">
@@ -435,180 +385,185 @@ $(document).ready(function() {
                     ${msg ? `<div class="s-toast-msg">${msg}</div>` : ''}
                 </div>
                 <button class="s-toast-close" onclick="$('#${id}').remove()">×</button>
-            </div>
-        `);
+            </div>`);
         $('#s-toast-stack').append($el);
         setTimeout(() => $el.addClass('show'), 20);
         if (duration > 0) {
-            setTimeout(() => {
-                $el.removeClass('show');
-                setTimeout(() => $el.remove(), 350);
-            }, duration);
+            setTimeout(() => { $el.removeClass('show'); setTimeout(() => $el.remove(), 350); }, duration);
         }
     }
 
-    // Update stat counters based on visible cards
-    function updateStats() {
-        const total = $('.subject-card').length;
-        const entered = $('.subject-card .badge-class').length;
-        const pending = $('.subject-card .subject-badge[style*="#fed7aa"]').length;
-        const mock = $('.subject-card .badge-term').length;
+    // Page Loader
+    const PageLoader = {
+        _prog: 0, _timer: null,
+        show(label = 'Processing…') {
+            $('#s-loader-label').text(label);
+            $('#s-progress-bar').css('width', '0%');
+            $('#s-page-loader').addClass('active');
+            this._prog = 0;
+            this._startTicker();
+        },
+        _startTicker() {
+            PageLoader._timer = setInterval(() => {
+                if (PageLoader._prog < 85) {
+                    PageLoader._prog += Math.random() * 8;
+                    $('#s-progress-bar').css('width', Math.min(PageLoader._prog, 85) + '%');
+                }
+            }, 220);
+        },
+        hide() {
+            clearInterval(this._timer);
+            $('#s-progress-bar').css('width', '100%');
+            setTimeout(() => $('#s-page-loader').removeClass('active'), 350);
+        }
+    };
 
-        $('#statTotal').text(total);
-        $('#statEntered').text(entered);
+    // Update statistics cards based on data
+    function updateStats(data) {
+        const total = data.length;
+        const completed = data.filter(s => s.broadsheet_exists).length;
+        const pending = data.filter(s => !s.broadsheet_exists && !s.broadsheet_mock_exists).length;
+        const mockAvailable = data.filter(s => s.broadsheet_mock_exists).length;
+
+        $('#statTotalSubjects').text(total);
+        $('#statCompleted').text(completed);
         $('#statPending').text(pending);
-        $('#statMock').text(mock);
+        $('#statMock').text(mockAvailable);
     }
 
-    // Handle filter form submission with AJAX
-    $('#filterForm').on('submit', function(e) {
-        e.preventDefault();
+    // Render table with DataTable
+    function renderTable(data) {
+        subjectsData = data;
+        updateStats(data);
+        $('#totalBadge').text(data.length);
 
-        const sessionid = $('#sessionid').val();
-        const termid = $('#termid').val();
+        const tbodyHtml = data.map((subject, idx) => {
+            let statusHtml = '';
+            let statusClass = '';
+            let statusText = '';
 
-        if (!sessionid || !termid) {
-            toast('warning', 'Selection Required', 'Please select both session and term.');
-            return;
-        }
-
-        PageLoader.show('Loading your subjects...');
-
-        $.ajax({
-            url: '{{ route("myresultroom.index") }}',
-            type: 'POST',
-            data: {
-                sessionid: sessionid,
-                termid: termid,
-                _token: CSRF
-            },
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            success: function(response) {
-                if (response.success && response.data) {
-                    renderSubjects(response.data.mysubjects);
-                    updateStats();
-                    toast('success', 'Success', response.message || 'Subjects loaded successfully.');
-                } else {
-                    renderEmptyState();
-                    toast('info', 'No Subjects', response.message || 'No subjects found for the selected criteria.');
-                }
-                PageLoader.hide();
-            },
-            error: function(xhr) {
-                PageLoader.hide();
-                let errorMsg = 'Failed to load subjects. Please try again.';
-                if (xhr.responseJSON && xhr.responseJSON.message) {
-                    errorMsg = xhr.responseJSON.message;
-                }
-                if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
-                    errorMsg = Object.values(xhr.responseJSON.errors).flat().join(', ');
-                }
-                toast('error', 'Error', errorMsg);
+            if (subject.broadsheet_exists) {
+                statusClass = 'completed';
+                statusText = 'Completed';
+            } else if (subject.broadsheet_mock_exists) {
+                statusClass = 'pending';
+                statusText = 'Mock Ready';
+            } else {
+                statusClass = 'not-started';
+                statusText = 'Not Started';
             }
-        });
-    });
 
-    // Render subjects grid dynamically
-    function renderSubjects(subjects) {
-        const container = $('#subjectsContainer');
+            statusHtml = `<span class="status-badge ${statusClass}">${statusText}</span>`;
 
-        if (!subjects || subjects.length === 0) {
-            renderEmptyState();
-            return;
+            return `<tr>
+                <td>${idx + 1}</td>
+                <td><span class="fw-semibold">${escapeHtml(subject.schoolclass)}</span></td>
+                <td>${escapeHtml(subject.classcategories)}</td>
+                <td>${escapeHtml(subject.subject)}</td>
+                <td><span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2" style="border-radius:6px;font-size:12px;">${escapeHtml(subject.subjectcode)}</span></td>
+                <td>${escapeHtml(subject.term)} ${escapeHtml(subject.session)}</td>
+                <td>${statusHtml}</td>
+                <td>
+                    <div class="d-flex gap-1">
+                        <a href="{{ url('myresultroom/enter') }}/${subject.id}" class="action-btn enter" title="Enter Results">
+                            <i class="ri-file-copy-line"></i>
+                        </a>
+                        ${subject.broadsheet_mock_exists ?
+                            `<a href="{{ url('myresultroom/mock') }}/${subject.id}" class="action-btn mock" title="Mock Results">
+                                <i class="ri-survey-line"></i>
+                            </a>` : ''}
+                    </div>
+                </td>
+            </tr>`;
+        }).join('');
+
+        $('#tableBody').html(tbodyHtml || `<tr><td colspan="8" class="text-center text-muted py-4"><i class="ri-inbox-line me-1"></i> No subjects found for this selection.</td></tr>`);
+
+        // Reinitialize DataTable
+        if (dataTable) {
+            dataTable.destroy();
         }
 
-        let html = '<div class="subjects-grid">';
-
-        subjects.forEach(subject => {
-            html += `
-                <div class="subject-card">
-                    <div class="subject-card-header">
-                        <h4 class="subject-name">${escapeHtml(subject.subject)}</h4>
-                        <span class="subject-code">${escapeHtml(subject.subjectcode)}</span>
-                    </div>
-                    <div class="subject-card-body">
-                        <div class="subject-info-row">
-                            <i class="ri-group-line"></i>
-                            <span><strong>Class:</strong> ${escapeHtml(subject.schoolclass)}</span>
-                        </div>
-                        ${subject.classcategories && subject.classcategories !== 'N/A' ? `
-                        <div class="subject-info-row">
-                            <i class="ri-price-tag-3-line"></i>
-                            <span><strong>Categories:</strong> ${escapeHtml(subject.classcategories)}</span>
-                        </div>
-                        ` : ''}
-                        <div class="subject-info-row">
-                            <i class="ri-calendar-event-line"></i>
-                            <span><strong>Term:</strong> ${escapeHtml(subject.term)} | <strong>Session:</strong> ${escapeHtml(subject.session)}</span>
-                        </div>
-                        <div class="mt-2">
-                            ${subject.broadsheet_exists ?
-                                '<span class="subject-badge badge-class"><i class="ri-check-line me-1"></i>Results Entered</span>' :
-                                '<span class="subject-badge" style="background:#fed7aa; color:#9a3412;"><i class="ri-time-line me-1"></i>Pending Entry</span>'}
-                            ${subject.broadsheet_mock_exists ?
-                                '<span class="subject-badge badge-term"><i class="ri-flask-line me-1"></i>Mock Results Done</span>' : ''}
-                        </div>
-                    </div>
-                    <div class="subject-card-footer">
-                        <a href="#" class="btn-action btn-enter" onclick="showComingSoon(\'Enter Results for ${escapeHtml(subject.subject)}\')">
-                            <i class="ri-edit-box-line me-1"></i> Enter Results
-                        </a>
-                        <a href="#" class="btn-action btn-mock" onclick="showComingSoon(\'Mock Results for ${escapeHtml(subject.subject)}\')">
-                            <i class="ri-flask-line me-1"></i> Mock
-                        </a>
-                    </div>
-                </div>
-            `;
+        dataTable = $('#subjectTable').DataTable({
+            dom: "<'row align-items-center mb-3'<'col-sm-6'l><'col-sm-6 text-end'f>>" +
+                 "<'row'<'col-12'tr>>" +
+                 "<'row align-items-center mt-3'<'col-sm-5'i><'col-sm-7 text-end'p>>",
+            language: {
+                search: '', searchPlaceholder: 'Search subjects…',
+                lengthMenu: 'Show _MENU_ entries',
+                info: 'Showing _START_–_END_ of _TOTAL_ entries',
+                infoEmpty: 'No subjects found',
+                zeroRecords: 'No matching subjects',
+            },
+            order: [[1, 'asc']],
+            pageLength: 15,
+            responsive: true,
         });
 
-        html += '</div>';
-        container.html(html);
-        updateStats();
+        $('#tableCard').fadeIn(200);
     }
 
-    function renderEmptyState() {
-        const container = $('#subjectsContainer');
-        container.html(`
-            <div class="empty-state">
-                <i class="ri-book-open-line"></i>
-                <h5>No subjects assigned yet</h5>
-                <p>Please select a session and term to view your assigned subjects.<br>If you have selected filters, no subjects are assigned to you for this period.</p>
-            </div>
-        `);
-        updateStats();
-    }
-
+    // Helper to escape HTML
     function escapeHtml(str) {
         if (!str) return '';
-        return String(str).replace(/[&<>]/g, function(m) {
+        return str.replace(/[&<>]/g, function(m) {
             if (m === '&') return '&amp;';
             if (m === '<') return '&lt;';
             if (m === '>') return '&gt;';
             return m;
+        }).replace(/[\uD800-\uDBFF][\uDC00-\uDFFF]/g, function(c) {
+            return c;
         });
     }
 
-    // Update stats on page load
-    updateStats();
+    // Handle form submission via AJAX
+    $('#filterForm').on('submit', function(e) {
+        e.preventDefault();
 
-    // If filters were pre-selected, show loading and fetch data
-    const preselectedSession = $('#sessionid').val();
-    const preselectedTerm = $('#termid').val();
-    if (preselectedSession && preselectedTerm && $('.subject-card').length === 0 && $('.empty-state').length === 0) {
+        const termid = $('#termid').val();
+        const sessionid = $('#sessionid').val();
+
+        if (!termid || !sessionid) {
+            toast('warning', 'Missing Selection', 'Please select both term and session.');
+            return;
+        }
+
+        PageLoader.show('Loading subjects...');
+
+        $.ajax({
+            url: '{{ route("myresultroom.index") }}',
+            type: 'POST',
+            data: { termid: termid, sessionid: sessionid, _token: '{{ csrf_token() }}' },
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            success: function(res) {
+                PageLoader.hide();
+                if (res.success && res.data && res.data.mysubjects) {
+                    renderTable(res.data.mysubjects);
+                    toast('success', 'Subjects Loaded', `Found ${res.data.mysubjects.length} subject(s).`);
+                } else {
+                    renderTable([]);
+                    toast('info', 'No Data', res.message || 'No subjects found for this selection.');
+                }
+            },
+            error: function(xhr) {
+                PageLoader.hide();
+                let msg = 'An error occurred while loading subjects.';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    msg = xhr.responseJSON.message;
+                }
+                toast('error', 'Error', msg);
+                console.error('AJAX Error:', xhr);
+            }
+        });
+    });
+
+    // Optional: Pre-fill from session/previous selection if needed
+    // Check if there are existing selections from controller (if redirected back)
+    @if(old('termid') && old('sessionid'))
+        $('#termid').val('{{ old('termid') }}');
+        $('#sessionid').val('{{ old('sessionid') }}');
         $('#filterForm').submit();
-    }
+    @endif
 });
-
-// Global function for showing coming soon message
-function showComingSoon(feature) {
-    // You can replace this with a proper toast or modal
-    if (typeof toast === 'function') {
-        toast('info', 'Coming Soon', `${feature} feature will be available soon.`);
-    } else {
-        alert(`${feature} feature coming soon!`);
-    }
-}
 </script>
 @endsection
