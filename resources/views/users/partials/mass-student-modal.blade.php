@@ -47,6 +47,12 @@
                         </div>
                     </div>
 
+                    <!-- Info Box -->
+                    <div class="alert alert-info mb-3">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <strong>Email Format:</strong> Student emails are automatically generated as <code>firstname.lastname@student.school</code> with all special characters removed.
+                    </div>
+
                     <!-- Student Selection Table -->
                     <div class="card">
                         <div class="card-header bg-light d-flex justify-content-between align-items-center">
@@ -70,7 +76,7 @@
                                             <th>Student Name</th>
                                             <th>Class/Arm</th>
                                             <th>Status</th>
-                                            <th>Username</th>
+                                            <th>Generated Email</th>
                                         </tr>
                                     </thead>
                                     <tbody id="massStudentList">
@@ -86,14 +92,14 @@
                         </div>
                     </div>
 
-                    <!-- Action Cards -->
+                    <!-- Action Cards Preview -->
                     <div class="row mt-3">
                         <div class="col-md-12">
-                            <div class="alert alert-info">
-                                <i class="bi bi-info-circle-fill me-2"></i>
+                            <div class="alert alert-secondary">
+                                <i class="bi bi-lightbulb-fill me-2"></i>
                                 <strong>Available Actions:</strong>
                                 <ul class="mb-0 mt-1">
-                                    <li><strong>Create Accounts</strong> - Creates new user accounts for students WITHOUT accounts</li>
+                                    <li><strong>Create Accounts</strong> - Creates new user accounts for students WITHOUT accounts (auto-generates email: firstname.lastname@student.school)</li>
                                     <li><strong>Reset Passwords</strong> - Generates new passwords for students WITH accounts</li>
                                     <li><strong>Revoke Accounts</strong> - Removes user access (student record remains)</li>
                                     <li><strong>Reprint Credentials</strong> - Shows existing credentials (passwords hidden for security)</li>
@@ -124,6 +130,7 @@
                                             <th>Student Name</th>
                                             <th>Admission No</th>
                                             <th>Current Status</th>
+                                            <th>Generated Email</th>
                                         </tr>
                                     </thead>
                                     <tbody id="selectedStudentsList"></tbody>
@@ -132,7 +139,7 @@
                         </div>
                     </div>
 
-                    <!-- Action Type Selection -->
+                    <!-- Action Type Selection Cards -->
                     <div class="card mb-3">
                         <div class="card-header bg-light">
                             <h6 class="mb-0"><i class="bi bi-lightning-charge-fill me-1"></i> Choose Action</h6>
@@ -191,7 +198,7 @@
                                     <div class="col-md-6">
                                         <label class="form-label">Password Type</label>
                                         <select id="passwordType" class="form-select">
-                                            <option value="individual">Individual Random Passwords</option>
+                                            <option value="individual">Individual Random Passwords (Recommended)</option>
                                             <option value="same">Same Password for All</option>
                                         </select>
                                     </div>
@@ -226,6 +233,12 @@
 
                     <!-- Warning Message -->
                     <div id="actionWarning" class="alert alert-warning" style="display: none;"></div>
+
+                    <!-- Email Format Note -->
+                    <div class="alert alert-info" id="emailFormatNote" style="display: none;">
+                        <i class="bi bi-envelope-fill me-2"></i>
+                        <strong>Email Format:</strong> Student emails will be generated as <code>firstname.lastname@student.school</code> with all special characters removed.
+                    </div>
 
                     <!-- Action Buttons -->
                     <div class="d-flex justify-content-between">
@@ -262,7 +275,16 @@ document.addEventListener('DOMContentLoaded', function() {
     let allStudents = [];
     let currentResults = null;
 
-    // ==================== LOAD STUDENTS ====================
+    // Helper function to generate preview email
+    function generatePreviewEmail(firstname, lastname) {
+        let cleanFirst = firstname.toLowerCase().replace(/[^a-z0-9]/g, '');
+        let cleanLast = lastname.toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (!cleanFirst) cleanFirst = 'student';
+        if (!cleanLast) cleanLast = 'user';
+        return cleanFirst + '.' + cleanLast + '@student.school';
+    }
+
+    // Load students function
     function loadStudents() {
         const search = $('#massStudentSearch').val();
         const classId = $('#massClassFilter').val();
@@ -308,15 +330,16 @@ document.addEventListener('DOMContentLoaded', function() {
             const statusBadge = student.has_account
                 ? '<span class="badge bg-success">Has Account</span>'
                 : '<span class="badge bg-secondary">No Account</span>';
+            const previewEmail = generatePreviewEmail(student.firstname, student.lastname);
 
             html += `
                 <tr>
                     <td><input type="checkbox" class="student-checkbox" data-id="${student.id}" ${isSelected ? 'checked' : ''}></td>
-                    <td>${student.admissionNo || 'N/A'}</td>
-                    <td><strong>${student.name}</strong></td>
+                    <td><strong>${student.admissionNo || 'N/A'}</strong></td>
+                    <td>${student.name}</td>
                     <td>${student.class_name || 'N/A'} ${student.arm_name ? '/' + student.arm_name : ''}</td>
                     <td>${statusBadge}</td>
-                    <td>${student.username || '-'}</td>
+                    <td><small class="text-muted">${previewEmail}</small></td>
                 </tr>
             `;
         });
@@ -366,20 +389,27 @@ document.addEventListener('DOMContentLoaded', function() {
         renderStudentTable();
     });
 
-    // ==================== STEP 2: ACTION SELECTION ====================
+    // Proceed to step 2
     $('#proceedToAction').on('click', function() {
         if (selectedStudents.length === 0) {
             Swal.fire('Warning', 'Please select at least one student', 'warning');
             return;
         }
 
-        // Populate selected students summary
         let summaryHtml = '';
         selectedStudents.forEach(student => {
             const statusBadge = student.has_account
                 ? '<span class="badge bg-success">Has Account</span>'
                 : '<span class="badge bg-secondary">No Account</span>';
-            summaryHtml += `<tr><td>${student.name}</td><td>${student.admissionNo || 'N/A'}</td><td>${statusBadge}</td></tr>`;
+            const previewEmail = generatePreviewEmail(student.firstname, student.lastname);
+            summaryHtml += `
+                <tr>
+                    <td>${student.name}</td>
+                    <td>${student.admissionNo || 'N/A'}</td>
+                    <td>${statusBadge}</td>
+                    <td><small>${previewEmail}</small></td>
+                </tr>
+            `;
         });
         $('#selectedStudentsList').html(summaryHtml);
         $('#step2SelectedCount').text(selectedStudents.length);
@@ -396,30 +426,30 @@ document.addEventListener('DOMContentLoaded', function() {
         const action = $(this).data('action');
         $('#selectedAction').val(action);
 
-        // Show/hide settings based on action
         if (action === 'create' || action === 'reset') {
             $('#passwordSettings').show();
             $('#roleSettings').show();
+            $('#emailFormatNote').show();
         } else {
             $('#passwordSettings').hide();
             $('#roleSettings').hide();
+            $('#emailFormatNote').hide();
         }
 
-        // Show warning if action not applicable
         const hasAccountStudents = selectedStudents.filter(s => s.has_account);
         const noAccountStudents = selectedStudents.filter(s => !s.has_account);
 
         let warningHtml = '';
         if (action === 'create' && hasAccountStudents.length > 0) {
-            warningHtml = `${hasAccountStudents.length} selected student(s) already have accounts and will be skipped.`;
+            warningHtml = `<i class="bi bi-exclamation-triangle-fill me-2"></i> ${hasAccountStudents.length} selected student(s) already have accounts and will be skipped.`;
         } else if (action === 'reset' && noAccountStudents.length > 0) {
-            warningHtml = `${noAccountStudents.length} selected student(s) don't have accounts and will be skipped.`;
+            warningHtml = `<i class="bi bi-exclamation-triangle-fill me-2"></i> ${noAccountStudents.length} selected student(s) don't have accounts and will be skipped.`;
         } else if (action === 'revoke' && noAccountStudents.length > 0) {
-            warningHtml = `${noAccountStudents.length} selected student(s) don't have accounts and will be skipped.`;
+            warningHtml = `<i class="bi bi-exclamation-triangle-fill me-2"></i> ${noAccountStudents.length} selected student(s) don't have accounts and will be skipped.`;
         }
 
         if (warningHtml) {
-            $('#actionWarning').html(`<i class="bi bi-exclamation-triangle-fill me-2"></i> ${warningHtml}`).show();
+            $('#actionWarning').html(warningHtml).show();
         } else {
             $('#actionWarning').hide();
         }
@@ -436,7 +466,7 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#massStep1').show();
     });
 
-    // ==================== EXECUTE ACTION ====================
+    // Execute action
     $('#executeAction').on('click', function() {
         const actionType = $('#selectedAction').val();
 
@@ -500,7 +530,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // ==================== DISPLAY RESULTS ====================
+    // Display results
     function displayResults(data) {
         let html = '<div class="alert alert-success"><h5><i class="bi bi-check-circle-fill"></i> Operation Complete!</h5><p>' + data.message + '</p>';
 
@@ -552,7 +582,7 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#resultsContainer').html(html);
     }
 
-    // ==================== PRINT RESULTS ====================
+    // Print results
     $('#printResults').on('click', function() {
         if (!currentResults) return;
 
@@ -572,7 +602,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #999; }
                 @media print {
                     body { margin: 0; padding: 10px; }
-                    .no-print { display: none; }
                 }
             </style>
         </head><body>
@@ -580,6 +609,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <h1>Student Account Credentials Report</h1>
                 <div class="subtitle">Generated by School Management System</div>
                 <div class="date">Print Date: ${new Date().toLocaleString()}</div>
+                <div class="date">Email Domain: @student.school</div>
             </div>`;
 
         if (currentResults.created && currentResults.created.length) {
@@ -609,7 +639,7 @@ document.addEventListener('DOMContentLoaded', function() {
         printWindow.document.close();
     });
 
-    // ==================== RESET AND NEW ACTION ====================
+    // Reset and new action
     $('#newAction, #massStudentModal').on('hidden.bs.modal', function() {
         selectedStudents = [];
         currentResults = null;
@@ -640,5 +670,6 @@ document.addEventListener('DOMContentLoaded', function() {
     position: sticky;
     top: 0;
     z-index: 10;
+    background: white;
 }
 </style>

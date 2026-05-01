@@ -286,8 +286,119 @@ class UserController extends Controller
         return response()->json(['roles' => $roles]);
     }
 
+    // ============================================================
+    // EMAIL GENERATION HELPERS
+    // ============================================================
+
     /**
-     * Store a single student user.
+     * Clean string - remove special characters, accents, and convert to ASCII
+     */
+    private function cleanString($string)
+    {
+        if (empty($string)) return 'user';
+
+        // Convert to ASCII (removes accents)
+        $string = Str::ascii($string);
+
+        // Convert to lowercase
+        $string = strtolower($string);
+
+        // Remove all special characters except letters, numbers, and spaces
+        $string = preg_replace('/[^a-z0-9\s]/', '', $string);
+
+        // Replace spaces with dots
+        $string = preg_replace('/\s+/', '.', $string);
+
+        // Remove multiple dots
+        $string = preg_replace('/\.+/', '.', $string);
+
+        // Trim dots from start and end
+        $string = trim($string, '.');
+
+        // If empty after cleaning, return default
+        if (empty($string)) {
+            return 'student';
+        }
+
+        return $string;
+    }
+
+    /**
+     * Generate a clean email from student name
+     * Format: firstname.lastname@student.school
+     */
+    private function generateStudentEmail($student)
+    {
+        $domain = '@student.school';
+
+        // Get firstname and lastname, clean them
+        $firstname = $this->cleanString($student->firstname);
+        $lastname = $this->cleanString($student->lastname);
+
+        // Generate base email: firstname.lastname@domain
+        $baseEmail = $firstname . '.' . $lastname;
+
+        // Remove any remaining special characters
+        $baseEmail = preg_replace('/[^a-z0-9.]/', '', $baseEmail);
+        $baseEmail = trim($baseEmail, '.');
+
+        // If still empty, use admission number or fallback
+        if (empty($baseEmail)) {
+            $baseEmail = !empty($student->admissionNo)
+                ? $this->cleanString($student->admissionNo)
+                : 'student_' . $student->id;
+        }
+
+        $email = $baseEmail . $domain;
+
+        // Check if email exists, if yes, add number suffix
+        $counter = 1;
+        while (User::where('email', $email)->exists()) {
+            $email = $baseEmail . $counter . $domain;
+            $counter++;
+        }
+
+        return $email;
+    }
+
+    /**
+     * Generate a clean username from admission number
+     */
+    private function generateUsername($student)
+    {
+        $baseUsername = !empty($student->admissionNo)
+            ? $this->cleanString($student->admissionNo)
+            : 'student_' . $student->id;
+
+        // Replace spaces and special chars with underscore
+        $username = preg_replace('/[^a-z0-9_]/', '_', $baseUsername);
+        $username = strtolower($username);
+
+        // Check if username exists
+        $counter = 1;
+        $originalUsername = $username;
+        while (User::where('username', $username)->exists()) {
+            $username = $originalUsername . '_' . $counter;
+            $counter++;
+        }
+
+        return $username;
+    }
+
+    /**
+     * Generate random password
+     */
+    private function generateRandomPassword()
+    {
+        return strtoupper(Str::random(4)) . rand(100, 999) . strtolower(Str::random(3));
+    }
+
+    // ============================================================
+    // SINGLE STUDENT CREATION
+    // ============================================================
+
+    /**
+     * Store a single student user
      */
     public function storeStudent(Request $request): JsonResponse
     {
@@ -304,22 +415,40 @@ class UserController extends Controller
             $validated = $request->validate([
                 'student_id' => 'required|exists:studentRegistration,id',
                 'name' => 'required|string|max:255',
-                'email' => 'required|email|unique:users,email',
-                'username' => 'required|string|unique:users,username|max:255',
+                'email' => 'nullable|email|unique:users,email',
+                'username' => 'nullable|string|unique:users,username|max:255',
                 'password' => 'required|min:8|confirmed',
                 'roles' => 'required|array|min:1',
                 'roles.*' => 'exists:roles,name',
             ]);
 
-            $input = $request->all();
-            $input['username'] = str_replace('/', '_', $input['username']);
-            $plainPassword = $input['password'];
-            $input['password'] = Hash::make($input['password']);
-
-            $user = User::create($input);
-            $user->syncRoles($request->input('roles'));
-
             $student = Student::findOrFail($validated['student_id']);
+
+            // Generate email if not provided
+            $email = $request->input('email');
+            if (empty($email)) {
+                $email = $this->generateStudentEmail($student);
+            }
+
+            // Generate username if not provided
+            $username = $request->input('username');
+            if (empty($username)) {
+                $username = $this->generateUsername($student);
+            } else {
+                $username = $this->cleanString($username);
+            }
+
+            $plainPassword = $validated['password'];
+
+            $user = User::create([
+                'name' => $validated['name'],
+                'email' => $email,
+                'username' => $username,
+                'student_id' => $student->id,
+                'password' => Hash::make($plainPassword),
+            ]);
+
+            $user->syncRoles($request->input('roles'));
 
             BioModel::updateOrCreate(
                 ['user_id' => $user->id],
@@ -360,10 +489,14 @@ class UserController extends Controller
             Log::error("Create student user error: {$e->getMessage()}");
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create student user',
+                'message' => 'Failed to create student user: ' . $e->getMessage(),
             ], 500);
         }
     }
+
+    // ============================================================
+    // MASS STUDENT OPERATIONS
+    // ============================================================
 
     /**
      * Mass operation on students (Create, Reset, Revoke, Reprint)
@@ -506,7 +639,184 @@ class UserController extends Controller
     }
 
     /**
-     * Reset single student password (from user list)
+     * Create a single student account (used by mass operation)
+     */
+    private function createStudentAccount($student, $validated)
+    {
+        try {
+            // Generate clean email
+            $email = $this->generateStudentEmail($student);
+
+            // Generate username
+            $username = $this->generateUsername($student);
+
+            // Generate password
+            $plainPassword = $validated['password_type'] === 'same'
+                ? $validated['shared_password']
+                : $this->generateRandomPassword();
+
+            // Create user
+            $user = User::create([
+                'name' => trim("{$student->firstname} {$student->lastname}"),
+                'email' => $email,
+                'username' => $username,
+                'student_id' => $student->id,
+                'password' => Hash::make($plainPassword),
+            ]);
+
+            $user->syncRoles($validated['roles']);
+
+            // Sync bio
+            BioModel::updateOrCreate(
+                ['user_id' => $user->id],
+                [
+                    'firstname' => $student->firstname,
+                    'lastname' => $student->lastname,
+                    'othernames' => $student->othername ?? '',
+                    'phone' => $student->phone_number ?? '',
+                    'address' => $student->home_address2 ?? '',
+                    'gender' => $student->gender ?? '',
+                    'maritalstatus' => '',
+                    'nationality' => $student->nationality ?? '',
+                    'dob' => $student->dateofbirth ?? '',
+                ]
+            );
+
+            return [
+                'success' => true,
+                'data' => [
+                    'id' => $user->id,
+                    'student_id' => $student->id,
+                    'name' => $user->name,
+                    'email' => $email,
+                    'username' => $username,
+                    'password' => $plainPassword,
+                    'admissionNo' => $student->admissionNo ?? '',
+                    'class_name' => $student->class_name ?? '',
+                ]
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'error' => "Failed to create account for {$student->firstname} {$student->lastname}: " . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Reset student password (used by mass operation)
+     */
+    private function resetStudentPassword($user, $student, $validated)
+    {
+        try {
+            $plainPassword = $validated['password_type'] === 'same'
+                ? $validated['shared_password']
+                : $this->generateRandomPassword();
+
+            $user->update(['password' => Hash::make($plainPassword)]);
+
+            if (isset($validated['roles'])) {
+                $user->syncRoles($validated['roles']);
+            }
+
+            return [
+                'success' => true,
+                'data' => [
+                    'id' => $user->id,
+                    'student_id' => $student->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'username' => $user->username,
+                    'password' => $plainPassword,
+                    'admissionNo' => $student->admissionNo ?? '',
+                    'class_name' => $student->class_name ?? '',
+                ]
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'error' => "Failed to reset password for {$student->firstname} {$student->lastname}: " . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Revoke student account (used by mass operation)
+     */
+    private function revokeStudentAccount($user, $student)
+    {
+        try {
+            $name = $user->name;
+            $user->roles()->detach();
+            $user->delete();
+
+            return [
+                'success' => true,
+                'data' => [
+                    'student_id' => $student->id,
+                    'name' => $name,
+                    'admissionNo' => $student->admissionNo ?? '',
+                    'class_name' => $student->class_name ?? '',
+                ]
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'error' => "Failed to revoke account: " . $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Reprint student credentials (used by mass operation)
+     */
+    private function reprintStudentCredentials($user, $student)
+    {
+        try {
+            return [
+                'success' => true,
+                'data' => [
+                    'id' => $user->id,
+                    'student_id' => $student->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'username' => $user->username,
+                    'admissionNo' => $student->admissionNo ?? '',
+                    'class_name' => $student->class_name ?? '',
+                    'note' => 'Password not shown for security. Use Reset action to set new password if needed.',
+                ]
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'error' => "Failed to retrieve credentials for {$student->firstname} {$student->lastname}"
+            ];
+        }
+    }
+
+    /**
+     * Build action result message
+     */
+    private function buildActionResultMessage($data)
+    {
+        $parts = [];
+        if ($data['created_count'] > 0) $parts[] = $data['created_count'] . ' account(s) created';
+        if ($data['reset_count'] > 0) $parts[] = $data['reset_count'] . ' password(s) reset';
+        if ($data['revoked_count'] > 0) $parts[] = $data['revoked_count'] . ' account(s) revoked';
+        if ($data['reprinted_count'] > 0) $parts[] = $data['reprinted_count'] . ' credential(s) reprinted';
+
+        $message = implode(', ', $parts) . ' successfully.';
+        if (count($data['skipped']) > 0) $message .= ' ' . count($data['skipped']) . ' skipped.';
+
+        return $message;
+    }
+
+    // ============================================================
+    // SINGLE PASSWORD RESET (from user list)
+    // ============================================================
+
+    /**
+     * Reset single student password (from user list button)
      */
     public function resetSingleStudentPassword(Request $request, $id): JsonResponse
     {
@@ -552,7 +862,7 @@ class UserController extends Controller
     }
 
     /**
-     * Revoke student password (bulk operation)
+     * Revoke/Reset multiple student passwords
      */
     public function revokeStudentPassword(Request $request): JsonResponse
     {
@@ -634,6 +944,10 @@ class UserController extends Controller
             ], 500);
         }
     }
+
+    // ============================================================
+    // GET STUDENTS FOR MODALS
+    // ============================================================
 
     /**
      * Get students list for modals with filters
@@ -741,181 +1055,5 @@ class UserController extends Controller
                 'message' => 'Failed to load students',
             ], 500);
         }
-    }
-
-    // ─────────────────────────────────────────────────────────────────
-    // PRIVATE HELPER METHODS
-    // ─────────────────────────────────────────────────────────────────
-
-    private function createStudentAccount($student, $validated)
-    {
-        try {
-            $email = !empty($student->email) ? trim($student->email) : null;
-
-            if (!$email || User::where('email', $email)->exists()) {
-                $base = strtolower(Str::ascii(trim($student->firstname)) . '.' . Str::ascii(trim($student->lastname)));
-                $email = $base . '@student.school';
-
-                if (User::where('email', $email)->exists()) {
-                    $email = $base . '.' . $student->id . '@student.school';
-                }
-            }
-
-            $baseUsername = str_replace(['/', '\\', ' '], '_', $student->admissionNo ?? "stu_{$student->id}");
-            $username = $baseUsername;
-            $suffix = 1;
-            while (User::where('username', $username)->exists()) {
-                $username = $baseUsername . '_' . $suffix++;
-            }
-
-            $plainPassword = $validated['password_type'] === 'same'
-                ? $validated['shared_password']
-                : $this->generateRandomPassword();
-
-            $user = User::create([
-                'name' => trim("{$student->firstname} {$student->lastname}"),
-                'email' => $email,
-                'username' => $username,
-                'student_id' => $student->id,
-                'password' => Hash::make($plainPassword),
-            ]);
-
-            $user->syncRoles($validated['roles']);
-
-            BioModel::updateOrCreate(
-                ['user_id' => $user->id],
-                [
-                    'firstname' => $student->firstname,
-                    'lastname' => $student->lastname,
-                    'othernames' => $student->othername ?? '',
-                    'phone' => $student->phone_number ?? '',
-                    'address' => $student->home_address2 ?? '',
-                    'gender' => $student->gender ?? '',
-                    'maritalstatus' => '',
-                    'nationality' => $student->nationality ?? '',
-                    'dob' => $student->dateofbirth ?? '',
-                ]
-            );
-
-            return [
-                'success' => true,
-                'data' => [
-                    'id' => $user->id,
-                    'student_id' => $student->id,
-                    'name' => $user->name,
-                    'email' => $email,
-                    'username' => $username,
-                    'password' => $plainPassword,
-                    'admissionNo' => $student->admissionNo ?? '',
-                    'class_name' => $student->class_name ?? '',
-                ]
-            ];
-        } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'error' => "Failed to create account for {$student->firstname} {$student->lastname}: " . $e->getMessage()
-            ];
-        }
-    }
-
-    private function resetStudentPassword($user, $student, $validated)
-    {
-        try {
-            $plainPassword = $validated['password_type'] === 'same'
-                ? $validated['shared_password']
-                : $this->generateRandomPassword();
-
-            $user->update(['password' => Hash::make($plainPassword)]);
-
-            if (isset($validated['roles'])) {
-                $user->syncRoles($validated['roles']);
-            }
-
-            return [
-                'success' => true,
-                'data' => [
-                    'id' => $user->id,
-                    'student_id' => $student->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'username' => $user->username,
-                    'password' => $plainPassword,
-                    'admissionNo' => $student->admissionNo ?? '',
-                    'class_name' => $student->class_name ?? '',
-                ]
-            ];
-        } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'error' => "Failed to reset password for {$student->firstname} {$student->lastname}: " . $e->getMessage()
-            ];
-        }
-    }
-
-    private function revokeStudentAccount($user, $student)
-    {
-        try {
-            $name = $user->name;
-            $user->roles()->detach();
-            $user->delete();
-
-            return [
-                'success' => true,
-                'data' => [
-                    'student_id' => $student->id,
-                    'name' => $name,
-                    'admissionNo' => $student->admissionNo ?? '',
-                    'class_name' => $student->class_name ?? '',
-                ]
-            ];
-        } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'error' => "Failed to revoke account: " . $e->getMessage()
-            ];
-        }
-    }
-
-    private function reprintStudentCredentials($user, $student)
-    {
-        try {
-            return [
-                'success' => true,
-                'data' => [
-                    'id' => $user->id,
-                    'student_id' => $student->id,
-                    'name' => $user->name,
-                    'email' => $user->email,
-                    'username' => $user->username,
-                    'admissionNo' => $student->admissionNo ?? '',
-                    'class_name' => $student->class_name ?? '',
-                    'note' => 'Password not shown for security. Use Reset action to set new password if needed.',
-                ]
-            ];
-        } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'error' => "Failed to retrieve credentials for {$student->firstname} {$student->lastname}"
-            ];
-        }
-    }
-
-    private function generateRandomPassword()
-    {
-        return strtoupper(Str::random(4)) . rand(100, 999) . strtolower(Str::random(3));
-    }
-
-    private function buildActionResultMessage($data)
-    {
-        $parts = [];
-        if ($data['created_count'] > 0) $parts[] = $data['created_count'] . ' account(s) created';
-        if ($data['reset_count'] > 0) $parts[] = $data['reset_count'] . ' password(s) reset';
-        if ($data['revoked_count'] > 0) $parts[] = $data['revoked_count'] . ' account(s) revoked';
-        if ($data['reprinted_count'] > 0) $parts[] = $data['reprinted_count'] . ' credential(s) reprinted';
-
-        $message = implode(', ', $parts) . ' successfully.';
-        if (count($data['skipped']) > 0) $message .= ' ' . count($data['skipped']) . ' skipped.';
-
-        return $message;
     }
 }
