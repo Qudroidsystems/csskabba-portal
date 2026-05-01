@@ -97,9 +97,8 @@
             background: white;
             padding: 3px;
             overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: block;           /* dompdf: use block not flex for margin:auto to work */
+            text-align: center;
         }
 
         .school-logo img, .photo-frame img {
@@ -139,21 +138,31 @@
             border-radius: 6px;
             padding: 7px 12px;
             margin: 8px 10px;
-            font-size: 8.8px;
+            font-size: 9.2px;
+            text-align: center;  /* centre all text in the bar */
         }
 
-        .info-table td { padding: 2px 6px; }
+        .info-table {
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .info-table td {
+            padding: 3px 8px;
+            text-align: center;  /* centre each cell */
+        }
 
         .info-bar-label {
             color: #1e40af;
-            font-weight: 700;
-            font-size: 8.2px;
+            font-weight: 900;    /* was 700 — bolder */
+            font-size: 8.6px;    /* was 8.2px — slightly larger */
             white-space: nowrap;
         }
 
         .info-bar-value {
             font-weight: 900;
-            padding-left: 4px;
+            font-size: 9.4px;    /* slightly larger than label */
+            padding-left: 3px;
         }
 
         /* RESULT TABLE */
@@ -183,16 +192,17 @@
             border: 1px solid #000000;
             padding: 3px 3px;
             text-align: center;
-            font-size: 7.7px;
+            font-size: 8px;      /* was 7.7px — slightly larger */
             background: white;
-            font-weight: 700;
+            font-weight: 800;    /* was 700 — bolder */
             height: 17px;
             line-height: 17px;
         }
 
         .result-table tbody td.subject-name {
             text-align: left;
-            font-weight: 700;
+            font-weight: 800;    /* was 700 — bolder */
+            font-size: 8px;
             padding-left: 7px;
         }
 
@@ -404,9 +414,9 @@
                         <strong>Website:</strong> {{ $schoolInfo->school_website ?? '—' }}
                     </td>
 
-                    <td width="29%" style="text-align:right; padding-right: 25px; vertical-align: top;">
+                    <td width="29%" style="text-align:right; padding-right: 8px; vertical-align: top; padding-top: 6px;">
                         @if(in_array('picture', $columnsToShow))
-                        <div class="photo-frame">
+                        <div class="photo-frame" style="margin-left: auto; margin-right: 0;">
                             @if(!empty($studentData['student_image_base64']))
                                 <img src="{{ $studentData['student_image_base64'] }}" alt="Student Photo">
                             @else
