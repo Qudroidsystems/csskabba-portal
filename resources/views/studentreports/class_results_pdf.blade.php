@@ -25,7 +25,7 @@
             width: 100%;
             background: #111827;
             color: white;
-            padding: 10px 10px 6px 10px;
+            padding: 9px 10px 5px 10px;
             border: 3px double #000000;
             border-bottom: 1px solid #1e40af;
             text-align: center;
@@ -78,6 +78,10 @@
             overflow: hidden;
         }
 
+        .student-section:last-child {
+            page-break-after: avoid;
+        }
+
         /* HEADER TABLE */
         .header-table {
             width: 100%;
@@ -105,10 +109,10 @@
         }
 
         .middle-info {
-            font-size: 10.8px;           /* Bigger and bolder */
-            line-height: 1.8;
+            font-size: 10.4px;
+            line-height: 1.75;
             padding: 0 15px;
-            font-weight: 600;
+            vertical-align: middle;
         }
 
         .middle-info strong {
@@ -152,12 +156,12 @@
             padding-left: 4px;
         }
 
-        /* RESULT TABLE - Bolder Subjects & Scores */
+        /* ACADEMIC RESULT TABLE - FULL WIDTH */
         .result-table table {
             width: 100%;
             border: 2px solid #000000;
             border-collapse: collapse;
-            font-size: 7.9px;
+            font-size: 7.8px;
             margin: 8px 10px;
         }
 
@@ -167,22 +171,24 @@
             font-weight: 800;
             border: 1px solid #000000;
             padding: 4px 2px;
-            font-size: 7px;
+            font-size: 6.9px;
         }
 
         .result-table tbody td {
             border: 1px solid #000000;
             padding: 3px 2px;
             text-align: center;
-            font-weight: 700;           /* Bolder scores */
-            height: 18px;
-            line-height: 18px;
+            font-size: 7.6px;
+            background: white;
+            font-weight: 700;           /* Made bolder */
+            height: 17px;
+            line-height: 17px;
         }
 
         .result-table tbody td.subject-name {
             text-align: left;
-            font-weight: 800;           /* Bolder subject names */
-            padding-left: 7px;
+            font-weight: 700;           /* Bolder subject names */
+            padding-left: 6px;
         }
 
         .highlight-red { color: #dc2626; font-weight: 900; }
@@ -204,7 +210,7 @@
             background: #0d1a3d;
             color: #ffffff;
             font-weight: 900;
-            font-size: 8px;
+            font-size: 7.9px;
             padding: 6px 10px;
             border: 2px solid #000000;
             border-top: none;
@@ -216,22 +222,21 @@
             width: 100%;
             border: 2px solid #000000;
             border-collapse: collapse;
-            margin: 10px 10px 8px;   /* Increased margin */
+            margin: 8px 10px 4px;
         }
 
         .remarks-table td {
             border: 1px solid #000000;
-            padding: 12px 10px;      /* More vertical space */
+            padding: 6px 8px;
             background: white;
             vertical-align: top;
             font-size: 8.5px;
-            min-height: 85px;
         }
 
         .remarks-table .h6 {
             font-weight: 700;
-            margin-bottom: 6px;
-            font-size: 9.2px;
+            margin-bottom: 4px;
+            font-size: 9px;
             border-bottom: 1px solid #ccc;
             display: inline-block;
         }
@@ -239,7 +244,7 @@
         /* FOOTER */
         .footer-section {
             background: #f1f5f9;
-            padding: 10px 12px 8px;
+            padding: 9px 12px 6px;
             border-top: 1px solid #cbd5e1;
             text-align: center;
             margin: 0 10px 8px;
@@ -250,24 +255,25 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px;
-            line-height: 1.5;
+            gap: 6px;
+            line-height: 1.4;
         }
 
         .text-dot-space2 {
             border-bottom: 1px dotted #333;
             display: inline-block;
-            min-width: 125px;
+            min-width: 120px;
             font-weight: bold;
+            margin: 0 4px;
         }
 
         .powered-by {
             font-size: 8px;
-            margin-top: 5px;
+            margin-top: 4px;
             color: #64748b;
         }
 
-        /* STAMPS & QR */
+        /* APPROVED STAMP - Right Side */
         .approved-stamp {
             position: absolute;
             bottom: 95px;
@@ -280,27 +286,28 @@
             transform: rotate(-8deg);
         }
 
+        /* QR CODE - Left Side */
         .qr-code-container {
             position: absolute;
             bottom: 48px;
-            left: 38px;              /* Moved to left side */
+            left: 38px;
             text-align: center;
             z-index: 11;
             background: rgba(255,255,255,0.9);
-            padding: 6px;
+            padding: 5px 6px;
             border: 1px solid #ddd;
             border-radius: 4px;
         }
 
         .qr-code-container img {
-            width: 85px;
-            height: 85px;
+            width: 82px;
+            height: 82px;
         }
 
         .qr-label {
-            font-size: 7px;
+            font-size: 6.8px;
             color: #333;
-            margin-top: 3px;
+            margin-top: 2px;
             font-weight: 600;
         }
 
@@ -360,22 +367,22 @@
 
         <div class="student-section">
 
-            <!-- APPROVED STAMP (Right) -->
+            <!-- APPROVED STAMP - Right Side -->
             <img src="{{ asset('stamp.jpeg') }}" alt="Approved Stamp" class="approved-stamp">
 
-            <!-- QR CODE (Left) -->
+            <!-- QR CODE - Left Side -->
             <div class="qr-code-container">
                 <img src="data:image/png;base64,{{ $qrCodeBase64 }}" alt="QR Code">
                 <div class="qr-label">Scan for Verification</div>
             </div>
 
-            <!-- SCHOOL NAME HEADER -->
+            <!-- SCHOOL NAME HEADER (Dynamic) -->
             <div class="school-name-header">
                 <div class="school-full-name">{{ $schoolInfo->school_name ?? 'CLARET SECONDARY SCHOOL KABBA' }}</div>
                 <div class="motto">{{ $schoolInfo->school_motto ?? 'KNOWLEDGE AND VIRTUE' }}</div>
             </div>
 
-            <!-- HEADER: Logo + School Info + Photo -->
+            <!-- HEADER: Logo + School Info + Student Photo -->
             <table class="header-table">
                 <tr>
                     <td width="20%" style="text-align:center;">
@@ -389,19 +396,20 @@
                     </td>
 
                     <td width="53%" class="middle-info">
-                        <strong>Address:</strong> {{ $schoolInfo->school_address ?? 'No. 1, Claret Avenue, Iludun Quarters, Olle Road, Kabba, Kogi State, Nigeria.' }}<br>
-                        <strong>Phone:</strong> {{ $schoolInfo->school_phone ?? '08039257337' }}<br>
-                        <strong>Email:</strong> {{ $schoolInfo->school_email ?? 'claretsecschools@yahoo.com' }}<br>
-                        <strong>Website:</strong> {{ $schoolInfo->school_website ?? 'http://csskabba.ng' }}
+                        <strong>Address:</strong> {{ $schoolInfo->school_address ?? 'No. 1, Claret Avenue, Kabba, Kogi State' }}<br>
+                        <strong>Phone:</strong> {{ $schoolInfo->school_phone ?? '08136663185' }}<br>
+                        <strong>Email:</strong> {{ $schoolInfo->school_email ?? '—' }}<br>
+                        <strong>Website:</strong> {{ $schoolInfo->school_website ?? '—' }}
                     </td>
 
+                    <!-- Student Photo - Moved further right -->
                     <td width="27%" style="text-align:right; padding-right: 22px; vertical-align: top;">
                         @if(in_array('picture', $columnsToShow))
                         <div class="photo-frame">
                             @if(!empty($studentData['student_image_base64']))
                                 <img src="{{ $studentData['student_image_base64'] }}" alt="Student Photo">
                             @else
-                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='85' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23e2e8f0'/%3E%3Ccircle cx='50' cy='40' r='20' fill='%2394a3b8'/%3E%3Crect x='35' y='65' width='30' height='25' fill='%2394a3b8' rx='4'/%3E%3Ctext x='50' y='95' text-anchor='middle' fill='%23475569' font-size='8'%3EPHOTO%3C/text%3E%3C/svg%3E" alt="Default">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='85' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23e2e8f0'/%3E%3Ccircle cx='50' cy='40' r='20' fill='%2394a3b8'/%3E%3Crect x='35' y='65' width='30' height='25' fill='%2394a3b8' rx='4'/%3E%3Ctext x='50' y='95' text-anchor='middle' fill='%23475569' font-size='8'%3EPHOTO%3C/text%3E%3C/svg%3E" alt="Default Photo">
                             @endif
                         </div>
                         @endif
@@ -530,30 +538,30 @@
                             @endif
                         </tr>
                         @empty
-                        <tr><td colspan="20" style="text-align:center; padding:12px;">No scores available.</td></tr>
+                        <tr><td colspan="20" style="text-align:center; padding:10px;">No scores available.</td></tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
 
-            <!-- TOTALS -->
+            <!-- TOTALS SUMMARY -->
             <div class="totals-summary">
                 TOTAL OBTAINED: {{ number_format($totals['obtained'] ?? 0, 1) }} &nbsp;&nbsp;|&nbsp;&nbsp;
                 TOTAL OBTAINABLE: {{ $totals['obtainable'] ?? 0 }} &nbsp;&nbsp;|&nbsp;&nbsp;
                 % OBTAINED: {{ $totals['percentage'] ?? 0 }}%
             </div>
 
-            <!-- REMARKS - With more space -->
+            <!-- REMARKS -->
             <table class="remarks-table">
                 <tbody>
                     <tr>
                         <td width="50%">
                             <div class="h6">Class Teacher's Remark</div>
-                            <div style="min-height: 70px;">{{ $profile ? ($profile->classteachercomment ?? 'NO COMMENT') : 'NO COMMENT' }}</div>
+                            <div>{{ $profile ? ($profile->classteachercomment ?? 'NO COMMENT') : 'NO COMMENT' }}</div>
                         </td>
                         <td width="50%">
                             <div class="h6">Principal's Remark</div>
-                            <div style="min-height: 70px;">{{ $profile ? ($profile->principalscomment ?? 'NO COMMENT') : 'NO COMMENT' }}</div>
+                            <div>{{ $profile ? ($profile->principalscomment ?? 'NO COMMENT') : 'NO COMMENT' }}</div>
                         </td>
                     </tr>
                 </tbody>
