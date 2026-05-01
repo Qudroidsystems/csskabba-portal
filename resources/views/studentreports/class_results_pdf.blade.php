@@ -13,19 +13,19 @@
         body {
             font-family: 'Times New Roman', Times, serif;
             font-size: 9.5px;
-            line-height: 1.3;
+            line-height: 1.35;
             color: #000;
             background: #f5f5f5;
             padding: 8mm 0;
             text-align: center;
         }
 
-        /* SCHOOL NAME HEADER */
+        /* SCHOOL NAME HEADER - Centered */
         .school-name-header {
             width: 100%;
             background: #111827;
             color: white;
-            padding: 9px 10px 5px 10px;
+            padding: 10px 10px 6px 10px;
             border: 3px double #000000;
             border-bottom: 1px solid #1e40af;
             text-align: center;
@@ -65,7 +65,7 @@
             text-transform: uppercase;
         }
 
-        /* MAIN REPORT CARD */
+        /* MAIN CARD */
         .student-section {
             width: 190mm;
             page-break-after: always;
@@ -156,7 +156,7 @@
             padding-left: 4px;
         }
 
-        /* ACADEMIC RESULT TABLE - FULL WIDTH */
+        /* RESULT TABLE - Bolder Text */
         .result-table table {
             width: 100%;
             border: 2px solid #000000;
@@ -176,11 +176,11 @@
 
         .result-table tbody td {
             border: 1px solid #000000;
-            padding: 3px 2px;
+            padding: 3px 3px;
             text-align: center;
-            font-size: 7.6px;
+            font-size: 7.7px;
             background: white;
-            font-weight: 700;           /* Made bolder */
+            font-weight: 700;           /* Bolder scores */
             height: 17px;
             line-height: 17px;
         }
@@ -188,7 +188,7 @@
         .result-table tbody td.subject-name {
             text-align: left;
             font-weight: 700;           /* Bolder subject names */
-            padding-left: 6px;
+            padding-left: 7px;
         }
 
         .highlight-red { color: #dc2626; font-weight: 900; }
@@ -273,7 +273,7 @@
             color: #64748b;
         }
 
-        /* APPROVED STAMP - Right Side */
+        /* STAMPS & QR */
         .approved-stamp {
             position: absolute;
             bottom: 95px;
@@ -286,7 +286,6 @@
             transform: rotate(-8deg);
         }
 
-        /* QR CODE - Left Side */
         .qr-code-container {
             position: absolute;
             bottom: 48px;
@@ -311,7 +310,6 @@
             font-weight: 600;
         }
 
-        /* GRADE STYLES */
         .grade-A { color: #16a34a; font-weight: 900; }
         .grade-B { color: #2563eb; font-weight: 900; }
         .grade-C { color: #ca8a04; font-weight: 900; }
@@ -367,22 +365,22 @@
 
         <div class="student-section">
 
-            <!-- APPROVED STAMP - Right Side -->
+            <!-- APPROVED STAMP (Right) -->
             <img src="{{ asset('stamp.jpeg') }}" alt="Approved Stamp" class="approved-stamp">
 
-            <!-- QR CODE - Left Side -->
+            <!-- QR CODE (Left) -->
             <div class="qr-code-container">
                 <img src="data:image/png;base64,{{ $qrCodeBase64 }}" alt="QR Code">
                 <div class="qr-label">Scan for Verification</div>
             </div>
 
-            <!-- SCHOOL NAME HEADER (Dynamic) -->
+            <!-- SCHOOL NAME HEADER -->
             <div class="school-name-header">
                 <div class="school-full-name">{{ $schoolInfo->school_name ?? 'CLARET SECONDARY SCHOOL KABBA' }}</div>
                 <div class="motto">{{ $schoolInfo->school_motto ?? 'KNOWLEDGE AND VIRTUE' }}</div>
             </div>
 
-            <!-- HEADER: Logo + School Info + Student Photo -->
+            <!-- HEADER: Logo + Info + Photo (Photo moved right) -->
             <table class="header-table">
                 <tr>
                     <td width="20%" style="text-align:center;">
@@ -395,15 +393,14 @@
                         </div>
                     </td>
 
-                    <td width="53%" class="middle-info">
+                    <td width="51%" class="middle-info">
                         <strong>Address:</strong> {{ $schoolInfo->school_address ?? 'No. 1, Claret Avenue, Kabba, Kogi State' }}<br>
                         <strong>Phone:</strong> {{ $schoolInfo->school_phone ?? '08136663185' }}<br>
                         <strong>Email:</strong> {{ $schoolInfo->school_email ?? '—' }}<br>
                         <strong>Website:</strong> {{ $schoolInfo->school_website ?? '—' }}
                     </td>
 
-                    <!-- Student Photo - Moved further right -->
-                    <td width="27%" style="text-align:right; padding-right: 22px; vertical-align: top;">
+                    <td width="29%" style="text-align:right; padding-right: 25px; vertical-align: top;">
                         @if(in_array('picture', $columnsToShow))
                         <div class="photo-frame">
                             @if(!empty($studentData['student_image_base64']))
@@ -456,7 +453,7 @@
                 </div>
             @endif
 
-            <!-- ACADEMIC RESULT TABLE -->
+            <!-- RESULT TABLE -->
             <div class="result-table">
                 <table>
                     <thead>
@@ -544,7 +541,7 @@
                 </table>
             </div>
 
-            <!-- TOTALS SUMMARY -->
+            <!-- TOTALS -->
             <div class="totals-summary">
                 TOTAL OBTAINED: {{ number_format($totals['obtained'] ?? 0, 1) }} &nbsp;&nbsp;|&nbsp;&nbsp;
                 TOTAL OBTAINABLE: {{ $totals['obtainable'] ?? 0 }} &nbsp;&nbsp;|&nbsp;&nbsp;
