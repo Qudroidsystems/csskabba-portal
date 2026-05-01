@@ -68,7 +68,7 @@
 /* ── Subject Cards Grid ────────────────────────────────── */
 .subjects-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
     gap: 20px;
     margin-top: 8px;
 }
@@ -141,11 +141,13 @@
     font-size:12px; font-weight:600;
     text-align:center; transition:all .15s;
     cursor:pointer; border:none;
+    text-decoration: none;
+    display: inline-block;
 }
 .btn-enter {
     background:var(--s-accent); color:#fff;
 }
-.btn-enter:hover { background:#1d4ed8; transform:translateY(-1px); }
+.btn-enter:hover { background:#1d4ed8; transform:translateY(-1px); color:#fff; }
 .btn-edit {
     background:#f1f5f9; color:#334155;
     border:1px solid #e2e8f0;
@@ -155,7 +157,7 @@
     background:#fef3c7; color:#b45309;
     border:1px solid #fde68a;
 }
-.btn-mock:hover { background:#fde68a; }
+.btn-mock:hover { background:#fde68a; color:#b45309; }
 
 /* ── Empty State ───────────────────────────────────────── */
 .empty-state {
@@ -173,22 +175,6 @@
 .empty-state p {
     font-size:13px; color:var(--s-muted);
 }
-
-/* ── Modal Overrides ───────────────────────────────────── */
-.s-modal .modal-content {
-    border:none; border-radius:16px;
-    overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.15);
-}
-.modal-hero-bar {
-    background:linear-gradient(135deg, var(--s-primary) 0%, #2563eb 100%);
-    padding:22px 28px; position:relative; overflow:hidden;
-}
-.modal-hero-bar::before {
-    content:''; position:absolute; top:-30px; right:-30px;
-    width:120px; height:120px; background:rgba(255,255,255,.07); border-radius:50%;
-}
-.modal-hero-bar h5 { color:#fff; font-weight:700; margin:0; font-size:16px; position:relative; }
-.modal-hero-bar .btn-close { position:absolute; top:18px; right:20px; filter:invert(1); }
 
 /* ── Toast notifications ───────────────────────────────── */
 #s-toast-stack {
@@ -239,6 +225,10 @@
 }
 @keyframes s-spin { to { transform:rotate(360deg); } }
 .s-loader-label { font-size:14px; font-weight:600; color:var(--s-primary); }
+
+/* Alert styles */
+.alert { border-radius: var(--s-radius); border: none; }
+.alert-danger { background: #fef2f2; color: #dc2626; border-left: 4px solid #dc2626; }
 </style>
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css">
@@ -306,7 +296,7 @@
                     <select name="sessionid" id="sessionid" class="filter-select" required>
                         <option value="">Select Session</option>
                         @foreach($sessions as $session)
-                            <option value="{{ $session->id }}" {{ request('sessionid') == $session->id ? 'selected' : '' }}>
+                            <option value="{{ $session->id }}" {{ old('sessionid', request('sessionid')) == $session->id ? 'selected' : '' }}>
                                 {{ $session->session }}
                             </option>
                         @endforeach
@@ -317,7 +307,7 @@
                     <select name="termid" id="termid" class="filter-select" required>
                         <option value="">Select Term</option>
                         @foreach($terms as $term)
-                            <option value="{{ $term->id }}" {{ request('termid') == $term->id ? 'selected' : '' }}>
+                            <option value="{{ $term->id }}" {{ old('termid', request('termid')) == $term->id ? 'selected' : '' }}>
                                 {{ $term->term }}
                             </option>
                         @endforeach
@@ -336,6 +326,16 @@
     @if(session('error'))
         <div class="alert alert-danger alert-dismissible fade show mb-3">
             <i class="ri-error-warning-line me-1"></i> {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show mb-3">
+            <i class="ri-error-warning-line me-1"></i>
+            @foreach($errors->all() as $error)
+                {{ $error }}<br>
+            @endforeach
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
@@ -377,23 +377,11 @@
                             </div>
                         </div>
                         <div class="subject-card-footer">
-                            <a href="{{ route('broadsheet.create', ['subjectclass_id' => $subject->subjectclassid, 'term_id' => $subject->termid, 'session_id' => $subject->session_id]) }}"
-                               class="btn-action btn-enter">
+                            {{-- Replace route() with direct URL or placeholder --}}
+                            <a href="#" class="btn-action btn-enter" onclick="showComingSoon('Enter Results')">
                                 <i class="ri-edit-box-line me-1"></i> Enter Results
                             </a>
-                            @php
-                                $mockParams = http_build_query([
-                                    'subjectclass_id' => $subject->subjectclassid,
-                                    'termid' => $subject->termid,
-                                    'sessionid' => $subject->session_id,
-                                    'subjectid' => $subject->id,
-                                    'subjectname' => $subject->subject,
-                                    'classname' => $subject->schoolclass,
-                                    'classid' => $subject->schoolclassid
-                                ]);
-                            @endphp
-                            <a href="{{ route('broadsheet-mock.create') }}?{{ $mockParams }}"
-                               class="btn-action btn-mock">
+                            <a href="#" class="btn-action btn-mock" onclick="showComingSoon('Mock Results')">
                                 <i class="ri-flask-line me-1"></i> Mock
                             </a>
                         </div>
@@ -514,11 +502,10 @@ $(document).ready(function() {
                 if (xhr.responseJSON && xhr.responseJSON.message) {
                     errorMsg = xhr.responseJSON.message;
                 }
-                if (xhr.status === 422 && xhr.responseJSON.errors) {
+                if (xhr.status === 422 && xhr.responseJSON && xhr.responseJSON.errors) {
                     errorMsg = Object.values(xhr.responseJSON.errors).flat().join(', ');
                 }
                 toast('error', 'Error', errorMsg);
-                renderEmptyState();
             }
         });
     });
@@ -535,23 +522,6 @@ $(document).ready(function() {
         let html = '<div class="subjects-grid">';
 
         subjects.forEach(subject => {
-            const mockParams = new URLSearchParams({
-                subjectclass_id: subject.subjectclassid,
-                termid: subject.termid,
-                sessionid: subject.session_id,
-                subjectid: subject.id,
-                subjectname: subject.subject,
-                classname: subject.schoolclass,
-                classid: subject.schoolclassid
-            }).toString();
-
-            const broadsheetUrl = "{{ route('broadsheet.create', ['subjectclass_id' => ':subjectclass_id', 'term_id' => ':term_id', 'session_id' => ':session_id']) }}"
-                .replace(':subjectclass_id', subject.subjectclassid)
-                .replace(':term_id', subject.termid)
-                .replace(':session_id', subject.session_id);
-
-            const mockUrl = "{{ route('broadsheet-mock.create') }}?" + mockParams;
-
             html += `
                 <div class="subject-card">
                     <div class="subject-card-header">
@@ -582,10 +552,10 @@ $(document).ready(function() {
                         </div>
                     </div>
                     <div class="subject-card-footer">
-                        <a href="${broadsheetUrl}" class="btn-action btn-enter">
+                        <a href="#" class="btn-action btn-enter" onclick="showComingSoon(\'Enter Results for ${escapeHtml(subject.subject)}\')">
                             <i class="ri-edit-box-line me-1"></i> Enter Results
                         </a>
-                        <a href="${mockUrl}" class="btn-action btn-mock">
+                        <a href="#" class="btn-action btn-mock" onclick="showComingSoon(\'Mock Results for ${escapeHtml(subject.subject)}\')">
                             <i class="ri-flask-line me-1"></i> Mock
                         </a>
                     </div>
@@ -595,6 +565,7 @@ $(document).ready(function() {
 
         html += '</div>';
         container.html(html);
+        updateStats();
     }
 
     function renderEmptyState() {
@@ -606,11 +577,12 @@ $(document).ready(function() {
                 <p>Please select a session and term to view your assigned subjects.<br>If you have selected filters, no subjects are assigned to you for this period.</p>
             </div>
         `);
+        updateStats();
     }
 
     function escapeHtml(str) {
         if (!str) return '';
-        return str.replace(/[&<>]/g, function(m) {
+        return String(str).replace(/[&<>]/g, function(m) {
             if (m === '&') return '&amp;';
             if (m === '<') return '&lt;';
             if (m === '>') return '&gt;';
@@ -618,17 +590,25 @@ $(document).ready(function() {
         });
     }
 
-    // Trigger initial stats update if subjects exist on page load
-    if ($('.subject-card').length > 0) {
-        updateStats();
-    }
+    // Update stats on page load
+    updateStats();
 
     // If filters were pre-selected, show loading and fetch data
     const preselectedSession = $('#sessionid').val();
     const preselectedTerm = $('#termid').val();
-    if (preselectedSession && preselectedTerm && $('.subject-card').length === 0) {
+    if (preselectedSession && preselectedTerm && $('.subject-card').length === 0 && $('.empty-state').length === 0) {
         $('#filterForm').submit();
     }
 });
+
+// Global function for showing coming soon message
+function showComingSoon(feature) {
+    // You can replace this with a proper toast or modal
+    if (typeof toast === 'function') {
+        toast('info', 'Coming Soon', `${feature} feature will be available soon.`);
+    } else {
+        alert(`${feature} feature coming soon!`);
+    }
+}
 </script>
 @endsection
