@@ -16,7 +16,8 @@ class StudentIdCardController extends Controller
     public function index()
     {
         $schoolclasses = Schoolclass::orderBy('schoolclass')->get();
-        return view('student.idcard.index', compact('schoolclasses'));
+        $pagetitle     = 'Student ID Card Generator';
+        return view('student.idcard.index', compact('schoolclasses', 'pagetitle'));
     }
 
     /**
