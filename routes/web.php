@@ -92,7 +92,7 @@ Route::get('/', function () {
 
 Auth::routes();
 Route::get('/home', [HomeController::class, 'index'])->name('home');
-
+Route::get('/student-id-cards/verify/{token}',[StudentIdCardController::class, 'verify'])->name('student-id-cards.verify');
 Route::group(['middleware' => ['auth']], function () {
         // ── Users resource + explicit sub-routes ────────────────────────
         // IMPORTANT: all GET /users/xxx static routes must come BEFORE the resource
