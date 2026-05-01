@@ -512,102 +512,119 @@ class UserController extends Controller
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────
-    // REVOKE student password (single or mass)
-    // ─────────────────────────────────────────────────────────────────
-    public function revokeStudentPassword(Request $request): JsonResponse
-    {
-        Log::debug("Revoking student password(s)", $request->all());
 
-        try {
-            if (!auth()->user()->hasPermissionTo('Update user')) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Insufficient permissions.',
-                ], 403);
-            }
 
-            $userIds = [];
+// ─────────────────────────────────────────────────────────────────
+// REVOKE student password (single or mass) — drop-in replacement
+// Returns full user details so the frontend can print credential slips
+// ─────────────────────────────────────────────────────────────────
+public function revokeStudentPassword(Request $request): JsonResponse
+{
+    Log::debug("Revoking student password(s)", $request->all());
 
-            // Accept user_ids directly (single revoke from user list button)
-            if ($request->has('user_ids')) {
-                $request->validate([
-                    'user_ids'   => 'required|array|min:1',
-                    'user_ids.*' => 'exists:users,id',
-                ]);
-                $userIds = $request->input('user_ids');
-            }
-            // Accept student_ids (mass revoke from mass modal)
-            elseif ($request->has('student_ids')) {
-                $request->validate([
-                    'student_ids'   => 'required|array|min:1',
-                    'student_ids.*' => 'integer',
-                ]);
-                $userIds = User::whereIn('student_id', $request->input('student_ids'))
-                               ->pluck('id')
-                               ->toArray();
-            }
-
-            if (empty($userIds)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No valid users found to revoke.',
-                ], 422);
-            }
-
-            $newPassword = Hash::make('ChangeMe@123');
-            $count       = 0;
-            $skipped     = 0;
-
-            foreach ($userIds as $uid) {
-                $user = User::with('roles')->find($uid);
-                if (!$user) {
-                    continue;
-                }
-
-                // Safety guard — only revoke for student-role users
-                if (!$user->hasRole('student')) {
-                    $skipped++;
-                    Log::warning("revokeStudentPassword: skipped user {$uid} — not a student role");
-                    continue;
-                }
-
-                $updateData = ['password' => $newPassword];
-
-                // If your users table has a force_password_change column, set it here.
-                // Remove this line if you don't have that column yet.
-                // $updateData['force_password_change'] = true;
-
-                $user->update($updateData);
-                $count++;
-            }
-
-            $msg = "{$count} student password(s) revoked successfully. New password: ChangeMe@123";
-            if ($skipped) {
-                $msg .= " ({$skipped} non-student user(s) skipped.)";
-            }
-
-            return response()->json([
-                'success' => true,
-                'message' => $msg,
-                'count'   => $count,
-                'skipped' => $skipped,
-            ]);
-
-        } catch (ValidationException $e) {
+    try {
+        if (!auth()->user()->hasPermissionTo('Update user')) {
             return response()->json([
                 'success' => false,
-                'message' => 'Validation failed',
-                'errors'  => $e->errors(),
-            ], 422);
-        } catch (\Exception $e) {
-            Log::error("revokeStudentPassword error: {$e->getMessage()}");
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to revoke passwords.',
-            ], 500);
+                'message' => 'Insufficient permissions.',
+            ], 403);
         }
+
+        $userIds = [];
+
+        // Accept user_ids directly (single revoke from user list button)
+        if ($request->has('user_ids')) {
+            $request->validate([
+                'user_ids'   => 'required|array|min:1',
+                'user_ids.*' => 'exists:users,id',
+            ]);
+            $userIds = $request->input('user_ids');
+        }
+        // Accept student_ids (mass revoke from mass modal)
+        elseif ($request->has('student_ids')) {
+            $request->validate([
+                'student_ids'   => 'required|array|min:1',
+                'student_ids.*' => 'integer',
+            ]);
+            $userIds = User::whereIn('student_id', $request->input('student_ids'))
+                           ->pluck('id')
+                           ->toArray();
+        }
+
+        if (empty($userIds)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No valid users found to revoke.',
+            ], 422);
+        }
+
+        $plainPassword = 'ChangeMe@123';
+        $newPassword   = Hash::make($plainPassword);
+        $count         = 0;
+        $skipped       = 0;
+        $revoked       = [];  // full detail for credential slip printing
+
+        foreach ($userIds as $uid) {
+            $user = User::with(['roles', 'student'])->find($uid);
+            if (!$user) {
+                continue;
+            }
+
+            // Safety guard — only revoke for student-role users
+            if (!$user->hasRole('student')) {
+                $skipped++;
+                Log::warning("revokeStudentPassword: skipped user {$uid} — not a student role");
+                continue;
+            }
+
+            $user->update(['password' => $newPassword]);
+            $count++;
+
+            // Build username from admission number (mirrors creation logic)
+            $admissionNo = $user->student?->admissionNo ?? '';
+            $username    = $user->username
+                ?? str_replace(['/', '\\', ' '], '_', $admissionNo ?: "user_{$uid}");
+
+            $revoked[] = [
+                'id'          => $user->id,
+                'name'        => $user->name,
+                'email'       => $user->email,
+                'username'    => $username,
+                'admissionNo' => $admissionNo,
+                'password'    => $plainPassword,
+            ];
+        }
+
+        $msg = "{$count} student password(s) revoked successfully. New password: {$plainPassword}";
+        if ($skipped) {
+            $msg .= " ({$skipped} non-student user(s) skipped.)";
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $msg,
+            'count'   => $count,
+            'skipped' => $skipped,
+            'revoked' => $revoked,   // ← NEW: full details for print slips
+        ]);
+
+    } catch (ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors'  => $e->errors(),
+        ], 422);
+    } catch (\Exception $e) {
+        Log::error("revokeStudentPassword error: {$e->getMessage()}");
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to revoke passwords.',
+        ], 500);
     }
+}
+
+
+
 
     // ─────────────────────────────────────────────────────────────────
     // GET students list for modals (includes arm + class filters)
