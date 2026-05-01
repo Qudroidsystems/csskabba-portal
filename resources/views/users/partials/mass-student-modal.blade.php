@@ -1,136 +1,195 @@
-<!-- Mass Student Creation/Management Modal -->
+<!-- resources/views/users/partials/mass-student-modal.blade.php -->
+
 <div id="massStudentModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
-    <div class="modal-dialog modal-xl">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Bulk Student Account Management</h5>
+                <h5 class="modal-title">Mass Student Account Management</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <!-- Step 1: Filter and Select Students -->
+                <!-- Step 1: Filters and Student Selection -->
                 <div id="step1">
                     <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label>Search</label>
-                            <input type="text" id="mass-search" class="form-control" placeholder="Name or Admission No...">
+                        <div class="col-md-3">
+                            <label class="form-label">Search</label>
+                            <input type="text" id="mass-student-search" class="form-control" placeholder="Name, Admission No...">
                         </div>
                         <div class="col-md-3">
-                            <label>Class</label>
+                            <label class="form-label">Class</label>
                             <select id="mass-class-filter" class="form-control">
                                 <option value="">All Classes</option>
                             </select>
                         </div>
                         <div class="col-md-3">
-                            <label>Arm</label>
+                            <label class="form-label">Arm</label>
                             <select id="mass-arm-filter" class="form-control">
                                 <option value="">All Arms</option>
                             </select>
                         </div>
-                        <div class="col-md-2">
-                            <label>&nbsp;</label>
-                            <button class="btn btn-primary w-100" id="apply-filters">Apply Filters</button>
+                        <div class="col-md-3">
+                            <label class="form-label">Account Status</label>
+                            <select id="mass-account-status" class="form-control">
+                                <option value="all">All Students</option>
+                                <option value="yes">Has Account</option>
+                                <option value="no">No Account</option>
+                            </select>
                         </div>
                     </div>
 
-                    <div class="table-responsive">
-                        <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th><input type="checkbox" id="select-all-students"></th>
-                                    <th>Admission No</th>
-                                    <th>Name</th>
-                                    <th>Class</th>
-                                    <th>Status</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="students-list">
-                                <tr><td colspan="6" class="text-center">Loading students...</td></tr>
-                            </tbody>
-                        </table>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div>
+                                <input type="checkbox" id="select-all-students">
+                                <label for="select-all-students" class="ms-1">Select All ({{ $studentsCount ?? 0 }})</label>
+                            </div>
+                            <div>
+                                <span class="badge bg-info" id="selected-count">0 students selected</span>
+                            </div>
+                        </div>
+                        <div class="table-responsive" style="max-height: 400px;">
+                            <table class="table table-sm table-hover">
+                                <thead class="table-light sticky-top">
+                                    <tr>
+                                        <th width="40"><input type="checkbox" id="select-all-students-table"></th>
+                                        <th>Admission No</th>
+                                        <th>Name</th>
+                                        <th>Class/Arm</th>
+                                        <th>Account Status</th>
+                                        <th>Username</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="mass-student-list">
+                                    <tr>
+                                        <td colspan="6" class="text-center">Loading students...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
 
-                    <div class="mt-3">
-                        <button class="btn btn-success" id="proceed-to-step2" disabled>
-                            Proceed (<span id="selected-count">0</span> selected)
-                        </button>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Actions:</strong>
+                        <ul class="mb-0 mt-1">
+                            <li><strong>Create</strong> - Creates new user accounts for students without accounts</li>
+                            <li><strong>Reset Password</strong> - Generates new password for existing accounts</li>
+                            <li><strong>Revoke Account</strong> - Removes user access (student record remains)</li>
+                            <li><strong>Reprint</strong> - Shows existing credentials (without revealing passwords)</li>
+                        </ul>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="button" class="btn btn-primary" id="proceed-to-action">Continue to Action <i class="bi bi-arrow-right"></i></button>
                     </div>
                 </div>
 
-                <!-- Step 2: Choose Action -->
+                <!-- Step 2: Action Selection -->
                 <div id="step2" style="display: none;">
-                    <h5>Selected Students: <span id="step2-selected-count"></span></h5>
-                    <div class="alert alert-info">
-                        <strong>Note:</strong> Students with existing accounts can have their passwords reset or credentials reprinted.
+                    <h6 class="mb-3">Selected Students: <span id="step2-selected-count">0</span></h6>
+
+                    <div class="table-responsive mb-3" style="max-height: 200px;">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Admission No</th>
+                                    <th>Current Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="selected-students-list"></tbody>
+                        </table>
                     </div>
 
-                    <div class="row mb-4">
-                        <div class="col-md-12">
-                            <div class="card">
-                                <div class="card-header">
-                                    <h6 class="mb-0">Choose Action Mode</h6>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label">Action Type <span class="text-danger">*</span></label>
+                            <div class="d-flex gap-3">
+                                <div class="form-check">
+                                    <input type="radio" name="mass-action-type" id="action-create" value="create" class="form-check-input">
+                                    <label class="form-check-label" for="action-create">
+                                        <strong>Create Accounts</strong>
+                                        <small class="d-block text-muted">For students without accounts only</small>
+                                    </label>
                                 </div>
-                                <div class="card-body">
-                                    <div class="btn-group w-100" role="group">
-                                        <input type="radio" class="btn-check" name="action-mode" id="action-create" value="create" autocomplete="off" checked>
-                                        <label class="btn btn-outline-primary" for="action-create">
-                                            <i class="bi bi-person-plus"></i> Create Accounts<br>
-                                            <small>For students without accounts</small>
-                                        </label>
-
-                                        <input type="radio" class="btn-check" name="action-mode" id="action-reset" value="reset" autocomplete="off">
-                                        <label class="btn btn-outline-warning" for="action-reset">
-                                            <i class="bi bi-key"></i> Reset Passwords<br>
-                                            <small>For students with existing accounts</small>
-                                        </label>
-
-                                        <input type="radio" class="btn-check" name="action-mode" id="action-reprint" value="reprint" autocomplete="off">
-                                        <label class="btn btn-outline-info" for="action-reprint">
-                                            <i class="bi bi-printer"></i> Reprint Only<br>
-                                            <small>Print existing credentials</small>
-                                        </label>
-                                    </div>
+                                <div class="form-check">
+                                    <input type="radio" name="mass-action-type" id="action-reset" value="reset" class="form-check-input">
+                                    <label class="form-check-label" for="action-reset">
+                                        <strong>Reset Passwords</strong>
+                                        <small class="d-block text-muted">Generate new passwords for existing accounts</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input type="radio" name="mass-action-type" id="action-revoke" value="revoke" class="form-check-input">
+                                    <label class="form-check-label" for="action-revoke">
+                                        <strong>Revoke Accounts</strong>
+                                        <small class="d-block text-muted">Remove user access completely</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input type="radio" name="mass-action-type" id="action-reprint" value="reprint" class="form-check-input">
+                                    <label class="form-check-label" for="action-reprint">
+                                        <strong>Reprint Credentials</strong>
+                                        <small class="d-block text-muted">Show existing credentials (no password)</small>
+                                    </label>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <div id="create-reset-options" style="display: block;">
-                        <div class="row mb-3">
+                    <div id="password-settings" style="display: none;">
+                        <div class="row">
                             <div class="col-md-6">
-                                <label>Password Type</label>
-                                <select id="password-type" class="form-control">
-                                    <option value="same">Same Password for All</option>
-                                    <option value="individual">Individual Random Passwords</option>
+                                <label class="form-label">Password Type</label>
+                                <select id="mass-password-type" class="form-control">
+                                    <option value="same">Same password for all</option>
+                                    <option value="individual">Individual random passwords</option>
                                 </select>
                             </div>
-                            <div class="col-md-6" id="shared-password-div">
-                                <label>Shared Password</label>
-                                <div class="input-group">
-                                    <input type="text" id="shared-password" class="form-control" placeholder="Enter password">
-                                    <button type="button" class="btn btn-secondary" id="generate-shared-password">Generate</button>
-                                </div>
+                            <div class="col-md-6" id="shared-password-container" style="display: none;">
+                                <label class="form-label">Shared Password</label>
+                                <input type="text" id="mass-shared-password" class="form-control" placeholder="Enter password">
+                                <small class="text-muted">Minimum 6 characters</small>
                             </div>
                         </div>
                     </div>
 
-                    <div class="alert alert-warning" id="revoke-warning" style="display: none;">
-                        <i class="bi bi-exclamation-triangle"></i>
-                        <strong>Note:</strong> Resetting passwords will change existing passwords. Students will need to use the new password.
+                    <div id="roles-settings" style="display: none;">
+                        <div class="mt-3">
+                            <label class="form-label">Assign Roles <span class="text-danger">*</span></label>
+                            <select id="mass-roles" class="form-control" multiple>
+                                @foreach (Spatie\Permission\Models\Role::all() as $role)
+                                    <option value="{{ $role->name }}" {{ $role->name == 'student' ? 'selected' : '' }}>
+                                        {{ $role->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            <small class="text-muted">Hold Ctrl/Cmd to select multiple roles</small>
+                        </div>
                     </div>
 
-                    <div class="d-flex justify-content-between">
-                        <button class="btn btn-secondary" id="back-to-step1">Back</button>
-                        <button class="btn btn-primary" id="process-students">Process Selected Students</button>
+                    <div class="alert alert-warning mt-3" id="action-warning" style="display: none;"></div>
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="button" class="btn btn-secondary" id="back-to-step1">
+                            <i class="bi bi-arrow-left"></i> Back
+                        </button>
+                        <button type="button" class="btn btn-success" id="execute-mass-action">
+                            Execute Action
+                        </button>
                     </div>
                 </div>
 
                 <!-- Step 3: Results -->
                 <div id="step3" style="display: none;">
-                    <div id="results-container"></div>
-                    <div class="d-flex justify-content-between mt-3">
-                        <button class="btn btn-secondary" id="start-over">Start Over</button>
-                        <button class="btn btn-primary" id="print-credentials" style="display: none;">Print Credentials</button>
+                    <div id="results-content"></div>
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="button" class="btn btn-secondary" id="new-mass-action">
+                            New Action
+                        </button>
+                        <button type="button" class="btn btn-primary" id="print-results">
+                            <i class="bi bi-printer"></i> Print Results
+                        </button>
                     </div>
                 </div>
             </div>
@@ -138,550 +197,452 @@
     </div>
 </div>
 
-<style>
-    .student-row.selected {
-        background-color: #e3f2fd !important;
-    }
-    .badge-has-account {
-        background-color: #28a745;
-    }
-    .badge-no-account {
-        background-color: #dc3545;
-    }
-    .credential-slip {
-        border: 1px solid #ddd;
-        padding: 15px;
-        margin-bottom: 15px;
-        page-break-after: always;
-    }
-    @media print {
-        .no-print {
-            display: none !important;
-        }
-        .credential-slip {
-            border: none;
-            page-break-after: always;
-        }
-    }
-</style>
+<!-- Printable Credentials Template -->
+<div id="printable-credentials" style="display: none;">
+    <div style="font-family: Arial, sans-serif; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h2>Student Account Credentials</h2>
+            <p>Generated on: <span id="print-date"></span></p>
+            <hr>
+        </div>
+        <div id="printable-content"></div>
+    </div>
+</div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener("DOMContentLoaded", function() {
     let selectedStudents = [];
-    let allStudents = [];
-    let processedResults = null;
-
-    const massModal = document.getElementById('massStudentModal');
-    const step1 = document.getElementById('step1');
-    const step2 = document.getElementById('step2');
-    const step3 = document.getElementById('step3');
-    const studentsList = document.getElementById('students-list');
-    const selectAllCheckbox = document.getElementById('select-all-students');
-    const selectedCountSpan = document.getElementById('selected-count');
-    const proceedBtn = document.getElementById('proceed-to-step2');
-    const backBtn = document.getElementById('back-to-step1');
-    const processBtn = document.getElementById('process-students');
-    const startOverBtn = document.getElementById('start-over');
-    const printBtn = document.getElementById('print-credentials');
-
-    let classFilter = '';
-    let armFilter = '';
-    let searchTerm = '';
+    let allStudentsData = [];
+    let currentResults = null;
 
     // Load students when modal opens
-    massModal.addEventListener('show.bs.modal', function() {
-        loadStudents();
+    $('#massStudentModal').on('show.bs.modal', function() {
+        loadMassStudents();
     });
 
-    // Filter events
-    document.getElementById('mass-class-filter').addEventListener('change', function() {
-        classFilter = this.value;
-        loadStudents();
-    });
+    // Load students with filters
+    function loadMassStudents() {
+        const search = $('#mass-student-search').val();
+        const classId = $('#mass-class-filter').val();
+        const armId = $('#mass-arm-filter').val();
+        const accountStatus = $('#mass-account-status').val();
 
-    document.getElementById('mass-arm-filter').addEventListener('change', function() {
-        armFilter = this.value;
-        loadStudents();
-    });
+        $('#mass-student-list').html('<tr><td colspan="6" class="text-center">Loading...</td></tr>');
 
-    document.getElementById('mass-search').addEventListener('input', debounce(function(e) {
-        searchTerm = e.target.value;
-        loadStudents();
-    }, 400));
-
-    document.getElementById('apply-filters').addEventListener('click', function() {
-        loadStudents();
-    });
-
-    function loadStudents() {
-        let url = '{{ route("get.students") }}?limit=1000';
-        if (classFilter) url += `&class_id=${classFilter}`;
-        if (armFilter) url += `&arm_id=${armFilter}`;
-        if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
+        let url = '{{ route("get.students") }}?limit=2000';
+        if (search) url += `&search=${encodeURIComponent(search)}`;
+        if (classId) url += `&class_id=${classId}`;
+        if (armId) url += `&arm_id=${armId}`;
+        if (accountStatus !== 'all') url += `&has_account=${accountStatus}`;
 
         fetch(url)
             .then(r => r.json())
             .then(data => {
                 if (data.success) {
-                    allStudents = data.students;
-                    renderStudentsList(allStudents);
+                    allStudentsData = data.students;
+                    renderStudentList(allStudentsData);
 
                     // Populate filters if empty
-                    if (document.getElementById('mass-class-filter').options.length <= 1) {
-                        data.classes.forEach(cls => {
-                            const opt = document.createElement('option');
-                            opt.value = cls.id;
-                            opt.textContent = cls.name;
-                            document.getElementById('mass-class-filter').appendChild(opt);
-                        });
-                    }
-
-                    if (document.getElementById('mass-arm-filter').options.length <= 1) {
-                        data.arms.forEach(arm => {
-                            const opt = document.createElement('option');
-                            opt.value = arm.id;
-                            opt.textContent = arm.name;
-                            document.getElementById('mass-arm-filter').appendChild(opt);
-                        });
+                    if ($('#mass-class-filter option').length <= 1) {
+                        populateFilters(data.classes, data.arms);
                     }
                 } else {
-                    studentsList.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Failed to load students</td></tr>';
+                    $('#mass-student-list').html('<tr><td colspan="6" class="text-center text-danger">Error loading students</td></tr>');
                 }
             })
             .catch(() => {
-                studentsList.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Network error</td></tr>';
+                $('#mass-student-list').html('<tr><td colspan="6" class="text-center text-danger">Network error</td></tr>');
             });
     }
 
-    function renderStudentsList(students) {
+    function renderStudentList(students) {
         if (!students.length) {
-            studentsList.innerHTML = '<tr><td colspan="6" class="text-center">No students found</td></tr>';
+            $('#mass-student-list').html('<tr><td colspan="6" class="text-center">No students found</td></tr>');
+            $('#selected-count').text('0 students selected');
             return;
         }
 
-        studentsList.innerHTML = students.map(student => `
-            <tr class="student-row ${selectedStudents.some(s => s.id === student.id) ? 'selected' : ''}" data-id="${student.id}">
-                <td><input type="checkbox" class="student-checkbox" value="${student.id}" ${selectedStudents.some(s => s.id === student.id) ? 'checked' : ''}></td>
-                <td>${student.admissionNo}</td>
-                <td>${student.name}</td>
-                <td>${student.class_name || 'N/A'} ${student.arm_name ? '(' + student.arm_name + ')' : ''}</td>
-                <td><span class="badge ${student.has_account ? 'badge-has-account' : 'badge-no-account'}">${student.has_account ? 'Has Account' : 'No Account'}</span></td>
-                <td>
-                    ${student.has_account ?
-                        `<button class="btn btn-sm btn-warning revoke-single" data-id="${student.id}" data-name="${student.name}">Revoke Access</button>
-                         <button class="btn btn-sm btn-info print-single" data-id="${student.id}" data-name="${student.name}">Print</button>` :
-                        ''
-                    }
-                </td>
-            </tr>
-        `).join('');
+        let html = '';
+        students.forEach(student => {
+            const statusBadge = student.has_account
+                ? '<span class="badge bg-success">Has Account</span>'
+                : '<span class="badge bg-secondary">No Account</span>';
+            const isSelected = selectedStudents.some(s => s.id === student.id);
 
-        // Add event listeners for checkboxes
-        document.querySelectorAll('.student-checkbox').forEach(cb => {
-            cb.addEventListener('change', function() {
-                const studentId = parseInt(this.value);
-                const student = allStudents.find(s => s.id === studentId);
+            html += `
+                <tr>
+                    <td><input type="checkbox" class="student-checkbox" data-id="${student.id}" ${isSelected ? 'checked' : ''}></td>
+                    <td>${student.admissionNo || 'N/A'}</td>
+                    <td>${student.name}</td>
+                    <td>${student.class_name || 'N/A'} ${student.arm_name ? '/' + student.arm_name : ''}</td>
+                    <td>${statusBadge}</td>
+                    <td>${student.username || '-'}</td>
+                </tr>
+            `;
+        });
+        $('#mass-student-list').html(html);
 
-                if (this.checked) {
-                    if (!selectedStudents.some(s => s.id === studentId)) {
-                        selectedStudents.push(student);
-                    }
-                } else {
-                    selectedStudents = selectedStudents.filter(s => s.id !== studentId);
+        updateSelectedCount();
+
+        // Attach checkbox events
+        $('.student-checkbox').off('change').on('change', function() {
+            const studentId = parseInt($(this).data('id'));
+            const student = allStudentsData.find(s => s.id === studentId);
+
+            if ($(this).is(':checked')) {
+                if (!selectedStudents.some(s => s.id === studentId)) {
+                    selectedStudents.push(student);
                 }
-
-                updateSelectedCount();
-                updateRowSelection();
-            });
-        });
-
-        // Add revoke single buttons
-        document.querySelectorAll('.revoke-single').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const studentId = parseInt(this.dataset.id);
-                const studentName = this.dataset.name;
-
-                Swal.fire({
-                    title: 'Revoke Access?',
-                    html: `Are you sure you want to revoke portal access for <strong>${studentName}</strong>?<br><br>This will remove their user account. They will need to be re-added to access the portal.`,
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonText: 'Yes, Revoke Access',
-                    cancelButtonText: 'Cancel'
-                }).then(result => {
-                    if (result.isConfirmed) {
-                        revokeAccounts([studentId]);
-                    }
-                });
-            });
-        });
-
-        // Add print single buttons
-        document.querySelectorAll('.print-single').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const studentId = parseInt(this.dataset.id);
-                const student = allStudents.find(s => s.id === studentId);
-                if (student) {
-                    printSingleCredential(student);
-                }
-            });
-        });
-
-        selectAllCheckbox.addEventListener('change', function() {
-            if (this.checked) {
-                selectedStudents = [...allStudents];
             } else {
-                selectedStudents = [];
+                selectedStudents = selectedStudents.filter(s => s.id !== studentId);
             }
             updateSelectedCount();
-            updateRowSelection();
-
-            document.querySelectorAll('.student-checkbox').forEach(cb => {
-                cb.checked = this.checked;
-            });
         });
     }
 
     function updateSelectedCount() {
-        selectedCountSpan.textContent = selectedStudents.length;
-        proceedBtn.disabled = selectedStudents.length === 0;
+        $('#selected-count').text(`${selectedStudents.length} student(s) selected`);
+        $('#select-all-students').prop('checked', selectedStudents.length === allStudentsData.length && allStudentsData.length > 0);
+        $('#select-all-students-table').prop('checked', selectedStudents.length === allStudentsData.length && allStudentsData.length > 0);
     }
 
-    function updateRowSelection() {
-        document.querySelectorAll('.student-row').forEach(row => {
-            const id = parseInt(row.dataset.id);
-            if (selectedStudents.some(s => s.id === id)) {
-                row.classList.add('selected');
-            } else {
-                row.classList.remove('selected');
-            }
+    function populateFilters(classes, arms) {
+        // Populate classes
+        let classHtml = '<option value="">All Classes</option>';
+        classes.forEach(cls => {
+            classHtml += `<option value="${cls.id}">${cls.name}</option>`;
         });
+        $('#mass-class-filter').html(classHtml);
+
+        // Populate arms
+        let armHtml = '<option value="">All Arms</option>';
+        arms.forEach(arm => {
+            armHtml += `<option value="${arm.id}">${arm.name}</option>`;
+        });
+        $('#mass-arm-filter').html(armHtml);
     }
 
-    // Action mode handling
-    const actionCreate = document.getElementById('action-create');
-    const actionReset = document.getElementById('action-reset');
-    const actionReprint = document.getElementById('action-reprint');
-    const createResetOptions = document.getElementById('create-reset-options');
-    const revokeWarning = document.getElementById('revoke-warning');
+    // Filter change events
+    $('#mass-student-search, #mass-class-filter, #mass-arm-filter, #mass-account-status').on('input change', function() {
+        selectedStudents = [];
+        loadMassStudents();
+    });
 
-    function updateActionUI() {
-        if (actionCreate.checked) {
-            createResetOptions.style.display = 'block';
-            revokeWarning.style.display = 'none';
-        } else if (actionReset.checked) {
-            createResetOptions.style.display = 'block';
-            revokeWarning.style.display = 'block';
-        } else if (actionReprint.checked) {
-            createResetOptions.style.display = 'none';
-            revokeWarning.style.display = 'none';
+    // Select all functionality
+    $('#select-all-students, #select-all-students-table').on('change', function() {
+        const isChecked = $(this).is(':checked');
+        if (isChecked) {
+            selectedStudents = [...allStudentsData];
+        } else {
+            selectedStudents = [];
         }
-    }
-
-    actionCreate.addEventListener('change', updateActionUI);
-    actionReset.addEventListener('change', updateActionUI);
-    actionReprint.addEventListener('change', updateActionUI);
-
-    // Password type handling
-    const passwordType = document.getElementById('password-type');
-    const sharedPasswordDiv = document.getElementById('shared-password-div');
-
-    passwordType.addEventListener('change', function() {
-        sharedPasswordDiv.style.display = this.value === 'same' ? 'block' : 'none';
+        renderStudentList(allStudentsData);
     });
 
-    document.getElementById('generate-shared-password').addEventListener('click', function() {
-        const password = generateRandomPassword();
-        document.getElementById('shared-password').value = password;
-    });
-
-    function generateRandomPassword() {
-        return strtoupper(Str::random(4)) + Math.floor(100 + Math.random() * 900) + strtolower(Str::random(3));
-    }
-
-    // Proceed to step 2
-    proceedBtn.addEventListener('click', function() {
-        if (selectedStudents.length === 0) return;
-
-        document.getElementById('step2-selected-count').textContent = selectedStudents.length;
-
-        // Pre-select appropriate action based on selected students
-        const hasExisting = selectedStudents.some(s => s.has_account);
-        const hasNew = selectedStudents.some(s => !s.has_account);
-
-        if (hasNew && !hasExisting) {
-            actionCreate.checked = true;
-        } else if (hasExisting && !hasNew) {
-            actionReset.checked = true;
-        }
-
-        updateActionUI();
-
-        step1.style.display = 'none';
-        step2.style.display = 'block';
-        step3.style.display = 'none';
-    });
-
-    // Back to step 1
-    backBtn.addEventListener('click', function() {
-        step1.style.display = 'block';
-        step2.style.display = 'none';
-        step3.style.display = 'none';
-    });
-
-    // Process students
-    processBtn.addEventListener('click', function() {
-        const actionMode = document.querySelector('input[name="action-mode"]:checked').value;
-        const passwordType = document.getElementById('password-type').value;
-        const sharedPassword = document.getElementById('shared-password').value;
-
-        // Validate based on action
-        if (actionMode !== 'reprint' && passwordType === 'same' && !sharedPassword) {
-            Swal.fire('Error', 'Please enter a shared password or select individual passwords', 'error');
+    // Proceed to action step
+    $('#proceed-to-action').on('click', function() {
+        if (selectedStudents.length === 0) {
+            Swal.fire('Warning', 'Please select at least one student', 'warning');
             return;
         }
 
-        if (actionMode === 'reprint') {
-            // Just reprint selected students' credentials
-            const reprintData = selectedStudents.map(s => ({
-                student_id: s.id,
-                action: 'reprint'
-            }));
+        // Populate selected students list
+        let html = '';
+        selectedStudents.forEach(student => {
+            html += `
+                <tr>
+                    <td>${student.name}</td>
+                    <td>${student.admissionNo || 'N/A'}</td>
+                    <td>${student.has_account ? '<span class="badge bg-success">Has Account</span>' : '<span class="badge bg-secondary">No Account</span>'}</td>
+                </tr>
+            `;
+        });
+        $('#selected-students-list').html(html);
+        $('#step2-selected-count').text(selectedStudents.length);
 
-            submitMassAction({
-                students: reprintData,
-                action_mode: 'reprint'
-            });
+        $('#step1').hide();
+        $('#step2').show();
+    });
+
+    // Action type change handler
+    $('input[name="mass-action-type"]').on('change', function() {
+        const action = $(this).val();
+
+        // Check if action is appropriate for selected students
+        const hasAccountStudents = selectedStudents.filter(s => s.has_account);
+        const noAccountStudents = selectedStudents.filter(s => !s.has_account);
+
+        $('#action-warning').hide();
+
+        if (action === 'create' && hasAccountStudents.length > 0) {
+            $('#action-warning').html(`
+                <i class="bi bi-exclamation-triangle"></i>
+                Warning: ${hasAccountStudents.length} selected student(s) already have accounts and will be skipped.
+            `).show();
+        } else if (action === 'reset' && noAccountStudents.length > 0) {
+            $('#action-warning').html(`
+                <i class="bi bi-exclamation-triangle"></i>
+                Warning: ${noAccountStudents.length} selected student(s) don't have accounts and will be skipped.
+            `).show();
+        } else if (action === 'revoke' && noAccountStudents.length > 0) {
+            $('#action-warning').html(`
+                <i class="bi bi-exclamation-triangle"></i>
+                Warning: ${noAccountStudents.length} selected student(s) don't have accounts and will be skipped.
+            `).show();
+        }
+
+        // Show/hide password and role settings
+        if (action === 'create' || action === 'reset') {
+            $('#password-settings').show();
+            $('#roles-settings').show();
+            $('#mass-password-type').trigger('change');
         } else {
-            // Filter students based on action
-            let studentsToProcess = [];
-
-            if (actionMode === 'create') {
-                studentsToProcess = selectedStudents.filter(s => !s.has_account).map(s => ({
-                    student_id: s.id,
-                    action: 'create'
-                }));
-            } else if (actionMode === 'reset') {
-                studentsToProcess = selectedStudents.filter(s => s.has_account).map(s => ({
-                    student_id: s.id,
-                    action: 'reset'
-                }));
-            }
-
-            if (studentsToProcess.length === 0) {
-                Swal.fire('Notice', `No ${actionMode === 'create' ? 'students without accounts' : 'students with accounts'} selected`, 'info');
-                return;
-            }
-
-            submitMassAction({
-                students: studentsToProcess,
-                action_mode: actionMode,
-                password_type: passwordType,
-                shared_password: passwordType === 'same' ? sharedPassword : null
-            });
+            $('#password-settings').hide();
+            $('#roles-settings').hide();
         }
     });
 
-    function submitMassAction(data) {
+    $('#mass-password-type').on('change', function() {
+        const showShared = $(this).val() === 'same';
+        $('#shared-password-container').toggle(showShared);
+        if (showShared) {
+            $('#mass-shared-password').prop('required', true);
+        } else {
+            $('#mass-shared-password').prop('required', false);
+        }
+    });
+
+    // Execute action
+    $('#execute-mass-action').on('click', function() {
+        const actionType = $('input[name="mass-action-type"]:checked').val();
+
+        if (!actionType) {
+            Swal.fire('Error', 'Please select an action', 'error');
+            return;
+        }
+
+        // Prepare payload
+        const students = selectedStudents.map(s => ({
+            student_id: s.id,
+            action: s.has_account ?
+                (actionType === 'create' ? 'skip' : actionType) :
+                (actionType === 'reset' || actionType === 'revoke' ? 'skip' : actionType)
+        }));
+
+        const payload = {
+            _token: '{{ csrf_token() }}',
+            students: students,
+            action_type: actionType,
+        };
+
+        if (actionType === 'create' || actionType === 'reset') {
+            payload.password_type = $('#mass-password-type').val();
+            if (payload.password_type === 'same') {
+                payload.shared_password = $('#mass-shared-password').val();
+                if (!payload.shared_password || payload.shared_password.length < 6) {
+                    Swal.fire('Error', 'Shared password must be at least 6 characters', 'error');
+                    return;
+                }
+            }
+
+            const roles = $('#mass-roles').val();
+            if (!roles || roles.length === 0) {
+                Swal.fire('Error', 'Please select at least one role', 'error');
+                return;
+            }
+            payload.roles = roles;
+        }
+
+        // Show loading
+        Swal.fire({
+            title: 'Processing...',
+            text: 'Please wait while we process your request',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
         fetch('{{ route("users.mass-create-students") }}', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': '{{ csrf_token() }}'
             },
-            body: JSON.stringify(data)
+            body: JSON.stringify(payload)
         })
         .then(r => r.json())
         .then(data => {
-            if (data.success) {
-                processedResults = data;
-                displayResults(data);
+            Swal.close();
 
-                step1.style.display = 'none';
-                step2.style.display = 'none';
-                step3.style.display = 'block';
+            if (data.success) {
+                currentResults = data;
+                displayResults(data);
+                $('#step2').hide();
+                $('#step3').show();
             } else {
                 Swal.fire('Error', data.message || 'Operation failed', 'error');
             }
         })
-        .catch(() => {
+        .catch(error => {
+            Swal.close();
             Swal.fire('Error', 'Network error occurred', 'error');
         });
-    }
+    });
 
     function displayResults(data) {
-        const container = document.getElementById('results-container');
-
         let html = '<div class="alert alert-success">';
-        html += `<h5>Operation Complete</h5>`;
+        html += `<h5>Operation Complete!</h5>`;
         html += `<p>${data.message}</p>`;
-        if (data.created_count) html += `<p><strong>Created:</strong> ${data.created_count}</p>`;
-        if (data.reset_count) html += `<p><strong>Passwords Reset:</strong> ${data.reset_count}</p>`;
-        if (data.reprinted_count) html += `<p><strong>Reprinted:</strong> ${data.reprinted_count}</p>`;
-        if (data.skipped_count) html += `<p><strong>Skipped:</strong> ${data.skipped_count}</p>`;
-        html += '</div>';
 
-        if (data.all_printable && data.all_printable.length) {
-            html += '<h6>Credentials Generated:</h6>';
-            html += '<div class="credentials-list">';
-            data.all_printable.forEach(cred => {
-                html += `
-                    <div class="credential-slip">
-                        <h5>${cred.name}</h5>
-                        <p><strong>Admission No:</strong> ${cred.admissionNo || 'N/A'}</p>
-                        <p><strong>Username:</strong> ${cred.username || cred.email}</p>
-                        <p><strong>Password:</strong> ${cred.password !== '********' ? cred.password : 'Use existing password'}</p>
-                        <p><strong>Class:</strong> ${cred.class_name || 'N/A'}</p>
-                        <hr>
-                        <small>Portal URL: ${window.location.origin}/login</small>
-                    </div>
-                `;
+        if (data.created_count > 0) {
+            html += `<div class="mt-3"><strong>Created Accounts (${data.created_count}):</strong>`;
+            html += `<div class="table-responsive"><table class="table table-sm table-bordered">`;
+            html += `<thead><tr><th>Name</th><th>Username</th><th>Email</th><th>Password</th></tr></thead><tbody>`;
+            data.created.forEach(c => {
+                html += `<tr><td>${c.name}</td><td>${c.username}</td><td>${c.email}</td><td><code>${c.password}</code></td></tr>`;
             });
-            html += '</div>';
-            printBtn.style.display = 'block';
-        } else {
-            printBtn.style.display = 'none';
+            html += `</tbody></table></div></div>`;
         }
 
-        container.innerHTML = html;
+        if (data.reset_count > 0) {
+            html += `<div class="mt-3"><strong>Reset Passwords (${data.reset_count}):</strong>`;
+            html += `<div class="table-responsive"><table class="table table-sm table-bordered">`;
+            html += `<thead><tr><th>Name</th><th>Username</th><th>Email</th><th>New Password</th></tr></thead><tbody>`;
+            data.reset.forEach(r => {
+                html += `<tr><td>${r.name}</td><td>${r.username}</td><td>${r.email}</td><td><code>${r.password}</code></td></tr>`;
+            });
+            html += `</tbody></table></div></div>`;
+        }
+
+        if (data.revoked_count > 0) {
+            html += `<div class="mt-3"><strong>Revoked Accounts (${data.revoked_count}):</strong>`;
+            html += `<ul>`;
+            data.revoked.forEach(r => {
+                html += `<li>${r.name} - Account removed</li>`;
+            });
+            html += `</ul></div>`;
+        }
+
+        if (data.skipped && data.skipped.length > 0) {
+            html += `<div class="mt-3 text-warning"><strong>Skipped (${data.skipped.length}):</strong>`;
+            html += `<ul>`;
+            data.skipped.forEach(s => {
+                html += `<li>${s}</li>`;
+            });
+            html += `</ul></div>`;
+        }
+
+        if (data.errors && data.errors.length > 0) {
+            html += `<div class="mt-3 text-danger"><strong>Errors (${data.errors.length}):</strong>`;
+            html += `<ul>`;
+            data.errors.forEach(e => {
+                html += `<li>${e}</li>`;
+            });
+            html += `</ul></div>`;
+        }
+
+        html += `</div>`;
+
+        $('#results-content').html(html);
     }
 
-    function revokeAccounts(studentIds) {
-        fetch('{{ route("users.revoke-password") }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({ student_ids: studentIds })
-        })
-        .then(r => r.json())
-        .then(data => {
-            if (data.success) {
-                Swal.fire('Success', data.message, 'success');
-                loadStudents(); // Refresh the list
-                selectedStudents = [];
-                updateSelectedCount();
-            } else {
-                Swal.fire('Error', data.message, 'error');
-            }
-        })
-        .catch(() => {
-            Swal.fire('Error', 'Network error', 'error');
-        });
-    }
+    // Print results
+    $('#print-results').on('click', function() {
+        if (!currentResults) return;
 
-    function printSingleCredential(student) {
         const printWindow = window.open('', '_blank');
-        printWindow.document.write(`
+        let printHtml = `
+            <!DOCTYPE html>
             <html>
             <head>
-                <title>Credential - ${student.name}</title>
+                <title>Student Credentials</title>
                 <style>
-                    body { font-family: Arial, sans-serif; padding: 40px; }
-                    .credential { border: 2px solid #333; padding: 20px; max-width: 400px; margin: 0 auto; }
-                    h2 { color: #2c3e50; }
-                    .info { margin: 10px 0; }
-                    .label { font-weight: bold; }
-                    hr { margin: 20px 0; }
-                    .footer { font-size: 12px; text-align: center; margin-top: 20px; }
+                    body { font-family: Arial, sans-serif; padding: 20px; }
+                    .header { text-align: center; margin-bottom: 30px; }
+                    .credentials-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                    .credentials-table th, .credentials-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                    .credentials-table th { background-color: #f2f2f2; }
+                    .page-break { page-break-after: always; }
+                    .footer { margin-top: 30px; text-align: center; font-size: 12px; }
+                    @media print {
+                        body { margin: 0; padding: 20px; }
+                        .no-print { display: none; }
+                    }
                 </style>
             </head>
             <body>
-                <div class="credential">
-                    <h2>Student Portal Credentials</h2>
-                    <div class="info"><span class="label">Name:</span> ${student.name}</div>
-                    <div class="info"><span class="label">Admission No:</span> ${student.admissionNo || 'N/A'}</div>
-                    <div class="info"><span class="label">Username:</span> ${student.username || student.email}</div>
-                    <div class="info"><span class="label">Class:</span> ${student.class_name || 'N/A'}</div>
+                <div class="header">
+                    <h2>Student Account Credentials</h2>
+                    <p>Generated: ${new Date().toLocaleString()}</p>
+                    <p>Total Students: ${currentResults.created_count + currentResults.reset_count}</p>
                     <hr>
-                    <div class="info"><span class="label">Portal URL:</span> ${window.location.origin}/login</div>
-                    <div class="footer">Please keep this information secure</div>
                 </div>
-                <script>window.print();<\/script>
+        `;
+
+        // Add created accounts
+        if (currentResults.created && currentResults.created.length > 0) {
+            printHtml += `<h3>Newly Created Accounts (${currentResults.created.length})</h3>`;
+            printHtml += `<table class="credentials-table">`;
+            printHtml += `<thead><tr><th>#</th><th>Name</th><th>Username</th><th>Email</th><th>Password</th><th>Admission No</th></tr></thead><tbody>`;
+            currentResults.created.forEach((c, idx) => {
+                printHtml += `<tr>
+                    <td>${idx + 1}</td>
+                    <td>${c.name}</td>
+                    <td>${c.username}</td>
+                    <td>${c.email}</td>
+                    <td><strong>${c.password}</strong></td>
+                    <td>${c.admissionNo || 'N/A'}</td>
+                </tr>`;
+            });
+            printHtml += `</tbody></table>`;
+        }
+
+        // Add reset accounts
+        if (currentResults.reset && currentResults.reset.length > 0) {
+            printHtml += `<h3>Password Reset Accounts (${currentResults.reset.length})</h3>`;
+            printHtml += `<table class="credentials-table">`;
+            printHtml += `<thead><tr><th>#</th><th>Name</th><th>Username</th><th>Email</th><th>New Password</th><th>Admission No</th></tr></thead><tbody>`;
+            currentResults.reset.forEach((r, idx) => {
+                printHtml += `<tr>
+                    <td>${idx + 1}</td>
+                    <td>${r.name}</td>
+                    <td>${r.username}</td>
+                    <td>${r.email}</td>
+                    <td><strong>${r.password}</strong></td>
+                    <td>${r.admissionNo || 'N/A'}</td>
+                </tr>`;
+            });
+            printHtml += `</tbody></table>`;
+        }
+
+        printHtml += `
+                <div class="footer">
+                    <p>This is a system-generated document. Please keep these credentials secure.</p>
+                </div>
+                <script>
+                    window.onload = function() { window.print(); setTimeout(function() { window.close(); }, 1000); };
+                <\/script>
             </body>
             </html>
-        `);
+        `;
+
+        printWindow.document.write(printHtml);
         printWindow.document.close();
-    }
-
-    printBtn.addEventListener('click', function() {
-        if (processedResults && processedResults.all_printable) {
-            const printWindow = window.open('', '_blank');
-            let html = `
-                <html>
-                <head>
-                    <title>Student Credentials</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; padding: 20px; }
-                        .credential-slip {
-                            border: 1px solid #ddd;
-                            padding: 15px;
-                            margin-bottom: 20px;
-                            page-break-after: always;
-                        }
-                        h3 { color: #2c3e50; margin-top: 0; }
-                        .info { margin: 5px 0; }
-                        .label { font-weight: bold; }
-                        hr { margin: 10px 0; }
-                        .footer { font-size: 11px; text-align: center; margin-top: 10px; }
-                        @media print {
-                            .credential-slip {
-                                page-break-after: always;
-                            }
-                        }
-                    </style>
-                </head>
-                <body>
-                    <h2 style="text-align: center;">Student Portal Credentials</h2>
-                    <p style="text-align: center;">Generated on: ${new Date().toLocaleDateString()}</p>
-            `;
-
-            processedResults.all_printable.forEach(cred => {
-                html += `
-                    <div class="credential-slip">
-                        <h3>${cred.name}</h3>
-                        <div class="info"><span class="label">Admission No:</span> ${cred.admissionNo || 'N/A'}</div>
-                        <div class="info"><span class="label">Username:</span> ${cred.username || cred.email}</div>
-                        <div class="info"><span class="label">Password:</span> ${cred.password !== '********' ? cred.password : 'Use existing password'}</div>
-                        <div class="info"><span class="label">Class:</span> ${cred.class_name || 'N/A'}</div>
-                        <hr>
-                        <div class="info"><span class="label">Portal URL:</span> ${window.location.origin}/login</div>
-                        <div class="footer">Please keep this information secure. Do not share with others.</div>
-                    </div>
-                `;
-            });
-
-            html += `
-                </body>
-                </html>
-            `;
-
-            printWindow.document.write(html);
-            printWindow.document.close();
-            printWindow.print();
-        }
     });
 
-    startOverBtn.addEventListener('click', function() {
+    // Back and new action buttons
+    $('#back-to-step1').on('click', function() {
+        $('#step2').hide();
+        $('#step1').show();
+    });
+
+    $('#new-mass-action').on('click', function() {
         selectedStudents = [];
-        processedResults = null;
-        step1.style.display = 'block';
-        step2.style.display = 'none';
-        step3.style.display = 'none';
-        loadStudents();
+        currentResults = null;
+        $('#step3').hide();
+        $('#step1').show();
+        loadMassStudents();
     });
-
-    function debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
-    }
 });
 </script>

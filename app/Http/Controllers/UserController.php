@@ -7,7 +7,7 @@ use App\Models\BioModel;
 use App\Models\Student;
 use App\Models\Studentpicture;
 use App\Models\User;
-use App\Models\PasswordResetHistory; // You'll need to create this model
+use App\Models\PasswordResetLog; // You'll need to create this model
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -259,23 +259,8 @@ class UserController extends Controller
             $isStudent = $user->hasRole('student');
 
             BioModel::where('user_id', $id)->delete();
-
-            // Store student_id before detaching if needed for password reset history
-            $studentId = $user->student_id;
-
             $user->roles()->detach();
             $user->delete();
-
-            // Optional: Log this deletion in password reset history
-            if ($studentId) {
-                PasswordResetHistory::create([
-                    'student_id' => $studentId,
-                    'action' => 'account_removed',
-                    'performed_by' => auth()->id(),
-                    'old_password_hash' => null,
-                    'new_password_hash' => null,
-                ]);
-            }
 
             return response()->json([
                 'success' => true,
@@ -352,13 +337,8 @@ class UserController extends Controller
                 ]
             );
 
-            // Log password creation
-            PasswordResetHistory::create([
-                'student_id' => $student->id,
-                'action' => 'created',
-                'performed_by' => auth()->id(),
-                'new_password_hash' => Hash::make($plainPassword),
-            ]);
+            // Log password reset
+            $this->logPasswordReset($user->id, $plainPassword, 'created');
 
             return response()->json([
                 'success' => true,
@@ -390,11 +370,11 @@ class UserController extends Controller
     }
 
     // ─────────────────────────────────────────────────────────────────
-    // MASS student user creation (UPDATED with better UX)
+    // MASS student user creation (ENHANCED - allows reprint, reset, revoke)
     // ─────────────────────────────────────────────────────────────────
     public function massCreateStudents(Request $request): JsonResponse
     {
-        Log::debug("Mass creating/updating student users", ['count' => count($request->input('students', []))]);
+        Log::debug("Mass creating/resetting student users", ['count' => count($request->input('students', []))]);
 
         try {
             if (!auth()->user()->hasPermissionTo('Create user')) {
@@ -407,26 +387,27 @@ class UserController extends Controller
             $validated = $request->validate([
                 'students' => 'required|array|min:1',
                 'students.*.student_id' => 'required|exists:studentRegistration,id',
-                'students.*.action' => 'nullable|in:create,reset,reprint', // NEW: action per student
-                'roles' => 'sometimes|array',
+                'students.*.action' => 'sometimes|in:create,reset,revoke,reprint',
+                'roles' => 'required_if:action_type,create,reset|array|min:1',
                 'roles.*' => 'exists:roles,name',
-                'password_type' => 'required_if:action_mode,create|in:same,individual',
+                'password_type' => 'required_if:action_type,create,reset|in:same,individual',
                 'shared_password' => 'required_if:password_type,same|nullable|string|min:6',
-                'action_mode' => 'required|in:create,reset,reprint', // NEW: mode selection
-                'reprint_only' => 'boolean', // NEW: reprint only mode
+                'action_type' => 'required|in:create,reset,revoke,reprint',
+                'reprint_only' => 'sometimes|boolean',
             ]);
+
+            DB::beginTransaction();
 
             $created = [];
             $reset = [];
+            $revoked = [];
             $reprinted = [];
             $skipped = [];
             $errors = [];
 
-            DB::beginTransaction();
-
             foreach ($validated['students'] as $entry) {
                 $studentId = $entry['student_id'];
-                $action = $entry['action'] ?? $validated['action_mode'];
+                $action = $entry['action'] ?? $validated['action_type'];
 
                 $student = DB::table('studentRegistration')->where('id', $studentId)->first();
 
@@ -441,11 +422,10 @@ class UserController extends Controller
                 switch ($action) {
                     case 'create':
                         if ($existingUser) {
-                            $skipped[] = trim("{$student->firstname} {$student->lastname}") . " (already has account)";
+                            $skipped[] = trim("{$student->firstname} {$student->lastname} (already has account)");
                             continue 2;
                         }
-
-                        $result = $this->createUserForStudent($student, $validated);
+                        $result = $this->createStudentUser($student, $validated);
                         if ($result['success']) {
                             $created[] = $result['data'];
                         } else {
@@ -455,11 +435,10 @@ class UserController extends Controller
 
                     case 'reset':
                         if (!$existingUser) {
-                            $skipped[] = trim("{$student->firstname} {$student->lastname}") . " (no account to reset)";
+                            $skipped[] = trim("{$student->firstname} {$student->lastname} (no account to reset)");
                             continue 2;
                         }
-
-                        $result = $this->resetUserPassword($existingUser, $validated);
+                        $result = $this->resetStudentPassword($existingUser, $student, $validated);
                         if ($result['success']) {
                             $reset[] = $result['data'];
                         } else {
@@ -467,46 +446,56 @@ class UserController extends Controller
                         }
                         break;
 
-                    case 'reprint':
+                    case 'revoke':
                         if (!$existingUser) {
-                            $skipped[] = trim("{$student->firstname} {$student->lastname}") . " (no account to reprint)";
+                            $skipped[] = trim("{$student->firstname} {$student->lastname} (no account to revoke)");
                             continue 2;
                         }
+                        $result = $this->revokeStudentAccount($existingUser);
+                        if ($result['success']) {
+                            $revoked[] = $result['data'];
+                        } else {
+                            $errors[] = $result['error'];
+                        }
+                        break;
 
-                        $reprinted[] = $this->getUserCredentials($existingUser, $student);
+                    case 'reprint':
+                        if (!$existingUser) {
+                            $skipped[] = trim("{$student->firstname} {$student->lastname} (no account to reprint)");
+                            continue 2;
+                        }
+                        $result = $this->getStudentCredentials($existingUser, $student);
+                        if ($result['success']) {
+                            $reprinted[] = $result['data'];
+                        } else {
+                            $errors[] = $result['error'];
+                        }
                         break;
                 }
             }
 
             DB::commit();
 
-            // Sort alphabetically by name
-            usort($created, fn($a, $b) => strcmp($a['name'], $b['name']));
-            usort($reset, fn($a, $b) => strcmp($a['name'], $b['name']));
-            usort($reprinted, fn($a, $b) => strcmp($a['name'], $b['name']));
-
-            $allPrintable = array_merge($created, $reset, $reprinted);
-
-            $message = [];
-            if (count($created)) $message[] = count($created) . " account(s) created";
-            if (count($reset)) $message[] = count($reset) . " password(s) reset";
-            if (count($reprinted)) $message[] = count($reprinted) . " credential(s) reprinted";
-            if (count($skipped)) $message[] = count($skipped) . " skipped";
-
-            return response()->json([
+            // Prepare response based on action type
+            $responseData = [
                 'success' => true,
-                'message' => implode(', ', $message) . '.',
+                'action_type' => $validated['action_type'],
                 'created' => $created,
                 'reset' => $reset,
+                'revoked' => $revoked,
                 'reprinted' => $reprinted,
-                'all_printable' => $allPrintable, // All credentials for printing
                 'skipped' => $skipped,
                 'errors' => $errors,
                 'created_count' => count($created),
                 'reset_count' => count($reset),
+                'revoked_count' => count($revoked),
                 'reprinted_count' => count($reprinted),
-                'skipped_count' => count($skipped),
-            ], 201);
+            ];
+
+            $message = $this->buildActionMessage($responseData);
+            $responseData['message'] = $message;
+
+            return response()->json($responseData, 201);
 
         } catch (ValidationException $e) {
             DB::rollBack();
@@ -526,8 +515,10 @@ class UserController extends Controller
         }
     }
 
-    // Helper method to create user for a student
-    private function createUserForStudent($student, $validated)
+    // ─────────────────────────────────────────────────────────────────
+    // Helper: Create new student user
+    // ─────────────────────────────────────────────────────────────────
+    private function createStudentUser($student, $validated)
     {
         try {
             // Build email
@@ -545,7 +536,7 @@ class UserController extends Controller
                 }
             }
 
-            // Build username from admission number
+            // Build username
             $baseUsername = str_replace(['/', '\\', ' '], '_', $student->admissionNo ?? "stu_{$student->id}");
             $username = $baseUsername;
             $suffix = 1;
@@ -556,7 +547,7 @@ class UserController extends Controller
             // Password
             $plainPassword = $validated['password_type'] === 'same'
                 ? $validated['shared_password']
-                : strtoupper(Str::random(4)) . rand(100, 999) . strtolower(Str::random(3));
+                : $this->generateRandomPassword();
 
             // Create user
             $user = User::create([
@@ -567,9 +558,9 @@ class UserController extends Controller
                 'password' => Hash::make($plainPassword),
             ]);
 
-            $user->syncRoles(['student']);
+            $user->syncRoles($validated['roles']);
 
-            // Sync bio record
+            // Sync bio
             BioModel::updateOrCreate(
                 ['user_id' => $user->id],
                 [
@@ -586,17 +577,13 @@ class UserController extends Controller
             );
 
             // Log creation
-            PasswordResetHistory::create([
-                'student_id' => $student->id,
-                'action' => 'created',
-                'performed_by' => auth()->id(),
-                'new_password_hash' => Hash::make($plainPassword),
-            ]);
+            $this->logPasswordReset($user->id, $plainPassword, 'created');
 
             return [
                 'success' => true,
                 'data' => [
                     'id' => $user->id,
+                    'student_id' => $student->id,
                     'name' => $user->name,
                     'email' => $email,
                     'username' => $username,
@@ -609,38 +596,36 @@ class UserController extends Controller
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'error' => "Failed to create user for {$student->firstname} {$student->lastname}: {$e->getMessage()}"
+                'error' => "Failed to create account for {$student->firstname} {$student->lastname}: " . $e->getMessage()
             ];
         }
     }
 
-    // Helper method to reset user password
-    private function resetUserPassword($user, $validated)
+    // ─────────────────────────────────────────────────────────────────
+    // Helper: Reset student password
+    // ─────────────────────────────────────────────────────────────────
+    private function resetStudentPassword($user, $student, $validated)
     {
         try {
-            $student = DB::table('studentRegistration')->where('id', $user->student_id)->first();
-
             $plainPassword = $validated['password_type'] === 'same'
                 ? $validated['shared_password']
-                : strtoupper(Str::random(4)) . rand(100, 999) . strtolower(Str::random(3));
+                : $this->generateRandomPassword();
 
-            $oldHash = $user->password;
-            $user->password = Hash::make($plainPassword);
-            $user->save();
+            $user->update(['password' => Hash::make($plainPassword)]);
 
-            // Log password reset
-            PasswordResetHistory::create([
-                'student_id' => $user->student_id,
-                'action' => 'reset',
-                'performed_by' => auth()->id(),
-                'old_password_hash' => $oldHash,
-                'new_password_hash' => $user->password,
-            ]);
+            // Sync roles if provided
+            if (isset($validated['roles'])) {
+                $user->syncRoles($validated['roles']);
+            }
+
+            // Log reset
+            $this->logPasswordReset($user->id, $plainPassword, 'reset');
 
             return [
                 'success' => true,
                 'data' => [
                     'id' => $user->id,
+                    'student_id' => $student->id,
                     'name' => $user->name,
                     'email' => $user->email,
                     'username' => $user->username,
@@ -653,29 +638,129 @@ class UserController extends Controller
         } catch (\Exception $e) {
             return [
                 'success' => false,
-                'error' => "Failed to reset password for {$user->name}: {$e->getMessage()}"
+                'error' => "Failed to reset password for {$student->firstname} {$student->lastname}: " . $e->getMessage()
             ];
         }
     }
 
-    // Helper method to get user credentials for reprint
-    private function getUserCredentials($user, $student)
+    // ─────────────────────────────────────────────────────────────────
+    // Helper: Revoke student account (remove user, keep student record)
+    // ─────────────────────────────────────────────────────────────────
+    private function revokeStudentAccount($user)
     {
-        return [
-            'id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'username' => $user->username,
-            'password' => '********', // Don't show actual password for reprint
-            'admissionNo' => $student->admissionNo ?? '',
-            'class_name' => $student->class_name ?? '',
-            'action' => 'reprint',
-            'has_account' => true,
-        ];
+        try {
+            $studentId = $user->student_id;
+            $student = DB::table('studentRegistration')->where('id', $studentId)->first();
+            $name = $user->name;
+
+            // Log before deletion
+            Log::info("Revoking student account: {$name} (ID: {$user->id})");
+
+            // Detach roles and delete user
+            $user->roles()->detach();
+            $user->delete();
+
+            return [
+                'success' => true,
+                'data' => [
+                    'student_id' => $studentId,
+                    'name' => $name,
+                    'admissionNo' => $student->admissionNo ?? '',
+                    'class_name' => $student->class_name ?? '',
+                    'action' => 'revoked',
+                ]
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'error' => "Failed to revoke account: " . $e->getMessage()
+            ];
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────
-    // REVOKE student password (single or mass) - UPDATED to actually remove access
+    // Helper: Get student credentials for reprint
+    // ─────────────────────────────────────────────────────────────────
+    private function getStudentCredentials($user, $student)
+    {
+        try {
+            // Note: We can't retrieve the original password, so we indicate this
+            return [
+                'success' => true,
+                'data' => [
+                    'id' => $user->id,
+                    'student_id' => $student->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'username' => $user->username,
+                    'password' => '********', // Password not retrievable for security
+                    'admissionNo' => $student->admissionNo ?? '',
+                    'class_name' => $student->class_name ?? '',
+                    'action' => 'reprinted',
+                    'note' => 'Password not shown for security. Use Reset action to set new password.',
+                ]
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'error' => "Failed to retrieve credentials for {$student->firstname} {$student->lastname}"
+            ];
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // Helper: Generate random password
+    // ─────────────────────────────────────────────────────────────────
+    private function generateRandomPassword()
+    {
+        return strtoupper(Str::random(4)) . rand(100, 999) . strtolower(Str::random(3));
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // Helper: Log password reset/creation
+    // ─────────────────────────────────────────────────────────────────
+    private function logPasswordReset($userId, $password, $action)
+    {
+        // Optional: Create password_reset_logs table to track changes
+        // For now, just log to Laravel log
+        Log::info("Password {$action} for user ID {$userId}", [
+            'action' => $action,
+            'user_id' => $userId,
+            'timestamp' => now(),
+            'reset_by' => auth()->id(),
+        ]);
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // Helper: Build action message
+    // ─────────────────────────────────────────────────────────────────
+    private function buildActionMessage($data)
+    {
+        $parts = [];
+        if ($data['created_count'] > 0) {
+            $parts[] = $data['created_count'] . ' account(s) created';
+        }
+        if ($data['reset_count'] > 0) {
+            $parts[] = $data['reset_count'] . ' password(s) reset';
+        }
+        if ($data['revoked_count'] > 0) {
+            $parts[] = $data['revoked_count'] . ' account(s) revoked';
+        }
+        if ($data['reprinted_count'] > 0) {
+            $parts[] = $data['reprinted_count'] . ' credential(s) reprinted';
+        }
+
+        $message = implode(', ', $parts) . ' successfully.';
+
+        if (count($data['skipped']) > 0) {
+            $message .= ' ' . count($data['skipped']) . ' skipped.';
+        }
+
+        return $message;
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // REVOKE student password (simplified - now integrated into mass operation)
     // ─────────────────────────────────────────────────────────────────
     public function revokeStudentPassword(Request $request): JsonResponse
     {
@@ -691,16 +776,13 @@ class UserController extends Controller
 
             $userIds = [];
 
-            // Accept user_ids directly (single revoke from user list button)
             if ($request->has('user_ids')) {
                 $request->validate([
                     'user_ids' => 'required|array|min:1',
                     'user_ids.*' => 'exists:users,id',
                 ]);
                 $userIds = $request->input('user_ids');
-            }
-            // Accept student_ids (mass revoke from mass modal)
-            elseif ($request->has('student_ids')) {
+            } elseif ($request->has('student_ids')) {
                 $request->validate([
                     'student_ids' => 'required|array|min:1',
                     'student_ids.*' => 'integer',
@@ -717,6 +799,8 @@ class UserController extends Controller
                 ], 422);
             }
 
+            $plainPassword = 'ChangeMe@123';
+            $newPassword = Hash::make($plainPassword);
             $count = 0;
             $skipped = 0;
             $revoked = [];
@@ -727,151 +811,100 @@ class UserController extends Controller
                     continue;
                 }
 
-                // Safety guard — only revoke for student-role users
                 if (!$user->hasRole('student')) {
                     $skipped++;
-                    Log::warning("revokeStudentPassword: skipped user {$uid} — not a student role");
                     continue;
                 }
 
-                // Instead of just changing password, we COMPLETELY REMOVE the user account
-                // But keep the student record intact
-                $studentId = $user->student_id;
-                $userData = [
+                $user->update(['password' => $newPassword]);
+                $this->logPasswordReset($user->id, $plainPassword, 'revoked');
+                $count++;
+
+                $revoked[] = [
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
                     'username' => $user->username,
                     'admissionNo' => $user->student?->admissionNo ?? '',
+                    'password' => $plainPassword,
                 ];
-
-                // Delete the user account
-                BioModel::where('user_id', $user->id)->delete();
-                $user->roles()->detach();
-                $user->delete();
-
-                // Log the revocation
-                PasswordResetHistory::create([
-                    'student_id' => $studentId,
-                    'action' => 'revoked',
-                    'performed_by' => auth()->id(),
-                    'old_password_hash' => $user->password ?? null,
-                    'new_password_hash' => null,
-                ]);
-
-                $revoked[] = $userData;
-                $count++;
-            }
-
-            $msg = "{$count} student account(s) revoked successfully. These students no longer have portal access.";
-            if ($skipped) {
-                $msg .= " ({$skipped} non-student user(s) skipped.)";
             }
 
             return response()->json([
                 'success' => true,
-                'message' => $msg,
+                'message' => "{$count} student password(s) reset. New password: {$plainPassword}",
                 'count' => $count,
                 'skipped' => $skipped,
                 'revoked' => $revoked,
             ]);
 
-        } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation failed',
-                'errors' => $e->errors(),
-            ], 422);
         } catch (\Exception $e) {
             Log::error("revokeStudentPassword error: {$e->getMessage()}");
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to revoke accounts.',
+                'message' => 'Failed to revoke passwords.',
             ], 500);
         }
     }
 
     // ─────────────────────────────────────────────────────────────────
-    // SINGLE PRINT CREDENTIALS (for existing student users)
+    // Single student password reset
     // ─────────────────────────────────────────────────────────────────
-    public function printCredentials($id): JsonResponse
+    public function resetSingleStudentPassword(Request $request, $id): JsonResponse
     {
         try {
-            $user = User::with(['student'])->findOrFail($id);
+            if (!auth()->user()->hasPermissionTo('Update user')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Insufficient permissions.',
+                ], 403);
+            }
+
+            $user = User::findOrFail($id);
 
             if (!$user->hasRole('student')) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Only student accounts can print credentials.',
-                ], 403);
+                    'message' => 'User is not a student.',
+                ], 422);
             }
+
+            $plainPassword = $this->generateRandomPassword();
+            $user->update(['password' => Hash::make($plainPassword)]);
+            $this->logPasswordReset($user->id, $plainPassword, 'reset');
 
             return response()->json([
                 'success' => true,
-                'credentials' => [
+                'message' => 'Password reset successfully',
+                'password' => $plainPassword,
+                'user' => [
                     'id' => $user->id,
                     'name' => $user->name,
                     'email' => $user->email,
                     'username' => $user->username,
-                    'admissionNo' => $user->student->admissionNo ?? '',
-                    'class_name' => $user->student->class_name ?? '',
-                    'password' => '********', // Don't reveal password on reprint
-                ]
+                ],
             ]);
 
         } catch (\Exception $e) {
+            Log::error("Reset password error: {$e->getMessage()}");
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to retrieve credentials.',
+                'message' => 'Failed to reset password.',
             ], 500);
         }
     }
 
     // ─────────────────────────────────────────────────────────────────
-    // BULK PRINT ALL STUDENT CREDENTIALS
-    // ─────────────────────────────────────────────────────────────────
-    public function bulkPrintCredentials(Request $request): JsonResponse
-    {
-        try {
-            $students = User::role('student')
-                ->with(['student'])
-                ->get()
-                ->map(function ($user) {
-                    return [
-                        'id' => $user->id,
-                        'name' => $user->name,
-                        'email' => $user->email,
-                        'username' => $user->username,
-                        'admissionNo' => $user->student->admissionNo ?? '',
-                        'class_name' => $user->student->class_name ?? '',
-                        'password' => '********',
-                    ];
-                });
-
-            return response()->json([
-                'success' => true,
-                'students' => $students,
-                'count' => $students->count(),
-            ]);
-
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to retrieve credentials.',
-            ], 500);
-        }
-    }
-
-    // ─────────────────────────────────────────────────────────────────
-    // GET students list for modals (UPDATED with has_account flag)
+    // GET students list (ENHANCED - includes has_account flag)
     // ─────────────────────────────────────────────────────────────────
     public function getStudents(Request $request): JsonResponse
     {
         try {
             $search = trim($request->get('search', ''));
-            $limit = min((int) $request->get('limit', 300), 2000);
+            $limit = min((int) $request->get('limit', 2000), 5000);
             $classId = $request->get('class_id');
             $armId = $request->get('arm_id');
+            $hasAccount = $request->get('has_account'); // 'yes', 'no', or 'all'
 
             $query = DB::table('studentRegistration as sr')
                 ->leftJoin('studentclass as sc', function ($join) {
@@ -892,12 +925,15 @@ class UserController extends Controller
                     'sr.firstname',
                     'sr.lastname',
                     'sr.email',
+                    'sr.phone_number',
                     'cls.id as class_id',
                     'cls.schoolclass as class_name',
                     'arm.id as arm_id',
                     'arm.arm as arm_name',
                     DB::raw('CASE WHEN u.id IS NOT NULL THEN 1 ELSE 0 END as has_account'),
-                    DB::raw('u.id as user_id') // Include user_id if exists
+                    DB::raw('u.id as user_id'),
+                    DB::raw('u.username as username'),
+                    DB::raw('u.created_at as account_created_at')
                 );
 
             if ($search) {
@@ -917,13 +953,19 @@ class UserController extends Controller
                 $query->where('arm.id', $armId);
             }
 
+            if ($hasAccount === 'yes') {
+                $query->whereNotNull('u.id');
+            } elseif ($hasAccount === 'no') {
+                $query->whereNull('u.id');
+            }
+
             $students = $query
                 ->orderBy('sr.lastname')
                 ->orderBy('sr.firstname')
                 ->limit($limit)
                 ->get();
 
-            // Dropdown data for filter selects
+            // Get filter data
             $classes = DB::table('schoolclass as cls')
                 ->leftJoin('schoolarm as arm', 'arm.id', '=', 'cls.arm')
                 ->select('cls.id', 'cls.schoolclass as name', 'arm.id as arm_id', 'arm.arm as arm_name')
@@ -937,17 +979,22 @@ class UserController extends Controller
 
             return response()->json([
                 'success' => true,
-                'students' => $students->map(fn($s) => [
+                'students' => $students->map(fn ($s) => [
                     'id' => $s->id,
                     'admissionNo' => $s->admissionNo,
                     'name' => trim("{$s->firstname} {$s->lastname}"),
+                    'firstname' => $s->firstname,
+                    'lastname' => $s->lastname,
                     'email' => $s->email ?? '',
+                    'phone_number' => $s->phone_number ?? '',
                     'class_id' => $s->class_id,
                     'class_name' => $s->class_name ?? '',
                     'arm_id' => $s->arm_id,
                     'arm_name' => $s->arm_name ?? '',
                     'has_account' => (bool) $s->has_account,
                     'user_id' => $s->user_id,
+                    'username' => $s->username,
+                    'account_created_at' => $s->account_created_at,
                 ])->values()->toArray(),
                 'classes' => $classes,
                 'arms' => $arms,
@@ -958,6 +1005,59 @@ class UserController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to load students',
+            ], 500);
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────
+    // Bulk reprint credentials for selected students
+    // ─────────────────────────────────────────────────────────────────
+    public function bulkReprintCredentials(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'student_ids' => 'required|array|min:1',
+                'student_ids.*' => 'exists:studentRegistration,id',
+            ]);
+
+            $students = DB::table('studentRegistration')
+                ->whereIn('id', $request->input('student_ids'))
+                ->get();
+
+            $credentials = [];
+            $skipped = [];
+
+            foreach ($students as $student) {
+                $user = User::where('student_id', $student->id)->first();
+
+                if (!$user) {
+                    $skipped[] = trim("{$student->firstname} {$student->lastname}");
+                    continue;
+                }
+
+                $credentials[] = [
+                    'student_id' => $student->id,
+                    'name' => trim("{$student->firstname} {$student->lastname}"),
+                    'email' => $user->email,
+                    'username' => $user->username,
+                    'admissionNo' => $student->admissionNo ?? '',
+                    'class_name' => $student->class_name ?? '',
+                    'note' => 'Password not shown - use Reset Password to set new one',
+                ];
+            }
+
+            return response()->json([
+                'success' => true,
+                'credentials' => $credentials,
+                'skipped' => $skipped,
+                'count' => count($credentials),
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error("Bulk reprint error: {$e->getMessage()}");
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve credentials',
             ], 500);
         }
     }

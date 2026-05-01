@@ -108,7 +108,12 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/users/revoke-student-password', [UserController::class, 'revokeStudentPassword'])->name('users.revoke-student-password');
         Route::delete('/users/{id}',          [UserController::class, 'destroy'])->name('users.destroy');
         Route::post('/users/get-student-credentials',[UserController::class, 'getStudentCredentials'])->name('users.get-student-credentials');
+        // Add these routes to your web.php file
 
+        Route::post('/users/reset-single-password/{id}', [UserController::class, 'resetSingleStudentPassword'])->name('users.reset-single-password');
+        Route::post('/users/bulk-reprint', [UserController::class, 'bulkReprintCredentials'])->name('users.bulk-reprint');
+
+        
         // Resource AFTER all static /users/xxx routes
         Route::resource('users', UserController::class);
 
