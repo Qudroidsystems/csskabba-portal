@@ -1711,7 +1711,7 @@
          ==================================================== -->
     @if (Route::is('dashboard')) @include('layouts.pages-assets.js.dashboard-list-js') @endif
     @if (Route::is('users.*')) @include('layouts.pages-assets.js.users-list-js') @endif
-    @if (Route::is('student-id-cards.*')) @include('layouts.pages-assets.js.users-list-js') @endif
+    @if (Route::is('student-id-cards.*')) @include('layouts.pages-assets.js.idcard-list-js') @endif
     @if (Route::is('profile.*')) @include('layouts.pages-assets.js.users-list-js') @endif
     @if (Route::is('roles.*')) @include('layouts.pages-assets.js.role-list-js') @endif
     @if (Route::is('permissions.*')) @include('layouts.pages-assets.js.permissions-list-js') @endif
