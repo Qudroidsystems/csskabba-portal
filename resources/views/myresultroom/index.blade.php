@@ -184,9 +184,9 @@
                                                         <td class="session" data-session="{{ $subject->session }}">{{ $subject->session }}</td>
                                                         <td>
                                                             <ul class="d-flex gap-2 list-unstyled mb-0">
-                                                                @if ($subject->broadsheet_exists)
+                                                                @if ($subject->broadsheet_exists && $subject->terminal_url)
                                                                     <li>
-                                                                        <a href="{{ route('subjectscoresheet.index', [$subject->schoolclassid, $subject->subjectclassid, $subject->userid, $subject->termid, $subject->session_id]) }}"
+                                                                        <a href="{{ $subject->terminal_url }}"
                                                                            class="btn btn-success btn-icon btn-sm" title="View Terminal Record">
                                                                             <i class="ph-file-list"></i>
                                                                         </a>
@@ -194,9 +194,9 @@
                                                                 @else
                                                                     <li><span class="badge bg-warning" title="No Terminal Record Available">N/A</span></li>
                                                                 @endif
-                                                                @if ($subject->broadsheet_mock_exists)
+                                                                @if ($subject->broadsheet_mock_exists && $subject->mock_url)
                                                                     <li>
-                                                                        <a href="{{ route('subjectscoresheet-mock.show', [$subject->schoolclassid, $subject->subjectclassid, $subject->userid, $subject->termid, $subject->session_id]) }}"
+                                                                        <a href="{{ $subject->mock_url }}"
                                                                            class="btn btn-warning btn-icon btn-sm" title="View Mock Record">
                                                                             <i class="ph-clipboard"></i>
                                                                         </a>
@@ -226,6 +226,10 @@
 </div>
 
 <script>
+    // Store terms and sessions globally
+    window.terms = @json($terms);
+    window.sessions = @json($sessions);
+
     document.addEventListener('DOMContentLoaded', function () {
         const filterButton = document.getElementById('filterButton');
         const idterm = document.getElementById('idterm');
@@ -233,15 +237,31 @@
         const subjectList = document.getElementById('subjectList');
         const subjectTeachersCard = document.getElementById('subjectTeachersCard');
         const noDataAlert = document.getElementById('noDataAlert');
+        const searchInput = document.getElementById('searchInput');
+        const clearSearch = document.getElementById('clearSearch');
+        const checkAll = document.getElementById('checkAll');
 
+        // Filter button click handler
         filterButton.addEventListener('click', function () {
             const termId = idterm.value;
             const sessionId = idsession.value;
 
             if (termId === 'ALL' || sessionId === 'ALL') {
-                alert('Please select both term and session.');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Selection Required',
+                    text: 'Please select both term and session.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
                 return;
             }
+
+            // Show loading state
+            filterButton.disabled = true;
+            filterButton.innerHTML = '<i class="bi bi-hourglass-split me-1"></i> Loading...';
 
             const formData = new FormData();
             formData.append('termid', termId);
@@ -262,13 +282,44 @@
                     // Update the table body with new data
                     updateSubjectTable(data.data.mysubjects);
                     updateSubjectTeachers(data.data.subjectTeachers);
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: data.message,
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
                 } else {
-                    alert(data.message);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error!',
+                        text: data.message,
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 3000
+                    });
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert('An error occurred while fetching data.');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: 'An error occurred while fetching data.',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000
+                });
+            })
+            .finally(() => {
+                // Reset button state
+                filterButton.disabled = false;
+                filterButton.innerHTML = '<i class="bi bi-funnel align-baseline me-1"></i> Search';
             });
         });
 
@@ -282,49 +333,51 @@
                 document.getElementById('subjectcount').textContent = '0';
             } else {
                 subjects.forEach((subject, index) => {
-                    const row = `
-                        <tr>
-                            <td class="id" data-id="${subject.id}">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="chk_child"
-                                           data-subjectclassid="${subject.subjectclassid}"
-                                           data-termid="${subject.termid}"
-                                           data-sessionid="${subject.session_id}"
-                                           data-staffid="${subject.userid}">
-                                    <label class="form-check-label"></label>
-                                </div>
-                            </td>
-                            <td class="sn">${index + 1}</td>
-                            <td class="schoolclass" data-schoolclass="${subject.schoolclass}">${subject.schoolclass} (${subject.classcategories})</td>
-                            <td class="subject" data-subject="${subject.subject}">${subject.subject}</td>
-                            <td class="subjectcode" data-subjectcode="${subject.subjectcode}">${subject.subjectcode}</td>
-                            <td class="term" data-term="${subject.term}">${subject.term}</td>
-                            <td class="session" data-session="${subject.session}">${subject.session}</td>
-                            <td>
-                                <ul class="d-flex gap-2 list-unstyled mb-0">
-                                    ${subject.broadsheet_exists ? 
-                                        `<li><a href="/subjectscoresheet/index/${subject.schoolclassid}/${subject.subjectclassid}/${subject.userid}/${subject.termid}/${subject.session_id}" 
-                                               class="btn btn-success btn-icon btn-sm" title="View Terminal Record">
-                                               <i class="ph-file-list"></i>
-                                               </a></li>` : 
-                                        '<li><span class="badge bg-warning" title="No Terminal Record Available">N/A</span></li>'
-                                    }
-                                    ${subject.broadsheet_mock_exists ? 
-                                        `<li><a href="/subjectscoresheet-mock/show/${subject.schoolclassid}/${subject.subjectclassid}/${subject.userid}/${subject.termid}/${subject.session_id}" 
-                                               class="btn btn-warning btn-icon btn-sm" title="View Mock Record">
-                                               <i class="ph-clipboard"></i>
-                                               </a></li>` : 
-                                        '<li><span class="badge bg-warning" title="No Mock Record Available">N/A</span></li>'
-                                    }
-                                </ul>
-                            </td>
-                        </tr>
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="id" data-id="${subject.id}">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="chk_child"
+                                       data-subjectclassid="${subject.subjectclassid}"
+                                       data-termid="${subject.termid}"
+                                       data-sessionid="${subject.session_id}"
+                                       data-staffid="${subject.userid}">
+                                <label class="form-check-label"></label>
+                            </div>
+                        </td>
+                        <td class="sn">${index + 1}</td>
+                        <td class="schoolclass" data-schoolclass="${subject.schoolclass}">${escapeHtml(subject.schoolclass)} (${escapeHtml(subject.classcategories)})</td>
+                        <td class="subject" data-subject="${subject.subject}">${escapeHtml(subject.subject)}</td>
+                        <td class="subjectcode" data-subjectcode="${subject.subjectcode}">${escapeHtml(subject.subjectcode)}</td>
+                        <td class="term" data-term="${subject.term}">${escapeHtml(subject.term)}</td>
+                        <td class="session" data-session="${subject.session}">${escapeHtml(subject.session)}</td>
+                        <td>
+                            <ul class="d-flex gap-2 list-unstyled mb-0">
+                                ${subject.broadsheet_exists && subject.terminal_url ?
+                                    `<li><a href="${subject.terminal_url}"
+                                           class="btn btn-success btn-icon btn-sm" title="View Terminal Record">
+                                           <i class="ph-file-list"></i>
+                                           </a></li>` :
+                                    '<li><span class="badge bg-warning" title="No Terminal Record Available">N/A</span></li>'
+                                }
+                                ${subject.broadsheet_mock_exists && subject.mock_url ?
+                                    `<li><a href="${subject.mock_url}"
+                                           class="btn btn-warning btn-icon btn-sm" title="View Mock Record">
+                                           <i class="ph-clipboard"></i>
+                                           </a></li>` :
+                                    '<li><span class="badge bg-warning" title="No Mock Record Available">N/A</span></li>'
+                                }
+                            </ul>
+                        </td>
                     `;
-                    tbody.innerHTML += row;
+                    tbody.appendChild(row);
                 });
                 noDataAlert.style.display = 'none';
                 document.getElementById('subjectcount').textContent = subjects.length;
             }
+
+            // Reset checkAll checkbox
+            if (checkAll) checkAll.checked = false;
         }
 
         function updateSubjectTeachers(teachers) {
@@ -343,10 +396,13 @@
                     return acc;
                 }, {});
 
+                // Get terms data from global variable
+                const termsData = window.terms || [];
+
                 Object.keys(grouped).forEach(termId => {
-                    const term = terms.find(t => t.id == termId); // Assume terms is global or passed
+                    const term = termsData.find(t => t.id == termId);
                     if (term) {
-                        let termHtml = `<h6 class="mt-3">${term.term}</h6><div class="row">`;
+                        let termHtml = `<h6 class="mt-3">${escapeHtml(term.term)}</h6><div class="row">`;
                         grouped[termId].forEach(teacher => {
                             termHtml += `
                                 <div class="col-md-6 col-lg-4">
@@ -355,8 +411,28 @@
                                                data-subjectclassid="${teacher.subjectclassid}" data-staffid="${teacher.userid}"
                                                data-termid="${termId}" checked>
                                         <label class="form-check-label" for="subject-${teacher.subjectclassid}">
-                                            <strong>${teacher.subjectname}</strong><br>
-                                            <small class="text-muted">${teacher.schoolclass} - ${teacher.staffname}</small>
+                                            <strong>${escapeHtml(teacher.subjectname)}</strong><br>
+                                            <small class="text-muted">${escapeHtml(teacher.schoolclass)}</small>
+                                        </label>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        termHtml += '</div>';
+                        container.innerHTML += termHtml;
+                    } else {
+                        // If term not found in global terms, display without term header
+                        let termHtml = `<div class="row">`;
+                        grouped[termId].forEach(teacher => {
+                            termHtml += `
+                                <div class="col-md-6 col-lg-4">
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input subject-checkbox" type="checkbox" id="subject-${teacher.subjectclassid}"
+                                               data-subjectclassid="${teacher.subjectclassid}" data-staffid="${teacher.userid}"
+                                               data-termid="${termId}" checked>
+                                        <label class="form-check-label" for="subject-${teacher.subjectclassid}">
+                                            <strong>${escapeHtml(teacher.subjectname)}</strong><br>
+                                            <small class="text-muted">${escapeHtml(teacher.schoolclass)}</small>
                                         </label>
                                     </div>
                                 </div>
@@ -372,11 +448,98 @@
             }
         }
 
-        // Add global variables for terms
-        window.terms = @json($terms);
+        // Helper function to escape HTML
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
 
-        // Other JS code for selectAll, etc., can be added if needed
+        // Search functionality
+        if (searchInput) {
+            searchInput.addEventListener('keyup', function() {
+                const searchTerm = this.value.toLowerCase();
+                const rows = document.querySelectorAll('#subjectTableBody tr');
+
+                rows.forEach(row => {
+                    const schoolclass = row.querySelector('.schoolclass');
+                    const subject = row.querySelector('.subject');
+                    const subjectcode = row.querySelector('.subjectcode');
+
+                    if (schoolclass && subject && subjectcode) {
+                        const text = schoolclass.textContent.toLowerCase() + ' ' +
+                                   subject.textContent.toLowerCase() + ' ' +
+                                   subjectcode.textContent.toLowerCase();
+
+                        if (text.includes(searchTerm)) {
+                            row.style.display = '';
+                        } else {
+                            row.style.display = 'none';
+                        }
+                    }
+                });
+            });
+        }
+
+        // Clear search
+        if (clearSearch) {
+            clearSearch.addEventListener('click', function() {
+                if (searchInput) {
+                    searchInput.value = '';
+                    const rows = document.querySelectorAll('#subjectTableBody tr');
+                    rows.forEach(row => {
+                        row.style.display = '';
+                    });
+                }
+            });
+        }
+
+        // CheckAll functionality
+        if (checkAll) {
+            checkAll.addEventListener('change', function() {
+                const checkboxes = document.querySelectorAll('#subjectTableBody input[name="chk_child"]');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = checkAll.checked;
+                });
+            });
+        }
     });
+
+    // Global functions for select/deselect
+    function selectAllSubjects() {
+        const checkboxes = document.querySelectorAll('.subject-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = true;
+        });
+    }
+
+    function deselectAllSubjects() {
+        const checkboxes = document.querySelectorAll('.subject-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = false;
+        });
+    }
 </script>
+
+<style>
+    .cursor-pointer {
+        cursor: pointer;
+    }
+    .cursor-pointer:hover {
+        background-color: rgba(0,0,0,0.05);
+    }
+    .btn-icon {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .ph-file-list:before, .ph-clipboard:before {
+        font-size: 18px;
+    }
+</style>
 
 @endsection

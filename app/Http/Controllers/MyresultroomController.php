@@ -127,6 +127,31 @@ class MyresultroomController extends Controller
                                 $query->where('session_id', $subject->sessionid);
                             })
                             ->exists();
+
+                        // Generate URLs without "index" and "show" in the path
+                        $terminalUrl = null;
+                        $mockUrl = null;
+
+                        if ($broadsheetExists) {
+                            $terminalUrl = route('subjectscoresheet.index', [
+                                'schoolclassid' => $subject->schoolclassid,
+                                'subjectclassid' => $subject->subjectclassid,
+                                'staffid' => $user->id,
+                                'termid' => $subject->termid,
+                                'sessionid' => $subject->sessionid
+                            ]);
+                        }
+
+                        if ($broadsheetMockExists) {
+                            $mockUrl = route('subjectscoresheet-mock.show', [
+                                'schoolclassid' => $subject->schoolclassid,
+                                'subjectclassid' => $subject->subjectclassid,
+                                'staffid' => $user->id,
+                                'termid' => $subject->termid,
+                                'sessionid' => $subject->sessionid
+                            ]);
+                        }
+
                     } catch (\Exception $e) {
                         Log::error('Error checking broadsheet existence', [
                             'user_id' => $user->id,
@@ -137,6 +162,8 @@ class MyresultroomController extends Controller
                         ]);
                         $broadsheetExists = false;
                         $broadsheetMockExists = false;
+                        $terminalUrl = null;
+                        $mockUrl = null;
                     }
 
                     return (object) [
@@ -154,6 +181,8 @@ class MyresultroomController extends Controller
                         'termid' => $subject->termid,
                         'broadsheet_exists' => $broadsheetExists,
                         'broadsheet_mock_exists' => $broadsheetMockExists,
+                        'terminal_url' => $terminalUrl,
+                        'mock_url' => $mockUrl,
                     ];
                 })->filter();
 
@@ -182,6 +211,8 @@ class MyresultroomController extends Controller
                         'data' => [
                             'mysubjects' => $mysubjects->values(),
                             'subjectTeachers' => $subjectTeachers->values(),
+                            'terms' => $terms,
+                            'sessions' => $sessions,
                         ],
                     ], 200);
                 }

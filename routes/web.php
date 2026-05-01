@@ -317,10 +317,19 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
     Route::resource('myclass', MyClassController::class);
     Route::resource('mysubject', MySubjectController::class);
 
+    // Route::get('/myresultroom', [MyresultroomController::class, 'index'])->name('myresultroom.index');
+    // Route::post('/myresultroom', [MyresultroomController::class, 'index']);
+    // Route::post('/myresultroom/store', [MyresultroomController::class, 'store']);
+    // Route::delete('/subjects/registered-classes', [MyresultroomController::class, 'delete']); // Adjust as needed
+
+
+    // Your existing routes
     Route::get('/myresultroom', [MyresultroomController::class, 'index'])->name('myresultroom.index');
     Route::post('/myresultroom', [MyresultroomController::class, 'index']);
     Route::post('/myresultroom/store', [MyresultroomController::class, 'store']);
-    Route::delete('/subjects/registered-classes', [MyresultroomController::class, 'delete']); // Adjust as needed
+    Route::delete('/subjects/registered-classes', [MyresultroomController::class, 'delete']);
+
+
     // Route::get('/subjectscoresheet/{schoolclassid}/{subjectclassid}/{userid}/{termid}/{session_id}', [MyScoreSheetController::class, 'index'])->name('subjectscoresheet.index');
     // Route::get('/subjectscoresheet-mock/{schoolclassid}/{subjectclassid}/{userid}/{termid}/{sessionid}', [MyScoreSheetController::class, 'index'])->name('subjectscoresheet-mock.index');
     Route::resource('studentresults', StudentResultsController::class);
