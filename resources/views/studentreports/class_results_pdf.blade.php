@@ -584,7 +584,7 @@
                         </span>
                     </div>
                 </div>
-                <div class="powered-by">Powered by Qudroid Systems</div>
+                <div class="powered-by">Powered by Qudroid Systemsnnn</div>
             </div>
         </div>
     @endforeach
