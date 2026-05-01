@@ -16,11 +16,28 @@
             line-height: 1.35;
             color: #000;
             background: #f5f5f5;
-            padding: 4mm 0; /* FIX 3: was 8mm 0 — reduced to cut blank space */
+            padding: 4mm 0;
             text-align: center;
         }
 
-        /* SCHOOL NAME HEADER - Centered */
+        /* WATERMARK */
+        .watermark-text {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-25deg);
+            font-size: 65px;
+            font-weight: 900;
+            color: rgba(0, 0, 0, 0.04);
+            font-family: 'Arial Black', sans-serif;
+            letter-spacing: 5px;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 1000;
+            text-transform: uppercase;
+        }
+
+        /* SCHOOL NAME HEADER */
         .school-name-header {
             width: 100%;
             background: #111827;
@@ -48,24 +65,7 @@
             margin-top: 3px;
         }
 
-        /* WATERMARK */
-        .watermark-text {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) rotate(-25deg);
-            font-size: 65px;
-            font-weight: 900;
-            color: rgba(0, 0, 0, 0.04);
-            font-family: 'Arial Black', sans-serif;
-            letter-spacing: 5px;
-            white-space: nowrap;
-            pointer-events: none;
-            z-index: 1000;
-            text-transform: uppercase;
-        }
-
-        /* MAIN CARD */
+        /* MAIN CARD — no overflow or padding-bottom hacks needed */
         .student-section {
             width: 190mm;
             page-break-after: always;
@@ -75,8 +75,7 @@
             position: relative;
             text-align: left;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-            overflow: visible; /* FIX 2: was 'hidden' — was clipping stamp & QR code */
-            padding-bottom: 130px; /* FIX 3: reserve space at bottom for stamp + QR */
+            overflow: hidden;
         }
 
         .student-section:last-child {
@@ -157,18 +156,18 @@
             padding-left: 4px;
         }
 
-        /* FIX 4: RESULT TABLE - margin moved from table to wrapper */
+        /* RESULT TABLE */
         .result-table {
-            padding: 0 10px; /* FIX 4: was margin on table itself; now padding on wrapper */
+            padding: 0 10px;
             margin: 8px 0;
         }
 
         .result-table table {
-            width: 100%; /* FIX 4: now truly 100% of wrapper (not card minus 2×10px margin) */
+            width: 100%;
             border: 2px solid #000000;
             border-collapse: collapse;
             font-size: 7.8px;
-            margin: 0; /* FIX 4: was margin: 8px 10px — removed from table */
+            margin: 0;
         }
 
         .result-table thead th {
@@ -199,7 +198,6 @@
 
         .highlight-red { color: #dc2626; font-weight: 900; }
 
-        /* Column Widths */
         .col-sn { width: 28px; }
         .col-admissionno { width: 78px; }
         .col-name { width: 165px; }
@@ -211,9 +209,8 @@
         .col-position { width: 38px; }
         .col-class-average { width: 42px; }
 
-        /* FIX 4: totals bar aligned to match table wrapper padding */
         .totals-summary {
-            width: calc(100% - 20px); /* FIX 4: was 98% — now matches 10px padding on each side */
+            width: calc(100% - 20px);
             background: #0d1a3d;
             color: #ffffff;
             font-weight: 900;
@@ -222,11 +219,11 @@
             border: 2px solid #000000;
             border-top: none;
             text-align: center;
-            margin: 0 10px 8px 10px; /* FIX 4: was 8px auto — now aligned with table */
+            margin: 0 10px 8px 10px;
         }
 
         .remarks-table {
-            width: calc(100% - 20px); /* align with table */
+            width: calc(100% - 20px);
             border: 2px solid #000000;
             border-collapse: collapse;
             margin: 8px 10px 4px;
@@ -248,29 +245,75 @@
             display: inline-block;
         }
 
-        /* FOOTER */
-        /* FIX 3: margin-bottom increased to 130px to leave room for QR + stamp */
-        .footer-section {
-            background: #f1f5f9;
-            padding: 9px 12px 6px;
+        /* ─── BOTTOM STRIP ──────────────────────────────────────────────────────
+           Replaces the old absolute-positioned QR + stamp + footer.
+           Dompdf does not reliably render position:absolute children outside
+           normal flow. We use a single normal-flow table instead:
+             Left cell  → QR code
+             Middle cell → Issued / Next Term / Powered by
+             Right cell  → Stamp image
+        ─────────────────────────────────────────────────────────────────────── */
+        .bottom-strip {
+            width: 100%;
             border-top: 1px solid #cbd5e1;
-            text-align: center;
-            margin: 0 10px 130px; /* FIX 3: was 0 10px 8px — now clears absolute elements */
-            font-size: 8.6px;
+            background: #f1f5f9;
+            margin-top: 6px;
         }
 
-        .footer-content {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-            line-height: 1.4;
+        .bottom-strip table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .bottom-strip td {
+            padding: 8px 10px;
+            vertical-align: middle;
+        }
+
+        .bottom-strip .cell-qr {
+            width: 90px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .bottom-strip .cell-footer {
+            text-align: center;
+            font-size: 8.6px;
+            vertical-align: middle;
+        }
+
+        .bottom-strip .cell-stamp {
+            width: 120px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .bottom-strip .cell-qr img {
+            width: 72px;
+            height: 72px;
+            display: block;
+            margin: 0 auto 2px;
+        }
+
+        .qr-label {
+            font-size: 6.5px;
+            color: #333;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .bottom-strip .cell-stamp img {
+            width: 105px;
+            height: 105px;
+            transform: rotate(-8deg);
+            display: block;
+            margin: 0 auto;
         }
 
         .text-dot-space2 {
             border-bottom: 1px dotted #333;
             display: inline-block;
-            min-width: 120px;
+            min-width: 110px;
             font-weight: bold;
             margin: 0 4px;
         }
@@ -279,44 +322,6 @@
             font-size: 8px;
             margin-top: 4px;
             color: #64748b;
-        }
-
-        /* FIX 2: APPROVED STAMP — repositioned to sit inside card bottom-right */
-        .approved-stamp {
-            position: absolute;
-            bottom: 10px;   /* FIX 2: was 95px — now anchored near bottom edge */
-            right: 14px;    /* FIX 2: was 48px — tucked into right corner */
-            width: 110px;   /* FIX 2: was 135px — slightly smaller to fit cleanly */
-            height: 110px;
-            opacity: 0.82;
-            z-index: 10;
-            pointer-events: none;
-            transform: rotate(-8deg);
-        }
-
-        /* FIX 1: QR CODE — repositioned to bottom-left, visible inside card */
-        .qr-code-container {
-            position: absolute;
-            bottom: 12px;   /* FIX 1: was 48px — now sits at bottom edge */
-            left: 12px;     /* FIX 1: was 38px — tucked into left corner */
-            text-align: center;
-            z-index: 11;
-            background: rgba(255,255,255,0.95);
-            padding: 4px 5px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-
-        .qr-code-container img {
-            width: 70px;    /* FIX 1: was 82px — slightly smaller for cleaner fit */
-            height: 70px;
-        }
-
-        .qr-label {
-            font-size: 6px; /* FIX 1: was 6.8px */
-            color: #333;
-            margin-top: 2px;
-            font-weight: 600;
         }
 
         .grade-A { color: #16a34a; font-weight: 900; }
@@ -355,7 +360,6 @@
             $assessments = $studentData['assessments'] ?? collect();
             $totals = $studentData['totals_summary'] ?? [];
 
-            // QR Code Data
             $admNo = $student->admissionNo ?? 'N/A';
             $fullName = trim(strtoupper($student->lastname ?? '') . ' ' . ($student->fname ?? '') . ' ' . ($student->othername ?? ''));
             $classVal = trim(($studentData['schoolclass']->schoolclass ?? '') . ' ' . ($studentData['schoolclass']->arms->arm ?? ''));
@@ -373,15 +377,6 @@
         @endphp
 
         <div class="student-section">
-
-            <!-- APPROVED STAMP (Bottom-Right) — FIX 2: repositioned + overflow:visible on parent -->
-            <img src="{{ asset('stamp.jpeg') }}" alt="Approved Stamp" class="approved-stamp">
-
-            <!-- QR CODE (Bottom-Left) — FIX 1: repositioned + overflow:visible on parent -->
-            <div class="qr-code-container">
-                <img src="data:image/png;base64,{{ $qrCodeBase64 }}" alt="QR Code">
-                <div class="qr-label">Scan for Verification</div>
-            </div>
 
             <!-- SCHOOL NAME HEADER -->
             <div class="school-name-header">
@@ -462,7 +457,7 @@
                 </div>
             @endif
 
-            <!-- RESULT TABLE — FIX 4: wrapper has padding, table has no margin -->
+            <!-- RESULT TABLE -->
             <div class="result-table">
                 <table>
                     <thead>
@@ -550,7 +545,7 @@
                 </table>
             </div>
 
-            <!-- TOTALS — FIX 4: width and margin aligned with table -->
+            <!-- TOTALS -->
             <div class="totals-summary">
                 TOTAL OBTAINED: {{ number_format($totals['obtained'] ?? 0, 1) }} &nbsp;&nbsp;|&nbsp;&nbsp;
                 TOTAL OBTAINABLE: {{ $totals['obtainable'] ?? 0 }} &nbsp;&nbsp;|&nbsp;&nbsp;
@@ -573,26 +568,49 @@
                 </tbody>
             </table>
 
-            <!-- FOOTER — FIX 3: margin-bottom:130px makes room for QR + stamp below -->
-            <div class="footer-section">
-                <div class="footer-content">
-                    <div>
-                        <strong>Issued:</strong>
-                        <span class="text-dot-space2">{{ now()->format('jS F, Y') }}</span>
-                        <strong style="margin-left:25px;">Collected by:</strong>
-                        <span class="text-dot-space2">.......................................</span>
-                    </div>
-                    <div>
-                        <strong>Next Term Begins:</strong>
-                        <span class="text-dot-space2">
-                            @php
-                                $nextTerm = $schoolInfo->date_next_term_begins ?? null;
-                                echo $nextTerm ? \Carbon\Carbon::parse($nextTerm)->format('jS F, Y') : '........................';
-                            @endphp
-                        </span>
-                    </div>
-                </div>
-                <div class="powered-by">Powered by Qudroid Systems</div>
+            <!-- ─── BOTTOM STRIP ───────────────────────────────────────────────────
+                 Single normal-flow table: QR | Footer text | Stamp
+                 Avoids position:absolute which dompdf mishandles — absolute children
+                 are clipped by overflow:hidden but do NOT expand parent height, so
+                 they either get cut off or fall outside the card onto a second page.
+            ─────────────────────────────────────────────────────────────────────── -->
+            <div class="bottom-strip">
+                <table>
+                    <tr>
+                        <!-- LEFT: QR Code -->
+                        <td class="cell-qr">
+                            <img src="data:image/png;base64,{{ $qrCodeBase64 }}" alt="QR Code">
+                            <div class="qr-label">Scan for Verification</div>
+                        </td>
+
+                        <!-- MIDDLE: Footer info -->
+                        <td class="cell-footer">
+                            <div>
+                                <strong>Issued:</strong>
+                                <span class="text-dot-space2">{{ now()->format('jS F, Y') }}</span>
+                            </div>
+                            <div style="margin-top:4px;">
+                                <strong>Collected by:</strong>
+                                <span class="text-dot-space2">.......................................</span>
+                            </div>
+                            <div style="margin-top:4px;">
+                                <strong>Next Term Begins:</strong>
+                                <span class="text-dot-space2">
+                                    @php
+                                        $nextTerm = $schoolInfo->date_next_term_begins ?? null;
+                                        echo $nextTerm ? \Carbon\Carbon::parse($nextTerm)->format('jS F, Y') : '........................';
+                                    @endphp
+                                </span>
+                            </div>
+                            <div class="powered-by">Powered by Qudroid Systems</div>
+                        </td>
+
+                        <!-- RIGHT: Stamp -->
+                        <td class="cell-stamp">
+                            <img src="{{ asset('stamp.jpeg') }}" alt="Approved Stamp">
+                        </td>
+                    </tr>
+                </table>
             </div>
 
         </div>
