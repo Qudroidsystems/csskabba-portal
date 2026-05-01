@@ -303,14 +303,14 @@
                             <td>
                                 <ul class="d-flex gap-2 list-unstyled mb-0">
                                     ${subject.broadsheet_exists ?
-                                        `<li><a href="/subjectscoresheet/index/${subject.schoolclassid}/${subject.subjectclassid}/${subject.userid}/${subject.termid}/${subject.session_id}"
+                                        `<li><a href="/subjectscoresheet/${subject.schoolclassid}/${subject.subjectclassid}/${subject.userid}/${subject.termid}/${subject.session_id}"
                                                class="btn btn-success btn-icon btn-sm" title="View Terminal Record">
                                                <i class="ph-file-list"></i>
                                                </a></li>` :
                                         '<li><span class="badge bg-warning" title="No Terminal Record Available">N/A</span></li>'
                                     }
                                     ${subject.broadsheet_mock_exists ?
-                                        `<li><a href="/subjectscoresheet-mock/show/${subject.schoolclassid}/${subject.subjectclassid}/${subject.userid}/${subject.termid}/${subject.session_id}"
+                                        `<li><a href="/subjectscoresheet-mock/${subject.schoolclassid}/${subject.subjectclassid}/${subject.userid}/${subject.termid}/${subject.session_id}"
                                                class="btn btn-warning btn-icon btn-sm" title="View Mock Record">
                                                <i class="ph-clipboard"></i>
                                                </a></li>` :
