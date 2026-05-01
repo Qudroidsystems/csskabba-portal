@@ -352,6 +352,7 @@
     <!-- Route-specific CSS includes -->
     @if (Route::is('dashboard')) @include('layouts.pages-assets.css.users-list-css') @endif
     @if (Route::is('users.*')) @include('layouts.pages-assets.css.users-list-css') @endif
+    @if (Route::is('student-id-cards.*')) @include('layouts.pages-assets.css.users-list-css') @endif
     @if (Route::is('profile.*')) @include('layouts.pages-assets.css.users-list-css') @endif
     @if (Route::is('roles.*')) @include('layouts.pages-assets.css.roles-list-css') @endif
     @if (Route::is('permissions.*')) @include('layouts.pages-assets.css.permission-list-css') @endif
@@ -608,11 +609,11 @@
                         @endcan
 
                         {{-- STUDENT & PARENTS --}}
-                        @if(auth()->user()->can('View student') || auth()->user()->can('Create student-bulk-upload') || auth()->user()->can('View parent'))
+                        @if(auth()->user()->can('View student') || auth()->user()->can('Create student-bulk-upload') || auth()->user()->can('View parent') || auth()->user()->can('View id card'))
                             <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-apps">STUDENT & PARENTS</span></li>
                         @endif
 
-                        @if(auth()->user()->can('View student') || auth()->user()->can('Create student-bulk-upload'))
+                        @if(auth()->user()->can('View student') || auth()->user()->can('Create student-bulk-upload')|| auth()->user()->can('Create student-bulk-upload'))
                             <li class="nav-item">
                                 <a href="#sidebarStudentmanagement" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarStudentmanagement">
                                     <i class="ph-storefront"></i> <span data-key="t-ecommerce">Student Management</span>
@@ -625,10 +626,20 @@
                                         @can('Create student-bulk-upload')
                                             <li class="nav-item"><a href="{{ route('studentbatchindex') }}" class="nav-link" data-key="t-products-grid">Batch Student Registration</a></li>
                                         @endcan
+                                        @can('View id card')
+                                            <li class="nav-item">
+                                                <a href="{{ route('student-id-cards.index') }}" class="nav-link">
+                                                    <i class="ri-id-card-line me-1"></i> ID Card Generator
+                                                </a>
+                                            </li>
+                                        @endcan
                                     </ul>
                                 </div>
                             </li>
                         @endif
+
+
+
 
                         @can('View parent')
                             <li class="nav-item">
@@ -1700,6 +1711,7 @@
          ==================================================== -->
     @if (Route::is('dashboard')) @include('layouts.pages-assets.js.dashboard-list-js') @endif
     @if (Route::is('users.*')) @include('layouts.pages-assets.js.users-list-js') @endif
+    @if (Route::is('student-id-cards.*')) @include('layouts.pages-assets.js.users-list-js') @endif
     @if (Route::is('profile.*')) @include('layouts.pages-assets.js.users-list-js') @endif
     @if (Route::is('roles.*')) @include('layouts.pages-assets.js.role-list-js') @endif
     @if (Route::is('permissions.*')) @include('layouts.pages-assets.js.permissions-list-js') @endif

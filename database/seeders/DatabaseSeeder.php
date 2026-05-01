@@ -90,6 +90,8 @@ class DatabaseSeeder extends Seeder
             'SubjectVettedPermissionTableSeeder' => '  ✅ Seeding subject vetted permissions...',
             'SubjectVettingsPermissionTableSeeder' => '  🔍 Seeding subject vettings...',
             'StudentAssessmentPermissionTableSeeder' => '  📝 Seeding student assessment permissions...',
+            'IdCardPermissionTableSeeder' => '  📝 Seeding student ID Card permissions...',
+
         ];
 
         foreach ($academicSeeders as $seeder => $message) {

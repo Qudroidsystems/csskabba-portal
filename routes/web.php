@@ -113,9 +113,19 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/users/reset-single-password/{id}', [UserController::class, 'resetSingleStudentPassword'])->name('users.reset-single-password');
         Route::post('/users/bulk-reprint', [UserController::class, 'bulkReprintCredentials'])->name('users.bulk-reprint');
 
-        
+
         // Resource AFTER all static /users/xxx routes
         Route::resource('users', UserController::class);
+
+
+
+        // Student ID Cards
+        Route::prefix('student-id-cards')->name('student-id-cards.')->middleware('auth')->group(function () {
+            Route::get('/', [StudentIdCardController::class, 'index'])->name('index');
+            Route::get('/load-students', [StudentIdCardController::class, 'loadStudents'])->name('load-students');
+            Route::post('/preview', [StudentIdCardController::class, 'preview'])->name('preview');
+            Route::post('/download', [StudentIdCardController::class, 'download'])->name('download');
+        });
 
         // ── Roles ────────────────────────────────────────────────────────
         Route::post('roles/bulk-remove-users', [RoleController::class, 'bulkRemoveUsers'])->name('roles.bulkremoveusers');
