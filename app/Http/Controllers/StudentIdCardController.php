@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
@@ -9,7 +10,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Picqer\Barcode\BarcodeGeneratorPNG;
-use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class StudentIdCardController extends Controller
 {
@@ -37,9 +37,6 @@ class StudentIdCardController extends Controller
         ));
     }
 
-    /**
-     * AJAX: Load Students for ID Card Selection
-     */
     public function loadStudents(Request $request)
     {
         try {
@@ -86,14 +83,11 @@ class StudentIdCardController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            Log::error('ID Card loadStudents: ' . $e->getMessage());
+            Log::error('ID Card loadStudents error: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => 'Failed to load students'], 500);
         }
     }
 
-    /**
-     * Preview ID Cards (AJAX)
-     */
     public function preview(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -122,9 +116,6 @@ class StudentIdCardController extends Controller
         ]);
     }
 
-    /**
-     * Download ID Cards as PDF
-     */
     public function download(Request $request)
     {
         $request->validate([
@@ -145,7 +136,7 @@ class StudentIdCardController extends Controller
         $orientation = $request->orientation;
 
         $pdf = Pdf::loadView('student.idcard.pdf', compact('students', 'schoolInfo', 'orientation'))
-            ->setPaper($orientation === 'landscape' ? [0, 0, 842, 595] : 'A4', $orientation) // Landscape = wider
+            ->setPaper($orientation === 'landscape' ? [0, 0, 842, 595] : 'A4', $orientation)
             ->setOptions([
                 'isRemoteEnabled' => true,
                 'isHtml5ParserEnabled' => true,
