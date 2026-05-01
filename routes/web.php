@@ -121,7 +121,7 @@ Route::group(['middleware' => ['auth']], function () {
 
 
         // Student ID Cards
-        Route::prefix('student-id-cards')->name('student-id-cards.')->middleware('auth')->group(function () {
+        Route::prefix('student-id-cards')->name('student-id-cards.')->group(function () {
             Route::get('/', [StudentIdCardController::class, 'index'])->name('index');
             Route::get('/load-students', [StudentIdCardController::class, 'loadStudents'])->name('load-students');
             Route::post('/preview', [StudentIdCardController::class, 'preview'])->name('preview');
