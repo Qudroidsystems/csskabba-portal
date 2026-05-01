@@ -287,33 +287,26 @@ class UserController extends Controller
     }
 
     // ============================================================
-    // EMAIL GENERATION HELPERS
+    // EMAIL GENERATION HELPERS - FIXED VERSION
     // ============================================================
 
     /**
-     * Clean string - remove special characters, accents, and convert to ASCII
+     * Clean string - remove ALL special characters including dots, commas, apostrophes, etc.
+     * Only keeps letters (a-z) and numbers (0-9)
      */
     private function cleanString($string)
     {
         if (empty($string)) return 'user';
 
-        // Convert to ASCII (removes accents)
+        // Convert to ASCII (removes accents like é, ñ, etc.)
         $string = Str::ascii($string);
 
         // Convert to lowercase
         $string = strtolower($string);
 
-        // Remove all special characters except letters, numbers, and spaces
-        $string = preg_replace('/[^a-z0-9\s]/', '', $string);
-
-        // Replace spaces with dots
-        $string = preg_replace('/\s+/', '.', $string);
-
-        // Remove multiple dots
-        $string = preg_replace('/\.+/', '.', $string);
-
-        // Trim dots from start and end
-        $string = trim($string, '.');
+        // Remove EVERYTHING except letters (a-z) and numbers (0-9)
+        // This removes: dots, commas, apostrophes, dashes, spaces, underscores, etc.
+        $string = preg_replace('/[^a-z0-9]/', '', $string);
 
         // If empty after cleaning, return default
         if (empty($string)) {
@@ -325,29 +318,43 @@ class UserController extends Controller
 
     /**
      * Generate a clean email from student name
-     * Format: firstname.lastname@student.school
+     * Format: firstname.lastname@student.school (with NO special characters in the name parts)
+     *
+     * Examples:
+     * - "Mercy Luke" -> mercy.luke@student.school
+     * - "Mercy.Luke" -> mercy.luke@student.school
+     * - "Mercy, Luke" -> mercy.luke@student.school
+     * - "O'Connor" -> oconnor@student.school (single name)
+     * - "Jean-Pierre" -> jeanpierre@student.school (no dash)
      */
     private function generateStudentEmail($student)
     {
         $domain = '@student.school';
 
-        // Get firstname and lastname, clean them
+        // Clean firstname and lastname - remove ALL special characters
         $firstname = $this->cleanString($student->firstname);
         $lastname = $this->cleanString($student->lastname);
 
-        // Generate base email: firstname.lastname@domain
-        $baseEmail = $firstname . '.' . $lastname;
-
-        // Remove any remaining special characters
-        $baseEmail = preg_replace('/[^a-z0-9.]/', '', $baseEmail);
-        $baseEmail = trim($baseEmail, '.');
-
-        // If still empty, use admission number or fallback
-        if (empty($baseEmail)) {
+        // Build email based on what's available
+        if (!empty($firstname) && !empty($lastname)) {
+            // Both first and last names exist
+            $baseEmail = $firstname . '.' . $lastname;
+        } elseif (!empty($firstname)) {
+            // Only first name exists
+            $baseEmail = $firstname;
+        } elseif (!empty($lastname)) {
+            // Only last name exists
+            $baseEmail = $lastname;
+        } else {
+            // No name - use admission number or fallback
             $baseEmail = !empty($student->admissionNo)
                 ? $this->cleanString($student->admissionNo)
                 : 'student_' . $student->id;
         }
+
+        // Final cleanup - ensure no dots at start or end, no multiple dots
+        $baseEmail = trim($baseEmail, '.');
+        $baseEmail = preg_replace('/\.+/', '.', $baseEmail);
 
         $email = $baseEmail . $domain;
 
@@ -370,15 +377,12 @@ class UserController extends Controller
             ? $this->cleanString($student->admissionNo)
             : 'student_' . $student->id;
 
-        // Replace spaces and special chars with underscore
-        $username = preg_replace('/[^a-z0-9_]/', '_', $baseUsername);
-        $username = strtolower($username);
+        $username = $baseUsername;
 
         // Check if username exists
         $counter = 1;
-        $originalUsername = $username;
         while (User::where('username', $username)->exists()) {
-            $username = $originalUsername . '_' . $counter;
+            $username = $baseUsername . $counter;
             $counter++;
         }
 
@@ -644,7 +648,7 @@ class UserController extends Controller
     private function createStudentAccount($student, $validated)
     {
         try {
-            // Generate clean email
+            // Generate clean email - now properly removes all special characters
             $email = $this->generateStudentEmail($student);
 
             // Generate username
