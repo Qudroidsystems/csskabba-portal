@@ -121,12 +121,17 @@ Route::group(['middleware' => ['auth']], function () {
 
 
         // Student ID Cards
-        Route::prefix('student-id-cards')->name('student-id-cards.')->group(function () {
-            Route::get('/', [StudentIdCardController::class, 'index'])->name('index');
-            Route::get('/load-students', [StudentIdCardController::class, 'loadStudents'])->name('load-students');
-            Route::post('/preview', [StudentIdCardController::class, 'preview'])->name('preview');
-            Route::post('/download', [StudentIdCardController::class, 'download'])->name('download');
-        });
+        // Route::prefix('student-id-cards')->name('student-id-cards.')->group(function () {
+        //     Route::get('/', [StudentIdCardController::class, 'index'])->name('index');
+        //     Route::get('/load-students', [StudentIdCardController::class, 'loadStudents'])->name('load-students');
+        //     Route::post('/preview', [StudentIdCardController::class, 'preview'])->name('preview');
+        //     Route::post('/download', [StudentIdCardController::class, 'download'])->name('download');
+        // });
+
+        Route::get('/student-id-cards',[StudentIdCardController::class, 'index'])->name('student-id-cards.index');
+        Route::get('/student-id-cards/load-students',[StudentIdCardController::class, 'loadStudents'])->name('student-id-cards.load-students');
+        Route::post('/student-id-cards/preview', [StudentIdCardController::class, 'preview'])->name('student-id-cards.preview');
+        Route::post('/student-id-cards/download',[StudentIdCardController::class, 'download']) ->name('student-id-cards.download');
 
         // ── Roles ────────────────────────────────────────────────────────
         Route::post('roles/bulk-remove-users', [RoleController::class, 'bulkRemoveUsers'])->name('roles.bulkremoveusers');
