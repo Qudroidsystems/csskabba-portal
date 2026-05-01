@@ -108,15 +108,16 @@
         }
 
         .middle-info {
-            font-size: 10.4px;
-            line-height: 1.75;
-            padding: 0 15px;
+            font-size: 11.2px;       /* was 10.4px — bigger */
+            font-weight: 700;        /* bolder body text */
+            line-height: 2.0;        /* was 1.75 — more space between lines */
+            padding: 4px 15px;       /* added vertical padding for breathing room */
             vertical-align: middle;
         }
 
         .middle-info strong {
             color: #1e40af;
-            font-weight: 700;
+            font-weight: 900;        /* was 700 — labels extra bold */
         }
 
         .header-divider { height: 2px; background: #1e40af; width: 100%; }

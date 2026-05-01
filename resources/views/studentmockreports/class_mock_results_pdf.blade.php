@@ -11,7 +11,7 @@
             line-height: 1.3;
             color: #000;
             background: #f5f5f5;
-            padding: 8mm 0;
+            padding: 4mm 0;
             text-align: center;
         }
         .school-name-header {
@@ -66,6 +66,7 @@
         }
         .student-section:last-child { page-break-after: avoid; }
         .header-table { width: 100%; border-collapse: collapse; padding: 8px 10px 6px; }
+
         .school-logo, .photo-frame {
             width: 74px; height: 88px;
             border: 2px solid #47b492;
@@ -73,13 +74,24 @@
             background: white;
             padding: 3px;
             overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: block;       /* dompdf-safe: block not flex */
+            text-align: center;
         }
         .school-logo img, .photo-frame img { max-width: 100%; max-height: 100%; object-fit: contain; }
-        .middle-info { font-size: 9.2px; line-height: 1.65; padding: 0 15px; vertical-align: middle; }
-        .middle-info strong { color: #1e40af; font-weight: 700; }
+
+        /* MIDDLE INFO — bolder, bigger, more line spacing */
+        .middle-info {
+            font-size: 11.2px;    /* was 9.2px */
+            font-weight: 700;     /* bolder body text */
+            line-height: 2.0;     /* was 1.65 — more space between lines */
+            padding: 4px 15px;    /* added vertical breathing room */
+            vertical-align: middle;
+        }
+        .middle-info strong {
+            color: #1e40af;
+            font-weight: 900;     /* was 700 — labels extra bold */
+        }
+
         .header-divider { width: 100%; height: 2px; background: #1e40af; margin: 0; }
         .header-divider2 { width: 100%; height: 1px; background: #64748b; margin: 2px 0; }
         .report-title {
@@ -100,25 +112,42 @@
             letter-spacing: 1px;
             text-align: center;
         }
+
+        /* STUDENT INFO BAR — centred, bolder */
         .student-info-bar {
             background: linear-gradient(to bottom, #f0f7ff 0%, #ffffff 100%);
             border: 2px solid #2aa886;
             border-radius: 6px;
             padding: 7px 12px;
             margin: 8px 10px;
-            font-size: 8.8px;
+            font-size: 9.2px;
+            text-align: center;
         }
-        .info-table { width: 100%; border-collapse: collapse; }
-        .info-table td { padding: 2px 6px; }
-        .info-bar-label { color: #1e40af; font-weight: 700; font-size: 8.2px; white-space: nowrap; }
-        .info-bar-value { font-weight: 900; padding-left: 4px; }
+        .info-table { width: 100%; border-collapse: collapse; margin: 0 auto; }
+        .info-table td { padding: 3px 8px; text-align: center; }
+        .info-bar-label {
+            color: #1e40af;
+            font-weight: 900;     /* was 700 */
+            font-size: 8.6px;     /* was 8.2px */
+            white-space: nowrap;
+        }
+        .info-bar-value {
+            font-weight: 900;
+            font-size: 9.4px;
+            padding-left: 3px;
+        }
+
+        /* RESULT TABLE — bolder scores */
+        .result-table {
+            padding: 0 10px;
+            margin: 8px 0;
+        }
         .result-table table {
             width: 100%;
             border: 2px solid #000;
             border-collapse: collapse;
             font-size: 7.8px;
-            margin: 0 10px;
-            width: calc(100% - 20px);
+            margin: 0;
         }
         .result-table thead th {
             background: #0d1a3d;
@@ -132,13 +161,18 @@
             border: 1px solid #000;
             padding: 2px 1px;
             text-align: center;
-            font-size: 7.5px;
+            font-size: 8px;       /* was 7.5px — slightly bigger */
             background: white;
-            font-weight: 600;
+            font-weight: 800;     /* was 600 — bolder */
             height: 16px;
             line-height: 16px;
         }
-        .result-table tbody td.subject-name { text-align: left; font-weight: 700; padding-left: 5px; }
+        .result-table tbody td.subject-name {
+            text-align: left;
+            font-weight: 800;     /* was 700 — bolder */
+            font-size: 8px;
+            padding-left: 5px;
+        }
         .highlight-red { color: #dc2626; font-weight: 900; }
         .grade-A { color: #16a34a; font-weight: 900; }
         .grade-B { color: #2563eb; font-weight: 900; }
@@ -148,7 +182,9 @@
         .position-1 { background: gold; color: black; font-weight: 900; border-radius: 2px; }
         .position-2 { background: silver; color: black; font-weight: 900; }
         .position-3 { background: #cd7f32; color: white; font-weight: 900; }
+
         .totals-summary {
+            width: calc(100% - 20px);
             background: #0d1a3d;
             color: #ffffff;
             font-weight: 900;
@@ -157,7 +193,7 @@
             border: 2px solid #000;
             border-top: none;
             text-align: center;
-            margin: 0 10px 8px;
+            margin: 0 10px 8px 10px;
         }
         .remarks-table {
             width: calc(100% - 20px);
@@ -179,14 +215,22 @@
             border-bottom: 1px solid #ccc;
             display: inline-block;
         }
-        .footer-section {
-            background: #f1f5f9;
-            padding: 9px 12px 6px;
+
+        /* BOTTOM STRIP — dompdf-safe: normal-flow table with QR | footer | stamp */
+        .bottom-strip {
+            width: 100%;
             border-top: 1px solid #cbd5e1;
-            text-align: center;
-            margin: 0 10px 8px;
-            font-size: 8.6px;
+            background: #f1f5f9;
+            margin-top: 6px;
         }
+        .bottom-strip table { width: 100%; border-collapse: collapse; }
+        .bottom-strip td { padding: 8px 10px; vertical-align: middle; }
+        .bottom-strip .cell-qr { width: 90px; text-align: center; vertical-align: middle; }
+        .bottom-strip .cell-footer { text-align: center; font-size: 8.6px; vertical-align: middle; }
+        .bottom-strip .cell-stamp { width: 120px; text-align: center; vertical-align: middle; }
+        .bottom-strip .cell-qr img { width: 72px; height: 72px; display: block; margin: 0 auto 2px; }
+        .qr-label { font-size: 6.5px; color: #333; font-weight: 600; text-align: center; }
+        .bottom-strip .cell-stamp img { width: 105px; height: 105px; transform: rotate(-8deg); display: block; margin: 0 auto; }
         .text-dot-space2 {
             border-bottom: 1px dotted #333;
             display: inline-block;
@@ -195,6 +239,7 @@
             margin: 0 4px;
         }
         .powered-by { font-size: 8px; margin-top: 4px; color: #64748b; }
+
         @media print {
             body { background: white; padding: 0; }
             .student-section { width: 190mm; margin: 0 auto; box-shadow: none; }
@@ -221,8 +266,18 @@
             $fullName  = strtoupper($student->lastname ?? '') . ' ' . ($student->fname ?? '') . ' ' . ($student->othername ?? '');
             $admNo     = $student->admissionNo ?? '—';
             $classVal  = ($studentData['schoolclass']->schoolclass ?? '') . ' ' . ($studentData['schoolclass']->arms->arm ?? '');
+            $session   = $metadata['session'] ?? '2025/2026';
+            $term      = $metadata['term'] ?? 'SECOND TERM';
             $minRows   = 18;
             $extraRows = max(0, $minRows - $mockScores->count());
+
+            $qrData = "Name: {$fullName}\nAdm No: {$admNo}\nClass: {$classVal}\nTerm: {$term}\nSession: {$session}\nSchool: Claret Secondary School Kabba";
+            $qrCodeBase64 = base64_encode(
+                \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
+                    ->size(280)
+                    ->errorCorrection('H')
+                    ->generate($qrData)
+            );
         @endphp
 
         <div class="student-section">
@@ -236,7 +291,7 @@
             {{-- HEADER: Logo + Info + Photo --}}
             <table class="header-table">
                 <tr>
-                    <td width="20%" style="text-align:center;">
+                    <td width="20%" style="text-align:center; vertical-align:middle;">
                         <div class="school-logo">
                             @php
                                 $logoSrc = !empty($studentData['school_logo_base64'])
@@ -252,9 +307,9 @@
                         <strong>Email:</strong> {{ $schoolInfo->school_email ?? '—' }}<br>
                         <strong>Website:</strong> {{ $schoolInfo->school_website ?? '—' }}
                     </td>
-                    <td width="22%" style="text-align:right; padding-right:12px;">
+                    <td width="22%" style="text-align:right; padding-right:8px; vertical-align:top; padding-top:6px;">
                         @if(in_array('picture', $columnsToShow))
-                        <div class="photo-frame">
+                        <div class="photo-frame" style="margin-left:auto; margin-right:0;">
                             @if(!empty($studentData['student_image_base64']))
                                 <img src="{{ $studentData['student_image_base64'] }}" alt="Student Photo">
                             @else
@@ -269,7 +324,7 @@
             <div class="header-divider"></div>
             <div class="header-divider2"></div>
             <div class="report-title">
-                {{ strtoupper($metadata['term'] ?? 'TERM') }} {{ strtoupper($metadata['session'] ?? '') }} MOCK EXAMINATION RESULT
+                {{ strtoupper($term) }} {{ strtoupper($session) }} MOCK EXAMINATION RESULT
             </div>
             <div class="mock-badge">MOCK EXAMINATION — NOT FOR OFFICIAL PROMOTION USE</div>
 
@@ -278,8 +333,8 @@
                 <table class="info-table">
                     <tr>
                         <td><span class="info-bar-label">NAME:</span> <span class="info-bar-value">{{ $fullName }}</span></td>
-                        <td><span class="info-bar-label">SESSION:</span> <span class="info-bar-value">{{ $metadata['session'] ?? '—' }}</span></td>
-                        <td><span class="info-bar-label">TERM:</span> <span class="info-bar-value">{{ $metadata['term'] ?? '—' }}</span></td>
+                        <td><span class="info-bar-label">SESSION:</span> <span class="info-bar-value">{{ $session }}</span></td>
+                        <td><span class="info-bar-label">TERM:</span> <span class="info-bar-value">{{ $term }}</span></td>
                         <td><span class="info-bar-label">CLASS:</span> <span class="info-bar-value">{{ $classVal }}</span></td>
                     </tr>
                     <tr>
@@ -388,24 +443,41 @@
                 </tbody>
             </table>
 
-            {{-- FOOTER --}}
-            <div class="footer-section">
-                <div>
-                    <strong>Issued:</strong>
-                    <span class="text-dot-space2">{{ now()->format('jS F, Y') }}</span>
-                    <strong style="margin-left:20px;">Collected by:</strong>
-                    <span class="text-dot-space2">.......................................</span>
-                </div>
-                <div style="margin-top:4px;">
-                    <strong>Next Term Begins:</strong>
-                    @php
-                        $ntb = $schoolInfo->date_next_term_begins ?? null;
-                        $ntbF = $ntb ? \Carbon\Carbon::parse($ntb)->format('jS F, Y') : '........................';
-                    @endphp
-                    <span class="text-dot-space2">{{ $ntbF }}</span>
-                </div>
-                <div class="powered-by">Powered by Qudroid Systems</div>
+            {{-- BOTTOM STRIP: QR | Footer text | Stamp (dompdf-safe normal flow) --}}
+            <div class="bottom-strip">
+                <table>
+                    <tr>
+                        <td class="cell-qr">
+                            <img src="data:image/png;base64,{{ $qrCodeBase64 }}" alt="QR Code">
+                            <div class="qr-label">Scan for Verification</div>
+                        </td>
+                        <td class="cell-footer">
+                            <div>
+                                <strong>Issued:</strong>
+                                <span class="text-dot-space2">{{ now()->format('jS F, Y') }}</span>
+                            </div>
+                            <div style="margin-top:4px;">
+                                <strong>Collected by:</strong>
+                                <span class="text-dot-space2">.......................................</span>
+                            </div>
+                            <div style="margin-top:4px;">
+                                <strong>Next Term Begins:</strong>
+                                <span class="text-dot-space2">
+                                    @php
+                                        $ntb = $schoolInfo->date_next_term_begins ?? null;
+                                        echo $ntb ? \Carbon\Carbon::parse($ntb)->format('jS F, Y') : '........................';
+                                    @endphp
+                                </span>
+                            </div>
+                            <div class="powered-by">Powered by Qudroid Systems</div>
+                        </td>
+                        <td class="cell-stamp">
+                            <img src="{{ asset('stamp.jpeg') }}" alt="Approved Stamp">
+                        </td>
+                    </tr>
+                </table>
             </div>
+
         </div>
     @endforeach
 </body>
