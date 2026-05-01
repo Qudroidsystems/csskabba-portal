@@ -2,9 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use \App\Models\Schoolsessions;
+use \App\Models\Schoolterm;
 use App\Http\Controllers\Controller;
-use App\Models\Student;
 use App\Models\SchoolInformation;
+use App\Models\Schoolsession;
+use App\Models\Student;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -27,8 +30,8 @@ class StudentIdCardController extends Controller
             ->orderBy('schoolclass.schoolclass')
             ->get();
 
-        $schoolsessions = \App\Models\Schoolsessions::select('id', 'session')->get();
-        $schoolterms    = \App\Models\Schoolterm::select('id', 'term')->get();
+        $schoolsessions = Schoolsession::select('id', 'session')->get();
+        $schoolterms    = Schoolterm::select('id', 'term')->get();
 
         $schoolInfo = SchoolInformation::getActiveSchool();
 
