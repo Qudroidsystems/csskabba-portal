@@ -30,7 +30,7 @@ class MyresultroomController extends Controller
         $user = auth()->user();
 
         if (!$user) {
-            Log::warning('Unauthenticated access attempt', ['request' => $request->all()]);
+            Log::warning('Unauthenticated access attempt to MyresultroomController', ['request' => $request->all()]);
             if ($request->expectsJson() || $request->ajax()) {
                 return response()->json(['success' => false, 'message' => 'User not authenticated'], 403);
             }
@@ -42,166 +42,177 @@ class MyresultroomController extends Controller
         $mysubjects = collect();
         $subjectTeachers = collect();
 
-        // If no filters are selected, just show the empty view
-        if (!$request->isMethod('post') && !$request->has(['termid', 'sessionid'])) {
-            return view('myresultroom.index', compact('pagetitle', 'terms', 'sessions', 'mysubjects', 'subjectTeachers'));
-        }
+        if ($request->isMethod('post') || $request->has(['termid', 'sessionid'])) {
+            try {
+                $validated = $request->validate([
+                    'termid' => ['required', 'integer', 'exists:schoolterm,id'],
+                    'sessionid' => ['required', 'integer', 'exists:schoolsession,id'],
+                ]);
 
-        // Process filters
-        try {
-            $validated = $request->validate([
-                'termid' => ['required', 'integer', 'exists:schoolterm,id'],
-                'sessionid' => ['required', 'integer', 'exists:schoolsession,id'],
-            ]);
+                Log::info('Filter request received', ['user_id' => $user->id, 'validated' => $validated]);
 
-            Log::info('Filter request received', [
-                'user_id' => $user->id,
-                'termid' => $validated['termid'],
-                'sessionid' => $validated['sessionid']
-            ]);
+                $subjectsQuery = SubjectTeacher::where('subjectteacher.staffid', $user->id)
+                    ->leftJoin('users', 'users.id', '=', 'subjectteacher.staffid')
+                    ->leftJoin('subjectclass', 'subjectclass.subjectteacherid', '=', 'subjectteacher.id')
+                    ->leftJoin('schoolclass', 'schoolclass.id', '=', 'subjectclass.schoolclassid')
+                    ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+                    ->leftJoin('subject', 'subject.id', '=', 'subjectteacher.subjectid')
+                    ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
+                    ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subjectteacher.sessionid')
+                    ->leftJoin('schoolclass_classcategory', 'schoolclass_classcategory.schoolclass_id', '=', 'schoolclass.id')
+                    ->leftJoin('classcategories', 'classcategories.id', '=', 'schoolclass_classcategory.classcategory_id')
+                    ->where('subjectteacher.sessionid', $validated['sessionid'])
+                    ->where('subjectteacher.termid', $validated['termid'])
+                    ->whereNotNull('subjectclass.id')
+                    ->groupBy(
+                        'subjectteacher.id',
+                        'users.id',
+                        'users.name',
+                        'subject.subject',
+                        'subject.subject_code',
+                        'schoolterm.id',
+                        'subjectclass.id',
+                        'schoolclass.id',
+                        'subjectteacher.sessionid',
+                        DB::raw("CONCAT(schoolclass.schoolclass, ' ', COALESCE(schoolarm.arm, ''))"),
+                        'schoolterm.term',
+                        'schoolsession.session'
+                    )
+                    ->orderBy('schoolclass.schoolclass')
+                    ->orderBy('schoolarm.arm');
 
-            // Simplified query - break it down to avoid complex joins
-            $subjectTeachersList = SubjectTeacher::where('staffid', $user->id)
-                ->where('sessionid', $validated['sessionid'])
-                ->where('termid', $validated['termid'])
-                ->get();
+                $subjectTeachersData = $subjectsQuery->get([
+                    'subjectteacher.id as id',
+                    'users.id as userid',
+                    'users.name as staffname',
+                    'subject.subject as subject',
+                    'subject.subject_code as subjectcode',
+                    'schoolterm.id as termid',
+                    'subjectclass.id as subjectclassid',
+                    'schoolclass.id as schoolclassid',
+                    'subjectteacher.sessionid as sessionid',
+                    \DB::raw("CONCAT(schoolclass.schoolclass, ' ', COALESCE(schoolarm.arm, '')) as schoolclass"),
+                    DB::raw("GROUP_CONCAT(DISTINCT classcategories.category ORDER BY classcategories.category SEPARATOR ', ') as classcategories"),
+                    'schoolterm.term as term',
+                    'schoolsession.session as session',
+                ]);
 
-            if ($subjectTeachersList->isEmpty()) {
-                Log::info('No subject teachers found for user');
+                if ($subjectTeachersData->isEmpty()) {
+                    Log::info('No subjects found for user', [
+                        'user_id' => $user->id,
+                        'termid' => $validated['termid'],
+                        'sessionid' => $validated['sessionid'],
+                    ]);
+                } else {
+                    Log::info('Found subjects', [
+                        'count' => $subjectTeachersData->count(),
+                        'user_id' => $user->id,
+                    ]);
+                }
+
+                $mysubjects = $subjectTeachersData->map(function ($subject) use ($user) {
+                    try {
+                        $broadsheetExists = Broadsheets::where('staff_id', $user->id)
+                            ->where('subjectclass_id', $subject->subjectclassid)
+                            ->where('term_id', $subject->termid)
+                            ->whereHas('broadsheetRecord', function ($query) use ($subject) {
+                                $query->where('session_id', $subject->sessionid);
+                            })
+                            ->exists();
+
+                        $broadsheetMockExists = BroadsheetsMock::where('staff_id', $user->id)
+                            ->where('subjectclass_id', $subject->subjectclassid)
+                            ->where('term_id', $subject->termid)
+                            ->whereHas('broadsheetRecordMock', function ($query) use ($subject) {
+                                $query->where('session_id', $subject->sessionid);
+                            })
+                            ->exists();
+                    } catch (\Exception $e) {
+                        Log::error('Error checking broadsheet existence', [
+                            'user_id' => $user->id,
+                            'subjectclass_id' => $subject->subjectclassid,
+                            'term_id' => $subject->termid,
+                            'session_id' => $subject->sessionid,
+                            'error' => $e->getMessage(),
+                        ]);
+                        $broadsheetExists = false;
+                        $broadsheetMockExists = false;
+                    }
+
+                    return (object) [
+                        'id' => $subject->id,
+                        'schoolclass' => $subject->schoolclass,
+                        'classcategories' => $subject->classcategories ?? 'N/A',
+                        'subject' => $subject->subject,
+                        'subjectcode' => $subject->subjectcode,
+                        'term' => $subject->term,
+                        'session' => $subject->session,
+                        'userid' => $subject->userid,
+                        'subjectclassid' => $subject->subjectclassid,
+                        'schoolclassid' => $subject->schoolclassid,
+                        'session_id' => $subject->sessionid,
+                        'termid' => $subject->termid,
+                        'broadsheet_exists' => $broadsheetExists,
+                        'broadsheet_mock_exists' => $broadsheetMockExists,
+                    ];
+                })->filter();
+
+                $subjectTeachers = $subjectTeachersData->map(function ($subject) {
+                    return (object) [
+                        'subjectclassid' => $subject->subjectclassid,
+                        'userid' => $subject->userid,
+                        'staffname' => $subject->staffname ?? 'Unknown',
+                        'subjectname' => $subject->subject,
+                        'termid' => $subject->termid,
+                        'term' => $subject->term,
+                        'schoolclass' => $subject->schoolclass . ' (' . ($subject->classcategories ?? 'N/A') . ')',
+                    ];
+                })->filter();
+
+                Log::info('Processed data', [
+                    'mysubjects_count' => $mysubjects->count(),
+                    'subjectTeachers_count' => $subjectTeachers->count(),
+                    'user_id' => $user->id
+                ]);
+
                 if ($request->expectsJson() || $request->ajax()) {
                     return response()->json([
                         'success' => true,
-                        'message' => 'No subjects found',
-                        'data' => ['mysubjects' => [], 'subjectTeachers' => []]
+                        'message' => 'Data loaded successfully',
+                        'data' => [
+                            'mysubjects' => $mysubjects->values(),
+                            'subjectTeachers' => $subjectTeachers->values(),
+                        ],
                     ], 200);
                 }
-                return view('myresultroom.index', compact('pagetitle', 'terms', 'sessions', 'mysubjects', 'subjectTeachers'))
-                    ->with('error', 'No subjects found for the selected term and session.');
-            }
 
-            // Process each subject teacher to get details
-            $mysubjects = collect();
-            $subjectTeachers = collect();
-
-            foreach ($subjectTeachersList as $teacher) {
-                // Get subject details
-                $subject = $teacher->subject;
-                if (!$subject) continue;
-
-                // Get subjectclass
-                $subjectClass = $teacher->subjectClass;
-                if (!$subjectClass) continue;
-
-                // Get school class
-                $schoolClass = $subjectClass->schoolClass;
-                if (!$schoolClass) continue;
-
-                // Get term and session
-                $term = $teacher->term;
-                $session = $teacher->session;
-
-                // Get arm if exists
-                $arm = $schoolClass->arm ? $schoolClass->arm->arm : '';
-
-                // Get class categories
-                $categories = $schoolClass->categories->pluck('category')->implode(', ');
-
-                $className = trim($schoolClass->schoolclass . ' ' . $arm);
-
-                // Check if broadsheet exists for terminal results
-                $broadsheetExists = Broadsheets::where('staff_id', $user->id)
-                    ->where('subjectclass_id', $subjectClass->id)
-                    ->where('term_id', $validated['termid'])
-                    ->where('session_id', $validated['sessionid'])
-                    ->exists();
-
-                // Check if broadsheet mock exists
-                $broadsheetMockExists = BroadsheetsMock::where('staff_id', $user->id)
-                    ->where('subjectclass_id', $subjectClass->id)
-                    ->where('term_id', $validated['termid'])
-                    ->where('session_id', $validated['sessionid'])
-                    ->exists();
-
-                // Add to mysubjects collection
-                $mysubjects->push((object)[
-                    'id' => $teacher->id,
-                    'subject' => $subject->subject ?? 'N/A',
-                    'subjectcode' => $subject->subject_code ?? 'N/A',
-                    'schoolclass' => $className,
-                    'classcategories' => $categories ?: 'N/A',
-                    'term' => $term->term ?? 'N/A',
-                    'session' => $session->session ?? 'N/A',
-                    'userid' => $user->id,
-                    'subjectclassid' => $subjectClass->id,
-                    'schoolclassid' => $schoolClass->id,
-                    'session_id' => $validated['sessionid'],
-                    'termid' => $validated['termid'],
-                    'broadsheet_exists' => $broadsheetExists,
-                    'broadsheet_mock_exists' => $broadsheetMockExists,
+            } catch (ValidationException $e) {
+                Log::warning('Validation failed', ['errors' => $e->errors(), 'user_id' => $user->id]);
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Invalid input: ' . implode(', ', array_merge(...array_values($e->errors()))),
+                        'errors' => $e->errors(),
+                    ], 422);
+                }
+                return back()->withErrors($e->errors())->withInput();
+            } catch (\Throwable $e) {
+                Log::error('Error loading subjects', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                    'user_id' => $user->id,
+                    'request_data' => $request->all()
                 ]);
-
-                // Add to subjectTeachers collection
-                $subjectTeachers->push((object)[
-                    'subjectclassid' => $subjectClass->id,
-                    'userid' => $user->id,
-                    'staffname' => $user->name,
-                    'subjectname' => $subject->subject ?? 'N/A',
-                    'termid' => $validated['termid'],
-                    'term' => $term->term ?? 'N/A',
-                    'schoolclass' => $className . ($categories ? ' (' . $categories . ')' : ''),
-                ]);
+                if ($request->expectsJson() || $request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Server error: ' . $e->getMessage(),
+                    ], 500);
+                }
+                return back()->with('error', 'Server error: ' . $e->getMessage());
             }
-
-            Log::info('Processed data', [
-                'mysubjects_count' => $mysubjects->count(),
-                'subjectTeachers_count' => $subjectTeachers->count()
-            ]);
-
-            // Return JSON for AJAX requests
-            if ($request->expectsJson() || $request->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Data loaded successfully',
-                    'data' => [
-                        'mysubjects' => $mysubjects->values(),
-                        'subjectTeachers' => $subjectTeachers->values(),
-                    ],
-                ], 200);
-            }
-
-            // Return view with data
-            return view('myresultroom.index', compact('pagetitle', 'terms', 'sessions', 'mysubjects', 'subjectTeachers'));
-
-        } catch (ValidationException $e) {
-            Log::warning('Validation failed', ['errors' => $e->errors()]);
-            $errorMessage = 'Invalid input: ' . implode(', ', array_merge(...array_values($e->errors())));
-
-            if ($request->expectsJson() || $request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $errorMessage,
-                    'errors' => $e->errors(),
-                ], 422);
-            }
-            return back()->withErrors($e->errors())->withInput();
-
-        } catch (\Exception $e) {
-            Log::error('Error loading subjects', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'user_id' => $user->id,
-                'request_data' => $request->all()
-            ]);
-
-            $errorMessage = 'Database error: ' . $e->getMessage();
-
-            if ($request->expectsJson() || $request->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => $errorMessage,
-                ], 500);
-            }
-            return back()->with('error', $errorMessage);
         }
+
+        return view('myresultroom.index', compact('pagetitle', 'terms', 'sessions', 'mysubjects', 'subjectTeachers'));
     }
 }

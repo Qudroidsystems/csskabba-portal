@@ -97,6 +97,39 @@
 .search-input:focus {
     border-color: var(--s-accent);
     outline: none;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+}
+
+.filter-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
+    display: block;
+}
+
+/* Loading Spinner */
+.btn-loading {
+    position: relative;
+    pointer-events: none;
+    opacity: 0.7;
+}
+.btn-loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid #fff;
+    border-radius: 50%;
+    border-top-color: transparent;
+    animation: spin 0.6s linear infinite;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
 }
 </style>
 
@@ -146,7 +179,7 @@
             @csrf
             <div class="row g-3">
                 <div class="col-md-5">
-                    <label class="form-label fw-semibold">Session</label>
+                    <label class="filter-label"><i class="ri-calendar-line me-1"></i> Academic Session</label>
                     <select class="form-select" name="sessionid" id="sessionid" required>
                         <option value="">Select Session</option>
                         @foreach ($sessions as $session)
@@ -157,7 +190,7 @@
                     </select>
                 </div>
                 <div class="col-md-5">
-                    <label class="form-label fw-semibold">Term</label>
+                    <label class="filter-label"><i class="ri-survey-line me-1"></i> Term</label>
                     <select class="form-select" name="termid" id="termid" required>
                         <option value="">Select Term</option>
                         @foreach ($terms as $term)
@@ -168,8 +201,8 @@
                     </select>
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label">&nbsp;</label>
-                    <button type="submit" class="btn btn-primary w-100">
+                    <label class="filter-label">&nbsp;</label>
+                    <button type="submit" class="btn btn-primary w-100" id="submitBtn">
                         <i class="ri-filter-3-line me-1"></i>Load Subjects
                     </button>
                 </div>
@@ -180,7 +213,7 @@
     {{-- Alert Messages --}}
     @if ($errors->any())
         <div class="alert alert-danger alert-dismissible fade show">
-            <strong>Error!</strong> There were some problems.<br>
+            <i class="ri-error-warning-line me-1"></i> <strong>Error!</strong> There were some problems.
             <ul class="mb-0 mt-1">
                 @foreach ($errors->all() as $error)
                     <li>{{ $error }}</li>
@@ -192,21 +225,21 @@
 
     @if (session('success'))
         <div class="alert alert-success alert-dismissible fade show">
-            {{ session('success') }}
+            <i class="ri-checkbox-circle-line me-1"></i> {{ session('success') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
 
     @if (session('error'))
         <div class="alert alert-danger alert-dismissible fade show">
-            {{ session('error') }}
+            <i class="ri-error-warning-line me-1"></i> {{ session('error') }}
             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
         </div>
     @endif
 
     {{-- Search Box --}}
     <div class="mb-3 text-end">
-        <input type="text" id="searchInput" class="search-input" placeholder="Search by class, subject, or code...">
+        <input type="text" id="searchInput" class="search-input" placeholder="🔍 Search by class, subject, or code...">
     </div>
 
     {{-- Subjects Table --}}
@@ -222,10 +255,10 @@
                         <th>Term</th>
                         <th>Session</th>
                         <th>Status</th>
-                        <th width="150">Actions</th>
+                        <th width="200">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="tableBody">
                     @forelse ($mysubjects as $index => $subject)
                         <tr>
                             <td>{{ $index + 1 }}</td>
@@ -246,25 +279,31 @@
                             </td>
                             <td>
                                 <div class="d-flex gap-2">
+                                    @php
+                                        // Build URLs using the same pattern as your working blade
+                                        $terminalUrl = url("/subjectscoresheet/{$subject->schoolclassid}/{$subject->subjectclassid}/{$subject->userid}/{$subject->termid}/{$subject->session_id}");
+                                        $mockUrl = url("/subjectscoresheet-mock/{$subject->schoolclassid}/{$subject->subjectclassid}/{$subject->userid}/{$subject->termid}/{$subject->session_id}");
+                                    @endphp
+
                                     @if ($subject->broadsheet_exists)
-                                        <a href="{{ route('subjectscoresheet.index', [$subject->schoolclassid, $subject->subjectclassid, $subject->userid, $subject->termid, $subject->session_id]) }}"
+                                        <a href="{{ $terminalUrl }}"
                                            class="btn btn-success btn-sm" title="View Terminal Record">
                                             <i class="ri-file-list-line"></i> View
                                         </a>
                                     @else
-                                        <a href="{{ route('subjectscoresheet.index', [$subject->schoolclassid, $subject->subjectclassid, $subject->userid, $subject->termid, $subject->session_id]) }}"
+                                        <a href="{{ $terminalUrl }}"
                                            class="btn btn-primary btn-sm" title="Enter Terminal Record">
                                             <i class="ri-edit-box-line"></i> Enter
                                         </a>
                                     @endif
 
                                     @if ($subject->broadsheet_mock_exists)
-                                        <a href="{{ route('subjectscoresheet-mock.show', [$subject->schoolclassid, $subject->subjectclassid, $subject->userid, $subject->termid, $subject->session_id]) }}"
+                                        <a href="{{ $mockUrl }}"
                                            class="btn btn-info btn-sm" title="View Mock Record">
                                             <i class="ri-eye-line"></i> Mock
                                         </a>
                                     @else
-                                        <a href="{{ route('subjectscoresheet-mock.show', [$subject->schoolclassid, $subject->subjectclassid, $subject->userid, $subject->termid, $subject->session_id]) }}"
+                                        <a href="{{ $mockUrl }}"
                                            class="btn btn-warning btn-sm" title="Enter Mock Record">
                                             <i class="ri-flask-line"></i> Mock
                                         </a>
@@ -276,7 +315,11 @@
                         <tr>
                             <td colspan="8" class="text-center text-muted py-4">
                                 <i class="ri-book-open-line fs-1 d-block mb-2"></i>
-                                No subjects found. Please select a session and term to load your subjects.
+                                @if(request()->has('sessionid') && request()->has('termid'))
+                                    No subjects found for the selected term and session.
+                                @else
+                                    Please select a session and term to load your subjects.
+                                @endif
                             </td>
                         </tr>
                     @endforelse
@@ -309,10 +352,35 @@ $(document).ready(function() {
         });
     });
 
-    // Update stats when filters are applied via form submission
+    // Form submit loading state
     $('#filterForm').on('submit', function() {
-        // Show loading state (optional)
-        $(this).find('button[type="submit"]').html('<i class="ri-loader-4-line ri-spin me-1"></i> Loading...');
+        const $btn = $('#submitBtn');
+        $btn.addClass('btn-loading');
+        $btn.html('<i class="ri-loader-4-line me-1"></i> Loading...');
+    });
+
+    // Update stats dynamically if needed (optional)
+    function updateStats() {
+        const visibleRows = $('#subjectsTable tbody tr:visible').not(':contains("No subjects found")').length;
+        $('#statTotal').text(visibleRows);
+
+        // Count terminal and mock from visible rows
+        let terminal = 0, mock = 0, pending = 0;
+        $('#subjectsTable tbody tr:visible').each(function() {
+            const statusCell = $(this).find('td:eq(6)');
+            if (statusCell.find('.bg-success').length) terminal++;
+            if (statusCell.find('.bg-info').length) mock++;
+            if (statusCell.find('.bg-warning').length && !statusCell.find('.bg-success').length) pending++;
+        });
+
+        $('#statTerminal').text(terminal);
+        $('#statMock').text(mock);
+        $('#statPending').text(pending);
+    }
+
+    // Update stats when search filters
+    $('#searchInput').on('keyup', function() {
+        setTimeout(updateStats, 100);
     });
 });
 </script>
