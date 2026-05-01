@@ -723,4 +723,146 @@ public function revokeStudentPassword(Request $request): JsonResponse
             ], 500);
         }
     }
+
+
+
+    // ─────────────────────────────────────────────────────────────────
+// GET STUDENT CREDENTIALS (for reprint — no password change)
+// Accepts:  { user_ids: [1,2,...] }   — look up by user id
+//        OR { student_ids: [1,2,...] } — look up by student record id
+// Returns:  { success, credentials: [{ id, name, email, username, admissionNo, password }] }
+//
+// NOTE: Because we never store plain-text passwords, the "password"
+// returned here is always the well-known reset placeholder
+// "ChangeMe@123".  Admins should use "Revoke" when they need a
+// definitive, usable credential.
+// ─────────────────────────────────────────────────────────────────
+public function getStudentCredentials(Request $request): JsonResponse
+{
+    try {
+        if (!auth()->user()->hasPermissionTo('Update user')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Insufficient permissions.',
+            ], 403);
+        }
+
+        $userIds = [];
+
+        if ($request->has('user_ids')) {
+            $request->validate([
+                'user_ids'   => 'required|array|min:1',
+                'user_ids.*' => 'integer|exists:users,id',
+            ]);
+            $userIds = $request->input('user_ids');
+        } elseif ($request->has('student_ids')) {
+            $request->validate([
+                'student_ids'   => 'required|array|min:1',
+                'student_ids.*' => 'integer',
+            ]);
+            $userIds = User::whereIn('student_id', $request->input('student_ids'))
+                           ->pluck('id')
+                           ->toArray();
+        }
+
+        if (empty($userIds)) {
+            return response()->json([
+                'success'     => false,
+                'message'     => 'No valid users found.',
+                'credentials' => [],
+            ], 422);
+        }
+
+        $credentials = [];
+
+        foreach ($userIds as $uid) {
+            $user = User::with(['student'])->find($uid);
+            if (!$user || !$user->hasRole('student')) {
+                continue;
+            }
+
+            $admissionNo = $user->student?->admissionNo ?? '';
+            $username    = $user->username
+                ?? str_replace(['/', '\\', ' '], '_', $admissionNo ?: "user_{$uid}");
+
+            $credentials[] = [
+                'id'          => $user->id,
+                'name'        => $user->name,
+                'email'       => $user->email,
+                'username'    => $username,
+                'admissionNo' => $admissionNo,
+                // Plain-text passwords are never stored; return the known reset value.
+                // Admins who need a new known password should use revokeStudentPassword().
+                'password'    => 'ChangeMe@123',
+            ];
+        }
+
+        return response()->json([
+            'success'     => true,
+            'message'     => count($credentials) . ' credential(s) fetched.',
+            'credentials' => $credentials,
+        ]);
+
+    } catch (ValidationException $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Validation failed',
+            'errors'  => $e->errors(),
+        ], 422);
+    } catch (\Exception $e) {
+        Log::error("getStudentCredentials error: {$e->getMessage()}");
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to fetch credentials.',
+        ], 500);
+    }
+}
+
+
+// ============================================================
+// ROUTES  (add to routes/web.php inside your auth middleware group)
+// ============================================================
+//
+//   Route::post('/users/get-student-credentials',
+//       [UserController::class, 'getStudentCredentials'])
+//       ->name('users.get-student-credentials');
+//
+// ============================================================
+
+
+// ============================================================
+// BLADE SNIPPET — add the "Print Credentials" button next to
+// the existing revoke button in your users/index.blade.php table.
+//
+// Find the block that renders the revoke button for student users
+// and add the print button immediately after it:
+// ============================================================
+//
+//  @can('Update user')
+//      @if($user->hasRole('student'))
+//          {{-- existing revoke button --}}
+//          <li>
+//              <button type="button"
+//                      class="btn btn-subtle-warning btn-icon btn-sm"
+//                      data-revoke-user-id="{{ $user->id }}"
+//                      data-revoke-user-name="{{ $user->name }}"
+//                      title="Revoke Password">
+//                  <i class="bi bi-key"></i>
+//              </button>
+//          </li>
+//
+//          {{-- NEW: print / reprint credentials button --}}
+//          <li>
+//              <button type="button"
+//                      class="btn btn-subtle-primary btn-icon btn-sm"
+//                      data-print-user-id="{{ $user->id }}"
+//                      data-print-user-name="{{ $user->name }}"
+//                      title="View / Print Credentials">
+//                  <i class="bi bi-printer"></i>
+//              </button>
+//          </li>
+//      @endif
+//  @endcan
+//
+// ============================================================
 }

@@ -107,6 +107,7 @@ Route::group(['middleware' => ['auth']], function () {
         Route::post('/users/create-from-student', [UserController::class, 'createFromStudent'])->name('users.createFromStudent');
         Route::post('/users/revoke-student-password', [UserController::class, 'revokeStudentPassword'])->name('users.revoke-student-password');
         Route::delete('/users/{id}',          [UserController::class, 'destroy'])->name('users.destroy');
+        Route::post('/users/get-student-credentials',[UserController::class, 'getStudentCredentials'])->name('users.get-student-credentials');
 
         // Resource AFTER all static /users/xxx routes
         Route::resource('users', UserController::class);

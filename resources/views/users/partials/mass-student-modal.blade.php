@@ -1,5 +1,6 @@
 {{-- ============================================================
      resources/views/users/partials/mass-student-modal.blade.php
+     IMPROVED: full revoke + reprint for existing accounts
      ============================================================ --}}
 
 {{-- ══════════════════════════════════════════════════════════════
@@ -32,7 +33,7 @@
                         <div class="step-line flex-grow-1"></div>
                         <div class="mass-step" data-step="3">
                             <span class="step-circle">3</span>
-                            <span class="step-label">Review & Create</span>
+                            <span class="step-label">Review & Execute</span>
                         </div>
                     </div>
                 </div>
@@ -41,7 +42,6 @@
                 <div id="massStep1" class="mass-step-panel px-4 pb-4">
 
                     <div class="row g-2 mb-3">
-                        {{-- Search --}}
                         <div class="col-md-4">
                             <div class="input-group">
                                 <span class="input-group-text"><i class="bi bi-search"></i></span>
@@ -49,22 +49,16 @@
                                        placeholder="Search name or admission no...">
                             </div>
                         </div>
-
-                        {{-- Arm filter --}}
                         <div class="col-md-2">
                             <select id="massArmFilter" class="form-select">
                                 <option value="">All Arms</option>
                             </select>
                         </div>
-
-                        {{-- Class filter --}}
                         <div class="col-md-3">
                             <select id="massClassFilter" class="form-select">
                                 <option value="">All Classes</option>
                             </select>
                         </div>
-
-                        {{-- Account filter --}}
                         <div class="col-md-3">
                             <select id="massAccountFilter" class="form-select">
                                 <option value="">All Students</option>
@@ -75,7 +69,6 @@
                     </div>
 
                     <div class="row g-2 mb-3">
-                        {{-- Select / Clear buttons --}}
                         <div class="col-md-6 d-flex gap-2">
                             <button type="button" class="btn btn-outline-primary btn-sm flex-fill" id="massSelectAll">
                                 <i class="bi bi-check-all me-1"></i>Select All Visible
@@ -84,24 +77,22 @@
                                 <i class="bi bi-x-lg me-1"></i>Clear All
                             </button>
                         </div>
-                        {{-- Selection summary badges --}}
                         <div class="col-md-6 d-flex align-items-center gap-2 justify-content-end flex-wrap">
                             <span class="badge bg-primary fs-6 px-3">
                                 <i class="bi bi-person-check me-1"></i>
                                 <span id="massSelectedCount">0</span> selected
                             </span>
-                            <span class="badge bg-success fs-6 px-3" title="Students without accounts (will be created)">
+                            <span class="badge bg-success fs-6 px-3" title="Students without accounts — will be created">
                                 <i class="bi bi-plus-circle me-1"></i>
                                 <span id="massNewCount">0</span> new
                             </span>
-                            <span class="badge bg-warning text-dark fs-6 px-3" title="Students with existing accounts (password can be managed)">
+                            <span class="badge bg-warning text-dark fs-6 px-3" title="Students with existing accounts">
                                 <i class="bi bi-key me-1"></i>
                                 <span id="massExistingCount">0</span> existing
                             </span>
                         </div>
                     </div>
 
-                    {{-- Students table --}}
                     <div class="table-responsive" style="max-height:380px;overflow-y:auto;">
                         <table class="table table-sm table-hover align-middle mb-0">
                             <thead class="table-light sticky-top">
@@ -126,9 +117,8 @@
 
                     <div class="d-flex align-items-center justify-content-between mt-3">
                         <small class="text-muted">
-                            Select students to create accounts or manage existing passwords.
-                            <span class="badge bg-success">No Account</span> = will be created.
-                            <span class="badge bg-warning text-dark">Has Account</span> = password can be revoked &amp; reprinted.
+                            <span class="badge bg-success">No Account</span> = will be created. &nbsp;
+                            <span class="badge bg-warning text-dark">Has Account</span> = can revoke password &amp; reprint credentials anytime.
                         </small>
                         <button type="button" class="btn btn-primary" id="massStep1Next" disabled>
                             Next: Configure <i class="bi bi-arrow-right ms-1"></i>
@@ -139,7 +129,6 @@
                 {{-- ── STEP 2: Configure ── --}}
                 <div id="massStep2" class="mass-step-panel px-4 pb-4 d-none">
 
-                    {{-- Smart batch summary --}}
                     <div class="alert alert-info py-2 mb-4" id="batchSummaryAlert">
                         <i class="bi bi-info-circle me-2"></i>
                         <span id="batchSummaryText"></span>
@@ -149,9 +138,7 @@
 
                         {{-- Role selector --}}
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">
-                                Assign Role <span class="text-danger">*</span>
-                            </label>
+                            <label class="form-label fw-semibold">Assign Role <span class="text-danger">*</span></label>
                             <input type="hidden" id="massRoleHidden" value="student">
                             <div class="border rounded p-3 bg-light">
                                 @foreach (\Spatie\Permission\Models\Role::orderBy('name')->get() as $role)
@@ -165,13 +152,9 @@
                                                for="massRole_{{ $role->name }}">
                                             {{ $role->name }}
                                             @if(strtolower($role->name) === 'student')
-                                                <span class="badge bg-success ms-1">
-                                                    <i class="bi bi-lock-fill me-1"></i>Required
-                                                </span>
+                                                <span class="badge bg-success ms-1"><i class="bi bi-lock-fill me-1"></i>Required</span>
                                             @else
-                                                <span class="badge bg-secondary ms-1">
-                                                    <i class="bi bi-lock me-1"></i>Restricted
-                                                </span>
+                                                <span class="badge bg-secondary ms-1"><i class="bi bi-lock me-1"></i>Restricted</span>
                                             @endif
                                         </label>
                                     </div>
@@ -187,9 +170,7 @@
 
                         {{-- Password strategy --}}
                         <div class="col-md-6">
-                            <label class="form-label fw-semibold">
-                                Password Strategy <span class="text-danger">*</span>
-                            </label>
+                            <label class="form-label fw-semibold">Password Strategy <span class="text-danger">*</span></label>
 
                             {{-- New students section --}}
                             <div id="newStudentsConfig" class="mb-3">
@@ -197,7 +178,6 @@
                                     <i class="bi bi-plus-circle text-success me-1"></i>
                                     For <span id="newStudentsConfigCount">0</span> students WITHOUT accounts:
                                 </p>
-
                                 <div class="form-check mb-2">
                                     <input class="form-check-input" type="radio" name="massPasswordType"
                                            id="pwdTypeSame" value="same" checked>
@@ -205,7 +185,6 @@
                                         Same password for all new students
                                     </label>
                                 </div>
-
                                 <div class="form-check mb-2">
                                     <input class="form-check-input" type="radio" name="massPasswordType"
                                            id="pwdTypeIndividual" value="individual">
@@ -213,8 +192,6 @@
                                         Auto-generate unique password per student
                                     </label>
                                 </div>
-
-                                {{-- Shared password input --}}
                                 <div id="sharedPasswordGroup" class="mt-2">
                                     <div class="input-group">
                                         <input type="text" id="massSharedPassword" class="form-control"
@@ -225,8 +202,6 @@
                                     </div>
                                     <small class="text-muted">All new students will receive this password.</small>
                                 </div>
-
-                                {{-- Individual password info --}}
                                 <div id="individualPasswordGroup" class="mt-2 d-none">
                                     <div class="alert alert-info py-2 mb-0">
                                         <i class="bi bi-info-circle me-1"></i>
@@ -244,26 +219,46 @@
                                     For <span id="existingStudentsConfigCount">0</span> students WITH existing accounts:
                                 </p>
 
-                                <div class="form-check mb-1">
+                                <div class="form-check mb-2">
                                     <input class="form-check-input" type="checkbox" id="revokeExistingPasswords" value="1">
                                     <label class="form-check-label" for="revokeExistingPasswords">
                                         <span class="fw-semibold text-danger">
-                                            <i class="bi bi-key me-1"></i>Revoke their passwords
+                                            <i class="bi bi-key me-1"></i>Revoke &amp; reset passwords
                                         </span>
                                         <small class="text-muted d-block mt-1">
                                             Resets to <code>ChangeMe@123</code>. Useful when students forget their password.
-                                            Their credential slip will be printable after.
+                                            Credential slips will be printable after.
                                         </small>
                                     </label>
                                 </div>
+
+                                {{-- NEW: Print-only option --}}
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" id="printExistingOnly" value="1">
+                                    <label class="form-check-label" for="printExistingOnly">
+                                        <span class="fw-semibold text-primary">
+                                            <i class="bi bi-printer me-1"></i>Reprint credential slips only
+                                        </span>
+                                        <small class="text-muted d-block mt-1">
+                                            Fetches current login details and generates printable slips —
+                                            <strong>without changing any passwords</strong>.
+                                        </small>
+                                    </label>
+                                </div>
+
+                                <div class="alert alert-warning py-2 mt-2 mb-0" id="bothOptionsWarning" style="display:none!important">
+                                    <i class="bi bi-exclamation-triangle me-1"></i>
+                                    "Revoke" takes priority over "Reprint only" — passwords <em>will</em> be reset.
+                                </div>
                             </div>
 
-                            {{-- Only-existing alert (no new students in selection) --}}
+                            {{-- Only-existing alert (no new students) --}}
                             <div id="onlyExistingAlert" class="d-none">
                                 <div class="alert alert-warning py-2 mb-0">
                                     <i class="bi bi-exclamation-triangle me-1"></i>
                                     All selected students already have accounts.
-                                    Enable <strong>Revoke passwords</strong> above to reset them,
+                                    Either <strong>Revoke passwords</strong> to reset them,
+                                    <strong>Reprint</strong> to get their current slips,
                                     or go back and select students without accounts.
                                 </div>
                             </div>
@@ -280,12 +275,12 @@
                     </div>
                 </div>
 
-                {{-- ── STEP 3: Review & Create ── --}}
+                {{-- ── STEP 3: Review & Execute ── --}}
                 <div id="massStep3" class="mass-step-panel px-4 pb-4 d-none">
 
                     <div class="alert alert-warning py-2 mb-3" id="step3Warning">
                         <i class="bi bi-exclamation-triangle me-1"></i>
-                        Review details below, then click <strong>Create Accounts</strong>. This cannot be undone.
+                        Review details below, then click <strong>Confirm & Execute</strong>.
                     </div>
 
                     <div class="row g-2 mb-3">
@@ -301,6 +296,11 @@
                         <div class="col-auto d-none" id="reviewRevokeBadge">
                             <span class="badge bg-danger fs-6">
                                 <i class="bi bi-key me-1"></i>+ Revoke existing passwords
+                            </span>
+                        </div>
+                        <div class="col-auto d-none" id="reviewReprintBadge">
+                            <span class="badge bg-primary fs-6">
+                                <i class="bi bi-printer me-1"></i>+ Reprint existing credentials
                             </span>
                         </div>
                     </div>
@@ -339,52 +339,78 @@
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <h6 class="mb-0 fw-bold" id="step4Title">Results</h6>
                         <div class="d-flex gap-2">
-                            <button type="button" class="btn btn-outline-primary btn-sm" id="printCredentialsBtn">
-                                <i class="bi bi-printer me-1"></i>Print Credential Slips
+                            <button type="button" class="btn btn-outline-primary btn-sm d-none" id="printCreatedBtn">
+                                <i class="bi bi-printer me-1"></i>Print New Accounts
+                            </button>
+                            <button type="button" class="btn btn-outline-warning btn-sm d-none" id="printRevokedBtn">
+                                <i class="bi bi-printer me-1"></i>Print Revoked Passwords
+                            </button>
+                            <button type="button" class="btn btn-outline-info btn-sm d-none" id="printReprintedBtn">
+                                <i class="bi bi-printer me-1"></i>Print Existing Credentials
+                            </button>
+                            <button type="button" class="btn btn-success btn-sm d-none" id="printAllBtn">
+                                <i class="bi bi-printer-fill me-1"></i>Print All Slips
                             </button>
                             <button type="button" class="btn btn-outline-secondary btn-sm"
                                     data-bs-dismiss="modal" onclick="location.reload()">
-                                <i class="bi bi-x me-1"></i>Close & Refresh
+                                <i class="bi bi-x me-1"></i>Close &amp; Refresh
                             </button>
                         </div>
                     </div>
 
-                    {{-- Created tab --}}
-                    <div id="step4CreatedSection" class="d-none">
+                    {{-- Created --}}
+                    <div id="step4CreatedSection" class="d-none mb-3">
                         <h6 class="text-success mb-2">
                             <i class="bi bi-plus-circle me-1"></i>
-                            Created Accounts
+                            New Accounts Created
                             <span class="badge bg-success ms-1" id="step4CreatedCount">0</span>
                         </h6>
-                        <div class="table-responsive mb-3" style="max-height:280px;overflow-y:auto;">
+                        <div class="table-responsive" style="max-height:260px;overflow-y:auto;">
                             <table class="table table-sm align-middle mb-0">
-                                <thead class="table-light sticky-top" id="step4TableHead">
-                                    <tr>
-                                        <th>#</th><th>Name</th><th>Admission No</th>
-                                        <th>Email / Username</th><th>Password</th>
-                                    </tr>
+                                <thead class="table-light sticky-top">
+                                    <tr><th>#</th><th>Name</th><th>Admission No</th><th>Email / Username</th><th>Password</th></tr>
                                 </thead>
                                 <tbody id="createdResultsBody"></tbody>
                             </table>
                         </div>
                     </div>
 
-                    {{-- Revoked tab --}}
-                    <div id="step4RevokedSection" class="d-none">
-                        <h6 class="text-warning mb-2">
+                    {{-- Revoked --}}
+                    <div id="step4RevokedSection" class="d-none mb-3">
+                        <h6 class="text-danger mb-2">
                             <i class="bi bi-key me-1"></i>
-                            Revoked Passwords
-                            <span class="badge bg-warning text-dark ms-1" id="step4RevokedCount">0</span>
+                            Passwords Revoked &amp; Reset
+                            <span class="badge bg-danger ms-1" id="step4RevokedCount">0</span>
                         </h6>
-                        <div class="table-responsive mb-3" style="max-height:280px;overflow-y:auto;">
+                        <div class="table-responsive" style="max-height:260px;overflow-y:auto;">
                             <table class="table table-sm align-middle mb-0">
                                 <thead class="table-light sticky-top">
-                                    <tr>
-                                        <th>#</th><th>Name</th><th>Admission No</th>
-                                        <th>Email / Username</th><th>New Password</th>
-                                    </tr>
+                                    <tr><th>#</th><th>Name</th><th>Admission No</th><th>Email / Username</th><th>New Password</th></tr>
                                 </thead>
                                 <tbody id="revokedResultsBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    {{-- Reprinted (fetch-only, no password change) --}}
+                    <div id="step4ReprintSection" class="d-none mb-3">
+                        <h6 class="text-primary mb-2">
+                            <i class="bi bi-printer me-1"></i>
+                            Existing Credentials Fetched for Reprint
+                            <span class="badge bg-primary ms-1" id="step4ReprintCount">0</span>
+                        </h6>
+                        <div class="alert alert-info py-2 mb-2">
+                            <i class="bi bi-info-circle me-1"></i>
+                            These passwords were <strong>not changed</strong>. Slips show the reset placeholder
+                            <code>ChangeMe@123</code> — if the student has already changed their password,
+                            use <em>Revoke</em> instead to generate a fresh known password.
+                        </div>
+                        <div class="table-responsive" style="max-height:260px;overflow-y:auto;">
+                            <table class="table table-sm align-middle mb-0">
+                                <thead class="table-light sticky-top">
+                                    <tr><th>#</th><th>Name</th><th>Admission No</th><th>Email / Username</th><th>Slip Password</th></tr>
+                                </thead>
+                                <tbody id="reprintResultsBody"></tbody>
                             </table>
                         </div>
                     </div>
@@ -420,7 +446,7 @@
                 <div class="alert alert-warning py-2 mb-0">
                     <i class="bi bi-exclamation-triangle me-1"></i>
                     Their password will be set to <code>ChangeMe@123</code>.
-                    They will need to use this to log in and should change it immediately.
+                    They should change it immediately after logging in.
                 </div>
                 <input type="hidden" id="revokeTargetUserId">
             </div>
@@ -435,52 +461,72 @@
 </div>
 
 {{-- ══════════════════════════════════════════════════════════════
+     PRINT CREDENTIALS MODAL (reprint for a single user anytime)
+     ══════════════════════════════════════════════════════════════ --}}
+<div id="printCredentialModal" class="modal fade" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary bg-opacity-10">
+                <h5 class="modal-title fw-bold text-primary">
+                    <i class="bi bi-printer me-2"></i>Print / View Credentials
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="printCredentialBody">
+                <div class="text-center py-4">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2 text-muted">Loading credentials...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning d-none" id="revokeAndPrintBtn">
+                    <i class="bi bi-key me-1"></i>Revoke &amp; Print New Password
+                </button>
+                <button type="button" class="btn btn-primary" id="doPrintCredentialBtn">
+                    <i class="bi bi-printer me-1"></i>Print Slip
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- ══════════════════════════════════════════════════════════════
      STYLES
      ══════════════════════════════════════════════════════════════ --}}
 <style>
 /* Step indicator */
-.mass-step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-}
+.mass-step { display:flex; flex-direction:column; align-items:center; gap:4px; }
 .step-circle {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: #dee2e6;
-    color: #6c757d;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 700;
-    font-size: .85rem;
-    transition: background .3s, color .3s;
+    width:32px; height:32px; border-radius:50%;
+    background:#dee2e6; color:#6c757d;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:.85rem; transition:background .3s,color .3s;
 }
-.step-label {
-    font-size: .72rem;
-    color: #6c757d;
-    white-space: nowrap;
+.step-label { font-size:.72rem; color:#6c757d; white-space:nowrap; }
+.mass-step.active .step-circle { background:#0d6efd; color:#fff; }
+.mass-step.done   .step-circle { background:#198754; color:#fff; }
+.mass-step.active .step-label  { color:#0d6efd; font-weight:600; }
+.step-line { height:2px; background:#dee2e6; min-width:20px; }
+
+/* Row tints */
+tr.row-has-account td        { background-color:rgba(255,193,7,.06)!important; }
+tr.row-has-account:hover td  { background-color:rgba(255,193,7,.14)!important; }
+
+/* Credential preview card inside modal */
+.cred-card {
+    border:1.5px solid #dee2e6; border-radius:8px; padding:1rem 1.25rem;
+    background:#f8f9fa;
 }
-.mass-step.active .step-circle { background: #0d6efd; color: #fff; }
-.mass-step.done   .step-circle { background: #198754; color: #fff; }
-.mass-step.active .step-label  { color: #0d6efd; font-weight: 600; }
-.step-line {
-    height: 2px;
-    background: #dee2e6;
-    min-width: 20px;
-}
-/* Row highlights */
-tr.row-has-account td { background-color: rgba(255, 193, 7, 0.06) !important; }
-tr.row-has-account:hover td { background-color: rgba(255, 193, 7, 0.12) !important; }
+.cred-card .cred-label { font-size:.75rem; text-transform:uppercase; color:#6c757d; letter-spacing:.5px; font-weight:600; }
+.cred-card .cred-value { font-size:1rem; font-weight:600; }
+.cred-card .cred-pwd   { font-family:'Courier New',monospace; font-size:1.15rem; color:#0a7c3e; letter-spacing:2px; font-weight:700; }
 
 /* Print styles */
 @media print {
-    body * { visibility: hidden !important; }
-    #credentialPrintArea,
-    #credentialPrintArea * { visibility: visible !important; }
-    #credentialPrintArea { position: fixed; top: 0; left: 0; width: 100%; }
+    body * { visibility:hidden!important; }
+    #credentialPrintArea, #credentialPrintArea * { visibility:visible!important; }
+    #credentialPrintArea { position:fixed; top:0; left:0; width:100%; }
 }
 </style>
 
@@ -490,33 +536,37 @@ tr.row-has-account:hover td { background-color: rgba(255, 193, 7, 0.12) !importa
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-    /* ═══════════════════════════════════════════════════════════
+    /* ═══════════════════════════════════════
        STATE
-    ═══════════════════════════════════════════════════════════ */
+    ═══════════════════════════════════════ */
     let allStudents      = [];
     let filteredStudents = [];
     let selectedIds      = new Set();
-    // allPrintable holds both created + revoked accounts for the print sheet
-    let allPrintable     = [];
 
-    /* ═══════════════════════════════════════════════════════════
+    // Result buckets (for per-group print buttons)
+    let bucket = { created: [], revoked: [], reprinted: [] };
+
+    // Single-user print state
+    let printCredUser = null; // { id, name, email, username, admissionNo, password }
+
+    /* ═══════════════════════════════════════
        DOM REFS
-    ═══════════════════════════════════════════════════════════ */
-    const modalEl         = document.getElementById('massStudentModal');
-    const tbody           = document.getElementById('massStudentTableBody');
-    const searchInput     = document.getElementById('massStudentSearch');
-    const classFilter     = document.getElementById('massClassFilter');
-    const armFilter       = document.getElementById('massArmFilter');
-    const accountFilter   = document.getElementById('massAccountFilter');
-    const checkAll        = document.getElementById('massCheckAll');
-    const selectedCount   = document.getElementById('massSelectedCount');
-    const newCount        = document.getElementById('massNewCount');
-    const existingCount   = document.getElementById('massExistingCount');
-    const step1Next       = document.getElementById('massStep1Next');
+    ═══════════════════════════════════════ */
+    const modalEl       = document.getElementById('massStudentModal');
+    const tbody         = document.getElementById('massStudentTableBody');
+    const searchInput   = document.getElementById('massStudentSearch');
+    const classFilter   = document.getElementById('massClassFilter');
+    const armFilter     = document.getElementById('massArmFilter');
+    const accountFilter = document.getElementById('massAccountFilter');
+    const checkAll      = document.getElementById('massCheckAll');
+    const selectedCount = document.getElementById('massSelectedCount');
+    const newCount      = document.getElementById('massNewCount');
+    const existingCount = document.getElementById('massExistingCount');
+    const step1Next     = document.getElementById('massStep1Next');
 
-    /* ═══════════════════════════════════════════════════════════
-       LOAD STUDENTS ON MODAL OPEN
-    ═══════════════════════════════════════════════════════════ */
+    /* ═══════════════════════════════════════
+       LOAD STUDENTS ON OPEN
+    ═══════════════════════════════════════ */
     modalEl?.addEventListener('show.bs.modal', () => {
         resetMassModal();
         loadAllStudents();
@@ -524,64 +574,43 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function loadAllStudents() {
         fetch('{{ route("get.students") }}?limit=2000')
-            .then(r => {
-                if (!r.ok) throw new Error(`HTTP ${r.status}`);
-                return r.json();
-            })
+            .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
             .then(data => {
                 if (!data.success) {
-                    tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-3">
-                        <i class="bi bi-exclamation-circle me-2"></i>Failed to load students: ${escHtml(data.message || '')}
-                    </td></tr>`;
+                    tbody.innerHTML = errRow(`Failed to load: ${escHtml(data.message || '')}`);
                     return;
                 }
-
                 allStudents = data.students;
 
-                /* Populate Arm filter */
                 if (data.arms?.length) {
                     armFilter.innerHTML = '<option value="">All Arms</option>' +
-                        data.arms.map(a =>
-                            `<option value="${escAttr(String(a.id))}">${escHtml(a.name)}</option>`
-                        ).join('');
+                        data.arms.map(a => `<option value="${escAttr(String(a.id))}">${escHtml(a.name)}</option>`).join('');
                 }
 
-                /* Populate Class filter */
                 if (data.classes?.length) {
                     classFilter.innerHTML = '<option value="">All Classes</option>' +
                         data.classes.map(c =>
-                            `<option value="${escAttr(String(c.id))}" data-arm-id="${escAttr(String(c.arm_id || ''))}">`
+                            `<option value="${escAttr(String(c.id))}" data-arm-id="${escAttr(String(c.arm_id||''))}">`
                             + escHtml(c.name) + (c.arm_name ? ` (${escHtml(c.arm_name)})` : '') + `</option>`
                         ).join('');
-                } else {
-                    const seen = new Set();
-                    const opts = [];
-                    allStudents.forEach(s => {
-                        if (s.class_id && !seen.has(s.class_id)) {
-                            seen.add(s.class_id);
-                            opts.push(
-                                `<option value="${escAttr(String(s.class_id))}" data-arm-id="${escAttr(String(s.arm_id || ''))}">`
-                                + escHtml(s.class_name) + (s.arm_name ? ` (${escHtml(s.arm_name)})` : '') + `</option>`
-                            );
-                        }
-                    });
-                    classFilter.innerHTML = '<option value="">All Classes</option>' + opts.join('');
                 }
 
                 filteredStudents = [...allStudents];
                 renderStudentTable();
             })
             .catch(err => {
-                console.error('loadAllStudents error:', err);
-                tbody.innerHTML = `<tr><td colspan="6" class="text-center text-danger py-3">
-                    <i class="bi bi-wifi-off me-2"></i>Network error – please try again.
-                </td></tr>`;
+                console.error(err);
+                tbody.innerHTML = errRow('Network error – please try again.');
             });
     }
 
-    /* ═══════════════════════════════════════════════════════════
-       RENDER TABLE — all students selectable regardless of account status
-    ═══════════════════════════════════════════════════════════ */
+    function errRow(msg) {
+        return `<tr><td colspan="6" class="text-center text-danger py-3"><i class="bi bi-exclamation-circle me-2"></i>${msg}</td></tr>`;
+    }
+
+    /* ═══════════════════════════════════════
+       RENDER TABLE
+    ═══════════════════════════════════════ */
     function renderStudentTable() {
         if (!filteredStudents.length) {
             tbody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-3">No students found</td></tr>`;
@@ -590,23 +619,22 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         tbody.innerHTML = filteredStudents.map(s => {
-            const has      = s.has_account;
-            const checked  = selectedIds.has(String(s.id)) ? 'checked' : '';
-            const rowClass = has ? 'row-has-account' : '';
-
-            return `<tr class="${rowClass}">
+            const has     = s.has_account;
+            const checked = selectedIds.has(String(s.id)) ? 'checked' : '';
+            const rowCls  = has ? 'row-has-account' : '';
+            return `<tr class="${rowCls}">
                 <td>
                     <input type="checkbox" class="form-check-input mass-row-check"
                            value="${s.id}" ${checked}
                            data-name="${escAttr(s.name)}"
-                           data-admission="${escAttr(s.admissionNo || '')}"
-                           data-email="${escAttr(s.email || '')}"
-                           data-has-account="${has ? '1' : '0'}">
+                           data-admission="${escAttr(s.admissionNo||'')}"
+                           data-email="${escAttr(s.email||'')}"
+                           data-has-account="${has?'1':'0'}">
                 </td>
                 <td>${escHtml(s.name)}</td>
-                <td><code>${escHtml(s.admissionNo || '—')}</code></td>
-                <td>${escHtml(s.class_name || '—')}</td>
-                <td>${escHtml(s.arm_name || '—')}</td>
+                <td><code>${escHtml(s.admissionNo||'—')}</code></td>
+                <td>${escHtml(s.class_name||'—')}</td>
+                <td>${escHtml(s.arm_name||'—')}</td>
                 <td>
                     ${has
                         ? '<span class="badge bg-warning text-dark"><i class="bi bi-person-check me-1"></i>Has Account</span>'
@@ -624,18 +652,18 @@ document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('.mass-row-check').forEach(cb => {
             cb.addEventListener('change', function () {
                 if (this.checked) selectedIds.add(this.value);
-                else selectedIds.delete(this.value);
+                else              selectedIds.delete(this.value);
                 updateSelectedCount();
             });
         });
     }
 
     function getSelectionBreakdown() {
-        const selected = allStudents.filter(s => selectedIds.has(String(s.id)));
+        const sel = allStudents.filter(s => selectedIds.has(String(s.id)));
         return {
-            all:      selected,
-            newOnes:  selected.filter(s => !s.has_account),
-            existing: selected.filter(s => s.has_account),
+            all:      sel,
+            newOnes:  sel.filter(s => !s.has_account),
+            existing: sel.filter(s =>  s.has_account),
         };
     }
 
@@ -645,27 +673,27 @@ document.addEventListener('DOMContentLoaded', function () {
         newCount.textContent      = newOnes.length;
         existingCount.textContent = existing.length;
         step1Next.disabled        = all.length === 0;
-        checkAll.checked          = all.length > 0 && all.length === filteredStudents.length;
-        checkAll.indeterminate    = all.length > 0 && !checkAll.checked;
+        checkAll.checked       = all.length > 0 && all.length === filteredStudents.length;
+        checkAll.indeterminate = all.length > 0 && !checkAll.checked;
     }
 
-    /* ═══════════════════════════════════════════════════════════
+    /* ═══════════════════════════════════════
        FILTERS
-    ═══════════════════════════════════════════════════════════ */
+    ═══════════════════════════════════════ */
     function applyFilter() {
-        const q       = (searchInput.value || '').toLowerCase();
+        const q       = (searchInput.value||'').toLowerCase();
         const cls     = classFilter.value;
         const arm     = armFilter.value;
         const acctVal = accountFilter.value;
 
         filteredStudents = allStudents.filter(s => {
-            const matchQ    = !q       || s.name.toLowerCase().includes(q) || (s.admissionNo || '').toLowerCase().includes(q);
-            const matchCls  = !cls     || String(s.class_id) === cls;
-            const matchArm  = !arm     || String(s.arm_id)   === arm;
-            const matchAcct = !acctVal
+            const mQ    = !q       || s.name.toLowerCase().includes(q) || (s.admissionNo||'').toLowerCase().includes(q);
+            const mCls  = !cls     || String(s.class_id) === cls;
+            const mArm  = !arm     || String(s.arm_id)   === arm;
+            const mAcct = !acctVal
                 || (acctVal === 'no_account'  && !s.has_account)
                 || (acctVal === 'has_account' &&  s.has_account);
-            return matchQ && matchCls && matchArm && matchAcct;
+            return mQ && mCls && mArm && mAcct;
         });
         renderStudentTable();
     }
@@ -676,8 +704,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!opt.value) return;
             opt.hidden = armId ? (opt.dataset.armId !== armId) : false;
         });
-        const sel = classFilter.options[classFilter.selectedIndex];
-        if (sel?.hidden) classFilter.value = '';
+        if (classFilter.options[classFilter.selectedIndex]?.hidden) classFilter.value = '';
         applyFilter();
     });
 
@@ -685,32 +712,28 @@ document.addEventListener('DOMContentLoaded', function () {
     classFilter?.addEventListener('change',   applyFilter);
     accountFilter?.addEventListener('change', applyFilter);
 
-    /* ═══════════════════════════════════════════════════════════
-       SELECT ALL / CLEAR — now selects ALL visible (not just no-account)
-    ═══════════════════════════════════════════════════════════ */
+    /* Select All / Clear */
     checkAll?.addEventListener('change', function () {
         filteredStudents.forEach(s => {
             if (this.checked) selectedIds.add(String(s.id));
-            else selectedIds.delete(String(s.id));
+            else              selectedIds.delete(String(s.id));
         });
         renderStudentTable();
     });
-
     document.getElementById('massSelectAll')?.addEventListener('click', () => {
         filteredStudents.forEach(s => selectedIds.add(String(s.id)));
         renderStudentTable();
     });
-
     document.getElementById('massClearAll')?.addEventListener('click', () => {
         selectedIds.clear();
         renderStudentTable();
     });
 
-    /* ═══════════════════════════════════════════════════════════
+    /* ═══════════════════════════════════════
        STEP NAVIGATION
-    ═══════════════════════════════════════════════════════════ */
+    ═══════════════════════════════════════ */
     function goStep(n) {
-        [1, 2, 3, 4].forEach(i => {
+        [1,2,3,4].forEach(i => {
             document.getElementById(`massStep${i}`)?.classList.toggle('d-none', i !== n);
             const ind = document.querySelector(`.mass-step[data-step="${i}"]`);
             if (ind) {
@@ -725,62 +748,47 @@ document.addEventListener('DOMContentLoaded', function () {
         setupStep2();
         goStep(2);
     });
-
     document.getElementById('massStep2Back')?.addEventListener('click', () => goStep(1));
     document.getElementById('massStep3Back')?.addEventListener('click', () => goStep(2));
 
-    /* ═══════════════════════════════════════════════════════════
-       STEP 2 — configure UI based on selection breakdown
-    ═══════════════════════════════════════════════════════════ */
+    /* ═══════════════════════════════════════
+       STEP 2 SETUP
+    ═══════════════════════════════════════ */
     function setupStep2() {
         const { newOnes, existing } = getSelectionBreakdown();
         const hasNew      = newOnes.length > 0;
         const hasExisting = existing.length > 0;
 
-        // Batch summary
         const parts = [];
-        if (hasNew)      parts.push(`<strong>${newOnes.length}</strong> student(s) without accounts <span class="badge bg-success">will be created</span>`);
-        if (hasExisting) parts.push(`<strong>${existing.length}</strong> student(s) already have accounts <span class="badge bg-warning text-dark">manage passwords</span>`);
+        if (hasNew)      parts.push(`<strong>${newOnes.length}</strong> without accounts <span class="badge bg-success">will be created</span>`);
+        if (hasExisting) parts.push(`<strong>${existing.length}</strong> with existing accounts <span class="badge bg-warning text-dark">manageable</span>`);
         document.getElementById('batchSummaryText').innerHTML = parts.join(' &nbsp;+&nbsp; ');
 
-        // Show/hide sections
-        document.getElementById('newStudentsConfig').classList.toggle('d-none', !hasNew);
+        document.getElementById('newStudentsConfig').classList.toggle('d-none',     !hasNew);
         document.getElementById('existingStudentsConfig').classList.toggle('d-none', !hasExisting);
-        document.getElementById('onlyExistingAlert').classList.toggle('d-none', hasNew || !hasExisting);
+        document.getElementById('onlyExistingAlert').classList.toggle('d-none',      hasNew || !hasExisting);
 
         document.getElementById('newStudentsConfigCount').textContent      = newOnes.length;
         document.getElementById('existingStudentsConfigCount').textContent = existing.length;
 
-        // Reset revoke checkbox
+        // Reset checkboxes
         const revokeEl = document.getElementById('revokeExistingPasswords');
-        if (revokeEl) revokeEl.checked = false;
+        const reprintEl = document.getElementById('printExistingOnly');
+        if (revokeEl)  revokeEl.checked  = false;
+        if (reprintEl) reprintEl.checked = false;
     }
 
-    document.getElementById('massStep2Next')?.addEventListener('click', () => {
-        const { newOnes, existing } = getSelectionBreakdown();
-        const pwdType  = document.querySelector('input[name="massPasswordType"]:checked')?.value;
-        const willRevoke = document.getElementById('revokeExistingPasswords')?.checked;
-
-        if (newOnes.length > 0 && pwdType === 'same') {
-            const pwd = (document.getElementById('massSharedPassword').value || '').trim();
-            if (pwd.length < 6) {
-                alert('Please enter a shared password of at least 6 characters.');
-                return;
-            }
-        }
-
-        if (newOnes.length === 0 && !willRevoke) {
-            alert('All selected students already have accounts. Either check "Revoke their passwords" or go back and select students without accounts.');
-            return;
-        }
-
-        buildReviewStep();
-        goStep(3);
+    // Mutual-awareness warning when both revoke + reprint checked
+    ['revokeExistingPasswords','printExistingOnly'].forEach(id => {
+        document.getElementById(id)?.addEventListener('change', () => {
+            const r = document.getElementById('revokeExistingPasswords')?.checked;
+            const p = document.getElementById('printExistingOnly')?.checked;
+            const w = document.getElementById('bothOptionsWarning');
+            if (w) w.style.setProperty('display', (r && p) ? 'block' : 'none', 'important');
+        });
     });
 
-    /* ═══════════════════════════════════════════════════════════
-       PASSWORD TYPE TOGGLE (new students section)
-    ═══════════════════════════════════════════════════════════ */
+    /* Password type toggle */
     document.querySelectorAll('input[name="massPasswordType"]').forEach(radio => {
         radio.addEventListener('change', function () {
             document.getElementById('sharedPasswordGroup')    .classList.toggle('d-none', this.value !== 'same');
@@ -789,17 +797,42 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     document.getElementById('generateSharedPwd')?.addEventListener('click', () => {
-        const pwd = Math.random().toString(36).slice(-6).toUpperCase() + Math.floor(1000 + Math.random() * 9000);
-        document.getElementById('massSharedPassword').value = pwd;
+        document.getElementById('massSharedPassword').value =
+            Math.random().toString(36).slice(-6).toUpperCase() + Math.floor(1000 + Math.random()*9000);
     });
 
-    /* ═══════════════════════════════════════════════════════════
-       BUILD REVIEW STEP
-    ═══════════════════════════════════════════════════════════ */
-    function buildReviewStep() {
-        const { all, newOnes, existing } = getSelectionBreakdown();
+    /* ═══════════════════════════════════════
+       STEP 2 → STEP 3 VALIDATION
+    ═══════════════════════════════════════ */
+    document.getElementById('massStep2Next')?.addEventListener('click', () => {
+        const { newOnes, existing } = getSelectionBreakdown();
         const pwdType    = document.querySelector('input[name="massPasswordType"]:checked')?.value;
         const willRevoke = document.getElementById('revokeExistingPasswords')?.checked;
+        const willReprint = document.getElementById('printExistingOnly')?.checked;
+
+        if (newOnes.length > 0 && pwdType === 'same') {
+            if ((document.getElementById('massSharedPassword').value||'').trim().length < 6) {
+                alert('Please enter a shared password of at least 6 characters.'); return;
+            }
+        }
+
+        if (newOnes.length === 0 && !willRevoke && !willReprint) {
+            alert('All selected students already have accounts. Choose "Revoke passwords" and/or "Reprint credential slips" to proceed, or go back and select students without accounts.');
+            return;
+        }
+
+        buildReviewStep();
+        goStep(3);
+    });
+
+    /* ═══════════════════════════════════════
+       BUILD REVIEW STEP
+    ═══════════════════════════════════════ */
+    function buildReviewStep() {
+        const { all, newOnes, existing } = getSelectionBreakdown();
+        const pwdType     = document.querySelector('input[name="massPasswordType"]:checked')?.value;
+        const willRevoke  = document.getElementById('revokeExistingPasswords')?.checked;
+        const willReprint = document.getElementById('printExistingOnly')?.checked;
 
         document.getElementById('reviewStudentCount').textContent = `${all.length} student(s)`;
         document.getElementById('reviewRoles').textContent        = 'Role: student';
@@ -807,170 +840,175 @@ document.addEventListener('DOMContentLoaded', function () {
             newOnes.length === 0 ? 'No new accounts'
             : (pwdType === 'same' ? 'Shared Password' : 'Individual Passwords');
 
-        const revokeBadge = document.getElementById('reviewRevokeBadge');
-        if (revokeBadge) revokeBadge.classList.toggle('d-none', !willRevoke || existing.length === 0);
+        document.getElementById('reviewRevokeBadge')?.classList.toggle('d-none',  !willRevoke  || existing.length === 0);
+        document.getElementById('reviewReprintBadge')?.classList.toggle('d-none', !willReprint || existing.length === 0);
 
-        const warning = document.getElementById('step3Warning');
-        if (warning) {
-            const actions = [];
-            if (newOnes.length > 0)          actions.push(`create ${newOnes.length} account(s)`);
-            if (willRevoke && existing.length) actions.push(`revoke passwords for ${existing.length} existing account(s)`);
-            warning.innerHTML = `<i class="bi bi-exclamation-triangle me-1"></i>
-                You are about to: <strong>${actions.join(' and ')}</strong>. This cannot be undone.`;
-        }
+        const actions = [];
+        if (newOnes.length > 0)           actions.push(`create ${newOnes.length} new account(s)`);
+        if (willRevoke && existing.length) actions.push(`revoke passwords for ${existing.length} existing account(s)`);
+        if (willReprint && existing.length && !willRevoke) actions.push(`fetch credentials for ${existing.length} existing account(s) to reprint`);
 
-        document.getElementById('massCreateBtnLabel').textContent = 'Confirm & Execute';
+        const w = document.getElementById('step3Warning');
+        if (w) w.innerHTML = `<i class="bi bi-exclamation-triangle me-1"></i>
+            You are about to: <strong>${actions.join(' and ')}</strong>.
+            ${willRevoke ? 'Password changes <strong>cannot</strong> be undone.' : ''}`;
+
+        const btnLabel = document.getElementById('massCreateBtnLabel');
+        if (btnLabel) btnLabel.textContent = 'Confirm & Execute';
 
         document.getElementById('reviewTableBody').innerHTML = all
-            .slice()
-            .sort((a, b) => a.name.localeCompare(b.name))
+            .slice().sort((a,b) => a.name.localeCompare(b.name))
             .map((s, i) => {
-                let actionBadge;
-                if (!s.has_account) {
-                    actionBadge = '<span class="badge bg-primary">Create account</span>';
-                } else if (willRevoke) {
-                    actionBadge = '<span class="badge bg-danger">Revoke password</span>';
-                } else {
-                    actionBadge = '<span class="badge bg-secondary">No change</span>';
-                }
+                let badge;
+                if (!s.has_account)       badge = '<span class="badge bg-primary">Create account</span>';
+                else if (willRevoke)      badge = '<span class="badge bg-danger">Revoke password</span>';
+                else if (willReprint)     badge = '<span class="badge bg-info text-dark">Reprint only</span>';
+                else                     badge = '<span class="badge bg-secondary">No change</span>';
+
                 return `<tr>
-                    <td>${i + 1}</td>
+                    <td>${i+1}</td>
                     <td>${escHtml(s.name)}</td>
-                    <td><code>${escHtml(s.admissionNo || '—')}</code></td>
-                    <td>
-                        ${escHtml(s.class_name || '—')}
-                        ${s.arm_name ? `<span class="text-muted"> / ${escHtml(s.arm_name)}</span>` : ''}
-                    </td>
+                    <td><code>${escHtml(s.admissionNo||'—')}</code></td>
+                    <td>${escHtml(s.class_name||'—')}${s.arm_name ? `<span class="text-muted"> / ${escHtml(s.arm_name)}</span>` : ''}</td>
                     <td>${s.email ? escHtml(s.email) : '<em class="text-muted">auto-generate</em>'}</td>
-                    <td>${actionBadge}</td>
+                    <td>${badge}</td>
                 </tr>`;
             }).join('');
     }
 
-    /* ═══════════════════════════════════════════════════════════
-       MAIN ACTION — CREATE + optional REVOKE in one go
-    ═══════════════════════════════════════════════════════════ */
+    /* ═══════════════════════════════════════
+       MAIN EXECUTE
+    ═══════════════════════════════════════ */
     document.getElementById('massCreateBtn')?.addEventListener('click', async function () {
         const { newOnes, existing } = getSelectionBreakdown();
-        const pwdType    = document.querySelector('input[name="massPasswordType"]:checked')?.value;
-        const willRevoke = document.getElementById('revokeExistingPasswords')?.checked;
-        const sharedPwd  = document.getElementById('massSharedPassword').value;
+        const pwdType     = document.querySelector('input[name="massPasswordType"]:checked')?.value;
+        const willRevoke  = document.getElementById('revokeExistingPasswords')?.checked;
+        const willReprint = document.getElementById('printExistingOnly')?.checked;
+        const sharedPwd   = document.getElementById('massSharedPassword').value;
 
         setBtn(this, true, '<span class="spinner-border spinner-border-sm me-2"></span>Processing...');
 
-        let createdAccounts = [];
-        let revokedAccounts = [];
-        let skippedNames    = [];
-        let messages        = [];
+        bucket = { created: [], revoked: [], reprinted: [] };
+        const skippedNames = [];
+        const messages     = [];
 
-        /* ── 1. Create new accounts ── */
+        /* 1 — Create new accounts */
         if (newOnes.length > 0) {
             try {
-                const payload = {
+                const r    = await apiFetch('{{ route("users.mass-create-students") }}', {
                     students:        newOnes.map(s => ({ student_id: s.id })),
                     roles:           ['student'],
                     password_type:   pwdType,
                     shared_password: pwdType === 'same' ? sharedPwd : null,
-                };
-
-                const r    = await fetch('{{ route("users.mass-create-students") }}', {
-                    method:  'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrf() },
-                    body:    JSON.stringify(payload),
                 });
-                const data = await r.json();
-
-                if (data.created?.length) createdAccounts = data.created;
-                if (data.skipped?.length) skippedNames    = [...skippedNames, ...data.skipped];
-                if (data.message)         messages.push(data.message);
-            } catch (err) {
-                console.error('Create error:', err);
+                if (r.created?.length) bucket.created = r.created;
+                if (r.skipped?.length) skippedNames.push(...r.skipped);
+                if (r.message)         messages.push(r.message);
+            } catch (e) {
+                console.error('Create error:', e);
                 messages.push('Error creating some accounts.');
             }
         }
 
-        /* ── 2. Revoke existing passwords ── */
+        /* 2 — Revoke existing passwords (takes priority over reprint) */
         if (willRevoke && existing.length > 0) {
             try {
-                const r    = await fetch('{{ route("users.revoke-student-password") }}', {
-                    method:  'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrf() },
-                    body:    JSON.stringify({ student_ids: existing.map(s => s.id) }),
+                const r = await apiFetch('{{ route("users.revoke-student-password") }}', {
+                    student_ids: existing.map(s => s.id),
                 });
-                const data = await r.json();
-
-                if (data.revoked?.length) {
-                    revokedAccounts = data.revoked;
-                } else if (data.count) {
-                    // Fallback: build from existing list
-                    revokedAccounts = existing.map(s => ({
-                        name:        s.name,
-                        admissionNo: s.admissionNo,
-                        email:       s.email || '',
-                        username:    (s.admissionNo || '').replace(/[\/\\]/g, '_'),
-                        password:    'ChangeMe@123',
+                if (r.revoked?.length) {
+                    bucket.revoked = r.revoked;
+                } else if (r.count) {
+                    bucket.revoked = existing.map(s => ({
+                        name: s.name, admissionNo: s.admissionNo,
+                        email: s.email||'', username: (s.admissionNo||'').replace(/[\/\\]/g,'_'),
+                        password: 'ChangeMe@123',
                     }));
                 }
-                if (data.message) messages.push(data.message);
-            } catch (err) {
-                console.error('Revoke error:', err);
+                if (r.message) messages.push(r.message);
+            } catch (e) {
+                console.error('Revoke error:', e);
                 messages.push('Error revoking some passwords.');
+            }
+        }
+
+        /* 3 — Reprint only (no password change) */
+        else if (willReprint && existing.length > 0) {
+            try {
+                const r = await apiFetch('{{ route("users.get-student-credentials") }}', {
+                    student_ids: existing.map(s => s.id),
+                });
+                if (r.credentials?.length) {
+                    bucket.reprinted = r.credentials;
+                } else {
+                    // Fallback: build skeleton (password unknown, show placeholder)
+                    bucket.reprinted = existing.map(s => ({
+                        name: s.name, admissionNo: s.admissionNo,
+                        email: s.email||'', username: (s.admissionNo||'').replace(/[\/\\]/g,'_'),
+                        password: 'ChangeMe@123',
+                    }));
+                }
+                if (r.message) messages.push(r.message || `Fetched credentials for ${existing.length} student(s).`);
+            } catch (e) {
+                console.error('Reprint fetch error:', e);
+                // Still build skeleton on failure
+                bucket.reprinted = existing.map(s => ({
+                    name: s.name, admissionNo: s.admissionNo,
+                    email: s.email||'', username: (s.admissionNo||'').replace(/[\/\\]/g,'_'),
+                    password: 'ChangeMe@123',
+                }));
+                messages.push(`Fetched ${existing.length} credential slip(s) from selection.`);
             }
         }
 
         setBtn(this, false, '<i class="bi bi-person-check me-2"></i>Confirm & Execute');
 
-        // All printable = created + revoked
-        allPrintable = [
-            ...createdAccounts,
-            ...revokedAccounts,
-        ];
-
-        showResultsStep(createdAccounts, revokedAccounts, skippedNames, messages.join(' '));
+        showResultsStep(skippedNames, messages.join(' '));
     });
 
-    /* ═══════════════════════════════════════════════════════════
+    /* ═══════════════════════════════════════
        SHOW RESULTS STEP
-    ═══════════════════════════════════════════════════════════ */
-    function showResultsStep(created, revoked, skipped, message) {
-        document.getElementById('step4Title').textContent = 'Results';
+    ═══════════════════════════════════════ */
+    function showResultsStep(skipped, message) {
         document.getElementById('massResultAlert').innerHTML =
             `<i class="bi bi-check-circle me-2"></i>${escHtml(message || 'Done.')}`;
 
-        // Print button — always visible if there's anything printable
-        document.getElementById('printCredentialsBtn').classList.toggle('d-none', allPrintable.length === 0);
-
-        /* Created section */
-        const createdSection = document.getElementById('step4CreatedSection');
-        createdSection.classList.toggle('d-none', created.length === 0);
-        if (created.length) {
-            document.getElementById('step4CreatedCount').textContent = created.length;
-            document.getElementById('createdResultsBody').innerHTML = created.map((u, i) => `
-                <tr>
-                    <td>${i + 1}</td>
-                    <td><strong>${escHtml(u.name)}</strong></td>
-                    <td><code>${escHtml(u.admissionNo)}</code></td>
-                    <td>${escHtml(u.email)}<br><small class="text-muted">@${escHtml(u.username)}</small></td>
-                    <td><code class="text-success">${escHtml(u.password)}</code></td>
-                </tr>
-            `).join('');
+        /* Created */
+        const createdSec = document.getElementById('step4CreatedSection');
+        createdSec.classList.toggle('d-none', bucket.created.length === 0);
+        if (bucket.created.length) {
+            document.getElementById('step4CreatedCount').textContent = bucket.created.length;
+            document.getElementById('createdResultsBody').innerHTML  = credRows(bucket.created);
         }
 
-        /* Revoked section */
-        const revokedSection = document.getElementById('step4RevokedSection');
-        revokedSection.classList.toggle('d-none', revoked.length === 0);
-        if (revoked.length) {
-            document.getElementById('step4RevokedCount').textContent = revoked.length;
-            document.getElementById('revokedResultsBody').innerHTML = revoked.map((u, i) => `
-                <tr>
-                    <td>${i + 1}</td>
-                    <td><strong>${escHtml(u.name)}</strong></td>
-                    <td><code>${escHtml(u.admissionNo || '—')}</code></td>
-                    <td>${escHtml(u.email || '—')}<br><small class="text-muted">@${escHtml(u.username || '—')}</small></td>
-                    <td><code class="text-danger">${escHtml(u.password || 'ChangeMe@123')}</code></td>
-                </tr>
-            `).join('');
+        /* Revoked */
+        const revokedSec = document.getElementById('step4RevokedSection');
+        revokedSec.classList.toggle('d-none', bucket.revoked.length === 0);
+        if (bucket.revoked.length) {
+            document.getElementById('step4RevokedCount').textContent = bucket.revoked.length;
+            document.getElementById('revokedResultsBody').innerHTML  = credRows(bucket.revoked, 'text-danger');
         }
+
+        /* Reprinted */
+        const reprintSec = document.getElementById('step4ReprintSection');
+        reprintSec.classList.toggle('d-none', bucket.reprinted.length === 0);
+        if (bucket.reprinted.length) {
+            document.getElementById('step4ReprintCount').textContent = bucket.reprinted.length;
+            document.getElementById('reprintResultsBody').innerHTML  = credRows(bucket.reprinted, 'text-primary');
+        }
+
+        /* Print buttons */
+        const pCreated  = document.getElementById('printCreatedBtn');
+        const pRevoked  = document.getElementById('printRevokedBtn');
+        const pReprint  = document.getElementById('printReprintedBtn');
+        const pAll      = document.getElementById('printAllBtn');
+
+        pCreated?.classList.toggle('d-none',  bucket.created.length === 0);
+        pRevoked?.classList.toggle('d-none',  bucket.revoked.length === 0);
+        pReprint?.classList.toggle('d-none',  bucket.reprinted.length === 0);
+
+        const total = bucket.created.length + bucket.revoked.length + bucket.reprinted.length;
+        pAll?.classList.toggle('d-none', total < 2); // show "Print All" only when multiple groups
 
         /* Skipped */
         if (skipped?.length) {
@@ -981,17 +1019,36 @@ document.addEventListener('DOMContentLoaded', function () {
         goStep(4);
     }
 
-    /* ═══════════════════════════════════════════════════════════
-       PRINT CREDENTIAL SLIPS — prints both created + revoked
-    ═══════════════════════════════════════════════════════════ */
-    document.getElementById('printCredentialsBtn')?.addEventListener('click', () => {
-        if (!allPrintable.length) { alert('No credentials to print.'); return; }
-        printSlips(allPrintable);
-    });
+    function credRows(accounts, pwdClass = 'text-success') {
+        return accounts.map((u, i) => `
+            <tr>
+                <td>${i+1}</td>
+                <td><strong>${escHtml(u.name)}</strong></td>
+                <td><code>${escHtml(u.admissionNo||'—')}</code></td>
+                <td>${escHtml(u.email||'—')}<br><small class="text-muted">@${escHtml(u.username||'—')}</small></td>
+                <td><code class="${pwdClass}">${escHtml(u.password||'ChangeMe@123')}</code></td>
+            </tr>
+        `).join('');
+    }
 
-    function printSlips(accounts) {
+    /* ═══════════════════════════════════════
+       PER-BUCKET PRINT BUTTONS
+    ═══════════════════════════════════════ */
+    document.getElementById('printCreatedBtn')?.addEventListener('click',  () => printSlips(bucket.created,   'New Accounts'));
+    document.getElementById('printRevokedBtn')?.addEventListener('click',  () => printSlips(bucket.revoked,   'Revoked Passwords'));
+    document.getElementById('printReprintedBtn')?.addEventListener('click',() => printSlips(bucket.reprinted, 'Existing Credentials'));
+    document.getElementById('printAllBtn')?.addEventListener('click', () =>
+        printSlips([...bucket.created, ...bucket.revoked, ...bucket.reprinted], 'All Credentials')
+    );
+
+    /* ═══════════════════════════════════════
+       PRINT SLIP RENDERER
+    ═══════════════════════════════════════ */
+    function printSlips(accounts, titleSuffix = 'Credentials') {
+        if (!accounts.length) { alert('No credentials to print.'); return; }
+
         const schoolName = document.querySelector('meta[name="school-name"]')?.content || 'School Portal';
-        const today      = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+        const today      = new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'long', year:'numeric' });
 
         const slipsHtml = accounts.map(u => `
             <div class="slip">
@@ -1002,133 +1059,228 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
                 <table class="slip-table">
                     <tr><td class="label">Student Name</td><td class="value"><strong>${escHtml(u.name)}</strong></td></tr>
-                    <tr><td class="label">Admission No</td><td class="value">${escHtml(u.admissionNo || '—')}</td></tr>
-                    <tr><td class="label">Login Email</td><td class="value">${escHtml(u.email || '—')}</td></tr>
-                    <tr><td class="label">Username</td><td class="value">${escHtml(u.username || '—')}</td></tr>
-                    <tr><td class="label">Password</td><td class="value password-cell">${escHtml(u.password || 'ChangeMe@123')}</td></tr>
+                    <tr><td class="label">Admission No</td><td class="value">${escHtml(u.admissionNo||'—')}</td></tr>
+                    <tr><td class="label">Login Email</td> <td class="value">${escHtml(u.email||'—')}</td></tr>
+                    <tr><td class="label">Username</td>    <td class="value">${escHtml(u.username||'—')}</td></tr>
+                    <tr><td class="label">Password</td>    <td class="value password-cell">${escHtml(u.password||'ChangeMe@123')}</td></tr>
                 </table>
                 <p class="slip-note">⚠ Change your password after first login. Keep this slip safe.</p>
             </div>
         `).join('');
 
-        const printWin = window.open('', '_blank', 'width=800,height=900');
-        if (!printWin) { alert('Pop-up blocked. Please allow pop-ups for this site.'); return; }
+        const win = window.open('', '_blank', 'width=820,height=940');
+        if (!win) { alert('Pop-up blocked — please allow pop-ups for this site.'); return; }
 
-        printWin.document.write(`<!DOCTYPE html>
-<html>
-<head>
+        win.document.write(`<!DOCTYPE html><html><head>
 <meta charset="UTF-8">
-<title>Student Credential Slips</title>
+<title>Credential Slips — ${escHtml(titleSuffix)}</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 12pt; background: #fff; color: #111; }
-  .page-title {
-      text-align: center; font-size: 14pt; font-weight: bold;
-      padding: 10mm 0 4mm; border-bottom: 2px solid #000; margin-bottom: 6mm;
-  }
-  .slip {
-      border: 1.5px solid #333; border-radius: 4px;
-      padding: 5mm 7mm; page-break-inside: avoid;
-  }
-  .slip + .slip { border-top: 2px dashed #888; }
-  .slip-header {
-      display: flex; justify-content: space-between; align-items: baseline;
-      border-bottom: 1px solid #ccc; padding-bottom: 3mm; margin-bottom: 3mm;
-  }
-  .school-name { font-weight: 800; font-size: 11pt; }
-  .slip-title  { font-size: 9pt; color: #555; font-style: italic; }
-  .slip-date   { font-size: 8pt; color: #888; }
-  .slip-table  { width: 100%; border-collapse: collapse; }
-  .slip-table td { padding: 1.5mm 2mm; vertical-align: top; }
-  .label { width: 38%; font-size: 9pt; color: #555; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
-  .value { font-size: 11pt; }
-  .password-cell { font-family: 'Courier New', monospace; font-size: 13pt; font-weight: bold; letter-spacing: 2px; color: #0a3; }
-  .slip-note { font-size: 7.5pt; color: #888; margin-top: 3mm; font-style: italic; }
-  @media print {
-      @page { margin: 10mm 12mm; size: A4 portrait; }
-      body  { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-  }
-</style>
-</head>
-<body>
-  <div class="page-title">Student Portal Login Credentials — ${today}</div>
-  ${slipsHtml}
-</body>
-</html>`);
-        printWin.document.close();
-        printWin.focus();
-        printWin.onload = () => printWin.print();
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,sans-serif;font-size:12pt;background:#fff;color:#111}
+.page-title{text-align:center;font-size:14pt;font-weight:bold;padding:10mm 0 4mm;border-bottom:2px solid #000;margin-bottom:6mm}
+.slip{border:1.5px solid #333;border-radius:4px;padding:5mm 7mm;page-break-inside:avoid}
+.slip+.slip{border-top:2px dashed #888}
+.slip-header{display:flex;justify-content:space-between;align-items:baseline;border-bottom:1px solid #ccc;padding-bottom:3mm;margin-bottom:3mm}
+.school-name{font-weight:800;font-size:11pt}
+.slip-title{font-size:9pt;color:#555;font-style:italic}
+.slip-date{font-size:8pt;color:#888}
+.slip-table{width:100%;border-collapse:collapse}
+.slip-table td{padding:1.5mm 2mm;vertical-align:top}
+.label{width:38%;font-size:9pt;color:#555;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.value{font-size:11pt}
+.password-cell{font-family:'Courier New',monospace;font-size:13pt;font-weight:bold;letter-spacing:2px;color:#0a3}
+.slip-note{font-size:7.5pt;color:#888;margin-top:3mm;font-style:italic}
+@media print{@page{margin:10mm 12mm;size:A4 portrait}body{print-color-adjust:exact;-webkit-print-color-adjust:exact}}
+</style></head><body>
+<div class="page-title">Student Portal — ${escHtml(titleSuffix)} — ${today}</div>
+${slipsHtml}
+</body></html>`);
+        win.document.close();
+        win.focus();
+        win.onload = () => win.print();
     }
 
-    /* ═══════════════════════════════════════════════════════════
-       SINGLE-USER REVOKE (from user list table)
-    ═══════════════════════════════════════════════════════════ */
+    /* ═══════════════════════════════════════
+       SINGLE-USER REVOKE (from user list)
+    ═══════════════════════════════════════ */
     document.addEventListener('click', function (e) {
         const btn = e.target.closest('[data-revoke-user-id]');
         if (!btn) return;
-
         document.getElementById('revokeTargetUserId').value     = btn.dataset.revokeUserId;
         document.getElementById('revokeTargetName').textContent = btn.dataset.revokeUserName || '—';
-
         bootstrap.Modal.getOrCreateInstance(document.getElementById('revokePasswordModal')).show();
     });
 
     document.getElementById('confirmRevokeBtn')?.addEventListener('click', function () {
         const userId = document.getElementById('revokeTargetUserId').value;
         if (!userId) return;
+        setBtn(this, true, '<span class="spinner-border spinner-border-sm me-2"></span>Revoking...');
+
+        apiFetch('{{ route("users.revoke-student-password") }}', { user_ids: [userId] })
+            .then(data => {
+                setBtn(this, false, '<i class="bi bi-key me-1"></i>Revoke Password');
+                bootstrap.Modal.getInstance(document.getElementById('revokePasswordModal')).hide();
+
+                if (data.success && data.revoked?.length) {
+                    // After revoke, offer to print the slip immediately
+                    printCredUser = data.revoked[0];
+                    showPrintCredentialModal(printCredUser, true);
+                } else {
+                    Swal.fire({ icon: data.success ? 'success' : 'error', title: data.success ? 'Done!' : 'Error', text: data.message });
+                }
+            })
+            .catch(err => {
+                setBtn(this, false, '<i class="bi bi-key me-1"></i>Revoke Password');
+                console.error(err);
+                alert('Network error. Please try again.');
+            });
+    });
+
+    /* ═══════════════════════════════════════
+       SINGLE-USER PRINT CREDENTIAL (from user list)
+       Triggered by [data-print-user-id] buttons in the table
+    ═══════════════════════════════════════ */
+    document.addEventListener('click', function (e) {
+        const btn = e.target.closest('[data-print-user-id]');
+        if (!btn) return;
+
+        const userId   = btn.dataset.printUserId;
+        const userName = btn.dataset.printUserName || '—';
+
+        // Show modal with loading state
+        const credModal = bootstrap.Modal.getOrCreateInstance(document.getElementById('printCredentialModal'));
+        document.getElementById('printCredentialBody').innerHTML = `
+            <div class="text-center py-4">
+                <div class="spinner-border text-primary" role="status"></div>
+                <p class="mt-2 text-muted">Loading credentials for <strong>${escHtml(userName)}</strong>...</p>
+            </div>`;
+        document.getElementById('doPrintCredentialBtn').classList.remove('d-none');
+        document.getElementById('revokeAndPrintBtn').classList.remove('d-none');
+        credModal.show();
+
+        // Fetch credentials
+        apiFetch('{{ route("users.get-student-credentials") }}', { user_ids: [userId] })
+            .then(data => {
+                const cred = data.credentials?.[0] || null;
+                if (cred) {
+                    printCredUser = cred;
+                    renderCredPreview(cred, false);
+                } else {
+                    document.getElementById('printCredentialBody').innerHTML =
+                        `<div class="alert alert-warning">Could not fetch credentials for this student. Try revoking their password first to generate a known credential slip.</div>`;
+                    document.getElementById('revokeAndPrintBtn').classList.remove('d-none');
+                }
+            })
+            .catch(() => {
+                document.getElementById('printCredentialBody').innerHTML =
+                    `<div class="alert alert-danger">Network error. Please try again.</div>`;
+            });
+    });
+
+    function renderCredPreview(cred, justRevoked) {
+        const notice = justRevoked
+            ? `<div class="alert alert-success py-2 mb-3"><i class="bi bi-check-circle me-1"></i>Password has been reset to the value below.</div>`
+            : `<div class="alert alert-info py-2 mb-3"><i class="bi bi-info-circle me-1"></i>
+                Showing login details for this student. If they've changed their password since last reset, use
+                <strong>Revoke &amp; Print</strong> to generate a fresh known password.</div>`;
+
+        document.getElementById('printCredentialBody').innerHTML = `
+            ${notice}
+            <div class="cred-card">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="cred-label">Student Name</div>
+                        <div class="cred-value">${escHtml(cred.name)}</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="cred-label">Admission No</div>
+                        <div class="cred-value"><code>${escHtml(cred.admissionNo||'—')}</code></div>
+                    </div>
+                    <div class="col-6">
+                        <div class="cred-label">Login Email</div>
+                        <div class="cred-value">${escHtml(cred.email||'—')}</div>
+                    </div>
+                    <div class="col-6">
+                        <div class="cred-label">Username</div>
+                        <div class="cred-value">${escHtml(cred.username||'—')}</div>
+                    </div>
+                    <div class="col-12">
+                        <div class="cred-label">Password</div>
+                        <div class="cred-pwd">${escHtml(cred.password||'ChangeMe@123')}</div>
+                        ${!justRevoked ? '<small class="text-muted">This is the last known reset password. Student may have changed it.</small>' : ''}
+                    </div>
+                </div>
+            </div>`;
+
+        // Hide "Revoke & Print" if just revoked
+        document.getElementById('revokeAndPrintBtn').classList.toggle('d-none', justRevoked);
+    }
+
+    function showPrintCredentialModal(cred, justRevoked) {
+        printCredUser = cred;
+        renderCredPreview(cred, justRevoked);
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('printCredentialModal')).show();
+    }
+
+    document.getElementById('doPrintCredentialBtn')?.addEventListener('click', () => {
+        if (printCredUser) printSlips([printCredUser], 'Credential Slip');
+    });
+
+    document.getElementById('revokeAndPrintBtn')?.addEventListener('click', function () {
+        const userId = document.getElementById('revokeTargetUserId').value
+            || document.getElementById('printCredentialBody')
+                .querySelector('[data-user-id]')?.dataset.userId;
+
+        // Find user id from the loaded cred if available
+        const uid = printCredUser?.id;
+        if (!uid) { alert('Cannot determine user ID. Please use the Revoke button in the user list.'); return; }
 
         setBtn(this, true, '<span class="spinner-border spinner-border-sm me-2"></span>Revoking...');
 
-        fetch('{{ route("users.revoke-student-password") }}', {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrf() },
-            body:    JSON.stringify({ user_ids: [userId] }),
-        })
-        .then(r => r.json())
-        .then(data => {
-            setBtn(this, false, '<i class="bi bi-key me-1"></i>Revoke Password');
-            bootstrap.Modal.getInstance(document.getElementById('revokePasswordModal')).hide();
-
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    icon:  data.success ? 'success' : 'error',
-                    title: data.success ? 'Done!' : 'Error',
-                    text:  data.message,
-                });
-            } else {
-                alert(data.message);
-            }
-        })
-        .catch(err => {
-            setBtn(this, false, '<i class="bi bi-key me-1"></i>Revoke Password');
-            console.error(err);
-            alert('Network error. Please try again.');
-        });
+        apiFetch('{{ route("users.revoke-student-password") }}', { user_ids: [uid] })
+            .then(data => {
+                setBtn(this, false, '<i class="bi bi-key me-1"></i>Revoke &amp; Print New Password');
+                if (data.success && data.revoked?.length) {
+                    printCredUser = data.revoked[0];
+                    renderCredPreview(printCredUser, true);
+                } else {
+                    alert(data.message || 'Revoke failed.');
+                }
+            })
+            .catch(err => {
+                setBtn(this, false, '<i class="bi bi-key me-1"></i>Revoke &amp; Print New Password');
+                console.error(err);
+                alert('Network error.');
+            });
     });
 
-    /* ═══════════════════════════════════════════════════════════
+    /* ═══════════════════════════════════════
        RESET MODAL
-    ═══════════════════════════════════════════════════════════ */
+    ═══════════════════════════════════════ */
     function resetMassModal() {
         selectedIds.clear();
-        allPrintable     = [];
-        allStudents      = [];
-        filteredStudents = [];
+        bucket = { created: [], revoked: [], reprinted: [] };
+        allStudents = filteredStudents = [];
 
-        if (searchInput)   searchInput.value   = '';
-        if (classFilter)   classFilter.value   = '';
-        if (armFilter)     armFilter.value     = '';
-        if (accountFilter) accountFilter.value = '';
+        ['massStudentSearch','massSharedPassword'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+        ['massClassFilter','massArmFilter','massAccountFilter'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
 
-        document.getElementById('massSharedPassword').value        = '';
         document.getElementById('massSkippedInfo')?.classList.add('d-none');
-        document.getElementById('massResultAlert').innerHTML       = '';
-        document.getElementById('massSelectedCount').textContent   = '0';
-        document.getElementById('newCount') && (document.getElementById('massNewCount').textContent      = '0');
-        document.getElementById('massExistingCount').textContent   = '0';
+        document.getElementById('massResultAlert').innerHTML = '';
+        document.getElementById('massSelectedCount').textContent = '0';
+        document.getElementById('massNewCount').textContent      = '0';
+        document.getElementById('massExistingCount').textContent = '0';
 
-        const revokeEl = document.getElementById('revokeExistingPasswords');
-        if (revokeEl) revokeEl.checked = false;
+        const revokeEl  = document.getElementById('revokeExistingPasswords');
+        const reprintEl = document.getElementById('printExistingOnly');
+        if (revokeEl)  revokeEl.checked  = false;
+        if (reprintEl) reprintEl.checked = false;
 
         tbody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-muted">
             <div class="spinner-border spinner-border-sm me-2"></div>Loading students...
@@ -1140,33 +1292,32 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         const samePwd = document.getElementById('pwdTypeSame');
-        if (samePwd) {
-            samePwd.checked = true;
-            samePwd.dispatchEvent(new Event('change'));
-        }
+        if (samePwd) { samePwd.checked = true; samePwd.dispatchEvent(new Event('change')); }
 
         goStep(1);
     }
 
-    /* ═══════════════════════════════════════════════════════════
+    /* ═══════════════════════════════════════
        UTILITIES
-    ═══════════════════════════════════════════════════════════ */
+    ═══════════════════════════════════════ */
     function debounce(fn, ms) {
-        let t;
-        return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+        let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); };
     }
-
-    function escHtml(str) {
-        if (str == null) return '';
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
+    function escHtml(s) {
+        if (s == null) return '';
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
     }
-
-    function escAttr(str) { return escHtml(str).replace(/'/g, '&#39;'); }
-    function getCsrf()    { return document.querySelector('meta[name="csrf-token"]')?.content || ''; }
+    function escAttr(s) { return escHtml(s).replace(/'/g,'&#39;'); }
+    function getCsrf() { return document.querySelector('meta[name="csrf-token"]')?.content || ''; }
     function setBtn(btn, disabled, html) { btn.disabled = disabled; btn.innerHTML = html; }
+
+    async function apiFetch(url, payload) {
+        const r = await fetch(url, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': getCsrf() },
+            body:    JSON.stringify(payload),
+        });
+        return r.json();
+    }
 });
 </script>
