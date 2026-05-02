@@ -13,412 +13,267 @@ body {
     print-color-adjust: exact;
 }
 
-/*
-    CR-80 PVC card: 85.6mm × 54mm
-    We render at 2× for quality: 171.2mm × 108mm
-    Two pairs per A4 page (210mm wide, 297mm tall)
-    Each pair = front + back side by side = 171.2mm + 6mm gap = ~178mm → fits
-    Two pairs stacked + cut marks = ~108 + 8 + 108 + 8 = ~232mm → fits on A4
-*/
-
 .page-wrap {
     width: 210mm;
-    padding: 8mm 6mm;
+    padding: 8mm 5mm;
     background: #fff;
 }
 
-/* Each front+back pair */
-.card-pair {
-    display: table;
+/* Side-by-side pair using table */
+.pair-table {
     width: 100%;
-    margin-bottom: 0;
+    border-collapse: collapse;
     page-break-inside: avoid;
     break-inside: avoid;
+    margin-bottom: 0;
 }
-.card-pair-inner {
-    display: table-row;
-}
-.card-cell {
-    display: table-cell;
-    vertical-align: top;
-    padding: 0 3mm;
-}
-.card-label {
+.pair-label-row td {
     font-size: 6pt;
     font-weight: bold;
     color: #94a3b8;
     letter-spacing: 1pt;
     text-transform: uppercase;
     text-align: center;
-    margin-bottom: 1.5mm;
+    padding-bottom: 1.5mm;
+}
+.pair-card-row td {
+    vertical-align: top;
+    padding: 0 2.5mm;
 }
 
 /* Cut guide */
-.cut-guide {
-    text-align: center;
-    padding: 2mm 0;
-    page-break-inside: avoid;
-}
-.cut-line {
-    border: none;
-    border-top: 0.5pt dashed #cbd5e1;
-    margin: 0 8mm;
-}
-.cut-text {
-    font-size: 5.5pt;
-    color: #cbd5e1;
-    letter-spacing: 1pt;
-    margin-top: 1mm;
-    font-family: 'DejaVu Sans', Arial, sans-serif;
-}
+.cut-table { width: 100%; border-collapse: collapse; }
+.cut-table td { padding: 2mm 0; text-align: center; }
+.cut-hr { border: none; border-top: 0.5pt dashed #cbd5e1; margin: 0 8mm; }
+.cut-text { font-size: 5.5pt; color: #cbd5e1; letter-spacing: 1pt; margin-top: 1mm; font-family: 'DejaVu Sans', Arial, sans-serif; }
 
-/* ═══════════════════════════════════════
-   CARD BASE  — fixed 85mm × 135mm
-   (portrait, scaled 2× from 54×85.6mm)
-   ═══════════════════════════════════════ */
-.id-card {
+/* ═══════════════════════
+   CARD SHELL
+   85mm × 135mm portrait
+   ═══════════════════════ */
+.card {
     width: 85mm;
     height: 135mm;
-    border-radius: 3mm;
+    border-radius: 2.5mm;
     overflow: hidden;
     position: relative;
-    background: #ffffff;
-    border: 0.4mm solid #d1d5db;
+    background: #fff;
+    border: 0.3mm solid #d1d5db;
     font-family: 'DejaVu Sans', Arial, sans-serif;
 }
 
-/* Crop marks — tiny lines at corners */
-.crop-tl, .crop-tr, .crop-bl, .crop-br {
+/* Accent strips */
+.accent { height: 2mm; background: #1e3a5f; font-size: 0; line-height: 0; }
+.accent-bot { height: 2mm; background: #2169ad; font-size: 0; line-height: 0; position: absolute; bottom: 0; left: 0; right: 0; }
+
+/* Watermark */
+.watermark {
     position: absolute;
-    width: 3mm; height: 3mm;
-    z-index: 99;
+    top: 28mm; left: 50%;
+    width: 45mm; height: 45mm;
+    margin-left: -22.5mm;
+    opacity: 0.06;
+    z-index: 0;
 }
-.crop-tl { top:-0.5mm; left:-0.5mm; border-top:0.3mm solid #9ca3af; border-left:0.3mm solid #9ca3af; }
-.crop-tr { top:-0.5mm; right:-0.5mm; border-top:0.3mm solid #9ca3af; border-right:0.3mm solid #9ca3af; }
-.crop-bl { bottom:-0.5mm; left:-0.5mm; border-bottom:0.3mm solid #9ca3af; border-left:0.3mm solid #9ca3af; }
-.crop-br { bottom:-0.5mm; right:-0.5mm; border-bottom:0.3mm solid #9ca3af; border-right:0.3mm solid #9ca3af; }
+.watermark img { width: 45mm; height: 45mm; object-fit: contain; }
 
-/* Accent bars */
-.accent-bar {
-    height: 2.2mm;
-    background: #1e3a5f;
-    font-size: 0;
-    line-height: 0;
-}
-
-/* ── FRONT CARD ── */
-.front-header {
+/* ── FRONT HEADER ── */
+.f-header {
     background: #1e3a5f;
     text-align: center;
-    padding: 3mm 2mm 13mm;
+    padding: 2.5mm 2mm 11mm;
     position: relative;
     overflow: hidden;
 }
-.front-header-deco1 {
-    position: absolute; top: -5mm; right: -5mm;
-    width: 20mm; height: 20mm;
-    border-radius: 50%;
-    background: rgba(255,255,255,0.08);
+.f-header-deco {
+    position: absolute; top: -4mm; right: -4mm;
+    width: 18mm; height: 18mm; border-radius: 50%;
+    background: rgba(255,255,255,0.07);
 }
-.front-header-deco2 {
-    position: absolute; bottom: -8mm; left: -3mm;
-    width: 24mm; height: 24mm;
+.f-logo {
+    width: 15mm; height: 15mm;
     border-radius: 50%;
-    background: rgba(255,255,255,0.05);
-}
-.logo-wrap {
-    width: 17mm; height: 17mm;
-    border-radius: 50%;
+    border: 0.5mm solid rgba(255,255,255,0.5);
     overflow: hidden;
-    border: 0.6mm solid rgba(255,255,255,0.5);
-    background: rgba(255,255,255,0.14);
-    margin: 0 auto 2mm;
+    margin: 0 auto 1.5mm;
+    background: rgba(255,255,255,0.13);
     display: block;
 }
-.logo-wrap img { width: 100%; height: 100%; object-fit: contain; }
-.logo-placeholder {
-    width: 17mm; height: 17mm;
-    border-radius: 50%;
+.f-logo img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.f-logo-placeholder {
+    width: 15mm; height: 15mm; border-radius: 50%;
     background: rgba(255,255,255,0.15);
-    border: 0.6mm solid rgba(255,255,255,0.4);
-    margin: 0 auto 2mm;
-    text-align: center;
-    line-height: 17mm;
-    font-size: 14pt;
-    color: #fff;
+    border: 0.5mm solid rgba(255,255,255,0.4);
+    margin: 0 auto 1.5mm;
+    line-height: 15mm; text-align: center;
+    font-size: 12pt; color: #fff;
 }
-.school-name {
-    color: #ffffff;
-    font-size: 7pt;
-    font-weight: bold;
-    line-height: 1.3;
-    position: relative;
-}
-.school-motto {
-    color: rgba(255,255,255,0.72);
-    font-size: 5pt;
-    font-style: italic;
-    margin-top: 0.8mm;
-    position: relative;
-}
-.id-badge {
+.f-school { color: #fff; font-size: 7pt; font-weight: bold; line-height: 1.3; }
+.f-motto  { color: rgba(255,255,255,0.72); font-size: 4.8pt; font-style: italic; margin-top: 0.8mm; }
+.f-badge  {
     display: inline-block;
     background: rgba(255,255,255,0.18);
     border: 0.3mm solid rgba(255,255,255,0.38);
-    color: #fff;
-    font-size: 4.5pt;
-    font-weight: bold;
-    letter-spacing: 1.5pt;
-    padding: 0.8mm 3mm;
-    border-radius: 5mm;
-    margin-top: 1.5mm;
-    position: relative;
+    color: #fff; font-size: 4.2pt; font-weight: bold;
+    letter-spacing: 1.5pt; padding: 0.8mm 3mm;
+    border-radius: 4mm; margin-top: 1.5mm;
 }
 
-/* Photo — overlaps header */
-.photo-overlap {
+/* Photo */
+.f-photo-wrap {
     text-align: center;
-    margin-top: -11mm;
-    margin-bottom: 1.5mm;
-    position: relative;
-    z-index: 5;
+    margin-top: -9.5mm;
+    margin-bottom: 1mm;
+    position: relative; z-index: 2;
 }
-.photo-ring {
-    width: 22mm; height: 22mm;
-    border-radius: 50%;
-    border: 1.2mm solid #ffffff;
-    overflow: hidden;
-    display: inline-block;
-    vertical-align: top;
-    background: #dbeafe;
-    /* outline trick via box-shadow (DomPDF supports box-shadow) */
-    box-shadow: 0 0 0 0.8mm #2169ad, 0 3px 10px rgba(33,105,173,0.4);
+.f-photo {
+    width: 19mm; height: 19mm; border-radius: 50%;
+    border: 0.8mm solid #fff;
+    box-shadow: 0 0 0 0.7mm #2169ad;
+    overflow: hidden; display: inline-block;
+    background: #dbeafe; vertical-align: top;
 }
-.photo-ring img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.photo-initials {
-    width: 22mm; height: 22mm;
-    border-radius: 50%;
-    background: #dbeafe;
-    border: 1.2mm solid #fff;
-    box-shadow: 0 0 0 0.8mm #2169ad;
-    display: inline-block;
-    text-align: center;
-    vertical-align: top;
-    font-size: 14pt;
-    font-weight: bold;
-    color: #2169ad;
-    line-height: 19.4mm;
-}
-
-/* Watermark — DomPDF supports opacity on img */
-.watermark {
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    text-align: center;
-    z-index: 1;
-}
-.watermark img {
-    width: 52mm;
-    height: 52mm;
-    object-fit: contain;
-    opacity: 0.06;
-    margin-top: 30mm;
+.f-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.f-initials {
+    width: 19mm; height: 19mm; border-radius: 50%;
+    background: #dbeafe; border: 0.8mm solid #fff;
+    box-shadow: 0 0 0 0.7mm #2169ad;
+    display: inline-block; text-align: center;
+    vertical-align: top; line-height: 17.4mm;
+    font-size: 11pt; font-weight: bold; color: #2169ad;
 }
 
 /* Name / Adm */
-.student-name {
-    text-align: center;
-    font-size: 7.5pt;
-    font-weight: bold;
-    color: #1e2937;
-    padding: 0 2.5mm;
-    line-height: 1.3;
-    position: relative;
-    z-index: 2;
+.f-name {
+    text-align: center; font-size: 7.5pt; font-weight: bold;
+    color: #1e2937; padding: 0 2mm; line-height: 1.3;
+    position: relative; z-index: 2;
 }
-.adm-wrap {
-    text-align: center;
-    margin: 1.2mm 0;
-    position: relative;
-    z-index: 2;
+.f-adm { text-align: center; margin: 1mm 0; position: relative; z-index: 2; }
+.f-adm-lbl {
+    background: #1e3a5f; color: #fff;
+    font-size: 4.3pt; font-weight: bold; padding: 0.6mm 1.8mm;
+    border-radius: 0.8mm 0 0 0.8mm;
 }
-.adm-label {
-    background: #1e3a5f;
-    color: #fff;
-    font-size: 4.5pt;
-    font-weight: bold;
-    padding: 0.7mm 1.8mm;
-    border-radius: 1mm 0 0 1mm;
-}
-.adm-value {
-    background: #eff6ff;
-    color: #2169ad;
-    font-size: 5pt;
-    font-weight: bold;
-    padding: 0.7mm 1.8mm;
-    border: 0.3mm solid #bfdbfe;
-    border-left: none;
-    border-radius: 0 1mm 1mm 0;
+.f-adm-val {
+    background: #eff6ff; color: #2169ad;
+    font-size: 4.8pt; font-weight: bold; padding: 0.6mm 1.8mm;
+    border: 0.3mm solid #bfdbfe; border-left: none;
+    border-radius: 0 0.8mm 0.8mm 0;
 }
 
-/* Info table — float-based for DomPDF */
-.info-table {
+/* ── Info table — proper HTML table ── */
+.info-tbl {
+    width: calc(100% - 5mm);
     margin: 1mm 2.5mm 0;
+    border-collapse: collapse;
     border: 0.3mm solid #e2e8f0;
     border-radius: 1.5mm;
     overflow: hidden;
-    position: relative;
-    z-index: 2;
+    position: relative; z-index: 2;
+    font-size: 0; /* remove whitespace gaps */
 }
-.info-row { overflow: hidden; border-bottom: 0.3mm solid #e2e8f0; min-height: 0; }
-.info-row:last-child { border-bottom: none; }
-.info-lbl {
-    float: left;
+.info-tbl tr { border-bottom: 0.3mm solid #e2e8f0; }
+.info-tbl tr:last-child { border-bottom: none; }
+
+/* Label cell */
+.info-tbl td.lbl {
     background: #eef2ff;
-    padding: 0.9mm 1.2mm;
-    font-size: 3.8pt;
-    font-weight: bold;
     color: #4338ca;
-    text-transform: uppercase;
-    letter-spacing: 0.1pt;
-    line-height: 1.4;
-}
-.info-val {
-    padding: 0.9mm 1.2mm;
-    font-size: 4.3pt;
+    font-size: 4pt;
     font-weight: bold;
-    color: #1e2937;
-    line-height: 1.4;
+    text-transform: uppercase;
+    letter-spacing: 0.2pt;
+    padding: 1mm 1.2mm;
+    width: 18%;
+    vertical-align: middle;
+    white-space: nowrap;
+    border-right: 0.3mm solid #e2e8f0;
 }
-.info-clear { clear: both; }
+/* Value cell */
+.info-tbl td.val {
+    color: #1e2937;
+    font-size: 5pt;
+    font-weight: bold;
+    padding: 1mm 1.5mm;
+    width: 32%;
+    vertical-align: middle;
+}
+/* Divider between left and right pair */
+.info-tbl td.div {
+    border-left: 0.3mm solid #e2e8f0;
+    padding: 0; width: 0;
+}
 
 /* QR */
-.qr-section {
-    text-align: center;
-    padding: 1.5mm 0 0.5mm;
-    position: relative;
-    z-index: 2;
-}
-.qr-section img { width: 14mm; height: 14mm; }
-.qr-label {
-    font-size: 4pt;
-    color: #94a3b8;
-    letter-spacing: 0.6pt;
-    margin-top: 0.5mm;
-}
+.f-qr { text-align: center; padding: 1.5mm 0 0; position: relative; z-index: 2; }
+.f-qr img { width: 13mm; height: 13mm; }
+.f-qr-lbl { font-size: 3.8pt; color: #94a3b8; letter-spacing: 0.6pt; margin-top: 0.5mm; }
 
 /* ── BACK CARD ── */
-.back-header {
+.b-header {
     background: #1e3a5f;
     text-align: center;
-    padding: 3mm 2mm;
-    position: relative;
-    overflow: hidden;
+    padding: 2.5mm 2mm;
+    position: relative; overflow: hidden;
 }
-.back-header-sub {
-    color: rgba(255,255,255,0.75);
-    font-size: 4.5pt;
-    font-weight: bold;
-    letter-spacing: 2pt;
-}
-.back-header-name {
-    color: #fff;
-    font-size: 7pt;
-    font-weight: bold;
-    margin-top: 1mm;
-    line-height: 1.3;
-}
-.back-header-addr {
-    color: rgba(255,255,255,0.62);
-    font-size: 4.3pt;
-    margin-top: 0.8mm;
-}
-.mag-strip {
-    height: 5mm;
-    background: #1a1a2e;
-    font-size: 0;
-}
-.student-chip {
+.b-header-sub { color: rgba(255,255,255,0.75); font-size: 4.2pt; font-weight: bold; letter-spacing: 2pt; }
+.b-header-name { color: #fff; font-size: 6.5pt; font-weight: bold; margin-top: 1mm; line-height: 1.3; }
+.b-header-addr { color: rgba(255,255,255,0.6); font-size: 4pt; margin-top: 0.8mm; }
+
+.b-mag { height: 4.5mm; background: #1a1a2e; font-size: 0; }
+
+.b-chip {
     margin: 2mm 2.5mm 0;
     background: #eef2ff;
-    border-left: 1mm solid #2169ad;
-    border-radius: 1.5mm;
-    padding: 1.5mm 2mm;
-    position: relative;
-    z-index: 2;
+    border-left: 0.9mm solid #2169ad;
+    border-radius: 1.2mm;
+    padding: 1.2mm 2mm;
+    position: relative; z-index: 2;
 }
-.chip-name { font-size: 6pt; font-weight: bold; color: #1e3a5f; }
-.chip-sub  { font-size: 4.5pt; font-weight: bold; color: #4338ca; margin-top: 0.5mm; }
+.b-chip-name { font-size: 6pt; font-weight: bold; color: #1e3a5f; }
+.b-chip-sub  { font-size: 4.3pt; font-weight: bold; color: #4338ca; margin-top: 0.5mm; }
 
-.terms-section { padding: 1.5mm 2.5mm 0; position: relative; z-index: 2; }
-.terms-head {
-    font-size: 5pt; font-weight: bold; color: #1e3a5f;
-    text-transform: uppercase; letter-spacing: 0.4pt; margin-bottom: 0.8mm;
-}
-.terms-list { padding-left: 3.5mm; font-size: 4.3pt; color: #4b5563; line-height: 1.65; }
+.b-terms { padding: 1.5mm 2.5mm 0; position: relative; z-index: 2; }
+.b-terms-head { font-size: 5pt; font-weight: bold; color: #1e3a5f; text-transform: uppercase; letter-spacing: 0.4pt; margin-bottom: 0.8mm; }
+.b-terms ul { padding-left: 3.5mm; font-size: 4.2pt; color: #4b5563; line-height: 1.7; }
 
-.contact-box {
+.b-contact {
     margin: 1.5mm 2.5mm 0;
     background: #f0f4ff;
-    border-left: 1mm solid #2169ad;
-    border-radius: 1.5mm;
-    padding: 1.2mm 2mm;
-    position: relative;
-    z-index: 2;
+    border-left: 0.9mm solid #2169ad;
+    border-radius: 1.2mm;
+    padding: 1mm 2mm;
+    position: relative; z-index: 2;
 }
-.contact-head {
-    font-size: 4pt; font-weight: bold; color: #2169ad;
-    text-transform: uppercase; letter-spacing: 0.6pt; margin-bottom: 0.8mm;
-}
-.contact-line { font-size: 4.5pt; color: #374151; margin-bottom: 0.5mm; }
+.b-contact-head { font-size: 3.8pt; font-weight: bold; color: #2169ad; text-transform: uppercase; letter-spacing: 0.6pt; margin-bottom: 0.8mm; }
+.b-contact-line { font-size: 4.2pt; color: #374151; margin-bottom: 0.5mm; }
 
-/* Signatures */
-.sig-section {
-    margin: 2mm 2.5mm 0;
-    overflow: hidden;
-    position: relative;
-    z-index: 2;
-}
-.sig-left  { float: left;  width: 47%; text-align: center; }
-.sig-right { float: right; width: 47%; text-align: center; }
-.sig-line  { height: 6mm; border-bottom: 0.5mm solid #1e3a5f; margin: 0 1.5mm; }
-.sig-label { font-size: 4pt; color: #6b7280; margin-top: 0.8mm; }
-.sig-clear { clear: both; }
+.b-sig-table { width: calc(100% - 5mm); margin: 2mm 2.5mm 0; border-collapse: collapse; position: relative; z-index: 2; }
+.b-sig-table td { text-align: center; width: 50%; padding: 0 1.5mm; }
+.b-sig-line { height: 5.5mm; border-bottom: 0.5mm solid #1e3a5f; }
+.b-sig-lbl  { font-size: 3.8pt; color: #6b7280; margin-top: 0.8mm; }
 
-.issued-section {
-    text-align: center;
-    margin-top: 1.5mm;
-    position: relative;
-    z-index: 2;
-}
-.issued-label  { font-size: 4pt; color: #9ca3af; letter-spacing: 0.5pt; text-transform: uppercase; }
-.issued-school { font-size: 5.5pt; font-weight: bold; color: #1e3a5f; }
-.issued-role   { font-size: 4pt; color: #6b7280; }
+.b-issued { text-align: center; margin-top: 1.5mm; position: relative; z-index: 2; }
+.b-issued-lbl    { font-size: 3.8pt; color: #9ca3af; letter-spacing: 0.5pt; text-transform: uppercase; }
+.b-issued-school { font-size: 5.5pt; font-weight: bold; color: #1e3a5f; }
+.b-issued-role   { font-size: 3.8pt; color: #6b7280; }
 
-/* Barcode */
-.barcode-section {
-    text-align: center;
-    padding: 1.5mm 0 0;
-    position: relative;
-    z-index: 2;
-}
-.barcode-section img { height: 11mm; max-width: 70mm; }
-.barcode-adm  { font-size: 5pt; font-weight: bold; color: #1e3a5f; letter-spacing: 1.5pt; margin-top: 0.5mm; }
-.barcode-sub  { font-size: 3.8pt; color: #94a3b8; margin-top: 0.3mm; }
-.barcode-text { font-family: monospace; font-size: 14pt; color: #1e3a5f; letter-spacing: -1px; }
+.b-barcode { text-align: center; padding: 1.5mm 0 0; position: relative; z-index: 2; }
+.b-barcode img { height: 10mm; max-width: 70mm; }
+.b-barcode-adm { font-size: 5pt; font-weight: bold; color: #1e3a5f; letter-spacing: 1.5pt; margin-top: 0.5mm; }
+.b-barcode-sub { font-size: 3.8pt; color: #94a3b8; margin-top: 0.3mm; }
+.b-barcode-fallback { font-family: monospace; font-size: 12pt; color: #1e3a5f; letter-spacing: -1px; }
 
 </style>
 </head>
 <body>
 @php
     $schoolName = $schoolInfo?->school_name ?? 'School Name';
-    $logoUrl    = ($schoolInfo && $schoolInfo->school_logo)
-                    ? $schoolInfo->getLogoUrlAttribute() : null;
+    $logoUrl    = ($schoolInfo && $schoolInfo->school_logo) ? $schoolInfo->getLogoUrlAttribute() : null;
     $expiry     = now()->addYear()->format('F Y');
-    $barcodeGen = null;
-    if (class_exists(\Picqer\Barcode\BarcodeGeneratorPNG::class)) {
-        $barcodeGen = new \Picqer\Barcode\BarcodeGeneratorPNG();
-    }
+    $barcodeGen = class_exists(\Picqer\Barcode\BarcodeGeneratorPNG::class)
+                    ? new \Picqer\Barcode\BarcodeGeneratorPNG() : null;
 @endphp
 
 <div class="page-wrap">
@@ -432,232 +287,216 @@ body {
     $classArm   = trim(($student->schoolclass ?? '') . ' ' . ($student->arm ?? ''));
     $admNo      = $student->admissionNo ?? '';
     $dob        = !empty($student->dateofbirth)
-                    ? \Carbon\Carbon::parse($student->dateofbirth)->format('d M Y') : 'N/A';
+                    ? \Carbon\Carbon::parse($student->dateofbirth)->format('d M Y') : '';
     $admDate    = !empty($student->admission_date)
-                    ? \Carbon\Carbon::parse($student->admission_date)->format('d M Y') : 'N/A';
-    $photoUrl   = $student->picture
-                    ? asset('storage/images/student_avatars/'.$student->picture) : null;
+                    ? \Carbon\Carbon::parse($student->admission_date)->format('d M Y') : '';
+    $photoUrl   = $student->picture ? asset('storage/images/student_avatars/'.$student->picture) : null;
     $phone      = $schoolInfo?->school_phone   ?? '';
     $email      = $schoolInfo?->school_email   ?? '';
     $website    = $schoolInfo?->school_website ?? '';
     $address    = $schoolInfo?->school_address ?? '';
 
-    $rows = array_filter([
-        ['Class',       $classArm],
-        ['Gender',      $student->gender           ?? ''],
-        ['D.O.B',       $dob !== 'N/A' ? $dob : ''],
-        ['Blood Grp',   $student->blood_group       ?? ''],
-        ['Nationality', $student->nationality       ?? ''],
-        ['State',       $student->state             ?? ''],
-        ['L.G.A',       $student->local             ?? ''],
-        ['Session',     $student->session           ?? ''],
-        ['Adm. Date',   $admDate !== 'N/A' ? $admDate : ''],
-        ['Category',    $student->student_category  ?? ''],
-        ['Status',      $student->student_status    ?? ''],
-    ], fn($r) => !empty(trim($r[1])));
+    // All fields — filter empty — chunk into pairs for 2-col table rows
+    $fields = array_values(array_filter([
+        ['Class',      $classArm],
+        ['Gender',     $student->gender           ?? ''],
+        ['D.O.B',      $dob],
+        ['Blood Grp',  $student->blood_group       ?? ''],
+        ['Nationality',$student->nationality       ?? ''],
+        ['State',      $student->state             ?? ''],
+        ['L.G.A',      $student->local             ?? ''],
+        ['Session',    $student->session           ?? ''],
+        ['Adm. Date',  $admDate],
+        ['Category',   $student->student_category  ?? ''],
+        ['Status',     $student->student_status    ?? ''],
+    ], fn($r) => !empty(trim($r[1]))));
 
-    $payload = base64_encode(json_encode(['id'=>$student->id,'adm'=>$admNo,'ts'=>now()->timestamp]));
-    $qrB64   = base64_encode(
-        \SimpleSoftwareIO\QrCode\Facades\QrCode::size(120)->format('png')
+    $pairs = array_chunk($fields, 2);
+
+    $payload    = base64_encode(json_encode(['id'=>$student->id,'adm'=>$admNo,'ts'=>now()->timestamp]));
+    $qrB64      = base64_encode(
+        \SimpleSoftwareIO\QrCode\Facades\QrCode::size(110)->format('png')
             ->generate(route('student-id-cards.verify', ['token' => $payload]))
     );
     $barcodeB64 = $barcodeGen
-        ? base64_encode($barcodeGen->getBarcode($admNo, $barcodeGen::TYPE_CODE_128, 2, 42))
+        ? base64_encode($barcodeGen->getBarcode($admNo, $barcodeGen::TYPE_CODE_128, 2, 40))
         : null;
 @endphp
 
-<div class="card-pair">
-  <div class="card-pair-inner">
+<table class="pair-table">
+  <tr class="pair-label-row">
+    <td style="width:50%;">&#9654; FRONT</td>
+    <td style="width:50%;">&#9664; BACK</td>
+  </tr>
+  <tr class="pair-card-row">
 
     {{-- ═══ FRONT ═══ --}}
-    <div class="card-cell">
-      <div class="card-label">▶ FRONT</div>
-      <div class="id-card">
-        <div class="crop-tl"></div><div class="crop-tr"></div>
-        <div class="crop-bl"></div><div class="crop-br"></div>
+    <td>
+    <div class="card">
+      <div class="accent"></div>
 
-        {{-- Watermark --}}
+      {{-- Watermark --}}
+      @if($logoUrl)
+      <div class="watermark"><img src="{{ $logoUrl }}" alt=""></div>
+      @endif
+
+      {{-- Header --}}
+      <div class="f-header">
+        <div class="f-header-deco"></div>
         @if($logoUrl)
-        <div class="watermark">
-            <img src="{{ $logoUrl }}" alt="">
-        </div>
+          <div class="f-logo"><img src="{{ $logoUrl }}" alt="logo"></div>
+        @else
+          <div class="f-logo-placeholder">&#127979;</div>
         @endif
-
-        {{-- Accent top --}}
-        <div class="accent-bar"></div>
-
-        {{-- Header --}}
-        <div class="front-header">
-            <div class="front-header-deco1"></div>
-            <div class="front-header-deco2"></div>
-            @if($logoUrl)
-                <div class="logo-wrap"><img src="{{ $logoUrl }}" alt="logo"></div>
-            @else
-                <div class="logo-placeholder">&#127979;</div>
-            @endif
-            <div class="school-name">{{ $schoolName }}</div>
-            @if(!empty($schoolInfo?->school_motto))
-            <div class="school-motto">{{ $schoolInfo->school_motto }}</div>
-            @endif
-            <div class="id-badge">STUDENT ID CARD</div>
-        </div>
-
-        {{-- Photo --}}
-        <div class="photo-overlap">
-            @if($photoUrl)
-            <div class="photo-ring">
-                <img src="{{ $photoUrl }}" alt="{{ $fullname }}">
-            </div>
-            @else
-            <div class="photo-initials">{{ $initials }}</div>
-            @endif
-        </div>
-
-        {{-- Name --}}
-        <div class="student-name">{{ $fullname }}</div>
-        <div class="adm-wrap">
-            <span class="adm-label">ADM NO</span><span class="adm-value">{{ $admNo }}</span>
-        </div>
-
-        {{-- Info rows — 2 per row --}}
-        @php $pairRows = array_chunk(array_values($rows), 2); @endphp
-        <div class="info-table">
-            @foreach($pairRows as $pi => $pair)
-            <div class="info-row" style="{{ $pi === count($pairRows)-1 ? 'border-bottom:none;' : '' }}">
-                {{-- left --}}
-                <div class="info-half" style="float:left;width:50%;{{ count($pair)>1 ? 'border-right:0.3mm solid #e2e8f0;' : '' }}overflow:hidden;">
-                    <div class="info-lbl" style="width:40%;float:left;">{{ $pair[0][0] }}</div>
-                    <div class="info-val" style="margin-left:40%;">{{ $pair[0][1] }}</div>
-                    <div style="clear:both;"></div>
-                </div>
-                {{-- right --}}
-                @if(isset($pair[1]))
-                <div class="info-half" style="float:left;width:50%;overflow:hidden;">
-                    <div class="info-lbl" style="width:40%;float:left;">{{ $pair[1][0] }}</div>
-                    <div class="info-val" style="margin-left:40%;">{{ $pair[1][1] }}</div>
-                    <div style="clear:both;"></div>
-                </div>
-                @endif
-                <div class="info-clear"></div>
-            </div>
-            @endforeach
-        </div>
-
-        {{-- QR --}}
-        <div class="qr-section">
-            <img src="data:image/png;base64,{{ $qrB64 }}" alt="QR">
-            <div class="qr-label">SCAN TO VERIFY</div>
-        </div>
-
-        {{-- Accent bottom --}}
-        <div class="accent-bar" style="position:absolute;bottom:0;left:0;right:0;background:#2169ad;"></div>
+        <div class="f-school">{{ $schoolName }}</div>
+        @if(!empty($schoolInfo?->school_motto))
+        <div class="f-motto">{{ $schoolInfo->school_motto }}</div>
+        @endif
+        <div class="f-badge">STUDENT ID CARD</div>
       </div>
+
+      {{-- Photo --}}
+      <div class="f-photo-wrap">
+        @if($photoUrl)
+          <div class="f-photo"><img src="{{ $photoUrl }}" alt="{{ $fullname }}"></div>
+        @else
+          <div class="f-initials">{{ $initials }}</div>
+        @endif
+      </div>
+
+      {{-- Name --}}
+      <div class="f-name">{{ $fullname }}</div>
+      <div class="f-adm">
+        <span class="f-adm-lbl">ADM NO</span><span class="f-adm-val">{{ $admNo }}</span>
+      </div>
+
+      {{-- Info table — proper HTML table, 2 fields per row --}}
+      <table class="info-tbl">
+        @foreach($pairs as $pi => $pair)
+        <tr>
+          {{-- Left label --}}
+          <td class="lbl">{{ $pair[0][0] }}</td>
+          {{-- Left value --}}
+          <td class="val">{{ $pair[0][1] }}</td>
+          @if(isset($pair[1]))
+          {{-- Divider + Right label + Right value --}}
+          <td class="lbl" style="border-left:0.3mm solid #e2e8f0;">{{ $pair[1][0] }}</td>
+          <td class="val">{{ $pair[1][1] }}</td>
+          @else
+          <td class="val" colspan="2"></td>
+          @endif
+        </tr>
+        @endforeach
+      </table>
+
+      {{-- QR --}}
+      <div class="f-qr">
+        <img src="data:image/png;base64,{{ $qrB64 }}" alt="QR">
+        <div class="f-qr-lbl">SCAN TO VERIFY</div>
+      </div>
+
+      <div class="accent-bot"></div>
     </div>
+    </td>
 
     {{-- ═══ BACK ═══ --}}
-    <div class="card-cell">
-      <div class="card-label">◀ BACK</div>
-      <div class="id-card">
-        <div class="crop-tl"></div><div class="crop-tr"></div>
-        <div class="crop-bl"></div><div class="crop-br"></div>
+    <td>
+    <div class="card">
+      <div class="accent"></div>
 
-        {{-- Watermark --}}
-        @if($logoUrl)
-        <div class="watermark">
-            <img src="{{ $logoUrl }}" alt="">
-        </div>
+      {{-- Watermark --}}
+      @if($logoUrl)
+      <div class="watermark"><img src="{{ $logoUrl }}" alt=""></div>
+      @endif
+
+      {{-- Header --}}
+      <div class="b-header">
+        <div class="b-header-sub">STUDENT IDENTITY CARD</div>
+        <div class="b-header-name">{{ $schoolName }}</div>
+        @if($address)
+        <div class="b-header-addr">{{ $address }}</div>
         @endif
-
-        {{-- Accent top --}}
-        <div class="accent-bar"></div>
-
-        {{-- Header --}}
-        <div class="back-header">
-            <div class="back-header-sub">STUDENT IDENTITY CARD</div>
-            <div class="back-header-name">{{ $schoolName }}</div>
-            @if($address)
-            <div class="back-header-addr">{{ $address }}</div>
-            @endif
-        </div>
-
-        {{-- Magnetic strip --}}
-        <div class="mag-strip"></div>
-
-        {{-- Student chip --}}
-        <div class="student-chip">
-            <div class="chip-name">{{ $fullname }}</div>
-            <div class="chip-sub">{{ $classArm ?: 'N/A' }} &nbsp;|&nbsp; {{ $admNo }}</div>
-        </div>
-
-        {{-- Terms --}}
-        <div class="terms-section">
-            <div class="terms-head">Terms &amp; Conditions</div>
-            <ul class="terms-list">
-                <li>Property of {{ $schoolName }}. Must be carried on premises at all times.</li>
-                <li>Report loss immediately. Replacement fee applies.</li>
-                <li>Not transferable. Misuse attracts disciplinary action.</li>
-                <li>Return upon completion or withdrawal of enrolment.</li>
-            </ul>
-        </div>
-
-        {{-- Contact --}}
-        @if($phone || $email || $website)
-        <div class="contact-box">
-            <div class="contact-head">Contact</div>
-            @if($phone)<div class="contact-line">Tel: {{ $phone }}</div>@endif
-            @if($email)<div class="contact-line">Email: {{ $email }}</div>@endif
-            @if($website)<div class="contact-line">Web: {{ $website }}</div>@endif
-        </div>
-        @endif
-
-        {{-- Signatures --}}
-        <div class="sig-section">
-            <div class="sig-left">
-                <div class="sig-line"></div>
-                <div class="sig-label">Cardholder's Signature</div>
-            </div>
-            <div class="sig-right">
-                <div class="sig-line"></div>
-                <div class="sig-label">Authorised Signature</div>
-            </div>
-            <div class="sig-clear"></div>
-        </div>
-
-        {{-- Issued by --}}
-        <div class="issued-section">
-            <div class="issued-label">Issued By</div>
-            <div class="issued-school">{{ $schoolName }}</div>
-            <div class="issued-role">Admin Officer</div>
-        </div>
-
-        {{-- Barcode --}}
-        <div class="barcode-section">
-            @if($barcodeB64)
-                <img src="data:image/png;base64,{{ $barcodeB64 }}" alt="barcode">
-            @else
-                <div class="barcode-text">||| {{ $admNo }} |||</div>
-            @endif
-            <div class="barcode-adm">{{ $admNo }}</div>
-            <div class="barcode-sub">Valid Until: {{ $expiry }} &bull; {{ now()->year }}</div>
-        </div>
-
-        {{-- Accent bottom --}}
-        <div class="accent-bar" style="position:absolute;bottom:0;left:0;right:0;background:#2169ad;"></div>
       </div>
+
+      {{-- Mag strip --}}
+      <div class="b-mag"></div>
+
+      {{-- Student chip --}}
+      <div class="b-chip">
+        <div class="b-chip-name">{{ $fullname }}</div>
+        <div class="b-chip-sub">{{ $classArm ?: 'N/A' }} &nbsp;|&nbsp; {{ $admNo }}</div>
+      </div>
+
+      {{-- Terms --}}
+      <div class="b-terms">
+        <div class="b-terms-head">Terms &amp; Conditions</div>
+        <ul>
+          <li>Property of {{ $schoolName }}. Must be carried on premises at all times.</li>
+          <li>Report loss immediately. Replacement fee applies.</li>
+          <li>Not transferable. Misuse attracts disciplinary action.</li>
+          <li>Return upon completion or withdrawal of enrolment.</li>
+        </ul>
+      </div>
+
+      {{-- Contact --}}
+      @if($phone || $email || $website)
+      <div class="b-contact">
+        <div class="b-contact-head">Contact</div>
+        @if($phone)<div class="b-contact-line">Tel: {{ $phone }}</div>@endif
+        @if($email)<div class="b-contact-line">Email: {{ $email }}</div>@endif
+        @if($website)<div class="b-contact-line">Web: {{ $website }}</div>@endif
+      </div>
+      @endif
+
+      {{-- Signatures --}}
+      <table class="b-sig-table">
+        <tr>
+          <td>
+            <div class="b-sig-line"></div>
+            <div class="b-sig-lbl">Cardholder's Signature</div>
+          </td>
+          <td>
+            <div class="b-sig-line"></div>
+            <div class="b-sig-lbl">Authorised Signature</div>
+          </td>
+        </tr>
+      </table>
+
+      {{-- Issued by --}}
+      <div class="b-issued">
+        <div class="b-issued-lbl">Issued By</div>
+        <div class="b-issued-school">{{ $schoolName }}</div>
+        <div class="b-issued-role">Admin Officer</div>
+      </div>
+
+      {{-- Barcode --}}
+      <div class="b-barcode">
+        @if($barcodeB64)
+          <img src="data:image/png;base64,{{ $barcodeB64 }}" alt="barcode">
+        @else
+          <div class="b-barcode-fallback">||| {{ $admNo }} |||</div>
+        @endif
+        <div class="b-barcode-adm">{{ $admNo }}</div>
+        <div class="b-barcode-sub">Valid Until: {{ $expiry }} &bull; {{ now()->year }}</div>
+      </div>
+
+      <div class="accent-bot"></div>
     </div>
+    </td>
 
-  </div>
-</div>{{-- /.card-pair --}}
+  </tr>
+</table>
 
-{{-- Cut guide between pairs --}}
 @if(!$loop->last)
-<div class="cut-guide">
-    <hr class="cut-line">
+<table class="cut-table">
+  <tr><td>
+    <hr class="cut-hr">
     <div class="cut-text">&#9986; &nbsp; CUT HERE &nbsp; &#9986;</div>
-</div>
+  </td></tr>
+</table>
 @endif
 
 @endforeach
-</div>{{-- /.page-wrap --}}
+</div>
 </body>
 </html>
