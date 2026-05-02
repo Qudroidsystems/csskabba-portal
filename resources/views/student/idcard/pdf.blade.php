@@ -270,25 +270,25 @@ body {
     position: relative;
     z-index: 2;
 }
-.info-row { overflow: hidden; border-bottom: 0.3mm solid #e2e8f0; }
+.info-row { overflow: hidden; border-bottom: 0.3mm solid #e2e8f0; min-height: 0; }
 .info-row:last-child { border-bottom: none; }
 .info-lbl {
     float: left;
-    width: 20mm;
     background: #eef2ff;
-    padding: 1mm 1.5mm;
-    font-size: 4.3pt;
+    padding: 0.9mm 1.2mm;
+    font-size: 3.8pt;
     font-weight: bold;
     color: #4338ca;
     text-transform: uppercase;
-    letter-spacing: 0.2pt;
+    letter-spacing: 0.1pt;
+    line-height: 1.4;
 }
 .info-val {
-    margin-left: 20mm;
-    padding: 1mm 1.5mm;
-    font-size: 5pt;
+    padding: 0.9mm 1.2mm;
+    font-size: 4.3pt;
     font-weight: bold;
     color: #1e2937;
+    line-height: 1.4;
 }
 .info-clear { clear: both; }
 
@@ -443,17 +443,17 @@ body {
     $address    = $schoolInfo?->school_address ?? '';
 
     $rows = array_filter([
-        ['Class',        $classArm],
-        ['Gender',       $student->gender           ?? ''],
-        ['Date of Birth',$dob !== 'N/A' ? $dob : ''],
-        ['Blood Group',  $student->blood_group       ?? ''],
-        ['Nationality',  $student->nationality       ?? ''],
-        ['State',        $student->state             ?? ''],
-        ['L.G.A',        $student->local             ?? ''],
-        ['Session',      $student->session           ?? ''],
-        ['Adm. Date',    $admDate !== 'N/A' ? $admDate : ''],
-        ['Category',     $student->student_category  ?? ''],
-        ['Status',       $student->student_status    ?? ''],
+        ['Class',       $classArm],
+        ['Gender',      $student->gender           ?? ''],
+        ['D.O.B',       $dob !== 'N/A' ? $dob : ''],
+        ['Blood Grp',   $student->blood_group       ?? ''],
+        ['Nationality', $student->nationality       ?? ''],
+        ['State',       $student->state             ?? ''],
+        ['L.G.A',       $student->local             ?? ''],
+        ['Session',     $student->session           ?? ''],
+        ['Adm. Date',   $admDate !== 'N/A' ? $admDate : ''],
+        ['Category',    $student->student_category  ?? ''],
+        ['Status',      $student->student_status    ?? ''],
     ], fn($r) => !empty(trim($r[1])));
 
     $payload = base64_encode(json_encode(['id'=>$student->id,'adm'=>$admNo,'ts'=>now()->timestamp]));
@@ -519,12 +519,25 @@ body {
             <span class="adm-label">ADM NO</span><span class="adm-value">{{ $admNo }}</span>
         </div>
 
-        {{-- Info rows --}}
+        {{-- Info rows — 2 per row --}}
+        @php $pairRows = array_chunk(array_values($rows), 2); @endphp
         <div class="info-table">
-            @foreach(array_values($rows) as $i => $row)
-            <div class="info-row" style="{{ $i === count($rows)-1 ? 'border-bottom:none;' : '' }}">
-                <div class="info-lbl">{{ $row[0] }}</div>
-                <div class="info-val">{{ $row[1] }}</div>
+            @foreach($pairRows as $pi => $pair)
+            <div class="info-row" style="{{ $pi === count($pairRows)-1 ? 'border-bottom:none;' : '' }}">
+                {{-- left --}}
+                <div class="info-half" style="float:left;width:50%;{{ count($pair)>1 ? 'border-right:0.3mm solid #e2e8f0;' : '' }}overflow:hidden;">
+                    <div class="info-lbl" style="width:40%;float:left;">{{ $pair[0][0] }}</div>
+                    <div class="info-val" style="margin-left:40%;">{{ $pair[0][1] }}</div>
+                    <div style="clear:both;"></div>
+                </div>
+                {{-- right --}}
+                @if(isset($pair[1]))
+                <div class="info-half" style="float:left;width:50%;overflow:hidden;">
+                    <div class="info-lbl" style="width:40%;float:left;">{{ $pair[1][0] }}</div>
+                    <div class="info-val" style="margin-left:40%;">{{ $pair[1][1] }}</div>
+                    <div style="clear:both;"></div>
+                </div>
+                @endif
                 <div class="info-clear"></div>
             </div>
             @endforeach
