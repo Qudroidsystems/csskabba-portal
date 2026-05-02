@@ -210,6 +210,9 @@ class StudentIdCardController extends Controller
                 'studentRegistration.student_status',
                 'studentRegistration.student_category',
                 'studentRegistration.admission_date',
+                'studentRegistration.state',
+                'studentRegistration.local',
+
                 'studentpicture.picture',
                 'schoolclass.schoolclass',
                 'schoolarm.arm',
@@ -263,6 +266,9 @@ class StudentIdCardController extends Controller
                 'studentRegistration.student_status',
                 'studentRegistration.student_category',
                 'studentRegistration.admission_date',
+                'studentRegistration.state',
+                'studentRegistration.local',
+
                 'studentpicture.picture',
                 'schoolclass.schoolclass',
                 'schoolarm.arm',
@@ -282,6 +288,9 @@ class StudentIdCardController extends Controller
                 'studentRegistration.student_status',
                 'studentRegistration.student_category',
                 'studentRegistration.admission_date',
+                'studentRegistration.state',
+                'studentRegistration.local',
+
                 'studentpicture.picture',
                 'schoolclass.schoolclass',
                 'schoolarm.arm',
