@@ -224,7 +224,7 @@
                         </div>
                     </div>
 
-                    <!-- Role Settings (shown for create/reset) - STUDENT role pre-checked and non-editable -->
+                    <!-- Role Settings (shown for create/reset) - ONLY student role is enabled -->
                     <div id="roleSettings" style="display: none;">
                         <div class="card mb-3">
                             <div class="card-header bg-light">
@@ -233,34 +233,56 @@
                             <div class="card-body">
                                 <div class="alert alert-info mb-3">
                                     <i class="bi bi-info-circle-fill me-2"></i>
-                                    <strong>Note:</strong> The "student" role is assigned by default and cannot be removed. You can add additional roles below.
+                                    <strong>Note:</strong> Only the "student" role can be assigned to student accounts. Other roles are disabled for security.
                                 </div>
                                 <div class="row">
-                                    @foreach (Spatie\Permission\Models\Role::all() as $role)
+                                    @php
+                                        $allRoles = Spatie\Permission\Models\Role::all();
+                                        $studentRole = $allRoles->where('name', 'student')->first();
+                                        $otherRoles = $allRoles->where('name', '!=', 'student');
+                                    @endphp
+
+                                    <!-- Student Role (Enabled and Checked) -->
+                                    @if($studentRole)
                                         <div class="col-md-4 mb-2">
                                             <div class="form-check">
-                                                @if($role->name == 'student')
-                                                    <input type="checkbox" class="form-check-input role-checkbox"
-                                                           name="roles[]" value="{{ $role->name }}"
-                                                           id="role_{{ $role->name }}" checked disabled>
-                                                    <label class="form-check-label fw-bold" for="role_{{ $role->name }}">
-                                                        {{ $role->name }}
-                                                        <span class="badge bg-info ms-1">Default</span>
-                                                    </label>
-                                                    <input type="hidden" name="roles[]" value="{{ $role->name }}">
-                                                @else
-                                                    <input type="checkbox" class="form-check-input role-checkbox"
-                                                           name="roles[]" value="{{ $role->name }}"
-                                                           id="role_{{ $role->name }}">
-                                                    <label class="form-check-label" for="role_{{ $role->name }}">
-                                                        {{ $role->name }}
-                                                    </label>
-                                                @endif
+                                                <input type="checkbox" class="form-check-input"
+                                                       name="roles[]" value="{{ $studentRole->name }}"
+                                                       id="role_{{ $studentRole->name }}" checked>
+                                                <label class="form-check-label fw-bold text-success" for="role_{{ $studentRole->name }}">
+                                                    <i class="bi bi-person-badge-fill me-1"></i>
+                                                    {{ $studentRole->name }}
+                                                    <span class="badge bg-success ms-1">Default</span>
+                                                </label>
                                             </div>
+                                        </div>
+                                    @endif
+
+                                    <!-- Other Roles (All Disabled) -->
+                                    @foreach($otherRoles as $role)
+                                        <div class="col-md-4 mb-2">
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input"
+                                                       name="disabled_roles[]" value="{{ $role->name }}"
+                                                       id="role_{{ $role->name }}" disabled>
+                                                <label class="form-check-label text-muted" for="role_{{ $role->name }}">
+                                                    <i class="bi bi-shield-lock-fill me-1"></i>
+                                                    {{ $role->name }}
+                                                    <span class="badge bg-secondary ms-1">Disabled</span>
+                                                </label>
+                                            </div>
+                                            <small class="text-danger d-block mt-1">
+                                                <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                                Cannot assign {{ $role->name }} role to student
+                                            </small>
                                         </div>
                                     @endforeach
                                 </div>
-                                <small class="text-muted">Select additional roles if needed (admin, teacher, etc.)</small>
+                                <hr>
+                                <div class="alert alert-warning mt-2 mb-0">
+                                    <i class="bi bi-shield-exclamation me-2"></i>
+                                    <strong>Security Notice:</strong> Student accounts can only have the "student" role for security purposes. Administrative roles cannot be assigned to student accounts.
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -325,7 +347,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const armId = $('#massArmFilter').val();
         const accountStatus = $('#massAccountStatus').val();
 
-        $('#massStudentList').html('<tr><td colspan="6" class="text-center"><div class="spinner-border spinner-border-sm"></div> Loading...</td></tr>');
+        $('#massStudentList').html('<tr><td colspan="6" class="text-center"><div class="spinner-border spinner-border-sm"></div> Loading...<tr></tr>');
 
         let url = '{{ route("get.students") }}?limit=2000';
         if (search) url += `&search=${encodeURIComponent(search)}`;
@@ -529,28 +551,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
-            // Get selected roles (including the hidden student role)
-            const roles = [];
-            $('input[name="roles[]"]:checked, input[name="roles[]"][disabled]').each(function() {
-                const roleValue = $(this).val();
-                if (roleValue && !roles.includes(roleValue)) {
-                    roles.push(roleValue);
-                }
-            });
-
-            // Also get any unchecked but enabled role checkboxes that are checked
-            $('.role-checkbox:checked').each(function() {
-                const roleValue = $(this).val();
-                if (roleValue && !roles.includes(roleValue)) {
-                    roles.push(roleValue);
-                }
-            });
-
-            if (roles.length === 0) {
-                Swal.fire('Error', 'Please select at least one role', 'error');
-                return;
-            }
-            payload.roles = roles;
+            // Only assign the "student" role (since other roles are disabled)
+            payload.roles = ['student'];
         }
 
         Swal.fire({
@@ -663,6 +665,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="subtitle">Generated by School Management System</div>
                 <div class="date">Print Date: ${new Date().toLocaleString()}</div>
                 <div class="date">Email Domain: @csskabba.ng</div>
+                <div class="date">Role: Student Only</div>
             </div>`;
 
         if (currentResults.created && currentResults.created.length) {
@@ -684,7 +687,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         printHtml += `<div class="footer"><p>This is an official document. Please keep these credentials secure.</p>
-            <p>Students can use these credentials to access the school portal.</p></div>
+            <p>Students can use these credentials to access the school portal.</p>
+            <p><strong>Note:</strong> These accounts have only the "student" role.</p></div>
             <script>window.onload = function() { window.print(); setTimeout(function() { window.close(); }, 1000); };<\/script>
         </body></html>`;
 
@@ -724,5 +728,9 @@ document.addEventListener('DOMContentLoaded', function() {
     top: 0;
     z-index: 10;
     background: white;
+}
+.form-check-input:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
 }
 </style>
