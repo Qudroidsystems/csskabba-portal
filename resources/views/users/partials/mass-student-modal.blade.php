@@ -224,64 +224,80 @@
                         </div>
                     </div>
 
-                    <!-- Role Settings (shown for create/reset) - ONLY student role is enabled -->
+                    <!-- Role Settings - ONLY Student role is enabled -->
                     <div id="roleSettings" style="display: none;">
                         <div class="card mb-3">
                             <div class="card-header bg-light">
-                                <h6 class="mb-0"><i class="bi bi-tags-fill me-1"></i> Assign Roles</h6>
+                                <h6 class="mb-0"><i class="bi bi-tags-fill me-1"></i> Assign Role</h6>
                             </div>
                             <div class="card-body">
-                                <div class="alert alert-info mb-3">
-                                    <i class="bi bi-info-circle-fill me-2"></i>
-                                    <strong>Note:</strong> Only the "student" role can be assigned to student accounts. Other roles are disabled for security.
+                                <div class="alert alert-warning mb-3">
+                                    <i class="bi bi-shield-exclamation me-2"></i>
+                                    <strong>Security Notice:</strong> Student accounts can only have the <strong>"Student"</strong> role for security purposes. Administrative roles cannot be assigned to student accounts.
                                 </div>
+
                                 <div class="row">
                                     @php
                                         $allRoles = Spatie\Permission\Models\Role::all();
-                                        $studentRole = $allRoles->where('name', 'student')->first();
-                                        $otherRoles = $allRoles->where('name', '!=', 'student');
+                                        $studentRole = $allRoles->where('name', 'Student')->first();
+                                        $otherRoles = $allRoles->where('name', '!=', 'Student');
                                     @endphp
 
-                                    <!-- Student Role (Enabled and Checked) -->
+                                    <!-- Student Role (Enabled and Checked - This is the only role that can be assigned) -->
                                     @if($studentRole)
-                                        <div class="col-md-4 mb-2">
-                                            <div class="form-check">
-                                                <input type="checkbox" class="form-check-input"
-                                                       name="roles[]" value="{{ $studentRole->name }}"
-                                                       id="role_{{ $studentRole->name }}" checked>
-                                                <label class="form-check-label fw-bold text-success" for="role_{{ $studentRole->name }}">
-                                                    <i class="bi bi-person-badge-fill me-1"></i>
-                                                    {{ $studentRole->name }}
-                                                    <span class="badge bg-success ms-1">Default</span>
-                                                </label>
+                                        <div class="col-md-12 mb-3">
+                                            <div class="card border-success">
+                                                <div class="card-body bg-success bg-opacity-10">
+                                                    <div class="form-check">
+                                                        <input type="checkbox" class="form-check-input"
+                                                               name="roles[]" value="{{ $studentRole->name }}"
+                                                               id="role_{{ $studentRole->name }}" checked>
+                                                        <label class="form-check-label fw-bold text-success fs-5" for="role_{{ $studentRole->name }}">
+                                                            <i class="bi bi-person-badge-fill me-2"></i>
+                                                            {{ $studentRole->name }}
+                                                            <span class="badge bg-success ms-2">Default Role</span>
+                                                        </label>
+                                                        <p class="text-muted mt-2 mb-0 ms-4">
+                                                            <i class="bi bi-check-circle-fill text-success me-1"></i>
+                                                            This role is automatically assigned to all student accounts.
+                                                        </p>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
                                     @endif
 
-                                    <!-- Other Roles (All Disabled) -->
-                                    @foreach($otherRoles as $role)
-                                        <div class="col-md-4 mb-2">
-                                            <div class="form-check">
-                                                <input type="checkbox" class="form-check-input"
-                                                       name="disabled_roles[]" value="{{ $role->name }}"
-                                                       id="role_{{ $role->name }}" disabled>
-                                                <label class="form-check-label text-muted" for="role_{{ $role->name }}">
-                                                    <i class="bi bi-shield-lock-fill me-1"></i>
-                                                    {{ $role->name }}
-                                                    <span class="badge bg-secondary ms-1">Disabled</span>
-                                                </label>
+                                    <!-- Other Roles (All Disabled - Cannot be selected) -->
+                                    @if($otherRoles->count() > 0)
+                                        <div class="col-md-12">
+                                            <hr>
+                                            <p class="text-muted mb-2"><i class="bi bi-shield-lock-fill me-1"></i> The following roles cannot be assigned to student accounts:</p>
+                                            <div class="row">
+                                                @foreach($otherRoles as $role)
+                                                    <div class="col-md-4 mb-2">
+                                                        <div class="card bg-light">
+                                                            <div class="card-body py-2">
+                                                                <div class="form-check">
+                                                                    <input type="checkbox" class="form-check-input"
+                                                                           value="{{ $role->name }}"
+                                                                           id="role_{{ $role->name }}" disabled>
+                                                                    <label class="form-check-label text-muted" for="role_{{ $role->name }}">
+                                                                        <i class="bi bi-shield-lock-fill me-1"></i>
+                                                                        {{ $role->name }}
+                                                                        <span class="badge bg-secondary ms-1">Disabled</span>
+                                                                    </label>
+                                                                </div>
+                                                                <small class="text-danger d-block mt-1">
+                                                                    <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                                                    Cannot assign {{ $role->name }} role to student account
+                                                                </small>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                @endforeach
                                             </div>
-                                            <small class="text-danger d-block mt-1">
-                                                <i class="bi bi-exclamation-triangle-fill me-1"></i>
-                                                Cannot assign {{ $role->name }} role to student
-                                            </small>
                                         </div>
-                                    @endforeach
-                                </div>
-                                <hr>
-                                <div class="alert alert-warning mt-2 mb-0">
-                                    <i class="bi bi-shield-exclamation me-2"></i>
-                                    <strong>Security Notice:</strong> Student accounts can only have the "student" role for security purposes. Administrative roles cannot be assigned to student accounts.
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -347,7 +363,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const armId = $('#massArmFilter').val();
         const accountStatus = $('#massAccountStatus').val();
 
-        $('#massStudentList').html('<tr><td colspan="6" class="text-center"><div class="spinner-border spinner-border-sm"></div> Loading...<tr></tr>');
+        $('#massStudentList').html('<tr><td colspan="6" class="text-center"><div class="spinner-border spinner-border-sm"></div> Loading...</td></tr>');
 
         let url = '{{ route("get.students") }}?limit=2000';
         if (search) url += `&search=${encodeURIComponent(search)}`;
@@ -539,7 +555,6 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         if (actionType === 'create' || actionType === 'reset') {
-            // Get selected password type from radio button
             const passwordType = $('input[name="passwordTypeRadio"]:checked').val();
             payload.password_type = passwordType;
 
@@ -551,8 +566,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
-            // Only assign the "student" role (since other roles are disabled)
-            payload.roles = ['student'];
+            // Only assign the "Student" role (capital S)
+            payload.roles = ['Student'];
         }
 
         Swal.fire({
@@ -688,7 +703,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         printHtml += `<div class="footer"><p>This is an official document. Please keep these credentials secure.</p>
             <p>Students can use these credentials to access the school portal.</p>
-            <p><strong>Note:</strong> These accounts have only the "student" role.</p></div>
+            <p><strong>Note:</strong> These accounts have only the "Student" role for security purposes.</p></div>
             <script>window.onload = function() { window.print(); setTimeout(function() { window.close(); }, 1000); };<\/script>
         </body></html>`;
 

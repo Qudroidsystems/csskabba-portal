@@ -141,7 +141,7 @@ class UserController extends Controller
             $studentPicture = Studentpicture::where('studentid', $user->student_id)->first();
         }
 
-        $isStudentUser = $user->hasRole('student');
+        $isStudentUser = $user->hasRole('Student');
         $studentData = $user->student;
         $currentClass = null;
         $parentData = null;
@@ -162,7 +162,7 @@ class UserController extends Controller
      */
     public function edit($id): View
     {
-        if (auth()->user()->hasRole('student')) {
+        if (auth()->user()->hasRole('Student')) {
             abort(403, 'Students are not allowed to edit profiles.');
         }
 
@@ -178,7 +178,7 @@ class UserController extends Controller
      */
     public function update(Request $request, $id): JsonResponse
     {
-        if (auth()->user()->hasRole('student')) {
+        if (auth()->user()->hasRole('Student')) {
             return response()->json([
                 'success' => false,
                 'message' => 'Students are not allowed to edit profiles.',
@@ -255,7 +255,7 @@ class UserController extends Controller
 
         try {
             $user = User::findOrFail($id);
-            $isStudent = $user->hasRole('student');
+            $isStudent = $user->hasRole('Student');
 
             BioModel::where('user_id', $id)->delete();
             $user->roles()->detach();
@@ -318,18 +318,11 @@ class UserController extends Controller
 
     /**
      * Generate a clean email from student name
-     * Format: firstname.lastname@student.school (with NO special characters in the name parts)
-     *
-     * Examples:
-     * - "Mercy Luke" -> mercy.luke@student.school
-     * - "Mercy.Luke" -> mercy.luke@student.school
-     * - "Mercy, Luke" -> mercy.luke@student.school
-     * - "O'Connor" -> oconnor@student.school (single name)
-     * - "Jean-Pierre" -> jeanpierre@student.school (no dash)
+     * Format: firstname.lastname@csskabba.ng (with NO special characters in the name parts)
      */
     private function generateStudentEmail($student)
     {
-        $domain = '@student.school';
+        $domain = '@csskabba.ng';
 
         // Clean firstname and lastname - remove ALL special characters
         $firstname = $this->cleanString($student->firstname);
@@ -648,7 +641,7 @@ class UserController extends Controller
     private function createStudentAccount($student, $validated)
     {
         try {
-            // Generate clean email - now properly removes all special characters
+            // Generate clean email
             $email = $this->generateStudentEmail($student);
 
             // Generate username
@@ -668,7 +661,8 @@ class UserController extends Controller
                 'password' => Hash::make($plainPassword),
             ]);
 
-            $user->syncRoles($validated['roles']);
+            // Assign only the Student role (capital S)
+            $user->syncRoles(['Student']);
 
             // Sync bio
             BioModel::updateOrCreate(
@@ -719,8 +713,9 @@ class UserController extends Controller
 
             $user->update(['password' => Hash::make($plainPassword)]);
 
-            if (isset($validated['roles'])) {
-                $user->syncRoles($validated['roles']);
+            // Ensure Student role is assigned (capital S)
+            if (!$user->hasRole('Student')) {
+                $user->syncRoles(['Student']);
             }
 
             return [
@@ -834,7 +829,7 @@ class UserController extends Controller
 
             $user = User::findOrFail($id);
 
-            if (!$user->hasRole('student')) {
+            if (!$user->hasRole('Student')) {
                 return response()->json([
                     'success' => false,
                     'message' => 'User is not a student.',
@@ -914,7 +909,7 @@ class UserController extends Controller
                     continue;
                 }
 
-                if (!$user->hasRole('student')) {
+                if (!$user->hasRole('Student')) {
                     $skipped++;
                     continue;
                 }
