@@ -40,28 +40,28 @@ use Spatie\Permission\Models\Role;
             </div>
 
             @if ($errors->any())
-                <div class="alert alert-danger">
-                    <strong>Whoops!</strong> There were some problems with your input.<br><br>
-                    <ul>
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
+            <div class="alert alert-danger">
+                <strong>Whoops!</strong> There were some problems with your input.<br><br>
+                <ul>
+                    @foreach ($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
             @endif
 
             @if (session('status'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('status') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                {{ session('status') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
             @endif
 
             @if (session('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                </div>
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                {{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
             @endif
 
             <div id="userList">
@@ -78,25 +78,25 @@ use Spatie\Permission\Models\Role;
                                     </div>
                                     <div class="col-xxl-3 col-sm-6">
                                         <select class="form-control" id="idRole"
-                                                data-choices data-choices-search-false data-choices-removeItem>
+                                            data-choices data-choices-search-false data-choices-removeItem>
                                             <option value="all">Select Role</option>
                                             @foreach ($roles as $role => $name)
-                                                <option value="{{ $role }}">{{ $name }}</option>
+                                            <option value="{{ $role }}">{{ $name }}</option>
                                             @endforeach
                                         </select>
                                     </div>
                                     <div class="col-xxl-2 col-sm-6">
                                         <select class="form-control" id="idEmail"
-                                                data-choices data-choices-search-false data-choices-removeItem>
+                                            data-choices data-choices-search-false data-choices-removeItem>
                                             <option value="all">Select Email</option>
                                             @foreach ($data as $user)
-                                                <option value="{{ $user->email }}">{{ $user->email }}</option>
+                                            <option value="{{ $user->email }}">{{ $user->email }}</option>
                                             @endforeach
                                         </select>
                                     </div>
                                     <div class="col-xxl-1 col-sm-6">
                                         <button type="button" class="btn btn-secondary w-100"
-                                                onclick="filterData();">
+                                            onclick="filterData();">
                                             <i class="bi bi-funnel align-baseline me-1"></i> Filters
                                         </button>
                                     </div>
@@ -119,22 +119,22 @@ use Spatie\Permission\Models\Role;
                                 <div class="flex-shrink-0">
                                     <div class="d-flex flex-wrap align-items-start gap-2">
                                         <button class="btn btn-subtle-danger d-none" id="remove-actions"
-                                                onclick="deleteMultiple()">
+                                            onclick="deleteMultiple()">
                                             <i class="ri-delete-bin-2-line"></i>
                                         </button>
                                         @can('Create user')
-                                            <button type="button" class="btn btn-primary add-btn"
-                                                    data-bs-toggle="modal" data-bs-target="#showModal">
-                                                <i class="bi bi-plus-circle align-baseline me-1"></i> Add User
-                                            </button>
-                                            <button type="button" class="btn btn-success add-btn"
-                                                    data-bs-toggle="modal" data-bs-target="#addStudentModal">
-                                                <i class="bi bi-person-plus align-baseline me-1"></i> Add Student
-                                            </button>
-                                            <button type="button" class="btn btn-warning"
-                                                    data-bs-toggle="modal" data-bs-target="#massStudentModal">
-                                                <i class="bi bi-people-fill me-1"></i> Mass Create Students
-                                            </button>
+                                        <button type="button" class="btn btn-primary add-btn"
+                                            data-bs-toggle="modal" data-bs-target="#showModal">
+                                            <i class="bi bi-plus-circle align-baseline me-1"></i> Add User
+                                        </button>
+                                        <button type="button" class="btn btn-success add-btn"
+                                            data-bs-toggle="modal" data-bs-target="#addStudentModal">
+                                            <i class="bi bi-person-plus align-baseline me-1"></i> Add Student
+                                        </button>
+                                        <button type="button" class="btn btn-warning"
+                                            data-bs-toggle="modal" data-bs-target="#massStudentModal">
+                                            <i class="bi bi-people-fill me-1"></i> Mass Manage Students
+                                        </button>
                                         @endcan
                                     </div>
                                 </div>
@@ -142,13 +142,13 @@ use Spatie\Permission\Models\Role;
 
                             <div class="card-body">
                                 <div class="table-responsive">
-                                    <table class="table table-centered align-middle table-nowrap mb-0" id="userList">
+                                    <table class="table table-centered align-middle table-nowrap mb-0" id="userListTable">
                                         <thead class="table-active">
                                             <tr>
                                                 <th>
                                                     <div class="form-check">
                                                         <input class="form-check-input" type="checkbox"
-                                                               value="option" id="checkAll">
+                                                            value="option" id="checkAll">
                                                         <label class="form-check-label" for="checkAll"></label>
                                                     </div>
                                                 </th>
@@ -161,99 +161,99 @@ use Spatie\Permission\Models\Role;
                                         </thead>
                                         <tbody class="list form-check-all">
                                             @forelse ($data as $key => $user)
-                                                <tr>
-                                                    <td class="id" data-id="{{ $user->id }}">
-                                                        <div class="form-check">
-                                                            <input class="form-check-input" type="checkbox"
-                                                                   name="chk_child">
-                                                            <label class="form-check-label"></label>
-                                                        </div>
-                                                    </td>
-                                                    <td class="name" data-name="{{ $user->name }}">
-                                                        <div class="d-flex align-items-center">
-                                                            <div>
-                                                                <h6 class="mb-0">
-                                                                    <a href="{{ route('users.show', $user->id) }}"
-                                                                       class="text-reset products">
-                                                                        {{ $user->name }}
-                                                                    </a>
-                                                                </h6>
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td class="email" data-email="{{ $user->email }}">
-                                                        {{ $user->email }}
-                                                    </td>
-                                                    <td class="role"
-                                                        data-roles="{{ $user->getRoleNames()->implode(',') }}">
+                                            <tr>
+                                                <td class="id" data-id="{{ $user->id }}">
+                                                    <div class="form-check">
+                                                        <input class="form-check-input" type="checkbox"
+                                                            name="chk_child">
+                                                        <label class="form-check-label"></label>
+                                                    </div>
+                                                </td>
+                                                <td class="name" data-name="{{ $user->name }}">
+                                                    <div class="d-flex align-items-center">
                                                         <div>
-                                                            @if(!empty($user->getRoleNames()))
-                                                                @foreach($user->getRoleNames() as $val)
-                                                                    <label class="badge bg-primary">{{ $val }}</label>
-                                                                @endforeach
-                                                            @else
-                                                                <label class="badge bg-secondary">No roles</label>
-                                                            @endif
+                                                            <h6 class="mb-0">
+                                                                <a href="{{ route('users.show', $user->id) }}"
+                                                                    class="text-reset products">
+                                                                    {{ $user->name }}
+                                                                </a>
+                                                            </h6>
                                                         </div>
-                                                    </td>
-                                                    <td class="datereg">
-                                                        {{ $user->created_at->format('Y-m-d') }}
-                                                    </td>
-                                                    <td>
-                                                        <ul class="d-flex gap-2 list-unstyled mb-0">
-                                                            @can('View user')
-                                                                <li>
-                                                                    <a href="{{ route('users.show', $user->id) }}"
-                                                                       class="btn btn-subtle-primary btn-icon btn-sm"
-                                                                       title="View">
-                                                                        <i class="ph-eye"></i>
-                                                                    </a>
-                                                                </li>
-                                                            @endcan
+                                                    </div>
+                                                </td>
+                                                <td class="email" data-email="{{ $user->email }}">
+                                                    {{ $user->email }}
+                                                </td>
+                                                <td class="role"
+                                                    data-roles="{{ $user->getRoleNames()->implode(',') }}">
+                                                    <div>
+                                                        @if(!empty($user->getRoleNames()))
+                                                        @foreach($user->getRoleNames() as $val)
+                                                        <label class="badge bg-primary">{{ $val }}</label>
+                                                        @endforeach
+                                                        @else
+                                                        <label class="badge bg-secondary">No roles</label>
+                                                        @endif
+                                                    </div>
+                                                </td>
+                                                <td class="datereg">
+                                                    {{ $user->created_at->format('Y-m-d') }}
+                                                </td>
+                                                <td>
+                                                    <ul class="d-flex gap-2 list-unstyled mb-0">
+                                                        @can('View user')
+                                                        <li>
+                                                            <a href="{{ route('users.show', $user->id) }}"
+                                                                class="btn btn-subtle-primary btn-icon btn-sm"
+                                                                title="View">
+                                                                <i class="ph-eye"></i>
+                                                            </a>
+                                                        </li>
+                                                        @endcan
 
-                                                            @can('Update user')
-                                                                <li>
-                                                                    <a href="javascript:void(0);"
-                                                                       class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn"
-                                                                       title="Edit">
-                                                                        <i class="ph-pencil"></i>
-                                                                    </a>
-                                                                </li>
-                                                            @endcan
+                                                        @can('Update user')
+                                                        <li>
+                                                            <a href="javascript:void(0);"
+                                                                class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn"
+                                                                title="Edit">
+                                                                <i class="ph-pencil"></i>
+                                                            </a>
+                                                        </li>
+                                                        @endcan
 
-                                                            {{-- Revoke password button — student users only --}}
-                                                            @can('Update user')
-                                                                @if($user->hasRole('student'))
-                                                                    <li>
-                                                                        <button type="button"
-                                                                                class="btn btn-subtle-warning btn-icon btn-sm"
-                                                                                data-revoke-user-id="{{ $user->id }}"
-                                                                                data-revoke-user-name="{{ $user->name }}"
-                                                                                title="Revoke Password">
-                                                                            <i class="bi bi-key"></i>
-                                                                        </button>
-                                                                    </li>
-                                                                @endif
-                                                            @endcan
+                                                        {{-- Reset password button - student users only --}}
+                                                        @can('Update user')
+                                                        @if($user->hasRole('Student'))
+                                                        <li>
+                                                            <button type="button"
+                                                                class="btn btn-subtle-warning btn-icon btn-sm reset-student-pwd-btn"
+                                                                data-user-id="{{ $user->id }}"
+                                                                data-user-name="{{ $user->name }}"
+                                                                title="Reset Password">
+                                                                <i class="bi bi-key-fill"></i>
+                                                            </button>
+                                                        </li>
+                                                        @endif
+                                                        @endcan
 
-                                                            @can('Delete user')
-                                                                <li>
-                                                                    <a href="javascript:void(0);"
-                                                                       class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn"
-                                                                       title="Delete">
-                                                                        <i class="ph-trash"></i>
-                                                                    </a>
-                                                                </li>
-                                                            @endcan
-                                                        </ul>
-                                                    </td>
-                                                </tr>
+                                                        @can('Delete user')
+                                                        <li>
+                                                            <a href="javascript:void(0);"
+                                                                class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn"
+                                                                title="Delete">
+                                                                <i class="ph-trash"></i>
+                                                            </a>
+                                                        </li>
+                                                        @endcan
+                                                    </ul>
+                                                </td>
+                                            </tr>
                                             @empty
-                                                <tr>
-                                                    <td colspan="7" class="noresult" style="display:block;">
-                                                        No results found
-                                                    </td>
-                                                </tr>
+                                            <tr>
+                                                <td colspan="7" class="noresult" style="display:block;">
+                                                    No results found
+                                                </td>
+                                            </tr>
                                             @endforelse
                                         </tbody>
                                     </table>
@@ -279,15 +279,15 @@ use Spatie\Permission\Models\Role;
             </div>
 
             <!-- ══════════════════════════════════════════════════════
-                 ADD USER MODAL
-                 ══════════════════════════════════════════════════════ -->
+            ADD USER MODAL
+            ══════════════════════════════════════════════════════ -->
             <div id="showModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 id="addModalLabel" class="modal-title">Add User</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="Close"></button>
+                                aria-label="Close"></button>
                         </div>
                         <form class="tablelist-form" autocomplete="off" id="add-user-form">
                             <div class="modal-body">
@@ -295,31 +295,31 @@ use Spatie\Permission\Models\Role;
                                 <div class="mb-3">
                                     <label for="name" class="form-label">Name</label>
                                     <input type="text" id="name" name="name" class="form-control"
-                                           placeholder="Enter name" required>
+                                        placeholder="Enter name" required>
                                 </div>
                                 <div class="mb-3">
                                     <label for="email" class="form-label">Email</label>
                                     <input type="email" id="email" name="email" class="form-control"
-                                           placeholder="Enter email" required>
+                                        placeholder="Enter email" required>
                                 </div>
                                 <div class="mb-3">
                                     <label for="role" class="form-label">Role</label>
                                     <select id="role" name="roles[]" class="form-control" multiple required>
                                         @foreach (Role::all() as $role)
-                                            <option value="{{ $role->name }}">{{ $role->name }}</option>
+                                        <option value="{{ $role->name }}">{{ $role->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
                                 <div class="mb-3">
                                     <label for="password" class="form-label">Password</label>
                                     <input type="password" id="password" name="password" class="form-control"
-                                           placeholder="Enter password" required>
+                                        placeholder="Enter password" required>
                                 </div>
                                 <div class="mb-3">
                                     <label for="password_confirmation" class="form-label">Confirm Password</label>
                                     <input type="password" id="password_confirmation"
-                                           name="password_confirmation" class="form-control"
-                                           placeholder="Confirm password" required>
+                                        name="password_confirmation" class="form-control"
+                                        placeholder="Confirm password" required>
                                 </div>
                                 <div class="alert alert-danger d-none" id="alert-error-msg"></div>
                             </div>
@@ -333,15 +333,15 @@ use Spatie\Permission\Models\Role;
             </div>
 
             <!-- ══════════════════════════════════════════════════════
-                 EDIT USER MODAL
-                 ══════════════════════════════════════════════════════ -->
+            EDIT USER MODAL
+            ══════════════════════════════════════════════════════ -->
             <div id="editModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 id="editModalLabel" class="modal-title">Edit User</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="Close"></button>
+                                aria-label="Close"></button>
                         </div>
                         <form class="tablelist-form" autocomplete="off" id="edit-user-form">
                             <div class="modal-body">
@@ -349,33 +349,33 @@ use Spatie\Permission\Models\Role;
                                 <div class="mb-3">
                                     <label for="edit-name" class="form-label">Name</label>
                                     <input type="text" id="edit-name" name="name" class="form-control"
-                                           placeholder="Enter name" required>
+                                        placeholder="Enter name" required>
                                 </div>
                                 <div class="mb-3">
                                     <label for="edit-email" class="form-label">Email</label>
                                     <input type="email" id="edit-email" name="email" class="form-control"
-                                           placeholder="Enter email" required>
+                                        placeholder="Enter email" required>
                                 </div>
                                 <div class="mb-3">
                                     <label for="edit-role" class="form-label">Role</label>
                                     <select id="edit-role" name="roles[]" class="form-control" multiple required>
                                         @foreach (Role::all() as $role)
-                                            <option value="{{ $role->name }}">{{ $role->name }}</option>
+                                        <option value="{{ $role->name }}">{{ $role->name }}</option>
                                         @endforeach
                                     </select>
                                 </div>
                                 <div class="mb-3">
                                     <label for="edit-password" class="form-label">Password (optional)</label>
                                     <input type="password" id="edit-password" name="password" class="form-control"
-                                           placeholder="Enter new password">
+                                        placeholder="Enter new password">
                                 </div>
                                 <div class="mb-3">
                                     <label for="edit-password_confirmation" class="form-label">
                                         Confirm Password
                                     </label>
                                     <input type="password" id="edit-password_confirmation"
-                                           name="password_confirmation" class="form-control"
-                                           placeholder="Confirm new password">
+                                        name="password_confirmation" class="form-control"
+                                        placeholder="Confirm new password">
                                 </div>
                                 <div class="alert alert-danger d-none" id="alert-error-msg"></div>
                             </div>
@@ -389,14 +389,14 @@ use Spatie\Permission\Models\Role;
             </div>
 
             <!-- ══════════════════════════════════════════════════════
-                 DELETE USER MODAL
-                 ══════════════════════════════════════════════════════ -->
+            DELETE USER MODAL
+            ══════════════════════════════════════════════════════ -->
             <div id="deleteRecordModal" class="modal fade zoomIn" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
                             <button type="button" class="btn-close" id="deleteRecord-close"
-                                    data-bs-dismiss="modal" aria-label="Close"></button>
+                                data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body p-md-5">
                             <div class="text-center">
@@ -412,9 +412,9 @@ use Spatie\Permission\Models\Role;
                             </div>
                             <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
                                 <button type="button" class="btn w-sm btn-light btn-hover"
-                                        data-bs-dismiss="modal">Close</button>
+                                    data-bs-dismiss="modal">Close</button>
                                 <button type="button" class="btn w-sm btn-danger btn-hover"
-                                        id="delete-record">Yes, Delete!</button>
+                                    id="delete-record">Yes, Delete!</button>
                             </div>
                         </div>
                     </div>
@@ -422,22 +422,22 @@ use Spatie\Permission\Models\Role;
             </div>
 
             <!-- ══════════════════════════════════════════════════════
-                 ADD STUDENT MODAL (single)
-                 ══════════════════════════════════════════════════════ -->
+            ADD STUDENT MODAL (single)
+            ══════════════════════════════════════════════════════ -->
             <div id="addStudentModal" class="modal fade" tabindex="-1" aria-hidden="true"
-                 data-bs-backdrop="static">
+                data-bs-backdrop="static">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title">Add Student as User</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="Close"></button>
+                                aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
                             <div class="mb-3">
                                 <label for="student-search" class="form-label">Search student</label>
                                 <input type="text" id="student-search" class="form-control"
-                                       placeholder="Admission no, name..." autocomplete="off">
+                                    placeholder="Admission no, name..." autocomplete="off">
                             </div>
                             <div class="mb-3">
                                 <label for="student-select" class="form-label">Select Student</label>
@@ -446,7 +446,7 @@ use Spatie\Permission\Models\Role;
                                 </select>
                             </div>
                             <div class="alert alert-info">
-                                <small>Username will be the admission number (slashes replaced with underscore).</small>
+                                <small>Email will be auto-generated as: firstname.lastname@csskabba.ng</small>
                             </div>
                             <div class="alert alert-danger d-none" id="student-select-error"></div>
                         </div>
@@ -461,16 +461,16 @@ use Spatie\Permission\Models\Role;
             </div>
 
             <!-- ══════════════════════════════════════════════════════
-                 SET STUDENT CREDENTIALS MODAL (single)
-                 ══════════════════════════════════════════════════════ -->
+            SET STUDENT CREDENTIALS MODAL (single)
+            ══════════════════════════════════════════════════════ -->
             <div id="setStudentCredentialsModal" class="modal fade" tabindex="-1" aria-hidden="true"
-                 data-bs-backdrop="static">
+                data-bs-backdrop="static">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title">Set Credentials for Student</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="Close"></button>
+                                aria-label="Close"></button>
                         </div>
                         <form class="tablelist-form" autocomplete="off" id="add-student-credentials-form">
                             <div class="modal-body">
@@ -479,9 +479,9 @@ use Spatie\Permission\Models\Role;
                                 <div class="mb-3">
                                     <label for="student-user-email" class="form-label">Email</label>
                                     <input type="email" id="student-user-email" name="email"
-                                           class="form-control" placeholder="Enter email (required)" required>
+                                        class="form-control" placeholder="Enter email (required)" required>
                                     <div class="form-text">
-                                        Prefilled from student record if available; edit if needed.
+                                        Will be auto-generated as firstname.lastname@csskabba.ng
                                     </div>
                                 </div>
                                 <div class="mb-3">
@@ -489,16 +489,16 @@ use Spatie\Permission\Models\Role;
                                         Username (Admission Number)
                                     </label>
                                     <input type="text" id="student-username" name="username"
-                                           class="form-control" readonly required>
+                                        class="form-control" readonly required>
                                 </div>
                                 <div class="mb-3">
                                     <label for="student-password" class="form-label">Temporary Password</label>
                                     <div class="input-group">
                                         <input type="password" id="student-password" name="password"
-                                               class="form-control"
-                                               placeholder="Temporary password will be generated" required>
+                                            class="form-control"
+                                            placeholder="Temporary password will be generated" required>
                                         <button type="button" class="btn btn-outline-secondary"
-                                                id="generate-temp-password">Generate</button>
+                                            id="generate-temp-password">Generate</button>
                                     </div>
                                 </div>
                                 <div class="mb-3">
@@ -506,27 +506,23 @@ use Spatie\Permission\Models\Role;
                                         Confirm Password
                                     </label>
                                     <input type="password" id="student-password_confirmation"
-                                           name="password_confirmation" class="form-control"
-                                           placeholder="Confirm password" required>
+                                        name="password_confirmation" class="form-control"
+                                        placeholder="Confirm password" required>
                                 </div>
                                 <div class="mb-3">
                                     <label for="student-role" class="form-label">
                                         Role <span class="text-danger">*</span>
-                                        (Select at least one)
                                     </label>
-                                    <select id="student-role" name="roles[]" class="form-control"
-                                            multiple required>
-                                        @foreach (Role::all() as $role)
-                                            <option value="{{ $role->name }}">{{ $role->name }}</option>
-                                        @endforeach
+                                    <select id="student-role" name="roles[]" class="form-control" required>
+                                        <option value="Student" selected>Student</option>
                                     </select>
-                                    <div class="form-text">Hold Ctrl/Cmd to select multiple roles.</div>
+                                    <div class="form-text">Student role is assigned by default.</div>
                                 </div>
                                 <div class="alert alert-danger d-none" id="student-credentials-error"></div>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-light" data-bs-dismiss="modal"
-                                        onclick="resetStudentCredentialsModal()">Close</button>
+                                    onclick="resetStudentCredentialsModal()">Close</button>
                                 <button type="submit" class="btn btn-primary" id="create-student-user">
                                     Create User
                                 </button>
@@ -536,54 +532,8 @@ use Spatie\Permission\Models\Role;
                 </div>
             </div>
 
-            <!-- ══════════════════════════════════════════════════════
-                 WHATSAPP MODAL
-                 ══════════════════════════════════════════════════════ -->
-            <div class="modal fade" id="whatsappModal" tabindex="-1"
-                 aria-labelledby="whatsappModalLabel" aria-hidden="true">
-                <div class="modal-dialog">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h5 class="modal-title" id="whatsappModalLabel">
-                                Send Credentials via WhatsApp
-                            </h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"
-                                    aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <p>Enter the phone number to send the username and password via WhatsApp.</p>
-                            <div class="mb-3">
-                                <label for="whatsapp-phone" class="form-label">
-                                    Phone Number (e.g., +1234567890)
-                                </label>
-                                <input type="tel" class="form-control" id="whatsapp-phone"
-                                       placeholder="Enter phone number" required>
-                                <input type="hidden" id="whatsapp-user-id"  value="">
-                                <input type="hidden" id="whatsapp-email"    value="">
-                                <input type="hidden" id="whatsapp-password" value="">
-                            </div>
-                            <div id="whatsapp-link-container" class="mb-3 d-none">
-                                <p>Click the link below to open WhatsApp with the pre-filled message:</p>
-                                <a href="#" id="whatsapp-link" target="_blank" class="btn btn-success">
-                                    Open WhatsApp
-                                </a>
-                                <p class="mt-2">
-                                    <strong>Preview:</strong>
-                                    <span id="whatsapp-message-preview"></span>
-                                </p>
-                            </div>
-                        </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                Cancel
-                            </button>
-                            <button type="button" class="btn btn-primary" id="generate-whatsapp-link">
-                                Generate Link
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <!-- Include Mass Student Modal -->
+            @include('users.partials.mass-student-modal')
 
         </div>
     </div>
@@ -591,16 +541,16 @@ use Spatie\Permission\Models\Role;
 
 {{-- Scripts --}}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="{{ asset('theme/layouts/assets/js/bootstrap.bundle.min.js') }}"></script>
 <script src="{{ asset('theme/layouts/assets/js/list.min.js') }}"></script>
 <script src="{{ asset('theme/layouts/assets/js/choices.min.js') }}" defer></script>
 <script src="{{ asset('js/user-list.init.js') }}"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 
-    /* ── Chart ── */
+    // Chart
     var ctx = document.getElementById("usersByRoleChart")?.getContext("2d");
     if (ctx) {
         new Chart(ctx, {
@@ -611,7 +561,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     label: "Users by Role",
                     data: @json(array_values($role_counts)),
                     backgroundColor: ["#4e73df","#1cc88a","#36b9cc","#f6c23e","#e74a3b"],
-                    borderColor:     ["#4e73df","#1cc88a","#36b9cc","#f6c23e","#e74a3b"],
+                    borderColor: ["#4e73df","#1cc88a","#36b9cc","#f6c23e","#e74a3b"],
                     borderWidth: 1
                 }]
             },
@@ -622,119 +572,149 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    /* ══════════════════════════════════════════════════════════
-       ADD STUDENT MODAL LOGIC (single)
-    ══════════════════════════════════════════════════════════ */
-    const addStudentModalEl    = document.getElementById('addStudentModal');
-    const credentialsModalEl   = document.getElementById('setStudentCredentialsModal');
+    // Single student password reset button
+    $(document).on('click', '.reset-student-pwd-btn', function() {
+        const userId = $(this).data('user-id');
+        const userName = $(this).data('user-name');
 
-    if (!addStudentModalEl || !credentialsModalEl) return;
-
-    const addStudentModal  = new bootstrap.Modal(addStudentModalEl);
-    const credentialsModal = new bootstrap.Modal(credentialsModalEl);
-
-    const searchInput  = document.getElementById('student-search');
-    const studentSelect = document.getElementById('student-select');
-    const proceedBtn   = document.getElementById('proceed-to-credentials');
-    const errorEl      = document.getElementById('student-select-error');
-
-    let selectedStudent = null;
-
-    // Load students on modal open
-    addStudentModalEl.addEventListener('show.bs.modal', () => loadStudents(''));
-
-    function loadStudents(search = '') {
-        proceedBtn.disabled = true;
-        errorEl?.classList.add('d-none');
-
-        let url = '{{ route("get.students") }}';
-        if (search.trim()) url += `?search=${encodeURIComponent(search.trim())}`;
-
-        fetch(url)
-            .then(r => r.json())
-            .then(data => {
-                if (!data.success) {
-                    errorEl.textContent = data.message || 'Failed to load students';
-                    errorEl.classList.remove('d-none');
-                    return;
-                }
-
-                studentSelect.innerHTML = '<option value="">Choose a student...</option>';
-                data.students.forEach(s => {
-                    const opt = document.createElement('option');
-                    opt.value               = s.id;
-                    opt.textContent         = `${s.name} (${s.admissionNo})`;
-                    opt.dataset.name        = s.name;
-                    opt.dataset.email       = s.email || '';
-                    opt.dataset.admission   = s.admissionNo || '';
-                    opt.dataset.hasAccount  = s.has_account ? '1' : '0';
-                    studentSelect.appendChild(opt);
+        Swal.fire({
+            title: 'Reset Password?',
+            html: `Reset password for <strong>${userName}</strong>?<br><br>A new random password will be generated.`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Reset Password',
+            cancelButtonText: 'Cancel'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Processing...',
+                    allowOutsideClick: false,
+                    didOpen: () => { Swal.showLoading(); }
                 });
 
-                proceedBtn.disabled = data.students.length === 0;
-            })
-            .catch(() => {
-                errorEl.textContent = 'Network error – please try again';
-                errorEl.classList.remove('d-none');
-            });
-    }
+                fetch(`/users/reset-single-password/${userId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    }
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            title: 'Password Reset!',
+                            html: `
+                                New password for <strong>${data.user.name}</strong>:<br>
+                                <code style="font-size: 24px; background: #f0f0f0; padding: 10px; display: inline-block; margin: 10px 0; letter-spacing: 2px;">${data.password}</code><br>
+                                <button class="btn btn-info mt-2" onclick="navigator.clipboard.writeText('${data.password}')">Copy Password</button>
+                            `,
+                            icon: 'success',
+                            showConfirmButton: true
+                        });
+                    } else {
+                        Swal.fire('Error', data.message || 'Failed to reset password', 'error');
+                    }
+                })
+                .catch(() => {
+                    Swal.fire('Error', 'Network error occurred', 'error');
+                });
+            }
+        });
+    });
 
-    searchInput?.addEventListener('input', debounce(e => {
-        loadStudents(e.target.value.trim());
-    }, 350));
+    // Single Student Add Modal Logic
+    const addStudentModalEl = document.getElementById('addStudentModal');
+    const credentialsModalEl = document.getElementById('setStudentCredentialsModal');
 
-    studentSelect?.addEventListener('change', function () {
-        const opt = this.options[this.selectedIndex];
-        if (!opt.value) {
+    if (addStudentModalEl && credentialsModalEl) {
+        const addStudentModal = new bootstrap.Modal(addStudentModalEl);
+        const credentialsModal = new bootstrap.Modal(credentialsModalEl);
+        const searchInput = document.getElementById('student-search');
+        const studentSelect = document.getElementById('student-select');
+        const proceedBtn = document.getElementById('proceed-to-credentials');
+        const errorEl = document.getElementById('student-select-error');
+        let selectedStudent = null;
+
+        addStudentModalEl.addEventListener('show.bs.modal', () => loadStudentsForSingle(''));
+
+        function loadStudentsForSingle(search = '') {
             proceedBtn.disabled = true;
-            selectedStudent = null;
-            return;
+            errorEl?.classList.add('d-none');
+            let url = '{{ route("get.students") }}?limit=500&has_account=no';
+
+            if (search.trim()) url += `&search=${encodeURIComponent(search.trim())}`;
+
+            fetch(url)
+                .then(r => r.json())
+                .then(data => {
+                    if (!data.success) {
+                        errorEl.textContent = data.message || 'Failed to load students';
+                        errorEl.classList.remove('d-none');
+                        return;
+                    }
+                    studentSelect.innerHTML = '<option value="">Choose a student...</option>';
+                    data.students.forEach(s => {
+                        const opt = document.createElement('option');
+                        opt.value = s.id;
+                        opt.textContent = `${s.name} (${s.admissionNo})`;
+                        opt.dataset.name = s.name;
+                        opt.dataset.email = s.email || '';
+                        opt.dataset.admission = s.admissionNo || '';
+                        studentSelect.appendChild(opt);
+                    });
+                    proceedBtn.disabled = data.students.length === 0;
+                })
+                .catch(() => {
+                    errorEl.textContent = 'Network error – please try again';
+                    errorEl.classList.remove('d-none');
+                });
         }
-        selectedStudent = {
-            id:          opt.value,
-            name:        opt.dataset.name,
-            email:       opt.dataset.email,
-            admissionNo: opt.dataset.admission,
-            hasAccount:  opt.dataset.hasAccount === '1',
-        };
-        proceedBtn.disabled = false;
-    });
 
-    proceedBtn?.addEventListener('click', () => {
-        if (!selectedStudent) return;
+        searchInput?.addEventListener('input', debounce(e => {
+            loadStudentsForSingle(e.target.value.trim());
+        }, 350));
 
-        document.getElementById('student-id-field').value    = selectedStudent.id;
-        document.getElementById('student-name-field').value  = selectedStudent.name;
-        document.getElementById('student-user-email').value  = selectedStudent.email;
-        document.getElementById('student-username').value    =
-            (selectedStudent.admissionNo || '').replace(/[\/\\]/g, '_');
+        studentSelect?.addEventListener('change', function () {
+            const opt = this.options[this.selectedIndex];
+            if (!opt.value) {
+                proceedBtn.disabled = true;
+                selectedStudent = null;
+                return;
+            }
+            selectedStudent = {
+                id: opt.value,
+                name: opt.dataset.name,
+                email: opt.dataset.email,
+                admissionNo: opt.dataset.admission,
+            };
+            proceedBtn.disabled = false;
+        });
 
-        addStudentModal.hide();
-        setTimeout(() => credentialsModal.show(), 300);
-    });
+        proceedBtn?.addEventListener('click', () => {
+            if (!selectedStudent) return;
+            document.getElementById('student-id-field').value = selectedStudent.id;
+            document.getElementById('student-name-field').value = selectedStudent.name;
+            document.getElementById('student-user-email').value = selectedStudent.email;
+            document.getElementById('student-username').value = (selectedStudent.admissionNo || '').replace(/[\/\\]/g, '_');
+            addStudentModal.hide();
+            setTimeout(() => credentialsModal.show(), 300);
+        });
 
-    document.getElementById('generate-temp-password')?.addEventListener('click', () => {
-        const temp = Math.random().toString(36).slice(-8) +
-                     Math.random().toString(36).slice(-4).toUpperCase();
-        document.getElementById('student-password').value             = temp;
-        document.getElementById('student-password_confirmation').value = temp;
-    });
+        document.getElementById('generate-temp-password')?.addEventListener('click', () => {
+            const temp = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-4).toUpperCase();
+            document.getElementById('student-password').value = temp;
+            document.getElementById('student-password_confirmation').value = temp;
+        });
 
-    // Submit student credentials form
-    document.getElementById('add-student-credentials-form')?.addEventListener('submit', function (e) {
-        e.preventDefault();
-
-        const rolesSelect    = document.getElementById('student-role');
-        const selectedRoles  = Array.from(rolesSelect.selectedOptions).map(o => o.value);
-        const hasStudentRole = selectedRoles.includes('student');
-
-        const doSubmit = () => {
+        document.getElementById('add-student-credentials-form')?.addEventListener('submit', function (e) {
+            e.preventDefault();
             const formData = new FormData(this);
             formData.append('_token', '{{ csrf_token() }}');
 
             fetch('{{ route("users.store-student") }}', {
                 method: 'POST',
-                body:   formData,
+                body: formData,
             })
             .then(r => r.json())
             .then(data => {
@@ -744,47 +724,29 @@ document.addEventListener("DOMContentLoaded", function () {
                     setTimeout(() => location.reload(), 1500);
                 } else {
                     const err = document.getElementById('student-credentials-error');
-                    err.innerHTML = data.errors
-                        ? Object.values(data.errors).flat().join('<br>')
-                        : (data.message || 'Error occurred');
+                    err.innerHTML = data.errors ? Object.values(data.errors).flat().join('<br>') : (data.message || 'Error occurred');
                     err.classList.remove('d-none');
                 }
             })
             .catch(() => {
                 Swal.fire('Error', 'Network error – please try again', 'error');
             });
-        };
+        });
 
-        if (hasStudentRole) {
-            Swal.fire({
-                title: 'Confirm Student Role',
-                html:  'You are assigning the <strong>student</strong> role.<br><br>' +
-                       'Deleting this user account <strong>will not</strong> delete the student record.',
-                icon:  'question',
-                showCancelButton:  true,
-                confirmButtonText: 'Yes, Create Student Account',
-                cancelButtonText:  'Cancel',
-            }).then(result => {
-                if (result.isConfirmed) doSubmit();
-            });
-        } else {
-            doSubmit();
+        function resetStudentCredentialsModal() {
+            document.getElementById('student-id-field').value = '';
+            document.getElementById('student-name-field').value = '';
+            document.getElementById('student-user-email').value = '';
+            document.getElementById('student-username').value = '';
+            document.getElementById('student-password').value = '';
+            document.getElementById('student-password_confirmation').value = '';
+            document.getElementById('student-credentials-error')?.classList.add('d-none');
         }
-    });
 
-    function resetStudentCredentialsModal() {
-        document.getElementById('student-id-field').value             = '';
-        document.getElementById('student-name-field').value           = '';
-        document.getElementById('student-user-email').value           = '';
-        document.getElementById('student-username').value             = '';
-        document.getElementById('student-password').value             = '';
-        document.getElementById('student-password_confirmation').value = '';
-        document.getElementById('student-credentials-error')?.classList.add('d-none');
+        credentialsModalEl?.addEventListener('hidden.bs.modal', resetStudentCredentialsModal);
+        window.resetStudentCredentialsModal = resetStudentCredentialsModal;
     }
 
-    credentialsModalEl?.addEventListener('hidden.bs.modal', resetStudentCredentialsModal);
-
-    /* ── Debounce helper ── */
     function debounce(func, wait) {
         let timeout;
         return (...args) => {
@@ -794,7 +756,5 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 });
 </script>
-
-@include('users.partials.mass-student-modal')
 
 @endsection

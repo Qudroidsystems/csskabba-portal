@@ -28,9 +28,6 @@ class UserController extends Controller
         $this->middleware('permission:Delete user', ['only' => ['destroy']]);
     }
 
-    /**
-     * Display a listing of users.
-     */
     public function index(Request $request): View
     {
         $pagetitle = "User Management";
@@ -47,9 +44,6 @@ class UserController extends Controller
         return view('users.index', compact('data', 'roles', 'role_permissions', 'pagetitle', 'role_counts'));
     }
 
-    /**
-     * Show the form for creating a new user.
-     */
     public function create(): View
     {
         $title = "Create User";
@@ -57,9 +51,6 @@ class UserController extends Controller
         return view('users.create', compact('roles', 'title'));
     }
 
-    /**
-     * Store a newly created user.
-     */
     public function store(Request $request): JsonResponse
     {
         Log::debug("Creating user", $request->all());
@@ -117,9 +108,6 @@ class UserController extends Controller
         }
     }
 
-    /**
-     * Display the specified user.
-     */
     public function show($id): View
     {
         $pagetitle = "User Overview";
@@ -157,9 +145,6 @@ class UserController extends Controller
         ));
     }
 
-    /**
-     * Show the form for editing the specified user.
-     */
     public function edit($id): View
     {
         if (auth()->user()->hasRole('Student')) {
@@ -173,9 +158,6 @@ class UserController extends Controller
         return view('users.edit', compact('user', 'roles', 'userRole'));
     }
 
-    /**
-     * Update the specified user.
-     */
     public function update(Request $request, $id): JsonResponse
     {
         if (auth()->user()->hasRole('Student')) {
@@ -246,9 +228,6 @@ class UserController extends Controller
         }
     }
 
-    /**
-     * Remove the specified user.
-     */
     public function destroy($id): JsonResponse
     {
         Log::debug("Attempting to delete user ID: {$id}");
@@ -277,9 +256,6 @@ class UserController extends Controller
         }
     }
 
-    /**
-     * Get all roles.
-     */
     public function roles(): JsonResponse
     {
         $roles = Role::pluck('name')->all();
@@ -287,28 +263,17 @@ class UserController extends Controller
     }
 
     // ============================================================
-    // EMAIL GENERATION HELPERS - FIXED VERSION
+    // EMAIL GENERATION HELPERS
     // ============================================================
 
-    /**
-     * Clean string - remove ALL special characters including dots, commas, apostrophes, etc.
-     * Only keeps letters (a-z) and numbers (0-9)
-     */
     private function cleanString($string)
     {
         if (empty($string)) return 'user';
 
-        // Convert to ASCII (removes accents like é, ñ, etc.)
         $string = Str::ascii($string);
-
-        // Convert to lowercase
         $string = strtolower($string);
-
-        // Remove EVERYTHING except letters (a-z) and numbers (0-9)
-        // This removes: dots, commas, apostrophes, dashes, spaces, underscores, etc.
         $string = preg_replace('/[^a-z0-9]/', '', $string);
 
-        // If empty after cleaning, return default
         if (empty($string)) {
             return 'student';
         }
@@ -316,42 +281,30 @@ class UserController extends Controller
         return $string;
     }
 
-    /**
-     * Generate a clean email from student name
-     * Format: firstname.lastname@csskabba.ng (with NO special characters in the name parts)
-     */
     private function generateStudentEmail($student)
     {
         $domain = '@csskabba.ng';
 
-        // Clean firstname and lastname - remove ALL special characters
         $firstname = $this->cleanString($student->firstname);
         $lastname = $this->cleanString($student->lastname);
 
-        // Build email based on what's available
         if (!empty($firstname) && !empty($lastname)) {
-            // Both first and last names exist
             $baseEmail = $firstname . '.' . $lastname;
         } elseif (!empty($firstname)) {
-            // Only first name exists
             $baseEmail = $firstname;
         } elseif (!empty($lastname)) {
-            // Only last name exists
             $baseEmail = $lastname;
         } else {
-            // No name - use admission number or fallback
             $baseEmail = !empty($student->admissionNo)
                 ? $this->cleanString($student->admissionNo)
                 : 'student_' . $student->id;
         }
 
-        // Final cleanup - ensure no dots at start or end, no multiple dots
         $baseEmail = trim($baseEmail, '.');
         $baseEmail = preg_replace('/\.+/', '.', $baseEmail);
 
         $email = $baseEmail . $domain;
 
-        // Check if email exists, if yes, add number suffix
         $counter = 1;
         while (User::where('email', $email)->exists()) {
             $email = $baseEmail . $counter . $domain;
@@ -361,9 +314,6 @@ class UserController extends Controller
         return $email;
     }
 
-    /**
-     * Generate a clean username from admission number
-     */
     private function generateUsername($student)
     {
         $baseUsername = !empty($student->admissionNo)
@@ -372,7 +322,6 @@ class UserController extends Controller
 
         $username = $baseUsername;
 
-        // Check if username exists
         $counter = 1;
         while (User::where('username', $username)->exists()) {
             $username = $baseUsername . $counter;
@@ -382,9 +331,6 @@ class UserController extends Controller
         return $username;
     }
 
-    /**
-     * Generate random password
-     */
     private function generateRandomPassword()
     {
         return strtoupper(Str::random(4)) . rand(100, 999) . strtolower(Str::random(3));
@@ -394,9 +340,6 @@ class UserController extends Controller
     // SINGLE STUDENT CREATION
     // ============================================================
 
-    /**
-     * Store a single student user
-     */
     public function storeStudent(Request $request): JsonResponse
     {
         Log::debug("Creating student user", $request->all());
@@ -421,13 +364,11 @@ class UserController extends Controller
 
             $student = Student::findOrFail($validated['student_id']);
 
-            // Generate email if not provided
             $email = $request->input('email');
             if (empty($email)) {
                 $email = $this->generateStudentEmail($student);
             }
 
-            // Generate username if not provided
             $username = $request->input('username');
             if (empty($username)) {
                 $username = $this->generateUsername($student);
@@ -495,9 +436,6 @@ class UserController extends Controller
     // MASS STUDENT OPERATIONS
     // ============================================================
 
-    /**
-     * Mass operation on students (Create, Reset, Revoke, Reprint)
-     */
     public function massCreateStudents(Request $request): JsonResponse
     {
         Log::debug("Mass operation on student users", $request->all());
@@ -516,7 +454,7 @@ class UserController extends Controller
                 'action_type' => 'required|in:create,reset,revoke,reprint',
                 'password_type' => 'required_if:action_type,create,reset|in:same,individual',
                 'shared_password' => 'required_if:password_type,same|nullable|string|min:6',
-                'roles' => 'required_if:action_type,create,reset|array|min:1',
+                'roles' => 'nullable|array',
                 'roles.*' => 'exists:roles,name',
             ]);
 
@@ -635,24 +573,16 @@ class UserController extends Controller
         }
     }
 
-    /**
-     * Create a single student account (used by mass operation)
-     */
     private function createStudentAccount($student, $validated)
     {
         try {
-            // Generate clean email
             $email = $this->generateStudentEmail($student);
-
-            // Generate username
             $username = $this->generateUsername($student);
 
-            // Generate password
             $plainPassword = $validated['password_type'] === 'same'
                 ? $validated['shared_password']
                 : $this->generateRandomPassword();
 
-            // Create user
             $user = User::create([
                 'name' => trim("{$student->firstname} {$student->lastname}"),
                 'email' => $email,
@@ -661,10 +591,8 @@ class UserController extends Controller
                 'password' => Hash::make($plainPassword),
             ]);
 
-            // Assign only the Student role (capital S)
             $user->syncRoles(['Student']);
 
-            // Sync bio
             BioModel::updateOrCreate(
                 ['user_id' => $user->id],
                 [
@@ -701,9 +629,6 @@ class UserController extends Controller
         }
     }
 
-    /**
-     * Reset student password (used by mass operation)
-     */
     private function resetStudentPassword($user, $student, $validated)
     {
         try {
@@ -713,7 +638,6 @@ class UserController extends Controller
 
             $user->update(['password' => Hash::make($plainPassword)]);
 
-            // Ensure Student role is assigned (capital S)
             if (!$user->hasRole('Student')) {
                 $user->syncRoles(['Student']);
             }
@@ -739,9 +663,6 @@ class UserController extends Controller
         }
     }
 
-    /**
-     * Revoke student account (used by mass operation)
-     */
     private function revokeStudentAccount($user, $student)
     {
         try {
@@ -766,9 +687,6 @@ class UserController extends Controller
         }
     }
 
-    /**
-     * Reprint student credentials (used by mass operation)
-     */
     private function reprintStudentCredentials($user, $student)
     {
         try {
@@ -782,7 +700,7 @@ class UserController extends Controller
                     'username' => $user->username,
                     'admissionNo' => $student->admissionNo ?? '',
                     'class_name' => $student->class_name ?? '',
-                    'note' => 'Password not shown for security. Use Reset action to set new password if needed.',
+                    'note' => 'Password not shown for security.',
                 ]
             ];
         } catch (\Exception $e) {
@@ -793,9 +711,6 @@ class UserController extends Controller
         }
     }
 
-    /**
-     * Build action result message
-     */
     private function buildActionResultMessage($data)
     {
         $parts = [];
@@ -811,12 +726,9 @@ class UserController extends Controller
     }
 
     // ============================================================
-    // SINGLE PASSWORD RESET (from user list)
+    // SINGLE STUDENT PASSWORD RESET (from user list button)
     // ============================================================
 
-    /**
-     * Reset single student password (from user list button)
-     */
     public function resetSingleStudentPassword(Request $request, $id): JsonResponse
     {
         try {
@@ -860,9 +772,10 @@ class UserController extends Controller
         }
     }
 
-    /**
-     * Revoke/Reset multiple student passwords
-     */
+    // ============================================================
+    // REVOKE PASSWORD (bulk operation)
+    // ============================================================
+
     public function revokeStudentPassword(Request $request): JsonResponse
     {
         Log::debug("Resetting student password(s)", $request->all());
@@ -875,42 +788,31 @@ class UserController extends Controller
                 ], 403);
             }
 
-            $userIds = [];
+            $studentIds = $request->input('student_ids', []);
 
-            if ($request->has('user_ids')) {
-                $request->validate([
-                    'user_ids' => 'required|array|min:1',
-                    'user_ids.*' => 'exists:users,id',
-                ]);
-                $userIds = $request->input('user_ids');
-            } elseif ($request->has('user_id')) {
-                $request->validate([
-                    'user_id' => 'required|exists:users,id',
-                ]);
-                $userIds = [$request->input('user_id')];
-            }
-
-            if (empty($userIds)) {
+            if (empty($studentIds)) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'No valid users found.',
+                    'message' => 'No student IDs provided.',
                 ], 422);
+            }
+
+            $users = User::whereIn('student_id', $studentIds)->get();
+
+            if ($users->isEmpty()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No users found for the selected students.',
+                ], 404);
             }
 
             $plainPassword = 'ChangeMe@123';
             $newPassword = Hash::make($plainPassword);
             $count = 0;
-            $skipped = 0;
             $revoked = [];
 
-            foreach ($userIds as $uid) {
-                $user = User::with(['roles', 'student'])->find($uid);
-                if (!$user) {
-                    continue;
-                }
-
+            foreach ($users as $user) {
                 if (!$user->hasRole('Student')) {
-                    $skipped++;
                     continue;
                 }
 
@@ -927,11 +829,14 @@ class UserController extends Controller
                 ];
             }
 
+            $message = $count > 0
+                ? "{$count} student password(s) reset successfully. New password: {$plainPassword}"
+                : "No student passwords were reset.";
+
             return response()->json([
                 'success' => true,
-                'message' => "{$count} student password(s) reset. New password: {$plainPassword}",
+                'message' => $message,
                 'count' => $count,
-                'skipped' => $skipped,
                 'revoked' => $revoked,
             ]);
 
@@ -939,7 +844,7 @@ class UserController extends Controller
             Log::error("revokeStudentPassword error: {$e->getMessage()}");
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to reset passwords.',
+                'message' => 'Failed to reset passwords: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -948,9 +853,6 @@ class UserController extends Controller
     // GET STUDENTS FOR MODALS
     // ============================================================
 
-    /**
-     * Get students list for modals with filters
-     */
     public function getStudents(Request $request): JsonResponse
     {
         try {
@@ -1051,8 +953,77 @@ class UserController extends Controller
             Log::error("getStudents error: {$e->getMessage()}");
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to load students',
+                'message' => 'Failed to load students: ' . $e->getMessage(),
             ], 500);
         }
+    }
+
+    // ============================================================
+    // EXTRA METHODS (for compatibility)
+    // ============================================================
+
+    public function allUsers(Request $request): JsonResponse
+    {
+        $users = User::with('roles')->get();
+        return response()->json(['users' => $users]);
+    }
+
+    public function paginate(Request $request): JsonResponse
+    {
+        $users = User::with('roles')->paginate(15);
+        return response()->json($users);
+    }
+
+    public function createFromStudentForm(): View
+    {
+        return view('users.create-from-student');
+    }
+
+    public function createFromStudent(Request $request): JsonResponse
+    {
+        return $this->storeStudent($request);
+    }
+
+    public function getStudentCredentials(Request $request): JsonResponse
+    {
+        $studentId = $request->input('student_id');
+        $user = User::where('student_id', $studentId)->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No user found for this student.',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'credentials' => [
+                'email' => $user->email,
+                'username' => $user->username,
+            ],
+        ]);
+    }
+
+    public function bulkReprintCredentials(Request $request): JsonResponse
+    {
+        $studentIds = $request->input('student_ids', []);
+        $users = User::whereIn('student_id', $studentIds)->get();
+
+        $credentials = [];
+        foreach ($users as $user) {
+            $credentials[] = [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'username' => $user->username,
+                'admissionNo' => $user->student?->admissionNo ?? '',
+            ];
+        }
+
+        return response()->json([
+            'success' => true,
+            'credentials' => $credentials,
+        ]);
     }
 }

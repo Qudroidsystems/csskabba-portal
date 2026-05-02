@@ -98,26 +98,34 @@ Route::group(['middleware' => ['auth']], function () {
         // IMPORTANT: all GET /users/xxx static routes must come BEFORE the resource
         // or they'll be captured by /users/{user}
 
-        Route::get('/users/all',              [UserController::class, 'allUsers'])->name('users.all');
-        Route::get('/users/paginate',         [UserController::class, 'paginate'])->name('users.paginate');
-        Route::get('/users/get-students',     [UserController::class, 'getStudents'])->name('get.students');
-        Route::get('/users/add-student',      [UserController::class, 'createFromStudentForm'])->name('users.add-student-form');
+        // ==============================================
+        // USER MANAGEMENT ROUTES
+        // ==============================================
 
-        Route::post('/users/store-student',       [UserController::class, 'storeStudent'])->name('users.store-student');
-        Route::post('/users/mass-create-students',[UserController::class, 'massCreateStudents'])->name('users.mass-create-students');
+        // These must come BEFORE the resource route
+        Route::get('/users/all', [UserController::class, 'allUsers'])->name('users.all');
+        Route::get('/users/paginate', [UserController::class, 'paginate'])->name('users.paginate');
+        Route::get('/users/get-students', [UserController::class, 'getStudents'])->name('get.students');
+        Route::get('/users/add-student', [UserController::class, 'createFromStudentForm'])->name('users.add-student-form');
+
+        // Student creation routes
+        Route::post('/users/store-student', [UserController::class, 'storeStudent'])->name('users.store-student');
+        Route::post('/users/mass-create-students', [UserController::class, 'massCreateStudents'])->name('users.mass-create-students');
         Route::post('/users/create-from-student', [UserController::class, 'createFromStudent'])->name('users.createFromStudent');
-        Route::post('/users/revoke-student-password', [UserController::class, 'revokeStudentPassword'])->name('users.revoke-student-password');
-        Route::delete('/users/{id}',          [UserController::class, 'destroy'])->name('users.destroy');
-        Route::post('/users/get-student-credentials',[UserController::class, 'getStudentCredentials'])->name('users.get-student-credentials');
-        // Add these routes to your web.php file
 
+        // Password management routes
+        Route::post('/users/revoke-student-password', [UserController::class, 'revokeStudentPassword'])->name('users.revoke-student-password');
         Route::post('/users/reset-single-password/{id}', [UserController::class, 'resetSingleStudentPassword'])->name('users.reset-single-password');
+
+        // Credentials routes
+        Route::post('/users/get-student-credentials', [UserController::class, 'getStudentCredentials'])->name('users.get-student-credentials');
         Route::post('/users/bulk-reprint', [UserController::class, 'bulkReprintCredentials'])->name('users.bulk-reprint');
 
+        // Delete user
+        Route::delete('/users/{id}', [UserController::class, 'destroy'])->name('users.destroy');
 
-        // Resource AFTER all static /users/xxx routes
+        // Resource route - MUST BE LAST
         Route::resource('users', UserController::class);
-
 
 
         // Student ID Cards
