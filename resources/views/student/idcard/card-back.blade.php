@@ -1,120 +1,155 @@
 {{--
     ID Card BACK — Portrait
-    Same flat data shape as card-front.blade.php
+    Barcode: uses BarcodeGeneratorSVG (same picqer package, inline SVG — no PNG needed)
+    Falls back to text-only if package not installed.
 --}}
 @php
-    $fullname  = trim(($student->firstname ?? '') . ' ' . ($student->lastname ?? ''));
-    $logoUrl   = ($schoolInfo && $schoolInfo->school_logo)
-        ? $schoolInfo->getLogoUrlAttribute()
-        : null;
-    $expiry    = now()->addYear()->format('F Y');
+    $firstname  = $student->firstname  ?? '';
+    $lastname   = $student->lastname   ?? '';
+    $othername  = $student->othername  ?? '';
+    $fullname   = trim("$firstname $othername $lastname");
+    $classArm   = trim(($student->schoolclass ?? '') . ' ' . ($student->arm ?? ''));
+    $expiry     = now()->addYear()->format('F Y');
+    $logoUrl    = ($schoolInfo && $schoolInfo->school_logo)
+                    ? $schoolInfo->getLogoUrlAttribute() : null;
 
-    $barcodeGen = new Picqer\Barcode\BarcodeGeneratorPNG();
-    $barcode    = base64_encode(
-        $barcodeGen->getBarcode(
-            $student->admissionNo ?? '000000',
-            $barcodeGen::TYPE_CODE_128,
-            2, 50
-        )
-    );
+    // Barcode — SVG inline (no PNG/GD dependency)
+    $admNo      = $student->admissionNo ?? '000000';
+    $barcodeSvg = null;
+    if (class_exists(\Picqer\Barcode\BarcodeGeneratorSVG::class)) {
+        $gen        = new \Picqer\Barcode\BarcodeGeneratorSVG();
+        $barcodeSvg = $gen->getBarcode($admNo, $gen::TYPE_CODE_128, 1.8, 50);
+    }
 @endphp
 
-<div class="id-card-wrap" style="
-    width:323px;height:510px;border-radius:10px;overflow:hidden;
-    position:relative;background:#ffffff;
+<div style="
+    width:323px; height:560px; border-radius:12px; overflow:hidden;
+    position:relative; background:#ffffff;
     box-shadow:0 8px 32px rgba(0,0,0,.18);
-    font-family:'Nunito','Segoe UI',sans-serif;flex-shrink:0;
+    font-family:'Nunito','Segoe UI',sans-serif; flex-shrink:0;
 ">
-    <div style="position:absolute;top:0;left:0;right:0;height:8px;
-        background:linear-gradient(90deg,#1e3a5f 0%,#2169ad 50%,#4f46e5 100%);"></div>
+    {{-- TOP ACCENT --}}
+    <div style="position:absolute;top:0;left:0;right:0;height:7px;z-index:10;
+        background:linear-gradient(90deg,#1e3a5f,#2169ad,#4f46e5,#2169ad,#1e3a5f);"></div>
+
+    {{-- WATERMARK --}}
+    @if($logoUrl)
+    <div style="position:absolute;inset:0;z-index:1;display:flex;
+        align-items:center;justify-content:center;pointer-events:none;">
+        <img src="{{ $logoUrl }}" style="width:180px;height:180px;object-fit:contain;
+            opacity:0.05;filter:grayscale(100%);" alt="">
+    </div>
+    @endif
 
     {{-- HEADER --}}
-    <div style="background:linear-gradient(150deg,#1e3a5f 0%,#2169ad 60%,#1e3a5f 100%);
-        padding:20px 16px 14px;text-align:center;position:relative;overflow:hidden;">
-        <div style="position:absolute;top:-20px;left:-20px;width:80px;height:80px;
-            border-radius:50%;background:rgba(255,255,255,.05);"></div>
-        <div style="color:#fff;font-size:9px;font-weight:700;letter-spacing:2.5px;opacity:.8;">
-            STUDENT IDENTITY CARD
-        </div>
-        <div style="color:#fff;font-weight:800;font-size:12px;margin-top:3px;">
+    <div style="position:relative;z-index:2;
+        background:linear-gradient(150deg,#1e3a5f 0%,#2169ad 55%,#1a3356 100%);
+        padding:16px 16px 12px; text-align:center; overflow:hidden;">
+        <div style="position:absolute;top:-18px;left:-18px;width:70px;height:70px;
+            border-radius:50%;background:rgba(255,255,255,.06);"></div>
+        <div style="color:rgba(255,255,255,.75);font-size:8px;font-weight:700;
+            letter-spacing:2.5px;">STUDENT IDENTITY CARD</div>
+        <div style="color:#fff;font-weight:800;font-size:12px;margin-top:2px;">
             {{ $schoolInfo?->school_name ?? 'School Name' }}
         </div>
+        @if(!empty($schoolInfo?->school_address))
+        <div style="color:rgba(255,255,255,.62);font-size:7.5px;margin-top:2px;">
+            {{ $schoolInfo->school_address }}
+        </div>
+        @endif
     </div>
 
     {{-- MAGNETIC STRIP --}}
-    <div style="height:18px;background:#1a1a2e;"></div>
+    <div style="height:16px;background:#1a1a2e;position:relative;z-index:2;"></div>
+
+    {{-- STUDENT SUMMARY CHIP --}}
+    <div style="position:relative;z-index:2;margin:10px 14px 0;background:#eef2ff;
+        border-radius:7px;padding:7px 11px;border-left:3px solid #2169ad;">
+        <div style="font-size:10.5px;font-weight:800;color:#1e3a5f;">{{ $fullname }}</div>
+        <div style="font-size:8.5px;color:#4338ca;font-weight:600;margin-top:1px;">
+            {{ $classArm ?: 'N/A' }} &nbsp;|&nbsp; {{ $admNo }}
+        </div>
+    </div>
 
     {{-- TERMS --}}
-    <div style="padding:10px 16px 0;font-size:8.5px;color:#374151;line-height:1.6;">
-        <div style="font-weight:700;font-size:9px;color:#1e3a5f;margin-bottom:4px;
-            text-transform:uppercase;letter-spacing:.5px;">Terms &amp; Conditions</div>
-        <ul style="margin:0;padding-left:14px;color:#4b5563;">
-            <li>This card is the property of {{ $schoolInfo?->school_name ?? 'the school' }} and must be carried at all times.</li>
+    <div style="position:relative;z-index:2;padding:9px 14px 0;font-size:7.8px;
+        color:#374151;line-height:1.65;">
+        <div style="font-weight:800;font-size:8.5px;color:#1e3a5f;margin-bottom:3px;
+            text-transform:uppercase;letter-spacing:.6px;">Terms &amp; Conditions</div>
+        <ul style="margin:0;padding-left:13px;color:#4b5563;">
+            <li>This card is the property of <strong>{{ $schoolInfo?->school_name ?? 'the school' }}</strong> and must be carried at all times on school premises.</li>
             <li>Report loss immediately to the school office. A replacement fee applies.</li>
-            <li>Not transferable. Misuse will result in disciplinary action.</li>
-            <li>Return this card upon completion of enrolment.</li>
+            <li>Not transferable. Misuse attracts disciplinary action.</li>
+            <li>Return this card upon completion or withdrawal of enrolment.</li>
         </ul>
     </div>
 
-    {{-- CONTACT BLOCK --}}
+    {{-- CONTACT --}}
     @php
-        $address = $schoolInfo?->school_address ?? '';
         $phone   = $schoolInfo?->school_phone   ?? '';
         $email   = $schoolInfo?->school_email   ?? '';
         $website = $schoolInfo?->school_website ?? '';
     @endphp
-    @if($address || $phone || $email)
-    <div style="margin:10px 16px 0;background:#f0f4ff;border-radius:8px;
-        padding:8px 10px;border-left:3px solid #2169ad;">
-        <div style="font-size:8px;font-weight:700;color:#2169ad;text-transform:uppercase;
-            letter-spacing:.8px;margin-bottom:4px;">School Contact</div>
-        @if($address)
-        <div style="font-size:8.5px;color:#374151;margin-bottom:2px;">&#128205; {{ $address }}</div>
-        @endif
+    @if($phone || $email || $website)
+    <div style="position:relative;z-index:2;margin:8px 14px 0;background:#f0f4ff;
+        border-radius:7px;padding:6px 10px;border-left:3px solid #2169ad;">
+        <div style="font-size:7px;font-weight:800;color:#2169ad;
+            text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px;">Contact</div>
         @if($phone)
-        <div style="font-size:8.5px;color:#374151;margin-bottom:2px;">&#128222; {{ $phone }}</div>
+        <div style="font-size:7.5px;color:#374151;">&#128222; {{ $phone }}</div>
         @endif
         @if($email)
-        <div style="font-size:8.5px;color:#374151;margin-bottom:2px;">&#9993; {{ $email }}</div>
+        <div style="font-size:7.5px;color:#374151;">&#9993; {{ $email }}</div>
         @endif
         @if($website)
-        <div style="font-size:8.5px;color:#2169ad;">&#127760; {{ $website }}</div>
+        <div style="font-size:7.5px;color:#2169ad;">&#127760; {{ $website }}</div>
         @endif
     </div>
     @endif
 
     {{-- SIGNATURES --}}
-    <div style="margin:12px 16px 0;display:flex;gap:10px;">
+    <div style="position:relative;z-index:2;margin:10px 14px 0;display:flex;gap:10px;">
         <div style="flex:1;text-align:center;">
-            <div style="height:36px;border-bottom:1.5px solid #1e3a5f;margin:0 6px;"></div>
-            <div style="font-size:8px;color:#6b7280;margin-top:3px;">Cardholder's Signature</div>
+            <div style="height:30px;border-bottom:1.5px solid #1e3a5f;margin:0 8px;"></div>
+            <div style="font-size:7px;color:#6b7280;margin-top:3px;">Cardholder's Signature</div>
         </div>
         <div style="flex:1;text-align:center;">
-            <div style="height:36px;border-bottom:1.5px solid #1e3a5f;margin:0 6px;"></div>
-            <div style="font-size:8px;color:#6b7280;margin-top:3px;">Authorised Signature</div>
+            <div style="height:30px;border-bottom:1.5px solid #1e3a5f;margin:0 8px;"></div>
+            <div style="font-size:7px;color:#6b7280;margin-top:3px;">Authorised Signature</div>
         </div>
     </div>
 
     {{-- ISSUED BY --}}
-    <div style="text-align:center;margin-top:10px;padding:0 16px;">
-        <div style="font-size:8px;color:#9ca3af;letter-spacing:.5px;">ISSUED BY</div>
-        <div style="font-size:10px;font-weight:700;color:#1e3a5f;">
+    <div style="position:relative;z-index:2;text-align:center;margin-top:8px;">
+        <div style="font-size:7px;color:#9ca3af;letter-spacing:.6px;text-transform:uppercase;">Issued By</div>
+        <div style="font-size:9px;font-weight:800;color:#1e3a5f;">
             {{ $schoolInfo?->school_name ?? 'School Administration' }}
         </div>
-        <div style="font-size:8.5px;color:#6b7280;">Admin Officer</div>
+        <div style="font-size:7px;color:#6b7280;">Admin Officer</div>
     </div>
 
     {{-- BARCODE --}}
-    <div style="text-align:center;padding:10px 0 6px;">
-        <img src="data:image/png;base64,{{ $barcode }}" style="height:40px;max-width:220px;" alt="barcode">
-        <div style="font-size:9px;font-weight:700;color:#1e3a5f;letter-spacing:2px;margin-top:2px;">
-            {{ $student->admissionNo }}
+    <div style="position:relative;z-index:2;text-align:center;padding:8px 0 4px;">
+        @if($barcodeSvg)
+            <div style="display:inline-block;max-width:220px;">
+                {!! $barcodeSvg !!}
+            </div>
+        @else
+            {{-- Fallback: styled text barcode look --}}
+            <div style="font-family:monospace;font-size:28px;letter-spacing:-1px;
+                color:#1e3a5f;line-height:1;">
+                ||||| {{ $admNo }} |||||
+            </div>
+        @endif
+        <div style="font-size:8.5px;font-weight:800;color:#1e3a5f;letter-spacing:2px;margin-top:1px;">
+            {{ $admNo }}
         </div>
-        <div style="font-size:7.5px;color:#94a3b8;margin-top:1px;">
-            Valid Until: <strong>{{ $expiry }}</strong> &nbsp;|&nbsp; {{ now()->year }}
+        <div style="font-size:7px;color:#94a3b8;margin-top:1px;">
+            Valid Until: <strong>{{ $expiry }}</strong> &bull; {{ now()->year }}
         </div>
     </div>
 
-    <div style="position:absolute;bottom:0;left:0;right:0;height:6px;
-        background:linear-gradient(90deg,#4f46e5 0%,#2169ad 50%,#1e3a5f 100%);"></div>
+    {{-- BOTTOM ACCENT --}}
+    <div style="position:absolute;bottom:0;left:0;right:0;height:7px;z-index:10;
+        background:linear-gradient(90deg,#4f46e5,#2169ad,#1e3a5f,#2169ad,#4f46e5);"></div>
 </div>

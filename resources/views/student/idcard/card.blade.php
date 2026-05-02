@@ -1,29 +1,48 @@
 {{--
-    ID Card BACK — Portrait
-    Barcode: uses BarcodeGeneratorSVG (same picqer package, inline SVG — no PNG needed)
-    Falls back to text-only if package not installed.
+    ID Card FRONT — Portrait preview
+    Data columns (flat stdClass): id, admissionNo, firstname, lastname, othername,
+      gender, dateofbirth, nationality, blood_group, student_category, student_status,
+      state, local, admission_date, picture, schoolclass, arm, session, term
 --}}
 @php
-    $firstname  = $student->firstname  ?? '';
-    $lastname   = $student->lastname   ?? '';
-    $othername  = $student->othername  ?? '';
-    $fullname   = trim("$firstname $othername $lastname");
-    $classArm   = trim(($student->schoolclass ?? '') . ' ' . ($student->arm ?? ''));
-    $expiry     = now()->addYear()->format('F Y');
-    $logoUrl    = ($schoolInfo && $schoolInfo->school_logo)
+    $firstname   = $student->firstname  ?? '';
+    $lastname    = $student->lastname   ?? '';
+    $othername   = $student->othername  ?? '';
+    $fullname    = trim("$firstname $othername $lastname");
+    $initials    = strtoupper(substr($firstname,0,1) . substr($lastname,0,1));
+    $classArm    = trim(($student->schoolclass ?? '') . ' ' . ($student->arm ?? ''));
+    $dob         = !empty($student->dateofbirth)
+                    ? \Carbon\Carbon::parse($student->dateofbirth)->format('d M Y') : '';
+    $admDate     = !empty($student->admission_date)
+                    ? \Carbon\Carbon::parse($student->admission_date)->format('d M Y') : '';
+    $photoUrl    = ($student->picture)
+                    ? asset('storage/images/student_avatars/' . $student->picture) : null;
+    $logoUrl     = ($schoolInfo && $schoolInfo->school_logo)
                     ? $schoolInfo->getLogoUrlAttribute() : null;
 
-    // Barcode — SVG inline (no PNG/GD dependency)
-    $admNo      = $student->admissionNo ?? '000000';
-    $barcodeSvg = null;
-    if (class_exists(\Picqer\Barcode\BarcodeGeneratorSVG::class)) {
-        $gen        = new \Picqer\Barcode\BarcodeGeneratorSVG();
-        $barcodeSvg = $gen->getBarcode($admNo, $gen::TYPE_CODE_128, 1.8, 50);
-    }
+    $payload = base64_encode(json_encode(['id'=>$student->id,'adm'=>$student->admissionNo,'ts'=>now()->timestamp]));
+    $qrB64   = base64_encode(
+        \SimpleSoftwareIO\QrCode\Facades\QrCode::size(72)->format('png')
+            ->generate(route('student-id-cards.verify', ['token' => $payload]))
+    );
+
+    $rows = array_filter([
+        ['Class',        $classArm],
+        ['Gender',       $student->gender           ?? ''],
+        ['Date of Birth',$dob],
+        ['Blood Group',  $student->blood_group       ?? ''],
+        ['Nationality',  $student->nationality       ?? ''],
+        ['State',        $student->state             ?? ''],
+        ['L.G.A',        $student->local             ?? ''],
+        ['Session',      $student->session           ?? ''],
+        ['Adm. Date',    $admDate],
+        ['Category',     $student->student_category  ?? ''],
+        ['Status',       $student->student_status    ?? ''],
+    ], fn($r) => !empty(trim($r[1])));
 @endphp
 
 <div style="
-    width:323px; height:560px; border-radius:12px; overflow:hidden;
+    width:323px; height:580px; border-radius:12px; overflow:hidden;
     position:relative; background:#ffffff;
     box-shadow:0 8px 32px rgba(0,0,0,.18);
     font-family:'Nunito','Segoe UI',sans-serif; flex-shrink:0;
@@ -35,118 +54,107 @@
     {{-- WATERMARK --}}
     @if($logoUrl)
     <div style="position:absolute;inset:0;z-index:1;display:flex;
-        align-items:center;justify-content:center;pointer-events:none;">
-        <img src="{{ $logoUrl }}" style="width:180px;height:180px;object-fit:contain;
-            opacity:0.05;filter:grayscale(100%);" alt="">
+        align-items:center;justify-content:center;pointer-events:none;margin-top:40px;">
+        <img src="{{ $logoUrl }}" style="width:210px;height:210px;object-fit:contain;
+            opacity:0.055;filter:grayscale(100%);" alt="">
     </div>
     @endif
 
-    {{-- HEADER --}}
+    {{-- HEADER — taller to give room for logo + badge before photo overlaps --}}
     <div style="position:relative;z-index:2;
         background:linear-gradient(150deg,#1e3a5f 0%,#2169ad 55%,#1a3356 100%);
-        padding:16px 16px 12px; text-align:center; overflow:hidden;">
-        <div style="position:absolute;top:-18px;left:-18px;width:70px;height:70px;
-            border-radius:50%;background:rgba(255,255,255,.06);"></div>
-        <div style="color:rgba(255,255,255,.75);font-size:8px;font-weight:700;
-            letter-spacing:2.5px;">STUDENT IDENTITY CARD</div>
-        <div style="color:#fff;font-weight:800;font-size:12px;margin-top:2px;">
+        padding:14px 14px 46px; text-align:center; overflow:hidden;">
+
+        <div style="position:absolute;top:-22px;right:-22px;width:90px;height:90px;
+            border-radius:50%;background:rgba(255,255,255,.08);"></div>
+        <div style="position:absolute;bottom:-32px;left:-14px;width:100px;height:100px;
+            border-radius:50%;background:rgba(255,255,255,.05);"></div>
+
+        {{-- LOGO — 64×64 --}}
+        @if($logoUrl)
+            <img src="{{ $logoUrl }}" style="height:64px;width:64px;object-fit:contain;
+                border-radius:50%;border:2.5px solid rgba(255,255,255,.55);
+                background:rgba(255,255,255,.14);display:block;margin:0 auto 7px;
+                position:relative;z-index:3;" alt="logo">
+        @else
+            <div style="width:64px;height:64px;border-radius:50%;
+                border:2px solid rgba(255,255,255,.4);background:rgba(255,255,255,.15);
+                display:flex;align-items:center;justify-content:center;
+                margin:0 auto 7px;font-size:28px;color:#fff;position:relative;z-index:3;">
+                &#127979;</div>
+        @endif
+
+        <div style="color:#fff;font-weight:800;font-size:13px;letter-spacing:.3px;
+            line-height:1.25;position:relative;z-index:3;">
             {{ $schoolInfo?->school_name ?? 'School Name' }}
         </div>
-        @if(!empty($schoolInfo?->school_address))
-        <div style="color:rgba(255,255,255,.62);font-size:7.5px;margin-top:2px;">
-            {{ $schoolInfo->school_address }}
+        @if(!empty($schoolInfo?->school_motto))
+        <div style="color:rgba(255,255,255,.72);font-size:8.5px;margin-top:2px;
+            font-style:italic;position:relative;z-index:3;">
+            {{ $schoolInfo->school_motto }}
         </div>
         @endif
+        {{-- Badge — photo sits BELOW this --}}
+        <div style="display:inline-block;background:rgba(255,255,255,.18);
+            border:1px solid rgba(255,255,255,.35);color:#fff;font-size:7.5px;
+            font-weight:800;letter-spacing:2.5px;padding:3px 14px;border-radius:20px;
+            margin-top:8px;position:relative;z-index:3;">STUDENT ID CARD</div>
     </div>
 
-    {{-- MAGNETIC STRIP --}}
-    <div style="height:16px;background:#1a1a2e;position:relative;z-index:2;"></div>
-
-    {{-- STUDENT SUMMARY CHIP --}}
-    <div style="position:relative;z-index:2;margin:10px 14px 0;background:#eef2ff;
-        border-radius:7px;padding:7px 11px;border-left:3px solid #2169ad;">
-        <div style="font-size:10.5px;font-weight:800;color:#1e3a5f;">{{ $fullname }}</div>
-        <div style="font-size:8.5px;color:#4338ca;font-weight:600;margin-top:1px;">
-            {{ $classArm ?: 'N/A' }} &nbsp;|&nbsp; {{ $admNo }}
+    {{-- PHOTO — overlaps header, margin-top pulls it up over the badge bottom --}}
+    <div style="position:relative;z-index:4;text-align:center;margin-top:-34px;">
+        <div style="width:84px;height:84px;border-radius:50%;
+            border:3px solid #ffffff;
+            box-shadow:0 0 0 3px #2169ad, 0 4px 16px rgba(33,105,173,.45);
+            margin:0 auto;overflow:hidden;background:#dbeafe;
+            display:flex;align-items:center;justify-content:center;">
+            @if($photoUrl)
+                <img src="{{ $photoUrl }}"
+                     style="width:100%;height:100%;object-fit:cover;"
+                     onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
+                     alt="{{ $fullname }}">
+                <div style="display:none;width:100%;height:100%;align-items:center;
+                    justify-content:center;font-size:24px;font-weight:800;color:#2169ad;">
+                    {{ $initials }}</div>
+            @else
+                <div style="font-size:24px;font-weight:800;color:#2169ad;">{{ $initials }}</div>
+            @endif
         </div>
     </div>
 
-    {{-- TERMS --}}
-    <div style="position:relative;z-index:2;padding:9px 14px 0;font-size:7.8px;
-        color:#374151;line-height:1.65;">
-        <div style="font-weight:800;font-size:8.5px;color:#1e3a5f;margin-bottom:3px;
-            text-transform:uppercase;letter-spacing:.6px;">Terms &amp; Conditions</div>
-        <ul style="margin:0;padding-left:13px;color:#4b5563;">
-            <li>This card is the property of <strong>{{ $schoolInfo?->school_name ?? 'the school' }}</strong> and must be carried at all times on school premises.</li>
-            <li>Report loss immediately to the school office. A replacement fee applies.</li>
-            <li>Not transferable. Misuse attracts disciplinary action.</li>
-            <li>Return this card upon completion or withdrawal of enrolment.</li>
-        </ul>
-    </div>
-
-    {{-- CONTACT --}}
-    @php
-        $phone   = $schoolInfo?->school_phone   ?? '';
-        $email   = $schoolInfo?->school_email   ?? '';
-        $website = $schoolInfo?->school_website ?? '';
-    @endphp
-    @if($phone || $email || $website)
-    <div style="position:relative;z-index:2;margin:8px 14px 0;background:#f0f4ff;
-        border-radius:7px;padding:6px 10px;border-left:3px solid #2169ad;">
-        <div style="font-size:7px;font-weight:800;color:#2169ad;
-            text-transform:uppercase;letter-spacing:.8px;margin-bottom:3px;">Contact</div>
-        @if($phone)
-        <div style="font-size:7.5px;color:#374151;">&#128222; {{ $phone }}</div>
-        @endif
-        @if($email)
-        <div style="font-size:7.5px;color:#374151;">&#9993; {{ $email }}</div>
-        @endif
-        @if($website)
-        <div style="font-size:7.5px;color:#2169ad;">&#127760; {{ $website }}</div>
-        @endif
-    </div>
-    @endif
-
-    {{-- SIGNATURES --}}
-    <div style="position:relative;z-index:2;margin:10px 14px 0;display:flex;gap:10px;">
-        <div style="flex:1;text-align:center;">
-            <div style="height:30px;border-bottom:1.5px solid #1e3a5f;margin:0 8px;"></div>
-            <div style="font-size:7px;color:#6b7280;margin-top:3px;">Cardholder's Signature</div>
+    {{-- NAME & ADM --}}
+    <div style="position:relative;z-index:2;text-align:center;padding:6px 16px 0;">
+        <div style="font-size:13px;font-weight:800;color:#1e2937;line-height:1.25;">
+            {{ $fullname }}
         </div>
-        <div style="flex:1;text-align:center;">
-            <div style="height:30px;border-bottom:1.5px solid #1e3a5f;margin:0 8px;"></div>
-            <div style="font-size:7px;color:#6b7280;margin-top:3px;">Authorised Signature</div>
+        <div style="display:inline-flex;align-items:center;gap:0;margin-top:5px;
+            border-radius:4px;overflow:hidden;border:1px solid #bfdbfe;">
+            <div style="background:#1e3a5f;color:#fff;font-size:8px;font-weight:700;
+                padding:2px 8px;letter-spacing:.5px;">ADM NO</div>
+            <div style="background:#eff6ff;color:#2169ad;font-size:9px;font-weight:800;
+                padding:2px 9px;letter-spacing:1px;">{{ $student->admissionNo }}</div>
         </div>
     </div>
 
-    {{-- ISSUED BY --}}
-    <div style="position:relative;z-index:2;text-align:center;margin-top:8px;">
-        <div style="font-size:7px;color:#9ca3af;letter-spacing:.6px;text-transform:uppercase;">Issued By</div>
-        <div style="font-size:9px;font-weight:800;color:#1e3a5f;">
-            {{ $schoolInfo?->school_name ?? 'School Administration' }}
+    {{-- INFO TABLE --}}
+    <div style="position:relative;z-index:2;margin:7px 13px 0;
+        background:#f8fafc;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0;">
+        @foreach(array_values($rows) as $i => $row)
+        <div style="display:flex;{{ $i < count($rows)-1 ? 'border-bottom:1px solid #e2e8f0;' : '' }}">
+            <div style="width:88px;background:#eef2ff;padding:3.5px 9px;font-size:8px;
+                font-weight:700;color:#4338ca;text-transform:uppercase;
+                letter-spacing:.35px;flex-shrink:0;line-height:1.4;">{{ $row[0] }}</div>
+            <div style="flex:1;padding:3.5px 9px;font-size:9px;font-weight:600;
+                color:#1e2937;line-height:1.4;">{{ $row[1] }}</div>
         </div>
-        <div style="font-size:7px;color:#6b7280;">Admin Officer</div>
+        @endforeach
     </div>
 
-    {{-- BARCODE --}}
-    <div style="position:relative;z-index:2;text-align:center;padding:8px 0 4px;">
-        @if($barcodeSvg)
-            <div style="display:inline-block;max-width:220px;">
-                {!! $barcodeSvg !!}
-            </div>
-        @else
-            {{-- Fallback: styled text barcode look --}}
-            <div style="font-family:monospace;font-size:28px;letter-spacing:-1px;
-                color:#1e3a5f;line-height:1;">
-                ||||| {{ $admNo }} |||||
-            </div>
-        @endif
-        <div style="font-size:8.5px;font-weight:800;color:#1e3a5f;letter-spacing:2px;margin-top:1px;">
-            {{ $admNo }}
-        </div>
-        <div style="font-size:7px;color:#94a3b8;margin-top:1px;">
-            Valid Until: <strong>{{ $expiry }}</strong> &bull; {{ now()->year }}
-        </div>
+    {{-- QR CODE --}}
+    <div style="position:relative;z-index:2;text-align:center;padding:8px 0 3px;">
+        <img src="data:image/png;base64,{{ $qrB64 }}" style="width:58px;height:58px;" alt="QR">
+        <div style="font-size:6.5px;color:#94a3b8;letter-spacing:.8px;margin-top:1px;">
+            SCAN TO VERIFY</div>
     </div>
 
     {{-- BOTTOM ACCENT --}}
