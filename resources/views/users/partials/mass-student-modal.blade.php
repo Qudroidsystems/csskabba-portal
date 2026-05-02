@@ -50,7 +50,7 @@
                     <!-- Info Box -->
                     <div class="alert alert-info mb-3">
                         <i class="bi bi-info-circle-fill me-2"></i>
-                        <strong>Email Format:</strong> Student emails are automatically generated as <code>firstname.lastname@student.school</code> with all special characters removed.
+                        <strong>Email Format:</strong> Student emails are automatically generated as <code>firstname.lastname@csskabba.ng</code> with all special characters removed.
                     </div>
 
                     <!-- Student Selection Table -->
@@ -99,7 +99,7 @@
                                 <i class="bi bi-lightbulb-fill me-2"></i>
                                 <strong>Available Actions:</strong>
                                 <ul class="mb-0 mt-1">
-                                    <li><strong>Create Accounts</strong> - Creates new user accounts for students WITHOUT accounts (auto-generates email: firstname.lastname@student.school)</li>
+                                    <li><strong>Create Accounts</strong> - Creates new user accounts for students WITHOUT accounts (auto-generates email: firstname.lastname@csskabba.ng)</li>
                                     <li><strong>Reset Passwords</strong> - Generates new passwords for students WITH accounts</li>
                                     <li><strong>Revoke Accounts</strong> - Removes user access (student record remains)</li>
                                     <li><strong>Reprint Credentials</strong> - Shows existing credentials (passwords hidden for security)</li>
@@ -187,7 +187,7 @@
                         </div>
                     </div>
 
-                    <!-- Password Settings (shown for create/reset) -->
+                    <!-- Password Settings (shown for create/reset) - RADIO BUTTONS -->
                     <div id="passwordSettings" style="display: none;">
                         <div class="card mb-3">
                             <div class="card-header bg-light">
@@ -195,14 +195,26 @@
                             </div>
                             <div class="card-body">
                                 <div class="row">
-                                    <div class="col-md-6">
-                                        <label class="form-label">Password Type</label>
-                                        <select id="passwordType" class="form-select">
-                                            <option value="individual">Individual Random Passwords (Recommended)</option>
-                                            <option value="same">Same Password for All</option>
-                                        </select>
+                                    <div class="col-md-12">
+                                        <label class="form-label fw-bold">Password Type</label>
+                                        <div class="d-flex gap-4 mt-2">
+                                            <div class="form-check">
+                                                <input type="radio" id="passwordTypeIndividual" name="passwordTypeRadio" value="individual" class="form-check-input" checked>
+                                                <label class="form-check-label" for="passwordTypeIndividual">
+                                                    <strong>Individual Random Passwords</strong>
+                                                    <br><small class="text-muted">Each student gets a unique random password</small>
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input type="radio" id="passwordTypeSame" name="passwordTypeRadio" value="same" class="form-check-input">
+                                                <label class="form-check-label" for="passwordTypeSame">
+                                                    <strong>Same Password for All</strong>
+                                                    <br><small class="text-muted">All selected students get the same password</small>
+                                                </label>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div class="col-md-6" id="sharedPasswordContainer" style="display: none;">
+                                    <div class="col-md-12 mt-3" id="sharedPasswordContainer" style="display: none;">
                                         <label class="form-label">Shared Password</label>
                                         <input type="text" id="sharedPassword" class="form-control" placeholder="Enter password">
                                         <small class="text-muted">Minimum 6 characters</small>
@@ -212,21 +224,43 @@
                         </div>
                     </div>
 
-                    <!-- Role Settings (shown for create/reset) -->
+                    <!-- Role Settings (shown for create/reset) - STUDENT role pre-checked and non-editable -->
                     <div id="roleSettings" style="display: none;">
                         <div class="card mb-3">
                             <div class="card-header bg-light">
                                 <h6 class="mb-0"><i class="bi bi-tags-fill me-1"></i> Assign Roles</h6>
                             </div>
                             <div class="card-body">
-                                <select id="massRoles" class="form-select" multiple size="3">
+                                <div class="alert alert-info mb-3">
+                                    <i class="bi bi-info-circle-fill me-2"></i>
+                                    <strong>Note:</strong> The "student" role is assigned by default and cannot be removed. You can add additional roles below.
+                                </div>
+                                <div class="row">
                                     @foreach (Spatie\Permission\Models\Role::all() as $role)
-                                        <option value="{{ $role->name }}" {{ $role->name == 'student' ? 'selected' : '' }}>
-                                            {{ $role->name }}
-                                        </option>
+                                        <div class="col-md-4 mb-2">
+                                            <div class="form-check">
+                                                @if($role->name == 'student')
+                                                    <input type="checkbox" class="form-check-input role-checkbox"
+                                                           name="roles[]" value="{{ $role->name }}"
+                                                           id="role_{{ $role->name }}" checked disabled>
+                                                    <label class="form-check-label fw-bold" for="role_{{ $role->name }}">
+                                                        {{ $role->name }}
+                                                        <span class="badge bg-info ms-1">Default</span>
+                                                    </label>
+                                                    <input type="hidden" name="roles[]" value="{{ $role->name }}">
+                                                @else
+                                                    <input type="checkbox" class="form-check-input role-checkbox"
+                                                           name="roles[]" value="{{ $role->name }}"
+                                                           id="role_{{ $role->name }}">
+                                                    <label class="form-check-label" for="role_{{ $role->name }}">
+                                                        {{ $role->name }}
+                                                    </label>
+                                                @endif
+                                            </div>
+                                        </div>
                                     @endforeach
-                                </select>
-                                <small class="text-muted">Hold Ctrl/Cmd to select multiple roles</small>
+                                </div>
+                                <small class="text-muted">Select additional roles if needed (admin, teacher, etc.)</small>
                             </div>
                         </div>
                     </div>
@@ -237,7 +271,7 @@
                     <!-- Email Format Note -->
                     <div class="alert alert-info" id="emailFormatNote" style="display: none;">
                         <i class="bi bi-envelope-fill me-2"></i>
-                        <strong>Email Format:</strong> Student emails will be generated as <code>firstname.lastname@student.school</code> with all special characters removed.
+                        <strong>Email Format:</strong> Student emails will be generated as <code>firstname.lastname@csskabba.ng</code> with all special characters removed.
                     </div>
 
                     <!-- Action Buttons -->
@@ -275,13 +309,13 @@ document.addEventListener('DOMContentLoaded', function() {
     let allStudents = [];
     let currentResults = null;
 
-    // Helper function to generate preview email
+    // Helper function to generate preview email with @csskabba.ng domain
     function generatePreviewEmail(firstname, lastname) {
         let cleanFirst = firstname.toLowerCase().replace(/[^a-z0-9]/g, '');
         let cleanLast = lastname.toLowerCase().replace(/[^a-z0-9]/g, '');
         if (!cleanFirst) cleanFirst = 'student';
         if (!cleanLast) cleanLast = 'user';
-        return cleanFirst + '.' + cleanLast + '@student.school';
+        return cleanFirst + '.' + cleanLast + '@csskabba.ng';
     }
 
     // Load students function
@@ -455,8 +489,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Password type change handler
-    $('#passwordType').on('change', function() {
+    // Password type radio button change handler
+    $('input[name="passwordTypeRadio"]').on('change', function() {
         $('#sharedPasswordContainer').toggle($(this).val() === 'same');
     });
 
@@ -483,8 +517,11 @@ document.addEventListener('DOMContentLoaded', function() {
         };
 
         if (actionType === 'create' || actionType === 'reset') {
-            payload.password_type = $('#passwordType').val();
-            if (payload.password_type === 'same') {
+            // Get selected password type from radio button
+            const passwordType = $('input[name="passwordTypeRadio"]:checked').val();
+            payload.password_type = passwordType;
+
+            if (passwordType === 'same') {
                 payload.shared_password = $('#sharedPassword').val();
                 if (!payload.shared_password || payload.shared_password.length < 6) {
                     Swal.fire('Error', 'Shared password must be at least 6 characters', 'error');
@@ -492,8 +529,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
 
-            const roles = $('#massRoles').val();
-            if (!roles || roles.length === 0) {
+            // Get selected roles (including the hidden student role)
+            const roles = [];
+            $('input[name="roles[]"]:checked, input[name="roles[]"][disabled]').each(function() {
+                const roleValue = $(this).val();
+                if (roleValue && !roles.includes(roleValue)) {
+                    roles.push(roleValue);
+                }
+            });
+
+            // Also get any unchecked but enabled role checkboxes that are checked
+            $('.role-checkbox:checked').each(function() {
+                const roleValue = $(this).val();
+                if (roleValue && !roles.includes(roleValue)) {
+                    roles.push(roleValue);
+                }
+            });
+
+            if (roles.length === 0) {
                 Swal.fire('Error', 'Please select at least one role', 'error');
                 return;
             }
@@ -609,7 +662,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <h1>Student Account Credentials Report</h1>
                 <div class="subtitle">Generated by School Management System</div>
                 <div class="date">Print Date: ${new Date().toLocaleString()}</div>
-                <div class="date">Email Domain: @student.school</div>
+                <div class="date">Email Domain: @csskabba.ng</div>
             </div>`;
 
         if (currentResults.created && currentResults.created.length) {
