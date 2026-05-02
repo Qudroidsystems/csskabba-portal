@@ -639,6 +639,26 @@
                         @endif
 
 
+                        @if(auth()->user()->can('View student assessments'))
+                            <li class="menu-title"><i class="ph-graduation-cap"></i> <span data-key="t-apps">STUDENT PORTAL</span></li>
+                            @endif
+                            @can('View student assessments')
+                            <li class="nav-item">
+                                <a href="#sidebarAssessments" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarExams">
+                                    <i class="ph-graduation-cap"></i> <span data-key="t-ecommerce">Assessments</span>
+                                </a>
+                                <div class="collapse menu-dropdown" id="sidebarAssessments">
+                                    <ul class="nav nav-sm flex-column">
+                                        <li class="nav-item">
+                                            <a href="{{ route('assessments') }}" class="nav-link" data-key="t-products">My Assessments</a>
+                                        </li>
+
+                                    </ul>
+                                </div>
+                            </li>
+                        @endcan
+
+
 
 
                         @can('View parent')
