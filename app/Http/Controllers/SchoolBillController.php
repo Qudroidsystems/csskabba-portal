@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\SchoolBillModel;
-use Yajra\DataTables\DataTables;
 
 class SchoolBillController extends Controller
 {
@@ -18,7 +17,7 @@ class SchoolBillController extends Controller
     }
 
     /**
-     * Display listing with DataTables AJAX support.
+     * Display listing with manual pagination (Laravel 12 compatible).
      */
     public function index(Request $request)
     {
@@ -39,10 +38,21 @@ class SchoolBillController extends Controller
             ]);
         }
 
-        // ── DataTables AJAX ───────────────────────────────────────────
+        // ── Manual AJAX endpoint for DataTables ───────────────────────
         if ($request->ajax()) {
             try {
-                $schoolbills = SchoolBillModel::leftJoin('student_status', 'student_status.id', '=', 'school_bill.statusId')
+                $search = $request->get('search')['value'] ?? '';
+                $start = $request->get('start', 0);
+                $length = $request->get('length', 15);
+                $orderColumn = $request->get('order')[0]['column'] ?? 1;
+                $orderDir = $request->get('order')[0]['dir'] ?? 'desc';
+
+                // Map column indexes
+                $columns = ['id', 'id', 'title', 'bill_amount', 'description', 'statusId', 'updated_at', 'action'];
+                $orderBy = $columns[$orderColumn] ?? 'id';
+
+                // Build query
+                $query = SchoolBillModel::leftJoin('student_status', 'student_status.id', '=', 'school_bill.statusId')
                     ->whereIn('student_status.id', [1, 2])
                     ->select([
                         'school_bill.id',
@@ -53,54 +63,103 @@ class SchoolBillController extends Controller
                         'school_bill.updated_at',
                     ]);
 
-                return DataTables::of($schoolbills)
-                    ->addIndexColumn()
-                    ->addColumn('status_name', function ($row) {
-                        if ($row->statusId == 1) {
-                            return '<span class="bill-badge bill-badge-old"><i class="ri-user-line me-1"></i>Old Student</span>';
-                        }
-                        if ($row->statusId == 2) {
-                            return '<span class="bill-badge bill-badge-new"><i class="ri-user-add-line me-1"></i>New Student</span>';
-                        }
-                        return '<span class="bill-badge bill-badge-unknown">Unknown</span>';
-                    })
-                    ->addColumn('formatted_amount', function ($row) {
-                        return '₦&nbsp;' . number_format($row->bill_amount, 2);
-                    })
-                    ->addColumn('formatted_date', function ($row) {
-                        if (!$row->updated_at) {
-                            return '<span class="text-muted small">N/A</span>';
-                        }
-                        return '<span class="text-muted small">'
+                // Apply search
+                if (!empty($search)) {
+                    $query->where(function($q) use ($search) {
+                        $q->where('school_bill.title', 'like', "%{$search}%")
+                          ->orWhere('school_bill.description', 'like', "%{$search}%")
+                          ->orWhere('school_bill.bill_amount', 'like', "%{$search}%");
+                    });
+                }
+
+                // Get total count
+                $totalRecords = SchoolBillModel::count();
+                $filteredRecords = $query->count();
+
+                // Get paginated results
+                $schoolbills = $query->orderBy($orderBy, $orderDir)
+                    ->skip($start)
+                    ->take($length)
+                    ->get();
+
+                // Format data
+                $data = [];
+                $counter = $start + 1;
+
+                foreach ($schoolbills as $row) {
+                    // Status badge
+                    if ($row->statusId == 1) {
+                        $statusName = '<span class="bill-badge bill-badge-old"><i class="ri-user-line me-1"></i>Old Student</span>';
+                    } elseif ($row->statusId == 2) {
+                        $statusName = '<span class="bill-badge bill-badge-new"><i class="ri-user-add-line me-1"></i>New Student</span>';
+                    } else {
+                        $statusName = '<span class="bill-badge bill-badge-unknown">Unknown</span>';
+                    }
+
+                    // Formatted amount
+                    $formattedAmount = '₦&nbsp;' . number_format($row->bill_amount, 2);
+
+                    // Formatted date
+                    if ($row->updated_at) {
+                        $formattedDate = '<span class="text-muted small">'
                             . date('d M Y', strtotime($row->updated_at))
                             . '<br><span style="font-size:10px">'
                             . date('H:i', strtotime($row->updated_at))
                             . '</span></span>';
-                    })
-                    ->addColumn('action', function ($row) {
-                        $buttons = '<div class="btn-group btn-group-sm">';
-                        if (auth()->user()->can('Update school-bills')) {
-                            $buttons .= '<button class="btn btn-primary edit-bill" title="Edit"
-                                data-id="' . $row->id . '"
-                                data-title="' . addslashes($row->title) . '"
-                                data-amount="' . $row->bill_amount . '"
-                                data-description="' . addslashes($row->description) . '"
-                                data-status="' . $row->statusId . '">
-                                <i class="ri-pencil-line"></i>
-                            </button>';
-                        }
-                        if (auth()->user()->can('Delete school-bills')) {
-                            $buttons .= '<button class="btn btn-danger delete-bill" title="Delete"
-                                data-id="' . $row->id . '"
-                                data-title="' . addslashes($row->title) . '">
-                                <i class="ri-delete-bin-line"></i>
-                            </button>';
-                        }
-                        $buttons .= '</div>';
-                        return $buttons;
-                    })
-                    ->rawColumns(['status_name', 'formatted_amount', 'formatted_date', 'action'])
-                    ->make(true);
+                    } else {
+                        $formattedDate = '<span class="text-muted small">N/A</span>';
+                    }
+
+                    // Description with truncation
+                    $description = $row->description
+                        ? (strlen($row->description) > 50
+                            ? '<span class="text-muted">' . e(substr($row->description, 0, 50)) . '…</span>'
+                            : '<span class="text-muted">' . e($row->description) . '</span>')
+                        : '<span class="text-muted fst-italic">—</span>';
+
+                    // Action buttons
+                    $buttons = '<div class="btn-group btn-group-sm">';
+                    if (auth()->user()->can('Update school-bills')) {
+                        $buttons .= '<button class="btn btn-primary edit-bill" title="Edit"
+                            data-id="' . $row->id . '"
+                            data-title="' . addslashes($row->title) . '"
+                            data-amount="' . $row->bill_amount . '"
+                            data-description="' . addslashes($row->description) . '"
+                            data-status="' . $row->statusId . '">
+                            <i class="ri-pencil-line"></i>
+                        </button>';
+                    }
+                    if (auth()->user()->can('Delete school-bills')) {
+                        $buttons .= '<button class="btn btn-danger delete-bill" title="Delete"
+                            data-id="' . $row->id . '"
+                            data-title="' . addslashes($row->title) . '">
+                            <i class="ri-delete-bin-line"></i>
+                        </button>';
+                    }
+                    $buttons .= '</div>';
+
+                    // Checkbox
+                    $checkbox = '<input type="checkbox" class="form-check-input row-checkbox" value="' . $row->id . '">';
+
+                    $data[] = [
+                        'checkbox' => $checkbox,
+                        'index' => $counter++,
+                        'title' => e($row->title),
+                        'formatted_amount' => $formattedAmount,
+                        'description' => $description,
+                        'status_name' => $statusName,
+                        'formatted_date' => $formattedDate,
+                        'action' => $buttons,
+                    ];
+                }
+
+                return response()->json([
+                    'draw' => intval($request->get('draw', 1)),
+                    'recordsTotal' => $totalRecords,
+                    'recordsFiltered' => $filteredRecords,
+                    'data' => $data,
+                ]);
+
             } catch (\Exception $e) {
                 return response()->json([
                     'error' => $e->getMessage(),

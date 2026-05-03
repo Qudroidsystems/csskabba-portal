@@ -351,28 +351,14 @@ $(document).ready(function () {
             }
         },
         columns: [
-            {
-                data: 'id',
-                orderable: false,
-                searchable: false,
-                render: function(data) {
-                    return data ? `<input type="checkbox" class="form-check-input row-checkbox" value="${data}">` : '';
-                }
-            },
-            { data: 'DT_RowIndex', orderable: false, searchable: false, defaultContent: '' },
-            { data: 'title', defaultContent: '' },
-            { data: 'formatted_amount', orderable: false, defaultContent: '₦0.00' },
-            {
-                data: 'description',
-                render: function(data) {
-                    if (!data) return '<span class="text-muted fst-italic">—</span>';
-                    return `<span class="text-muted">${data.length > 50 ? data.substring(0, 50) + '…' : data}</span>`;
-                },
-                defaultContent: '<span class="text-muted fst-italic">—</span>'
-            },
-            { data: 'status_name', orderable: false, defaultContent: '<span class="bill-badge bill-badge-unknown">Unknown</span>' },
-            { data: 'formatted_date', orderable: false, defaultContent: 'N/A' },
-            { data: 'action', orderable: false, searchable: false, defaultContent: '' },
+            { data: 'checkbox', orderable: false, searchable: false },
+            { data: 'index', orderable: false, searchable: false },
+            { data: 'title' },
+            { data: 'formatted_amount', orderable: false },
+            { data: 'description', orderable: false },
+            { data: 'status_name', orderable: false },
+            { data: 'formatted_date', orderable: false },
+            { data: 'action', orderable: false, searchable: false },
         ],
         language: {
             processing: '<span class="spinner-border spinner-border-sm text-primary me-2"></span>Loading...',
