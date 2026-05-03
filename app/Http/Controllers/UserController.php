@@ -846,7 +846,7 @@ class UserController extends Controller
     }
 
     // ============================================================
-    // GET STUDENTS FOR MODALS
+    // GET STUDENTS FOR MODALS - FIXED WITH UNIQUE CLASSES
     // ============================================================
 
     public function getStudents(Request $request): JsonResponse
@@ -912,7 +912,7 @@ class UserController extends Controller
                 ->limit($limit)
                 ->get();
 
-            // Get UNIQUE classes
+            // Get UNIQUE classes - distinct by id to avoid duplicates
             $classes = DB::table('schoolclass')
                 ->select('id', 'schoolclass as name')
                 ->distinct()
@@ -925,9 +925,12 @@ class UserController extends Controller
                 ->orderBy('arm')
                 ->get();
 
-            // Get class-arm relationships
+            // Get class-arm relationships: which arms belong to which class
             $classArms = DB::table('schoolclass')
-                ->select('id as class_id', 'schoolclass', 'arm')
+                ->join('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+                ->select('schoolclass.id as class_id', 'schoolclass.schoolclass', 'schoolarm.id as arm_id', 'schoolarm.arm as arm_name')
+                ->orderBy('schoolclass.schoolclass')
+                ->orderBy('schoolarm.arm')
                 ->get();
 
             return response()->json([

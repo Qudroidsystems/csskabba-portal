@@ -252,12 +252,14 @@ document.addEventListener('DOMContentLoaded', function() {
         allStudents.forEach(student => {
             const isSelected = selectedStudents.some(s => s.id === student.id);
             const statusBadge = student.has_account ? '<span class="badge bg-success">Has Account</span>' : '<span class="badge bg-secondary">No Account</span>';
-            html += `<tr><td><input type="checkbox" class="student-checkbox" data-id="${student.id}" ${isSelected ? 'checked' : ''}></td>
-                    <td><strong>${escapeHtml(student.admissionNo || 'N/A')}</strong></td>
-                    <td>${escapeHtml(student.name)}</td>
-                    <td>${escapeHtml(student.class_name || 'N/A')} ${student.arm_name ? '/' + escapeHtml(student.arm_name) : ''}</td>
-                    <td>${statusBadge}</td>
-                    <td><small class="text-muted">${escapeHtml(student.generatedEmail)}</small></td></tr>`;
+            html += `<tr>
+                        <td><input type="checkbox" class="student-checkbox" data-id="${student.id}" ${isSelected ? 'checked' : ''}></td>
+                        <td><strong>${escapeHtml(student.admissionNo || 'N/A')}</strong></td>
+                        <td>${escapeHtml(student.name)}</td>
+                        <td>${escapeHtml(student.class_name || 'N/A')} ${student.arm_name ? '/' + escapeHtml(student.arm_name) : ''}</td>
+                        <td>${statusBadge}</td>
+                        <td><small class="text-muted">${escapeHtml(student.generatedEmail)}</small></td>
+                    </tr>`;
         });
         $('#massStudentList').html(html);
         updateSelectedCount();
@@ -280,31 +282,46 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function populateFilters(classes, arms, classArms) {
         window.classArmsData = classArms || [];
+
+        // Populate Class dropdown with UNIQUE classes
         let classHtml = '<option value="">All Classes</option>';
-        const uniqueClasses = [];
-        const classIds = new Set();
-        classes.forEach(cls => { if (!classIds.has(cls.id)) { classIds.add(cls.id); uniqueClasses.push(cls); } });
-        uniqueClasses.forEach(cls => { classHtml += `<option value="${cls.id}">${escapeHtml(cls.name)}</option>`; });
+        classes.forEach(cls => {
+            classHtml += `<option value="${cls.id}">${escapeHtml(cls.name)}</option>`;
+        });
         $('#massClassFilter').html(classHtml);
 
+        // Populate Arm dropdown
         let armHtml = '<option value="">All Arms</option>';
-        arms.forEach(arm => { armHtml += `<option value="${arm.id}">${escapeHtml(arm.name)}</option>`; });
+        arms.forEach(arm => {
+            armHtml += `<option value="${arm.id}">${escapeHtml(arm.name)}</option>`;
+        });
         $('#massArmFilter').html(armHtml);
 
+        // Class change event - filter arms based on selected class
         $('#massClassFilter').off('change').on('change', function() {
             const selectedClassId = $(this).val();
+
             if (!selectedClassId) {
                 $('#massArmFilter option').show();
                 $('#massArmFilter').val('');
             } else {
-                const relatedArmIds = window.classArmsData.filter(ca => ca.class_id == selectedClassId).map(ca => String(ca.arm));
+                const relatedArmIds = window.classArmsData
+                    .filter(ca => String(ca.class_id) === String(selectedClassId))
+                    .map(ca => String(ca.arm_id));
+
                 $('#massArmFilter option').each(function() {
                     const optionValue = $(this).val();
-                    if (optionValue && !relatedArmIds.includes(optionValue)) $(this).hide();
-                    else $(this).show();
+                    if (optionValue && !relatedArmIds.includes(optionValue)) {
+                        $(this).hide();
+                    } else {
+                        $(this).show();
+                    }
                 });
+
                 const currentArm = $('#massArmFilter').val();
-                if (currentArm && !relatedArmIds.includes(currentArm)) $('#massArmFilter').val('');
+                if (currentArm && !relatedArmIds.includes(currentArm)) {
+                    $('#massArmFilter').val('');
+                }
             }
             applyFilters();
         });
@@ -332,12 +349,14 @@ document.addEventListener('DOMContentLoaded', function() {
         students.forEach(student => {
             const isSelected = selectedStudents.some(s => s.id === student.id);
             const statusBadge = student.has_account ? '<span class="badge bg-success">Has Account</span>' : '<span class="badge bg-secondary">No Account</span>';
-            html += `<tr><td><input type="checkbox" class="student-checkbox" data-id="${student.id}" ${isSelected ? 'checked' : ''}></td>
-                    <td><strong>${escapeHtml(student.admissionNo || 'N/A')}</strong></td>
-                    <td>${escapeHtml(student.name)}</td>
-                    <td>${escapeHtml(student.class_name || 'N/A')} ${student.arm_name ? '/' + escapeHtml(student.arm_name) : ''}</td>
-                    <td>${statusBadge}</td>
-                    <td><small class="text-muted">${escapeHtml(student.generatedEmail)}</small></td></tr>`;
+            html += `<tr>
+                        <td><input type="checkbox" class="student-checkbox" data-id="${student.id}" ${isSelected ? 'checked' : ''}></td>
+                        <td><strong>${escapeHtml(student.admissionNo || 'N/A')}</strong></td>
+                        <td>${escapeHtml(student.name)}</td>
+                        <td>${escapeHtml(student.class_name || 'N/A')} ${student.arm_name ? '/' + escapeHtml(student.arm_name) : ''}</td>
+                        <td>${statusBadge}</td>
+                        <td><small class="text-muted">${escapeHtml(student.generatedEmail)}</small></td>
+                    </tr>`;
         });
         $('#massStudentList').html(html);
         updateSelectedCount();
@@ -431,7 +450,7 @@ document.addEventListener('DOMContentLoaded', function() {
         $('#resultsContainer').html(html);
     }
 
-    // ==================== DIV-BASED PDF PRINT WITH CUTTING LINES ====================
+    // Print function with beautiful DIV-based layout
     $('#printResults').on('click', function() {
         if (!currentResults) return;
 
@@ -558,7 +577,6 @@ document.addEventListener('DOMContentLoaded', function() {
         body { font-family: 'Segoe UI', 'Roboto', Arial, sans-serif; background: #eef2f5; padding: 30px; }
         .print-container { max-width: 850px; margin: 0 auto; }
 
-        /* Summary Page */
         .summary-page {
             background: linear-gradient(135deg, #fff 0%, #f8f9fa 100%);
             border-radius: 20px;
@@ -583,14 +601,7 @@ document.addEventListener('DOMContentLoaded', function() {
         .summary-table th, .summary-table td { border: 1px solid #dee2e6; padding: 10px; text-align: left; }
         .summary-table th { background: #e9ecef; font-weight: 600; }
 
-        /* Credential Card */
-        .credential-card {
-            margin-bottom: 25px;
-            page-break-inside: avoid;
-            break-inside: avoid;
-        }
-
-        /* Cutting Lines */
+        .credential-card { margin-bottom: 25px; page-break-inside: avoid; break-inside: avoid; }
         .cutting-line-top, .cutting-line-bottom {
             height: 20px;
             background: repeating-linear-gradient(45deg, #ccc, #ccc 8px, #fff 8px, #fff 16px);
@@ -613,61 +624,26 @@ document.addEventListener('DOMContentLoaded', function() {
             letter-spacing: 2px;
         }
 
-        /* Credential Content */
         .credential-content {
             background: white;
             border-radius: 16px;
             padding: 25px;
             box-shadow: 0 8px 25px rgba(0,0,0,0.1);
             border: 1px solid #e0e0e0;
-            transition: transform 0.2s;
         }
         .reset-card { border-left: 5px solid #f39c12; }
 
-        /* School Header */
-        .school-header {
-            text-align: center;
-            margin-bottom: 25px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #ecf0f1;
-        }
+        .school-header { text-align: center; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 2px solid #ecf0f1; }
         .school-logo { font-size: 40px; margin-bottom: 5px; }
-        .school-header h2 {
-            color: #2c3e50;
-            font-size: 22px;
-            font-weight: 700;
-            letter-spacing: 1px;
-        }
-        .school-header .subtitle {
-            color: #667eea;
-            font-size: 11px;
-            font-weight: 600;
-            letter-spacing: 2px;
-            margin-top: 5px;
-        }
+        .school-header h2 { color: #2c3e50; font-size: 22px; font-weight: 700; }
+        .school-header .subtitle { color: #667eea; font-size: 11px; font-weight: 600; letter-spacing: 2px; margin-top: 5px; }
         .issue-date { color: #95a5a6; font-size: 10px; margin-top: 8px; }
 
-        /* Info Grid */
         .info-grid { margin-bottom: 20px; }
-        .info-row {
-            display: flex;
-            padding: 12px 0;
-            border-bottom: 1px dashed #ecf0f1;
-        }
-        .info-label {
-            width: 35%;
-            font-weight: 600;
-            color: #34495e;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+        .info-row { display: flex; padding: 12px 0; border-bottom: 1px dashed #ecf0f1; }
+        .info-label { width: 35%; font-weight: 600; color: #34495e; display: flex; align-items: center; gap: 8px; }
         .info-label i { color: #667eea; font-size: 16px; }
-        .info-value {
-            width: 65%;
-            color: #2c3e50;
-            word-break: break-word;
-        }
+        .info-value { width: 65%; color: #2c3e50; word-break: break-word; }
         .email-value { color: #2980b9; font-family: monospace; font-size: 13px; }
         .password-value {
             font-family: 'Courier New', monospace;
@@ -680,7 +656,6 @@ document.addEventListener('DOMContentLoaded', function() {
             display: inline-block;
             letter-spacing: 1px;
         }
-        .password-row .info-value { padding: 0; }
         .role-badge {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -691,18 +666,10 @@ document.addEventListener('DOMContentLoaded', function() {
             display: inline-block;
         }
 
-        /* Footer */
-        .footer-note {
-            text-align: center;
-            padding-top: 15px;
-            border-top: 1px dashed #ddd;
-            font-size: 10px;
-            color: #7f8c8d;
-        }
+        .footer-note { text-align: center; padding-top: 15px; border-top: 1px dashed #ddd; font-size: 10px; color: #7f8c8d; }
         .footer-note i { color: #e74c3c; margin-right: 4px; }
         .portal-link { font-family: monospace; margin-top: 8px; color: #667eea; font-weight: 500; }
 
-        /* Print Styles */
         @media print {
             body { background: white; padding: 0; margin: 0; }
             .credential-card { page-break-after: always; break-after: page; margin-bottom: 0; }
@@ -712,19 +679,10 @@ document.addEventListener('DOMContentLoaded', function() {
             .role-badge { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
             .stat-card { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
         }
-
-        @media (max-width: 600px) {
-            body { padding: 15px; }
-            .credential-content { padding: 15px; }
-            .info-row { flex-direction: column; gap: 5px; }
-            .info-label { width: 100%; }
-            .info-value { width: 100%; }
-        }
     </style>
 </head>
 <body>
     <div class="print-container">
-        <!-- Summary Page -->
         <div class="summary-page">
             <h3><i class="bi bi-file-text-fill"></i> Credentials Summary</h3>
             <div class="summary-stats">
@@ -735,19 +693,11 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             <table class="summary-table">
                 <thead><tr><th>Category</th><th>Count</th></tr></thead>
-                <tbody>
-                    <tr><td>✅ Newly Created Accounts</td><td>${currentResults.created?.length || 0}</td></tr>
-                    <tr><td>🔄 Password Resets</td><td>${currentResults.reset?.length || 0}</td></tr>
-                    <tr><td>⏭️ Skipped</td><td>${currentResults.skipped?.length || 0}</td></tr>
-                </tbody>
+                <tbody><tr><td>✅ Newly Created Accounts</td><td>${currentResults.created?.length || 0}</td></tr><tr><td>🔄 Password Resets</td><td>${currentResults.reset?.length || 0}</td></tr><tr><td>⏭️ Skipped</td><td>${currentResults.skipped?.length || 0}</td></tr></tbody>
             </table>
             <p style="margin-top: 15px; font-size: 11px; color: #666;"><i class="bi bi-scissors"></i> Each student's credential slip can be cut along the dashed lines.</p>
-            <p style="font-size: 10px; color: #999;"><i class="bi bi-envelope"></i> Email Domain: @csskabba.ng | Role: Student</p>
         </div>
-
-        <!-- Individual Credential Slips -->
         ${credentialsHtml}
-
         <div style="text-align: center; margin-top: 30px; font-size: 10px; color: #999; padding: 20px;">
             <p>This is an official document generated by CSS Kabba School Management System.</p>
             <p>Please keep these credentials secure.</p>
