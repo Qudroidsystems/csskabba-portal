@@ -726,7 +726,7 @@ class UserController extends Controller
     }
 
     // ============================================================
-    // SINGLE STUDENT PASSWORD RESET (from user list button)
+    // SINGLE STUDENT PASSWORD RESET
     // ============================================================
 
     public function resetSingleStudentPassword(Request $request, $id): JsonResponse
@@ -771,10 +771,6 @@ class UserController extends Controller
             ], 500);
         }
     }
-
-    // ============================================================
-    // REVOKE PASSWORD (bulk operation)
-    // ============================================================
 
     public function revokeStudentPassword(Request $request): JsonResponse
     {
@@ -916,15 +912,23 @@ class UserController extends Controller
                 ->limit($limit)
                 ->get();
 
-            $classes = DB::table('schoolclass as cls')
-                ->leftJoin('schoolarm as arm', 'arm.id', '=', 'cls.arm')
-                ->select('cls.id', 'cls.schoolclass as name', 'arm.id as arm_id', 'arm.arm as arm_name')
-                ->orderBy('cls.schoolclass')
+            // Get UNIQUE classes
+            $classes = DB::table('schoolclass')
+                ->select('id', 'schoolclass as name')
+                ->orderBy('schoolclass')
+                ->distinct()
                 ->get();
 
+            // Get all arms
             $arms = DB::table('schoolarm')
                 ->select('id', 'arm as name')
                 ->orderBy('arm')
+                ->get();
+
+            // Get class-arm relationships
+            $classArms = DB::table('schoolclass')
+                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+                ->select('schoolclass.id as class_id', 'schoolclass.schoolclass', 'schoolarm.id as arm_id', 'schoolarm.arm')
                 ->get();
 
             return response()->json([
@@ -947,6 +951,7 @@ class UserController extends Controller
                 ])->values()->toArray(),
                 'classes' => $classes,
                 'arms' => $arms,
+                'class_arms' => $classArms,
             ]);
 
         } catch (\Exception $e) {
@@ -959,7 +964,7 @@ class UserController extends Controller
     }
 
     // ============================================================
-    // EXTRA METHODS (for compatibility)
+    // EXTRA METHODS
     // ============================================================
 
     public function allUsers(Request $request): JsonResponse
