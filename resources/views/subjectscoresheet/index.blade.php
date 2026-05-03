@@ -17,7 +17,6 @@
     --ss-shadow:    0 1px 4px rgba(0,0,0,.08);
 }
 
-/* ── Score input ─────────────────────────────────────────────────── */
 .score-input {
     width: 72px; min-width: 72px;
     height: 36px; padding: 4px 6px;
@@ -27,9 +26,8 @@
 }
 .score-input:focus { outline: none; border-color: var(--ss-accent); box-shadow: 0 0 0 3px rgba(37,99,235,.15); }
 .score-input.is-invalid { border-color: var(--ss-danger) !important; background: #fef2f2; }
-.score-input.is-saved  { border-color: var(--ss-success); background: #f0fdf4; }
+.score-input.is-saved   { border-color: var(--ss-success) !important; background: #f0fdf4; }
 
-/* ── Table ───────────────────────────────────────────────────────── */
 #scoresheetTable { font-size: 12.5px; }
 #scoresheetTable thead tr { background: var(--ss-primary); color: #fff; }
 #scoresheetTable thead th { padding: 10px 8px; font-weight: 600; white-space: nowrap; border: none; }
@@ -37,39 +35,24 @@
 #scoresheetTable tbody tr:hover { background: #eff6ff !important; }
 #scoresheetTable tbody td { padding: 6px 8px; vertical-align: middle; border-bottom: 1px solid var(--ss-border); }
 
-/* ── Vetted row colours ──────────────────────────────────────────── */
 .row-vetted     { background: #f0fdf4 !important; }
 .row-not-vetted { background: #fef2f2 !important; }
 .row-pending    { background: #fffbeb !important; }
 
-/* ── Stats / analysis cards ─────────────────────────────────────── */
-.stat-card {
-    background: var(--ss-card); border: 1px solid var(--ss-border);
-    border-radius: var(--ss-radius); padding: 14px 18px;
-    box-shadow: var(--ss-shadow); transition: transform .15s;
-}
+.stat-card { background: var(--ss-card); border: 1px solid var(--ss-border); border-radius: var(--ss-radius); padding: 14px 18px; box-shadow: var(--ss-shadow); transition: transform .15s; }
 .stat-card:hover { transform: translateY(-2px); }
 .stat-card .stat-value { font-size: 22px; font-weight: 700; color: var(--ss-primary); }
 .stat-card .stat-label { font-size: 11px; color: var(--ss-muted); margin-top: 2px; }
 .stat-card .stat-icon  { font-size: 28px; opacity: .15; float: right; margin-top: -6px; }
 
-/* ── Grade badge strip ───────────────────────────────────────────── */
 .grade-strip { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
-.grade-pill  { flex: 1; min-width: 80px; text-align: center; border-radius: 8px;
-               padding: 8px 6px; font-weight: 700; font-size: 13px; }
-
-/* ── Assessment info button ─────────────────────────────────────── */
+.grade-pill  { flex: 1; min-width: 80px; text-align: center; border-radius: 8px; padding: 8px 6px; font-weight: 700; font-size: 13px; }
 .assessment-btn { font-size: 12px; }
-
-/* ── Progress bar (mini) ─────────────────────────────────────────── */
 .pass-bar { height: 8px; border-radius: 4px; background: #e2e8f0; overflow: hidden; margin-top: 6px; }
 .pass-bar-fill { height: 100%; border-radius: 4px; transition: width .4s; }
-
-/* ── Column visibility modal ─────────────────────────────────────── */
 .col-group { border: 1px solid var(--ss-border); border-radius: 8px; padding: 10px 14px; margin-bottom: 10px; }
 .col-group h6 { color: var(--ss-primary); font-weight: 600; margin-bottom: 8px; }
 
-/* ── Mobile ─────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
     .score-input { width: 64px; min-width: 64px; height: 42px; font-size: 1rem; }
     .stat-card   { padding: 10px 12px; }
@@ -96,32 +79,25 @@
         @endif
     @endforeach
 
-    {{-- ══════════════════════════════════════════════════════════════ --}}
-    {{-- INFO + ASSESSMENTS HEADER                                      --}}
-    {{-- ══════════════════════════════════════════════════════════════ --}}
+    {{-- ══ INFO + ASSESSMENTS HEADER ══════════════════════════════════ --}}
     @if ($broadsheets->isNotEmpty())
+    @php
+        $first    = $broadsheets->first();
+        $total    = $broadsheets->count();
+        $passed   = $broadsheets->filter(fn($b) => ($b->cum ?? 0) >= 40)->count();
+        $failed   = $total - $passed;
+        $avg      = $total > 0 ? round($broadsheets->avg('cum'), 1) : 0;
+        $highest  = $total > 0 ? round($broadsheets->max('cum'), 1) : 0;
+        $lowest   = $total > 0 ? round($broadsheets->min('cum'), 1) : 0;
+        $passRate = $total > 0 ? round($passed / $total * 100) : 0;
+        $gradeDist  = $broadsheets->groupBy('grade')->map->count();
+        $gradeColors = ['A'=>'#16a34a','A1'=>'#16a34a','B'=>'#2563eb','B2'=>'#2563eb','B3'=>'#3b82f6',
+                        'C'=>'#7c3aed','C4'=>'#7c3aed','C5'=>'#8b5cf6','C6'=>'#a78bfa',
+                        'D'=>'#d97706','D7'=>'#d97706','E8'=>'#f59e0b',
+                        'F'=>'#dc2626','F9'=>'#dc2626'];
+    @endphp
 
-    {{-- Subject info strip --}}
     <div class="row g-3 mb-3">
-        @php
-            $first  = $broadsheets->first();
-            $total  = $broadsheets->count();
-            $passed = $broadsheets->filter(fn($b) => ($b->cum ?? 0) >= 40)->count();
-            $failed = $total - $passed;
-            $avg    = $total > 0 ? round($broadsheets->avg('cum'), 1) : 0;
-            $highest= $total > 0 ? round($broadsheets->max('cum'), 1) : 0;
-            $lowest = $total > 0 ? round($broadsheets->min('cum'), 1) : 0;
-            $passRate= $total > 0 ? round($passed / $total * 100) : 0;
-
-            // Grade distribution
-            $gradeDist = $broadsheets->groupBy('grade')->map->count();
-            $gradeColors = ['A'=>'#16a34a','A1'=>'#16a34a','B'=>'#2563eb','B2'=>'#2563eb','B3'=>'#3b82f6',
-                            'C'=>'#7c3aed','C4'=>'#7c3aed','C5'=>'#8b5cf6','C6'=>'#a78bfa',
-                            'D'=>'#d97706','D7'=>'#d97706','E8'=>'#f59e0b',
-                            'F'=>'#dc2626','F9'=>'#dc2626'];
-        @endphp
-
-        {{-- Subject / Class card --}}
         <div class="col-lg-6">
             <div class="card border-0 shadow-sm h-100" style="border-left:4px solid var(--ss-primary) !important;">
                 <div class="card-body py-3">
@@ -144,8 +120,6 @@
                 </div>
             </div>
         </div>
-
-        {{-- Quick stats --}}
         <div class="col-lg-6">
             <div class="row g-2 h-100">
                 <div class="col-4"><div class="stat-card text-center h-100">
@@ -168,9 +142,7 @@
         </div>
     </div>
 
-    {{-- Result analysis row --}}
     <div class="row g-3 mb-3">
-        {{-- Pass/Fail + High/Low --}}
         <div class="col-lg-4">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-header border-0 pb-0 pt-3 px-3">
@@ -178,36 +150,27 @@
                 </div>
                 <div class="card-body pt-2">
                     <div class="row g-2">
-                        <div class="col-6">
-                            <div class="p-2 rounded-3 text-center" style="background:#f0fdf4;">
-                                <div class="fw-bold fs-5" style="color:var(--ss-success);">{{ $passed }}</div>
-                                <div class="text-muted" style="font-size:11px;">Passed</div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="p-2 rounded-3 text-center" style="background:#fef2f2;">
-                                <div class="fw-bold fs-5" style="color:var(--ss-danger);">{{ $failed }}</div>
-                                <div class="text-muted" style="font-size:11px;">Failed</div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="p-2 rounded-3 text-center" style="background:#eff6ff;">
-                                <div class="fw-bold fs-5" style="color:var(--ss-accent);">{{ $highest }}</div>
-                                <div class="text-muted" style="font-size:11px;">Highest</div>
-                            </div>
-                        </div>
-                        <div class="col-6">
-                            <div class="p-2 rounded-3 text-center" style="background:#fffbeb;">
-                                <div class="fw-bold fs-5" style="color:var(--ss-warning);">{{ $lowest }}</div>
-                                <div class="text-muted" style="font-size:11px;">Lowest</div>
-                            </div>
-                        </div>
+                        <div class="col-6"><div class="p-2 rounded-3 text-center" style="background:#f0fdf4;">
+                            <div class="fw-bold fs-5" style="color:var(--ss-success);">{{ $passed }}</div>
+                            <div class="text-muted" style="font-size:11px;">Passed</div>
+                        </div></div>
+                        <div class="col-6"><div class="p-2 rounded-3 text-center" style="background:#fef2f2;">
+                            <div class="fw-bold fs-5" style="color:var(--ss-danger);">{{ $failed }}</div>
+                            <div class="text-muted" style="font-size:11px;">Failed</div>
+                        </div></div>
+                        <div class="col-6"><div class="p-2 rounded-3 text-center" style="background:#eff6ff;">
+                            <div class="fw-bold fs-5" style="color:var(--ss-accent);">{{ $highest }}</div>
+                            <div class="text-muted" style="font-size:11px;">Highest</div>
+                        </div></div>
+                        <div class="col-6"><div class="p-2 rounded-3 text-center" style="background:#fffbeb;">
+                            <div class="fw-bold fs-5" style="color:var(--ss-warning);">{{ $lowest }}</div>
+                            <div class="text-muted" style="font-size:11px;">Lowest</div>
+                        </div></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        {{-- Grade distribution --}}
         <div class="col-lg-4">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-header border-0 pb-0 pt-3 px-3">
@@ -231,7 +194,6 @@
             </div>
         </div>
 
-        {{-- Assessments navigation --}}
         <div class="col-lg-4">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-header border-0 pb-0 pt-3 px-3">
@@ -262,17 +224,11 @@
             </div>
         </div>
     </div>
+    @endif
 
-    @endif {{-- broadsheets not empty --}}
+    {{-- ══ MAIN SCORESHEET CARD ════════════════════════════════════════ --}}
+    <div class="row"><div class="col-12"><div class="card border-0 shadow-sm">
 
-    {{-- ══════════════════════════════════════════════════════════════ --}}
-    {{-- MAIN SCORESHEET CARD                                           --}}
-    {{-- ══════════════════════════════════════════════════════════════ --}}
-    <div class="row">
-    <div class="col-12">
-    <div class="card border-0 shadow-sm">
-
-        {{-- Card header --}}
         <div class="card-header d-flex align-items-center flex-wrap gap-2 py-3" style="background:var(--ss-primary);">
             <div class="flex-grow-1">
                 <h5 class="mb-0 text-white fw-semibold">
@@ -283,7 +239,6 @@
                 </h5>
             </div>
             <div class="d-flex align-items-center gap-2 flex-wrap">
-                {{-- Search --}}
                 <div class="input-group input-group-sm" style="width:240px;">
                     <span class="input-group-text bg-white border-0"><i class="ri-search-line text-muted"></i></span>
                     <input type="text" class="form-control border-0 ps-1" id="searchInput" placeholder="Search admission / name…" {{ $broadsheets->isEmpty() ? 'disabled' : '' }}>
@@ -293,9 +248,12 @@
                     <button class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#columnVisibilityModal">
                         <i class="ri-eye-line me-1"></i>Columns
                     </button>
-                    {{-- These IDs are required by subjectscoresheet.init.js --}}
                     <button type="button" class="btn btn-sm btn-warning" id="downloadMarksSheet">
                         <i class="ri-file-pdf-line me-1"></i>Marks Sheet
+                    </button>
+                    {{-- ★ NEW: Download Scores PDF --}}
+                    <button type="button" class="btn btn-sm btn-danger" id="downloadScoresPdf">
+                        <i class="ri-file-pdf-2-line me-1"></i>Scores PDF
                     </button>
                     <button type="button" class="btn btn-sm btn-success" id="downloadExcel">
                         <i class="ri-download-line me-1"></i>Export Excel
@@ -309,23 +267,21 @@
 
         <div class="card-body p-0">
 
-            {{-- No data alert --}}
             <div class="alert alert-info text-center m-3 mb-0" id="noDataAlert" style="display:{{ $broadsheets->isEmpty() ? 'block' : 'none' }};">
-                <i class="ri-information-line me-2"></i>No scores available. Import scores or register students for this subject.
+                <i class="ri-information-line me-2"></i>No scores available.
             </div>
 
-            {{-- Download progress (required by subjectscoresheet.init.js) --}}
+            {{-- Shared progress bar used by both download and save --}}
             <div id="downloadProgressContainer" style="display:none;" class="px-3 pt-3">
                 <div class="d-flex align-items-center gap-3 p-3 rounded-3" style="background:#fefce8;">
                     <div class="spinner-border spinner-border-sm text-warning"></div>
                     <div class="flex-grow-1">
-                        <div class="fw-semibold mb-1" style="font-size:13px;">Downloading…</div>
+                        <div class="fw-semibold mb-1" style="font-size:13px;" id="downloadProgressLabel">Downloading…</div>
                         <div class="progress" style="height:5px;"><div class="progress-bar progress-bar-animated bg-warning" id="downloadProgressBar" style="width:0%"></div></div>
                     </div>
                 </div>
             </div>
 
-            {{-- Save progress bar --}}
             <div id="progressContainer" style="display:none;" class="px-3 pt-3">
                 <div class="d-flex align-items-center gap-3 p-3 rounded-3" style="background:#eff6ff;">
                     <div class="spinner-border spinner-border-sm text-primary"></div>
@@ -336,7 +292,6 @@
                 </div>
             </div>
 
-            {{-- Table --}}
             <div class="table-responsive">
             <table class="table table-nowrap align-middle mb-0" id="scoresheetTable">
                 <thead>
@@ -374,6 +329,8 @@
                                 $so = $broadsheet->assessmentScores->where('assessment_id', $a->id)->first();
                                 $rowTotal += $so ? $so->score : 0;
                             }
+                            $cum = $broadsheet->cum ?? 0;
+                            $cumColor = $cum >= 70 ? 'success' : ($cum >= 50 ? 'info' : ($cum >= 40 ? 'warning' : 'danger'));
                             $vClass = match(true) {
                                 $broadsheet->vettedstatus === '1' => 'row-vetted',
                                 $broadsheet->vettedstatus === '0' => 'row-not-vetted',
@@ -390,14 +347,14 @@
                             <td class="col-admissionno admissionno" data-admissionno="{{ $broadsheet->admissionno }}">
                                 <span class="text-muted small">{{ $broadsheet->admissionno ?? '-' }}</span>
                             </td>
-                            <td class="col-name name" data-name="{{ strtolower(($broadsheet->lname ?? '') . ' ' . ($broadsheet->fname ?? '') . ' ' . ($broadsheet->mname ?? '')) }}">
+                            <td class="col-name name" data-name="{{ strtolower(($broadsheet->lname ?? '').' '.($broadsheet->fname ?? '').' '.($broadsheet->mname ?? '')) }}">
                                 <div class="d-flex align-items-center gap-2">
-                                    <img src="{{ $broadsheet->picture ? asset('storage/student_avatars/' . basename($broadsheet->picture)) : asset('storage/student_avatars/unnamed.jpg') }}"
-                                         class="rounded-circle" style="width:34px;height:34px;object-fit:cover;border:2px solid var(--ss-border);"
+                                    <img src="{{ $broadsheet->picture ? asset('storage/student_avatars/'.basename($broadsheet->picture)) : asset('storage/student_avatars/unnamed.jpg') }}"
+                                         class="rounded-circle student-image"
+                                         style="width:34px;height:34px;object-fit:cover;border:2px solid var(--ss-border);cursor:pointer;"
                                          data-bs-toggle="modal" data-bs-target="#imageViewModal"
-                                         data-image="{{ $broadsheet->picture ? asset('storage/student_avatars/' . basename($broadsheet->picture)) : asset('storage/student_avatars/unnamed.jpg') }}"
-                                         onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}';"
-                                         style="cursor:pointer;">
+                                         data-image="{{ $broadsheet->picture ? asset('storage/student_avatars/'.basename($broadsheet->picture)) : asset('storage/student_avatars/unnamed.jpg') }}"
+                                         onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}';">
                                     <div>
                                         <span class="fw-semibold d-block" style="font-size:12.5px;">{{ $broadsheet->lname ?? '' }}, {{ $broadsheet->fname ?? '' }}</span>
                                         @if($broadsheet->mname)<span class="text-muted small">{{ $broadsheet->mname }}</span>@endif
@@ -405,7 +362,6 @@
                                 </div>
                             </td>
 
-                            {{-- Assessment score inputs --}}
                             @forelse ($assessments as $assessment)
                                 @php
                                     $scoreObj   = $broadsheet->assessmentScores->where('assessment_id', $assessment->id)->first();
@@ -425,30 +381,38 @@
                                 <td colspan="4" class="col-no-assessments text-center text-muted">-</td>
                             @endforelse
 
+                            {{-- Total --}}
                             <td class="col-total text-center">
-                                <span class="badge bg-primary" data-total="{{ $rowTotal }}">{{ number_format($rowTotal, 1) }}</span>
+                                <span class="badge bg-primary total-badge">{{ number_format($rowTotal, 1) }}</span>
                             </td>
+                            {{-- BF --}}
                             <td class="col-bf text-center">
-                                <span class="badge bg-secondary-subtle text-secondary">{{ number_format($broadsheet->bf ?? 0, 1) }}</span>
+                                <span class="badge bg-secondary-subtle text-secondary bf-badge">{{ number_format($broadsheet->bf ?? 0, 1) }}</span>
                             </td>
+                            {{-- Cum --}}
                             <td class="col-cum text-center">
-                                @php $cum = $broadsheet->cum ?? 0; $cumColor = $cum >= 70 ? 'success' : ($cum >= 50 ? 'info' : ($cum >= 40 ? 'warning' : 'danger')); @endphp
-                                <span class="badge bg-{{ $cumColor }}-subtle text-{{ $cumColor }} fw-bold" style="font-size:12px;">{{ number_format($cum, 1) }}</span>
+                                <span class="badge bg-{{ $cumColor }}-subtle text-{{ $cumColor }} fw-bold cum-badge" style="font-size:12px;">{{ number_format($cum, 1) }}</span>
                             </td>
+                            {{-- GPA --}}
                             <td class="col-gpa text-center">
-                                <span class="badge bg-warning-subtle text-warning fw-semibold">{{ number_format($broadsheet->gpa ?? 0, 2) }}</span>
+                                <span class="badge bg-warning-subtle text-warning fw-semibold gpa-badge">{{ number_format($broadsheet->gpa ?? 0, 2) }}</span>
                             </td>
+                            {{-- CGPA --}}
                             <td class="col-cgpa text-center">
-                                <span class="badge bg-dark-subtle text-dark">{{ number_format($broadsheet->cgpa ?? 0, 2) }}</span>
+                                <span class="badge bg-dark-subtle text-dark cgpa-badge">{{ number_format($broadsheet->cgpa ?? 0, 2) }}</span>
                             </td>
-                            <td class="col-grade text-center fw-bold" style="font-size:13px;color:{{ $gradeColors[$broadsheet->grade ?? 'F'] ?? '#6b7280' }};">
-                                {{ $broadsheet->grade ?? '-' }}
+                            {{-- Grade - use a badge so JS can target .grade-badge --}}
+                            <td class="col-grade text-center">
+                                @php $gc = $gradeColors[$broadsheet->grade ?? 'F'] ?? '#6b7280'; @endphp
+                                <span class="fw-bold grade-badge" style="font-size:13px;color:{{ $gc }};">{{ $broadsheet->grade ?? '-' }}</span>
                             </td>
+                            {{-- Position --}}
                             <td class="col-position text-center">
-                                <span class="badge" style="background:var(--ss-primary);">
-                                    {{ $broadsheet->position ? $broadsheet->position . \App\Helpers\OrdinalHelper::getOrdinalSuffix($broadsheet->position) : '-' }}
+                                <span class="badge position-badge" style="background:var(--ss-primary);">
+                                    {{ $broadsheet->position ? $broadsheet->position.\App\Helpers\OrdinalHelper::getOrdinalSuffix($broadsheet->position) : '-' }}
                                 </span>
                             </td>
+                            {{-- Status --}}
                             <td class="col-vetted text-center">
                                 @if($broadsheet->vettedstatus === '1')
                                     <span class="badge bg-success-subtle text-success"><i class="ri-check-line me-1"></i>Vetted</span>
@@ -470,7 +434,6 @@
             </table>
             </div>
 
-            {{-- Bulk action toolbar --}}
             @if ($broadsheets->isNotEmpty())
             <div class="p-3 border-top" style="background:#f8fafc;">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -492,16 +455,11 @@
             </div>
             @endif
 
-        </div>{{-- card-body --}}
-    </div>
-    </div>
-    </div>
+        </div>
+    </div></div></div>
 
-    {{-- ══════════════════════════════════════════════════════════════ --}}
-    {{-- MODALS                                                         --}}
-    {{-- ══════════════════════════════════════════════════════════════ --}}
+    {{-- ══ MODALS ══════════════════════════════════════════════════════ --}}
 
-    {{-- Column visibility --}}
     @if ($broadsheets->isNotEmpty())
     <div class="modal fade" id="columnVisibilityModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -512,32 +470,26 @@
                 </div>
                 <div class="modal-body">
                     <div class="row g-3">
-                        <div class="col-md-4">
-                            <div class="col-group">
-                                <h6>Student Info</h6>
-                                @foreach([['col-checkbox','Select'],['col-sn','SN'],['col-admissionno','Adm. No'],['col-name','Name']] as [$cls,$lbl])
-                                <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" id="chk-{{ $cls }}" data-col="{{ $cls }}" checked><label class="form-check-label" for="chk-{{ $cls }}">{{ $lbl }}</label></div>
-                                @endforeach
-                            </div>
-                        </div>
+                        <div class="col-md-4"><div class="col-group">
+                            <h6>Student Info</h6>
+                            @foreach([['col-checkbox','Select'],['col-sn','SN'],['col-admissionno','Adm. No'],['col-name','Name']] as [$cls,$lbl])
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" id="chk-{{ $cls }}" data-col="{{ $cls }}" checked><label class="form-check-label" for="chk-{{ $cls }}">{{ $lbl }}</label></div>
+                            @endforeach
+                        </div></div>
                         @if($assessments->isNotEmpty())
-                        <div class="col-md-4">
-                            <div class="col-group">
-                                <h6>Assessments</h6>
-                                @foreach($assessments as $a)
-                                <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" id="chk-col-assessment-{{ $a->id }}" data-col="col-assessment-{{ $a->id }}" checked><label class="form-check-label" for="chk-col-assessment-{{ $a->id }}">{{ $a->name }}</label></div>
-                                @endforeach
-                            </div>
-                        </div>
+                        <div class="col-md-4"><div class="col-group">
+                            <h6>Assessments</h6>
+                            @foreach($assessments as $a)
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" id="chk-col-assessment-{{ $a->id }}" data-col="col-assessment-{{ $a->id }}" checked><label class="form-check-label" for="chk-col-assessment-{{ $a->id }}">{{ $a->name }}</label></div>
+                            @endforeach
+                        </div></div>
                         @endif
-                        <div class="col-md-4">
-                            <div class="col-group">
-                                <h6>Scores & Metrics</h6>
-                                @foreach([['col-total','Total'],['col-bf','BF'],['col-cum','Cum'],['col-gpa','GPA'],['col-cgpa','CGPA'],['col-grade','Grade'],['col-position','Position'],['col-vetted','Status']] as [$cls,$lbl])
-                                <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" id="chk-{{ $cls }}" data-col="{{ $cls }}" checked><label class="form-check-label" for="chk-{{ $cls }}">{{ $lbl }}</label></div>
-                                @endforeach
-                            </div>
-                        </div>
+                        <div class="col-md-4"><div class="col-group">
+                            <h6>Scores & Metrics</h6>
+                            @foreach([['col-total','Total'],['col-bf','BF'],['col-cum','Cum'],['col-gpa','GPA'],['col-cgpa','CGPA'],['col-grade','Grade'],['col-position','Position'],['col-vetted','Status']] as [$cls,$lbl])
+                            <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" id="chk-{{ $cls }}" data-col="{{ $cls }}" checked><label class="form-check-label" for="chk-{{ $cls }}">{{ $lbl }}</label></div>
+                            @endforeach
+                        </div></div>
                     </div>
                 </div>
                 <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">Close</button></div>
@@ -546,7 +498,6 @@
     </div>
     @endif
 
-    {{-- Import modal --}}
     <div class="modal fade" id="importModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg">
@@ -556,29 +507,25 @@
                 </div>
                 <div class="modal-body">
                     <div class="alert alert-info">
-                        <i class="ri-information-line me-2"></i>
-                        Upload the Excel file exported from this scoresheet. Assessment columns are matched automatically by header name.
+                        <i class="ri-information-line me-2"></i>Upload the Excel file exported from this scoresheet.
                     </div>
-                    <form action="{{ route('subjectscoresheet.import') }}" method="POST" enctype="multipart/form-data" id="importForm">
+                    <form method="POST" enctype="multipart/form-data" id="importForm">
                         @csrf
-                        <input type="hidden" name="schoolclass_id" value="{{ session('schoolclass_id') }}">
+                        <input type="hidden" name="schoolclass_id"  value="{{ session('schoolclass_id') }}">
                         <input type="hidden" name="subjectclass_id" value="{{ session('subjectclass_id') }}">
-                        <input type="hidden" name="staff_id" value="{{ session('staff_id') }}">
-                        <input type="hidden" name="term_id" value="{{ session('term_id') }}">
-                        <input type="hidden" name="session_id" value="{{ session('session_id') }}">
+                        <input type="hidden" name="staff_id"        value="{{ session('staff_id') }}">
+                        <input type="hidden" name="term_id"         value="{{ session('term_id') }}">
+                        <input type="hidden" name="session_id"      value="{{ session('session_id') }}">
 
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Excel File (.xlsx)</label>
                             <input type="file" name="file" class="form-control" accept=".xlsx,.xls" required>
                             <small class="text-muted">Only upload files exported from this system</small>
                         </div>
-
                         <div class="mb-3">
                             <label class="form-label fw-semibold">File Password (if protected)</label>
                             <input type="password" name="password" class="form-control" placeholder="Enter file password">
-                            <small class="text-muted">Required if the Excel file is password protected</small>
                         </div>
-
                         <div id="importLoader" style="display:none;" class="mb-3">
                             <div class="d-flex align-items-center gap-3 p-2 rounded-3" style="background:#f0fdf4;">
                                 <div class="spinner-border spinner-border-sm text-success"></div>
@@ -590,7 +537,6 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="d-flex justify-content-end gap-2">
                             <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
                             <button type="submit" class="btn btn-primary" id="importSubmit">
@@ -603,7 +549,6 @@
         </div>
     </div>
 
-    {{-- Image view modal --}}
     <div class="modal fade" id="imageViewModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg">
@@ -616,149 +561,338 @@
     </div>
 
 </div>{{-- container-fluid --}}
-</div>{{-- page-content --}}
-</div>{{-- main-content --}}
+</div>
+</div>
 
+{{-- ══════════════════════════════════════════════════════════════════ --}}
+{{-- INLINE SCRIPT — single source of truth, no init.js conflict      --}}
+{{-- ══════════════════════════════════════════════════════════════════ --}}
 <script>
-// ── CSRF meta ─────────────────────────────────────────────────────────────────
+/* ---------- CSRF -------------------------------------------------- */
 if (!document.querySelector('meta[name="csrf-token"]')) {
     const m = document.createElement('meta'); m.name = 'csrf-token';
     m.content = '{{ csrf_token() }}'; document.head.appendChild(m);
 }
-
 const CSRF = document.querySelector('meta[name="csrf-token"]').content;
 
-// ROUTES used by inline JS below
-const ROUTES = {
-    singleUpdate: '{{ route("subjectscoresheet.single-update") }}',
-    bulkUpdate  : '{{ route("subjectscoresheet.bulk-update") }}',
-    destroy     : '{{ route("subjectscoresheet.destroy", ["id" => "__ID__"]) }}',
-};
-
-// window.routes is used by subjectscoresheet.init.js — keep both in sync
+/* ---------- Window globals (read by subjectscoresheet.init.js too) - */
 window.routes = {
-    singleUpdate     : '{{ route("subjectscoresheet.single-update") }}',
-    bulkUpdate       : '{{ route("subjectscoresheet.bulk-update") }}',
-    destroy          : '{{ route("subjectscoresheet.destroy", ["id" => "__ID__"]) }}',
-    results          : '{{ route("subjectscoresheet.results") }}',
-    export           : '{{ route("subjectscoresheet.export") }}',
-    import           : '{{ route("subjectscoresheet.import") }}',
+    singleUpdate      : '{{ route("subjectscoresheet.single-update") }}',
+    bulkUpdate        : '{{ route("subjectscoresheet.bulk-update") }}',
+    destroy           : '{{ route("subjectscoresheet.destroy", ["id" => "__ID__"]) }}',
+    results           : '{{ route("subjectscoresheet.results") }}',
+    export            : '{{ route("subjectscoresheet.export") }}',
+    import            : '{{ route("subjectscoresheet.import") }}',
     downloadMarksSheet: '{{ route("scoresheet.download-marks-sheet") }}',
-    gradePreview     : '{{ route("subjectscoresheet.grade-preview") }}',
+    downloadScoresPdf : '{{ route("scoresheet.download-scores-pdf") }}',
+    gradePreview      : '{{ route("subjectscoresheet.grade-preview") }}',
 };
-
 window.term_id         = {{ session('term_id')         ?? 'null' }};
 window.session_id      = {{ session('session_id')      ?? 'null' }};
 window.subjectclass_id = {{ session('subjectclass_id') ?? 'null' }};
 window.schoolclass_id  = {{ session('schoolclass_id')  ?? 'null' }};
 window.staff_id        = {{ session('staff_id')        ?? 'null' }};
-window.is_senior       = {{ $is_senior ?? false ? 'true' : 'false' }};
+window.is_senior       = {{ ($is_senior ?? false) ? 'true' : 'false' }};
 window.broadsheets     = @json($broadsheets ?? []);
 
+/* ---------- Helpers ----------------------------------------------- */
+const fmtN = (n, d = 1) => parseFloat(n || 0).toFixed(d);
+const ord  = n => { if (!n || isNaN(n)) return '-'; n=+n; const s=n%100; return n+(s>=11&&s<=13?'th':['th','st','nd','rd'][n%10]||'th'); };
+
+function showToast(msg, type = 'info') {
+    const colors = { success:'#16a34a', warning:'#d97706', danger:'#dc2626', info:'#2563eb' };
+    const id = 'toast_' + Date.now();
+    document.body.insertAdjacentHTML('beforeend',
+        `<div id="${id}" class="toast align-items-center border-0 text-white show" role="alert"
+          style="position:fixed;bottom:20px;right:20px;z-index:9999;background:${colors[type]||colors.info};min-width:280px;">
+          <div class="d-flex p-3"><div class="me-auto">${msg}</div>
+          <button class="btn-close btn-close-white ms-2" onclick="this.closest('.toast').remove()"></button></div></div>`);
+    setTimeout(() => document.getElementById(id)?.remove(), 4500);
+}
+
+/* ---------- Row update helpers ------------------------------------ */
+function validateInput(inp) {
+    const max = parseFloat(inp.dataset.max) || 0;
+    const val = parseFloat(inp.value) || 0;
+    inp.classList.toggle('is-invalid', val > max);
+    return val <= max;
+}
+
+function updateRowTotal(row) {
+    let sum = 0;
+    row.querySelectorAll('.score-input').forEach(i => sum += parseFloat(i.value) || 0);
+    const badge = row.querySelector('.total-badge');
+    if (badge) badge.textContent = fmtN(sum);
+}
+
+/* ---------- Individual save --------------------------------------- */
+function saveIndividualScore(input) {
+    const broadsheetId = input.dataset.id;
+    const assessmentId = parseInt(input.dataset.field);
+    const score        = parseFloat(input.value) || 0;
+    const row          = input.closest('tr');
+
+    fetch(window.routes.singleUpdate, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+        body: JSON.stringify({
+            broadsheet_id:   broadsheetId,
+            assessment_id:   assessmentId,
+            score,
+            is_sub:          false,
+            term_id:         window.term_id,
+            session_id:      window.session_id,
+            subjectclass_id: window.subjectclass_id,
+            schoolclass_id:  window.schoolclass_id,
+            staff_id:        window.staff_id,
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (!data.success) { showToast(data.message || 'Could not save.', 'warning'); return; }
+        const d = data.data;
+
+        // Update cum badge — recolour too
+        const cumBadge = row.querySelector('.cum-badge');
+        if (cumBadge && d.cum != null) {
+            const cum = parseFloat(d.cum);
+            cumBadge.textContent = fmtN(cum);
+            cumBadge.className = 'badge fw-bold cum-badge ' +
+                (cum >= 70 ? 'bg-success-subtle text-success' :
+                 cum >= 50 ? 'bg-info-subtle text-info' :
+                 cum >= 40 ? 'bg-warning-subtle text-warning' :
+                             'bg-danger-subtle text-danger');
+        }
+        // Grade
+        const gradeBadge = row.querySelector('.grade-badge');
+        if (gradeBadge && d.grade != null) gradeBadge.textContent = d.grade;
+        // BF
+        const bfBadge = row.querySelector('.bf-badge');
+        if (bfBadge && d.bf != null) bfBadge.textContent = fmtN(d.bf);
+        // GPA / CGPA
+        const gpaBadge  = row.querySelector('.gpa-badge');
+        const cgpaBadge = row.querySelector('.cgpa-badge');
+        if (gpaBadge  && d.gpa  != null) gpaBadge.textContent  = fmtN(d.gpa, 2);
+        if (cgpaBadge && d.cgpa != null) cgpaBadge.textContent = fmtN(d.cgpa, 2);
+
+        input.classList.add('is-saved');
+        setTimeout(() => input.classList.remove('is-saved'), 2000);
+    })
+    .catch(err => {
+        console.warn('singleUpdate network error:', err.message);
+        showToast('Network issue — score may not have saved.', 'danger');
+    });
+}
+
+/* ---------- Bulk save --------------------------------------------- */
+function bulkSave() {
+    const invalid = document.querySelectorAll('.score-input.is-invalid').length;
+    if (invalid) {
+        Swal.fire({ icon:'warning', title:'Invalid Scores', text:`${invalid} score(s) exceed their maximum. Please fix them first.` });
+        return;
+    }
+
+    const scores = [];
+    document.querySelectorAll('#scoresheetTableBody tr[data-id]').forEach(row => {
+        const assessments = {};
+        row.querySelectorAll('.score-input').forEach(inp => {
+            assessments[inp.dataset.field] = parseFloat(inp.value) || 0;
+        });
+        if (Object.keys(assessments).length) {
+            scores.push({ id: row.dataset.id, assessments });
+        }
+    });
+
+    if (!scores.length) return;
+
+    const prog = document.getElementById('progressContainer');
+    const bar  = document.getElementById('saveProgressBar');
+    if (prog) prog.style.display = 'block';
+    let w = 0; const iv = setInterval(() => { w = Math.min(w + 8, 90); if (bar) bar.style.width = w + '%'; }, 150);
+
+    const btn = document.getElementById('bulkUpdateScores');
+    const origHtml = btn?.innerHTML;
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ri-loader-4-line"></i> Saving…'; }
+
+    fetch(window.routes.bulkUpdate, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+        body: JSON.stringify({
+            scores,
+            term_id:         window.term_id,
+            session_id:      window.session_id,
+            subjectclass_id: window.subjectclass_id,
+            staff_id:        window.staff_id,
+            schoolclass_id:  window.schoolclass_id,
+            is_sub:          false,
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        clearInterval(iv); if (bar) bar.style.width = '100%';
+
+        if (!data.success) {
+            Swal.fire({ icon:'error', title:'Save Failed', text: data.message || 'Server error.' });
+            return;
+        }
+
+        // Update every row from server response — server-computed grades/positions
+        const serverSheets = data.data?.broadsheets ?? [];
+        serverSheets.forEach(bs => {
+            const row = document.querySelector(`#scoresheetTableBody tr[data-id="${bs.id}"]`);
+            if (!row) return;
+
+            const cum = parseFloat(bs.cum ?? 0);
+
+            const cumBadge = row.querySelector('.cum-badge');
+            if (cumBadge) {
+                cumBadge.textContent = fmtN(cum);
+                cumBadge.className = 'badge fw-bold cum-badge ' +
+                    (cum >= 70 ? 'bg-success-subtle text-success' :
+                     cum >= 50 ? 'bg-info-subtle text-info' :
+                     cum >= 40 ? 'bg-warning-subtle text-warning' :
+                                 'bg-danger-subtle text-danger');
+            }
+            const gradeBadge = row.querySelector('.grade-badge');
+            if (gradeBadge) gradeBadge.textContent = bs.grade ?? '-';
+
+            const bfBadge = row.querySelector('.bf-badge');
+            if (bfBadge) bfBadge.textContent = fmtN(bs.bf);
+
+            const gpaBadge  = row.querySelector('.gpa-badge');
+            const cgpaBadge = row.querySelector('.cgpa-badge');
+            if (gpaBadge)  gpaBadge.textContent  = fmtN(bs.gpa, 2);
+            if (cgpaBadge) cgpaBadge.textContent = fmtN(bs.cgpa, 2);
+
+            const posBadge = row.querySelector('.position-badge');
+            if (posBadge) posBadge.textContent = ord(bs.position);
+
+            // Mark all inputs saved
+            row.querySelectorAll('.score-input').forEach(i => {
+                i.classList.add('is-saved');
+                setTimeout(() => i.classList.remove('is-saved'), 2000);
+            });
+        });
+
+        Swal.fire({ icon:'success', title:'Saved!', text: data.message, timer:2000, showConfirmButton:false });
+    })
+    .catch(err => {
+        clearInterval(iv);
+        Swal.fire({ icon:'error', title:'Network Error', text:'Please check your connection and try again.' });
+        console.error('bulkSave error:', err);
+    })
+    .finally(() => {
+        setTimeout(() => { if (prog) prog.style.display = 'none'; if (bar) bar.style.width='0%'; }, 1000);
+        if (btn) { btn.disabled = false; btn.innerHTML = origHtml || '<i class="ri-save-line me-1"></i>Save All Scores'; }
+    });
+}
+
+/* ---------- PDF download helper ----------------------------------- */
+function startPdfDownload(url, filename, label) {
+    const cont  = document.getElementById('downloadProgressContainer');
+    const bar   = document.getElementById('downloadProgressBar');
+    const lbl   = document.getElementById('downloadProgressLabel');
+    if (cont) cont.style.display = 'block';
+    if (bar)  bar.style.width   = '10%';
+    if (lbl)  lbl.textContent   = label || 'Downloading…';
+
+    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF } })
+    .then(async r => {
+        if (!r.ok) {
+            const err = await r.json().catch(() => ({}));
+            throw new Error(err.message || 'Download failed.');
+        }
+        if (bar) bar.style.width = '90%';
+        return r.blob();
+    })
+    .then(blob => {
+        if (bar) bar.style.width = '100%';
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = filename;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+        showToast('Downloaded successfully!', 'success');
+    })
+    .catch(err => {
+        Swal.fire({ icon:'error', title:'Download Failed', text: err.message });
+    })
+    .finally(() => {
+        setTimeout(() => { if (cont) cont.style.display='none'; if (bar) bar.style.width='0%'; }, 1200);
+    });
+}
+
+/* ---------- DOM ready --------------------------------------------- */
 document.addEventListener('DOMContentLoaded', function () {
 
-    // ── Tooltips ──────────────────────────────────────────────────────────────
+    /* tooltips */
     document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => new bootstrap.Tooltip(el));
 
-    // ── Image modal ───────────────────────────────────────────────────────────
+    /* image modal */
     document.getElementById('imageViewModal')?.addEventListener('show.bs.modal', function(e) {
         const src = e.relatedTarget?.dataset?.image || e.relatedTarget?.getAttribute('data-image');
         document.getElementById('enlargedImage').src = src || '{{ asset("storage/student_avatars/unnamed.jpg") }}';
     });
-    // Also handle click on img tags (not data-bs-toggle targets)
-    document.addEventListener('click', function(e) {
-        if (e.target.classList.contains('student-image') || e.target.closest('[data-image]')) {
-            const el  = e.target.classList.contains('student-image') ? e.target : e.target.closest('[data-image]');
-            const src = el.getAttribute('data-image');
-            if (src) document.getElementById('enlargedImage').src = src;
-        }
-    });
 
-    // ── Column visibility ─────────────────────────────────────────────────────
+    /* column visibility */
     document.querySelectorAll('.col-toggle').forEach(cb => {
         cb.addEventListener('change', function() {
-            const cls = this.dataset.col;
-            document.querySelectorAll(`th.${cls}, td.${cls}`).forEach(el => {
-                el.style.display = this.checked ? '' : 'none';
-            });
+            document.querySelectorAll(`th.${this.dataset.col}, td.${this.dataset.col}`)
+                    .forEach(el => el.style.display = this.checked ? '' : 'none');
         });
     });
 
-    // ── Search ────────────────────────────────────────────────────────────────
-    let tableRows = () => document.querySelectorAll('#scoresheetTableBody tr[data-id]');
-    const noDataAlert = document.getElementById('noDataAlert');
-    const scoreCount  = document.getElementById('scoreCount');
-
+    /* search */
     function applySearch() {
         const q = (document.getElementById('searchInput')?.value ?? '').trim().toLowerCase();
         let vis = 0;
-        tableRows().forEach(row => {
+        document.querySelectorAll('#scoresheetTableBody tr[data-id]').forEach(row => {
             const adm  = (row.querySelector('.admissionno')?.dataset?.admissionno ?? '').toLowerCase();
             const name = (row.querySelector('.name')?.dataset?.name ?? '').toLowerCase();
             const show = !q || adm.includes(q) || name.includes(q);
             row.style.display = show ? '' : 'none';
             if (show) vis++;
         });
-        if (scoreCount) scoreCount.textContent = vis;
-        if (noDataAlert) noDataAlert.style.display = vis === 0 ? 'block' : 'none';
+        const sc = document.getElementById('scoreCount');
+        if (sc) sc.textContent = vis;
+        const nd = document.getElementById('noDataAlert');
+        if (nd) nd.style.display = vis === 0 ? 'block' : 'none';
     }
-
     document.getElementById('searchInput')?.addEventListener('input', applySearch);
-    document.getElementById('clearSearch')?.addEventListener('click', function() {
-        if (document.getElementById('searchInput')) document.getElementById('searchInput').value = '';
+    document.getElementById('clearSearch')?.addEventListener('click', () => {
+        const si = document.getElementById('searchInput'); if (si) si.value = '';
         applySearch();
     });
 
-    // ── Check-all ─────────────────────────────────────────────────────────────
+    /* check-all */
     document.getElementById('checkAll')?.addEventListener('change', function() {
         document.querySelectorAll('.score-checkbox').forEach(cb => cb.checked = this.checked);
     });
     document.addEventListener('change', function(e) {
-        if (e.target.classList.contains('score-checkbox')) {
-            const all    = document.querySelectorAll('.score-checkbox');
-            const checked= document.querySelectorAll('.score-checkbox:checked');
-            const ca     = document.getElementById('checkAll');
-            if (ca) { ca.checked = checked.length === all.length && all.length > 0; ca.indeterminate = checked.length > 0 && checked.length < all.length; }
-        }
+        if (!e.target.classList.contains('score-checkbox')) return;
+        const all = document.querySelectorAll('.score-checkbox');
+        const chk = document.querySelectorAll('.score-checkbox:checked');
+        const ca  = document.getElementById('checkAll');
+        if (ca) { ca.checked = chk.length === all.length && all.length > 0; ca.indeterminate = chk.length > 0 && chk.length < all.length; }
     });
-
     document.getElementById('selectAllScores')?.addEventListener('click', () => {
-        document.getElementById('checkAll').checked = true;
+        const ca = document.getElementById('checkAll'); if (ca) ca.checked = true;
         document.querySelectorAll('.score-checkbox').forEach(cb => cb.checked = true);
     });
     document.getElementById('clearAllScores')?.addEventListener('click', () => {
-        document.getElementById('checkAll').checked = false;
+        const ca = document.getElementById('checkAll'); if (ca) ca.checked = false;
         document.querySelectorAll('.score-checkbox').forEach(cb => cb.checked = false);
     });
 
-    // ── Score input helpers ───────────────────────────────────────────────────
-
-    function updateRowTotal(row) {
-        let sum = 0;
-        row.querySelectorAll('.score-input').forEach(inp => sum += parseFloat(inp.value) || 0);
-        const span = row.querySelector('.col-total span');
-        if (span) { span.textContent = fmtNum(sum, 1); span.dataset.total = sum; }
-    }
-
-    function validateInput(input) {
-        const max = parseFloat(input.dataset.max) || 0;
-        const val = parseFloat(input.value) || 0;
-        if (val > max) { input.classList.add('is-invalid'); return false; }
-        input.classList.remove('is-invalid'); return true;
-    }
-
-    // ── FIX: highlight existing value on focus ────────────────────────────────
-    document.querySelectorAll('.score-input').forEach(input => {
-        // Select all text when user clicks/tabs into the field
-        input.addEventListener('focus', function() { this.select(); });
-
-        input.addEventListener('input', function() {
+    /* score inputs */
+    document.querySelectorAll('.score-input').forEach(inp => {
+        inp.addEventListener('focus', function() { this.select(); });
+        inp.addEventListener('input', function() {
             validateInput(this);
             updateRowTotal(this.closest('tr'));
         });
-
-        input.addEventListener('blur', function() {
-            validateInput(this);
+        inp.addEventListener('blur', function() {
+            if (!validateInput(this)) return;
             updateRowTotal(this.closest('tr'));
             const orig = parseFloat(this.dataset.original) || 0;
             const curr = parseFloat(this.value) || 0;
@@ -767,157 +901,129 @@ document.addEventListener('DOMContentLoaded', function () {
                 saveIndividualScore(this);
             }
         });
-
-        input.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                const row = this.closest('tr');
-                if (!document.querySelectorAll('.score-input.is-invalid').length) {
-                    saveIndividualScore(this);
-                }
-                // Move to next score input
-                const inputs = Array.from(document.querySelectorAll('.score-input'));
-                const idx    = inputs.indexOf(this);
-                if (idx < inputs.length - 1) inputs[idx + 1].focus();
-            }
+        inp.addEventListener('keydown', function(e) {
+            if (e.key !== 'Enter') return;
+            e.preventDefault();
+            if (validateInput(this)) saveIndividualScore(this);
+            const all = Array.from(document.querySelectorAll('.score-input'));
+            const idx = all.indexOf(this);
+            if (idx < all.length - 1) all[idx + 1].focus();
         });
     });
 
-    // ── Individual save ───────────────────────────────────────────────────────
-    function saveIndividualScore(input) {
-        const rowId   = input.dataset.id;
-        const fieldId = parseInt(input.dataset.field);
-        const score   = parseFloat(input.value) || 0;
-        const row     = input.closest('tr');
-        const totSpan = row.querySelector('.col-total span');
-        const total   = totSpan ? parseFloat(totSpan.dataset.total) || 0 : 0;
+    /* bulk save button */
+    document.getElementById('bulkUpdateScores')?.addEventListener('click', bulkSave);
 
-        // Visual indicator: saving
-        input.classList.add('is-saved');
-        setTimeout(() => input.classList.remove('is-saved'), 2000);
-
-        fetch(ROUTES.singleUpdate, {
-            method : 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
-            body   : JSON.stringify({
-                broadsheet_id: rowId, assessment_id: fieldId, score, is_sub: false,
-                raw_total: total, term_id: window.term_id, session_id: window.session_id,
-                subjectclass_id: window.subjectclass_id, schoolclass_id: window.schoolclass_id, staff_id: window.staff_id
-            })
-        })
-        .then(r => r.json())   // always parse — don't rely on r.ok before parsing
-        .then(data => {
-            if (!data.success) {
-                // Server returned an error payload — show it but don't crash
-                showToast(data.message || 'Could not save score.', 'warning');
-                return;
-            }
-            // Update displayed values
-            const d = data.data;
-            const update = (cls, val, fmt) => { const el = row.querySelector(`.${cls} span`); if (el && val != null) el.textContent = fmtNum(val, fmt ?? 1); };
-            update('col-cum',  d.cum,  1);
-            update('col-gpa',  d.gpa,  2);
-            update('col-cgpa', d.cgpa, 2);
-            update('col-bf',   d.bf,   1);
-            if (row.querySelector('.col-grade')) row.querySelector('.col-grade').textContent = d.grade ?? '';
-        })
-        .catch(err => {
-            // Network-level error (offline, timeout) — show minimal toast, don't alert
-            console.warn('saveIndividualScore network error:', err.message);
-            showToast('Network issue — score may not have saved. Check your connection.', 'danger');
-        });
-    }
-
-    // ── Bulk save ─────────────────────────────────────────────────────────────
-    document.getElementById('bulkUpdateScores')?.addEventListener('click', function() {
-        const invalid = document.querySelectorAll('.score-input.is-invalid').length;
-        if (invalid) {
-            Swal.fire({ icon: 'warning', title: 'Invalid Scores', text: `${invalid} score(s) exceed the maximum. Please correct them.` });
-            return;
-        }
-        document.querySelectorAll('#scoresheetTableBody tr[data-id]').forEach(row => updateRowTotal(row));
-
-        const scores = [];
-        document.querySelectorAll('#scoresheetTableBody tr[data-id]').forEach(row => {
-            const assessments = {};
-            row.querySelectorAll('.score-input').forEach(inp => { assessments[inp.dataset.field] = parseFloat(inp.value) || 0; });
-            const totSpan = row.querySelector('.col-total span');
-            scores.push({ id: row.dataset.id, assessments, raw_total: totSpan ? parseFloat(totSpan.dataset.total) || 0 : 0 });
-        });
-
-        if (!scores.length) return;
-
-        const prog = document.getElementById('progressContainer');
-        const bar  = document.getElementById('saveProgressBar');
-        if (prog) prog.style.display = 'block';
-        let w = 0; const iv = setInterval(() => { w = Math.min(w + 8, 90); if (bar) bar.style.width = w + '%'; }, 150);
-
-        fetch(ROUTES.bulkUpdate, {
-            method : 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
-            body   : JSON.stringify({ scores, term_id: window.term_id, session_id: window.session_id,
-                subjectclass_id: window.subjectclass_id, staff_id: window.staff_id, schoolclass_id: window.schoolclass_id, is_sub: false })
-        })
-        .then(r => r.json())
-        .then(data => {
-            clearInterval(iv); if (prog) prog.style.display = 'none';
-            if (data.success) {
-                Swal.fire({ icon: 'success', title: 'Saved!', text: data.message, timer: 2000, showConfirmButton: false }).then(() => location.reload());
-            } else {
-                Swal.fire({ icon: 'error', title: 'Error', text: data.message || 'Could not save scores.' });
-            }
-        })
-        .catch(err => {
-            clearInterval(iv); if (prog) prog.style.display = 'none';
-            Swal.fire({ icon: 'error', title: 'Network Error', text: 'Please check your connection and try again.' });
-        });
+    /* keyboard shortcut */
+    document.addEventListener('keydown', e => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); bulkSave(); }
     });
 
-    // ── Delete selected ───────────────────────────────────────────────────────
+    /* delete selected */
     document.getElementById('deleteSelectedScoresBtn')?.addEventListener('click', function() {
         const ids = Array.from(document.querySelectorAll('.score-checkbox:checked')).map(cb => cb.dataset.id);
-        if (!ids.length) { Swal.fire({ icon: 'warning', title: 'No Selection', text: 'Select rows to delete.' }); return; }
+        if (!ids.length) { Swal.fire({ icon:'warning', title:'No Selection', text:'Select rows to delete.' }); return; }
 
-        Swal.fire({ title: 'Delete selected scores?', text: 'This cannot be undone.', icon: 'warning',
-            showCancelButton: true, confirmButtonColor: '#dc2626', confirmButtonText: 'Yes, delete' })
+        Swal.fire({ title:'Delete selected scores?', text:'This cannot be undone.', icon:'warning',
+            showCancelButton:true, confirmButtonColor:'#dc2626', confirmButtonText:'Yes, delete' })
         .then(r => {
             if (!r.isConfirmed) return;
             Promise.all(ids.map(id =>
-                fetch(ROUTES.destroy.replace('__ID__', id), { method: 'DELETE', headers: { 'X-CSRF-TOKEN': CSRF } }).then(r => r.json())
+                fetch(window.routes.destroy.replace('__ID__', id), {
+                    method:'DELETE', headers:{'X-CSRF-TOKEN':CSRF}
+                }).then(r => r.json())
             )).then(results => {
                 let deleted = 0;
-                results.forEach((res, i) => { if (res.success) { document.querySelector(`tr[data-id="${ids[i]}"]`)?.remove(); deleted++; } });
-                Swal.fire({ icon: 'success', title: `${deleted} deleted`, timer: 1500, showConfirmButton: false });
+                results.forEach((res, i) => {
+                    if (res.success) { document.querySelector(`tr[data-id="${ids[i]}"]`)?.remove(); deleted++; }
+                });
+                showToast(`${deleted} score(s) deleted.`, 'success');
                 if (!document.querySelectorAll('#scoresheetTableBody tr[data-id]').length) location.reload();
             });
         });
     });
 
-    // ── Keyboard shortcut Ctrl+S ──────────────────────────────────────────────
-    document.addEventListener('keydown', function(e) {
-        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-            e.preventDefault();
-            document.getElementById('bulkUpdateScores')?.click();
+    /* marks sheet download */
+    document.getElementById('downloadMarksSheet')?.addEventListener('click', () => {
+        startPdfDownload(window.routes.downloadMarksSheet, 'marks-sheet.pdf', 'Generating Marks Sheet…');
+    });
+
+    /* ★ scores PDF download */
+    document.getElementById('downloadScoresPdf')?.addEventListener('click', () => {
+        startPdfDownload(window.routes.downloadScoresPdf, 'scores-sheet.pdf', 'Generating Scores PDF…');
+    });
+
+    /* Excel export */
+    document.getElementById('downloadExcel')?.addEventListener('click', () => {
+        const btn = document.getElementById('downloadExcel');
+        const orig = btn?.innerHTML;
+        if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ri-loader-4-line"></i> Generating…'; }
+
+        fetch(window.routes.export, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }
+        })
+        .then(r => {
+            const cd = r.headers.get('content-disposition') || '';
+            const m  = cd.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+            const fn = m ? m[1].replace(/['"]/g, '') : 'scoresheet.xlsx';
+            return r.blob().then(b => ({ blob: b, filename: fn }));
+        })
+        .then(({ blob, filename }) => {
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob); a.download = filename;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            showToast('Excel downloaded. File may be password-protected.', 'success');
+        })
+        .catch(err => Swal.fire({ icon:'error', title:'Download Failed', text: err.message }))
+        .finally(() => { if (btn) { btn.disabled = false; btn.innerHTML = orig; } });
+    });
+
+    /* import form */
+    document.getElementById('importForm')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const file = this.querySelector('input[name="file"]');
+        if (!file?.files?.length) {
+            Swal.fire({ icon:'warning', title:'No File', text:'Please select an Excel file.' }); return;
         }
+
+        const btn    = document.getElementById('importSubmit');
+        const loader = document.getElementById('importLoader');
+        const bar    = document.getElementById('uploadProgressBar');
+        const origHtml = btn?.innerHTML;
+
+        if (btn)    { btn.disabled = true; btn.innerHTML = '<i class="ri-loader-4-line"></i> Uploading…'; }
+        if (loader) loader.style.display = 'block';
+        if (bar)    bar.style.width = '10%';
+
+        const fd = new FormData(this);
+        fd.append('_method', 'POST');
+
+        fetch(window.routes.import, {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': CSRF, 'X-Requested-With': 'XMLHttpRequest' },
+            body: fd,
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (bar) bar.style.width = '100%';
+            if (data.success || data.warning) {
+                Swal.fire({ icon: data.warning ? 'warning' : 'success', title: data.warning ? 'Partial Success' : 'Imported!', text: data.message, timer: 2500, showConfirmButton: false });
+                bootstrap.Modal.getInstance(document.getElementById('importModal'))?.hide();
+                setTimeout(() => location.reload(), 2600);
+            } else {
+                Swal.fire({ icon:'error', title:'Import Failed', text: data.message || 'Unknown error.' });
+            }
+        })
+        .catch(err => Swal.fire({ icon:'error', title:'Upload Error', text: err.message }))
+        .finally(() => {
+            setTimeout(() => { if (loader) loader.style.display='none'; if (bar) bar.style.width='0%'; }, 1000);
+            if (btn) { btn.disabled = false; btn.innerHTML = origHtml || 'Upload'; }
+            if (file) file.value = '';
+        });
     });
 });
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function fmtNum(n, d) { return parseFloat(n).toFixed(d ?? 1); }
-
-function showToast(msg, type = 'info') {
-    // Minimal non-blocking toast (Bootstrap toast)
-    const id = 'toast_' + Date.now();
-    const colors = { success: '#16a34a', warning: '#d97706', danger: '#dc2626', info: '#2563eb' };
-    const html = `<div id="${id}" class="toast align-items-center border-0 text-white show" role="alert"
-        style="position:fixed;bottom:20px;right:20px;z-index:9999;background:${colors[type]};min-width:260px;">
-        <div class="d-flex p-3"><div class="me-auto">${msg}</div>
-        <button type="button" class="btn-close btn-close-white ms-2" onclick="this.closest('.toast').remove()"></button></div></div>`;
-    document.body.insertAdjacentHTML('beforeend', html);
-    setTimeout(() => document.getElementById(id)?.remove(), 4500);
-}
-
-// Include SweetAlert2 if needed
+/* SweetAlert2 safety net */
 if (typeof Swal === 'undefined') {
     const s = document.createElement('script');
     s.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';

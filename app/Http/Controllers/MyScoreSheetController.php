@@ -1681,4 +1681,81 @@ class MyScoreSheetController extends Controller
         session()->forget(['import_progress', 'import_status', 'import_message']);
         return response()->json(['success' => true]);
     }
+
+
+    /**
+ * Download a filled-in scores PDF showing actual student scores,
+ * totals, grades, positions and class statistics.
+ *
+ * Route: GET scoresheet/download-scores-pdf
+ * Name:  scoresheet.download-scores-pdf
+ */
+public function downloadScoresPdf(Request $request)
+{
+    try {
+        $subjectclassid = $request->input('subjectclass_id', session('subjectclass_id'));
+        $staffid        = $request->input('staff_id',        session('staff_id'));
+        $termid         = $request->input('term_id',         session('term_id'));
+        $sessionid      = $request->input('session_id',      session('session_id'));
+        $schoolclassid  = $request->input('schoolclass_id',  session('schoolclass_id'));
+
+        if (!$subjectclassid || !$staffid || !$termid || !$sessionid || !$schoolclassid) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Missing session data. Please open the scoresheet first.',
+            ], 400);
+        }
+
+        $broadsheets = $this->getBroadsheets($staffid, $termid, $sessionid, $schoolclassid, $subjectclassid);
+
+        if ($broadsheets->isEmpty()) {
+            return response()->json(['success' => false, 'message' => 'No students found for this subject.'], 404);
+        }
+
+        // Load assessment scores relation so the Blade can iterate them
+        $broadsheets->load(['assessmentScores']);
+
+        $schoolclass = Schoolclass::with('classcategories')->find($schoolclassid);
+        $assessments = collect();
+        if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
+            $categoryIds = $schoolclass->classcategories->pluck('id');
+            $assessments = Assessment::whereIn('classcategory_id', $categoryIds)
+                ->with('subAssessments')
+                ->orderBy('id')
+                ->get();
+        }
+
+        $teacher     = \App\Models\User::find($staffid);
+        $teacherName = $teacher
+            ? ($teacher->name ?? trim($teacher->firstname . ' ' . $teacher->lastname))
+            : '';
+
+        $school = SchoolInformation::first();
+
+        $pdf = Pdf::loadView('subjectscoresheet.scores-pdf', [
+            'broadsheets' => $broadsheets,
+            'assessments' => $assessments,
+            'classInfo'   => $broadsheets->first(),
+            'school'      => $school,
+            'teacherName' => $teacherName,
+        ]);
+
+        $pdf->setPaper('a4', 'landscape');
+
+        // Build a descriptive filename
+        $subject = preg_replace('/[^a-zA-Z0-9-]/', '_', $broadsheets->first()->subject ?? 'subject');
+        $class   = preg_replace('/[^a-zA-Z0-9-]/', '_', $broadsheets->first()->schoolclass ?? 'class');
+        $term    = preg_replace('/[^a-zA-Z0-9-]/', '_', $broadsheets->first()->term ?? 'term');
+        $filename = "scores-{$subject}-{$class}-{$term}-" . date('Y-m-d') . '.pdf';
+
+        return $pdf->download($filename);
+
+    } catch (\Exception $e) {
+        Log::error('Scores PDF download error: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to generate PDF: ' . $e->getMessage(),
+        ], 500);
+    }
+}
 }
