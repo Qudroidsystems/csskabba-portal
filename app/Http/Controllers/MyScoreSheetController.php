@@ -299,6 +299,7 @@ class MyScoreSheetController extends Controller
             $examScore = max(0, min($examScore, 100));
             $total     = round($examScore, 2);
 
+            // Grade on total score
             $grade  = $schoolclass && $schoolclass->classcategories->isNotEmpty()
                 ? $schoolclass->classcategories->first()->calculateGrade($total)
                 : $this->getDefaultGrade($total);
@@ -377,6 +378,7 @@ class MyScoreSheetController extends Controller
                 $examScore = max(0, min($examScore, 100));
                 $total     = round($examScore, 2);
 
+                // Grade on total score
                 $grade  = $schoolclass->classcategories->isNotEmpty()
                     ? $schoolclass->classcategories->first()->calculateGrade($total)
                     : $this->getDefaultGrade($total);
@@ -466,28 +468,68 @@ class MyScoreSheetController extends Controller
         }
     }
 
+    // =========================================================================
+    // GRADE PREVIEW ENDPOINTS
+    // =========================================================================
+
+    /**
+     * Original: returns grade for a single cum value (used by assessment scoresheet).
+     */
+    // public function calculateGradePreview(Request $request)
+    // {
+    //     $request->validate([
+    //         'schoolclass_id' => 'required|exists:schoolclass,id',
+    //         'cum'            => 'required|numeric|min:0|max:100',
+    //     ]);
+
+    //     $schoolclass = Schoolclass::with('classcategories')->findOrFail($request->schoolclass_id);
+    //     $grade       = $schoolclass->classcategories->isNotEmpty()
+    //         ? $schoolclass->classcategories->first()->calculateGrade($request->cum)
+    //         : $this->getDefaultGrade($request->cum);
+
+    //     return response()->json(['grade' => $grade]);
+    // }
+
+    /**
+     * NEW: Returns BOTH total-grade (graded on raw total) AND cum-grade (graded on cumulative).
+     * Called by real-time grade preview on input events in the scoresheet.
+     */
     public function calculateGradeForScore(Request $request)
     {
         $request->validate([
             'schoolclass_id' => 'required|exists:schoolclass,id',
-            'score'          => 'required|numeric|min:0|max:100',
+            'total'          => 'required|numeric|min:0|max:100',
+            'cum'            => 'required|numeric|min:0|max:100',
         ]);
 
         $schoolclass = Schoolclass::with('classcategories')->findOrFail($request->schoolclass_id);
-        $grade       = $schoolclass->classcategories->isNotEmpty()
-            ? $schoolclass->classcategories->first()->calculateGrade($request->score)
-            : $this->getDefaultGrade($request->score);
 
-        return response()->json(['grade' => $grade, 'remark' => $this->getRemark($grade)]);
+        $category = $schoolclass->classcategories->isNotEmpty()
+            ? $schoolclass->classcategories->first()
+            : null;
+
+        // Total grade: graded on raw total (this is saved to DB)
+        $totalGrade = $category
+            ? $category->calculateGrade($request->total)
+            : $this->getDefaultGrade($request->total);
+
+        // Cum grade: graded on cumulative average (display only)
+        $cumGrade = $category
+            ? $category->calculateGrade($request->cum)
+            : $this->getDefaultGrade($request->cum);
+
+        return response()->json([
+            'success'     => true,
+            'total_grade' => $totalGrade,
+            'cum_grade'   => $cumGrade,
+            'remark'      => $this->getRemark($totalGrade),
+        ]);
     }
 
     // =========================================================================
     // PDF DOWNLOADS
     // =========================================================================
 
-    /**
-     * Download blank marks sheet (teachers fill in scores manually).
-     */
     public function downloadMarksSheet(Request $request)
     {
         try {
@@ -534,9 +576,6 @@ class MyScoreSheetController extends Controller
         }
     }
 
-    /**
-     * Download filled scores PDF showing actual student scores, grades, positions.
-     */
     public function downloadScoresPdf(Request $request)
     {
         try {
@@ -547,10 +586,7 @@ class MyScoreSheetController extends Controller
             $schoolclassid  = $request->input('schoolclass_id',  session('schoolclass_id'));
 
             if (!$subjectclassid || !$staffid || !$termid || !$sessionid || !$schoolclassid) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Missing session data. Please open the scoresheet first.',
-                ], 400);
+                return response()->json(['success' => false, 'message' => 'Missing session data. Please open the scoresheet first.'], 400);
             }
 
             $broadsheets = $this->getBroadsheets($staffid, $termid, $sessionid, $schoolclassid, $subjectclassid);
@@ -559,7 +595,6 @@ class MyScoreSheetController extends Controller
                 return response()->json(['success' => false, 'message' => 'No students found for this subject.'], 404);
             }
 
-            // Ensure assessment scores are loaded for the PDF
             $broadsheets->load(['assessmentScores']);
 
             $schoolclass = Schoolclass::with('classcategories')->find($schoolclassid);
@@ -596,16 +631,10 @@ class MyScoreSheetController extends Controller
             return $pdf->download($filename);
         } catch (\Exception $e) {
             Log::error('Scores PDF download error: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to generate PDF: ' . $e->getMessage(),
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Failed to generate PDF: ' . $e->getMessage()], 500);
         }
     }
 
-    /**
-     * Download mock marks sheet PDF.
-     */
     public function mockDownloadMarkSheet(Request $request)
     {
         try {
@@ -781,46 +810,11 @@ class MyScoreSheetController extends Controller
                 'grade'             => $b->grade,
                 'position'          => $b->position,
                 'remark'            => $b->remark,
+                'avg'               => floatval($b->avg ?? 0),
                 'assessment_scores' => $assessmentScores,
             ];
         }
         return $formatted;
-    }
-
-    protected function verifyFilePassword($file, $providedPassword)
-    {
-        $required = env('EXCEL_PASSWORD', null);
-        if ($required && $providedPassword !== $required) {
-            throw new \Exception('Invalid password.');
-        }
-        return true;
-    }
-
-    protected function validateFileMetadata($file, $importData)
-    {
-        $rows = Excel::toArray(new \stdClass(), $file);
-        if (empty($rows) || empty($rows[0])) throw new \Exception('Could not read file metadata.');
-
-        $metadata = [];
-        foreach (array_slice($rows[0], 0, 10) as $row) {
-            if (!isset($row[0]) || !is_string($row[0])) continue;
-            $t = $row[0];
-            if (str_contains($t, 'Subject:')) { preg_match('/Subject:\s*([^\|]+)/', $t, $m); $metadata['subject'] = trim($m[1] ?? ''); }
-            if (str_contains($t, 'Class:'))   { preg_match('/Class:\s*([^\|]+)/',   $t, $m); $metadata['class']   = trim($m[1] ?? ''); }
-            if (str_contains($t, 'Term:'))    { preg_match('/Term:\s*([^\|]+)/',    $t, $m); $metadata['term']    = trim($m[1] ?? ''); }
-            if (str_contains($t, 'Session:')) { preg_match('/Session:\s*([^\|]+)/', $t, $m); $metadata['session'] = trim($m[1] ?? ''); }
-        }
-
-        $subjectClass = Subjectclass::find($importData['subjectclass_id']);
-        $errors       = [];
-
-        if (!empty($metadata['subject']) && $subjectClass
-            && !str_contains(strtolower($metadata['subject']), strtolower($subjectClass->subject->subject ?? ''))) {
-            $errors[] = "Subject mismatch. Expected: {$subjectClass->subject->subject}, Found: {$metadata['subject']}";
-        }
-
-        if (!empty($errors)) throw new \Exception('File validation failed: ' . implode(', ', $errors));
-        return true;
     }
 
     // =========================================================================
@@ -924,7 +918,7 @@ class MyScoreSheetController extends Controller
                     'total'              => $broadsheet->total,
                     'cum'                => $broadsheet->cum,
                     'bf'                 => $broadsheet->bf,
-                    'grade'              => $broadsheet->grade,
+                    'grade'              => $broadsheet->grade,   // graded on total
                     'remark'             => $broadsheet->remark,
                     'gpa'                => round($gpaCgpaData['gpa'], 2),
                     'gpa_grade'          => $gpaCgpaData['gpa_grade'] ?? 'F',
@@ -942,12 +936,11 @@ class MyScoreSheetController extends Controller
     }
 
     // =========================================================================
-    // BULK UPDATE (terminal)   ← FIXED validation + payload handling
+    // BULK UPDATE (terminal)
     // =========================================================================
 
     public function bulkUpdateScores(Request $request)
     {
-        // ── FIX: 'assessment_id' is nullable (not required_if) ───────────────
         $validated = $request->validate([
             'scores'               => 'required|array',
             'scores.*.id'          => 'required|exists:broadsheets,id',
@@ -959,8 +952,8 @@ class MyScoreSheetController extends Controller
             'subjectclass_id'      => 'required|exists:subjectclass,id',
             'staff_id'             => 'required|exists:users,id',
             'schoolclass_id'       => 'required|exists:schoolclass,id',
-            'assessment_id'        => 'nullable|exists:assessments,id',   // ← fixed
-            'is_sub'               => 'nullable|boolean',                 // ← fixed
+            'assessment_id'        => 'nullable|exists:assessments,id',
+            'is_sub'               => 'nullable|boolean',
         ]);
 
         $scores          = $validated['scores'];
@@ -995,7 +988,6 @@ class MyScoreSheetController extends Controller
                 $broadsheet      = Broadsheets::find($broadsheetId);
                 if (!$broadsheet) { $errors[] = "Broadsheet ID {$broadsheetId} not found."; continue; }
 
-                // ── FIX: assessments keyed by assessment/sub-assessment ID ──
                 $assessmentsData = $scoreData['assessments'] ?? [];
                 if (empty($assessmentsData)) continue;
 
@@ -1046,13 +1038,11 @@ class MyScoreSheetController extends Controller
                 $updatedCount++;
             }
 
-            // Metrics & positions inside transaction so they reflect the new scores
             $this->updateClassMetrics($subjectclass_id, $staff_id, $term_id, $session_id);
             $this->updateSubjectPositions($subjectclass_id, $staff_id, $term_id, $session_id);
             $this->updateClassPositions($schoolclass_id, $term_id, $session_id);
         });
 
-        // Re-fetch fresh data with server-computed grades/positions/GPA for the response
         $updatedBroadsheets = $this->getBroadsheets($staff_id, $term_id, $session_id, $schoolclass_id, $subjectclass_id);
         $this->computeOverallGPAAndCGPA($updatedBroadsheets, $schoolclass, $term_id, $session_id);
 
@@ -1109,6 +1099,7 @@ class MyScoreSheetController extends Controller
                     'broadsheets.bf',
                     'broadsheets.cum',
                     'broadsheets.grade',
+                    'broadsheets.avg',
                     'broadsheets.subject_position_class as position',
                     'broadsheets.term_id',
                 ]);
@@ -1130,10 +1121,11 @@ class MyScoreSheetController extends Controller
                     'total'              => $b->total,
                     'bf'                 => $b->bf,
                     'cum'                => $b->cum,
+                    'avg'                => $b->avg ?? 0,
                     'gpa'                => $b->gpa,
                     'gpa_grade'          => $b->gpa_grade  ?? 'F',
                     'cgpa'               => $b->cgpa,
-                    'grade'              => $b->grade,
+                    'grade'              => $b->grade,      // total-based grade (saved)
                     'position'           => $b->position,
                     'num_subjects'       => $b->num_subjects       ?? 0,
                     'total_grade_points' => $b->total_grade_points ?? 0.0,
@@ -1177,6 +1169,7 @@ class MyScoreSheetController extends Controller
                 'broadsheets.bf',
                 'broadsheets.cum',
                 'broadsheets.grade',
+                'broadsheets.avg',
                 'schoolterm.term',
                 'schoolsession.session',
                 'subject.subject',
@@ -1387,7 +1380,7 @@ class MyScoreSheetController extends Controller
     }
 
     // =========================================================================
-    // COMPUTE DYNAMIC TOTALS (terminal)
+    // COMPUTE DYNAMIC TOTALS — grade saved on TOTAL (not cum)
     // =========================================================================
 
     private function computeDynamicTotals($broadsheets, $assessments, $schoolclass, $termId, $sessionId)
@@ -1402,9 +1395,11 @@ class MyScoreSheetController extends Controller
 
             $newBf    = $this->getPreviousTermCum($broadsheet->student_id, $broadsheet->subject_id, $termId, $sessionId);
             $newCum   = $termId == 1 ? round($totalRaw, 2) : round(($totalRaw + $newBf) / 2, 2);
-            $newGrade = $schoolclass && $schoolclass->classcategories->isNotEmpty()
-                ? $schoolclass->classcategories->first()->calculateGrade($newCum)
-                : $this->getDefaultGrade($newCum);
+
+            // ── GRADE IS BASED ON TOTAL (raw), NOT cum ──────────────────────
+            $newGrade  = $schoolclass && $schoolclass->classcategories->isNotEmpty()
+                ? $schoolclass->classcategories->first()->calculateGrade($totalRaw)
+                : $this->getDefaultGrade($totalRaw);
             $newRemark = $this->getRemark($newGrade);
 
             $changed = abs($broadsheet->total - $totalRaw) > 0.01
@@ -1417,7 +1412,7 @@ class MyScoreSheetController extends Controller
                 $broadsheet->total  = $totalRaw;
                 $broadsheet->bf     = $newBf;
                 $broadsheet->cum    = $newCum;
-                $broadsheet->grade  = $newGrade;
+                $broadsheet->grade  = $newGrade;   // saved total-grade
                 $broadsheet->remark = $newRemark;
                 $broadsheet->save();
             }
@@ -1468,6 +1463,7 @@ class MyScoreSheetController extends Controller
             'broadsheet_records.subject_id',
             'schoolclass.schoolclass',
             'schoolclass.id as schoolclass_id',
+            'schoolclass.classcategoryid',           // ← needed for cum grade in Blade
             'schoolarm.arm',
             'schoolterm.term',
             'schoolsession.session',
@@ -1479,10 +1475,13 @@ class MyScoreSheetController extends Controller
             'broadsheets.total',
             'broadsheets.bf',
             'broadsheets.cum',
-            'broadsheets.grade',
+            'broadsheets.grade',                     // total-grade (saved)
             'broadsheets.subject_position_class as position',
             'broadsheets.remark',
             'broadsheets.vettedstatus',
+            'broadsheets.avg',                       // class subject average
+            'broadsheets.cmin',                      // class minimum
+            'broadsheets.cmax',                      // class maximum
         ]);
     }
 
@@ -1526,6 +1525,7 @@ class MyScoreSheetController extends Controller
             'broadsheet_records.subject_id',
             'schoolclass.schoolclass',
             'schoolclass.id as schoolclass_id',
+            'schoolclass.classcategoryid',
             'schoolarm.arm',
             'schoolterm.term',
             'schoolsession.session',
@@ -1541,6 +1541,9 @@ class MyScoreSheetController extends Controller
             'broadsheets.subject_position_class as position',
             'broadsheets.remark',
             'broadsheets.vettedstatus',
+            'broadsheets.avg',
+            'broadsheets.cmin',
+            'broadsheets.cmax',
         ]);
     }
 
@@ -1657,8 +1660,7 @@ class MyScoreSheetController extends Controller
             $rank++;
             if ($lastCum === null || $b->cum != $lastCum) { $lastPosition = $rank; $lastCum = $b->cum; }
             if ($b->subject_position_class != $lastPosition) {
-                $b->subject_position_class = $lastPosition;
-                $b->save();
+                Broadsheets::where('id', $b->id)->update(['subject_position_class' => $lastPosition]);
             }
         }
     }

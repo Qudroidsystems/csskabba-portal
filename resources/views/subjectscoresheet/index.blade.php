@@ -53,6 +53,40 @@
 .col-group { border: 1px solid var(--ss-border); border-radius: 8px; padding: 10px 14px; margin-bottom: 10px; }
 .col-group h6 { color: var(--ss-primary); font-weight: 600; margin-bottom: 8px; }
 
+/* Grade badge animations for real-time updates */
+.grade-badge, .cum-grade-badge {
+    display: inline-block;
+    transition: all .25s ease;
+    font-weight: 700;
+    font-size: 13px;
+    min-width: 28px;
+    text-align: center;
+}
+.grade-badge.updating, .cum-grade-badge.updating {
+    opacity: 0.5;
+    transform: scale(0.9);
+}
+.grade-badge.updated, .cum-grade-badge.updated {
+    animation: gradeFlash .4s ease;
+}
+@keyframes gradeFlash {
+    0%   { transform: scale(1.15); }
+    50%  { transform: scale(1.2);  }
+    100% { transform: scale(1);    }
+}
+
+/* Spinner for async grade fetch */
+.grade-loading {
+    display: inline-block;
+    width: 12px; height: 12px;
+    border: 2px solid #e2e8f0;
+    border-top-color: var(--ss-accent);
+    border-radius: 50%;
+    animation: spin .6s linear infinite;
+    vertical-align: middle;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
 @media (max-width: 768px) {
     .score-input { width: 64px; min-width: 64px; height: 42px; font-size: 1rem; }
     .stat-card   { padding: 10px 12px; }
@@ -84,11 +118,11 @@
     @php
         $first    = $broadsheets->first();
         $total    = $broadsheets->count();
-        $passed   = $broadsheets->filter(fn($b) => ($b->cum ?? 0) >= 40)->count();
+        $passed   = $broadsheets->filter(fn($b) => ($b->total ?? 0) >= 40)->count();
         $failed   = $total - $passed;
-        $avg      = $total > 0 ? round($broadsheets->avg('cum'), 1) : 0;
-        $highest  = $total > 0 ? round($broadsheets->max('cum'), 1) : 0;
-        $lowest   = $total > 0 ? round($broadsheets->min('cum'), 1) : 0;
+        $avg      = $total > 0 ? round($broadsheets->avg('total'), 1) : 0;
+        $highest  = $total > 0 ? round($broadsheets->max('total'), 1) : 0;
+        $lowest   = $total > 0 ? round($broadsheets->min('total'), 1) : 0;
         $passRate = $total > 0 ? round($passed / $total * 100) : 0;
         $gradeDist  = $broadsheets->groupBy('grade')->map->count();
         $gradeColors = ['A'=>'#16a34a','A1'=>'#16a34a','B'=>'#2563eb','B2'=>'#2563eb','B3'=>'#3b82f6',
@@ -152,19 +186,19 @@
                     <div class="row g-2">
                         <div class="col-6"><div class="p-2 rounded-3 text-center" style="background:#f0fdf4;">
                             <div class="fw-bold fs-5" style="color:var(--ss-success);">{{ $passed }}</div>
-                            <div class="text-muted" style="font-size:11px;">Passed</div>
+                            <div class="text-muted" style="font-size:11px;">Passed (Total)</div>
                         </div></div>
                         <div class="col-6"><div class="p-2 rounded-3 text-center" style="background:#fef2f2;">
                             <div class="fw-bold fs-5" style="color:var(--ss-danger);">{{ $failed }}</div>
-                            <div class="text-muted" style="font-size:11px;">Failed</div>
+                            <div class="text-muted" style="font-size:11px;">Failed (Total)</div>
                         </div></div>
                         <div class="col-6"><div class="p-2 rounded-3 text-center" style="background:#eff6ff;">
                             <div class="fw-bold fs-5" style="color:var(--ss-accent);">{{ $highest }}</div>
-                            <div class="text-muted" style="font-size:11px;">Highest</div>
+                            <div class="text-muted" style="font-size:11px;">Highest Total</div>
                         </div></div>
                         <div class="col-6"><div class="p-2 rounded-3 text-center" style="background:#fffbeb;">
                             <div class="fw-bold fs-5" style="color:var(--ss-warning);">{{ $lowest }}</div>
-                            <div class="text-muted" style="font-size:11px;">Lowest</div>
+                            <div class="text-muted" style="font-size:11px;">Lowest Total</div>
                         </div></div>
                     </div>
                 </div>
@@ -174,7 +208,7 @@
         <div class="col-lg-4">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-header border-0 pb-0 pt-3 px-3">
-                    <h6 class="fw-semibold mb-0" style="color:var(--ss-primary)"><i class="ri-pie-chart-line me-1"></i>Grade Distribution</h6>
+                    <h6 class="fw-semibold mb-0" style="color:var(--ss-primary)"><i class="ri-pie-chart-line me-1"></i>Grade Distribution (Total)</h6>
                 </div>
                 <div class="card-body pt-2">
                     @if($gradeDist->isEmpty())
@@ -226,6 +260,15 @@
     </div>
     @endif
 
+    {{-- ══ LEGEND ══════════════════════════════════════════════════════ --}}
+    <div class="d-flex align-items-center gap-3 mb-2 flex-wrap" style="font-size:12px;color:var(--ss-muted);">
+        <span><i class="ri-information-line me-1 text-info"></i>
+            <strong>Total Grade</strong> = grade based on raw assessment total (saved to DB) &nbsp;|&nbsp;
+            <strong>Cum Grade</strong> = grade based on cumulative average (display only) &nbsp;|&nbsp;
+            <strong>Class Avg</strong> = subject class average score
+        </span>
+    </div>
+
     {{-- ══ MAIN SCORESHEET CARD ════════════════════════════════════════ --}}
     <div class="row"><div class="col-12"><div class="card border-0 shadow-sm">
 
@@ -251,7 +294,6 @@
                     <button type="button" class="btn btn-sm btn-warning" id="downloadMarksSheet">
                         <i class="ri-file-pdf-line me-1"></i>Marks Sheet
                     </button>
-                    {{-- ★ NEW: Download Scores PDF --}}
                     <button type="button" class="btn btn-sm btn-danger" id="downloadScoresPdf">
                         <i class="ri-file-pdf-2-line me-1"></i>Scores PDF
                     </button>
@@ -271,7 +313,7 @@
                 <i class="ri-information-line me-2"></i>No scores available.
             </div>
 
-            {{-- Shared progress bar used by both download and save --}}
+            {{-- Download progress bar --}}
             <div id="downloadProgressContainer" style="display:none;" class="px-3 pt-3">
                 <div class="d-flex align-items-center gap-3 p-3 rounded-3" style="background:#fefce8;">
                     <div class="spinner-border spinner-border-sm text-warning"></div>
@@ -282,6 +324,7 @@
                 </div>
             </div>
 
+            {{-- Save progress bar --}}
             <div id="progressContainer" style="display:none;" class="px-3 pt-3">
                 <div class="d-flex align-items-center gap-3 p-3 rounded-3" style="background:#eff6ff;">
                     <div class="spinner-border spinner-border-sm text-primary"></div>
@@ -311,11 +354,19 @@
                             <th colspan="4" class="col-no-assessments text-center text-white opacity-75">No Assessments Defined</th>
                         @endforelse
                         <th class="col-total text-center">Total</th>
+                        {{-- Total Grade: graded on raw total, saved to DB --}}
+                        <th class="col-total-grade text-center" title="Grade based on Total score (saved)">
+                            Total<br><small class="fw-normal opacity-75">Grade</small>
+                        </th>
                         <th class="col-bf text-center">BF</th>
                         <th class="col-cum text-center">Cum</th>
+                        {{-- Cum Grade: graded on cumulative average, display only --}}
+                        <th class="col-cum-grade text-center" title="Grade based on Cumulative average (display only)">
+                            Cum<br><small class="fw-normal opacity-75">Grade</small>
+                        </th>
+                        <th class="col-avg text-center" title="Subject class average score">Class Avg</th>
                         <th class="col-gpa text-center">GPA</th>
                         <th class="col-cgpa text-center">CGPA</th>
-                        <th class="col-grade text-center">Grade</th>
                         <th class="col-position text-center">Pos</th>
                         <th class="col-vetted text-center">Status</th>
                     </tr>
@@ -330,14 +381,38 @@
                                 $rowTotal += $so ? $so->score : 0;
                             }
                             $cum = $broadsheet->cum ?? 0;
+
+                            // Total grade (saved to DB, graded on raw total)
+                            $totalGrade = $broadsheet->grade ?? '-';
+                            // Cum grade (display only, graded on cumulative)
+                            $gradeForCum = '-';
+                            if ($broadsheet->classcategories ?? null) {
+                                // prefer DB-stored cum grade if available; otherwise derive client-side
+                            }
+                            // Derive cum grade using same logic as controller
+                            if (isset($broadsheet->classcategoryid)) {
+                                $cat = \App\Models\ClassCategory::find($broadsheet->classcategoryid);
+                                $gradeForCum = $cat ? $cat->calculateGrade($cum) : '-';
+                            }
+
                             $cumColor = $cum >= 70 ? 'success' : ($cum >= 50 ? 'info' : ($cum >= 40 ? 'warning' : 'danger'));
+                            $totalColor = $rowTotal >= 70 ? 'success' : ($rowTotal >= 50 ? 'info' : ($rowTotal >= 40 ? 'warning' : 'danger'));
+
                             $vClass = match(true) {
                                 $broadsheet->vettedstatus === '1' => 'row-vetted',
                                 $broadsheet->vettedstatus === '0' => 'row-not-vetted',
                                 default => 'row-pending'
                             };
+
+                            $totalGradeColor = $gradeColors[$totalGrade] ?? '#6b7280';
+                            $cumGradeColor   = $gradeColors[$gradeForCum] ?? '#6b7280';
                         @endphp
-                        <tr class="{{ $vClass }}" data-id="{{ $broadsheet->id }}">
+                        <tr class="{{ $vClass }}"
+                            data-id="{{ $broadsheet->id }}"
+                            data-bf="{{ $broadsheet->bf ?? 0 }}"
+                            data-termid="{{ session('term_id') }}"
+                            data-schoolclassid="{{ $broadsheet->schoolclass_id ?? session('schoolclass_id') }}"
+                            data-categoryid="{{ $broadsheet->classcategoryid ?? '' }}">
                             <td class="col-checkbox">
                                 <div class="form-check mb-0">
                                     <input class="form-check-input score-checkbox" type="checkbox" data-id="{{ $broadsheet->id }}">
@@ -383,16 +458,42 @@
 
                             {{-- Total --}}
                             <td class="col-total text-center">
-                                <span class="badge bg-primary total-badge">{{ number_format($rowTotal, 1) }}</span>
+                                <span class="badge bg-{{ $totalColor }}-subtle text-{{ $totalColor }} fw-bold total-badge" style="font-size:12px;">
+                                    {{ number_format($rowTotal, 1) }}
+                                </span>
                             </td>
+
+                            {{-- Total Grade (saved, updates in real-time) --}}
+                            <td class="col-total-grade text-center">
+                                <span class="grade-badge" style="color:{{ $totalGradeColor }};" data-score="{{ $rowTotal }}">
+                                    {{ $totalGrade }}
+                                </span>
+                            </td>
+
                             {{-- BF --}}
                             <td class="col-bf text-center">
                                 <span class="badge bg-secondary-subtle text-secondary bf-badge">{{ number_format($broadsheet->bf ?? 0, 1) }}</span>
                             </td>
+
                             {{-- Cum --}}
                             <td class="col-cum text-center">
                                 <span class="badge bg-{{ $cumColor }}-subtle text-{{ $cumColor }} fw-bold cum-badge" style="font-size:12px;">{{ number_format($cum, 1) }}</span>
                             </td>
+
+                            {{-- Cum Grade (display only, recomputed on cum change) --}}
+                            <td class="col-cum-grade text-center">
+                                <span class="cum-grade-badge" style="color:{{ $cumGradeColor }};" data-score="{{ $cum }}">
+                                    {{ $gradeForCum }}
+                                </span>
+                            </td>
+
+                            {{-- Class Average --}}
+                            <td class="col-avg text-center">
+                                <span class="badge bg-purple-subtle text-purple avg-badge" style="background:#f3e8ff;color:#7c3aed;">
+                                    {{ number_format($broadsheet->avg ?? 0, 1) }}
+                                </span>
+                            </td>
+
                             {{-- GPA --}}
                             <td class="col-gpa text-center">
                                 <span class="badge bg-warning-subtle text-warning fw-semibold gpa-badge">{{ number_format($broadsheet->gpa ?? 0, 2) }}</span>
@@ -401,15 +502,10 @@
                             <td class="col-cgpa text-center">
                                 <span class="badge bg-dark-subtle text-dark cgpa-badge">{{ number_format($broadsheet->cgpa ?? 0, 2) }}</span>
                             </td>
-                            {{-- Grade - use a badge so JS can target .grade-badge --}}
-                            <td class="col-grade text-center">
-                                @php $gc = $gradeColors[$broadsheet->grade ?? 'F'] ?? '#6b7280'; @endphp
-                                <span class="fw-bold grade-badge" style="font-size:13px;color:{{ $gc }};">{{ $broadsheet->grade ?? '-' }}</span>
-                            </td>
                             {{-- Position --}}
                             <td class="col-position text-center">
                                 <span class="badge position-badge" style="background:var(--ss-primary);">
-                                    {{ $broadsheet->position ? $broadsheet->position.\App\Helpers\OrdinalHelper::getOrdinalSuffix($broadsheet->position) : '-' }}
+                                    {{ $broadsheet->position ? \App\Helpers\OrdinalHelper::getOrdinalSuffix($broadsheet->position) : '-' }}
                                 </span>
                             </td>
                             {{-- Status --}}
@@ -425,7 +521,7 @@
                         </tr>
                     @empty
                         <tr id="noDataRow">
-                            <td colspan="{{ ($assessments->count() ?: 4) + 13 }}" class="text-center py-4 text-muted">
+                            <td colspan="{{ ($assessments->count() ?: 4) + 15 }}" class="text-center py-4 text-muted">
                                 <i class="ri-inbox-line ri-2x d-block mb-2"></i>No scores available.
                             </td>
                         </tr>
@@ -486,7 +582,18 @@
                         @endif
                         <div class="col-md-4"><div class="col-group">
                             <h6>Scores & Metrics</h6>
-                            @foreach([['col-total','Total'],['col-bf','BF'],['col-cum','Cum'],['col-gpa','GPA'],['col-cgpa','CGPA'],['col-grade','Grade'],['col-position','Position'],['col-vetted','Status']] as [$cls,$lbl])
+                            @foreach([
+                                ['col-total','Total'],
+                                ['col-total-grade','Total Grade (saved)'],
+                                ['col-bf','BF'],
+                                ['col-cum','Cum'],
+                                ['col-cum-grade','Cum Grade (display)'],
+                                ['col-avg','Class Avg'],
+                                ['col-gpa','GPA'],
+                                ['col-cgpa','CGPA'],
+                                ['col-position','Position'],
+                                ['col-vetted','Status'],
+                            ] as [$cls,$lbl])
                             <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" id="chk-{{ $cls }}" data-col="{{ $cls }}" checked><label class="form-check-label" for="chk-{{ $cls }}">{{ $lbl }}</label></div>
                             @endforeach
                         </div></div>
@@ -565,17 +672,17 @@
 </div>
 
 {{-- ══════════════════════════════════════════════════════════════════ --}}
-{{-- INLINE SCRIPT — single source of truth, no init.js conflict      --}}
+{{-- INLINE SCRIPT                                                     --}}
 {{-- ══════════════════════════════════════════════════════════════════ --}}
 <script>
-/* ---------- CSRF -------------------------------------------------- */
+/* ── CSRF ──────────────────────────────────────────────────────────── */
 if (!document.querySelector('meta[name="csrf-token"]')) {
     const m = document.createElement('meta'); m.name = 'csrf-token';
     m.content = '{{ csrf_token() }}'; document.head.appendChild(m);
 }
 const CSRF = document.querySelector('meta[name="csrf-token"]').content;
 
-/* ---------- Window globals (read by subjectscoresheet.init.js too) - */
+/* ── Window globals ─────────────────────────────────────────────────── */
 window.routes = {
     singleUpdate      : '{{ route("subjectscoresheet.single-update") }}',
     bulkUpdate        : '{{ route("subjectscoresheet.bulk-update") }}',
@@ -586,6 +693,7 @@ window.routes = {
     downloadMarksSheet: '{{ route("scoresheet.download-marks-sheet") }}',
     downloadScoresPdf : '{{ route("scoresheet.download-scores-pdf") }}',
     gradePreview      : '{{ route("subjectscoresheet.grade-preview") }}',
+    gradeForScore     : '{{ route("subjectscoresheet.grade-for-score") }}',
 };
 window.term_id         = {{ session('term_id')         ?? 'null' }};
 window.session_id      = {{ session('session_id')      ?? 'null' }};
@@ -595,10 +703,55 @@ window.staff_id        = {{ session('staff_id')        ?? 'null' }};
 window.is_senior       = {{ ($is_senior ?? false) ? 'true' : 'false' }};
 window.broadsheets     = @json($broadsheets ?? []);
 
-/* ---------- Helpers ----------------------------------------------- */
-const fmtN = (n, d = 1) => parseFloat(n || 0).toFixed(d);
-const ord  = n => { if (!n || isNaN(n)) return '-'; n=+n; const s=n%100; return n+(s>=11&&s<=13?'th':['th','st','nd','rd'][n%10]||'th'); };
+/* ── Grade colours map ─────────────────────────────────────────────── */
+const GRADE_COLORS = {
+    'A':'#16a34a','A1':'#16a34a',
+    'B':'#2563eb','B2':'#2563eb','B3':'#3b82f6',
+    'C':'#7c3aed','C4':'#7c3aed','C5':'#8b5cf6','C6':'#a78bfa',
+    'D':'#d97706','D7':'#d97706','E8':'#f59e0b',
+    'F':'#dc2626','F9':'#dc2626',
+};
 
+/* ── Client-side grade fallback (matches server logic) ─────────────── */
+function clientGrade(score) {
+    score = parseFloat(score) || 0;
+    if (window.is_senior) {
+        if (score >= 75) return 'A1';
+        if (score >= 70) return 'B2';
+        if (score >= 65) return 'B3';
+        if (score >= 60) return 'C4';
+        if (score >= 55) return 'C5';
+        if (score >= 50) return 'C6';
+        if (score >= 45) return 'D7';
+        if (score >= 40) return 'E8';
+        return 'F9';
+    }
+    if (score >= 70) return 'A';
+    if (score >= 60) return 'B';
+    if (score >= 50) return 'C';
+    if (score >= 40) return 'D';
+    return 'F';
+}
+
+/* ── Debounce ────────────────────────────────────────────────────────── */
+function debounce(fn, ms) {
+    let t;
+    return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+}
+
+/* ── Per-row grade fetch queue (prevents concurrent requests per row) ── */
+const gradeTimers = {};
+
+/* ── Format number ───────────────────────────────────────────────────── */
+const fmtN = (n, d = 1) => parseFloat(n || 0).toFixed(d);
+const ord  = n => {
+    if (!n || isNaN(n)) return '-';
+    n = +n;
+    const s = n % 100;
+    return n + (s >= 11 && s <= 13 ? 'th' : (['th','st','nd','rd'][n % 10] || 'th'));
+};
+
+/* ── Toast ──────────────────────────────────────────────────────────── */
 function showToast(msg, type = 'info') {
     const colors = { success:'#16a34a', warning:'#d97706', danger:'#dc2626', info:'#2563eb' };
     const id = 'toast_' + Date.now();
@@ -610,7 +763,103 @@ function showToast(msg, type = 'info') {
     setTimeout(() => document.getElementById(id)?.remove(), 4500);
 }
 
-/* ---------- Row update helpers ------------------------------------ */
+/* ── Apply grade badge ───────────────────────────────────────────────── */
+function applyGrade(badge, grade) {
+    if (!badge) return;
+    badge.textContent = grade || '-';
+    badge.style.color = GRADE_COLORS[grade] || '#6b7280';
+    badge.classList.remove('updating');
+    badge.classList.add('updated');
+    setTimeout(() => badge.classList.remove('updated'), 500);
+}
+
+/* ── Real-time grade update for a row ───────────────────────────────── */
+/**
+ * Called whenever a score input changes.
+ * 1. Immediately compute grades client-side for instant feedback.
+ * 2. After debounce (400ms), confirm with server (handles custom grade scales).
+ */
+function updateRowGrades(row) {
+    const bid          = row.dataset.id;
+    const bf           = parseFloat(row.dataset.bf) || 0;
+    const termId       = parseInt(row.dataset.termid) || window.term_id;
+    const schoolclasId = parseInt(row.dataset.schoolclassid) || window.schoolclass_id;
+
+    // Sum all assessment inputs
+    let totalRaw = 0;
+    row.querySelectorAll('.score-input').forEach(inp => { totalRaw += parseFloat(inp.value) || 0; });
+
+    // Compute cum
+    const cum = termId == 1 ? totalRaw : (totalRaw + bf) / 2;
+
+    // ── Update total badge ──────────────────────────────────────────
+    const totalBadge = row.querySelector('.total-badge');
+    if (totalBadge) {
+        totalBadge.textContent = fmtN(totalRaw);
+        const tc = totalRaw >= 70 ? 'success' : totalRaw >= 50 ? 'info' : totalRaw >= 40 ? 'warning' : 'danger';
+        totalBadge.className = `badge fw-bold total-badge bg-${tc}-subtle text-${tc}`;
+        totalBadge.style.fontSize = '12px';
+    }
+
+    // ── Update cum badge ────────────────────────────────────────────
+    const cumBadge = row.querySelector('.cum-badge');
+    if (cumBadge) {
+        cumBadge.textContent = fmtN(cum);
+        const cc = cum >= 70 ? 'success' : cum >= 50 ? 'info' : cum >= 40 ? 'warning' : 'danger';
+        cumBadge.className = `badge fw-bold cum-badge bg-${cc}-subtle text-${cc}`;
+        cumBadge.style.fontSize = '12px';
+    }
+
+    // ── Instant client-side grades (immediate feedback) ─────────────
+    const totalGradeBadge = row.querySelector('.grade-badge');
+    const cumGradeBadge   = row.querySelector('.cum-grade-badge');
+
+    const instantTotalGrade = clientGrade(totalRaw);
+    const instantCumGrade   = clientGrade(cum);
+
+    applyGrade(totalGradeBadge, instantTotalGrade);
+    applyGrade(cumGradeBadge,   instantCumGrade);
+
+    // ── Debounced server confirmation ───────────────────────────────
+    clearTimeout(gradeTimers[bid]);
+    gradeTimers[bid] = setTimeout(async () => {
+        try {
+            // Show loading spinner while fetching
+            if (totalGradeBadge) {
+                totalGradeBadge.classList.add('updating');
+                totalGradeBadge.innerHTML = '<span class="grade-loading"></span>';
+            }
+            if (cumGradeBadge) {
+                cumGradeBadge.classList.add('updating');
+                cumGradeBadge.innerHTML = '<span class="grade-loading"></span>';
+            }
+
+            const res  = await fetch(window.routes.gradeForScore, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+                body: JSON.stringify({
+                    schoolclass_id: schoolclasId,
+                    total:          totalRaw,
+                    cum:            cum,
+                }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                applyGrade(totalGradeBadge, data.total_grade);
+                applyGrade(cumGradeBadge,   data.cum_grade);
+            } else {
+                // Fallback to client grades
+                applyGrade(totalGradeBadge, instantTotalGrade);
+                applyGrade(cumGradeBadge,   instantCumGrade);
+            }
+        } catch {
+            applyGrade(totalGradeBadge, instantTotalGrade);
+            applyGrade(cumGradeBadge,   instantCumGrade);
+        }
+    }, 400);
+}
+
+/* ── Validate input ─────────────────────────────────────────────────── */
 function validateInput(inp) {
     const max = parseFloat(inp.dataset.max) || 0;
     const val = parseFloat(inp.value) || 0;
@@ -618,14 +867,7 @@ function validateInput(inp) {
     return val <= max;
 }
 
-function updateRowTotal(row) {
-    let sum = 0;
-    row.querySelectorAll('.score-input').forEach(i => sum += parseFloat(i.value) || 0);
-    const badge = row.querySelector('.total-badge');
-    if (badge) badge.textContent = fmtN(sum);
-}
-
-/* ---------- Individual save --------------------------------------- */
+/* ── Individual save (on blur / Enter) ──────────────────────────────── */
 function saveIndividualScore(input) {
     const broadsheetId = input.dataset.id;
     const assessmentId = parseInt(input.dataset.field);
@@ -652,43 +894,47 @@ function saveIndividualScore(input) {
         if (!data.success) { showToast(data.message || 'Could not save.', 'warning'); return; }
         const d = data.data;
 
-        // Update cum badge — recolour too
+        // BF
+        const bfBadge = row.querySelector('.bf-badge');
+        if (bfBadge && d.bf != null) bfBadge.textContent = fmtN(d.bf);
+
+        // Cum
         const cumBadge = row.querySelector('.cum-badge');
         if (cumBadge && d.cum != null) {
             const cum = parseFloat(d.cum);
             cumBadge.textContent = fmtN(cum);
-            cumBadge.className = 'badge fw-bold cum-badge ' +
-                (cum >= 70 ? 'bg-success-subtle text-success' :
-                 cum >= 50 ? 'bg-info-subtle text-info' :
-                 cum >= 40 ? 'bg-warning-subtle text-warning' :
-                             'bg-danger-subtle text-danger');
+            const cc = cum >= 70 ? 'success' : cum >= 50 ? 'info' : cum >= 40 ? 'warning' : 'danger';
+            cumBadge.className = `badge fw-bold cum-badge bg-${cc}-subtle text-${cc}`;
         }
-        // Grade
-        const gradeBadge = row.querySelector('.grade-badge');
-        if (gradeBadge && d.grade != null) gradeBadge.textContent = d.grade;
-        // BF
-        const bfBadge = row.querySelector('.bf-badge');
-        if (bfBadge && d.bf != null) bfBadge.textContent = fmtN(d.bf);
+
+        // Total grade (from server — authoritative, graded on total)
+        const totalGradeBadge = row.querySelector('.grade-badge');
+        if (totalGradeBadge && d.grade != null) applyGrade(totalGradeBadge, d.grade);
+
+        // Cum grade (derive from server cum or use client grade)
+        const cumGradeBadge = row.querySelector('.cum-grade-badge');
+        if (cumGradeBadge && d.cum != null) applyGrade(cumGradeBadge, clientGrade(parseFloat(d.cum)));
+
         // GPA / CGPA
         const gpaBadge  = row.querySelector('.gpa-badge');
         const cgpaBadge = row.querySelector('.cgpa-badge');
-        if (gpaBadge  && d.gpa  != null) gpaBadge.textContent  = fmtN(d.gpa, 2);
+        if (gpaBadge  && d.gpa  != null) gpaBadge.textContent  = fmtN(d.gpa,  2);
         if (cgpaBadge && d.cgpa != null) cgpaBadge.textContent = fmtN(d.cgpa, 2);
 
         input.classList.add('is-saved');
         setTimeout(() => input.classList.remove('is-saved'), 2000);
     })
     .catch(err => {
-        console.warn('singleUpdate network error:', err.message);
+        console.warn('singleUpdate error:', err.message);
         showToast('Network issue — score may not have saved.', 'danger');
     });
 }
 
-/* ---------- Bulk save --------------------------------------------- */
+/* ── Bulk save ──────────────────────────────────────────────────────── */
 function bulkSave() {
     const invalid = document.querySelectorAll('.score-input.is-invalid').length;
     if (invalid) {
-        Swal.fire({ icon:'warning', title:'Invalid Scores', text:`${invalid} score(s) exceed their maximum. Please fix them first.` });
+        Swal.fire({ icon:'warning', title:'Invalid Scores', text:`${invalid} score(s) exceed their maximum.` });
         return;
     }
 
@@ -698,9 +944,7 @@ function bulkSave() {
         row.querySelectorAll('.score-input').forEach(inp => {
             assessments[inp.dataset.field] = parseFloat(inp.value) || 0;
         });
-        if (Object.keys(assessments).length) {
-            scores.push({ id: row.dataset.id, assessments });
-        }
+        if (Object.keys(assessments).length) scores.push({ id: row.dataset.id, assessments });
     });
 
     if (!scores.length) return;
@@ -710,7 +954,7 @@ function bulkSave() {
     if (prog) prog.style.display = 'block';
     let w = 0; const iv = setInterval(() => { w = Math.min(w + 8, 90); if (bar) bar.style.width = w + '%'; }, 150);
 
-    const btn = document.getElementById('bulkUpdateScores');
+    const btn      = document.getElementById('bulkUpdateScores');
     const origHtml = btn?.innerHTML;
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ri-loader-4-line"></i> Saving…'; }
 
@@ -730,44 +974,61 @@ function bulkSave() {
     .then(r => r.json())
     .then(data => {
         clearInterval(iv); if (bar) bar.style.width = '100%';
-
         if (!data.success) {
             Swal.fire({ icon:'error', title:'Save Failed', text: data.message || 'Server error.' });
             return;
         }
 
-        // Update every row from server response — server-computed grades/positions
         const serverSheets = data.data?.broadsheets ?? [];
         serverSheets.forEach(bs => {
             const row = document.querySelector(`#scoresheetTableBody tr[data-id="${bs.id}"]`);
             if (!row) return;
 
-            const cum = parseFloat(bs.cum ?? 0);
-
-            const cumBadge = row.querySelector('.cum-badge');
-            if (cumBadge) {
-                cumBadge.textContent = fmtN(cum);
-                cumBadge.className = 'badge fw-bold cum-badge ' +
-                    (cum >= 70 ? 'bg-success-subtle text-success' :
-                     cum >= 50 ? 'bg-info-subtle text-info' :
-                     cum >= 40 ? 'bg-warning-subtle text-warning' :
-                                 'bg-danger-subtle text-danger');
+            // Total badge
+            const total = parseFloat(bs.total ?? 0);
+            const totalBadge = row.querySelector('.total-badge');
+            if (totalBadge) {
+                totalBadge.textContent = fmtN(total);
+                const tc = total >= 70 ? 'success' : total >= 50 ? 'info' : total >= 40 ? 'warning' : 'danger';
+                totalBadge.className = `badge fw-bold total-badge bg-${tc}-subtle text-${tc}`;
             }
-            const gradeBadge = row.querySelector('.grade-badge');
-            if (gradeBadge) gradeBadge.textContent = bs.grade ?? '-';
 
+            // Total grade badge (server-authoritative, graded on total)
+            const totalGradeBadge = row.querySelector('.grade-badge');
+            if (totalGradeBadge) applyGrade(totalGradeBadge, bs.grade ?? '-');
+
+            // BF
             const bfBadge = row.querySelector('.bf-badge');
             if (bfBadge) bfBadge.textContent = fmtN(bs.bf);
 
+            // Cum badge
+            const cum = parseFloat(bs.cum ?? 0);
+            const cumBadge = row.querySelector('.cum-badge');
+            if (cumBadge) {
+                cumBadge.textContent = fmtN(cum);
+                const cc = cum >= 70 ? 'success' : cum >= 50 ? 'info' : cum >= 40 ? 'warning' : 'danger';
+                cumBadge.className = `badge fw-bold cum-badge bg-${cc}-subtle text-${cc}`;
+            }
+
+            // Cum grade badge (display only, derived from cum)
+            const cumGradeBadge = row.querySelector('.cum-grade-badge');
+            if (cumGradeBadge) applyGrade(cumGradeBadge, clientGrade(cum));
+
+            // Avg
+            const avgBadge = row.querySelector('.avg-badge');
+            if (avgBadge && bs.avg != null) avgBadge.textContent = fmtN(bs.avg);
+
+            // GPA / CGPA
             const gpaBadge  = row.querySelector('.gpa-badge');
             const cgpaBadge = row.querySelector('.cgpa-badge');
-            if (gpaBadge)  gpaBadge.textContent  = fmtN(bs.gpa, 2);
+            if (gpaBadge)  gpaBadge.textContent  = fmtN(bs.gpa,  2);
             if (cgpaBadge) cgpaBadge.textContent = fmtN(bs.cgpa, 2);
 
+            // Position
             const posBadge = row.querySelector('.position-badge');
             if (posBadge) posBadge.textContent = ord(bs.position);
 
-            // Mark all inputs saved
+            // Mark inputs saved
             row.querySelectorAll('.score-input').forEach(i => {
                 i.classList.add('is-saved');
                 setTimeout(() => i.classList.remove('is-saved'), 2000);
@@ -782,47 +1043,39 @@ function bulkSave() {
         console.error('bulkSave error:', err);
     })
     .finally(() => {
-        setTimeout(() => { if (prog) prog.style.display = 'none'; if (bar) bar.style.width='0%'; }, 1000);
+        setTimeout(() => { if (prog) prog.style.display = 'none'; if (bar) bar.style.width = '0%'; }, 1000);
         if (btn) { btn.disabled = false; btn.innerHTML = origHtml || '<i class="ri-save-line me-1"></i>Save All Scores'; }
     });
 }
 
-/* ---------- PDF download helper ----------------------------------- */
+/* ── PDF download helper ────────────────────────────────────────────── */
 function startPdfDownload(url, filename, label) {
-    const cont  = document.getElementById('downloadProgressContainer');
-    const bar   = document.getElementById('downloadProgressBar');
-    const lbl   = document.getElementById('downloadProgressLabel');
+    const cont = document.getElementById('downloadProgressContainer');
+    const bar  = document.getElementById('downloadProgressBar');
+    const lbl  = document.getElementById('downloadProgressLabel');
     if (cont) cont.style.display = 'block';
     if (bar)  bar.style.width   = '10%';
     if (lbl)  lbl.textContent   = label || 'Downloading…';
 
     fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF } })
     .then(async r => {
-        if (!r.ok) {
-            const err = await r.json().catch(() => ({}));
-            throw new Error(err.message || 'Download failed.');
-        }
+        if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.message || 'Download failed.'); }
         if (bar) bar.style.width = '90%';
         return r.blob();
     })
     .then(blob => {
         if (bar) bar.style.width = '100%';
         const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob);
-        a.download = filename;
+        a.href = URL.createObjectURL(blob); a.download = filename;
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         URL.revokeObjectURL(a.href);
         showToast('Downloaded successfully!', 'success');
     })
-    .catch(err => {
-        Swal.fire({ icon:'error', title:'Download Failed', text: err.message });
-    })
-    .finally(() => {
-        setTimeout(() => { if (cont) cont.style.display='none'; if (bar) bar.style.width='0%'; }, 1200);
-    });
+    .catch(err => Swal.fire({ icon:'error', title:'Download Failed', text: err.message }))
+    .finally(() => setTimeout(() => { if (cont) cont.style.display='none'; if (bar) bar.style.width='0%'; }, 1200));
 }
 
-/* ---------- DOM ready --------------------------------------------- */
+/* ── DOM ready ──────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', function () {
 
     /* tooltips */
@@ -884,16 +1137,18 @@ document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('.score-checkbox').forEach(cb => cb.checked = false);
     });
 
-    /* score inputs */
+    /* ── SCORE INPUTS: real-time grade preview + save ─────────────────── */
     document.querySelectorAll('.score-input').forEach(inp => {
         inp.addEventListener('focus', function() { this.select(); });
+
         inp.addEventListener('input', function() {
             validateInput(this);
-            updateRowTotal(this.closest('tr'));
+            const row = this.closest('tr');
+            if (row) updateRowGrades(row);   // ← real-time grade update
         });
+
         inp.addEventListener('blur', function() {
             if (!validateInput(this)) return;
-            updateRowTotal(this.closest('tr'));
             const orig = parseFloat(this.dataset.original) || 0;
             const curr = parseFloat(this.value) || 0;
             if (Math.abs(curr - orig) > 0.001) {
@@ -901,6 +1156,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 saveIndividualScore(this);
             }
         });
+
         inp.addEventListener('keydown', function(e) {
             if (e.key !== 'Enter') return;
             e.preventDefault();
@@ -943,12 +1199,10 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    /* marks sheet download */
+    /* PDF downloads */
     document.getElementById('downloadMarksSheet')?.addEventListener('click', () => {
         startPdfDownload(window.routes.downloadMarksSheet, 'marks-sheet.pdf', 'Generating Marks Sheet…');
     });
-
-    /* ★ scores PDF download */
     document.getElementById('downloadScoresPdf')?.addEventListener('click', () => {
         startPdfDownload(window.routes.downloadScoresPdf, 'scores-sheet.pdf', 'Generating Scores PDF…');
     });
@@ -996,7 +1250,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (bar)    bar.style.width = '10%';
 
         const fd = new FormData(this);
-        fd.append('_method', 'POST');
 
         fetch(window.routes.import, {
             method: 'POST',
