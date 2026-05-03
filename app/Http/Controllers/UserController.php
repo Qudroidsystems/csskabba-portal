@@ -915,8 +915,8 @@ class UserController extends Controller
             // Get UNIQUE classes
             $classes = DB::table('schoolclass')
                 ->select('id', 'schoolclass as name')
-                ->orderBy('schoolclass')
                 ->distinct()
+                ->orderBy('schoolclass')
                 ->get();
 
             // Get all arms
@@ -927,8 +927,7 @@ class UserController extends Controller
 
             // Get class-arm relationships
             $classArms = DB::table('schoolclass')
-                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-                ->select('schoolclass.id as class_id', 'schoolclass.schoolclass', 'schoolarm.id as arm_id', 'schoolarm.arm')
+                ->select('id as class_id', 'schoolclass', 'arm')
                 ->get();
 
             return response()->json([
