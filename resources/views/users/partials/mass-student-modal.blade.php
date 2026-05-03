@@ -168,7 +168,7 @@
                                     $otherRoles = $allRoles->where('name', '!=', 'Student');
                                 @endphp
                                 @if($studentRole)
-                                    <div class="card border-success mb-3"><div class="card-body bg-success bg-opacity-10"><div class="form-check"><input type="checkbox" class="form-check-input" name="roles[]" value="{{ $studentRole->name }}" id="role_{{ $studentRole->name }}" checked><label class="form-check-label fw-bold text-success fs-5" for="role_{{ $studentRole->name }}"><i class="bi bi-person-badge-fill me-2"></i>{{ $studentRole->name }}<span class="badge bg-success ms-2">Default</span></label><p class="text-muted mt-2 mb-0 ms-4"><i class="bi bi-check-circle-fill text-success me-1"></i>Automatically assigned to all student accounts.</p></div></div></div>
+                                    <div class="card border-success mb-3"><div class="card-body bg-success bg-opacity-10"><div class="form-check"><input type="checkbox" class="form-check-input" name="roles[]" value="{{ $studentRole->name }}" id="role_{{ $studentRole->name }}" checked disabled><label class="form-check-label fw-bold text-success fs-5" for="role_{{ $studentRole->name }}"><i class="bi bi-person-badge-fill me-2"></i>{{ $studentRole->name }}<span class="badge bg-success ms-2">Default</span></label><p class="text-muted mt-2 mb-0 ms-4"><i class="bi bi-check-circle-fill text-success me-1"></i>Automatically assigned to all student accounts.</p></div></div></div>
                                 @endif
                                 @if($otherRoles->count() > 0)
                                     <hr><p class="text-muted mb-2"><i class="bi bi-shield-lock-fill me-1"></i> The following roles cannot be assigned to student accounts:</p>
@@ -693,7 +693,11 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             <table class="summary-table">
                 <thead><tr><th>Category</th><th>Count</th></tr></thead>
-                <tbody><tr><td>✅ Newly Created Accounts</td><td>${currentResults.created?.length || 0}</td></tr><tr><td>🔄 Password Resets</td><td>${currentResults.reset?.length || 0}</td></tr><tr><td>⏭️ Skipped</td><td>${currentResults.skipped?.length || 0}</td></tr></tbody>
+                <tbody><tr><td>✅ Newly Created Accounts</td><td>${currentResults.created?.length || 0}</td><tr>
+                            <td>🔄 Password Resets</td><td>${currentResults.reset?.length || 0}</td>
+                        </tr>
+                        <tr><td>⏭️ Skipped</td><td>${currentResults.skipped?.length || 0}</td></tr>
+                </tbody>
             </table>
             <p style="margin-top: 15px; font-size: 11px; color: #666;"><i class="bi bi-scissors"></i> Each student's credential slip can be cut along the dashed lines.</p>
         </div>

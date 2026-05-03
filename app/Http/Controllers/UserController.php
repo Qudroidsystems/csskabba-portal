@@ -912,12 +912,18 @@ class UserController extends Controller
                 ->limit($limit)
                 ->get();
 
-            // Get UNIQUE classes - distinct by id to avoid duplicates
+            // Get UNIQUE class names - group by schoolclass name to remove duplicates
             $classes = DB::table('schoolclass')
-                ->select('id', 'schoolclass as name')
-                ->distinct()
+                ->select('schoolclass as name', DB::raw('MIN(id) as id'))
+                ->groupBy('schoolclass')
                 ->orderBy('schoolclass')
-                ->get();
+                ->get()
+                ->map(function ($class) {
+                    return (object) [
+                        'id' => $class->id,
+                        'name' => $class->name
+                    ];
+                });
 
             // Get all arms
             $arms = DB::table('schoolarm')
@@ -925,10 +931,10 @@ class UserController extends Controller
                 ->orderBy('arm')
                 ->get();
 
-            // Get class-arm relationships: which arms belong to which class
+            // Get class-arm relationships - which arms belong to which class
             $classArms = DB::table('schoolclass')
                 ->join('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-                ->select('schoolclass.id as class_id', 'schoolclass.schoolclass', 'schoolarm.id as arm_id', 'schoolarm.arm as arm_name')
+                ->select('schoolclass.id as class_id', 'schoolclass.schoolclass as class_name', 'schoolarm.id as arm_id', 'schoolarm.arm as arm_name')
                 ->orderBy('schoolclass.schoolclass')
                 ->orderBy('schoolarm.arm')
                 ->get();
