@@ -94,14 +94,6 @@ Auth::routes();
 Route::get('/home', [HomeController::class, 'index'])->name('home');
 Route::get('/student-id-cards/verify/{token}',[StudentIdCardController::class, 'verify'])->name('student-id-cards.verify');
 Route::group(['middleware' => ['auth']], function () {
-        // ── Users resource + explicit sub-routes ────────────────────────
-        // IMPORTANT: all GET /users/xxx static routes must come BEFORE the resource
-        // or they'll be captured by /users/{user}
-
-        // ==============================================
-        // USER MANAGEMENT ROUTES
-        // ==============================================
-
         // These must come BEFORE the resource route
         Route::get('/users/all', [UserController::class, 'allUsers'])->name('users.all');
         Route::get('/users/paginate', [UserController::class, 'paginate'])->name('users.paginate');
