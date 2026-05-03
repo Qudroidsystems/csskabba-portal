@@ -393,6 +393,9 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
     Route::post('subjectscoresheet/bulk-update', [MyScoreSheetController::class, 'bulkUpdateScores'])->name('subjectscoresheet.bulk-update');
     Route::post('subjectscoresheet/single-update', [MyScoreSheetController::class, 'singleUpdateScore'])->name('subjectscoresheet.single-update');
     Route::get('scoresheet/download-scores-pdf',[MyScoreSheetController::class, 'downloadScoresPdf'])->name('scoresheet.download-scores-pdf');
+    // Add this route alongside your other subjectscoresheet routes
+    Route::post('subjectscoresheet/grade-for-score', [MyScoreSheetController::class, 'calculateGradeForScore'])->name('subjectscoresheet.grade-for-score');
+
 
     Route::post('/studentreports/column-options', [ViewStudentReportController::class, 'getColumnOptions'])->name('studentreports.column-options');
 
