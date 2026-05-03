@@ -1,4 +1,3 @@
-{{-- resources/views/schoolbill/index.blade.php --}}
 @extends('layouts.master')
 
 @section('content')
@@ -327,49 +326,69 @@ $(document).ready(function () {
         processing: true,
         serverSide: true,
         ajax: {
-            url:     ROUTES.index,
-            type:    'GET',
+            url: ROUTES.index,
+            type: 'GET',
+            dataType: 'json',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            error: function (xhr) {
-                console.error('DataTables error:', xhr.responseText);
-                Swal.fire('Error', 'Failed to load bills. Please refresh.', 'error');
+            error: function (xhr, status, error) {
+                console.error('DataTables error:', {
+                    status: status,
+                    error: error,
+                    responseText: xhr.responseText,
+                    statusCode: xhr.status
+                });
+
+                let errorMsg = 'Failed to load bills. ';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMsg += xhr.responseJSON.message;
+                } else if (xhr.status === 500) {
+                    errorMsg += 'Server error. Please check the console for details.';
+                } else {
+                    errorMsg += 'Please refresh and try again.';
+                }
+
+                Swal.fire('Error', errorMsg, 'error');
             }
         },
         columns: [
             {
-                data: 'id', orderable: false, searchable: false,
-                render: data =>
-                    `<input type="checkbox" class="form-check-input row-checkbox" value="${data}">`
+                data: 'id',
+                orderable: false,
+                searchable: false,
+                render: function(data) {
+                    return data ? `<input type="checkbox" class="form-check-input row-checkbox" value="${data}">` : '';
+                }
             },
-            { data: 'DT_RowIndex', orderable: false, searchable: false },
-            { data: 'title' },
-            { data: 'formatted_amount',  orderable: false },
+            { data: 'DT_RowIndex', orderable: false, searchable: false, defaultContent: '' },
+            { data: 'title', defaultContent: '' },
+            { data: 'formatted_amount', orderable: false, defaultContent: '₦0.00' },
             {
                 data: 'description',
-                render: data => data
-                    ? `<span class="text-muted">${data.length > 50 ? data.substring(0, 50) + '…' : data}</span>`
-                    : '<span class="text-muted fst-italic">—</span>'
+                render: function(data) {
+                    if (!data) return '<span class="text-muted fst-italic">—</span>';
+                    return `<span class="text-muted">${data.length > 50 ? data.substring(0, 50) + '…' : data}</span>`;
+                },
+                defaultContent: '<span class="text-muted fst-italic">—</span>'
             },
-            { data: 'status_name',   orderable: false },
-            { data: 'formatted_date', orderable: false },
-            { data: 'action',         orderable: false, searchable: false },
+            { data: 'status_name', orderable: false, defaultContent: '<span class="bill-badge bill-badge-unknown">Unknown</span>' },
+            { data: 'formatted_date', orderable: false, defaultContent: 'N/A' },
+            { data: 'action', orderable: false, searchable: false, defaultContent: '' },
         ],
         language: {
-            processing:       '<span class="spinner-border spinner-border-sm text-primary me-2"></span>Loading...',
-            search:           '',
-            searchPlaceholder:'Search bills...',
-            lengthMenu:       'Show _MENU_ entries',
-            info:             'Showing _START_–_END_ of _TOTAL_ bills',
-            infoEmpty:        'No bills found',
-            zeroRecords:      'No matching bills',
-            emptyTable:       'No school bills created yet',
+            processing: '<span class="spinner-border spinner-border-sm text-primary me-2"></span>Loading...',
+            search: '',
+            searchPlaceholder: 'Search bills...',
+            lengthMenu: 'Show _MENU_ entries',
+            info: 'Showing _START_–_END_ of _TOTAL_ bills',
+            infoEmpty: 'No bills found',
+            zeroRecords: 'No matching bills',
+            emptyTable: 'No school bills created yet',
         },
-        order:      [[1, 'desc']],
+        order: [[1, 'desc']],
         pageLength: 15,
         responsive: true,
-        drawCallback: function () {
+        drawCallback: function() {
             bindCheckboxes();
-            // Update badge
             const info = this.api().page.info();
             $('#totalBadge').text(info.recordsTotal);
         },
@@ -377,15 +396,22 @@ $(document).ready(function () {
 
     // ── Load stats ─────────────────────────────────────────────────────
     function loadStats() {
-        $.get(ROUTES.stats, function (data) {
-            if (data.stats) {
-                $('#statTotal' ).text(data.stats.total);
-                $('#statOld'   ).text(data.stats.old);
-                $('#statNew'   ).text(data.stats.new);
-                $('#statAmount').text(
-                    '₦' + Number(data.stats.total_amount)
-                        .toLocaleString('en-NG', { minimumFractionDigits: 0 })
-                );
+        $.ajax({
+            url: ROUTES.stats,
+            type: 'GET',
+            dataType: 'json',
+            success: function(data) {
+                if (data.stats) {
+                    $('#statTotal').text(data.stats.total);
+                    $('#statOld').text(data.stats.old);
+                    $('#statNew').text(data.stats.new);
+                    $('#statAmount').text(
+                        '₦' + Number(data.stats.total_amount).toLocaleString('en-NG', { minimumFractionDigits: 0 })
+                    );
+                }
+            },
+            error: function(xhr) {
+                console.error('Stats load error:', xhr);
             }
         });
     }
@@ -396,21 +422,26 @@ $(document).ready(function () {
         $('.row-checkbox').off('change').on('change', updateBulkBar);
     }
 
-    $('#selectAll').on('change', function () {
+    $('#selectAll').on('change', function() {
         $('.row-checkbox').prop('checked', this.checked);
         updateBulkBar();
     });
 
     function updateBulkBar() {
         const count = $('.row-checkbox:checked').length;
-        $('#bulkBar').toggleClass('show', count > 0);
+        if (count > 0) {
+            $('#bulkBar').addClass('show');
+            $('#bulkDeleteBtn').removeClass('d-none');
+        } else {
+            $('#bulkBar').removeClass('show');
+            $('#bulkDeleteBtn').addClass('d-none');
+        }
         $('#bulkCount').text(count);
-        $('#bulkDeleteBtn').toggleClass('d-none', count === 0);
         if (count === 0) $('#selectAll').prop('checked', false);
     }
 
     // ── Create ─────────────────────────────────────────────────────────
-    $('#createBillBtn').on('click', function () {
+    $('#createBillBtn').on('click', function() {
         $('#billId').val('');
         $('#title').val('');
         $('#billAmount').val('');
@@ -423,12 +454,12 @@ $(document).ready(function () {
     });
 
     // ── Edit ───────────────────────────────────────────────────────────
-    $(document).on('click', '.edit-bill', function () {
-        $('#billId'     ).val($(this).data('id'));
-        $('#title'      ).val($(this).data('title'));
-        $('#billAmount' ).val($(this).data('amount'));
-        $('#description').val($(this).data('description'));
-        $('#statusId'   ).val($(this).data('status'));
+    $(document).on('click', '.edit-bill', function() {
+        $('#billId').val($(this).data('id'));
+        $('#title').val($(this).data('title'));
+        $('#billAmount').val($(this).data('amount'));
+        $('#description').val($(this).data('description') || '');
+        $('#statusId').val($(this).data('status'));
         $('#modalTitle').html('<i class="ri-edit-line me-2"></i>Edit School Bill');
         $('#saveBtn').html('<i class="ri-save-line me-1"></i>Update Bill');
         $('#formErrors').addClass('d-none').html('');
@@ -436,57 +467,57 @@ $(document).ready(function () {
     });
 
     // ── Save (create + update) ─────────────────────────────────────────
-    $('#billForm').on('submit', function (e) {
+    $('#billForm').on('submit', function(e) {
         e.preventDefault();
 
-        const id      = $('#billId').val();
-        const isEdit  = !!id;
+        const id = $('#billId').val();
+        const isEdit = !!id;
 
-        // URL and method based on create vs update
-        const url    = isEdit ? ROUTES.update(id) : ROUTES.store;
-        const method = 'POST'; // always POST, spoof PUT via _method for update
+        const url = isEdit ? ROUTES.update(id) : ROUTES.store;
+        const method = 'POST';
 
         const payload = {
-            title:       $('#title').val(),
+            title: $('#title').val(),
             bill_amount: $('#billAmount').val(),
             description: $('#description').val(),
-            statusId:    $('#statusId').val(),
-            _token:      CSRF,
+            statusId: $('#statusId').val(),
+            _token: CSRF,
         };
         if (isEdit) payload._method = 'PUT';
 
-        $('#saveBtn').prop('disabled', true)
-                     .html('<span class="spinner-border spinner-border-sm me-2"></span>Saving...');
+        $('#saveBtn').prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Saving...');
         $('#formErrors').addClass('d-none').html('');
 
         $.ajax({
-            url,
-            type:    method,
-            data:    payload,
+            url: url,
+            type: method,
+            data: payload,
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            success(res) {
+            success: function(res) {
                 if (res.success) {
                     $('#billModal').modal('hide');
-                    table.ajax.reload();
+                    table.ajax.reload(null, false);
                     loadStats();
                     Swal.fire({
-                        icon: 'success', title: 'Saved!', text: res.message,
-                        timer: 2500, showConfirmButton: false,
+                        icon: 'success',
+                        title: 'Saved!',
+                        text: res.message,
+                        timer: 2500,
+                        showConfirmButton: false,
                     });
                 } else {
                     showErrors(res.message, res.errors);
                 }
             },
-            error(xhr) {
+            error: function(xhr) {
                 if (xhr.status === 422) {
                     showErrors(null, xhr.responseJSON?.errors);
                 } else {
                     Swal.fire('Error!', 'Something went wrong. Please try again.', 'error');
                 }
             },
-            complete() {
-                $('#saveBtn').prop('disabled', false)
-                             .html('<i class="ri-save-line me-1"></i>Save Bill');
+            complete: function() {
+                $('#saveBtn').prop('disabled', false).html('<i class="ri-save-line me-1"></i>Save Bill');
             },
         });
     });
@@ -494,7 +525,7 @@ $(document).ready(function () {
     function showErrors(message, errors) {
         let html = '<ul class="mb-0 ps-3">';
         if (errors) {
-            $.each(errors, function (k, v) {
+            $.each(errors, function(k, v) {
                 html += `<li>${Array.isArray(v) ? v[0] : v}</li>`;
             });
         } else {
@@ -505,41 +536,43 @@ $(document).ready(function () {
     }
 
     // ── Single delete ──────────────────────────────────────────────────
-    $(document).on('click', '.delete-bill', function () {
+    $(document).on('click', '.delete-bill', function() {
         deleteId = $(this).data('id');
         $('#deleteItemTitle').text('"' + $(this).data('title') + '"');
         $('#deleteModal').modal('show');
     });
 
-    $('#confirmDelete').on('click', function () {
+    $('#confirmDelete').on('click', function() {
         if (!deleteId) return;
         const btn = $(this);
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
 
         $.ajax({
-            url:     ROUTES.destroy(deleteId),
-            type:    'POST',
-            data:    { _method: 'DELETE', _token: CSRF },
+            url: ROUTES.destroy(deleteId),
+            type: 'POST',
+            data: { _method: 'DELETE', _token: CSRF },
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            success(res) {
+            success: function(res) {
                 if (res.success) {
                     $('#deleteModal').modal('hide');
-                    table.ajax.reload();
+                    table.ajax.reload(null, false);
                     loadStats();
                     Swal.fire({
-                        icon: 'success', title: 'Deleted!', text: res.message,
-                        timer: 2000, showConfirmButton: false,
+                        icon: 'success',
+                        title: 'Deleted!',
+                        text: res.message,
+                        timer: 2000,
+                        showConfirmButton: false,
                     });
                 } else {
                     Swal.fire('Error!', res.message, 'error');
                 }
             },
-            error() {
+            error: function() {
                 Swal.fire('Error!', 'Failed to delete bill.', 'error');
             },
-            complete() {
-                btn.prop('disabled', false)
-                   .html('<i class="ri-delete-bin-line me-1"></i>Delete');
+            complete: function() {
+                btn.prop('disabled', false).html('<i class="ri-delete-bin-line me-1"></i>Delete');
                 deleteId = null;
             },
         });
@@ -547,38 +580,44 @@ $(document).ready(function () {
 
     // ── Bulk delete ────────────────────────────────────────────────────
     function doBulkDelete() {
-        const ids = $('.row-checkbox:checked').map((i, el) => el.value).get();
+        const ids = $('.row-checkbox:checked').map(function(i, el) {
+            return $(el).val();
+        }).get();
+
         if (!ids.length) return;
 
         Swal.fire({
             title: `Delete ${ids.length} bill(s)?`,
-            text:  'This cannot be undone.',
-            icon:  'warning',
-            showCancelButton:   true,
+            text: 'This cannot be undone.',
+            icon: 'warning',
+            showCancelButton: true,
             confirmButtonColor: '#dc2626',
-            confirmButtonText:  'Yes, delete',
-        }).then(result => {
+            confirmButtonText: 'Yes, delete',
+        }).then(function(result) {
             if (!result.isConfirmed) return;
 
             $.ajax({
-                url:         ROUTES.bulkDestroy,
-                type:        'POST',
-                data:        { ids: ids, _token: CSRF },
-                headers:     { 'X-Requested-With': 'XMLHttpRequest' },
-                traditional: true, // needed for array data with jQuery
-                success(res) {
+                url: ROUTES.bulkDestroy,
+                type: 'POST',
+                data: { ids: ids, _token: CSRF },
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+                traditional: true,
+                success: function(res) {
                     if (res.success) {
-                        table.ajax.reload();
+                        table.ajax.reload(null, false);
                         loadStats();
                         $('#selectAll').prop('checked', false);
                         updateBulkBar();
                         Swal.fire({
-                            icon: 'success', title: 'Deleted!', text: res.message,
-                            timer: 2000, showConfirmButton: false,
+                            icon: 'success',
+                            title: 'Deleted!',
+                            text: res.message,
+                            timer: 2000,
+                            showConfirmButton: false,
                         });
                     }
                 },
-                error() {
+                error: function() {
                     Swal.fire('Error!', 'Failed to delete bills.', 'error');
                 },
             });

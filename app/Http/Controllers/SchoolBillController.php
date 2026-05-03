@@ -41,64 +41,72 @@ class SchoolBillController extends Controller
 
         // ── DataTables AJAX ───────────────────────────────────────────
         if ($request->ajax()) {
-            $schoolbills = SchoolBillModel::leftJoin('student_status', 'student_status.id', '=', 'school_bill.statusId')
-                ->whereIn('student_status.id', [1, 2])
-                ->select([
-                    'school_bill.id',
-                    'school_bill.title',
-                    'school_bill.description',
-                    'school_bill.bill_amount',
-                    'student_status.id as statusId',
-                    'school_bill.updated_at',
-                ]);
+            try {
+                $schoolbills = SchoolBillModel::leftJoin('student_status', 'student_status.id', '=', 'school_bill.statusId')
+                    ->whereIn('student_status.id', [1, 2])
+                    ->select([
+                        'school_bill.id',
+                        'school_bill.title',
+                        'school_bill.description',
+                        'school_bill.bill_amount',
+                        'student_status.id as statusId',
+                        'school_bill.updated_at',
+                    ]);
 
-            return DataTables::of($schoolbills)
-                ->addIndexColumn()
-                ->addColumn('status_name', function ($row) {
-                    if ($row->statusId == 1) {
-                        return '<span class="bill-badge bill-badge-old"><i class="ri-user-line me-1"></i>Old Student</span>';
-                    }
-                    if ($row->statusId == 2) {
-                        return '<span class="bill-badge bill-badge-new"><i class="ri-user-add-line me-1"></i>New Student</span>';
-                    }
-                    return '<span class="bill-badge bill-badge-unknown">Unknown</span>';
-                })
-                ->addColumn('formatted_amount', function ($row) {
-                    return '₦&nbsp;' . number_format($row->bill_amount, 2);
-                })
-                ->addColumn('formatted_date', function ($row) {
-                    return $row->updated_at
-                        ? '<span class="text-muted small">'
-                            . $row->updated_at->format('d M Y')
+                return DataTables::of($schoolbills)
+                    ->addIndexColumn()
+                    ->addColumn('status_name', function ($row) {
+                        if ($row->statusId == 1) {
+                            return '<span class="bill-badge bill-badge-old"><i class="ri-user-line me-1"></i>Old Student</span>';
+                        }
+                        if ($row->statusId == 2) {
+                            return '<span class="bill-badge bill-badge-new"><i class="ri-user-add-line me-1"></i>New Student</span>';
+                        }
+                        return '<span class="bill-badge bill-badge-unknown">Unknown</span>';
+                    })
+                    ->addColumn('formatted_amount', function ($row) {
+                        return '₦&nbsp;' . number_format($row->bill_amount, 2);
+                    })
+                    ->addColumn('formatted_date', function ($row) {
+                        if (!$row->updated_at) {
+                            return '<span class="text-muted small">N/A</span>';
+                        }
+                        return '<span class="text-muted small">'
+                            . date('d M Y', strtotime($row->updated_at))
                             . '<br><span style="font-size:10px">'
-                            . $row->updated_at->format('H:i')
-                            . '</span></span>'
-                        : 'N/A';
-                })
-                ->addColumn('action', function ($row) {
-                    $buttons = '<div class="btn-group btn-group-sm">';
-                    if (auth()->user()->can('Update school-bills')) {
-                        $buttons .= '<button class="btn btn-primary edit-bill" title="Edit"
-                            data-id="'          . $row->id             . '"
-                            data-title="'       . e($row->title)       . '"
-                            data-amount="'      . $row->bill_amount    . '"
-                            data-description="' . e($row->description) . '"
-                            data-status="'      . $row->statusId       . '">
-                            <i class="ri-pencil-line"></i>
-                        </button>';
-                    }
-                    if (auth()->user()->can('Delete school-bills')) {
-                        $buttons .= '<button class="btn btn-danger delete-bill" title="Delete"
-                            data-id="'    . $row->id       . '"
-                            data-title="' . e($row->title) . '">
-                            <i class="ri-delete-bin-line"></i>
-                        </button>';
-                    }
-                    $buttons .= '</div>';
-                    return $buttons;
-                })
-                ->rawColumns(['status_name', 'formatted_amount', 'formatted_date', 'action'])
-                ->make(true);
+                            . date('H:i', strtotime($row->updated_at))
+                            . '</span></span>';
+                    })
+                    ->addColumn('action', function ($row) {
+                        $buttons = '<div class="btn-group btn-group-sm">';
+                        if (auth()->user()->can('Update school-bills')) {
+                            $buttons .= '<button class="btn btn-primary edit-bill" title="Edit"
+                                data-id="' . $row->id . '"
+                                data-title="' . addslashes($row->title) . '"
+                                data-amount="' . $row->bill_amount . '"
+                                data-description="' . addslashes($row->description) . '"
+                                data-status="' . $row->statusId . '">
+                                <i class="ri-pencil-line"></i>
+                            </button>';
+                        }
+                        if (auth()->user()->can('Delete school-bills')) {
+                            $buttons .= '<button class="btn btn-danger delete-bill" title="Delete"
+                                data-id="' . $row->id . '"
+                                data-title="' . addslashes($row->title) . '">
+                                <i class="ri-delete-bin-line"></i>
+                            </button>';
+                        }
+                        $buttons .= '</div>';
+                        return $buttons;
+                    })
+                    ->rawColumns(['status_name', 'formatted_amount', 'formatted_date', 'action'])
+                    ->make(true);
+            } catch (\Exception $e) {
+                return response()->json([
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ], 500);
+            }
         }
 
         $pagetitle = 'School Bill Management';
