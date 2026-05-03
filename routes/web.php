@@ -392,7 +392,7 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
     Route::post('subjectscoresheet/grade-preview', [MyScoreSheetController::class, 'calculateGradePreview'])->name('subjectscoresheet.grade-preview');
     Route::post('subjectscoresheet/bulk-update', [MyScoreSheetController::class, 'bulkUpdateScores'])->name('subjectscoresheet.bulk-update');
     Route::post('subjectscoresheet/single-update', [MyScoreSheetController::class, 'singleUpdateScore'])->name('subjectscoresheet.single-update');
-
+    Route::get('scoresheet/download-scores-pdf',[MyScoreSheetController::class, 'downloadScoresPdf'])->name('scoresheet.download-scores-pdf');
     Route::post('/studentreports/column-options', [ViewStudentReportController::class, 'getColumnOptions'])->name('studentreports.column-options');
 
     // // Mock Scoresheet Routes
