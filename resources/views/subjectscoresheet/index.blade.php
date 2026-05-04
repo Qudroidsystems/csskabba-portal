@@ -32,7 +32,6 @@
 #scoresheetTable thead tr { background: var(--ss-primary); color: #fff; }
 #scoresheetTable thead th { padding: 10px 8px; font-weight: 600; white-space: nowrap; border: none; }
 #scoresheetTable tbody tr { transition: background .12s; }
-#scoresheetTable tbody tr:hover { background: #eff6ff !important; }
 #scoresheetTable tbody td { padding: 6px 8px; vertical-align: middle; border-bottom: 1px solid var(--ss-border); }
 
 .row-vetted     { background: #f0fdf4 !important; }
@@ -68,7 +67,6 @@
     50%  { transform: scale(1.2);  }
     100% { transform: scale(1);    }
 }
-
 .grade-loading {
     display: inline-block;
     width: 12px; height: 12px;
@@ -80,13 +78,341 @@
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Apple-style Save Modal ──────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════════
+   APPLE-STYLE ROW ENTRANCE & HOVER
+   ══════════════════════════════════════════════════════════════════ */
+#scoresheetTableBody tr[data-id] {
+    opacity: 0;
+    transform: translateY(14px);
+    transition:
+        opacity     0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+        transform   0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+        background  0.18s ease,
+        box-shadow  0.22s ease;
+    will-change: opacity, transform;
+}
+#scoresheetTableBody tr[data-id].row-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+#scoresheetTableBody tr[data-id]:hover {
+    background: #f0f6ff !important;
+    box-shadow: inset 3px 0 0 #2563eb, 0 2px 12px rgba(37,99,235,0.07);
+    transform: translateY(-1px) !important;
+    transition:
+        background  0.14s ease,
+        box-shadow  0.18s ease,
+        transform   0.18s cubic-bezier(0.34, 1.4, 0.64, 1);
+    position: relative;
+    z-index: 1;
+}
+#scoresheetTableBody tr.row-vetted:hover     { background: #e6faf0 !important; }
+#scoresheetTableBody tr.row-not-vetted:hover { background: #fff0f0 !important; }
+#scoresheetTableBody tr.row-pending:hover    { background: #fff8e6 !important; }
+
+#scoresheetTableBody tr[data-id]:hover .student-image {
+    transform: scale(1.12);
+    transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.student-image { transition: transform 0.18s ease, box-shadow 0.18s ease; }
+
+#scoresheetTableBody tr[data-id]:hover .score-input {
+    border-color: #93c5fd;
+    box-shadow: 0 1px 6px rgba(37,99,235,0.10);
+}
+#scoresheetTableBody tr[data-id]:hover .badge {
+    transition: transform 0.18s cubic-bezier(0.34, 1.4, 0.64, 1);
+    transform: scale(1.06);
+}
+#scoresheetTableBody tr[data-id] .score-checkbox {
+    opacity: 0.35;
+    transform: scale(0.85);
+    transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+#scoresheetTableBody tr[data-id]:hover .score-checkbox,
+#scoresheetTableBody tr[data-id] .score-checkbox:checked {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Active row being scored — dim everything else */
+#scoresheetTableBody.has-active-row tr[data-id]:not(.scoring-active) {
+    opacity: 0.22;
+    filter: blur(0.4px);
+    transition: opacity 0.25s ease, filter 0.25s ease;
+    pointer-events: none;
+}
+#scoresheetTableBody tr[data-id].scoring-active {
+    opacity: 1 !important;
+    filter: none !important;
+    transform: translateY(0) !important;
+    pointer-events: all !important;
+    box-shadow: inset 3px 0 0 #2563eb, 0 4px 24px rgba(37,99,235,0.13) !important;
+    background: #eff6ff !important;
+    z-index: 2;
+    position: relative;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #scoresheetTableBody tr[data-id],
+    #scoresheetTableBody tr[data-id]:hover {
+        transition: background 0.15s ease !important;
+        transform: none !important;
+        opacity: 1 !important;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   STUDENT SCORE-ENTRY HUD
+   ══════════════════════════════════════════════════════════════════ */
+#studentHud {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 88888;
+    pointer-events: none;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 32px;
+}
+/* Backdrop blur layer — only covers area outside the card */
+#studentHudBackdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.38);
+    backdrop-filter: blur(3px) saturate(0.7);
+    -webkit-backdrop-filter: blur(3px) saturate(0.7);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.28s ease;
+    z-index: 88887;
+}
+#studentHudBackdrop.hud-backdrop-visible {
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* HUD card */
+#studentHudCard {
+    background: rgba(255,255,255,0.96);
+    border-radius: 22px;
+    border: 0.5px solid rgba(255,255,255,0.9);
+    box-shadow:
+        0 32px 80px rgba(0,0,0,0.22),
+        0 8px 24px rgba(0,0,0,0.10),
+        0 0 0 0.5px rgba(0,0,0,0.06);
+    padding: 20px 24px 18px;
+    width: 420px;
+    max-width: calc(100vw - 32px);
+    pointer-events: all;
+    transform: translateY(28px) scale(0.92);
+    opacity: 0;
+    transition:
+        transform 0.36s cubic-bezier(0.34, 1.28, 0.64, 1),
+        opacity   0.26s ease;
+    position: relative;
+    z-index: 88889;
+}
+#studentHudCard.hud-visible {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+}
+
+/* Top row: avatar + name + close */
+.hud-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+.hud-avatar {
+    width: 46px; height: 46px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #e2e8f0;
+    flex-shrink: 0;
+    transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+.hud-avatar:hover { transform: scale(1.08); }
+.hud-name-block { flex: 1; min-width: 0; }
+.hud-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: -.015em;
+}
+.hud-meta {
+    font-size: 11px;
+    color: #64748b;
+    margin-top: 1px;
+}
+.hud-close {
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    border: none;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.15s ease, transform 0.15s cubic-bezier(0.34,1.4,0.64,1);
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1;
+}
+.hud-close:hover { background: #e2e8f0; transform: scale(1.12); color: #0f172a; }
+
+/* Score pills row */
+.hud-scores-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+.hud-score-pill {
+    flex: 1;
+    min-width: 70px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 8px 10px;
+    text-align: center;
+    transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s cubic-bezier(0.34,1.4,0.64,1);
+}
+.hud-score-pill.pill-active {
+    border-color: #2563eb;
+    background: #eff6ff;
+    transform: scale(1.04);
+    box-shadow: 0 2px 10px rgba(37,99,235,0.14);
+}
+.hud-score-pill.pill-invalid {
+    border-color: #dc2626;
+    background: #fef2f2;
+}
+.hud-score-pill .pill-label {
+    font-size: 9px;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 3px;
+}
+.hud-score-pill .pill-val {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    transition: color 0.15s ease;
+}
+.hud-score-pill.pill-active .pill-val { color: #2563eb; }
+.hud-score-pill.pill-invalid .pill-val { color: #dc2626; }
+.hud-score-pill .pill-max {
+    font-size: 9px;
+    color: #94a3b8;
+    margin-top: 1px;
+}
+
+/* Divider */
+.hud-divider {
+    height: 0.5px;
+    background: #e2e8f0;
+    margin: 0 0 12px;
+}
+
+/* Stats row */
+.hud-stats {
+    display: flex;
+    gap: 0;
+}
+.hud-stat {
+    flex: 1;
+    text-align: center;
+    padding: 6px 4px;
+    border-right: 0.5px solid #f1f5f9;
+}
+.hud-stat:last-child { border-right: none; }
+.hud-stat-label {
+    font-size: 9px;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    margin-bottom: 2px;
+}
+.hud-stat-value {
+    font-size: 15px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.02em;
+}
+
+/* Grade badge in HUD */
+.hud-grade-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    border-radius: 6px;
+    padding: 2px 8px;
+    margin-left: 4px;
+    vertical-align: middle;
+    transition: all 0.22s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+/* Progress bar inside HUD */
+.hud-prog-wrap {
+    margin-top: 10px;
+}
+.hud-prog-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #94a3b8;
+    margin-bottom: 4px;
+}
+.hud-prog-track {
+    height: 4px;
+    background: #f1f5f9;
+    border-radius: 2px;
+    overflow: hidden;
+}
+.hud-prog-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: #2563eb;
+    transition: width 0.4s cubic-bezier(0.4,0,.2,1), background 0.3s ease;
+}
+
+/* Keyboard hint */
+.hud-hint {
+    text-align: center;
+    font-size: 10px;
+    color: #cbd5e1;
+    margin-top: 10px;
+    letter-spacing: .02em;
+}
+.hud-hint kbd {
+    font-size: 10px;
+    background: #f1f5f9;
+    color: #64748b;
+    border: 0.5px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 1px 5px;
+    font-family: inherit;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   APPLE-STYLE SAVE MODAL
+   ══════════════════════════════════════════════════════════════════ */
 #ssSaveOverlay {
     display: none;
     position: fixed;
     inset: 0;
     z-index: 99999;
-    background: rgba(0, 0, 0, 0.30);
+    background: rgba(0,0,0,0.30);
     align-items: center;
     justify-content: center;
     backdrop-filter: blur(2px);
@@ -97,7 +423,6 @@
     animation: ssOverlayIn .2s ease forwards;
 }
 @keyframes ssOverlayIn { from { opacity:0; } to { opacity:1; } }
-
 #ssSaveModal {
     background: #fff;
     border-radius: 20px;
@@ -110,160 +435,135 @@
     opacity: 0;
     transition: transform .32s cubic-bezier(.34,1.3,.64,1), opacity .22s ease;
 }
-#ssSaveOverlay.ss-visible #ssSaveModal {
-    transform: scale(1) translateY(0);
-    opacity: 1;
-}
-#ssSaveOverlay.ss-closing {
-    animation: ssOverlayOut .22s ease forwards;
-}
-#ssSaveOverlay.ss-closing #ssSaveModal {
-    transform: scale(0.88) translateY(10px);
-    opacity: 0;
-}
+#ssSaveOverlay.ss-visible #ssSaveModal { transform: scale(1) translateY(0); opacity: 1; }
+#ssSaveOverlay.ss-closing { animation: ssOverlayOut .22s ease forwards; }
+#ssSaveOverlay.ss-closing #ssSaveModal { transform: scale(0.88) translateY(10px); opacity: 0; }
 @keyframes ssOverlayOut { from { opacity:1; } to { opacity:0; } }
 
-/* Icon ring */
 .ss-icon-ring {
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
+    width: 56px; height: 56px; border-radius: 50%;
     margin: 0 auto 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: flex; align-items: center; justify-content: center;
     position: relative;
 }
-.ss-icon-ring svg.ss-arc-svg {
-    position: absolute;
-    top: 0; left: 0;
-    width: 56px; height: 56px;
-}
+.ss-icon-ring svg.ss-arc-svg { position: absolute; top:0; left:0; width:56px; height:56px; }
 .ss-icon-center {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
+    width: 36px; height: 36px; border-radius: 50%;
     background: rgba(30,58,95,0.09);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1;
-    position: relative;
-    transition: background .3s;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1; position: relative; transition: background .3s;
 }
-
-/* Save title + sub */
-.ss-modal-title {
-    font-size: 16px;
-    font-weight: 600;
-    color: #0f172a;
-    margin-bottom: 3px;
-    letter-spacing: -.015em;
-}
-.ss-modal-sub {
-    font-size: 12px;
-    color: #64748b;
-    margin-bottom: 20px;
-    min-height: 16px;
-    transition: opacity .2s;
-}
-
-/* Progress track */
-.ss-progress-track {
-    height: 5px;
-    border-radius: 3px;
-    background: #f1f5f9;
-    overflow: hidden;
-    margin-bottom: 10px;
-}
-.ss-progress-fill {
-    height: 100%;
-    border-radius: 3px;
-    background: var(--ss-primary);
-    width: 0%;
-    transition: width .38s cubic-bezier(.4,0,.2,1), background .3s ease;
-}
-
-/* Count row */
-.ss-count-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 11px;
-    color: #94a3b8;
-}
-.ss-count-num {
-    font-size: 11px;
-    font-weight: 600;
-    color: #334155;
-    font-variant-numeric: tabular-nums;
-}
-
-/* Checkmark stroke animation */
-.ss-check-path {
-    stroke-dasharray: 22;
-    stroke-dashoffset: 22;
-    transition: stroke-dashoffset .38s ease .08s;
-}
-.ss-check-path.drawn {
-    stroke-dashoffset: 0;
-}
+.ss-modal-title { font-size: 16px; font-weight: 600; color: #0f172a; margin-bottom: 3px; letter-spacing: -.015em; }
+.ss-modal-sub   { font-size: 12px; color: #64748b; margin-bottom: 20px; min-height: 16px; transition: opacity .2s; }
+.ss-progress-track { height: 5px; border-radius: 3px; background: #f1f5f9; overflow: hidden; margin-bottom: 10px; }
+.ss-progress-fill  { height: 100%; border-radius: 3px; background: var(--ss-primary); width: 0%; transition: width .38s cubic-bezier(.4,0,.2,1), background .3s ease; }
+.ss-count-row { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #94a3b8; }
+.ss-count-num { font-size: 11px; font-weight: 600; color: #334155; font-variant-numeric: tabular-nums; }
+.ss-check-path { stroke-dasharray: 22; stroke-dashoffset: 22; transition: stroke-dashoffset .38s ease .08s; }
+.ss-check-path.drawn { stroke-dashoffset: 0; }
 
 @media (max-width: 768px) {
     .score-input { width: 64px; min-width: 64px; height: 42px; font-size: 1rem; }
-    .stat-card   { padding: 10px 12px; }
+    .stat-card { padding: 10px 12px; }
     .stat-card .stat-value { font-size: 18px; }
     #ssSaveModal { width: 280px; padding: 26px 24px 22px; }
+    #studentHudCard { width: calc(100vw - 24px); padding: 16px 16px 14px; }
 }
 </style>
 
-{{-- ══ APPLE-STYLE SAVE MODAL (fixed overlay) ══════════════════════ --}}
+{{-- ══ APPLE-STYLE SAVE MODAL ══════════════════════════════════════ --}}
 <div id="ssSaveOverlay">
     <div id="ssSaveModal">
-
         <div class="ss-icon-ring" id="ssIconRing">
             <svg class="ss-arc-svg" viewBox="0 0 56 56" fill="none">
                 <circle cx="28" cy="28" r="25" stroke="#e2e8f0" stroke-width="2.5"/>
                 <circle id="ssArcFg" cx="28" cy="28" r="25"
-                    stroke="#1e3a5f" stroke-width="2.5"
-                    stroke-linecap="round"
-                    stroke-dasharray="157.08"
-                    stroke-dashoffset="157.08"
+                    stroke="#1e3a5f" stroke-width="2.5" stroke-linecap="round"
+                    stroke-dasharray="157.08" stroke-dashoffset="157.08"
                     transform="rotate(-90 28 28)"
                     style="transition: stroke-dashoffset .38s cubic-bezier(.4,0,.2,1), stroke .3s ease;"/>
             </svg>
             <div class="ss-icon-center" id="ssIconCenter">
-                {{-- Save icon --}}
                 <svg id="ssIconSave" width="18" height="18" viewBox="0 0 18 18" fill="none">
                     <rect x="2.5" y="2.5" width="13" height="13" rx="2.5" stroke="#1e3a5f" stroke-width="1.5"/>
                     <rect x="5.5" y="2.5" width="5" height="4.5" rx="1" fill="#1e3a5f" opacity=".45"/>
                     <path d="M5 10.5h8M5 13h5.5" stroke="#1e3a5f" stroke-width="1.3" stroke-linecap="round"/>
                 </svg>
-                {{-- Success checkmark --}}
                 <svg id="ssIconCheck" width="18" height="18" viewBox="0 0 18 18" fill="none" style="display:none;">
                     <polyline class="ss-check-path" id="ssCheckPath"
                         points="3.5,9.5 7.5,13.5 14.5,5.5"
-                        stroke="#16a34a" stroke-width="2.2"
-                        stroke-linecap="round" stroke-linejoin="round"/>
+                        stroke="#16a34a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
-                {{-- Error X --}}
                 <svg id="ssIconX" width="16" height="16" viewBox="0 0 16 16" fill="none" style="display:none;">
                     <line x1="3.5" y1="3.5" x2="12.5" y2="12.5" stroke="#dc2626" stroke-width="2.2" stroke-linecap="round"/>
                     <line x1="12.5" y1="3.5" x2="3.5" y2="12.5" stroke="#dc2626" stroke-width="2.2" stroke-linecap="round"/>
                 </svg>
             </div>
         </div>
-
         <div class="ss-modal-title" id="ssSaveTitle">Saving scores</div>
         <div class="ss-modal-sub"  id="ssSaveSub">Please wait…</div>
-
-        <div class="ss-progress-track">
-            <div class="ss-progress-fill" id="ssSaveFill"></div>
-        </div>
-
+        <div class="ss-progress-track"><div class="ss-progress-fill" id="ssSaveFill"></div></div>
         <div class="ss-count-row">
             <span id="ssSaveCountLabel">Saved</span>
             <span class="ss-count-num" id="ssSaveCountNum"></span>
+        </div>
+    </div>
+</div>
+
+{{-- ══ STUDENT SCORE-ENTRY HUD ════════════════════════════════════ --}}
+<div id="studentHudBackdrop"></div>
+<div id="studentHud">
+    <div id="studentHudCard">
+        <div class="hud-top">
+            <img id="hudAvatar" class="hud-avatar" src="" alt="">
+            <div class="hud-name-block">
+                <div class="hud-name" id="hudName">—</div>
+                <div class="hud-meta" id="hudMeta">—</div>
+            </div>
+            <button class="hud-close" id="hudClose" title="Dismiss (Esc)">&#x2715;</button>
+        </div>
+
+        <div class="hud-scores-row" id="hudScoresRow">
+            {{-- Filled dynamically --}}
+        </div>
+
+        <div class="hud-divider"></div>
+
+        <div class="hud-stats">
+            <div class="hud-stat">
+                <div class="hud-stat-label">Total</div>
+                <div class="hud-stat-value" id="hudTotal" style="color:#1e3a5f;">—</div>
+            </div>
+            <div class="hud-stat">
+                <div class="hud-stat-label">Grade</div>
+                <div class="hud-stat-value" id="hudGrade" style="color:#6b7280;">—</div>
+            </div>
+            <div class="hud-stat">
+                <div class="hud-stat-label">BF</div>
+                <div class="hud-stat-value" id="hudBf" style="color:#6b7280;">—</div>
+            </div>
+            <div class="hud-stat">
+                <div class="hud-stat-label">Cum</div>
+                <div class="hud-stat-value" id="hudCum" style="color:#6b7280;">—</div>
+            </div>
+            <div class="hud-stat">
+                <div class="hud-stat-label">Cum Grade</div>
+                <div class="hud-stat-value" id="hudCumGrade" style="color:#6b7280;">—</div>
+            </div>
+        </div>
+
+        <div class="hud-prog-wrap">
+            <div class="hud-prog-label">
+                <span id="hudProgLabel">Score progress</span>
+                <span id="hudProgPct">0%</span>
+            </div>
+            <div class="hud-prog-track">
+                <div class="hud-prog-fill" id="hudProgFill" style="width:0%"></div>
+            </div>
+        </div>
+
+        <div class="hud-hint">
+            <kbd>Enter</kbd> next field &nbsp;·&nbsp; <kbd>Esc</kbd> dismiss
         </div>
     </div>
 </div>
@@ -378,7 +678,6 @@
                 </div>
             </div>
         </div>
-
         <div class="col-lg-4">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-header border-0 pb-0 pt-3 px-3">
@@ -401,7 +700,6 @@
                 </div>
             </div>
         </div>
-
         <div class="col-lg-4">
             <div class="card border-0 shadow-sm h-100">
                 <div class="card-header border-0 pb-0 pt-3 px-3">
@@ -434,7 +732,6 @@
     </div>
     @endif
 
-    {{-- ══ LEGEND ══════════════════════════════════════════════════════ --}}
     <div class="d-flex align-items-center gap-3 mb-2 flex-wrap" style="font-size:12px;color:var(--ss-muted);">
         <span><i class="ri-information-line me-1 text-info"></i>
             <strong>Total Grade</strong> = grade based on raw assessment total (saved to DB) &nbsp;|&nbsp;
@@ -482,7 +779,6 @@
         </div>
 
         <div class="card-body p-0">
-
             <div class="alert alert-info text-center m-3 mb-0" id="noDataAlert" style="display:{{ $broadsheets->isEmpty() ? 'block' : 'none' }};">
                 <i class="ri-information-line me-2"></i>No scores available.
             </div>
@@ -548,7 +844,7 @@
                                 $cat = \App\Models\ClassCategory::find($broadsheet->classcategoryid);
                                 $gradeForCum = $cat ? $cat->calculateGrade($cum) : '-';
                             }
-                            $cumColor = $cum >= 70 ? 'success' : ($cum >= 50 ? 'info' : ($cum >= 40 ? 'warning' : 'danger'));
+                            $cumColor   = $cum >= 70 ? 'success' : ($cum >= 50 ? 'info' : ($cum >= 40 ? 'warning' : 'danger'));
                             $totalColor = $rowTotal >= 70 ? 'success' : ($rowTotal >= 50 ? 'info' : ($rowTotal >= 40 ? 'warning' : 'danger'));
                             $vClass = match(true) {
                                 $broadsheet->vettedstatus === '1' => 'row-vetted',
@@ -557,13 +853,19 @@
                             };
                             $totalGradeColor = $gradeColors[$totalGrade] ?? '#6b7280';
                             $cumGradeColor   = $gradeColors[$gradeForCum] ?? '#6b7280';
+                            $avatarUrl = $broadsheet->picture
+                                ? asset('storage/student_avatars/'.basename($broadsheet->picture))
+                                : asset('storage/student_avatars/unnamed.jpg');
                         @endphp
                         <tr class="{{ $vClass }}"
                             data-id="{{ $broadsheet->id }}"
                             data-bf="{{ $broadsheet->bf ?? 0 }}"
                             data-termid="{{ session('term_id') }}"
                             data-schoolclassid="{{ $broadsheet->schoolclass_id ?? session('schoolclass_id') }}"
-                            data-categoryid="{{ $broadsheet->classcategoryid ?? '' }}">
+                            data-categoryid="{{ $broadsheet->classcategoryid ?? '' }}"
+                            data-name="{{ $broadsheet->lname ?? '' }}, {{ $broadsheet->fname ?? '' }}{{ $broadsheet->mname ? ' '.$broadsheet->mname : '' }}"
+                            data-admissionno="{{ $broadsheet->admissionno ?? '' }}"
+                            data-avatar="{{ $avatarUrl }}">
                             <td class="col-checkbox">
                                 <div class="form-check mb-0">
                                     <input class="form-check-input score-checkbox" type="checkbox" data-id="{{ $broadsheet->id }}">
@@ -575,11 +877,11 @@
                             </td>
                             <td class="col-name name" data-name="{{ strtolower(($broadsheet->lname ?? '').' '.($broadsheet->fname ?? '').' '.($broadsheet->mname ?? '')) }}">
                                 <div class="d-flex align-items-center gap-2">
-                                    <img src="{{ $broadsheet->picture ? asset('storage/student_avatars/'.basename($broadsheet->picture)) : asset('storage/student_avatars/unnamed.jpg') }}"
+                                    <img src="{{ $avatarUrl }}"
                                          class="rounded-circle student-image"
                                          style="width:34px;height:34px;object-fit:cover;border:2px solid var(--ss-border);cursor:pointer;"
                                          data-bs-toggle="modal" data-bs-target="#imageViewModal"
-                                         data-image="{{ $broadsheet->picture ? asset('storage/student_avatars/'.basename($broadsheet->picture)) : asset('storage/student_avatars/unnamed.jpg') }}"
+                                         data-image="{{ $avatarUrl }}"
                                          onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}';">
                                     <div>
                                         <span class="fw-semibold d-block" style="font-size:12.5px;">{{ $broadsheet->lname ?? '' }}, {{ $broadsheet->fname ?? '' }}</span>
@@ -600,6 +902,7 @@
                                            data-max="{{ $assessment->max_score }}"
                                            data-id="{{ $broadsheet->id }}"
                                            data-original="{{ $scoreValue }}"
+                                           data-assessment-name="{{ $assessment->name }}"
                                            value="{{ $scoreValue }}"
                                            min="0" max="{{ $assessment->max_score }}" step="0.1">
                                 </td>
@@ -613,9 +916,7 @@
                                 </span>
                             </td>
                             <td class="col-total-grade text-center">
-                                <span class="grade-badge" style="color:{{ $totalGradeColor }};" data-score="{{ $rowTotal }}">
-                                    {{ $totalGrade }}
-                                </span>
+                                <span class="grade-badge" style="color:{{ $totalGradeColor }};" data-score="{{ $rowTotal }}">{{ $totalGrade }}</span>
                             </td>
                             <td class="col-bf text-center">
                                 <span class="badge bg-secondary-subtle text-secondary bf-badge">{{ number_format($broadsheet->bf ?? 0, 1) }}</span>
@@ -624,14 +925,10 @@
                                 <span class="badge bg-{{ $cumColor }}-subtle text-{{ $cumColor }} fw-bold cum-badge" style="font-size:12px;">{{ number_format($cum, 1) }}</span>
                             </td>
                             <td class="col-cum-grade text-center">
-                                <span class="cum-grade-badge" style="color:{{ $cumGradeColor }};" data-score="{{ $cum }}">
-                                    {{ $gradeForCum }}
-                                </span>
+                                <span class="cum-grade-badge" style="color:{{ $cumGradeColor }};" data-score="{{ $cum }}">{{ $gradeForCum }}</span>
                             </td>
                             <td class="col-avg text-center">
-                                <span class="badge avg-badge" style="background:#f3e8ff;color:#7c3aed;">
-                                    {{ number_format($broadsheet->avg ?? 0, 1) }}
-                                </span>
+                                <span class="badge avg-badge" style="background:#f3e8ff;color:#7c3aed;">{{ number_format($broadsheet->avg ?? 0, 1) }}</span>
                             </td>
                             <td class="col-gpa text-center">
                                 <span class="badge bg-warning-subtle text-warning fw-semibold gpa-badge">{{ number_format($broadsheet->gpa ?? 0, 2) }}</span>
@@ -685,12 +982,10 @@
                 </div>
             </div>
             @endif
-
         </div>
     </div></div></div>
 
     {{-- ══ MODALS ══════════════════════════════════════════════════════ --}}
-
     @if ($broadsheets->isNotEmpty())
     <div class="modal fade" id="columnVisibilityModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -718,16 +1013,10 @@
                         <div class="col-md-4"><div class="col-group">
                             <h6>Scores & Metrics</h6>
                             @foreach([
-                                ['col-total','Total'],
-                                ['col-total-grade','Total Grade (saved)'],
-                                ['col-bf','BF'],
-                                ['col-cum','Cum'],
-                                ['col-cum-grade','Cum Grade (display)'],
-                                ['col-avg','Class Avg'],
-                                ['col-gpa','GPA'],
-                                ['col-cgpa','CGPA'],
-                                ['col-position','Position'],
-                                ['col-vetted','Status'],
+                                ['col-total','Total'],['col-total-grade','Total Grade (saved)'],
+                                ['col-bf','BF'],['col-cum','Cum'],['col-cum-grade','Cum Grade (display)'],
+                                ['col-avg','Class Avg'],['col-gpa','GPA'],['col-cgpa','CGPA'],
+                                ['col-position','Position'],['col-vetted','Status'],
                             ] as [$cls,$lbl])
                             <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" id="chk-{{ $cls }}" data-col="{{ $cls }}" checked><label class="form-check-label" for="chk-{{ $cls }}">{{ $lbl }}</label></div>
                             @endforeach
@@ -748,9 +1037,7 @@
                     <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="alert alert-info">
-                        <i class="ri-information-line me-2"></i>Upload the Excel file exported from this scoresheet.
-                    </div>
+                    <div class="alert alert-info"><i class="ri-information-line me-2"></i>Upload the Excel file exported from this scoresheet.</div>
                     <form method="POST" enctype="multipart/form-data" id="importForm">
                         @csrf
                         <input type="hidden" name="schoolclass_id"  value="{{ session('schoolclass_id') }}">
@@ -772,17 +1059,13 @@
                                 <div class="spinner-border spinner-border-sm text-success"></div>
                                 <div class="flex-grow-1">
                                     <div style="font-size:12px;margin-bottom:3px;">Uploading...</div>
-                                    <div class="progress" style="height:5px;">
-                                        <div class="progress-bar progress-bar-animated bg-success" id="uploadProgressBar" style="width:0%"></div>
-                                    </div>
+                                    <div class="progress" style="height:5px;"><div class="progress-bar progress-bar-animated bg-success" id="uploadProgressBar" style="width:0%"></div></div>
                                 </div>
                             </div>
                         </div>
                         <div class="d-flex justify-content-end gap-2">
                             <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                            <button type="submit" class="btn btn-primary" id="importSubmit">
-                                <i class="ri-upload-line me-1"></i>Upload
-                            </button>
+                            <button type="submit" class="btn btn-primary" id="importSubmit"><i class="ri-upload-line me-1"></i>Upload</button>
                         </div>
                     </form>
                 </div>
@@ -801,22 +1084,19 @@
         </div>
     </div>
 
-</div>{{-- container-fluid --}}
+</div>
 </div>
 </div>
 
-{{-- ══════════════════════════════════════════════════════════════════ --}}
-{{-- INLINE SCRIPT                                                     --}}
-{{-- ══════════════════════════════════════════════════════════════════ --}}
 <script>
-/* ── CSRF ──────────────────────────────────────────────────────────── */
+/* ── CSRF ────────────────────────────────────────────────────────── */
 if (!document.querySelector('meta[name="csrf-token"]')) {
     const m = document.createElement('meta'); m.name = 'csrf-token';
     m.content = '{{ csrf_token() }}'; document.head.appendChild(m);
 }
 const CSRF = document.querySelector('meta[name="csrf-token"]').content;
 
-/* ── Window globals ─────────────────────────────────────────────────── */
+/* ── Routes / globals ────────────────────────────────────────────── */
 window.routes = {
     singleUpdate      : '{{ route("subjectscoresheet.single-update") }}',
     bulkUpdate        : '{{ route("subjectscoresheet.bulk-update") }}',
@@ -826,7 +1106,6 @@ window.routes = {
     import            : '{{ route("subjectscoresheet.import") }}',
     downloadMarksSheet: '{{ route("scoresheet.download-marks-sheet") }}',
     downloadScoresPdf : '{{ route("scoresheet.download-scores-pdf") }}',
-    gradePreview      : '{{ route("subjectscoresheet.grade-preview") }}',
     gradeForScore     : '{{ route("subjectscoresheet.grade-for-score") }}',
 };
 window.term_id         = {{ session('term_id')         ?? 'null' }};
@@ -835,9 +1114,8 @@ window.subjectclass_id = {{ session('subjectclass_id') ?? 'null' }};
 window.schoolclass_id  = {{ session('schoolclass_id')  ?? 'null' }};
 window.staff_id        = {{ session('staff_id')        ?? 'null' }};
 window.is_senior       = {{ ($is_senior ?? false) ? 'true' : 'false' }};
-window.broadsheets     = @json($broadsheets ?? []);
 
-/* ── Grade colours map ─────────────────────────────────────────────── */
+/* ── Grade colours ───────────────────────────────────────────────── */
 const GRADE_COLORS = {
     'A':'#16a34a','A1':'#16a34a',
     'B':'#2563eb','B2':'#2563eb','B3':'#3b82f6',
@@ -846,45 +1124,27 @@ const GRADE_COLORS = {
     'F':'#dc2626','F9':'#dc2626',
 };
 
-/* ── Client-side grade fallback ────────────────────────────────────── */
 function clientGrade(score) {
     score = parseFloat(score) || 0;
     if (window.is_senior) {
-        if (score >= 75) return 'A1';
-        if (score >= 70) return 'B2';
-        if (score >= 65) return 'B3';
-        if (score >= 60) return 'C4';
-        if (score >= 55) return 'C5';
-        if (score >= 50) return 'C6';
-        if (score >= 45) return 'D7';
-        if (score >= 40) return 'E8';
+        if (score >= 75) return 'A1'; if (score >= 70) return 'B2';
+        if (score >= 65) return 'B3'; if (score >= 60) return 'C4';
+        if (score >= 55) return 'C5'; if (score >= 50) return 'C6';
+        if (score >= 45) return 'D7'; if (score >= 40) return 'E8';
         return 'F9';
     }
-    if (score >= 70) return 'A';
-    if (score >= 60) return 'B';
-    if (score >= 50) return 'C';
-    if (score >= 40) return 'D';
+    if (score >= 70) return 'A'; if (score >= 60) return 'B';
+    if (score >= 50) return 'C'; if (score >= 40) return 'D';
     return 'F';
 }
 
-/* ── Debounce ─────────────────────────────────────────────────────── */
-function debounce(fn, ms) {
-    let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
-}
-
-/* ── Per-row grade fetch queue ────────────────────────────────────── */
-const gradeTimers = {};
-
-/* ── Helpers ──────────────────────────────────────────────────────── */
 const fmtN = (n, d = 1) => parseFloat(n || 0).toFixed(d);
 const ord  = n => {
     if (!n || isNaN(n)) return '-';
-    n = +n;
-    const s = n % 100;
+    n = +n; const s = n % 100;
     return n + (s >= 11 && s <= 13 ? 'th' : (['th','st','nd','rd'][n % 10] || 'th'));
 };
 
-/* ── Toast ────────────────────────────────────────────────────────── */
 function showToast(msg, type = 'info') {
     const colors = { success:'#16a34a', warning:'#d97706', danger:'#dc2626', info:'#2563eb' };
     const id = 'toast_' + Date.now();
@@ -896,7 +1156,6 @@ function showToast(msg, type = 'info') {
     setTimeout(() => document.getElementById(id)?.remove(), 4500);
 }
 
-/* ── Apply grade badge ────────────────────────────────────────────── */
 function applyGrade(badge, grade) {
     if (!badge) return;
     badge.textContent = grade || '-';
@@ -906,13 +1165,12 @@ function applyGrade(badge, grade) {
     setTimeout(() => badge.classList.remove('updated'), 500);
 }
 
-/* ── Real-time grade update ───────────────────────────────────────── */
+const gradeTimers = {};
 function updateRowGrades(row) {
     const bid          = row.dataset.id;
     const bf           = parseFloat(row.dataset.bf) || 0;
     const termId       = parseInt(row.dataset.termid) || window.term_id;
     const schoolclasId = parseInt(row.dataset.schoolclassid) || window.schoolclass_id;
-
     let totalRaw = 0;
     row.querySelectorAll('.score-input').forEach(inp => { totalRaw += parseFloat(inp.value) || 0; });
     const cum = termId == 1 ? totalRaw : (totalRaw + bf) / 2;
@@ -924,7 +1182,6 @@ function updateRowGrades(row) {
         totalBadge.className = `badge fw-bold total-badge bg-${tc}-subtle text-${tc}`;
         totalBadge.style.fontSize = '12px';
     }
-
     const cumBadge = row.querySelector('.cum-badge');
     if (cumBadge) {
         cumBadge.textContent = fmtN(cum);
@@ -932,13 +1189,10 @@ function updateRowGrades(row) {
         cumBadge.className = `badge fw-bold cum-badge bg-${cc}-subtle text-${cc}`;
         cumBadge.style.fontSize = '12px';
     }
-
     const totalGradeBadge = row.querySelector('.grade-badge');
     const cumGradeBadge   = row.querySelector('.cum-grade-badge');
-    const instantTotalGrade = clientGrade(totalRaw);
-    const instantCumGrade   = clientGrade(cum);
-    applyGrade(totalGradeBadge, instantTotalGrade);
-    applyGrade(cumGradeBadge,   instantCumGrade);
+    applyGrade(totalGradeBadge, clientGrade(totalRaw));
+    applyGrade(cumGradeBadge,   clientGrade(cum));
 
     clearTimeout(gradeTimers[bid]);
     gradeTimers[bid] = setTimeout(async () => {
@@ -946,26 +1200,19 @@ function updateRowGrades(row) {
             if (totalGradeBadge) { totalGradeBadge.classList.add('updating'); totalGradeBadge.innerHTML = '<span class="grade-loading"></span>'; }
             if (cumGradeBadge)   { cumGradeBadge.classList.add('updating');   cumGradeBadge.innerHTML   = '<span class="grade-loading"></span>'; }
             const res  = await fetch(window.routes.gradeForScore, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+                method:'POST', headers:{'Content-Type':'application/json','X-CSRF-TOKEN':CSRF},
                 body: JSON.stringify({ schoolclass_id: schoolclasId, total: totalRaw, cum }),
             });
             const data = await res.json();
-            if (data.success) {
-                applyGrade(totalGradeBadge, data.total_grade);
-                applyGrade(cumGradeBadge,   data.cum_grade);
-            } else {
-                applyGrade(totalGradeBadge, instantTotalGrade);
-                applyGrade(cumGradeBadge,   instantCumGrade);
-            }
+            if (data.success) { applyGrade(totalGradeBadge, data.total_grade); applyGrade(cumGradeBadge, data.cum_grade); }
+            else { applyGrade(totalGradeBadge, clientGrade(totalRaw)); applyGrade(cumGradeBadge, clientGrade(cum)); }
         } catch {
-            applyGrade(totalGradeBadge, instantTotalGrade);
-            applyGrade(cumGradeBadge,   instantCumGrade);
+            applyGrade(totalGradeBadge, clientGrade(totalRaw));
+            applyGrade(cumGradeBadge, clientGrade(cum));
         }
     }, 400);
 }
 
-/* ── Validate input ───────────────────────────────────────────────── */
 function validateInput(inp) {
     const max = parseFloat(inp.dataset.max) || 0;
     const val = parseFloat(inp.value) || 0;
@@ -973,19 +1220,14 @@ function validateInput(inp) {
     return val <= max;
 }
 
-/* ── Individual save ──────────────────────────────────────────────── */
 function saveIndividualScore(input) {
-    const broadsheetId = input.dataset.id;
-    const assessmentId = parseInt(input.dataset.field);
-    const score        = parseFloat(input.value) || 0;
-    const row          = input.closest('tr');
-
+    const row = input.closest('tr');
     fetch(window.routes.singleUpdate, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+        method:'POST', headers:{'Content-Type':'application/json','X-CSRF-TOKEN':CSRF},
         body: JSON.stringify({
-            broadsheet_id: broadsheetId, assessment_id: assessmentId, score,
-            is_sub: false, term_id: window.term_id, session_id: window.session_id,
+            broadsheet_id: input.dataset.id, assessment_id: parseInt(input.dataset.field),
+            score: parseFloat(input.value) || 0, is_sub: false,
+            term_id: window.term_id, session_id: window.session_id,
             subjectclass_id: window.subjectclass_id, schoolclass_id: window.schoolclass_id, staff_id: window.staff_id,
         })
     })
@@ -1001,6 +1243,8 @@ function saveIndividualScore(input) {
             cumBadge.textContent = fmtN(cum);
             const cc = cum >= 70 ? 'success' : cum >= 50 ? 'info' : cum >= 40 ? 'warning' : 'danger';
             cumBadge.className = `badge fw-bold cum-badge bg-${cc}-subtle text-${cc}`;
+            // sync HUD cum if this row is active
+            if (row.classList.contains('scoring-active')) hudRefreshFromRow(row);
         }
         const totalGradeBadge = row.querySelector('.grade-badge');
         if (totalGradeBadge && d.grade != null) applyGrade(totalGradeBadge, d.grade);
@@ -1013,246 +1257,234 @@ function saveIndividualScore(input) {
         input.classList.add('is-saved');
         setTimeout(() => input.classList.remove('is-saved'), 2000);
     })
-    .catch(err => {
-        console.warn('singleUpdate error:', err.message);
-        showToast('Network issue — score may not have saved.', 'danger');
-    });
+    .catch(err => { console.warn('singleUpdate error:', err.message); showToast('Network issue — score may not have saved.', 'danger'); });
 }
 
 /* ════════════════════════════════════════════════════════════════════
-   APPLE-STYLE SAVE MODAL HELPERS
+   STUDENT SCORE-ENTRY HUD
    ════════════════════════════════════════════════════════════════════ */
-const SS_ARC_CIRC = 157.08; // 2π × 25
+let hudActive    = false;
+let hudDismissTimer = null;
+const HUD_IDLE_MS = 8000; // auto-dismiss after 8s of no input
 
+function hudEl(id) { return document.getElementById(id); }
+
+function hudOpen(row, focusedInput) {
+    clearTimeout(hudDismissTimer);
+    hudActive = true;
+
+    // Mark row active, dim others
+    document.querySelectorAll('#scoresheetTableBody tr[data-id]').forEach(r => r.classList.remove('scoring-active'));
+    document.getElementById('scoresheetTableBody').classList.add('has-active-row');
+    row.classList.add('scoring-active');
+
+    // Populate top
+    hudEl('hudAvatar').src    = row.dataset.avatar || '{{ asset("storage/student_avatars/unnamed.jpg") }}';
+    hudEl('hudAvatar').onerror = () => { hudEl('hudAvatar').src = '{{ asset("storage/student_avatars/unnamed.jpg") }}'; };
+    hudEl('hudName').textContent = row.dataset.name  || '—';
+    hudEl('hudMeta').textContent = row.dataset.admissionno || '—';
+
+    // Build score pills
+    hudRefreshPills(row, focusedInput);
+    hudRefreshFromRow(row);
+
+    // Show
+    hudEl('studentHudCard').classList.add('hud-visible');
+    hudEl('studentHudBackdrop').classList.add('hud-backdrop-visible');
+
+    // Auto-dismiss timer
+    hudStartIdleTimer();
+}
+
+function hudRefreshPills(row, focusedInput) {
+    const inputs  = Array.from(row.querySelectorAll('.score-input'));
+    const pillsEl = hudEl('hudScoresRow');
+    pillsEl.innerHTML = '';
+
+    inputs.forEach(inp => {
+        const val     = parseFloat(inp.value) || 0;
+        const max     = parseFloat(inp.dataset.max) || 100;
+        const name    = inp.dataset.assessmentName || 'Score';
+        const invalid = val > max;
+        const active  = focusedInput === inp;
+
+        const pill = document.createElement('div');
+        pill.className = 'hud-score-pill' + (active ? ' pill-active' : '') + (invalid ? ' pill-invalid' : '');
+        pill.dataset.inputId = inp.dataset.field;
+        pill.innerHTML = `
+            <div class="pill-label">${name}</div>
+            <div class="pill-val">${val % 1 === 0 ? val : val.toFixed(1)}</div>
+            <div class="pill-max">/ ${max}</div>`;
+        pillsEl.appendChild(pill);
+    });
+}
+
+function hudRefreshFromRow(row) {
+    const inputs  = Array.from(row.querySelectorAll('.score-input'));
+    const bf      = parseFloat(row.dataset.bf) || 0;
+    const termId  = parseInt(row.dataset.termid) || window.term_id;
+
+    let totalRaw  = 0;
+    let totalMax  = 0;
+    inputs.forEach(inp => { totalRaw += parseFloat(inp.value) || 0; totalMax += parseFloat(inp.dataset.max) || 0; });
+    const cum     = termId == 1 ? totalRaw : (totalRaw + bf) / 2;
+    const grade   = clientGrade(totalRaw);
+    const cumGrade= clientGrade(cum);
+    const pct     = totalMax > 0 ? Math.min((totalRaw / totalMax) * 100, 100) : 0;
+
+    // Stats
+    const totalEl = hudEl('hudTotal');
+    totalEl.textContent = fmtN(totalRaw);
+    totalEl.style.color = totalRaw >= 70 ? '#16a34a' : totalRaw >= 50 ? '#2563eb' : totalRaw >= 40 ? '#d97706' : '#dc2626';
+
+    const gradeEl = hudEl('hudGrade');
+    gradeEl.textContent = grade;
+    gradeEl.style.color = GRADE_COLORS[grade] || '#6b7280';
+
+    hudEl('hudBf').textContent  = fmtN(bf);
+    const cumEl = hudEl('hudCum');
+    cumEl.textContent = fmtN(cum);
+    cumEl.style.color = cum >= 70 ? '#16a34a' : cum >= 50 ? '#2563eb' : cum >= 40 ? '#d97706' : '#dc2626';
+
+    const cgEl = hudEl('hudCumGrade');
+    cgEl.textContent = cumGrade;
+    cgEl.style.color = GRADE_COLORS[cumGrade] || '#6b7280';
+
+    // Progress
+    const fill  = hudEl('hudProgFill');
+    fill.style.width = pct.toFixed(1) + '%';
+    fill.style.background = pct >= 70 ? '#16a34a' : pct >= 50 ? '#2563eb' : pct >= 40 ? '#d97706' : '#dc2626';
+    hudEl('hudProgPct').textContent = Math.round(pct) + '%';
+    hudEl('hudProgLabel').textContent = `${fmtN(totalRaw)} of ${totalMax} marks`;
+}
+
+function hudClose() {
+    clearTimeout(hudDismissTimer);
+    hudActive = false;
+    hudEl('studentHudCard').classList.remove('hud-visible');
+    hudEl('studentHudBackdrop').classList.remove('hud-backdrop-visible');
+    setTimeout(() => {
+        document.getElementById('scoresheetTableBody').classList.remove('has-active-row');
+        document.querySelectorAll('#scoresheetTableBody tr[data-id]').forEach(r => r.classList.remove('scoring-active'));
+    }, 280);
+}
+
+function hudStartIdleTimer() {
+    clearTimeout(hudDismissTimer);
+    hudDismissTimer = setTimeout(() => { if (hudActive) hudClose(); }, HUD_IDLE_MS);
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   APPLE-STYLE SAVE MODAL
+   ════════════════════════════════════════════════════════════════════ */
+const SS_ARC_CIRC = 157.08;
 function ssEl(id) { return document.getElementById(id); }
-
 function ssResetIcons() {
-    ssEl('ssIconSave').style.display  = '';
-    ssEl('ssIconCheck').style.display = 'none';
-    ssEl('ssIconX').style.display     = 'none';
-    ssEl('ssCheckPath').style.strokeDashoffset = '22';
-    ssEl('ssCheckPath').classList.remove('drawn');
-    ssEl('ssIconCenter').style.background = 'rgba(30,58,95,0.09)';
-    ssEl('ssArcFg').style.stroke = '#1e3a5f';
+    ssEl('ssIconSave').style.display  = '';  ssEl('ssIconCheck').style.display = 'none'; ssEl('ssIconX').style.display = 'none';
+    ssEl('ssCheckPath').style.strokeDashoffset = '22'; ssEl('ssCheckPath').classList.remove('drawn');
+    ssEl('ssIconCenter').style.background = 'rgba(30,58,95,0.09)'; ssEl('ssArcFg').style.stroke = '#1e3a5f';
 }
-
-function ssSetArc(pct) {
-    ssEl('ssArcFg').style.strokeDashoffset = (SS_ARC_CIRC * (1 - pct / 100)).toFixed(3);
-}
-
+function ssSetArc(pct) { ssEl('ssArcFg').style.strokeDashoffset = (SS_ARC_CIRC * (1 - pct / 100)).toFixed(3); }
 function ssOpen(total) {
-    ssResetIcons();
-    ssSetArc(0);
-    ssEl('ssSaveFill').style.width      = '0%';
-    ssEl('ssSaveFill').style.background = '#1e3a5f';
-    ssEl('ssSaveTitle').textContent     = 'Saving scores';
-    ssEl('ssSaveSub').textContent       = 'Preparing…';
-    ssEl('ssSaveCountLabel').textContent = 'Saved';
-    ssEl('ssSaveCountNum').textContent  = `0 / ${total}`;
-
-    const overlay = ssEl('ssSaveOverlay');
-    overlay.classList.remove('ss-closing');
-    overlay.classList.add('ss-visible');
+    ssResetIcons(); ssSetArc(0);
+    ssEl('ssSaveFill').style.width = '0%'; ssEl('ssSaveFill').style.background = '#1e3a5f';
+    ssEl('ssSaveTitle').textContent = 'Saving scores'; ssEl('ssSaveSub').textContent = 'Preparing…';
+    ssEl('ssSaveCountLabel').textContent = 'Saved'; ssEl('ssSaveCountNum').textContent = `0 / ${total}`;
+    const o = ssEl('ssSaveOverlay'); o.classList.remove('ss-closing'); o.classList.add('ss-visible');
 }
-
 function ssUpdate(saved, total, pct) {
-    ssEl('ssSaveFill').style.width     = pct.toFixed(1) + '%';
-    ssEl('ssSaveCountNum').textContent = `${saved} / ${total}`;
-    ssSetArc(pct);
-
+    ssEl('ssSaveFill').style.width = pct.toFixed(1) + '%'; ssEl('ssSaveCountNum').textContent = `${saved} / ${total}`; ssSetArc(pct);
     if      (pct < 25) ssEl('ssSaveSub').textContent = 'Uploading data…';
     else if (pct < 55) ssEl('ssSaveSub').textContent = 'Processing records…';
     else if (pct < 85) ssEl('ssSaveSub').textContent = 'Recalculating grades…';
     else               ssEl('ssSaveSub').textContent = 'Finalising…';
 }
-
 function ssSuccess(total) {
-    ssEl('ssSaveFill').style.width      = '100%';
-    ssEl('ssSaveFill').style.background = '#16a34a';
-    ssEl('ssArcFg').style.strokeDashoffset = '0';
-    ssEl('ssArcFg').style.stroke        = '#16a34a';
+    ssEl('ssSaveFill').style.width = '100%'; ssEl('ssSaveFill').style.background = '#16a34a';
+    ssEl('ssArcFg').style.strokeDashoffset = '0'; ssEl('ssArcFg').style.stroke = '#16a34a';
     ssEl('ssIconCenter').style.background = '#dcfce7';
-    ssEl('ssIconSave').style.display    = 'none';
-    ssEl('ssIconCheck').style.display   = '';
-    ssEl('ssSaveCountNum').textContent  = `${total} / ${total}`;
-    ssEl('ssSaveTitle').textContent     = 'All saved';
-    ssEl('ssSaveSub').textContent       = `${total} score${total !== 1 ? 's' : ''} saved successfully`;
-    // Trigger checkmark draw
-    requestAnimationFrame(() => {
-        ssEl('ssCheckPath').classList.add('drawn');
-    });
+    ssEl('ssIconSave').style.display = 'none'; ssEl('ssIconCheck').style.display = '';
+    requestAnimationFrame(() => ssEl('ssCheckPath').classList.add('drawn'));
+    ssEl('ssSaveTitle').textContent = 'All saved'; ssEl('ssSaveSub').textContent = `${total} score${total !== 1 ? 's' : ''} saved successfully`;
+    ssEl('ssSaveCountNum').textContent = `${total} / ${total}`;
     setTimeout(ssClose, 1900);
 }
-
 function ssError(msg) {
-    ssEl('ssSaveFill').style.background = '#dc2626';
-    ssEl('ssArcFg').style.stroke        = '#dc2626';
+    ssEl('ssSaveFill').style.background = '#dc2626'; ssEl('ssArcFg').style.stroke = '#dc2626';
     ssEl('ssIconCenter').style.background = '#fee2e2';
-    ssEl('ssIconSave').style.display    = 'none';
-    ssEl('ssIconX').style.display       = '';
-    ssEl('ssSaveTitle').textContent     = 'Save failed';
-    ssEl('ssSaveSub').textContent       = msg || 'Something went wrong.';
+    ssEl('ssIconSave').style.display = 'none'; ssEl('ssIconX').style.display = '';
+    ssEl('ssSaveTitle').textContent = 'Save failed'; ssEl('ssSaveSub').textContent = msg || 'Something went wrong.';
     setTimeout(ssClose, 2400);
 }
-
 function ssClose() {
-    const overlay = ssEl('ssSaveOverlay');
-    overlay.classList.add('ss-closing');
-    setTimeout(() => {
-        overlay.classList.remove('ss-visible', 'ss-closing');
-    }, 260);
+    const o = ssEl('ssSaveOverlay'); o.classList.add('ss-closing');
+    setTimeout(() => o.classList.remove('ss-visible', 'ss-closing'), 260);
 }
 
 /* ── Bulk save ────────────────────────────────────────────────────── */
 function bulkSave() {
     const invalid = document.querySelectorAll('.score-input.is-invalid').length;
-    if (invalid) {
-        Swal.fire({ icon:'warning', title:'Invalid Scores', text:`${invalid} score(s) exceed their maximum.` });
-        return;
-    }
-
+    if (invalid) { Swal.fire({ icon:'warning', title:'Invalid Scores', text:`${invalid} score(s) exceed their maximum.` }); return; }
     const scores = [];
     document.querySelectorAll('#scoresheetTableBody tr[data-id]').forEach(row => {
         const assessments = {};
-        row.querySelectorAll('.score-input').forEach(inp => {
-            assessments[inp.dataset.field] = parseFloat(inp.value) || 0;
-        });
+        row.querySelectorAll('.score-input').forEach(inp => { assessments[inp.dataset.field] = parseFloat(inp.value) || 0; });
         if (Object.keys(assessments).length) scores.push({ id: row.dataset.id, assessments });
     });
-
     if (!scores.length) return;
-
     const total = scores.length;
-
-    /* ── Open Apple modal ── */
     ssOpen(total);
-
-    /* ── Animated fake progress (smooth fill until server responds) ── */
     let fakeProgress = 0;
-    let fakeSaved    = 0;
     const fakeIv = setInterval(() => {
-        const step = Math.random() * 4 + 2;
-        fakeProgress = Math.min(fakeProgress + step, 88); // cap at 88% until server confirms
-        fakeSaved    = Math.round((fakeProgress / 100) * total);
-        ssUpdate(fakeSaved, total, fakeProgress);
+        fakeProgress = Math.min(fakeProgress + Math.random() * 4 + 2, 88);
+        ssUpdate(Math.round((fakeProgress / 100) * total), total, fakeProgress);
     }, 130);
-
-    const btn      = document.getElementById('bulkUpdateScores');
+    const btn = document.getElementById('bulkUpdateScores');
     const origHtml = btn?.innerHTML;
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ri-loader-4-line"></i> Saving…'; }
-
     fetch(window.routes.bulkUpdate, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
-        body: JSON.stringify({
-            scores,
-            term_id:         window.term_id,
-            session_id:      window.session_id,
-            subjectclass_id: window.subjectclass_id,
-            staff_id:        window.staff_id,
-            schoolclass_id:  window.schoolclass_id,
-            is_sub:          false,
-        })
+        method:'POST', headers:{'Content-Type':'application/json','X-CSRF-TOKEN':CSRF},
+        body: JSON.stringify({ scores, term_id: window.term_id, session_id: window.session_id, subjectclass_id: window.subjectclass_id, staff_id: window.staff_id, schoolclass_id: window.schoolclass_id, is_sub: false })
     })
     .then(r => r.json())
     .then(data => {
         clearInterval(fakeIv);
-
-        if (!data.success) {
-            ssError(data.message || 'Server error.');
-            return;
-        }
-
-        /* ── Animate to 100% then show success ── */
+        if (!data.success) { ssError(data.message || 'Server error.'); return; }
         ssUpdate(total, total, 100);
         setTimeout(() => ssSuccess(total), 220);
-
-        /* ── Update DOM with server values ── */
-        const serverSheets = data.data?.broadsheets ?? [];
-        serverSheets.forEach(bs => {
+        (data.data?.broadsheets ?? []).forEach(bs => {
             const row = document.querySelector(`#scoresheetTableBody tr[data-id="${bs.id}"]`);
             if (!row) return;
-
-            const total_score = parseFloat(bs.total ?? 0);
-            const totalBadge  = row.querySelector('.total-badge');
-            if (totalBadge) {
-                totalBadge.textContent = fmtN(total_score);
-                const tc = total_score >= 70 ? 'success' : total_score >= 50 ? 'info' : total_score >= 40 ? 'warning' : 'danger';
-                totalBadge.className = `badge fw-bold total-badge bg-${tc}-subtle text-${tc}`;
-            }
-
-            const totalGradeBadge = row.querySelector('.grade-badge');
-            if (totalGradeBadge) applyGrade(totalGradeBadge, bs.grade ?? '-');
-
-            const bfBadge = row.querySelector('.bf-badge');
-            if (bfBadge) bfBadge.textContent = fmtN(bs.bf);
-
-            const cum      = parseFloat(bs.cum ?? 0);
-            const cumBadge = row.querySelector('.cum-badge');
-            if (cumBadge) {
-                cumBadge.textContent = fmtN(cum);
-                const cc = cum >= 70 ? 'success' : cum >= 50 ? 'info' : cum >= 40 ? 'warning' : 'danger';
-                cumBadge.className = `badge fw-bold cum-badge bg-${cc}-subtle text-${cc}`;
-            }
-
-            const cumGradeBadge = row.querySelector('.cum-grade-badge');
-            if (cumGradeBadge) applyGrade(cumGradeBadge, clientGrade(cum));
-
-            const avgBadge = row.querySelector('.avg-badge');
-            if (avgBadge && bs.avg != null) avgBadge.textContent = fmtN(bs.avg);
-
-            const gpaBadge  = row.querySelector('.gpa-badge');
-            const cgpaBadge = row.querySelector('.cgpa-badge');
-            if (gpaBadge)  gpaBadge.textContent  = fmtN(bs.gpa,  2);
-            if (cgpaBadge) cgpaBadge.textContent = fmtN(bs.cgpa, 2);
-
-            const posBadge = row.querySelector('.position-badge');
-            if (posBadge) posBadge.textContent = ord(bs.position);
-
-            row.querySelectorAll('.score-input').forEach(i => {
-                i.classList.add('is-saved');
-                setTimeout(() => i.classList.remove('is-saved'), 2000);
-            });
+            const ts = parseFloat(bs.total ?? 0), tb = row.querySelector('.total-badge');
+            if (tb) { tb.textContent = fmtN(ts); const tc = ts>=70?'success':ts>=50?'info':ts>=40?'warning':'danger'; tb.className=`badge fw-bold total-badge bg-${tc}-subtle text-${tc}`; }
+            const tgb = row.querySelector('.grade-badge'); if (tgb) applyGrade(tgb, bs.grade ?? '-');
+            const bfB = row.querySelector('.bf-badge'); if (bfB) bfB.textContent = fmtN(bs.bf);
+            const cum = parseFloat(bs.cum ?? 0), cb = row.querySelector('.cum-badge');
+            if (cb) { cb.textContent = fmtN(cum); const cc = cum>=70?'success':cum>=50?'info':cum>=40?'warning':'danger'; cb.className=`badge fw-bold cum-badge bg-${cc}-subtle text-${cc}`; }
+            const cgb = row.querySelector('.cum-grade-badge'); if (cgb) applyGrade(cgb, clientGrade(cum));
+            const ab = row.querySelector('.avg-badge'); if (ab && bs.avg != null) ab.textContent = fmtN(bs.avg);
+            const gb = row.querySelector('.gpa-badge'); if (gb) gb.textContent = fmtN(bs.gpa, 2);
+            const cgpab = row.querySelector('.cgpa-badge'); if (cgpab) cgpab.textContent = fmtN(bs.cgpa, 2);
+            const pb = row.querySelector('.position-badge'); if (pb) pb.textContent = ord(bs.position);
+            row.querySelectorAll('.score-input').forEach(i => { i.classList.add('is-saved'); setTimeout(()=>i.classList.remove('is-saved'),2000); });
         });
     })
-    .catch(err => {
-        clearInterval(fakeIv);
-        ssError('Please check your connection and try again.');
-        console.error('bulkSave error:', err);
-    })
-    .finally(() => {
-        if (btn) { btn.disabled = false; btn.innerHTML = origHtml || '<i class="ri-save-line me-1"></i>Save All Scores'; }
-    });
+    .catch(err => { clearInterval(fakeIv); ssError('Please check your connection and try again.'); console.error(err); })
+    .finally(() => { if (btn) { btn.disabled = false; btn.innerHTML = origHtml || '<i class="ri-save-line me-1"></i>Save All Scores'; } });
 }
 
-/* ── PDF download helper ──────────────────────────────────────────── */
+/* ── PDF download ─────────────────────────────────────────────────── */
 function startPdfDownload(url, filename, label) {
-    const cont = document.getElementById('downloadProgressContainer');
-    const bar  = document.getElementById('downloadProgressBar');
-    const lbl  = document.getElementById('downloadProgressLabel');
-    if (cont) cont.style.display = 'block';
-    if (bar)  bar.style.width   = '10%';
-    if (lbl)  lbl.textContent   = label || 'Downloading…';
-
-    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF } })
-    .then(async r => {
-        if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.message || 'Download failed.'); }
-        if (bar) bar.style.width = '90%';
-        return r.blob();
-    })
-    .then(blob => {
-        if (bar) bar.style.width = '100%';
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob); a.download = filename;
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        URL.revokeObjectURL(a.href);
-        showToast('Downloaded successfully!', 'success');
-    })
-    .catch(err => Swal.fire({ icon:'error', title:'Download Failed', text: err.message }))
-    .finally(() => setTimeout(() => { if (cont) cont.style.display='none'; if (bar) bar.style.width='0%'; }, 1200));
+    const cont = document.getElementById('downloadProgressContainer'), bar = document.getElementById('downloadProgressBar'), lbl = document.getElementById('downloadProgressLabel');
+    if (cont) cont.style.display = 'block'; if (bar) bar.style.width = '10%'; if (lbl) lbl.textContent = label || 'Downloading…';
+    fetch(url, { headers:{'X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':CSRF} })
+    .then(async r => { if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.message||'Download failed.'); } if (bar) bar.style.width='90%'; return r.blob(); })
+    .then(blob => { if (bar) bar.style.width='100%'; const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(a.href); showToast('Downloaded successfully!','success'); })
+    .catch(err => Swal.fire({icon:'error',title:'Download Failed',text:err.message}))
+    .finally(() => setTimeout(()=>{if(cont)cont.style.display='none';if(bar)bar.style.width='0%';},1200));
 }
 
-/* ── DOM ready ────────────────────────────────────────────────────── */
+/* ── DOM Ready ────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', function () {
 
     document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => new bootstrap.Tooltip(el));
@@ -1264,8 +1496,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.querySelectorAll('.col-toggle').forEach(cb => {
         cb.addEventListener('change', function() {
-            document.querySelectorAll(`th.${this.dataset.col}, td.${this.dataset.col}`)
-                    .forEach(el => el.style.display = this.checked ? '' : 'none');
+            document.querySelectorAll(`th.${this.dataset.col}, td.${this.dataset.col}`).forEach(el => el.style.display = this.checked ? '' : 'none');
         });
     });
 
@@ -1279,54 +1510,54 @@ document.addEventListener('DOMContentLoaded', function () {
             row.style.display = show ? '' : 'none';
             if (show) vis++;
         });
-        const sc = document.getElementById('scoreCount');
-        if (sc) sc.textContent = vis;
-        const nd = document.getElementById('noDataAlert');
-        if (nd) nd.style.display = vis === 0 ? 'block' : 'none';
+        const sc = document.getElementById('scoreCount'); if (sc) sc.textContent = vis;
+        const nd = document.getElementById('noDataAlert'); if (nd) nd.style.display = vis === 0 ? 'block' : 'none';
     }
     document.getElementById('searchInput')?.addEventListener('input', applySearch);
-    document.getElementById('clearSearch')?.addEventListener('click', () => {
-        const si = document.getElementById('searchInput'); if (si) si.value = '';
-        applySearch();
-    });
+    document.getElementById('clearSearch')?.addEventListener('click', () => { const si = document.getElementById('searchInput'); if (si) si.value = ''; applySearch(); });
 
-    document.getElementById('checkAll')?.addEventListener('change', function() {
-        document.querySelectorAll('.score-checkbox').forEach(cb => cb.checked = this.checked);
-    });
+    document.getElementById('checkAll')?.addEventListener('change', function() { document.querySelectorAll('.score-checkbox').forEach(cb => cb.checked = this.checked); });
     document.addEventListener('change', function(e) {
         if (!e.target.classList.contains('score-checkbox')) return;
-        const all = document.querySelectorAll('.score-checkbox');
-        const chk = document.querySelectorAll('.score-checkbox:checked');
-        const ca  = document.getElementById('checkAll');
+        const all = document.querySelectorAll('.score-checkbox'), chk = document.querySelectorAll('.score-checkbox:checked'), ca = document.getElementById('checkAll');
         if (ca) { ca.checked = chk.length === all.length && all.length > 0; ca.indeterminate = chk.length > 0 && chk.length < all.length; }
     });
-    document.getElementById('selectAllScores')?.addEventListener('click', () => {
-        const ca = document.getElementById('checkAll'); if (ca) ca.checked = true;
-        document.querySelectorAll('.score-checkbox').forEach(cb => cb.checked = true);
-    });
-    document.getElementById('clearAllScores')?.addEventListener('click', () => {
-        const ca = document.getElementById('checkAll'); if (ca) ca.checked = false;
-        document.querySelectorAll('.score-checkbox').forEach(cb => cb.checked = false);
-    });
+    document.getElementById('selectAllScores')?.addEventListener('click', () => { const ca = document.getElementById('checkAll'); if (ca) ca.checked = true; document.querySelectorAll('.score-checkbox').forEach(cb => cb.checked = true); });
+    document.getElementById('clearAllScores')?.addEventListener('click',  () => { const ca = document.getElementById('checkAll'); if (ca) ca.checked = false; document.querySelectorAll('.score-checkbox').forEach(cb => cb.checked = false); });
 
-    /* Score inputs */
+    /* ── Score inputs ──────────────────────────────────────────────── */
     document.querySelectorAll('.score-input').forEach(inp => {
-        inp.addEventListener('focus', function() { this.select(); });
+        inp.addEventListener('focus', function() {
+            this.select();
+            const row = this.closest('tr');
+            if (row && row.dataset.id) hudOpen(row, this);
+        });
+
         inp.addEventListener('input', function() {
             validateInput(this);
             const row = this.closest('tr');
-            if (row) updateRowGrades(row);
+            if (row) {
+                updateRowGrades(row);
+                // refresh HUD live
+                if (hudActive && row.classList.contains('scoring-active')) {
+                    hudRefreshPills(row, this);
+                    hudRefreshFromRow(row);
+                    hudStartIdleTimer();
+                }
+            }
         });
+
         inp.addEventListener('blur', function() {
             if (!validateInput(this)) return;
             const orig = parseFloat(this.dataset.original) || 0;
             const curr = parseFloat(this.value) || 0;
-            if (Math.abs(curr - orig) > 0.001) {
-                this.dataset.original = this.value;
-                saveIndividualScore(this);
-            }
+            if (Math.abs(curr - orig) > 0.001) { this.dataset.original = this.value; saveIndividualScore(this); }
+            // restart idle timer on blur (moving to next field)
+            if (hudActive) hudStartIdleTimer();
         });
+
         inp.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') { e.preventDefault(); hudClose(); this.blur(); return; }
             if (e.key !== 'Enter') return;
             e.preventDefault();
             if (validateInput(this)) saveIndividualScore(this);
@@ -1336,107 +1567,93 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    document.getElementById('bulkUpdateScores')?.addEventListener('click', bulkSave);
+    /* HUD close button */
+    document.getElementById('hudClose')?.addEventListener('click', hudClose);
+
+    /* Backdrop click to dismiss */
+    document.getElementById('studentHudBackdrop')?.addEventListener('click', hudClose);
+
+    /* Keyboard dismiss */
     document.addEventListener('keydown', e => {
+        if (e.key === 'Escape' && hudActive) { hudClose(); return; }
         if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); bulkSave(); }
     });
 
+    /* Bulk save */
+    document.getElementById('bulkUpdateScores')?.addEventListener('click', bulkSave);
+
+    /* Delete selected */
     document.getElementById('deleteSelectedScoresBtn')?.addEventListener('click', function() {
         const ids = Array.from(document.querySelectorAll('.score-checkbox:checked')).map(cb => cb.dataset.id);
-        if (!ids.length) { Swal.fire({ icon:'warning', title:'No Selection', text:'Select rows to delete.' }); return; }
-        Swal.fire({ title:'Delete selected scores?', text:'This cannot be undone.', icon:'warning',
-            showCancelButton:true, confirmButtonColor:'#dc2626', confirmButtonText:'Yes, delete' })
+        if (!ids.length) { Swal.fire({icon:'warning',title:'No Selection',text:'Select rows to delete.'}); return; }
+        Swal.fire({title:'Delete selected scores?',text:'This cannot be undone.',icon:'warning',showCancelButton:true,confirmButtonColor:'#dc2626',confirmButtonText:'Yes, delete'})
         .then(r => {
             if (!r.isConfirmed) return;
-            Promise.all(ids.map(id =>
-                fetch(window.routes.destroy.replace('__ID__', id), {
-                    method:'DELETE', headers:{'X-CSRF-TOKEN':CSRF}
-                }).then(r => r.json())
-            )).then(results => {
+            Promise.all(ids.map(id => fetch(window.routes.destroy.replace('__ID__',id),{method:'DELETE',headers:{'X-CSRF-TOKEN':CSRF}}).then(r=>r.json())))
+            .then(results => {
                 let deleted = 0;
-                results.forEach((res, i) => {
-                    if (res.success) { document.querySelector(`tr[data-id="${ids[i]}"]`)?.remove(); deleted++; }
-                });
-                showToast(`${deleted} score(s) deleted.`, 'success');
+                results.forEach((res,i) => { if (res.success) { document.querySelector(`tr[data-id="${ids[i]}"]`)?.remove(); deleted++; } });
+                showToast(`${deleted} score(s) deleted.`,'success');
                 if (!document.querySelectorAll('#scoresheetTableBody tr[data-id]').length) location.reload();
             });
         });
     });
 
-    document.getElementById('downloadMarksSheet')?.addEventListener('click', () => {
-        startPdfDownload(window.routes.downloadMarksSheet, 'marks-sheet.pdf', 'Generating Marks Sheet…');
-    });
-    document.getElementById('downloadScoresPdf')?.addEventListener('click', () => {
-        startPdfDownload(window.routes.downloadScoresPdf, 'scores-sheet.pdf', 'Generating Scores PDF…');
-    });
+    /* Downloads */
+    document.getElementById('downloadMarksSheet')?.addEventListener('click', () => startPdfDownload(window.routes.downloadMarksSheet,'marks-sheet.pdf','Generating Marks Sheet…'));
+    document.getElementById('downloadScoresPdf')?.addEventListener('click',  () => startPdfDownload(window.routes.downloadScoresPdf,'scores-sheet.pdf','Generating Scores PDF…'));
 
     document.getElementById('downloadExcel')?.addEventListener('click', () => {
-        const btn = document.getElementById('downloadExcel');
-        const orig = btn?.innerHTML;
+        const btn = document.getElementById('downloadExcel'), orig = btn?.innerHTML;
         if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ri-loader-4-line"></i> Generating…'; }
-        fetch(window.routes.export, {
-            headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }
-        })
-        .then(r => {
-            const cd = r.headers.get('content-disposition') || '';
-            const m  = cd.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-            const fn = m ? m[1].replace(/['"]/g, '') : 'scoresheet.xlsx';
-            return r.blob().then(b => ({ blob: b, filename: fn }));
-        })
-        .then(({ blob, filename }) => {
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob); a.download = filename;
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-            showToast('Excel downloaded. File may be password-protected.', 'success');
-        })
-        .catch(err => Swal.fire({ icon:'error', title:'Download Failed', text: err.message }))
-        .finally(() => { if (btn) { btn.disabled = false; btn.innerHTML = orig; } });
+        fetch(window.routes.export, { headers:{'X-Requested-With':'XMLHttpRequest','Accept':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'} })
+        .then(r => { const cd=r.headers.get('content-disposition')||'',m=cd.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/),fn=m?m[1].replace(/['"]/g,''):'scoresheet.xlsx'; return r.blob().then(b=>({blob:b,filename:fn})); })
+        .then(({blob,filename}) => { const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); showToast('Excel downloaded. File may be password-protected.','success'); })
+        .catch(err => Swal.fire({icon:'error',title:'Download Failed',text:err.message}))
+        .finally(() => { if (btn) { btn.disabled=false; btn.innerHTML=orig; } });
     });
 
     document.getElementById('importForm')?.addEventListener('submit', function(e) {
         e.preventDefault();
         const file = this.querySelector('input[name="file"]');
-        if (!file?.files?.length) {
-            Swal.fire({ icon:'warning', title:'No File', text:'Please select an Excel file.' }); return;
-        }
-        const btn    = document.getElementById('importSubmit');
-        const loader = document.getElementById('importLoader');
-        const bar    = document.getElementById('uploadProgressBar');
-        const origHtml = btn?.innerHTML;
-        if (btn)    { btn.disabled = true; btn.innerHTML = '<i class="ri-loader-4-line"></i> Uploading…'; }
-        if (loader) loader.style.display = 'block';
-        if (bar)    bar.style.width = '10%';
-        const fd = new FormData(this);
-        fetch(window.routes.import, {
-            method: 'POST',
-            headers: { 'X-CSRF-TOKEN': CSRF, 'X-Requested-With': 'XMLHttpRequest' },
-            body: fd,
-        })
-        .then(r => r.json())
+        if (!file?.files?.length) { Swal.fire({icon:'warning',title:'No File',text:'Please select an Excel file.'}); return; }
+        const btn=document.getElementById('importSubmit'), loader=document.getElementById('importLoader'), bar=document.getElementById('uploadProgressBar'), origHtml=btn?.innerHTML;
+        if (btn) { btn.disabled=true; btn.innerHTML='<i class="ri-loader-4-line"></i> Uploading…'; }
+        if (loader) loader.style.display='block'; if (bar) bar.style.width='10%';
+        fetch(window.routes.import, { method:'POST', headers:{'X-CSRF-TOKEN':CSRF,'X-Requested-With':'XMLHttpRequest'}, body: new FormData(this) })
+        .then(r=>r.json())
         .then(data => {
-            if (bar) bar.style.width = '100%';
-            if (data.success || data.warning) {
-                Swal.fire({ icon: data.warning ? 'warning' : 'success', title: data.warning ? 'Partial Success' : 'Imported!', text: data.message, timer: 2500, showConfirmButton: false });
-                bootstrap.Modal.getInstance(document.getElementById('importModal'))?.hide();
-                setTimeout(() => location.reload(), 2600);
-            } else {
-                Swal.fire({ icon:'error', title:'Import Failed', text: data.message || 'Unknown error.' });
-            }
+            if (bar) bar.style.width='100%';
+            if (data.success||data.warning) { Swal.fire({icon:data.warning?'warning':'success',title:data.warning?'Partial Success':'Imported!',text:data.message,timer:2500,showConfirmButton:false}); bootstrap.Modal.getInstance(document.getElementById('importModal'))?.hide(); setTimeout(()=>location.reload(),2600); }
+            else Swal.fire({icon:'error',title:'Import Failed',text:data.message||'Unknown error.'});
         })
-        .catch(err => Swal.fire({ icon:'error', title:'Upload Error', text: err.message }))
-        .finally(() => {
-            setTimeout(() => { if (loader) loader.style.display='none'; if (bar) bar.style.width='0%'; }, 1000);
-            if (btn) { btn.disabled = false; btn.innerHTML = origHtml || 'Upload'; }
-            if (file) file.value = '';
-        });
+        .catch(err=>Swal.fire({icon:'error',title:'Upload Error',text:err.message}))
+        .finally(()=>{ setTimeout(()=>{if(loader)loader.style.display='none';if(bar)bar.style.width='0%';},1000); if(btn){btn.disabled=false;btn.innerHTML=origHtml||'Upload';} if(file)file.value=''; });
     });
+
+    /* ── Apple-style staggered row entrance ────────────────────────── */
+    (function initRowEntrance() {
+        const rows = Array.from(document.querySelectorAll('#scoresheetTableBody tr[data-id]'));
+        if (!rows.length) return;
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            rows.forEach(r => r.classList.add('row-visible')); return;
+        }
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (!entry.isIntersecting) return;
+                const row = entry.target, index = rows.indexOf(row);
+                const delay = Math.min(index * 38, 15 * 38) + 60;
+                setTimeout(() => row.classList.add('row-visible'), delay);
+                observer.unobserve(row);
+            });
+        }, { threshold: 0.05, rootMargin: '0px 0px -20px 0px' });
+        rows.forEach(row => observer.observe(row));
+    })();
+
 });
 
-/* SweetAlert2 safety net */
 if (typeof Swal === 'undefined') {
-    const s = document.createElement('script');
-    s.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
-    document.head.appendChild(s);
+    const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11'; document.head.appendChild(s);
 }
 </script>
 @endsection
