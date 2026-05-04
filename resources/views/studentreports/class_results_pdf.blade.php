@@ -410,19 +410,19 @@
 
                    <table style="border:none; border-collapse:collapse; width:100%;">
     <tr>
-        <td style="font-weight:900; color:#1e40af; white-space:nowrap; vertical-align:top; padding:0 4px 0 0;">Address:</td>
+        <td style="font-weight:1200; color:#1e40af; white-space:nowrap; vertical-align:top; padding:0 4px 0 0;">Address:</td>
         <td style="vertical-align:top; padding:0;">{{ $schoolInfo->school_address ?? 'No. 1, Claret Avenue, Iludun Quarters, Olle Road, Kabba, Kogi State, Nigeria.' }}</td>
     </tr>
     <tr>
-        <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Phone:</td>
+        <td style="font-weight:1200; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Phone:</td>
         <td>{{ $schoolInfo->school_phone ?? '08136663185' }}</td>
     </tr>
     <tr>
-        <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Email:</td>
+        <td style="font-weight:1200; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Email:</td>
         <td>{{ $schoolInfo->school_email ?? '—' }}</td>
     </tr>
     <tr>
-        <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Website:</td>
+        <td style="font-weight:1200; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Website:</td>
         <td>{{ $schoolInfo->school_website ?? '—' }}</td>
     </tr>
 </table>
