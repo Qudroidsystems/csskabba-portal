@@ -87,24 +87,6 @@
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Progress Modal Styles */
-.progress-modal-content {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(12px);
-    border-radius: 16px;
-    box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.2);
-}
-.progress-spinner {
-    width: 48px;
-    height: 48px;
-    border: 3px solid #e2e8f0;
-    border-top-color: var(--ss-accent);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin: 0 auto 16px;
-}
-@keyframes spin { to { transform: rotate(360deg); } }
-
 @media (max-width: 768px) {
     .score-input { width: 64px; min-width: 64px; height: 42px; font-size: 1rem; }
     .stat-card   { padding: 10px 12px; }
@@ -131,7 +113,7 @@
         @endif
     @endforeach
 
-    {{-- ══ INFO + ASSESSMENTS HEADER ══════════════════════════════════════ --}}
+    {{-- ══ INFO + ASSESSMENTS HEADER ══════════════════════════════════ --}}
     @if ($broadsheets->isNotEmpty())
     @php
         $first    = $broadsheets->first();
@@ -331,6 +313,28 @@
                 <i class="ri-information-line me-2"></i>No scores available.
             </div>
 
+            {{-- Download progress bar --}}
+            <div id="downloadProgressContainer" style="display:none;" class="px-3 pt-3">
+                <div class="d-flex align-items-center gap-3 p-3 rounded-3" style="background:#fefce8;">
+                    <div class="spinner-border spinner-border-sm text-warning"></div>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold mb-1" style="font-size:13px;" id="downloadProgressLabel">Downloading…</div>
+                        <div class="progress" style="height:5px;"><div class="progress-bar progress-bar-animated bg-warning" id="downloadProgressBar" style="width:0%"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Save progress bar --}}
+            <div id="progressContainer" style="display:none;" class="px-3 pt-3">
+                <div class="d-flex align-items-center gap-3 p-3 rounded-3" style="background:#eff6ff;">
+                    <div class="spinner-border spinner-border-sm text-primary"></div>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold mb-1" style="font-size:13px;">Saving scores…</div>
+                        <div class="progress" style="height:5px;"><div class="progress-bar progress-bar-animated bg-primary" id="saveProgressBar" style="width:0%"></div></div>
+                    </div>
+                </div>
+            </div>
+
             <div class="table-responsive">
             <table class="table table-nowrap align-middle mb-0" id="scoresheetTable">
                 <thead>
@@ -350,11 +354,13 @@
                             <th colspan="4" class="col-no-assessments text-center text-white opacity-75">No Assessments Defined</th>
                         @endforelse
                         <th class="col-total text-center">Total</th>
+                        {{-- Total Grade: graded on raw total, saved to DB --}}
                         <th class="col-total-grade text-center" title="Grade based on Total score (saved)">
                             Total<br><small class="fw-normal opacity-75">Grade</small>
                         </th>
                         <th class="col-bf text-center">BF</th>
                         <th class="col-cum text-center">Cum</th>
+                        {{-- Cum Grade: graded on cumulative average, display only --}}
                         <th class="col-cum-grade text-center" title="Grade based on Cumulative average (display only)">
                             Cum<br><small class="fw-normal opacity-75">Grade</small>
                         </th>
@@ -376,8 +382,14 @@
                             }
                             $cum = $broadsheet->cum ?? 0;
 
+                            // Total grade (saved to DB, graded on raw total)
                             $totalGrade = $broadsheet->grade ?? '-';
+                            // Cum grade (display only, graded on cumulative)
                             $gradeForCum = '-';
+                            if ($broadsheet->classcategories ?? null) {
+                                // prefer DB-stored cum grade if available; otherwise derive client-side
+                            }
+                            // Derive cum grade using same logic as controller
                             if (isset($broadsheet->classcategoryid)) {
                                 $cat = \App\Models\ClassCategory::find($broadsheet->classcategoryid);
                                 $gradeForCum = $cat ? $cat->calculateGrade($cum) : '-';
@@ -423,7 +435,7 @@
                                         @if($broadsheet->mname)<span class="text-muted small">{{ $broadsheet->mname }}</span>@endif
                                     </div>
                                 </div>
-                             </td>
+                            </td>
 
                             @forelse ($assessments as $assessment)
                                 @php
@@ -439,54 +451,64 @@
                                            data-original="{{ $scoreValue }}"
                                            value="{{ $scoreValue }}"
                                            min="0" max="{{ $assessment->max_score }}" step="0.1">
-                                 </td>
+                                </td>
                             @empty
                                 <td colspan="4" class="col-no-assessments text-center text-muted">-</td>
                             @endforelse
 
+                            {{-- Total --}}
                             <td class="col-total text-center">
                                 <span class="badge bg-{{ $totalColor }}-subtle text-{{ $totalColor }} fw-bold total-badge" style="font-size:12px;">
                                     {{ number_format($rowTotal, 1) }}
                                 </span>
-                             </td>
+                            </td>
 
+                            {{-- Total Grade (saved, updates in real-time) --}}
                             <td class="col-total-grade text-center">
                                 <span class="grade-badge" style="color:{{ $totalGradeColor }};" data-score="{{ $rowTotal }}">
                                     {{ $totalGrade }}
                                 </span>
-                             </td>
+                            </td>
 
+                            {{-- BF --}}
                             <td class="col-bf text-center">
                                 <span class="badge bg-secondary-subtle text-secondary bf-badge">{{ number_format($broadsheet->bf ?? 0, 1) }}</span>
-                             </td>
+                            </td>
 
+                            {{-- Cum --}}
                             <td class="col-cum text-center">
                                 <span class="badge bg-{{ $cumColor }}-subtle text-{{ $cumColor }} fw-bold cum-badge" style="font-size:12px;">{{ number_format($cum, 1) }}</span>
-                             </td>
+                            </td>
 
+                            {{-- Cum Grade (display only, recomputed on cum change) --}}
                             <td class="col-cum-grade text-center">
                                 <span class="cum-grade-badge" style="color:{{ $cumGradeColor }};" data-score="{{ $cum }}">
                                     {{ $gradeForCum }}
                                 </span>
-                             </td>
+                            </td>
 
+                            {{-- Class Average --}}
                             <td class="col-avg text-center">
                                 <span class="badge bg-purple-subtle text-purple avg-badge" style="background:#f3e8ff;color:#7c3aed;">
                                     {{ number_format($broadsheet->avg ?? 0, 1) }}
                                 </span>
-                             </td>
+                            </td>
 
+                            {{-- GPA --}}
                             <td class="col-gpa text-center">
                                 <span class="badge bg-warning-subtle text-warning fw-semibold gpa-badge">{{ number_format($broadsheet->gpa ?? 0, 2) }}</span>
-                             </td>
+                            </td>
+                            {{-- CGPA --}}
                             <td class="col-cgpa text-center">
                                 <span class="badge bg-dark-subtle text-dark cgpa-badge">{{ number_format($broadsheet->cgpa ?? 0, 2) }}</span>
-                             </td>
+                            </td>
+                            {{-- Position --}}
                             <td class="col-position text-center">
                                 <span class="badge position-badge" style="background:var(--ss-primary);">
                                     {{ $broadsheet->position ? \App\Helpers\OrdinalHelper::getOrdinalSuffix($broadsheet->position) : '-' }}
                                 </span>
-                             </td>
+                            </td>
+                            {{-- Status --}}
                             <td class="col-vetted text-center">
                                 @if($broadsheet->vettedstatus === '1')
                                     <span class="badge bg-success-subtle text-success"><i class="ri-check-line me-1"></i>Vetted</span>
@@ -495,17 +517,17 @@
                                 @else
                                     <span class="badge bg-warning-subtle text-warning"><i class="ri-time-line me-1"></i>Pending</span>
                                 @endif
-                             </td>
-                         </tr>
+                            </td>
+                        </tr>
                     @empty
                         <tr id="noDataRow">
                             <td colspan="{{ ($assessments->count() ?: 4) + 15 }}" class="text-center py-4 text-muted">
                                 <i class="ri-inbox-line ri-2x d-block mb-2"></i>No scores available.
-                             </td>
-                         </tr>
+                            </td>
+                        </tr>
                     @endforelse
                 </tbody>
-             </table>
+            </table>
             </div>
 
             @if ($broadsheets->isNotEmpty())
@@ -645,50 +667,6 @@
         </div>
     </div>
 
-    {{-- ══ SAVE PROGRESS MODAL (TRANSPARENT) ═══════════════════════════ --}}
-    <div class="modal fade" id="saveProgressModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-sm">
-            <div class="modal-content bg-transparent border-0 shadow-none">
-                <div class="modal-body text-center">
-                    <div class="card border-0 shadow-lg progress-modal-content">
-                        <div class="card-body p-4">
-                            <div class="progress-spinner"></div>
-                            <h5 class="card-title mb-2" id="progressTitle">Saving Scores...</h5>
-                            <p class="text-muted small mb-3" id="progressMessage">Please wait while we save your changes</p>
-
-                            {{-- Progress Bar --}}
-                            <div class="progress mb-3" style="height: 8px; border-radius: 4px;">
-                                <div id="saveProgressBarModal" class="progress-bar progress-bar-striped progress-bar-animated"
-                                     style="width: 0%; background-color: var(--ss-accent);"
-                                     role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-
-                            {{-- Percentage and Counters --}}
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span class="small text-muted">Progress</span>
-                                <span class="small fw-bold text-primary" id="progressPercentage">0%</span>
-                            </div>
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span class="small text-muted">
-                                    <i class="ri-checkbox-circle-line me-1"></i>
-                                    <span id="savedCount">0</span> / <span id="totalCount">0</span> saved
-                                </span>
-                                <span class="small text-muted" id="currentStudentLabel">Preparing...</span>
-                            </div>
-
-                            {{-- Status Badge --}}
-                            <div class="mt-3 pt-2" id="statusContainer">
-                                <span class="badge bg-primary-subtle text-primary px-3 py-2" id="statusBadge">
-                                    <i class="ri-loader-4-line me-1 spinner-grow spinner-grow-sm"></i> Processing
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
 </div>{{-- container-fluid --}}
 </div>
 </div>
@@ -796,17 +774,25 @@ function applyGrade(badge, grade) {
 }
 
 /* ── Real-time grade update for a row ───────────────────────────────── */
+/**
+ * Called whenever a score input changes.
+ * 1. Immediately compute grades client-side for instant feedback.
+ * 2. After debounce (400ms), confirm with server (handles custom grade scales).
+ */
 function updateRowGrades(row) {
     const bid          = row.dataset.id;
     const bf           = parseFloat(row.dataset.bf) || 0;
     const termId       = parseInt(row.dataset.termid) || window.term_id;
     const schoolclasId = parseInt(row.dataset.schoolclassid) || window.schoolclass_id;
 
+    // Sum all assessment inputs
     let totalRaw = 0;
     row.querySelectorAll('.score-input').forEach(inp => { totalRaw += parseFloat(inp.value) || 0; });
 
+    // Compute cum
     const cum = termId == 1 ? totalRaw : (totalRaw + bf) / 2;
 
+    // ── Update total badge ──────────────────────────────────────────
     const totalBadge = row.querySelector('.total-badge');
     if (totalBadge) {
         totalBadge.textContent = fmtN(totalRaw);
@@ -815,6 +801,7 @@ function updateRowGrades(row) {
         totalBadge.style.fontSize = '12px';
     }
 
+    // ── Update cum badge ────────────────────────────────────────────
     const cumBadge = row.querySelector('.cum-badge');
     if (cumBadge) {
         cumBadge.textContent = fmtN(cum);
@@ -823,6 +810,7 @@ function updateRowGrades(row) {
         cumBadge.style.fontSize = '12px';
     }
 
+    // ── Instant client-side grades (immediate feedback) ─────────────
     const totalGradeBadge = row.querySelector('.grade-badge');
     const cumGradeBadge   = row.querySelector('.cum-grade-badge');
 
@@ -832,9 +820,11 @@ function updateRowGrades(row) {
     applyGrade(totalGradeBadge, instantTotalGrade);
     applyGrade(cumGradeBadge,   instantCumGrade);
 
+    // ── Debounced server confirmation ───────────────────────────────
     clearTimeout(gradeTimers[bid]);
     gradeTimers[bid] = setTimeout(async () => {
         try {
+            // Show loading spinner while fetching
             if (totalGradeBadge) {
                 totalGradeBadge.classList.add('updating');
                 totalGradeBadge.innerHTML = '<span class="grade-loading"></span>';
@@ -858,6 +848,7 @@ function updateRowGrades(row) {
                 applyGrade(totalGradeBadge, data.total_grade);
                 applyGrade(cumGradeBadge,   data.cum_grade);
             } else {
+                // Fallback to client grades
                 applyGrade(totalGradeBadge, instantTotalGrade);
                 applyGrade(cumGradeBadge,   instantCumGrade);
             }
@@ -903,9 +894,11 @@ function saveIndividualScore(input) {
         if (!data.success) { showToast(data.message || 'Could not save.', 'warning'); return; }
         const d = data.data;
 
+        // BF
         const bfBadge = row.querySelector('.bf-badge');
         if (bfBadge && d.bf != null) bfBadge.textContent = fmtN(d.bf);
 
+        // Cum
         const cumBadge = row.querySelector('.cum-badge');
         if (cumBadge && d.cum != null) {
             const cum = parseFloat(d.cum);
@@ -914,12 +907,15 @@ function saveIndividualScore(input) {
             cumBadge.className = `badge fw-bold cum-badge bg-${cc}-subtle text-${cc}`;
         }
 
+        // Total grade (from server — authoritative, graded on total)
         const totalGradeBadge = row.querySelector('.grade-badge');
         if (totalGradeBadge && d.grade != null) applyGrade(totalGradeBadge, d.grade);
 
+        // Cum grade (derive from server cum or use client grade)
         const cumGradeBadge = row.querySelector('.cum-grade-badge');
         if (cumGradeBadge && d.cum != null) applyGrade(cumGradeBadge, clientGrade(parseFloat(d.cum)));
 
+        // GPA / CGPA
         const gpaBadge  = row.querySelector('.gpa-badge');
         const cgpaBadge = row.querySelector('.cgpa-badge');
         if (gpaBadge  && d.gpa  != null) gpaBadge.textContent  = fmtN(d.gpa,  2);
@@ -934,8 +930,8 @@ function saveIndividualScore(input) {
     });
 }
 
-/* ── Bulk save with progress modal ─────────────────────────────────── */
-async function bulkSave() {
+/* ── Bulk save ──────────────────────────────────────────────────────── */
+function bulkSave() {
     const invalid = document.querySelectorAll('.score-input.is-invalid').length;
     if (invalid) {
         Swal.fire({ icon:'warning', title:'Invalid Scores', text:`${invalid} score(s) exceed their maximum.` });
@@ -943,159 +939,140 @@ async function bulkSave() {
     }
 
     const scores = [];
-    const allRows = document.querySelectorAll('#scoresheetTableBody tr[data-id]');
-
-    allRows.forEach(row => {
+    document.querySelectorAll('#scoresheetTableBody tr[data-id]').forEach(row => {
         const assessments = {};
         row.querySelectorAll('.score-input').forEach(inp => {
             assessments[inp.dataset.field] = parseFloat(inp.value) || 0;
         });
-        if (Object.keys(assessments).length) {
-            scores.push({
-                id: row.dataset.id,
-                assessments,
-                studentName: row.querySelector('.name')?.dataset?.name || 'Unknown'
-            });
-        }
+        if (Object.keys(assessments).length) scores.push({ id: row.dataset.id, assessments });
     });
 
     if (!scores.length) return;
 
-    const totalToSave = scores.length;
-    let savedSoFar = 0;
-    let hasError = false;
+    const prog = document.getElementById('progressContainer');
+    const bar  = document.getElementById('saveProgressBar');
+    if (prog) prog.style.display = 'block';
+    let w = 0; const iv = setInterval(() => { w = Math.min(w + 8, 90); if (bar) bar.style.width = w + '%'; }, 150);
 
-    // Show modal
-    const modalEl = document.getElementById('saveProgressModal');
-    const modal = new bootstrap.Modal(modalEl);
-    modal.show();
+    const btn      = document.getElementById('bulkUpdateScores');
+    const origHtml = btn?.innerHTML;
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ri-loader-4-line"></i> Saving…'; }
 
-    // Update modal UI elements
-    const progressBar = document.getElementById('saveProgressBarModal');
-    const progressPercentage = document.getElementById('progressPercentage');
-    const savedCountSpan = document.getElementById('savedCount');
-    const totalCountSpan = document.getElementById('totalCount');
-    const currentStudentLabel = document.getElementById('currentStudentLabel');
-    const statusBadge = document.getElementById('statusBadge');
-    const progressTitle = document.getElementById('progressTitle');
-    const progressMessage = document.getElementById('progressMessage');
-    const progressSpinner = document.querySelector('.progress-spinner');
-
-    totalCountSpan.textContent = totalToSave;
-    savedCountSpan.textContent = '0';
-
-    function updateProgress(current, total, currentStudent) {
-        const percent = Math.round((current / total) * 100);
-        progressBar.style.width = percent + '%';
-        progressBar.setAttribute('aria-valuenow', percent);
-        progressPercentage.textContent = percent + '%';
-        savedCountSpan.textContent = current;
-
-        if (currentStudent) {
-            const shortName = currentStudent.length > 35 ? currentStudent.substring(0, 32) + '...' : currentStudent;
-            currentStudentLabel.textContent = `Saving: ${shortName}`;
+    fetch(window.routes.bulkUpdate, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+        body: JSON.stringify({
+            scores,
+            term_id:         window.term_id,
+            session_id:      window.session_id,
+            subjectclass_id: window.subjectclass_id,
+            staff_id:        window.staff_id,
+            schoolclass_id:  window.schoolclass_id,
+            is_sub:          false,
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        clearInterval(iv); if (bar) bar.style.width = '100%';
+        if (!data.success) {
+            Swal.fire({ icon:'error', title:'Save Failed', text: data.message || 'Server error.' });
+            return;
         }
-    }
 
-    // Use bulk endpoint for faster saving
-    try {
-        updateProgress(0, totalToSave, 'Preparing...');
+        const serverSheets = data.data?.broadsheets ?? [];
+        serverSheets.forEach(bs => {
+            const row = document.querySelector(`#scoresheetTableBody tr[data-id="${bs.id}"]`);
+            if (!row) return;
 
-        const response = await fetch(window.routes.bulkUpdate, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
-            body: JSON.stringify({
-                scores: scores.map(s => ({ id: s.id, assessments: s.assessments })),
-                term_id: window.term_id,
-                session_id: window.session_id,
-                subjectclass_id: window.subjectclass_id,
-                staff_id: window.staff_id,
-                schoolclass_id: window.schoolclass_id,
-                is_sub: false,
-            })
+            // Total badge
+            const total = parseFloat(bs.total ?? 0);
+            const totalBadge = row.querySelector('.total-badge');
+            if (totalBadge) {
+                totalBadge.textContent = fmtN(total);
+                const tc = total >= 70 ? 'success' : total >= 50 ? 'info' : total >= 40 ? 'warning' : 'danger';
+                totalBadge.className = `badge fw-bold total-badge bg-${tc}-subtle text-${tc}`;
+            }
+
+            // Total grade badge (server-authoritative, graded on total)
+            const totalGradeBadge = row.querySelector('.grade-badge');
+            if (totalGradeBadge) applyGrade(totalGradeBadge, bs.grade ?? '-');
+
+            // BF
+            const bfBadge = row.querySelector('.bf-badge');
+            if (bfBadge) bfBadge.textContent = fmtN(bs.bf);
+
+            // Cum badge
+            const cum = parseFloat(bs.cum ?? 0);
+            const cumBadge = row.querySelector('.cum-badge');
+            if (cumBadge) {
+                cumBadge.textContent = fmtN(cum);
+                const cc = cum >= 70 ? 'success' : cum >= 50 ? 'info' : cum >= 40 ? 'warning' : 'danger';
+                cumBadge.className = `badge fw-bold cum-badge bg-${cc}-subtle text-${cc}`;
+            }
+
+            // Cum grade badge (display only, derived from cum)
+            const cumGradeBadge = row.querySelector('.cum-grade-badge');
+            if (cumGradeBadge) applyGrade(cumGradeBadge, clientGrade(cum));
+
+            // Avg
+            const avgBadge = row.querySelector('.avg-badge');
+            if (avgBadge && bs.avg != null) avgBadge.textContent = fmtN(bs.avg);
+
+            // GPA / CGPA
+            const gpaBadge  = row.querySelector('.gpa-badge');
+            const cgpaBadge = row.querySelector('.cgpa-badge');
+            if (gpaBadge)  gpaBadge.textContent  = fmtN(bs.gpa,  2);
+            if (cgpaBadge) cgpaBadge.textContent = fmtN(bs.cgpa, 2);
+
+            // Position
+            const posBadge = row.querySelector('.position-badge');
+            if (posBadge) posBadge.textContent = ord(bs.position);
+
+            // Mark inputs saved
+            row.querySelectorAll('.score-input').forEach(i => {
+                i.classList.add('is-saved');
+                setTimeout(() => i.classList.remove('is-saved'), 2000);
+            });
         });
 
-        const data = await response.json();
+        Swal.fire({ icon:'success', title:'Saved!', text: data.message, timer:2000, showConfirmButton:false });
+    })
+    .catch(err => {
+        clearInterval(iv);
+        Swal.fire({ icon:'error', title:'Network Error', text:'Please check your connection and try again.' });
+        console.error('bulkSave error:', err);
+    })
+    .finally(() => {
+        setTimeout(() => { if (prog) prog.style.display = 'none'; if (bar) bar.style.width = '0%'; }, 1000);
+        if (btn) { btn.disabled = false; btn.innerHTML = origHtml || '<i class="ri-save-line me-1"></i>Save All Scores'; }
+    });
+}
 
-        if (data.success) {
-            // Update UI with server response
-            const serverSheets = data.data?.broadsheets ?? [];
-            serverSheets.forEach((bs, idx) => {
-                const row = document.querySelector(`#scoresheetTableBody tr[data-id="${bs.id}"]`);
-                if (!row) return;
+/* ── PDF download helper ────────────────────────────────────────────── */
+function startPdfDownload(url, filename, label) {
+    const cont = document.getElementById('downloadProgressContainer');
+    const bar  = document.getElementById('downloadProgressBar');
+    const lbl  = document.getElementById('downloadProgressLabel');
+    if (cont) cont.style.display = 'block';
+    if (bar)  bar.style.width   = '10%';
+    if (lbl)  lbl.textContent   = label || 'Downloading…';
 
-                const totalBadge = row.querySelector('.total-badge');
-                if (totalBadge) {
-                    totalBadge.textContent = fmtN(bs.total);
-                    const tc = bs.total >= 70 ? 'success' : bs.total >= 50 ? 'info' : bs.total >= 40 ? 'warning' : 'danger';
-                    totalBadge.className = `badge fw-bold total-badge bg-${tc}-subtle text-${tc}`;
-                }
-
-                const totalGradeBadge = row.querySelector('.grade-badge');
-                if (totalGradeBadge) applyGrade(totalGradeBadge, bs.grade ?? '-');
-
-                const cumBadge = row.querySelector('.cum-badge');
-                if (cumBadge) {
-                    cumBadge.textContent = fmtN(bs.cum);
-                    const cc = bs.cum >= 70 ? 'success' : bs.cum >= 50 ? 'info' : bs.cum >= 40 ? 'warning' : 'danger';
-                    cumBadge.className = `badge fw-bold cum-badge bg-${cc}-subtle text-${cc}`;
-                }
-
-                const cumGradeBadge = row.querySelector('.cum-grade-badge');
-                if (cumGradeBadge) applyGrade(cumGradeBadge, clientGrade(bs.cum));
-
-                const bfBadge = row.querySelector('.bf-badge');
-                if (bfBadge) bfBadge.textContent = fmtN(bs.bf);
-
-                const posBadge = row.querySelector('.position-badge');
-                if (posBadge) posBadge.textContent = ord(bs.position);
-
-                const gpaBadge = row.querySelector('.gpa-badge');
-                const cgpaBadge = row.querySelector('.cgpa-badge');
-                if (gpaBadge) gpaBadge.textContent = fmtN(bs.gpa, 2);
-                if (cgpaBadge) cgpaBadge.textContent = fmtN(bs.cgpa, 2);
-
-                // Mark inputs as saved
-                row.querySelectorAll('.score-input').forEach(inp => {
-                    inp.classList.add('is-saved');
-                    setTimeout(() => inp.classList.remove('is-saved'), 2000);
-                });
-
-                savedSoFar = idx + 1;
-                updateProgress(savedSoFar, totalToSave, bs.lname ? `${bs.lname}, ${bs.fname}` : 'Updating...');
-            });
-
-            progressBar.classList.remove('progress-bar-animated');
-            progressBar.style.backgroundColor = '#16a34a';
-            progressSpinner.style.display = 'none';
-            statusBadge.innerHTML = '<i class="ri-checkbox-circle-line me-1"></i> Complete!';
-            statusBadge.className = 'badge bg-success-subtle text-success px-3 py-2';
-            progressTitle.textContent = 'All Scores Saved!';
-            progressMessage.textContent = `Successfully saved ${savedSoFar} student record(s).`;
-            currentStudentLabel.textContent = 'Done!';
-
-            setTimeout(() => {
-                modal.hide();
-                showToast(data.message || `${savedSoFar} score(s) saved successfully!`, 'success');
-                location.reload(); // Refresh to update positions and metrics
-            }, 1500);
-        } else {
-            throw new Error(data.message || 'Save failed');
-        }
-    } catch (err) {
-        progressBar.classList.remove('progress-bar-animated');
-        progressBar.style.backgroundColor = '#dc2626';
-        progressSpinner.style.display = 'none';
-        statusBadge.innerHTML = '<i class="ri-error-warning-line me-1"></i> Error';
-        statusBadge.className = 'badge bg-danger-subtle text-danger px-3 py-2';
-        progressTitle.textContent = 'Save Failed';
-        progressMessage.textContent = err.message || 'Network error. Please try again.';
-
-        setTimeout(() => {
-            modal.hide();
-            Swal.fire({ icon:'error', title:'Save Failed', text: err.message || 'Please check your connection and try again.' });
-        }, 2000);
-    }
+    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF } })
+    .then(async r => {
+        if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.message || 'Download failed.'); }
+        if (bar) bar.style.width = '90%';
+        return r.blob();
+    })
+    .then(blob => {
+        if (bar) bar.style.width = '100%';
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob); a.download = filename;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(a.href);
+        showToast('Downloaded successfully!', 'success');
+    })
+    .catch(err => Swal.fire({ icon:'error', title:'Download Failed', text: err.message }))
+    .finally(() => setTimeout(() => { if (cont) cont.style.display='none'; if (bar) bar.style.width='0%'; }, 1200));
 }
 
 /* ── DOM ready ──────────────────────────────────────────────────────── */
@@ -1167,7 +1144,7 @@ document.addEventListener('DOMContentLoaded', function () {
         inp.addEventListener('input', function() {
             validateInput(this);
             const row = this.closest('tr');
-            if (row) updateRowGrades(row);
+            if (row) updateRowGrades(row);   // ← real-time grade update
         });
 
         inp.addEventListener('blur', function() {
@@ -1298,33 +1275,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 });
-
-/* PDF download helper */
-function startPdfDownload(url, filename, label) {
-    const cont = document.getElementById('downloadProgressContainer');
-    const bar  = document.getElementById('downloadProgressBar');
-    const lbl  = document.getElementById('downloadProgressLabel');
-    if (cont) cont.style.display = 'block';
-    if (bar)  bar.style.width   = '10%';
-    if (lbl)  lbl.textContent   = label || 'Downloading…';
-
-    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF } })
-    .then(async r => {
-        if (!r.ok) { const e = await r.json().catch(() => ({})); throw new Error(e.message || 'Download failed.'); }
-        if (bar) bar.style.width = '90%';
-        return r.blob();
-    })
-    .then(blob => {
-        if (bar) bar.style.width = '100%';
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(blob); a.download = filename;
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        URL.revokeObjectURL(a.href);
-        showToast('Downloaded successfully!', 'success');
-    })
-    .catch(err => Swal.fire({ icon:'error', title:'Download Failed', text: err.message }))
-    .finally(() => setTimeout(() => { if (cont) cont.style.display='none'; if (bar) bar.style.width='0%'; }, 1200));
-}
 
 /* SweetAlert2 safety net */
 if (typeof Swal === 'undefined') {
