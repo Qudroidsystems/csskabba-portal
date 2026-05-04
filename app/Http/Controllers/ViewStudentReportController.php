@@ -69,6 +69,10 @@ class ViewStudentReportController extends Controller
 
     /**
      * Calculate grade based on total score using WAEC/NECO standard.
+     *
+     * FIX: Removed upper-bound checks (e.g. $score <= 74) that caused decimal
+     * scores like 74.5 to fall through every condition and return F9.
+     * Now uses cascading >= only, which correctly handles any decimal value.
      */
     protected function calculateGrade($score)
     {
@@ -101,6 +105,8 @@ class ViewStudentReportController extends Controller
 
     /**
      * Get grade point based on score using WAEC/NECO standard.
+     *
+     * FIX: Same gap fix as calculateGrade() — cascading >= only.
      */
     protected function getGradePoint($score)
     {
@@ -158,6 +164,8 @@ class ViewStudentReportController extends Controller
 
     /**
      * Get GPA letter grade based on GPA value.
+     *
+     * FIX: Cascading >= only — no upper-bound gaps.
      */
     protected function getGpaGrade($gpa)
     {
@@ -184,6 +192,8 @@ class ViewStudentReportController extends Controller
 
     /**
      * Compute overall GPA and CGPA for a student.
+     * GPA  = Average of grade points for current term using TOTAL score.
+     * CGPA = Average of GPAs for all completed terms in current session.
      */
     protected function computeOverallGPAAndCGPAForStudent($studentId, $schoolclass, $termId, $sessionId)
     {
@@ -263,6 +273,10 @@ class ViewStudentReportController extends Controller
 
     /**
      * Calculate class positions, averages, and grades for all subjects.
+     *
+     * FIX 1: Class average now uses TOTAL (consistent with report display).
+     * FIX 2: Positions ranked and tied by TOTAL.
+     * FIX 3: Grade boundaries use cascading >= to handle decimal scores.
      */
     protected function calculateClassPositionsAndAverages($schoolclassid, $sessionid, $termid)
     {
@@ -340,11 +354,13 @@ class ViewStudentReportController extends Controller
             foreach ($subjectGroups as $subjectId => $subjectRecords) {
                 $subjectName = $subjectRecords->first()->subject_name;
 
+                // FIX: Average from TOTAL (not cum)
                 $validRecords = $subjectRecords->filter(fn ($r) => $r->total != 0 && $r->total !== null);
                 $totalScores  = $validRecords->sum('total');
                 $studentCount = $validRecords->count();
                 $classAvg     = $studentCount > 0 ? round($totalScores / $studentCount, 1) : 0;
 
+                // FIX: Positions based on TOTAL
                 $sortedRecords = $validRecords->sortByDesc('total')->values();
                 $rank          = 0;
                 $lastTotal     = null;
@@ -365,6 +381,7 @@ class ViewStudentReportController extends Controller
                 $updatesCount = 0;
 
                 foreach ($subjectRecords as $record) {
+                    // FIX: Grade uses cascading >= (no upper-bound gaps)
                     $grade  = $record->total == 0 ? '-' : $this->calculateGrade($record->total);
                     $remark = $this->getRemark($grade);
 
@@ -588,6 +605,11 @@ class ViewStudentReportController extends Controller
                 'total_attempts' => $attempts + 1,
             ]);
 
+            // -------------------------------------------------------
+            // TOTALS SUMMARY: obtained, obtainable, percentage
+            // Each subject is scored out of 100 (matching the sample
+            // report: 17 subjects × 100 = 1700 obtainable).
+            // -------------------------------------------------------
             $totalObtained   = 0;
             $totalObtainable = 0;
 
@@ -596,6 +618,7 @@ class ViewStudentReportController extends Controller
                     if ($score->total !== null && is_numeric($score->total)) {
                         $totalObtained += (float) $score->total;
                     }
+                    // Each subject is out of 100
                     $totalObtainable += 100;
                 }
             }
@@ -609,6 +632,9 @@ class ViewStudentReportController extends Controller
                 'obtainable'  => $totalObtainable,
                 'percentage'  => $totalPercentage,
             ];
+
+            Log::info('Totals summary computed', array_merge(['student_id' => $id], $totalsSummary));
+            // -------------------------------------------------------
 
             $gpaData = [];
             if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
@@ -662,7 +688,6 @@ class ViewStudentReportController extends Controller
                 $schoolInfo->id                    = 0;
                 $schoolInfo->school_name           = 'School Name Not Found';
                 $schoolInfo->school_logo           = null;
-                $schoolInfo->school_stamp          = null;
                 $schoolInfo->school_motto          = 'Motto Not Found';
                 $schoolInfo->school_address        = 'Address Not Found';
                 $schoolInfo->school_phone          = 'Phone Not Found';
@@ -716,7 +741,7 @@ class ViewStudentReportController extends Controller
                 'assessments'          => $assessments,
                 'compulsorySubjects'   => $compulsorySubjects,
                 'gpa_data'             => $gpaData,
-                'totals_summary'       => $totalsSummary,
+                'totals_summary'       => $totalsSummary,   // ← NEW
             ];
 
             Log::channel('pdf')->info('========== END getStudentResultData ==========', [
@@ -1397,7 +1422,6 @@ class ViewStudentReportController extends Controller
 
         $defaultStudentImage = public_path('storage/student_avatars/unnamed.jpg');
         $defaultSchoolLogo   = public_path('storage/school_logos/default.jpg');
-        $defaultStamp        = public_path('stamp.jpeg');
 
         if (!file_exists($defaultStudentImage)) {
             Log::warning('Default student image not found', ['path' => $defaultStudentImage]);
@@ -1475,45 +1499,9 @@ class ViewStudentReportController extends Controller
                     Log::info('No logo in database, using default', ['student_index' => $index]);
                     $student['school_logo_base64'] = $this->imageToBase64($defaultSchoolLogo);
                 }
-
-                // School stamp - DYNAMIC
-                $hasStampInDatabase = !empty($student['schoolInfo']->school_stamp);
-                $stampPath = $student['schoolInfo']->school_stamp ?? null;
-
-                if ($hasStampInDatabase && $stampPath) {
-                    $absolutePath = $this->getAbsoluteImagePath($stampPath, false);
-
-                    if ($absolutePath && file_exists($absolutePath)) {
-                        $fileSize = filesize($absolutePath);
-                        if ($fileSize > 100) {
-                            $student['school_stamp_base64'] = $this->imageToBase64($absolutePath);
-                            Log::info('Actual school stamp found and used', [
-                                'student_index' => $index,
-                                'file_size'     => $fileSize,
-                                'path'          => $absolutePath,
-                            ]);
-                        } else {
-                            Log::warning('Stamp file exists but is too small', [
-                                'student_index' => $index,
-                                'file_size'     => $fileSize,
-                            ]);
-                            $student['school_stamp_base64'] = $this->imageToBase64($defaultStamp);
-                        }
-                    } else {
-                        Log::warning('Stamp in database but file not found', [
-                            'student_index' => $index,
-                            'stamp_path'    => $stampPath,
-                        ]);
-                        $student['school_stamp_base64'] = $this->imageToBase64($defaultStamp);
-                    }
-                } else {
-                    Log::info('No stamp in database, using default', ['student_index' => $index]);
-                    $student['school_stamp_base64'] = $this->imageToBase64($defaultStamp);
-                }
             } else {
-                Log::warning('No schoolInfo found, using default logo and stamp', ['student_index' => $index]);
+                Log::warning('No schoolInfo found, using default logo', ['student_index' => $index]);
                 $student['school_logo_base64'] = $this->imageToBase64($defaultSchoolLogo);
-                $student['school_stamp_base64'] = $this->imageToBase64($defaultStamp);
             }
         }
 
