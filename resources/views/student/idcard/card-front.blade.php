@@ -36,7 +36,6 @@
         ['Session',     $student->session           ?? ''],
         ['Adm. Date',   $admDate],
         ['Category',    $student->student_category  ?? ''],
-        // ['Status',    $student->student_status    ?? ''], // REMOVED
     ], fn($r) => !empty(trim($r[1]))));
 
     // Pair up into rows of 2
@@ -71,7 +70,7 @@
         <div style="position:absolute;bottom:-32px;left:-14px;width:100px;height:100px;
             border-radius:50%;background:rgba(255,255,255,.05);"></div>
 
-        {{-- BIGGER SCHOOL LOGO --}}
+        {{-- SCHOOL LOGO --}}
         @if($logoUrl)
             <img src="{{ $logoUrl }}" style="height:82px;width:82px;object-fit:contain;
                 border-radius:50%;border:2.5px solid rgba(255,255,255,.55);
@@ -100,10 +99,10 @@
             margin-top:7px;position:relative;z-index:3;">STUDENT ID CARD</div>
     </div>
 
-    {{-- BIGGER PHOTO --}}
-    <div style="position:relative;z-index:4;text-align:center;margin-top:-32px;">
-        <div style="width:100px;height:100px;border-radius:50%;
-            border:3px solid #ffffff;
+    {{-- EXTRA LARGE PHOTO (120px) --}}
+    <div style="position:relative;z-index:4;text-align:center;margin-top:-38px;">
+        <div style="width:120px;height:120px;border-radius:50%;
+            border:4px solid #ffffff;
             box-shadow:0 0 0 3px #2169ad, 0 4px 16px rgba(33,105,173,.45);
             margin:0 auto;overflow:hidden;background:#dbeafe;
             display:flex;align-items:center;justify-content:center;">
@@ -113,18 +112,18 @@
                      onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
                      alt="{{ $fullname }}">
                 <div style="display:none;width:100%;height:100%;align-items:center;
-                    justify-content:center;font-size:32px;font-weight:800;color:#2169ad;">
+                    justify-content:center;font-size:42px;font-weight:800;color:#2169ad;">
                     {{ $initials }}</div>
             @else
-                <div style="font-size:32px;font-weight:800;color:#2169ad;">{{ $initials }}</div>
+                <div style="font-size:42px;font-weight:800;color:#2169ad;">{{ $initials }}</div>
             @endif
         </div>
     </div>
 
     {{-- NAME & ADM --}}
-    <div style="position:relative;z-index:2;text-align:center;padding:5px 16px 0;">
+    <div style="position:relative;z-index:2;text-align:center;padding:8px 16px 0;">
         <div style="font-size:13px;font-weight:800;color:#1e2937;line-height:1.25;">{{ $fullname }}</div>
-        <div style="display:inline-flex;align-items:center;gap:0;margin-top:4px;
+        <div style="display:inline-flex;align-items:center;gap:0;margin-top:5px;
             border-radius:4px;overflow:hidden;border:1px solid #bfdbfe;">
             <div style="background:#1e3a5f;color:#fff;font-size:8px;font-weight:700;
                 padding:2px 8px;letter-spacing:.5px;">ADM NO</div>
@@ -134,7 +133,7 @@
     </div>
 
     {{-- INFO TABLE — 2 fields per row (Status removed) --}}
-    <div style="position:relative;z-index:2;margin:8px 12px 0;
+    <div style="position:relative;z-index:2;margin:10px 12px 0;
         background:#f8fafc;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0;">
         @foreach($rows as $i => $pair)
         <div style="display:flex;{{ $i < count($rows)-1 ? 'border-bottom:1px solid #e2e8f0;' : '' }}">
@@ -162,8 +161,8 @@
         @endforeach
     </div>
 
-    {{-- QR CODE MOVED DOWN — adjusted spacing to eliminate bottom gap --}}
-    <div style="position:relative;z-index:2;text-align:center;padding:12px 0 8px;">
+    {{-- QR CODE --}}
+    <div style="position:relative;z-index:2;text-align:center;padding:10px 0 8px;">
         <img src="data:image/png;base64,{{ $qrB64 }}" style="width:75px;height:75px;" alt="QR">
         <div style="font-size:6.5px;color:#94a3b8;letter-spacing:.8px;margin-top:3px;">SCAN TO VERIFY</div>
     </div>
