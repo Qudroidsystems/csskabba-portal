@@ -53,7 +53,6 @@
 .col-group { border: 1px solid var(--ss-border); border-radius: 8px; padding: 10px 14px; margin-bottom: 10px; }
 .col-group h6 { color: var(--ss-primary); font-weight: 600; margin-bottom: 8px; }
 
-/* Grade badge animations for real-time updates */
 .grade-badge, .cum-grade-badge {
     display: inline-block;
     transition: all .25s ease;
@@ -62,20 +61,14 @@
     min-width: 28px;
     text-align: center;
 }
-.grade-badge.updating, .cum-grade-badge.updating {
-    opacity: 0.5;
-    transform: scale(0.9);
-}
-.grade-badge.updated, .cum-grade-badge.updated {
-    animation: gradeFlash .4s ease;
-}
+.grade-badge.updating, .cum-grade-badge.updating { opacity: 0.5; transform: scale(0.9); }
+.grade-badge.updated, .cum-grade-badge.updated { animation: gradeFlash .4s ease; }
 @keyframes gradeFlash {
     0%   { transform: scale(1.15); }
     50%  { transform: scale(1.2);  }
     100% { transform: scale(1);    }
 }
 
-/* Spinner for async grade fetch */
 .grade-loading {
     display: inline-block;
     width: 12px; height: 12px;
@@ -87,12 +80,193 @@
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ── Apple-style Save Modal ──────────────────────────────────────── */
+#ssSaveOverlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: rgba(0, 0, 0, 0.30);
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+#ssSaveOverlay.ss-visible {
+    display: flex !important;
+    animation: ssOverlayIn .2s ease forwards;
+}
+@keyframes ssOverlayIn { from { opacity:0; } to { opacity:1; } }
+
+#ssSaveModal {
+    background: #fff;
+    border-radius: 20px;
+    border: 0.5px solid rgba(0,0,0,0.10);
+    box-shadow: 0 24px 64px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.08);
+    padding: 32px 36px 26px;
+    width: 310px;
+    text-align: center;
+    transform: scale(0.85) translateY(16px);
+    opacity: 0;
+    transition: transform .32s cubic-bezier(.34,1.3,.64,1), opacity .22s ease;
+}
+#ssSaveOverlay.ss-visible #ssSaveModal {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+}
+#ssSaveOverlay.ss-closing {
+    animation: ssOverlayOut .22s ease forwards;
+}
+#ssSaveOverlay.ss-closing #ssSaveModal {
+    transform: scale(0.88) translateY(10px);
+    opacity: 0;
+}
+@keyframes ssOverlayOut { from { opacity:1; } to { opacity:0; } }
+
+/* Icon ring */
+.ss-icon-ring {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    margin: 0 auto 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+.ss-icon-ring svg.ss-arc-svg {
+    position: absolute;
+    top: 0; left: 0;
+    width: 56px; height: 56px;
+}
+.ss-icon-center {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(30,58,95,0.09);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+    position: relative;
+    transition: background .3s;
+}
+
+/* Save title + sub */
+.ss-modal-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #0f172a;
+    margin-bottom: 3px;
+    letter-spacing: -.015em;
+}
+.ss-modal-sub {
+    font-size: 12px;
+    color: #64748b;
+    margin-bottom: 20px;
+    min-height: 16px;
+    transition: opacity .2s;
+}
+
+/* Progress track */
+.ss-progress-track {
+    height: 5px;
+    border-radius: 3px;
+    background: #f1f5f9;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+.ss-progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--ss-primary);
+    width: 0%;
+    transition: width .38s cubic-bezier(.4,0,.2,1), background .3s ease;
+}
+
+/* Count row */
+.ss-count-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 11px;
+    color: #94a3b8;
+}
+.ss-count-num {
+    font-size: 11px;
+    font-weight: 600;
+    color: #334155;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Checkmark stroke animation */
+.ss-check-path {
+    stroke-dasharray: 22;
+    stroke-dashoffset: 22;
+    transition: stroke-dashoffset .38s ease .08s;
+}
+.ss-check-path.drawn {
+    stroke-dashoffset: 0;
+}
+
 @media (max-width: 768px) {
     .score-input { width: 64px; min-width: 64px; height: 42px; font-size: 1rem; }
     .stat-card   { padding: 10px 12px; }
     .stat-card .stat-value { font-size: 18px; }
+    #ssSaveModal { width: 280px; padding: 26px 24px 22px; }
 }
 </style>
+
+{{-- ══ APPLE-STYLE SAVE MODAL (fixed overlay) ══════════════════════ --}}
+<div id="ssSaveOverlay">
+    <div id="ssSaveModal">
+
+        <div class="ss-icon-ring" id="ssIconRing">
+            <svg class="ss-arc-svg" viewBox="0 0 56 56" fill="none">
+                <circle cx="28" cy="28" r="25" stroke="#e2e8f0" stroke-width="2.5"/>
+                <circle id="ssArcFg" cx="28" cy="28" r="25"
+                    stroke="#1e3a5f" stroke-width="2.5"
+                    stroke-linecap="round"
+                    stroke-dasharray="157.08"
+                    stroke-dashoffset="157.08"
+                    transform="rotate(-90 28 28)"
+                    style="transition: stroke-dashoffset .38s cubic-bezier(.4,0,.2,1), stroke .3s ease;"/>
+            </svg>
+            <div class="ss-icon-center" id="ssIconCenter">
+                {{-- Save icon --}}
+                <svg id="ssIconSave" width="18" height="18" viewBox="0 0 18 18" fill="none">
+                    <rect x="2.5" y="2.5" width="13" height="13" rx="2.5" stroke="#1e3a5f" stroke-width="1.5"/>
+                    <rect x="5.5" y="2.5" width="5" height="4.5" rx="1" fill="#1e3a5f" opacity=".45"/>
+                    <path d="M5 10.5h8M5 13h5.5" stroke="#1e3a5f" stroke-width="1.3" stroke-linecap="round"/>
+                </svg>
+                {{-- Success checkmark --}}
+                <svg id="ssIconCheck" width="18" height="18" viewBox="0 0 18 18" fill="none" style="display:none;">
+                    <polyline class="ss-check-path" id="ssCheckPath"
+                        points="3.5,9.5 7.5,13.5 14.5,5.5"
+                        stroke="#16a34a" stroke-width="2.2"
+                        stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                {{-- Error X --}}
+                <svg id="ssIconX" width="16" height="16" viewBox="0 0 16 16" fill="none" style="display:none;">
+                    <line x1="3.5" y1="3.5" x2="12.5" y2="12.5" stroke="#dc2626" stroke-width="2.2" stroke-linecap="round"/>
+                    <line x1="12.5" y1="3.5" x2="3.5" y2="12.5" stroke="#dc2626" stroke-width="2.2" stroke-linecap="round"/>
+                </svg>
+            </div>
+        </div>
+
+        <div class="ss-modal-title" id="ssSaveTitle">Saving scores</div>
+        <div class="ss-modal-sub"  id="ssSaveSub">Please wait…</div>
+
+        <div class="ss-progress-track">
+            <div class="ss-progress-fill" id="ssSaveFill"></div>
+        </div>
+
+        <div class="ss-count-row">
+            <span id="ssSaveCountLabel">Saved</span>
+            <span class="ss-count-num" id="ssSaveCountNum"></span>
+        </div>
+    </div>
+</div>
 
 <div class="main-content">
 <div class="page-content">
@@ -324,17 +498,6 @@
                 </div>
             </div>
 
-            {{-- Save progress bar --}}
-            <div id="progressContainer" style="display:none;" class="px-3 pt-3">
-                <div class="d-flex align-items-center gap-3 p-3 rounded-3" style="background:#eff6ff;">
-                    <div class="spinner-border spinner-border-sm text-primary"></div>
-                    <div class="flex-grow-1">
-                        <div class="fw-semibold mb-1" style="font-size:13px;">Saving scores…</div>
-                        <div class="progress" style="height:5px;"><div class="progress-bar progress-bar-animated bg-primary" id="saveProgressBar" style="width:0%"></div></div>
-                    </div>
-                </div>
-            </div>
-
             <div class="table-responsive">
             <table class="table table-nowrap align-middle mb-0" id="scoresheetTable">
                 <thead>
@@ -354,13 +517,11 @@
                             <th colspan="4" class="col-no-assessments text-center text-white opacity-75">No Assessments Defined</th>
                         @endforelse
                         <th class="col-total text-center">Total</th>
-                        {{-- Total Grade: graded on raw total, saved to DB --}}
                         <th class="col-total-grade text-center" title="Grade based on Total score (saved)">
                             Total<br><small class="fw-normal opacity-75">Grade</small>
                         </th>
                         <th class="col-bf text-center">BF</th>
                         <th class="col-cum text-center">Cum</th>
-                        {{-- Cum Grade: graded on cumulative average, display only --}}
                         <th class="col-cum-grade text-center" title="Grade based on Cumulative average (display only)">
                             Cum<br><small class="fw-normal opacity-75">Grade</small>
                         </th>
@@ -381,29 +542,19 @@
                                 $rowTotal += $so ? $so->score : 0;
                             }
                             $cum = $broadsheet->cum ?? 0;
-
-                            // Total grade (saved to DB, graded on raw total)
                             $totalGrade = $broadsheet->grade ?? '-';
-                            // Cum grade (display only, graded on cumulative)
                             $gradeForCum = '-';
-                            if ($broadsheet->classcategories ?? null) {
-                                // prefer DB-stored cum grade if available; otherwise derive client-side
-                            }
-                            // Derive cum grade using same logic as controller
                             if (isset($broadsheet->classcategoryid)) {
                                 $cat = \App\Models\ClassCategory::find($broadsheet->classcategoryid);
                                 $gradeForCum = $cat ? $cat->calculateGrade($cum) : '-';
                             }
-
                             $cumColor = $cum >= 70 ? 'success' : ($cum >= 50 ? 'info' : ($cum >= 40 ? 'warning' : 'danger'));
                             $totalColor = $rowTotal >= 70 ? 'success' : ($rowTotal >= 50 ? 'info' : ($rowTotal >= 40 ? 'warning' : 'danger'));
-
                             $vClass = match(true) {
                                 $broadsheet->vettedstatus === '1' => 'row-vetted',
                                 $broadsheet->vettedstatus === '0' => 'row-not-vetted',
                                 default => 'row-pending'
                             };
-
                             $totalGradeColor = $gradeColors[$totalGrade] ?? '#6b7280';
                             $cumGradeColor   = $gradeColors[$gradeForCum] ?? '#6b7280';
                         @endphp
@@ -456,59 +607,43 @@
                                 <td colspan="4" class="col-no-assessments text-center text-muted">-</td>
                             @endforelse
 
-                            {{-- Total --}}
                             <td class="col-total text-center">
                                 <span class="badge bg-{{ $totalColor }}-subtle text-{{ $totalColor }} fw-bold total-badge" style="font-size:12px;">
                                     {{ number_format($rowTotal, 1) }}
                                 </span>
                             </td>
-
-                            {{-- Total Grade (saved, updates in real-time) --}}
                             <td class="col-total-grade text-center">
                                 <span class="grade-badge" style="color:{{ $totalGradeColor }};" data-score="{{ $rowTotal }}">
                                     {{ $totalGrade }}
                                 </span>
                             </td>
-
-                            {{-- BF --}}
                             <td class="col-bf text-center">
                                 <span class="badge bg-secondary-subtle text-secondary bf-badge">{{ number_format($broadsheet->bf ?? 0, 1) }}</span>
                             </td>
-
-                            {{-- Cum --}}
                             <td class="col-cum text-center">
                                 <span class="badge bg-{{ $cumColor }}-subtle text-{{ $cumColor }} fw-bold cum-badge" style="font-size:12px;">{{ number_format($cum, 1) }}</span>
                             </td>
-
-                            {{-- Cum Grade (display only, recomputed on cum change) --}}
                             <td class="col-cum-grade text-center">
                                 <span class="cum-grade-badge" style="color:{{ $cumGradeColor }};" data-score="{{ $cum }}">
                                     {{ $gradeForCum }}
                                 </span>
                             </td>
-
-                            {{-- Class Average --}}
                             <td class="col-avg text-center">
-                                <span class="badge bg-purple-subtle text-purple avg-badge" style="background:#f3e8ff;color:#7c3aed;">
+                                <span class="badge avg-badge" style="background:#f3e8ff;color:#7c3aed;">
                                     {{ number_format($broadsheet->avg ?? 0, 1) }}
                                 </span>
                             </td>
-
-                            {{-- GPA --}}
                             <td class="col-gpa text-center">
                                 <span class="badge bg-warning-subtle text-warning fw-semibold gpa-badge">{{ number_format($broadsheet->gpa ?? 0, 2) }}</span>
                             </td>
-                            {{-- CGPA --}}
                             <td class="col-cgpa text-center">
                                 <span class="badge bg-dark-subtle text-dark cgpa-badge">{{ number_format($broadsheet->cgpa ?? 0, 2) }}</span>
                             </td>
-                            {{-- Position --}}
                             <td class="col-position text-center">
                                 <span class="badge position-badge" style="background:var(--ss-primary);">
                                     {{ $broadsheet->position ? \App\Helpers\OrdinalHelper::getOrdinalSuffix($broadsheet->position) : '-' }}
                                 </span>
                             </td>
-                            {{-- Status --}}
                             <td class="col-vetted text-center">
                                 @if($broadsheet->vettedstatus === '1')
                                     <span class="badge bg-success-subtle text-success"><i class="ri-check-line me-1"></i>Vetted</span>
@@ -623,7 +758,6 @@
                         <input type="hidden" name="staff_id"        value="{{ session('staff_id') }}">
                         <input type="hidden" name="term_id"         value="{{ session('term_id') }}">
                         <input type="hidden" name="session_id"      value="{{ session('session_id') }}">
-
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Excel File (.xlsx)</label>
                             <input type="file" name="file" class="form-control" accept=".xlsx,.xls" required>
@@ -712,7 +846,7 @@ const GRADE_COLORS = {
     'F':'#dc2626','F9':'#dc2626',
 };
 
-/* ── Client-side grade fallback (matches server logic) ─────────────── */
+/* ── Client-side grade fallback ────────────────────────────────────── */
 function clientGrade(score) {
     score = parseFloat(score) || 0;
     if (window.is_senior) {
@@ -733,16 +867,15 @@ function clientGrade(score) {
     return 'F';
 }
 
-/* ── Debounce ────────────────────────────────────────────────────────── */
+/* ── Debounce ─────────────────────────────────────────────────────── */
 function debounce(fn, ms) {
-    let t;
-    return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
+    let t; return (...args) => { clearTimeout(t); t = setTimeout(() => fn(...args), ms); };
 }
 
-/* ── Per-row grade fetch queue (prevents concurrent requests per row) ── */
+/* ── Per-row grade fetch queue ────────────────────────────────────── */
 const gradeTimers = {};
 
-/* ── Format number ───────────────────────────────────────────────────── */
+/* ── Helpers ──────────────────────────────────────────────────────── */
 const fmtN = (n, d = 1) => parseFloat(n || 0).toFixed(d);
 const ord  = n => {
     if (!n || isNaN(n)) return '-';
@@ -751,19 +884,19 @@ const ord  = n => {
     return n + (s >= 11 && s <= 13 ? 'th' : (['th','st','nd','rd'][n % 10] || 'th'));
 };
 
-/* ── Toast ──────────────────────────────────────────────────────────── */
+/* ── Toast ────────────────────────────────────────────────────────── */
 function showToast(msg, type = 'info') {
     const colors = { success:'#16a34a', warning:'#d97706', danger:'#dc2626', info:'#2563eb' };
     const id = 'toast_' + Date.now();
     document.body.insertAdjacentHTML('beforeend',
         `<div id="${id}" class="toast align-items-center border-0 text-white show" role="alert"
-          style="position:fixed;bottom:20px;right:20px;z-index:9999;background:${colors[type]||colors.info};min-width:280px;">
+          style="position:fixed;bottom:20px;right:20px;z-index:99999;background:${colors[type]||colors.info};min-width:280px;border-radius:10px;">
           <div class="d-flex p-3"><div class="me-auto">${msg}</div>
           <button class="btn-close btn-close-white ms-2" onclick="this.closest('.toast').remove()"></button></div></div>`);
     setTimeout(() => document.getElementById(id)?.remove(), 4500);
 }
 
-/* ── Apply grade badge ───────────────────────────────────────────────── */
+/* ── Apply grade badge ────────────────────────────────────────────── */
 function applyGrade(badge, grade) {
     if (!badge) return;
     badge.textContent = grade || '-';
@@ -773,26 +906,17 @@ function applyGrade(badge, grade) {
     setTimeout(() => badge.classList.remove('updated'), 500);
 }
 
-/* ── Real-time grade update for a row ───────────────────────────────── */
-/**
- * Called whenever a score input changes.
- * 1. Immediately compute grades client-side for instant feedback.
- * 2. After debounce (400ms), confirm with server (handles custom grade scales).
- */
+/* ── Real-time grade update ───────────────────────────────────────── */
 function updateRowGrades(row) {
     const bid          = row.dataset.id;
     const bf           = parseFloat(row.dataset.bf) || 0;
     const termId       = parseInt(row.dataset.termid) || window.term_id;
     const schoolclasId = parseInt(row.dataset.schoolclassid) || window.schoolclass_id;
 
-    // Sum all assessment inputs
     let totalRaw = 0;
     row.querySelectorAll('.score-input').forEach(inp => { totalRaw += parseFloat(inp.value) || 0; });
-
-    // Compute cum
     const cum = termId == 1 ? totalRaw : (totalRaw + bf) / 2;
 
-    // ── Update total badge ──────────────────────────────────────────
     const totalBadge = row.querySelector('.total-badge');
     if (totalBadge) {
         totalBadge.textContent = fmtN(totalRaw);
@@ -801,7 +925,6 @@ function updateRowGrades(row) {
         totalBadge.style.fontSize = '12px';
     }
 
-    // ── Update cum badge ────────────────────────────────────────────
     const cumBadge = row.querySelector('.cum-badge');
     if (cumBadge) {
         cumBadge.textContent = fmtN(cum);
@@ -810,45 +933,28 @@ function updateRowGrades(row) {
         cumBadge.style.fontSize = '12px';
     }
 
-    // ── Instant client-side grades (immediate feedback) ─────────────
     const totalGradeBadge = row.querySelector('.grade-badge');
     const cumGradeBadge   = row.querySelector('.cum-grade-badge');
-
     const instantTotalGrade = clientGrade(totalRaw);
     const instantCumGrade   = clientGrade(cum);
-
     applyGrade(totalGradeBadge, instantTotalGrade);
     applyGrade(cumGradeBadge,   instantCumGrade);
 
-    // ── Debounced server confirmation ───────────────────────────────
     clearTimeout(gradeTimers[bid]);
     gradeTimers[bid] = setTimeout(async () => {
         try {
-            // Show loading spinner while fetching
-            if (totalGradeBadge) {
-                totalGradeBadge.classList.add('updating');
-                totalGradeBadge.innerHTML = '<span class="grade-loading"></span>';
-            }
-            if (cumGradeBadge) {
-                cumGradeBadge.classList.add('updating');
-                cumGradeBadge.innerHTML = '<span class="grade-loading"></span>';
-            }
-
+            if (totalGradeBadge) { totalGradeBadge.classList.add('updating'); totalGradeBadge.innerHTML = '<span class="grade-loading"></span>'; }
+            if (cumGradeBadge)   { cumGradeBadge.classList.add('updating');   cumGradeBadge.innerHTML   = '<span class="grade-loading"></span>'; }
             const res  = await fetch(window.routes.gradeForScore, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
-                body: JSON.stringify({
-                    schoolclass_id: schoolclasId,
-                    total:          totalRaw,
-                    cum:            cum,
-                }),
+                body: JSON.stringify({ schoolclass_id: schoolclasId, total: totalRaw, cum }),
             });
             const data = await res.json();
             if (data.success) {
                 applyGrade(totalGradeBadge, data.total_grade);
                 applyGrade(cumGradeBadge,   data.cum_grade);
             } else {
-                // Fallback to client grades
                 applyGrade(totalGradeBadge, instantTotalGrade);
                 applyGrade(cumGradeBadge,   instantCumGrade);
             }
@@ -859,7 +965,7 @@ function updateRowGrades(row) {
     }, 400);
 }
 
-/* ── Validate input ─────────────────────────────────────────────────── */
+/* ── Validate input ───────────────────────────────────────────────── */
 function validateInput(inp) {
     const max = parseFloat(inp.dataset.max) || 0;
     const val = parseFloat(inp.value) || 0;
@@ -867,7 +973,7 @@ function validateInput(inp) {
     return val <= max;
 }
 
-/* ── Individual save (on blur / Enter) ──────────────────────────────── */
+/* ── Individual save ──────────────────────────────────────────────── */
 function saveIndividualScore(input) {
     const broadsheetId = input.dataset.id;
     const assessmentId = parseInt(input.dataset.field);
@@ -878,27 +984,17 @@ function saveIndividualScore(input) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
         body: JSON.stringify({
-            broadsheet_id:   broadsheetId,
-            assessment_id:   assessmentId,
-            score,
-            is_sub:          false,
-            term_id:         window.term_id,
-            session_id:      window.session_id,
-            subjectclass_id: window.subjectclass_id,
-            schoolclass_id:  window.schoolclass_id,
-            staff_id:        window.staff_id,
+            broadsheet_id: broadsheetId, assessment_id: assessmentId, score,
+            is_sub: false, term_id: window.term_id, session_id: window.session_id,
+            subjectclass_id: window.subjectclass_id, schoolclass_id: window.schoolclass_id, staff_id: window.staff_id,
         })
     })
     .then(r => r.json())
     .then(data => {
         if (!data.success) { showToast(data.message || 'Could not save.', 'warning'); return; }
         const d = data.data;
-
-        // BF
         const bfBadge = row.querySelector('.bf-badge');
         if (bfBadge && d.bf != null) bfBadge.textContent = fmtN(d.bf);
-
-        // Cum
         const cumBadge = row.querySelector('.cum-badge');
         if (cumBadge && d.cum != null) {
             const cum = parseFloat(d.cum);
@@ -906,21 +1002,14 @@ function saveIndividualScore(input) {
             const cc = cum >= 70 ? 'success' : cum >= 50 ? 'info' : cum >= 40 ? 'warning' : 'danger';
             cumBadge.className = `badge fw-bold cum-badge bg-${cc}-subtle text-${cc}`;
         }
-
-        // Total grade (from server — authoritative, graded on total)
         const totalGradeBadge = row.querySelector('.grade-badge');
         if (totalGradeBadge && d.grade != null) applyGrade(totalGradeBadge, d.grade);
-
-        // Cum grade (derive from server cum or use client grade)
         const cumGradeBadge = row.querySelector('.cum-grade-badge');
         if (cumGradeBadge && d.cum != null) applyGrade(cumGradeBadge, clientGrade(parseFloat(d.cum)));
-
-        // GPA / CGPA
         const gpaBadge  = row.querySelector('.gpa-badge');
         const cgpaBadge = row.querySelector('.cgpa-badge');
         if (gpaBadge  && d.gpa  != null) gpaBadge.textContent  = fmtN(d.gpa,  2);
         if (cgpaBadge && d.cgpa != null) cgpaBadge.textContent = fmtN(d.cgpa, 2);
-
         input.classList.add('is-saved');
         setTimeout(() => input.classList.remove('is-saved'), 2000);
     })
@@ -930,7 +1019,91 @@ function saveIndividualScore(input) {
     });
 }
 
-/* ── Bulk save ──────────────────────────────────────────────────────── */
+/* ════════════════════════════════════════════════════════════════════
+   APPLE-STYLE SAVE MODAL HELPERS
+   ════════════════════════════════════════════════════════════════════ */
+const SS_ARC_CIRC = 157.08; // 2π × 25
+
+function ssEl(id) { return document.getElementById(id); }
+
+function ssResetIcons() {
+    ssEl('ssIconSave').style.display  = '';
+    ssEl('ssIconCheck').style.display = 'none';
+    ssEl('ssIconX').style.display     = 'none';
+    ssEl('ssCheckPath').style.strokeDashoffset = '22';
+    ssEl('ssCheckPath').classList.remove('drawn');
+    ssEl('ssIconCenter').style.background = 'rgba(30,58,95,0.09)';
+    ssEl('ssArcFg').style.stroke = '#1e3a5f';
+}
+
+function ssSetArc(pct) {
+    ssEl('ssArcFg').style.strokeDashoffset = (SS_ARC_CIRC * (1 - pct / 100)).toFixed(3);
+}
+
+function ssOpen(total) {
+    ssResetIcons();
+    ssSetArc(0);
+    ssEl('ssSaveFill').style.width      = '0%';
+    ssEl('ssSaveFill').style.background = '#1e3a5f';
+    ssEl('ssSaveTitle').textContent     = 'Saving scores';
+    ssEl('ssSaveSub').textContent       = 'Preparing…';
+    ssEl('ssSaveCountLabel').textContent = 'Saved';
+    ssEl('ssSaveCountNum').textContent  = `0 / ${total}`;
+
+    const overlay = ssEl('ssSaveOverlay');
+    overlay.classList.remove('ss-closing');
+    overlay.classList.add('ss-visible');
+}
+
+function ssUpdate(saved, total, pct) {
+    ssEl('ssSaveFill').style.width     = pct.toFixed(1) + '%';
+    ssEl('ssSaveCountNum').textContent = `${saved} / ${total}`;
+    ssSetArc(pct);
+
+    if      (pct < 25) ssEl('ssSaveSub').textContent = 'Uploading data…';
+    else if (pct < 55) ssEl('ssSaveSub').textContent = 'Processing records…';
+    else if (pct < 85) ssEl('ssSaveSub').textContent = 'Recalculating grades…';
+    else               ssEl('ssSaveSub').textContent = 'Finalising…';
+}
+
+function ssSuccess(total) {
+    ssEl('ssSaveFill').style.width      = '100%';
+    ssEl('ssSaveFill').style.background = '#16a34a';
+    ssEl('ssArcFg').style.strokeDashoffset = '0';
+    ssEl('ssArcFg').style.stroke        = '#16a34a';
+    ssEl('ssIconCenter').style.background = '#dcfce7';
+    ssEl('ssIconSave').style.display    = 'none';
+    ssEl('ssIconCheck').style.display   = '';
+    ssEl('ssSaveCountNum').textContent  = `${total} / ${total}`;
+    ssEl('ssSaveTitle').textContent     = 'All saved';
+    ssEl('ssSaveSub').textContent       = `${total} score${total !== 1 ? 's' : ''} saved successfully`;
+    // Trigger checkmark draw
+    requestAnimationFrame(() => {
+        ssEl('ssCheckPath').classList.add('drawn');
+    });
+    setTimeout(ssClose, 1900);
+}
+
+function ssError(msg) {
+    ssEl('ssSaveFill').style.background = '#dc2626';
+    ssEl('ssArcFg').style.stroke        = '#dc2626';
+    ssEl('ssIconCenter').style.background = '#fee2e2';
+    ssEl('ssIconSave').style.display    = 'none';
+    ssEl('ssIconX').style.display       = '';
+    ssEl('ssSaveTitle').textContent     = 'Save failed';
+    ssEl('ssSaveSub').textContent       = msg || 'Something went wrong.';
+    setTimeout(ssClose, 2400);
+}
+
+function ssClose() {
+    const overlay = ssEl('ssSaveOverlay');
+    overlay.classList.add('ss-closing');
+    setTimeout(() => {
+        overlay.classList.remove('ss-visible', 'ss-closing');
+    }, 260);
+}
+
+/* ── Bulk save ────────────────────────────────────────────────────── */
 function bulkSave() {
     const invalid = document.querySelectorAll('.score-input.is-invalid').length;
     if (invalid) {
@@ -949,10 +1122,20 @@ function bulkSave() {
 
     if (!scores.length) return;
 
-    const prog = document.getElementById('progressContainer');
-    const bar  = document.getElementById('saveProgressBar');
-    if (prog) prog.style.display = 'block';
-    let w = 0; const iv = setInterval(() => { w = Math.min(w + 8, 90); if (bar) bar.style.width = w + '%'; }, 150);
+    const total = scores.length;
+
+    /* ── Open Apple modal ── */
+    ssOpen(total);
+
+    /* ── Animated fake progress (smooth fill until server responds) ── */
+    let fakeProgress = 0;
+    let fakeSaved    = 0;
+    const fakeIv = setInterval(() => {
+        const step = Math.random() * 4 + 2;
+        fakeProgress = Math.min(fakeProgress + step, 88); // cap at 88% until server confirms
+        fakeSaved    = Math.round((fakeProgress / 100) * total);
+        ssUpdate(fakeSaved, total, fakeProgress);
+    }, 130);
 
     const btn      = document.getElementById('bulkUpdateScores');
     const origHtml = btn?.innerHTML;
@@ -973,36 +1156,38 @@ function bulkSave() {
     })
     .then(r => r.json())
     .then(data => {
-        clearInterval(iv); if (bar) bar.style.width = '100%';
+        clearInterval(fakeIv);
+
         if (!data.success) {
-            Swal.fire({ icon:'error', title:'Save Failed', text: data.message || 'Server error.' });
+            ssError(data.message || 'Server error.');
             return;
         }
 
+        /* ── Animate to 100% then show success ── */
+        ssUpdate(total, total, 100);
+        setTimeout(() => ssSuccess(total), 220);
+
+        /* ── Update DOM with server values ── */
         const serverSheets = data.data?.broadsheets ?? [];
         serverSheets.forEach(bs => {
             const row = document.querySelector(`#scoresheetTableBody tr[data-id="${bs.id}"]`);
             if (!row) return;
 
-            // Total badge
-            const total = parseFloat(bs.total ?? 0);
-            const totalBadge = row.querySelector('.total-badge');
+            const total_score = parseFloat(bs.total ?? 0);
+            const totalBadge  = row.querySelector('.total-badge');
             if (totalBadge) {
-                totalBadge.textContent = fmtN(total);
-                const tc = total >= 70 ? 'success' : total >= 50 ? 'info' : total >= 40 ? 'warning' : 'danger';
+                totalBadge.textContent = fmtN(total_score);
+                const tc = total_score >= 70 ? 'success' : total_score >= 50 ? 'info' : total_score >= 40 ? 'warning' : 'danger';
                 totalBadge.className = `badge fw-bold total-badge bg-${tc}-subtle text-${tc}`;
             }
 
-            // Total grade badge (server-authoritative, graded on total)
             const totalGradeBadge = row.querySelector('.grade-badge');
             if (totalGradeBadge) applyGrade(totalGradeBadge, bs.grade ?? '-');
 
-            // BF
             const bfBadge = row.querySelector('.bf-badge');
             if (bfBadge) bfBadge.textContent = fmtN(bs.bf);
 
-            // Cum badge
-            const cum = parseFloat(bs.cum ?? 0);
+            const cum      = parseFloat(bs.cum ?? 0);
             const cumBadge = row.querySelector('.cum-badge');
             if (cumBadge) {
                 cumBadge.textContent = fmtN(cum);
@@ -1010,45 +1195,37 @@ function bulkSave() {
                 cumBadge.className = `badge fw-bold cum-badge bg-${cc}-subtle text-${cc}`;
             }
 
-            // Cum grade badge (display only, derived from cum)
             const cumGradeBadge = row.querySelector('.cum-grade-badge');
             if (cumGradeBadge) applyGrade(cumGradeBadge, clientGrade(cum));
 
-            // Avg
             const avgBadge = row.querySelector('.avg-badge');
             if (avgBadge && bs.avg != null) avgBadge.textContent = fmtN(bs.avg);
 
-            // GPA / CGPA
             const gpaBadge  = row.querySelector('.gpa-badge');
             const cgpaBadge = row.querySelector('.cgpa-badge');
             if (gpaBadge)  gpaBadge.textContent  = fmtN(bs.gpa,  2);
             if (cgpaBadge) cgpaBadge.textContent = fmtN(bs.cgpa, 2);
 
-            // Position
             const posBadge = row.querySelector('.position-badge');
             if (posBadge) posBadge.textContent = ord(bs.position);
 
-            // Mark inputs saved
             row.querySelectorAll('.score-input').forEach(i => {
                 i.classList.add('is-saved');
                 setTimeout(() => i.classList.remove('is-saved'), 2000);
             });
         });
-
-        Swal.fire({ icon:'success', title:'Saved!', text: data.message, timer:2000, showConfirmButton:false });
     })
     .catch(err => {
-        clearInterval(iv);
-        Swal.fire({ icon:'error', title:'Network Error', text:'Please check your connection and try again.' });
+        clearInterval(fakeIv);
+        ssError('Please check your connection and try again.');
         console.error('bulkSave error:', err);
     })
     .finally(() => {
-        setTimeout(() => { if (prog) prog.style.display = 'none'; if (bar) bar.style.width = '0%'; }, 1000);
         if (btn) { btn.disabled = false; btn.innerHTML = origHtml || '<i class="ri-save-line me-1"></i>Save All Scores'; }
     });
 }
 
-/* ── PDF download helper ────────────────────────────────────────────── */
+/* ── PDF download helper ──────────────────────────────────────────── */
 function startPdfDownload(url, filename, label) {
     const cont = document.getElementById('downloadProgressContainer');
     const bar  = document.getElementById('downloadProgressBar');
@@ -1075,19 +1252,16 @@ function startPdfDownload(url, filename, label) {
     .finally(() => setTimeout(() => { if (cont) cont.style.display='none'; if (bar) bar.style.width='0%'; }, 1200));
 }
 
-/* ── DOM ready ──────────────────────────────────────────────────────── */
+/* ── DOM ready ────────────────────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', function () {
 
-    /* tooltips */
     document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => new bootstrap.Tooltip(el));
 
-    /* image modal */
     document.getElementById('imageViewModal')?.addEventListener('show.bs.modal', function(e) {
         const src = e.relatedTarget?.dataset?.image || e.relatedTarget?.getAttribute('data-image');
         document.getElementById('enlargedImage').src = src || '{{ asset("storage/student_avatars/unnamed.jpg") }}';
     });
 
-    /* column visibility */
     document.querySelectorAll('.col-toggle').forEach(cb => {
         cb.addEventListener('change', function() {
             document.querySelectorAll(`th.${this.dataset.col}, td.${this.dataset.col}`)
@@ -1095,7 +1269,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    /* search */
     function applySearch() {
         const q = (document.getElementById('searchInput')?.value ?? '').trim().toLowerCase();
         let vis = 0;
@@ -1117,7 +1290,6 @@ document.addEventListener('DOMContentLoaded', function () {
         applySearch();
     });
 
-    /* check-all */
     document.getElementById('checkAll')?.addEventListener('change', function() {
         document.querySelectorAll('.score-checkbox').forEach(cb => cb.checked = this.checked);
     });
@@ -1137,16 +1309,14 @@ document.addEventListener('DOMContentLoaded', function () {
         document.querySelectorAll('.score-checkbox').forEach(cb => cb.checked = false);
     });
 
-    /* ── SCORE INPUTS: real-time grade preview + save ─────────────────── */
+    /* Score inputs */
     document.querySelectorAll('.score-input').forEach(inp => {
         inp.addEventListener('focus', function() { this.select(); });
-
         inp.addEventListener('input', function() {
             validateInput(this);
             const row = this.closest('tr');
-            if (row) updateRowGrades(row);   // ← real-time grade update
+            if (row) updateRowGrades(row);
         });
-
         inp.addEventListener('blur', function() {
             if (!validateInput(this)) return;
             const orig = parseFloat(this.dataset.original) || 0;
@@ -1156,7 +1326,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 saveIndividualScore(this);
             }
         });
-
         inp.addEventListener('keydown', function(e) {
             if (e.key !== 'Enter') return;
             e.preventDefault();
@@ -1167,19 +1336,14 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    /* bulk save button */
     document.getElementById('bulkUpdateScores')?.addEventListener('click', bulkSave);
-
-    /* keyboard shortcut */
     document.addEventListener('keydown', e => {
         if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); bulkSave(); }
     });
 
-    /* delete selected */
     document.getElementById('deleteSelectedScoresBtn')?.addEventListener('click', function() {
         const ids = Array.from(document.querySelectorAll('.score-checkbox:checked')).map(cb => cb.dataset.id);
         if (!ids.length) { Swal.fire({ icon:'warning', title:'No Selection', text:'Select rows to delete.' }); return; }
-
         Swal.fire({ title:'Delete selected scores?', text:'This cannot be undone.', icon:'warning',
             showCancelButton:true, confirmButtonColor:'#dc2626', confirmButtonText:'Yes, delete' })
         .then(r => {
@@ -1199,7 +1363,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    /* PDF downloads */
     document.getElementById('downloadMarksSheet')?.addEventListener('click', () => {
         startPdfDownload(window.routes.downloadMarksSheet, 'marks-sheet.pdf', 'Generating Marks Sheet…');
     });
@@ -1207,12 +1370,10 @@ document.addEventListener('DOMContentLoaded', function () {
         startPdfDownload(window.routes.downloadScoresPdf, 'scores-sheet.pdf', 'Generating Scores PDF…');
     });
 
-    /* Excel export */
     document.getElementById('downloadExcel')?.addEventListener('click', () => {
         const btn = document.getElementById('downloadExcel');
         const orig = btn?.innerHTML;
         if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ri-loader-4-line"></i> Generating…'; }
-
         fetch(window.routes.export, {
             headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }
         })
@@ -1232,25 +1393,20 @@ document.addEventListener('DOMContentLoaded', function () {
         .finally(() => { if (btn) { btn.disabled = false; btn.innerHTML = orig; } });
     });
 
-    /* import form */
     document.getElementById('importForm')?.addEventListener('submit', function(e) {
         e.preventDefault();
         const file = this.querySelector('input[name="file"]');
         if (!file?.files?.length) {
             Swal.fire({ icon:'warning', title:'No File', text:'Please select an Excel file.' }); return;
         }
-
         const btn    = document.getElementById('importSubmit');
         const loader = document.getElementById('importLoader');
         const bar    = document.getElementById('uploadProgressBar');
         const origHtml = btn?.innerHTML;
-
         if (btn)    { btn.disabled = true; btn.innerHTML = '<i class="ri-loader-4-line"></i> Uploading…'; }
         if (loader) loader.style.display = 'block';
         if (bar)    bar.style.width = '10%';
-
         const fd = new FormData(this);
-
         fetch(window.routes.import, {
             method: 'POST',
             headers: { 'X-CSRF-TOKEN': CSRF, 'X-Requested-With': 'XMLHttpRequest' },
