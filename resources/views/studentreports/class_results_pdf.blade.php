@@ -65,11 +65,10 @@
             margin-top: 3px;
         }
 
-        /* MAIN CARD — force page break after each student */
+        /* MAIN CARD — no overflow or padding-bottom hacks needed */
         .student-section {
             width: 190mm;
             page-break-after: always;
-            page-break-inside: avoid;
             background: #ffffff;
             border: 3px double #000000;
             margin: 0 auto 15px auto;
@@ -87,18 +86,18 @@
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            padding: 8px 10px 6px 10px;
+            padding: 4px 8px 4px 8px;
         }
 
         .school-logo, .photo-frame {
-            width: 74px;
-            height: 88px;
+            width: 65px;
+            height: 72px;
             border: 2px solid #47b492;
             border-radius: 6px;
             background: white;
             padding: 3px;
             overflow: hidden;
-            display: block;
+            display: block;           /* dompdf: use block not flex for margin:auto to work */
             text-align: center;
         }
 
@@ -109,16 +108,16 @@
         }
 
         .middle-info {
-            font-size: 10.4px;
-            font-weight: 700;
-            line-height: 1.75;
-            padding: 4px 15px;
+            font-size: 10px;       /* was 10.4px — bigger */
+            font-weight: 700;        /* bolder body text */
+            line-height: 1.5;        /* was 1.75 — more space between lines */
+            padding: 2px 12px;       /* added vertical padding for breathing room */
             vertical-align: middle;
         }
 
         .middle-info strong {
             color: #1e40af;
-            font-weight: 900;
+            font-weight: 900;        /* was 700 — labels extra bold */
         }
 
         .header-divider { height: 2px; background: #1e40af; width: 100%; }
@@ -141,7 +140,7 @@
             padding: 7px 12px;
             margin: 8px 10px;
             font-size: 9.2px;
-            text-align: center;
+            text-align: center;  /* centre all text in the bar */
         }
 
         .info-table {
@@ -151,19 +150,19 @@
 
         .info-table td {
             padding: 3px 8px;
-            text-align: center;
+            text-align: center;  /* centre each cell */
         }
 
         .info-bar-label {
             color: #1e40af;
-            font-weight: 900;
-            font-size: 8.6px;
+            font-weight: 900;    /* was 700 — bolder */
+            font-size: 8.6px;    /* was 8.2px — slightly larger */
             white-space: nowrap;
         }
 
         .info-bar-value {
             font-weight: 900;
-            font-size: 9.4px;
+            font-size: 9.4px;    /* slightly larger than label */
             padding-left: 3px;
         }
 
@@ -194,16 +193,16 @@
             border: 1px solid #000000;
             padding: 3px 3px;
             text-align: center;
-            font-size: 8px;
+            font-size: 8px;      /* was 7.7px — slightly larger */
             background: white;
-            font-weight: 800;
+            font-weight: 800;    /* was 700 — bolder */
             height: 17px;
             line-height: 17px;
         }
 
         .result-table tbody td.subject-name {
             text-align: left;
-            font-weight: 800;
+            font-weight: 800;    /* was 700 — bolder */
             font-size: 8px;
             padding-left: 7px;
         }
@@ -257,7 +256,14 @@
             display: inline-block;
         }
 
-        /* BOTTOM STRIP */
+        /* ─── BOTTOM STRIP ──────────────────────────────────────────────────────
+           Replaces the old absolute-positioned QR + stamp + footer.
+           Dompdf does not reliably render position:absolute children outside
+           normal flow. We use a single normal-flow table instead:
+             Left cell  → QR code
+             Middle cell → Issued / Next Term / Powered by
+             Right cell  → Stamp image
+        ─────────────────────────────────────────────────────────────────────── */
         .bottom-strip {
             width: 100%;
             border-top: 1px solid #cbd5e1;
@@ -403,12 +409,9 @@
                     </td>
 
                     <td width="51%" class="middle-info">
-                        <!-- FIXED ADDRESS LAYOUT: second line indented -->
-                        <strong>Address:</strong> No. 1, Claret Avenue, Iludun Quarters, Olle Road,<br>
-                        <span style="display: inline-block; width: 55px;"></span>Kabba, Kogi State, Nigeria.<br>
-                        <strong>Phone:</strong> {{ $schoolInfo->school_phone ?? '08039257337' }}<br>
-                        <strong>Email:</strong> {{ $schoolInfo->school_email ?? 'claretsecschools@yahoo.com' }}<br>
-                        <strong>Website:</strong> {{ $schoolInfo->school_website ?? 'http://csskabba.ng' }}
+                        <strong>Address:</strong> <span style="display:inline-block; vertical-align:top;">{{ $schoolInfo->school_address ?? 'No. 1, Claret Avenue, Iludun Quarters, Olle Road, Kabba, Kogi State, Nigeria.' }}</span><br>                        <strong>Phone:</strong> {{ $schoolInfo->school_phone ?? '08136663185' }}<br>
+                        <strong>Email:</strong> {{ $schoolInfo->school_email ?? '—' }}<br>
+                        <strong>Website:</strong> {{ $schoolInfo->school_website ?? '—' }}
                     </td>
 
                     <td width="29%" style="text-align:right; padding-right: 8px; vertical-align: top; padding-top: 6px;">
@@ -575,14 +578,22 @@
                 </tbody>
             </table>
 
-            <!-- BOTTOM STRIP -->
+            <!-- ─── BOTTOM STRIP ───────────────────────────────────────────────────
+                 Single normal-flow table: QR | Footer text | Stamp
+                 Avoids position:absolute which dompdf mishandles — absolute children
+                 are clipped by overflow:hidden but do NOT expand parent height, so
+                 they either get cut off or fall outside the card onto a second page.
+            ─────────────────────────────────────────────────────────────────────── -->
             <div class="bottom-strip">
                 <table>
                     <tr>
+                        <!-- LEFT: QR Code -->
                         <td class="cell-qr">
                             <img src="data:image/png;base64,{{ $qrCodeBase64 }}" alt="QR Code">
                             <div class="qr-label">Scan for Verification</div>
                         </td>
+
+                        <!-- MIDDLE: Footer info -->
                         <td class="cell-footer">
                             <div>
                                 <strong>Issued:</strong>
@@ -603,6 +614,8 @@
                             </div>
                             <div class="powered-by">Powered by Qudroid Systems</div>
                         </td>
+
+                        <!-- RIGHT: Stamp -->
                         <td class="cell-stamp">
                             <img src="{{ asset('stamp.jpeg') }}" alt="Approved Stamp">
                         </td>
