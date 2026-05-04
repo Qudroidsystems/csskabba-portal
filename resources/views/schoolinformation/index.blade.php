@@ -411,9 +411,8 @@
                                         @can('Update schoolinformation')
                                             <li>
                                                 <button type="button"
-                                                    class="btn btn-subtle-secondary btn-icon btn-sm edit-school-btn"
-                                                    data-id="{{ $school->id }}"
-                                                    data-name="{{ $school->school_name }}"
+                                                    class="btn btn-subtle-secondary btn-icon btn-sm"
+                                                    onclick="openEditModal({{ $school->id }})"
                                                     title="Edit">
                                                     <i class="ph-pencil"></i>
                                                 </button>
@@ -422,9 +421,8 @@
                                         @can('Delete schoolinformation')
                                             <li>
                                                 <button type="button"
-                                                    class="btn btn-subtle-danger btn-icon btn-sm delete-school-btn"
-                                                    data-id="{{ $school->id }}"
-                                                    data-name="{{ $school->school_name }}"
+                                                    class="btn btn-subtle-danger btn-icon btn-sm"
+                                                    onclick="openDeleteModal({{ $school->id }}, '{{ addslashes($school->school_name) }}')"
                                                     title="Delete">
                                                     <i class="ph-trash"></i>
                                                 </button>
@@ -1121,13 +1119,8 @@ function filterData() {
 
 // ─── Event listeners ──────────────────────────────────────────────────────────
 function initEventListeners() {
-    document.querySelectorAll('.edit-school-btn').forEach(btn => {
-        btn.addEventListener('click', () => openEditModal(btn.dataset.id));
-    });
-
-    document.querySelectorAll('.delete-school-btn').forEach(btn => {
-        btn.addEventListener('click', () => openDeleteModal(btn.dataset.id, btn.dataset.name));
-    });
+    // Edit/Delete buttons use onclick attributes directly on the elements,
+    // so no addEventListener needed for those.
 
     document.getElementById('checkAll')?.addEventListener('change', function () {
         document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = this.checked);
@@ -1157,11 +1150,13 @@ function updateBulkBar() {
 }
 
 // ─── Global exports ───────────────────────────────────────────────────────────
-window.filterData      = filterData;
-window.addPhoneInput   = addPhoneInput;
+window.filterData       = filterData;
+window.addPhoneInput    = addPhoneInput;
 window.removePhoneInput = removePhoneInput;
-window.openAddModal    = openAddModal;
-window.clearFileInput  = clearFileInput;
+window.openAddModal     = openAddModal;
+window.openEditModal    = openEditModal;
+window.openDeleteModal  = openDeleteModal;
+window.clearFileInput   = clearFileInput;
 </script>
 
 @endsection
