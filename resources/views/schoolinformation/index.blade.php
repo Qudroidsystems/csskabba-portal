@@ -146,17 +146,17 @@
     }
 
     /* Badges */
-    .school-badge {
-        display: inline-flex;
-        align-items: center;
+    .phone-badge {
+        display: inline-block;
+        background: #f3f4f6;
         padding: 4px 10px;
         border-radius: 20px;
-        font-size: 11px;
-        font-weight: 600;
+        margin: 2px;
+        font-size: 12px;
     }
 
     /* Modal Styles */
-    #schoolModal .modal-content {
+    #schoolModal .modal-content, #deleteModal .modal-content {
         border: none;
         border-radius: 16px;
         overflow: hidden;
@@ -226,11 +226,7 @@
         display: flex;
     }
 
-    /* Cropper Container */
-    .cropper-preview {
-        margin-top: 10px;
-        text-align: center;
-    }
+    /* Cropper Preview */
     .cropper-preview img {
         max-width: 100px;
         max-height: 100px;
@@ -254,7 +250,7 @@
 
     {{-- Hero Banner --}}
     <div class="school-hero">
-        <h1><i class="ri-school-line me-2"></i>{{ $pagetitle }}</h1>
+        <h1><i class="ri-school-line me-2"></i>{{ $pagetitle ?? 'School Information Management' }}</h1>
         <p>Manage school information, logos, stamps, and operational dates</p>
     </div>
 
@@ -342,11 +338,11 @@
             </div>
             <div class="flex-shrink-0">
                 <div class="d-flex flex-wrap align-items-start gap-2">
-                    <button class="btn btn-subtle-danger d-none" id="remove-actions" onclick="deleteMultiple()">
-                        <i class="ri-delete-bin-2-line"></i>
+                    <button class="btn btn-subtle-danger d-none" id="remove-actions">
+                        <i class="ri-delete-bin-2-line"></i> Delete Selected
                     </button>
                     @can('Create schoolinformation')
-                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#schoolModal" onclick="openAddModal()">
+                        <button type="button" class="btn btn-primary" onclick="openAddModal()">
                             <i class="ri-add-line me-1"></i> Add School
                         </button>
                     @endcan
@@ -358,7 +354,7 @@
             <div class="row g-3 mb-4">
                 <div class="col-xxl-3">
                     <div class="search-box">
-                        <input type="text" class="form-control search" placeholder="Search schools...">
+                        <input type="text" class="form-control search" id="searchInput" placeholder="Search schools...">
                         <i class="ri-search-line search-icon"></i>
                     </div>
                 </div>
@@ -389,12 +385,12 @@
                 <i class="ri-checkbox-circle-line text-warning"></i>
                 <span id="bulkCount">0</span> school(s) selected
                 <button class="btn btn-sm btn-danger ms-auto" id="bulkDeleteBtn">
-                    <i class="ri-delete-bin-line me-1"></i>Delete Selected
+                    <i class="ri-delete-bin-line me-1"></i> Delete Selected
                 </button>
             </div>
 
             <div class="table-responsive">
-                <table class="table school-table w-100 mb-0" id="schoolTable">
+                <table class="table school-table w-100 mb-0">
                     <thead>
                         <tr>
                             <th width="40">
@@ -407,21 +403,20 @@
                             <th>Times Opened</th>
                             <th>Date Opened</th>
                             <th>Date Closed</th>
-                            <th>Next Term Begins</th>
-                            <th>Date Created</th>
+                            <th>Next Term</th>
+                            <th>Created</th>
                             <th width="120">Actions</th>
                         </tr>
                     </thead>
-                    <tbody class="list form-check-all">
+                    <tbody>
                         @forelse ($data as $school)
                             <tr>
-                                <td class="id" data-id="{{ $school->id }}">
+                                <td>
                                     <div class="form-check">
-                                        <input class="form-check-input row-checkbox" type="checkbox" name="chk_child" value="{{ $school->id }}">
-                                        <label class="form-check-label"></label>
+                                        <input class="form-check-input row-checkbox" type="checkbox" value="{{ $school->id }}">
                                     </div>
                                 </td>
-                                <td class="name" data-name="{{ $school->school_name }}" data-address="{{ $school->school_address }}" data-motto="{{ $school->school_motto }}" data-website="{{ $school->school_website }}">
+                                <td>
                                     <div class="d-flex align-items-center">
                                         @if($school->getLogoUrlAttribute())
                                             <img src="{{ $school->getLogoUrlAttribute() }}" alt="logo" class="rounded me-2" style="width: 32px; height: 32px; object-fit: cover;">
@@ -430,57 +425,48 @@
                                                 <i class="ri-building-line text-muted"></i>
                                             </div>
                                         @endif
-                                        <h6 class="mb-0"><a href="{{ route('admin.school-info.show', $school->id) }}" class="text-reset">{{ $school->school_name }}</a></h6>
+                                        <div>
+                                            <a href="{{ route('admin.school-info.show', $school->id) }}" class="text-reset fw-medium">{{ $school->school_name }}</a>
+                                        </div>
                                     </div>
                                 </td>
-                                <td class="email" data-email="{{ $school->school_email }}">{{ $school->school_email }}</td>
-                                <td class="phones" data-phones='@json($school->school_phones)'>
+                                <td>{{ $school->school_email }}</td>
+                                <td>
                                     @php
                                         $phones = is_array($school->school_phones) ? $school->school_phones : json_decode($school->school_phones ?? '[]', true);
                                     @endphp
                                     @if(!empty($phones))
-                                        @foreach($phones as $index => $phone)
-                                            <span class="badge bg-light text-dark">{{ $phone }}</span>
-                                            @if($index < count($phones) - 1) <br> @endif
+                                        @foreach($phones as $phone)
+                                            <span class="phone-badge">{{ $phone }}</span>
                                         @endforeach
                                     @else
                                         -
                                     @endif
                                 </td>
-                                <td class="status" data-status="{{ $school->is_active ? 'Active' : 'Inactive' }}">
-                                    <label class="badge bg-{{ $school->is_active ? 'success' : 'secondary' }}">{{ $school->is_active ? 'Active' : 'Inactive' }}</label>
-                                </td>
-                                <td class="no_of_times_school_opened" data-no_of_times_school_opened="{{ $school->no_of_times_school_opened }}">{{ $school->no_of_times_school_opened }}</td>
-                                <td class="date_school_opened" data-date_school_opened="{{ $school->date_school_opened ? $school->date_school_opened->format('Y-m-d') : '' }}">{{ $school->date_school_opened ? $school->date_school_opened->format('d M Y') : '-' }}</td>
-                                <td class="date_school_closed" data-date_school_closed="{{ $school->date_school_closed ? $school->date_school_closed->format('Y-m-d') : '' }}">{{ $school->date_school_closed ? $school->date_school_closed->format('d M Y') : '-' }}</td>
-                                <td class="date_next_term_begins" data-date_next_term_begins="{{ $school->date_next_term_begins ? $school->date_next_term_begins->format('Y-m-d') : '' }}">{{ $school->date_next_term_begins ? $school->date_next_term_begins->format('d M Y') : '-' }}</td>
-                                <td class="created_at">{{ $school->created_at->format('d M Y') }}</td>
                                 <td>
-                                    <ul class="d-flex gap-2 list-unstyled mb-0">
-                                        @can('View schoolinformation')
-                                            <li>
-                                                <a href="{{ route('admin.school-info.show', $school->id) }}" class="btn btn-subtle-primary btn-icon btn-sm" title="View">
-                                                    <i class="ri-eye-line"></i>
-                                                </a>
-                                            </li>
-                                        @endcan
-                                        @can('Update schoolinformation')
-                                            <li>
-                                                <a href="javascript:void(0);" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn" data-id="{{ $school->id }}" title="Edit">
-                                                    <i class="ri-pencil-line"></i>
-                                                </a>
-                                            </li>
-                                        @endcan
-                                        @can('Delete schoolinformation')
-                                            <li>
-                                                <a href="javascript:void(0);" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn" data-id="{{ $school->id }}" title="Delete">
-                                                    <i class="ri-delete-bin-line"></i>
-                                                </a>
-                                            </li>
-                                        @endcan
-                                    </ul>
+                                    <span class="badge bg-{{ $school->is_active ? 'success' : 'secondary' }}">
+                                        {{ $school->is_active ? 'Active' : 'Inactive' }}
+                                    </span>
                                 </td>
-                            </tr>
+                                <td>{{ $school->no_of_times_school_opened }}</td>
+                                <td>{{ $school->date_school_opened ? $school->date_school_opened->format('d M Y') : '-' }}</td>
+                                <td>{{ $school->date_school_closed ? $school->date_school_closed->format('d M Y') : '-' }}</td>
+                                <td>{{ $school->date_next_term_begins ? $school->date_next_term_begins->format('d M Y') : '-' }}</td>
+                                <td>{{ $school->created_at->format('d M Y') }}</td>
+                                <td>
+                                    <div class="d-flex gap-2">
+                                        <a href="{{ route('admin.school-info.show', $school->id) }}" class="btn btn-sm btn-soft-primary" title="View">
+                                            <i class="ri-eye-line"></i>
+                                        </a>
+                                        <button type="button" class="btn btn-sm btn-soft-secondary edit-school-btn" data-id="{{ $school->id }}" data-name="{{ $school->school_name }}" title="Edit">
+                                            <i class="ri-pencil-line"></i>
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-soft-danger delete-school-btn" data-id="{{ $school->id }}" data-name="{{ $school->school_name }}" title="Delete">
+                                            <i class="ri-delete-bin-line"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </table>
                         @empty
                             <tr>
                                 <td colspan="11" class="text-center py-5">No schools found. Click "Add School" to create one.</td>
@@ -498,21 +484,7 @@
                     </div>
                 </div>
                 <div class="col-sm-auto mt-3 mt-sm-0">
-                    <div class="pagination-wrap hstack gap-2 justify-content-center">
-                        <a class="page-item pagination-prev {{ $data->onFirstPage() ? 'disabled' : '' }}" href="{{ $data->previousPageUrl() }}">
-                            <i class="ri-arrow-left-line align-middle"></i>
-                        </a>
-                        <ul class="pagination listjs-pagination mb-0">
-                            @foreach ($data->links()->elements[0] as $page => $url)
-                                <li class="page-item {{ $data->currentPage() == $page ? 'active' : '' }}">
-                                    <a class="page-link" href="{{ $url }}">{{ $page }}</a>
-                                </li>
-                            @endforeach
-                        </ul>
-                        <a class="page-item pagination-next {{ $data->hasMorePages() ? '' : 'disabled' }}" href="{{ $data->nextPageUrl() }}">
-                            <i class="ri-arrow-right-line align-middle"></i>
-                        </a>
-                    </div>
+                    {{ $data->links() }}
                 </div>
             </div>
         </div>
@@ -522,7 +494,7 @@
 </div>
 
 {{-- ADD/EDIT SCHOOL MODAL --}}
-<div class="modal fade" id="schoolModal" tabindex="-1" data-bs-backdrop="static">
+<div class="modal fade" id="schoolModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-hero-bar">
@@ -558,7 +530,7 @@
                     {{-- Multiple Phone Numbers --}}
                     <div class="mb-3">
                         <label class="form-label">Phone Numbers <span class="text-danger">*</span></label>
-                        <div class="phone-input-group" id="phoneNumbersContainer">
+                        <div class="phone-input-group">
                             <div id="phoneInputsList">
                                 <div class="phone-input-item">
                                     <input type="text" class="form-control phone-input" name="school_phones[]" placeholder="e.g., +234 123 456 7890" required>
@@ -570,7 +542,7 @@
                             <button type="button" class="btn btn-sm btn-outline-primary add-phone-btn" onclick="addPhoneInput()">
                                 <i class="ri-add-line me-1"></i>Add Another Phone Number
                             </button>
-                            <small class="text-muted d-block mt-2">Add at least one phone number. You can add multiple contact numbers.</small>
+                            <small class="text-muted d-block mt-2">Add at least one phone number.</small>
                         </div>
                     </div>
 
@@ -749,21 +721,24 @@
 </div>
 
 {{-- DELETE MODAL --}}
-<div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered" style="max-width:400px">
-        <div class="modal-content border-0" style="border-radius:16px;overflow:hidden">
-            <div class="modal-header bg-danger text-white">
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white border-0">
                 <h5 class="modal-title"><i class="ri-delete-bin-line me-2"></i>Confirm Deletion</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
-                <p>Are you sure you want to delete <strong id="deleteItemName"></strong>?</p>
-                <p class="text-muted small mb-0">This action cannot be undone. All school data will be permanently removed.</p>
+            <div class="modal-body text-center py-4">
+                <div class="mb-3">
+                    <i class="ri-error-warning-line text-danger" style="font-size: 48px;"></i>
+                </div>
+                <h6>Are you sure?</h6>
+                <p class="text-muted">You are about to delete <strong id="deleteItemName"></strong>. This action cannot be undone.</p>
             </div>
-            <div class="modal-footer border-0">
+            <div class="modal-footer border-0 justify-content-center pb-4">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmDelete">
-                    <i class="ri-delete-bin-line me-1"></i>Delete
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="ri-delete-bin-line me-1"></i>Yes, Delete
                 </button>
             </div>
         </div>
@@ -772,37 +747,29 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.jsdelivr.net/npm/list.js@2.3.1/dist/list.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
 // Global variables
 let schoolLogoCropper = null;
 let appLogoCropper = null;
 let schoolStampCropper = null;
-let editSchoolLogoCropper = null;
-let editAppLogoCropper = null;
-let editSchoolStampCropper = null;
 
 let croppedSchoolLogoBlob = null;
 let croppedAppLogoBlob = null;
 let croppedSchoolStampBlob = null;
-let croppedEditSchoolLogoBlob = null;
-let croppedEditAppLogoBlob = null;
-let croppedEditSchoolStampBlob = null;
 
-let deleteId = null;
-let isEditMode = false;
-let schoolList = null;
+let currentDeleteId = null;
 
-const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
-// Initialize List.js
+// Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     initStatusChart();
-    initListJS();
     initEventListeners();
     initAddModalCroppers();
     updateOpenedCount();
+    initPhoneInputs();
 });
 
 function initStatusChart() {
@@ -828,28 +795,26 @@ function initStatusChart() {
     });
 }
 
-function initListJS() {
-    schoolList = new List('schoolList', {
-        valueNames: ['name', 'email', 'status', 'no_of_times_school_opened', 'date_school_opened', 'date_next_term_begins', 'created_at']
-    });
-    refreshCallbacks();
-}
-
 function updateOpenedCount() {
     let total = 0;
-    document.querySelectorAll('.no_of_times_school_opened').forEach(el => {
-        let val = parseInt(el.getAttribute('data-no_of_times_school_opened') || '0');
-        if (!isNaN(val)) total += val;
+    document.querySelectorAll('table tbody tr').forEach(row => {
+        const timesOpenedCell = row.cells[5];
+        if (timesOpenedCell) {
+            const val = parseInt(timesOpenedCell.innerText);
+            if (!isNaN(val)) total += val;
+        }
     });
-    document.getElementById('openedCount').textContent = total;
+    const openedCountEl = document.getElementById('openedCount');
+    if (openedCountEl) openedCountEl.textContent = total;
 }
 
-// Phone numbers management
+function initPhoneInputs() {
+    const removeBtns = document.querySelectorAll('.remove-phone-btn');
+    removeBtns.forEach(btn => btn.style.display = removeBtns.length > 1 ? 'inline-flex' : 'none');
+}
+
 function addPhoneInput(value = '') {
     const container = document.getElementById('phoneInputsList');
-    const inputs = container.querySelectorAll('.phone-input-item');
-    const newIndex = inputs.length;
-
     const div = document.createElement('div');
     div.className = 'phone-input-item';
     div.innerHTML = `
@@ -860,7 +825,6 @@ function addPhoneInput(value = '') {
     `;
     container.appendChild(div);
 
-    // Show remove buttons for all if more than 1
     const removeBtns = document.querySelectorAll('.remove-phone-btn');
     removeBtns.forEach(btn => btn.style.display = removeBtns.length > 1 ? 'inline-flex' : 'none');
 }
@@ -908,9 +872,9 @@ function initAddModalCroppers() {
     const schoolLogoInput = document.getElementById('school_logo');
     if (schoolLogoInput) {
         schoolLogoInput.addEventListener('change', function(e) {
-            handleImageUpload(e, 'school', 'school-logo-cropper', 'school-logo-cropper-container', 'school-crop-width', 'school-crop-height', 'school-logo-preview', 'schoolLogoCropper');
+            handleImageUpload(e, 'school-logo-cropper', 'school-logo-cropper-container', 'school-crop-width', 'school-crop-height', 'school-logo-preview', 'schoolLogoCropper');
         });
-        document.getElementById('school-crop-btn')?.addEventListener('click', () => handleCropImage('school', 'school-crop-width', 'school-crop-height', 'school-logo-preview', 'schoolLogoCropper', 'croppedSchoolLogoBlob'));
+        document.getElementById('school-crop-btn')?.addEventListener('click', () => handleCropImage('school-logo-preview', 'schoolLogoCropper', 'school-crop-width', 'school-crop-height', 'croppedSchoolLogoBlob'));
         document.getElementById('school-reset-crop-btn')?.addEventListener('click', () => resetCropper('schoolLogoCropper', 'school-logo-cropper-container', 'school-logo-preview', 'croppedSchoolLogoBlob'));
     }
 
@@ -918,9 +882,9 @@ function initAddModalCroppers() {
     const appLogoInput = document.getElementById('app_logo');
     if (appLogoInput) {
         appLogoInput.addEventListener('change', function(e) {
-            handleImageUpload(e, 'app', 'app-logo-cropper', 'app-logo-cropper-container', 'app-crop-width', 'app-crop-height', 'app-logo-preview', 'appLogoCropper');
+            handleImageUpload(e, 'app-logo-cropper', 'app-logo-cropper-container', 'app-crop-width', 'app-crop-height', 'app-logo-preview', 'appLogoCropper');
         });
-        document.getElementById('app-crop-btn')?.addEventListener('click', () => handleCropImage('app', 'app-crop-width', 'app-crop-height', 'app-logo-preview', 'appLogoCropper', 'croppedAppLogoBlob'));
+        document.getElementById('app-crop-btn')?.addEventListener('click', () => handleCropImage('app-logo-preview', 'appLogoCropper', 'app-crop-width', 'app-crop-height', 'croppedAppLogoBlob'));
         document.getElementById('app-reset-crop-btn')?.addEventListener('click', () => resetCropper('appLogoCropper', 'app-logo-cropper-container', 'app-logo-preview', 'croppedAppLogoBlob'));
     }
 
@@ -928,18 +892,24 @@ function initAddModalCroppers() {
     const stampInput = document.getElementById('school_stamp');
     if (stampInput) {
         stampInput.addEventListener('change', function(e) {
-            handleImageUpload(e, 'stamp', 'school-stamp-cropper', 'school-stamp-cropper-container', 'stamp-crop-width', 'stamp-crop-height', 'school-stamp-preview', 'schoolStampCropper');
+            handleImageUpload(e, 'school-stamp-cropper', 'school-stamp-cropper-container', 'stamp-crop-width', 'stamp-crop-height', 'school-stamp-preview', 'schoolStampCropper');
         });
-        document.getElementById('stamp-crop-btn')?.addEventListener('click', () => handleCropImage('stamp', 'stamp-crop-width', 'stamp-crop-height', 'school-stamp-preview', 'schoolStampCropper', 'croppedSchoolStampBlob'));
+        document.getElementById('stamp-crop-btn')?.addEventListener('click', () => handleCropImage('school-stamp-preview', 'schoolStampCropper', 'stamp-crop-width', 'stamp-crop-height', 'croppedSchoolStampBlob'));
         document.getElementById('stamp-reset-crop-btn')?.addEventListener('click', () => resetCropper('schoolStampCropper', 'school-stamp-cropper-container', 'school-stamp-preview', 'croppedSchoolStampBlob'));
     }
 }
 
-function handleImageUpload(e, type, cropperId, containerId, widthId, heightId, previewId, cropperVarName) {
+function handleImageUpload(e, cropperId, containerId, widthId, heightId, previewId, cropperVar) {
     const file = e.target.files[0];
     if (!file) return;
-    if (!file.type.match('image.*')) { showAlert('error', 'Invalid File', 'Please select an image file'); return; }
-    if (file.size > 5 * 1024 * 1024) { showAlert('error', 'File Too Large', 'Image must be less than 5MB'); return; }
+    if (!file.type.match('image.*')) {
+        showAlert('error', 'Invalid File', 'Please select an image file');
+        return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+        showAlert('error', 'File Too Large', 'Image must be less than 5MB');
+        return;
+    }
 
     const container = document.getElementById(containerId);
     const cropperImg = document.getElementById(cropperId);
@@ -949,11 +919,11 @@ function handleImageUpload(e, type, cropperId, containerId, widthId, heightId, p
         container.classList.remove('d-none');
         cropperImg.src = e.target.result;
 
-        if (window[cropperVarName]) window[cropperVarName].destroy();
+        if (window[cropperVar]) window[cropperVar].destroy();
         const cropWidth = document.getElementById(widthId)?.value || 200;
         const cropHeight = document.getElementById(heightId)?.value || 200;
 
-        window[cropperVarName] = new Cropper(cropperImg, {
+        window[cropperVar] = new Cropper(cropperImg, {
             aspectRatio: cropWidth / cropHeight,
             viewMode: 1,
             autoCropArea: 1
@@ -962,79 +932,43 @@ function handleImageUpload(e, type, cropperId, containerId, widthId, heightId, p
     reader.readAsDataURL(file);
 }
 
-function handleCropImage(type, widthId, heightId, previewId, cropperVarName, blobVarName) {
-    const cropper = window[cropperVarName];
-    if (!cropper) { showAlert('warning', 'No Image', 'Please select an image first'); return; }
+function handleCropImage(previewId, cropperVar, widthId, heightId, blobVar) {
+    const cropper = window[cropperVar];
+    if (!cropper) {
+        showAlert('warning', 'No Image', 'Please select an image first');
+        return;
+    }
 
-    const w = parseInt(document.getElementById(widthId)?.value) || (type === 'school' ? 300 : 200);
-    const h = parseInt(document.getElementById(heightId)?.value) || (type === 'school' ? 300 : 200);
+    const w = parseInt(document.getElementById(widthId)?.value) || 200;
+    const h = parseInt(document.getElementById(heightId)?.value) || 200;
 
     const canvas = cropper.getCroppedCanvas({ width: w, height: h, imageSmoothingEnabled: true, imageSmoothingQuality: 'high' });
     canvas.toBlob(function(blob) {
-        window[blobVarName] = blob;
+        window[blobVar] = blob;
         const preview = document.getElementById(previewId);
         if (preview) {
             preview.innerHTML = `<img src="${canvas.toDataURL()}" class="img-thumbnail" style="max-width: 100px; max-height: 100px;">`;
         }
-        showAlert('success', 'Cropped!', `${type.charAt(0).toUpperCase() + type.slice(1)} image cropped successfully`);
+        showAlert('success', 'Cropped!', 'Image cropped successfully');
     }, 'image/png');
 }
 
-function resetCropper(cropperVarName, containerId, previewId, blobVarName) {
-    if (window[cropperVarName]) { window[cropperVarName].destroy(); window[cropperVarName] = null; }
-    window[blobVarName] = null;
+function resetCropper(cropperVar, containerId, previewId, blobVar) {
+    if (window[cropperVar]) {
+        window[cropperVar].destroy();
+        window[cropperVar] = null;
+    }
+    window[blobVar] = null;
     document.getElementById(containerId)?.classList.add('d-none');
     if (previewId) document.getElementById(previewId).innerHTML = '';
 }
 
-function initEditModalCroppers() {
-    const editModal = document.getElementById('editModal');
-    if (!editModal) return;
-
-    // School Logo
-    const editSchoolLogo = document.getElementById('edit_school_logo');
-    if (editSchoolLogo) {
-        editSchoolLogo.addEventListener('change', function(e) {
-            handleImageUpload(e, 'school', 'edit-school-logo-cropper', 'edit-school-logo-cropper-container', 'edit-school-crop-width', 'edit-school-crop-height', 'edit-school-logo-preview', 'editSchoolLogoCropper');
-        });
-        document.getElementById('edit-school-crop-btn')?.addEventListener('click', () => handleEditCropImage('school', 'edit-school-crop-width', 'edit-school-crop-height', 'edit-school-logo-preview', 'editSchoolLogoCropper', 'croppedEditSchoolLogoBlob'));
-        document.getElementById('edit-school-reset-crop-btn')?.addEventListener('click', () => resetCropper('editSchoolLogoCropper', 'edit-school-logo-cropper-container', 'edit-school-logo-preview', 'croppedEditSchoolLogoBlob'));
-    }
-
-    // App Logo
-    const editAppLogo = document.getElementById('edit_app_logo');
-    if (editAppLogo) {
-        editAppLogo.addEventListener('change', function(e) {
-            handleImageUpload(e, 'app', 'edit-app-logo-cropper', 'edit-app-logo-cropper-container', 'edit-app-crop-width', 'edit-app-crop-height', 'edit-app-logo-preview', 'editAppLogoCropper');
-        });
-        document.getElementById('edit-app-crop-btn')?.addEventListener('click', () => handleEditCropImage('app', 'edit-app-crop-width', 'edit-app-crop-height', 'edit-app-logo-preview', 'editAppLogoCropper', 'croppedEditAppLogoBlob'));
-        document.getElementById('edit-app-reset-crop-btn')?.addEventListener('click', () => resetCropper('editAppLogoCropper', 'edit-app-logo-cropper-container', 'edit-app-logo-preview', 'croppedEditAppLogoBlob'));
-    }
-
-    // Stamp
-    const editStamp = document.getElementById('edit_school_stamp');
-    if (editStamp) {
-        editStamp.addEventListener('change', function(e) {
-            handleImageUpload(e, 'stamp', 'edit-school-stamp-cropper', 'edit-school-stamp-cropper-container', 'edit-stamp-crop-width', 'edit-stamp-crop-height', 'edit-school-stamp-preview', 'editSchoolStampCropper');
-        });
-        document.getElementById('edit-stamp-crop-btn')?.addEventListener('click', () => handleEditCropImage('stamp', 'edit-stamp-crop-width', 'edit-stamp-crop-height', 'edit-school-stamp-preview', 'editSchoolStampCropper', 'croppedEditSchoolStampBlob'));
-        document.getElementById('edit-stamp-reset-crop-btn')?.addEventListener('click', () => resetCropper('editSchoolStampCropper', 'edit-school-stamp-cropper-container', 'edit-school-stamp-preview', 'croppedEditSchoolStampBlob'));
-    }
-}
-
-function handleEditCropImage(type, widthId, heightId, previewId, cropperVarName, blobVarName) {
-    handleCropImage(type, widthId, heightId, previewId, cropperVarName, blobVarName);
-}
-
-// Form submission handlers
+// Modal functions
 function openAddModal() {
-    isEditMode = false;
     document.getElementById('modalTitle').innerHTML = '<i class="ri-add-line me-2"></i>Add School';
     document.getElementById('schoolForm').reset();
     document.getElementById('schoolId').value = '';
     document.getElementById('formErrors').classList.add('d-none');
-
-    // Reset phone inputs
     setPhonesArray(['']);
 
     // Reset previews
@@ -1053,15 +987,27 @@ function openAddModal() {
     ['school-logo-cropper-container', 'app-logo-cropper-container', 'school-stamp-cropper-container'].forEach(id => {
         if (document.getElementById(id)) document.getElementById(id).classList.add('d-none');
     });
+
+    const modal = new bootstrap.Modal(document.getElementById('schoolModal'));
+    modal.show();
 }
 
-function openEditModal(id) {
-    isEditMode = true;
+function openEditModal(id, name) {
     document.getElementById('modalTitle').innerHTML = '<i class="ri-pencil-line me-2"></i>Edit School';
     document.getElementById('schoolId').value = id;
     document.getElementById('formErrors').classList.add('d-none');
 
-    // Fetch school data
+    // Reset croppers
+    ['schoolLogoCropper', 'appLogoCropper', 'schoolStampCropper'].forEach(name => {
+        if (window[name]) { window[name].destroy(); window[name] = null; }
+    });
+
+    // Show loading
+    const saveBtn = document.getElementById('saveBtn');
+    const originalHtml = saveBtn.innerHTML;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
+    saveBtn.disabled = true;
+
     fetch(`/school-info/${id}/edit-json`, {
         headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
     })
@@ -1092,15 +1038,33 @@ function openEditModal(id) {
                 document.getElementById('school-stamp-preview').innerHTML = `<img src="${school.stamp_url}" class="img-thumbnail" style="max-width: 100px;">`;
             }
 
-            // Initialize edit croppers
-            setTimeout(() => initEditModalCroppers(), 100);
+            const modal = new bootstrap.Modal(document.getElementById('schoolModal'));
+            modal.show();
+        } else {
+            showAlert('error', 'Error', data.message || 'Failed to load school data');
         }
     })
-    .catch(error => console.error('Error fetching school:', error));
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('error', 'Error', 'Failed to load school data. Please try again.');
+    })
+    .finally(() => {
+        saveBtn.innerHTML = originalHtml;
+        saveBtn.disabled = false;
+    });
 }
 
+function openDeleteModal(id, name) {
+    currentDeleteId = id;
+    document.getElementById('deleteItemName').textContent = name;
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    modal.show();
+}
+
+// Form submission
 document.getElementById('schoolForm')?.addEventListener('submit', function(e) {
     e.preventDefault();
+
     const formData = new FormData();
     const schoolId = document.getElementById('schoolId').value;
 
@@ -1127,30 +1091,34 @@ document.getElementById('schoolForm')?.addEventListener('submit', function(e) {
     }
 
     const url = schoolId ? `/school-info/${schoolId}` : '/school-info';
-    const method = 'POST';
 
     const saveBtn = document.getElementById('saveBtn');
     const originalHtml = saveBtn.innerHTML;
     saveBtn.disabled = true;
     saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
 
-    fetch(url, { method: method, body: formData, headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
+    fetch(url, {
+        method: 'POST',
+        body: formData,
+        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+    })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
             showAlert('success', 'Success!', data.message);
             setTimeout(() => window.location.reload(), 1500);
         } else {
-            let errors = data.errors || { message: data.message || 'Validation failed' };
             let errorHtml = '<ul class="mb-0">';
-            for (let key in errors) {
-                if (Array.isArray(errors[key])) {
-                    errors[key].forEach(err => errorHtml += `<li>${err}</li>`);
-                } else if (typeof errors[key] === 'string') {
-                    errorHtml += `<li>${errors[key]}</li>`;
-                } else if (key === 'message') {
-                    errorHtml += `<li>${errors[key]}</li>`;
+            if (data.errors) {
+                for (let key in data.errors) {
+                    if (Array.isArray(data.errors[key])) {
+                        data.errors[key].forEach(err => errorHtml += `<li>${err}</li>`);
+                    } else {
+                        errorHtml += `<li>${data.errors[key]}</li>`;
+                    }
                 }
+            } else {
+                errorHtml += `<li>${data.message || 'Something went wrong'}</li>`;
             }
             errorHtml += '</ul>';
             document.getElementById('formErrors').innerHTML = errorHtml;
@@ -1159,7 +1127,7 @@ document.getElementById('schoolForm')?.addEventListener('submit', function(e) {
     })
     .catch(error => {
         console.error('Error:', error);
-        showAlert('error', 'Error', 'Something went wrong. Please try again.');
+        showAlert('error', 'Error', 'Network error. Please try again.');
     })
     .finally(() => {
         saveBtn.disabled = false;
@@ -1167,22 +1135,23 @@ document.getElementById('schoolForm')?.addEventListener('submit', function(e) {
     });
 });
 
-// Delete handlers
-function handleDelete(id, name) {
-    deleteId = id;
-    document.getElementById('deleteItemName').textContent = name;
-    new bootstrap.Modal(document.getElementById('deleteModal')).show();
-}
+// Delete confirmation
+document.getElementById('confirmDeleteBtn')?.addEventListener('click', function() {
+    if (!currentDeleteId) return;
 
-document.getElementById('confirmDelete')?.addEventListener('click', function() {
-    if (!deleteId) return;
     const btn = this;
+    const originalHtml = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Deleting...';
 
-    fetch(`/school-info/${deleteId}`, {
+    fetch(`/school-info/${currentDeleteId}`, {
         method: 'DELETE',
-        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF_TOKEN }
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': CSRF_TOKEN,
+            'Content-Type': 'application/json'
+        }
     })
     .then(response => response.json())
     .then(data => {
@@ -1193,39 +1162,50 @@ document.getElementById('confirmDelete')?.addEventListener('click', function() {
             showAlert('error', 'Error', data.message || 'Failed to delete');
         }
     })
-    .catch(error => showAlert('error', 'Error', 'Network error'))
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('error', 'Error', 'Network error. Please try again.');
+    })
     .finally(() => {
         btn.disabled = false;
-        btn.innerHTML = '<i class="ri-delete-bin-line me-1"></i>Delete';
+        btn.innerHTML = originalHtml;
         bootstrap.Modal.getInstance(document.getElementById('deleteModal'))?.hide();
-        deleteId = null;
+        currentDeleteId = null;
     });
 });
 
 // Event listeners
 function initEventListeners() {
-    document.querySelectorAll('.edit-item-btn').forEach(btn => {
+    // Edit buttons
+    document.querySelectorAll('.edit-school-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
-            openEditModal(id);
-            new bootstrap.Modal(document.getElementById('schoolModal')).show();
+            const name = this.getAttribute('data-name');
+            openEditModal(id, name);
         });
     });
 
-    document.querySelectorAll('.remove-item-btn').forEach(btn => {
+    // Delete buttons
+    document.querySelectorAll('.delete-school-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const id = this.getAttribute('data-id');
-            const row = this.closest('tr');
-            const name = row.querySelector('.name a')?.innerText || 'this school';
-            handleDelete(id, name);
+            const name = this.getAttribute('data-name');
+            openDeleteModal(id, name);
         });
     });
 
+    // Check all checkbox
     document.getElementById('checkAll')?.addEventListener('change', function() {
         document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = this.checked);
         updateBulkBar();
     });
 
+    // Row checkboxes
+    document.querySelectorAll('.row-checkbox').forEach(cb => {
+        cb.addEventListener('change', updateBulkBar);
+    });
+
+    // Bulk delete
     document.getElementById('bulkDeleteBtn')?.addEventListener('click', bulkDelete);
 }
 
@@ -1235,11 +1215,11 @@ function updateBulkBar() {
     const removeActions = document.getElementById('remove-actions');
     if (count > 0) {
         bulkBar.classList.add('show');
-        removeActions?.classList.remove('d-none');
+        if (removeActions) removeActions.classList.remove('d-none');
         document.getElementById('bulkCount').textContent = count;
     } else {
         bulkBar.classList.remove('show');
-        removeActions?.classList.add('d-none');
+        if (removeActions) removeActions.classList.add('d-none');
     }
 }
 
@@ -1266,28 +1246,35 @@ function bulkDelete() {
                 if (data.success) {
                     showAlert('success', 'Deleted!', data.message);
                     setTimeout(() => window.location.reload(), 1500);
+                } else {
+                    showAlert('error', 'Error', data.message || 'Failed to delete');
                 }
             })
-            .catch(error => showAlert('error', 'Error', 'Failed to delete'));
+            .catch(error => {
+                console.error('Error:', error);
+                showAlert('error', 'Error', 'Network error');
+            });
         }
     });
 }
 
-function refreshCallbacks() {
-    initEventListeners();
-}
-
 function filterData() {
-    const searchVal = document.querySelector('.search-box input.search')?.value.toLowerCase() || '';
+    const searchTerm = document.getElementById('searchInput')?.value.toLowerCase() || '';
     const status = document.getElementById('idStatus')?.value || 'all';
     const email = document.getElementById('idEmail')?.value || 'all';
 
-    schoolList.filter(item => {
-        const nameMatch = item.values().name.toLowerCase().includes(searchVal);
-        const emailMatch = item.values().email.toLowerCase().includes(searchVal);
-        const statusMatch = status === 'all' || item.values().status === status;
-        const emailMatchFilter = email === 'all' || item.values().email === email;
-        return (nameMatch || emailMatch) && statusMatch && emailMatchFilter;
+    const rows = document.querySelectorAll('table tbody tr');
+    rows.forEach(row => {
+        const name = row.cells[1]?.innerText.toLowerCase() || '';
+        const emailText = row.cells[2]?.innerText.toLowerCase() || '';
+        const statusText = row.cells[4]?.innerText || '';
+        const rowEmail = row.cells[2]?.innerText || '';
+
+        const matchesSearch = name.includes(searchTerm) || emailText.includes(searchTerm);
+        const matchesStatus = status === 'all' || statusText === status;
+        const matchesEmail = email === 'all' || rowEmail === email;
+
+        row.style.display = (matchesSearch && matchesStatus && matchesEmail) ? '' : 'none';
     });
 }
 
@@ -1300,6 +1287,5 @@ window.filterData = filterData;
 window.addPhoneInput = addPhoneInput;
 window.removePhoneInput = removePhoneInput;
 window.openAddModal = openAddModal;
-window.deleteMultiple = bulkDelete;
 </script>
 @endsection
