@@ -65,7 +65,6 @@
             margin-top: 3px;
         }
 
-        /* MAIN CARD — no overflow or padding-bottom hacks needed */
         .student-section {
             width: 190mm;
             page-break-after: always;
@@ -82,7 +81,6 @@
             page-break-after: avoid;
         }
 
-        /* HEADER TABLE */
         .header-table {
             width: 100%;
             border-collapse: collapse;
@@ -97,7 +95,7 @@
             background: white;
             padding: 3px;
             overflow: hidden;
-            display: block;           /* dompdf: use block not flex for margin:auto to work */
+            display: block;
             text-align: center;
         }
 
@@ -108,16 +106,16 @@
         }
 
         .middle-info {
-            font-size: 10px;       /* was 10.4px — bigger */
-            font-weight: 700;        /* bolder body text */
-            line-height: 1.5;        /* was 1.75 — more space between lines */
-            padding: 2px 12px;       /* added vertical padding for breathing room */
+            font-size: 10px;
+            font-weight: 700;
+            line-height: 1.5;
+            padding: 2px 12px;
             vertical-align: middle;
         }
 
         .middle-info strong {
             color: #1e40af;
-            font-weight: 900;        /* was 700 — labels extra bold */
+            font-weight: 900;
         }
 
         .header-divider { height: 2px; background: #1e40af; width: 100%; }
@@ -132,7 +130,6 @@
             text-align: center;
         }
 
-        /* STUDENT INFO BAR */
         .student-info-bar {
             background: linear-gradient(to bottom, #f0f7ff 0%, #ffffff 100%);
             border: 2px solid #2aa886;
@@ -140,7 +137,7 @@
             padding: 7px 12px;
             margin: 8px 10px;
             font-size: 9.2px;
-            text-align: center;  /* centre all text in the bar */
+            text-align: center;
         }
 
         .info-table {
@@ -150,23 +147,22 @@
 
         .info-table td {
             padding: 3px 8px;
-            text-align: center;  /* centre each cell */
+            text-align: center;
         }
 
         .info-bar-label {
             color: #1e40af;
-            font-weight: 900;    /* was 700 — bolder */
-            font-size: 8.6px;    /* was 8.2px — slightly larger */
+            font-weight: 900;
+            font-size: 8.6px;
             white-space: nowrap;
         }
 
         .info-bar-value {
             font-weight: 900;
-            font-size: 9.4px;    /* slightly larger than label */
+            font-size: 9.4px;
             padding-left: 3px;
         }
 
-        /* RESULT TABLE */
         .result-table {
             padding: 0 10px;
             margin: 8px 0;
@@ -193,16 +189,16 @@
             border: 1px solid #000000;
             padding: 3px 3px;
             text-align: center;
-            font-size: 8px;      /* was 7.7px — slightly larger */
+            font-size: 8px;
             background: white;
-            font-weight: 800;    /* was 700 — bolder */
+            font-weight: 800;
             height: 17px;
             line-height: 17px;
         }
 
         .result-table tbody td.subject-name {
             text-align: left;
-            font-weight: 800;    /* was 700 — bolder */
+            font-weight: 800;
             font-size: 8px;
             padding-left: 7px;
         }
@@ -256,14 +252,6 @@
             display: inline-block;
         }
 
-        /* ─── BOTTOM STRIP ──────────────────────────────────────────────────────
-           Replaces the old absolute-positioned QR + stamp + footer.
-           Dompdf does not reliably render position:absolute children outside
-           normal flow. We use a single normal-flow table instead:
-             Left cell  → QR code
-             Middle cell → Issued / Next Term / Powered by
-             Right cell  → Stamp image
-        ─────────────────────────────────────────────────────────────────────── */
         .bottom-strip {
             width: 100%;
             border-top: 1px solid #cbd5e1;
@@ -366,16 +354,16 @@
 
     @foreach ($allStudentData as $index => $studentData)
         @php
-            $schoolInfo = $studentData['schoolInfo'] ?? null;
-            $student = $studentData['students'] && $studentData['students']->isNotEmpty() ? $studentData['students']->first() : null;
+            $schoolInfo  = $studentData['schoolInfo'] ?? null;
+            $student     = $studentData['students'] && $studentData['students']->isNotEmpty() ? $studentData['students']->first() : null;
             $assessments = $studentData['assessments'] ?? collect();
-            $totals = $studentData['totals_summary'] ?? [];
+            $totals      = $studentData['totals_summary'] ?? [];
 
-            $admNo = $student->admissionNo ?? 'N/A';
+            $admNo    = $student->admissionNo ?? 'N/A';
             $fullName = trim(strtoupper($student->lastname ?? '') . ' ' . ($student->fname ?? '') . ' ' . ($student->othername ?? ''));
             $classVal = trim(($studentData['schoolclass']->schoolclass ?? '') . ' ' . ($studentData['schoolclass']->arms->arm ?? ''));
-            $session = $metadata['session'] ?? '2025/2026';
-            $term = $metadata['term'] ?? 'SECOND TERM';
+            $session  = $metadata['session'] ?? '2025/2026';
+            $term     = $metadata['term'] ?? 'SECOND TERM';
 
             $qrData = "Name: {$fullName}\nAdm No: {$admNo}\nClass: {$classVal}\nTerm: {$term}\nSession: {$session}\nSchool: Claret Secondary School Kabba";
 
@@ -385,6 +373,11 @@
                     ->errorCorrection('H')
                     ->generate($qrData)
             );
+
+            // ── STAMP: prefer uploaded stamp (base64), fall back to asset ──
+            $stampSrc = !empty($studentData['school_stamp_base64'])
+                ? $studentData['school_stamp_base64']
+                : asset('stamp.jpeg');
         @endphp
 
         <div class="student-section">
@@ -408,28 +401,28 @@
                         </div>
                     </td>
 
-                   <table style="border:none; border-collapse:collapse; width:100%;">
-    <tr>
-        <td style="font-weight:1200; color:#1e40af; white-space:nowrap; vertical-align:top; padding:0 4px 0 0;">Address:</td>
-        <td style="vertical-align:top; padding:0;">{{ $schoolInfo->school_address ?? 'No. 1, Claret Avenue, Iludun Quarters, Olle Road, Kabba, Kogi State, Nigeria.' }}</td>
-    </tr>
-    <tr>
-        <td style="font-weight:1200; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Phone:</td>
-        <td>{{ $schoolInfo->school_phone ?? '08136663185' }}</td>
-    </tr>
-    <tr>
-        <td style="font-weight:1200; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Email:</td>
-        <td>{{ $schoolInfo->school_email ?? '—' }}</td>
-    </tr>
-    <tr>
-        <td style="font-weight:1200; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Website:</td>
-        <td>{{ $schoolInfo->school_website ?? '—' }}</td>
-    </tr>
-</table>
+                    <table style="border:none; border-collapse:collapse; width:100%;">
+                        <tr>
+                            <td style="font-weight:900; color:#1e40af; white-space:nowrap; vertical-align:top; padding:0 4px 0 0;">Address:</td>
+                            <td style="vertical-align:top; padding:0;">{{ $schoolInfo->school_address ?? 'No. 1, Claret Avenue, Iludun Quarters, Olle Road, Kabba, Kogi State, Nigeria.' }}</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Phone:</td>
+                            <td>{{ $schoolInfo->school_phone ?? '08136663185' }}</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Email:</td>
+                            <td>{{ $schoolInfo->school_email ?? '—' }}</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Website:</td>
+                            <td>{{ $schoolInfo->school_website ?? '—' }}</td>
+                        </tr>
+                    </table>
 
-                    <td width="29%" style="text-align:right; padding-right: 8px; vertical-align: top; padding-top: 6px;">
+                    <td width="29%" style="text-align:right; padding-right:8px; vertical-align:top; padding-top:6px;">
                         @if(in_array('picture', $columnsToShow))
-                        <div class="photo-frame" style="margin-left: auto; margin-right: 0;">
+                        <div class="photo-frame" style="margin-left:auto; margin-right:0;">
                             @if(!empty($studentData['student_image_base64']))
                                 <img src="{{ $studentData['student_image_base64'] }}" alt="Student Photo">
                             @else
@@ -452,12 +445,12 @@
             <!-- STUDENT INFO BAR -->
             @if ($studentData['students'] && $studentData['students']->isNotEmpty())
                 @php
-                    $profile = $studentData['studentpp'] && $studentData['studentpp']->isNotEmpty() ? $studentData['studentpp']->first() : null;
+                    $profile         = $studentData['studentpp'] && $studentData['studentpp']->isNotEmpty() ? $studentData['studentpp']->first() : null;
                     $fullNameDisplay = strtoupper($student->lastname ?? '') . ' ' . ($student->fname ?? '') . ' ' . ($student->othername ?? '');
-                    $admNoDisplay = $student->admissionNo ?? '—';
+                    $admNoDisplay    = $student->admissionNo ?? '—';
                     $classValDisplay = ($studentData['schoolclass']->schoolclass ?? '') . ' ' . ($studentData['schoolclass']->arms->arm ?? '');
-                    $schoolOpened = $schoolInfo->date_school_opened ? \Carbon\Carbon::parse($schoolInfo->date_school_opened)->format('jS M, Y') : '—';
-                    $numInClass = $studentData['numberOfStudents'] ?? '—';
+                    $schoolOpened    = $schoolInfo->date_school_opened ? \Carbon\Carbon::parse($schoolInfo->date_school_opened)->format('jS M, Y') : '—';
+                    $numInClass      = $studentData['numberOfStudents'] ?? '—';
                 @endphp
 
                 <div class="student-info-bar">
@@ -534,7 +527,7 @@
 
                             @if(in_array('grade', $columnsToShow))
                                 @php
-                                    $gradeRaw = $score->grade ?? '-';
+                                    $gradeRaw   = $score->grade ?? '-';
                                     $gradeUpper = strtoupper($gradeRaw);
                                     $gradeClass = match(true) {
                                         str_starts_with($gradeUpper, 'A') => 'grade-A',
@@ -549,7 +542,7 @@
 
                             @if(in_array('position', $columnsToShow))
                                 @php
-                                    $posVal = $score->position ?? '-';
+                                    $posVal   = $score->position ?? '-';
                                     $posClass = is_numeric($posVal) ? match((int)$posVal) {
                                         1 => 'position-1', 2 => 'position-2', 3 => 'position-3', default => ''
                                     } : '';
@@ -591,12 +584,7 @@
                 </tbody>
             </table>
 
-            <!-- ─── BOTTOM STRIP ───────────────────────────────────────────────────
-                 Single normal-flow table: QR | Footer text | Stamp
-                 Avoids position:absolute which dompdf mishandles — absolute children
-                 are clipped by overflow:hidden but do NOT expand parent height, so
-                 they either get cut off or fall outside the card onto a second page.
-            ─────────────────────────────────────────────────────────────────────── -->
+            <!-- BOTTOM STRIP: QR | Footer text | Stamp -->
             <div class="bottom-strip">
                 <table>
                     <tr>
@@ -628,9 +616,9 @@
                             <div class="powered-by">Powered by Qudroid Systems</div>
                         </td>
 
-                        <!-- RIGHT: Stamp -->
+                        <!-- RIGHT: School Stamp (uploaded via admin, falls back to stamp.jpeg) -->
                         <td class="cell-stamp">
-                            <img src="{{ asset('stamp.jpeg') }}" alt="Approved Stamp">
+                            <img src="{{ $stampSrc }}" alt="School Stamp">
                         </td>
                     </tr>
                 </table>

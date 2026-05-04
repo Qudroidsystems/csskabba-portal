@@ -74,22 +74,21 @@
             background: white;
             padding: 3px;
             overflow: hidden;
-            display: block;       /* dompdf-safe: block not flex */
+            display: block;
             text-align: center;
         }
         .school-logo img, .photo-frame img { max-width: 100%; max-height: 100%; object-fit: contain; }
 
-        /* MIDDLE INFO — bolder, bigger, more line spacing */
         .middle-info {
-            font-size: 11.2px;    /* was 9.2px */
-            font-weight: 700;     /* bolder body text */
-            line-height: 2.0;     /* was 1.65 — more space between lines */
-            padding: 4px 15px;    /* added vertical breathing room */
+            font-size: 11.2px;
+            font-weight: 700;
+            line-height: 2.0;
+            padding: 4px 15px;
             vertical-align: middle;
         }
         .middle-info strong {
             color: #1e40af;
-            font-weight: 900;     /* was 700 — labels extra bold */
+            font-weight: 900;
         }
 
         .header-divider { width: 100%; height: 2px; background: #1e40af; margin: 0; }
@@ -113,7 +112,6 @@
             text-align: center;
         }
 
-        /* STUDENT INFO BAR — centred, bolder */
         .student-info-bar {
             background: linear-gradient(to bottom, #f0f7ff 0%, #ffffff 100%);
             border: 2px solid #2aa886;
@@ -127,8 +125,8 @@
         .info-table td { padding: 3px 8px; text-align: center; }
         .info-bar-label {
             color: #1e40af;
-            font-weight: 900;     /* was 700 */
-            font-size: 8.6px;     /* was 8.2px */
+            font-weight: 900;
+            font-size: 8.6px;
             white-space: nowrap;
         }
         .info-bar-value {
@@ -137,11 +135,7 @@
             padding-left: 3px;
         }
 
-        /* RESULT TABLE — bolder scores */
-        .result-table {
-            padding: 0 10px;
-            margin: 8px 0;
-        }
+        .result-table { padding: 0 10px; margin: 8px 0; }
         .result-table table {
             width: 100%;
             border: 2px solid #000;
@@ -161,15 +155,15 @@
             border: 1px solid #000;
             padding: 2px 1px;
             text-align: center;
-            font-size: 8px;       /* was 7.5px — slightly bigger */
+            font-size: 8px;
             background: white;
-            font-weight: 800;     /* was 600 — bolder */
+            font-weight: 800;
             height: 16px;
             line-height: 16px;
         }
         .result-table tbody td.subject-name {
             text-align: left;
-            font-weight: 800;     /* was 700 — bolder */
+            font-weight: 800;
             font-size: 8px;
             padding-left: 5px;
         }
@@ -216,7 +210,6 @@
             display: inline-block;
         }
 
-        /* BOTTOM STRIP — dompdf-safe: normal-flow table with QR | footer | stamp */
         .bottom-strip {
             width: 100%;
             border-top: 1px solid #cbd5e1;
@@ -263,12 +256,12 @@
             $totals     = $studentData['totals_summary'] ?? [];
             $profile    = $studentData['studentpp']->isNotEmpty() ? $studentData['studentpp']->first() : null;
 
-            $fullName  = strtoupper($student->lastname ?? '') . ' ' . ($student->fname ?? '') . ' ' . ($student->othername ?? '');
-            $admNo     = $student->admissionNo ?? '—';
-            $classVal  = ($studentData['schoolclass']->schoolclass ?? '') . ' ' . ($studentData['schoolclass']->arms->arm ?? '');
-            $session   = $metadata['session'] ?? '2025/2026';
-            $term      = $metadata['term'] ?? 'SECOND TERM';
-            $minRows   = 18;
+            $fullName = strtoupper($student->lastname ?? '') . ' ' . ($student->fname ?? '') . ' ' . ($student->othername ?? '');
+            $admNo    = $student->admissionNo ?? '—';
+            $classVal = ($studentData['schoolclass']->schoolclass ?? '') . ' ' . ($studentData['schoolclass']->arms->arm ?? '');
+            $session  = $metadata['session'] ?? '2025/2026';
+            $term     = $metadata['term'] ?? 'SECOND TERM';
+            $minRows  = 18;
             $extraRows = max(0, $minRows - $mockScores->count());
 
             $qrData = "Name: {$fullName}\nAdm No: {$admNo}\nClass: {$classVal}\nTerm: {$term}\nSession: {$session}\nSchool: Claret Secondary School Kabba";
@@ -278,6 +271,11 @@
                     ->errorCorrection('H')
                     ->generate($qrData)
             );
+
+            // ── STAMP: prefer uploaded stamp (base64), fall back to asset ──
+            $stampSrc = !empty($studentData['school_stamp_base64'])
+                ? $studentData['school_stamp_base64']
+                : asset('stamp.jpeg');
         @endphp
 
         <div class="student-section">
@@ -374,7 +372,7 @@
 
                             @if(in_array('grade', $columnsToShow))
                                 @php
-                                    $g = $score->grade ?? '-';
+                                    $g  = $score->grade ?? '-';
                                     $gc = match(true) {
                                         str_starts_with(strtoupper($g), 'A') => 'grade-A',
                                         str_starts_with(strtoupper($g), 'B') => 'grade-B',
@@ -471,8 +469,9 @@
                             </div>
                             <div class="powered-by">Powered by Qudroid Systems</div>
                         </td>
+                        <!-- RIGHT: School Stamp (uploaded via admin, falls back to stamp.jpeg) -->
                         <td class="cell-stamp">
-                            <img src="{{ asset('stamp.jpeg') }}" alt="Approved Stamp">
+                            <img src="{{ $stampSrc }}" alt="School Stamp">
                         </td>
                     </tr>
                 </table>
