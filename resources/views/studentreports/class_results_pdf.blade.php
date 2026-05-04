@@ -408,11 +408,24 @@
                         </div>
                     </td>
 
-                    <td width="51%" class="middle-info">
-                        <strong>Address:</strong> <span style="display:inline-block; vertical-align:top;">{{ $schoolInfo->school_address ?? 'No. 1, Claret Avenue, Iludun Quarters, Olle Road, Kabba, Kogi State, Nigeria.' }}</span><br>                        <strong>Phone:</strong> {{ $schoolInfo->school_phone ?? '08136663185' }}<br>
-                        <strong>Email:</strong> {{ $schoolInfo->school_email ?? '—' }}<br>
-                        <strong>Website:</strong> {{ $schoolInfo->school_website ?? '—' }}
-                    </td>
+                   <table style="border:none; border-collapse:collapse; width:100%;">
+    <tr>
+        <td style="font-weight:900; color:#1e40af; white-space:nowrap; vertical-align:top; padding:0 4px 0 0;">Address:</td>
+        <td style="vertical-align:top; padding:0;">{{ $schoolInfo->school_address ?? 'No. 1, Claret Avenue, Iludun Quarters, Olle Road, Kabba, Kogi State, Nigeria.' }}</td>
+    </tr>
+    <tr>
+        <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Phone:</td>
+        <td>{{ $schoolInfo->school_phone ?? '08136663185' }}</td>
+    </tr>
+    <tr>
+        <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Email:</td>
+        <td>{{ $schoolInfo->school_email ?? '—' }}</td>
+    </tr>
+    <tr>
+        <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Website:</td>
+        <td>{{ $schoolInfo->school_website ?? '—' }}</td>
+    </tr>
+</table>
 
                     <td width="29%" style="text-align:right; padding-right: 8px; vertical-align: top; padding-top: 6px;">
                         @if(in_array('picture', $columnsToShow))
