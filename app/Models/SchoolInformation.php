@@ -15,16 +15,16 @@ class SchoolInformation extends Model
     protected $fillable = [
         'school_name',
         'school_address',
-        'school_phones', // Changed to JSON for multiple phones
+        'school_phones',
         'school_email',
         'school_logo',
         'app_logo',
-        'school_stamp', // New field
+        'school_stamp',
         'school_motto',
         'school_website',
         'no_of_times_school_opened',
         'date_school_opened',
-        'date_school_closed', // New field
+        'date_school_closed',
         'date_next_term_begins',
         'is_active',
     ];
@@ -34,7 +34,7 @@ class SchoolInformation extends Model
         'date_school_opened' => 'date',
         'date_school_closed' => 'date',
         'date_next_term_begins' => 'date',
-        'school_phones' => 'array', // Cast JSON to array
+        'school_phones' => 'array',
     ];
 
     /**
@@ -86,7 +86,7 @@ class SchoolInformation extends Model
     }
 
     /**
-     * Get the school stamp URL
+     * Get the school stamp URL - ADD THIS METHOD
      */
     public function getStampUrlAttribute()
     {

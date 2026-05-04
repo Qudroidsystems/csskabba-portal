@@ -73,9 +73,9 @@
                             </h5>
                             <div>
                                 @can('Update schoolinformation')
-                                    <button type="button" class="btn btn-soft-secondary btn-sm edit-item-btn" data-id="{{ $school->id }}" onclick="openEditModal({{ $school->id }})">
+                                    <a href="{{ route('admin.school-info.index') }}?edit={{ $school->id }}" class="btn btn-soft-secondary btn-sm">
                                         <i class="ri-pencil-line"></i> Edit
-                                    </button>
+                                    </a>
                                 @endcan
                                 <a href="{{ route('admin.school-info.index') }}" class="btn btn-soft-primary btn-sm">
                                     <i class="ri-arrow-left-line"></i> Back to List
@@ -216,29 +216,17 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if we need to open edit modal from URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    const editId = urlParams.get('edit');
 
-function openEditModal(id) {
-    window.location.href = "{{ route('admin.school-info.index') }}";
-}
-
-document.querySelector('.edit-item-btn')?.addEventListener('click', function() {
-    const id = this.getAttribute('data-id');
-    const modal = new bootstrap.Modal(document.getElementById('editModal'));
-    // Fetch and populate edit data
-    fetch(`/school-info/${id}/edit-json`, {
-        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Redirect to index with edit modal open
-            sessionStorage.setItem('editSchoolId', id);
-            window.location.href = "{{ route('admin.school-info.index') }}";
-        }
-    });
+    if (editId) {
+        // Store in session and redirect to index (which will handle opening edit modal)
+        sessionStorage.setItem('editSchoolId', editId);
+        window.location.href = "{{ route('admin.school-info.index') }}";
+    }
 });
 </script>
 @endsection
