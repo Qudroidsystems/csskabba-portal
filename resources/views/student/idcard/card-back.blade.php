@@ -7,7 +7,8 @@
     $firstname  = $student->firstname  ?? '';
     $lastname   = $student->lastname   ?? '';
     $othername  = $student->othername  ?? '';
-    $fullname   = trim("$firstname $othername $lastname");
+    // Reordered: Last Name, First Name Othername (matching front card)
+    $fullname   = trim("$lastname $firstname $othername");
     $classArm   = trim(($student->schoolclass ?? '') . ' ' . ($student->arm ?? ''));
     $expiry     = now()->addYear()->format('F Y');
     $logoUrl    = ($schoolInfo && $schoolInfo->school_logo)
@@ -32,12 +33,12 @@
     <div style="position:absolute;top:0;left:0;right:0;height:7px;z-index:10;
         background:linear-gradient(90deg,#1e3a5f,#2169ad,#4f46e5,#2169ad,#1e3a5f);"></div>
 
-    {{-- WATERMARK --}}
+    {{-- WATERMARK - CLEARER (opacity increased to 0.12, size increased) --}}
     @if($logoUrl)
     <div style="position:absolute;inset:0;z-index:1;display:flex;
         align-items:center;justify-content:center;pointer-events:none;">
-        <img src="{{ $logoUrl }}" style="width:180px;height:180px;object-fit:contain;
-            opacity:0.05;filter:grayscale(100%);" alt="">
+        <img src="{{ $logoUrl }}" style="width:220px;height:220px;object-fit:contain;
+            opacity:0.12;filter:grayscale(100%);" alt="">
     </div>
     @endif
 
@@ -128,23 +129,25 @@
         <div style="font-size:7px;color:#6b7280;">Admin Officer</div>
     </div>
 
-    {{-- BARCODE --}}
+    {{-- BARCODE - CENTERED (using flex with justify-content:center) --}}
     <div style="position:relative;z-index:2;text-align:center;padding:8px 0 4px;">
-        @if($barcodeSvg)
-            <div style="display:inline-block;max-width:220px;">
-                {!! $barcodeSvg !!}
-            </div>
-        @else
-            {{-- Fallback: styled text barcode look --}}
-            <div style="font-family:monospace;font-size:28px;letter-spacing:-1px;
-                color:#1e3a5f;line-height:1;">
-                ||||| {{ $admNo }} |||||
-            </div>
-        @endif
-        <div style="font-size:8.5px;font-weight:800;color:#1e3a5f;letter-spacing:2px;margin-top:1px;">
+        <div style="display:flex;justify-content:center;align-items:center;width:100%;">
+            @if($barcodeSvg)
+                <div style="display:flex;justify-content:center;">
+                    {!! $barcodeSvg !!}
+                </div>
+            @else
+                {{-- Fallback: styled text barcode look --}}
+                <div style="font-family:monospace;font-size:28px;letter-spacing:-1px;
+                    color:#1e3a5f;line-height:1;text-align:center;">
+                    ||||| {{ $admNo }} |||||
+                </div>
+            @endif
+        </div>
+        <div style="font-size:8.5px;font-weight:800;color:#1e3a5f;letter-spacing:2px;margin-top:4px;">
             {{ $admNo }}
         </div>
-        <div style="font-size:7px;color:#94a3b8;margin-top:1px;">
+        <div style="font-size:7px;color:#94a3b8;margin-top:2px;">
             Valid Until: <strong>{{ $expiry }}</strong> &bull; {{ now()->year }}
         </div>
     </div>
