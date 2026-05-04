@@ -13,16 +13,61 @@
         body {
             font-family: 'Times New Roman', Times, serif;
             font-size: 9.5px;
-            line-height: 1.3;
+            line-height: 1.35;
             color: #000;
             background: #f5f5f5;
-            padding: 10px 0;
+            padding: 4mm 0;
+            text-align: center;
         }
 
-        /* MAIN CARD - ENSURES PAGE BREAKS */
+        /* WATERMARK */
+        .watermark-text {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-25deg);
+            font-size: 65px;
+            font-weight: 900;
+            color: rgba(0, 0, 0, 0.04);
+            font-family: 'Arial Black', sans-serif;
+            letter-spacing: 5px;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 1000;
+            text-transform: uppercase;
+        }
+
+        /* SCHOOL NAME HEADER */
+        .school-name-header {
+            width: 100%;
+            background: #111827;
+            color: white;
+            padding: 10px 10px 6px 10px;
+            border: 3px double #000000;
+            border-bottom: 1px solid #1e40af;
+            text-align: center;
+        }
+
+        .school-name-header .school-full-name {
+            font-family: 'Arial Black', sans-serif;
+            font-size: 19.5px;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            line-height: 1.05;
+        }
+
+        .school-name-header .motto {
+            font-size: 9.8px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            opacity: 0.95;
+            margin-top: 3px;
+        }
+
+        /* MAIN CARD — force page break after each student */
         .student-section {
             width: 190mm;
-            min-height: 277mm; /* A4 height in mm */
             page-break-after: always;
             page-break-inside: avoid;
             background: #ffffff;
@@ -31,256 +76,259 @@
             position: relative;
             text-align: left;
             box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between; /* Pushes footer to bottom */
+            overflow: hidden;
         }
 
-        /* PAGE BREAK PROTECTION FOR INTERNAL ELEMENTS */
-        .student-section > * {
-            page-break-inside: avoid;
+        .student-section:last-child {
+            page-break-after: avoid;
         }
 
-        /* SCHOOL NAME HEADER - COMPACT */
-        .school-name-header {
-            width: 100%;
-            background: #111827;
-            color: white;
-            padding: 6px 10px 4px 10px;
-            border-bottom: 1px solid #1e40af;
-            text-align: center;
-        }
-        .school-name-header .school-full-name {
-            font-family: 'Arial Black', sans-serif;
-            font-size: 18px;
-            font-weight: 900;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            line-height: 1.1;
-        }
-        .school-name-header .motto {
-            font-size: 9px;
-            font-weight: 700;
-            letter-spacing: 2px;
-            margin-top: 2px;
-        }
-
-        /* HEADER TABLE (LOGO, INFO, PHOTO) - MORE COMPACT */
+        /* HEADER TABLE */
         .header-table {
             width: 100%;
             border-collapse: collapse;
-            padding: 5px 10px;
+            padding: 8px 10px 6px 10px;
         }
+
         .school-logo, .photo-frame {
-            width: 70px;
-            height: 80px;
+            width: 74px;
+            height: 88px;
             border: 2px solid #47b492;
-            border-radius: 5px;
+            border-radius: 6px;
             background: white;
-            padding: 2px;
+            padding: 3px;
+            overflow: hidden;
             display: block;
             text-align: center;
         }
+
         .school-logo img, .photo-frame img {
             max-width: 100%;
             max-height: 100%;
             object-fit: contain;
         }
+
         .middle-info {
-            font-size: 9.5px;
+            font-size: 10.4px;
             font-weight: 700;
-            line-height: 1.4;
-            padding: 0 10px;
+            line-height: 1.75;
+            padding: 4px 15px;
             vertical-align: middle;
         }
+
         .middle-info strong {
             color: #1e40af;
             font-weight: 900;
         }
-        .header-divider { height: 2px; background: #1e40af; width: 100%; }
-        .header-divider2 { height: 1px; background: #64748b; width: 100%; margin: 1px 0; }
 
-        /* REPORT TITLE */
+        .header-divider { height: 2px; background: #1e40af; width: 100%; }
+        .header-divider2 { height: 1px; background: #64748b; width: 100%; margin: 2px 0; }
+
         .report-title {
             background: #111827;
             color: white;
-            padding: 4px 6px;
-            font-size: 11px;
+            padding: 6px 8px;
+            font-size: 11.5px;
             font-weight: 700;
             text-align: center;
         }
 
-        /* STUDENT INFO BAR - COMPACT AND CLEAN */
+        /* STUDENT INFO BAR */
         .student-info-bar {
-            background: #f8fafc;
-            border: 1px solid #2aa886;
-            border-radius: 4px;
-            padding: 4px 8px;
-            margin: 6px 10px;
-            font-size: 9px;
-        }
-        .info-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .info-table td {
-            padding: 2px 4px;
+            background: linear-gradient(to bottom, #f0f7ff 0%, #ffffff 100%);
+            border: 2px solid #2aa886;
+            border-radius: 6px;
+            padding: 7px 12px;
+            margin: 8px 10px;
+            font-size: 9.2px;
             text-align: center;
         }
+
+        .info-table {
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .info-table td {
+            padding: 3px 8px;
+            text-align: center;
+        }
+
         .info-bar-label {
             color: #1e40af;
             font-weight: 900;
-            font-size: 8.5px;
+            font-size: 8.6px;
+            white-space: nowrap;
         }
+
         .info-bar-value {
             font-weight: 900;
-            font-size: 9px;
+            font-size: 9.4px;
             padding-left: 3px;
         }
 
         /* RESULT TABLE */
         .result-table {
             padding: 0 10px;
-            margin: 4px 0;
+            margin: 8px 0;
         }
+
         .result-table table {
             width: 100%;
             border: 2px solid #000000;
             border-collapse: collapse;
             font-size: 7.8px;
+            margin: 0;
         }
+
         .result-table thead th {
             background: #0d1a3d;
             color: white;
             font-weight: 800;
             border: 1px solid #000000;
             padding: 4px 2px;
-            font-size: 6.8px;
+            font-size: 6.9px;
         }
+
         .result-table tbody td {
             border: 1px solid #000000;
             padding: 3px 3px;
             text-align: center;
-            font-size: 7.8px;
+            font-size: 8px;
             background: white;
-            font-weight: 700;
+            font-weight: 800;
+            height: 17px;
+            line-height: 17px;
         }
+
         .result-table tbody td.subject-name {
             text-align: left;
             font-weight: 800;
-            font-size: 7.8px;
-            padding-left: 6px;
+            font-size: 8px;
+            padding-left: 7px;
         }
+
         .highlight-red { color: #dc2626; font-weight: 900; }
 
-        /* COLUMN WIDTHS */
-        .col-sn { width: 25px; }
-        .col-admissionno { width: 75px; }
-        .col-name { width: 160px; }
-        .col-assessment { width: 40px; }
-        .col-total { width: 45px; }
-        .col-bf { width: 35px; }
-        .col-cum { width: 40px; }
-        .col-grade { width: 35px; }
-        .col-position { width: 35px; }
-        .col-class-average { width: 40px; }
+        .col-sn { width: 28px; }
+        .col-admissionno { width: 78px; }
+        .col-name { width: 165px; }
+        .col-assessment { width: 42px; }
+        .col-total { width: 48px; }
+        .col-bf { width: 38px; }
+        .col-cum { width: 44px; }
+        .col-grade { width: 38px; }
+        .col-position { width: 38px; }
+        .col-class-average { width: 42px; }
 
-        /* TOTALS SUMMARY */
         .totals-summary {
             width: calc(100% - 20px);
             background: #0d1a3d;
             color: #ffffff;
             font-weight: 900;
-            font-size: 8px;
-            padding: 5px 10px;
+            font-size: 7.9px;
+            padding: 6px 10px;
             border: 2px solid #000000;
             border-top: none;
             text-align: center;
-            margin: 0 10px 6px 10px;
+            margin: 0 10px 8px 10px;
         }
 
-        /* REMARKS TABLE */
         .remarks-table {
             width: calc(100% - 20px);
             border: 2px solid #000000;
             border-collapse: collapse;
-            margin: 4px 10px;
+            margin: 8px 10px 4px;
         }
+
         .remarks-table td {
             border: 1px solid #000000;
-            padding: 5px 8px;
+            padding: 6px 8px;
             background: white;
             vertical-align: top;
             font-size: 8.5px;
         }
+
         .remarks-table .h6 {
-            font-weight: 800;
-            margin-bottom: 3px;
+            font-weight: 700;
+            margin-bottom: 4px;
             font-size: 9px;
             border-bottom: 1px solid #ccc;
             display: inline-block;
         }
 
-        /* BOTTOM STRIP - FLEXIBLE AND STABLE */
+        /* BOTTOM STRIP */
         .bottom-strip {
             width: 100%;
             border-top: 1px solid #cbd5e1;
             background: #f1f5f9;
-            margin-top: 5px;
-            padding: 5px 0;
+            margin-top: 6px;
         }
+
         .bottom-strip table {
             width: 100%;
             border-collapse: collapse;
         }
+
         .bottom-strip td {
-            padding: 5px 10px;
+            padding: 8px 10px;
             vertical-align: middle;
         }
-        .cell-qr {
+
+        .bottom-strip .cell-qr {
             width: 90px;
             text-align: center;
+            vertical-align: middle;
         }
-        .cell-footer {
+
+        .bottom-strip .cell-footer {
             text-align: center;
-            font-size: 8.5px;
+            font-size: 8.6px;
+            vertical-align: middle;
         }
-        .cell-stamp {
-            width: 110px;
+
+        .bottom-strip .cell-stamp {
+            width: 120px;
             text-align: center;
+            vertical-align: middle;
         }
-        .cell-qr img {
-            width: 65px;
-            height: 65px;
+
+        .bottom-strip .cell-qr img {
+            width: 72px;
+            height: 72px;
             display: block;
             margin: 0 auto 2px;
         }
+
         .qr-label {
-            font-size: 6px;
+            font-size: 6.5px;
             color: #333;
             font-weight: 600;
+            text-align: center;
         }
-        .cell-stamp img {
-            width: 90px;
-            height: 90px;
+
+        .bottom-strip .cell-stamp img {
+            width: 105px;
+            height: 105px;
             transform: rotate(-8deg);
             display: block;
             margin: 0 auto;
         }
+
         .text-dot-space2 {
             border-bottom: 1px dotted #333;
             display: inline-block;
-            min-width: 100px;
+            min-width: 110px;
             font-weight: bold;
             margin: 0 4px;
         }
+
         .powered-by {
-            font-size: 7.5px;
-            margin-top: 3px;
+            font-size: 8px;
+            margin-top: 4px;
             color: #64748b;
         }
 
-        /* GRADE COLORS */
         .grade-A { color: #16a34a; font-weight: 900; }
         .grade-B { color: #2563eb; font-weight: 900; }
         .grade-C { color: #ca8a04; font-weight: 900; }
@@ -291,29 +339,14 @@
         .position-2 { background: silver; color: black; font-weight: 900; }
         .position-3 { background: #cd7f32; color: white; font-weight: 900; }
 
-        /* ADDRESS STYLING - FIXED INDENT */
-        .address-line {
-            display: block;
-            margin-left: 55px; /* Indent the second line to align with the text after "Address:" */
-            margin-top: -1.2em; /* Pull it back up to the first line */
-        }
-        .middle-info strong:first-child {
-            display: inline-block;
-            width: 55px; /* Fixed width for labels to align content */
-        }
-        /* Adjust other labels to match width */
-        .middle-info strong:nth-child(3), .middle-info strong:nth-child(5), .middle-info strong:nth-child(7) {
-            display: inline-block;
-            width: 55px;
-        }
-
         @media print {
-            body { background: white; padding: 0; margin: 0; }
-            .student-section { box-shadow: none; margin: 0 auto; page-break-after: always; }
+            body { background: white; padding: 0; }
+            .student-section { box-shadow: none; }
         }
     </style>
 </head>
 <body>
+    <div class="watermark-text">ORIGINAL COPY</div>
 
     @php
         $selectedColumns = $metadata['selected_columns'] ?? [];
@@ -342,7 +375,7 @@
 
             $qrCodeBase64 = base64_encode(
                 \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
-                    ->size(240)
+                    ->size(280)
                     ->errorCorrection('H')
                     ->generate($qrData)
             );
@@ -350,40 +383,41 @@
 
         <div class="student-section">
 
-            <!-- COMPACT SCHOOL NAME HEADER -->
+            <!-- SCHOOL NAME HEADER -->
             <div class="school-name-header">
                 <div class="school-full-name">{{ $schoolInfo->school_name ?? 'CLARET SECONDARY SCHOOL KABBA' }}</div>
                 <div class="motto">{{ $schoolInfo->school_motto ?? 'KNOWLEDGE AND VIRTUE' }}</div>
             </div>
 
-            <!-- COMPACT HEADER TABLE -->
+            <!-- HEADER: Logo + Info + Photo -->
             <table class="header-table">
                 <tr>
-                    <td width="18%" style="text-align:center;">
+                    <td width="20%" style="text-align:center;">
                         <div class="school-logo">
                             @php
                                 $logoSrc = $studentData['school_logo_base64'] ??
-                                    'data:image/svg+xml;base64,' . base64_encode('<svg xmlns="http://www.w3.org/2000/svg" width="70" height="80" viewBox="0 0 100 100"><rect width="100" height="100" fill="#f8f9fa" stroke="#47b492" stroke-width="2"/><circle cx="50" cy="40" r="15" fill="#47b492" opacity="0.6"/><rect x="35" y="60" width="30" height="20" fill="#47b492" opacity="0.6" rx="3"/><text x="50" y="95" text-anchor="middle" fill="#1e40af" font-size="8" font-weight="bold">CLARET</text></svg>');
+                                    'data:image/svg+xml;base64,' . base64_encode('<svg xmlns="http://www.w3.org/2000/svg" width="72" height="85" viewBox="0 0 100 100"><rect width="100" height="100" fill="#f8f9fa" stroke="#47b492" stroke-width="2"/><circle cx="50" cy="40" r="15" fill="#47b492" opacity="0.6"/><rect x="35" y="60" width="30" height="20" fill="#47b492" opacity="0.6" rx="3"/><text x="50" y="95" text-anchor="middle" fill="#1e40af" font-size="8" font-weight="bold">CLARET</text></svg>');
                             @endphp
                             <img src="{{ $logoSrc }}" alt="School Logo">
                         </div>
                     </td>
 
-                    <td width="60%" class="middle-info">
+                    <td width="51%" class="middle-info">
+                        <!-- FIXED ADDRESS LAYOUT: second line indented -->
                         <strong>Address:</strong> No. 1, Claret Avenue, Iludun Quarters, Olle Road,<br>
-                        <span style="margin-left: 55px;">Kabba, Kogi State, Nigeria.</span><br>
+                        <span style="display: inline-block; width: 55px;"></span>Kabba, Kogi State, Nigeria.<br>
                         <strong>Phone:</strong> {{ $schoolInfo->school_phone ?? '08039257337' }}<br>
                         <strong>Email:</strong> {{ $schoolInfo->school_email ?? 'claretsecschools@yahoo.com' }}<br>
                         <strong>Website:</strong> {{ $schoolInfo->school_website ?? 'http://csskabba.ng' }}
                     </td>
 
-                    <td width="22%" style="text-align:right; vertical-align: top; padding-top: 2px;">
+                    <td width="29%" style="text-align:right; padding-right: 8px; vertical-align: top; padding-top: 6px;">
                         @if(in_array('picture', $columnsToShow))
                         <div class="photo-frame" style="margin-left: auto; margin-right: 0;">
                             @if(!empty($studentData['student_image_base64']))
                                 <img src="{{ $studentData['student_image_base64'] }}" alt="Student Photo">
                             @else
-                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='70' height='80' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23e2e8f0'/%3E%3Ccircle cx='50' cy='40' r='20' fill='%2394a3b8'/%3E%3Crect x='35' y='65' width='30' height='25' fill='%2394a3b8' rx='4'/%3E%3Ctext x='50' y='95' text-anchor='middle' fill='%23475569' font-size='8'%3EPHOTO%3C/text%3E%3C/svg%3E" alt="Default Photo">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='85' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23e2e8f0'/%3E%3Ccircle cx='50' cy='40' r='20' fill='%2394a3b8'/%3E%3Crect x='35' y='65' width='30' height='25' fill='%2394a3b8' rx='4'/%3E%3Ctext x='50' y='95' text-anchor='middle' fill='%23475569' font-size='8'%3EPHOTO%3C/text%3E%3C/svg%3E" alt="Default Photo">
                             @endif
                         </div>
                         @endif
@@ -399,7 +433,7 @@
                 {{ strtoupper($term) }} {{ strtoupper($session) }} ACADEMIC SESSION TERMINAL PROGRESS REPORT
             </div>
 
-            <!-- STUDENT INFO BAR - COMPACT -->
+            <!-- STUDENT INFO BAR -->
             @if ($studentData['students'] && $studentData['students']->isNotEmpty())
                 @php
                     $profile = $studentData['studentpp'] && $studentData['studentpp']->isNotEmpty() ? $studentData['studentpp']->first() : null;
@@ -440,7 +474,7 @@
                             @if(in_array('name', $columnsToShow)) <th class="col-name">Subject</th> @endif
                             @foreach ($assessments as $assessment)
                                 @if(in_array($assessment->id, $columnsToShow) || in_array('all_assessments', $columnsToShow))
-                                    <th class="col-assessment">{{ $assessment->name }}<br><span style="font-size:5px;">({{ $assessment->max_score }})</span></th>
+                                    <th class="col-assessment">{{ $assessment->name }}<br><span style="font-size:5.5px;">({{ $assessment->max_score }})</span></th>
                                 @endif
                             @endforeach
                             @if(in_array('total', $columnsToShow)) <th class="col-total">Total</th> @endif
@@ -477,7 +511,7 @@
                             @if(in_array('total', $columnsToShow))
                                 <td @if($score->total < 50) class="highlight-red" @endif>
                                     {{ $score->total ? number_format($score->total, 1) : '-' }}
-                                 </td>
+                                </td>
                             @endif
                             @if(in_array('bf', $columnsToShow)) <td>{{ $score->bf ? number_format($score->bf, 1) : '-' }}</td> @endif
                             @if(in_array('cum', $columnsToShow)) <td>{{ $score->cum ? number_format($score->cum, 1) : '-' }}</td> @endif
@@ -532,27 +566,33 @@
                         <td width="50%">
                             <div class="h6">Class Teacher's Remark</div>
                             <div>{{ $profile ? ($profile->classteachercomment ?? 'NO COMMENT') : 'NO COMMENT' }}</div>
-                         </td>
+                        </td>
                         <td width="50%">
                             <div class="h6">Principal's Remark</div>
                             <div>{{ $profile ? ($profile->principalscomment ?? 'NO COMMENT') : 'NO COMMENT' }}</div>
-                         </td>
-                     </tr>
+                        </td>
+                    </tr>
                 </tbody>
-             </table>
+            </table>
 
-            <!-- STABLE BOTTOM STRIP -->
+            <!-- BOTTOM STRIP -->
             <div class="bottom-strip">
                 <table>
                     <tr>
                         <td class="cell-qr">
                             <img src="data:image/png;base64,{{ $qrCodeBase64 }}" alt="QR Code">
                             <div class="qr-label">Scan for Verification</div>
-                         </td>
+                        </td>
                         <td class="cell-footer">
-                            <div><strong>Issued:</strong> <span class="text-dot-space2">{{ now()->format('jS F, Y') }}</span></div>
-                            <div style="margin-top:3px;"><strong>Collected by:</strong> <span class="text-dot-space2">.......................................</span></div>
-                            <div style="margin-top:3px;">
+                            <div>
+                                <strong>Issued:</strong>
+                                <span class="text-dot-space2">{{ now()->format('jS F, Y') }}</span>
+                            </div>
+                            <div style="margin-top:4px;">
+                                <strong>Collected by:</strong>
+                                <span class="text-dot-space2">.......................................</span>
+                            </div>
+                            <div style="margin-top:4px;">
                                 <strong>Next Term Begins:</strong>
                                 <span class="text-dot-space2">
                                     @php
@@ -562,13 +602,14 @@
                                 </span>
                             </div>
                             <div class="powered-by">Powered by Qudroid Systems</div>
-                         </td>
+                        </td>
                         <td class="cell-stamp">
                             <img src="{{ asset('stamp.jpeg') }}" alt="Approved Stamp">
-                         </td>
-                     </tr>
-                 </table>
+                        </td>
+                    </tr>
+                </table>
             </div>
+
         </div>
     @endforeach
 </body>
