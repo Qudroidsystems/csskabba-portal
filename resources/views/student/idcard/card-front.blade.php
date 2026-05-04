@@ -20,11 +20,11 @@
 
     $payload = base64_encode(json_encode(['id'=>$student->id,'adm'=>$student->admissionNo,'ts'=>now()->timestamp]));
     $qrB64   = base64_encode(
-        \SimpleSoftwareIO\QrCode\Facades\QrCode::size(72)->format('png')
+        \SimpleSoftwareIO\QrCode\Facades\QrCode::size(85)->format('png')
             ->generate(route('student-id-cards.verify', ['token' => $payload]))
     );
 
-    // All fields — will be displayed 2 per row
+    // All fields — will be displayed 2 per row (Status removed)
     $fields = array_values(array_filter([
         ['Class',       $classArm],
         ['Gender',      $student->gender           ?? ''],
@@ -36,7 +36,7 @@
         ['Session',     $student->session           ?? ''],
         ['Adm. Date',   $admDate],
         ['Category',    $student->student_category  ?? ''],
-        ['Status',      $student->student_status    ?? ''],
+        // ['Status',    $student->student_status    ?? ''], // REMOVED
     ], fn($r) => !empty(trim($r[1]))));
 
     // Pair up into rows of 2
@@ -71,16 +71,17 @@
         <div style="position:absolute;bottom:-32px;left:-14px;width:100px;height:100px;
             border-radius:50%;background:rgba(255,255,255,.05);"></div>
 
+        {{-- BIGGER SCHOOL LOGO --}}
         @if($logoUrl)
-            <img src="{{ $logoUrl }}" style="height:62px;width:62px;object-fit:contain;
+            <img src="{{ $logoUrl }}" style="height:82px;width:82px;object-fit:contain;
                 border-radius:50%;border:2.5px solid rgba(255,255,255,.55);
-                background:rgba(255,255,255,.14);display:block;margin:0 auto 6px;
+                background:rgba(255,255,255,.14);display:block;margin:0 auto 8px;
                 position:relative;z-index:3;" alt="logo">
         @else
-            <div style="width:62px;height:62px;border-radius:50%;
+            <div style="width:82px;height:82px;border-radius:50%;
                 border:2px solid rgba(255,255,255,.4);background:rgba(255,255,255,.15);
                 display:flex;align-items:center;justify-content:center;
-                margin:0 auto 6px;font-size:28px;color:#fff;position:relative;z-index:3;">&#127979;</div>
+                margin:0 auto 8px;font-size:38px;color:#fff;position:relative;z-index:3;">&#127979;</div>
         @endif
 
         <div style="color:#fff;font-weight:800;font-size:13px;letter-spacing:.3px;
@@ -99,9 +100,9 @@
             margin-top:7px;position:relative;z-index:3;">STUDENT ID CARD</div>
     </div>
 
-    {{-- PHOTO --}}
+    {{-- BIGGER PHOTO --}}
     <div style="position:relative;z-index:4;text-align:center;margin-top:-32px;">
-        <div style="width:82px;height:82px;border-radius:50%;
+        <div style="width:100px;height:100px;border-radius:50%;
             border:3px solid #ffffff;
             box-shadow:0 0 0 3px #2169ad, 0 4px 16px rgba(33,105,173,.45);
             margin:0 auto;overflow:hidden;background:#dbeafe;
@@ -112,10 +113,10 @@
                      onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
                      alt="{{ $fullname }}">
                 <div style="display:none;width:100%;height:100%;align-items:center;
-                    justify-content:center;font-size:24px;font-weight:800;color:#2169ad;">
+                    justify-content:center;font-size:32px;font-weight:800;color:#2169ad;">
                     {{ $initials }}</div>
             @else
-                <div style="font-size:24px;font-weight:800;color:#2169ad;">{{ $initials }}</div>
+                <div style="font-size:32px;font-weight:800;color:#2169ad;">{{ $initials }}</div>
             @endif
         </div>
     </div>
@@ -132,26 +133,26 @@
         </div>
     </div>
 
-    {{-- INFO TABLE — 2 fields per row --}}
-    <div style="position:relative;z-index:2;margin:6px 12px 0;
+    {{-- INFO TABLE — 2 fields per row (Status removed) --}}
+    <div style="position:relative;z-index:2;margin:8px 12px 0;
         background:#f8fafc;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0;">
         @foreach($rows as $i => $pair)
         <div style="display:flex;{{ $i < count($rows)-1 ? 'border-bottom:1px solid #e2e8f0;' : '' }}">
             {{-- Left cell --}}
             <div style="display:flex;flex:1;{{ count($pair) > 1 ? 'border-right:1px solid #e2e8f0;' : '' }}">
-                <div style="width:58px;background:#eef2ff;padding:3px 7px;font-size:7.5px;
+                <div style="width:62px;background:#eef2ff;padding:4px 7px;font-size:7.5px;
                     font-weight:700;color:#4338ca;text-transform:uppercase;
                     letter-spacing:.3px;flex-shrink:0;line-height:1.4;">{{ $pair[0][0] }}</div>
-                <div style="flex:1;padding:3px 7px;font-size:8.5px;font-weight:600;
+                <div style="flex:1;padding:4px 7px;font-size:8.5px;font-weight:600;
                     color:#1e2937;line-height:1.4;">{{ $pair[0][1] }}</div>
             </div>
             {{-- Right cell (if exists) --}}
             @if(isset($pair[1]))
             <div style="display:flex;flex:1;">
-                <div style="width:58px;background:#eef2ff;padding:3px 7px;font-size:7.5px;
+                <div style="width:62px;background:#eef2ff;padding:4px 7px;font-size:7.5px;
                     font-weight:700;color:#4338ca;text-transform:uppercase;
                     letter-spacing:.3px;flex-shrink:0;line-height:1.4;">{{ $pair[1][0] }}</div>
-                <div style="flex:1;padding:3px 7px;font-size:8.5px;font-weight:600;
+                <div style="flex:1;padding:4px 7px;font-size:8.5px;font-weight:600;
                     color:#1e2937;line-height:1.4;">{{ $pair[1][1] }}</div>
             </div>
             @else
@@ -161,10 +162,10 @@
         @endforeach
     </div>
 
-    {{-- QR CODE --}}
-    <div style="position:relative;z-index:2;text-align:center;padding:8px 0 3px;">
-        <img src="data:image/png;base64,{{ $qrB64 }}" style="width:58px;height:58px;" alt="QR">
-        <div style="font-size:6.5px;color:#94a3b8;letter-spacing:.8px;margin-top:1px;">SCAN TO VERIFY</div>
+    {{-- QR CODE MOVED DOWN — adjusted spacing to eliminate bottom gap --}}
+    <div style="position:relative;z-index:2;text-align:center;padding:12px 0 8px;">
+        <img src="data:image/png;base64,{{ $qrB64 }}" style="width:75px;height:75px;" alt="QR">
+        <div style="font-size:6.5px;color:#94a3b8;letter-spacing:.8px;margin-top:3px;">SCAN TO VERIFY</div>
     </div>
 
     {{-- BOTTOM ACCENT --}}
