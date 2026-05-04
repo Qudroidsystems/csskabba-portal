@@ -17,7 +17,6 @@
         --school-shadow: 0 2px 8px rgba(0,0,0,.08);
     }
 
-    /* Hero Banner */
     .school-hero {
         background: linear-gradient(135deg, var(--school-primary) 0%, #2563eb 60%, #4f46e5 100%);
         border-radius: var(--school-radius);
@@ -25,26 +24,6 @@
         margin-bottom: 24px;
         position: relative;
         overflow: hidden;
-    }
-    .school-hero::before {
-        content: '';
-        position: absolute;
-        top: -60px;
-        right: -60px;
-        width: 220px;
-        height: 220px;
-        background: rgba(255,255,255,.06);
-        border-radius: 50%;
-    }
-    .school-hero::after {
-        content: '';
-        position: absolute;
-        bottom: -80px;
-        left: -30px;
-        width: 260px;
-        height: 260px;
-        background: rgba(255,255,255,.03);
-        border-radius: 50%;
     }
     .school-hero h1 {
         font-size: 22px;
@@ -60,7 +39,6 @@
         position: relative;
     }
 
-    /* Phone Input Group */
     .phone-input-group {
         background: #f8fafc;
         border: 1.5px solid var(--school-border);
@@ -86,7 +64,6 @@
         cursor: pointer;
         padding: 8px;
         border-radius: 6px;
-        transition: all 0.2s;
     }
     .remove-phone-btn:hover {
         background: #fee2e2;
@@ -96,7 +73,6 @@
         width: 100%;
     }
 
-    /* Stat Cards */
     .stat-card {
         background: #fff;
         border: 1px solid var(--school-border);
@@ -125,7 +101,6 @@
         margin-top: -8px;
     }
 
-    /* Table Styles - Original */
     .school-table th {
         background: var(--school-primary);
         color: #fff;
@@ -144,7 +119,6 @@
         background: #eff6ff;
     }
 
-    /* Phone Badges */
     .phone-badge {
         display: inline-block;
         background: #f3f4f6;
@@ -154,78 +128,6 @@
         font-size: 12px;
     }
 
-    /* Modal Styles */
-    #schoolModal .modal-content, #deleteModal .modal-content {
-        border: none;
-        border-radius: 16px;
-        overflow: hidden;
-        box-shadow: 0 20px 60px rgba(0,0,0,.15);
-    }
-    .modal-hero-bar {
-        background: linear-gradient(135deg, var(--school-primary) 0%, #2563eb 100%);
-        padding: 22px 28px;
-        position: relative;
-        overflow: hidden;
-    }
-    .modal-hero-bar::before {
-        content: '';
-        position: absolute;
-        top: -30px;
-        right: -30px;
-        width: 120px;
-        height: 120px;
-        background: rgba(255,255,255,.07);
-        border-radius: 50%;
-    }
-    .modal-hero-bar h5 {
-        color: #fff;
-        font-weight: 700;
-        margin: 0;
-        font-size: 16px;
-        position: relative;
-    }
-    .modal-hero-bar .btn-close {
-        position: absolute;
-        top: 18px;
-        right: 20px;
-        filter: invert(1);
-    }
-
-    /* Form Styles */
-    .form-label {
-        font-size: 13px;
-        font-weight: 600;
-        color: #374151;
-        margin-bottom: 6px;
-    }
-    .form-control, .form-select {
-        border: 1.5px solid var(--school-border);
-        border-radius: 8px;
-        font-size: 13px;
-        padding: 9px 14px;
-        transition: border .15s;
-    }
-    .form-control:focus, .form-select:focus {
-        border-color: var(--school-accent);
-        box-shadow: 0 0 0 3px rgba(37,99,235,.1);
-    }
-
-    /* Bulk Bar */
-    .bulk-bar {
-        background: #fff3cd;
-        border: 1px solid #ffc107;
-        border-radius: 8px;
-        padding: 10px 16px;
-        display: none;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 12px;
-    }
-    .bulk-bar.show {
-        display: flex;
-    }
-
-    /* Original Button Styles */
     .btn-subtle-primary {
         color: #2563eb;
         background-color: rgba(37,99,235,.1);
@@ -263,12 +165,18 @@
         border-radius: 6px;
     }
 
-    /* Cropper Preview */
-    .cropper-preview img {
-        max-width: 100px;
-        max-height: 100px;
+    .bulk-bar {
+        background: #fff3cd;
+        border: 1px solid #ffc107;
         border-radius: 8px;
-        border: 1px solid var(--school-border);
+        padding: 10px 16px;
+        display: none;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+    }
+    .bulk-bar.show {
+        display: flex;
     }
 </style>
 
@@ -276,13 +184,11 @@
 <div class="page-content">
 <div class="container-fluid">
 
-    {{-- Hero Banner --}}
     <div class="school-hero">
         <h1><i class="ri-school-line me-2"></i>{{ $pagetitle ?? 'School Information Management' }}</h1>
         <p>Manage school information, logos, stamps, and operational dates</p>
     </div>
 
-    {{-- Stat Cards --}}
     <div class="row g-3 mb-4">
         <div class="col-md-3">
             <div class="stat-card">
@@ -314,7 +220,6 @@
         </div>
     </div>
 
-    {{-- Chart --}}
     <div class="row">
         <div class="col-lg-12">
             <div class="card border-0 shadow-sm">
@@ -341,14 +246,6 @@
         </div>
     @endif
 
-    @if (session('status'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('status') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
-    {{-- Schools List --}}
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white py-3 border-bottom d-flex align-items-center">
             <div class="flex-grow-1">
@@ -371,7 +268,6 @@
             </div>
         </div>
         <div class="card-body">
-            {{-- Filters --}}
             <div class="row g-3 mb-4">
                 <div class="col-xxl-3">
                     <div class="search-box">
@@ -401,7 +297,6 @@
                 </div>
             </div>
 
-            {{-- Bulk Action Bar --}}
             <div class="bulk-bar" id="bulkBar">
                 <i class="ri-checkbox-circle-line text-warning"></i>
                 <span id="bulkCount">0</span> school(s) selected
@@ -434,7 +329,7 @@
                                     <div class="form-check">
                                         <input class="form-check-input row-checkbox" type="checkbox" value="{{ $school->id }}">
                                     </div>
-                                </td>
+                                </div>
                                 <td>
                                     <div class="d-flex align-items-center">
                                         @if($school->getLogoUrlAttribute())
@@ -507,7 +402,6 @@
                 </table>
             </div>
 
-            {{-- Pagination --}}
             <div class="row mt-4 align-items-center">
                 <div class="col-sm">
                     <div class="text-muted text-center text-sm-start">
@@ -542,23 +436,22 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">School Name <span class="text-danger">*</span></label>
-                                <input type="text" id="school_name" name="school_name" class="form-control" placeholder="Enter school name" required>
+                                <input type="text" id="school_name" name="school_name" class="form-control" required>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">Email <span class="text-danger">*</span></label>
-                                <input type="email" id="school_email" name="school_email" class="form-control" placeholder="Enter school email" required>
+                                <input type="email" id="school_email" name="school_email" class="form-control" required>
                             </div>
                         </div>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label">Address <span class="text-danger">*</span></label>
-                        <textarea id="school_address" name="school_address" class="form-control" placeholder="Enter school address" rows="2" required></textarea>
+                        <textarea id="school_address" name="school_address" class="form-control" rows="2" required></textarea>
                     </div>
 
-                    {{-- Multiple Phone Numbers --}}
                     <div class="mb-3">
                         <label class="form-label">Phone Numbers <span class="text-danger">*</span></label>
                         <div class="phone-input-group">
@@ -580,13 +473,13 @@
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">Website</label>
-                                <input type="url" id="school_website" name="school_website" class="form-control" placeholder="https://example.com">
+                                <input type="url" id="school_website" name="school_website" class="form-control">
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
                                 <label class="form-label">Motto</label>
-                                <input type="text" id="school_motto" name="school_motto" class="form-control" placeholder="Enter school motto">
+                                <input type="text" id="school_motto" name="school_motto" class="form-control">
                             </div>
                         </div>
                     </div>
@@ -595,7 +488,7 @@
                         <div class="col-md-4">
                             <div class="mb-3">
                                 <label class="form-label">Times Opened <span class="text-danger">*</span></label>
-                                <input type="number" id="no_of_times_school_opened" name="no_of_times_school_opened" class="form-control" placeholder="0" min="0" value="0" required>
+                                <input type="number" id="no_of_times_school_opened" name="no_of_times_school_opened" class="form-control" min="0" value="0" required>
                             </div>
                         </div>
                         <div class="col-md-4">
@@ -624,13 +517,11 @@
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="1">
                                     <label class="form-check-label" for="is_active">Set as Active School</label>
-                                    <small class="text-muted d-block mt-1">Only one school can be active at a time</small>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    {{-- Logo Uploads Section --}}
                     <hr>
                     <h6 class="fw-semibold mb-3">School Assets</h6>
 
@@ -643,15 +534,6 @@
                                 <div class="card-body">
                                     <input type="file" id="school_logo" name="school_logo" class="form-control" accept="image/jpeg,image/png,image/jpg,image/webp">
                                     <small class="text-muted">Recommended: 300x300px</small>
-                                    <div id="school-logo-cropper-container" class="d-none mt-2">
-                                        <img id="school-logo-cropper" style="max-width: 100%; max-height: 200px;">
-                                        <div class="mt-2">
-                                            <input type="number" id="school-crop-width" class="form-control form-control-sm d-inline-block w-25" placeholder="W" value="300">
-                                            <input type="number" id="school-crop-height" class="form-control form-control-sm d-inline-block w-25" placeholder="H" value="300">
-                                            <button type="button" id="school-crop-btn" class="btn btn-primary btn-sm">Crop</button>
-                                            <button type="button" id="school-reset-crop-btn" class="btn btn-secondary btn-sm">Reset</button>
-                                        </div>
-                                    </div>
                                     <div id="school-logo-preview" class="text-center mt-2"></div>
                                 </div>
                             </div>
@@ -664,15 +546,6 @@
                                 <div class="card-body">
                                     <input type="file" id="app_logo" name="app_logo" class="form-control" accept="image/jpeg,image/png,image/jpg,image/webp">
                                     <small class="text-muted">Recommended: 200x200px</small>
-                                    <div id="app-logo-cropper-container" class="d-none mt-2">
-                                        <img id="app-logo-cropper" style="max-width: 100%; max-height: 200px;">
-                                        <div class="mt-2">
-                                            <input type="number" id="app-crop-width" class="form-control form-control-sm d-inline-block w-25" placeholder="W" value="200">
-                                            <input type="number" id="app-crop-height" class="form-control form-control-sm d-inline-block w-25" placeholder="H" value="200">
-                                            <button type="button" id="app-crop-btn" class="btn btn-primary btn-sm">Crop</button>
-                                            <button type="button" id="app-reset-crop-btn" class="btn btn-secondary btn-sm">Reset</button>
-                                        </div>
-                                    </div>
                                     <div id="app-logo-preview" class="text-center mt-2"></div>
                                 </div>
                             </div>
@@ -685,15 +558,6 @@
                                 <div class="card-body">
                                     <input type="file" id="school_stamp" name="school_stamp" class="form-control" accept="image/jpeg,image/png,image/jpg,image/webp">
                                     <small class="text-muted">For official documents</small>
-                                    <div id="school-stamp-cropper-container" class="d-none mt-2">
-                                        <img id="school-stamp-cropper" style="max-width: 100%; max-height: 200px;">
-                                        <div class="mt-2">
-                                            <input type="number" id="stamp-crop-width" class="form-control form-control-sm d-inline-block w-25" placeholder="W" value="200">
-                                            <input type="number" id="stamp-crop-height" class="form-control form-control-sm d-inline-block w-25" placeholder="H" value="200">
-                                            <button type="button" id="stamp-crop-btn" class="btn btn-primary btn-sm">Crop</button>
-                                            <button type="button" id="stamp-reset-crop-btn" class="btn btn-secondary btn-sm">Reset</button>
-                                        </div>
-                                    </div>
                                     <div id="school-stamp-preview" class="text-center mt-2"></div>
                                 </div>
                             </div>
@@ -735,23 +599,26 @@
     </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
 // Global variables
-let schoolLogoCropper = null, appLogoCropper = null, schoolStampCropper = null;
-let croppedSchoolLogoBlob = null, croppedAppLogoBlob = null, croppedSchoolStampBlob = null;
 let currentDeleteId = null;
 const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
 document.addEventListener('DOMContentLoaded', function() {
     initStatusChart();
     initEventListeners();
-    initAddModalCroppers();
     updateOpenedCount();
     initPhoneInputs();
+
+    // Check for edit from session storage
+    const editId = sessionStorage.getItem('editSchoolId');
+    if (editId) {
+        sessionStorage.removeItem('editSchoolId');
+        setTimeout(() => openEditModal(editId), 500);
+    }
 });
 
 function initStatusChart() {
@@ -779,7 +646,8 @@ function updateOpenedCount() {
         let val = parseInt(cell.innerText);
         if (!isNaN(val)) total += val;
     });
-    document.getElementById('openedCount').textContent = total;
+    const openedCountEl = document.getElementById('openedCount');
+    if (openedCountEl) openedCountEl.textContent = total;
 }
 
 function initPhoneInputs() {
@@ -824,68 +692,24 @@ function setPhonesArray(phones) {
     else phones.forEach(phone => addPhoneInput(phone));
 }
 
-function escapeHtml(str) { return str ? String(str).replace(/[&<>]/g, function(m) { return m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'; }) : ''; }
-
-// Cropper functions
-function initAddModalCroppers() {
-    const schoolLogo = document.getElementById('school_logo');
-    if (schoolLogo) {
-        schoolLogo.addEventListener('change', (e) => handleImageUpload(e, 'school-logo-cropper', 'school-logo-cropper-container', 'school-crop-width', 'school-crop-height', 'school-logo-preview', 'schoolLogoCropper'));
-        document.getElementById('school-crop-btn')?.addEventListener('click', () => handleCropImage('school-logo-preview', 'schoolLogoCropper', 'school-crop-width', 'school-crop-height', 'croppedSchoolLogoBlob'));
-        document.getElementById('school-reset-crop-btn')?.addEventListener('click', () => resetCropper('schoolLogoCropper', 'school-logo-cropper-container', 'school-logo-preview', 'croppedSchoolLogoBlob'));
-    }
-    const appLogo = document.getElementById('app_logo');
-    if (appLogo) {
-        appLogo.addEventListener('change', (e) => handleImageUpload(e, 'app-logo-cropper', 'app-logo-cropper-container', 'app-crop-width', 'app-crop-height', 'app-logo-preview', 'appLogoCropper'));
-        document.getElementById('app-crop-btn')?.addEventListener('click', () => handleCropImage('app-logo-preview', 'appLogoCropper', 'app-crop-width', 'app-crop-height', 'croppedAppLogoBlob'));
-        document.getElementById('app-reset-crop-btn')?.addEventListener('click', () => resetCropper('appLogoCropper', 'app-logo-cropper-container', 'app-logo-preview', 'croppedAppLogoBlob'));
-    }
-    const stamp = document.getElementById('school_stamp');
-    if (stamp) {
-        stamp.addEventListener('change', (e) => handleImageUpload(e, 'school-stamp-cropper', 'school-stamp-cropper-container', 'stamp-crop-width', 'stamp-crop-height', 'school-stamp-preview', 'schoolStampCropper'));
-        document.getElementById('stamp-crop-btn')?.addEventListener('click', () => handleCropImage('school-stamp-preview', 'schoolStampCropper', 'stamp-crop-width', 'stamp-crop-height', 'croppedSchoolStampBlob'));
-        document.getElementById('stamp-reset-crop-btn')?.addEventListener('click', () => resetCropper('schoolStampCropper', 'school-stamp-cropper-container', 'school-stamp-preview', 'croppedSchoolStampBlob'));
-    }
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>]/g, function(m) {
+        return m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;';
+    });
 }
 
-function handleImageUpload(e, cropperId, containerId, widthId, heightId, previewId, cropperVar) {
-    const file = e.target.files[0];
-    if (!file) return;
-    if (!file.type.match('image.*')) { showAlert('error', 'Invalid File', 'Please select an image'); return; }
-    if (file.size > 5 * 1024 * 1024) { showAlert('error', 'File Too Large', 'Image must be less than 5MB'); return; }
-    const container = document.getElementById(containerId);
-    const cropperImg = document.getElementById(cropperId);
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        container.classList.remove('d-none');
-        cropperImg.src = e.target.result;
-        if (window[cropperVar]) window[cropperVar].destroy();
-        const w = document.getElementById(widthId)?.value || 200;
-        const h = document.getElementById(heightId)?.value || 200;
-        window[cropperVar] = new Cropper(cropperImg, { aspectRatio: w / h, viewMode: 1, autoCropArea: 1 });
-    };
-    reader.readAsDataURL(file);
-}
-
-function handleCropImage(previewId, cropperVar, widthId, heightId, blobVar) {
-    const cropper = window[cropperVar];
-    if (!cropper) { showAlert('warning', 'No Image', 'Select an image first'); return; }
-    const w = parseInt(document.getElementById(widthId)?.value) || 200;
-    const h = parseInt(document.getElementById(heightId)?.value) || 200;
-    const canvas = cropper.getCroppedCanvas({ width: w, height: h });
-    canvas.toBlob(function(blob) {
-        window[blobVar] = blob;
-        const preview = document.getElementById(previewId);
-        if (preview) preview.innerHTML = `<img src="${canvas.toDataURL()}" class="img-thumbnail" style="max-width: 80px;">`;
-        showAlert('success', 'Cropped!', 'Image cropped successfully');
-    }, 'image/png');
-}
-
-function resetCropper(cropperVar, containerId, previewId, blobVar) {
-    if (window[cropperVar]) { window[cropperVar].destroy(); window[cropperVar] = null; }
-    window[blobVar] = null;
-    document.getElementById(containerId)?.classList.add('d-none');
-    if (previewId) document.getElementById(previewId).innerHTML = '';
+function previewImage(input, previewId) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.getElementById(previewId);
+            if (preview) {
+                preview.innerHTML = `<img src="${e.target.result}" class="img-thumbnail" style="max-width: 100px; max-height: 100px;">`;
+            }
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
 }
 
 // Modal functions
@@ -895,15 +719,17 @@ function openAddModal() {
     document.getElementById('schoolId').value = '';
     document.getElementById('formErrors').classList.add('d-none');
     setPhonesArray(['']);
-    ['school-logo-preview', 'app-logo-preview', 'school-stamp-preview'].forEach(id => {
-        if (document.getElementById(id)) document.getElementById(id).innerHTML = '';
-    });
-    ['schoolLogoCropper', 'appLogoCropper', 'schoolStampCropper'].forEach(name => {
-        if (window[name]) { window[name].destroy(); window[name] = null; }
-    });
-    ['school-logo-cropper-container', 'app-logo-cropper-container', 'school-stamp-cropper-container'].forEach(id => {
-        if (document.getElementById(id)) document.getElementById(id).classList.add('d-none');
-    });
+
+    // Clear previews
+    document.getElementById('school-logo-preview').innerHTML = '';
+    document.getElementById('app-logo-preview').innerHTML = '';
+    document.getElementById('school-stamp-preview').innerHTML = '';
+
+    // Clear file inputs
+    document.getElementById('school_logo').value = '';
+    document.getElementById('app_logo').value = '';
+    document.getElementById('school_stamp').value = '';
+
     new bootstrap.Modal(document.getElementById('schoolModal')).show();
 }
 
@@ -918,33 +744,52 @@ function openEditModal(id) {
     saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
 
     fetch(`/school-info/${id}/edit-json`, {
-        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            const s = data.school;
-            document.getElementById('school_name').value = s.school_name || '';
-            document.getElementById('school_email').value = s.school_email || '';
-            document.getElementById('school_address').value = s.school_address || '';
-            document.getElementById('school_website').value = s.school_website || '';
-            document.getElementById('school_motto').value = s.school_motto || '';
-            document.getElementById('no_of_times_school_opened').value = s.no_of_times_school_opened || 0;
-            document.getElementById('date_school_opened').value = s.date_school_opened || '';
-            document.getElementById('date_school_closed').value = s.date_school_closed || '';
-            document.getElementById('date_next_term_begins').value = s.date_next_term_begins || '';
-            document.getElementById('is_active').checked = s.is_active || false;
-            setPhonesArray(s.school_phones || []);
-            if (s.logo_url) document.getElementById('school-logo-preview').innerHTML = `<img src="${s.logo_url}" class="img-thumbnail" style="max-width: 80px;">`;
-            if (s.app_logo_url) document.getElementById('app-logo-preview').innerHTML = `<img src="${s.app_logo_url}" class="img-thumbnail" style="max-width: 80px;">`;
-            if (s.stamp_url) document.getElementById('school-stamp-preview').innerHTML = `<img src="${s.stamp_url}" class="img-thumbnail" style="max-width: 80px;">`;
+            const school = data.school;
+            document.getElementById('school_name').value = school.school_name || '';
+            document.getElementById('school_email').value = school.school_email || '';
+            document.getElementById('school_address').value = school.school_address || '';
+            document.getElementById('school_website').value = school.school_website || '';
+            document.getElementById('school_motto').value = school.school_motto || '';
+            document.getElementById('no_of_times_school_opened').value = school.no_of_times_school_opened || 0;
+            document.getElementById('date_school_opened').value = school.date_school_opened || '';
+            document.getElementById('date_school_closed').value = school.date_school_closed || '';
+            document.getElementById('date_next_term_begins').value = school.date_next_term_begins || '';
+            document.getElementById('is_active').checked = school.is_active || false;
+
+            setPhonesArray(school.school_phones || []);
+
+            // Show existing images
+            if (school.logo_url) {
+                document.getElementById('school-logo-preview').innerHTML = `<img src="${school.logo_url}" class="img-thumbnail" style="max-width: 100px;">`;
+            }
+            if (school.app_logo_url) {
+                document.getElementById('app-logo-preview').innerHTML = `<img src="${school.app_logo_url}" class="img-thumbnail" style="max-width: 100px;">`;
+            }
+            if (school.stamp_url) {
+                document.getElementById('school-stamp-preview').innerHTML = `<img src="${school.stamp_url}" class="img-thumbnail" style="max-width: 100px;">`;
+            }
+
             new bootstrap.Modal(document.getElementById('schoolModal')).show();
         } else {
-            showAlert('error', 'Error', data.message || 'Failed to load');
+            Swal.fire('Error', data.message || 'Failed to load school data', 'error');
         }
     })
-    .catch(error => showAlert('error', 'Error', 'Network error'))
-    .finally(() => { saveBtn.disabled = false; saveBtn.innerHTML = originalHtml; });
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire('Error', 'Network error. Please try again.', 'error');
+    })
+    .finally(() => {
+        saveBtn.disabled = false;
+        saveBtn.innerHTML = originalHtml;
+    });
 }
 
 function openDeleteModal(id, name) {
@@ -953,15 +798,16 @@ function openDeleteModal(id, name) {
     new bootstrap.Modal(document.getElementById('deleteRecordModal')).show();
 }
 
-// Form submission
+// Form submission - FIXED VERSION
 document.getElementById('schoolForm')?.addEventListener('submit', function(e) {
     e.preventDefault();
+
     const formData = new FormData();
     const schoolId = document.getElementById('schoolId').value;
 
+    // Basic info
     formData.append('school_name', document.getElementById('school_name').value);
     formData.append('school_address', document.getElementById('school_address').value);
-    getPhonesArray().forEach(p => formData.append('school_phones[]', p));
     formData.append('school_email', document.getElementById('school_email').value);
     formData.append('school_website', document.getElementById('school_website').value || '');
     formData.append('school_motto', document.getElementById('school_motto').value || '');
@@ -969,81 +815,179 @@ document.getElementById('schoolForm')?.addEventListener('submit', function(e) {
     formData.append('date_school_opened', document.getElementById('date_school_opened').value || '');
     formData.append('date_school_closed', document.getElementById('date_school_closed').value || '');
     formData.append('date_next_term_begins', document.getElementById('date_next_term_begins').value || '');
-    formData.append('is_active', document.getElementById('is_active').checked ? 1 : 0);
+    formData.append('is_active', document.getElementById('is_active').checked ? '1' : '0');
     formData.append('_token', CSRF_TOKEN);
-    if (croppedSchoolLogoBlob) formData.append('school_logo', croppedSchoolLogoBlob, 'logo.png');
-    if (croppedAppLogoBlob) formData.append('app_logo', croppedAppLogoBlob, 'app_logo.png');
-    if (croppedSchoolStampBlob) formData.append('school_stamp', croppedSchoolStampBlob, 'stamp.png');
-    if (schoolId) formData.append('_method', 'PUT');
+
+    // Phone numbers
+    const phones = getPhonesArray();
+    phones.forEach(phone => {
+        formData.append('school_phones[]', phone);
+    });
+
+    // File uploads - DIRECT from file input (no cropper for simplicity)
+    const schoolLogoInput = document.getElementById('school_logo');
+    if (schoolLogoInput.files.length > 0) {
+        formData.append('school_logo', schoolLogoInput.files[0]);
+        console.log('School logo file:', schoolLogoInput.files[0].name);
+    }
+
+    const appLogoInput = document.getElementById('app_logo');
+    if (appLogoInput.files.length > 0) {
+        formData.append('app_logo', appLogoInput.files[0]);
+        console.log('App logo file:', appLogoInput.files[0].name);
+    }
+
+    const stampInput = document.getElementById('school_stamp');
+    if (stampInput.files.length > 0) {
+        formData.append('school_stamp', stampInput.files[0]);
+        console.log('Stamp file:', stampInput.files[0].name);
+    }
+
+    // For update, add _method
+    if (schoolId) {
+        formData.append('_method', 'PUT');
+    }
 
     const url = schoolId ? `/school-info/${schoolId}` : '/school-info';
+
     const btn = document.getElementById('saveBtn');
-    const original = btn.innerHTML;
+    const originalHtml = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
 
-    fetch(url, { method: 'POST', body: formData, headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
+    // Log form data for debugging
+    console.log('Submitting to:', url);
+    for (let pair of formData.entries()) {
+        console.log(pair[0] + ': ' + (pair[1] instanceof File ? pair[1].name : pair[1]));
+    }
+
+    fetch(url, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+        // Do NOT set Content-Type header - browser will set it with boundary
+    })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            showAlert('success', 'Success!', data.message);
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: data.message,
+                timer: 2000,
+                showConfirmButton: false
+            });
             setTimeout(() => window.location.reload(), 1500);
         } else {
-            let html = '<ul>';
-            if (data.errors) for (let k in data.errors) data.errors[k].forEach(e => html += `<li>${e}</li>`);
-            else html += `<li>${data.message || 'Error'}</li>`;
+            let html = '<ul class="mb-0">';
+            if (data.errors) {
+                for (let key in data.errors) {
+                    if (Array.isArray(data.errors[key])) {
+                        data.errors[key].forEach(err => html += `<li>${err}</li>`);
+                    } else {
+                        html += `<li>${data.errors[key]}</li>`;
+                    }
+                }
+            } else {
+                html += `<li>${data.message || 'Something went wrong'}</li>`;
+            }
             html += '</ul>';
             document.getElementById('formErrors').innerHTML = html;
             document.getElementById('formErrors').classList.remove('d-none');
         }
     })
-    .catch(error => showAlert('error', 'Error', 'Network error'))
-    .finally(() => { btn.disabled = false; btn.innerHTML = original; });
+    .catch(error => {
+        console.error('Fetch error:', error);
+        Swal.fire('Error', 'Network error. Please check console for details.', 'error');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
+    });
 });
 
 // Delete confirmation
 document.getElementById('confirmDeleteBtn')?.addEventListener('click', function() {
     if (!currentDeleteId) return;
+
     const btn = this;
-    const original = btn.innerHTML;
+    const originalHtml = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Deleting...';
 
     fetch(`/school-info/${currentDeleteId}`, {
         method: 'DELETE',
-        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF_TOKEN }
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': CSRF_TOKEN,
+            'Content-Type': 'application/json'
+        }
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            showAlert('success', 'Deleted!', data.message);
+            Swal.fire({
+                icon: 'success',
+                title: 'Deleted!',
+                text: data.message,
+                timer: 2000,
+                showConfirmButton: false
+            });
             setTimeout(() => window.location.reload(), 1500);
         } else {
-            showAlert('error', 'Error', data.message || 'Delete failed');
+            Swal.fire('Error', data.message || 'Delete failed', 'error');
         }
     })
-    .catch(error => showAlert('error', 'Error', 'Network error'))
+    .catch(error => {
+        console.error('Error:', error);
+        Swal.fire('Error', 'Network error', 'error');
+    })
     .finally(() => {
         btn.disabled = false;
-        btn.innerHTML = original;
+        btn.innerHTML = originalHtml;
         bootstrap.Modal.getInstance(document.getElementById('deleteRecordModal'))?.hide();
         currentDeleteId = null;
     });
 });
 
+// Preview images when selected
+document.getElementById('school_logo')?.addEventListener('change', function() {
+    previewImage(this, 'school-logo-preview');
+});
+document.getElementById('app_logo')?.addEventListener('change', function() {
+    previewImage(this, 'app-logo-preview');
+});
+document.getElementById('school_stamp')?.addEventListener('change', function() {
+    previewImage(this, 'school-stamp-preview');
+});
+
 // Event listeners
 function initEventListeners() {
     document.querySelectorAll('.edit-school-btn').forEach(btn => {
-        btn.addEventListener('click', function() { openEditModal(this.getAttribute('data-id')); });
+        btn.addEventListener('click', function() {
+            openEditModal(this.getAttribute('data-id'));
+        });
     });
+
     document.querySelectorAll('.delete-school-btn').forEach(btn => {
-        btn.addEventListener('click', function() { openDeleteModal(this.getAttribute('data-id'), this.getAttribute('data-name')); });
+        btn.addEventListener('click', function() {
+            openDeleteModal(this.getAttribute('data-id'), this.getAttribute('data-name'));
+        });
     });
+
     document.getElementById('checkAll')?.addEventListener('change', function() {
         document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = this.checked);
         updateBulkBar();
     });
-    document.querySelectorAll('.row-checkbox').forEach(cb => cb.addEventListener('change', updateBulkBar));
+
+    document.querySelectorAll('.row-checkbox').forEach(cb => {
+        cb.addEventListener('change', updateBulkBar);
+    });
+
     document.getElementById('bulkDeleteBtn')?.addEventListener('click', bulkDelete);
 }
 
@@ -1064,6 +1008,7 @@ function updateBulkBar() {
 function bulkDelete() {
     const ids = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value);
     if (ids.length === 0) return;
+
     Swal.fire({
         title: `Delete ${ids.length} school(s)?`,
         text: 'This cannot be undone.',
@@ -1075,18 +1020,22 @@ function bulkDelete() {
         if (result.isConfirmed) {
             fetch('/school-info/bulk-delete', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF_TOKEN },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': CSRF_TOKEN
+                },
                 body: JSON.stringify({ ids: ids })
             })
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    showAlert('success', 'Deleted!', data.message);
+                    Swal.fire('Deleted!', data.message, 'success');
                     setTimeout(() => window.location.reload(), 1500);
                 } else {
-                    showAlert('error', 'Error', data.message || 'Delete failed');
+                    Swal.fire('Error', data.message || 'Delete failed', 'error');
                 }
-            });
+            })
+            .catch(error => Swal.fire('Error', 'Network error', 'error'));
         }
     });
 }
@@ -1095,18 +1044,17 @@ function filterData() {
     const search = document.getElementById('searchInput')?.value.toLowerCase() || '';
     const status = document.getElementById('idStatus')?.value || 'all';
     const email = document.getElementById('idEmail')?.value || 'all';
+
     document.querySelectorAll('table tbody tr').forEach(row => {
         const name = row.cells[1]?.innerText.toLowerCase() || '';
         const emailText = row.cells[2]?.innerText.toLowerCase() || '';
         const statusText = row.cells[4]?.innerText || '';
         const rowEmail = row.cells[2]?.innerText || '';
-        const match = (name.includes(search) || emailText.includes(search)) && (status === 'all' || statusText === status) && (email === 'all' || rowEmail === email);
+        const match = (name.includes(search) || emailText.includes(search)) &&
+                      (status === 'all' || statusText === status) &&
+                      (email === 'all' || rowEmail === email);
         row.style.display = match ? '' : 'none';
     });
-}
-
-function showAlert(icon, title, text) {
-    Swal.fire({ icon, title, text, timer: icon === 'success' ? 2000 : undefined, showConfirmButton: icon !== 'success' });
 }
 
 // Global exports
