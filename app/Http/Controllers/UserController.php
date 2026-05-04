@@ -913,18 +913,11 @@ class UserController extends Controller
                 ->get();
 
             // Get UNIQUE class names - group by schoolclass name to remove duplicates
-            $classes = DB::table('schoolclass')
-                ->select('schoolclass as name', DB::raw('MIN(id) as id'))
-                ->groupBy('schoolclass')
-                ->orderBy('schoolclass')
-                ->get()
-                ->map(function ($class) {
-                    return (object) [
-                        'id' => $class->id,
-                        'name' => $class->name
-                    ];
-                });
-
+            $classes = DB::table('schoolclass as cls')
+    ->join('schoolarm as arm', 'arm.id', '=', 'cls.arm')
+    ->select('cls.id', DB::raw("CONCAT(cls.schoolclass, ' ', arm.arm) as name"))
+    ->orderByRaw("cls.schoolclass, arm.arm")
+    ->get();
             // Get all arms
             $arms = DB::table('schoolarm')
                 ->select('id', 'arm as name')
