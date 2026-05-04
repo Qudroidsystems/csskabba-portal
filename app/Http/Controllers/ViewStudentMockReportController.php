@@ -276,6 +276,7 @@ class ViewStudentMockReportController extends Controller
                 $schoolInfo                        = new \stdClass();
                 $schoolInfo->school_name           = 'School Name Not Found';
                 $schoolInfo->school_logo           = null;
+                $schoolInfo->school_stamp          = null;
                 $schoolInfo->school_motto          = 'Motto Not Found';
                 $schoolInfo->school_address        = 'Address Not Found';
                 $schoolInfo->school_phone          = 'Phone Not Found';
@@ -707,6 +708,7 @@ class ViewStudentMockReportController extends Controller
     {
         $defaultStudentImage = public_path('storage/student_avatars/unnamed.jpg');
         $defaultSchoolLogo   = public_path('storage/school_logos/default.jpg');
+        $defaultStamp        = public_path('stamp.jpeg');
 
         foreach ($studentData as &$student) {
             // Student image
@@ -728,6 +730,15 @@ class ViewStudentMockReportController extends Controller
                 $student['school_logo_base64'] = $this->imageToBase64($abs ?: $defaultSchoolLogo);
             } else {
                 $student['school_logo_base64'] = $this->imageToBase64($defaultSchoolLogo);
+            }
+
+            // School stamp - DYNAMIC
+            $stampPath = $student['schoolInfo']->school_stamp ?? null;
+            if ($stampPath) {
+                $abs = $this->getAbsoluteImagePath($stampPath, false);
+                $student['school_stamp_base64'] = $this->imageToBase64($abs ?: $defaultStamp);
+            } else {
+                $student['school_stamp_base64'] = $this->imageToBase64($defaultStamp);
             }
         }
     }

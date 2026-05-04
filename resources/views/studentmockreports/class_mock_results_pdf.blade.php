@@ -469,8 +469,13 @@
                             </div>
                             <div class="powered-by">Powered by Qudroid Systems</div>
                         </td>
-                        <!-- RIGHT: School Stamp (uploaded via admin, falls back to stamp.jpeg) -->
+                       {{-- RIGHT: School Stamp (dynamic from school_info table) --}}
                         <td class="cell-stamp">
+                            @php
+                                $stampSrc = !empty($studentData['school_stamp_base64'])
+                                    ? $studentData['school_stamp_base64']
+                                    : asset('stamp.jpeg');
+                            @endphp
                             <img src="{{ $stampSrc }}" alt="School Stamp">
                         </td>
                     </tr>
