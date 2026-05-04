@@ -67,8 +67,14 @@
                     background: rgba(255,255,255,.04);
                     border-radius: 50%;
                 }
-                .sm-hero h1 { font-size: 22px; font-weight: 700; color: #fff; margin: 0 0 6px; position: relative; z-index: 1; }
-                .sm-hero p  { font-size: 13px; color: rgba(255,255,255,.75); margin: 0; position: relative; z-index: 1; }
+                .sm-hero h1 {
+                    font-size: 22px; font-weight: 700; color: #fff;
+                    margin: 0 0 6px; position: relative; z-index: 1;
+                }
+                .sm-hero p {
+                    font-size: 13px; color: rgba(255,255,255,.75);
+                    margin: 0; position: relative; z-index: 1;
+                }
 
                 /* ====================================================
                    STAT CARDS
@@ -101,6 +107,7 @@
                 .sm-stat-sub   { font-size: 11px; color: var(--sm-muted); margin-top: 4px; }
                 .sm-stat-sub .up   { color: var(--sm-success); }
                 .sm-stat-sub .down { color: var(--sm-danger);  }
+                /* color variants */
                 .sm-stat.c-blue   { --sm-stat-color: #2563eb; }
                 .sm-stat.c-green  { --sm-stat-color: #16a34a; }
                 .sm-stat.c-amber  { --sm-stat-color: #d97706; }
@@ -125,7 +132,10 @@
                     border-bottom: 1px solid var(--sm-border);
                     display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;
                 }
-                .sm-panel-title { font-size: 15px; font-weight: 700; color: var(--sm-primary); display: flex; align-items: center; gap: 8px; }
+                .sm-panel-title {
+                    font-size: 15px; font-weight: 700; color: var(--sm-primary);
+                    display: flex; align-items: center; gap: 8px;
+                }
 
                 /* ====================================================
                    FILTER BAR
@@ -143,7 +153,10 @@
                     height: 42px; font-size: 13px;
                     transition: border .2s, box-shadow .2s; width: 100%;
                 }
-                .sm-search input:focus { border-color: var(--sm-accent); box-shadow: 0 0 0 3px rgba(37,99,235,.1); outline: none; }
+                .sm-search input:focus {
+                    border-color: var(--sm-accent);
+                    box-shadow: 0 0 0 3px rgba(37,99,235,.1); outline: none;
+                }
                 .sm-search .clear-btn {
                     position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
                     background: transparent; border: none; color: #9ca3af;
@@ -167,7 +180,10 @@
                     text-transform: uppercase; letter-spacing: .04em;
                     border: none; white-space: nowrap;
                 }
-                .sm-table tbody tr { border-bottom: 1px solid var(--sm-border); transition: background .15s; }
+                .sm-table tbody tr {
+                    border-bottom: 1px solid var(--sm-border);
+                    transition: background .15s;
+                }
                 .sm-table tbody tr:hover { background: #f0f7ff; }
                 .sm-table tbody td { padding: 13px 14px; vertical-align: middle; font-size: 13px; }
 
@@ -175,8 +191,10 @@
                    AVATAR
                    ==================================================== */
                 .sm-avatar {
-                    width: 44px; height: 44px; border-radius: 12px; object-fit: cover;
-                    border: 2px solid var(--sm-border); cursor: pointer;
+                    width: 44px; height: 44px; border-radius: 12px;
+                    object-fit: cover;
+                    border: 2px solid var(--sm-border);
+                    cursor: pointer;
                     transition: transform .2s, box-shadow .2s;
                 }
                 .sm-avatar:hover { transform: scale(1.08); box-shadow: 0 4px 14px rgba(0,0,0,.15); }
@@ -195,7 +213,11 @@
                    ==================================================== */
                 .stu-name    { font-weight: 600; font-size: 13px; color: #1e293b; margin-bottom: 2px; }
                 .stu-meta    { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-                .stu-chip    { background: #f1f5f9; color: #475569; padding: 2px 7px; border-radius: 20px; font-size: 11px; display: inline-flex; align-items: center; gap: 3px; }
+                .stu-chip    {
+                    background: #f1f5f9; color: #475569;
+                    padding: 2px 7px; border-radius: 20px; font-size: 11px;
+                    display: inline-flex; align-items: center; gap: 3px;
+                }
 
                 /* ====================================================
                    BADGES
@@ -204,44 +226,58 @@
                 .badge-inactive { background: #f3f4f6; color: #374151; border: 1px solid #d1d5db; }
                 .badge-new      { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
                 .badge-old      { background: #ede9fe; color: #5b21b6; border: 1px solid #ddd6fe; }
-                .sm-badge { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+                .sm-badge {
+                    display: inline-flex; align-items: center; gap: 4px;
+                    padding: 4px 10px; border-radius: 20px;
+                    font-size: 11px; font-weight: 600;
+                }
 
                 /* ====================================================
-                   ACTION BUTTONS — TABLE ROWS (highly visible)
+                   ACTION BUTTONS
                    ==================================================== */
                 .act-btn {
-                    height: 34px; border-radius: 8px; border: none;
+                    width: 32px; height: 32px; border-radius: 8px; border: none;
                     display: inline-flex; align-items: center; justify-content: center;
-                    font-size: 12px; font-weight: 600; cursor: pointer;
-                    transition: all .15s; gap: 5px; padding: 0 12px;
-                    white-space: nowrap;
+                    font-size: 14px; cursor: pointer; transition: all .15s;
                 }
-                .act-view   { background: #2563eb; color: #fff; }
-                .act-view:hover  { background: #1d4ed8; color: #fff; transform: translateY(-1px); box-shadow: 0 3px 10px rgba(37,99,235,.35); }
-                .act-edit   { background: #d97706; color: #fff; }
-                .act-edit:hover  { background: #b45309; color: #fff; transform: translateY(-1px); box-shadow: 0 3px 10px rgba(217,119,6,.35); }
-                .act-delete { background: #dc2626; color: #fff; }
-                .act-delete:hover { background: #b91c1c; color: #fff; transform: translateY(-1px); box-shadow: 0 3px 10px rgba(220,38,38,.35); }
+                .act-view   { background: #e0f2fe; color: #0284c7; }
+                .act-view:hover  { background: #0284c7; color: #fff; transform: translateY(-1px); }
+                .act-edit   { background: #fef9c3; color: #a16207; }
+                .act-edit:hover  { background: #d97706; color: #fff; transform: translateY(-1px); }
+                .act-delete { background: #fee2e2; color: #dc2626; }
+                .act-delete:hover { background: #dc2626; color: #fff; transform: translateY(-1px); }
 
                 /* ====================================================
                    STUDENT PROFILE CARD (card view)
                    ==================================================== */
                 .stu-card {
-                    background: #fff; border: 1px solid var(--sm-border);
-                    border-radius: var(--sm-radius); overflow: hidden;
+                    background: #fff;
+                    border: 1px solid var(--sm-border);
+                    border-radius: var(--sm-radius);
+                    overflow: hidden;
                     transition: transform .2s, box-shadow .2s, border-color .2s;
-                    height: 100%; position: relative;
+                    height: 100%;
+                    position: relative;
                 }
-                .stu-card:hover { transform: translateY(-4px); box-shadow: var(--sm-shadow-lg); border-color: var(--sm-accent); }
+                .stu-card:hover {
+                    transform: translateY(-4px);
+                    box-shadow: var(--sm-shadow-lg);
+                    border-color: var(--sm-accent);
+                }
                 .stu-card-header {
                     background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #4f46e5 100%);
-                    padding: 18px 16px 14px; position: relative; min-height: 110px;
+                    padding: 18px 16px 14px;
+                    position: relative;
+                    min-height: 110px;
                 }
                 .stu-card-avatar {
                     position: absolute; top: 14px; right: 14px;
                     width: 68px; height: 68px; border-radius: 12px;
-                    border: 3px solid rgba(255,255,255,.9); overflow: hidden; background: #fff;
-                    box-shadow: 0 4px 12px rgba(0,0,0,.2); cursor: pointer; transition: transform .2s;
+                    border: 3px solid rgba(255,255,255,.9);
+                    overflow: hidden; background: #fff;
+                    box-shadow: 0 4px 12px rgba(0,0,0,.2);
+                    cursor: pointer;
+                    transition: transform .2s;
                 }
                 .stu-card-avatar:hover { transform: scale(1.06); }
                 .stu-card-avatar img  { width: 100%; height: 100%; object-fit: cover; }
@@ -251,18 +287,34 @@
                     font-size: 24px; font-weight: 700; color: #667eea;
                     background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
                 }
-                .stu-card-name { font-size: 15px; font-weight: 700; color: #fff; padding-right: 82px; margin-bottom: 5px; line-height: 1.3; }
-                .stu-card-adm { display: inline-block; background: rgba(255,255,255,.15); backdrop-filter: blur(6px); color: rgba(255,255,255,.95); padding: 3px 10px; border-radius: 20px; font-size: 11px; }
-                .stu-card-checkbox { position: absolute; top: 12px; left: 12px; z-index: 2; }
+                .stu-card-name {
+                    font-size: 15px; font-weight: 700; color: #fff;
+                    padding-right: 82px; margin-bottom: 5px; line-height: 1.3;
+                }
+                .stu-card-adm {
+                    display: inline-block; background: rgba(255,255,255,.15);
+                    backdrop-filter: blur(6px); color: rgba(255,255,255,.95);
+                    padding: 3px 10px; border-radius: 20px; font-size: 11px;
+                }
+                .stu-card-checkbox {
+                    position: absolute; top: 12px; left: 12px; z-index: 2;
+                }
                 .stu-card-body { padding: 14px 16px; }
-                .stu-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+                .stu-card-grid {
+                    display: grid; grid-template-columns: 1fr 1fr;
+                    gap: 10px; margin-bottom: 12px;
+                }
                 .stu-card-info-label { font-size: 10px; font-weight: 700; color: var(--sm-muted); text-transform: uppercase; letter-spacing: .04em; }
                 .stu-card-info-val   { font-size: 13px; font-weight: 600; color: #374151; margin-top: 2px; }
-                .stu-card-actions { display: flex; gap: 6px; padding-top: 12px; border-top: 1px solid var(--sm-border); }
+                .stu-card-actions {
+                    display: flex; gap: 6px;
+                    padding-top: 12px; border-top: 1px solid var(--sm-border);
+                }
                 .stu-card-actions button {
                     flex: 1; padding: 8px 4px; border-radius: 8px; border: none;
                     font-size: 12px; font-weight: 600; cursor: pointer;
-                    display: flex; align-items: center; justify-content: center; gap: 4px; transition: all .15s;
+                    display: flex; align-items: center; justify-content: center; gap: 4px;
+                    transition: all .15s;
                 }
                 .stu-card-view   { background: var(--sm-accent); color: #fff; }
                 .stu-card-view:hover   { background: #1d4ed8; }
@@ -276,27 +328,52 @@
                    ==================================================== */
                 .img-zoom-modal .modal-content { background: transparent; border: none; }
                 .img-zoom-modal .modal-dialog  { max-width: 90vw; }
-                .img-zoom-modal .modal-body    { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 80vh; padding: 20px; }
+                .img-zoom-modal .modal-body    {
+                    display: flex; flex-direction: column;
+                    align-items: center; justify-content: center;
+                    min-height: 80vh; padding: 20px;
+                }
                 .img-zoomed {
-                    max-width: 90vw; max-height: 72vh; border-radius: 16px; border: 4px solid #fff;
-                    box-shadow: 0 24px 64px rgba(0,0,0,.4); object-fit: contain; cursor: pointer;
+                    max-width: 90vw; max-height: 72vh;
+                    border-radius: 16px; border: 4px solid #fff;
+                    box-shadow: 0 24px 64px rgba(0,0,0,.4);
+                    object-fit: contain; cursor: pointer;
                     animation: zoomIn .25s ease;
                 }
-                @keyframes zoomIn { from { opacity: 0; transform: scale(.85); } to { opacity: 1; transform: scale(1); } }
+                @keyframes zoomIn {
+                    from { opacity: 0; transform: scale(.85); }
+                    to   { opacity: 1; transform: scale(1); }
+                }
                 .img-zoom-modal .btn-close {
                     position: fixed; top: 20px; right: 28px;
                     background: rgba(0,0,0,.7); border-radius: 50%;
-                    padding: 12px; filter: brightness(0) invert(1); opacity: 1; z-index: 9999;
+                    padding: 12px; filter: brightness(0) invert(1);
+                    opacity: 1; z-index: 9999;
                 }
                 .img-zoom-modal .btn-close:hover { background: rgba(0,0,0,.9); transform: scale(1.1); }
-                .zoom-name { color: #fff; margin-top: 18px; font-size: 17px; font-weight: 700; background: rgba(0,0,0,.5); padding: 7px 22px; border-radius: 40px; text-shadow: 0 1px 4px rgba(0,0,0,.3); }
-                .zoom-detail { color: rgba(255,255,255,.78); margin-top: 6px; font-size: 13px; text-align: center; }
+                .zoom-name {
+                    color: #fff; margin-top: 18px; font-size: 17px; font-weight: 700;
+                    background: rgba(0,0,0,.5); padding: 7px 22px;
+                    border-radius: 40px; text-shadow: 0 1px 4px rgba(0,0,0,.3);
+                }
+                .zoom-detail {
+                    color: rgba(255,255,255,.78); margin-top: 6px;
+                    font-size: 13px; text-align: center;
+                }
 
                 /* ====================================================
                    VIEW TOGGLE BUTTONS
                    ==================================================== */
-                .view-toggle .btn { border-radius: 10px; padding: 8px 16px; font-weight: 600; font-size: 13px; transition: all .2s; }
-                .view-toggle .btn.active { background: linear-gradient(135deg, #1e3a5f, #2563eb); border-color: #2563eb; color: #fff; box-shadow: 0 4px 12px rgba(37,99,235,.3); }
+                .view-toggle .btn {
+                    border-radius: 10px; padding: 8px 16px;
+                    font-weight: 600; font-size: 13px;
+                    transition: all .2s;
+                }
+                .view-toggle .btn.active {
+                    background: linear-gradient(135deg, #1e3a5f, #2563eb);
+                    border-color: #2563eb; color: #fff;
+                    box-shadow: 0 4px 12px rgba(37,99,235,.3);
+                }
 
                 /* ====================================================
                    PAGINATION
@@ -305,7 +382,6 @@
                 .sm-pagination .page-link { border: none; border-radius: 9px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 13px; margin: 0 2px; transition: all .15s; color: #374151; }
                 .sm-pagination .page-link:hover { background: #f3f4f6; color: var(--sm-accent); }
                 .sm-pagination .page-item.active .page-link { background: linear-gradient(135deg, #1e3a5f, #2563eb); color: #fff; }
-                .sm-pagination .page-item.disabled .page-link { opacity: .45; cursor: not-allowed; }
 
                 /* ====================================================
                    EMPTY / LOADING STATES
@@ -315,7 +391,11 @@
                 .sm-empty-title { font-size: 18px; font-weight: 700; color: #374151; margin-bottom: 6px; }
                 .sm-empty-desc  { color: var(--sm-muted); font-size: 13px; max-width: 360px; margin: 0 auto 20px; }
                 .sm-loading { padding: 60px 20px; text-align: center; }
-                .spin-ring { width: 60px; height: 60px; margin: 0 auto; border: 4px solid #f3f4f6; border-top-color: var(--sm-accent); border-radius: 50%; animation: spin 1s linear infinite; }
+                .spin-ring {
+                    width: 60px; height: 60px; margin: 0 auto;
+                    border: 4px solid #f3f4f6; border-top-color: var(--sm-accent);
+                    border-radius: 50%; animation: spin 1s linear infinite;
+                }
                 @keyframes spin { to { transform: rotate(360deg); } }
 
                 /* ====================================================
@@ -323,7 +403,8 @@
                    ==================================================== */
                 .modal-hdr {
                     background: linear-gradient(135deg, #1e3a5f, #2563eb 55%, #4f46e5 100%);
-                    padding: 22px 28px; color: #fff; border: none; position: relative; overflow: hidden;
+                    padding: 22px 28px; color: #fff; border: none;
+                    position: relative; overflow: hidden;
                 }
                 .modal-hdr::before { content: ''; position: absolute; top: -50px; right: -50px; width: 160px; height: 160px; background: rgba(255,255,255,.06); border-radius: 50%; }
                 .modal-hdr .modal-title { font-weight: 700; font-size: 16px; position: relative; }
@@ -333,34 +414,65 @@
                 /* ====================================================
                    PROGRESS STEPS
                    ==================================================== */
-                .progress-steps { display: flex; justify-content: space-between; position: relative; margin-bottom: 28px; }
+                .progress-steps { display: flex; justify-content: space-between; position: relative; margin-bottom: 28px; counter-reset: step; }
                 .progress-steps::before { content: ''; position: absolute; top: 50%; left: 0; right: 0; height: 2px; background: #e5e7eb; transform: translateY(-50%); z-index: 0; }
                 .progress-steps .step { width: 38px; height: 38px; border-radius: 50%; background: #e5e7eb; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #9ca3af; position: relative; z-index: 1; border: 2px solid #e5e7eb; }
                 .progress-steps .step.active { background: var(--sm-accent); color: #fff; border-color: var(--sm-accent); box-shadow: 0 0 0 4px rgba(37,99,235,.15); }
 
                 /* ====================================================
-                   DRAG AND DROP COLUMNS
+                   DRAG AND DROP COLUMNS (SORTABLE FIX)
                    ==================================================== */
-                #columnsContainer { display: flex; flex-wrap: wrap; gap: 8px; min-height: 48px; padding: 8px; background: #f8fafc; border: 1.5px solid var(--sm-border); border-radius: 12px; }
+                #columnsContainer {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 0;
+                }
+                #columnsContainer .col-md-4 {
+                    transition: none;
+                }
                 .draggable-item {
-                    background: #fff; border: 1.5px solid var(--sm-border) !important;
-                    border-radius: 10px !important; padding: 8px 12px !important;
-                    cursor: default; user-select: none; transition: box-shadow .15s; position: relative;
-                    display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+                    background: #fff;
+                    border: 1.5px solid var(--sm-border) !important;
+                    border-radius: 10px !important;
+                    padding: 10px 12px !important;
+                    cursor: default;
+                    user-select: none;
+                    transition: box-shadow .15s;
+                    position: relative;
                 }
                 .draggable-item:hover { box-shadow: 0 2px 8px rgba(0,0,0,.08); }
-                .drag-handle { cursor: grab !important; color: #9ca3af; padding: 2px 4px; border-radius: 4px; display: inline-flex; align-items: center; transition: color .15s, background .15s; font-size: 14px; }
+                .drag-handle {
+                    cursor: grab !important;
+                    color: #9ca3af; padding: 4px 6px; margin-right: 6px;
+                    border-radius: 6px; display: inline-flex; align-items: center;
+                    transition: color .15s, background .15s;
+                    font-size: 16px;
+                }
                 .drag-handle:hover  { color: var(--sm-accent); background: rgba(37,99,235,.08); }
                 .drag-handle:active { cursor: grabbing !important; }
                 .sortable-ghost    { opacity: .4; background: #e0f2fe !important; border: 2px dashed var(--sm-accent) !important; }
                 .sortable-chosen   { box-shadow: 0 8px 24px rgba(0,0,0,.18) !important; transform: scale(1.02); border-color: var(--sm-accent) !important; z-index: 1000; }
-                .order-badge       { font-size: 10px; padding: 1px 5px; border-radius: 8px; background: var(--sm-accent); color: #fff; }
+                .sortable-drag     { opacity: .85; }
+                .order-badge       { font-size: 10px; padding: 1px 5px; border-radius: 8px; float: right; background: var(--sm-accent); color: #fff; }
 
                 /* ====================================================
                    BULK STATUS CARDS
                    ==================================================== */
-                .bsc-card { border: 1.5px solid var(--sm-border); border-radius: 12px; overflow: hidden; transition: transform .15s, box-shadow .15s, border-color .15s; background: #fff; }
+                .bsc-card {
+                    border: 1.5px solid var(--sm-border);
+                    border-radius: 12px; overflow: hidden;
+                    transition: transform .15s, box-shadow .15s, border-color .15s;
+                    background: #fff;
+                }
                 .bsc-card:hover { transform: translateY(-3px); box-shadow: var(--sm-shadow); border-color: var(--sm-accent); }
+                .bsc-avatar {
+                    width: 56px; height: 56px; border-radius: 50%;
+                    margin: 0 auto 10px;
+                    background: linear-gradient(135deg, #667eea, #764ba2);
+                    display: flex; align-items: center; justify-content: center;
+                    font-size: 22px; font-weight: 700; color: #fff;
+                    border: 3px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,.12);
+                }
 
                 /* ====================================================
                    INFO CARD (view modal)
@@ -510,16 +622,16 @@
                         <!-- Bulk Actions -->
                         @can('Delete student')
                         <div class="dropdown">
-                            <button class="btn btn-light btn-sm dropdown-toggle fw-semibold" type="button" id="bulkActionsDropdown"
+                            <button class="btn btn-light btn-sm dropdown-toggle" type="button" id="bulkActionsDropdown"
                                     data-bs-toggle="dropdown" aria-expanded="false" disabled>
-                                <i class="fas fa-cog me-1"></i>Bulk Actions
+                                <i class="fas fa-cog me-1"></i>Actions
                             </button>
                             <ul class="dropdown-menu shadow-sm border-0 rounded-3 p-2">
                                 <li><a class="dropdown-item rounded-2" href="javascript:void(0);" id="deleteMultipleBtn">
                                     <i class="fas fa-trash text-danger me-2"></i>Delete Selected
                                 </a></li>
                                 <li><a class="dropdown-item rounded-2" href="javascript:void(0);" id="updateCurrentTermBtn">
-                                    <i class="fas fa-calendar-alt text-primary me-2"></i>Register / Update Term
+                                    <i class="fas fa-calendar-alt text-primary me-2"></i>Update Current Term
                                 </a></li>
                             </ul>
                         </div>
@@ -529,8 +641,8 @@
                             <i class="fas fa-user-plus me-1"></i>Add Student
                         </button>
                         @endcan
-                        <button type="button" class="btn btn-outline-success btn-sm fw-semibold" data-bs-toggle="modal" data-bs-target="#printStudentReportModal">
-                            <i class="fas fa-file-export me-1"></i>Export Report
+                        <button type="button" class="btn btn-outline-success btn-sm" data-bs-toggle="modal" data-bs-target="#printStudentReportModal">
+                            <i class="fas fa-file-export me-1"></i>Export
                         </button>
                     </div>
                 </div>
@@ -570,23 +682,23 @@
                             </select>
                         </div>
                         <div class="col-md-1 col-6">
-                            <button class="btn btn-primary w-100" id="filterBtn" style="height:42px;border-radius:10px;font-weight:600;">
-                                <i class="fas fa-filter me-1"></i>Filter
+                            <button class="btn btn-primary w-100" id="filterBtn" style="height:42px;border-radius:10px;">
+                                <i class="fas fa-filter"></i>
                             </button>
                         </div>
                         <div class="col-md-1 col-6">
-                            <button class="btn btn-outline-secondary w-100" id="resetFiltersBtn" title="Reset Filters" style="height:42px;border-radius:10px;font-weight:600;">
-                                <i class="fas fa-redo-alt me-1"></i>Reset
+                            <button class="btn btn-outline-secondary w-100" id="resetFiltersBtn" style="height:42px;border-radius:10px;">
+                                <i class="fas fa-redo-alt"></i>
                             </button>
                         </div>
                         <div class="col-md-1 col-6">
-                            <button class="btn btn-warning w-100 fw-semibold" id="bulkStatusBtn" title="Bulk Update Status" style="height:42px;border-radius:10px;font-size:12px;">
-                                <i class="fas fa-sync-alt me-1"></i>Status
+                            <button class="btn btn-warning w-100" id="bulkStatusBtn" title="Bulk Update Status" style="height:42px;border-radius:10px;font-size:12px;">
+                                <i class="fas fa-sync-alt"></i>
                             </button>
                         </div>
                         <div class="col-md-1 col-6">
-                            <button class="btn btn-info w-100 text-white fw-semibold" id="manageTermBtn" title="Manage Term Registrations" style="height:42px;border-radius:10px;font-size:12px;">
-                                <i class="fas fa-calendar-alt me-1"></i>Term
+                            <button class="btn btn-info w-100 text-white" id="manageTermBtn" title="Manage Term" style="height:42px;border-radius:10px;font-size:12px;">
+                                <i class="fas fa-calendar-alt"></i>
                             </button>
                         </div>
                     </div>
@@ -605,7 +717,7 @@
                                     <th>Status</th>
                                     <th>Gender</th>
                                     <th>Registered</th>
-                                    <th class="text-end" style="min-width:210px;">Actions</th>
+                                    <th width="120" class="text-end">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="studentTableBody"></tbody>
@@ -653,8 +765,7 @@
                 <div class="modal-content">
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     <div class="modal-body text-center">
-                        <img id="zoomedStudentImg" src="" alt="Student Photo" class="img-zoomed"
-                             onclick="bootstrap.Modal.getInstance(document.getElementById('imageZoomModal')).hide()">
+                        <img id="zoomedStudentImg" src="" alt="Student Photo" class="img-zoomed" onclick="bootstrap.Modal.getInstance(document.getElementById('imageZoomModal')).hide()">
                         <div class="zoom-name" id="zoomedStudentName"></div>
                         <div class="zoom-detail" id="zoomedStudentDetail"></div>
                     </div>
@@ -713,7 +824,7 @@
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal"><i class="fas fa-times me-1"></i>Cancel</button>
+                        <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Cancel</button>
                         <button type="button" class="btn-pg" id="confirmUpdateCurrentTerm">
                             <i class="fas fa-save me-1"></i>Register / Update
                         </button>
@@ -776,18 +887,19 @@
                                 </div>
                             </div>
 
-                            <!-- Drag & Drop Columns -->
+                            <!-- ─── DRAG & DROP COLUMNS ─── -->
                             <div class="mb-4">
                                 <label class="form-label fw-semibold d-flex align-items-center gap-2">
                                     <i class="fas fa-grip-vertical text-primary"></i>
                                     Select &amp; Arrange Columns
-                                    <small class="text-muted fw-normal">— drag to reorder</small>
+                                    <small class="text-muted fw-normal">— drag handle to reorder</small>
                                 </label>
                                 <div class="alert alert-info py-2 px-3 mb-2" style="font-size:12px;">
                                     <i class="fas fa-info-circle me-1"></i>
-                                    Drag the <i class="fas fa-grip-vertical"></i> handle to reorder. Check to include in report.
+                                    Drag the <i class="fas fa-grip-vertical"></i> handle on any column chip to reorder. Check to include in report.
                                 </div>
-                                <div id="columnsContainer">
+                                <!-- Sortable container: items sit directly inside, no nested grid wrappers -->
+                                <div id="columnsContainer" style="display:flex;flex-wrap:wrap;gap:8px;min-height:48px;padding:8px;background:#f8fafc;border:1.5px solid var(--sm-border);border-radius:12px;">
                                     <input type="hidden" name="columns_order" id="columnsOrderInput" value="">
                                     @php
                                         $availableColumns = [
@@ -815,7 +927,9 @@
                                         ];
                                     @endphp
                                     @foreach($availableColumns as $key => $label)
-                                        <div class="draggable-item" data-column="{{ $key }}">
+                                        <div class="draggable-item d-inline-flex align-items-center gap-2 px-2 py-2"
+                                             data-column="{{ $key }}"
+                                             style="background:#fff;border:1.5px solid #e2e8f0;border-radius:10px;cursor:default;user-select:none;white-space:nowrap;">
                                             <span class="drag-handle" title="Drag to reorder">
                                                 <i class="fas fa-grip-vertical"></i>
                                             </span>
@@ -834,7 +948,7 @@
                                 </div>
                             </div>
 
-                            <!-- Report Options -->
+                            <!-- Report Header -->
                             <div class="card border-0 bg-light rounded-3 mb-4">
                                 <div class="card-body">
                                     <h6 class="fw-bold mb-3"><i class="ri-file-info-line me-1 text-primary"></i>Report Options</h6>
@@ -862,7 +976,7 @@
                                 </div>
                             </div>
 
-                            <!-- Export Format -->
+                            <!-- Format -->
                             <div class="mb-3">
                                 <label class="form-label fw-semibold">Export Format</label>
                                 <div class="d-flex gap-4">
@@ -886,8 +1000,8 @@
                         </form>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal"><i class="fas fa-times me-1"></i>Close</button>
-                        <button type="button" class="btn btn-success rounded-3 fw-semibold" id="generateReportBtn">
+                        <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-success rounded-3" id="generateReportBtn">
                             <i class="ri-printer-line me-1"></i>Generate &amp; Download
                         </button>
                     </div>
@@ -1147,7 +1261,7 @@
         </div>
 
         <!-- ============================================================
-             EDIT STUDENT MODAL  (modal-dialog-scrollable fixed)
+             EDIT STUDENT MODAL
              ============================================================ -->
         <div id="editStudentModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
             <div class="modal-dialog modal-dialog-centered modal-xl modal-dialog-scrollable">
@@ -1471,7 +1585,10 @@
                                             <div class="info-card-body">
                                                 <table class="table table-borderless table-sm">
                                                     <tr><th>Name:</th><td class="fw-semibold" id="viewFatherFullName">—</td></tr>
-                                                    <tr><th>Phone:</th><td><span id="viewFatherPhone">—</span> <a href="javascript:void(0)" onclick="callNumber('viewFatherPhone')" class="ms-2 text-success"><i class="fas fa-phone-alt"></i></a></td></tr>
+                                                    <tr><th>Phone:</th><td>
+                                                        <span id="viewFatherPhone">—</span>
+                                                        <a href="javascript:void(0)" onclick="callNumber('viewFatherPhone')" class="ms-2 text-success" title="Call"><i class="fas fa-phone-alt"></i></a>
+                                                    </td></tr>
                                                     <tr><th>Occupation:</th><td id="viewFatherOccupation">—</td></tr>
                                                     <tr><th>City:</th><td id="viewFatherCityState">—</td></tr>
                                                     <tr><th>Email:</th><td id="viewFatherEmail">—</td></tr>
@@ -1486,7 +1603,10 @@
                                             <div class="info-card-body">
                                                 <table class="table table-borderless table-sm">
                                                     <tr><th>Name:</th><td class="fw-semibold" id="viewMotherFullName">—</td></tr>
-                                                    <tr><th>Phone:</th><td><span id="viewMotherPhone">—</span> <a href="javascript:void(0)" onclick="callNumber('viewMotherPhone')" class="ms-2 text-success"><i class="fas fa-phone-alt"></i></a></td></tr>
+                                                    <tr><th>Phone:</th><td>
+                                                        <span id="viewMotherPhone">—</span>
+                                                        <a href="javascript:void(0)" onclick="callNumber('viewMotherPhone')" class="ms-2 text-success" title="Call"><i class="fas fa-phone-alt"></i></a>
+                                                    </td></tr>
                                                     <tr><th>Occupation:</th><td id="viewMotherOccupation">—</td></tr>
                                                     <tr><th>Email:</th><td id="viewMotherEmail">—</td></tr>
                                                     <tr><th>Address:</th><td id="viewMotherAddress">—</td></tr>
@@ -1516,7 +1636,7 @@
                                 <div class="row g-3">
                                     <div class="col-md-6">
                                         <div class="info-card">
-                                            <div class="info-card-header"><h6><i class="fas fa-notes-medical me-2 text-info"></i>Medical &amp; Personal</h6></div>
+                                            <div class="info-card-header"><h6><i class="fas fa-notes-medical me-2 text-info"></i>Medical & Personal</h6></div>
                                             <div class="info-card-body">
                                                 <table class="table table-borderless table-sm">
                                                     <tr><th>Blood Group:</th><td id="viewBloodGroupAdditional">—</td></tr>
@@ -1548,8 +1668,8 @@
                     </div>
                     <div class="modal-footer bg-light">
                         <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal"><i class="fas fa-times me-1"></i>Close</button>
-                        <button type="button" class="btn btn-primary rounded-3 fw-semibold" onclick="editStudentFromView()"><i class="fas fa-edit me-1"></i>Edit Student</button>
-                        <button type="button" class="btn btn-success rounded-3 fw-semibold" onclick="printStudentProfile()"><i class="fas fa-print me-1"></i>Print Profile</button>
+                        <button type="button" class="btn btn-primary rounded-3" onclick="editStudentFromView()"><i class="fas fa-edit me-1"></i>Edit Student</button>
+                        <button type="button" class="btn btn-success rounded-3" onclick="printStudentProfile()"><i class="fas fa-print me-1"></i>Print</button>
                     </div>
                 </div>
             </div>
@@ -1574,13 +1694,14 @@
     // ================================================================
     const CONFIG = {
         DEFAULT_PER_PAGE: 25,
+        PER_PAGE_OPTIONS: [25, 50, 100, 250],
         SEARCH_DEBOUNCE: 500,
         ENABLE_LOG: true
     };
 
     const AppState = {
         pagination:  { currentPage: 1, perPage: CONFIG.DEFAULT_PER_PAGE, total: 0, lastPage: 1, from: 0, to: 0, data: [] },
-        filters:     { search: '', class: 'all', session: 'all', term: 'all' },
+        filters:     { search: '', class: 'all', status: 'all', gender: 'all', session: 'all', term: 'all' },
         ui:          { currentView: 'table', isLoading: false, selectedStudents: new Set() },
         cache:       { students: new Map() },
         bulkStatusFilters: null,
@@ -1591,57 +1712,55 @@
     // NIGERIAN STATES / LGAS
     // ================================================================
     const NIGERIAN_STATES = [
-        { name:"Abia", lgas:["Aba North","Aba South","Arochukwu","Bende","Ikwuano","Isiala Ngwa North","Isiala Ngwa South","Isuikwuato","Obi Ngwa","Ohafia","Osisioma","Ugwunagbo","Ukwa East","Ukwa West","Umuahia North","Umuahia South","Umu Nneochi"] },
-        { name:"Adamawa", lgas:["Demsa","Fufure","Ganye","Gayuk","Gombi","Grie","Hong","Jada","Lamurde","Madagali","Maiha","Mayo Belwa","Michika","Mubi North","Mubi South","Numan","Shelleng","Song","Toungo","Yola North","Yola South"] },
-        { name:"Akwa Ibom", lgas:["Abak","Eastern Obolo","Eket","Esit Eket","Essien Udim","Etim Ekpo","Etinan","Ibeno","Ibesikpo Asutan","Ibiono-Ibom","Ika","Ikono","Ikot Abasi","Ikot Ekpene","Ini","Itu","Mbo","Mkpat-Enin","Nsit-Atai","Nsit-Ibom","Nsit-Ubium","Obot Akara","Okobo","Onna","Oron","Oruk Anam","Udung-Uko","Ukanafun","Uruan","Urue-Offong/Oruko","Uyo"] },
-        { name:"Anambra", lgas:["Aguata","Anambra East","Anambra West","Anaocha","Awka North","Awka South","Ayamelum","Dunukofia","Ekwusigo","Idemili North","Idemili South","Ihiala","Njikoka","Nnewi North","Nnewi South","Ogbaru","Onitsha North","Onitsha South","Orumba North","Orumba South","Oyi"] },
-        { name:"Bauchi", lgas:["Alkaleri","Bauchi","Bogoro","Damban","Darazo","Dass","Gamawa","Ganjuwa","Giade","Itas/Gadau","Jama'are","Katagum","Kirfi","Misau","Ningi","Shira","Tafawa Balewa","Toro","Warji","Zaki"] },
-        { name:"Bayelsa", lgas:["Brass","Ekeremor","Kolokuma/Opokuma","Nembe","Ogbia","Sagbama","Southern Ijaw","Yenagoa"] },
-        { name:"Benue", lgas:["Ado","Agatu","Apa","Buruku","Gboko","Guma","Gwer East","Gwer West","Katsina-Ala","Konshisha","Kwande","Logo","Makurdi","Obi","Ogbadibo","Ohimini","Oju","Okpokwu","Oturkpo","Tarka","Ukum","Ushongo","Vandeikya"] },
-        { name:"Cross River", lgas:["Abi","Akamkpa","Akpabuyo","Bakassi","Bekwarra","Biase","Boki","Calabar Municipal","Calabar South","Etung","Ikom","Obanliku","Obubra","Obudu","Odukpani","Ogoja","Yakuur","Yala"] },
-        { name:"Delta", lgas:["Aniocha North","Aniocha South","Bomadi","Burutu","Ethiope East","Ethiope West","Ika North East","Ika South","Isoko North","Isoko South","Ndokwa East","Ndokwa West","Okpe","Oshimili North","Oshimili South","Patani","Sapele","Udu","Ughelli North","Ughelli South","Ukwuani","Uvwie","Warri North","Warri South","Warri South West"] },
-        { name:"Ebonyi", lgas:["Abakaliki","Afikpo North","Afikpo South","Ebonyi","Ezza North","Ezza South","Ikwo","Ishielu","Ivo","Izzi","Ohaozara","Ohaukwu","Onicha"] },
-        { name:"Edo", lgas:["Akoko-Edo","Egor","Esan Central","Esan North-East","Esan South-East","Esan West","Etsako Central","Etsako East","Etsako West","Igueben","Ikpoba Okha","Orhionmwon","Oredo","Ovia North-East","Ovia South-West","Owan East","Owan West","Uhunmwonde"] },
-        { name:"Ekiti", lgas:["Ado Ekiti","Efon","Ekiti East","Ekiti South-West","Ekiti West","Emure","Gbonyin","Ido Osi","Ijero","Ikere","Ilejemeje","Irepodun/Ifelodun","Ise/Orun","Moba","Oye"] },
-        { name:"Enugu", lgas:["Aninri","Awgu","Enugu East","Enugu North","Enugu South","Ezeagu","Igbo Etiti","Igbo Eze North","Igbo Eze South","Isi Uzo","Nkanu East","Nkanu West","Nsukka","Oji River","Udenu","Udi","Uzo Uwani"] },
-        { name:"FCT", lgas:["Abaji","Bwari","Gwagwalada","Kuje","Kwali","Municipal Area Council"] },
-        { name:"Gombe", lgas:["Akko","Balanga","Billiri","Dukku","Funakaye","Gombe","Kaltungo","Kwami","Nafada","Shongom","Yamaltu/Deba"] },
-        { name:"Imo", lgas:["Aboh Mbaise","Ahiazu Mbaise","Ehime Mbano","Ezinihitte","Ideato North","Ideato South","Ihitte/Uboma","Ikeduru","Isiala Mbano","Isu","Mbaitoli","Ngor Okpala","Njaba","Nkwerre","Nwangele","Obowo","Oguta","Ohaji/Egbema","Okigwe","Orlu","Orsu","Oru East","Oru West","Owerri Municipal","Owerri North","Owerri West","Unuimo"] },
-        { name:"Jigawa", lgas:["Auyo","Babura","Biriniwa","Birnin Kudu","Buji","Dutse","Gagarawa","Garki","Gumel","Guri","Gwaram","Gwiwa","Hadejia","Jahun","Kafin Hausa","Kazaure","Kiri Kasama","Kiyawa","Kaugama","Maigatari","Malam Madori","Miga","Ringim","Roni","Sule Tankarkar","Taura","Yankwashi"] },
-        { name:"Kaduna", lgas:["Birnin Gwari","Chikun","Giwa","Igabi","Ikara","Jaba","Jema'a","Kachia","Kaduna North","Kaduna South","Kagarko","Kajuru","Kaura","Kauru","Kubau","Kudan","Lere","Makarfi","Sabon Gari","Sanga","Soba","Zangon Kataf","Zaria"] },
-        { name:"Kano", lgas:["Ajingi","Albasu","Bagwai","Bebeji","Bichi","Bunkure","Dala","Dambatta","Dawakin Kudu","Dawakin Tofa","Doguwa","Fagge","Gabasawa","Garko","Garun Mallam","Gaya","Gezawa","Gwale","Gwarzo","Kabo","Kano Municipal","Karaye","Kibiya","Kiru","Kumbotso","Kunchi","Kura","Madobi","Makoda","Minjibir","Nasarawa","Rano","Rimin Gado","Rogo","Shanono","Sumaila","Takai","Tarauni","Tofa","Tsanyawa","Tudun Wada","Ungogo","Warwa","Wudil"] },
-        { name:"Katsina", lgas:["Bakori","Batagarawa","Batsari","Baure","Bindawa","Charanchi","Dan Musa","Dandume","Danja","Daura","Dutsi","Dutsin Ma","Faskari","Funtua","Ingawa","Jibia","Kafur","Kaita","Kankara","Kankia","Katsina","Kurfi","Kusada","Mai'Adua","Malumfashi","Mani","Mashi","Matazu","Musawa","Rimi","Sabuwa","Safana","Sandamu","Zango"] },
-        { name:"Kebbi", lgas:["Aleiro","Arewa Dandi","Argungu","Augie","Bagudo","Birnin Kebbi","Bunza","Dandi","Fakai","Gwandu","Jega","Kalgo","Koko/Besse","Maiyama","Ngaski","Sakaba","Shanga","Suru","Danko/Wasagu","Yauri","Zuru"] },
-        { name:"Kogi", lgas:["Adavi","Ajaokuta","Ankpa","Bassa","Dekina","Ibaji","Idah","Igalamela Odolu","Ijumu","Kabba/Bunu","Kogi","Lokoja","Mopa Muro","Ofu","Ogori/Magongo","Okehi","Okene","Olamaboro","Omala","Yagba East","Yagba West"] },
-        { name:"Kwara", lgas:["Asa","Baruten","Edu","Ekiti","Ifelodun","Ilorin East","Ilorin South","Ilorin West","Irepodun","Isin","Kaiama","Moro","Offa","Oke Ero","Oyun","Pategi"] },
-        { name:"Lagos", lgas:["Agege","Ajeromi-Ifelodun","Alimosho","Amuwo-Odofin","Apapa","Badagry","Epe","Eti Osa","Ibeju-Lekki","Ifako-Ijaiye","Ikeja","Ikorodu","Kosofe","Lagos Island","Lagos Mainland","Mushin","Ojo","Oshodi-Isolo","Shomolu","Surulere"] },
-        { name:"Nasarawa", lgas:["Akwanga","Awe","Doma","Karu","Keana","Keffi","Kokona","Lafia","Nasarawa","Nasarawa Egon","Obi","Toto","Wamba"] },
-        { name:"Niger", lgas:["Agaie","Agwara","Bida","Borgu","Bosso","Chanchaga","Edati","Gbako","Gurara","Katcha","Kontagora","Lapai","Lavun","Magama","Mariga","Mashegu","Mokwa","Moya","Paikoro","Rafi","Rijau","Shiroro","Suleja","Tafa","Wushishi"] },
-        { name:"Ogun", lgas:["Abeokuta North","Abeokuta South","Ado-Odo/Ota","Egbado North","Egbado South","Ewekoro","Ifo","Ijebu East","Ijebu North","Ijebu North East","Ijebu Ode","Ikenne","Imeko Afon","Ipokia","Obafemi Owode","Odeda","Odogbolu","Ogun Waterside","Remo North","Shagamu"] },
-        { name:"Ondo", lgas:["Akoko North-East","Akoko North-West","Akoko South-East","Akoko South-West","Akure North","Akure South","Ese Odo","Idanre","Ifedore","Ilaje","Ile Oluji/Okeigbo","Irele","Odigbo","Okitipupa","Ondo East","Ondo West","Ose","Owo"] },
-        { name:"Osun", lgas:["Aiyedade","Aiyedire","Atakunmosa East","Atakunmosa West","Boluwaduro","Boripe","Ede North","Ede South","Egbedore","Ejigbo","Ife Central","Ife East","Ife North","Ife South","Ifedayo","Ifelodun","Ila","Ilesa East","Ilesa West","Irepodun","Irewole","Isokan","Iwo","Obokun","Odo Otin","Ola Oluwa","Olorunda","Oriade","Orolu","Osogbo"] },
-        { name:"Oyo", lgas:["Afijio","Akinyele","Atiba","Atisbo","Egbeda","Ibadan North","Ibadan North-East","Ibadan North-West","Ibadan South-East","Ibadan South-West","Ibarapa Central","Ibarapa East","Ibarapa North","Ido","Irepo","Iseyin","Itesiwaju","Iwajowa","Kajola","Lagelu","Ogbomosho North","Ogbomosho South","Ogo Oluwa","Olorunsogo","Oluyole","Ona Ara","Orelope","Ori Ire","Oyo East","Oyo West","Saki East","Saki West","Surulere"] },
-        { name:"Plateau", lgas:["Bokkos","Barkin Ladi","Bassa","Jos East","Jos North","Jos South","Kanam","Kanke","Langtang North","Langtang South","Mangu","Mikang","Pankshin","Qua'an Pan","Riyom","Shendam","Wase"] },
-        { name:"Rivers", lgas:["Abua/Odual","Ahoada East","Ahoada West","Akuku-Toru","Andoni","Asari-Toru","Bonny","Degema","Eleme","Emohua","Etche","Gokana","Ikwerre","Khana","Obio/Akpor","Ogba/Egbema/Ndoni","Ogu/Bolo","Okrika","Omuma","Opobo/Nkoro","Oyigbo","Port Harcourt","Tai"] },
-        { name:"Sokoto", lgas:["Binji","Bodinga","Dange Shuni","Gada","Goronyo","Gudu","Gwadabawa","Illela","Isa","Kebbe","Kware","Rabah","Sabon Birni","Shagari","Silame","Sokoto North","Sokoto South","Tambuwal","Tangaza","Tureta","Wamako","Wurno","Yabo"] },
-        { name:"Taraba", lgas:["Ardo Kola","Bali","Donga","Gashaka","Gassol","Ibi","Jalingo","Karim Lamido","Kumi","Lau","Sardauna","Takum","Ussa","Wukari","Yorro","Zing"] },
-        { name:"Yobe", lgas:["Bade","Bursari","Damaturu","Fika","Fune","Geidam","Gujba","Gulani","Jakusko","Karasuwa","Machina","Nangere","Nguru","Potiskum","Tarmuwa","Yunusari","Yusufari"] },
-        { name:"Zamfara", lgas:["Anka","Bakura","Birnin Magaji/Kiyaw","Bukkuyum","Bungudu","Gummi","Gusau","Kaura Namoda","Maradun","Maru","Shinkafi","Talata Mafara","Chafe","Zurmi"] }
+        { name: "Abia", lgas: ["Aba North","Aba South","Arochukwu","Bende","Ikwuano","Isiala Ngwa North","Isiala Ngwa South","Isuikwuato","Obi Ngwa","Ohafia","Osisioma","Ugwunagbo","Ukwa East","Ukwa West","Umuahia North","Umuahia South","Umu Nneochi"] },
+        { name: "Adamawa", lgas: ["Demsa","Fufure","Ganye","Gayuk","Gombi","Grie","Hong","Jada","Lamurde","Madagali","Maiha","Mayo Belwa","Michika","Mubi North","Mubi South","Numan","Shelleng","Song","Toungo","Yola North","Yola South"] },
+        { name: "Akwa Ibom", lgas: ["Abak","Eastern Obolo","Eket","Esit Eket","Essien Udim","Etim Ekpo","Etinan","Ibeno","Ibesikpo Asutan","Ibiono-Ibom","Ika","Ikono","Ikot Abasi","Ikot Ekpene","Ini","Itu","Mbo","Mkpat-Enin","Nsit-Atai","Nsit-Ibom","Nsit-Ubium","Obot Akara","Okobo","Onna","Oron","Oruk Anam","Udung-Uko","Ukanafun","Uruan","Urue-Offong/Oruko","Uyo"] },
+        { name: "Anambra", lgas: ["Aguata","Anambra East","Anambra West","Anaocha","Awka North","Awka South","Ayamelum","Dunukofia","Ekwusigo","Idemili North","Idemili South","Ihiala","Njikoka","Nnewi North","Nnewi South","Ogbaru","Onitsha North","Onitsha South","Orumba North","Orumba South","Oyi"] },
+        { name: "Bauchi", lgas: ["Alkaleri","Bauchi","Bogoro","Damban","Darazo","Dass","Gamawa","Ganjuwa","Giade","Itas/Gadau","Jama'are","Katagum","Kirfi","Misau","Ningi","Shira","Tafawa Balewa","Toro","Warji","Zaki"] },
+        { name: "Bayelsa", lgas: ["Brass","Ekeremor","Kolokuma/Opokuma","Nembe","Ogbia","Sagbama","Southern Ijaw","Yenagoa"] },
+        { name: "Benue", lgas: ["Ado","Agatu","Apa","Buruku","Gboko","Guma","Gwer East","Gwer West","Katsina-Ala","Konshisha","Kwande","Logo","Makurdi","Obi","Ogbadibo","Ohimini","Oju","Okpokwu","Oturkpo","Tarka","Ukum","Ushongo","Vandeikya"] },
+        { name: "Cross River", lgas: ["Abi","Akamkpa","Akpabuyo","Bakassi","Bekwarra","Biase","Boki","Calabar Municipal","Calabar South","Etung","Ikom","Obanliku","Obubra","Obudu","Odukpani","Ogoja","Yakuur","Yala"] },
+        { name: "Delta", lgas: ["Aniocha North","Aniocha South","Bomadi","Burutu","Ethiope East","Ethiope West","Ika North East","Ika South","Isoko North","Isoko South","Ndokwa East","Ndokwa West","Okpe","Oshimili North","Oshimili South","Patani","Sapele","Udu","Ughelli North","Ughelli South","Ukwuani","Uvwie","Warri North","Warri South","Warri South West"] },
+        { name: "Ebonyi", lgas: ["Abakaliki","Afikpo North","Afikpo South","Ebonyi","Ezza North","Ezza South","Ikwo","Ishielu","Ivo","Izzi","Ohaozara","Ohaukwu","Onicha"] },
+        { name: "Edo", lgas: ["Akoko-Edo","Egor","Esan Central","Esan North-East","Esan South-East","Esan West","Etsako Central","Etsako East","Etsako West","Igueben","Ikpoba Okha","Orhionmwon","Oredo","Ovia North-East","Ovia South-West","Owan East","Owan West","Uhunmwonde"] },
+        { name: "Ekiti", lgas: ["Ado Ekiti","Efon","Ekiti East","Ekiti South-West","Ekiti West","Emure","Gbonyin","Ido Osi","Ijero","Ikere","Ilejemeje","Irepodun/Ifelodun","Ise/Orun","Moba","Oye"] },
+        { name: "Enugu", lgas: ["Aninri","Awgu","Enugu East","Enugu North","Enugu South","Ezeagu","Igbo Etiti","Igbo Eze North","Igbo Eze South","Isi Uzo","Nkanu East","Nkanu West","Nsukka","Oji River","Udenu","Udi","Uzo Uwani"] },
+        { name: "FCT", lgas: ["Abaji","Bwari","Gwagwalada","Kuje","Kwali","Municipal Area Council"] },
+        { name: "Gombe", lgas: ["Akko","Balanga","Billiri","Dukku","Funakaye","Gombe","Kaltungo","Kwami","Nafada","Shongom","Yamaltu/Deba"] },
+        { name: "Imo", lgas: ["Aboh Mbaise","Ahiazu Mbaise","Ehime Mbano","Ezinihitte","Ideato North","Ideato South","Ihitte/Uboma","Ikeduru","Isiala Mbano","Isu","Mbaitoli","Ngor Okpala","Njaba","Nkwerre","Nwangele","Obowo","Oguta","Ohaji/Egbema","Okigwe","Orlu","Orsu","Oru East","Oru West","Owerri Municipal","Owerri North","Owerri West","Unuimo"] },
+        { name: "Jigawa", lgas: ["Auyo","Babura","Biriniwa","Birnin Kudu","Buji","Dutse","Gagarawa","Garki","Gumel","Guri","Gwaram","Gwiwa","Hadejia","Jahun","Kafin Hausa","Kazaure","Kiri Kasama","Kiyawa","Kaugama","Maigatari","Malam Madori","Miga","Ringim","Roni","Sule Tankarkar","Taura","Yankwashi"] },
+        { name: "Kaduna", lgas: ["Birnin Gwari","Chikun","Giwa","Igabi","Ikara","Jaba","Jema'a","Kachia","Kaduna North","Kaduna South","Kagarko","Kajuru","Kaura","Kauru","Kubau","Kudan","Lere","Makarfi","Sabon Gari","Sanga","Soba","Zangon Kataf","Zaria"] },
+        { name: "Kano", lgas: ["Ajingi","Albasu","Bagwai","Bebeji","Bichi","Bunkure","Dala","Dambatta","Dawakin Kudu","Dawakin Tofa","Doguwa","Fagge","Gabasawa","Garko","Garun Mallam","Gaya","Gezawa","Gwale","Gwarzo","Kabo","Kano Municipal","Karaye","Kibiya","Kiru","Kumbotso","Kunchi","Kura","Madobi","Makoda","Minjibir","Nasarawa","Rano","Rimin Gado","Rogo","Shanono","Sumaila","Takai","Tarauni","Tofa","Tsanyawa","Tudun Wada","Ungogo","Warawa","Wudil"] },
+        { name: "Katsina", lgas: ["Bakori","Batagarawa","Batsari","Baure","Bindawa","Charanchi","Dan Musa","Dandume","Danja","Daura","Dutsi","Dutsin Ma","Faskari","Funtua","Ingawa","Jibia","Kafur","Kaita","Kankara","Kankia","Katsina","Kurfi","Kusada","Mai'Adua","Malumfashi","Mani","Mashi","Matazu","Musawa","Rimi","Sabuwa","Safana","Sandamu","Zango"] },
+        { name: "Kebbi", lgas: ["Aleiro","Arewa Dandi","Argungu","Augie","Bagudo","Birnin Kebbi","Bunza","Dandi","Fakai","Gwandu","Jega","Kalgo","Koko/Besse","Maiyama","Ngaski","Sakaba","Shanga","Suru","Danko/Wasagu","Yauri","Zuru"] },
+        { name: "Kogi", lgas: ["Adavi","Ajaokuta","Ankpa","Bassa","Dekina","Ibaji","Idah","Igalamela Odolu","Ijumu","Kabba/Bunu","Kogi","Lokoja","Mopa Muro","Ofu","Ogori/Magongo","Okehi","Okene","Olamaboro","Omala","Yagba East","Yagba West"] },
+        { name: "Kwara", lgas: ["Asa","Baruten","Edu","Ekiti","Ifelodun","Ilorin East","Ilorin South","Ilorin West","Irepodun","Isin","Kaiama","Moro","Offa","Oke Ero","Oyun","Pategi"] },
+        { name: "Lagos", lgas: ["Agege","Ajeromi-Ifelodun","Alimosho","Amuwo-Odofin","Apapa","Badagry","Epe","Eti Osa","Ibeju-Lekki","Ifako-Ijaiye","Ikeja","Ikorodu","Kosofe","Lagos Island","Lagos Mainland","Mushin","Ojo","Oshodi-Isolo","Shomolu","Surulere"] },
+        { name: "Nasarawa", lgas: ["Akwanga","Awe","Doma","Karu","Keana","Keffi","Kokona","Lafia","Nasarawa","Nasarawa Egon","Obi","Toto","Wamba"] },
+        { name: "Niger", lgas: ["Agaie","Agwara","Bida","Borgu","Bosso","Chanchaga","Edati","Gbako","Gurara","Katcha","Kontagora","Lapai","Lavun","Magama","Mariga","Mashegu","Mokwa","Moya","Paikoro","Rafi","Rijau","Shiroro","Suleja","Tafa","Wushishi"] },
+        { name: "Ogun", lgas: ["Abeokuta North","Abeokuta South","Ado-Odo/Ota","Egbado North","Egbado South","Ewekoro","Ifo","Ijebu East","Ijebu North","Ijebu North East","Ijebu Ode","Ikenne","Imeko Afon","Ipokia","Obafemi Owode","Odeda","Odogbolu","Ogun Waterside","Remo North","Shagamu"] },
+        { name: "Ondo", lgas: ["Akoko North-East","Akoko North-West","Akoko South-East","Akoko South-West","Akure North","Akure South","Ese Odo","Idanre","Ifedore","Ilaje","Ile Oluji/Okeigbo","Irele","Odigbo","Okitipupa","Ondo East","Ondo West","Ose","Owo"] },
+        { name: "Osun", lgas: ["Aiyedade","Aiyedire","Atakunmosa East","Atakunmosa West","Boluwaduro","Boripe","Ede North","Ede South","Egbedore","Ejigbo","Ife Central","Ife East","Ife North","Ife South","Ifedayo","Ifelodun","Ila","Ilesa East","Ilesa West","Irepodun","Irewole","Isokan","Iwo","Obokun","Odo Otin","Ola Oluwa","Olorunda","Oriade","Orolu","Osogbo"] },
+        { name: "Oyo", lgas: ["Afijio","Akinyele","Atiba","Atisbo","Egbeda","Ibadan North","Ibadan North-East","Ibadan North-West","Ibadan South-East","Ibadan South-West","Ibarapa Central","Ibarapa East","Ibarapa North","Ido","Irepo","Iseyin","Itesiwaju","Iwajowa","Kajola","Lagelu","Ogbomosho North","Ogbomosho South","Ogo Oluwa","Olorunsogo","Oluyole","Ona Ara","Orelope","Ori Ire","Oyo East","Oyo West","Saki East","Saki West","Surulere"] },
+        { name: "Plateau", lgas: ["Bokkos","Barkin Ladi","Bassa","Jos East","Jos North","Jos South","Kanam","Kanke","Langtang North","Langtang South","Mangu","Mikang","Pankshin","Qua'an Pan","Riyom","Shendam","Wase"] },
+        { name: "Rivers", lgas: ["Abua/Odual","Ahoada East","Ahoada West","Akuku-Toru","Andoni","Asari-Toru","Bonny","Degema","Eleme","Emohua","Etche","Gokana","Ikwerre","Khana","Obio/Akpor","Ogba/Egbema/Ndoni","Ogu/Bolo","Okrika","Omuma","Opobo/Nkoro","Oyigbo","Port Harcourt","Tai"] },
+        { name: "Sokoto", lgas: ["Binji","Bodinga","Dange Shuni","Gada","Goronyo","Gudu","Gwadabawa","Illela","Isa","Kebbe","Kware","Rabah","Sabon Birni","Shagari","Silame","Sokoto North","Sokoto South","Tambuwal","Tangaza","Tureta","Wamako","Wurno","Yabo"] },
+        { name: "Taraba", lgas: ["Ardo Kola","Bali","Donga","Gashaka","Gassol","Ibi","Jalingo","Karim Lamido","Kumi","Lau","Sardauna","Takum","Ussa","Wukari","Yorro","Zing"] },
+        { name: "Yobe", lgas: ["Bade","Bursari","Damaturu","Fika","Fune","Geidam","Gujba","Gulani","Jakusko","Karasuwa","Machina","Nangere","Nguru","Potiskum","Tarmuwa","Yunusari","Yusufari"] },
+        { name: "Zamfara", lgas: ["Anka","Bakura","Birnin Magaji/Kiyaw","Bukkuyum","Bungudu","Gummi","Gusau","Kaura Namoda","Maradun","Maru","Shinkafi","Talata Mafara","Chafe","Zurmi"] }
     ];
 
     // ================================================================
     // UTILS
     // ================================================================
     const U = {
-        log: (m, d) => CONFIG.ENABLE_LOG && (d !== undefined ? console.log(m, d) : console.log(m)),
+        log: (m, d) => CONFIG.ENABLE_LOG && (d ? console.log(m, d) : console.log(m)),
         esc: t => !t ? '' : t.toString().replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])),
         date: (v, fmt='short') => {
             if (!v) return 'N/A';
             try {
                 const d = new Date(v); if (isNaN(d.getTime())) return 'N/A';
-                return d.toLocaleDateString('en-US', fmt === 'long'
-                    ? {year:'numeric',month:'long',day:'numeric'}
-                    : {year:'numeric',month:'short',day:'numeric'});
+                return d.toLocaleDateString('en-US', fmt === 'long' ? {year:'numeric',month:'long',day:'numeric'} : {year:'numeric',month:'short',day:'numeric'});
             } catch { return 'N/A'; }
         },
         age: dob => {
@@ -1664,8 +1783,9 @@
             document.getElementById('loadingState')?.classList.add('d-none');
             const hasData = AppState.pagination.data?.length > 0;
             if (hasData) {
-                const view = AppState.ui.currentView;
-                document.getElementById(view === 'table' ? 'tableView' : 'cardView')?.classList.remove('d-none');
+                const tv = document.getElementById('tableView'), cv = document.getElementById('cardView');
+                if (AppState.ui.currentView === 'table') tv?.classList.remove('d-none');
+                else cv?.classList.remove('d-none');
                 document.getElementById('emptyState')?.classList.add('d-none');
             } else {
                 ['tableView','cardView'].forEach(id => document.getElementById(id)?.classList.add('d-none'));
@@ -1673,10 +1793,10 @@
             }
             AppState.ui.isLoading = false;
         },
-        err:  (msg, title='Error')   => Swal.fire({title, text:msg, icon:'error', confirmButtonText:'OK', customClass:{confirmButton:'btn btn-primary'}}),
-        ok:   (msg, title='Success') => Swal.fire({title, text:msg, icon:'success', timer:2500, timerProgressBar:true, showConfirmButton:false}),
+        err:  (msg, title='Error')   => Swal.fire({title,text:msg,icon:'error',confirmButtonText:'OK',customClass:{confirmButton:'btn btn-primary'}}),
+        ok:   (msg, title='Success') => Swal.fire({title,text:msg,icon:'success',timer:2000,timerProgressBar:true,showConfirmButton:false}),
         confirm: async (title, text, confirmText='Yes') => {
-            const r = await Swal.fire({title, text, icon:'warning', showCancelButton:true, confirmButtonText:confirmText, cancelButtonText:'Cancel', customClass:{confirmButton:'btn btn-danger', cancelButton:'btn btn-light'}});
+            const r = await Swal.fire({title,text,icon:'warning',showCancelButton:true,confirmButtonText:confirmText,cancelButtonText:'Cancel',customClass:{confirmButton:'btn btn-danger',cancelButton:'btn btn-light'}});
             return r.isConfirmed;
         },
         csrf: () => {
@@ -1684,7 +1804,8 @@
             if (t) { axios.defaults.headers.common['X-CSRF-TOKEN'] = t; axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest'; }
             return !!t;
         },
-        setText: (id, v) => { const el = document.getElementById(id); if (el) el.textContent = (v === null || v === undefined) ? '—' : v; },
+        setText: (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; },
+        /* zoom helper */
         openZoom: (imgSrc, name, initials, detail) => {
             const zImg  = document.getElementById('zoomedStudentImg');
             const zName = document.getElementById('zoomedStudentName');
@@ -1692,6 +1813,7 @@
             if (imgSrc) {
                 zImg.src = imgSrc; zImg.style.display = 'block';
             } else {
+                // Draw initials on canvas
                 const cv = document.createElement('canvas'); cv.width = 400; cv.height = 400;
                 const ctx = cv.getContext('2d');
                 const g = ctx.createLinearGradient(0,0,400,400); g.addColorStop(0,'#667eea'); g.addColorStop(1,'#764ba2');
@@ -1702,7 +1824,8 @@
             }
             if (zName) zName.textContent = name || '';
             if (zDet)  zDet.innerHTML = detail || '';
-            new bootstrap.Modal(document.getElementById('imageZoomModal')).show();
+            const m = new bootstrap.Modal(document.getElementById('imageZoomModal'));
+            m.show();
         }
     };
 
@@ -1722,20 +1845,21 @@
             const p = { page, per_page: perPage };
             if (filters.search && filters.search.trim()) p.search = filters.search.trim();
             if (filters.class   !== 'all') p.class_id   = filters.class;
-            if (filters.session !== 'all') p.session_id = filters.session;
-            if (filters.term    !== 'all') p.term_id    = filters.term;
+            if (filters.status  !== 'all') p.status      = filters.status;
+            if (filters.gender  !== 'all') p.gender      = filters.gender;
+            if (filters.session !== 'all') p.session_id  = filters.session;
             return API.get('/students/optimized', p);
         },
         student:  id => API.get(`/student/${id}/edit`, {}),
         delete:   id => API.del(`/student/${id}/destroy`),
         delMany:  ids => API.post('/students/destroy-multiple', {ids}),
         activeTerm: sid => API.get(`/student-current-term/student/${sid}/active`, {}),
-        bulkTerm:   d   => API.post('/student-current-term/bulk-update', d),
-        byClassSession: (cid, sid) => API.get('/students/by-class-session', {class_id:cid, session_id:sid}),
-        bulkStatus: d   => API.post('/students/bulk-update-status', d),
-        inTerm:     p   => API.get('/students-in-term', p),
-        rmTerm:     id  => API.post('/students/remove-from-term', {registration_id:id}),
-        rmTermMany: ids => API.post('/students/bulk-remove-from-term', {registration_ids:ids})
+        bulkTerm:   d  => API.post('/student-current-term/bulk-update', d),
+        byClassSession: (cid, sid) => API.get('/students/by-class-session', {class_id:cid,session_id:sid}),
+        bulkStatus: d  => API.post('/students/bulk-update-status', d),
+        inTerm:     p  => API.get('/students-in-term', p),
+        rmTerm:     id => API.post('/students/remove-from-term', {registration_id:id}),
+        rmTermMany: ids=> API.post('/students/bulk-remove-from-term', {registration_ids:ids})
     };
 
     // ================================================================
@@ -1770,7 +1894,7 @@
     };
 
     // ================================================================
-    // RENDER MANAGER
+    // RENDER MANAGER — TABLE & CARDS (othername included)
     // ================================================================
     const Render = {
         table: students => {
@@ -1784,22 +1908,20 @@
                 const init    = U.initials(s.firstname, s.lastname);
                 const fullName= [s.lastname, s.firstname, s.othername].filter(Boolean).join(' ');
                 const imgHtml = s.picture && s.picture !== 'unnamed.jpg'
-                    ? `<img src="/storage/images/student_avatars/${U.esc(s.picture)}" class="sm-avatar" alt="${U.esc(fullName)}"
-                           data-zoom-src="/storage/images/student_avatars/${U.esc(s.picture)}"
+                    ? `<img src="/storage/images/student_avatars/${s.picture}" class="sm-avatar" alt="${U.esc(fullName)}"
+                           data-zoom-src="/storage/images/student_avatars/${s.picture}"
                            data-zoom-name="${U.esc(fullName)}" data-zoom-init="${U.esc(init)}"
-                           data-zoom-detail="${U.esc(s.admissionNo||'')} &bull; ${U.esc((s.schoolclass||'')+' '+(s.arm||''))} &bull; ${U.esc(s.gender||'')}"
-                           onclick="handleAvatarZoom(this)">`
-                    : `<div class="sm-avatar-init"
-                            data-zoom-src="" data-zoom-name="${U.esc(fullName)}" data-zoom-init="${U.esc(init)}"
-                            data-zoom-detail="${U.esc(s.admissionNo||'')} &bull; ${U.esc((s.schoolclass||'')+' '+(s.arm||''))} &bull; ${U.esc(s.gender||'')}"
+                           data-zoom-detail="${U.esc(s.admissionNo||'')} &bull; ${U.esc(s.schoolclass||'')} ${U.esc(s.arm||'')} &bull; ${U.esc(s.gender||'')}
+                           " onclick="handleAvatarZoom(this)">`
+                    : `<div class="sm-avatar-init" data-zoom-src="" data-zoom-name="${U.esc(fullName)}" data-zoom-init="${U.esc(init)}"
+                            data-zoom-detail="${U.esc(s.admissionNo||'')} &bull; ${U.esc(s.schoolclass||'')} ${U.esc(s.arm||'')} &bull; ${U.esc(s.gender||'')}"
                             onclick="handleAvatarZoom(this)">${U.esc(init)}</div>`;
-
                 const actBadge = s.student_status === 'Active'
-                    ? `<span class="sm-badge badge-active"><i class="fas fa-circle" style="font-size:6px"></i> Active</span>`
-                    : `<span class="sm-badge badge-inactive"><i class="fas fa-circle" style="font-size:6px"></i> ${U.esc(s.student_status||'Inactive')}</span>`;
+                    ? `<span class="sm-badge badge-active"><i class="fas fa-circle" style="font-size:7px"></i>${U.esc(s.student_status)}</span>`
+                    : `<span class="sm-badge badge-inactive"><i class="fas fa-circle" style="font-size:7px"></i>${U.esc(s.student_status||'—')}</span>`;
                 const typeBadge = s.statusId == 2
-                    ? `<span class="sm-badge badge-new"><i class="fas fa-star" style="font-size:9px"></i> New</span>`
-                    : `<span class="sm-badge badge-old"><i class="fas fa-history" style="font-size:9px"></i> Old</span>`;
+                    ? `<span class="sm-badge badge-new"><i class="fas fa-star" style="font-size:9px"></i>New</span>`
+                    : `<span class="sm-badge badge-old"><i class="fas fa-history" style="font-size:9px"></i>Old</span>`;
 
                 tr.innerHTML = `
                     <td><div class="form-check"><input class="form-check-input student-checkbox" type="checkbox" value="${s.id}"></div></td>
@@ -1807,7 +1929,7 @@
                     <td>
                         <div class="stu-name">${U.esc(fullName)}</div>
                         <div class="stu-meta">
-                            <span class="stu-chip"><i class="fas fa-id-card" style="font-size:9px"></i> ${U.esc(s.admissionNo||'N/A')}</span>
+                            <span class="stu-chip"><i class="fas fa-id-card" style="font-size:9px"></i>${U.esc(s.admissionNo||'N/A')}</span>
                             ${typeBadge}
                         </div>
                     </td>
@@ -1825,15 +1947,9 @@
                     <td style="font-size:12px;color:var(--sm-muted);">${U.date(s.created_at,'short')}</td>
                     <td>
                         <div class="d-flex gap-1 justify-content-end">
-                            <button class="act-btn act-view view-student-btn" data-student-id="${s.id}">
-                                <i class="fas fa-eye"></i> View
-                            </button>
-                            <button class="act-btn act-edit edit-student-btn" data-student-id="${s.id}">
-                                <i class="fas fa-edit"></i> Edit
-                            </button>
-                            <button class="act-btn act-delete delete-student-btn" data-student-id="${s.id}">
-                                <i class="fas fa-trash-alt"></i> Delete
-                            </button>
+                            <button class="act-btn act-view view-student-btn" data-student-id="${s.id}" title="View"><i class="fas fa-eye"></i></button>
+                            <button class="act-btn act-edit edit-student-btn"  data-student-id="${s.id}" title="Edit"><i class="fas fa-edit"></i></button>
+                            <button class="act-btn act-delete delete-student-btn" data-student-id="${s.id}" title="Delete"><i class="fas fa-trash-alt"></i></button>
                         </div>
                     </td>`;
                 frag.appendChild(tr);
@@ -1850,26 +1966,26 @@
             students.forEach(s => {
                 const col = document.createElement('div');
                 col.className = 'col-xl-3 col-lg-4 col-md-6';
-                const init     = U.initials(s.firstname, s.lastname);
+                const init = U.initials(s.firstname, s.lastname);
                 const fullName = [s.lastname, s.firstname, s.othername].filter(Boolean).join(' ');
                 const avatarHtml = s.picture && s.picture !== 'unnamed.jpg'
                     ? `<div class="stu-card-avatar" onclick="handleAvatarZoom(this)"
-                             data-zoom-src="/storage/images/student_avatars/${U.esc(s.picture)}"
+                             data-zoom-src="/storage/images/student_avatars/${s.picture}"
                              data-zoom-name="${U.esc(fullName)}" data-zoom-init="${U.esc(init)}"
-                             data-zoom-detail="${U.esc(s.admissionNo||'')} &bull; ${U.esc((s.schoolclass||'')+' '+(s.arm||''))}">
-                           <img src="/storage/images/student_avatars/${U.esc(s.picture)}" alt="${U.esc(fullName)}">
+                             data-zoom-detail="${U.esc(s.admissionNo||'')} &bull; ${U.esc(s.schoolclass||'')} ${U.esc(s.arm||'')}">
+                           <img src="/storage/images/student_avatars/${s.picture}" alt="${U.esc(fullName)}">
                        </div>`
                     : `<div class="stu-card-avatar" onclick="handleAvatarZoom(this)"
                              data-zoom-src="" data-zoom-name="${U.esc(fullName)}" data-zoom-init="${U.esc(init)}"
-                             data-zoom-detail="${U.esc(s.admissionNo||'')} &bull; ${U.esc((s.schoolclass||'')+' '+(s.arm||''))}">
+                             data-zoom-detail="${U.esc(s.admissionNo||'')} &bull; ${U.esc(s.schoolclass||'')} ${U.esc(s.arm||'')}">
                            <div class="stu-card-avatar-init">${U.esc(init)}</div>
                        </div>`;
                 const actBadge = s.student_status === 'Active'
-                    ? `<span class="sm-badge badge-active" style="font-size:11px;"><i class="fas fa-circle" style="font-size:6px"></i> Active</span>`
-                    : `<span class="sm-badge badge-inactive" style="font-size:11px;"><i class="fas fa-circle" style="font-size:6px"></i> Inactive</span>`;
+                    ? `<span class="sm-badge badge-active" style="font-size:11px;"><i class="fas fa-circle" style="font-size:7px"></i>Active</span>`
+                    : `<span class="sm-badge badge-inactive" style="font-size:11px;"><i class="fas fa-circle" style="font-size:7px"></i>Inactive</span>`;
                 const typeBadge = s.statusId == 2
-                    ? `<span class="sm-badge badge-new ms-1" style="font-size:11px;"> New</span>`
-                    : `<span class="sm-badge badge-old ms-1" style="font-size:11px;"> Old</span>`;
+                    ? `<span class="sm-badge badge-new ms-1" style="font-size:11px;">New</span>`
+                    : `<span class="sm-badge badge-old ms-1" style="font-size:11px;">Old</span>`;
 
                 col.innerHTML = `
                     <div class="stu-card mb-3" data-id="${s.id}">
@@ -1884,14 +2000,26 @@
                         <div class="stu-card-body">
                             <div class="mb-2">${actBadge}${typeBadge}</div>
                             <div class="stu-card-grid">
-                                <div><div class="stu-card-info-label">Class</div><div class="stu-card-info-val">${U.esc(s.schoolclass||'—')} ${U.esc(s.arm||'')}</div></div>
-                                <div><div class="stu-card-info-label">Gender</div><div class="stu-card-info-val">${U.esc(s.gender||'—')}</div></div>
-                                <div><div class="stu-card-info-label">Age</div><div class="stu-card-info-val">${s.age||U.age(s.dateofbirth)||'—'}</div></div>
-                                <div><div class="stu-card-info-label">Registered</div><div class="stu-card-info-val">${U.date(s.created_at,'short')}</div></div>
+                                <div>
+                                    <div class="stu-card-info-label">Class</div>
+                                    <div class="stu-card-info-val">${U.esc(s.schoolclass||'—')} ${U.esc(s.arm||'')}</div>
+                                </div>
+                                <div>
+                                    <div class="stu-card-info-label">Gender</div>
+                                    <div class="stu-card-info-val">${U.esc(s.gender||'—')}</div>
+                                </div>
+                                <div>
+                                    <div class="stu-card-info-label">Age</div>
+                                    <div class="stu-card-info-val">${s.age||U.age(s.dateofbirth)||'—'}</div>
+                                </div>
+                                <div>
+                                    <div class="stu-card-info-label">Registered</div>
+                                    <div class="stu-card-info-val">${U.date(s.created_at,'short')}</div>
+                                </div>
                             </div>
                             <div class="stu-card-actions">
-                                <button class="stu-card-view view-student-btn" data-student-id="${s.id}"><i class="fas fa-eye"></i> View</button>
-                                <button class="stu-card-edit edit-student-btn"  data-student-id="${s.id}"><i class="fas fa-edit"></i> Edit</button>
+                                <button class="stu-card-view view-student-btn"   data-student-id="${s.id}"><i class="fas fa-eye"></i> View</button>
+                                <button class="stu-card-edit edit-student-btn"   data-student-id="${s.id}"><i class="fas fa-edit"></i> Edit</button>
                                 <button class="stu-card-delete delete-student-btn" data-student-id="${s.id}"><i class="fas fa-trash-alt"></i></button>
                             </div>
                         </div>
@@ -1912,9 +2040,7 @@
             const bulkBtn = document.getElementById('bulkActionsDropdown');
             if (bulkBtn) {
                 bulkBtn.disabled = ch === 0;
-                bulkBtn.innerHTML = ch > 0
-                    ? `<i class="fas fa-cog me-1"></i>Bulk Actions (${ch})`
-                    : '<i class="fas fa-cog me-1"></i>Bulk Actions';
+                bulkBtn.innerHTML = ch > 0 ? `<i class="fas fa-cog me-1"></i>Actions (${ch})` : '<i class="fas fa-cog me-1"></i>Actions';
             }
         },
 
@@ -1944,39 +2070,33 @@
                 const resp = await API.students(AppState.pagination.currentPage, AppState.pagination.perPage, AppState.filters);
                 if (!resp.success) throw new Error(resp.message || 'Failed');
                 const pd = resp.data;
-                AppState.pagination = {
-                    currentPage: pd.current_page,
-                    lastPage: pd.last_page,
-                    total: pd.total,
-                    from: pd.from,
-                    to: pd.to,
-                    data: pd.data,
-                    perPage: AppState.pagination.perPage
-                };
+                AppState.pagination = { currentPage: pd.current_page, lastPage: pd.last_page, total: pd.total, from: pd.from, to: pd.to, data: pd.data };
                 AppState.ui.currentView === 'table' ? Render.table(pd.data) : Render.cards(pd.data);
                 Pagination.update(pd);
                 Selection.clearAll();
                 pd.data.forEach(s => AppState.cache.students.set(String(s.id), s));
             } catch (e) {
-                U.log('Fetch error', e);
+                U.log('Fetch error', e, 'error');
                 U.err('Failed to load students. Please try again.');
             } finally { U.hideLoading(); }
         },
 
         async view(id) {
             try {
-                Swal.fire({title:'Loading…', allowOutsideClick:false, didOpen:()=>Swal.showLoading()});
+                Swal.fire({title:'Loading…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
                 let s = AppState.cache.students.get(String(id));
                 if (!s) { const r = await API.student(id); if (r.success) { s = r.student; AppState.cache.students.set(String(id), s); } }
                 Swal.close();
-                if (s) { ViewModal.populate(s); new bootstrap.Modal(document.getElementById('viewStudentModal')).show(); }
-                else U.err('Student not found.');
+                if (s) {
+                    ViewModal.populate(s);
+                    new bootstrap.Modal(document.getElementById('viewStudentModal')).show();
+                } else U.err('Student not found.');
             } catch (e) { Swal.close(); U.err('Failed to load student.'); }
         },
 
         async edit(id) {
             try {
-                Swal.fire({title:'Loading…', allowOutsideClick:false, didOpen:()=>Swal.showLoading()});
+                Swal.fire({title:'Loading…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
                 SLM.populate('editState','editLocal');
                 const r = await API.student(id);
                 Swal.close();
@@ -1988,20 +2108,16 @@
 
         async delete(id) {
             if (!await U.confirm('Delete Student?', "You won't be able to revert this!", 'Yes, delete it!')) return;
-            try {
-                await API.delete(id); AppState.cache.students.delete(String(id));
-                await SM.fetch(); U.ok('Student deleted successfully.');
-            } catch(e) { U.err('Failed to delete student.'); }
+            try { await API.delete(id); AppState.cache.students.delete(String(id)); await SM.fetch(); U.ok('Student deleted.'); }
+            catch(e) { U.err('Failed to delete student.'); }
         },
 
         async deleteMany() {
             const ids = Selection.getIds();
             if (!ids.length) { U.err('Please select at least one student.', 'No Selection'); return; }
-            if (!await U.confirm(`Delete ${ids.length} Students?`, 'This cannot be undone!', 'Yes, delete all!')) return;
-            try {
-                await API.delMany(ids); ids.forEach(id => AppState.cache.students.delete(String(id)));
-                await SM.fetch(); U.ok(`${ids.length} student(s) deleted.`); Selection.clearAll();
-            } catch(e) { U.err('Failed to delete selected students.'); }
+            if (!await U.confirm(`Delete ${ids.length} Students?`, 'This cannot be undone!', 'Yes, delete them!')) return;
+            try { await API.delMany(ids); ids.forEach(id => AppState.cache.students.delete(String(id))); await SM.fetch(); U.ok(`${ids.length} student(s) deleted.`); Selection.clearAll(); }
+            catch(e) { U.err('Failed to delete selected students.'); }
         }
     };
 
@@ -2011,7 +2127,7 @@
     const Selection = {
         getIds: () => Array.from(document.querySelectorAll('.student-checkbox:checked')).map(cb => cb.value),
         clearAll: () => {
-            document.querySelectorAll('.student-checkbox').forEach(cb => { cb.checked = false; });
+            document.querySelectorAll('.student-checkbox').forEach(cb => { cb.checked = false; cb.closest('tr,div[data-id]')?.classList.remove('selected'); });
             AppState.ui.selectedStudents.clear();
             ['checkAll','checkAllTable'].forEach(id => { const el = document.getElementById(id); if (el) { el.checked = false; el.indeterminate = false; } });
             Render.updateCheckAll();
@@ -2031,7 +2147,7 @@
     };
 
     // ================================================================
-    // PAGINATION — FULLY FIXED
+    // PAGINATION
     // ================================================================
     const Pagination = {
         update: pd => {
@@ -2042,50 +2158,28 @@
 
             const ul = document.getElementById('pagination');
             if (!ul) return;
+            ul.querySelectorAll('.page-item:not(#prevPageLi):not(#nextPageLi)').forEach(el => el.remove());
 
-            // Remove all page number items (keep prev and next)
-            const toRemove = ul.querySelectorAll('.page-item:not(#prevPageLi):not(#nextPageLi)');
-            toRemove.forEach(el => el.remove());
-
-            const cur  = pd.current_page || 1;
-            const last = pd.last_page    || 1;
-
-            if (last > 1) {
-                const start = Math.max(1, cur - 2);
-                const end   = Math.min(last, cur + 2);
-                const nextLi = document.getElementById('nextPageLi');
-
-                const addPage = (n, label) => {
+            if (pd.last_page > 1) {
+                const start = Math.max(1, pd.current_page - 2);
+                const end   = Math.min(pd.last_page, pd.current_page + 2);
+                const addItem = (n, label=n) => {
                     const li = document.createElement('li');
-                    li.className = `page-item${n === cur ? ' active' : ''}`;
-                    const a = document.createElement('a');
-                    a.className = 'page-link'; a.href = 'javascript:void(0);';
-                    a.textContent = label !== undefined ? label : n;
+                    li.className = `page-item ${n === pd.current_page ? 'active' : ''}`;
+                    const a = document.createElement('a'); a.className = 'page-link'; a.href = 'javascript:void(0);';
+                    a.textContent = label;
                     a.onclick = () => { AppState.pagination.currentPage = n; SM.fetch(); };
-                    li.appendChild(a); ul.insertBefore(li, nextLi);
+                    li.appendChild(a);
+                    ul.querySelector('#nextPageLi').before(li);
                 };
-                const addEllipsis = () => {
-                    const li = document.createElement('li');
-                    li.className = 'page-item disabled';
-                    li.innerHTML = '<span class="page-link">…</span>';
-                    ul.insertBefore(li, document.getElementById('nextPageLi'));
-                };
-
-                if (start > 1) { addPage(1); if (start > 2) addEllipsis(); }
-                for (let i = start; i <= end; i++) addPage(i);
-                if (end < last) { if (end < last - 1) addEllipsis(); addPage(last); }
+                if (start > 1) { addItem(1); if (start > 2) { const li = document.createElement('li'); li.className='page-item disabled'; li.innerHTML='<span class="page-link">…</span>'; ul.querySelector('#nextPageLi').before(li); } }
+                for (let i = start; i <= end; i++) addItem(i);
+                if (end < pd.last_page) { if (end < pd.last_page-1) { const li = document.createElement('li'); li.className='page-item disabled'; li.innerHTML='<span class="page-link">…</span>'; ul.querySelector('#nextPageLi').before(li); } addItem(pd.last_page); }
             }
-
-            // Update prev / next
-            const prevLi = document.getElementById('prevPageLi');
-            const nextLi = document.getElementById('nextPageLi');
-            const prevA  = document.getElementById('prevPage');
-            const nextA  = document.getElementById('nextPage');
-
-            if (prevLi) prevLi.classList.toggle('disabled', cur <= 1);
-            if (nextLi) nextLi.classList.toggle('disabled', cur >= last);
-            if (prevA) prevA.onclick = e => { e.preventDefault(); if (cur > 1) { AppState.pagination.currentPage = cur - 1; SM.fetch(); } };
-            if (nextA) nextA.onclick = e => { e.preventDefault(); if (cur < last) { AppState.pagination.currentPage = cur + 1; SM.fetch(); } };
+            const prev = document.getElementById('prevPage');
+            const next = document.getElementById('nextPage');
+            if (prev) { prev.classList.toggle('disabled', pd.current_page <= 1); prev.onclick = e => { e.preventDefault(); if (pd.current_page > 1) { AppState.pagination.currentPage--; SM.fetch(); } }; }
+            if (next) { next.classList.toggle('disabled', pd.current_page >= pd.last_page); next.onclick = e => { e.preventDefault(); if (pd.current_page < pd.last_page) { AppState.pagination.currentPage++; SM.fetch(); } }; }
         }
     };
 
@@ -2097,71 +2191,70 @@
         populate: s => {
             ViewModal.currentId = s.id;
             const full = [s.lastname, s.firstname, s.othername].filter(Boolean).join(' ');
-            U.setText('viewFullName',         full||'—');
-            U.setText('viewFullNameDetail',   full||'—');
-            U.setText('viewAdmissionNumber',  s.admissionNo||'—');
-            U.setText('viewAdmissionNo',      s.admissionNo||'—');
-            U.setText('viewTitle',            s.title||'—');
-            U.setText('viewDOB',              U.date(s.dateofbirth,'long'));
-            U.setText('viewAge',              s.age||U.age(s.dateofbirth)||'—');
-            U.setText('viewAgeDetail',        s.age||U.age(s.dateofbirth)||'—');
-            U.setText('viewPlaceOfBirth',     s.placeofbirth||'—');
-            U.setText('viewGenderDetail',     s.gender||'—');
-            U.setText('viewGenderText',       s.gender||'—');
-            U.setText('viewBloodGroupDetail', s.blood_group||'—');
-            U.setText('viewBloodGroupAdditional', s.blood_group||'—');
-            U.setText('viewReligionDetail',   s.religion||'—');
-            U.setText('viewPhoneNumber',      s.phone_number||'—');
-            U.setText('viewEmailAddress',     s.email||'—');
-            U.setText('viewPermanentAddress', s.permanent_address||'—');
-            U.setText('viewCity',             s.city||'—');
-            U.setText('viewStateOrigin',      s.state||'—');
-            U.setText('viewLGA',              s.local||'—');
-            U.setText('viewNationality',      s.nationality||'—');
-            U.setText('viewFutureAmbition',   s.future_ambition||'—');
-            U.setText('viewAdmissionDate',    U.date(s.admission_date||s.admissionDate,'long'));
-            U.setText('viewAdmittedDate',     U.date(s.admission_date||s.admissionDate,'short'));
+            U.setText('viewFullName',       full||'—');
+            U.setText('viewFullNameDetail', full||'—');
+            U.setText('viewAdmissionNumber',s.admissionNo||'—');
+            U.setText('viewAdmissionNo',    s.admissionNo||'—');
+            U.setText('viewTitle',          s.title||'—');
+            U.setText('viewDOB',            U.date(s.dateofbirth,'long'));
+            U.setText('viewAge',            s.age||U.age(s.dateofbirth));
+            U.setText('viewAgeDetail',      s.age||U.age(s.dateofbirth));
+            U.setText('viewPlaceOfBirth',   s.placeofbirth||'—');
+            U.setText('viewGenderDetail',   s.gender||'—');
+            U.setText('viewGenderText',     s.gender||'—');
+            U.setText('viewBloodGroupDetail',   s.blood_group||'—');
+            U.setText('viewBloodGroupAdditional',s.blood_group||'—');
+            U.setText('viewReligionDetail', s.religion||'—');
+            U.setText('viewPhoneNumber',    s.phone_number||'—');
+            U.setText('viewEmailAddress',   s.email||'—');
+            U.setText('viewPermanentAddress',s.permanent_address||'—');
+            U.setText('viewCity',           s.city||'—');
+            U.setText('viewStateOrigin',    s.state||'—');
+            U.setText('viewLGA',            s.local||'—');
+            U.setText('viewNationality',    s.nationality||'—');
+            U.setText('viewFutureAmbition', s.future_ambition||'—');
+            U.setText('viewAdmissionDate',  U.date(s.admission_date||s.admissionDate,'long'));
+            U.setText('viewAdmittedDate',   U.date(s.admission_date||s.admissionDate,'short'));
             const cls = `${s.schoolclass||''} ${s.arm||''}`.trim() || '—';
-            U.setText('viewCurrentClass',     cls);
-            U.setText('viewClassDisplay',     cls);
-            U.setText('viewArm',              s.arm||'—');
-            U.setText('viewStudentCategory',  s.student_category||'—');
+            U.setText('viewCurrentClass',   cls);
+            U.setText('viewClassDisplay',   cls);
+            U.setText('viewArm',            s.arm||'—');
+            U.setText('viewStudentCategory',s.student_category||'—');
             const type = s.statusId==2 ? 'New Student' : s.statusId==1 ? 'Old Student' : '—';
-            U.setText('viewStudentType',      type);
-            U.setText('viewStudentStatus',    s.student_status||'—');
-            U.setText('viewSchoolHouse',      s.school_house||'—');
-            U.setText('viewLastSchool',       s.last_school||'—');
-            U.setText('viewLastClass',        s.last_class||'—');
-            U.setText('viewReasonForLeaving', s.reason_for_leaving||'—');
-            U.setText('viewFatherFullName',   s.father_name||'—');
-            U.setText('viewFatherPhone',      s.father_phone||'—');
-            U.setText('viewFatherOccupation', s.father_occupation||'—');
-            U.setText('viewFatherCityState',  s.father_city||'—');
-            U.setText('viewFatherEmail',      s.parent_email||'—');
-            U.setText('viewFatherAddress',    s.parent_address||'—');
-            U.setText('viewMotherFullName',   s.mother_name||'—');
-            U.setText('viewMotherPhone',      s.mother_phone||'—');
-            U.setText('viewMotherOccupation', s.mother_occupation||'—');
-            U.setText('viewMotherEmail',      s.parent_email||'—');
-            U.setText('viewMotherAddress',    s.parent_address||'—');
-            U.setText('viewParentEmail',      s.parent_email||'—');
-            U.setText('viewParentAddress',    s.parent_address||'—');
-            U.setText('viewNIN',              s.nin_number||'—');
-            U.setText('viewMotherTongue',     s.mother_tongue||'—');
+            U.setText('viewStudentType',    type);
+            U.setText('viewStudentStatus',  s.student_status||'—');
+            U.setText('viewSchoolHouse',    s.school_house||'—');
+            U.setText('viewLastSchool',     s.last_school||'—');
+            U.setText('viewLastClass',      s.last_class||'—');
+            U.setText('viewReasonForLeaving',s.reason_for_leaving||'—');
+            U.setText('viewFatherFullName', s.father_name||'—');
+            U.setText('viewFatherPhone',    s.father_phone||'—');
+            U.setText('viewFatherOccupation',s.father_occupation||'—');
+            U.setText('viewFatherCityState',s.father_city||'—');
+            U.setText('viewFatherEmail',    s.parent_email||'—');
+            U.setText('viewFatherAddress',  s.parent_address||'—');
+            U.setText('viewMotherFullName', s.mother_name||'—');
+            U.setText('viewMotherPhone',    s.mother_phone||'—');
+            U.setText('viewMotherOccupation',s.mother_occupation||'—');
+            U.setText('viewMotherEmail',    s.parent_email||'—');
+            U.setText('viewMotherAddress',  s.parent_address||'—');
+            U.setText('viewParentEmail',    s.parent_email||'—');
+            U.setText('viewParentAddress',  s.parent_address||'—');
+            U.setText('viewNIN',            s.nin_number||'—');
+            U.setText('viewMotherTongue',   s.mother_tongue||'—');
 
-            // Father/Mother badges
-            const fb = document.getElementById('fatherStatusBadge');
-            if (fb) { fb.textContent = s.father_name ? 'Available' : 'Not Provided'; fb.className = `badge ms-1 ${s.father_name ? 'bg-success' : 'bg-secondary'}`; }
-            const mb = document.getElementById('motherStatusBadge');
-            if (mb) { mb.textContent = s.mother_name ? 'Available' : 'Not Provided'; mb.className = `badge ms-1 ${s.mother_name ? 'bg-success' : 'bg-secondary'}`; }
+            // Father/Mother status badges
+            const fb = document.getElementById('fatherStatusBadge'); if (fb) { fb.textContent = s.father_name ? 'Available' : 'Not Provided'; fb.className = `badge ms-1 ${s.father_name ? 'bg-success' : 'bg-secondary'}`; }
+            const mb = document.getElementById('motherStatusBadge'); if (mb) { mb.textContent = s.mother_name ? 'Available' : 'Not Provided'; mb.className = `badge ms-1 ${s.mother_name ? 'bg-success' : 'bg-secondary'}`; }
 
-            // Type badge
+            // Type badge styling
             const tb = document.getElementById('viewStudentTypeBadge');
             if (tb) { if (s.statusId==2) { tb.style.background='#fef3c7'; tb.style.color='#92400e'; } else { tb.style.background='#ede9fe'; tb.style.color='#5b21b6'; } }
 
             // Status indicator
             const si = document.getElementById('studentStatusIndicator');
-            if (si) { si.className = `position-absolute bottom-0 end-0 rounded-circle border border-2 border-white ${s.student_status==='Active'?'bg-success':'bg-secondary'}`; si.style.cssText='width:18px;height:18px;'; }
+            if (si) si.className = `position-absolute bottom-0 end-0 rounded-circle border border-2 border-white ${s.student_status==='Active'?'bg-success':'bg-secondary'}`;
+            si.style.cssText = 'width:18px;height:18px;';
 
             // Photo
             const photo = document.getElementById('viewStudentPhoto');
@@ -2175,8 +2268,9 @@
             }
 
             ViewModal.fetchTerm(s.id);
-            const thc = document.getElementById('termHistoryContent'); if (thc) { thc.style.display='none'; thc.innerHTML=''; }
-            const thl = document.getElementById('termHistoryLoading'); if (thl) thl.style.display='block';
+            // Reset term history
+            const thc = document.getElementById('termHistoryContent'); if (thc) { thc.style.display = 'none'; thc.innerHTML = ''; }
+            const thl = document.getElementById('termHistoryLoading'); if (thl) thl.style.display = 'block';
         },
 
         fetchTerm: async id => {
@@ -2184,28 +2278,18 @@
                 const r = await API.activeTerm(id);
                 if (r.success && r.data) {
                     const d = r.data;
-                    U.setText('viewCurrentTerm',    d.term?.term||d.term?.name||'—');
-                    U.setText('viewCurrentSession', d.session?.session||d.session?.name||'—');
+                    U.setText('viewCurrentTerm',   d.term?.term||'—');
+                    U.setText('viewCurrentSession', d.session?.session||'—');
                     const status = document.getElementById('viewCurrentTermStatus');
                     if (status) status.innerHTML = d.is_current ? '<span class="badge bg-success">Active Term</span>' : '<span class="badge bg-warning text-dark">Registered</span>';
                     const alert = document.getElementById('currentTermAlert');
-                    if (alert) alert.innerHTML = `<div class="alert alert-success border-0 rounded-3 py-2 small"><i class="fas fa-check-circle me-1"></i><strong>Enrolled:</strong> ${d.schoolClass?.schoolclass||''} ${d.schoolClass?.armRelation?.arm||''} &bull; ${d.term?.term||d.term?.name||''} &bull; ${d.session?.session||d.session?.name||''}</div>`;
-
-                    const thl = document.getElementById('termHistoryLoading'); if (thl) thl.style.display='none';
-                    const thc = document.getElementById('termHistoryContent');
-                    if (thc) {
-                        thc.style.display='block';
-                        thc.innerHTML = `<div class="alert alert-info py-2">Latest active term loaded. Use the Refresh button for full history.</div>`;
-                    }
+                    if (alert) alert.innerHTML = `<div class="alert alert-success border-0 rounded-3 py-2 small"><i class="fas fa-check-circle me-1"></i><strong>Enrolled:</strong> ${d.schoolClass?.schoolclass||''} ${d.schoolClass?.armRelation?.arm||''} &bull; ${d.term?.term||''} Term &bull; ${d.session?.session||''}</div>`;
                 } else {
-                    ['viewCurrentTerm','viewCurrentSession'].forEach(id => U.setText(id,'—'));
-                    const status = document.getElementById('viewCurrentTermStatus'); if (status) status.innerHTML='<span class="badge bg-secondary">Not Registered</span>';
-                    const alert  = document.getElementById('currentTermAlert'); if (alert) alert.innerHTML='<div class="alert alert-warning border-0 rounded-3 py-2 small"><i class="fas fa-exclamation-triangle me-1"></i>No active term registration found.</div>';
-                    const thl = document.getElementById('termHistoryLoading'); if (thl) thl.style.display='none';
-                    const thc = document.getElementById('termHistoryContent');
-                    if (thc) { thc.style.display='block'; thc.innerHTML='<div class="alert alert-warning">No term registrations found.</div>'; }
+                    ['viewCurrentTerm','viewCurrentSession'].forEach(id => U.setText(id, '—'));
+                    const status = document.getElementById('viewCurrentTermStatus'); if (status) status.innerHTML = '<span class="badge bg-secondary">Not Registered</span>';
+                    const alert = document.getElementById('currentTermAlert'); if (alert) alert.innerHTML = '<div class="alert alert-warning border-0 rounded-3 py-2 small"><i class="fas fa-exclamation-triangle me-1"></i>No active term registration found.</div>';
                 }
-            } catch { /* silent */ }
+            } catch {}
         }
     };
 
@@ -2219,51 +2303,48 @@
 
             document.getElementById('editStudentId').value = s.id||'';
 
-            // Fix form action — always rebuild from base pattern
+            // Form action
             const form = document.getElementById('editStudentForm');
-            if (form && s.id) {
-                const base = form.dataset.baseAction;
-                if (base) form.action = base.replace(':id', s.id);
-            }
+            if (form) { const base = form.dataset.baseAction; if (base) form.action = base.replace(':id', s.id); }
 
-            set('editAdmissionNo',    s.admissionNo);
-            set('editAdmissionYear',  s.admissionYear||new Date().getFullYear());
-            set('editAdmissionDate',  (s.admissionDate||s.admission_date||'').split('T')[0].split(' ')[0]);
-            set('editSchoolclassid',  s.schoolclassid);
-            set('editTermid',         s.termid);
-            set('editSessionid',      s.sessionid);
+            set('editAdmissionNo',   s.admissionNo);
+            set('editAdmissionYear', s.admissionYear||new Date().getFullYear());
+            set('editAdmissionDate', (s.admissionDate||s.admission_date||'').split(' ')[0].split('T')[0]);
+            set('editSchoolclassid', s.schoolclassid);
+            set('editTermid',        s.termid);
+            set('editSessionid',     s.sessionid);
             set('editStudentCategory',s.student_category);
-            set('editTitle',          s.title);
-            set('editLastname',       s.lastname);
-            set('editFirstname',      s.firstname);
-            set('editOthername',      s.othername);
-            set('editPlaceofbirth',   s.placeofbirth);
-            set('editPhoneNumber',    s.phone_number);
-            set('editEmail',          s.email);
-            set('editFutureAmbition', s.future_ambition);
+            set('editTitle',         s.title);
+            set('editLastname',      s.lastname);
+            set('editFirstname',     s.firstname);
+            set('editOthername',     s.othername);
+            set('editPlaceofbirth',  s.placeofbirth);
+            set('editPhoneNumber',   s.phone_number);
+            set('editEmail',         s.email);
+            set('editFutureAmbition',s.future_ambition);
             set('editPermanentAddress',s.permanent_address);
-            set('editNationality',    s.nationality);
-            set('editCity',           s.city);
-            set('editReligion',       s.religion);
-            set('editBloodGroup',     s.blood_group);
-            set('editMotherTongue',   s.mother_tongue);
-            set('editNinNumber',      s.nin_number);
-            set('editFatherName',     s.father_name);
-            set('editFatherPhone',    s.father_phone);
+            set('editNationality',   s.nationality);
+            set('editCity',          s.city);
+            set('editReligion',      s.religion);
+            set('editBloodGroup',    s.blood_group);
+            set('editMotherTongue',  s.mother_tongue);
+            set('editNinNumber',     s.nin_number);
+            set('editFatherName',    s.father_name);
+            set('editFatherPhone',   s.father_phone);
             set('editFatherOccupation',s.father_occupation);
-            set('editFatherCity',     s.father_city);
-            set('editMotherName',     s.mother_name);
-            set('editMotherPhone',    s.mother_phone);
-            set('editParentEmail',    s.parent_email);
-            set('editParentAddress',  s.parent_address);
-            set('editLastSchool',     s.last_school);
-            set('editLastClass',      s.last_class);
+            set('editFatherCity',    s.father_city);
+            set('editMotherName',    s.mother_name);
+            set('editMotherPhone',   s.mother_phone);
+            set('editParentEmail',   s.parent_email);
+            set('editParentAddress', s.parent_address);
+            set('editLastSchool',    s.last_school);
+            set('editLastClass',     s.last_class);
             set('editReasonForLeaving',s.reason_for_leaving);
 
             // DOB & age
             const dobInput = document.getElementById('editDOB');
             if (dobInput && s.dateofbirth) {
-                const dv = s.dateofbirth.split('T')[0].split(' ')[0];
+                const dv = s.dateofbirth.split(' ')[0].split('T')[0];
                 dobInput.value = dv;
                 const ageEl = document.getElementById('editAgeInput');
                 if (ageEl) ageEl.value = U.age(dv)||s.age||'';
@@ -2271,25 +2352,23 @@
 
             // Radio buttons
             if (s.statusId==1) chk('statusId','1'); else if (s.statusId==2) chk('statusId','2');
-            if (s.student_status==='Active') chk('student_status','Active'); else if (s.student_status==='Inactive') chk('student_status','Inactive');
+            if (s.student_status==='Active') chk('student_status','Active'); else chk('student_status','Inactive');
             if (s.gender==='Male') chk('gender','Male'); else if (s.gender==='Female') chk('gender','Female');
 
-            // Admission mode — default to manual so the number is visible/editable
+            // Admission mode
             const manualRadio = document.getElementById('editAdmissionManual');
             if (manualRadio) { manualRadio.checked = true; const noEl = document.getElementById('editAdmissionNo'); if (noEl) noEl.readOnly = false; }
 
             // School House
             const houseEl = document.getElementById('editSchoolHouse');
-            if (houseEl && (s.schoolhouseid||s.school_house)) { houseEl.value = s.schoolhouseid||s.school_house; }
+            if (houseEl && s.schoolhouseid) houseEl.value = s.schoolhouseid;
 
             // State & LGA
             if (s.state) SLM.set('editState','editLocal', s.state, s.local);
 
             // Avatar
             const avatar = document.getElementById('editStudentAvatar');
-            if (avatar) avatar.src = s.picture && s.picture !== 'unnamed.jpg'
-                ? `/storage/images/student_avatars/${s.picture}`
-                : '{{ asset("theme/layouts/assets/media/avatars/blank.png") }}';
+            if (avatar) avatar.src = s.picture && s.picture !== 'unnamed.jpg' ? `/storage/images/student_avatars/${s.picture}` : '{{ asset("theme/layouts/assets/media/avatars/blank.png") }}';
         }
     };
 
@@ -2309,7 +2388,7 @@
                 });
                 si.addEventListener('keypress', e => { if (e.key==='Enter') { clearTimeout(Filters.searchDebounce); Filters.apply(); } });
             }
-            if (cl) cl.addEventListener('click', () => { if (si) { si.value=''; cl.style.display='none'; } Filters.apply(); });
+            if (cl) cl.addEventListener('click', () => { if (si) { si.value = ''; cl.style.display='none'; } Filters.apply(); });
             ['schoolclass-filter','term-filter','session-filter'].forEach(id => { const el=document.getElementById(id); if (el) el.addEventListener('change', () => Filters.apply()); });
             document.getElementById('filterBtn')?.addEventListener('click', () => Filters.apply());
             document.getElementById('resetFiltersBtn')?.addEventListener('click', () => Filters.reset());
@@ -2321,15 +2400,16 @@
                 class:   document.getElementById('schoolclass-filter')?.value||'all',
                 term:    document.getElementById('term-filter')?.value||'all',
                 session: document.getElementById('session-filter')?.value||'all',
+                status:  'all', gender: 'all'
             };
             AppState.pagination.currentPage = 1;
             SM.fetch();
         },
         reset: () => {
-            const si = document.getElementById('search-input'); if (si) si.value='';
-            const cl = document.getElementById('clear-search'); if (cl) cl.style.display='none';
+            ['search-input'].forEach(id => { const el=document.getElementById(id); if (el) el.value=''; });
             ['schoolclass-filter','term-filter','session-filter'].forEach(id => { const el=document.getElementById(id); if (el) el.value='all'; });
-            AppState.filters = {search:'',class:'all',term:'all',session:'all'};
+            const cl = document.getElementById('clear-search'); if (cl) cl.style.display='none';
+            AppState.filters = { search:'',class:'all',status:'all',gender:'all',session:'all',term:'all' };
             AppState.pagination.currentPage = 1;
             SM.fetch();
         }
@@ -2356,7 +2436,7 @@
             try {
                 const r = await API.bulkTerm({student_ids:ids,schoolclassId:classId,termId,sessionId,is_current:true});
                 bootstrap.Modal.getInstance(document.getElementById('updateCurrentTermModal'))?.hide();
-                Swal.close(); U.ok(r.message||'Term updated successfully.'); await SM.fetch();
+                Swal.close(); U.ok(r.message||'Term updated.'); await SM.fetch();
             } catch(e) { Swal.close(); U.err(e.response?.data?.message||'Failed to update term.'); }
         }
     };
@@ -2374,7 +2454,7 @@
             API.byClassSession(cid,sid).then(r => {
                 Swal.close();
                 if (r.success) BSM.render(r.students, r.stats);
-                else U.err(r.message||'Failed to load students.');
+                else U.err(r.message||'Failed to load.');
             }).catch(e => { Swal.close(); U.err(e.response?.data?.message||e.message); });
         },
         render: (students, stats) => {
@@ -2389,34 +2469,29 @@
                   </div>
                   <div class="modal-body p-4">
                     <div class="row g-3 mb-4">
-                      <div class="col-6 col-md-3"><div class="sm-stat c-blue"><div class="sm-stat-value">${stats?.total||0}</div><div class="sm-stat-label">Total</div></div></div>
-                      <div class="col-6 col-md-3"><div class="sm-stat c-green"><div class="sm-stat-value">${stats?.active||0}</div><div class="sm-stat-label">Active</div></div></div>
-                      <div class="col-6 col-md-3"><div class="sm-stat c-orange" style="--sm-stat-color:#6b7280"><div class="sm-stat-value">${stats?.inactive||0}</div><div class="sm-stat-label">Inactive</div></div></div>
-                      <div class="col-6 col-md-3"><div class="sm-stat c-amber"><div class="sm-stat-value">${stats?.new_students||0}</div><div class="sm-stat-label">New</div></div></div>
+                      <div class="col-6 col-md-3"><div class="sm-stat c-blue"><div class="sm-stat-value">${stats.total}</div><div class="sm-stat-label">Total</div></div></div>
+                      <div class="col-6 col-md-3"><div class="sm-stat c-green"><div class="sm-stat-value">${stats.active}</div><div class="sm-stat-label">Active</div></div></div>
+                      <div class="col-6 col-md-3"><div class="sm-stat c-orange" style="--sm-stat-color:#6b7280"><div class="sm-stat-value">${stats.inactive}</div><div class="sm-stat-label">Inactive</div></div></div>
+                      <div class="col-6 col-md-3"><div class="sm-stat c-amber"><div class="sm-stat-value">${stats.new_students}</div><div class="sm-stat-label">New</div></div></div>
                     </div>
-                    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
-                      <div class="form-check mb-0">
-                        <input class="form-check-input" type="checkbox" id="bsSelectAll">
-                        <label class="form-check-label fw-semibold" for="bsSelectAll">Select All</label>
-                      </div>
-                      <div class="d-flex flex-wrap gap-2">
-                        <div class="dropdown">
-                          <button class="btn btn-outline-success btn-sm fw-semibold dropdown-toggle" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-check me-1"></i>Set Activity Status
-                          </button>
-                          <ul class="dropdown-menu shadow border-0 rounded-3 p-2">
-                            <li><a class="dropdown-item rounded-2" href="#" onclick="BulkStatusManager.bulkUpdateStatus('activity_status','Active')"><i class="fas fa-check-circle text-success me-2"></i>Active</a></li>
-                            <li><a class="dropdown-item rounded-2" href="#" onclick="BulkStatusManager.bulkUpdateStatus('activity_status','Inactive')"><i class="fas fa-pause-circle text-secondary me-2"></i>Inactive</a></li>
-                          </ul>
+                    <div class="sm-panel mb-3">
+                      <div class="sm-panel-header">
+                        <div class="d-flex align-items-center gap-3">
+                          <div class="form-check mb-0"><input class="form-check-input" type="checkbox" id="bsSelectAll"><label class="form-check-label fw-semibold" for="bsSelectAll">Select All</label></div>
                         </div>
-                        <div class="dropdown">
-                          <button class="btn btn-outline-warning btn-sm fw-semibold dropdown-toggle" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-tag me-1"></i>Set Student Type
-                          </button>
-                          <ul class="dropdown-menu shadow border-0 rounded-3 p-2">
-                            <li><a class="dropdown-item rounded-2" href="#" onclick="BulkStatusManager.bulkUpdateStatus('student_type','old')"><i class="fas fa-history text-secondary me-2"></i>Old Student</a></li>
-                            <li><a class="dropdown-item rounded-2" href="#" onclick="BulkStatusManager.bulkUpdateStatus('student_type','new')"><i class="fas fa-star text-warning me-2"></i>New Student</a></li>
-                          </ul>
+                        <div class="d-flex flex-wrap gap-2">
+                          <div class="dropdown"><button class="btn btn-outline-success btn-sm dropdown-toggle" data-bs-toggle="dropdown"><i class="fas fa-user-check me-1"></i>Activity Status</button>
+                            <ul class="dropdown-menu shadow border-0 rounded-3 p-2">
+                              <li><a class="dropdown-item rounded-2" href="#" onclick="BulkStatusManager.bulkUpdateStatus('activity_status','Active')"><i class="fas fa-check-circle text-success me-2"></i>Active</a></li>
+                              <li><a class="dropdown-item rounded-2" href="#" onclick="BulkStatusManager.bulkUpdateStatus('activity_status','Inactive')"><i class="fas fa-pause-circle text-secondary me-2"></i>Inactive</a></li>
+                            </ul>
+                          </div>
+                          <div class="dropdown"><button class="btn btn-outline-warning btn-sm dropdown-toggle" data-bs-toggle="dropdown"><i class="fas fa-user-tag me-1"></i>Student Type</button>
+                            <ul class="dropdown-menu shadow border-0 rounded-3 p-2">
+                              <li><a class="dropdown-item rounded-2" href="#" onclick="BulkStatusManager.bulkUpdateStatus('student_type','old')"><i class="fas fa-history text-secondary me-2"></i>Old Student</a></li>
+                              <li><a class="dropdown-item rounded-2" href="#" onclick="BulkStatusManager.bulkUpdateStatus('student_type','new')"><i class="fas fa-star text-warning me-2"></i>New Student</a></li>
+                            </ul>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -2428,26 +2503,24 @@
                     </div>
                   </div>
                   <div class="modal-footer">
-                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal"><i class="fas fa-times me-1"></i>Close</button>
-                    <button type="button" class="btn-pg" onclick="BulkStatusManager.refreshData()"><i class="fas fa-sync-alt me-1"></i>Refresh Data</button>
+                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn-pg" onclick="BulkStatusManager.refreshData()"><i class="fas fa-sync-alt me-1"></i>Refresh</button>
                   </div>
                 </div>
               </div>
             </div>`;
             document.body.insertAdjacentHTML('beforeend', html);
-            ['bsSelectAll','bsSelectAllTable'].forEach(id => {
-                document.getElementById(id)?.addEventListener('change', e => {
-                    document.querySelectorAll('.bs-checkbox').forEach(cb => cb.checked = e.target.checked);
-                });
-            });
+            // Select all
+            document.getElementById('bsSelectAll')?.addEventListener('change', e => { document.querySelectorAll('.bs-checkbox').forEach(cb => cb.checked = e.target.checked); });
+            document.getElementById('bsSelectAllTable')?.addEventListener('change', e => { document.querySelectorAll('.bs-checkbox').forEach(cb => cb.checked = e.target.checked); });
             new bootstrap.Modal(document.getElementById('bulkStatusUpdateModal')).show();
         },
         rows: students => {
             if (!students?.length) return '<tr><td colspan="7" class="text-center py-4 text-muted">No students found</td></tr>';
             return students.map(s => {
                 const init = U.initials(s.firstname, s.lastname);
-                const act  = s.student_status==='Active' ? '<span class="sm-badge badge-active" style="font-size:11px;">Active</span>' : '<span class="sm-badge badge-inactive" style="font-size:11px;">Inactive</span>';
-                const type = s.statusId==2 ? '<span class="sm-badge badge-new" style="font-size:11px;">New</span>' : '<span class="sm-badge badge-old" style="font-size:11px;">Old</span>';
+                const act = s.student_status==='Active' ? '<span class="sm-badge badge-active" style="font-size:11px;">Active</span>' : '<span class="sm-badge badge-inactive" style="font-size:11px;">Inactive</span>';
+                const type= s.statusId==2 ? '<span class="sm-badge badge-new" style="font-size:11px;">New</span>' : '<span class="sm-badge badge-old" style="font-size:11px;">Old</span>';
                 return `<tr data-student-id="${s.id}">
                   <td><input class="form-check-input bs-checkbox" type="checkbox" value="${s.id}"></td>
                   <td><div class="d-flex align-items-center gap-2">
@@ -2456,15 +2529,9 @@
                   </div></td>
                   <td><span style="font-family:monospace;font-size:12px;">${U.esc(s.admissionNo||'N/A')}</span></td>
                   <td>${U.esc(s.schoolclass||'')} ${U.esc(s.arm||'')}</td>
-                  <td><div class="d-flex align-items-center gap-1">${act}
-                    <button class="act-btn act-edit" style="padding:0 8px;height:28px;" onclick="BulkStatusManager.toggleOne(${s.id},'activity')" title="Toggle Status">
-                      <i class="fas fa-exchange-alt" style="font-size:11px;"></i>
-                    </button></div></td>
-                  <td><div class="d-flex align-items-center gap-1">${type}
-                    <button class="act-btn act-edit" style="padding:0 8px;height:28px;" onclick="BulkStatusManager.toggleOne(${s.id},'type')" title="Toggle Type">
-                      <i class="fas fa-exchange-alt" style="font-size:11px;"></i>
-                    </button></div></td>
-                  <td><button class="act-btn act-view" style="padding:0 10px;" onclick="StudentManager.viewStudent(${s.id})"><i class="fas fa-eye me-1"></i>View</button></td>
+                  <td><div class="d-flex align-items-center gap-1">${act}<button class="act-btn act-edit" style="width:26px;height:26px;" onclick="BulkStatusManager.toggleOne(${s.id},'activity')"><i class="fas fa-exchange-alt" style="font-size:11px;"></i></button></div></td>
+                  <td><div class="d-flex align-items-center gap-1">${type}<button class="act-btn act-edit" style="width:26px;height:26px;" onclick="BulkStatusManager.toggleOne(${s.id},'type')"><i class="fas fa-exchange-alt" style="font-size:11px;"></i></button></div></td>
+                  <td><button class="act-btn act-view" onclick="StudentManager.viewStudent(${s.id})"><i class="fas fa-eye"></i></button></td>
                 </tr>`;
             }).join('');
         },
@@ -2478,20 +2545,20 @@
             try {
                 const r = await API.bulkStatus({student_ids:ids,update_type:type,value});
                 Swal.close(); if (r.success) { U.ok(r.message); BSM.refreshData(); }
-            } catch(e) { Swal.close(); U.err(e.response?.data?.message||e.message||'Failed.'); }
+            } catch(e) { Swal.close(); U.err(e.response?.data?.message||e.message); }
         },
         toggleOne: async (id, type) => {
+            const row = document.querySelector(`tr[data-student-id="${id}"]`);
             const s = AppState.cache.students.get(String(id));
+            if (!s) { U.err('Cannot find student data.'); return; }
             const updateType = type==='activity' ? 'activity_status' : 'student_type';
-            const newVal = type==='activity'
-                ? (s?.student_status==='Active'?'Inactive':'Active')
-                : (s?.statusId==1?'new':'old');
+            const newVal = type==='activity' ? (s.student_status==='Active'?'Inactive':'Active') : (s.statusId==1?'new':'old');
             if (!await U.confirm('Confirm Update', `Change to ${newVal}?`, 'Yes, update')) return;
             Swal.fire({title:'Updating…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
             try {
                 const r = await API.bulkStatus({student_ids:[id],update_type:updateType,value:newVal});
-                Swal.close(); if (r.success) { U.ok('Updated successfully.'); BSM.refreshData(); }
-            } catch(e) { Swal.close(); U.err('Failed to update.'); }
+                Swal.close(); if (r.success) { U.ok('Updated'); BSM.refreshData(); }
+            } catch(e) { Swal.close(); U.err('Failed.'); }
         },
         refreshData: async () => {
             if (!AppState.bulkStatusFilters) return;
@@ -2501,8 +2568,9 @@
                 if (r.success) {
                     const tbody = document.querySelector('#bulkStatusUpdateModal tbody');
                     if (tbody) tbody.innerHTML = BSM.rows(r.students);
+                    // Update stats
                     const vals = document.querySelectorAll('#bulkStatusUpdateModal .sm-stat-value');
-                    if (vals.length>=4) { vals[0].textContent=r.stats?.total||0; vals[1].textContent=r.stats?.active||0; vals[2].textContent=r.stats?.inactive||0; vals[3].textContent=r.stats?.new_students||0; }
+                    if (vals.length >= 4) { vals[0].textContent=r.stats.total; vals[1].textContent=r.stats.active; vals[2].textContent=r.stats.inactive; vals[3].textContent=r.stats.new_students; }
                 }
                 Swal.close();
             } catch(e) { Swal.close(); U.err('Failed to refresh.'); }
@@ -2517,15 +2585,12 @@
             const tid = document.getElementById('term-filter')?.value;
             const sid = document.getElementById('session-filter')?.value;
             if (!tid||tid==='all'||!sid||sid==='all') { U.err('Please select both a term and a session first.','Selection Required'); return; }
-            AppState.termFilters = {
-                term_id:tid, session_id:sid,
-                class_id: document.getElementById('schoolclass-filter')?.value !== 'all' ? document.getElementById('schoolclass-filter')?.value : null
-            };
+            AppState.termFilters = {term_id:tid, session_id:sid, class_id: document.getElementById('schoolclass-filter')?.value !== 'all' ? document.getElementById('schoolclass-filter')?.value : null};
             Swal.fire({title:'Loading…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
             API.inTerm(AppState.termFilters).then(r => {
                 Swal.close();
                 if (r.success) TRM.render(r.students, r.total);
-                else U.err(r.message||'Failed to load.');
+                else U.err(r.message||'Failed.');
             }).catch(e => { Swal.close(); U.err(e.response?.data?.message||e.message); });
         },
         render: (students, total) => {
@@ -2541,27 +2606,23 @@
                   <div class="modal-body p-4">
                     <div class="alert alert-info border-0 rounded-3 d-flex align-items-center gap-3 mb-4">
                       <i class="fas fa-info-circle fa-2x"></i>
-                      <div><strong>Total Registered: ${total||0}</strong><br><small>Manage term registrations below</small></div>
+                      <div><strong>Total Registered: ${total}</strong><br><small>Manage term registrations below</small></div>
                     </div>
                     <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
                       <div class="form-check"><input class="form-check-input" type="checkbox" id="trmSelectAll"><label class="form-check-label fw-semibold" for="trmSelectAll">Select All</label></div>
-                      <button class="btn btn-danger btn-sm rounded-3 fw-semibold" onclick="TermRegistrationManager.bulkRemove()">
-                        <i class="fas fa-user-minus me-1"></i>Remove Selected from Term
-                      </button>
+                      <button class="btn btn-danger btn-sm rounded-3" onclick="TermRegistrationManager.bulkRemove()"><i class="fas fa-user-minus me-1"></i>Remove Selected from Term</button>
                     </div>
                     <div class="row g-3" id="termStudentsContainer">${TRM.cards(students)}</div>
                   </div>
                   <div class="modal-footer">
-                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal"><i class="fas fa-times me-1"></i>Close</button>
+                    <button type="button" class="btn btn-light rounded-3" data-bs-dismiss="modal">Close</button>
                     <button type="button" class="btn-pg" onclick="TermRegistrationManager.refreshData()"><i class="fas fa-sync-alt me-1"></i>Refresh</button>
                   </div>
                 </div>
               </div>
             </div>`;
             document.body.insertAdjacentHTML('beforeend', html);
-            document.getElementById('trmSelectAll')?.addEventListener('change', e => {
-                document.querySelectorAll('.trm-checkbox').forEach(cb => cb.checked = e.target.checked);
-            });
+            document.getElementById('trmSelectAll')?.addEventListener('change', e => { document.querySelectorAll('.trm-checkbox').forEach(cb => cb.checked = e.target.checked); });
             new bootstrap.Modal(document.getElementById('termStudentsModal')).show();
         },
         cards: students => {
@@ -2570,9 +2631,9 @@
                 const init = ((s.firstname||'').charAt(0)+(s.lastname||'').charAt(0)).toUpperCase()||'ST';
                 const cur  = s.is_current ? '<span class="badge bg-success position-absolute top-0 end-0 m-2" style="font-size:10px;">Current</span>' : '';
                 return `<div class="col-md-4 col-lg-3">
-                  <div class="stu-card mb-3" data-registration-id="${s.registration_id}">
-                    ${cur}
-                    <div class="stu-card-header" style="min-height:90px;">
+                  <div class="stu-card" data-registration-id="${s.registration_id}" style="margin-bottom:12px;">
+                    <div class="stu-card-header" style="min-height:80px;">
+                      ${cur}
                       <div class="stu-card-checkbox"><input class="form-check-input trm-checkbox" type="checkbox" value="${s.registration_id}" style="border:2px solid rgba(255,255,255,.8);width:18px;height:18px;"></div>
                       <div class="stu-card-name">${U.esc(s.fullname||'')}</div>
                       <span class="stu-card-adm">${U.esc(s.admissionNo||'N/A')}</span>
@@ -2582,7 +2643,7 @@
                         <div><div class="stu-card-info-label">Class</div><div class="stu-card-info-val">${U.esc(s.class||'')} ${U.esc(s.arm||'')}</div></div>
                         <div><div class="stu-card-info-label">Gender</div><div class="stu-card-info-val">${U.esc(s.gender||'—')}</div></div>
                       </div>
-                      <button class="btn btn-outline-danger btn-sm w-100 rounded-3 fw-semibold" style="font-size:12px;"
+                      <button class="btn btn-outline-danger btn-sm w-100 rounded-3" style="font-size:12px;"
                               onclick="TermRegistrationManager.removeOne(${s.registration_id}, '${U.esc(s.fullname)}')">
                         <i class="fas fa-user-minus me-1"></i>Remove from Term
                       </button>
@@ -2596,11 +2657,7 @@
             Swal.fire({title:'Removing…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
             try {
                 const r = await API.rmTerm(regId); Swal.close();
-                if (r.success) {
-                    U.ok(r.message);
-                    const card = document.querySelector(`.stu-card[data-registration-id="${regId}"]`);
-                    card?.closest('.col-md-4,.col-lg-3')?.remove();
-                }
+                if (r.success) { U.ok(r.message); const card = document.querySelector(`.stu-card[data-registration-id="${regId}"]`); card?.closest('.col-md-4,.col-lg-3')?.remove(); }
             } catch(e) { Swal.close(); U.err('Failed to remove.'); }
         },
         bulkRemove: async () => {
@@ -2620,25 +2677,31 @@
                 const r = await API.inTerm(AppState.termFilters);
                 if (r.success) { const c = document.getElementById('termStudentsContainer'); if (c) c.innerHTML = TRM.cards(r.students); }
                 Swal.close();
-            } catch(e) { Swal.close(); U.err('Failed to refresh.'); }
+            } catch(e) { Swal.close(); U.err('Failed.'); }
         }
     };
 
     // ================================================================
-    // REPORT MANAGER
+    // REPORT MANAGER — FIXED DRAG & DROP
     // ================================================================
     const Report = {
         sortable: null,
         init: () => {
             const container = document.getElementById('columnsContainer');
-            if (!container || typeof Sortable === 'undefined') return;
+            if (!container) return;
+            if (typeof Sortable === 'undefined') { console.error('Sortable not loaded'); return; }
             if (Report.sortable) { try { Report.sortable.destroy(); } catch {} }
             Report.sortable = new Sortable(container, {
-                animation: 200, handle: '.drag-handle', draggable: '.draggable-item',
-                ghostClass: 'sortable-ghost', chosenClass: 'sortable-chosen',
+                animation: 200,
+                handle: '.drag-handle',
+                draggable: '.draggable-item',
+                ghostClass: 'sortable-ghost',
+                chosenClass: 'sortable-chosen',
+                dragClass: 'sortable-drag',
                 onEnd: () => { Report.updateOrder(); Report.updatePreview(); }
             });
             container.querySelectorAll('.column-checkbox').forEach(cb => { cb.onchange = () => { Report.updateOrder(); Report.updatePreview(); }; });
+            // Select/deselect all buttons
             document.getElementById('selectAllColumnsBtn')?.addEventListener('click', () => {
                 container.querySelectorAll('.column-checkbox').forEach(cb => cb.checked = true);
                 Report.updateOrder(); Report.updatePreview();
@@ -2647,7 +2710,8 @@
                 container.querySelectorAll('.column-checkbox').forEach(cb => cb.checked = false);
                 Report.updateOrder(); Report.updatePreview();
             });
-            Report.updateOrder(); Report.updatePreview();
+            Report.updateOrder();
+            Report.updatePreview();
         },
         updateOrder: () => {
             const container = document.getElementById('columnsContainer');
@@ -2656,12 +2720,13 @@
             const items = container.querySelectorAll('.draggable-item');
             const checked = Array.from(items).filter(el => el.querySelector('.column-checkbox')?.checked).map(el => el.dataset.column);
             orderInput.value = checked.join(',');
+            // Badge numbers
             let n = 0;
             items.forEach(el => {
                 let badge = el.querySelector('.order-badge');
                 if (el.querySelector('.column-checkbox')?.checked) {
                     n++;
-                    if (!badge) { badge = document.createElement('span'); badge.className = 'order-badge'; el.appendChild(badge); }
+                    if (!badge) { badge = document.createElement('span'); badge.className = 'order-badge'; el.style.position='relative'; el.appendChild(badge); }
                     badge.textContent = n;
                 } else { badge?.remove(); }
             });
@@ -2687,9 +2752,8 @@
                 else if (k==='columns_order') { params.columns_order = document.getElementById('columnsOrderInput')?.value||v; }
                 else if (v) params[k] = v;
             }
-            const fmtEl = form.querySelector('input[name="format"]:checked');
-            params.format = fmtEl?.value||'pdf';
-            params.orientation = form.querySelector('#orientation')?.value||'portrait';
+            if (!params.format) { const r = form.querySelector('input[name="format"]:checked'); params.format = r?.value||'pdf'; }
+            if (!params.orientation) { const o = form.querySelector('#orientation'); params.orientation = o?.value||'portrait'; }
             params.include_header = form.querySelector('input[name="include_header"]')?.checked ? '1' : '0';
             params.include_logo   = form.querySelector('input[name="include_logo"]')?.checked   ? '1' : '0';
             bootstrap.Modal.getInstance(document.getElementById('printStudentReportModal'))?.hide();
@@ -2720,16 +2784,17 @@
     document.getElementById('addStudentForm')?.addEventListener('submit', async e => {
         e.preventDefault();
         const form = e.target;
+        const fd = new FormData(form);
         Swal.fire({title:'Saving…',allowOutsideClick:false,didOpen:()=>Swal.showLoading()});
         try {
-            const r = await axios.post(form.action, new FormData(form), {headers:{'Content-Type':'multipart/form-data'}});
+            const r = await axios.post(form.action, fd, {headers:{'Content-Type':'multipart/form-data'}});
             if (r.data.success) {
                 bootstrap.Modal.getInstance(document.getElementById('addStudentModal'))?.hide();
-                Swal.close(); await SM.fetch(); U.ok(r.data.message||'Student registered successfully.');
+                await SM.fetch(); U.ok(r.data.message||'Student registered.');
                 form.reset();
-                const av = document.getElementById('addStudentAvatar'); if (av) av.src='https://via.placeholder.com/120x120/2563eb/ffffff?text=Photo';
-            } else { Swal.close(); U.err(r.data.message||'Failed to save student.'); }
-        } catch(err) { Swal.close(); U.err(err.response?.data?.message||err.response?.data?.errors?Object.values(err.response.data.errors).flat().join('\n'):'Failed to save student.'); }
+                const av = document.getElementById('addStudentAvatar'); if (av) av.src = 'https://via.placeholder.com/120x120/2563eb/ffffff?text=Photo';
+            }
+        } catch(err) { Swal.close(); U.err(err.response?.data?.message||'Failed to save student.'); }
     });
 
     document.getElementById('editStudentForm')?.addEventListener('submit', async e => {
@@ -2742,8 +2807,8 @@
             const r = await axios.post(form.action, fd, {headers:{'Content-Type':'multipart/form-data'}});
             if (r.data.success) {
                 bootstrap.Modal.getInstance(document.getElementById('editStudentModal'))?.hide();
-                Swal.close(); await SM.fetch(); U.ok(r.data.message||'Student updated successfully.');
-            } else { Swal.close(); U.err(r.data.message||'Failed to update student.'); }
+                await SM.fetch(); U.ok(r.data.message||'Student updated.');
+            } else { Swal.close(); U.err(r.data.message||'Failed.'); }
         } catch(err) { Swal.close(); U.err(err.response?.data?.message||'Failed to update student.'); }
     });
 
@@ -2765,53 +2830,50 @@
     document.getElementById('bulkStatusBtn')?.addEventListener('click', e => { e.preventDefault(); BSM.show(); });
     document.getElementById('manageTermBtn')?.addEventListener('click',  e => { e.preventDefault(); TRM.show(); });
 
+    // Report modal — init sortable when it opens
     document.getElementById('printStudentReportModal')?.addEventListener('show.bs.modal', () => {
         setTimeout(() => Report.init(), 200);
     });
 
     // ================================================================
-    // GLOBAL FUNCTIONS
+    // GLOBAL FUNCTIONS (used in templates / onclick attrs)
     // ================================================================
-    window.handleAvatarZoom = el => U.openZoom(el.dataset.zoomSrc||null, el.dataset.zoomName, el.dataset.zoomInit, el.dataset.zoomDetail);
-    window.openZoomFromView = el => U.openZoom(el.dataset.zoomSrc||null, el.dataset.zoomName, el.dataset.zoomInit, el.dataset.zoomDetail);
-
+    window.handleAvatarZoom = el => {
+        const src    = el.dataset.zoomSrc;
+        const name   = el.dataset.zoomName;
+        const init   = el.dataset.zoomInit;
+        const detail = el.dataset.zoomDetail;
+        U.openZoom(src || null, name, init, detail);
+    };
+    window.openZoomFromView = el => {
+        const src    = el.dataset.zoomSrc;
+        const name   = el.dataset.zoomName;
+        const init   = el.dataset.zoomInit;
+        const detail = el.dataset.zoomDetail;
+        U.openZoom(src||null, name, init, detail);
+    };
     window.updateAdmissionNumber = prefix => {
-        const pref = prefix ? prefix : '';
-        const yrId = pref ? `${pref}AdmissionYear` : 'admissionYear';
-        const noId = pref ? `${pref}AdmissionNo`   : 'admissionNo';
-        const yr   = document.getElementById(yrId)?.value || new Date().getFullYear();
-        const input= document.getElementById(noId);
+        const yr = document.getElementById(`${prefix?prefix+'A':'a'}dmissionYear`)?.value || new Date().getFullYear();
+        const input = document.getElementById(`${prefix?prefix+'A':'a'}dmissionNo`);
         if (input) { const base = `TCC/${yr}/`; if (!input.value.startsWith(base)) input.value = `${base}0001`; }
     };
-
     window.toggleAdmissionInput = prefix => {
-        const pref    = prefix ? prefix : '';
-        const modeId  = pref ? `${pref}AdmissionManual` : 'admissionManual';
-        const autoId  = pref ? `${pref}AdmissionAuto`   : 'admissionAuto';
-        const noId    = pref ? `${pref}AdmissionNo`     : 'admissionNo';
-        const manual  = document.getElementById(modeId);
-        const auto    = document.getElementById(autoId);
-        const input   = document.getElementById(noId);
-        if (!input) return;
-        const isAuto  = auto?.checked;
-        input.readOnly = isAuto;
+        const p = prefix ? prefix.charAt(0).toUpperCase() + prefix.slice(1) : '';
+        const mode = document.querySelector(`input[name="admissionMode"]#${prefix?prefix:''}${p?'':prefix}AdmissionAuto, input[name="admissionMode"]#${prefix}AdmissionAuto, input[name="admissionMode"]#admissionAuto`);
+        const selMode = prefix ? document.querySelector(`input[name="admissionMode"][id^="${prefix}"]:checked`) : document.querySelector('input[name="admissionMode"]:checked');
+        const input = document.getElementById(`${prefix?prefix+'A':'a'}dmissionNo`);
+        if (input && selMode) input.readOnly = selMode.value === 'auto';
     };
-
     window.previewImage = (input, targetId='addStudentAvatar') => {
         const f = input.files[0]; if (!f) return;
         const reader = new FileReader();
         reader.onload = e => { const img = document.getElementById(targetId); if (img) img.src = e.target.result; };
         reader.readAsDataURL(f);
     };
-
-    window.calculateAge = (dob, ageInputId) => {
-        const el = document.getElementById(ageInputId); if (el) el.value = U.age(dob)||'';
-    };
-
+    window.calculateAge = (dob, ageInputId) => { const el = document.getElementById(ageInputId); if (el) el.value = U.age(dob)||''; };
     window.callNumber = id => { const p = document.getElementById(id)?.textContent; if (p && p !== '—') window.location.href = `tel:${p}`; };
     window.sendSMS    = id => { const p = document.getElementById(id)?.textContent; if (p && p !== '—') window.location.href = `sms:${p}`; };
     window.sendEmail  = id => { const em = document.getElementById(id)?.textContent; if (em && em !== '—') window.location.href = `mailto:${em}`; };
-
     window.editStudentFromView = () => {
         const id = ViewModal.currentId;
         if (id) { bootstrap.Modal.getInstance(document.getElementById('viewStudentModal'))?.hide(); SM.edit(id); }
@@ -2819,7 +2881,7 @@
     window.printStudentProfile = () => window.print();
     window.refreshTermHistory  = () => { if (ViewModal.currentId) ViewModal.fetchTerm(ViewModal.currentId); };
 
-    // Expose to inline onclick handlers in dynamically generated modals
+    // Expose managers (needed by inline onclick in dynamically created modals)
     window.BulkStatusManager       = BSM;
     window.TermRegistrationManager = TRM;
     window.StudentManager          = { viewStudent: id => SM.view(id) };
