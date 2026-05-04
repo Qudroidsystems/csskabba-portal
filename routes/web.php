@@ -451,15 +451,15 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
     // Route::get('/scoresheet/download-marks-sheet', [MyScoreSheetController::class, 'downloadMarkSheet'])->name('scoresheet.download-marks-sheet');
     // Route::post('/subjectscoresheet/bulk-update', [MyScoreSheetController::class, 'bulkUpdateScores']) ->name('subjectscoresheet.bulk-update');
 
-    Route::prefix('school-info')->name('admin.school-info.')->group(function () {
+   Route::prefix('school-info')->name('admin.school-info.')->group(function () {
         Route::get('/', [SchoolInformationController::class, 'index'])->name('index');
         Route::post('/', [SchoolInformationController::class, 'store'])->name('store');
         Route::match(['PUT', 'PATCH', 'POST'], '/{id}', [SchoolInformationController::class, 'update'])->name('update');
         Route::delete('/{id}', [SchoolInformationController::class, 'destroy'])->name('destroy');
         Route::get('/{id}', [SchoolInformationController::class, 'show'])->name('show');
         Route::get('/{id}/edit-json', [SchoolInformationController::class, 'editJson'])->name('edit-json');
+        Route::post('/bulk-delete', [SchoolInformationController::class, 'bulkDestroy'])->name('bulk-destroy'); // Add this line
     });
-
     // Route::resource('schoolbill', SchoolBillController::class);
     // Route::get('/billid/{billid}', [SchoolBillController::class, 'deletebill'])->name('schoolbill.deletebill');
     // Route::post('billid', [SchoolBillController::class, 'updatebill'])->name('schoolbill.updateschoolbill');
