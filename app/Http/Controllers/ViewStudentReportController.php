@@ -688,12 +688,17 @@ class ViewStudentReportController extends Controller
                 $schoolInfo->id                    = 0;
                 $schoolInfo->school_name           = 'School Name Not Found';
                 $schoolInfo->school_logo           = null;
+                $schoolInfo->school_stamp          = null; // ADD THIS LINE
                 $schoolInfo->school_motto          = 'Motto Not Found';
                 $schoolInfo->school_address        = 'Address Not Found';
                 $schoolInfo->school_phone          = 'Phone Not Found';
                 $schoolInfo->date_school_opened    = null;
                 $schoolInfo->date_next_term_begins = null;
+            }else {
+               // Ensure school_stamp is included
+               $schoolInfo->school_stamp = $schoolInfo->school_stamp ?? null;
             }
+
 
             $promotionStatusValue = null;
             try {
