@@ -2,7 +2,6 @@
 
 @section('content')
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 
 <style>
     :root {
@@ -126,7 +125,7 @@
         margin-top: -8px;
     }
 
-    /* Table Styles */
+    /* Table Styles - Original */
     .school-table th {
         background: var(--school-primary);
         color: #fff;
@@ -145,7 +144,7 @@
         background: #eff6ff;
     }
 
-    /* Badges */
+    /* Phone Badges */
     .phone-badge {
         display: inline-block;
         background: #f3f4f6;
@@ -226,21 +225,50 @@
         display: flex;
     }
 
+    /* Original Button Styles */
+    .btn-subtle-primary {
+        color: #2563eb;
+        background-color: rgba(37,99,235,.1);
+        border: none;
+    }
+    .btn-subtle-primary:hover {
+        background-color: rgba(37,99,235,.2);
+        color: #1d4ed8;
+    }
+    .btn-subtle-secondary {
+        color: #6b7280;
+        background-color: rgba(107,114,128,.1);
+        border: none;
+    }
+    .btn-subtle-secondary:hover {
+        background-color: rgba(107,114,128,.2);
+        color: #4b5563;
+    }
+    .btn-subtle-danger {
+        color: #dc2626;
+        background-color: rgba(220,38,38,.1);
+        border: none;
+    }
+    .btn-subtle-danger:hover {
+        background-color: rgba(220,38,38,.2);
+        color: #b91c1c;
+    }
+    .btn-icon {
+        width: 32px;
+        height: 32px;
+        padding: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 6px;
+    }
+
     /* Cropper Preview */
     .cropper-preview img {
         max-width: 100px;
         max-height: 100px;
         border-radius: 8px;
         border: 1px solid var(--school-border);
-    }
-
-    /* Spinner Animation */
-    .spin {
-        animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
     }
 </style>
 
@@ -320,13 +348,6 @@
         </div>
     @endif
 
-    @if (session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    @endif
-
     {{-- Schools List --}}
     <div class="card border-0 shadow-sm">
         <div class="card-header bg-white py-3 border-bottom d-flex align-items-center">
@@ -339,10 +360,10 @@
             <div class="flex-shrink-0">
                 <div class="d-flex flex-wrap align-items-start gap-2">
                     <button class="btn btn-subtle-danger d-none" id="remove-actions">
-                        <i class="ri-delete-bin-2-line"></i> Delete Selected
+                        <i class="ri-delete-bin-2-line"></i>
                     </button>
                     @can('Create schoolinformation')
-                        <button type="button" class="btn btn-primary" onclick="openAddModal()">
+                        <button type="button" class="btn btn-primary add-btn" onclick="openAddModal()">
                             <i class="ri-add-line me-1"></i> Add School
                         </button>
                     @endcan
@@ -390,12 +411,10 @@
             </div>
 
             <div class="table-responsive">
-                <table class="table school-table w-100 mb-0">
-                    <thead>
+                <table class="table school-table align-middle table-nowrap mb-0">
+                    <thead class="table-active">
                         <tr>
-                            <th width="40">
-                                <input type="checkbox" id="checkAll" class="form-check-input">
-                            </th>
+                            <th width="40"><div class="form-check"><input class="form-check-input" type="checkbox" id="checkAll"></div></th>
                             <th>Name</th>
                             <th>Email</th>
                             <th>Phone(s)</th>
@@ -405,7 +424,7 @@
                             <th>Date Closed</th>
                             <th>Next Term</th>
                             <th>Created</th>
-                            <th width="120">Actions</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -429,8 +448,8 @@
                                             <a href="{{ route('admin.school-info.show', $school->id) }}" class="text-reset fw-medium">{{ $school->school_name }}</a>
                                         </div>
                                     </div>
-                                </td>
-                                <td>{{ $school->school_email }}</td>
+                                </div>
+                                <td>{{ $school->school_email }}</div>
                                 <td>
                                     @php
                                         $phones = is_array($school->school_phones) ? $school->school_phones : json_decode($school->school_phones ?? '[]', true);
@@ -442,31 +461,43 @@
                                     @else
                                         -
                                     @endif
-                                </td>
+                                </div>
                                 <td>
                                     <span class="badge bg-{{ $school->is_active ? 'success' : 'secondary' }}">
                                         {{ $school->is_active ? 'Active' : 'Inactive' }}
                                     </span>
-                                </td>
-                                <td>{{ $school->no_of_times_school_opened }}</td>
-                                <td>{{ $school->date_school_opened ? $school->date_school_opened->format('d M Y') : '-' }}</td>
-                                <td>{{ $school->date_school_closed ? $school->date_school_closed->format('d M Y') : '-' }}</td>
-                                <td>{{ $school->date_next_term_begins ? $school->date_next_term_begins->format('d M Y') : '-' }}</td>
-                                <td>{{ $school->created_at->format('d M Y') }}</td>
+                                </div>
+                                <td>{{ $school->no_of_times_school_opened }}</div>
+                                <td>{{ $school->date_school_opened ? $school->date_school_opened->format('Y-m-d') : '-' }}</div>
+                                <td>{{ $school->date_school_closed ? $school->date_school_closed->format('Y-m-d') : '-' }}</div>
+                                <td>{{ $school->date_next_term_begins ? $school->date_next_term_begins->format('Y-m-d') : '-' }}</div>
+                                <td>{{ $school->created_at->format('Y-m-d') }}</div>
                                 <td>
-                                    <div class="d-flex gap-2">
-                                        <a href="{{ route('admin.school-info.show', $school->id) }}" class="btn btn-sm btn-soft-primary" title="View">
-                                            <i class="ri-eye-line"></i>
-                                        </a>
-                                        <button type="button" class="btn btn-sm btn-soft-secondary edit-school-btn" data-id="{{ $school->id }}" data-name="{{ $school->school_name }}" title="Edit">
-                                            <i class="ri-pencil-line"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-sm btn-soft-danger delete-school-btn" data-id="{{ $school->id }}" data-name="{{ $school->school_name }}" title="Delete">
-                                            <i class="ri-delete-bin-line"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </table>
+                                    <ul class="d-flex gap-2 list-unstyled mb-0">
+                                        @can('View schoolinformation')
+                                            <li>
+                                                <a href="{{ route('admin.school-info.show', $school->id) }}" class="btn btn-subtle-primary btn-icon btn-sm" title="View">
+                                                    <i class="ph-eye"></i>
+                                                </a>
+                                            </li>
+                                        @endcan
+                                        @can('Update schoolinformation')
+                                            <li>
+                                                <button type="button" class="btn btn-subtle-secondary btn-icon btn-sm edit-school-btn" data-id="{{ $school->id }}" data-name="{{ $school->school_name }}" title="Edit">
+                                                    <i class="ph-pencil"></i>
+                                                </button>
+                                            </li>
+                                        @endcan
+                                        @can('Delete schoolinformation')
+                                            <li>
+                                                <button type="button" class="btn btn-subtle-danger btn-icon btn-sm delete-school-btn" data-id="{{ $school->id }}" data-name="{{ $school->school_name }}" title="Delete">
+                                                    <i class="ph-trash"></i>
+                                                </button>
+                                            </li>
+                                        @endcan
+                                    </ul>
+                                </div>
+                            </tr>
                         @empty
                             <tr>
                                 <td colspan="11" class="text-center py-5">No schools found. Click "Add School" to create one.</td>
@@ -495,16 +526,16 @@
 
 {{-- ADD/EDIT SCHOOL MODAL --}}
 <div class="modal fade" id="schoolModal" tabindex="-1" data-bs-backdrop="static" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-hero-bar">
+            <div class="modal-header">
+                <h5 id="modalTitle" class="modal-title">Add School</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                <h5 id="modalTitle"><i class="ri-add-line me-2"></i>Add School</h5>
             </div>
             <form id="schoolForm" enctype="multipart/form-data">
                 @csrf
                 <input type="hidden" id="schoolId" name="id">
-                <div class="modal-body p-4">
+                <div class="modal-body">
                     <div class="alert alert-danger d-none" id="formErrors"></div>
 
                     <div class="row">
@@ -542,7 +573,6 @@
                             <button type="button" class="btn btn-sm btn-outline-primary add-phone-btn" onclick="addPhoneInput()">
                                 <i class="ri-add-line me-1"></i>Add Another Phone Number
                             </button>
-                            <small class="text-muted d-block mt-2">Add at least one phone number.</small>
                         </div>
                     </div>
 
@@ -555,7 +585,7 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <label class="form-label">Motto / Slogan</label>
+                                <label class="form-label">Motto</label>
                                 <input type="text" id="school_motto" name="school_motto" class="form-control" placeholder="Enter school motto">
                             </div>
                         </div>
@@ -591,7 +621,7 @@
                         </div>
                         <div class="col-md-6">
                             <div class="mb-3">
-                                <div class="form-check form-switch mt-4">
+                                <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" id="is_active" name="is_active" value="1">
                                     <label class="form-check-label" for="is_active">Set as Active School</label>
                                     <small class="text-muted d-block mt-1">Only one school can be active at a time</small>
@@ -601,8 +631,8 @@
                     </div>
 
                     {{-- Logo Uploads Section --}}
-                    <hr class="my-4">
-                    <h6 class="fw-semibold mb-3"><i class="ri-image-line me-2"></i>School Assets</h6>
+                    <hr>
+                    <h6 class="fw-semibold mb-3">School Assets</h6>
 
                     <div class="row">
                         <div class="col-md-4">
@@ -611,28 +641,15 @@
                                     <h6 class="card-title mb-0">School Logo</h6>
                                 </div>
                                 <div class="card-body">
-                                    <div class="mb-3">
-                                        <label class="form-label">Upload Logo</label>
-                                        <input type="file" id="school_logo" name="school_logo" class="form-control" accept="image/jpeg,image/png,image/jpg,image/webp">
-                                        <small class="text-muted">Recommended: 300x300px</small>
-                                    </div>
-                                    <div id="school-logo-cropper-container" class="d-none">
-                                        <div class="cropper-container mb-3">
-                                            <img id="school-logo-cropper" style="max-width: 100%; max-height: 200px;">
-                                        </div>
-                                        <div class="cropper-controls">
-                                            <div class="row g-2">
-                                                <div class="col-6">
-                                                    <input type="number" id="school-crop-width" class="form-control form-control-sm" placeholder="Width" value="300">
-                                                </div>
-                                                <div class="col-6">
-                                                    <input type="number" id="school-crop-height" class="form-control form-control-sm" placeholder="Height" value="300">
-                                                </div>
-                                            </div>
-                                            <div class="mt-2">
-                                                <button type="button" id="school-crop-btn" class="btn btn-primary btn-sm">Crop</button>
-                                                <button type="button" id="school-reset-crop-btn" class="btn btn-secondary btn-sm">Reset</button>
-                                            </div>
+                                    <input type="file" id="school_logo" name="school_logo" class="form-control" accept="image/jpeg,image/png,image/jpg,image/webp">
+                                    <small class="text-muted">Recommended: 300x300px</small>
+                                    <div id="school-logo-cropper-container" class="d-none mt-2">
+                                        <img id="school-logo-cropper" style="max-width: 100%; max-height: 200px;">
+                                        <div class="mt-2">
+                                            <input type="number" id="school-crop-width" class="form-control form-control-sm d-inline-block w-25" placeholder="W" value="300">
+                                            <input type="number" id="school-crop-height" class="form-control form-control-sm d-inline-block w-25" placeholder="H" value="300">
+                                            <button type="button" id="school-crop-btn" class="btn btn-primary btn-sm">Crop</button>
+                                            <button type="button" id="school-reset-crop-btn" class="btn btn-secondary btn-sm">Reset</button>
                                         </div>
                                     </div>
                                     <div id="school-logo-preview" class="text-center mt-2"></div>
@@ -642,31 +659,18 @@
                         <div class="col-md-4">
                             <div class="card border">
                                 <div class="card-header bg-light">
-                                    <h6 class="card-title mb-0">App Logo (Website)</h6>
+                                    <h6 class="card-title mb-0">App Logo</h6>
                                 </div>
                                 <div class="card-body">
-                                    <div class="mb-3">
-                                        <label class="form-label">Upload App Logo</label>
-                                        <input type="file" id="app_logo" name="app_logo" class="form-control" accept="image/jpeg,image/png,image/jpg,image/webp">
-                                        <small class="text-muted">Recommended: 200x200px</small>
-                                    </div>
-                                    <div id="app-logo-cropper-container" class="d-none">
-                                        <div class="cropper-container mb-3">
-                                            <img id="app-logo-cropper" style="max-width: 100%; max-height: 200px;">
-                                        </div>
-                                        <div class="cropper-controls">
-                                            <div class="row g-2">
-                                                <div class="col-6">
-                                                    <input type="number" id="app-crop-width" class="form-control form-control-sm" placeholder="Width" value="200">
-                                                </div>
-                                                <div class="col-6">
-                                                    <input type="number" id="app-crop-height" class="form-control form-control-sm" placeholder="Height" value="200">
-                                                </div>
-                                            </div>
-                                            <div class="mt-2">
-                                                <button type="button" id="app-crop-btn" class="btn btn-primary btn-sm">Crop</button>
-                                                <button type="button" id="app-reset-crop-btn" class="btn btn-secondary btn-sm">Reset</button>
-                                            </div>
+                                    <input type="file" id="app_logo" name="app_logo" class="form-control" accept="image/jpeg,image/png,image/jpg,image/webp">
+                                    <small class="text-muted">Recommended: 200x200px</small>
+                                    <div id="app-logo-cropper-container" class="d-none mt-2">
+                                        <img id="app-logo-cropper" style="max-width: 100%; max-height: 200px;">
+                                        <div class="mt-2">
+                                            <input type="number" id="app-crop-width" class="form-control form-control-sm d-inline-block w-25" placeholder="W" value="200">
+                                            <input type="number" id="app-crop-height" class="form-control form-control-sm d-inline-block w-25" placeholder="H" value="200">
+                                            <button type="button" id="app-crop-btn" class="btn btn-primary btn-sm">Crop</button>
+                                            <button type="button" id="app-reset-crop-btn" class="btn btn-secondary btn-sm">Reset</button>
                                         </div>
                                     </div>
                                     <div id="app-logo-preview" class="text-center mt-2"></div>
@@ -679,28 +683,15 @@
                                     <h6 class="card-title mb-0">School Stamp</h6>
                                 </div>
                                 <div class="card-body">
-                                    <div class="mb-3">
-                                        <label class="form-label">Upload Stamp</label>
-                                        <input type="file" id="school_stamp" name="school_stamp" class="form-control" accept="image/jpeg,image/png,image/jpg,image/webp">
-                                        <small class="text-muted">For official documents, certificates</small>
-                                    </div>
-                                    <div id="school-stamp-cropper-container" class="d-none">
-                                        <div class="cropper-container mb-3">
-                                            <img id="school-stamp-cropper" style="max-width: 100%; max-height: 200px;">
-                                        </div>
-                                        <div class="cropper-controls">
-                                            <div class="row g-2">
-                                                <div class="col-6">
-                                                    <input type="number" id="stamp-crop-width" class="form-control form-control-sm" placeholder="Width" value="200">
-                                                </div>
-                                                <div class="col-6">
-                                                    <input type="number" id="stamp-crop-height" class="form-control form-control-sm" placeholder="Height" value="200">
-                                                </div>
-                                            </div>
-                                            <div class="mt-2">
-                                                <button type="button" id="stamp-crop-btn" class="btn btn-primary btn-sm">Crop</button>
-                                                <button type="button" id="stamp-reset-crop-btn" class="btn btn-secondary btn-sm">Reset</button>
-                                            </div>
+                                    <input type="file" id="school_stamp" name="school_stamp" class="form-control" accept="image/jpeg,image/png,image/jpg,image/webp">
+                                    <small class="text-muted">For official documents</small>
+                                    <div id="school-stamp-cropper-container" class="d-none mt-2">
+                                        <img id="school-stamp-cropper" style="max-width: 100%; max-height: 200px;">
+                                        <div class="mt-2">
+                                            <input type="number" id="stamp-crop-width" class="form-control form-control-sm d-inline-block w-25" placeholder="W" value="200">
+                                            <input type="number" id="stamp-crop-height" class="form-control form-control-sm d-inline-block w-25" placeholder="H" value="200">
+                                            <button type="button" id="stamp-crop-btn" class="btn btn-primary btn-sm">Crop</button>
+                                            <button type="button" id="stamp-reset-crop-btn" class="btn btn-secondary btn-sm">Reset</button>
                                         </div>
                                     </div>
                                     <div id="school-stamp-preview" class="text-center mt-2"></div>
@@ -709,11 +700,9 @@
                         </div>
                     </div>
                 </div>
-                <div class="modal-footer border-0 pt-0 px-4 pb-4">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary" id="saveBtn">
-                        <i class="ri-save-line me-1"></i>Save School
-                    </button>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary" id="saveBtn">Save School</button>
                 </div>
             </form>
         </div>
@@ -721,25 +710,26 @@
 </div>
 
 {{-- DELETE MODAL --}}
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" style="max-width: 400px;">
+<div id="deleteRecordModal" class="modal fade zoomIn" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header bg-danger text-white border-0">
-                <h5 class="modal-title"><i class="ri-delete-bin-line me-2"></i>Confirm Deletion</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-header">
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body text-center py-4">
-                <div class="mb-3">
-                    <i class="ri-error-warning-line text-danger" style="font-size: 48px;"></i>
+            <div class="modal-body p-md-5">
+                <div class="text-center">
+                    <div class="text-danger">
+                        <i class="bi bi-trash display-4"></i>
+                    </div>
+                    <div class="mt-4">
+                        <h3 class="mb-2">Are you sure?</h3>
+                        <p class="text-muted fs-lg mx-3 mb-0">Are you sure you want to remove <strong id="deleteItemName"></strong>?</p>
+                    </div>
                 </div>
-                <h6>Are you sure?</h6>
-                <p class="text-muted">You are about to delete <strong id="deleteItemName"></strong>. This action cannot be undone.</p>
-            </div>
-            <div class="modal-footer border-0 justify-content-center pb-4">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
-                    <i class="ri-delete-bin-line me-1"></i>Yes, Delete
-                </button>
+                <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
+                    <button type="button" class="btn w-sm btn-light" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn w-sm btn-danger" id="confirmDeleteBtn">Yes, Delete It!</button>
+                </div>
             </div>
         </div>
     </div>
@@ -751,19 +741,11 @@
 
 <script>
 // Global variables
-let schoolLogoCropper = null;
-let appLogoCropper = null;
-let schoolStampCropper = null;
-
-let croppedSchoolLogoBlob = null;
-let croppedAppLogoBlob = null;
-let croppedSchoolStampBlob = null;
-
+let schoolLogoCropper = null, appLogoCropper = null, schoolStampCropper = null;
+let croppedSchoolLogoBlob = null, croppedAppLogoBlob = null, croppedSchoolStampBlob = null;
 let currentDeleteId = null;
-
 const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
-// Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
     initStatusChart();
     initEventListeners();
@@ -787,25 +769,17 @@ function initStatusChart() {
                 borderRadius: 8
             }]
         },
-        options: {
-            responsive: true,
-            maintainAspectRatio: true,
-            scales: { y: { beginAtZero: true, title: { display: true, text: "Count" } } }
-        }
+        options: { responsive: true, maintainAspectRatio: true, scales: { y: { beginAtZero: true } } }
     });
 }
 
 function updateOpenedCount() {
     let total = 0;
-    document.querySelectorAll('table tbody tr').forEach(row => {
-        const timesOpenedCell = row.cells[5];
-        if (timesOpenedCell) {
-            const val = parseInt(timesOpenedCell.innerText);
-            if (!isNaN(val)) total += val;
-        }
+    document.querySelectorAll('table tbody tr td:nth-child(6)').forEach(cell => {
+        let val = parseInt(cell.innerText);
+        if (!isNaN(val)) total += val;
     });
-    const openedCountEl = document.getElementById('openedCount');
-    if (openedCountEl) openedCountEl.textContent = total;
+    document.getElementById('openedCount').textContent = total;
 }
 
 function initPhoneInputs() {
@@ -824,18 +798,15 @@ function addPhoneInput(value = '') {
         </button>
     `;
     container.appendChild(div);
-
-    const removeBtns = document.querySelectorAll('.remove-phone-btn');
-    removeBtns.forEach(btn => btn.style.display = removeBtns.length > 1 ? 'inline-flex' : 'none');
+    const btns = document.querySelectorAll('.remove-phone-btn');
+    btns.forEach(btn => btn.style.display = btns.length > 1 ? 'inline-flex' : 'none');
 }
 
 function removePhoneInput(btn) {
-    const container = document.getElementById('phoneInputsList');
-    if (container.children.length <= 1) return;
+    if (document.querySelectorAll('.phone-input-item').length <= 1) return;
     btn.closest('.phone-input-item').remove();
-
-    const removeBtns = document.querySelectorAll('.remove-phone-btn');
-    removeBtns.forEach(btn => btn.style.display = removeBtns.length > 1 ? 'inline-flex' : 'none');
+    const btns = document.querySelectorAll('.remove-phone-btn');
+    btns.forEach(btn => btn.style.display = btns.length > 1 ? 'inline-flex' : 'none');
 }
 
 function getPhonesArray() {
@@ -849,51 +820,29 @@ function getPhonesArray() {
 function setPhonesArray(phones) {
     const container = document.getElementById('phoneInputsList');
     container.innerHTML = '';
-    if (!phones || phones.length === 0) {
-        addPhoneInput('');
-    } else {
-        phones.forEach(phone => addPhoneInput(phone));
-    }
+    if (!phones || phones.length === 0) addPhoneInput('');
+    else phones.forEach(phone => addPhoneInput(phone));
 }
 
-function escapeHtml(str) {
-    if (!str) return '';
-    return str.replace(/[&<>]/g, function(m) {
-        if (m === '&') return '&amp;';
-        if (m === '<') return '&lt;';
-        if (m === '>') return '&gt;';
-        return m;
-    });
-}
+function escapeHtml(str) { return str ? String(str).replace(/[&<>]/g, function(m) { return m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'; }) : ''; }
 
 // Cropper functions
 function initAddModalCroppers() {
-    // School Logo Cropper
-    const schoolLogoInput = document.getElementById('school_logo');
-    if (schoolLogoInput) {
-        schoolLogoInput.addEventListener('change', function(e) {
-            handleImageUpload(e, 'school-logo-cropper', 'school-logo-cropper-container', 'school-crop-width', 'school-crop-height', 'school-logo-preview', 'schoolLogoCropper');
-        });
+    const schoolLogo = document.getElementById('school_logo');
+    if (schoolLogo) {
+        schoolLogo.addEventListener('change', (e) => handleImageUpload(e, 'school-logo-cropper', 'school-logo-cropper-container', 'school-crop-width', 'school-crop-height', 'school-logo-preview', 'schoolLogoCropper'));
         document.getElementById('school-crop-btn')?.addEventListener('click', () => handleCropImage('school-logo-preview', 'schoolLogoCropper', 'school-crop-width', 'school-crop-height', 'croppedSchoolLogoBlob'));
         document.getElementById('school-reset-crop-btn')?.addEventListener('click', () => resetCropper('schoolLogoCropper', 'school-logo-cropper-container', 'school-logo-preview', 'croppedSchoolLogoBlob'));
     }
-
-    // App Logo Cropper
-    const appLogoInput = document.getElementById('app_logo');
-    if (appLogoInput) {
-        appLogoInput.addEventListener('change', function(e) {
-            handleImageUpload(e, 'app-logo-cropper', 'app-logo-cropper-container', 'app-crop-width', 'app-crop-height', 'app-logo-preview', 'appLogoCropper');
-        });
+    const appLogo = document.getElementById('app_logo');
+    if (appLogo) {
+        appLogo.addEventListener('change', (e) => handleImageUpload(e, 'app-logo-cropper', 'app-logo-cropper-container', 'app-crop-width', 'app-crop-height', 'app-logo-preview', 'appLogoCropper'));
         document.getElementById('app-crop-btn')?.addEventListener('click', () => handleCropImage('app-logo-preview', 'appLogoCropper', 'app-crop-width', 'app-crop-height', 'croppedAppLogoBlob'));
         document.getElementById('app-reset-crop-btn')?.addEventListener('click', () => resetCropper('appLogoCropper', 'app-logo-cropper-container', 'app-logo-preview', 'croppedAppLogoBlob'));
     }
-
-    // School Stamp Cropper
-    const stampInput = document.getElementById('school_stamp');
-    if (stampInput) {
-        stampInput.addEventListener('change', function(e) {
-            handleImageUpload(e, 'school-stamp-cropper', 'school-stamp-cropper-container', 'stamp-crop-width', 'stamp-crop-height', 'school-stamp-preview', 'schoolStampCropper');
-        });
+    const stamp = document.getElementById('school_stamp');
+    if (stamp) {
+        stamp.addEventListener('change', (e) => handleImageUpload(e, 'school-stamp-cropper', 'school-stamp-cropper-container', 'stamp-crop-width', 'stamp-crop-height', 'school-stamp-preview', 'schoolStampCropper'));
         document.getElementById('stamp-crop-btn')?.addEventListener('click', () => handleCropImage('school-stamp-preview', 'schoolStampCropper', 'stamp-crop-width', 'stamp-crop-height', 'croppedSchoolStampBlob'));
         document.getElementById('stamp-reset-crop-btn')?.addEventListener('click', () => resetCropper('schoolStampCropper', 'school-stamp-cropper-container', 'school-stamp-preview', 'croppedSchoolStampBlob'));
     }
@@ -902,62 +851,38 @@ function initAddModalCroppers() {
 function handleImageUpload(e, cropperId, containerId, widthId, heightId, previewId, cropperVar) {
     const file = e.target.files[0];
     if (!file) return;
-    if (!file.type.match('image.*')) {
-        showAlert('error', 'Invalid File', 'Please select an image file');
-        return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-        showAlert('error', 'File Too Large', 'Image must be less than 5MB');
-        return;
-    }
-
+    if (!file.type.match('image.*')) { showAlert('error', 'Invalid File', 'Please select an image'); return; }
+    if (file.size > 5 * 1024 * 1024) { showAlert('error', 'File Too Large', 'Image must be less than 5MB'); return; }
     const container = document.getElementById(containerId);
     const cropperImg = document.getElementById(cropperId);
     const reader = new FileReader();
-
     reader.onload = function(e) {
         container.classList.remove('d-none');
         cropperImg.src = e.target.result;
-
         if (window[cropperVar]) window[cropperVar].destroy();
-        const cropWidth = document.getElementById(widthId)?.value || 200;
-        const cropHeight = document.getElementById(heightId)?.value || 200;
-
-        window[cropperVar] = new Cropper(cropperImg, {
-            aspectRatio: cropWidth / cropHeight,
-            viewMode: 1,
-            autoCropArea: 1
-        });
+        const w = document.getElementById(widthId)?.value || 200;
+        const h = document.getElementById(heightId)?.value || 200;
+        window[cropperVar] = new Cropper(cropperImg, { aspectRatio: w / h, viewMode: 1, autoCropArea: 1 });
     };
     reader.readAsDataURL(file);
 }
 
 function handleCropImage(previewId, cropperVar, widthId, heightId, blobVar) {
     const cropper = window[cropperVar];
-    if (!cropper) {
-        showAlert('warning', 'No Image', 'Please select an image first');
-        return;
-    }
-
+    if (!cropper) { showAlert('warning', 'No Image', 'Select an image first'); return; }
     const w = parseInt(document.getElementById(widthId)?.value) || 200;
     const h = parseInt(document.getElementById(heightId)?.value) || 200;
-
-    const canvas = cropper.getCroppedCanvas({ width: w, height: h, imageSmoothingEnabled: true, imageSmoothingQuality: 'high' });
+    const canvas = cropper.getCroppedCanvas({ width: w, height: h });
     canvas.toBlob(function(blob) {
         window[blobVar] = blob;
         const preview = document.getElementById(previewId);
-        if (preview) {
-            preview.innerHTML = `<img src="${canvas.toDataURL()}" class="img-thumbnail" style="max-width: 100px; max-height: 100px;">`;
-        }
+        if (preview) preview.innerHTML = `<img src="${canvas.toDataURL()}" class="img-thumbnail" style="max-width: 80px;">`;
         showAlert('success', 'Cropped!', 'Image cropped successfully');
     }, 'image/png');
 }
 
 function resetCropper(cropperVar, containerId, previewId, blobVar) {
-    if (window[cropperVar]) {
-        window[cropperVar].destroy();
-        window[cropperVar] = null;
-    }
+    if (window[cropperVar]) { window[cropperVar].destroy(); window[cropperVar] = null; }
     window[blobVar] = null;
     document.getElementById(containerId)?.classList.add('d-none');
     if (previewId) document.getElementById(previewId).innerHTML = '';
@@ -965,48 +890,32 @@ function resetCropper(cropperVar, containerId, previewId, blobVar) {
 
 // Modal functions
 function openAddModal() {
-    document.getElementById('modalTitle').innerHTML = '<i class="ri-add-line me-2"></i>Add School';
+    document.getElementById('modalTitle').innerHTML = 'Add School';
     document.getElementById('schoolForm').reset();
     document.getElementById('schoolId').value = '';
     document.getElementById('formErrors').classList.add('d-none');
     setPhonesArray(['']);
-
-    // Reset previews
     ['school-logo-preview', 'app-logo-preview', 'school-stamp-preview'].forEach(id => {
         if (document.getElementById(id)) document.getElementById(id).innerHTML = '';
     });
-
-    // Reset croppers
     ['schoolLogoCropper', 'appLogoCropper', 'schoolStampCropper'].forEach(name => {
         if (window[name]) { window[name].destroy(); window[name] = null; }
     });
-    ['croppedSchoolLogoBlob', 'croppedAppLogoBlob', 'croppedSchoolStampBlob'].forEach(name => {
-        window[name] = null;
-    });
-
     ['school-logo-cropper-container', 'app-logo-cropper-container', 'school-stamp-cropper-container'].forEach(id => {
         if (document.getElementById(id)) document.getElementById(id).classList.add('d-none');
     });
-
-    const modal = new bootstrap.Modal(document.getElementById('schoolModal'));
-    modal.show();
+    new bootstrap.Modal(document.getElementById('schoolModal')).show();
 }
 
-function openEditModal(id, name) {
-    document.getElementById('modalTitle').innerHTML = '<i class="ri-pencil-line me-2"></i>Edit School';
+function openEditModal(id) {
+    document.getElementById('modalTitle').innerHTML = 'Edit School';
     document.getElementById('schoolId').value = id;
     document.getElementById('formErrors').classList.add('d-none');
 
-    // Reset croppers
-    ['schoolLogoCropper', 'appLogoCropper', 'schoolStampCropper'].forEach(name => {
-        if (window[name]) { window[name].destroy(); window[name] = null; }
-    });
-
-    // Show loading
     const saveBtn = document.getElementById('saveBtn');
     const originalHtml = saveBtn.innerHTML;
-    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
     saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
 
     fetch(`/school-info/${id}/edit-json`, {
         headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
@@ -1014,64 +923,45 @@ function openEditModal(id, name) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            const school = data.school;
-            document.getElementById('school_name').value = school.school_name || '';
-            document.getElementById('school_email').value = school.school_email || '';
-            document.getElementById('school_address').value = school.school_address || '';
-            document.getElementById('school_website').value = school.school_website || '';
-            document.getElementById('school_motto').value = school.school_motto || '';
-            document.getElementById('no_of_times_school_opened').value = school.no_of_times_school_opened || 0;
-            document.getElementById('date_school_opened').value = school.date_school_opened || '';
-            document.getElementById('date_school_closed').value = school.date_school_closed || '';
-            document.getElementById('date_next_term_begins').value = school.date_next_term_begins || '';
-            document.getElementById('is_active').checked = school.is_active || false;
-
-            setPhonesArray(school.school_phones || []);
-
-            if (school.logo_url) {
-                document.getElementById('school-logo-preview').innerHTML = `<img src="${school.logo_url}" class="img-thumbnail" style="max-width: 100px;">`;
-            }
-            if (school.app_logo_url) {
-                document.getElementById('app-logo-preview').innerHTML = `<img src="${school.app_logo_url}" class="img-thumbnail" style="max-width: 100px;">`;
-            }
-            if (school.stamp_url) {
-                document.getElementById('school-stamp-preview').innerHTML = `<img src="${school.stamp_url}" class="img-thumbnail" style="max-width: 100px;">`;
-            }
-
-            const modal = new bootstrap.Modal(document.getElementById('schoolModal'));
-            modal.show();
+            const s = data.school;
+            document.getElementById('school_name').value = s.school_name || '';
+            document.getElementById('school_email').value = s.school_email || '';
+            document.getElementById('school_address').value = s.school_address || '';
+            document.getElementById('school_website').value = s.school_website || '';
+            document.getElementById('school_motto').value = s.school_motto || '';
+            document.getElementById('no_of_times_school_opened').value = s.no_of_times_school_opened || 0;
+            document.getElementById('date_school_opened').value = s.date_school_opened || '';
+            document.getElementById('date_school_closed').value = s.date_school_closed || '';
+            document.getElementById('date_next_term_begins').value = s.date_next_term_begins || '';
+            document.getElementById('is_active').checked = s.is_active || false;
+            setPhonesArray(s.school_phones || []);
+            if (s.logo_url) document.getElementById('school-logo-preview').innerHTML = `<img src="${s.logo_url}" class="img-thumbnail" style="max-width: 80px;">`;
+            if (s.app_logo_url) document.getElementById('app-logo-preview').innerHTML = `<img src="${s.app_logo_url}" class="img-thumbnail" style="max-width: 80px;">`;
+            if (s.stamp_url) document.getElementById('school-stamp-preview').innerHTML = `<img src="${s.stamp_url}" class="img-thumbnail" style="max-width: 80px;">`;
+            new bootstrap.Modal(document.getElementById('schoolModal')).show();
         } else {
-            showAlert('error', 'Error', data.message || 'Failed to load school data');
+            showAlert('error', 'Error', data.message || 'Failed to load');
         }
     })
-    .catch(error => {
-        console.error('Error:', error);
-        showAlert('error', 'Error', 'Failed to load school data. Please try again.');
-    })
-    .finally(() => {
-        saveBtn.innerHTML = originalHtml;
-        saveBtn.disabled = false;
-    });
+    .catch(error => showAlert('error', 'Error', 'Network error'))
+    .finally(() => { saveBtn.disabled = false; saveBtn.innerHTML = originalHtml; });
 }
 
 function openDeleteModal(id, name) {
     currentDeleteId = id;
     document.getElementById('deleteItemName').textContent = name;
-    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
-    modal.show();
+    new bootstrap.Modal(document.getElementById('deleteRecordModal')).show();
 }
 
 // Form submission
 document.getElementById('schoolForm')?.addEventListener('submit', function(e) {
     e.preventDefault();
-
     const formData = new FormData();
     const schoolId = document.getElementById('schoolId').value;
 
     formData.append('school_name', document.getElementById('school_name').value);
     formData.append('school_address', document.getElementById('school_address').value);
-    const phones = getPhonesArray();
-    phones.forEach(phone => formData.append('school_phones[]', phone));
+    getPhonesArray().forEach(p => formData.append('school_phones[]', p));
     formData.append('school_email', document.getElementById('school_email').value);
     formData.append('school_website', document.getElementById('school_website').value || '');
     formData.append('school_motto', document.getElementById('school_motto').value || '');
@@ -1081,77 +971,47 @@ document.getElementById('schoolForm')?.addEventListener('submit', function(e) {
     formData.append('date_next_term_begins', document.getElementById('date_next_term_begins').value || '');
     formData.append('is_active', document.getElementById('is_active').checked ? 1 : 0);
     formData.append('_token', CSRF_TOKEN);
-
-    if (croppedSchoolLogoBlob) formData.append('school_logo', croppedSchoolLogoBlob, 'school_logo.png');
+    if (croppedSchoolLogoBlob) formData.append('school_logo', croppedSchoolLogoBlob, 'logo.png');
     if (croppedAppLogoBlob) formData.append('app_logo', croppedAppLogoBlob, 'app_logo.png');
-    if (croppedSchoolStampBlob) formData.append('school_stamp', croppedSchoolStampBlob, 'school_stamp.png');
-
-    if (schoolId) {
-        formData.append('_method', 'PUT');
-    }
+    if (croppedSchoolStampBlob) formData.append('school_stamp', croppedSchoolStampBlob, 'stamp.png');
+    if (schoolId) formData.append('_method', 'PUT');
 
     const url = schoolId ? `/school-info/${schoolId}` : '/school-info';
+    const btn = document.getElementById('saveBtn');
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
 
-    const saveBtn = document.getElementById('saveBtn');
-    const originalHtml = saveBtn.innerHTML;
-    saveBtn.disabled = true;
-    saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
-
-    fetch(url, {
-        method: 'POST',
-        body: formData,
-        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
-    })
+    fetch(url, { method: 'POST', body: formData, headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
             showAlert('success', 'Success!', data.message);
             setTimeout(() => window.location.reload(), 1500);
         } else {
-            let errorHtml = '<ul class="mb-0">';
-            if (data.errors) {
-                for (let key in data.errors) {
-                    if (Array.isArray(data.errors[key])) {
-                        data.errors[key].forEach(err => errorHtml += `<li>${err}</li>`);
-                    } else {
-                        errorHtml += `<li>${data.errors[key]}</li>`;
-                    }
-                }
-            } else {
-                errorHtml += `<li>${data.message || 'Something went wrong'}</li>`;
-            }
-            errorHtml += '</ul>';
-            document.getElementById('formErrors').innerHTML = errorHtml;
+            let html = '<ul>';
+            if (data.errors) for (let k in data.errors) data.errors[k].forEach(e => html += `<li>${e}</li>`);
+            else html += `<li>${data.message || 'Error'}</li>`;
+            html += '</ul>';
+            document.getElementById('formErrors').innerHTML = html;
             document.getElementById('formErrors').classList.remove('d-none');
         }
     })
-    .catch(error => {
-        console.error('Error:', error);
-        showAlert('error', 'Error', 'Network error. Please try again.');
-    })
-    .finally(() => {
-        saveBtn.disabled = false;
-        saveBtn.innerHTML = originalHtml;
-    });
+    .catch(error => showAlert('error', 'Error', 'Network error'))
+    .finally(() => { btn.disabled = false; btn.innerHTML = original; });
 });
 
 // Delete confirmation
 document.getElementById('confirmDeleteBtn')?.addEventListener('click', function() {
     if (!currentDeleteId) return;
-
     const btn = this;
-    const originalHtml = btn.innerHTML;
+    const original = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Deleting...';
 
     fetch(`/school-info/${currentDeleteId}`, {
         method: 'DELETE',
-        headers: {
-            'Accept': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            'X-CSRF-TOKEN': CSRF_TOKEN,
-            'Content-Type': 'application/json'
-        }
+        headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF_TOKEN }
     })
     .then(response => response.json())
     .then(data => {
@@ -1159,77 +1019,54 @@ document.getElementById('confirmDeleteBtn')?.addEventListener('click', function(
             showAlert('success', 'Deleted!', data.message);
             setTimeout(() => window.location.reload(), 1500);
         } else {
-            showAlert('error', 'Error', data.message || 'Failed to delete');
+            showAlert('error', 'Error', data.message || 'Delete failed');
         }
     })
-    .catch(error => {
-        console.error('Error:', error);
-        showAlert('error', 'Error', 'Network error. Please try again.');
-    })
+    .catch(error => showAlert('error', 'Error', 'Network error'))
     .finally(() => {
         btn.disabled = false;
-        btn.innerHTML = originalHtml;
-        bootstrap.Modal.getInstance(document.getElementById('deleteModal'))?.hide();
+        btn.innerHTML = original;
+        bootstrap.Modal.getInstance(document.getElementById('deleteRecordModal'))?.hide();
         currentDeleteId = null;
     });
 });
 
 // Event listeners
 function initEventListeners() {
-    // Edit buttons
     document.querySelectorAll('.edit-school-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const id = this.getAttribute('data-id');
-            const name = this.getAttribute('data-name');
-            openEditModal(id, name);
-        });
+        btn.addEventListener('click', function() { openEditModal(this.getAttribute('data-id')); });
     });
-
-    // Delete buttons
     document.querySelectorAll('.delete-school-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const id = this.getAttribute('data-id');
-            const name = this.getAttribute('data-name');
-            openDeleteModal(id, name);
-        });
+        btn.addEventListener('click', function() { openDeleteModal(this.getAttribute('data-id'), this.getAttribute('data-name')); });
     });
-
-    // Check all checkbox
     document.getElementById('checkAll')?.addEventListener('change', function() {
         document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = this.checked);
         updateBulkBar();
     });
-
-    // Row checkboxes
-    document.querySelectorAll('.row-checkbox').forEach(cb => {
-        cb.addEventListener('change', updateBulkBar);
-    });
-
-    // Bulk delete
+    document.querySelectorAll('.row-checkbox').forEach(cb => cb.addEventListener('change', updateBulkBar));
     document.getElementById('bulkDeleteBtn')?.addEventListener('click', bulkDelete);
 }
 
 function updateBulkBar() {
     const count = document.querySelectorAll('.row-checkbox:checked').length;
-    const bulkBar = document.getElementById('bulkBar');
-    const removeActions = document.getElementById('remove-actions');
+    const bar = document.getElementById('bulkBar');
+    const actions = document.getElementById('remove-actions');
     if (count > 0) {
-        bulkBar.classList.add('show');
-        if (removeActions) removeActions.classList.remove('d-none');
+        bar.classList.add('show');
+        if (actions) actions.classList.remove('d-none');
         document.getElementById('bulkCount').textContent = count;
     } else {
-        bulkBar.classList.remove('show');
-        if (removeActions) removeActions.classList.add('d-none');
+        bar.classList.remove('show');
+        if (actions) actions.classList.add('d-none');
     }
 }
 
 function bulkDelete() {
     const ids = Array.from(document.querySelectorAll('.row-checkbox:checked')).map(cb => cb.value);
     if (ids.length === 0) return;
-
     Swal.fire({
         title: `Delete ${ids.length} school(s)?`,
-        text: 'This action cannot be undone.',
+        text: 'This cannot be undone.',
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#dc2626',
@@ -1247,42 +1084,32 @@ function bulkDelete() {
                     showAlert('success', 'Deleted!', data.message);
                     setTimeout(() => window.location.reload(), 1500);
                 } else {
-                    showAlert('error', 'Error', data.message || 'Failed to delete');
+                    showAlert('error', 'Error', data.message || 'Delete failed');
                 }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showAlert('error', 'Error', 'Network error');
             });
         }
     });
 }
 
 function filterData() {
-    const searchTerm = document.getElementById('searchInput')?.value.toLowerCase() || '';
+    const search = document.getElementById('searchInput')?.value.toLowerCase() || '';
     const status = document.getElementById('idStatus')?.value || 'all';
     const email = document.getElementById('idEmail')?.value || 'all';
-
-    const rows = document.querySelectorAll('table tbody tr');
-    rows.forEach(row => {
+    document.querySelectorAll('table tbody tr').forEach(row => {
         const name = row.cells[1]?.innerText.toLowerCase() || '';
         const emailText = row.cells[2]?.innerText.toLowerCase() || '';
         const statusText = row.cells[4]?.innerText || '';
         const rowEmail = row.cells[2]?.innerText || '';
-
-        const matchesSearch = name.includes(searchTerm) || emailText.includes(searchTerm);
-        const matchesStatus = status === 'all' || statusText === status;
-        const matchesEmail = email === 'all' || rowEmail === email;
-
-        row.style.display = (matchesSearch && matchesStatus && matchesEmail) ? '' : 'none';
+        const match = (name.includes(search) || emailText.includes(search)) && (status === 'all' || statusText === status) && (email === 'all' || rowEmail === email);
+        row.style.display = match ? '' : 'none';
     });
 }
 
 function showAlert(icon, title, text) {
-    Swal.fire({ icon: icon, title: title, text: text, timer: icon === 'success' ? 2000 : undefined, showConfirmButton: icon !== 'success' });
+    Swal.fire({ icon, title, text, timer: icon === 'success' ? 2000 : undefined, showConfirmButton: icon !== 'success' });
 }
 
-// Make functions global
+// Global exports
 window.filterData = filterData;
 window.addPhoneInput = addPhoneInput;
 window.removePhoneInput = removePhoneInput;
