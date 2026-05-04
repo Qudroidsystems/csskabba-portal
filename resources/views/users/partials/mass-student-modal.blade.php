@@ -1,14 +1,29 @@
 {{--
     Mass Student Account Management Modal
-    – Single "Class" dropdown that shows every schoolclass row as-is
-      (e.g. "JSS 1 A", "JSS 1 B") — the arm label is already baked into
-      schoolclass.schoolclass, so a separate Arm filter is not needed.
-    – Controller getStudents() must return data.classes as ALL schoolclass
-      rows (id + name), NOT deduplicated. Change the query to:
-        DB::table('schoolclass')
-            ->select('id', 'schoolclass as name')
-            ->orderBy('schoolclass')
-            ->get()
+    – Single "Class" dropdown showing combined class+arm labels
+      e.g. "JSS 1 A", "JSS 1 B".
+    – schoolclass.schoolclass = base name ("JSS 1")
+      schoolarm.arm           = arm label ("A")
+      They must be CONCATENATED — neither column alone contains both.
+
+    ── REQUIRED CONTROLLER CHANGE in getStudents() ──────────────────
+    Replace the $classes query with:
+
+        $classes = DB::table('schoolclass as cls')
+            ->join('schoolarm as arm', 'arm.id', '=', 'cls.arm')
+            ->select(
+                'cls.id',
+                DB::raw("CONCAT(cls.schoolclass, ' ', arm.arm) as name")
+            )
+            ->orderByRaw("cls.schoolclass, arm.arm")
+            ->get();
+
+    And in the students select(), change:
+        'cls.schoolclass as class_name',
+        'arm.arm as arm_name',
+    to:
+        DB::raw("CONCAT(cls.schoolclass, ' ', arm.arm) as class_name"),
+    (remove arm_name — it's now baked into class_name)
 --}}
 
 <div id="massStudentModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
@@ -452,6 +467,14 @@ document.addEventListener('DOMContentLoaded', function () {
         );
     }
 
+    // Combines "JSS 1" + "A" → "JSS 1 A", handles nulls gracefully
+    function classArmLabel(className, armName) {
+        const c = (className || '').trim();
+        const a = (armName   || '').trim();
+        if (c && a) return `${c} ${a}`;
+        return c || a || '—';
+    }
+
     function generatePreviewEmail(firstname, lastname) {
         const clean = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '') || 'user';
         return clean(firstname) + '.' + clean(lastname) + '@csskabba.ng';
@@ -513,13 +536,39 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 renderStudentTable(allStudents);
 
-                // Populate class dropdown once.
-                // data.classes must be ALL schoolclass rows (id + schoolclass name).
-                // Each name already contains the arm, e.g. "JSS 1 A", "JSS 1 B".
-                if (data.classes && $('#massClassFilter option').length <= 1) {
+                // Populate class dropdown once, on first load only.
+                // Build combined "JSS 1 A" labels from data.classes (which has
+                // class_name + arm_name separately) OR from the student list itself
+                // as a fallback — both use classArmLabel() to concatenate.
+                if ($('#massClassFilter option').length <= 1) {
+                    let classOptions = [];
+
+                    if (data.classes && data.classes.length) {
+                        // Preferred: server returns dedicated classes array
+                        // Each entry needs { id, class_name, arm_name } OR { id, name }
+                        classOptions = data.classes.map(c => ({
+                            id:    c.id,
+                            label: c.name
+                                   // if name is already combined use it; otherwise concat
+                                   ? c.name
+                                   : classArmLabel(c.class_name, c.arm_name),
+                        }));
+                    } else {
+                        // Fallback: derive unique classes from loaded students
+                        const seen = new Map();
+                        allStudents.forEach(s => {
+                            if (s.class_id && !seen.has(s.class_id)) {
+                                seen.set(s.class_id, classArmLabel(s.class_name, s.arm_name));
+                            }
+                        });
+                        classOptions = [...seen.entries()]
+                            .map(([id, label]) => ({ id, label }))
+                            .sort((a, b) => a.label.localeCompare(b.label));
+                    }
+
                     let html = '<option value="">All Classes</option>';
-                    data.classes.forEach(c => {
-                        html += `<option value="${escapeHtml(String(c.id))}">${escapeHtml(c.name)}</option>`;
+                    classOptions.forEach(c => {
+                        html += `<option value="${escapeHtml(String(c.id))}">${escapeHtml(c.label)}</option>`;
                     });
                     $('#massClassFilter').html(html);
                 }
@@ -544,13 +593,14 @@ document.addEventListener('DOMContentLoaded', function () {
 
         let html = '';
         students.forEach(s => {
-            const checked = selectedStudents.some(x => x.id === s.id) ? 'checked' : '';
-            // class_name = schoolclass.schoolclass column, e.g. "JSS 1 A"
+            const checked   = selectedStudents.some(x => x.id === s.id) ? 'checked' : '';
+            // Combine class_name ("JSS 1") + arm_name ("A") → "JSS 1 A"
+            const classLabel = classArmLabel(s.class_name, s.arm_name);
             html += `<tr>
                 <td><input type="checkbox" class="student-checkbox" data-id="${s.id}" ${checked}></td>
                 <td><strong>${escapeHtml(s.admissionNo || 'N/A')}</strong></td>
                 <td>${escapeHtml(s.name)}</td>
-                <td>${escapeHtml(s.class_name || '—')}</td>
+                <td>${escapeHtml(classLabel)}</td>
                 <td>${statusBadge(s.has_account)}</td>
                 <td><small class="text-muted font-monospace">${escapeHtml(s.generatedEmail)}</small></td>
             </tr>`;
@@ -624,7 +674,7 @@ document.addEventListener('DOMContentLoaded', function () {
             html += `<tr>
                 <td>${escapeHtml(s.name)}</td>
                 <td>${escapeHtml(s.admissionNo || 'N/A')}</td>
-                <td>${escapeHtml(s.class_name || '—')}</td>
+                <td>${escapeHtml(classArmLabel(s.class_name, s.arm_name))}</td>
                 <td>${statusBadge(s.has_account)}</td>
                 <td><small class="font-monospace">${escapeHtml(s.generatedEmail)}</small></td>
             </tr>`;
