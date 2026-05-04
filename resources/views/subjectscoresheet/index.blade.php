@@ -79,7 +79,7 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 
 /* ══════════════════════════════════════════════════════════════════
-   APPLE-STYLE ROW ENTRANCE & HOVER
+   ROW ENTRANCE & HOVER
    ══════════════════════════════════════════════════════════════════ */
 #scoresheetTableBody tr[data-id] {
     opacity: 0;
@@ -87,8 +87,7 @@
     transition:
         opacity     0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94),
         transform   0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-        background  0.18s ease,
-        box-shadow  0.22s ease;
+        background  0.18s ease;
     will-change: opacity, transform;
 }
 #scoresheetTableBody tr[data-id].row-visible {
@@ -97,7 +96,7 @@
 }
 #scoresheetTableBody tr[data-id]:hover {
     background: #f0f6ff !important;
-    box-shadow: inset 3px 0 0 #2563eb, 0 2px 12px rgba(37,99,235,0.07);
+    box-shadow: inset 3px 0 0 #2563eb;
     transform: translateY(-1px) !important;
     transition:
         background  0.14s ease,
@@ -136,24 +135,6 @@
     transform: scale(1);
 }
 
-/* Active row being scored — dim everything else */
-#scoresheetTableBody.has-active-row tr[data-id]:not(.scoring-active) {
-    opacity: 0.22;
-    filter: blur(0.4px);
-    transition: opacity 0.25s ease, filter 0.25s ease;
-    pointer-events: none;
-}
-#scoresheetTableBody tr[data-id].scoring-active {
-    opacity: 1 !important;
-    filter: none !important;
-    transform: translateY(0) !important;
-    pointer-events: all !important;
-    box-shadow: inset 3px 0 0 #2563eb, 0 4px 24px rgba(37,99,235,0.13) !important;
-    background: #eff6ff !important;
-    z-index: 2;
-    position: relative;
-}
-
 @media (prefers-reduced-motion: reduce) {
     #scoresheetTableBody tr[data-id],
     #scoresheetTableBody tr[data-id]:hover {
@@ -164,245 +145,45 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════
-   STUDENT SCORE-ENTRY HUD
+   SCORE INPUT TOOLTIP
    ══════════════════════════════════════════════════════════════════ */
-#studentHud {
+#scoreTooltip {
+    display: none;
     position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    z-index: 88888;
-    pointer-events: none;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    padding-bottom: 32px;
-}
-/* Backdrop blur layer — only covers area outside the card */
-#studentHudBackdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(15, 23, 42, 0.38);
-    backdrop-filter: blur(3px) saturate(0.7);
-    -webkit-backdrop-filter: blur(3px) saturate(0.7);
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.28s ease;
-    z-index: 88887;
-}
-#studentHudBackdrop.hud-backdrop-visible {
-    opacity: 1;
-    pointer-events: all;
-}
-
-/* HUD card */
-#studentHudCard {
-    background: rgba(255,255,255,0.96);
-    border-radius: 22px;
-    border: 0.5px solid rgba(255,255,255,0.9);
-    box-shadow:
-        0 32px 80px rgba(0,0,0,0.22),
-        0 8px 24px rgba(0,0,0,0.10),
-        0 0 0 0.5px rgba(0,0,0,0.06);
-    padding: 20px 24px 18px;
-    width: 420px;
-    max-width: calc(100vw - 32px);
-    pointer-events: all;
-    transform: translateY(28px) scale(0.92);
-    opacity: 0;
-    transition:
-        transform 0.36s cubic-bezier(0.34, 1.28, 0.64, 1),
-        opacity   0.26s ease;
-    position: relative;
-    z-index: 88889;
-}
-#studentHudCard.hud-visible {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-}
-
-/* Top row: avatar + name + close */
-.hud-top {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 14px;
-}
-.hud-avatar {
-    width: 46px; height: 46px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid #e2e8f0;
-    flex-shrink: 0;
-    transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1);
-}
-.hud-avatar:hover { transform: scale(1.08); }
-.hud-name-block { flex: 1; min-width: 0; }
-.hud-name {
-    font-size: 14px;
-    font-weight: 700;
-    color: #0f172a;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    letter-spacing: -.015em;
-}
-.hud-meta {
-    font-size: 11px;
-    color: #64748b;
-    margin-top: 1px;
-}
-.hud-close {
-    width: 28px; height: 28px;
-    border-radius: 50%;
-    background: #f1f5f9;
-    border: none;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer;
-    flex-shrink: 0;
-    transition: background 0.15s ease, transform 0.15s cubic-bezier(0.34,1.4,0.64,1);
-    color: #64748b;
-    font-size: 14px;
-    line-height: 1;
-}
-.hud-close:hover { background: #e2e8f0; transform: scale(1.12); color: #0f172a; }
-
-/* Score pills row */
-.hud-scores-row {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-bottom: 12px;
-}
-.hud-score-pill {
-    flex: 1;
-    min-width: 70px;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
+    z-index: 99990;
+    background: #fff;
+    border: 0.5px solid #cbd5e1;
     border-radius: 10px;
-    padding: 8px 10px;
-    text-align: center;
-    transition: border-color 0.18s ease, background 0.18s ease, transform 0.18s cubic-bezier(0.34,1.4,0.64,1);
-}
-.hud-score-pill.pill-active {
-    border-color: #2563eb;
-    background: #eff6ff;
-    transform: scale(1.04);
-    box-shadow: 0 2px 10px rgba(37,99,235,0.14);
-}
-.hud-score-pill.pill-invalid {
-    border-color: #dc2626;
-    background: #fef2f2;
-}
-.hud-score-pill .pill-label {
-    font-size: 9px;
-    font-weight: 600;
-    color: #94a3b8;
-    text-transform: uppercase;
-    letter-spacing: .04em;
-    margin-bottom: 3px;
-}
-.hud-score-pill .pill-val {
-    font-size: 18px;
-    font-weight: 700;
-    color: #0f172a;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-    transition: color 0.15s ease;
-}
-.hud-score-pill.pill-active .pill-val { color: #2563eb; }
-.hud-score-pill.pill-invalid .pill-val { color: #dc2626; }
-.hud-score-pill .pill-max {
-    font-size: 9px;
-    color: #94a3b8;
-    margin-top: 1px;
-}
-
-/* Divider */
-.hud-divider {
-    height: 0.5px;
-    background: #e2e8f0;
-    margin: 0 0 12px;
-}
-
-/* Stats row */
-.hud-stats {
-    display: flex;
-    gap: 0;
-}
-.hud-stat {
-    flex: 1;
-    text-align: center;
-    padding: 6px 4px;
-    border-right: 0.5px solid #f1f5f9;
-}
-.hud-stat:last-child { border-right: none; }
-.hud-stat-label {
-    font-size: 9px;
-    font-weight: 600;
-    color: #94a3b8;
-    text-transform: uppercase;
-    letter-spacing: .04em;
-    margin-bottom: 2px;
-}
-.hud-stat-value {
-    font-size: 15px;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    letter-spacing: -.02em;
-}
-
-/* Grade badge in HUD */
-.hud-grade-badge {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 700;
-    border-radius: 6px;
-    padding: 2px 8px;
-    margin-left: 4px;
-    vertical-align: middle;
-    transition: all 0.22s cubic-bezier(0.34, 1.4, 0.64, 1);
-}
-
-/* Progress bar inside HUD */
-.hud-prog-wrap {
-    margin-top: 10px;
-}
-.hud-prog-label {
-    display: flex;
-    justify-content: space-between;
-    font-size: 10px;
-    color: #94a3b8;
-    margin-bottom: 4px;
-}
-.hud-prog-track {
-    height: 4px;
-    background: #f1f5f9;
-    border-radius: 2px;
-    overflow: hidden;
-}
-.hud-prog-fill {
-    height: 100%;
-    border-radius: 2px;
-    background: #2563eb;
-    transition: width 0.4s cubic-bezier(0.4,0,.2,1), background 0.3s ease;
-}
-
-/* Keyboard hint */
-.hud-hint {
-    text-align: center;
-    font-size: 10px;
-    color: #cbd5e1;
-    margin-top: 10px;
-    letter-spacing: .02em;
-}
-.hud-hint kbd {
-    font-size: 10px;
-    background: #f1f5f9;
-    color: #64748b;
-    border: 0.5px solid #e2e8f0;
-    border-radius: 4px;
-    padding: 1px 5px;
+    padding: 10px 13px;
+    width: 230px;
+    box-shadow: 0 4px 20px rgba(0,0,0,.10), 0 1px 4px rgba(0,0,0,.06);
+    pointer-events: none;
     font-family: inherit;
+    opacity: 0;
+    transition: opacity .15s ease;
 }
+#scoreTooltip.tip-above { transform: translateY(-100%); }
+#scoreTooltip.tip-below { transform: translateY(0); }
+.tip-top {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 8px; padding-bottom: 8px;
+    border-bottom: 0.5px solid #e8ecf0;
+}
+.tip-avatar {
+    width: 28px; height: 28px; border-radius: 50%;
+    object-fit: cover; flex-shrink: 0;
+    border: 1.5px solid #e2e8f0;
+}
+.tip-name { font-size: 12px; font-weight: 600; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tip-adm  { font-size: 10px; color: #64748b; margin-top: 1px; }
+.tip-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+.tip-stat { text-align: center; }
+.tip-stat-label { font-size: 9px; text-transform: uppercase; letter-spacing: .04em; color: #94a3b8; font-weight: 600; margin-bottom: 2px; }
+.tip-stat-val   { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+.tip-divider { height: 0.5px; background: #e8ecf0; margin-bottom: 8px; }
+.tip-prog-labels { display: flex; justify-content: space-between; font-size: 10px; color: #94a3b8; margin-bottom: 3px; }
+.tip-prog-track  { height: 3px; background: #f1f5f9; border-radius: 2px; overflow: hidden; }
+.tip-prog-fill   { height: 100%; border-radius: 2px; background: #2563eb; width: 0%; transition: width .3s ease, background .3s ease; }
 
 /* ══════════════════════════════════════════════════════════════════
    APPLE-STYLE SAVE MODAL
@@ -467,7 +248,7 @@
     .stat-card { padding: 10px 12px; }
     .stat-card .stat-value { font-size: 18px; }
     #ssSaveModal { width: 280px; padding: 26px 24px 22px; }
-    #studentHudCard { width: calc(100vw - 24px); padding: 16px 16px 14px; }
+    #scoreTooltip { width: calc(100vw - 24px); }
 }
 </style>
 
@@ -510,61 +291,37 @@
     </div>
 </div>
 
-{{-- ══ STUDENT SCORE-ENTRY HUD ════════════════════════════════════ --}}
-<div id="studentHudBackdrop"></div>
-<div id="studentHud">
-    <div id="studentHudCard">
-        <div class="hud-top">
-            <img id="hudAvatar" class="hud-avatar" src="" alt="">
-            <div class="hud-name-block">
-                <div class="hud-name" id="hudName">—</div>
-                <div class="hud-meta" id="hudMeta">—</div>
-            </div>
-            <button class="hud-close" id="hudClose" title="Dismiss (Esc)">&#x2715;</button>
+{{-- ══ SCORE INPUT TOOLTIP ═════════════════════════════════════════ --}}
+<div id="scoreTooltip">
+    <div class="tip-top">
+        <img id="stAvatar" class="tip-avatar" src="" alt=""
+             onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'">
+        <div style="min-width:0;">
+            <div class="tip-name" id="stName">—</div>
+            <div class="tip-adm"  id="stMeta">—</div>
         </div>
-
-        <div class="hud-scores-row" id="hudScoresRow">
-            {{-- Filled dynamically --}}
+    </div>
+    <div class="tip-grid">
+        <div class="tip-stat">
+            <div class="tip-stat-label">Entering</div>
+            <div class="tip-stat-val" id="stVal" style="color:#2563eb;">—</div>
         </div>
-
-        <div class="hud-divider"></div>
-
-        <div class="hud-stats">
-            <div class="hud-stat">
-                <div class="hud-stat-label">Total</div>
-                <div class="hud-stat-value" id="hudTotal" style="color:#1e3a5f;">—</div>
-            </div>
-            <div class="hud-stat">
-                <div class="hud-stat-label">Grade</div>
-                <div class="hud-stat-value" id="hudGrade" style="color:#6b7280;">—</div>
-            </div>
-            <div class="hud-stat">
-                <div class="hud-stat-label">BF</div>
-                <div class="hud-stat-value" id="hudBf" style="color:#6b7280;">—</div>
-            </div>
-            <div class="hud-stat">
-                <div class="hud-stat-label">Cum</div>
-                <div class="hud-stat-value" id="hudCum" style="color:#6b7280;">—</div>
-            </div>
-            <div class="hud-stat">
-                <div class="hud-stat-label">Cum Grade</div>
-                <div class="hud-stat-value" id="hudCumGrade" style="color:#6b7280;">—</div>
-            </div>
+        <div class="tip-stat">
+            <div class="tip-stat-label">Total</div>
+            <div class="tip-stat-val" id="stTotal" style="color:#1e3a5f;">—</div>
         </div>
-
-        <div class="hud-prog-wrap">
-            <div class="hud-prog-label">
-                <span id="hudProgLabel">Score progress</span>
-                <span id="hudProgPct">0%</span>
-            </div>
-            <div class="hud-prog-track">
-                <div class="hud-prog-fill" id="hudProgFill" style="width:0%"></div>
-            </div>
+        <div class="tip-stat">
+            <div class="tip-stat-label">Grade</div>
+            <div class="tip-stat-val" id="stGrade" style="color:#6b7280;">—</div>
         </div>
-
-        <div class="hud-hint">
-            <kbd>Enter</kbd> next field &nbsp;·&nbsp; <kbd>Esc</kbd> dismiss
-        </div>
+    </div>
+    <div class="tip-divider"></div>
+    <div class="tip-prog-labels">
+        <span id="stProgLabel">Score progress</span>
+        <span id="stProgPct">0%</span>
+    </div>
+    <div class="tip-prog-track">
+        <div class="tip-prog-fill" id="stProgFill"></div>
     </div>
 </div>
 
@@ -1243,8 +1000,6 @@ function saveIndividualScore(input) {
             cumBadge.textContent = fmtN(cum);
             const cc = cum >= 70 ? 'success' : cum >= 50 ? 'info' : cum >= 40 ? 'warning' : 'danger';
             cumBadge.className = `badge fw-bold cum-badge bg-${cc}-subtle text-${cc}`;
-            // sync HUD cum if this row is active
-            if (row.classList.contains('scoring-active')) hudRefreshFromRow(row);
         }
         const totalGradeBadge = row.querySelector('.grade-badge');
         if (totalGradeBadge && d.grade != null) applyGrade(totalGradeBadge, d.grade);
@@ -1261,117 +1016,80 @@ function saveIndividualScore(input) {
 }
 
 /* ════════════════════════════════════════════════════════════════════
-   STUDENT SCORE-ENTRY HUD
+   SCORE INPUT TOOLTIP
    ════════════════════════════════════════════════════════════════════ */
-let hudActive    = false;
-let hudDismissTimer = null;
-const HUD_IDLE_MS = 8000; // auto-dismiss after 8s of no input
+const tip      = document.getElementById('scoreTooltip');
+let   tipInput = null;
+let   tipHideTimer = null;
 
-function hudEl(id) { return document.getElementById(id); }
+function tipPosition(inp) {
+    const r   = inp.getBoundingClientRect();
+    const tw  = 230;
+    const margin = 8;
 
-function hudOpen(row, focusedInput) {
-    clearTimeout(hudDismissTimer);
-    hudActive = true;
+    // Horizontal: centre over the input, clamp to viewport
+    let left = r.left + r.width / 2 - tw / 2;
+    left = Math.max(margin, Math.min(left, window.innerWidth - tw - margin));
+    tip.style.left = left + 'px';
 
-    // Mark row active, dim others
-    document.querySelectorAll('#scoresheetTableBody tr[data-id]').forEach(r => r.classList.remove('scoring-active'));
-    document.getElementById('scoresheetTableBody').classList.add('has-active-row');
-    row.classList.add('scoring-active');
-
-    // Populate top
-    hudEl('hudAvatar').src    = row.dataset.avatar || '{{ asset("storage/student_avatars/unnamed.jpg") }}';
-    hudEl('hudAvatar').onerror = () => { hudEl('hudAvatar').src = '{{ asset("storage/student_avatars/unnamed.jpg") }}'; };
-    hudEl('hudName').textContent = row.dataset.name  || '—';
-    hudEl('hudMeta').textContent = row.dataset.admissionno || '—';
-
-    // Build score pills
-    hudRefreshPills(row, focusedInput);
-    hudRefreshFromRow(row);
-
-    // Show
-    hudEl('studentHudCard').classList.add('hud-visible');
-    hudEl('studentHudBackdrop').classList.add('hud-backdrop-visible');
-
-    // Auto-dismiss timer
-    hudStartIdleTimer();
+    // Vertical: prefer above, fall back to below if not enough space
+    const spaceAbove = r.top;
+    tip.classList.remove('tip-above', 'tip-below');
+    if (spaceAbove > 155) {
+        tip.style.top = (r.top + window.scrollY - 8) + 'px';
+        tip.classList.add('tip-above');
+    } else {
+        tip.style.top = (r.bottom + window.scrollY + 8) + 'px';
+        tip.classList.add('tip-below');
+    }
 }
 
-function hudRefreshPills(row, focusedInput) {
-    const inputs  = Array.from(row.querySelectorAll('.score-input'));
-    const pillsEl = hudEl('hudScoresRow');
-    pillsEl.innerHTML = '';
-
-    inputs.forEach(inp => {
-        const val     = parseFloat(inp.value) || 0;
-        const max     = parseFloat(inp.dataset.max) || 100;
-        const name    = inp.dataset.assessmentName || 'Score';
-        const invalid = val > max;
-        const active  = focusedInput === inp;
-
-        const pill = document.createElement('div');
-        pill.className = 'hud-score-pill' + (active ? ' pill-active' : '') + (invalid ? ' pill-invalid' : '');
-        pill.dataset.inputId = inp.dataset.field;
-        pill.innerHTML = `
-            <div class="pill-label">${name}</div>
-            <div class="pill-val">${val % 1 === 0 ? val : val.toFixed(1)}</div>
-            <div class="pill-max">/ ${max}</div>`;
-        pillsEl.appendChild(pill);
+function tipRefresh(inp) {
+    if (!inp) return;
+    const row      = inp.closest('tr');
+    const val      = parseFloat(inp.value) || 0;
+    const max      = parseFloat(inp.dataset.max) || 100;
+    const asmtName = inp.dataset.assessmentName || 'Score';
+    let total = 0, totalMax = 0;
+    row.querySelectorAll('.score-input').forEach(i => {
+        total    += parseFloat(i.value)       || 0;
+        totalMax += parseFloat(i.dataset.max) || 0;
     });
-}
+    const grade = clientGrade(total);
+    const pct   = totalMax > 0 ? Math.min(total / totalMax * 100, 100) : 0;
+    const col   = GRADE_COLORS[grade] || '#6b7280';
 
-function hudRefreshFromRow(row) {
-    const inputs  = Array.from(row.querySelectorAll('.score-input'));
-    const bf      = parseFloat(row.dataset.bf) || 0;
-    const termId  = parseInt(row.dataset.termid) || window.term_id;
-
-    let totalRaw  = 0;
-    let totalMax  = 0;
-    inputs.forEach(inp => { totalRaw += parseFloat(inp.value) || 0; totalMax += parseFloat(inp.dataset.max) || 0; });
-    const cum     = termId == 1 ? totalRaw : (totalRaw + bf) / 2;
-    const grade   = clientGrade(totalRaw);
-    const cumGrade= clientGrade(cum);
-    const pct     = totalMax > 0 ? Math.min((totalRaw / totalMax) * 100, 100) : 0;
-
-    // Stats
-    const totalEl = hudEl('hudTotal');
-    totalEl.textContent = fmtN(totalRaw);
-    totalEl.style.color = totalRaw >= 70 ? '#16a34a' : totalRaw >= 50 ? '#2563eb' : totalRaw >= 40 ? '#d97706' : '#dc2626';
-
-    const gradeEl = hudEl('hudGrade');
-    gradeEl.textContent = grade;
-    gradeEl.style.color = GRADE_COLORS[grade] || '#6b7280';
-
-    hudEl('hudBf').textContent  = fmtN(bf);
-    const cumEl = hudEl('hudCum');
-    cumEl.textContent = fmtN(cum);
-    cumEl.style.color = cum >= 70 ? '#16a34a' : cum >= 50 ? '#2563eb' : cum >= 40 ? '#d97706' : '#dc2626';
-
-    const cgEl = hudEl('hudCumGrade');
-    cgEl.textContent = cumGrade;
-    cgEl.style.color = GRADE_COLORS[cumGrade] || '#6b7280';
-
-    // Progress
-    const fill  = hudEl('hudProgFill');
-    fill.style.width = pct.toFixed(1) + '%';
+    document.getElementById('stAvatar').src         = row.dataset.avatar || '{{ asset("storage/student_avatars/unnamed.jpg") }}';
+    document.getElementById('stName').textContent   = row.dataset.name || '—';
+    document.getElementById('stMeta').textContent   = (row.dataset.admissionno || '—') + ' · ' + asmtName + ' (max ' + max + ')';
+    document.getElementById('stVal').textContent    = val % 1 === 0 ? String(val) : val.toFixed(1);
+    document.getElementById('stTotal').textContent  = fmtN(total);
+    const gEl = document.getElementById('stGrade');
+    gEl.textContent = grade; gEl.style.color = col;
+    document.getElementById('stProgLabel').textContent = fmtN(total) + ' / ' + totalMax + ' marks';
+    document.getElementById('stProgPct').textContent   = Math.round(pct) + '%';
+    const fill = document.getElementById('stProgFill');
+    fill.style.width      = pct.toFixed(1) + '%';
     fill.style.background = pct >= 70 ? '#16a34a' : pct >= 50 ? '#2563eb' : pct >= 40 ? '#d97706' : '#dc2626';
-    hudEl('hudProgPct').textContent = Math.round(pct) + '%';
-    hudEl('hudProgLabel').textContent = `${fmtN(totalRaw)} of ${totalMax} marks`;
+
+    tipPosition(inp);
 }
 
-function hudClose() {
-    clearTimeout(hudDismissTimer);
-    hudActive = false;
-    hudEl('studentHudCard').classList.remove('hud-visible');
-    hudEl('studentHudBackdrop').classList.remove('hud-backdrop-visible');
-    setTimeout(() => {
-        document.getElementById('scoresheetTableBody').classList.remove('has-active-row');
-        document.querySelectorAll('#scoresheetTableBody tr[data-id]').forEach(r => r.classList.remove('scoring-active'));
-    }, 280);
+function tipShow(inp) {
+    clearTimeout(tipHideTimer);
+    tipInput = inp;
+    tip.style.position = 'absolute'; // use absolute so it scrolls with page
+    tip.style.display  = 'block';
+    tipRefresh(inp);
+    requestAnimationFrame(() => { tip.style.opacity = '1'; });
 }
 
-function hudStartIdleTimer() {
-    clearTimeout(hudDismissTimer);
-    hudDismissTimer = setTimeout(() => { if (hudActive) hudClose(); }, HUD_IDLE_MS);
+function tipHide() {
+    tip.style.opacity = '0';
+    tipHideTimer = setTimeout(() => {
+        if (tip.style.opacity === '0') tip.style.display = 'none';
+    }, 160);
+    tipInput = null;
 }
 
 /* ════════════════════════════════════════════════════════════════════
@@ -1527,37 +1245,30 @@ document.addEventListener('DOMContentLoaded', function () {
 
     /* ── Score inputs ──────────────────────────────────────────────── */
     document.querySelectorAll('.score-input').forEach(inp => {
-        inp.addEventListener('focus', function() {
+
+        inp.addEventListener('focus', function () {
             this.select();
-            const row = this.closest('tr');
-            if (row && row.dataset.id) hudOpen(row, this);
+            tipShow(this);
         });
 
-        inp.addEventListener('input', function() {
+        inp.addEventListener('input', function () {
             validateInput(this);
             const row = this.closest('tr');
-            if (row) {
-                updateRowGrades(row);
-                // refresh HUD live
-                if (hudActive && row.classList.contains('scoring-active')) {
-                    hudRefreshPills(row, this);
-                    hudRefreshFromRow(row);
-                    hudStartIdleTimer();
-                }
-            }
+            if (row) updateRowGrades(row);
+            if (tipInput === this) tipRefresh(this);
         });
 
-        inp.addEventListener('blur', function() {
+        inp.addEventListener('blur', function () {
+            // Small delay so tabbing to next input doesn't flash hide/show
+            setTimeout(() => { if (tipInput === this) tipHide(); }, 80);
             if (!validateInput(this)) return;
             const orig = parseFloat(this.dataset.original) || 0;
             const curr = parseFloat(this.value) || 0;
             if (Math.abs(curr - orig) > 0.001) { this.dataset.original = this.value; saveIndividualScore(this); }
-            // restart idle timer on blur (moving to next field)
-            if (hudActive) hudStartIdleTimer();
         });
 
-        inp.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') { e.preventDefault(); hudClose(); this.blur(); return; }
+        inp.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') { e.preventDefault(); tipHide(); this.blur(); return; }
             if (e.key !== 'Enter') return;
             e.preventDefault();
             if (validateInput(this)) saveIndividualScore(this);
@@ -1567,15 +1278,9 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    /* HUD close button */
-    document.getElementById('hudClose')?.addEventListener('click', hudClose);
-
-    /* Backdrop click to dismiss */
-    document.getElementById('studentHudBackdrop')?.addEventListener('click', hudClose);
-
-    /* Keyboard dismiss */
+    /* Keyboard shortcuts */
     document.addEventListener('keydown', e => {
-        if (e.key === 'Escape' && hudActive) { hudClose(); return; }
+        if (e.key === 'Escape' && tipInput) { tipHide(); document.activeElement?.blur(); return; }
         if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); bulkSave(); }
     });
 
