@@ -148,6 +148,7 @@
    SCORE INPUT TOOLTIP
    ══════════════════════════════════════════════════════════════════ */
 #scoreTooltip {
+    display: none;
     position: fixed;
     z-index: 99990;
     background: #fff;
@@ -158,16 +159,11 @@
     box-shadow: 0 4px 20px rgba(0,0,0,.10), 0 1px 4px rgba(0,0,0,.06);
     pointer-events: none;
     font-family: inherit;
-    visibility: hidden;
     opacity: 0;
-    transition: opacity .16s ease, visibility .16s ease, transform .16s ease;
-    transform: translateY(6px);
+    transition: opacity .15s ease;
 }
-#scoreTooltip.tip-visible {
-    visibility: visible;
-    opacity: 1;
-    transform: translateY(0);
-}
+#scoreTooltip.tip-above { transform: translateY(-100%); }
+#scoreTooltip.tip-below { transform: translateY(0); }
 .tip-top {
     display: flex; align-items: center; gap: 8px;
     margin-bottom: 8px; padding-bottom: 8px;
@@ -252,7 +248,7 @@
     .stat-card { padding: 10px 12px; }
     .stat-card .stat-value { font-size: 18px; }
     #ssSaveModal { width: 280px; padding: 26px 24px 22px; }
-    #scoreTooltip { width: 200px; }
+    #scoreTooltip { width: calc(100vw - 24px); }
 }
 </style>
 
@@ -1025,25 +1021,26 @@ function saveIndividualScore(input) {
 const tip      = document.getElementById('scoreTooltip');
 let   tipInput = null;
 let   tipHideTimer = null;
-const TIP_W    = 230;
-const TIP_H    = 158; // approx rendered height
-const MARGIN   = 8;
 
 function tipPosition(inp) {
-    const r = inp.getBoundingClientRect();
+    const r   = inp.getBoundingClientRect();
+    const tw  = 230;
+    const margin = 8;
 
-    // Horizontal: centre over input, clamp within viewport
-    let left = r.left + r.width / 2 - TIP_W / 2;
-    left = Math.max(MARGIN, Math.min(left, window.innerWidth - TIP_W - MARGIN));
+    // Horizontal: centre over the input, clamp to viewport
+    let left = r.left + r.width / 2 - tw / 2;
+    left = Math.max(margin, Math.min(left, window.innerWidth - tw - margin));
     tip.style.left = left + 'px';
 
-    // Vertical: prefer above, fall back to below when too close to top
-    if (r.top > TIP_H + MARGIN + 10) {
-        // above the input
-        tip.style.top = (r.top - TIP_H - MARGIN) + 'px';
+    // Vertical: prefer above, fall back to below if not enough space
+    const spaceAbove = r.top;
+    tip.classList.remove('tip-above', 'tip-below');
+    if (spaceAbove > 155) {
+        tip.style.top = (r.top + window.scrollY - 8) + 'px';
+        tip.classList.add('tip-above');
     } else {
-        // below the input
-        tip.style.top = (r.bottom + MARGIN) + 'px';
+        tip.style.top = (r.bottom + window.scrollY + 8) + 'px';
+        tip.classList.add('tip-below');
     }
 }
 
@@ -1062,11 +1059,11 @@ function tipRefresh(inp) {
     const pct   = totalMax > 0 ? Math.min(total / totalMax * 100, 100) : 0;
     const col   = GRADE_COLORS[grade] || '#6b7280';
 
-    document.getElementById('stAvatar').src        = row.dataset.avatar || '{{ asset("storage/student_avatars/unnamed.jpg") }}';
-    document.getElementById('stName').textContent  = row.dataset.name || '—';
-    document.getElementById('stMeta').textContent  = (row.dataset.admissionno || '—') + ' · ' + asmtName + ' (max ' + max + ')';
-    document.getElementById('stVal').textContent   = val % 1 === 0 ? String(val) : val.toFixed(1);
-    document.getElementById('stTotal').textContent = fmtN(total);
+    document.getElementById('stAvatar').src         = row.dataset.avatar || '{{ asset("storage/student_avatars/unnamed.jpg") }}';
+    document.getElementById('stName').textContent   = row.dataset.name || '—';
+    document.getElementById('stMeta').textContent   = (row.dataset.admissionno || '—') + ' · ' + asmtName + ' (max ' + max + ')';
+    document.getElementById('stVal').textContent    = val % 1 === 0 ? String(val) : val.toFixed(1);
+    document.getElementById('stTotal').textContent  = fmtN(total);
     const gEl = document.getElementById('stGrade');
     gEl.textContent = grade; gEl.style.color = col;
     document.getElementById('stProgLabel').textContent = fmtN(total) + ' / ' + totalMax + ' marks';
@@ -1081,14 +1078,18 @@ function tipRefresh(inp) {
 function tipShow(inp) {
     clearTimeout(tipHideTimer);
     tipInput = inp;
-    tipRefresh(inp);                        // position & fill before making visible
-    tip.classList.add('tip-visible');       // CSS handles opacity + transform fade-in
+    tip.style.position = 'absolute'; // use absolute so it scrolls with page
+    tip.style.display  = 'block';
+    tipRefresh(inp);
+    requestAnimationFrame(() => { tip.style.opacity = '1'; });
 }
 
 function tipHide() {
-    clearTimeout(tipHideTimer);
-    tip.classList.remove('tip-visible');
-    tipHideTimer = setTimeout(() => { tipInput = null; }, 170);
+    tip.style.opacity = '0';
+    tipHideTimer = setTimeout(() => {
+        if (tip.style.opacity === '0') tip.style.display = 'none';
+    }, 160);
+    tipInput = null;
 }
 
 /* ════════════════════════════════════════════════════════════════════
@@ -1258,9 +1259,8 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         inp.addEventListener('blur', function () {
-            const self = this;
-            // Small delay so tabbing to next input moves tooltip instead of hiding it
-            setTimeout(() => { if (tipInput === self) tipHide(); }, 80);
+            // Small delay so tabbing to next input doesn't flash hide/show
+            setTimeout(() => { if (tipInput === this) tipHide(); }, 80);
             if (!validateInput(this)) return;
             const orig = parseFloat(this.dataset.original) || 0;
             const curr = parseFloat(this.value) || 0;
