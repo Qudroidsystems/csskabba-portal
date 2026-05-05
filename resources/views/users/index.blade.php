@@ -278,9 +278,7 @@ use Spatie\Permission\Models\Role;
                 </div>
             </div>
 
-            <!-- ══════════════════════════════════════════════════════
-            ADD USER MODAL
-            ══════════════════════════════════════════════════════ -->
+            <!-- ADD USER MODAL -->
             <div id="showModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
@@ -332,9 +330,7 @@ use Spatie\Permission\Models\Role;
                 </div>
             </div>
 
-            <!-- ══════════════════════════════════════════════════════
-            EDIT USER MODAL
-            ══════════════════════════════════════════════════════ -->
+            <!-- EDIT USER MODAL -->
             <div id="editModal" class="modal fade" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
@@ -388,9 +384,7 @@ use Spatie\Permission\Models\Role;
                 </div>
             </div>
 
-            <!-- ══════════════════════════════════════════════════════
-            DELETE USER MODAL
-            ══════════════════════════════════════════════════════ -->
+            <!-- DELETE USER MODAL -->
             <div id="deleteRecordModal" class="modal fade zoomIn" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">
@@ -421,9 +415,7 @@ use Spatie\Permission\Models\Role;
                 </div>
             </div>
 
-            <!-- ══════════════════════════════════════════════════════
-            ADD STUDENT MODAL (single)
-            ══════════════════════════════════════════════════════ -->
+            <!-- ADD STUDENT MODAL (single) -->
             <div id="addStudentModal" class="modal fade" tabindex="-1" aria-hidden="true"
                 data-bs-backdrop="static">
                 <div class="modal-dialog modal-dialog-centered">
@@ -460,9 +452,7 @@ use Spatie\Permission\Models\Role;
                 </div>
             </div>
 
-            <!-- ══════════════════════════════════════════════════════
-            SET STUDENT CREDENTIALS MODAL (single)
-            ══════════════════════════════════════════════════════ -->
+            <!-- SET STUDENT CREDENTIALS MODAL (single) -->
             <div id="setStudentCredentialsModal" class="modal fade" tabindex="-1" aria-hidden="true"
                 data-bs-backdrop="static">
                 <div class="modal-dialog modal-dialog-centered">
@@ -544,217 +534,915 @@ use Spatie\Permission\Models\Role;
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="{{ asset('theme/layouts/assets/js/bootstrap.bundle.min.js') }}"></script>
 <script src="{{ asset('theme/layouts/assets/js/list.min.js') }}"></script>
-<script src="{{ asset('theme/layouts/assets/js/choices.min.js') }}" defer></script>
-<script src="{{ asset('js/user-list.init.js') }}"></script>
+<script src="{{ asset('theme/layouts/assets/js/choices.min.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
 <script>
-document.addEventListener("DOMContentLoaded", function () {
+// ==================== MAIN APPLICATION SCRIPT ====================
+(function() {
+    'use strict';
 
-    // Chart
-    var ctx = document.getElementById("usersByRoleChart")?.getContext("2d");
-    if (ctx) {
-        new Chart(ctx, {
-            type: "bar",
-            data: {
-                labels: @json(array_keys($role_counts)),
-                datasets: [{
-                    label: "Users by Role",
-                    data: @json(array_values($role_counts)),
-                    backgroundColor: ["#4e73df","#1cc88a","#36b9cc","#f6c23e","#e74a3b"],
-                    borderColor: ["#4e73df","#1cc88a","#36b9cc","#f6c23e","#e74a3b"],
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: { y: { beginAtZero: true } },
-                plugins: { legend: { position: "top" } }
-            }
+    // Global variables
+    var perPage = 100,
+        editlist = false,
+        checkAll = document.getElementById("checkAll"),
+        options = {
+            valueNames: ["id", "name", "email", "role", "datereg"],
+            page: perPage,
+            pagination: true,
+            item: '缘<td class="id" data-id><div class="form-check"><input class="form-check-input" type="checkbox" name="chk_child"><label class="form-check-label"></label></div></td><td class="name" data-name><div class="d-flex align-items-center"><div><h6 class="mb-0"><a href="#" class="text-reset products"></a></h6></div></div></td><td class="email" data-email></td><td class="role" data-roles><div></div></td><td class="datereg"></td><td><ul class="d-flex gap-2 list-unstyled mb-0"><li><a href="#" class="btn btn-subtle-primary btn-icon btn-sm"><i class="ph-eye"></i></a></li><li><a href="javascript:void(0);" class="btn btn-subtle-secondary btn-icon btn-sm edit-item-btn"><i class="ph-pencil"></i></a></li><li><a href="javascript:void(0);" class="btn btn-subtle-danger btn-icon btn-sm remove-item-btn"><i class="ph-trash"></i></a></li></ul></td>'
+        },
+        userList = new List("userList", options),
+        addIdField = document.getElementById("add-id-field"),
+        addNameField = document.getElementById("name"),
+        addEmailField = document.getElementById("email"),
+        addRoleField = document.getElementById("role"),
+        addPasswordField = document.getElementById("password"),
+        addPasswordConfirmField = document.getElementById("password_confirmation"),
+        editIdField = document.getElementById("edit-id-field"),
+        editNameField = document.getElementById("edit-name"),
+        editEmailField = document.getElementById("edit-email"),
+        editRoleField = document.getElementById("edit-role"),
+        editPasswordField = document.getElementById("edit-password"),
+        editPasswordConfirmField = document.getElementById("edit-password_confirmation"),
+        addRoleVal = null,
+        editRoleVal = null,
+        roleFilterVal = null,
+        emailFilterVal = null;
+
+    // Make globally accessible
+    window.userList = userList;
+    window.editlist = editlist;
+    window.editIdField = editIdField;
+    window.editNameField = editNameField;
+    window.editEmailField = editEmailField;
+    window.editRoleField = editRoleField;
+    window.editRoleVal = editRoleVal;
+    window.ensureAxios = ensureAxios;
+
+    function ensureAxios() {
+        if (typeof axios === 'undefined') {
+            console.error("Axios is not defined");
+            Swal.fire({
+                icon: "error",
+                title: "Configuration error",
+                text: "Axios library is missing",
+                showConfirmButton: true
+            });
+            return false;
+        }
+        return true;
+    }
+
+    function refreshCallbacks() {
+        console.log("refreshCallbacks executed");
+        var removeButtons = document.getElementsByClassName("remove-item-btn");
+        var editButtons = document.getElementsByClassName("edit-item-btn");
+
+        Array.from(removeButtons).forEach(function(btn) {
+            btn.removeEventListener("click", handleRemoveClick);
+            btn.addEventListener("click", handleRemoveClick);
+        });
+
+        Array.from(editButtons).forEach(function(btn) {
+            btn.removeEventListener("click", handleEditClick);
+            btn.addEventListener("click", handleEditClick);
         });
     }
 
-    // Single student password reset button
-    $(document).on('click', '.reset-student-pwd-btn', function() {
-        const userId = $(this).data('user-id');
-        const userName = $(this).data('user-name');
+    function handleRemoveClick(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log("Remove button clicked");
 
-        Swal.fire({
-            title: 'Reset Password?',
-            html: `Reset password for <strong>${userName}</strong>?<br><br>A new random password will be generated.`,
-            icon: 'question',
-            showCancelButton: true,
-            confirmButtonText: 'Yes, Reset Password',
-            cancelButtonText: 'Cancel'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                Swal.fire({
-                    title: 'Processing...',
-                    allowOutsideClick: false,
-                    didOpen: () => { Swal.showLoading(); }
-                });
-
-                fetch(`/users/reset-single-password/${userId}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    }
-                })
-                .then(r => r.json())
-                .then(data => {
-                    if (data.success) {
-                        Swal.fire({
-                            title: 'Password Reset!',
-                            html: `
-                                New password for <strong>${data.user.name}</strong>:<br>
-                                <code style="font-size: 24px; background: #f0f0f0; padding: 10px; display: inline-block; margin: 10px 0; letter-spacing: 2px;">${data.password}</code><br>
-                                <button class="btn btn-info mt-2" onclick="navigator.clipboard.writeText('${data.password}')">Copy Password</button>
-                            `,
-                            icon: 'success',
-                            showConfirmButton: true
-                        });
-                    } else {
-                        Swal.fire('Error', data.message || 'Failed to reset password', 'error');
-                    }
-                })
-                .catch(() => {
-                    Swal.fire('Error', 'Network error occurred', 'error');
-                });
-            }
-        });
-    });
-
-    // Single Student Add Modal Logic
-    const addStudentModalEl = document.getElementById('addStudentModal');
-    const credentialsModalEl = document.getElementById('setStudentCredentialsModal');
-
-    if (addStudentModalEl && credentialsModalEl) {
-        const addStudentModal = new bootstrap.Modal(addStudentModalEl);
-        const credentialsModal = new bootstrap.Modal(credentialsModalEl);
-        const searchInput = document.getElementById('student-search');
-        const studentSelect = document.getElementById('student-select');
-        const proceedBtn = document.getElementById('proceed-to-credentials');
-        const errorEl = document.getElementById('student-select-error');
-        let selectedStudent = null;
-
-        addStudentModalEl.addEventListener('show.bs.modal', () => loadStudentsForSingle(''));
-
-        function loadStudentsForSingle(search = '') {
-            proceedBtn.disabled = true;
-            errorEl?.classList.add('d-none');
-            let url = '{{ route("get.students") }}?limit=500&has_account=no';
-
-            if (search.trim()) url += `&search=${encodeURIComponent(search.trim())}`;
-
-            fetch(url)
-                .then(r => r.json())
-                .then(data => {
-                    if (!data.success) {
-                        errorEl.textContent = data.message || 'Failed to load students';
-                        errorEl.classList.remove('d-none');
-                        return;
-                    }
-                    studentSelect.innerHTML = '<option value="">Choose a student...</option>';
-                    data.students.forEach(s => {
-                        const opt = document.createElement('option');
-                        opt.value = s.id;
-                        opt.textContent = `${s.name} (${s.admissionNo})`;
-                        opt.dataset.name = s.name;
-                        opt.dataset.email = s.email || '';
-                        opt.dataset.admission = s.admissionNo || '';
-                        studentSelect.appendChild(opt);
-                    });
-                    proceedBtn.disabled = data.students.length === 0;
-                })
-                .catch(() => {
-                    errorEl.textContent = 'Network error – please try again';
-                    errorEl.classList.remove('d-none');
-                });
+        var btn = e.target.closest("tr");
+        if (!btn) {
+            console.error("Could not find parent tr");
+            return;
         }
 
-        searchInput?.addEventListener('input', debounce(e => {
-            loadStudentsForSingle(e.target.value.trim());
-        }, 350));
+        var idElement = btn.querySelector(".id");
+        if (!idElement) {
+            console.error("Could not find .id element");
+            return;
+        }
 
-        studentSelect?.addEventListener('change', function () {
-            const opt = this.options[this.selectedIndex];
-            if (!opt.value) {
-                proceedBtn.disabled = true;
-                selectedStudent = null;
-                return;
+        var itemId = idElement.getAttribute("data-id");
+        if (!itemId) {
+            console.error("No data-id attribute found");
+            return;
+        }
+
+        console.log("Deleting user ID:", itemId);
+
+        var deleteBtn = document.getElementById("delete-record");
+        if (deleteBtn) {
+            var newDeleteBtn = deleteBtn.cloneNode(true);
+            deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
+
+            newDeleteBtn.addEventListener("click", function() {
+                if (!ensureAxios()) return;
+                axios.delete(`/users/${itemId}`, {
+                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+                }).then(function() {
+                    userList.remove("id", itemId);
+                    Swal.fire({
+                        icon: "success",
+                        title: "User deleted successfully!",
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
+                    var modal = bootstrap.Modal.getInstance(document.getElementById("deleteRecordModal"));
+                    if (modal) modal.hide();
+                }).catch(function(error) {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Error deleting user",
+                        text: error.response?.data?.message || "An error occurred"
+                    });
+                });
+            });
+        }
+
+        var modal = new bootstrap.Modal(document.getElementById("deleteRecordModal"));
+        modal.show();
+    }
+
+    function handleEditClick(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log("Edit button clicked");
+
+        var tr = e.target.closest("tr");
+        if (!tr) {
+            console.error("Could not find parent tr");
+            return;
+        }
+
+        var idElement = tr.querySelector(".id");
+        if (!idElement) {
+            console.error("Could not find .id element");
+            return;
+        }
+
+        var itemId = idElement.getAttribute("data-id");
+        if (!itemId) {
+            console.error("No data-id attribute found");
+            return;
+        }
+
+        console.log("Editing user ID:", itemId);
+
+        editIdField.value = itemId;
+
+        var nameElement = tr.querySelector(".name a");
+        editNameField.value = nameElement ? nameElement.innerText : "";
+
+        var emailElement = tr.querySelector(".email");
+        editEmailField.value = emailElement ? emailElement.innerText : "";
+
+        var roleElement = tr.querySelector(".role");
+        var roles = roleElement ? roleElement.getAttribute("data-roles")?.split(",").filter(r => r.trim()) : [];
+
+        if (typeof Choices !== 'undefined' && editRoleVal) {
+            editRoleVal.removeActiveItems();
+            editRoleVal.setChoiceByValue(roles);
+        } else if (editRoleField) {
+            Array.from(editRoleField.options).forEach(option => {
+                option.selected = roles.includes(option.value);
+            });
+        }
+
+        var modal = new bootstrap.Modal(document.getElementById("editModal"));
+        modal.show();
+    }
+
+    function ischeckboxcheck() {
+        const checkboxes = document.querySelectorAll('tbody input[name="chk_child"]');
+        checkboxes.forEach((checkbox) => {
+            checkbox.removeEventListener("change", handleCheckboxChange);
+            checkbox.addEventListener("change", handleCheckboxChange);
+        });
+    }
+
+    function handleCheckboxChange(e) {
+        const row = e.target.closest("tr");
+        if (e.target.checked) {
+            row.classList.add("table-active");
+        } else {
+            row.classList.remove("table-active");
+        }
+        const checkedCount = document.querySelectorAll('tbody input[name="chk_child"]:checked').length;
+        const removeActions = document.getElementById("remove-actions");
+        if (removeActions) {
+            removeActions.classList.toggle("d-none", checkedCount === 0);
+        }
+        if (checkAll) {
+            const allCheckboxes = document.querySelectorAll('tbody input[name="chk_child"]');
+            checkAll.checked = allCheckboxes.length > 0 && allCheckboxes.length === checkedCount;
+        }
+    }
+
+    function clearAddFields() {
+        if (addIdField) addIdField.value = "";
+        if (addNameField) addNameField.value = "";
+        if (addEmailField) addEmailField.value = "";
+        if (addPasswordField) addPasswordField.value = "";
+        if (addPasswordConfirmField) addPasswordConfirmField.value = "";
+        if (typeof Choices !== 'undefined' && addRoleVal) {
+            addRoleVal.setChoiceByValue([]);
+        } else if (addRoleField) {
+            Array.from(addRoleField.options).forEach(option => option.selected = false);
+        }
+    }
+
+    function clearEditFields() {
+        if (editIdField) editIdField.value = "";
+        if (editNameField) editNameField.value = "";
+        if (editEmailField) editEmailField.value = "";
+        if (editPasswordField) editPasswordField.value = "";
+        if (editPasswordConfirmField) editPasswordConfirmField.value = "";
+        if (typeof Choices !== 'undefined' && editRoleVal) {
+            editRoleVal.setChoiceByValue([]);
+        } else if (editRoleField) {
+            Array.from(editRoleField.options).forEach(option => option.selected = false);
+        }
+    }
+
+    function filterData() {
+        var searchInput = document.querySelector(".search-box input.search");
+        var searchValue = searchInput ? searchInput.value.toLowerCase() : "";
+        var roleSelect = document.getElementById("idRole");
+        var emailSelect = document.getElementById("idEmail");
+        var selectedRole = (typeof Choices !== 'undefined' && roleFilterVal) ? roleFilterVal.getValue(true) : (roleSelect ? roleSelect.value : "all");
+        var selectedEmail = (typeof Choices !== 'undefined' && emailFilterVal) ? emailFilterVal.getValue(true) : (emailSelect ? emailSelect.value : "all");
+
+        userList.filter(function(item) {
+            var nameMatch = item.values().name.toLowerCase().includes(searchValue);
+            var emailMatch = item.values().email.toLowerCase().includes(searchValue);
+            var roleMatch = selectedRole === "all" || item.values().role.split(",").includes(selectedRole);
+            var emailSelectMatch = selectedEmail === "all" || item.values().email === selectedEmail;
+            return (nameMatch || emailMatch) && roleMatch && emailSelectMatch;
+        });
+    }
+
+    function deleteMultiple() {
+        const ids_array = [];
+        const checkboxes = document.querySelectorAll('tbody input[name="chk_child"]');
+        checkboxes.forEach((checkbox) => {
+            if (checkbox.checked) {
+                const id = checkbox.closest("tr").querySelector(".id").getAttribute("data-id");
+                ids_array.push(id);
             }
-            selectedStudent = {
-                id: opt.value,
-                name: opt.dataset.name,
-                email: opt.dataset.email,
-                admissionNo: opt.dataset.admission,
-            };
-            proceedBtn.disabled = false;
         });
 
-        proceedBtn?.addEventListener('click', () => {
-            if (!selectedStudent) return;
-            document.getElementById('student-id-field').value = selectedStudent.id;
-            document.getElementById('student-name-field').value = selectedStudent.name;
-            document.getElementById('student-user-email').value = selectedStudent.email;
-            document.getElementById('student-username').value = (selectedStudent.admissionNo || '').replace(/[\/\\]/g, '_');
-            addStudentModal.hide();
-            setTimeout(() => credentialsModal.show(), 300);
-        });
-
-        document.getElementById('generate-temp-password')?.addEventListener('click', () => {
-            const temp = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-4).toUpperCase();
-            document.getElementById('student-password').value = temp;
-            document.getElementById('student-password_confirmation').value = temp;
-        });
-
-        document.getElementById('add-student-credentials-form')?.addEventListener('submit', function (e) {
-            e.preventDefault();
-            const formData = new FormData(this);
-            formData.append('_token', '{{ csrf_token() }}');
-
-            fetch('{{ route("users.store-student") }}', {
-                method: 'POST',
-                body: formData,
-            })
-            .then(r => r.json())
-            .then(data => {
-                if (data.success) {
-                    Swal.fire('Success!', data.message, 'success');
-                    credentialsModal.hide();
-                    setTimeout(() => location.reload(), 1500);
-                } else {
-                    const err = document.getElementById('student-credentials-error');
-                    err.innerHTML = data.errors ? Object.values(data.errors).flat().join('<br>') : (data.message || 'Error occurred');
-                    err.classList.remove('d-none');
+        if (ids_array.length > 0) {
+            Swal.fire({
+                title: "Are you sure?",
+                text: "You won't be able to revert this!",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonText: "Yes, delete it!",
+                cancelButtonText: "Cancel"
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    if (!ensureAxios()) return;
+                    Promise.all(ids_array.map((id) => {
+                        return axios.delete(`/users/${id}`, {
+                            headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+                        });
+                    })).then(() => {
+                        ids_array.forEach(id => userList.remove("id", id));
+                        Swal.fire("Deleted!", "Your data has been deleted.", "success");
+                    }).catch((error) => {
+                        Swal.fire("Error!", error.response?.data?.message || "Failed to delete users", "error");
+                    });
                 }
-            })
-            .catch(() => {
-                Swal.fire('Error', 'Network error – please try again', 'error');
+            });
+        } else {
+            Swal.fire("Please select at least one checkbox");
+        }
+    }
+
+    function clearWhatsAppFields() {
+        var userIdField = document.getElementById("whatsapp-user-id");
+        var emailField = document.getElementById("whatsapp-email");
+        var passwordField = document.getElementById("whatsapp-password");
+        var phoneField = document.getElementById("whatsapp-phone");
+        var linkContainer = document.getElementById("whatsapp-link-container");
+        var linkElement = document.getElementById("whatsapp-link");
+        var previewElement = document.getElementById("whatsapp-message-preview");
+
+        if (userIdField) userIdField.value = "";
+        if (emailField) emailField.value = "";
+        if (passwordField) passwordField.value = "";
+        if (phoneField) phoneField.value = "";
+        if (linkContainer) linkContainer.classList.add("d-none");
+        if (linkElement) linkElement.href = "#";
+        if (previewElement) previewElement.textContent = "";
+    }
+
+    // Make functions globally accessible
+    window.filterData = filterData;
+    window.deleteMultiple = deleteMultiple;
+    window.clearWhatsAppFields = clearWhatsAppFields;
+    window.refreshCallbacks = refreshCallbacks;
+    window.ischeckboxcheck = ischeckboxcheck;
+
+    // DOM Content Loaded
+    document.addEventListener("DOMContentLoaded", function() {
+        console.log("DOM loaded, initializing...");
+
+        // Initialize Choices.js
+        if (typeof Choices !== 'undefined') {
+            var roleElement = document.getElementById("role");
+            var editRoleElement = document.getElementById("edit-role");
+            var idRoleElement = document.getElementById("idRole");
+            var idEmailElement = document.getElementById("idEmail");
+
+            if (roleElement) addRoleVal = new Choices(roleElement, { searchEnabled: true, removeItemButton: true });
+            if (editRoleElement) editRoleVal = new Choices(editRoleElement, { searchEnabled: true, removeItemButton: true });
+            if (idRoleElement) roleFilterVal = new Choices(idRoleElement, { searchEnabled: true });
+            if (idEmailElement) emailFilterVal = new Choices(idEmailElement, { searchEnabled: true });
+
+            window.editRoleVal = editRoleVal;
+        }
+
+        // Update pagination display
+        var showingEl = document.getElementById("pagination-showing");
+        var totalEl = document.getElementById("pagination-total");
+        if (showingEl) showingEl.innerText = Math.min(perPage, userList.items.length);
+        if (totalEl) totalEl.innerText = userList.items.length;
+
+        // List.js update event
+        userList.on("updated", function(e) {
+            const noResultElement = document.getElementsByClassName("noresult")[0];
+            if (noResultElement) {
+                noResultElement.style.display = e.matchingItems.length === 0 ? "block" : "none";
+            }
+            if (showingEl) showingEl.innerText = e.matchingItems.length;
+            if (totalEl) totalEl.innerText = userList.items.length;
+            setTimeout(() => {
+                refreshCallbacks();
+                ischeckboxcheck();
+            }, 100);
+        });
+
+        refreshCallbacks();
+        ischeckboxcheck();
+
+        // CheckAll functionality
+        if (checkAll) {
+            checkAll.onclick = function() {
+                var checkboxes = document.querySelectorAll('tbody input[name="chk_child"]');
+                checkboxes.forEach((checkbox) => {
+                    checkbox.checked = this.checked;
+                    const row = checkbox.closest("tr");
+                    if (checkbox.checked) {
+                        row.classList.add("table-active");
+                    } else {
+                        row.classList.remove("table-active");
+                    }
+                });
+                const checkedCount = document.querySelectorAll('tbody input[name="chk_child"]:checked').length;
+                const removeActions = document.getElementById("remove-actions");
+                if (removeActions) removeActions.classList.toggle("d-none", checkedCount === 0);
+            };
+        }
+
+        // WhatsApp link generation
+        var generateBtn = document.getElementById("generate-whatsapp-link");
+        if (generateBtn) {
+            generateBtn.addEventListener("click", function() {
+                const phoneNumber = document.getElementById("whatsapp-phone")?.value;
+                const email = document.getElementById("whatsapp-email")?.value;
+                const password = document.getElementById("whatsapp-password")?.value;
+
+                if (!phoneNumber || !phoneNumber.match(/^\+[1-9]\d{1,14}$/)) {
+                    Swal.fire({
+                        icon: "error",
+                        title: "Error",
+                        text: "Please enter a valid phone number in E.164 format (e.g., +1234567890)"
+                    });
+                    return;
+                }
+
+                const message = encodeURIComponent(`Your account credentials to the school portal:\nUsername: ${email}\nPassword: ${password}\nPlease change your password after logging in.`);
+                const whatsappLink = `https://wa.me/${phoneNumber}?text=${message}`;
+
+                const linkContainer = document.getElementById("whatsapp-link-container");
+                const linkElement = document.getElementById("whatsapp-link");
+                const previewElement = document.getElementById("whatsapp-message-preview");
+
+                if (linkElement) linkElement.href = whatsappLink;
+                if (previewElement) previewElement.textContent = decodeURIComponent(message);
+                if (linkContainer) linkContainer.classList.remove("d-none");
+
+                Swal.fire({
+                    icon: "success",
+                    title: "WhatsApp link generated!",
+                    showConfirmButton: false,
+                    timer: 2000
+                });
+            });
+        }
+
+        // Add User Form
+        var addUserForm = document.getElementById("add-user-form");
+        if (addUserForm) {
+            addUserForm.addEventListener("submit", function(e) {
+                e.preventDefault();
+                var errorMsg = document.getElementById("alert-error-msg");
+                if (!errorMsg) return;
+
+                errorMsg.classList.remove("d-none");
+                setTimeout(() => errorMsg.classList.add("d-none"), 3000);
+
+                if (!addNameField || !addNameField.value) {
+                    errorMsg.innerHTML = "Please enter a name";
+                    return;
+                }
+                if (!addEmailField || !addEmailField.value) {
+                    errorMsg.innerHTML = "Please enter an email";
+                    return;
+                }
+                if (!addRoleField || !addRoleField.selectedOptions.length) {
+                    errorMsg.innerHTML = "Please select at least one role";
+                    return;
+                }
+                if (!addPasswordField || !addPasswordField.value) {
+                    errorMsg.innerHTML = "Please enter a password";
+                    return;
+                }
+                if (addPasswordField.value !== addPasswordConfirmField.value) {
+                    errorMsg.innerHTML = "Passwords do not match";
+                    return;
+                }
+
+                if (!ensureAxios()) return;
+
+                var roles = (typeof Choices !== 'undefined' && addRoleVal)
+                    ? addRoleVal.getValue(true)
+                    : Array.from(addRoleField.selectedOptions).map(option => option.value);
+
+                axios.post('/users', {
+                    name: addNameField.value,
+                    email: addEmailField.value,
+                    roles: roles,
+                    password: addPasswordField.value,
+                    password_confirmation: addPasswordConfirmField.value,
+                    _token: document.querySelector('meta[name="csrf-token"]').content
+                }).then(function(response) {
+                    userList.add({
+                        id: response.data.user.id,
+                        name: response.data.user.name,
+                        email: response.data.user.email,
+                        role: response.data.user.roles.join(','),
+                        datereg: new Date().toISOString().slice(0, 10)
+                    });
+                    userList.reIndex();
+                    userList.update();
+                    Swal.fire({
+                        icon: "success",
+                        title: "User added successfully!",
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
+                    var addModal = bootstrap.Modal.getInstance(document.getElementById("showModal"));
+                    if (addModal) addModal.hide();
+
+                    // Show WhatsApp modal
+                    var whatsappModalEl = document.getElementById("whatsappModal");
+                    if (whatsappModalEl) {
+                        var userIdField = document.getElementById("whatsapp-user-id");
+                        var emailField = document.getElementById("whatsapp-email");
+                        var passwordField = document.getElementById("whatsapp-password");
+                        var phoneField = document.getElementById("whatsapp-phone");
+
+                        if (userIdField) userIdField.value = response.data.user.id;
+                        if (emailField) emailField.value = response.data.user.email;
+                        if (passwordField) passwordField.value = response.data.user.password || "";
+                        if (phoneField) phoneField.value = response.data.user.phone_number || "";
+
+                        var whatsappModal = new bootstrap.Modal(whatsappModalEl);
+                        whatsappModal.show();
+                    }
+                }).catch(function(error) {
+                    var message = error.response?.data?.message || "Error adding user";
+                    if (error.response?.status === 422) {
+                        message = Object.values(error.response.data.errors || {}).flat().join(", ");
+                    }
+                    errorMsg.innerHTML = message;
+                });
+            });
+        }
+
+        // Edit User Form
+        var editUserForm = document.getElementById("edit-user-form");
+        if (editUserForm) {
+            editUserForm.addEventListener("submit", function(e) {
+                e.preventDefault();
+                const updateBtn = document.getElementById("update-btn");
+                if (updateBtn) updateBtn.disabled = true;
+
+                const errorMsg = document.getElementById("alert-error-msg");
+                if (errorMsg) {
+                    errorMsg.classList.add("d-none");
+                }
+
+                if (!editNameField || !editNameField.value) {
+                    if (errorMsg) {
+                        errorMsg.innerHTML = "Please enter a name";
+                        errorMsg.classList.remove("d-none");
+                        setTimeout(() => errorMsg.classList.add("d-none"), 3000);
+                    }
+                    if (updateBtn) updateBtn.disabled = false;
+                    return;
+                }
+                if (!editEmailField || !editEmailField.value) {
+                    if (errorMsg) {
+                        errorMsg.innerHTML = "Please enter an email";
+                        errorMsg.classList.remove("d-none");
+                        setTimeout(() => errorMsg.classList.add("d-none"), 3000);
+                    }
+                    if (updateBtn) updateBtn.disabled = false;
+                    return;
+                }
+                if (!editRoleField || !editRoleField.selectedOptions.length) {
+                    if (errorMsg) {
+                        errorMsg.innerHTML = "Please select at least one role";
+                        errorMsg.classList.remove("d-none");
+                        setTimeout(() => errorMsg.classList.add("d-none"), 3000);
+                    }
+                    if (updateBtn) updateBtn.disabled = false;
+                    return;
+                }
+                if (editPasswordField && editPasswordField.value && editPasswordField.value !== editPasswordConfirmField.value) {
+                    if (errorMsg) {
+                        errorMsg.innerHTML = "Passwords do not match";
+                        errorMsg.classList.remove("d-none");
+                        setTimeout(() => errorMsg.classList.add("d-none"), 3000);
+                    }
+                    if (updateBtn) updateBtn.disabled = false;
+                    return;
+                }
+
+                if (!ensureAxios()) {
+                    if (errorMsg) {
+                        errorMsg.innerHTML = "Axios library is missing";
+                        errorMsg.classList.remove("d-none");
+                        setTimeout(() => errorMsg.classList.add("d-none"), 3000);
+                    }
+                    if (updateBtn) updateBtn.disabled = false;
+                    return;
+                }
+
+                const roles = (typeof Choices !== 'undefined' && editRoleVal)
+                    ? editRoleVal.getValue(true)
+                    : Array.from(editRoleField.selectedOptions).map(option => option.value);
+
+                const data = {
+                    name: editNameField.value,
+                    email: editEmailField.value,
+                    roles: roles,
+                    _token: document.querySelector('meta[name="csrf-token"]')?.content || '',
+                };
+                if (editPasswordField && editPasswordField.value) {
+                    data.password = editPasswordField.value;
+                    data.password_confirmation = editPasswordConfirmField.value;
+                }
+
+                axios.put(`/users/${editIdField.value}`, data, {
+                    headers: { 'X-CSRF-TOKEN': data._token }
+                })
+                .then(function(response) {
+                    userList.items.forEach(item => {
+                        if (item.values().id === response.data.user.id) {
+                            item.values({
+                                id: response.data.user.id,
+                                name: response.data.user.name,
+                                email: response.data.user.email,
+                                role: response.data.user.roles.join(','),
+                                datereg: item.values().datereg
+                            });
+                        }
+                    });
+                    userList.reIndex();
+                    userList.update();
+                    Swal.fire({
+                        icon: "success",
+                        title: "User updated successfully!",
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
+                    var editModal = bootstrap.Modal.getInstance(document.getElementById("editModal"));
+                    if (editModal) editModal.hide();
+
+                    if (data.password) {
+                        var whatsappModalEl = document.getElementById("whatsappModal");
+                        if (whatsappModalEl) {
+                            var userIdField = document.getElementById("whatsapp-user-id");
+                            var emailField = document.getElementById("whatsapp-email");
+                            var passwordField = document.getElementById("whatsapp-password");
+                            var phoneField = document.getElementById("whatsapp-phone");
+
+                            if (userIdField) userIdField.value = response.data.user.id;
+                            if (emailField) emailField.value = response.data.user.email;
+                            if (passwordField) passwordField.value = response.data.user.password || data.password;
+                            if (phoneField) phoneField.value = response.data.user.phone_number || "";
+
+                            var whatsappModal = new bootstrap.Modal(whatsappModalEl);
+                            whatsappModal.show();
+                        }
+                    }
+                    if (updateBtn) updateBtn.disabled = false;
+                })
+                .catch(function(error) {
+                    let message = error.response?.data?.message || "Error updating user";
+                    if (error.response?.status === 422) {
+                        message = Object.values(error.response.data.errors || {}).flat().join(", ");
+                    }
+                    if (errorMsg) {
+                        errorMsg.innerHTML = message;
+                        errorMsg.classList.remove("d-none");
+                        setTimeout(() => errorMsg.classList.add("d-none"), 3000);
+                    }
+                    if (updateBtn) updateBtn.disabled = false;
+                });
+            });
+        }
+
+        // Modal event handlers
+        var showModal = document.getElementById("showModal");
+        if (showModal) {
+            showModal.addEventListener("show.bs.modal", function() {
+                var addModalLabel = document.getElementById("addModalLabel");
+                var addBtn = document.getElementById("add-btn");
+                if (addModalLabel) addModalLabel.innerHTML = "Add User";
+                if (addBtn) addBtn.innerHTML = "Add User";
+            });
+            showModal.addEventListener("hidden.bs.modal", clearAddFields);
+        }
+
+        var editModal = document.getElementById("editModal");
+        if (editModal) {
+            editModal.addEventListener("show.bs.modal", function() {
+                var editModalLabel = document.getElementById("editModalLabel");
+                var updateBtn = document.getElementById("update-btn");
+                if (editModalLabel) editModalLabel.innerHTML = "Edit User";
+                if (updateBtn) updateBtn.innerHTML = "Update";
+            });
+            editModal.addEventListener("hidden.bs.modal", clearEditFields);
+        }
+
+        var whatsappModal = document.getElementById("whatsappModal");
+        if (whatsappModal) {
+            whatsappModal.addEventListener("hidden.bs.modal", clearWhatsAppFields);
+        }
+
+        // Chart
+        var ctx = document.getElementById("usersByRoleChart")?.getContext("2d");
+        if (ctx) {
+            new Chart(ctx, {
+                type: "bar",
+                data: {
+                    labels: @json(array_keys($role_counts)),
+                    datasets: [{
+                        label: "Users by Role",
+                        data: @json(array_values($role_counts)),
+                        backgroundColor: ["#4e73df","#1cc88a","#36b9cc","#f6c23e","#e74a3b"],
+                        borderColor: ["#4e73df","#1cc88a","#36b9cc","#f6c23e","#e74a3b"],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    scales: { y: { beginAtZero: true } },
+                    plugins: { legend: { position: "top" } }
+                }
+            });
+        }
+
+        // Student password reset
+        $(document).on('click', '.reset-student-pwd-btn', function() {
+            const userId = $(this).data('user-id');
+            const userName = $(this).data('user-name');
+
+            Swal.fire({
+                title: 'Reset Password?',
+                html: `Reset password for <strong>${userName}</strong>?<br><br>A new random password will be generated.`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, Reset Password',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    Swal.fire({
+                        title: 'Processing...',
+                        allowOutsideClick: false,
+                        didOpen: () => { Swal.showLoading(); }
+                    });
+
+                    fetch(`/users/reset-single-password/${userId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        }
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire({
+                                title: 'Password Reset!',
+                                html: `
+                                    New password for <strong>${data.user.name}</strong>:<br>
+                                    <code style="font-size: 24px; background: #f0f0f0; padding: 10px; display: inline-block; margin: 10px 0; letter-spacing: 2px;">${data.password}</code><br>
+                                    <button class="btn btn-info mt-2" onclick="navigator.clipboard.writeText('${data.password}')">Copy Password</button>
+                                `,
+                                icon: 'success',
+                                showConfirmButton: true
+                            });
+                        } else {
+                            Swal.fire('Error', data.message || 'Failed to reset password', 'error');
+                        }
+                    })
+                    .catch(() => {
+                        Swal.fire('Error', 'Network error occurred', 'error');
+                    });
+                }
             });
         });
 
-        function resetStudentCredentialsModal() {
-            document.getElementById('student-id-field').value = '';
-            document.getElementById('student-name-field').value = '';
-            document.getElementById('student-user-email').value = '';
-            document.getElementById('student-username').value = '';
-            document.getElementById('student-password').value = '';
-            document.getElementById('student-password_confirmation').value = '';
-            document.getElementById('student-credentials-error')?.classList.add('d-none');
+        // Single Student Add Modal Logic
+        const addStudentModalEl = document.getElementById('addStudentModal');
+        const credentialsModalEl = document.getElementById('setStudentCredentialsModal');
+
+        if (addStudentModalEl && credentialsModalEl) {
+            const addStudentModal = new bootstrap.Modal(addStudentModalEl);
+            const credentialsModal = new bootstrap.Modal(credentialsModalEl);
+            const searchInput = document.getElementById('student-search');
+            const studentSelect = document.getElementById('student-select');
+            const proceedBtn = document.getElementById('proceed-to-credentials');
+            const errorEl = document.getElementById('student-select-error');
+            let selectedStudent = null;
+
+            addStudentModalEl.addEventListener('show.bs.modal', () => loadStudentsForSingle(''));
+
+            function loadStudentsForSingle(search = '') {
+                if (proceedBtn) proceedBtn.disabled = true;
+                if (errorEl) errorEl.classList.add('d-none');
+
+                let url = '{{ route("get.students") }}?limit=500&has_account=no';
+                if (search.trim()) url += `&search=${encodeURIComponent(search.trim())}`;
+
+                fetch(url)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (!data.success) {
+                            if (errorEl) {
+                                errorEl.textContent = data.message || 'Failed to load students';
+                                errorEl.classList.remove('d-none');
+                            }
+                            return;
+                        }
+                        if (studentSelect) {
+                            studentSelect.innerHTML = '<option value="">Choose a student...</option>';
+                            data.students.forEach(s => {
+                                const opt = document.createElement('option');
+                                opt.value = s.id;
+                                opt.textContent = `${s.name} (${s.admissionNo})`;
+                                opt.dataset.name = s.name;
+                                opt.dataset.email = s.email || '';
+                                opt.dataset.admission = s.admissionNo || '';
+                                studentSelect.appendChild(opt);
+                            });
+                            if (proceedBtn) proceedBtn.disabled = data.students.length === 0;
+                        }
+                    })
+                    .catch(() => {
+                        if (errorEl) {
+                            errorEl.textContent = 'Network error – please try again';
+                            errorEl.classList.remove('d-none');
+                        }
+                    });
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener('input', debounce(e => {
+                    loadStudentsForSingle(e.target.value.trim());
+                }, 350));
+            }
+
+            if (studentSelect) {
+                studentSelect.addEventListener('change', function() {
+                    const opt = this.options[this.selectedIndex];
+                    if (!opt.value) {
+                        if (proceedBtn) proceedBtn.disabled = true;
+                        selectedStudent = null;
+                        return;
+                    }
+                    selectedStudent = {
+                        id: opt.value,
+                        name: opt.dataset.name,
+                        email: opt.dataset.email,
+                        admissionNo: opt.dataset.admission,
+                    };
+                    if (proceedBtn) proceedBtn.disabled = false;
+                });
+            }
+
+            if (proceedBtn) {
+                proceedBtn.addEventListener('click', () => {
+                    if (!selectedStudent) return;
+                    var studentIdField = document.getElementById('student-id-field');
+                    var studentNameField = document.getElementById('student-name-field');
+                    var studentUserEmail = document.getElementById('student-user-email');
+                    var studentUsername = document.getElementById('student-username');
+
+                    if (studentIdField) studentIdField.value = selectedStudent.id;
+                    if (studentNameField) studentNameField.value = selectedStudent.name;
+                    if (studentUserEmail) studentUserEmail.value = selectedStudent.email;
+                    if (studentUsername) studentUsername.value = (selectedStudent.admissionNo || '').replace(/[\/\\]/g, '_');
+
+                    addStudentModal.hide();
+                    setTimeout(() => credentialsModal.show(), 300);
+                });
+            }
+
+            var generateTempPassword = document.getElementById('generate-temp-password');
+            if (generateTempPassword) {
+                generateTempPassword.addEventListener('click', () => {
+                    const temp = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-4).toUpperCase();
+                    var studentPassword = document.getElementById('student-password');
+                    var studentPasswordConfirm = document.getElementById('student-password_confirmation');
+                    if (studentPassword) studentPassword.value = temp;
+                    if (studentPasswordConfirm) studentPasswordConfirm.value = temp;
+                });
+            }
+
+            var addStudentCredentialsForm = document.getElementById('add-student-credentials-form');
+            if (addStudentCredentialsForm) {
+                addStudentCredentialsForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const formData = new FormData(this);
+                    formData.append('_token', '{{ csrf_token() }}');
+
+                    fetch('{{ route("users.store-student") }}', {
+                        method: 'POST',
+                        body: formData,
+                    })
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire('Success!', data.message, 'success');
+                            credentialsModal.hide();
+                            setTimeout(() => location.reload(), 1500);
+                        } else {
+                            const err = document.getElementById('student-credentials-error');
+                            if (err) {
+                                err.innerHTML = data.errors ? Object.values(data.errors).flat().join('<br>') : (data.message || 'Error occurred');
+                                err.classList.remove('d-none');
+                            }
+                        }
+                    })
+                    .catch(() => {
+                        Swal.fire('Error', 'Network error – please try again', 'error');
+                    });
+                });
+            }
+
+            window.resetStudentCredentialsModal = function() {
+                var studentIdField = document.getElementById('student-id-field');
+                var studentNameField = document.getElementById('student-name-field');
+                var studentUserEmail = document.getElementById('student-user-email');
+                var studentUsername = document.getElementById('student-username');
+                var studentPassword = document.getElementById('student-password');
+                var studentPasswordConfirm = document.getElementById('student-password_confirmation');
+                var studentCredentialsError = document.getElementById('student-credentials-error');
+
+                if (studentIdField) studentIdField.value = '';
+                if (studentNameField) studentNameField.value = '';
+                if (studentUserEmail) studentUserEmail.value = '';
+                if (studentUsername) studentUsername.value = '';
+                if (studentPassword) studentPassword.value = '';
+                if (studentPasswordConfirm) studentPasswordConfirm.value = '';
+                if (studentCredentialsError) studentCredentialsError.classList.add('d-none');
+            };
+
+            if (credentialsModalEl) {
+                credentialsModalEl.addEventListener('hidden.bs.modal', window.resetStudentCredentialsModal);
+            }
         }
 
-        credentialsModalEl?.addEventListener('hidden.bs.modal', resetStudentCredentialsModal);
-        window.resetStudentCredentialsModal = resetStudentCredentialsModal;
-    }
-
-    function debounce(func, wait) {
-        let timeout;
-        return (...args) => {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => func.apply(this, args), wait);
-        };
-    }
-});
+        function debounce(func, wait) {
+            let timeout;
+            return (...args) => {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+    });
+})();
 </script>
 
 @endsection
