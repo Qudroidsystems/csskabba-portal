@@ -486,11 +486,10 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
     });
 
 
-    // ============================================
-    // SCHOOL BILL TERM SESSION ROUTES
-    // ============================================
     Route::prefix('schoolbilltermsession')->name('schoolbilltermsession.')->group(function () {
         Route::get('/', [SchoolBillTermSessionController::class, 'index'])->name('index');
+        Route::get('/data', [SchoolBillTermSessionController::class, 'data'])->name('data');         // ← ADD
+        Route::get('/stats', [SchoolBillTermSessionController::class, 'stats'])->name('stats');      // ← ADD
         Route::post('/store', [SchoolBillTermSessionController::class, 'store'])->name('store');
         Route::get('/{id}/edit', [SchoolBillTermSessionController::class, 'edit'])->name('edit');
         Route::put('/{id}', [SchoolBillTermSessionController::class, 'update'])->name('update');
@@ -499,6 +498,7 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
         Route::post('/bulk-destroy', [SchoolBillTermSessionController::class, 'bulkDestroy'])->name('bulk-destroy');
     });
 
+    
     // ============================================
     // SCHOLARSHIP MANAGEMENT ROUTES
     // ============================================

@@ -188,7 +188,7 @@
         </div>
         <div class="col-md-3">
             <div class="stat-card">
-                <div class="stat-icon"><i class="ri-money-naira-circle-line"></i></div>
+                <div class="stat-icon"><i class="ri-money-dollar-circle-line"></i></div>
                 <div class="stat-value text-warning" id="statAmount">—</div>
                 <div class="stat-label">Total Assigned Value</div>
             </div>
@@ -345,7 +345,7 @@
                         </select>
                     </div>
 
-                    {{-- Session (radio for create, single select for edit) --}}
+                    {{-- Session --}}
                     <div class="mb-3">
                         <label class="form-label">Session <span class="text-danger">*</span></label>
                         <div class="d-flex flex-wrap gap-3" id="sessionRadios">
@@ -406,11 +406,12 @@ $(document).ready(function () {
     // ── Route helpers ──────────────────────────────────────────────────
     const ROUTES = {
         index:       '{{ route("schoolbilltermsession.index") }}',
+        data:        '{{ route("schoolbilltermsession.data") }}',
+        stats:       '{{ route("schoolbilltermsession.stats") }}',
         store:       '{{ route("schoolbilltermsession.store") }}',
-        update:      id => '{{ url("schoolbilltermsession") }}/' + id,
-        destroy:     id => '{{ url("schoolbilltermsession") }}/' + id,
+        update:      function(id) { return '{{ url("schoolbilltermsession") }}/' + id; },
+        destroy:     function(id) { return '{{ url("schoolbilltermsession") }}/' + id; },
         bulkDestroy: '{{ route("schoolbilltermsession.bulk-destroy") }}',
-        stats:       '{{ route("schoolbilltermsession.index") }}?stats=1',
     };
 
     const CSRF = $('meta[name="csrf-token"]').attr('content');
@@ -421,18 +422,19 @@ $(document).ready(function () {
         processing: true,
         serverSide: true,
         ajax: {
-            url:     ROUTES.index,
-            type:    'GET',
-            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            url:  ROUTES.data,
+            type: 'GET',
             error: function (xhr) {
-                console.error('DataTables error:', xhr.responseText);
-                Swal.fire('Error', 'Failed to load assignments. Please refresh.', 'error');
+                console.error('DataTables AJAX error:', xhr.status, xhr.responseText);
+                Swal.fire('Error', 'Failed to load assignments. Please refresh the page.', 'error');
             }
         },
         columns: [
             {
                 data: 'id', orderable: false, searchable: false,
-                render: data => `<input type="checkbox" class="form-check-input row-checkbox" value="${data}">`
+                render: function(data) {
+                    return '<input type="checkbox" class="form-check-input row-checkbox" value="' + data + '">';
+                }
             },
             { data: 'DT_RowIndex',           orderable: false, searchable: false },
             { data: 'formatted_bill',         orderable: false },
@@ -443,14 +445,14 @@ $(document).ready(function () {
             { data: 'action',                 orderable: false, searchable: false },
         ],
         language: {
-            processing:       '<span class="spinner-border spinner-border-sm text-primary me-2"></span>Loading...',
-            search:           '',
-            searchPlaceholder:'Search assignments...',
-            lengthMenu:       'Show _MENU_ entries',
-            info:             'Showing _START_–_END_ of _TOTAL_ assignments',
-            infoEmpty:        'No assignments found',
-            zeroRecords:      'No matching assignments',
-            emptyTable:       'No assignments created yet',
+            processing:        '<span class="spinner-border spinner-border-sm text-primary me-2"></span>Loading...',
+            search:            '',
+            searchPlaceholder: 'Search assignments...',
+            lengthMenu:        'Show _MENU_ entries',
+            info:              'Showing _START_&ndash;_END_ of _TOTAL_ assignments',
+            infoEmpty:         'No assignments found',
+            zeroRecords:       'No matching assignments',
+            emptyTable:        'No assignments created yet',
         },
         order:      [[1, 'desc']],
         pageLength: 15,
@@ -470,7 +472,7 @@ $(document).ready(function () {
                 $('#statBills'   ).text(data.stats.unique_bills);
                 $('#statSessions').text(data.stats.unique_sessions);
                 $('#statAmount'  ).text(
-                    '₦' + Number(data.stats.total_amount)
+                    '&#8358;' + Number(data.stats.total_amount)
                         .toLocaleString('en-NG', { minimumFractionDigits: 0 })
                 );
             }
@@ -503,19 +505,19 @@ $(document).ready(function () {
 
     // ── Helpers: switch between create mode (checkboxes) / edit mode (selects)
     function setCreateMode() {
-        $('#editNote'         ).addClass('d-none');
+        $('#editNote'          ).addClass('d-none');
         $('#classCheckboxGroup').removeClass('d-none');
-        $('#classSingleGroup' ).addClass('d-none');
-        $('#termCheckboxGroup').removeClass('d-none');
-        $('#termSingleGroup'  ).addClass('d-none');
+        $('#classSingleGroup'  ).addClass('d-none');
+        $('#termCheckboxGroup' ).removeClass('d-none');
+        $('#termSingleGroup'   ).addClass('d-none');
     }
 
     function setEditMode() {
-        $('#editNote'         ).removeClass('d-none');
+        $('#editNote'          ).removeClass('d-none');
         $('#classCheckboxGroup').addClass('d-none');
-        $('#classSingleGroup' ).removeClass('d-none');
-        $('#termCheckboxGroup').addClass('d-none');
-        $('#termSingleGroup'  ).removeClass('d-none');
+        $('#classSingleGroup'  ).removeClass('d-none');
+        $('#termCheckboxGroup' ).addClass('d-none');
+        $('#termSingleGroup'   ).removeClass('d-none');
     }
 
     function resetForm() {
@@ -554,7 +556,7 @@ $(document).ready(function () {
         $('#bill_id').val(bill_id);
         $('#class_id_single').val(class_id);
         $('#termid_id_single').val(termid_id);
-        $(`#ses_${session_id}`).prop('checked', true);
+        $('#ses_' + session_id).prop('checked', true);
 
         $('#modalTitle').html('<i class="ri-edit-line me-2"></i>Edit Assignment');
         $('#saveBtn').html('<i class="ri-save-line me-1"></i>Update Assignment');
@@ -581,9 +583,8 @@ $(document).ready(function () {
             payload.class_id  = $('#class_id_single').val();
             payload.termid_id = $('#termid_id_single').val();
         } else {
-            // Collect checked class and term arrays
-            payload['class_id[]']  = $('.class-cb:checked').map((i, el) => el.value).get();
-            payload['termid_id[]'] = $('.term-cb:checked').map((i, el) => el.value).get();
+            payload['class_id[]']  = $('.class-cb:checked').map(function(i, el) { return el.value; }).get();
+            payload['termid_id[]'] = $('.term-cb:checked').map(function(i, el) { return el.value; }).get();
         }
 
         $('#saveBtn').prop('disabled', true)
@@ -591,12 +592,11 @@ $(document).ready(function () {
         $('#formErrors').addClass('d-none').html('');
 
         $.ajax({
-            url,
+            url:         url,
             type:        'POST',
             data:        payload,
             traditional: true,
-            headers:     { 'X-Requested-With': 'XMLHttpRequest' },
-            success(res) {
+            success: function(res) {
                 if (res.success) {
                     $('#tsModal').modal('hide');
                     table.ajax.reload();
@@ -609,14 +609,15 @@ $(document).ready(function () {
                     showErrors(res.message, res.errors);
                 }
             },
-            error(xhr) {
+            error: function(xhr) {
                 if (xhr.status === 422) {
-                    showErrors(null, xhr.responseJSON?.errors);
+                    const json = xhr.responseJSON;
+                    showErrors(json ? json.message : null, json ? json.errors : null);
                 } else {
                     Swal.fire('Error!', 'Something went wrong. Please try again.', 'error');
                 }
             },
-            complete() {
+            complete: function() {
                 $('#saveBtn').prop('disabled', false)
                              .html('<i class="ri-save-line me-1"></i>Save Assignment');
             },
@@ -627,10 +628,10 @@ $(document).ready(function () {
         let html = '<ul class="mb-0 ps-3">';
         if (errors) {
             $.each(errors, function (k, v) {
-                html += `<li>${Array.isArray(v) ? v[0] : v}</li>`;
+                html += '<li>' + (Array.isArray(v) ? v[0] : v) + '</li>';
             });
         } else {
-            html += `<li>${message || 'Something went wrong.'}</li>`;
+            html += '<li>' + (message || 'Something went wrong.') + '</li>';
         }
         html += '</ul>';
         $('#formErrors').removeClass('d-none').html(html);
@@ -649,11 +650,10 @@ $(document).ready(function () {
         btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span>');
 
         $.ajax({
-            url:     ROUTES.destroy(deleteId),
-            type:    'POST',
-            data:    { _method: 'DELETE', _token: CSRF },
-            headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            success(res) {
+            url:  ROUTES.destroy(deleteId),
+            type: 'POST',
+            data: { _method: 'DELETE', _token: CSRF },
+            success: function(res) {
                 if (res.success) {
                     $('#deleteModal').modal('hide');
                     table.ajax.reload();
@@ -666,10 +666,10 @@ $(document).ready(function () {
                     Swal.fire('Error!', res.message, 'error');
                 }
             },
-            error() {
+            error: function() {
                 Swal.fire('Error!', 'Failed to delete assignment.', 'error');
             },
-            complete() {
+            complete: function() {
                 btn.prop('disabled', false)
                    .html('<i class="ri-delete-bin-line me-1"></i>Delete');
                 deleteId = null;
@@ -679,26 +679,25 @@ $(document).ready(function () {
 
     // ── Bulk delete ────────────────────────────────────────────────────
     function doBulkDelete() {
-        const ids = $('.row-checkbox:checked').map((i, el) => el.value).get();
+        const ids = $('.row-checkbox:checked').map(function(i, el) { return el.value; }).get();
         if (!ids.length) return;
 
         Swal.fire({
-            title: `Delete ${ids.length} assignment(s)?`,
+            title: 'Delete ' + ids.length + ' assignment(s)?',
             text:  'This cannot be undone.',
             icon:  'warning',
             showCancelButton:   true,
             confirmButtonColor: '#dc2626',
             confirmButtonText:  'Yes, delete',
-        }).then(result => {
+        }).then(function(result) {
             if (!result.isConfirmed) return;
 
             $.ajax({
                 url:         ROUTES.bulkDestroy,
                 type:        'POST',
                 data:        { ids: ids, _token: CSRF },
-                headers:     { 'X-Requested-With': 'XMLHttpRequest' },
                 traditional: true,
-                success(res) {
+                success: function(res) {
                     if (res.success) {
                         table.ajax.reload();
                         loadStats();
@@ -710,7 +709,7 @@ $(document).ready(function () {
                         });
                     }
                 },
-                error() {
+                error: function() {
                     Swal.fire('Error!', 'Failed to delete assignments.', 'error');
                 },
             });

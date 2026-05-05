@@ -1,4 +1,5 @@
 <?php
+
 // app/Http/Controllers/SchoolBillTermSessionController.php
 
 namespace App\Http\Controllers;
@@ -24,123 +25,18 @@ class SchoolBillTermSessionController extends Controller
     }
 
     /**
-     * Display a listing with DataTable AJAX support.
+     * Display the index page (normal page load only).
      */
-    public function index(Request $request)
+    public function index()
     {
-        // ── Stats endpoint ────────────────────────────────────────────
-        if ($request->has('stats')) {
-            $assignments = SchoolBillTermSession::leftJoin('school_bill', 'school_bill.id', '=', 'school_bill_class_term_session.bill_id')
-                ->leftJoin('schoolterm', 'schoolterm.id', '=', 'school_bill_class_term_session.termid_id')
-                ->leftJoin('schoolsession', 'schoolsession.id', '=', 'school_bill_class_term_session.session_id')
-                ->select([
-                    'school_bill_class_term_session.id',
-                    'school_bill_class_term_session.session_id',
-                    'school_bill.bill_amount',
-                ])
-                ->get();
-
-            // Unique sessions count (how many distinct sessions have bills assigned)
-            $uniqueSessions = SchoolBillTermSession::distinct('session_id')->count('session_id');
-
-            // Unique bills count
-            $uniqueBills = SchoolBillTermSession::distinct('bill_id')->count('bill_id');
-
-            return response()->json([
-                'stats' => [
-                    'total'           => $assignments->count(),
-                    'unique_bills'    => $uniqueBills,
-                    'unique_sessions' => $uniqueSessions,
-                    'total_amount'    => $assignments->sum('bill_amount'),
-                ]
-            ]);
-        }
-
-        // ── DataTables AJAX ───────────────────────────────────────────
-        if ($request->ajax()) {
-            $assignments = SchoolBillTermSession::leftJoin('school_bill', 'school_bill.id', '=', 'school_bill_class_term_session.bill_id')
-                ->leftJoin('schoolclass', 'schoolclass.id', '=', 'school_bill_class_term_session.class_id')
-                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-                ->leftJoin('schoolterm', 'schoolterm.id', '=', 'school_bill_class_term_session.termid_id')
-                ->leftJoin('schoolsession', 'schoolsession.id', '=', 'school_bill_class_term_session.session_id')
-                ->leftJoin('users', 'users.id', '=', 'school_bill_class_term_session.created_by')
-                ->select([
-                    'school_bill_class_term_session.id as id',
-                    'school_bill_class_term_session.bill_id',
-                    'school_bill_class_term_session.class_id',
-                    'school_bill_class_term_session.termid_id',
-                    'school_bill_class_term_session.session_id',
-                    'schoolclass.schoolclass as schoolclass',
-                    'schoolarm.arm as schoolarm',
-                    'schoolterm.term as schoolterm',
-                    'schoolsession.session as schoolsession',
-                    'users.name as createdBy',
-                    'school_bill.title as schoolbill',
-                    'school_bill.bill_amount as bill_amount',
-                    'school_bill_class_term_session.updated_at as updated_at',
-                ]);
-
-            return DataTables::of($assignments)
-                ->addIndexColumn()
-                ->addColumn('formatted_class', function ($row) {
-                    return trim($row->schoolclass . ' ' . ($row->schoolarm ?? ''));
-                })
-                ->addColumn('formatted_term_session', function ($row) {
-                    return '<span class="ts-badge ts-badge-term">'
-                        . e($row->schoolterm)
-                        . '</span>'
-                        . '<span class="ts-badge ts-badge-session ms-1">'
-                        . e($row->schoolsession)
-                        . '</span>';
-                })
-                ->addColumn('formatted_bill', function ($row) {
-                    return '<div class="fw-semibold">' . e($row->schoolbill) . '</div>'
-                        . '<div class="text-muted small">₦&nbsp;' . number_format($row->bill_amount, 2) . '</div>';
-                })
-                ->addColumn('formatted_date', function ($row) {
-                    return $row->updated_at
-                        ? '<span class="text-muted small">'
-                            . \Carbon\Carbon::parse($row->updated_at)->format('d M Y')
-                            . '<br><span style="font-size:10px">'
-                            . \Carbon\Carbon::parse($row->updated_at)->format('H:i')
-                            . '</span></span>'
-                        : 'N/A';
-                })
-                ->addColumn('action', function ($row) {
-                    $buttons = '<div class="btn-group btn-group-sm">';
-                    if (auth()->user()->can('Update school-bill-for-term-session')) {
-                        $buttons .= '<button class="btn btn-primary edit-assignment" title="Edit"
-                            data-id="'         . $row->id         . '"
-                            data-bill_id="'    . $row->bill_id    . '"
-                            data-class_id="'   . $row->class_id   . '"
-                            data-termid_id="'  . $row->termid_id  . '"
-                            data-session_id="' . $row->session_id . '">
-                            <i class="ri-pencil-line"></i>
-                        </button>';
-                    }
-                    if (auth()->user()->can('Delete school-bill-for-term-session')) {
-                        $buttons .= '<button class="btn btn-danger delete-assignment" title="Delete"
-                            data-id="'    . $row->id        . '"
-                            data-title="' . e($row->schoolbill . ' — ' . $row->schoolclass . ' ' . $row->schoolarm) . '">
-                            <i class="ri-delete-bin-line"></i>
-                        </button>';
-                    }
-                    $buttons .= '</div>';
-                    return $buttons;
-                })
-                ->rawColumns(['formatted_term_session', 'formatted_bill', 'formatted_date', 'action'])
-                ->make(true);
-        }
-
-        // ── Normal page load ──────────────────────────────────────────
-        $pagetitle     = 'School Bill Term Session Management';
-        $terms         = Schoolterm::all();
+        $pagetitle      = 'School Bill Term Session Management';
+        $terms          = Schoolterm::all();
         $schoolsessions = Schoolsession::all();
-        $schoolclasses = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+        $schoolclasses  = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
             ->select(['schoolclass.id as id', 'schoolclass.schoolclass as schoolclass', 'schoolarm.arm as arm'])
             ->orderBy('schoolclass')
             ->get();
-        $schoolbills   = SchoolBillModel::whereIn('statusId', [1, 2])->get();
+        $schoolbills = SchoolBillModel::whereIn('statusId', [1, 2])->get();
 
         return view('schoolbilltermsession.index', compact(
             'pagetitle', 'schoolbills', 'schoolclasses', 'terms', 'schoolsessions'
@@ -148,7 +44,112 @@ class SchoolBillTermSessionController extends Controller
     }
 
     /**
-     * Store new assignment(s) — supports multi-class × multi-term combos.
+     * DataTables AJAX data endpoint.
+     */
+    public function data(Request $request)
+    {
+        $assignments = SchoolBillTermSession::leftJoin('school_bill', 'school_bill.id', '=', 'school_bill_class_term_session.bill_id')
+            ->leftJoin('schoolclass', 'schoolclass.id', '=', 'school_bill_class_term_session.class_id')
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->leftJoin('schoolterm', 'schoolterm.id', '=', 'school_bill_class_term_session.termid_id')
+            ->leftJoin('schoolsession', 'schoolsession.id', '=', 'school_bill_class_term_session.session_id')
+            ->leftJoin('users', 'users.id', '=', 'school_bill_class_term_session.created_by')
+            ->select([
+                'school_bill_class_term_session.id as id',
+                'school_bill_class_term_session.bill_id',
+                'school_bill_class_term_session.class_id',
+                'school_bill_class_term_session.termid_id',
+                'school_bill_class_term_session.session_id',
+                'schoolclass.schoolclass as schoolclass',
+                'schoolarm.arm as schoolarm',
+                'schoolterm.term as schoolterm',
+                'schoolsession.session as schoolsession',
+                'users.name as createdBy',
+                'school_bill.title as schoolbill',
+                'school_bill.bill_amount as bill_amount',
+                'school_bill_class_term_session.updated_at as updated_at',
+            ]);
+
+        return DataTables::of($assignments)
+            ->addIndexColumn()
+            ->addColumn('formatted_class', function ($row) {
+                return trim($row->schoolclass . ' ' . ($row->schoolarm ?? ''));
+            })
+            ->addColumn('formatted_term_session', function ($row) {
+                return '<span class="ts-badge ts-badge-term">'
+                    . e($row->schoolterm)
+                    . '</span>'
+                    . '<span class="ts-badge ts-badge-session ms-1">'
+                    . e($row->schoolsession)
+                    . '</span>';
+            })
+            ->addColumn('formatted_bill', function ($row) {
+                return '<div class="fw-semibold">' . e($row->schoolbill) . '</div>'
+                    . '<div class="text-muted small">&#8358;&nbsp;' . number_format($row->bill_amount, 2) . '</div>';
+            })
+            ->addColumn('formatted_date', function ($row) {
+                return $row->updated_at
+                    ? '<span class="text-muted small">'
+                        . \Carbon\Carbon::parse($row->updated_at)->format('d M Y')
+                        . '<br><span style="font-size:10px">'
+                        . \Carbon\Carbon::parse($row->updated_at)->format('H:i')
+                        . '</span></span>'
+                    : 'N/A';
+            })
+            ->addColumn('action', function ($row) {
+                $buttons = '<div class="btn-group btn-group-sm">';
+                if (auth()->user()->can('Update school-bill-for-term-session')) {
+                    $buttons .= '<button class="btn btn-primary edit-assignment" title="Edit"
+                        data-id="'         . $row->id         . '"
+                        data-bill_id="'    . $row->bill_id    . '"
+                        data-class_id="'   . $row->class_id   . '"
+                        data-termid_id="'  . $row->termid_id  . '"
+                        data-session_id="' . $row->session_id . '">
+                        <i class="ri-pencil-line"></i>
+                    </button>';
+                }
+                if (auth()->user()->can('Delete school-bill-for-term-session')) {
+                    $buttons .= '<button class="btn btn-danger delete-assignment" title="Delete"
+                        data-id="'    . $row->id       . '"
+                        data-title="' . e($row->schoolbill . ' — ' . $row->schoolclass . ' ' . $row->schoolarm) . '">
+                        <i class="ri-delete-bin-line"></i>
+                    </button>';
+                }
+                $buttons .= '</div>';
+                return $buttons;
+            })
+            ->rawColumns(['formatted_term_session', 'formatted_bill', 'formatted_date', 'action'])
+            ->make(true);
+    }
+
+    /**
+     * Stats endpoint.
+     */
+    public function stats()
+    {
+        $assignments = SchoolBillTermSession::leftJoin('school_bill', 'school_bill.id', '=', 'school_bill_class_term_session.bill_id')
+            ->select([
+                'school_bill_class_term_session.id',
+                'school_bill_class_term_session.session_id',
+                'school_bill.bill_amount',
+            ])
+            ->get();
+
+        $uniqueSessions = SchoolBillTermSession::distinct('session_id')->count('session_id');
+        $uniqueBills    = SchoolBillTermSession::distinct('bill_id')->count('bill_id');
+
+        return response()->json([
+            'stats' => [
+                'total'           => $assignments->count(),
+                'unique_bills'    => $uniqueBills,
+                'unique_sessions' => $uniqueSessions,
+                'total_amount'    => $assignments->sum('bill_amount'),
+            ]
+        ]);
+    }
+
+    /**
+     * Store new assignment(s) — supports multi-class x multi-term combos.
      */
     public function store(Request $request)
     {
@@ -217,7 +218,7 @@ class SchoolBillTermSessionController extends Controller
     }
 
     /**
-     * Show single record (for edit pre-fill via AJAX if needed).
+     * Show single record (for edit pre-fill via AJAX).
      */
     public function show($id)
     {
@@ -305,7 +306,7 @@ class SchoolBillTermSessionController extends Controller
     }
 
     /**
-     * Get related records for group-edit (fetch all class+term combos sharing same bill+session).
+     * Get related records for group-edit.
      */
     public function getRelated($id)
     {
