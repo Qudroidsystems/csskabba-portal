@@ -445,6 +445,9 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
     Route::get('/studentassessments/print', [StudentAssessmentController::class, 'printResult'])->name('assessments.print');
 
 
+    // ── Student Payment Portal ──────────────────────────────────────
+    Route::get('/my-payments', [StudentPaymentController::class, 'index'])->name('student.payments');
+    Route::get('/my-payments/receipt', [StudentPaymentController::class, 'printReceipt'])->name('student.payments.receipt');
 
 
         // Marks Sheet Download Routes
