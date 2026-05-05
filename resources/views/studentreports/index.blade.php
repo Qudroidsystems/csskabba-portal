@@ -1,3 +1,4 @@
+
 @extends('layouts.master')
 
 @section('content')
@@ -201,10 +202,8 @@
             </div>
             <div class="col-xxl-3 col-sm-6">
                 <label class="form-label"><i class="ri-search-line me-1"></i>Search</label>
-                <div class="input-group">
-                    <input type="text" class="form-control" id="searchInput"
-                           name="search" placeholder="Search students...">
-                </div>
+                <input type="text" class="form-control" id="searchInput"
+                       name="search" placeholder="Search students...">
             </div>
             <div class="col-xxl-3 col-sm-6 d-flex gap-2">
                 <button type="button" class="btn btn-primary w-50"
@@ -272,8 +271,8 @@
                 <h5><i class="ri-image-line me-2"></i>Student Image</h5>
             </div>
             <div class="modal-body text-center p-4">
-                <img id="enlargedImage" src="" alt="Student Image" class="img-fluid rounded"
-                     style="max-height:420px;"
+                <img id="enlargedImage" src="" alt="Student Image"
+                     class="img-fluid rounded" style="max-height:420px;"
                      onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}';">
             </div>
         </div>
@@ -289,7 +288,8 @@
                 <h5><i class="ri-layout-column-line me-2"></i>Select Columns for PDF Report</h5>
             </div>
             <div class="modal-body p-4">
-                <div class="alert alert-info d-flex align-items-center gap-2" style="border-radius:8px; font-size:13px;">
+                <div class="alert alert-info d-flex align-items-center gap-2"
+                     style="border-radius:8px; font-size:13px;">
                     <i class="ri-information-line fs-5"></i>
                     <span>Select the columns to include in the PDF report. Class, Session, and Term must be selected first.</span>
                 </div>
@@ -304,10 +304,10 @@
                 <div id="columnSelectionForm" style="display:none;">
                     <div class="row g-3">
 
-                        {{-- Student Info --}}
                         <div class="col-12">
                             <div class="card border" style="border-radius:var(--bill-radius);">
-                                <div class="card-header bg-white fw-semibold" style="font-size:13px; color:var(--bill-primary);">
+                                <div class="card-header bg-white fw-semibold"
+                                     style="font-size:13px; color:var(--bill-primary);">
                                     <i class="ri-user-line me-1"></i>Student Information
                                 </div>
                                 <div class="card-body">
@@ -316,14 +316,15 @@
                             </div>
                         </div>
 
-                        {{-- Assessments --}}
                         <div class="col-12">
                             <div class="card border" style="border-radius:var(--bill-radius);">
-                                <div class="card-header bg-white d-flex justify-content-between align-items-center" style="font-size:13px; color:var(--bill-primary);">
+                                <div class="card-header bg-white d-flex justify-content-between align-items-center"
+                                     style="font-size:13px; color:var(--bill-primary);">
                                     <span class="fw-semibold"><i class="ri-pencil-ruler-line me-1"></i>Assessments</span>
                                     <div class="form-check mb-0">
                                         <input class="form-check-input" type="checkbox" id="selectAllAssessments">
-                                        <label class="form-check-label" for="selectAllAssessments" style="font-size:12px;">Select All</label>
+                                        <label class="form-check-label" for="selectAllAssessments"
+                                               style="font-size:12px;">Select All</label>
                                     </div>
                                 </div>
                                 <div class="card-body">
@@ -332,10 +333,10 @@
                             </div>
                         </div>
 
-                        {{-- Scores --}}
                         <div class="col-12">
                             <div class="card border" style="border-radius:var(--bill-radius);">
-                                <div class="card-header bg-white fw-semibold" style="font-size:13px; color:var(--bill-primary);">
+                                <div class="card-header bg-white fw-semibold"
+                                     style="font-size:13px; color:var(--bill-primary);">
                                     <i class="ri-bar-chart-line me-1"></i>Scores & Metrics
                                 </div>
                                 <div class="card-body">
@@ -344,14 +345,15 @@
                             </div>
                         </div>
 
-                        {{-- GPA --}}
                         <div class="col-12">
                             <div class="card border" style="border-radius:var(--bill-radius);">
-                                <div class="card-header bg-white d-flex justify-content-between align-items-center" style="font-size:13px; color:var(--bill-primary);">
+                                <div class="card-header bg-white d-flex justify-content-between align-items-center"
+                                     style="font-size:13px; color:var(--bill-primary);">
                                     <span class="fw-semibold"><i class="ri-award-line me-1"></i>GPA/CGPA Metrics</span>
                                     <div class="form-check mb-0">
                                         <input class="form-check-input" type="checkbox" id="selectAllGPAMetrics">
-                                        <label class="form-check-label" for="selectAllGPAMetrics" style="font-size:12px;">Select All</label>
+                                        <label class="form-check-label" for="selectAllGPAMetrics"
+                                               style="font-size:12px;">Select All</label>
                                     </div>
                                 </div>
                                 <div class="card-body">
@@ -360,10 +362,10 @@
                             </div>
                         </div>
 
-                        {{-- Other --}}
                         <div class="col-12">
                             <div class="card border" style="border-radius:var(--bill-radius);">
-                                <div class="card-header bg-white fw-semibold" style="font-size:13px; color:var(--bill-primary);">
+                                <div class="card-header bg-white fw-semibold"
+                                     style="font-size:13px; color:var(--bill-primary);">
                                     <i class="ri-more-line me-1"></i>Other Information
                                 </div>
                                 <div class="card-body">
@@ -391,169 +393,173 @@
 <script>
     console.log("Script loaded at", new Date().toISOString());
 
+    // ── Visibility helpers ──────────────────────────────────────────────
+
     function updateSelectionAlert() {
-        const classSelect = document.getElementById("idclass");
+        const classSelect   = document.getElementById("idclass");
         const sessionSelect = document.getElementById("idsession");
-        const termSelect = document.getElementById("idterm");
-        const checkedCheckboxes = document.querySelectorAll('tbody input[name="chk_child"]:checked');
-        const selectionAlert = document.getElementById("selectionAlert");
-        const selectionAlertText = document.getElementById("selectionAlertText");
+        const termSelect    = document.getElementById("idterm");
+        const checked       = document.querySelectorAll('tbody input[name="chk_child"]:checked');
+        const alert         = document.getElementById("selectionAlert");
+        const alertText     = document.getElementById("selectionAlertText");
 
-        let alertText = [];
-        if (classSelect.value !== 'ALL') {
-            alertText.push(`Class: ${classSelect.options[classSelect.selectedIndex].text}`);
-        }
-        if (sessionSelect.value !== 'ALL') {
-            alertText.push(`Session: ${sessionSelect.options[sessionSelect.selectedIndex].text}`);
-        }
-        if (termSelect.value !== 'ALL') {
-            alertText.push(`Term: ${termSelect.options[termSelect.selectedIndex].text}`);
-        }
-        alertText.push(`Students Selected: ${checkedCheckboxes.length}`);
+        let parts = [];
+        if (classSelect.value !== 'ALL')
+            parts.push(`Class: ${classSelect.options[classSelect.selectedIndex].text}`);
+        if (sessionSelect.value !== 'ALL')
+            parts.push(`Session: ${sessionSelect.options[sessionSelect.selectedIndex].text}`);
+        if (termSelect.value !== 'ALL')
+            parts.push(`Term: ${termSelect.options[termSelect.selectedIndex].text}`);
+        parts.push(`Students Selected: ${checked.length}`);
 
-        // Update selected stat card
-        document.getElementById('statSelected').textContent = checkedCheckboxes.length;
+        document.getElementById('statSelected').textContent = checked.length;
 
         if (classSelect.value !== 'ALL' && sessionSelect.value !== 'ALL') {
-            selectionAlert.style.display = 'block';
-            selectionAlertText.innerText = alertText.join(' | ');
+            alert.style.display = 'block';
+            alertText.innerText = parts.join(' | ');
         } else {
-            selectionAlert.style.display = 'none';
-            selectionAlertText.innerText = 'No selections made.';
+            alert.style.display = 'none';
+            alertText.innerText = 'No selections made.';
         }
     }
 
     function updateSearchButtonVisibility() {
-        const classSelect = document.getElementById("idclass");
-        const sessionSelect = document.getElementById("idsession");
-        const searchBtn = document.getElementById("searchBtn");
-        const termSelectContainer = document.getElementById("termSelectContainer");
-        const printAllBtn = document.getElementById("printAllBtn");
-
-        searchBtn.style.display = (classSelect.value !== 'ALL' && sessionSelect.value !== 'ALL') ? 'block' : 'none';
-        termSelectContainer.style.display = 'none';
-        printAllBtn.style.display = 'none';
+        const classValue   = document.getElementById("idclass").value;
+        const sessionValue = document.getElementById("idsession").value;
+        document.getElementById("searchBtn").style.display =
+            (classValue !== 'ALL' && sessionValue !== 'ALL') ? 'block' : 'none';
         updateSelectionAlert();
     }
 
+    // Only controls term dropdown visibility — never touches print button
     function updateTermSelectVisibility() {
-        const termSelectContainer = document.getElementById("termSelectContainer");
-        const printAllBtn = document.getElementById("printAllBtn");
-        const studentCount = parseInt(document.getElementById("studentcount").innerText);
-
-        termSelectContainer.style.display = studentCount > 0 ? 'block' : 'none';
-        printAllBtn.style.display = 'none';
+        const studentCount = parseInt(document.getElementById("studentcount").innerText) || 0;
+        document.getElementById("termSelectContainer").style.display =
+            studentCount > 0 ? 'block' : 'none';
         updateSelectionAlert();
     }
 
+    // Sole owner of print button visibility
     function updatePrintButtonVisibility() {
-        const termSelect = document.getElementById("idterm");
-        const printAllBtn = document.getElementById("printAllBtn");
-        const checkedCheckboxes = document.querySelectorAll('tbody input[name="chk_child"]:checked');
-
-        printAllBtn.style.display = (termSelect.value !== 'ALL' && checkedCheckboxes.length > 0) ? 'block' : 'none';
+        const termValue = document.getElementById("idterm").value;
+        const checked   = document.querySelectorAll('tbody input[name="chk_child"]:checked');
+        const show      = termValue !== 'ALL' && checked.length > 0;
+        document.getElementById("printAllBtn").style.display = show ? 'block' : 'none';
         updateSelectionAlert();
     }
+
+    // ── Filter / search ─────────────────────────────────────────────────
 
     function filterData() {
-        console.log("filterData called");
         if (typeof axios === 'undefined') {
-            console.error("Axios is not defined");
             Swal.fire({ icon: "error", title: "Configuration Error", text: "Axios library is missing." });
             return;
         }
 
-        const classSelect = document.getElementById("idclass");
-        const sessionSelect = document.getElementById("idsession");
-        const termSelect = document.getElementById("idterm");
-        const searchInput = document.getElementById("searchInput");
-
-        if (!classSelect || !sessionSelect || !termSelect) {
-            Swal.fire({ icon: "error", title: "Error", text: "Required filter elements not found." });
-            return;
-        }
-
-        const classValue = classSelect.value;
-        const sessionValue = sessionSelect.value;
-        const termValue = termSelect.value;
-        const searchValue = searchInput ? searchInput.value.trim() : '';
+        const classValue   = document.getElementById("idclass").value;
+        const sessionValue = document.getElementById("idsession").value;
+        const termValue    = document.getElementById("idterm").value;
+        const searchValue  = (document.getElementById("searchInput").value || '').trim();
 
         if (classValue === 'ALL' || sessionValue === 'ALL') {
-            document.getElementById('studentTableBody').innerHTML = '<tr><td colspan="10" class="text-center py-4 text-muted">Select class and session to view students.</td></tr>';
-            document.getElementById('pagination-container').innerHTML = '';
-            document.getElementById('studentcount').innerText = '0';
-            document.getElementById('statTotal').innerText = '0';
-            document.getElementById('printAllBtn').style.display = 'none';
-            document.getElementById('termSelectContainer').style.display = 'none';
-            updateSelectionAlert();
-            Swal.fire({ icon: "warning", title: "Missing Selection", text: "Please select a valid class and session." });
+            resetTable();
+            Swal.fire({ icon: "warning", title: "Missing Selection",
+                        text: "Please select a valid class and session." });
             return;
         }
 
         const tableBody = document.getElementById('studentTableBody');
-        tableBody.innerHTML = '<tr><td colspan="10" class="text-center py-4"><span class="spinner-border spinner-border-sm text-primary me-2"></span>Loading...</td></tr>';
+        tableBody.innerHTML =
+            '<tr><td colspan="10" class="text-center py-4">' +
+            '<span class="spinner-border spinner-border-sm text-primary me-2"></span>Loading...</td></tr>';
 
         axios.get('{{ route("studentreports.index") }}', {
-            params: { search: searchValue, schoolclassid: classValue, sessionid: sessionValue, termid: termValue },
+            params: { search: searchValue, schoolclassid: classValue,
+                      sessionid: sessionValue, termid: termValue },
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                 'X-Requested-With': 'XMLHttpRequest'
             }
         }).then(function (response) {
-            document.getElementById('studentTableBody').innerHTML = response.data.tableBody || '<tr><td colspan="10" class="text-center py-4 text-muted">No students found.</td></tr>';
-            document.getElementById('pagination-container').innerHTML = response.data.pagination || '';
+            document.getElementById('studentTableBody').innerHTML =
+                response.data.tableBody ||
+                '<tr><td colspan="10" class="text-center py-4 text-muted">No students found.</td></tr>';
+            document.getElementById('pagination-container').innerHTML =
+                response.data.pagination || '';
+
             const count = response.data.studentCount || '0';
             document.getElementById('studentcount').innerText = count;
-            document.getElementById('statTotal').innerText = count;
+            document.getElementById('statTotal').innerText    = count;
 
             setupPaginationLinks();
             setupCheckboxListeners();
             updateTermSelectVisibility();
+            // Do NOT call updatePrintButtonVisibility here —
+            // newly loaded rows have no checkboxes ticked yet,
+            // so the print button should stay hidden until the user checks some.
             updatePrintButtonVisibility();
 
-            if (response.data.tableBody.includes('No students found') || response.data.tableBody.includes('Select class and session')) {
-                Swal.fire({ icon: "info", title: "No Results", text: "No students found for the selected class and session." });
+            if (!response.data.tableBody ||
+                response.data.tableBody.includes('No students found') ||
+                response.data.tableBody.includes('Select class and session')) {
+                Swal.fire({ icon: "info", title: "No Results",
+                            text: "No students found for the selected filters." });
             }
         }).catch(function (error) {
             console.error("AJAX error:", error);
-            tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-danger py-4">Error loading data. Please try again.</td></tr>';
-            Swal.fire({ icon: "error", title: "Error", text: error.response?.data?.message || "Failed to fetch student data." });
+            tableBody.innerHTML =
+                '<tr><td colspan="10" class="text-center text-danger py-4">' +
+                'Error loading data. Please try again.</td></tr>';
+            Swal.fire({ icon: "error", title: "Error",
+                        text: error.response?.data?.message || "Failed to fetch student data." });
         });
     }
 
+    function resetTable() {
+        document.getElementById('studentTableBody').innerHTML =
+            '<tr><td colspan="10" class="text-center py-4 text-muted">' +
+            'Select class and session to view students.</td></tr>';
+        document.getElementById('pagination-container').innerHTML = '';
+        document.getElementById('studentcount').innerText = '0';
+        document.getElementById('statTotal').innerText    = '0';
+        document.getElementById('printAllBtn').style.display     = 'none';
+        document.getElementById('termSelectContainer').style.display = 'none';
+        updateSelectionAlert();
+    }
+
+    // ── Print / PDF ─────────────────────────────────────────────────────
+
     function printAllResults() {
-        const classSelect = document.getElementById("idclass");
-        const sessionSelect = document.getElementById("idsession");
-        const termSelect = document.getElementById("idterm");
-        const classValue = classSelect.value;
-        const sessionValue = sessionSelect.value;
-        const termValue = termSelect.value;
-        const checkedCheckboxes = document.querySelectorAll('tbody input[name="chk_child"]:checked');
-        const selectedStudentIds = Array.from(checkedCheckboxes).map(checkbox => checkbox.value);
+        const classValue   = document.getElementById("idclass").value;
+        const sessionValue = document.getElementById("idsession").value;
+        const termValue    = document.getElementById("idterm").value;
+        const checked      = document.querySelectorAll('tbody input[name="chk_child"]:checked');
+        const selectedIds  = Array.from(checked).map(cb => cb.value);
 
         if (classValue === 'ALL' || sessionValue === 'ALL' || termValue === 'ALL') {
-            Swal.fire({ icon: "warning", title: "Missing Selection", text: "Please select a valid class, session, and term." });
+            Swal.fire({ icon: "warning", title: "Missing Selection",
+                        text: "Please select a valid class, session, and term." });
             return;
         }
-
-        if (selectedStudentIds.length === 0) {
-            Swal.fire({ icon: "warning", title: "No Students Selected", text: "Please select at least one student to generate the PDF." });
+        if (selectedIds.length === 0) {
+            Swal.fire({ icon: "warning", title: "No Students Selected",
+                        text: "Please select at least one student to generate the PDF." });
             return;
         }
 
         const columnModal = new bootstrap.Modal(document.getElementById('columnSelectionModal'));
         columnModal.show();
-        loadColumnOptions(classValue, sessionValue, termValue, selectedStudentIds);
+        loadColumnOptions(classValue, sessionValue, termValue, selectedIds);
     }
 
     function loadColumnOptions(classId, sessionId, termId, studentIds) {
-        const loader = document.getElementById('columnSelectionLoader');
-        const form = document.getElementById('columnSelectionForm');
+        const loader  = document.getElementById('columnSelectionLoader');
+        const form    = document.getElementById('columnSelectionForm');
         const saveBtn = document.getElementById('saveColumnSelection');
 
-        loader.style.display = 'block';
-        form.style.display = 'none';
-        saveBtn.disabled = true;
+        loader.style.display  = 'block';
+        form.style.display    = 'none';
+        saveBtn.disabled      = true;
 
         window.currentPrintParams = { classId, sessionId, termId, studentIds };
 
@@ -565,33 +571,36 @@
             },
             body: JSON.stringify({ schoolclassid: classId, sessionid: sessionId, termid: termId })
         })
-        .then(response => response.json())
+        .then(r => r.json())
         .then(data => {
             if (data.success) {
                 populateColumnOptions(data.columns);
                 loader.style.display = 'none';
-                form.style.display = 'block';
-                saveBtn.disabled = false;
+                form.style.display   = 'block';
+                saveBtn.disabled     = false;
             } else {
-                Swal.fire({ icon: "error", title: "Error", text: data.message || "Failed to load column options." });
-                bootstrap.Modal.getInstance(document.getElementById('columnSelectionModal')).hide();
+                Swal.fire({ icon: "error", title: "Error",
+                            text: data.message || "Failed to load column options." });
+                bootstrap.Modal.getInstance(
+                    document.getElementById('columnSelectionModal')).hide();
             }
         })
         .catch(error => {
             console.error('Error loading column options:', error);
-            Swal.fire({ icon: "error", title: "Network Error", text: "Failed to load column options. Please try again." });
-            bootstrap.Modal.getInstance(document.getElementById('columnSelectionModal')).hide();
+            Swal.fire({ icon: "error", title: "Network Error",
+                        text: "Failed to load column options. Please try again." });
+            bootstrap.Modal.getInstance(
+                document.getElementById('columnSelectionModal')).hide();
         });
     }
 
     function populateColumnOptions(columns) {
-        document.getElementById('studentInfoColumns').innerHTML = '';
-        document.getElementById('assessmentColumns').innerHTML = '';
-        document.getElementById('scoreColumns').innerHTML = '';
-        document.getElementById('gpaColumns').innerHTML = '';
-        document.getElementById('otherColumns').innerHTML = '';
+        ['studentInfoColumns','assessmentColumns','scoreColumns',
+         'gpaColumns','otherColumns'].forEach(id => {
+            document.getElementById(id).innerHTML = '';
+        });
 
-        function renderCheckboxes(containerId, data, extraClass = '') {
+        function renderCheckboxes(containerId, data, extraClass) {
             if (!data) return;
             const container = document.getElementById(containerId);
             Object.entries(data).forEach(([key, config]) => {
@@ -601,8 +610,9 @@
                     ? '<small class="text-muted d-block">Has sub-assessments</small>' : '';
                 colDiv.innerHTML = `
                     <div class="form-check">
-                        <input class="form-check-input column-checkbox ${extraClass}" type="checkbox"
-                               id="col_${key}" data-column="${key}" ${config.default ? 'checked' : ''}>
+                        <input class="form-check-input column-checkbox ${extraClass || ''}"
+                               type="checkbox" id="col_${key}" data-column="${key}"
+                               ${config.default ? 'checked' : ''}>
                         <label class="form-check-label" for="col_${key}" style="font-size:13px;">
                             ${config.label}${subText}
                         </label>
@@ -612,28 +622,29 @@
         }
 
         renderCheckboxes('studentInfoColumns', columns.student_info);
-        renderCheckboxes('assessmentColumns', columns.assessments, 'assessment-checkbox');
-        renderCheckboxes('scoreColumns', columns.scores);
-        renderCheckboxes('gpaColumns', columns.gpa_metrics, 'gpa-checkbox');
-        renderCheckboxes('otherColumns', columns.other);
+        renderCheckboxes('assessmentColumns',  columns.assessments,  'assessment-checkbox');
+        renderCheckboxes('scoreColumns',       columns.scores);
+        renderCheckboxes('gpaColumns',         columns.gpa_metrics,  'gpa-checkbox');
+        renderCheckboxes('otherColumns',       columns.other);
 
-        document.getElementById('selectAllAssessments').addEventListener('change', function() {
-            document.querySelectorAll('.assessment-checkbox').forEach(cb => cb.checked = this.checked);
+        document.getElementById('selectAllAssessments').addEventListener('change', function () {
+            document.querySelectorAll('.assessment-checkbox')
+                    .forEach(cb => cb.checked = this.checked);
         });
-
-        document.getElementById('selectAllGPAMetrics').addEventListener('change', function() {
-            document.querySelectorAll('.gpa-checkbox').forEach(cb => cb.checked = this.checked);
+        document.getElementById('selectAllGPAMetrics').addEventListener('change', function () {
+            document.querySelectorAll('.gpa-checkbox')
+                    .forEach(cb => cb.checked = this.checked);
         });
     }
 
-    document.getElementById('saveColumnSelection').addEventListener('click', function() {
+    document.getElementById('saveColumnSelection').addEventListener('click', function () {
         const selectedColumns = [];
-        document.querySelectorAll('.column-checkbox:checked').forEach(cb => {
-            selectedColumns.push(cb.dataset.column);
-        });
+        document.querySelectorAll('.column-checkbox:checked')
+                .forEach(cb => selectedColumns.push(cb.dataset.column));
 
         if (selectedColumns.length === 0) {
-            Swal.fire({ icon: "warning", title: "No Columns Selected", text: "Please select at least one column to include in the PDF." });
+            Swal.fire({ icon: "warning", title: "No Columns Selected",
+                        text: "Please select at least one column to include in the PDF." });
             return;
         }
 
@@ -648,13 +659,12 @@
                 <p><strong>Term:</strong> ${document.getElementById('idterm').options[document.getElementById('idterm').selectedIndex].text}</p>
                 <p><strong>Students Selected:</strong> ${params.studentIds.length}</p>
                 <p><strong>Columns Selected:</strong> ${selectedColumns.length}</p>
-                <p>Generating PDF... Please wait.</p>
-            `,
+                <p>Generating PDF… Please wait.</p>`,
             icon: 'info',
             showCancelButton: false,
             showConfirmButton: false,
             allowOutsideClick: false,
-            didOpen: () => { Swal.showLoading(); }
+            didOpen: () => Swal.showLoading()
         });
 
         const form = document.createElement('form');
@@ -664,20 +674,19 @@
 
         const addInput = (name, value) => {
             const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = name;
+            input.type  = 'hidden';
+            input.name  = name;
             input.value = value;
             form.appendChild(input);
         };
 
         addInput('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
-        addInput('schoolclassid', params.classId);
-        addInput('sessionid', params.sessionId);
-        addInput('termid', params.termId);
+        addInput('schoolclassid',   params.classId);
+        addInput('sessionid',       params.sessionId);
+        addInput('termid',          params.termId);
         addInput('response_method', 'inline');
-
-        params.studentIds.forEach((id, i) => addInput(`studentIds[${i}]`, id));
-        selectedColumns.forEach((col, i) => addInput(`selectedColumns[${i}]`, col));
+        params.studentIds.forEach((id,  i) => addInput(`studentIds[${i}]`,      id));
+        selectedColumns.forEach((col,   i) => addInput(`selectedColumns[${i}]`, col));
 
         document.body.appendChild(form);
         form.submit();
@@ -686,19 +695,22 @@
         setTimeout(() => Swal.close(), 2000);
     });
 
+    // ── Pagination ──────────────────────────────────────────────────────
+
     function setupPaginationLinks() {
         document.querySelectorAll('#pagination-container a').forEach(link => {
-            link.addEventListener('click', function(e) {
+            link.addEventListener('click', function (e) {
                 e.preventDefault();
-                const url = this.href;
-                if (url && !this.classList.contains('disabled')) loadPage(url);
+                if (this.href && !this.classList.contains('disabled')) loadPage(this.href);
             });
         });
     }
 
     function loadPage(url) {
         const tableBody = document.getElementById('studentTableBody');
-        tableBody.innerHTML = '<tr><td colspan="10" class="text-center py-4"><span class="spinner-border spinner-border-sm text-primary me-2"></span>Loading...</td></tr>';
+        tableBody.innerHTML =
+            '<tr><td colspan="10" class="text-center py-4">' +
+            '<span class="spinner-border spinner-border-sm text-primary me-2"></span>Loading...</td></tr>';
 
         axios.get(url, {
             headers: {
@@ -706,84 +718,100 @@
                 'X-Requested-With': 'XMLHttpRequest'
             }
         }).then(function (response) {
-            document.getElementById('studentTableBody').innerHTML = response.data.tableBody || '<tr><td colspan="10" class="text-center py-4 text-muted">No students found.</td></tr>';
-            document.getElementById('pagination-container').innerHTML = response.data.pagination || '';
+            document.getElementById('studentTableBody').innerHTML =
+                response.data.tableBody ||
+                '<tr><td colspan="10" class="text-center py-4 text-muted">No students found.</td></tr>';
+            document.getElementById('pagination-container').innerHTML =
+                response.data.pagination || '';
+
             const count = response.data.studentCount || '0';
             document.getElementById('studentcount').innerText = count;
-            document.getElementById('statTotal').innerText = count;
+            document.getElementById('statTotal').innerText    = count;
+
             setupPaginationLinks();
             setupCheckboxListeners();
             updateTermSelectVisibility();
             updatePrintButtonVisibility();
         }).catch(function (error) {
             console.error("Page load error:", error);
-            tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-danger py-4">Error loading data. Please try again.</td></tr>';
-            Swal.fire({ icon: "error", title: "Error", text: error.response?.data?.message || "Failed to fetch student data." });
+            tableBody.innerHTML =
+                '<tr><td colspan="10" class="text-center text-danger py-4">' +
+                'Error loading data. Please try again.</td></tr>';
+            Swal.fire({ icon: "error", title: "Error",
+                        text: error.response?.data?.message || "Failed to fetch student data." });
         });
     }
 
+    // ── Checkboxes ──────────────────────────────────────────────────────
+
     function setupCheckboxListeners() {
-        const checkAll = document.getElementById("checkAll");
+        const checkAll   = document.getElementById("checkAll");
         const checkboxes = document.querySelectorAll('tbody input[name="chk_child"]');
 
         if (checkAll) {
-            checkAll.addEventListener("change", function () {
-                checkboxes.forEach(checkbox => {
-                    checkbox.checked = this.checked;
-                    checkbox.closest("tr").classList.toggle("table-active", this.checked);
+            // Remove any old listener before adding a fresh one
+            const freshCheckAll = checkAll.cloneNode(true);
+            checkAll.parentNode.replaceChild(freshCheckAll, checkAll);
+
+            freshCheckAll.addEventListener("change", function () {
+                checkboxes.forEach(cb => {
+                    cb.checked = this.checked;
+                    cb.closest("tr").classList.toggle("table-active", this.checked);
                 });
                 updatePrintButtonVisibility();
             });
         }
 
-        checkboxes.forEach(checkbox => {
-            checkbox.addEventListener("change", function () {
+        checkboxes.forEach(cb => {
+            cb.addEventListener("change", function () {
                 this.closest("tr").classList.toggle("table-active", this.checked);
                 const checkedCount = document.querySelectorAll('tbody input[name="chk_child"]:checked').length;
-                const allCount = document.querySelectorAll('tbody input[name="chk_child"]').length;
-                if (checkAll) checkAll.checked = checkedCount === allCount && allCount > 0;
+                const allCount     = document.querySelectorAll('tbody input[name="chk_child"]').length;
+                const ca           = document.getElementById("checkAll");
+                if (ca) ca.checked = checkedCount === allCount && allCount > 0;
                 updatePrintButtonVisibility();
             });
         });
     }
 
+    // ── Boot ────────────────────────────────────────────────────────────
+
     document.addEventListener("DOMContentLoaded", function () {
         setupCheckboxListeners();
 
-        const classSelect = document.getElementById("idclass");
+        const classSelect   = document.getElementById("idclass");
         const sessionSelect = document.getElementById("idsession");
-        const termSelect = document.getElementById("idterm");
-
-        const resetTable = () => {
-            document.getElementById('studentTableBody').innerHTML = '<tr><td colspan="10" class="text-center py-4 text-muted">Select class and session to view students.</td></tr>';
-            document.getElementById('pagination-container').innerHTML = '';
-            document.getElementById('studentcount').innerText = '0';
-            document.getElementById('statTotal').innerText = '0';
-        };
+        const termSelect    = document.getElementById("idterm");
 
         classSelect.addEventListener("change", function () {
-            updateSearchButtonVisibility();
             termSelect.value = 'ALL';
+            updateSearchButtonVisibility();
             resetTable();
         });
 
         sessionSelect.addEventListener("change", function () {
-            updateSearchButtonVisibility();
             termSelect.value = 'ALL';
+            updateSearchButtonVisibility();
             resetTable();
         });
 
         termSelect.addEventListener("change", function () {
-            updatePrintButtonVisibility();
-            if (this.value !== 'ALL') filterData();
+            // When term changes, re-run filter then let checkbox state decide print button
+            if (this.value !== 'ALL') {
+                filterData();
+            } else {
+                document.getElementById("printAllBtn").style.display = 'none';
+                updateSelectionAlert();
+            }
         });
 
-        const modal = document.getElementById('imageViewModal');
-        if (modal) {
-            modal.addEventListener('show.bs.modal', function (event) {
-                const button = event.relatedTarget;
-                const imageSrc = button.getAttribute('data-image');
-                modal.querySelector('#enlargedImage').src = imageSrc || '{{ asset('storage/student_avatars/unnamed.jpg') }}';
+        const imageModal = document.getElementById('imageViewModal');
+        if (imageModal) {
+            imageModal.addEventListener('show.bs.modal', function (event) {
+                const btn = event.relatedTarget;
+                document.getElementById('enlargedImage').src =
+                    btn.getAttribute('data-image') ||
+                    '{{ asset('storage/student_avatars/unnamed.jpg') }}';
             });
         }
     });
