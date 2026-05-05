@@ -640,10 +640,10 @@
                         @endif
 
 
-                        @if(auth()->user()->can('View student assessments'))
+                        @if(auth()->user()->can('View student assessments') || auth()->user()->can('View student payments'))
                             <li class="menu-title"><i class="ph-graduation-cap"></i> <span data-key="t-apps">STUDENT PORTAL</span></li>
-                            @endif
-                            @can('View student assessments')
+                        @endif
+                        @can('View student assessments')
                             <li class="nav-item">
                                 <a href="#sidebarAssessments" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarExams">
                                     <i class="ph-graduation-cap"></i> <span data-key="t-ecommerce">Assessments</span>
@@ -658,7 +658,21 @@
                                 </div>
                             </li>
                         @endcan
+                        @can('View student payments')
+                            <li class="nav-item">
+                                <a href="#sidebarPayment" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarExams">
+                                    <i class="ph-graduation-cap"></i> <span data-key="t-ecommerce">Payments</span>
+                                </a>
+                                <div class="collapse menu-dropdown" id="sidebarPayment">
+                                    <ul class="nav nav-sm flex-column">
+                                        <li class="nav-item">
+                                            <a href="{{ route('student.payments') }}" class="nav-link" data-key="t-products">My Payments</a>
+                                        </li>
 
+                                    </ul>
+                                </div>
+                            </li>
+                        @endcan
 
 
 
