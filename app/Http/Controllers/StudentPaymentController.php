@@ -121,12 +121,21 @@ class StudentPaymentController extends Controller
                 $bill, $studentId, $scholarshipAssignment, $discountAssignments
             );
 
+            // $paidRecord = StudentBillPayment::where('student_id', $studentId)
+            //     ->where('school_bill_id', $bill->id)
+            //     ->where('term_id', $selectedTermId)
+            //     ->where('session_id', $selectedSessionId)
+            //     ->selectRaw('COALESCE(SUM(amount_paid), 0) as total_paid')
+            //     ->first();
+
+                            // With this:
             $paidRecord = StudentBillPayment::where('student_id', $studentId)
                 ->where('school_bill_id', $bill->id)
-                ->where('term_id', $selectedTermId)
+                ->where('termid_id', $selectedTermId)      // Correct column name
                 ->where('session_id', $selectedSessionId)
-                ->selectRaw('COALESCE(SUM(amount_paid), 0) as total_paid')
-                ->first();
+                ->first(['total_paid']);
+
+
 
             $amountPaid = (float) ($paidRecord->total_paid ?? 0);
             $balance    = max(0, $adjusted['adjusted_amount'] - $amountPaid);

@@ -177,6 +177,18 @@ class StudentBillPayment extends Model
         return $record;
     }
 
+
+    // In StudentBillPayment model
+public static function getTotalPaid(int $studentId, int $schoolBillId, int $termId, int $sessionId): float
+{
+    return (float) self::where('student_id', $studentId)
+        ->where('school_bill_id', $schoolBillId)
+        ->where('termid_id', $termId)
+        ->where('session_id', $sessionId)
+        ->value('total_paid') ?? 0.0;
+}
+
+
     public function generateInvoice()
     {
         if ($this->delete_status === '0') {
