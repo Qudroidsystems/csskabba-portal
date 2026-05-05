@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Student;
 use App\Models\Schoolterm;
 use App\Models\Schoolsession;
-use App\Models\Schoolclass;
 use App\Models\SchoolBillModel;
 use App\Models\SchoolBillTermSession;
 use App\Models\StudentBillPayment;
@@ -16,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class StudentPaymentController extends Controller
 {
@@ -25,9 +25,8 @@ class StudentPaymentController extends Controller
     }
 
     // =========================================================================
-    // INDEX — Student's own payment portal
+    // INDEX — Student's Payment Portal
     // =========================================================================
-
     public function index(Request $request)
     {
         $pagetitle  = 'My Payments';
@@ -47,12 +46,13 @@ class StudentPaymentController extends Controller
 
         $sessions = Schoolsession::whereIn('status', ['Current', 'Previous'])
             ->orderBy('id', 'desc')->get(['id', 'session']);
-        $terms    = Schoolterm::orderBy('id', 'desc')->get(['id', 'term']);
+
+        $terms = Schoolterm::orderBy('id', 'desc')->get(['id', 'term']);
 
         $selectedSessionId = $request->get('session_id', $sessions->first()?->id);
         $selectedTermId    = $request->get('term_id');
 
-        // Resolve class
+        // Get student's current class data
         $studentClassData = DB::table('studentclass')
             ->where('studentId', $studentId)
             ->join('schoolclass',   'schoolclass.id',   '=', 'studentclass.schoolclassid')
@@ -72,14 +72,14 @@ class StudentPaymentController extends Controller
         if (!$studentClassData) {
             return view('student.payments.index', compact(
                 'pagetitle', 'student', 'terms', 'sessions', 'selectedSessionId', 'selectedTermId'
-            ))->with('error', 'No class registration found.');
+            ))->with('error', 'No class registration found for this session.');
         }
 
         if (!$selectedTermId) {
             $selectedTermId = $studentClassData->term_id;
         }
 
-        // Fetch bills assigned to this class/term/session
+        // Fetch bills for this class, term & session
         $billAssignments = SchoolBillTermSession::where('class_id', $studentClassData->class_id)
             ->where('termid_id', $selectedTermId)
             ->where('session_id', $selectedSessionId)
@@ -88,7 +88,7 @@ class StudentPaymentController extends Controller
             ->orderBy('display_order')
             ->get();
 
-        // Active scholarship
+        // Active Scholarship & Discounts
         $scholarshipAssignment = ScholarshipAssignment::where('student_id', $studentId)
             ->where('status', 'active')
             ->where('effective_from', '<=', now())
@@ -98,7 +98,6 @@ class StudentPaymentController extends Controller
             ->with('scholarship')
             ->first();
 
-        // Active discounts
         $discountAssignments = DiscountAssignment::where('student_id', $studentId)
             ->where('status', 'active')
             ->where('effective_from', '<=', now())
@@ -108,7 +107,7 @@ class StudentPaymentController extends Controller
             ->with('discount')
             ->get();
 
-        // Build bill data with payment status
+        // Process bills
         $bills = collect();
         $totals = ['original' => 0, 'adjusted' => 0, 'paid' => 0, 'outstanding' => 0, 'savings' => 0];
 
@@ -120,19 +119,16 @@ class StudentPaymentController extends Controller
                 $bill, $studentId, $scholarshipAssignment, $discountAssignments
             );
 
-            // FIXED: Use total_paid and correct column termid_id
-            $paidRecord = StudentBillPayment::where('student_id', $studentId)
+            $amountPaid = (float) StudentBillPayment::where('student_id', $studentId)
                 ->where('school_bill_id', $bill->id)
                 ->where('termid_id', $selectedTermId)
                 ->where('session_id', $selectedSessionId)
-                ->first(['total_paid']);
+                ->value('total_paid') ?? 0;
 
-            $amountPaid = (float) ($paidRecord?->total_paid ?? 0);
-
-            $balance    = max(0, $adjusted['adjusted_amount'] - $amountPaid);
-            $progress   = $adjusted['adjusted_amount'] > 0
-                ? min(100, ($amountPaid / $adjusted['adjusted_amount']) * 100)
-                : 100;
+            $balance  = max(0, $adjusted['adjusted_amount'] - $amountPaid);
+            $progress = $adjusted['adjusted_amount'] > 0
+                        ? min(100, ($amountPaid / $adjusted['adjusted_amount']) * 100)
+                        : 100;
 
             $bills->push([
                 'id'                    => $bill->id,
@@ -152,14 +148,14 @@ class StudentPaymentController extends Controller
                 'category'              => $bill->category,
             ]);
 
-            $totals['original']     += $adjusted['original_amount'];
-            $totals['adjusted']     += $adjusted['adjusted_amount'];
-            $totals['paid']         += $amountPaid;
-            $totals['outstanding']  += $balance;
-            $totals['savings']      += $adjusted['savings'];
+            $totals['original']    += $adjusted['original_amount'];
+            $totals['adjusted']    += $adjusted['adjusted_amount'];
+            $totals['paid']        += $amountPaid;
+            $totals['outstanding'] += $balance;
+            $totals['savings']     += $adjusted['savings'];
         }
 
-        // FIXED: Payment history
+        // Payment History
         $paymentHistory = StudentBillPayment::where('student_id', $studentId)
             ->where('termid_id', $selectedTermId)
             ->where('session_id', $selectedSessionId)
@@ -167,7 +163,7 @@ class StudentPaymentController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        // Payment trend across terms
+        // Payment Trend
         $paymentTrend = $this->buildPaymentTrend($studentId, $selectedSessionId);
 
         $studentPicture = DB::table('studentpicture')->where('studentid', $studentId)->value('picture');
@@ -187,9 +183,8 @@ class StudentPaymentController extends Controller
     }
 
     // =========================================================================
-    // PRINT RECEIPT (PDF)
+    // PRINT RECEIPT
     // =========================================================================
-
     public function printReceipt(Request $request)
     {
         ini_set('max_execution_time', 120);
@@ -266,7 +261,6 @@ class StudentPaymentController extends Controller
 
             $adjusted = $this->computeAdjustedAmount($bill, $studentId, $scholarshipAssignment, $discountAssignments);
 
-            // FIXED: Use total_paid and termid_id
             $amountPaid = (float) StudentBillPayment::where('student_id', $studentId)
                 ->where('school_bill_id', $bill->id)
                 ->where('termid_id', $selectedTermId)
@@ -300,34 +294,36 @@ class StudentPaymentController extends Controller
         $picturePath   = DB::table('studentpicture')->where('studentid', $studentId)->value('picture');
         $pictureBase64 = $this->imageToBase64ForPdf($picturePath);
 
-        $termName    = Schoolterm::find($selectedTermId)?->term    ?? 'Term';
+        $termName    = Schoolterm::find($selectedTermId)?->term ?? 'Term';
         $sessionName = Schoolsession::find($selectedSessionId ?? $studentClassData->session_id)?->session ?? 'Session';
+
+        // Safe Filename (Fix for "/" and "\" error)
+        $safeAdmission = Str::slug($student->admissionNo ?? 'student', '-');
+        $safeTerm      = Str::slug($termName, '-');
+        $filename      = "Payment_Receipt_{$safeAdmission}_{$safeTerm}.pdf";
 
         $receiptNo = 'RCP-' . strtoupper(substr(md5($studentId . $selectedTermId . $selectedSessionId), 0, 8));
 
         $pdf = Pdf::loadView('student.payments.receipt-pdf', [
-            'student'        => $student,
-            'bills'          => $bills,
-            'totals'         => $totals,
-            'termName'       => $termName,
-            'sessionName'    => $sessionName,
-            'schoolInfo'     => $schoolInfo,
-            'logoBase64'     => $logoBase64,
-            'pictureBase64'  => $pictureBase64,
-            'receiptNo'      => $receiptNo,
-            'className'      => $studentClassData->class_name,
-            'generatedAt'    => Carbon::now()->format('d M Y, h:i A'),
+            'student'       => $student,
+            'bills'         => $bills,
+            'totals'        => $totals,
+            'termName'      => $termName,
+            'sessionName'   => $sessionName,
+            'schoolInfo'    => $schoolInfo,
+            'logoBase64'    => $logoBase64,
+            'pictureBase64' => $pictureBase64,
+            'receiptNo'     => $receiptNo,
+            'className'     => $studentClassData->class_name,
+            'generatedAt'   => Carbon::now()->format('d M Y, h:i A'),
         ])
-            ->setPaper('A4', 'portrait')
-            ->setOptions([
-                'dpi'                   => 150,
-                'defaultFont'           => 'DejaVu Sans',
-                'isRemoteEnabled'       => true,
-                'isHtml5ParserEnabled'  => true,
-                'isFontSubsettingEnabled' => true,
-            ]);
-
-        $filename = 'Payment_Receipt_' . ($student->admissionNo ?? 'student') . '_' . $termName . '.pdf';
+        ->setPaper('A4', 'portrait')
+        ->setOptions([
+            'dpi'                     => 150,
+            'defaultFont'             => 'DejaVu Sans',
+            'isRemoteEnabled'         => true,
+            'isHtml5ParserEnabled'    => true,
+        ]);
 
         return $pdf->download($filename);
     }
@@ -342,11 +338,11 @@ class StudentPaymentController extends Controller
         ?ScholarshipAssignment $scholarshipAssignment,
         $discountAssignments
     ): array {
-        $original            = (float) $bill->bill_amount;
+        $original = (float) $bill->bill_amount;
         $scholarshipDeduction = 0.0;
-        $discountDeduction    = 0.0;
+        $discountDeduction = 0.0;
 
-        // Apply scholarship
+        // Scholarship
         if ($scholarshipAssignment && $bill->is_scholarship_eligible) {
             $scholarship = $scholarshipAssignment->scholarship;
             if ($scholarship) {
@@ -364,7 +360,7 @@ class StudentPaymentController extends Controller
 
         $afterScholarship = max(0, $original - $scholarshipDeduction);
 
-        // Apply discounts
+        // Discounts
         if ($bill->is_discount_eligible && $discountAssignments->isNotEmpty()) {
             foreach ($discountAssignments as $da) {
                 $discount = $da->discount;
@@ -409,9 +405,9 @@ class StudentPaymentController extends Controller
 
         foreach ($terms as $t) {
             $paid = StudentBillPayment::where('student_id', $studentId)
-                ->where('termid_id', $t->id)           // Fixed
+                ->where('termid_id', $t->id)
                 ->when($sessionId, fn ($q) => $q->where('session_id', $sessionId))
-                ->sum('total_paid');                   // Fixed
+                ->sum('total_paid');
 
             if ($paid > 0) {
                 $trend[$t->term] = (float) $paid;
