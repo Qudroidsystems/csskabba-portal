@@ -62,6 +62,7 @@ use App\Http\Controllers\StudentController;
 use App\Http\Controllers\StudentHouseController;
 use App\Http\Controllers\StudentIdCardController;
 use App\Http\Controllers\StudentImageUploadController;
+use App\Http\Controllers\StudentPaymentController;
 use App\Http\Controllers\StudentpersonalityprofileController;
 use App\Http\Controllers\StudentResultsController;
 use App\Http\Controllers\SubjectClassController;
