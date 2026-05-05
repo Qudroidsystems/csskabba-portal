@@ -658,7 +658,7 @@
                                 </div>
                             </li>
                         @endcan
-                        @can('View student payments')
+                        {{-- @can('View student payments') --}}
                             <li class="nav-item">
                                 <a href="#sidebarPayment" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarExams">
                                     <i class="ph-graduation-cap"></i> <span data-key="t-ecommerce">Payments</span>
@@ -672,7 +672,7 @@
                                     </ul>
                                 </div>
                             </li>
-                        @endcan
+                        {{-- @endcan --}}
 
 
 
