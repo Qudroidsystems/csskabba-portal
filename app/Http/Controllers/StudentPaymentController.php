@@ -14,7 +14,6 @@ use App\Models\DiscountAssignment;
 use App\Models\SchoolInformation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 
@@ -121,23 +120,15 @@ class StudentPaymentController extends Controller
                 $bill, $studentId, $scholarshipAssignment, $discountAssignments
             );
 
-            // $paidRecord = StudentBillPayment::where('student_id', $studentId)
-            //     ->where('school_bill_id', $bill->id)
-            //     ->where('term_id', $selectedTermId)
-            //     ->where('session_id', $selectedSessionId)
-            //     ->selectRaw('COALESCE(SUM(amount_paid), 0) as total_paid')
-            //     ->first();
-
-                            // With this:
+            // FIXED: Use total_paid and correct column termid_id
             $paidRecord = StudentBillPayment::where('student_id', $studentId)
                 ->where('school_bill_id', $bill->id)
-                ->where('termid_id', $selectedTermId)      // Correct column name
+                ->where('termid_id', $selectedTermId)
                 ->where('session_id', $selectedSessionId)
                 ->first(['total_paid']);
 
+            $amountPaid = (float) ($paidRecord?->total_paid ?? 0);
 
-
-            $amountPaid = (float) ($paidRecord->total_paid ?? 0);
             $balance    = max(0, $adjusted['adjusted_amount'] - $amountPaid);
             $progress   = $adjusted['adjusted_amount'] > 0
                 ? min(100, ($amountPaid / $adjusted['adjusted_amount']) * 100)
@@ -168,9 +159,9 @@ class StudentPaymentController extends Controller
             $totals['savings']      += $adjusted['savings'];
         }
 
-        // Payment history
+        // FIXED: Payment history
         $paymentHistory = StudentBillPayment::where('student_id', $studentId)
-            ->where('term_id', $selectedTermId)
+            ->where('termid_id', $selectedTermId)
             ->where('session_id', $selectedSessionId)
             ->with('schoolBill')
             ->orderBy('created_at', 'desc')
@@ -273,12 +264,14 @@ class StudentPaymentController extends Controller
             $bill = $assignment->schoolBill;
             if (!$bill || !$bill->is_active) continue;
 
-            $adjusted   = $this->computeAdjustedAmount($bill, $studentId, $scholarshipAssignment, $discountAssignments);
+            $adjusted = $this->computeAdjustedAmount($bill, $studentId, $scholarshipAssignment, $discountAssignments);
+
+            // FIXED: Use total_paid and termid_id
             $amountPaid = (float) StudentBillPayment::where('student_id', $studentId)
                 ->where('school_bill_id', $bill->id)
-                ->where('term_id', $selectedTermId)
+                ->where('termid_id', $selectedTermId)
                 ->where('session_id', $selectedSessionId ?? $studentClassData->session_id)
-                ->sum('amount_paid');
+                ->value('total_paid') ?? 0;
 
             $balance = max(0, $adjusted['adjusted_amount'] - $amountPaid);
 
@@ -377,10 +370,8 @@ class StudentPaymentController extends Controller
                 $discount = $da->discount;
                 if (!$discount) continue;
 
-                // Check stackability
                 if (!$discount->stackable_with_scholarship && $scholarshipDeduction > 0) continue;
 
-                // Check bill applicability
                 if ($discount->applicable_to === 'specific_bills') {
                     $applicableBills = $discount->applicable_bill_ids ?? [];
                     if (!in_array($bill->id, $applicableBills)) continue;
@@ -418,9 +409,9 @@ class StudentPaymentController extends Controller
 
         foreach ($terms as $t) {
             $paid = StudentBillPayment::where('student_id', $studentId)
-                ->where('term_id', $t->id)
+                ->where('termid_id', $t->id)           // Fixed
                 ->when($sessionId, fn ($q) => $q->where('session_id', $sessionId))
-                ->sum('amount_paid');
+                ->sum('total_paid');                   // Fixed
 
             if ($paid > 0) {
                 $trend[$t->term] = (float) $paid;
