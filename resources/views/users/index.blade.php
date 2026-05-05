@@ -529,13 +529,14 @@ use Spatie\Permission\Models\Role;
     </div>
 </div>
 
-{{-- Scripts --}}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{{-- Scripts - Using Online CDNs --}}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="{{ asset('theme/layouts/assets/js/bootstrap.bundle.min.js') }}"></script>
-<script src="{{ asset('theme/layouts/assets/js/list.min.js') }}"></script>
-<script src="{{ asset('theme/layouts/assets/js/choices.min.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/list.js@2.3.1/dist/list.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/choices.js@10.2.0/public/assets/scripts/choices.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script>
 // ==================== MAIN APPLICATION SCRIPT ====================
