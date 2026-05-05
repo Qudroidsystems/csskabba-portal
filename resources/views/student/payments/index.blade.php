@@ -135,14 +135,14 @@
     {{-- FILTER BAR --}}
     <form method="GET" action="{{ route('student.payments') }}">
         <div class="pp-filter-bar">
-            <select name="term_id" class="pp-filter-select" id="termSelect">
+            <select name="term_id" class="pp-filter-select">
                 <option value="">All Terms</option>
                 @foreach($terms as $t)
                     <option value="{{ $t->id }}" {{ $selectedTermId == $t->id ? 'selected' : '' }}>{{ $t->term }}</option>
                 @endforeach
             </select>
 
-            <select name="session_id" class="pp-filter-select" id="sessionSelect">
+            <select name="session_id" class="pp-filter-select">
                 <option value="">All Sessions</option>
                 @foreach($sessions as $s)
                     <option value="{{ $s->id }}" {{ $selectedSessionId == $s->id ? 'selected' : '' }}>{{ $s->session }}</option>
@@ -152,15 +152,15 @@
             <button type="submit" class="pp-filter-btn">Apply Filter</button>
 
             @if(isset($bills) && $bills->isNotEmpty())
-            <a href="{{ route('student.payments.receipt') }}?term_id={{ $selectedTermId }}&session_id={{ $selectedSessionId }}"
-               class="pp-receipt-btn" id="downloadReceiptBtn">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                    <polyline points="7 10 12 15 17 10"/>
-                    <line x1="12" y1="15" x2="12" y2="3"/>
-                </svg>
-                Download Receipt
-            </a>
+                <a href="{{ route('student.payments.receipt') }}?term_id={{ $selectedTermId }}&session_id={{ $selectedSessionId }}"
+                   class="pp-receipt-btn">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7 10 12 15 17 10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                    </svg>
+                    Download Receipt
+                </a>
             @endif
         </div>
     </form>
@@ -184,13 +184,13 @@
                 @if(!empty($studentPicture))
                     <img src="{{ asset('storage/student_avatars/' . $studentPicture) }}" alt="Photo">
                 @else
-                    {{ strtoupper(substr($student->firstname, 0, 1)) }}{{ strtoupper(substr($student->lastname, 0, 1)) }}
+                    {{ strtoupper(substr($student->firstname ?? '', 0, 1)) }}{{ strtoupper(substr($student->lastname ?? '', 0, 1)) }}
                 @endif
             </div>
             <div>
                 <p class="pp-identity-name">{{ $student->firstname }} {{ $student->lastname }}</p>
                 <div class="pp-identity-meta">
-                    <span>{{ $student->admissionNo }}</span>
+                    <span>{{ $student->admissionNo ?? 'N/A' }}</span>
                     @isset($class)<span>Class: {{ $class->schoolclass }}</span>@endisset
                     @isset($term)<span>Term: {{ $term->term }}</span>@endisset
                     @isset($session)<span>Session: {{ $session->session }}</span>@endisset
@@ -222,52 +222,34 @@
             </div>
         </div>
 
-        {{-- SCHOLARSHIP BANNER --}}
+        {{-- SCHOLARSHIP & DISCOUNT BANNERS --}}
         @if(isset($scholarshipAssignment) && $scholarshipAssignment)
         <div class="pp-benefit schol">
             <span class="icon">🏆</span>
             <div>
                 <strong>Scholarship Active: {{ $scholarshipAssignment->scholarship->title ?? 'Scholarship' }}</strong><br>
                 <span style="font-size:12px;">
-                    {{ $scholarshipAssignment->value_type === 'percentage'
-                        ? $scholarshipAssignment->value . '% deduction applied to eligible bills.'
-                        : '₦' . number_format($scholarshipAssignment->value, 0) . ' fixed deduction per eligible bill.' }}
-                    @if($scholarshipAssignment->effective_to)
-                        Valid until {{ \Carbon\Carbon::parse($scholarshipAssignment->effective_to)->format('d M Y') }}.
-                    @endif
-                    <strong class="ms-2">Total Savings: ₦{{ number_format($totals['savings'], 0) }}</strong>
+                    Total Savings: ₦{{ number_format($totals['savings'], 0) }}
                 </span>
             </div>
         </div>
         @endif
 
-        {{-- DISCOUNT BANNERS --}}
         @if(isset($discountAssignments) && $discountAssignments->isNotEmpty())
         <div class="pp-benefit disc">
             <span class="icon">🏷️</span>
             <div>
-                <strong>Discount(s) Applied</strong><br>
-                <span style="font-size:12px;">
-                    @foreach($discountAssignments as $da)
-                        <span class="me-3">
-                            <strong>{{ $da->discount->title ?? 'Discount' }}:</strong>
-                            {{ $da->value_type === 'percentage' ? $da->value . '% off' : '₦' . number_format($da->value, 0) . ' off' }}
-                        </span>
-                    @endforeach
-                </span>
+                <strong>Discount(s) Applied</strong>
             </div>
         </div>
         @endif
 
-        {{-- BILL CARDS --}}
+        {{-- BILLS GRID --}}
         <div class="pp-bills-grid">
             @foreach($bills as $bill)
             @php
-                $cardClass = $bill['is_paid'] ? 'paid-bill'
-                    : ($bill['is_partial'] ? 'partial-bill'
-                    : ($bill['total_savings'] > 0 ? 'savings-bill' : 'unpaid-bill'));
-                $fillClass = $bill['is_paid'] ? 'fill-paid'
-                    : ($bill['is_partial'] ? 'fill-partial' : 'fill-unpaid');
+                $cardClass = $bill['is_paid'] ? 'paid-bill' : ($bill['is_partial'] ? 'partial-bill' : ($bill['total_savings'] > 0 ? 'savings-bill' : 'unpaid-bill'));
+                $fillClass = $bill['is_paid'] ? 'fill-paid' : ($bill['is_partial'] ? 'fill-partial' : 'fill-unpaid');
             @endphp
             <div class="pp-bill-card {{ $cardClass }}">
                 <div class="pp-bill-stripe"></div>
@@ -285,12 +267,12 @@
                 </div>
 
                 @if($bill['total_savings'] > 0)
-                <div style="display:flex; gap:6px; flex-wrap:wrap; margin:10px 0 0;">
+                <div style="display:flex; gap:6px; flex-wrap:wrap; margin:10px 0;">
                     @if($bill['scholarship_deduction'] > 0)
-                        <span class="pp-schol-pill">🏆 -₦{{ number_format($bill['scholarship_deduction'], 0) }} Scholarship</span>
+                        <span class="pp-schol-pill">🏆 -₦{{ number_format($bill['scholarship_deduction'], 0) }}</span>
                     @endif
                     @if($bill['discount_deduction'] > 0)
-                        <span class="pp-disc-pill">🏷️ -₦{{ number_format($bill['discount_deduction'], 0) }} Discount</span>
+                        <span class="pp-disc-pill">🏷️ -₦{{ number_format($bill['discount_deduction'], 0) }}</span>
                     @endif
                 </div>
                 @endif
@@ -316,9 +298,7 @@
                     </div>
                     <div>
                         <div class="pp-bill-mini-label">Progress</div>
-                        <div class="pp-bill-mini-value" style="color:{{ $bill['is_paid'] ? 'var(--success)' : 'var(--info)' }}">
-                            {{ $bill['progress'] }}%
-                        </div>
+                        <div class="pp-bill-mini-value">{{ $bill['progress'] }}%</div>
                     </div>
                 </div>
 
@@ -335,7 +315,7 @@
             @endforeach
         </div>
 
-        {{-- PAYMENT TREND CHART --}}
+        {{-- PAYMENT TREND --}}
         @if(isset($paymentTrend) && count($paymentTrend) > 0)
         <div class="pp-trend-card">
             <div class="pp-section-title">Payment Trend</div>
@@ -345,10 +325,10 @@
         </div>
         @endif
 
-        {{-- PAYMENT HISTORY TABLE --}}
+        {{-- PAYMENT HISTORY --}}
         @if(isset($paymentHistory) && $paymentHistory->isNotEmpty())
         <div class="pp-history-card">
-            <div class="pp-section-title" style="margin-bottom:16px;">Payment History</div>
+            <div class="pp-section-title">Payment History</div>
             <div class="table-responsive">
                 <table class="table pp-table w-100 mb-0">
                     <thead>
@@ -357,7 +337,6 @@
                             <th>Bill</th>
                             <th>Amount Paid</th>
                             <th>Method</th>
-                            <th>Reference</th>
                             <th>Date</th>
                             <th>Status</th>
                         </tr>
@@ -367,20 +346,20 @@
                         <tr>
                             <td>{{ $idx + 1 }}</td>
                             <td>
-                                <div style="font-weight:600;">{{ $payment->schoolBill?->title ?? '—' }}</div>
-                                @if($payment->notes)
-                                    <div style="font-size:11px; color:var(--muted);">{{ $payment->notes }}</div>
-                                @endif
+                                <strong>{{ $payment->schoolBill?->title ?? '—' }}</strong>
                             </td>
-                            <td style="color:var(--success); font-weight:700;">₦{{ number_format($payment->amount_paid, 2) }}</td>
-                            <td>
-                                <span class="badge bg-secondary-subtle text-secondary">{{ $payment->payment_method ?? '—' }}</span>
+                            <td style="color:var(--success); font-weight:700;">
+                                ₦{{ number_format($payment->total_paid ?? 0, 2) }}
                             </td>
-                            <td style="font-family:monospace; font-size:11px; color:var(--muted);">{{ $payment->reference_no ?? '—' }}</td>
-                            <td style="font-size:12px;">{{ $payment->payment_date ? \Carbon\Carbon::parse($payment->payment_date)->format('d M Y') : ($payment->created_at?->format('d M Y') ?? 'N/A') }}</td>
                             <td>
-                                <span class="badge {{ $payment->status === 'completed' ? 'bg-success' : ($payment->status === 'reversed' ? 'bg-danger' : 'bg-warning text-dark') }}">
-                                    {{ ucfirst($payment->status ?? 'completed') }}
+                                <span class="badge bg-secondary-subtle text-secondary">
+                                    {{ $payment->payment_method ?? '—' }}
+                                </span>
+                            </td>
+                            <td>{{ $payment->created_at?->format('d M Y') }}</td>
+                            <td>
+                                <span class="badge {{ $payment->payment_status === 'completed' ? 'bg-success' : 'bg-warning text-dark' }}">
+                                    {{ ucfirst($payment->payment_status ?? 'pending') }}
                                 </span>
                             </td>
                         </tr>
@@ -391,7 +370,7 @@
         </div>
         @endif
 
-        @endif {{-- end if bills --}}
+        @endif {{-- end bills check --}}
     </div>
 </div>
 
@@ -407,7 +386,7 @@
                 datasets: [{
                     label: 'Amount Paid (₦)',
                     data: @json(array_values($paymentTrend)),
-                    backgroundColor: 'rgba(201,168,76,.75)',
+                    backgroundColor: 'rgba(201,168,76,0.8)',
                     borderColor: '#c9a84c',
                     borderWidth: 2,
                     borderRadius: 6,
@@ -420,9 +399,7 @@
                 scales: {
                     y: {
                         beginAtZero: true,
-                        ticks: {
-                            callback: val => '₦' + Number(val).toLocaleString('en-NG')
-                        }
+                        ticks: { callback: val => '₦' + Number(val).toLocaleString('en-NG') }
                     }
                 }
             }
