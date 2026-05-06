@@ -190,89 +190,67 @@ class SiblingGroupController extends Controller
         ]);
     }
 
-    public function edit($id)
-    {
-        // Get group directly from database
-        $groupData = DB::table('sibling_groups')->where('id', $id)->first();
+public function edit($id)
+{
+    $groupData = SiblingGroup::findOrFail($id);
 
-        if (!$groupData) {
-            abort(404, 'Group not found');
+    // Get students with pivot
+    $students = DB::table('sibling_group_students')
+        ->where('sibling_group_id', $id)
+        ->join('studentRegistration', 'sibling_group_students.student_id', '=', 'studentRegistration.id')
+        ->leftJoin('studentpicture', 'studentRegistration.id', '=', 'studentpicture.studentid')
+        ->select(
+            'studentRegistration.id',
+            'studentRegistration.firstname',
+            'studentRegistration.lastname',
+            'studentRegistration.admissionNo',
+            'studentpicture.picture'
+        )
+        ->get();
+
+    $initialStudents = [];
+
+    foreach ($students as $student) {
+        $firstName = !empty($student->firstname) ? $student->firstname : 'X';
+        $lastName  = !empty($student->lastname) ? $student->lastname : 'X';
+        $initials  = strtoupper(substr($firstName, 0, 1) . substr($lastName, 0, 1));
+
+        $pictureUrl = null;
+        if (!empty($student->picture) && $student->picture !== 'unnamed.jpg') {
+            $pictureUrl = asset('storage/images/student_avatars/' . $student->picture);
         }
 
-        // Get students from pivot table with their details
-        $students = DB::table('sibling_group_students')
-            ->where('sibling_group_id', $id)
-            ->join('studentRegistration', 'sibling_group_students.student_id', '=', 'studentRegistration.id')
-            ->leftJoin('studentpicture', 'studentRegistration.id', '=', 'studentpicture.studentid')
-            ->select(
-                'studentRegistration.id',
-                'studentRegistration.firstname',
-                'studentRegistration.lastname',
-                'studentRegistration.admissionNo',
-                'studentpicture.picture as picture'
-            )
-            ->get();
-
-        // Build $initialStudents — always an array, even if empty
-        $initialStudents = [];
-
-        foreach ($students as $student) {
-            // Safely derive initials — never blank
-            $firstName = !empty($student->firstname) ? $student->firstname : 'X';
-            $lastName  = !empty($student->lastname)  ? $student->lastname  : 'X';
-            $initials  = strtoupper(substr($firstName, 0, 1) . substr($lastName, 0, 1));
-
-            // Get picture URL
-            $pictureUrl = null;
-            if (!empty($student->picture) && $student->picture !== 'unnamed.jpg') {
-                $pictureUrl = asset('storage/images/student_avatars/' . $student->picture);
-            }
-
-            // Get class info — wrapped in try/catch so one bad record never kills the whole list
-            try {
-                $classInfo = $this->getStudentClassInfo($student->id);
-            } catch (\Exception $e) {
-                Log::warning("getStudentClassInfo failed for student {$student->id}: " . $e->getMessage());
-                $classInfo = ['class' => 'N/A', 'arm' => '', 'term' => 'N/A', 'session' => 'N/A', 'has_current_term' => false];
-            }
-
+        // Get class info safely
+        try {
+            $classInfo = $this->getStudentClassInfo($student->id);
             $classDisplay = $classInfo['class'] ?? 'N/A';
             if (!empty($classInfo['arm'])) {
                 $classDisplay .= ' ' . $classInfo['arm'];
             }
-
-            $initialStudents[] = [
-                'id'           => (int) $student->id,
-                'firstname'    => $firstName,
-                'lastname'     => $lastName,
-                'admission_no' => $student->admissionNo ?? 'N/A',
-                'class'        => $classDisplay,
-                'picture'      => $pictureUrl,
-                'initials'     => $initials,
-            ];
+        } catch (\Exception $e) {
+            Log::warning("Class info failed for student {$student->id}");
+            $classDisplay = 'N/A';
         }
 
-        // Build a plain object for the view
-        $group               = new \stdClass();
-        $group->id           = $groupData->id;
-        $group->group_no     = $groupData->group_no;
-        $group->family_name  = $groupData->family_name;
-        $group->parent_phone = $groupData->parent_phone;
-        $group->parent_email = $groupData->parent_email;
-        $group->address      = $groupData->address;
-        $group->discount_type  = $groupData->discount_type;
-        $group->discount_value = $groupData->discount_value;
-        $group->students       = $students; // raw collection (for reference only)
-
-        $pagetitle = 'Edit Family Group - ' . $groupData->family_name;
-
-        return view('sibling.edit', [
-            'group'           => $group,
-            'pagetitle'       => $pagetitle,
-            'initialStudents' => $initialStudents, // always a plain PHP array
-        ]);
+        $initialStudents[] = [
+            'id'           => (int) $student->id,
+            'firstname'    => $firstName,
+            'lastname'     => $lastName,
+            'admission_no' => $student->admissionNo ?? 'N/A',
+            'class'        => $classDisplay,
+            'picture'      => $pictureUrl,
+            'initials'     => $initials,
+        ];
     }
 
+    $pagetitle = 'Edit Family Group - ' . $groupData->family_name;
+
+    return view('sibling.edit', [
+        'group'           => $groupData,
+        'pagetitle'       => $pagetitle,
+        'initialStudents' => $initialStudents,
+    ]);
+}
     public function update(Request $request, $id)
     {
         $group = SiblingGroup::find($id);
