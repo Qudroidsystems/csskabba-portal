@@ -258,7 +258,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-// FIX: use null-coalescing at the PHP level so @json never receives undefined
 let initialStudentsData = [];
 try {
     const data = @json($initialStudents ?? []);
