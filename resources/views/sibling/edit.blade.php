@@ -261,31 +261,8 @@ const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content ||
 let selectedStudents = [];
 let searchTimeout = null;
 
-// Initial students from the group
-const initialStudents = @json($group->students->map(function($student) {
-    $pictureUrl = null;
-    if ($student->picture && $student->picture->picture && $student->picture->picture != 'unnamed.jpg') {
-        $pictureUrl = asset('storage/images/student_avatars/' . $student->picture->picture);
-    }
-
-    $className = 'N/A';
-    if ($student->currentTerm && $student->currentTerm->schoolClass) {
-        $className = $student->currentTerm->schoolClass->schoolclass ?? 'N/A';
-        if ($student->currentTerm->schoolClass->armRelation) {
-            $className .= ' ' . $student->currentTerm->schoolClass->armRelation->arm;
-        }
-    }
-
-    return [
-        'id' => $student->id,
-        'firstname' => $student->firstname,
-        'lastname' => $student->lastname,
-        'admission_no' => $student->admissionNo,
-        'class' => $className,
-        'picture' => $pictureUrl,
-        'initials' => strtoupper(substr($student->firstname, 0, 1) . substr($student->lastname, 0, 1)),
-    ];
-}));
+// Prepare initial students data from PHP
+const initialStudents = @json($initialStudents);
 
 $(document).ready(function() {
     selectedStudents = [...initialStudents];
@@ -314,7 +291,7 @@ $(document).ready(function() {
                 </div>
             `);
 
-            const searchUrl = '{{ route("sibling.search-students") }}';
+            const searchUrl = '/sibling/search-students';
 
             $.ajax({
                 url: searchUrl,
