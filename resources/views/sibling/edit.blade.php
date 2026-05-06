@@ -185,9 +185,10 @@
                     <h5><i class="ri-bar-chart-line me-2"></i>Statistics</h5>
                     <div class="mb-3">
                         <div class="small text-muted">Total Children</div>
-                        <div class="fs-4 fw-bold" id="totalChildrenCount">{{ is_array($initialStudents) ? count($initialStudents) : 0 }}</div>
+                        {{-- FIX: use isset() + null-coalescing so this never throws "Undefined variable $initialStudents" --}}
+                        <div class="fs-4 fw-bold" id="totalChildrenCount">{{ isset($initialStudents) && is_array($initialStudents) ? count($initialStudents) : 0 }}</div>
                     </div>
-                    @if(isset($group) && $group->discount_value)
+                    @if(isset($group) && !empty($group->discount_value))
                     <div class="mb-3">
                         <div class="small text-muted">Current Discount</div>
                         <div class="fs-5 text-success">
@@ -257,7 +258,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-// Get initial students data from PHP - handle null case
+// FIX: use null-coalescing at the PHP level so @json never receives undefined
 let initialStudentsData = [];
 try {
     const data = @json($initialStudents ?? []);

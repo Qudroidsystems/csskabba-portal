@@ -191,80 +191,78 @@ class SiblingGroupController extends Controller
         ]);
     }
 
+    public function edit($id)
+    {
+        // Get group directly from database
+        $groupData = DB::table('sibling_groups')->where('id', $id)->first();
 
-
-public function edit($id)
-{
-    // Get group directly from database
-    $groupData = DB::table('sibling_groups')->where('id', $id)->first();
-
-    if (!$groupData) {
-        abort(404, 'Group not found');
-    }
-
-    // Get students from pivot table with their details
-    $students = DB::table('sibling_group_students')
-        ->where('sibling_group_id', $id)
-        ->join('studentRegistration', 'sibling_group_students.student_id', '=', 'studentRegistration.id')
-        ->leftJoin('studentpicture', 'studentRegistration.id', '=', 'studentpicture.studentid')
-        ->select(
-            'studentRegistration.id',
-            'studentRegistration.firstname',
-            'studentRegistration.lastname',
-            'studentRegistration.admissionNo',
-            'studentpicture.picture as picture'
-        )
-        ->get();
-
-    // Format initial students for JavaScript (ALWAYS return an array)
-    $initialStudents = [];
-
-    foreach ($students as $student) {
-        // Get picture URL
-        $pictureUrl = null;
-        if ($student->picture && $student->picture != 'unnamed.jpg') {
-            $pictureUrl = asset('storage/images/student_avatars/' . $student->picture);
+        if (!$groupData) {
+            abort(404, 'Group not found');
         }
 
-        // Get class info
-        $classInfo = $this->getStudentClassInfo($student->id);
-        $classDisplay = $classInfo['class'];
-        if ($classInfo['arm']) {
-            $classDisplay .= ' ' . $classInfo['arm'];
+        // Get students from pivot table with their details
+        $students = DB::table('sibling_group_students')
+            ->where('sibling_group_id', $id)
+            ->join('studentRegistration', 'sibling_group_students.student_id', '=', 'studentRegistration.id')
+            ->leftJoin('studentpicture', 'studentRegistration.id', '=', 'studentpicture.studentid')
+            ->select(
+                'studentRegistration.id',
+                'studentRegistration.firstname',
+                'studentRegistration.lastname',
+                'studentRegistration.admissionNo',
+                'studentpicture.picture as picture'
+            )
+            ->get();
+
+        // Format initial students for JavaScript (ALWAYS return an array)
+        $initialStudents = [];
+
+        foreach ($students as $student) {
+            // Get picture URL
+            $pictureUrl = null;
+            if ($student->picture && $student->picture != 'unnamed.jpg') {
+                $pictureUrl = asset('storage/images/student_avatars/' . $student->picture);
+            }
+
+            // Get class info
+            $classInfo = $this->getStudentClassInfo($student->id);
+            $classDisplay = $classInfo['class'];
+            if ($classInfo['arm']) {
+                $classDisplay .= ' ' . $classInfo['arm'];
+            }
+
+            $initialStudents[] = [
+                'id' => $student->id,
+                'firstname' => $student->firstname,
+                'lastname' => $student->lastname,
+                'admission_no' => $student->admissionNo,
+                'class' => $classDisplay,
+                'picture' => $pictureUrl,
+                'initials' => strtoupper(substr($student->firstname, 0, 1) . substr($student->lastname, 0, 1)),
+            ];
         }
 
-        $initialStudents[] = [
-            'id' => $student->id,
-            'firstname' => $student->firstname,
-            'lastname' => $student->lastname,
-            'admission_no' => $student->admissionNo,
-            'class' => $classDisplay,
-            'picture' => $pictureUrl,
-            'initials' => strtoupper(substr($student->firstname, 0, 1) . substr($student->lastname, 0, 1)),
-        ];
+        // Create group object for the view
+        $group = new \stdClass();
+        $group->id = $groupData->id;
+        $group->group_no = $groupData->group_no;
+        $group->family_name = $groupData->family_name;
+        $group->parent_phone = $groupData->parent_phone;
+        $group->parent_email = $groupData->parent_email;
+        $group->address = $groupData->address;
+        $group->discount_type = $groupData->discount_type;
+        $group->discount_value = $groupData->discount_value;
+        $group->students = $students;
+
+        $pagetitle = 'Edit Family Group - ' . $groupData->family_name;
+
+        // Always pass $initialStudents explicitly — never leave it undefined
+        return view('sibling.edit', [
+            'group'           => $group,
+            'pagetitle'       => $pagetitle,
+            'initialStudents' => $initialStudents, // always an array, even if empty
+        ]);
     }
-
-    // Create group object for the view
-    $group = new \stdClass();
-    $group->id = $groupData->id;
-    $group->group_no = $groupData->group_no;
-    $group->family_name = $groupData->family_name;
-    $group->parent_phone = $groupData->parent_phone;
-    $group->parent_email = $groupData->parent_email;
-    $group->address = $groupData->address;
-    $group->discount_type = $groupData->discount_type;
-    $group->discount_value = $groupData->discount_value;
-    $group->students = $students;
-
-    $pagetitle = 'Edit Family Group - ' . $groupData->family_name;
-
-    return view('sibling.edit', [
-        'group' => $group,
-        'pagetitle' => $pagetitle,
-        'initialStudents' => $initialStudents // This is ALWAYS an array, even if empty
-    ]);
-}
-
 
     public function update(Request $request, $id)
     {
