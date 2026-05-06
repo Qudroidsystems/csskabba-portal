@@ -480,10 +480,6 @@ class SiblingGroupController extends Controller
      */
     public function searchStudents(Request $request)
     {
-        \Log::info('=== SEARCH STUDENTS METHOD CALLED ===');
-    \Log::info('Request URL: ' . $request->fullUrl());
-    \Log::info('Request query: ' . $request->get('q'));
-    
         try {
             $search = $request->input('q', '');
 
