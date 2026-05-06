@@ -37,28 +37,28 @@ class SiblingGroupController extends Controller
                 ->sum('value');
 
             $stats = [
-                'total_groups' => $groups->count(),
-                'total_students' => $groups->sum('total_children'),
-                'total_savings' => $totalSavings,
+                'total_groups'    => $groups->count(),
+                'total_students'  => $groups->sum('total_children'),
+                'total_savings'   => $totalSavings,
                 'active_discounts' => DiscountAssignment::whereNotNull('sibling_group_id')->where('status', 'active')->count(),
             ];
 
-            $formattedGroups = $groups->map(function($group) {
+            $formattedGroups = $groups->map(function ($group) {
                 return [
-                    'id' => $group->id,
-                    'group_no' => $group->group_no,
-                    'family_name' => $group->family_name,
-                    'parent_phone' => $group->parent_phone,
-                    'parent_email' => $group->parent_email,
-                    'address' => $group->address,
+                    'id'             => $group->id,
+                    'group_no'       => $group->group_no,
+                    'family_name'    => $group->family_name,
+                    'parent_phone'   => $group->parent_phone,
+                    'parent_email'   => $group->parent_email,
+                    'address'        => $group->address,
                     'total_children' => $group->students->count(),
-                    'discount_type' => $group->discount_type,
+                    'discount_type'  => $group->discount_type,
                     'discount_value' => $group->discount_value,
-                    'has_discount' => !is_null($group->discount_value),
-                    'students' => $group->students->map(function($student) {
+                    'has_discount'   => !is_null($group->discount_value),
+                    'students'       => $group->students->map(function ($student) {
                         return [
-                            'id' => $student->id,
-                            'name' => $student->firstname . ' ' . $student->lastname,
+                            'id'           => $student->id,
+                            'name'         => $student->firstname . ' ' . $student->lastname,
                             'admission_no' => $student->admissionNo,
                         ];
                     }),
@@ -67,8 +67,8 @@ class SiblingGroupController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $formattedGroups,
-                'stats' => $stats
+                'data'    => $formattedGroups,
+                'stats'   => $stats,
             ]);
         }
 
@@ -84,46 +84,45 @@ class SiblingGroupController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'family_name' => 'required|string|max:255',
-            'parent_phone' => 'nullable|string|max:20',
-            'parent_email' => 'nullable|email|max:100',
-            'address' => 'nullable|string',
-            'student_ids' => 'required|array|min:1',
-            'student_ids.*' => 'exists:studentRegistration,id',
-            'discount_type' => 'nullable|in:percentage,fixed_per_child',
+            'family_name'    => 'required|string|max:255',
+            'parent_phone'   => 'nullable|string|max:20',
+            'parent_email'   => 'nullable|email|max:100',
+            'address'        => 'nullable|string',
+            'student_ids'    => 'required|array|min:1',
+            'student_ids.*'  => 'exists:studentRegistration,id',
+            'discount_type'  => 'nullable|in:percentage,fixed_per_child',
             'discount_value' => 'nullable|numeric|min:0',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'errors' => $validator->errors()
+                'errors'  => $validator->errors(),
             ], 422);
         }
 
         DB::beginTransaction();
         try {
             $groupCount = SiblingGroup::count();
-            $groupNo = 'SG-' . date('Y') . '-' . str_pad($groupCount + 1, 4, '0', STR_PAD_LEFT);
+            $groupNo    = 'SG-' . date('Y') . '-' . str_pad($groupCount + 1, 4, '0', STR_PAD_LEFT);
 
             $group = SiblingGroup::create([
-                'group_no' => $groupNo,
-                'family_name' => $request->family_name,
-                'parent_phone' => $request->parent_phone,
-                'parent_email' => $request->parent_email,
-                'address' => $request->address,
+                'group_no'       => $groupNo,
+                'family_name'    => $request->family_name,
+                'parent_phone'   => $request->parent_phone,
+                'parent_email'   => $request->parent_email,
+                'address'        => $request->address,
                 'total_children' => count($request->student_ids),
-                'discount_type' => $request->discount_type,
+                'discount_type'  => $request->discount_type,
                 'discount_value' => $request->discount_value,
             ]);
 
-            // Attach students
             foreach ($request->student_ids as $studentId) {
                 DB::table('sibling_group_students')->insert([
                     'sibling_group_id' => $group->id,
-                    'student_id' => $studentId,
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'student_id'       => $studentId,
+                    'created_at'       => now(),
+                    'updated_at'       => now(),
                 ]);
             }
 
@@ -136,7 +135,7 @@ class SiblingGroupController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Family group created successfully!',
-                'data' => $group
+                'data'    => $group,
             ]);
 
         } catch (\Exception $e) {
@@ -144,7 +143,7 @@ class SiblingGroupController extends Controller
             Log::error('Store sibling group error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create group: ' . $e->getMessage()
+                'message' => 'Failed to create group: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -156,7 +155,7 @@ class SiblingGroupController extends Controller
         if (!$group) {
             return response()->json([
                 'success' => false,
-                'message' => 'Group not found'
+                'message' => 'Group not found',
             ], 404);
         }
 
@@ -166,28 +165,28 @@ class SiblingGroupController extends Controller
             ->select('studentRegistration.id', 'studentRegistration.firstname', 'studentRegistration.lastname', 'studentRegistration.admissionNo')
             ->get();
 
-        $formattedStudents = $students->map(function($student) {
-            $classInfo = $this->getStudentClassInfo($student->id);
+        $formattedStudents = $students->map(function ($student) {
+            $classInfo    = $this->getStudentClassInfo($student->id);
             $classDisplay = $classInfo['class'];
             if ($classInfo['arm']) {
                 $classDisplay .= ' ' . $classInfo['arm'];
             }
 
             return [
-                'id' => $student->id,
-                'name' => $student->firstname . ' ' . $student->lastname,
+                'id'           => $student->id,
+                'name'         => $student->firstname . ' ' . $student->lastname,
                 'admission_no' => $student->admissionNo,
-                'class' => $classDisplay,
+                'class'        => $classDisplay,
             ];
         });
 
         return response()->json([
             'success' => true,
-            'data' => [
-                'group' => $group,
-                'students' => $formattedStudents,
-                'total_children' => $formattedStudents->count()
-            ]
+            'data'    => [
+                'group'          => $group,
+                'students'       => $formattedStudents,
+                'total_children' => $formattedStudents->count(),
+            ],
         ]);
     }
 
@@ -214,53 +213,63 @@ class SiblingGroupController extends Controller
             )
             ->get();
 
-        // Format initial students for JavaScript (ALWAYS return an array)
+        // Build $initialStudents — always an array, even if empty
         $initialStudents = [];
 
         foreach ($students as $student) {
+            // Safely derive initials — never blank
+            $firstName = !empty($student->firstname) ? $student->firstname : 'X';
+            $lastName  = !empty($student->lastname)  ? $student->lastname  : 'X';
+            $initials  = strtoupper(substr($firstName, 0, 1) . substr($lastName, 0, 1));
+
             // Get picture URL
             $pictureUrl = null;
-            if ($student->picture && $student->picture != 'unnamed.jpg') {
+            if (!empty($student->picture) && $student->picture !== 'unnamed.jpg') {
                 $pictureUrl = asset('storage/images/student_avatars/' . $student->picture);
             }
 
-            // Get class info
-            $classInfo = $this->getStudentClassInfo($student->id);
-            $classDisplay = $classInfo['class'];
-            if ($classInfo['arm']) {
+            // Get class info — wrapped in try/catch so one bad record never kills the whole list
+            try {
+                $classInfo = $this->getStudentClassInfo($student->id);
+            } catch (\Exception $e) {
+                Log::warning("getStudentClassInfo failed for student {$student->id}: " . $e->getMessage());
+                $classInfo = ['class' => 'N/A', 'arm' => '', 'term' => 'N/A', 'session' => 'N/A', 'has_current_term' => false];
+            }
+
+            $classDisplay = $classInfo['class'] ?? 'N/A';
+            if (!empty($classInfo['arm'])) {
                 $classDisplay .= ' ' . $classInfo['arm'];
             }
 
             $initialStudents[] = [
-                'id' => $student->id,
-                'firstname' => $student->firstname,
-                'lastname' => $student->lastname,
-                'admission_no' => $student->admissionNo,
-                'class' => $classDisplay,
-                'picture' => $pictureUrl,
-                'initials' => strtoupper(substr($student->firstname, 0, 1) . substr($student->lastname, 0, 1)),
+                'id'           => (int) $student->id,
+                'firstname'    => $firstName,
+                'lastname'     => $lastName,
+                'admission_no' => $student->admissionNo ?? 'N/A',
+                'class'        => $classDisplay,
+                'picture'      => $pictureUrl,
+                'initials'     => $initials,
             ];
         }
 
-        // Create group object for the view
-        $group = new \stdClass();
-        $group->id = $groupData->id;
-        $group->group_no = $groupData->group_no;
-        $group->family_name = $groupData->family_name;
+        // Build a plain object for the view
+        $group               = new \stdClass();
+        $group->id           = $groupData->id;
+        $group->group_no     = $groupData->group_no;
+        $group->family_name  = $groupData->family_name;
         $group->parent_phone = $groupData->parent_phone;
         $group->parent_email = $groupData->parent_email;
-        $group->address = $groupData->address;
-        $group->discount_type = $groupData->discount_type;
+        $group->address      = $groupData->address;
+        $group->discount_type  = $groupData->discount_type;
         $group->discount_value = $groupData->discount_value;
-        $group->students = $students;
+        $group->students       = $students; // raw collection (for reference only)
 
         $pagetitle = 'Edit Family Group - ' . $groupData->family_name;
 
-        // Always pass $initialStudents explicitly — never leave it undefined
         return view('sibling.edit', [
             'group'           => $group,
             'pagetitle'       => $pagetitle,
-            'initialStudents' => $initialStudents, // always an array, even if empty
+            'initialStudents' => $initialStudents, // always a plain PHP array
         ]);
     }
 
@@ -270,33 +279,33 @@ class SiblingGroupController extends Controller
         if (!$group) {
             return response()->json([
                 'success' => false,
-                'message' => 'Group not found'
+                'message' => 'Group not found',
             ], 404);
         }
 
         $validator = Validator::make($request->all(), [
-            'family_name' => 'required|string|max:255',
-            'parent_phone' => 'nullable|string|max:20',
-            'parent_email' => 'nullable|email|max:100',
-            'address' => 'nullable|string',
-            'student_ids' => 'required|array|min:1',
+            'family_name'   => 'required|string|max:255',
+            'parent_phone'  => 'nullable|string|max:20',
+            'parent_email'  => 'nullable|email|max:100',
+            'address'       => 'nullable|string',
+            'student_ids'   => 'required|array|min:1',
             'student_ids.*' => 'exists:studentRegistration,id',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'errors' => $validator->errors()
+                'errors'  => $validator->errors(),
             ], 422);
         }
 
         DB::beginTransaction();
         try {
             $group->update([
-                'family_name' => $request->family_name,
-                'parent_phone' => $request->parent_phone,
-                'parent_email' => $request->parent_email,
-                'address' => $request->address,
+                'family_name'    => $request->family_name,
+                'parent_phone'   => $request->parent_phone,
+                'parent_email'   => $request->parent_email,
+                'address'        => $request->address,
                 'total_children' => count($request->student_ids),
             ]);
 
@@ -306,9 +315,9 @@ class SiblingGroupController extends Controller
             foreach ($request->student_ids as $studentId) {
                 DB::table('sibling_group_students')->insert([
                     'sibling_group_id' => $id,
-                    'student_id' => $studentId,
-                    'created_at' => now(),
-                    'updated_at' => now(),
+                    'student_id'       => $studentId,
+                    'created_at'       => now(),
+                    'updated_at'       => now(),
                 ]);
             }
 
@@ -317,7 +326,7 @@ class SiblingGroupController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Family group updated successfully!',
-                'data' => $group
+                'data'    => $group,
             ]);
 
         } catch (\Exception $e) {
@@ -325,7 +334,7 @@ class SiblingGroupController extends Controller
             Log::error('Update sibling group error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update group: ' . $e->getMessage()
+                'message' => 'Failed to update group: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -336,7 +345,7 @@ class SiblingGroupController extends Controller
         if (!$group) {
             return response()->json([
                 'success' => false,
-                'message' => 'Group not found'
+                'message' => 'Group not found',
             ], 404);
         }
 
@@ -350,14 +359,14 @@ class SiblingGroupController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Family group deleted successfully!'
+                'message' => 'Family group deleted successfully!',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Delete sibling group error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete group: ' . $e->getMessage()
+                'message' => 'Failed to delete group: ' . $e->getMessage(),
             ], 500);
         }
     }
@@ -365,15 +374,15 @@ class SiblingGroupController extends Controller
     public function applyDiscount(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'group_id' => 'required|exists:sibling_groups,id',
-            'discount_type' => 'required|in:percentage,fixed_per_child',
+            'group_id'       => 'required|exists:sibling_groups,id',
+            'discount_type'  => 'required|in:percentage,fixed_per_child',
             'discount_value' => 'required|numeric|min:0',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'errors' => $validator->errors()
+                'errors'  => $validator->errors(),
             ], 422);
         }
 
@@ -382,19 +391,19 @@ class SiblingGroupController extends Controller
         if (!$group) {
             return response()->json([
                 'success' => false,
-                'message' => 'Group not found'
+                'message' => 'Group not found',
             ], 404);
         }
 
         if ($request->discount_type === 'percentage' && $request->discount_value > 100) {
             return response()->json([
                 'success' => false,
-                'message' => 'Percentage discount cannot exceed 100%'
+                'message' => 'Percentage discount cannot exceed 100%',
             ], 422);
         }
 
         $group->update([
-            'discount_type' => $request->discount_type,
+            'discount_type'  => $request->discount_type,
             'discount_value' => $request->discount_value,
         ]);
 
@@ -408,7 +417,7 @@ class SiblingGroupController extends Controller
         return response()->json([
             'success' => true,
             'message' => "Sibling discount applied to {$result['count']} student(s)!",
-            'data' => $result
+            'data'    => $result,
         ]);
     }
 
@@ -422,21 +431,19 @@ class SiblingGroupController extends Controller
                 $discountValue = min($group->discount_value + ($index * 5), 50);
             }
 
-            // Delete existing sibling discount assignments for this student and group
             DiscountAssignment::where('student_id', $studentId)
                 ->where('sibling_group_id', $group->id)
                 ->delete();
 
-            // Create new assignment
-            $assignment = new DiscountAssignment();
-            $assignment->student_id = $studentId;
+            $assignment                   = new DiscountAssignment();
+            $assignment->student_id       = $studentId;
             $assignment->sibling_group_id = $group->id;
-            $assignment->value_type = $group->discount_type === 'percentage' ? 'percentage' : 'fixed_amount';
-            $assignment->value = $discountValue;
-            $assignment->status = 'active';
-            $assignment->effective_from = now();
-            $assignment->effective_to = now()->addYear();
-            $assignment->assigned_by = Auth::id();
+            $assignment->value_type       = $group->discount_type === 'percentage' ? 'percentage' : 'fixed_amount';
+            $assignment->value            = $discountValue;
+            $assignment->status           = 'active';
+            $assignment->effective_from   = now();
+            $assignment->effective_to     = now()->addYear();
+            $assignment->assigned_by      = Auth::id();
             $assignment->save();
 
             $applied++;
@@ -446,20 +453,20 @@ class SiblingGroupController extends Controller
     }
 
     /**
-     * Get student class information with fallback
+     * Get student class information with fallback — never throws.
      */
     private function getStudentClassInfo($studentId)
     {
         $result = [
-            'class' => 'N/A',
-            'arm' => '',
-            'term' => 'N/A',
-            'session' => 'N/A',
+            'class'            => 'N/A',
+            'arm'              => '',
+            'term'             => 'N/A',
+            'session'          => 'N/A',
             'has_current_term' => false,
         ];
 
         try {
-            // Try to get from StudentCurrentTerm
+            // Try student_current_term first
             $currentTerm = DB::table('student_current_term')
                 ->where('studentId', $studentId)
                 ->where('is_current', true)
@@ -471,7 +478,7 @@ class SiblingGroupController extends Controller
                 $class = DB::table('schoolclass')->where('id', $currentTerm->schoolclassId)->first();
                 if ($class) {
                     $result['class'] = $class->schoolclass ?? 'N/A';
-                    if (isset($class->arm) && $class->arm) {
+                    if (!empty($class->arm)) {
                         $arm = DB::table('schoolarm')->where('id', $class->arm)->first();
                         $result['arm'] = $arm->arm ?? '';
                     }
@@ -486,7 +493,7 @@ class SiblingGroupController extends Controller
                 return $result;
             }
 
-            // Fallback to Studentclass
+            // Fallback to studentclass
             $studentClass = DB::table('studentclass')
                 ->where('studentId', $studentId)
                 ->orderBy('sessionid', 'desc')
@@ -497,7 +504,7 @@ class SiblingGroupController extends Controller
                 $class = DB::table('schoolclass')->where('id', $studentClass->schoolclassid)->first();
                 if ($class) {
                     $result['class'] = $class->schoolclass ?? 'N/A';
-                    if (isset($class->arm) && $class->arm) {
+                    if (!empty($class->arm)) {
                         $arm = DB::table('schoolarm')->where('id', $class->arm)->first();
                         $result['arm'] = $arm->arm ?? '';
                     }
@@ -513,7 +520,7 @@ class SiblingGroupController extends Controller
             return $result;
 
         } catch (\Exception $e) {
-            Log::error('Error getting student class info: ' . $e->getMessage());
+            Log::error("getStudentClassInfo error for student {$studentId}: " . $e->getMessage());
             return $result;
         }
     }
@@ -524,13 +531,13 @@ class SiblingGroupController extends Controller
     public function searchStudents(Request $request)
     {
         try {
-            $search = $request->input('q', '');
+            $search = trim($request->input('q', ''));
 
             if (strlen($search) < 2) {
                 return response()->json([
-                    'success' => true,
+                    'success'  => true,
                     'students' => [],
-                    'results' => []
+                    'results'  => [],
                 ]);
             }
 
@@ -540,52 +547,52 @@ class SiblingGroupController extends Controller
                 ->limit(20)
                 ->get(['id', 'firstname', 'lastname', 'admissionNo']);
 
-            $formattedStudents = $students->map(function($student) {
-                $initials = strtoupper(substr($student->firstname, 0, 1) . substr($student->lastname, 0, 1));
+            $formattedStudents = $students->map(function ($student) {
+                $firstName = !empty($student->firstname) ? $student->firstname : 'X';
+                $lastName  = !empty($student->lastname)  ? $student->lastname  : 'X';
+                $initials  = strtoupper(substr($firstName, 0, 1) . substr($lastName, 0, 1));
 
                 $pictureUrl = null;
-                $picture = DB::table('studentpicture')
-                    ->where('studentid', $student->id)
-                    ->first();
-                if ($picture && $picture->picture && $picture->picture != 'unnamed.jpg') {
+                $picture    = DB::table('studentpicture')->where('studentid', $student->id)->first();
+                if ($picture && !empty($picture->picture) && $picture->picture !== 'unnamed.jpg') {
                     $pictureUrl = asset('storage/images/student_avatars/' . $picture->picture);
                 }
 
-                $classInfo = $this->getStudentClassInfo($student->id);
-                $classDisplay = $classInfo['class'];
-                if ($classInfo['arm']) {
+                try {
+                    $classInfo = $this->getStudentClassInfo($student->id);
+                } catch (\Exception $e) {
+                    $classInfo = ['class' => 'N/A', 'arm' => ''];
+                }
+
+                $classDisplay = $classInfo['class'] ?? 'N/A';
+                if (!empty($classInfo['arm'])) {
                     $classDisplay .= ' ' . $classInfo['arm'];
                 }
 
                 return [
-                    'id' => $student->id,
-                    'text' => $student->firstname . ' ' . $student->lastname . ' (' . $student->admissionNo . ')',
-                    'firstname' => $student->firstname,
-                    'lastname' => $student->lastname,
-                    'admission_no' => $student->admissionNo,
-                    'class' => $classDisplay,
-                    'picture' => $pictureUrl,
-                    'initials' => $initials,
+                    'id'           => (int) $student->id,
+                    'text'         => $firstName . ' ' . $lastName . ' (' . ($student->admissionNo ?? 'N/A') . ')',
+                    'firstname'    => $firstName,
+                    'lastname'     => $lastName,
+                    'admission_no' => $student->admissionNo ?? 'N/A',
+                    'class'        => $classDisplay,
+                    'picture'      => $pictureUrl,
+                    'initials'     => $initials,
                 ];
             });
 
             return response()->json([
-                'success' => true,
+                'success'  => true,
                 'students' => $formattedStudents,
-                'results' => $formattedStudents->map(function($s) {
-                    return [
-                        'id' => $s['id'],
-                        'text' => $s['text']
-                    ];
-                })
+                'results'  => $formattedStudents->map(fn($s) => ['id' => $s['id'], 'text' => $s['text']]),
             ]);
 
         } catch (\Exception $e) {
             Log::error('Search students error: ' . $e->getMessage());
             return response()->json([
-                'success' => false,
-                'message' => 'Search failed: ' . $e->getMessage(),
-                'students' => []
+                'success'  => false,
+                'message'  => 'Search failed: ' . $e->getMessage(),
+                'students' => [],
             ], 500);
         }
     }
@@ -599,9 +606,9 @@ class SiblingGroupController extends Controller
 
             if (!$group) {
                 return response()->json([
-                    'success' => true,
+                    'success'  => true,
                     'siblings' => [],
-                    'count' => 0
+                    'count'    => 0,
                 ]);
             }
 
@@ -613,23 +620,21 @@ class SiblingGroupController extends Controller
                 ->get();
 
             return response()->json([
-                'success' => true,
-                'siblings' => $siblings->map(function($sibling) {
-                    return [
-                        'id' => $sibling->id,
-                        'name' => $sibling->firstname . ' ' . $sibling->lastname,
-                        'admission_no' => $sibling->admissionNo,
-                    ];
-                }),
-                'count' => $siblings->count()
+                'success'  => true,
+                'siblings' => $siblings->map(fn($s) => [
+                    'id'           => $s->id,
+                    'name'         => $s->firstname . ' ' . $s->lastname,
+                    'admission_no' => $s->admissionNo,
+                ]),
+                'count' => $siblings->count(),
             ]);
         } catch (\Exception $e) {
             Log::error('Get student siblings error: ' . $e->getMessage());
             return response()->json([
-                'success' => false,
-                'message' => 'Failed to get siblings',
+                'success'  => false,
+                'message'  => 'Failed to get siblings',
                 'siblings' => [],
-                'count' => 0
+                'count'    => 0,
             ]);
         }
     }
