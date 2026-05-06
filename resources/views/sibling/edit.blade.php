@@ -313,7 +313,7 @@ $(document).ready(function() {
                         `);
                     }
                 },
-                error: function(xhr, status, error) {
+                error: function(xhr) {
                     console.error('Search error:', xhr);
                     $('#studentSearchResults').html(`
                         <div class="text-center text-danger py-5">
