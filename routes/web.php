@@ -551,7 +551,7 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
         Route::post('/{id}/approve', [DiscountController::class, 'approve'])->name('approve');
     });
 
-use App\Http\Controllers\Admin\SiblingGroupController;
+
 
 // SIBLING GROUP ROUTES
 Route::prefix('sibling')->name('sibling.')->group(function () {
