@@ -556,57 +556,109 @@ class DiscountController extends Controller
         }
     }
 
+    // ─────────────────────────────────────────────────────────────────────────────
+    // Replace the getEligibleStudents() method in DiscountController with this.
+    // It now returns: picture_url, class_name, arm, session_name, gender, etc.
+    // ─────────────────────────────────────────────────────────────────────────────
+
     /**
-     * Get eligible students for discount (AJAX).
+     * Get eligible students for discount assignment (AJAX – Select2).
+     *
+     * Returns rich student data including profile picture, current class,
+     * arm, session, and gender so the frontend can render a rich dropdown.
      */
     public function getEligibleStudents(Request $request)
     {
         try {
             $request->validate([
                 'discount_id' => 'required|exists:discounts,id',
-                'q' => 'nullable|string'
+                'q'           => 'nullable|string|max:100',
             ]);
 
-            $discount = Discount::findOrFail($request->discount_id);
+            $discount       = Discount::findOrFail($request->discount_id);
             $eligibleClasses = json_decode($discount->eligible_classes, true) ?? [];
 
-            $query = Student::query();
+            // ── Base query with eager-loaded relationships ────────────────────
+            $query = Student::with([
+                'picture',                                  // Studentpicture (studentid)
+                'currentTerm.schoolClass.armRelation',      // current class + arm
+                'currentTerm.session',                      // current session
+            ]);
 
+            // ── Restrict to eligible classes if configured ────────────────────
             if (!empty($eligibleClasses)) {
-                $query->whereHas('studentClass', function($q) use ($eligibleClasses) {
-                    $q->whereIn('schoolclassid', $eligibleClasses);
+                $query->whereHas('currentTerm', function ($q) use ($eligibleClasses) {
+                    $q->whereIn('schoolclassId', $eligibleClasses);
                 });
             }
 
+            // ── Full-text search ──────────────────────────────────────────────
             if ($request->filled('q')) {
-                $search = $request->q;
-                $query->where(function($q) use ($search) {
-                    $q->where('firstname', 'like', "%{$search}%")
-                      ->orWhere('lastname', 'like', "%{$search}%")
-                      ->orWhere('admissionNo', 'like', "%{$search}%");
+                $search = trim($request->q);
+                $query->where(function ($q) use ($search) {
+                    $q->where('firstname',   'like', "%{$search}%")
+                    ->orWhere('lastname',  'like', "%{$search}%")
+                    ->orWhere('admissionNo', 'like', "%{$search}%");
                 });
             }
 
-            $query->whereDoesntHave('discountAssignments', function($q) use ($discount) {
+            // ── Exclude students already assigned to this discount ────────────
+            $query->whereDoesntHave('discountAssignments', function ($q) use ($discount) {
                 $q->where('discount_id', $discount->id)
-                  ->where('status', 'active');
+                ->where('status', 'active');
             });
 
-            $students = $query->select('id', 'firstname', 'lastname', 'admissionNo')
+            $students = $query
+                ->select('id', 'firstname', 'lastname', 'othername', 'admissionNo', 'gender')
                 ->orderBy('lastname')
+                ->orderBy('firstname')
                 ->limit(50)
                 ->get();
 
+            // ── Transform into rich response payload ──────────────────────────
+            $results = $students->map(function (Student $s) {
+                // Profile picture URL
+                $picturePath = $s->picture?->picture;
+                $pictureUrl  = $picturePath
+                    ? asset('storage/' . $picturePath)
+                    : null;
+
+                // Current class details via StudentCurrentTerm
+                $currentTerm = $s->currentTerm;
+                $schoolClass = $currentTerm?->schoolClass;
+                $arm         = $schoolClass?->armRelation?->arm ?? null;
+                $className   = $schoolClass?->schoolclass ?? null;   // adjust field name if different
+                $sessionName = $currentTerm?->session?->name ?? null;
+
+                return [
+                    'id'          => $s->id,
+                    'firstname'   => $s->firstname,
+                    'lastname'    => $s->lastname,
+                    'othername'   => $s->othername,
+                    'admissionNo' => $s->admissionNo,
+                    'gender'      => $s->gender,
+                    'picture_url' => $pictureUrl,
+                    'class_name'  => $className,
+                    'arm'         => $arm,
+                    'session_name'=> $sessionName,
+                ];
+            });
+
             return response()->json([
-                'success' => true,
-                'students' => $students
+                'success'  => true,
+                'students' => $results,
             ]);
 
-        } catch (\Exception $e) {
-            Log::error('Error getting eligible students: ' . $e->getMessage());
+        } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to get eligible students.'
+                'message' => 'Invalid request: ' . collect($e->errors())->flatten()->first(),
+            ], 422);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('getEligibleStudents error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve students.',
             ], 500);
         }
     }
