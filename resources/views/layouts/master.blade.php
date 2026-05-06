@@ -1806,7 +1806,7 @@
     @if (Route::is('admin.scholarship.*') || Route::is('admin.discount.*') || Route::is('sibling.*') ||
         Route::is('payment.*') || Route::is('reports.financial.*') || Route::is('reports.analysis.*') ||
         Route::is('payroll.*') || Route::is('staff.payments.*'))
-        @include('layouts.pages-assets.js.finance-list-js')
+        @include('layouts.pages-assets.js.scholarship-list-js')
     @endif
 
     <!-- ====================================================
