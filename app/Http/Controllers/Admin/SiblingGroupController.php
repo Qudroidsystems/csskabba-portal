@@ -1,5 +1,4 @@
 <?php
-// app/Http/Controllers/Admin/SiblingGroupController.php
 
 namespace App\Http\Controllers\Admin;
 
@@ -23,22 +22,23 @@ class SiblingGroupController extends Controller
         $this->middleware('permission:Apply sibling discount', ['only' => ['applyDiscount']]);
     }
 
-    /**
-     * Display listing of sibling groups.
-     */
     public function index(Request $request)
     {
         $pagetitle = 'Sibling Groups Management';
 
-        if ($request->ajax()) {
+        if ($request->ajax() || $request->wantsJson()) {
             $groups = SiblingGroup::with(['students', 'discountAssignments'])
                 ->orderBy('created_at', 'desc')
                 ->get();
 
+            $totalSavings = DiscountAssignment::whereNotNull('sibling_group_id')
+                ->where('status', 'active')
+                ->sum('value');
+
             $stats = [
                 'total_groups' => $groups->count(),
                 'total_students' => $groups->sum('total_children'),
-                'total_savings' => DiscountAssignment::whereNotNull('sibling_group_id')->where('status', 'active')->sum('value'),
+                'total_savings' => $totalSavings,
                 'active_discounts' => DiscountAssignment::whereNotNull('sibling_group_id')->where('status', 'active')->count(),
             ];
 
@@ -53,6 +53,7 @@ class SiblingGroupController extends Controller
                     'total_children' => $group->students->count(),
                     'discount_type' => $group->discount_type,
                     'discount_value' => $group->discount_value,
+                    'has_discount' => !is_null($group->discount_value),
                     'students' => $group->students->map(function($student) {
                         return [
                             'id' => $student->id,
@@ -73,18 +74,12 @@ class SiblingGroupController extends Controller
         return view('sibling.index', compact('pagetitle'));
     }
 
-    /**
-     * Show form for creating a new sibling group.
-     */
     public function create()
     {
         $pagetitle = 'Create Family Group';
         return view('sibling.create', compact('pagetitle'));
     }
 
-    /**
-     * Store a new sibling group.
-     */
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -107,7 +102,8 @@ class SiblingGroupController extends Controller
 
         DB::beginTransaction();
         try {
-            $groupNo = 'SG-' . date('Y') . '-' . str_pad(SiblingGroup::count() + 1, 4, '0', STR_PAD_LEFT);
+            $groupCount = SiblingGroup::count();
+            $groupNo = 'SG-' . date('Y') . '-' . str_pad($groupCount + 1, 4, '0', STR_PAD_LEFT);
 
             $group = SiblingGroup::create([
                 'group_no' => $groupNo,
@@ -143,12 +139,9 @@ class SiblingGroupController extends Controller
         }
     }
 
-    /**
-     * Display sibling group details.
-     */
     public function show($id)
     {
-        $group = SiblingGroup::with('students')->find($id);
+        $group = SiblingGroup::with(['students.currentTerm.schoolClass.armRelation', 'students.picture'])->find($id);
 
         if (!$group) {
             return response()->json([
@@ -158,11 +151,27 @@ class SiblingGroupController extends Controller
         }
 
         $students = $group->students->map(function($student) {
+            $className = 'N/A';
+            $armName = '';
+            if ($student->currentTerm && $student->currentTerm->schoolClass) {
+                $className = $student->currentTerm->schoolClass->schoolclass ?? 'N/A';
+                if ($student->currentTerm->schoolClass->armRelation) {
+                    $armName = $student->currentTerm->schoolClass->armRelation->arm;
+                }
+            }
+
+            $pictureUrl = null;
+            if ($student->picture && $student->picture->picture && $student->picture->picture != 'unnamed.jpg') {
+                $pictureUrl = asset('storage/images/student_avatars/' . $student->picture->picture);
+            }
+
             return [
                 'id' => $student->id,
                 'name' => $student->firstname . ' ' . $student->lastname,
                 'admission_no' => $student->admissionNo,
-                'class' => optional($student->currentClass())->schoolclass->schoolclass ?? 'N/A',
+                'class' => $className . ($armName ? ' ' . $armName : ''),
+                'picture' => $pictureUrl,
+                'initials' => strtoupper(substr($student->firstname, 0, 1) . substr($student->lastname, 0, 1)),
             ];
         });
 
@@ -176,9 +185,6 @@ class SiblingGroupController extends Controller
         ]);
     }
 
-    /**
-     * Show form for editing a sibling group.
-     */
     public function edit($id)
     {
         $group = SiblingGroup::with('students')->findOrFail($id);
@@ -186,9 +192,6 @@ class SiblingGroupController extends Controller
         return view('sibling.edit', compact('group', 'pagetitle'));
     }
 
-    /**
-     * Update sibling group.
-     */
     public function update(Request $request, $id)
     {
         $group = SiblingGroup::find($id);
@@ -244,9 +247,6 @@ class SiblingGroupController extends Controller
         }
     }
 
-    /**
-     * Delete sibling group.
-     */
     public function destroy($id)
     {
         $group = SiblingGroup::find($id);
@@ -257,25 +257,32 @@ class SiblingGroupController extends Controller
             ], 404);
         }
 
-        DiscountAssignment::where('sibling_group_id', $id)->delete();
-        $group->students()->detach();
-        $group->delete();
+        DB::beginTransaction();
+        try {
+            DiscountAssignment::where('sibling_group_id', $id)->delete();
+            $group->students()->detach();
+            $group->delete();
+            DB::commit();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Family group deleted successfully!'
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Family group deleted successfully!'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete group: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
-    /**
-     * Apply sibling discount to group.
-     */
     public function applyDiscount(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'group_id' => 'required|exists:sibling_groups,id',
             'discount_type' => 'required|in:percentage,fixed_per_child',
-            'discount_value' => 'required|numeric|min:0|max:100',
+            'discount_value' => 'required|numeric|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -285,7 +292,21 @@ class SiblingGroupController extends Controller
             ], 422);
         }
 
-        $group = SiblingGroup::find($request->group_id);
+        $group = SiblingGroup::with('students')->find($request->group_id);
+
+        if (!$group) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Group not found'
+            ], 404);
+        }
+
+        if ($request->discount_type === 'percentage' && $request->discount_value > 100) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Percentage discount cannot exceed 100%'
+            ], 422);
+        }
 
         $group->update([
             'discount_type' => $request->discount_type,
@@ -301,9 +322,6 @@ class SiblingGroupController extends Controller
         ]);
     }
 
-    /**
-     * Apply sibling discount to students in group.
-     */
     private function applySiblingDiscountToGroup($group, $studentIds)
     {
         $applied = 0;
@@ -320,6 +338,7 @@ class SiblingGroupController extends Controller
                     'sibling_group_id' => $group->id,
                 ],
                 [
+                    'discount_id' => null,
                     'value_type' => $group->discount_type === 'percentage' ? 'percentage' : 'fixed_amount',
                     'value' => $discountValue,
                     'status' => 'active',
@@ -337,33 +356,66 @@ class SiblingGroupController extends Controller
         return ['count' => $applied];
     }
 
-    /**
-     * Search students for adding to group (AJAX).
-     */
     public function searchStudents(Request $request)
     {
         $search = $request->input('q', '');
 
-        $students = Student::where('firstname', 'like', "%{$search}%")
+        if (strlen($search) < 2) {
+            return response()->json([
+                'success' => true,
+                'students' => [],
+                'results' => []
+            ]);
+        }
+
+        $students = Student::with(['picture', 'currentTerm.schoolClass.armRelation'])
+            ->where('firstname', 'like', "%{$search}%")
             ->orWhere('lastname', 'like', "%{$search}%")
             ->orWhere('admissionNo', 'like', "%{$search}%")
             ->limit(20)
-            ->get(['id', 'firstname', 'lastname', 'admissionNo']);
+            ->get();
+
+        $formattedStudents = $students->map(function($student) {
+            // Get class info
+            $className = 'N/A';
+            $armName = '';
+            if ($student->currentTerm && $student->currentTerm->schoolClass) {
+                $className = $student->currentTerm->schoolClass->schoolclass ?? 'N/A';
+                if ($student->currentTerm->schoolClass->armRelation) {
+                    $armName = $student->currentTerm->schoolClass->armRelation->arm;
+                }
+            }
+
+            // Get picture
+            $pictureUrl = null;
+            if ($student->picture && $student->picture->picture && $student->picture->picture != 'unnamed.jpg') {
+                $pictureUrl = asset('storage/images/student_avatars/' . $student->picture->picture);
+            }
+
+            return [
+                'id' => $student->id,
+                'text' => $student->firstname . ' ' . $student->lastname . ' (' . $student->admissionNo . ')',
+                'firstname' => $student->firstname,
+                'lastname' => $student->lastname,
+                'admission_no' => $student->admissionNo,
+                'class' => $className . ($armName ? ' ' . $armName : ''),
+                'picture' => $pictureUrl,
+                'initials' => strtoupper(substr($student->firstname, 0, 1) . substr($student->lastname, 0, 1)),
+            ];
+        });
 
         return response()->json([
             'success' => true,
-            'students' => $students->map(function($student) {
+            'students' => $formattedStudents,
+            'results' => $formattedStudents->map(function($s) {
                 return [
-                    'id' => $student->id,
-                    'text' => $student->firstname . ' ' . $student->lastname . ' (' . $student->admissionNo . ')'
+                    'id' => $s['id'],
+                    'text' => $s['text']
                 ];
             })
         ]);
     }
 
-    /**
-     * Get student siblings (AJAX).
-     */
     public function getStudentSiblings($studentId)
     {
         $siblings = SiblingGroup::getSiblings($studentId);

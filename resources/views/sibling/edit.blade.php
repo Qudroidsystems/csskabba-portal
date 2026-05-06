@@ -1,22 +1,107 @@
-{{-- resources/views/sibling/edit.blade.php --}}
 @extends('layouts.master')
 
 @section('content')
 <style>
+:root {
+    --sib-primary: #1e3a5f;
+    --sib-accent: #2563eb;
+    --sib-border: #e2e8f0;
+    --sib-radius: 12px;
+}
+
 .form-section {
     background: white;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
+    border: 1px solid var(--sib-border);
+    border-radius: var(--sib-radius);
     padding: 24px;
     margin-bottom: 24px;
 }
 .form-section h5 {
     font-size: 16px;
     font-weight: 600;
-    color: #1e3a5f;
+    color: var(--sib-primary);
     margin-bottom: 20px;
     padding-bottom: 10px;
-    border-bottom: 2px solid #e2e8f0;
+    border-bottom: 2px solid var(--sib-border);
+}
+
+.selected-students-container {
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid var(--sib-border);
+    border-radius: var(--sib-radius);
+    background: #f8fafc;
+    min-height: 150px;
+}
+.selected-student-card {
+    background: white;
+    border: 1px solid var(--sib-border);
+    border-radius: 10px;
+    padding: 12px;
+    margin-bottom: 10px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.selected-student-card:hover {
+    border-color: var(--sib-accent);
+    box-shadow: 0 2px 8px rgba(0,0,0,.05);
+}
+.student-avatar-sm {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--sib-border);
+    background: #f0f0f0;
+}
+.avatar-placeholder-sm {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+    border: 2px solid var(--sib-border);
+}
+.student-search-modal .modal-content {
+    border-radius: 20px;
+    overflow: hidden;
+}
+.student-result-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+    border-bottom: 1px solid var(--sib-border);
+    transition: background 0.15s;
+}
+.student-result-item:hover {
+    background: #f0f9ff;
+}
+.student-result-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.student-result-avatar-placeholder {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    color: white;
 }
 </style>
 
@@ -28,7 +113,7 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h4 class="mb-1 fw-bold" style="color: #1e3a5f;">
+                    <h4 class="mb-1 fw-bold" style="color: var(--sib-primary);">
                         <i class="ri-group-line me-2"></i>{{ $pagetitle }}
                     </h4>
                     <nav aria-label="breadcrumb">
@@ -81,14 +166,16 @@
                 <div class="form-section">
                     <h5><i class="ri-user-line me-2"></i>Children / Students</h5>
                     <div class="mb-3">
-                        <label class="form-label fw-semibold">Select Students <span class="text-danger">*</span></label>
-                        <select name="student_ids[]" id="studentSelect" class="form-select select2" multiple="multiple" required>
-                            @foreach($group->students as $student)
-                                <option value="{{ $student->id }}" selected>{{ $student->firstname }} {{ $student->lastname }} ({{ $student->admissionNo }})</option>
-                            @endforeach
-                        </select>
-                        <small class="text-muted">Select all children belonging to this family</small>
+                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#searchStudentModal">
+                            <i class="ri-user-add-line me-1"></i>Add/Remove Students
+                        </button>
+                        <small class="text-muted ms-2">Click to search and manage students in this family</small>
                     </div>
+
+                    <div id="selectedStudentsContainer" class="selected-students-container p-3">
+                        <div id="selectedStudentsList"></div>
+                    </div>
+                    <input type="hidden" name="student_ids" id="studentIdsInput" value="">
                 </div>
             </div>
 
@@ -97,13 +184,13 @@
                     <h5><i class="ri-bar-chart-line me-2"></i>Statistics</h5>
                     <div class="mb-3">
                         <div class="small text-muted">Total Children</div>
-                        <div class="fs-4 fw-bold">{{ $group->students->count() }}</div>
+                        <div class="fs-4 fw-bold" id="totalChildrenCount">{{ $group->students->count() }}</div>
                     </div>
                     @if($group->discount_value)
                     <div class="mb-3">
                         <div class="small text-muted">Current Discount</div>
                         <div class="fs-5 text-success">
-                            {{ $group->discount_type === 'percentage' ? $group->discount_value . '%' : '₦' . $group->discount_value . ' per child' }}
+                            {{ $group->discount_type === 'percentage' ? $group->discount_value . '%' : '₦' . number_format($group->discount_value, 2) . ' per child' }}
                         </div>
                     </div>
                     @endif
@@ -138,37 +225,163 @@
 </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+{{-- Search Student Modal --}}
+<div class="modal fade" id="searchStudentModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content student-search-modal">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="ri-user-search-line me-2"></i>Search Students</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div class="p-3 border-bottom">
+                    <div class="position-relative">
+                        <input type="text" id="studentSearchInput" class="form-control ps-5" placeholder="Type name or admission number...">
+                        <i class="ri-search-line position-absolute" style="left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8;"></i>
+                    </div>
+                </div>
+                <div id="studentSearchResults" class="student-search-results" style="max-height: 400px; overflow-y: auto;">
+                    <div class="text-center text-muted py-5">
+                        <i class="ri-user-search-line ri-2x d-block mb-2"></i>
+                        Type at least 2 characters to search
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content;
-const currentStudentIds = @json($group->students->pluck('id')->toArray());
+let selectedStudents = [];
+let searchTimeout = null;
+
+// Initial students from the group
+const initialStudents = @json($group->students->map(function($student) {
+    $pictureUrl = null;
+    if ($student->picture && $student->picture->picture && $student->picture->picture != 'unnamed.jpg') {
+        $pictureUrl = asset('storage/images/student_avatars/' . $student->picture->picture);
+    }
+
+    $className = 'N/A';
+    if ($student->currentTerm && $student->currentTerm->schoolClass) {
+        $className = $student->currentTerm->schoolClass->schoolclass ?? 'N/A';
+    }
+
+    return [
+        'id' => $student->id,
+        'firstname' => $student->firstname,
+        'lastname' => $student->lastname,
+        'admission_no' => $student->admissionNo,
+        'class' => $className,
+        'picture' => $pictureUrl,
+        'initials' => strtoupper(substr($student->firstname, 0, 1) . substr($student->lastname, 0, 1)),
+    ];
+}));
 
 $(document).ready(function() {
-    // Initialize Select2 for student search
-    $('#studentSelect').select2({
-        ajax: {
-            url: '{{ route("sibling.search-students") }}',
-            dataType: 'json',
-            delay: 250,
-            data: function(params) {
-                return { q: params.term };
-            },
-            processResults: function(data) {
-                return {
-                    results: data.students?.map(s => ({ id: s.id, text: s.text })) || []
-                };
-            },
-            cache: true
-        },
-        placeholder: 'Search for students...',
-        minimumInputLength: 2,
-        width: '100%'
+    selectedStudents = [...initialStudents];
+    updateSelectedStudentsList();
+
+    // Student search in modal
+    $('#studentSearchInput').on('input', function() {
+        clearTimeout(searchTimeout);
+        const query = $(this).val().trim();
+
+        if (query.length < 2) {
+            $('#studentSearchResults').html(`
+                <div class="text-center text-muted py-5">
+                    <i class="ri-user-search-line ri-2x d-block mb-2"></i>
+                    Type at least 2 characters to search
+                </div>
+            `);
+            return;
+        }
+
+        searchTimeout = setTimeout(() => {
+            $('#studentSearchResults').html(`
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary"></div>
+                    <p class="mt-2">Searching...</p>
+                </div>
+            `);
+
+            $.ajax({
+                url: '{{ route("sibling.search-students") }}',
+                method: 'GET',
+                data: { q: query },
+                success: function(response) {
+                    if (response.success && response.students.length) {
+                        renderSearchResults(response.students);
+                    } else {
+                        $('#studentSearchResults').html(`
+                            <div class="text-center text-muted py-5">
+                                <i class="ri-user-unfollow-line ri-2x d-block mb-2"></i>
+                                No students found
+                            </div>
+                        `);
+                    }
+                },
+                error: function() {
+                    $('#studentSearchResults').html(`
+                        <div class="text-center text-danger py-5">
+                            <i class="ri-error-warning-line ri-2x d-block mb-2"></i>
+                            Search failed. Please try again.
+                        </div>
+                    `);
+                }
+            });
+        }, 300);
+    });
+
+    function renderSearchResults(students) {
+        const resultsHtml = students.map(s => `
+            <div class="student-result-item" onclick="addStudent(${JSON.stringify(s).replace(/"/g, '&quot;')})">
+                <div>
+                    ${s.picture
+                        ? `<img src="${s.picture}" class="student-result-avatar">`
+                        : `<div class="student-result-avatar-placeholder">${s.initials}</div>`
+                    }
+                </div>
+                <div style="flex: 1;">
+                    <div class="fw-semibold">${s.firstname} ${s.lastname}</div>
+                    <div class="small text-muted">Admission: ${s.admission_no} | Class: ${s.class}</div>
+                </div>
+                <div>
+                    ${selectedStudents.some(existing => existing.id === s.id)
+                        ? '<i class="ri-checkbox-circle-line text-success fs-5"></i>'
+                        : '<i class="ri-add-circle-line text-primary fs-5"></i>'
+                    }
+                </div>
+            </div>
+        `).join('');
+
+        $('#studentSearchResults').html(resultsHtml);
+    }
+
+    // Reset modal when opened
+    $('#searchStudentModal').on('show.bs.modal', function() {
+        $('#studentSearchInput').val('');
+        $('#studentSearchResults').html(`
+            <div class="text-center text-muted py-5">
+                <i class="ri-user-search-line ri-2x d-block mb-2"></i>
+                Type at least 2 characters to search
+            </div>
+        `);
     });
 
     // Form submission
     $('#editGroupForm').on('submit', async function(e) {
         e.preventDefault();
+
+        if (selectedStudents.length === 0) {
+            Swal.fire('Error!', 'Please add at least one student to the family group.', 'error');
+            return;
+        }
 
         const submitBtn = $('#submitBtn');
         const originalText = submitBtn.html();
@@ -176,12 +389,13 @@ $(document).ready(function() {
 
         const id = $('input[name="id"]').val();
         const formData = $(this).serialize();
+        const finalFormData = formData + `&student_ids[]=${selectedStudents.map(s => s.id).join('&student_ids[]=')}`;
 
         try {
             const response = await fetch(`/sibling/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-TOKEN': CSRF_TOKEN },
-                body: formData
+                body: finalFormData
             });
             const data = await response.json();
             if (data.success) {
@@ -207,5 +421,60 @@ $(document).ready(function() {
         }
     });
 });
+
+// Global function to add student
+function addStudent(student) {
+    if (selectedStudents.some(s => s.id === student.id)) {
+        Swal.fire('Info', 'Student already in this family.', 'info');
+        return;
+    }
+
+    selectedStudents.push(student);
+    updateSelectedStudentsList();
+}
+
+function removeStudent(studentId) {
+    selectedStudents = selectedStudents.filter(s => s.id !== studentId);
+    updateSelectedStudentsList();
+}
+
+function updateSelectedStudentsList() {
+    const container = $('#selectedStudentsList');
+    const studentIdsInput = $('#studentIdsInput');
+    const totalChildrenCount = $('#totalChildrenCount');
+
+    studentIdsInput.val(selectedStudents.map(s => s.id).join(','));
+    totalChildrenCount.text(selectedStudents.length);
+
+    if (selectedStudents.length === 0) {
+        container.html(`
+            <div class="text-center text-muted py-4">
+                <i class="ri-user-line ri-2x d-block mb-2"></i>
+                No students in this family. Click "Add/Remove Students" to add family members.
+            </div>
+        `);
+        return;
+    }
+
+    const studentsHtml = selectedStudents.map(s => `
+        <div class="selected-student-card">
+            <div>
+                ${s.picture
+                    ? `<img src="${s.picture}" class="student-avatar-sm">`
+                    : `<div class="avatar-placeholder-sm">${s.initials}</div>`
+                }
+            </div>
+            <div style="flex: 1;">
+                <div class="fw-semibold">${s.firstname} ${s.lastname}</div>
+                <div class="small text-muted">Admission: ${s.admission_no} | Class: ${s.class}</div>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeStudent(${s.id})">
+                <i class="ri-close-line"></i>
+            </button>
+        </div>
+    `).join('');
+
+    container.html(studentsHtml);
+}
 </script>
 @endsection
