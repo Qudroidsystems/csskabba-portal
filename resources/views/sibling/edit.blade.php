@@ -185,7 +185,7 @@
                     <h5><i class="ri-bar-chart-line me-2"></i>Statistics</h5>
                     <div class="mb-3">
                         <div class="small text-muted">Total Children</div>
-                        <div class="fs-4 fw-bold" id="totalChildrenCount">{{ isset($group) ? $group->students->count() : 0 }}</div>
+                        <div class="fs-4 fw-bold" id="totalChildrenCount">{{ isset($initialStudents) ? count($initialStudents) : 0 }}</div>
                     </div>
                     @if(isset($group) && $group->discount_value)
                     <div class="mb-3">
@@ -257,16 +257,27 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-// Check if variable exists, if not, create empty array
-const initialStudentsData = @json($initialStudents ?? []);
+// Get initial students data from PHP
+let initialStudents = [];
+try {
+    initialStudents = @json($initialStudents ?? []);
+    console.log('Initial students loaded:', initialStudents.length);
+    console.log('Initial students data:', initialStudents);
+} catch(e) {
+    console.error('Error parsing initial students:', e);
+    initialStudents = [];
+}
+
 const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
 let selectedStudents = [];
 let searchTimeout = null;
 
-console.log('Initial students data:', initialStudentsData);
-
 $(document).ready(function() {
-    selectedStudents = [...initialStudentsData];
+    // Copy initial students to selectedStudents
+    selectedStudents = [...initialStudents];
+    console.log('Selected students after copy:', selectedStudents.length);
+
+    // Update the UI
     updateSelectedStudentsList();
 
     // Student search in modal
@@ -458,6 +469,8 @@ function updateSelectedStudentsList() {
 
     studentIdsInput.val(selectedStudents.map(s => s.id).join(','));
     if (totalChildrenCount.length) totalChildrenCount.text(selectedStudents.length);
+
+    console.log('Updating student list, count:', selectedStudents.length);
 
     if (selectedStudents.length === 0) {
         container.html(`

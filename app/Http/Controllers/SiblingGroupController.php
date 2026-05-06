@@ -191,62 +191,70 @@ class SiblingGroupController extends Controller
         ]);
     }
 
-    public function edit($id)
-    {
-        $group = SiblingGroup::findOrFail($id);
+   public function edit($id)
+{
+    // Find the group
+    $group = SiblingGroup::findOrFail($id);
 
-        // Get student IDs from pivot table
-        $studentIds = DB::table('sibling_group_students')
-            ->where('sibling_group_id', $id)
-            ->pluck('student_id')
-            ->toArray();
+    // Get student IDs from pivot table using direct query
+    $studentIds = DB::table('sibling_group_students')
+        ->where('sibling_group_id', $id)
+        ->pluck('student_id')
+        ->toArray();
 
-        $students = Student::whereIn('id', $studentIds)->get();
+    // Debug - log the IDs found
+    \Log::info('Edit - Group ID: ' . $id);
+    \Log::info('Edit - Student IDs found: ' . json_encode($studentIds));
 
-        // Format initial students for JavaScript - MUST be an array
-        $initialStudents = [];
+    // Get students
+    $students = Student::whereIn('id', $studentIds)->get();
 
-        foreach ($students as $student) {
-            // Get picture
-            $pictureUrl = null;
-            $picture = DB::table('studentpicture')
-                ->where('studentid', $student->id)
-                ->first();
-            if ($picture && $picture->picture && $picture->picture != 'unnamed.jpg') {
-                $pictureUrl = asset('storage/images/student_avatars/' . $picture->picture);
-            }
+    // Debug - log students count
+    \Log::info('Edit - Students count: ' . $students->count());
 
-            // Get class info
-            $classInfo = $this->getStudentClassInfo($student->id);
-            $classDisplay = $classInfo['class'];
-            if ($classInfo['arm']) {
-                $classDisplay .= ' ' . $classInfo['arm'];
-            }
+    // Format initial students for JavaScript
+    $initialStudents = [];
 
-            $initialStudents[] = [
-                'id' => $student->id,
-                'firstname' => $student->firstname,
-                'lastname' => $student->lastname,
-                'admission_no' => $student->admissionNo,
-                'class' => $classDisplay,
-                'picture' => $pictureUrl,
-                'initials' => strtoupper(substr($student->firstname, 0, 1) . substr($student->lastname, 0, 1)),
-            ];
+    foreach ($students as $student) {
+        // Get picture
+        $pictureUrl = null;
+        $picture = DB::table('studentpicture')
+            ->where('studentid', $student->id)
+            ->first();
+        if ($picture && $picture->picture && $picture->picture != 'unnamed.jpg') {
+            $pictureUrl = asset('storage/images/student_avatars/' . $picture->picture);
         }
 
-        $pagetitle = 'Edit Family Group - ' . $group->family_name;
+        // Get class info
+        $classInfo = $this->getStudentClassInfo($student->id);
+        $classDisplay = $classInfo['class'];
+        if ($classInfo['arm']) {
+            $classDisplay .= ' ' . $classInfo['arm'];
+        }
 
-        // DEBUG: Log to verify data is being prepared
-        \Log::info('Edit method - initialStudents count: ' . count($initialStudents));
-        \Log::info('Edit method - pagetitle: ' . $pagetitle);
-
-        // Make sure to explicitly pass all variables
-        return view('sibling.edit', [
-            'group' => $group,
-            'pagetitle' => $pagetitle,
-            'initialStudents' => $initialStudents
-        ]);
+        $initialStudents[] = [
+            'id' => $student->id,
+            'firstname' => $student->firstname,
+            'lastname' => $student->lastname,
+            'admission_no' => $student->admissionNo,
+            'class' => $classDisplay,
+            'picture' => $pictureUrl,
+            'initials' => strtoupper(substr($student->firstname, 0, 1) . substr($student->lastname, 0, 1)),
+        ];
     }
+
+    $pagetitle = 'Edit Family Group - ' . $group->family_name;
+
+    // Debug - log initial students
+    \Log::info('Edit - Initial students formatted: ' . json_encode($initialStudents));
+
+    // Make sure to explicitly pass all variables
+    return view('sibling.edit', [
+        'group' => $group,
+        'pagetitle' => $pagetitle,
+        'initialStudents' => $initialStudents
+    ]);
+}
 
     public function update(Request $request, $id)
     {
