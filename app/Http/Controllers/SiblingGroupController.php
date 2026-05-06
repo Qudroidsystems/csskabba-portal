@@ -1,5 +1,4 @@
 <?php
-// app/Http/Controllers/Admin/SiblingGroupController.php
 
 namespace App\Http\Controllers\Admin;
 
@@ -11,34 +10,36 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Log;
 
 class SiblingGroupController extends Controller
 {
     public function __construct()
     {
         $this->middleware('permission:View sibling groups', ['only' => ['index', 'show']]);
-        $this->middleware('permission:Create sibling group', ['only' => ['store']]);
-        $this->middleware('permission:Update sibling group', ['only' => ['update']]);
+        $this->middleware('permission:Create sibling group', ['only' => ['create', 'store']]);
+        $this->middleware('permission:Update sibling group', ['only' => ['edit', 'update']]);
         $this->middleware('permission:Delete sibling group', ['only' => ['destroy']]);
         $this->middleware('permission:Apply sibling discount', ['only' => ['applyDiscount']]);
     }
 
-    /**
-     * Display listing of sibling groups.
-     */
     public function index(Request $request)
     {
         $pagetitle = 'Sibling Groups Management';
 
-        if ($request->ajax()) {
+        if ($request->ajax() || $request->wantsJson()) {
             $groups = SiblingGroup::with(['students', 'discountAssignments'])
                 ->orderBy('created_at', 'desc')
                 ->get();
 
+            $totalSavings = DiscountAssignment::whereNotNull('sibling_group_id')
+                ->where('status', 'active')
+                ->sum('value');
+
             $stats = [
                 'total_groups' => $groups->count(),
                 'total_students' => $groups->sum('total_children'),
-                'total_savings' => DiscountAssignment::whereNotNull('sibling_group_id')->sum('value'),
+                'total_savings' => $totalSavings,
                 'active_discounts' => DiscountAssignment::whereNotNull('sibling_group_id')->where('status', 'active')->count(),
             ];
 
@@ -53,6 +54,7 @@ class SiblingGroupController extends Controller
                     'total_children' => $group->students->count(),
                     'discount_type' => $group->discount_type,
                     'discount_value' => $group->discount_value,
+                    'has_discount' => !is_null($group->discount_value),
                     'students' => $group->students->map(function($student) {
                         return [
                             'id' => $student->id,
@@ -70,12 +72,15 @@ class SiblingGroupController extends Controller
             ]);
         }
 
-        return view('sibling.groups', compact('pagetitle'));
+        return view('sibling.index', compact('pagetitle'));
     }
 
-    /**
-     * Store a new sibling group.
-     */
+    public function create()
+    {
+        $pagetitle = 'Create Family Group';
+        return view('sibling.create', compact('pagetitle'));
+    }
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -98,8 +103,8 @@ class SiblingGroupController extends Controller
 
         DB::beginTransaction();
         try {
-            // Generate unique group number
-            $groupNo = 'SG-' . date('Y') . '-' . str_pad(SiblingGroup::count() + 1, 4, '0', STR_PAD_LEFT);
+            $groupCount = SiblingGroup::count();
+            $groupNo = 'SG-' . date('Y') . '-' . str_pad($groupCount + 1, 4, '0', STR_PAD_LEFT);
 
             $group = SiblingGroup::create([
                 'group_no' => $groupNo,
@@ -112,10 +117,16 @@ class SiblingGroupController extends Controller
                 'discount_value' => $request->discount_value,
             ]);
 
-            // Attach students
-            $group->students()->attach($request->student_ids);
+            // Attach students to the group using the correct pivot table
+            foreach ($request->student_ids as $studentId) {
+                DB::table('sibling_group_students')->insert([
+                    'sibling_group_id' => $group->id,
+                    'student_id' => $studentId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
 
-            // Apply discount if configured
             if ($request->discount_type && $request->discount_value) {
                 $this->applySiblingDiscountToGroup($group, $request->student_ids);
             }
@@ -130,6 +141,7 @@ class SiblingGroupController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Store sibling group error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to create group: ' . $e->getMessage()
@@ -137,12 +149,9 @@ class SiblingGroupController extends Controller
         }
     }
 
-    /**
-     * Display sibling group details.
-     */
     public function show($id)
     {
-        $group = SiblingGroup::with('students')->find($id);
+        $group = SiblingGroup::find($id);
 
         if (!$group) {
             return response()->json([
@@ -151,12 +160,25 @@ class SiblingGroupController extends Controller
             ], 404);
         }
 
-        $students = $group->students->map(function($student) {
+        // Load students directly from the pivot table
+        $students = DB::table('sibling_group_students')
+            ->where('sibling_group_id', $id)
+            ->join('studentRegistration', 'sibling_group_students.student_id', '=', 'studentRegistration.id')
+            ->select('studentRegistration.id', 'studentRegistration.firstname', 'studentRegistration.lastname', 'studentRegistration.admissionNo')
+            ->get();
+
+        $formattedStudents = $students->map(function($student) {
+            // Get student class info with fallback
+            $classInfo = $this->getStudentClassInfo($student->id);
+
             return [
                 'id' => $student->id,
                 'name' => $student->firstname . ' ' . $student->lastname,
                 'admission_no' => $student->admissionNo,
-                'class' => optional($student->currentClass())->schoolclass->schoolclass ?? 'N/A',
+                'class' => $classInfo['class'],
+                'class_arm' => $classInfo['arm'],
+                'term' => $classInfo['term'],
+                'session' => $classInfo['session'],
             ];
         });
 
@@ -164,15 +186,29 @@ class SiblingGroupController extends Controller
             'success' => true,
             'data' => [
                 'group' => $group,
-                'students' => $students,
-                'total_children' => $students->count()
+                'students' => $formattedStudents,
+                'total_children' => $formattedStudents->count()
             ]
         ]);
     }
 
-    /**
-     * Update sibling group.
-     */
+    public function edit($id)
+    {
+        $group = SiblingGroup::findOrFail($id);
+
+        // Load students from the pivot table
+        $studentIds = DB::table('sibling_group_students')
+            ->where('sibling_group_id', $id)
+            ->pluck('student_id')
+            ->toArray();
+
+        $students = Student::whereIn('id', $studentIds)->get();
+        $group->students = $students;
+
+        $pagetitle = 'Edit Family Group - ' . $group->family_name;
+        return view('sibling.edit', compact('group', 'pagetitle'));
+    }
+
     public function update(Request $request, $id)
     {
         $group = SiblingGroup::find($id);
@@ -209,8 +245,17 @@ class SiblingGroupController extends Controller
                 'total_children' => count($request->student_ids),
             ]);
 
-            // Sync students
-            $group->students()->sync($request->student_ids);
+            // Sync students - delete existing and insert new
+            DB::table('sibling_group_students')->where('sibling_group_id', $id)->delete();
+
+            foreach ($request->student_ids as $studentId) {
+                DB::table('sibling_group_students')->insert([
+                    'sibling_group_id' => $id,
+                    'student_id' => $studentId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
 
             DB::commit();
 
@@ -222,6 +267,7 @@ class SiblingGroupController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Update sibling group error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update group: ' . $e->getMessage()
@@ -229,9 +275,6 @@ class SiblingGroupController extends Controller
         }
     }
 
-    /**
-     * Delete sibling group.
-     */
     public function destroy($id)
     {
         $group = SiblingGroup::find($id);
@@ -242,28 +285,39 @@ class SiblingGroupController extends Controller
             ], 404);
         }
 
-        // Remove discount assignments first
-        DiscountAssignment::where('sibling_group_id', $id)->delete();
+        DB::beginTransaction();
+        try {
+            // Delete pivot records
+            DB::table('sibling_group_students')->where('sibling_group_id', $id)->delete();
 
-        // Detach students and delete group
-        $group->students()->detach();
-        $group->delete();
+            // Delete discount assignments
+            DiscountAssignment::where('sibling_group_id', $id)->delete();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Family group deleted successfully!'
-        ]);
+            // Delete group
+            $group->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Family group deleted successfully!'
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Delete sibling group error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to delete group: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
-    /**
-     * Apply sibling discount to group.
-     */
     public function applyDiscount(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'group_id' => 'required|exists:sibling_groups,id',
             'discount_type' => 'required|in:percentage,fixed_per_child',
-            'discount_value' => 'required|numeric|min:0|max:100',
+            'discount_value' => 'required|numeric|min:0',
         ]);
 
         if ($validator->fails()) {
@@ -275,12 +329,32 @@ class SiblingGroupController extends Controller
 
         $group = SiblingGroup::find($request->group_id);
 
+        if (!$group) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Group not found'
+            ], 404);
+        }
+
+        if ($request->discount_type === 'percentage' && $request->discount_value > 100) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Percentage discount cannot exceed 100%'
+            ], 422);
+        }
+
         $group->update([
             'discount_type' => $request->discount_type,
             'discount_value' => $request->discount_value,
         ]);
 
-        $result = $this->applySiblingDiscountToGroup($group, $group->students->pluck('id')->toArray());
+        // Get student IDs from pivot table
+        $studentIds = DB::table('sibling_group_students')
+            ->where('sibling_group_id', $group->id)
+            ->pluck('student_id')
+            ->toArray();
+
+        $result = $this->applySiblingDiscountToGroup($group, $studentIds);
 
         return response()->json([
             'success' => true,
@@ -289,18 +363,13 @@ class SiblingGroupController extends Controller
         ]);
     }
 
-    /**
-     * Apply sibling discount to students in group.
-     */
     private function applySiblingDiscountToGroup($group, $studentIds)
     {
         $applied = 0;
 
         foreach ($studentIds as $index => $studentId) {
-            // Calculate discount based on birth order
             $discountValue = $group->discount_value;
             if ($group->discount_type === 'percentage' && $index > 0) {
-                // Additional 5% for each subsequent child
                 $discountValue = min($group->discount_value + ($index * 5), 50);
             }
 
@@ -310,6 +379,7 @@ class SiblingGroupController extends Controller
                     'sibling_group_id' => $group->id,
                 ],
                 [
+                    'discount_id' => null,
                     'value_type' => $group->discount_type === 'percentage' ? 'percentage' : 'fixed_amount',
                     'value' => $discountValue,
                     'status' => 'active',
@@ -328,46 +398,250 @@ class SiblingGroupController extends Controller
     }
 
     /**
-     * Search students for adding to group (AJAX).
+     * Get student class information with fallback from StudentCurrentTerm to Studentclass
      */
-    public function searchStudents(Request $request)
+    private function getStudentClassInfo($studentId)
     {
-        $search = $request->input('q', '');
+        $result = [
+            'class' => 'N/A',
+            'arm' => '',
+            'term' => 'N/A',
+            'session' => 'N/A',
+            'has_current_term' => false,
+            'source' => 'none'
+        ];
 
-        $students = Student::where('firstname', 'like', "%{$search}%")
-            ->orWhere('lastname', 'like', "%{$search}%")
-            ->orWhere('admissionNo', 'like', "%{$search}%")
-            ->limit(20)
-            ->get(['id', 'firstname', 'lastname', 'admissionNo']);
+        try {
+            // FIRST: Try to get from StudentCurrentTerm (most accurate)
+            $currentTerm = DB::table('student_current_term')
+                ->where('studentId', $studentId)
+                ->where('is_current', true)
+                ->first();
 
-        return response()->json([
-            'success' => true,
-            'students' => $students->map(function($student) {
-                return [
-                    'id' => $student->id,
-                    'text' => $student->firstname . ' ' . $student->lastname . ' (' . $student->admissionNo . ')'
-                ];
-            })
-        ]);
+            if ($currentTerm) {
+                $result['has_current_term'] = true;
+                $result['source'] = 'student_current_term';
+
+                // Get class name
+                $class = DB::table('schoolclass')
+                    ->where('id', $currentTerm->schoolclassId)
+                    ->first();
+
+                if ($class) {
+                    $result['class'] = $class->schoolclass ?? 'N/A';
+
+                    // Get arm if exists
+                    if (isset($class->arm) && $class->arm) {
+                        $arm = DB::table('schoolarm')
+                            ->where('id', $class->arm)
+                            ->first();
+                        $result['arm'] = $arm->arm ?? '';
+                    }
+                }
+
+                // Get term name
+                $term = DB::table('schoolterm')
+                    ->where('id', $currentTerm->termId)
+                    ->first();
+                $result['term'] = $term->term ?? 'N/A';
+
+                // Get session name
+                $session = DB::table('schoolsession')
+                    ->where('id', $currentTerm->sessionId)
+                    ->first();
+                $result['session'] = $session->session ?? 'N/A';
+
+                return $result;
+            }
+
+            // SECOND: Fallback to Studentclass table
+            $studentClass = DB::table('studentclass')
+                ->where('studentId', $studentId)
+                ->orderBy('sessionid', 'desc')
+                ->orderBy('termid', 'desc')
+                ->first();
+
+            if ($studentClass) {
+                $result['source'] = 'studentclass';
+                $result['has_current_term'] = false;
+
+                // Get class name
+                $class = DB::table('schoolclass')
+                    ->where('id', $studentClass->schoolclassid)
+                    ->first();
+
+                if ($class) {
+                    $result['class'] = $class->schoolclass ?? 'N/A';
+
+                    // Get arm if exists
+                    if (isset($class->arm) && $class->arm) {
+                        $arm = DB::table('schoolarm')
+                            ->where('id', $class->arm)
+                            ->first();
+                        $result['arm'] = $arm->arm ?? '';
+                    }
+                }
+
+                // Get term name
+                $term = DB::table('schoolterm')
+                    ->where('id', $studentClass->termid)
+                    ->first();
+                $result['term'] = $term->term ?? 'N/A';
+
+                // Get session name
+                $session = DB::table('schoolsession')
+                    ->where('id', $studentClass->sessionid)
+                    ->first();
+                $result['session'] = $session->session ?? 'N/A';
+
+                return $result;
+            }
+
+            // No class found
+            return $result;
+
+        } catch (\Exception $e) {
+            Log::error('Error getting student class info: ' . $e->getMessage());
+            return $result;
+        }
     }
 
     /**
-     * Get student siblings (AJAX).
+     * Search students for adding to group (AJAX)
      */
+    public function searchStudents(Request $request)
+    {
+        try {
+            $search = $request->input('q', '');
+
+            Log::info('Search students called with query: ' . $search);
+
+            if (strlen($search) < 2) {
+                return response()->json([
+                    'success' => true,
+                    'students' => [],
+                    'results' => []
+                ]);
+            }
+
+            // Search students
+            $students = Student::where('firstname', 'like', "%{$search}%")
+                ->orWhere('lastname', 'like', "%{$search}%")
+                ->orWhere('admissionNo', 'like', "%{$search}%")
+                ->limit(20)
+                ->get();
+
+            Log::info('Found ' . $students->count() . ' students');
+
+            $formattedStudents = $students->map(function($student) {
+                // Get class info with fallback
+                $classInfo = $this->getStudentClassInfo($student->id);
+
+                // Determine display class string
+                $classDisplay = $classInfo['class'];
+                if ($classInfo['arm']) {
+                    $classDisplay .= ' ' . $classInfo['arm'];
+                }
+
+                // Add indicator if using fallback
+                if (!$classInfo['has_current_term']) {
+                    $classDisplay .= ' ⚠️ (from history)';
+                }
+
+                // Get student picture
+                $pictureUrl = null;
+                $picture = DB::table('studentpicture')
+                    ->where('studentid', $student->id)
+                    ->first();
+
+                if ($picture && $picture->picture && $picture->picture != 'unnamed.jpg') {
+                    $pictureUrl = asset('storage/images/student_avatars/' . $picture->picture);
+                }
+
+                $initials = strtoupper(substr($student->firstname, 0, 1) . substr($student->lastname, 0, 1));
+
+                return [
+                    'id' => $student->id,
+                    'text' => $student->firstname . ' ' . $student->lastname . ' (' . $student->admissionNo . ')',
+                    'firstname' => $student->firstname,
+                    'lastname' => $student->lastname,
+                    'admission_no' => $student->admissionNo,
+                    'class' => $classDisplay,
+                    'class_name' => $classInfo['class'],
+                    'arm_name' => $classInfo['arm'],
+                    'term' => $classInfo['term'],
+                    'session' => $classInfo['session'],
+                    'has_current_term' => $classInfo['has_current_term'],
+                    'source' => $classInfo['source'],
+                    'picture' => $pictureUrl,
+                    'initials' => $initials,
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'students' => $formattedStudents,
+                'results' => $formattedStudents->map(function($s) {
+                    return [
+                        'id' => $s['id'],
+                        'text' => $s['text']
+                    ];
+                })
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Search students error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Search failed: ' . $e->getMessage(),
+                'students' => []
+            ], 500);
+        }
+    }
+
     public function getStudentSiblings($studentId)
     {
-        $siblings = SiblingGroup::getSiblings($studentId);
+        try {
+            // Find the group containing this student
+            $group = DB::table('sibling_group_students')
+                ->where('student_id', $studentId)
+                ->first();
 
-        return response()->json([
-            'success' => true,
-            'siblings' => $siblings->map(function($sibling) {
-                return [
-                    'id' => $sibling->id,
-                    'name' => $sibling->firstname . ' ' . $sibling->lastname,
-                    'admission_no' => $sibling->admissionNo,
-                ];
-            }),
-            'count' => $siblings->count()
-        ]);
+            if (!$group) {
+                return response()->json([
+                    'success' => true,
+                    'siblings' => [],
+                    'count' => 0
+                ]);
+            }
+
+            // Get all siblings in the same group
+            $siblings = DB::table('sibling_group_students')
+                ->where('sibling_group_id', $group->sibling_group_id)
+                ->where('student_id', '!=', $studentId)
+                ->join('studentRegistration', 'sibling_group_students.student_id', '=', 'studentRegistration.id')
+                ->select('studentRegistration.id', 'studentRegistration.firstname', 'studentRegistration.lastname', 'studentRegistration.admissionNo')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'siblings' => $siblings->map(function($sibling) {
+                    return [
+                        'id' => $sibling->id,
+                        'name' => $sibling->firstname . ' ' . $sibling->lastname,
+                        'admission_no' => $sibling->admissionNo,
+                    ];
+                }),
+                'count' => $siblings->count()
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Get student siblings error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to get siblings: ' . $e->getMessage(),
+                'siblings' => [],
+                'count' => 0
+            ]);
+        }
     }
 }
