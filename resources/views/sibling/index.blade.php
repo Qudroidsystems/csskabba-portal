@@ -1,4 +1,3 @@
-{{-- resources/views/sibling/index.blade.php --}}
 @extends('layouts.master')
 
 @section('content')
@@ -18,20 +17,30 @@
     border-radius: var(--sib-radius);
     padding: 28px 32px;
     margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
 }
-.sib-hero h1 { font-size: 22px; font-weight: 700; color: white; margin: 0 0 6px; }
-.sib-hero p { font-size: 13px; color: rgba(255,255,255,.75); margin: 0; }
+.sib-hero::before {
+    content: '';
+    position: absolute; top: -60px; right: -60px;
+    width: 220px; height: 220px;
+    background: rgba(255,255,255,.06);
+    border-radius: 50%;
+}
+.sib-hero h1 { font-size: 22px; font-weight: 700; color: white; margin: 0 0 6px; position: relative; }
+.sib-hero p { font-size: 13px; color: rgba(255,255,255,.75); margin: 0; position: relative; }
 
 .stat-card {
     background: white;
     border: 1px solid var(--sib-border);
     border-radius: var(--sib-radius);
     padding: 18px 20px;
-    transition: transform .15s;
+    transition: transform .15s, box-shadow .15s;
 }
 .stat-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,.08); }
 .stat-card .stat-value { font-size: 28px; font-weight: 700; color: var(--sib-primary); }
 .stat-card .stat-label { font-size: 12px; color: #6b7280; margin-top: 4px; }
+.stat-card .stat-icon { font-size: 32px; opacity: .12; float: right; margin-top: -8px; }
 
 .group-card {
     background: white;
@@ -68,6 +77,19 @@
 .filter-bar {
     background: white; border: 1px solid var(--sib-border);
     border-radius: var(--sib-radius); padding: 16px 20px; margin-bottom: 20px;
+}
+.search-box {
+    position: relative;
+}
+.search-box input {
+    padding-left: 38px;
+}
+.search-box .search-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
 }
 </style>
 
@@ -191,7 +213,7 @@
                     <div class="mb-3">
                         <label class="form-label fw-semibold" id="applyDiscountValueLabel">Discount Value (%)</label>
                         <input type="number" name="discount_value" id="applyDiscountValue" class="form-control" step="0.01" required>
-                        <small class="text-muted">Additional 5% discount for each subsequent child after the first.</small>
+                        <small class="text-muted">Additional 5% discount for each subsequent child after the first (max 50%).</small>
                     </div>
                     <div class="alert alert-danger d-none" id="discountFormErrors"></div>
                 </div>
@@ -225,8 +247,9 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script>
-const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content;
+const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
 let currentDeleteId = null;
 
 $(document).ready(function() {
@@ -241,7 +264,7 @@ $(document).ready(function() {
 
         $('.group-card').each(function() {
             const familyName = $(this).data('family-name')?.toLowerCase() || '';
-            const hasDiscount = $(this).data('has-discount') === true;
+            const hasDiscount = $(this).data('has-discount') === 'true';
 
             let matchesSearch = familyName.includes(searchTerm) || searchTerm === '';
             let matchesFilter = true;
@@ -263,10 +286,17 @@ $(document).ready(function() {
                 if (response.success) {
                     renderGroups(response.data);
                     updateStats(response.stats);
+                } else {
+                    $('#groupsContainer').html('<div class="alert alert-danger text-center">' + (response.message || 'Failed to load family groups.') + '</div>');
                 }
             },
-            error: function() {
-                $('#groupsContainer').html('<div class="alert alert-danger text-center">Failed to load family groups.</div>');
+            error: function(xhr) {
+                console.error('AJAX Error:', xhr);
+                let errorMessage = 'Failed to load family groups.';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                }
+                $('#groupsContainer').html('<div class="alert alert-danger text-center">' + errorMessage + '</div>');
             }
         });
     }
@@ -294,13 +324,16 @@ $(document).ready(function() {
             const discountHtml = group.discount_value ? `
                 <div class="discount-badge mt-2">
                     <i class="ri-discount-line me-1"></i>
-                    ${group.discount_type === 'percentage' ? group.discount_value + '% off' : '₦' + group.discount_value + ' per child'}
+                    ${group.discount_type === 'percentage' ? group.discount_value + '% off' : '₦' + parseFloat(group.discount_value).toLocaleString() + ' per child'}
                 </div>
             ` : '<span class="text-muted small">No discount applied</span>';
 
             html += `
                 <div class="col-md-6 col-lg-4">
-                    <div class="group-card" data-family-name="${escapeHtml(group.family_name)}" data-has-discount="${!!group.discount_value}" data-group-id="${group.id}">
+                    <div class="group-card"
+                         data-family-name="${escapeHtml(group.family_name)}"
+                         data-has-discount="${group.discount_value ? 'true' : 'false'}"
+                         data-group-id="${group.id}">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <div>
                                 <h5 class="mb-1 fw-bold">${escapeHtml(group.family_name)}</h5>
@@ -454,8 +487,10 @@ $(document).ready(function() {
         const valueLabel = $('#applyDiscountValueLabel');
         if (this.value === 'percentage') {
             valueLabel.text('Discount Value (%)');
+            $('#applyDiscountValue').attr('step', '0.01');
         } else {
             valueLabel.text('Discount Value (₦ per child)');
+            $('#applyDiscountValue').attr('step', '100');
         }
     });
 
@@ -466,7 +501,10 @@ $(document).ready(function() {
         try {
             const response = await fetch('{{ route("sibling.apply-discount") }}', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-TOKEN': CSRF_TOKEN },
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRF-TOKEN': CSRF_TOKEN
+                },
                 body: formData
             });
             const data = await response.json();
@@ -475,7 +513,11 @@ $(document).ready(function() {
                 $('#applyDiscountModal').modal('hide');
                 loadGroups();
             } else {
-                $('#discountFormErrors').removeClass('d-none').html(data.message);
+                let errorMsg = data.message || 'Something went wrong.';
+                if (data.errors) {
+                    errorMsg = Object.values(data.errors).flat().join('<br>');
+                }
+                $('#discountFormErrors').removeClass('d-none').html(errorMsg);
             }
         } catch (error) {
             Swal.fire('Error!', 'Something went wrong', 'error');
@@ -496,7 +538,10 @@ $(document).ready(function() {
         try {
             const response = await fetch(`/sibling/${currentDeleteId}`, {
                 method: 'DELETE',
-                headers: { 'X-CSRF-TOKEN': CSRF_TOKEN }
+                headers: {
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'Content-Type': 'application/json'
+                }
             });
             const data = await response.json();
             if (data.success) {
