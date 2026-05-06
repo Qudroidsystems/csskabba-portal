@@ -192,22 +192,50 @@ class SiblingGroupController extends Controller
         ]);
     }
 
-    public function edit($id)
-    {
-        $group = SiblingGroup::findOrFail($id);
+public function edit($id)
+{
+    $group = SiblingGroup::findOrFail($id);
 
-        // Load students from the pivot table
-        $studentIds = DB::table('sibling_group_students')
-            ->where('sibling_group_id', $id)
-            ->pluck('student_id')
-            ->toArray();
+    // Get student IDs from pivot table
+    $studentIds = DB::table('sibling_group_students')
+        ->where('sibling_group_id', $id)
+        ->pluck('student_id')
+        ->toArray();
 
-        $students = Student::whereIn('id', $studentIds)->get();
-        $group->students = $students;
+    $students = Student::whereIn('id', $studentIds)->get();
 
-        $pagetitle = 'Edit Family Group - ' . $group->family_name;
-        return view('sibling.edit', compact('group', 'pagetitle'));
-    }
+    // Format initial students for JavaScript
+    $initialStudents = $students->map(function($student) {
+        // Get picture
+        $pictureUrl = null;
+        $picture = DB::table('studentpicture')
+            ->where('studentid', $student->id)
+            ->first();
+        if ($picture && $picture->picture && $picture->picture != 'unnamed.jpg') {
+            $pictureUrl = asset('storage/images/student_avatars/' . $picture->picture);
+        }
+
+        // Get class info
+        $classInfo = $this->getStudentClassInfo($student->id);
+        $classDisplay = $classInfo['class'];
+        if ($classInfo['arm']) {
+            $classDisplay .= ' ' . $classInfo['arm'];
+        }
+
+        return [
+            'id' => $student->id,
+            'firstname' => $student->firstname,
+            'lastname' => $student->lastname,
+            'admission_no' => $student->admissionNo,
+            'class' => $classDisplay,
+            'picture' => $pictureUrl,
+            'initials' => strtoupper(substr($student->firstname, 0, 1) . substr($student->lastname, 0, 1)),
+        ];
+    });
+
+    $pagetitle = 'Edit Family Group - ' . $group->family_name;
+    return view('sibling.edit', compact('group', 'pagetitle', 'initialStudents'));
+}
 
     public function update(Request $request, $id)
     {
@@ -506,84 +534,84 @@ class SiblingGroupController extends Controller
         }
     }
 
-/**
- * Search students for adding to group (AJAX)
- * SIMPLIFIED - No complex relationships
- */
-public function searchStudents(Request $request)
-{
-    try {
-        $search = $request->input('q', '');
+    /**
+     * Search students for adding to group (AJAX)
+     * SIMPLIFIED - No complex relationships
+     */
+    public function searchStudents(Request $request)
+    {
+        try {
+            $search = $request->input('q', '');
 
-        // Log for debugging
-        \Log::info('Search students called with query: ' . $search);
+            // Log for debugging
+            \Log::info('Search students called with query: ' . $search);
 
-        if (strlen($search) < 2) {
-            return response()->json([
-                'success' => true,
-                'students' => [],
-                'results' => []
-            ]);
-        }
-
-        // Simple search - only basic student information
-        $students = Student::where('firstname', 'like', "%{$search}%")
-            ->orWhere('lastname', 'like', "%{$search}%")
-            ->orWhere('admissionNo', 'like', "%{$search}%")
-            ->limit(20)
-            ->get(['id', 'firstname', 'lastname', 'admissionNo']);
-
-        \Log::info('Found ' . $students->count() . ' students');
-
-        $formattedStudents = $students->map(function($student) {
-            // Simple initials
-            $initials = strtoupper(substr($student->firstname, 0, 1) . substr($student->lastname, 0, 1));
-
-            // Get picture if exists (simple query)
-            $pictureUrl = null;
-            try {
-                $picture = \DB::table('studentpicture')
-                    ->where('studentid', $student->id)
-                    ->first();
-                if ($picture && $picture->picture && $picture->picture != 'unnamed.jpg') {
-                    $pictureUrl = asset('storage/images/student_avatars/' . $picture->picture);
-                }
-            } catch (\Exception $e) {
-                // Ignore picture errors
+            if (strlen($search) < 2) {
+                return response()->json([
+                    'success' => true,
+                    'students' => [],
+                    'results' => []
+                ]);
             }
 
-            return [
-                'id' => $student->id,
-                'text' => $student->firstname . ' ' . $student->lastname . ' (' . $student->admissionNo . ')',
-                'firstname' => $student->firstname,
-                'lastname' => $student->lastname,
-                'admission_no' => $student->admissionNo,
-                'class' => 'Loading...', // Will be updated when added
-                'picture' => $pictureUrl,
-                'initials' => $initials,
-            ];
-        });
+            // Simple search - only basic student information
+            $students = Student::where('firstname', 'like', "%{$search}%")
+                ->orWhere('lastname', 'like', "%{$search}%")
+                ->orWhere('admissionNo', 'like', "%{$search}%")
+                ->limit(20)
+                ->get(['id', 'firstname', 'lastname', 'admissionNo']);
 
-        return response()->json([
-            'success' => true,
-            'students' => $formattedStudents,
-            'results' => $formattedStudents->map(function($s) {
+            \Log::info('Found ' . $students->count() . ' students');
+
+            $formattedStudents = $students->map(function($student) {
+                // Simple initials
+                $initials = strtoupper(substr($student->firstname, 0, 1) . substr($student->lastname, 0, 1));
+
+                // Get picture if exists (simple query)
+                $pictureUrl = null;
+                try {
+                    $picture = \DB::table('studentpicture')
+                        ->where('studentid', $student->id)
+                        ->first();
+                    if ($picture && $picture->picture && $picture->picture != 'unnamed.jpg') {
+                        $pictureUrl = asset('storage/images/student_avatars/' . $picture->picture);
+                    }
+                } catch (\Exception $e) {
+                    // Ignore picture errors
+                }
+
                 return [
-                    'id' => $s['id'],
-                    'text' => $s['text']
+                    'id' => $student->id,
+                    'text' => $student->firstname . ' ' . $student->lastname . ' (' . $student->admissionNo . ')',
+                    'firstname' => $student->firstname,
+                    'lastname' => $student->lastname,
+                    'admission_no' => $student->admissionNo,
+                    'class' => 'Loading...', // Will be updated when added
+                    'picture' => $pictureUrl,
+                    'initials' => $initials,
                 ];
-            })
-        ]);
+            });
 
-    } catch (\Exception $e) {
-        \Log::error('Search students error: ' . $e->getMessage());
-        return response()->json([
-            'success' => false,
-            'message' => 'Search failed: ' . $e->getMessage(),
-            'students' => []
-        ], 500);
+            return response()->json([
+                'success' => true,
+                'students' => $formattedStudents,
+                'results' => $formattedStudents->map(function($s) {
+                    return [
+                        'id' => $s['id'],
+                        'text' => $s['text']
+                    ];
+                })
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Search students error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Search failed: ' . $e->getMessage(),
+                'students' => []
+            ], 500);
+        }
     }
-}
 
     public function getStudentSiblings($studentId)
     {
