@@ -117,7 +117,7 @@ class SiblingGroupController extends Controller
                 'discount_value' => $request->discount_value,
             ]);
 
-            // Attach students to the group using the correct pivot table
+            // Attach students
             foreach ($request->student_ids as $studentId) {
                 DB::table('sibling_group_students')->insert([
                     'sibling_group_id' => $group->id,
@@ -160,7 +160,6 @@ class SiblingGroupController extends Controller
             ], 404);
         }
 
-        // Load students directly from the pivot table
         $students = DB::table('sibling_group_students')
             ->where('sibling_group_id', $id)
             ->join('studentRegistration', 'sibling_group_students.student_id', '=', 'studentRegistration.id')
@@ -168,17 +167,17 @@ class SiblingGroupController extends Controller
             ->get();
 
         $formattedStudents = $students->map(function($student) {
-            // Get student class info with fallback
             $classInfo = $this->getStudentClassInfo($student->id);
+            $classDisplay = $classInfo['class'];
+            if ($classInfo['arm']) {
+                $classDisplay .= ' ' . $classInfo['arm'];
+            }
 
             return [
                 'id' => $student->id,
                 'name' => $student->firstname . ' ' . $student->lastname,
                 'admission_no' => $student->admissionNo,
-                'class' => $classInfo['class'],
-                'class_arm' => $classInfo['arm'],
-                'term' => $classInfo['term'],
-                'session' => $classInfo['session'],
+                'class' => $classDisplay,
             ];
         });
 
@@ -192,50 +191,51 @@ class SiblingGroupController extends Controller
         ]);
     }
 
-public function edit($id)
-{
-    $group = SiblingGroup::findOrFail($id);
+    public function edit($id)
+    {
+        $group = SiblingGroup::findOrFail($id);
 
-    // Get student IDs from pivot table
-    $studentIds = DB::table('sibling_group_students')
-        ->where('sibling_group_id', $id)
-        ->pluck('student_id')
-        ->toArray();
+        // Get student IDs from pivot table
+        $studentIds = DB::table('sibling_group_students')
+            ->where('sibling_group_id', $id)
+            ->pluck('student_id')
+            ->toArray();
 
-    $students = Student::whereIn('id', $studentIds)->get();
+        $students = Student::whereIn('id', $studentIds)->get();
 
-    // Format initial students for JavaScript
-    $initialStudents = $students->map(function($student) {
-        // Get picture
-        $pictureUrl = null;
-        $picture = DB::table('studentpicture')
-            ->where('studentid', $student->id)
-            ->first();
-        if ($picture && $picture->picture && $picture->picture != 'unnamed.jpg') {
-            $pictureUrl = asset('storage/images/student_avatars/' . $picture->picture);
+        // Format initial students for JavaScript
+        $initialStudents = [];
+        foreach ($students as $student) {
+            // Get picture
+            $pictureUrl = null;
+            $picture = DB::table('studentpicture')
+                ->where('studentid', $student->id)
+                ->first();
+            if ($picture && $picture->picture && $picture->picture != 'unnamed.jpg') {
+                $pictureUrl = asset('storage/images/student_avatars/' . $picture->picture);
+            }
+
+            // Get class info
+            $classInfo = $this->getStudentClassInfo($student->id);
+            $classDisplay = $classInfo['class'];
+            if ($classInfo['arm']) {
+                $classDisplay .= ' ' . $classInfo['arm'];
+            }
+
+            $initialStudents[] = [
+                'id' => $student->id,
+                'firstname' => $student->firstname,
+                'lastname' => $student->lastname,
+                'admission_no' => $student->admissionNo,
+                'class' => $classDisplay,
+                'picture' => $pictureUrl,
+                'initials' => strtoupper(substr($student->firstname, 0, 1) . substr($student->lastname, 0, 1)),
+            ];
         }
 
-        // Get class info
-        $classInfo = $this->getStudentClassInfo($student->id);
-        $classDisplay = $classInfo['class'];
-        if ($classInfo['arm']) {
-            $classDisplay .= ' ' . $classInfo['arm'];
-        }
-
-        return [
-            'id' => $student->id,
-            'firstname' => $student->firstname,
-            'lastname' => $student->lastname,
-            'admission_no' => $student->admissionNo,
-            'class' => $classDisplay,
-            'picture' => $pictureUrl,
-            'initials' => strtoupper(substr($student->firstname, 0, 1) . substr($student->lastname, 0, 1)),
-        ];
-    });
-
-    $pagetitle = 'Edit Family Group - ' . $group->family_name;
-    return view('sibling.edit', compact('group', 'pagetitle', 'initialStudents'));
-}
+        $pagetitle = 'Edit Family Group - ' . $group->family_name;
+        return view('sibling.edit', compact('group', 'pagetitle', 'initialStudents'));
+    }
 
     public function update(Request $request, $id)
     {
@@ -273,7 +273,7 @@ public function edit($id)
                 'total_children' => count($request->student_ids),
             ]);
 
-            // Sync students - delete existing and insert new
+            // Sync students
             DB::table('sibling_group_students')->where('sibling_group_id', $id)->delete();
 
             foreach ($request->student_ids as $studentId) {
@@ -315,13 +315,8 @@ public function edit($id)
 
         DB::beginTransaction();
         try {
-            // Delete pivot records
             DB::table('sibling_group_students')->where('sibling_group_id', $id)->delete();
-
-            // Delete discount assignments
             DiscountAssignment::where('sibling_group_id', $id)->delete();
-
-            // Delete group
             $group->delete();
 
             DB::commit();
@@ -376,7 +371,6 @@ public function edit($id)
             'discount_value' => $request->discount_value,
         ]);
 
-        // Get student IDs from pivot table
         $studentIds = DB::table('sibling_group_students')
             ->where('sibling_group_id', $group->id)
             ->pluck('student_id')
@@ -401,32 +395,31 @@ public function edit($id)
                 $discountValue = min($group->discount_value + ($index * 5), 50);
             }
 
-            $assignment = DiscountAssignment::updateOrCreate(
-                [
-                    'student_id' => $studentId,
-                    'sibling_group_id' => $group->id,
-                ],
-                [
-                    'discount_id' => null,
-                    'value_type' => $group->discount_type === 'percentage' ? 'percentage' : 'fixed_amount',
-                    'value' => $discountValue,
-                    'status' => 'active',
-                    'effective_from' => now(),
-                    'effective_to' => now()->addYear(),
-                    'assigned_by' => Auth::id(),
-                ]
-            );
+            // Delete existing sibling discount assignments for this student and group
+            DiscountAssignment::where('student_id', $studentId)
+                ->where('sibling_group_id', $group->id)
+                ->delete();
 
-            if ($assignment->wasRecentlyCreated || $assignment->wasChanged()) {
-                $applied++;
-            }
+            // Create new assignment
+            $assignment = new DiscountAssignment();
+            $assignment->student_id = $studentId;
+            $assignment->sibling_group_id = $group->id;
+            $assignment->value_type = $group->discount_type === 'percentage' ? 'percentage' : 'fixed_amount';
+            $assignment->value = $discountValue;
+            $assignment->status = 'active';
+            $assignment->effective_from = now();
+            $assignment->effective_to = now()->addYear();
+            $assignment->assigned_by = Auth::id();
+            $assignment->save();
+
+            $applied++;
         }
 
         return ['count' => $applied];
     }
 
     /**
-     * Get student class information with fallback from StudentCurrentTerm to Studentclass
+     * Get student class information with fallback
      */
     private function getStudentClassInfo($studentId)
     {
@@ -436,11 +429,10 @@ public function edit($id)
             'term' => 'N/A',
             'session' => 'N/A',
             'has_current_term' => false,
-            'source' => 'none'
         ];
 
         try {
-            // FIRST: Try to get from StudentCurrentTerm (most accurate)
+            // Try to get from StudentCurrentTerm
             $currentTerm = DB::table('student_current_term')
                 ->where('studentId', $studentId)
                 ->where('is_current', true)
@@ -448,41 +440,26 @@ public function edit($id)
 
             if ($currentTerm) {
                 $result['has_current_term'] = true;
-                $result['source'] = 'student_current_term';
 
-                // Get class name
-                $class = DB::table('schoolclass')
-                    ->where('id', $currentTerm->schoolclassId)
-                    ->first();
-
+                $class = DB::table('schoolclass')->where('id', $currentTerm->schoolclassId)->first();
                 if ($class) {
                     $result['class'] = $class->schoolclass ?? 'N/A';
-
-                    // Get arm if exists
                     if (isset($class->arm) && $class->arm) {
-                        $arm = DB::table('schoolarm')
-                            ->where('id', $class->arm)
-                            ->first();
+                        $arm = DB::table('schoolarm')->where('id', $class->arm)->first();
                         $result['arm'] = $arm->arm ?? '';
                     }
                 }
 
-                // Get term name
-                $term = DB::table('schoolterm')
-                    ->where('id', $currentTerm->termId)
-                    ->first();
+                $term = DB::table('schoolterm')->where('id', $currentTerm->termId)->first();
                 $result['term'] = $term->term ?? 'N/A';
 
-                // Get session name
-                $session = DB::table('schoolsession')
-                    ->where('id', $currentTerm->sessionId)
-                    ->first();
+                $session = DB::table('schoolsession')->where('id', $currentTerm->sessionId)->first();
                 $result['session'] = $session->session ?? 'N/A';
 
                 return $result;
             }
 
-            // SECOND: Fallback to Studentclass table
+            // Fallback to Studentclass
             $studentClass = DB::table('studentclass')
                 ->where('studentId', $studentId)
                 ->orderBy('sessionid', 'desc')
@@ -490,42 +467,22 @@ public function edit($id)
                 ->first();
 
             if ($studentClass) {
-                $result['source'] = 'studentclass';
-                $result['has_current_term'] = false;
-
-                // Get class name
-                $class = DB::table('schoolclass')
-                    ->where('id', $studentClass->schoolclassid)
-                    ->first();
-
+                $class = DB::table('schoolclass')->where('id', $studentClass->schoolclassid)->first();
                 if ($class) {
                     $result['class'] = $class->schoolclass ?? 'N/A';
-
-                    // Get arm if exists
                     if (isset($class->arm) && $class->arm) {
-                        $arm = DB::table('schoolarm')
-                            ->where('id', $class->arm)
-                            ->first();
+                        $arm = DB::table('schoolarm')->where('id', $class->arm)->first();
                         $result['arm'] = $arm->arm ?? '';
                     }
                 }
 
-                // Get term name
-                $term = DB::table('schoolterm')
-                    ->where('id', $studentClass->termid)
-                    ->first();
+                $term = DB::table('schoolterm')->where('id', $studentClass->termid)->first();
                 $result['term'] = $term->term ?? 'N/A';
 
-                // Get session name
-                $session = DB::table('schoolsession')
-                    ->where('id', $studentClass->sessionid)
-                    ->first();
+                $session = DB::table('schoolsession')->where('id', $studentClass->sessionid)->first();
                 $result['session'] = $session->session ?? 'N/A';
-
-                return $result;
             }
 
-            // No class found
             return $result;
 
         } catch (\Exception $e) {
@@ -536,15 +493,11 @@ public function edit($id)
 
     /**
      * Search students for adding to group (AJAX)
-     * SIMPLIFIED - No complex relationships
      */
     public function searchStudents(Request $request)
     {
         try {
             $search = $request->input('q', '');
-
-            // Log for debugging
-            \Log::info('Search students called with query: ' . $search);
 
             if (strlen($search) < 2) {
                 return response()->json([
@@ -554,30 +507,27 @@ public function edit($id)
                 ]);
             }
 
-            // Simple search - only basic student information
             $students = Student::where('firstname', 'like', "%{$search}%")
                 ->orWhere('lastname', 'like', "%{$search}%")
                 ->orWhere('admissionNo', 'like', "%{$search}%")
                 ->limit(20)
                 ->get(['id', 'firstname', 'lastname', 'admissionNo']);
 
-            \Log::info('Found ' . $students->count() . ' students');
-
             $formattedStudents = $students->map(function($student) {
-                // Simple initials
                 $initials = strtoupper(substr($student->firstname, 0, 1) . substr($student->lastname, 0, 1));
 
-                // Get picture if exists (simple query)
                 $pictureUrl = null;
-                try {
-                    $picture = \DB::table('studentpicture')
-                        ->where('studentid', $student->id)
-                        ->first();
-                    if ($picture && $picture->picture && $picture->picture != 'unnamed.jpg') {
-                        $pictureUrl = asset('storage/images/student_avatars/' . $picture->picture);
-                    }
-                } catch (\Exception $e) {
-                    // Ignore picture errors
+                $picture = DB::table('studentpicture')
+                    ->where('studentid', $student->id)
+                    ->first();
+                if ($picture && $picture->picture && $picture->picture != 'unnamed.jpg') {
+                    $pictureUrl = asset('storage/images/student_avatars/' . $picture->picture);
+                }
+
+                $classInfo = $this->getStudentClassInfo($student->id);
+                $classDisplay = $classInfo['class'];
+                if ($classInfo['arm']) {
+                    $classDisplay .= ' ' . $classInfo['arm'];
                 }
 
                 return [
@@ -586,7 +536,7 @@ public function edit($id)
                     'firstname' => $student->firstname,
                     'lastname' => $student->lastname,
                     'admission_no' => $student->admissionNo,
-                    'class' => 'Loading...', // Will be updated when added
+                    'class' => $classDisplay,
                     'picture' => $pictureUrl,
                     'initials' => $initials,
                 ];
@@ -604,7 +554,7 @@ public function edit($id)
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Search students error: ' . $e->getMessage());
+            Log::error('Search students error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Search failed: ' . $e->getMessage(),
@@ -616,7 +566,6 @@ public function edit($id)
     public function getStudentSiblings($studentId)
     {
         try {
-            // Find the group containing this student
             $group = DB::table('sibling_group_students')
                 ->where('student_id', $studentId)
                 ->first();
@@ -629,7 +578,6 @@ public function edit($id)
                 ]);
             }
 
-            // Get all siblings in the same group
             $siblings = DB::table('sibling_group_students')
                 ->where('sibling_group_id', $group->sibling_group_id)
                 ->where('student_id', '!=', $studentId)
@@ -652,7 +600,7 @@ public function edit($id)
             Log::error('Get student siblings error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to get siblings: ' . $e->getMessage(),
+                'message' => 'Failed to get siblings',
                 'siblings' => [],
                 'count' => 0
             ]);

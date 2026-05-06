@@ -1,4 +1,3 @@
-{{-- resources/views/sibling/create.blade.php --}}
 @extends('layouts.master')
 
 @section('content')
@@ -6,7 +5,6 @@
 :root {
     --sib-primary: #1e3a5f;
     --sib-accent: #2563eb;
-    --sib-success: #16a34a;
     --sib-border: #e2e8f0;
     --sib-radius: 12px;
 }
@@ -27,7 +25,6 @@
     border-bottom: 2px solid var(--sib-border);
 }
 
-/* Selected Students Container */
 .selected-students-container {
     max-height: 400px;
     overflow-y: auto;
@@ -73,7 +70,6 @@
     border: 2px solid var(--sib-border);
 }
 
-/* Search Modal Styles */
 .student-search-modal .modal-content {
     border-radius: 20px;
     overflow: hidden;
@@ -124,7 +120,7 @@
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb mb-0">
                             <li class="breadcrumb-item"><a href="{{ route('sibling.index') }}">Family Groups</a></li>
-                            <li class="breadcrumb-item active">Create</li>
+                            <li class="breadcrumb-item active">Edit</li>
                         </ol>
                     </nav>
                 </div>
@@ -135,28 +131,35 @@
         </div>
     </div>
 
-    <form id="createGroupForm">
+    <form id="editGroupForm">
         @csrf
+        @method('PUT')
+        <input type="hidden" name="id" value="{{ $group->id }}">
+
         <div class="row">
             <div class="col-lg-8">
                 <div class="form-section">
                     <h5><i class="ri-information-line me-2"></i>Family Information</h5>
                     <div class="row g-3">
                         <div class="col-md-12">
+                            <label class="form-label fw-semibold">Group Number</label>
+                            <input type="text" class="form-control bg-light" value="{{ $group->group_no }}" readonly disabled>
+                        </div>
+                        <div class="col-md-12">
                             <label class="form-label fw-semibold">Family Name <span class="text-danger">*</span></label>
-                            <input type="text" name="family_name" id="family_name" class="form-control" required placeholder="e.g., Smith Family">
+                            <input type="text" name="family_name" id="family_name" class="form-control" value="{{ $group->family_name }}" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Parent Phone</label>
-                            <input type="text" name="parent_phone" id="parent_phone" class="form-control" placeholder="Primary contact number">
+                            <input type="text" name="parent_phone" id="parent_phone" class="form-control" value="{{ $group->parent_phone }}">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Parent Email</label>
-                            <input type="email" name="parent_email" id="parent_email" class="form-control" placeholder="Family email address">
+                            <input type="email" name="parent_email" id="parent_email" class="form-control" value="{{ $group->parent_email }}">
                         </div>
                         <div class="col-md-12">
                             <label class="form-label fw-semibold">Address</label>
-                            <textarea name="address" id="address" class="form-control" rows="2" placeholder="Family address"></textarea>
+                            <textarea name="address" id="address" class="form-control" rows="2">{{ $group->address }}</textarea>
                         </div>
                     </div>
                 </div>
@@ -165,52 +168,41 @@
                     <h5><i class="ri-user-line me-2"></i>Children / Students</h5>
                     <div class="mb-3">
                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#searchStudentModal">
-                            <i class="ri-user-add-line me-1"></i>Add Students
+                            <i class="ri-user-add-line me-1"></i>Add/Remove Students
                         </button>
-                        <small class="text-muted ms-2">Click to search and add students to this family</small>
+                        <small class="text-muted ms-2">Click to search and manage students in this family</small>
                     </div>
 
                     <div id="selectedStudentsContainer" class="selected-students-container p-3">
-                        <div class="text-center text-muted py-4" id="noStudentsMsg">
-                            <i class="ri-user-line ri-2x d-block mb-2"></i>
-                            No students added yet. Click "Add Students" to add family members.
-                        </div>
                         <div id="selectedStudentsList"></div>
                     </div>
                     <input type="hidden" name="student_ids" id="studentIdsInput" value="">
-                </div>
-
-                <div class="form-section">
-                    <h5><i class="ri-discount-line me-2"></i>Sibling Discount (Optional)</h5>
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label fw-semibold">Discount Type</label>
-                            <select name="discount_type" id="discountType" class="form-select">
-                                <option value="">No Discount</option>
-                                <option value="percentage">Percentage (%)</option>
-                                <option value="fixed_per_child">Fixed Amount per Child (₦)</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6" id="discountValueDiv" style="display: none;">
-                            <label class="form-label fw-semibold" id="discountValueLabel">Discount Value</label>
-                            <input type="number" name="discount_value" id="discountValue" class="form-control" step="0.01" placeholder="Enter value">
-                        </div>
-                    </div>
-                    <div class="alert alert-info mt-3">
-                        <i class="ri-information-line me-2"></i>
-                        <strong>Note:</strong> Additional 5% discount for each subsequent child after the first (max 50%).
-                    </div>
                 </div>
             </div>
 
             <div class="col-lg-4">
                 <div class="form-section bg-light">
+                    <h5><i class="ri-bar-chart-line me-2"></i>Statistics</h5>
+                    <div class="mb-3">
+                        <div class="small text-muted">Total Children</div>
+                        <div class="fs-4 fw-bold" id="totalChildrenCount">{{ $group->students->count() }}</div>
+                    </div>
+                    @if($group->discount_value)
+                    <div class="mb-3">
+                        <div class="small text-muted">Current Discount</div>
+                        <div class="fs-5 text-success">
+                            {{ $group->discount_type === 'percentage' ? $group->discount_value . '%' : '₦' . number_format($group->discount_value, 2) . ' per child' }}
+                        </div>
+                    </div>
+                    @endif
+                </div>
+
+                <div class="form-section bg-light">
                     <h5><i class="ri-lightbulb-line me-2"></i>Quick Tips</h5>
                     <ul class="small text-muted mb-0 ps-3">
-                        <li class="mb-2">✓ Create family groups for siblings</li>
-                        <li class="mb-2">✓ Apply sibling discounts automatically</li>
-                        <li class="mb-2">✓ Track family savings across all children</li>
-                        <li class="mb-2">✓ Multiple students can be added per family</li>
+                        <li class="mb-2">✓ Update family information as needed</li>
+                        <li class="mb-2">✓ Add or remove children from the family</li>
+                        <li class="mb-2">✓ Apply sibling discount from the main list</li>
                     </ul>
                 </div>
             </div>
@@ -223,7 +215,7 @@
                         <i class="ri-close-line me-1"></i>Cancel
                     </button>
                     <button type="submit" class="btn btn-primary" id="submitBtn">
-                        <i class="ri-save-line me-1"></i>Create Family Group
+                        <i class="ri-save-line me-1"></i>Update Family Group
                     </button>
                 </div>
             </div>
@@ -269,7 +261,13 @@ const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content ||
 let selectedStudents = [];
 let searchTimeout = null;
 
+// Prepare initial students data from PHP
+const initialStudents = @json($initialStudents);
+
 $(document).ready(function() {
+    selectedStudents = [...initialStudents];
+    updateSelectedStudentsList();
+
     // Student search in modal
     $('#studentSearchInput').on('input', function() {
         clearTimeout(searchTimeout);
@@ -293,8 +291,7 @@ $(document).ready(function() {
                 </div>
             `);
 
-            // Use the named route
-            const searchUrl = '{{ route("sibling.search-students") }}';
+            const searchUrl = '/sibling/search-students';
 
             $.ajax({
                 url: searchUrl,
@@ -316,16 +313,12 @@ $(document).ready(function() {
                         `);
                     }
                 },
-                error: function(xhr, status, error) {
+                error: function(xhr) {
                     console.error('Search error:', xhr);
-                    let errorMsg = 'Search failed. Please try again.';
-                    if (xhr.responseJSON && xhr.responseJSON.message) {
-                        errorMsg = xhr.responseJSON.message;
-                    }
                     $('#studentSearchResults').html(`
                         <div class="text-center text-danger py-5">
                             <i class="ri-error-warning-line ri-2x d-block mb-2"></i>
-                            ${errorMsg}
+                            Search failed. Please try again.
                         </div>
                     `);
                 }
@@ -368,7 +361,6 @@ $(document).ready(function() {
         });
     }
 
-    // Reset modal when opened
     $('#searchStudentModal').on('show.bs.modal', function() {
         $('#studentSearchInput').val('');
         $('#studentSearchResults').html(`
@@ -379,28 +371,8 @@ $(document).ready(function() {
         `);
     });
 
-    // Discount type toggle
-    $('#discountType').on('change', function() {
-        const discountValueDiv = $('#discountValueDiv');
-        const discountValueLabel = $('#discountValueLabel');
-        if (this.value === 'percentage') {
-            discountValueDiv.show();
-            discountValueLabel.text('Discount Value (%)');
-            $('#discountValue').attr('step', '0.01');
-            $('#discountValue').attr('max', '100');
-        } else if (this.value === 'fixed_per_child') {
-            discountValueDiv.show();
-            discountValueLabel.text('Discount Value (₦ per child)');
-            $('#discountValue').attr('step', '100');
-            $('#discountValue').removeAttr('max');
-        } else {
-            discountValueDiv.hide();
-            $('#discountValue').val('');
-        }
-    });
-
     // Form submission
-    $('#createGroupForm').on('submit', async function(e) {
+    $('#editGroupForm').on('submit', async function(e) {
         e.preventDefault();
 
         if (selectedStudents.length === 0) {
@@ -410,24 +382,24 @@ $(document).ready(function() {
 
         const submitBtn = $('#submitBtn');
         const originalText = submitBtn.html();
-        submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Creating...');
+        submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Updating...');
 
-        // Build form data
+        const id = $('input[name="id"]').val();
+
         const formData = new FormData();
         formData.append('_token', CSRF_TOKEN);
+        formData.append('_method', 'PUT');
         formData.append('family_name', $('#family_name').val());
         formData.append('parent_phone', $('#parent_phone').val());
         formData.append('parent_email', $('#parent_email').val());
         formData.append('address', $('#address').val());
-        formData.append('discount_type', $('#discountType').val());
-        formData.append('discount_value', $('#discountValue').val());
 
         selectedStudents.forEach(s => {
             formData.append('student_ids[]', s.id);
         });
 
         try {
-            const response = await fetch('{{ route("sibling.store") }}', {
+            const response = await fetch(`/sibling/${id}`, {
                 method: 'POST',
                 headers: {
                     'X-CSRF-TOKEN': CSRF_TOKEN,
@@ -464,7 +436,7 @@ $(document).ready(function() {
 // Global functions
 function addStudent(student) {
     if (selectedStudents.some(s => s.id === student.id)) {
-        Swal.fire('Info', 'Student already added to this family.', 'info');
+        Swal.fire('Info', 'Student already in this family.', 'info');
         return;
     }
 
@@ -480,18 +452,21 @@ function removeStudent(studentId) {
 
 function updateSelectedStudentsList() {
     const container = $('#selectedStudentsList');
-    const noStudentsMsg = $('#noStudentsMsg');
     const studentIdsInput = $('#studentIdsInput');
+    const totalChildrenCount = $('#totalChildrenCount');
 
     studentIdsInput.val(selectedStudents.map(s => s.id).join(','));
+    if (totalChildrenCount.length) totalChildrenCount.text(selectedStudents.length);
 
     if (selectedStudents.length === 0) {
-        noStudentsMsg.show();
-        container.html('');
+        container.html(`
+            <div class="text-center text-muted py-4">
+                <i class="ri-user-line ri-2x d-block mb-2"></i>
+                No students in this family. Click "Add/Remove Students" to add family members.
+            </div>
+        `);
         return;
     }
-
-    noStudentsMsg.hide();
 
     const studentsHtml = selectedStudents.map(s => `
         <div class="selected-student-card">
