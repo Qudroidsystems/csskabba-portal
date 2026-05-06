@@ -1,5 +1,4 @@
 <?php
-// app/Http/Controllers/Admin/DiscountController.php
 
 namespace App\Http\Controllers\Admin;
 
@@ -138,10 +137,11 @@ class DiscountController extends Controller
 
             $discount = Discount::create($validated);
 
-            if ($request->ajax()) {
+            if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
                     'message' => 'Discount created successfully.',
+                    'redirect' => route('admin.discount.index'),
                     'discount' => $discount
                 ]);
             }
@@ -150,7 +150,7 @@ class DiscountController extends Controller
                 ->with('success', 'Discount created successfully.');
 
         } catch (ValidationException $e) {
-            if ($request->ajax()) {
+            if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation error.',
@@ -161,10 +161,10 @@ class DiscountController extends Controller
         } catch (\Exception $e) {
             Log::error('Error creating discount: ' . $e->getMessage());
 
-            if ($request->ajax()) {
+            if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to create discount.'
+                    'message' => 'Failed to create discount: ' . $e->getMessage()
                 ], 500);
             }
 
@@ -259,10 +259,11 @@ class DiscountController extends Controller
 
             $discount->update($validated);
 
-            if ($request->ajax()) {
+            if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => true,
-                    'message' => 'Discount updated successfully.'
+                    'message' => 'Discount updated successfully.',
+                    'redirect' => route('admin.discount.index')
                 ]);
             }
 
@@ -270,7 +271,7 @@ class DiscountController extends Controller
                 ->with('success', 'Discount updated successfully.');
 
         } catch (ValidationException $e) {
-            if ($request->ajax()) {
+            if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation error.',
@@ -281,10 +282,10 @@ class DiscountController extends Controller
         } catch (\Exception $e) {
             Log::error('Error updating discount: ' . $e->getMessage());
 
-            if ($request->ajax()) {
+            if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to update discount.'
+                    'message' => 'Failed to update discount: ' . $e->getMessage()
                 ], 500);
             }
 
@@ -428,12 +429,10 @@ class DiscountController extends Controller
     {
         $query = DiscountAssignment::with(['discount', 'student', 'assignedBy']);
 
-        // Status filter
         if ($request->filled('status')) {
             $query->where('status', $request->status);
         }
 
-        // Student search
         if ($request->filled('search')) {
             $search = $request->search;
             $query->whereHas('student', function($q) use ($search) {
@@ -443,7 +442,6 @@ class DiscountController extends Controller
             });
         }
 
-        // Discount filter
         if ($request->filled('discount_id')) {
             $query->where('discount_id', $request->discount_id);
         }
@@ -484,7 +482,6 @@ class DiscountController extends Controller
 
             $discount = Discount::findOrFail($validated['discount_id']);
 
-            // Check if student already has active assignment for this discount
             $existing = DiscountAssignment::where('discount_id', $validated['discount_id'])
                 ->where('student_id', $validated['student_id'])
                 ->where('status', 'active')
@@ -526,7 +523,7 @@ class DiscountController extends Controller
             Log::error('Error assigning discount: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to assign discount.'
+                'message' => 'Failed to assign discount: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -581,7 +578,6 @@ class DiscountController extends Controller
                 });
             }
 
-            // Search by name or admission number
             if ($request->filled('q')) {
                 $search = $request->q;
                 $query->where(function($q) use ($search) {
@@ -591,7 +587,6 @@ class DiscountController extends Controller
                 });
             }
 
-            // Exclude students who already have active assignment
             $query->whereDoesntHave('discountAssignments', function($q) use ($discount) {
                 $q->where('discount_id', $discount->id)
                   ->where('status', 'active');

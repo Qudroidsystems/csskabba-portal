@@ -1,4 +1,3 @@
-{{-- resources/views/admin/discount/create.blade.php --}}
 @extends('layouts.master')
 
 @section('content')
@@ -34,6 +33,18 @@
     margin-right: 10px;
 }
 .section-icon i { color: white; font-size: 16px; }
+
+/* Error styles */
+.is-invalid {
+    border-color: #dc3545 !important;
+}
+.invalid-feedback {
+    display: block;
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: 0.875em;
+    color: #dc3545;
+}
 </style>
 
 <div class="main-content">
@@ -297,16 +308,21 @@
 </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Value type change handler
     const valueType = document.getElementById('valueType');
     const valueLabel = document.getElementById('valueLabel');
+    const valueInput = document.getElementById('value');
 
     valueType.addEventListener('change', function() {
         if (this.value === 'percentage') {
             valueLabel.textContent = 'Value (%)';
+            valueInput.placeholder = 'Enter percentage (e.g., 10 for 10%)';
         } else {
             valueLabel.textContent = 'Value (₦)';
+            valueInput.placeholder = 'Enter amount in Naira';
         }
     });
 
@@ -318,16 +334,24 @@ document.addEventListener('DOMContentLoaded', function() {
     const categorySelectionDiv = document.getElementById('categorySelectionDiv');
 
     allBillsRadio.addEventListener('change', function() {
-        billSelectionDiv.style.display = 'none';
-        categorySelectionDiv.style.display = 'none';
+        if (this.checked) {
+            billSelectionDiv.style.display = 'none';
+            categorySelectionDiv.style.display = 'none';
+        }
     });
+
     specificBillsRadio.addEventListener('change', function() {
-        billSelectionDiv.style.display = 'block';
-        categorySelectionDiv.style.display = 'none';
+        if (this.checked) {
+            billSelectionDiv.style.display = 'block';
+            categorySelectionDiv.style.display = 'none';
+        }
     });
+
     specificCategoriesRadio.addEventListener('change', function() {
-        billSelectionDiv.style.display = 'none';
-        categorySelectionDiv.style.display = 'block';
+        if (this.checked) {
+            billSelectionDiv.style.display = 'none';
+            categorySelectionDiv.style.display = 'block';
+        }
     });
 
     // Condition type toggles
@@ -337,62 +361,139 @@ document.addEventListener('DOMContentLoaded', function() {
     const conditionLabel = document.getElementById('conditionLabel');
 
     conditionType.addEventListener('change', function() {
-        conditionValueDiv.style.display = this.value !== 'none' ? 'block' : 'none';
+        if (this.value !== 'none') {
+            conditionValueDiv.style.display = 'block';
+        } else {
+            conditionValueDiv.style.display = 'none';
+        }
+
         daysBeforeDueDiv.style.display = this.value === 'early_payment' ? 'block' : 'none';
 
         if (this.value === 'early_payment') {
             conditionLabel.textContent = 'Discount Percentage (%)';
+            document.getElementById('conditionValue').placeholder = 'Enter percentage (e.g., 5)';
         } else if (this.value === 'min_amount') {
             conditionLabel.textContent = 'Minimum Amount (₦)';
+            document.getElementById('conditionValue').placeholder = 'Enter minimum amount';
         } else if (this.value === 'sibling_count') {
             conditionLabel.textContent = 'Number of Siblings';
+            document.getElementById('conditionValue').placeholder = 'Enter number of siblings';
         }
     });
 
-    // Form submission
+    // Form submission with AJAX
     const form = document.getElementById('discountForm');
+
     form.addEventListener('submit', async function(e) {
         e.preventDefault();
 
         const submitBtn = document.getElementById('submitBtn');
         const originalText = submitBtn.innerHTML;
+
+        // Disable button and show loading state
         submitBtn.disabled = true;
         submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Saving...';
+
+        // Clear previous errors
+        clearErrors();
 
         const formData = new FormData(form);
 
         try {
             const response = await fetch(form.action, {
                 method: 'POST',
-                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
                 body: formData
             });
 
             const data = await response.json();
 
             if (data.success) {
-                Swal.fire({
+                // Show success message
+                await Swal.fire({
                     icon: 'success',
                     title: 'Success!',
                     text: data.message,
-                    confirmButtonText: 'OK'
-                }).then(() => {
-                    window.location.href = '{{ route("admin.discount.index") }}';
+                    confirmButtonText: 'OK',
+                    timer: 2000,
+                    timerProgressBar: true
                 });
+
+                // Redirect to index page
+                window.location.href = data.redirect || '{{ route("admin.discount.index") }}';
             } else {
-                let errorMsg = data.message || 'Something went wrong';
+                // Show error message
+                let errorMessage = data.message || 'Something went wrong';
+
                 if (data.errors) {
-                    errorMsg = Object.values(data.errors).flat().join('\n');
+                    // Display validation errors
+                    displayErrors(data.errors);
+                    errorMessage = 'Please check the form for errors.';
                 }
-                Swal.fire({ icon: 'error', title: 'Error!', text: errorMsg });
+
+                await Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: errorMessage,
+                    confirmButtonText: 'OK'
+                });
             }
         } catch (error) {
-            Swal.fire({ icon: 'error', title: 'Error!', text: 'Network error. Please try again.' });
+            console.error('Fetch error:', error);
+            await Swal.fire({
+                icon: 'error',
+                title: 'Error!',
+                text: 'Network error. Please check your connection and try again.',
+                confirmButtonText: 'OK'
+            });
         } finally {
+            // Re-enable button
             submitBtn.disabled = false;
             submitBtn.innerHTML = originalText;
         }
     });
+
+    // Function to clear previous errors
+    function clearErrors() {
+        document.querySelectorAll('.is-invalid').forEach(el => {
+            el.classList.remove('is-invalid');
+        });
+        document.querySelectorAll('.invalid-feedback').forEach(el => {
+            el.remove();
+        });
+    }
+
+    // Function to display validation errors
+    function displayErrors(errors) {
+        for (const [field, messages] of Object.entries(errors)) {
+            // Find the input element
+            let input = document.querySelector(`[name="${field}"]`);
+
+            // For array fields like applicable_bill_ids[]
+            if (!input && field.includes('.')) {
+                const parts = field.split('.');
+                input = document.querySelector(`[name="${parts[0]}[]"]`);
+            }
+
+            if (input) {
+                input.classList.add('is-invalid');
+
+                // Add error message
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback';
+                errorDiv.textContent = messages[0];
+                input.parentNode.appendChild(errorDiv);
+            }
+        }
+    }
+
+    // Trigger change events to set initial states
+    valueType.dispatchEvent(new Event('change'));
+    conditionType.dispatchEvent(new Event('change'));
 });
 </script>
 @endsection
