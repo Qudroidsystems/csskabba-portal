@@ -193,45 +193,40 @@ class SiblingGroupController extends Controller
 
 
 
-
-    public function edit($id)
+public function edit($id)
 {
-    // Find the group using direct DB query first to verify
-    $group = DB::table('sibling_groups')->where('id', $id)->first();
+    // Get group directly from database
+    $groupData = DB::table('sibling_groups')->where('id', $id)->first();
 
-    if (!$group) {
+    if (!$groupData) {
         abort(404, 'Group not found');
     }
 
-    // Get student IDs from pivot table
-    $studentIds = DB::table('sibling_group_students')
+    // Get students from pivot table with their details
+    $students = DB::table('sibling_group_students')
         ->where('sibling_group_id', $id)
-        ->pluck('student_id')
-        ->toArray();
-
-    // Debug - log the IDs found
-    \Log::info('=== EDIT METHOD DEBUG ===');
-    \Log::info('Group ID being edited: ' . $id);
-    \Log::info('Student IDs found in pivot: ' . json_encode($studentIds));
-    \Log::info('Number of students: ' . count($studentIds));
-
-    // Get students
-    $students = Student::whereIn('id', $studentIds)->get();
+        ->join('studentRegistration', 'sibling_group_students.student_id', '=', 'studentRegistration.id')
+        ->leftJoin('studentpicture', 'studentRegistration.id', '=', 'studentpicture.studentid')
+        ->select(
+            'studentRegistration.id',
+            'studentRegistration.firstname',
+            'studentRegistration.lastname',
+            'studentRegistration.admissionNo',
+            'studentpicture.picture as picture'
+        )
+        ->get();
 
     // Format initial students for JavaScript
     $initialStudents = [];
 
     foreach ($students as $student) {
-        // Get picture
+        // Get picture URL
         $pictureUrl = null;
-        $picture = DB::table('studentpicture')
-            ->where('studentid', $student->id)
-            ->first();
-        if ($picture && $picture->picture && $picture->picture != 'unnamed.jpg') {
-            $pictureUrl = asset('storage/images/student_avatars/' . $picture->picture);
+        if ($student->picture && $student->picture != 'unnamed.jpg') {
+            $pictureUrl = asset('storage/images/student_avatars/' . $student->picture);
         }
 
-        // Get class info
+        // Get class info from student_current_term or studentclass
         $classInfo = $this->getStudentClassInfo($student->id);
         $classDisplay = $classInfo['class'];
         if ($classInfo['arm']) {
@@ -249,30 +244,26 @@ class SiblingGroupController extends Controller
         ];
     }
 
-    \Log::info('Initial students formatted count: ' . count($initialStudents));
-    \Log::info('Initial students data: ' . json_encode($initialStudents));
+    // Create group object for the view
+    $group = new \stdClass();
+    $group->id = $groupData->id;
+    $group->group_no = $groupData->group_no;
+    $group->family_name = $groupData->family_name;
+    $group->parent_phone = $groupData->parent_phone;
+    $group->parent_email = $groupData->parent_email;
+    $group->address = $groupData->address;
+    $group->discount_type = $groupData->discount_type;
+    $group->discount_value = $groupData->discount_value;
+    $group->students = $students;
 
-    // Create a proper Group object for the view
-    $groupObj = new \stdClass();
-    $groupObj->id = $group->id;
-    $groupObj->group_no = $group->group_no;
-    $groupObj->family_name = $group->family_name;
-    $groupObj->parent_phone = $group->parent_phone;
-    $groupObj->parent_email = $group->parent_email;
-    $groupObj->address = $group->address;
-    $groupObj->discount_type = $group->discount_type;
-    $groupObj->discount_value = $group->discount_value;
-    $groupObj->students = $students;
-
-    $pagetitle = 'Edit Family Group - ' . $group->family_name;
+    $pagetitle = 'Edit Family Group - ' . $groupData->family_name;
 
     return view('sibling.edit', [
-        'group' => $groupObj,
+        'group' => $group,
         'pagetitle' => $pagetitle,
         'initialStudents' => $initialStudents
     ]);
 }
-
 
 
     public function update(Request $request, $id)
