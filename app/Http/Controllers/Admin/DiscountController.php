@@ -435,13 +435,11 @@ class DiscountController extends Controller
     }
 
     // ─────────────────────────────────────────────────────────────────
-    // GET ELIGIBLE STUDENTS  (AJAX — used by the assign modal search)
+    // GET ELIGIBLE STUDENTS (AJAX — used by the assign modal search)
     // ─────────────────────────────────────────────────────────────────
     public function getEligibleStudents(Request $request)
     {
         try {
-            // discount_id is required only when we want to filter by eligible classes.
-            // During step 1 the user may not have chosen a discount yet, so we make it optional.
             $request->validate([
                 'discount_id' => 'nullable|exists:discounts,id',
                 'q'           => 'nullable|string|max:100',
@@ -449,16 +447,14 @@ class DiscountController extends Controller
 
             $query = Student::query();
 
-            // ── Filter by eligible classes if discount is selected ──────
+            // Filter by eligible classes if discount is selected
             if ($request->filled('discount_id')) {
-                $discount        = Discount::findOrFail($request->discount_id);
+                $discount = Discount::findOrFail($request->discount_id);
                 $eligibleClasses = json_decode($discount->eligible_classes, true) ?? [];
 
                 if (!empty($eligibleClasses)) {
-                    // Use currentTerm relationship first, fall back to studentClass
-                    $query->where(function ($q) use ($eligibleClasses) {
-                        $q->whereHas('currentTerm', fn ($ct) => $ct->whereIn('schoolclassId', $eligibleClasses))
-                          ->orWhereHas('schoolClass',  fn ($sc) => $sc->whereIn('schoolclassid', $eligibleClasses));
+                    $query->whereHas('currentTerm', function ($ct) use ($eligibleClasses) {
+                        $ct->whereIn('schoolclassId', $eligibleClasses);
                     });
                 }
 
@@ -468,22 +464,22 @@ class DiscountController extends Controller
                 });
             }
 
-            // ── Text search ─────────────────────────────────────────────
+            // Text search
             if ($request->filled('q')) {
                 $search = $request->q;
                 $query->where(function ($q) use ($search) {
-                    $q->where('firstname',   'like', "%{$search}%")
-                      ->orWhere('lastname',  'like', "%{$search}%")
+                    $q->where('firstname', 'like', "%{$search}%")
+                      ->orWhere('lastname', 'like', "%{$search}%")
                       ->orWhere('admissionNo', 'like', "%{$search}%");
                 });
             }
 
-            // ── Eager-load class / arm / picture ────────────────────────
+            // Eager load relationships
             $query->with([
                 'picture',
-                // Try currentTerm path first (StudentCurrentTerm model)
-                'currentTerm.schoolClass.armRelation',
-                // Fall back to direct studentClass
+                'currentTerm' => function($q) {
+                    $q->with(['schoolClass.armRelation', 'term', 'session']);
+                },
                 'schoolClass.schoolclass',
                 'schoolClass.armRelation',
             ]);
@@ -493,48 +489,72 @@ class DiscountController extends Controller
                 ->orderBy('lastname')
                 ->limit(50)
                 ->get()
-                ->map(function ($s) {
-                    // ── Resolve class name ───────────────────────────────
+                ->map(function ($student) {
+                    // Get current term info
+                    $currentTerm = $student->currentTerm;
                     $className = null;
-                    $armName   = null;
+                    $armName = null;
+                    $termName = null;
+                    $sessionName = null;
 
-                    // Prefer currentTerm (most accurate)
-                    if ($s->currentTerm && $s->currentTerm->schoolClass) {
-                        $className = $s->currentTerm->schoolClass->schoolclass ?? null;
-                        $armName   = $s->currentTerm->schoolClass->armRelation->arm ?? null;
-                    }
-                    // Fall back to studentClass pivot
-                    if (!$className && $s->schoolClass) {
-                        $sc = $s->schoolClass;
-                        // schoolClass relation returns Studentclass model;
-                        // its schoolclass relation returns Schoolclass model
-                        if ($sc->schoolclass) {
-                            $className = $sc->schoolclass->schoolclass ?? null;
-                            $armName   = $sc->armRelation->arm ?? null;
+                    if ($currentTerm) {
+                        // Get class and arm from current term
+                        if ($currentTerm->schoolClass) {
+                            $className = $currentTerm->schoolClass->schoolclass ?? null;
+                            $armName = $currentTerm->schoolClass->armRelation->arm ?? null;
+                        }
+
+                        // Get term name
+                        if ($currentTerm->term) {
+                            $termName = $currentTerm->term->term;
+                        }
+
+                        // Get session name
+                        if ($currentTerm->session) {
+                            $sessionName = $currentTerm->session->session;
                         }
                     }
 
-                    // ── Resolve picture URL ──────────────────────────────
+                    // Fallback to direct schoolClass if no current term
+                    if (!$className && $student->schoolClass) {
+                        $sc = $student->schoolClass;
+                        if ($sc->schoolclass) {
+                            $className = $sc->schoolclass->schoolclass ?? null;
+                            $armName = $sc->armRelation->arm ?? null;
+                        }
+                    }
+
+                    // Get student picture - using the same path as your payment portal
                     $pictureUrl = null;
-                    if ($s->picture && $s->picture->picture) {
-                        // Adjust the path prefix to match your storage setup
-                        $pictureUrl = asset('storage/' . $s->picture->picture);
+                    if ($student->picture && $student->picture->picture) {
+                        $picturePath = $student->picture->picture;
+                        // Check if it's already a full path or just filename
+                        if (!str_contains($picturePath, 'storage/') && $picturePath != 'unnamed.jpg') {
+                            $pictureUrl = asset('storage/images/student_avatars/' . $picturePath);
+                        } elseif ($picturePath != 'unnamed.jpg') {
+                            $pictureUrl = asset($picturePath);
+                        }
                     }
 
                     return [
-                        'id'          => $s->id,
-                        'firstname'   => $s->firstname,
-                        'lastname'    => $s->lastname,
-                        'admissionNo' => $s->admissionNo,
-                        'gender'      => $s->gender,
-                        'class_name'  => $className,
-                        'arm_name'    => $armName,
-                        'picture'     => $pictureUrl,
+                        'id' => $student->id,
+                        'firstname' => $student->firstname,
+                        'lastname' => $student->lastname,
+                        'admissionNo' => $student->admissionNo,
+                        'gender' => $student->gender,
+                        'class_name' => $className,
+                        'arm_name' => $armName,
+                        'term' => $termName,
+                        'session' => $sessionName,
+                        'picture' => $pictureUrl,
+                        'initials' => strtoupper(substr($student->firstname, 0, 1) . substr($student->lastname, 0, 1)),
+                        'class_display' => $className && $armName ? "{$className} {$armName}" : ($className ?? 'N/A'),
+                        'current_term_display' => $termName && $sessionName ? "{$termName} · {$sessionName}" : 'Not assigned',
                     ];
                 });
 
             return response()->json([
-                'success'  => true,
+                'success' => true,
                 'students' => $students,
             ]);
 

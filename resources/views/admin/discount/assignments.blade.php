@@ -141,7 +141,9 @@
     width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
     font-size: 18px; font-weight: 500; color: #fff;
+    overflow: hidden;
 }
+.ad-selected-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .ad-change-btn {
     margin-left: auto;
     font-size: 12px; padding: 5px 12px;
@@ -227,6 +229,20 @@
     width: 64px; height: 64px; background: #d1fae5; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     margin: 0 auto 16px; font-size: 28px; color: #059669;
+}
+
+.student-info-detail {
+    font-size: 11px;
+    color: #64748b;
+    margin-top: 4px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+.student-info-detail span {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
 }
 </style>
 
@@ -571,6 +587,20 @@
     </div>
 </div>
 
+{{-- Image Zoom Modal for Student Photos --}}
+<div class="modal fade image-zoom-modal" id="imageZoomModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content bg-transparent border-0">
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close" style="position: absolute; top: 20px; right: 30px; z-index: 1060; background-color: rgba(0,0,0,0.7); border-radius: 50%; padding: 12px;"></button>
+            <div class="modal-body text-center">
+                <img id="zoomedImage" src="" alt="Student Photo" class="zoomed-image" style="max-width: 90vw; max-height: 75vh; border-radius: 16px; box-shadow: 0 25px 50px rgba(0,0,0,0.3); border: 4px solid white; cursor: pointer;">
+                <div class="zoomed-image-name" id="zoomedImageName" style="color: white; margin-top: 20px; font-size: 18px; font-weight: 600; text-shadow: 0 2px 4px rgba(0,0,0,0.3); background: rgba(0,0,0,0.5); padding: 8px 20px; border-radius: 40px; display: inline-block;"></div>
+                <div class="zoomed-image-details" id="zoomedImageDetails" style="color: rgba(255,255,255,0.8); margin-top: 8px; font-size: 14px; text-align: center;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content;
@@ -627,13 +657,17 @@ function adSetStep(n) {
 /* ── Student banner (shown on steps 2-4) ── */
 function adStudentBanner(student, discount) {
     const [bg, fg] = adAvatarColors(student.id);
-    const className = [student.class_name, student.arm_name].filter(Boolean).join(' ');
+    const className = student.class_display || (student.class_name && student.arm_name ? `${student.class_name} ${student.arm_name}` : (student.class_name || 'N/A'));
+    const termDisplay = student.current_term_display || (student.term && student.session ? `${student.term} · ${student.session}` : 'Not assigned');
+
+    const pictureHtml = student.picture
+        ? `<img src="${student.picture}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+        : adInitials(student);
+
     return `
     <div class="ad-selected-banner">
         <div class="ad-selected-avatar" style="background:linear-gradient(135deg,${bg},${fg});">
-            ${student.picture
-                ? `<img src="${student.picture}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
-                : adInitials(student)}
+            ${pictureHtml}
         </div>
         <div style="flex:1;min-width:0;">
             <div style="font-size:14px;font-weight:600;color:#1e293b;">
@@ -641,7 +675,10 @@ function adStudentBanner(student, discount) {
             </div>
             <div style="font-size:12px;color:#64748b;margin-top:2px;">
                 <i class="ri-id-card-line" style="vertical-align:-2px;margin-right:3px;"></i>${student.admissionNo || '—'}
-                ${className ? `&nbsp;·&nbsp;<i class="ri-school-line" style="vertical-align:-2px;margin-right:3px;"></i>${className}` : ''}
+            </div>
+            <div class="student-info-detail">
+                <span><i class="ri-building-line"></i> ${className}</span>
+                <span><i class="ri-calendar-line"></i> ${termDisplay}</span>
             </div>
             ${discount
                 ? `<span style="display:inline-block;margin-top:5px;background:#4f46e5;color:#fff;border-radius:20px;padding:2px 12px;font-size:11px;font-weight:500;">
@@ -719,7 +756,7 @@ document.getElementById('adStudentSearch').addEventListener('input', function ()
 
     adSearchTimer = setTimeout(() => {
         const discId = adSelectedDiscount ? adSelectedDiscount.id : '';
-        fetch(`{{ route('admin.discount.eligible-students') }}?q=${encodeURIComponent(val)}&discount_id=${discId}`)
+        fetch(`{{ route("admin.discount.eligible-students") }}?q=${encodeURIComponent(val)}&discount_id=${discId}`)
             .then(r => r.json())
             .then(data => {
                 if (!data.success || !data.students || !data.students.length) {
@@ -731,11 +768,12 @@ document.getElementById('adStudentSearch').addEventListener('input', function ()
                 }
                 box.innerHTML = data.students.map(s => {
                     const [bg, fg] = adAvatarColors(s.id);
-                    const className = [s.class_name, s.arm_name].filter(Boolean).join(' ');
+                    const className = s.class_display || (s.class_name && s.arm_name ? `${s.class_name} ${s.arm_name}` : (s.class_name || 'N/A'));
+                    const termDisplay = s.current_term_display || (s.term && s.session ? `${s.term} · ${s.session}` : 'Not assigned');
                     const isSelected = adSelectedStudent && adSelectedStudent.id === s.id;
                     const pictureHtml = s.picture
                         ? `<img src="${s.picture}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
-                        : ((s.firstname || '?')[0] + (s.lastname || '?')[0]).toUpperCase();
+                        : s.initials;
                     return `
                     <div class="ad-student-row ${isSelected ? 'selected' : ''}"
                          data-id="${s.id}"
@@ -752,10 +790,12 @@ document.getElementById('adStudentSearch').addEventListener('input', function ()
                                 <i class="ri-id-card-line" style="vertical-align:-2px;margin-right:3px;"></i>${s.admissionNo || '—'}
                                 ${s.gender ? `&nbsp;·&nbsp;${s.gender}` : ''}
                             </div>
+                            <div style="font-size:10px;color:#64748b;margin-top:2px;">
+                                <i class="ri-building-line" style="vertical-align:-2px;margin-right:3px;"></i>${className}
+                                &nbsp;·&nbsp;
+                                <i class="ri-calendar-line" style="vertical-align:-2px;margin-right:3px;"></i>${termDisplay}
+                            </div>
                         </div>
-                        ${className
-                            ? `<span class="ad-class-badge">${className}</span>`
-                            : ''}
                     </div>`;
                 }).join('');
             })
@@ -774,6 +814,14 @@ function adSelectStudent(student) {
     const row = document.querySelector(`.ad-student-row[data-id="${student.id}"]`);
     if (row) row.classList.add('selected');
     document.getElementById('adBtnNext').disabled = false;
+
+    // Also update the avatar in the banner if we go back
+    if (adCurrentStep > 1) {
+        const bannerDiv = document.getElementById(`adStep${adCurrentStep}Banner`);
+        if (bannerDiv) {
+            bannerDiv.innerHTML = adStudentBanner(student, adSelectedDiscount);
+        }
+    }
 }
 
 /* ── STEP 2: Render discounts ── */
@@ -803,7 +851,7 @@ function adRenderDiscounts() {
                     <div style="font-size:13px;font-weight:500;color:#1e293b;">${d.title}</div>
                     <div style="font-size:11px;color:#64748b;margin-top:2px;">
                         ${d.discount_no}
-                        ${d.description ? `&nbsp;·&nbsp;${d.description}` : ''}
+                        ${d.description ? `&nbsp;·&nbsp;${d.description.substring(0, 50)}` : ''}
                     </div>
                 </div>
             </div>
@@ -826,12 +874,14 @@ function adRenderSummary() {
     const to     = document.getElementById('adEffectiveTo').value;
     const reason = document.getElementById('adReason').value;
     const val    = adFormatValue(adSelectedDiscount);
-    const className = [adSelectedStudent.class_name, adSelectedStudent.arm_name].filter(Boolean).join(' ');
+    const className = adSelectedStudent.class_display || (adSelectedStudent.class_name && adSelectedStudent.arm_name ? `${adSelectedStudent.class_name} ${adSelectedStudent.arm_name}` : (adSelectedStudent.class_name || 'N/A'));
+    const termDisplay = adSelectedStudent.current_term_display || (adSelectedStudent.term && adSelectedStudent.session ? `${adSelectedStudent.term} · ${adSelectedStudent.session}` : 'Not assigned');
 
     const rows = [
         ['Student',       `${adSelectedStudent.firstname} ${adSelectedStudent.lastname}`],
         ['Admission No.', adSelectedStudent.admissionNo || '—'],
-        ['Class',         className || '—'],
+        ['Class',         className],
+        ['Current Term',  termDisplay],
         ['Discount',      `${adSelectedDiscount.title} <span style="color:#94a3b8;font-weight:400;">(${adSelectedDiscount.discount_no})</span>`],
         ['Value',         `<span style="color:#059669;font-size:15px;">${val}</span>`],
         ['Effective From',adFormatDate(from)],
@@ -852,23 +902,22 @@ async function adSubmit() {
     btnNext.disabled = true;
     btnNext.innerHTML = '<span class="ad-spinner"></span> Assigning…';
 
-    const body = new URLSearchParams({
-        _token:         CSRF_TOKEN,
-        discount_id:    adSelectedDiscount.id,
-        student_id:     adSelectedStudent.id,
-        effective_from: document.getElementById('adEffectiveFrom').value,
-        effective_to:   document.getElementById('adEffectiveTo').value,
-        reason:         document.getElementById('adReason').value,
-    });
+    const formData = new FormData();
+    formData.append('_token', CSRF_TOKEN);
+    formData.append('discount_id', adSelectedDiscount.id);
+    formData.append('student_id', adSelectedStudent.id);
+    formData.append('effective_from', document.getElementById('adEffectiveFrom').value);
+    formData.append('effective_to', document.getElementById('adEffectiveTo').value);
+    formData.append('reason', document.getElementById('adReason').value);
 
     try {
-        const res  = await fetch('{{ route("admin.discount.assign") }}', {
+        const res = await fetch('{{ route("admin.discount.assign") }}', {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
                 'X-CSRF-TOKEN': CSRF_TOKEN,
+                'Accept': 'application/json',
             },
-            body: body.toString(),
+            body: formData,
         });
         const data = await res.json();
 
@@ -886,7 +935,8 @@ async function adSubmit() {
             btnNext.disabled = false;
             btnNext.innerHTML = '<i class="ri-check-line"></i> Confirm & Assign';
         }
-    } catch {
+    } catch (error) {
+        console.error('Error:', error);
         Swal.fire({ icon: 'error', title: 'Error', text: 'Something went wrong.', confirmButtonColor: '#4f46e5' });
         btnNext.disabled = false;
         btnNext.innerHTML = '<i class="ri-check-line"></i> Confirm & Assign';
@@ -961,6 +1011,81 @@ $(document).ready(function () {
         }
         $('#removeModal').modal('hide');
     });
+});
+
+// Image Zoom Functionality for Student Photos
+function setupImageZoom() {
+    $(document).on('click', '.ad-avatar, .ad-selected-avatar', function(e) {
+        e.stopPropagation();
+        const $row = $(this).closest('.ad-student-row, .ad-selected-banner');
+        let studentData = null;
+
+        // Try to get student data from the row's onclick attribute or from the banner
+        if ($row.find('.ad-student-row').length) {
+            const onclickAttr = $row.find('.ad-student-row').attr('onclick');
+            if (onclickAttr) {
+                const match = onclickAttr.match(/adSelectStudent\(({.*?})\)/);
+                if (match) {
+                    studentData = JSON.parse(match[1].replace(/&#39;/g, "'"));
+                }
+            }
+        } else if ($row.hasClass('ad-selected-banner')) {
+            // Get from global selected student
+            studentData = adSelectedStudent;
+        }
+
+        if (studentData) {
+            const zoomedImage = document.getElementById('zoomedImage');
+            const zoomedImageName = document.getElementById('zoomedImageName');
+            const zoomedImageDetails = document.getElementById('zoomedImageDetails');
+
+            zoomedImageName.textContent = `${studentData.firstname} ${studentData.lastname}`;
+            zoomedImageDetails.innerHTML = `
+                <i class="ri-id-card-line me-1"></i> ${studentData.admissionNo || 'N/A'} &nbsp;|&nbsp;
+                <i class="ri-building-line me-1"></i> ${studentData.class_display || (studentData.class_name && studentData.arm_name ? `${studentData.class_name} ${studentData.arm_name}` : (studentData.class_name || 'N/A'))} &nbsp;|&nbsp;
+                <i class="ri-calendar-line me-1"></i> ${studentData.current_term_display || (studentData.term && studentData.session ? `${studentData.term} · ${studentData.session}` : 'Not assigned')}
+            `;
+
+            if (studentData.picture) {
+                zoomedImage.src = studentData.picture;
+                zoomedImage.style.display = 'block';
+            } else {
+                // Create canvas with initials
+                const canvas = document.createElement('canvas');
+                canvas.width = 400;
+                canvas.height = 400;
+                const ctx = canvas.getContext('2d');
+                const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+                const [bg, fg] = adAvatarColors(studentData.id);
+                gradient.addColorStop(0, bg);
+                gradient.addColorStop(1, fg);
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 160px "Segoe UI", Arial, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(adInitials(studentData), canvas.width/2, canvas.height/2);
+                zoomedImage.src = canvas.toDataURL();
+                zoomedImage.style.display = 'block';
+            }
+
+            $('#imageZoomModal').modal('show');
+        }
+    });
+}
+
+// Initialize image zoom
+setupImageZoom();
+
+// Close zoom modal on escape or click on image
+$(document).on('click', '.zoomed-image', function() {
+    $('#imageZoomModal').modal('hide');
+});
+$(document).on('keydown', function(e) {
+    if (e.key === 'Escape') {
+        $('#imageZoomModal').modal('hide');
+    }
 });
 </script>
 @endsection
