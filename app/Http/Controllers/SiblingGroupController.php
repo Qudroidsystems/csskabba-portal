@@ -216,7 +216,7 @@ public function edit($id)
         )
         ->get();
 
-    // Format initial students for JavaScript
+    // Format initial students for JavaScript (ALWAYS return an array)
     $initialStudents = [];
 
     foreach ($students as $student) {
@@ -226,7 +226,7 @@ public function edit($id)
             $pictureUrl = asset('storage/images/student_avatars/' . $student->picture);
         }
 
-        // Get class info from student_current_term or studentclass
+        // Get class info
         $classInfo = $this->getStudentClassInfo($student->id);
         $classDisplay = $classInfo['class'];
         if ($classInfo['arm']) {
@@ -261,7 +261,7 @@ public function edit($id)
     return view('sibling.edit', [
         'group' => $group,
         'pagetitle' => $pagetitle,
-        'initialStudents' => $initialStudents
+        'initialStudents' => $initialStudents // This is ALWAYS an array, even if empty
     ]);
 }
 

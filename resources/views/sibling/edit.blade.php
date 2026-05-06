@@ -115,7 +115,7 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h4 class="mb-1 fw-bold" style="color: var(--sib-primary);">
-                        <i class="ri-group-line me-2"></i>{{ $pagetitle }}
+                        <i class="ri-group-line me-2"></i>{{ $pagetitle ?? 'Edit Family Group' }}
                     </h4>
                     <nav aria-label="breadcrumb">
                         <ol class="breadcrumb mb-0">
@@ -134,7 +134,7 @@
     <form id="editGroupForm">
         @csrf
         @method('PUT')
-        <input type="hidden" name="id" value="{{ $group->id }}">
+        <input type="hidden" name="id" value="{{ $group->id ?? '' }}">
 
         <div class="row">
             <div class="col-lg-8">
@@ -143,23 +143,23 @@
                     <div class="row g-3">
                         <div class="col-md-12">
                             <label class="form-label fw-semibold">Group Number</label>
-                            <input type="text" class="form-control bg-light" value="{{ $group->group_no }}" readonly disabled>
+                            <input type="text" class="form-control bg-light" value="{{ $group->group_no ?? '' }}" readonly disabled>
                         </div>
                         <div class="col-md-12">
                             <label class="form-label fw-semibold">Family Name <span class="text-danger">*</span></label>
-                            <input type="text" name="family_name" id="family_name" class="form-control" value="{{ $group->family_name }}" required>
+                            <input type="text" name="family_name" id="family_name" class="form-control" value="{{ $group->family_name ?? '' }}" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Parent Phone</label>
-                            <input type="text" name="parent_phone" id="parent_phone" class="form-control" value="{{ $group->parent_phone }}">
+                            <input type="text" name="parent_phone" id="parent_phone" class="form-control" value="{{ $group->parent_phone ?? '' }}">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Parent Email</label>
-                            <input type="email" name="parent_email" id="parent_email" class="form-control" value="{{ $group->parent_email }}">
+                            <input type="email" name="parent_email" id="parent_email" class="form-control" value="{{ $group->parent_email ?? '' }}">
                         </div>
                         <div class="col-md-12">
                             <label class="form-label fw-semibold">Address</label>
-                            <textarea name="address" id="address" class="form-control" rows="2">{{ $group->address }}</textarea>
+                            <textarea name="address" id="address" class="form-control" rows="2">{{ $group->address ?? '' }}</textarea>
                         </div>
                     </div>
                 </div>
@@ -185,9 +185,9 @@
                     <h5><i class="ri-bar-chart-line me-2"></i>Statistics</h5>
                     <div class="mb-3">
                         <div class="small text-muted">Total Children</div>
-                        <div class="fs-4 fw-bold" id="totalChildrenCount">{{ count($initialStudents) }}</div>
+                        <div class="fs-4 fw-bold" id="totalChildrenCount">{{ is_array($initialStudents) ? count($initialStudents) : 0 }}</div>
                     </div>
-                    @if($group->discount_value)
+                    @if(isset($group) && $group->discount_value)
                     <div class="mb-3">
                         <div class="small text-muted">Current Discount</div>
                         <div class="fs-5 text-success">
@@ -257,20 +257,30 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-// Get initial students data from PHP
-const initialStudentsData = @json($initialStudents);
+// Get initial students data from PHP - handle null case
+let initialStudentsData = [];
+try {
+    const data = @json($initialStudents ?? []);
+    if (data && Array.isArray(data)) {
+        initialStudentsData = data;
+    }
+    console.log('Initial students data:', initialStudentsData);
+    console.log('Initial students count:', initialStudentsData.length);
+} catch(e) {
+    console.error('Error parsing initial students:', e);
+    initialStudentsData = [];
+}
+
 const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
 let selectedStudents = [];
 let searchTimeout = null;
-
-console.log('Initial students data:', initialStudentsData);
-console.log('Initial students count:', initialStudentsData ? initialStudentsData.length : 0);
 
 $(document).ready(function() {
     // Copy initial students to selectedStudents
     if (initialStudentsData && initialStudentsData.length > 0) {
         selectedStudents = [...initialStudentsData];
         console.log('Loaded', selectedStudents.length, 'students');
+        console.log('First student:', selectedStudents[0]);
     } else {
         console.log('No initial students found');
     }
