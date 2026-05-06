@@ -3,7 +3,6 @@
 
 @section('content')
 
-@push('styles')
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
 <style>
@@ -298,7 +297,7 @@
 }
 .row-anim { animation: rowIn .2s ease forwards; }
 </style>
-@endpush
+
 
 <div class="dbl-page">
 
@@ -479,7 +478,7 @@
 
 </div>{{-- /.dbl-page --}}
 
-@push('scripts')
+
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 
@@ -654,6 +653,6 @@ function exportReport(fmt) {
     window.open('{{ route("reports.financial.export", ["debtors", "pdf"]) }}?' + params.toString(), '_blank');
 }
 </script>
-@endpush
+@
 
 @endsection
