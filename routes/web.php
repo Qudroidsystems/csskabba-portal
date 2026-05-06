@@ -1353,3 +1353,17 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
         Route::post('/remita', [FlexibleOnlinePaymentController::class, 'webhook'])->name('webhook.remita');
         Route::post('/flutterwave', [FlexibleOnlinePaymentController::class, 'webhook'])->name('webhook.flutterwave');
     });
+Route::get('/test-sibling-data/{id}', function($id) {
+    $group = DB::table('sibling_groups')->where('id', $id)->first();
+    $students = DB::table('sibling_group_students')
+        ->where('sibling_group_id', $id)
+        ->join('studentRegistration', 'sibling_group_students.student_id', '=', 'studentRegistration.id')
+        ->select('studentRegistration.id', 'studentRegistration.firstname', 'studentRegistration.lastname', 'studentRegistration.admissionNo')
+        ->get();
+
+    return response()->json([
+        'group' => $group,
+        'students' => $students,
+        'student_count' => $students->count()
+    ]);
+});
