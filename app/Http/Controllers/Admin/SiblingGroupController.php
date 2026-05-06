@@ -356,64 +356,81 @@ class SiblingGroupController extends Controller
         return ['count' => $applied];
     }
 
+    /**
+     * Search students for adding to group (AJAX).
+     */
     public function searchStudents(Request $request)
     {
-        $search = $request->input('q', '');
+        try {
+            $search = $request->input('q', '');
 
-        if (strlen($search) < 2) {
+            \Log::info('Search students called with query: ' . $search);
+
+            if (strlen($search) < 2) {
+                return response()->json([
+                    'success' => true,
+                    'students' => [],
+                    'results' => []
+                ]);
+            }
+
+            $students = Student::with(['picture', 'currentTerm.schoolClass.armRelation'])
+                ->where('firstname', 'like', "%{$search}%")
+                ->orWhere('lastname', 'like', "%{$search}%")
+                ->orWhere('admissionNo', 'like', "%{$search}%")
+                ->limit(20)
+                ->get();
+
+            \Log::info('Found ' . $students->count() . ' students');
+
+            $formattedStudents = $students->map(function($student) {
+                // Get class info
+                $className = 'N/A';
+                $armName = '';
+                if ($student->currentTerm && $student->currentTerm->schoolClass) {
+                    $className = $student->currentTerm->schoolClass->schoolclass ?? 'N/A';
+                    if ($student->currentTerm->schoolClass->armRelation) {
+                        $armName = $student->currentTerm->schoolClass->armRelation->arm;
+                    }
+                }
+
+                // Get picture
+                $pictureUrl = null;
+                if ($student->picture && $student->picture->picture && $student->picture->picture != 'unnamed.jpg') {
+                    $pictureUrl = asset('storage/images/student_avatars/' . $student->picture->picture);
+                }
+
+                return [
+                    'id' => $student->id,
+                    'text' => $student->firstname . ' ' . $student->lastname . ' (' . $student->admissionNo . ')',
+                    'firstname' => $student->firstname,
+                    'lastname' => $student->lastname,
+                    'admission_no' => $student->admissionNo,
+                    'class' => $className . ($armName ? ' ' . $armName : ''),
+                    'picture' => $pictureUrl,
+                    'initials' => strtoupper(substr($student->firstname, 0, 1) . substr($student->lastname, 0, 1)),
+                ];
+            });
+
             return response()->json([
                 'success' => true,
-                'students' => [],
-                'results' => []
+                'students' => $formattedStudents,
+                'results' => $formattedStudents->map(function($s) {
+                    return [
+                        'id' => $s['id'],
+                        'text' => $s['text']
+                    ];
+                })
             ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Search students error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Search failed: ' . $e->getMessage(),
+                'students' => []
+            ], 500);
         }
-
-        $students = Student::with(['picture', 'currentTerm.schoolClass.armRelation'])
-            ->where('firstname', 'like', "%{$search}%")
-            ->orWhere('lastname', 'like', "%{$search}%")
-            ->orWhere('admissionNo', 'like', "%{$search}%")
-            ->limit(20)
-            ->get();
-
-        $formattedStudents = $students->map(function($student) {
-            // Get class info
-            $className = 'N/A';
-            $armName = '';
-            if ($student->currentTerm && $student->currentTerm->schoolClass) {
-                $className = $student->currentTerm->schoolClass->schoolclass ?? 'N/A';
-                if ($student->currentTerm->schoolClass->armRelation) {
-                    $armName = $student->currentTerm->schoolClass->armRelation->arm;
-                }
-            }
-
-            // Get picture
-            $pictureUrl = null;
-            if ($student->picture && $student->picture->picture && $student->picture->picture != 'unnamed.jpg') {
-                $pictureUrl = asset('storage/images/student_avatars/' . $student->picture->picture);
-            }
-
-            return [
-                'id' => $student->id,
-                'text' => $student->firstname . ' ' . $student->lastname . ' (' . $student->admissionNo . ')',
-                'firstname' => $student->firstname,
-                'lastname' => $student->lastname,
-                'admission_no' => $student->admissionNo,
-                'class' => $className . ($armName ? ' ' . $armName : ''),
-                'picture' => $pictureUrl,
-                'initials' => strtoupper(substr($student->firstname, 0, 1) . substr($student->lastname, 0, 1)),
-            ];
-        });
-
-        return response()->json([
-            'success' => true,
-            'students' => $formattedStudents,
-            'results' => $formattedStudents->map(function($s) {
-                return [
-                    'id' => $s['id'],
-                    'text' => $s['text']
-                ];
-            })
-        ]);
     }
 
     public function getStudentSiblings($studentId)

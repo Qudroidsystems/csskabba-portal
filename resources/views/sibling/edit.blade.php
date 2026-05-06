@@ -69,6 +69,7 @@
     color: white;
     border: 2px solid var(--sib-border);
 }
+
 .student-search-modal .modal-content {
     border-radius: 20px;
     overflow: hidden;
@@ -146,19 +147,19 @@
                         </div>
                         <div class="col-md-12">
                             <label class="form-label fw-semibold">Family Name <span class="text-danger">*</span></label>
-                            <input type="text" name="family_name" class="form-control" value="{{ $group->family_name }}" required>
+                            <input type="text" name="family_name" id="family_name" class="form-control" value="{{ $group->family_name }}" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Parent Phone</label>
-                            <input type="text" name="parent_phone" class="form-control" value="{{ $group->parent_phone }}">
+                            <input type="text" name="parent_phone" id="parent_phone" class="form-control" value="{{ $group->parent_phone }}">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Parent Email</label>
-                            <input type="email" name="parent_email" class="form-control" value="{{ $group->parent_email }}">
+                            <input type="email" name="parent_email" id="parent_email" class="form-control" value="{{ $group->parent_email }}">
                         </div>
                         <div class="col-md-12">
                             <label class="form-label fw-semibold">Address</label>
-                            <textarea name="address" class="form-control" rows="2">{{ $group->address }}</textarea>
+                            <textarea name="address" id="address" class="form-control" rows="2">{{ $group->address }}</textarea>
                         </div>
                     </div>
                 </div>
@@ -256,7 +257,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content;
+const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
 let selectedStudents = [];
 let searchTimeout = null;
 
@@ -270,6 +271,9 @@ const initialStudents = @json($group->students->map(function($student) {
     $className = 'N/A';
     if ($student->currentTerm && $student->currentTerm->schoolClass) {
         $className = $student->currentTerm->schoolClass->schoolclass ?? 'N/A';
+        if ($student->currentTerm->schoolClass->armRelation) {
+            $className .= ' ' . $student->currentTerm->schoolClass->armRelation->arm;
+        }
     }
 
     return [
@@ -310,12 +314,18 @@ $(document).ready(function() {
                 </div>
             `);
 
+            const searchUrl = '{{ route("sibling.search-students") }}';
+
             $.ajax({
-                url: '{{ route("sibling.search-students") }}',
+                url: searchUrl,
                 method: 'GET',
                 data: { q: query },
+                headers: {
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'Accept': 'application/json'
+                },
                 success: function(response) {
-                    if (response.success && response.students.length) {
+                    if (response.success && response.students && response.students.length) {
                         renderSearchResults(response.students);
                     } else {
                         $('#studentSearchResults').html(`
@@ -326,7 +336,8 @@ $(document).ready(function() {
                         `);
                     }
                 },
-                error: function() {
+                error: function(xhr, status, error) {
+                    console.error('Search error:', xhr);
                     $('#studentSearchResults').html(`
                         <div class="text-center text-danger py-5">
                             <i class="ri-error-warning-line ri-2x d-block mb-2"></i>
@@ -340,16 +351,16 @@ $(document).ready(function() {
 
     function renderSearchResults(students) {
         const resultsHtml = students.map(s => `
-            <div class="student-result-item" onclick="addStudent(${JSON.stringify(s).replace(/"/g, '&quot;')})">
+            <div class="student-result-item" onclick='addStudent(${JSON.stringify(s).replace(/'/g, "\\'")})'>
                 <div>
                     ${s.picture
-                        ? `<img src="${s.picture}" class="student-result-avatar">`
-                        : `<div class="student-result-avatar-placeholder">${s.initials}</div>`
+                        ? `<img src="${s.picture}" class="student-result-avatar" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'student-result-avatar-placeholder\'>${s.initials}</div>'">`
+                        : `<div class="student-result-avatar-placeholder">${escapeHtml(s.initials)}</div>`
                     }
                 </div>
                 <div style="flex: 1;">
-                    <div class="fw-semibold">${s.firstname} ${s.lastname}</div>
-                    <div class="small text-muted">Admission: ${s.admission_no} | Class: ${s.class}</div>
+                    <div class="fw-semibold">${escapeHtml(s.firstname)} ${escapeHtml(s.lastname)}</div>
+                    <div class="small text-muted">Admission: ${escapeHtml(s.admission_no)} | Class: ${escapeHtml(s.class)}</div>
                 </div>
                 <div>
                     ${selectedStudents.some(existing => existing.id === s.id)
@@ -363,7 +374,16 @@ $(document).ready(function() {
         $('#studentSearchResults').html(resultsHtml);
     }
 
-    // Reset modal when opened
+    function escapeHtml(text) {
+        if (!text) return '';
+        return String(text).replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
     $('#searchStudentModal').on('show.bs.modal', function() {
         $('#studentSearchInput').val('');
         $('#studentSearchResults').html(`
@@ -388,14 +408,27 @@ $(document).ready(function() {
         submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Updating...');
 
         const id = $('input[name="id"]').val();
-        const formData = $(this).serialize();
-        const finalFormData = formData + `&student_ids[]=${selectedStudents.map(s => s.id).join('&student_ids[]=')}`;
+
+        const formData = new FormData();
+        formData.append('_token', CSRF_TOKEN);
+        formData.append('_method', 'PUT');
+        formData.append('family_name', $('#family_name').val());
+        formData.append('parent_phone', $('#parent_phone').val());
+        formData.append('parent_email', $('#parent_email').val());
+        formData.append('address', $('#address').val());
+
+        selectedStudents.forEach(s => {
+            formData.append('student_ids[]', s.id);
+        });
 
         try {
             const response = await fetch(`/sibling/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-TOKEN': CSRF_TOKEN },
-                body: finalFormData
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'Accept': 'application/json'
+                },
+                body: formData
             });
             const data = await response.json();
             if (data.success) {
@@ -415,14 +448,15 @@ $(document).ready(function() {
                 Swal.fire('Error!', errorMsg, 'error');
             }
         } catch (error) {
-            Swal.fire('Error!', 'Something went wrong', 'error');
+            console.error('Submit error:', error);
+            Swal.fire('Error!', 'Something went wrong. Please try again.', 'error');
         } finally {
             submitBtn.prop('disabled', false).html(originalText);
         }
     });
 });
 
-// Global function to add student
+// Global functions
 function addStudent(student) {
     if (selectedStudents.some(s => s.id === student.id)) {
         Swal.fire('Info', 'Student already in this family.', 'info');
@@ -431,6 +465,7 @@ function addStudent(student) {
 
     selectedStudents.push(student);
     updateSelectedStudentsList();
+    $('#searchStudentModal').modal('hide');
 }
 
 function removeStudent(studentId) {
@@ -444,7 +479,7 @@ function updateSelectedStudentsList() {
     const totalChildrenCount = $('#totalChildrenCount');
 
     studentIdsInput.val(selectedStudents.map(s => s.id).join(','));
-    totalChildrenCount.text(selectedStudents.length);
+    if (totalChildrenCount.length) totalChildrenCount.text(selectedStudents.length);
 
     if (selectedStudents.length === 0) {
         container.html(`
@@ -460,13 +495,13 @@ function updateSelectedStudentsList() {
         <div class="selected-student-card">
             <div>
                 ${s.picture
-                    ? `<img src="${s.picture}" class="student-avatar-sm">`
-                    : `<div class="avatar-placeholder-sm">${s.initials}</div>`
+                    ? `<img src="${s.picture}" class="student-avatar-sm" onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML='<div class=\'avatar-placeholder-sm\'>${escapeHtmlStatic(s.initials)}</div>'">`
+                    : `<div class="avatar-placeholder-sm">${escapeHtmlStatic(s.initials)}</div>`
                 }
             </div>
             <div style="flex: 1;">
-                <div class="fw-semibold">${s.firstname} ${s.lastname}</div>
-                <div class="small text-muted">Admission: ${s.admission_no} | Class: ${s.class}</div>
+                <div class="fw-semibold">${escapeHtmlStatic(s.firstname)} ${escapeHtmlStatic(s.lastname)}</div>
+                <div class="small text-muted">Admission: ${escapeHtmlStatic(s.admission_no)} | Class: ${escapeHtmlStatic(s.class)}</div>
             </div>
             <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeStudent(${s.id})">
                 <i class="ri-close-line"></i>
@@ -475,6 +510,16 @@ function updateSelectedStudentsList() {
     `).join('');
 
     container.html(studentsHtml);
+}
+
+function escapeHtmlStatic(text) {
+    if (!text) return '';
+    return String(text).replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
 }
 </script>
 @endsection

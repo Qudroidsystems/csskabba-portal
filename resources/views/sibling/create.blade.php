@@ -1,3 +1,4 @@
+{{-- resources/views/sibling/create.blade.php --}}
 @extends('layouts.master')
 
 @section('content')
@@ -26,7 +27,7 @@
     border-bottom: 2px solid var(--sib-border);
 }
 
-/* Student Cards Container */
+/* Selected Students Container */
 .selected-students-container {
     max-height: 400px;
     overflow-y: auto;
@@ -71,6 +72,8 @@
     color: white;
     border: 2px solid var(--sib-border);
 }
+
+/* Search Modal Styles */
 .student-search-modal .modal-content {
     border-radius: 20px;
     overflow: hidden;
@@ -141,19 +144,19 @@
                     <div class="row g-3">
                         <div class="col-md-12">
                             <label class="form-label fw-semibold">Family Name <span class="text-danger">*</span></label>
-                            <input type="text" name="family_name" class="form-control" required placeholder="e.g., Smith Family">
+                            <input type="text" name="family_name" id="family_name" class="form-control" required placeholder="e.g., Smith Family">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Parent Phone</label>
-                            <input type="text" name="parent_phone" class="form-control" placeholder="Primary contact number">
+                            <input type="text" name="parent_phone" id="parent_phone" class="form-control" placeholder="Primary contact number">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Parent Email</label>
-                            <input type="email" name="parent_email" class="form-control" placeholder="Family email address">
+                            <input type="email" name="parent_email" id="parent_email" class="form-control" placeholder="Family email address">
                         </div>
                         <div class="col-md-12">
                             <label class="form-label fw-semibold">Address</label>
-                            <textarea name="address" class="form-control" rows="2" placeholder="Family address"></textarea>
+                            <textarea name="address" id="address" class="form-control" rows="2" placeholder="Family address"></textarea>
                         </div>
                     </div>
                 </div>
@@ -262,7 +265,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content;
+const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}';
 let selectedStudents = [];
 let searchTimeout = null;
 
@@ -290,12 +293,19 @@ $(document).ready(function() {
                 </div>
             `);
 
+            // Use the named route
+            const searchUrl = '{{ route("sibling.search-students") }}';
+
             $.ajax({
-                url: '{{ route("sibling.search-students") }}',
+                url: searchUrl,
                 method: 'GET',
                 data: { q: query },
+                headers: {
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'Accept': 'application/json'
+                },
                 success: function(response) {
-                    if (response.success && response.students.length) {
+                    if (response.success && response.students && response.students.length) {
                         renderSearchResults(response.students);
                     } else {
                         $('#studentSearchResults').html(`
@@ -306,11 +316,16 @@ $(document).ready(function() {
                         `);
                     }
                 },
-                error: function() {
+                error: function(xhr, status, error) {
+                    console.error('Search error:', xhr);
+                    let errorMsg = 'Search failed. Please try again.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    }
                     $('#studentSearchResults').html(`
                         <div class="text-center text-danger py-5">
                             <i class="ri-error-warning-line ri-2x d-block mb-2"></i>
-                            Search failed. Please try again.
+                            ${errorMsg}
                         </div>
                     `);
                 }
@@ -320,24 +335,37 @@ $(document).ready(function() {
 
     function renderSearchResults(students) {
         const resultsHtml = students.map(s => `
-            <div class="student-result-item" onclick="addStudent(${JSON.stringify(s).replace(/"/g, '&quot;')})">
+            <div class="student-result-item" onclick='addStudent(${JSON.stringify(s).replace(/'/g, "\\'")})'>
                 <div>
                     ${s.picture
-                        ? `<img src="${s.picture}" class="student-result-avatar">`
-                        : `<div class="student-result-avatar-placeholder">${s.initials}</div>`
+                        ? `<img src="${s.picture}" class="student-result-avatar" onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'student-result-avatar-placeholder\'>${s.initials}</div>'">`
+                        : `<div class="student-result-avatar-placeholder">${escapeHtml(s.initials)}</div>`
                     }
                 </div>
                 <div style="flex: 1;">
-                    <div class="fw-semibold">${s.firstname} ${s.lastname}</div>
-                    <div class="small text-muted">Admission: ${s.admission_no} | Class: ${s.class}</div>
+                    <div class="fw-semibold">${escapeHtml(s.firstname)} ${escapeHtml(s.lastname)}</div>
+                    <div class="small text-muted">Admission: ${escapeHtml(s.admission_no)} | Class: ${escapeHtml(s.class)}</div>
                 </div>
                 <div>
-                    <i class="ri-add-circle-line text-primary fs-5"></i>
+                    ${selectedStudents.some(existing => existing.id === s.id)
+                        ? '<i class="ri-checkbox-circle-line text-success fs-5"></i>'
+                        : '<i class="ri-add-circle-line text-primary fs-5"></i>'
+                    }
                 </div>
             </div>
         `).join('');
 
         $('#studentSearchResults').html(resultsHtml);
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        return String(text).replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
     }
 
     // Reset modal when opened
@@ -358,11 +386,16 @@ $(document).ready(function() {
         if (this.value === 'percentage') {
             discountValueDiv.show();
             discountValueLabel.text('Discount Value (%)');
+            $('#discountValue').attr('step', '0.01');
+            $('#discountValue').attr('max', '100');
         } else if (this.value === 'fixed_per_child') {
             discountValueDiv.show();
             discountValueLabel.text('Discount Value (₦ per child)');
+            $('#discountValue').attr('step', '100');
+            $('#discountValue').removeAttr('max');
         } else {
             discountValueDiv.hide();
+            $('#discountValue').val('');
         }
     });
 
@@ -379,14 +412,28 @@ $(document).ready(function() {
         const originalText = submitBtn.html();
         submitBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Creating...');
 
-        const formData = $(this).serialize();
-        const finalFormData = formData + `&student_ids[]=${selectedStudents.map(s => s.id).join('&student_ids[]=')}`;
+        // Build form data
+        const formData = new FormData();
+        formData.append('_token', CSRF_TOKEN);
+        formData.append('family_name', $('#family_name').val());
+        formData.append('parent_phone', $('#parent_phone').val());
+        formData.append('parent_email', $('#parent_email').val());
+        formData.append('address', $('#address').val());
+        formData.append('discount_type', $('#discountType').val());
+        formData.append('discount_value', $('#discountValue').val());
+
+        selectedStudents.forEach(s => {
+            formData.append('student_ids[]', s.id);
+        });
 
         try {
             const response = await fetch('{{ route("sibling.store") }}', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-TOKEN': CSRF_TOKEN },
-                body: finalFormData
+                headers: {
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
+                    'Accept': 'application/json'
+                },
+                body: formData
             });
             const data = await response.json();
             if (data.success) {
@@ -406,14 +453,15 @@ $(document).ready(function() {
                 Swal.fire('Error!', errorMsg, 'error');
             }
         } catch (error) {
-            Swal.fire('Error!', 'Something went wrong', 'error');
+            console.error('Submit error:', error);
+            Swal.fire('Error!', 'Something went wrong. Please try again.', 'error');
         } finally {
             submitBtn.prop('disabled', false).html(originalText);
         }
     });
 });
 
-// Global function to add student
+// Global functions
 function addStudent(student) {
     if (selectedStudents.some(s => s.id === student.id)) {
         Swal.fire('Info', 'Student already added to this family.', 'info');
@@ -449,13 +497,13 @@ function updateSelectedStudentsList() {
         <div class="selected-student-card">
             <div>
                 ${s.picture
-                    ? `<img src="${s.picture}" class="student-avatar-sm">`
-                    : `<div class="avatar-placeholder-sm">${s.initials}</div>`
+                    ? `<img src="${s.picture}" class="student-avatar-sm" onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML='<div class=\'avatar-placeholder-sm\'>${escapeHtmlStatic(s.initials)}</div>'">`
+                    : `<div class="avatar-placeholder-sm">${escapeHtmlStatic(s.initials)}</div>`
                 }
             </div>
             <div style="flex: 1;">
-                <div class="fw-semibold">${s.firstname} ${s.lastname}</div>
-                <div class="small text-muted">Admission: ${s.admission_no} | Class: ${s.class}</div>
+                <div class="fw-semibold">${escapeHtmlStatic(s.firstname)} ${escapeHtmlStatic(s.lastname)}</div>
+                <div class="small text-muted">Admission: ${escapeHtmlStatic(s.admission_no)} | Class: ${escapeHtmlStatic(s.class)}</div>
             </div>
             <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeStudent(${s.id})">
                 <i class="ri-close-line"></i>
@@ -464,6 +512,16 @@ function updateSelectedStudentsList() {
     `).join('');
 
     container.html(studentsHtml);
+}
+
+function escapeHtmlStatic(text) {
+    if (!text) return '';
+    return String(text).replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
 }
 </script>
 @endsection
