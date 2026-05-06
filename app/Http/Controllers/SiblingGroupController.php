@@ -506,98 +506,84 @@ class SiblingGroupController extends Controller
         }
     }
 
-    /**
-     * Search students for adding to group (AJAX)
-     */
-    public function searchStudents(Request $request)
-    {
-        try {
-            $search = $request->input('q', '');
+/**
+ * Search students for adding to group (AJAX)
+ * SIMPLIFIED - No complex relationships
+ */
+public function searchStudents(Request $request)
+{
+    try {
+        $search = $request->input('q', '');
 
-            Log::info('Search students called with query: ' . $search);
+        // Log for debugging
+        \Log::info('Search students called with query: ' . $search);
 
-            if (strlen($search) < 2) {
-                return response()->json([
-                    'success' => true,
-                    'students' => [],
-                    'results' => []
-                ]);
-            }
+        if (strlen($search) < 2) {
+            return response()->json([
+                'success' => true,
+                'students' => [],
+                'results' => []
+            ]);
+        }
 
-            // Search students
-            $students = Student::where('firstname', 'like', "%{$search}%")
-                ->orWhere('lastname', 'like', "%{$search}%")
-                ->orWhere('admissionNo', 'like', "%{$search}%")
-                ->limit(20)
-                ->get();
+        // Simple search - only basic student information
+        $students = Student::where('firstname', 'like', "%{$search}%")
+            ->orWhere('lastname', 'like', "%{$search}%")
+            ->orWhere('admissionNo', 'like', "%{$search}%")
+            ->limit(20)
+            ->get(['id', 'firstname', 'lastname', 'admissionNo']);
 
-            Log::info('Found ' . $students->count() . ' students');
+        \Log::info('Found ' . $students->count() . ' students');
 
-            $formattedStudents = $students->map(function($student) {
-                // Get class info with fallback
-                $classInfo = $this->getStudentClassInfo($student->id);
+        $formattedStudents = $students->map(function($student) {
+            // Simple initials
+            $initials = strtoupper(substr($student->firstname, 0, 1) . substr($student->lastname, 0, 1));
 
-                // Determine display class string
-                $classDisplay = $classInfo['class'];
-                if ($classInfo['arm']) {
-                    $classDisplay .= ' ' . $classInfo['arm'];
-                }
-
-                // Add indicator if using fallback
-                if (!$classInfo['has_current_term']) {
-                    $classDisplay .= ' ⚠️ (from history)';
-                }
-
-                // Get student picture
-                $pictureUrl = null;
-                $picture = DB::table('studentpicture')
+            // Get picture if exists (simple query)
+            $pictureUrl = null;
+            try {
+                $picture = \DB::table('studentpicture')
                     ->where('studentid', $student->id)
                     ->first();
-
                 if ($picture && $picture->picture && $picture->picture != 'unnamed.jpg') {
                     $pictureUrl = asset('storage/images/student_avatars/' . $picture->picture);
                 }
+            } catch (\Exception $e) {
+                // Ignore picture errors
+            }
 
-                $initials = strtoupper(substr($student->firstname, 0, 1) . substr($student->lastname, 0, 1));
+            return [
+                'id' => $student->id,
+                'text' => $student->firstname . ' ' . $student->lastname . ' (' . $student->admissionNo . ')',
+                'firstname' => $student->firstname,
+                'lastname' => $student->lastname,
+                'admission_no' => $student->admissionNo,
+                'class' => 'Loading...', // Will be updated when added
+                'picture' => $pictureUrl,
+                'initials' => $initials,
+            ];
+        });
 
+        return response()->json([
+            'success' => true,
+            'students' => $formattedStudents,
+            'results' => $formattedStudents->map(function($s) {
                 return [
-                    'id' => $student->id,
-                    'text' => $student->firstname . ' ' . $student->lastname . ' (' . $student->admissionNo . ')',
-                    'firstname' => $student->firstname,
-                    'lastname' => $student->lastname,
-                    'admission_no' => $student->admissionNo,
-                    'class' => $classDisplay,
-                    'class_name' => $classInfo['class'],
-                    'arm_name' => $classInfo['arm'],
-                    'term' => $classInfo['term'],
-                    'session' => $classInfo['session'],
-                    'has_current_term' => $classInfo['has_current_term'],
-                    'source' => $classInfo['source'],
-                    'picture' => $pictureUrl,
-                    'initials' => $initials,
+                    'id' => $s['id'],
+                    'text' => $s['text']
                 ];
-            });
+            })
+        ]);
 
-            return response()->json([
-                'success' => true,
-                'students' => $formattedStudents,
-                'results' => $formattedStudents->map(function($s) {
-                    return [
-                        'id' => $s['id'],
-                        'text' => $s['text']
-                    ];
-                })
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Search students error: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Search failed: ' . $e->getMessage(),
-                'students' => []
-            ], 500);
-        }
+    } catch (\Exception $e) {
+        \Log::error('Search students error: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Search failed: ' . $e->getMessage(),
+            'students' => []
+        ], 500);
     }
+}
 
     public function getStudentSiblings($studentId)
     {
