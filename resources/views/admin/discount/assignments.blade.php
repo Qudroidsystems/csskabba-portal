@@ -2,447 +2,379 @@
 @extends('layouts.master')
 
 @section('content')
-
-{{-- Select2 + SweetAlert2 CSS --}}
-<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet">
-
 <style>
-/* ── Design Tokens ─────────────────────────────────────────────────────── */
 :root {
-    --c-bg:       #f0f4f9;
-    --c-surface:  #ffffff;
-    --c-primary:  #1e3a5f;
-    --c-accent:   #2563eb;
-    --c-success:  #16a34a;
-    --c-warning:  #d97706;
-    --c-danger:   #dc2626;
-    --c-muted:    #64748b;
-    --c-border:   #e2e8f0;
-    --c-text:     #1e293b;
-    --radius-lg:  14px;
-    --radius-md:  10px;
-    --shadow-sm:  0 1px 4px rgba(0,0,0,.06);
-    --shadow-md:  0 4px 16px rgba(0,0,0,.10);
-    --shadow-lg:  0 8px 32px rgba(0,0,0,.14);
-    --font-head:  'DM Sans', sans-serif;
-    --font-body:  'Inter', sans-serif;
-    --transition: .18s cubic-bezier(.4,0,.2,1);
+    --disc-primary: #1e3a5f;
+    --disc-success: #16a34a;
+    --disc-warning: #d97706;
+    --disc-danger: #dc2626;
+    --disc-border: #e2e8f0;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap');
-
-body { background: var(--c-bg); font-family: var(--font-body); }
-
-/* ── Page Header ────────────────────────────────────────────────────────── */
-.page-header-card {
-    background: linear-gradient(135deg, var(--c-primary) 0%, #2e5f9e 100%);
-    border-radius: var(--radius-lg);
-    padding: 28px 32px;
-    color: #fff;
-    margin-bottom: 24px;
-    position: relative;
-    overflow: hidden;
-}
-.page-header-card::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-}
-.page-header-card h4 { font-family: var(--font-head); font-weight: 700; font-size: 1.5rem; margin: 0 0 4px; }
-.page-header-card .breadcrumb { margin: 0; }
-.page-header-card .breadcrumb-item, .page-header-card .breadcrumb-item a { color: rgba(255,255,255,.75); font-size: 13px; }
-.page-header-card .breadcrumb-item.active { color: #fff; }
-.page-header-card .breadcrumb-item + .breadcrumb-item::before { color: rgba(255,255,255,.4); }
-
-/* ── Stat Pills ─────────────────────────────────────────────────────────── */
-.stat-pill {
-    background: rgba(255,255,255,.15);
-    border: 1px solid rgba(255,255,255,.2);
-    border-radius: 8px;
-    padding: 10px 18px;
-    text-align: center;
-    backdrop-filter: blur(8px);
-}
-.stat-pill .val { font-size: 1.6rem; font-weight: 700; font-family: var(--font-head); line-height: 1; }
-.stat-pill .lbl { font-size: 11px; opacity: .75; margin-top: 2px; }
-
-/* ── Filter Tabs ────────────────────────────────────────────────────────── */
-.filter-tabs { border: none; gap: 6px; flex-wrap: wrap; margin-bottom: 20px; }
-.filter-tabs .nav-link {
-    border: 1.5px solid var(--c-border) !important;
-    border-radius: 8px !important;
-    color: var(--c-muted);
-    font-size: 13px; font-weight: 500;
-    padding: 6px 14px;
-    transition: var(--transition);
-    background: var(--c-surface);
-}
-.filter-tabs .nav-link:hover { border-color: var(--c-accent) !important; color: var(--c-accent); }
-.filter-tabs .nav-link.active { background: var(--c-accent) !important; color: #fff !important; border-color: var(--c-accent) !important; }
-
-/* ── Search + Toolbar ───────────────────────────────────────────────────── */
-.toolbar-card {
-    background: var(--c-surface);
-    border: 1px solid var(--c-border);
-    border-radius: var(--radius-md);
-    padding: 16px 20px;
-    margin-bottom: 20px;
-    box-shadow: var(--shadow-sm);
-}
-.search-wrap { position: relative; }
-.search-wrap input { padding-left: 40px; border-radius: 8px; border: 1.5px solid var(--c-border); font-size: 14px; transition: var(--transition); height: 42px; }
-.search-wrap input:focus { border-color: var(--c-accent); box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
-.search-wrap .s-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--c-muted); font-size: 16px; pointer-events: none; }
-.btn-assign {
-    background: linear-gradient(135deg, var(--c-accent), #1d4ed8);
-    color: #fff; border: none; border-radius: 8px;
-    padding: 10px 20px; font-weight: 600; font-size: 14px;
-    transition: var(--transition); white-space: nowrap;
-    box-shadow: 0 2px 8px rgba(37,99,235,.3);
-}
-.btn-assign:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(37,99,235,.4); color: #fff; }
-
-/* ── Assignment Cards ───────────────────────────────────────────────────── */
-.asgn-card {
-    background: var(--c-surface);
-    border: 1px solid var(--c-border);
-    border-radius: var(--radius-lg);
-    padding: 20px;
-    margin-bottom: 18px;
-    transition: var(--transition);
-    position: relative;
-    overflow: hidden;
-}
-.asgn-card::before {
-    content: '';
-    position: absolute; left: 0; top: 0; bottom: 0;
-    width: 4px;
-    background: var(--c-border);
-    border-radius: 4px 0 0 4px;
-    transition: var(--transition);
-}
-.asgn-card.status-active::before { background: var(--c-success); }
-.asgn-card.status-expired::before { background: var(--c-danger); }
-.asgn-card.status-removed::before { background: var(--c-muted); }
-.asgn-card:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
-
-.asgn-avatar {
-    width: 48px; height: 48px; border-radius: 50%;
-    object-fit: cover; border: 2px solid var(--c-border);
-    background: #e2e8f0; flex-shrink: 0;
-}
-.asgn-avatar-placeholder {
-    width: 48px; height: 48px; border-radius: 50%;
-    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 700; font-size: 16px; color: var(--c-accent); flex-shrink: 0;
-    border: 2px solid rgba(37,99,235,.15);
-}
-
+/* ── Assignment cards ─────────────────────────────────── */
 .status-badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;
-    letter-spacing: .3px; text-transform: uppercase;
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 500;
 }
-.status-active  { background: #dcfce7; color: #15803d; }
-.status-expired { background: #fee2e2; color: #b91c1c; }
-.status-removed { background: #f1f5f9; color: #64748b; }
+.status-active  { background: #dcfce7; color: #16a34a; }
+.status-expired { background: #fee2e2; color: #dc2626; }
+.status-removed { background: #f3f4f6; color: #6b7280; }
 
-.discount-chip {
-    background: #eff6ff; color: var(--c-accent);
-    border: 1px solid #bfdbfe; border-radius: 6px;
-    font-size: 12px; font-weight: 600; padding: 2px 8px;
-    display: inline-block;
+.assignment-card {
+    background: white;
+    border: 1px solid var(--disc-border);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    transition: all 0.2s;
 }
-.value-chip {
-    background: #f0fdf4; color: var(--c-success);
-    border: 1px solid #bbf7d0; border-radius: 6px;
-    font-size: 13px; font-weight: 700; padding: 2px 10px;
+.assignment-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+/* ── Multi-step assign modal ──────────────────────────── */
+.ad-modal-content {
+    border: none !important;
+    border-radius: 20px !important;
+    overflow: hidden !important;
+}
+.ad-header {
+    background: linear-gradient(135deg, #4338ca 0%, #7c3aed 100%);
+    padding: 20px 28px;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.ad-header-icon {
+    width: 46px; height: 46px;
+    background: rgba(255,255,255,0.18);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; color: #fff; flex-shrink: 0;
+}
+.ad-steps-bar {
+    display: flex; align-items: center; justify-content: center;
+    padding: 14px 28px;
+    background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+}
+.ad-step {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 12px; font-weight: 500; color: #94a3b8;
+    transition: color 0.25s;
+}
+.ad-step.active { color: #4f46e5; }
+.ad-step.done   { color: #059669; }
+.ad-step-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: #e2e8f0; color: #94a3b8;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 500; flex-shrink: 0;
+    border: 1.5px solid transparent;
+    transition: all 0.25s;
+}
+.ad-step.active .ad-step-num { background: #ede9fe; color: #4f46e5; border-color: #4f46e5; }
+.ad-step.done   .ad-step-num { background: #d1fae5; color: #059669; border-color: #059669; }
+.ad-step-line { flex: 1; height: 1.5px; background: #e2e8f0; margin: 0 12px; max-width: 60px; }
+
+.ad-body {
+    padding: 24px 28px;
+    background: #f8fafc;
+    max-height: 520px;
+    overflow-y: auto;
 }
 
-.meta-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--c-muted); margin-top: 4px; }
-.meta-row i { font-size: 13px; }
+.ad-section-card {
+    background: #fff;
+    border: 0.5px solid #e2e8f0;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 16px;
+}
+.ad-section-head {
+    padding: 11px 16px;
+    font-size: 11.5px; font-weight: 600;
+    color: #64748b; background: #f8fafc;
+    border-bottom: 1px solid #e2e8f0;
+    text-transform: uppercase; letter-spacing: 0.4px;
+    display: flex; align-items: center; gap: 8px;
+}
+.ad-section-body { padding: 16px; }
 
-.btn-remove {
-    background: #fff0f0; color: var(--c-danger);
-    border: 1.5px solid #fca5a5; border-radius: 7px;
-    font-size: 12px; font-weight: 600; padding: 6px 14px;
-    transition: var(--transition);
+/* Student results list */
+.ad-student-results {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px; overflow: hidden;
+    max-height: 320px; overflow-y: auto;
+    margin-top: 8px;
 }
-.btn-remove:hover { background: var(--c-danger); color: #fff; border-color: var(--c-danger); }
-
-/* ── Modal Overrides ────────────────────────────────────────────────────── */
-.modal-content { border: none; border-radius: var(--radius-lg); overflow: hidden; }
-.modal-header-assign {
-    background: linear-gradient(135deg, var(--c-primary), #2e5f9e);
-    color: #fff; padding: 20px 24px;
-}
-.modal-header-remove {
-    background: linear-gradient(135deg, var(--c-danger), #ef4444);
-    color: #fff; padding: 20px 24px;
-}
-.modal-body { padding: 24px; }
-.modal-footer { border-top: 1px solid var(--c-border); padding: 16px 24px; }
-
-/* ── Student Search Dropdown ────────────────────────────────────────────── */
-.select2-container--default .select2-selection--single {
-    height: 42px !important; border: 1.5px solid var(--c-border) !important;
-    border-radius: 8px !important; display: flex; align-items: center;
-}
-.select2-container--default .select2-selection--single .select2-selection__rendered {
-    line-height: 40px !important; padding-left: 12px !important; font-size: 14px;
-}
-.select2-container--default .select2-selection--single .select2-selection__arrow {
-    height: 40px !important;
-}
-.select2-container--default.select2-container--focus .select2-selection--single {
-    border-color: var(--c-accent) !important;
-    box-shadow: 0 0 0 3px rgba(37,99,235,.12) !important;
-}
-.select2-dropdown { border: 1.5px solid var(--c-border) !important; border-radius: 10px !important; box-shadow: var(--shadow-lg) !important; overflow: hidden; }
-.select2-search--dropdown { padding: 10px !important; border-bottom: 1px solid var(--c-border); }
-.select2-search--dropdown input { border-radius: 7px !important; border: 1.5px solid var(--c-border) !important; font-size: 13px !important; padding: 8px 12px !important; height: auto !important; }
-.select2-results__option { padding: 0 !important; }
-.select2-results__option--highlighted { background: #eff6ff !important; }
-.select2-results__option[aria-selected=true] { background: #dbeafe !important; }
-
-/* ── Student Result Item ────────────────────────────────────────────────── */
-.s2-student-item {
+.ad-student-row {
     display: flex; align-items: center; gap: 12px;
-    padding: 10px 14px;
+    padding: 11px 14px; cursor: pointer;
+    border-bottom: 0.5px solid #f1f5f9;
+    transition: background 0.12s;
 }
-.s2-student-item .s2-avatar {
-    width: 44px; height: 44px; border-radius: 50%;
-    object-fit: cover; border: 2px solid var(--c-border); flex-shrink: 0;
-}
-.s2-student-item .s2-avatar-ph {
-    width: 44px; height: 44px; border-radius: 50%;
-    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+.ad-student-row:last-child { border-bottom: none; }
+.ad-student-row:hover { background: #ede9fe; }
+.ad-student-row.selected { background: #ede9fe; border-left: 3px solid #4f46e5; }
+
+.ad-avatar {
+    width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    font-weight: 700; font-size: 15px; color: var(--c-accent); flex-shrink: 0;
+    font-size: 14px; font-weight: 500; overflow: hidden;
 }
-.s2-student-item .s2-info { flex: 1; min-width: 0; }
-.s2-student-item .s2-name { font-weight: 600; font-size: 14px; color: var(--c-text); }
-.s2-student-item .s2-meta { font-size: 12px; color: var(--c-muted); margin-top: 2px; display: flex; gap: 10px; flex-wrap: wrap; }
-.s2-student-item .s2-class-badge {
-    background: #eff6ff; color: var(--c-accent); border: 1px solid #bfdbfe;
-    border-radius: 4px; font-size: 11px; font-weight: 600; padding: 1px 7px;
+.ad-avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.ad-class-badge {
+    font-size: 11px; padding: 3px 10px; border-radius: 20px;
+    background: #ede9fe; color: #4f46e5; font-weight: 500; white-space: nowrap;
 }
 
-/* ── Selected Student Preview ───────────────────────────────────────────── */
-#studentPreview {
-    background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
-    border: 1.5px solid #bae6fd; border-radius: 10px; padding: 14px;
-    margin-top: 12px; display: none;
+/* Selected student banner */
+.ad-selected-banner {
+    background: #ede9fe;
+    border: 1.5px solid #c4b5fd;
+    border-radius: 10px; padding: 14px 16px;
+    display: flex; align-items: center; gap: 14px;
+    margin-bottom: 16px;
 }
-#studentPreview .prev-avatar {
-    width: 52px; height: 52px; border-radius: 50%;
-    object-fit: cover; border: 3px solid #fff;
-    box-shadow: 0 2px 8px rgba(0,0,0,.12); flex-shrink: 0;
-}
-#studentPreview .prev-avatar-ph {
-    width: 52px; height: 52px; border-radius: 50%;
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+.ad-selected-avatar {
+    width: 52px; height: 52px; border-radius: 50%; flex-shrink: 0;
     display: flex; align-items: center; justify-content: center;
-    font-weight: 700; font-size: 18px; color: #fff; flex-shrink: 0;
-    border: 3px solid #fff; box-shadow: 0 2px 8px rgba(37,99,235,.3);
+    font-size: 18px; font-weight: 500; color: #fff;
 }
-#studentPreview .prev-name { font-weight: 700; font-size: 15px; color: var(--c-text); }
-#studentPreview .prev-detail { font-size: 12px; color: var(--c-muted); margin-top: 3px; }
-#studentPreview .prev-badge {
-    background: #0ea5e9; color: #fff;
-    border-radius: 6px; font-size: 11px; font-weight: 600; padding: 2px 8px;
+.ad-change-btn {
+    margin-left: auto;
+    font-size: 12px; padding: 5px 12px;
+    background: #fff; border: 0.5px solid #c4b5fd;
+    border-radius: 8px; color: #4f46e5;
+    cursor: pointer; font-weight: 500;
+    transition: all 0.15s;
+    white-space: nowrap;
 }
+.ad-change-btn:hover { background: #4f46e5; color: #fff; }
 
-/* ── Form Labels ────────────────────────────────────────────────────────── */
-.form-label { font-weight: 600; font-size: 13px; color: var(--c-text); margin-bottom: 6px; }
-.form-control, .form-select { font-size: 14px; border: 1.5px solid var(--c-border); border-radius: 8px; transition: var(--transition); }
-.form-control:focus, .form-select:focus { border-color: var(--c-accent); box-shadow: 0 0 0 3px rgba(37,99,235,.12); }
-
-/* ── Empty State ────────────────────────────────────────────────────────── */
-.empty-state {
-    text-align: center; padding: 60px 20px;
-    background: var(--c-surface); border: 1px dashed var(--c-border);
-    border-radius: var(--radius-lg);
+/* Discount option cards */
+.ad-discount-opt {
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px; padding: 13px 15px;
+    cursor: pointer; transition: all 0.15s;
+    margin-bottom: 8px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
 }
-.empty-state i { font-size: 3rem; color: var(--c-muted); margin-bottom: 12px; display: block; }
-.empty-state h6 { color: var(--c-muted); font-weight: 500; }
+.ad-discount-opt:hover { border-color: #4f46e5; background: #f5f3ff; }
+.ad-discount-opt.picked { border-color: #4f46e5; background: #ede9fe; }
+.ad-discount-opt .check { display: none; color: #4f46e5; font-size: 18px; margin-right: 4px; }
+.ad-discount-opt.picked .check { display: inline-block; }
 
-/* ── Pagination ─────────────────────────────────────────────────────────── */
-.pagination .page-link { border-radius: 8px; font-size: 13px; border-color: var(--c-border); color: var(--c-text); }
-.pagination .page-item.active .page-link { background: var(--c-accent); border-color: var(--c-accent); }
+.ad-disc-value {
+    font-size: 14px; font-weight: 500;
+    color: #4f46e5; background: #fff;
+    border: 0.5px solid #c4b5fd;
+    border-radius: 8px; padding: 4px 12px;
+    white-space: nowrap; transition: all 0.15s;
+}
+.ad-discount-opt.picked .ad-disc-value { background: #4f46e5; color: #fff; border-color: #4f46e5; }
+
+/* Summary rows */
+.ad-summary-row {
+    display: flex; padding: 10px 0;
+    border-bottom: 0.5px solid #f1f5f9; font-size: 13px;
+}
+.ad-summary-row:last-child { border-bottom: none; }
+.ad-summary-row .lbl { width: 38%; color: #64748b; }
+.ad-summary-row .val { flex: 1; font-weight: 500; color: #1e293b; }
+
+/* Footer */
+.ad-footer {
+    padding: 16px 28px; background: #fff;
+    border-top: 1px solid #e2e8f0;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.ad-btn-back {
+    background: #fff; border: 0.5px solid #e2e8f0;
+    border-radius: 8px; padding: 9px 20px;
+    font-size: 13px; font-weight: 500; cursor: pointer; color: #1e293b;
+    display: flex; align-items: center; gap: 6px;
+    transition: background 0.15s;
+}
+.ad-btn-back:hover { background: #f1f5f9; }
+.ad-btn-next {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    border: none; border-radius: 8px; padding: 9px 22px;
+    font-size: 13px; font-weight: 500; cursor: pointer; color: #fff;
+    display: flex; align-items: center; gap: 6px;
+    transition: opacity 0.15s, transform 0.1s;
+}
+.ad-btn-next:hover:not(:disabled) { transform: translateY(-1px); opacity: 0.92; }
+.ad-btn-next:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.ad-spinner {
+    display: inline-block; width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.4);
+    border-top-color: #fff; border-radius: 50%;
+    animation: adSpin 0.7s linear infinite; vertical-align: -2px;
+}
+@keyframes adSpin { to { transform: rotate(360deg); } }
+
+.ad-no-results {
+    text-align: center; padding: 28px; color: #94a3b8; font-size: 13px;
+}
+.ad-loading-cell {
+    text-align: center; padding: 20px; color: #94a3b8; font-size: 13px;
+}
+.ad-success-screen { text-align: center; padding: 32px 20px; }
+.ad-success-icon {
+    width: 64px; height: 64px; background: #d1fae5; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px; font-size: 28px; color: #059669;
+}
 </style>
 
 <div class="main-content">
 <div class="page-content">
 <div class="container-fluid">
 
-    {{-- ── Page Header ── --}}
-    <div class="page-header-card mb-4">
-        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
-            <div>
-                <h4><i class="ri-shield-user-line me-2"></i>{{ $pagetitle }}</h4>
-                <nav aria-label="breadcrumb">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="{{ route('admin.discount.index') }}">Discounts</a></li>
-                        <li class="breadcrumb-item active">Assignments</li>
-                    </ol>
-                </nav>
-            </div>
-            <div class="d-flex gap-3 flex-wrap">
-                <div class="stat-pill">
-                    <div class="val">{{ $statusCounts['active'] ?? 0 }}</div>
-                    <div class="lbl">Active</div>
+    {{-- Page Header --}}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="mb-1 fw-bold" style="color: var(--disc-primary);">
+                        <i class="ri-user-settings-line me-2"></i>{{ $pagetitle }}
+                    </h4>
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb mb-0">
+                            <li class="breadcrumb-item"><a href="{{ route('admin.discount.index') }}">Discounts</a></li>
+                            <li class="breadcrumb-item active">Assignments</li>
+                        </ol>
+                    </nav>
                 </div>
-                <div class="stat-pill">
-                    <div class="val">{{ $statusCounts['expired'] ?? 0 }}</div>
-                    <div class="lbl">Expired</div>
-                </div>
-                <div class="stat-pill">
-                    <div class="val">{{ array_sum($statusCounts) }}</div>
-                    <div class="lbl">Total</div>
+                <div>
+                    <a href="{{ route('admin.discount.index') }}" class="btn btn-light">
+                        <i class="ri-arrow-left-line me-1"></i>Back to Discounts
+                    </a>
                 </div>
             </div>
         </div>
     </div>
 
-    {{-- ── Filter Tabs ── --}}
-    <ul class="nav filter-tabs">
+    {{-- Status Filter Tabs --}}
+    <ul class="nav nav-tabs mb-4">
         <li class="nav-item">
             <a class="nav-link {{ !request('status') ? 'active' : '' }}" href="{{ route('admin.discount.assignments') }}">
-                <i class="ri-apps-line me-1"></i>All
-                <span class="badge bg-secondary ms-1" style="font-size:11px">{{ array_sum($statusCounts) }}</span>
+                All <span class="badge bg-secondary ms-1">{{ array_sum($statusCounts) }}</span>
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link {{ request('status') == 'active' ? 'active' : '' }}" href="{{ route('admin.discount.assignments', ['status' => 'active']) }}">
-                <i class="ri-checkbox-circle-line me-1"></i>Active
-                <span class="badge bg-success ms-1" style="font-size:11px">{{ $statusCounts['active'] ?? 0 }}</span>
+                Active <span class="badge bg-success ms-1">{{ $statusCounts['active'] ?? 0 }}</span>
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link {{ request('status') == 'expired' ? 'active' : '' }}" href="{{ route('admin.discount.assignments', ['status' => 'expired']) }}">
-                <i class="ri-time-line me-1"></i>Expired
-                <span class="badge ms-1" style="background:#fee2e2;color:#dc2626;font-size:11px">{{ $statusCounts['expired'] ?? 0 }}</span>
+                Expired <span class="badge bg-secondary ms-1">{{ $statusCounts['expired'] ?? 0 }}</span>
             </a>
         </li>
         <li class="nav-item">
             <a class="nav-link {{ request('status') == 'removed' ? 'active' : '' }}" href="{{ route('admin.discount.assignments', ['status' => 'removed']) }}">
-                <i class="ri-close-circle-line me-1"></i>Removed
-                <span class="badge bg-secondary ms-1" style="font-size:11px">{{ $statusCounts['removed'] ?? 0 }}</span>
+                Removed <span class="badge bg-danger ms-1">{{ $statusCounts['removed'] ?? 0 }}</span>
             </a>
         </li>
     </ul>
 
-    {{-- ── Toolbar ── --}}
-    <div class="toolbar-card">
-        <div class="row g-3 align-items-center">
-            <div class="col-md-6">
-                <div class="search-wrap">
-                    <i class="ri-search-line s-icon"></i>
-                    <input type="text" class="form-control" id="searchInput" placeholder="Search by student name or admission number…">
+    {{-- Search + Assign button --}}
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="position-relative">
+                        <input type="text" class="form-control ps-5" id="searchInput"
+                               placeholder="Search by student name or admission number…">
+                        <i class="ri-search-line position-absolute"
+                           style="left:14px;top:50%;transform:translateY(-50%);color:#94a3b8;"></i>
+                    </div>
                 </div>
-            </div>
-            <div class="col-md-6 text-md-end">
-                <button class="btn btn-assign" data-bs-toggle="modal" data-bs-target="#assignModal">
-                    <i class="ri-user-add-line me-2"></i>Assign Discount
-                </button>
+                <div class="col-md-6 text-end">
+                    <button class="btn btn-success" id="assignDiscountBtn"
+                            data-bs-toggle="modal" data-bs-target="#assignModal">
+                        <i class="ri-add-line me-1"></i>Assign Discount
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
-    {{-- ── Assignment Cards ── --}}
+    {{-- Assignments Grid --}}
     <div class="row" id="assignmentsContainer">
         @forelse($assignments as $assignment)
-        @php
-            $student = $assignment->student;
-            $initials = strtoupper(substr($student->firstname ?? 'S', 0, 1) . substr($student->lastname ?? '', 0, 1));
-            $picUrl = $student->picture->picture ?? null;
-        @endphp
-        <div class="col-md-6 col-xl-4 assignment-item"
-             data-search="{{ strtolower($student->firstname ?? '') }} {{ strtolower($student->lastname ?? '') }} {{ strtolower($student->admissionNo ?? '') }}">
-            <div class="asgn-card status-{{ $assignment->status }}">
-
-                {{-- Card Top: Student + Status --}}
-                <div class="d-flex align-items-center gap-3 mb-3">
-                    @if($picUrl)
-                        <img src="{{ asset('storage/' . $picUrl) }}" alt="{{ $student->firstname }}" class="asgn-avatar">
-                    @else
-                        <div class="asgn-avatar-placeholder">{{ $initials }}</div>
-                    @endif
-                    <div class="flex-grow-1 min-width-0">
-                        <div class="fw-bold text-truncate" style="font-size:15px;color:var(--c-text)">
-                            {{ $student->firstname ?? '' }} {{ $student->lastname ?? '' }}
-                        </div>
-                        <div class="meta-row">
-                            <i class="ri-id-card-line"></i>
-                            <span>{{ $student->admissionNo ?? 'N/A' }}</span>
-                        </div>
+        <div class="col-md-6 col-lg-4">
+            <div class="assignment-card"
+                 data-search="{{ strtolower($assignment->student->firstname ?? '') }} {{ strtolower($assignment->student->lastname ?? '') }} {{ $assignment->student->admissionNo ?? '' }}">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <h6 class="mb-1 fw-bold">{{ $assignment->discount->title ?? 'N/A' }}</h6>
+                        <small class="text-muted">{{ $assignment->discount->discount_no ?? 'N/A' }}</small>
                     </div>
                     <span class="status-badge status-{{ $assignment->status }}">
-                        <i class="ri-{{ $assignment->status == 'active' ? 'checkbox-circle' : ($assignment->status == 'expired' ? 'time' : 'close-circle') }}-line"></i>
                         {{ ucfirst($assignment->status) }}
                     </span>
                 </div>
 
-                {{-- Divider --}}
-                <hr style="border-color:var(--c-border);margin:0 0 14px">
-
-                {{-- Discount Info --}}
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                    <div>
-                        <div class="small text-muted mb-1">Discount</div>
-                        <span class="discount-chip">{{ $assignment->discount->title ?? 'N/A' }}</span>
-                        <div class="small text-muted mt-1">{{ $assignment->discount->discount_no ?? '' }}</div>
-                    </div>
-                    <div class="text-end">
-                        <div class="small text-muted mb-1">Value</div>
-                        <span class="value-chip">
-                            @if($assignment->value_type == 'percentage')
-                                {{ $assignment->value }}%
-                            @else
-                                ₦{{ number_format($assignment->value, 2) }}
-                            @endif
-                        </span>
-                    </div>
-                </div>
-
-                {{-- Dates --}}
-                <div class="d-flex gap-3 mb-3">
-                    <div>
-                        <div class="small text-muted" style="font-size:11px">FROM</div>
-                        <div style="font-size:13px;font-weight:600">
-                            {{ \Carbon\Carbon::parse($assignment->effective_from)->format('d M Y') }}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="small text-muted">Student</div>
+                            <div class="fw-semibold">
+                                {{ $assignment->student->firstname ?? '' }}
+                                {{ $assignment->student->lastname ?? '' }}
+                            </div>
+                            <div class="small text-muted">Adm: {{ $assignment->student->admissionNo ?? 'N/A' }}</div>
                         </div>
-                    </div>
-                    <div style="color:var(--c-border);align-self:center;font-size:18px">→</div>
-                    <div>
-                        <div class="small text-muted" style="font-size:11px">TO</div>
-                        <div style="font-size:13px;font-weight:600">
-                            {{ $assignment->effective_to ? \Carbon\Carbon::parse($assignment->effective_to)->format('d M Y') : 'Ongoing' }}
+                        <div class="text-end">
+                            <div class="small text-muted">Discount Value</div>
+                            <div class="fw-bold text-success">
+                                @if($assignment->value_type == 'percentage')
+                                    {{ $assignment->value }}%
+                                @else
+                                    ₦{{ number_format($assignment->value, 2) }}
+                                @endif
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                @if($assignment->reason)
-                <div class="mb-3" style="background:#f8fafc;border-radius:7px;padding:8px 12px;font-size:12px;color:var(--c-muted)">
-                    <i class="ri-information-line me-1"></i>{{ Str::limit($assignment->reason, 80) }}
+                <div class="mb-3">
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="small text-muted">Effective From</div>
+                            <div>{{ \Carbon\Carbon::parse($assignment->effective_from)->format('d M Y') }}</div>
+                        </div>
+                        <div class="col-6">
+                            <div class="small text-muted">Effective To</div>
+                            <div>
+                                {{ $assignment->effective_to
+                                    ? \Carbon\Carbon::parse($assignment->effective_to)->format('d M Y')
+                                    : 'Ongoing' }}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                @endif
 
                 @if($assignment->status == 'active')
-                <button class="btn btn-remove w-100 remove-btn" data-id="{{ $assignment->id }}">
-                    <i class="ri-user-unfollow-line me-1"></i>Remove Assignment
-                </button>
+                <div class="d-flex gap-2 mt-2">
+                    <button class="btn btn-sm btn-danger remove-btn flex-grow-1"
+                            data-id="{{ $assignment->id }}">
+                        <i class="ri-close-line me-1"></i>Remove
+                    </button>
+                </div>
                 @endif
             </div>
         </div>
         @empty
         <div class="col-12">
-            <div class="empty-state">
-                <i class="ri-inbox-2-line"></i>
-                <h6>No discount assignments found</h6>
-                <p class="text-muted small">Use the "Assign Discount" button to create one.</p>
+            <div class="alert alert-info text-center py-5">
+                <i class="ri-inbox-line ri-2x d-block mb-2"></i>
+                No discount assignments found.
             </div>
         </div>
         @endforelse
@@ -458,377 +390,577 @@ body { background: var(--c-bg); font-family: var(--font-body); }
 </div>
 </div>
 
-{{-- ════════════════════════════════════════════════════════════════════════
-     ASSIGN DISCOUNT MODAL
-     ════════════════════════════════════════════════════════════════════════ --}}
-<div class="modal fade" id="assignModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered" style="max-width:560px">
-        <div class="modal-content">
+{{-- ═══════════════════════════════════════════════════════════════
+     ASSIGN DISCOUNT MODAL  —  Multi-step wizard
+═══════════════════════════════════════════════════════════════ --}}
+<div class="modal fade" id="assignModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:840px;">
+        <div class="modal-content ad-modal-content">
 
-            <div class="modal-header-assign">
+            {{-- Header --}}
+            <div class="ad-header">
                 <div class="d-flex align-items-center gap-3">
-                    <div style="width:38px;height:38px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center">
-                        <i class="ri-user-add-line" style="font-size:18px;color:#fff"></i>
+                    <div class="ad-header-icon">
+                        <i class="ri-discount-percent-line"></i>
                     </div>
                     <div>
-                        <h5 style="margin:0;font-family:var(--font-head);font-weight:700">Assign Discount</h5>
-                        <small style="opacity:.75">Attach a discount to a student</small>
+                        <h5 class="mb-0 text-white fw-semibold" style="font-size:17px;">Assign Discount</h5>
+                        <small style="color:rgba(255,255,255,.75);">Attach a discount to a student account</small>
                     </div>
                 </div>
-                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close btn-close-white"
+                        data-bs-dismiss="modal" id="adModalClose"></button>
             </div>
 
-            <form id="assignForm">
-                @csrf
-                <div class="modal-body" style="padding:24px">
-
-                    {{-- Step indicator --}}
-                    <div class="d-flex gap-2 mb-4">
-                        <div style="flex:1;height:4px;background:var(--c-accent);border-radius:4px"></div>
-                        <div style="flex:1;height:4px;background:var(--c-border);border-radius:4px" id="step2bar"></div>
+            {{-- Step bar --}}
+            <div class="ad-steps-bar">
+                @foreach([1 => 'Find student', 2 => 'Select discount', 3 => 'Set dates', 4 => 'Confirm'] as $n => $label)
+                    <div class="ad-step {{ $n === 1 ? 'active' : '' }}" id="adSb{{ $n }}">
+                        <div class="ad-step-num">{{ $n }}</div>
+                        <span>{{ $label }}</span>
                     </div>
+                    @if($n < 4)
+                        <div class="ad-step-line"></div>
+                    @endif
+                @endforeach
+            </div>
 
-                    {{-- Discount Select --}}
-                    <div class="mb-3">
-                        <label class="form-label">Select Discount <span class="text-danger">*</span></label>
-                        <select name="discount_id" id="discountSelect" class="form-select" required>
-                            <option value="">— Choose a discount —</option>
-                            @foreach($discounts ?? [] as $discount)
-                                <option value="{{ $discount->id }}">
-                                    {{ $discount->title }}
-                                    @if($discount->value_type == 'percentage')
-                                        · {{ $discount->value }}%
-                                    @else
-                                        · ₦{{ number_format($discount->value, 2) }}
-                                    @endif
-                                    ({{ $discount->discount_no }})
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
+            {{-- Body --}}
+            <div class="ad-body" id="adBody">
 
-                    {{-- Student Search --}}
-                    <div class="mb-1">
-                        <label class="form-label">Select Student <span class="text-danger">*</span></label>
-                        <select name="student_id" id="studentSelect" class="form-select" required style="width:100%">
-                            <option value="">— Search by name or admission no. —</option>
-                        </select>
-                        <small class="text-muted" style="font-size:12px">
-                            <i class="ri-information-line"></i>
-                            Select a discount first, then type at least 2 characters to search
-                        </small>
-                    </div>
-
-                    {{-- Student Preview Card --}}
-                    <div id="studentPreview">
-                        <div class="d-flex align-items-center gap-3">
-                            <div id="prevAvatarWrap"></div>
-                            <div>
-                                <div class="prev-name" id="prevName"></div>
-                                <div class="prev-detail" id="prevDetail"></div>
-                                <div class="mt-1" id="prevBadge"></div>
+                {{-- ── STEP 1: Search student ── --}}
+                <div id="adStep1">
+                    <div class="ad-section-card">
+                        <div class="ad-section-head">
+                            <i class="ri-search-line"></i> Search student
+                        </div>
+                        <div class="ad-section-body">
+                            <div class="position-relative mb-1">
+                                <input type="text" id="adStudentSearch"
+                                       class="form-control ps-5"
+                                       placeholder="Type student name or admission number…"
+                                       autocomplete="off">
+                                <i class="ri-search-line position-absolute"
+                                   style="left:14px;top:50%;transform:translateY(-50%);color:#94a3b8;font-size:15px;"></i>
+                            </div>
+                            <div id="adStudentResults" class="ad-student-results">
+                                <div class="ad-no-results">
+                                    <i class="ri-user-search-line ri-2x d-block mb-2"></i>
+                                    Type at least 2 characters to search
+                                </div>
                             </div>
                         </div>
                     </div>
-
-                    {{-- Dates --}}
-                    <div class="row g-3 mt-1">
-                        <div class="col-6">
-                            <label class="form-label">Effective From <span class="text-danger">*</span></label>
-                            <input type="date" name="effective_from" class="form-control" value="{{ date('Y-m-d') }}" required>
-                        </div>
-                        <div class="col-6">
-                            <label class="form-label">Effective To</label>
-                            <input type="date" name="effective_to" class="form-control">
-                            <div class="form-text" style="font-size:11px">Leave empty = ongoing</div>
-                        </div>
-                    </div>
-
-                    {{-- Reason --}}
-                    <div class="mt-3">
-                        <label class="form-label">Reason <span class="text-muted">(optional)</span></label>
-                        <textarea name="reason" class="form-control" rows="2" placeholder="e.g. Scholarship recipient, staff ward…"></textarea>
-                    </div>
-
-                    <div class="alert alert-danger d-none mt-3 mb-0 py-2" id="assignErrors" style="font-size:13px;border-radius:8px"></div>
                 </div>
 
-                <div class="modal-footer" style="gap:10px">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-assign" id="submitAssignBtn" style="min-width:130px">
-                        <i class="ri-save-line me-1"></i>Assign Discount
-                    </button>
+                {{-- ── STEP 2: Select discount ── --}}
+                <div id="adStep2" style="display:none;">
+                    <div id="adStep2Banner"></div>
+                    <div class="ad-section-card">
+                        <div class="ad-section-head">
+                            <i class="ri-discount-percent-line"></i> Choose a discount
+                        </div>
+                        <div class="ad-section-body" id="adDiscountList">
+                            <div class="ad-loading-cell">
+                                <div class="spinner-border spinner-border-sm text-primary me-2"></div>
+                                Loading discounts…
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </form>
-        </div>
+
+                {{-- ── STEP 3: Dates ── --}}
+                <div id="adStep3" style="display:none;">
+                    <div id="adStep3Banner"></div>
+                    <div class="ad-section-card">
+                        <div class="ad-section-head">
+                            <i class="ri-calendar-line"></i> Validity period
+                        </div>
+                        <div class="ad-section-body">
+                            <div class="row g-3 mb-3">
+                                <div class="col-sm-6">
+                                    <label class="form-label fw-semibold small">
+                                        Effective From <span class="text-danger">*</span>
+                                    </label>
+                                    <input type="date" id="adEffectiveFrom" class="form-control"
+                                           value="{{ date('Y-m-d') }}" required>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label class="form-label fw-semibold small">
+                                        Effective To
+                                        <span class="text-muted fw-normal">(optional)</span>
+                                    </label>
+                                    <input type="date" id="adEffectiveTo" class="form-control">
+                                    <div class="form-text">Leave empty for ongoing</div>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="form-label fw-semibold small">
+                                    Reason
+                                    <span class="text-muted fw-normal">(optional)</span>
+                                </label>
+                                <textarea id="adReason" class="form-control" rows="2"
+                                          placeholder="Reason for assigning this discount…"
+                                          style="resize:vertical;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- ── STEP 4: Summary + confirm ── --}}
+                <div id="adStep4" style="display:none;">
+                    <div id="adStep4Banner"></div>
+                    <div class="ad-section-card mt-3">
+                        <div class="ad-section-head">
+                            <i class="ri-file-list-3-line"></i> Assignment summary
+                        </div>
+                        <div class="ad-section-body" id="adSummaryContent"></div>
+                    </div>
+                    <div style="background:#fffbeb;border:0.5px solid #fde68a;border-radius:8px;
+                                padding:11px 14px;font-size:12.5px;color:#92400e;
+                                display:flex;gap:8px;align-items:center;">
+                        <i class="ri-alert-line" style="font-size:16px;flex-shrink:0;"></i>
+                        <span>Please review carefully. The discount will be applied immediately upon confirmation.</span>
+                    </div>
+                </div>
+
+                {{-- Error banner --}}
+                <div class="alert alert-danger d-none mt-3" id="adErrors"></div>
+
+            </div>{{-- /ad-body --}}
+
+            {{-- Footer --}}
+            <div class="ad-footer">
+                <button type="button" class="ad-btn-back"
+                        id="adBtnBack" style="visibility:hidden;"
+                        onclick="adGoBack()">
+                    <i class="ri-arrow-left-line"></i> Back
+                </button>
+                <button type="button" class="ad-btn-next"
+                        id="adBtnNext" disabled
+                        onclick="adGoNext()">
+                    Continue <i class="ri-arrow-right-line"></i>
+                </button>
+            </div>
+
+        </div>{{-- /modal-content --}}
     </div>
 </div>
 
-{{-- ════════════════════════════════════════════════════════════════════════
-     REMOVE CONFIRMATION MODAL
-     ════════════════════════════════════════════════════════════════════════ --}}
+{{-- Remove Confirmation Modal --}}
 <div class="modal fade" id="removeModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered" style="max-width:440px">
+    <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            <div class="modal-header-remove">
-                <div class="d-flex align-items-center gap-3">
-                    <div style="width:38px;height:38px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center">
-                        <i class="ri-user-unfollow-line" style="font-size:18px;color:#fff"></i>
-                    </div>
-                    <div>
-                        <h5 style="margin:0;font-family:var(--font-head);font-weight:700">Remove Assignment</h5>
-                        <small style="opacity:.75">This action cannot be undone</small>
-                    </div>
-                </div>
-                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="ri-close-line me-2"></i>Remove Discount</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
-                <p style="color:var(--c-muted);font-size:14px">
-                    Are you sure you want to remove this discount assignment from the student?
-                    The student will <strong>lose access</strong> to the discount immediately.
-                </p>
-                <label class="form-label">Reason for Removal</label>
-                <textarea id="removeReason" class="form-control" rows="3" placeholder="Optional — describe why this is being removed…"></textarea>
+                <p>Are you sure you want to remove this discount from the student?</p>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Reason for Removal</label>
+                    <textarea id="removeReason" class="form-control" rows="3"
+                              placeholder="Optional reason…"></textarea>
+                </div>
             </div>
-            <div class="modal-footer gap-2">
+            <div class="modal-footer">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-danger" id="confirmRemoveBtn" style="border-radius:8px;font-weight:600">
-                    <i class="ri-delete-bin-line me-1"></i>Confirm Removal
-                </button>
+                <button type="button" class="btn btn-danger" id="confirmRemoveBtn">Remove</button>
             </div>
         </div>
     </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-
 <script>
 const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]')?.content;
 let removeId = null;
 
-/* ── Custom Select2 Result Template ──────────────────────────────────── */
-function formatStudentResult(student) {
-    if (student.loading) {
-        return $('<div class="s2-student-item" style="padding:12px 14px;color:#64748b"><i class="ri-loader-4-line me-2"></i>Searching…</div>');
-    }
-    if (!student.id) return student.text;
+/* ═══════════════════════════════════════════════════════════════
+   ASSIGN MODAL — state & helpers
+═══════════════════════════════════════════════════════════════ */
+let adCurrentStep  = 1;
+let adSelectedStudent  = null;
+let adSelectedDiscount = null;
+let adSearchTimer  = null;
 
-    const d = student.studentData || {};
-    const initials = ((d.firstname || 'S').charAt(0) + (d.lastname || '').charAt(0)).toUpperCase();
-    const avatarHtml = d.picture_url
-        ? `<img src="${d.picture_url}" alt="" class="s2-avatar">`
-        : `<div class="s2-avatar-ph">${initials}</div>`;
+// Avatar colours cycling on student id
+const AD_AVATAR_PALETTES = [
+    ['#c7d2fe','#4338ca'], ['#bbf7d0','#065f46'], ['#fde68a','#92400e'],
+    ['#fecaca','#991b1b'], ['#ddd6fe','#5b21b6'], ['#bfdbfe','#1e40af'],
+    ['#fbcfe8','#9d174d'], ['#d9f99d','#365314'],
+];
+function adAvatarColors(id) {
+    return AD_AVATAR_PALETTES[id % AD_AVATAR_PALETTES.length];
+}
+function adInitials(s) {
+    return ((s.firstname || '?')[0] + (s.lastname || '?')[0]).toUpperCase();
+}
+function adFormatValue(discount) {
+    if (!discount) return '';
+    return discount.value_type === 'percentage'
+        ? parseFloat(discount.value) + '%'
+        : '₦' + parseFloat(discount.value).toLocaleString('en-NG', { minimumFractionDigits: 2 });
+}
+function adFormatDate(str) {
+    if (!str) return 'Ongoing';
+    const d = new Date(str);
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+}
 
-    const classLabel = d.class_name
-        ? `<span class="s2-class-badge">${d.class_name}${d.arm ? ' ' + d.arm : ''}</span>`
-        : '';
+/* ── Step bar renderer ── */
+function adSetStep(n) {
+    [1, 2, 3, 4].forEach(i => {
+        const el  = document.getElementById('adSb' + i);
+        const num = el.querySelector('.ad-step-num');
+        el.classList.remove('active', 'done');
+        if (i < n) {
+            el.classList.add('done');
+            num.innerHTML = '<i class="ri-check-line" style="font-size:12px;"></i>';
+        } else {
+            num.textContent = i;
+            if (i === n) el.classList.add('active');
+        }
+    });
+}
 
-    return $(`
-        <div class="s2-student-item">
-            ${avatarHtml}
-            <div class="s2-info">
-                <div class="s2-name">${d.firstname || ''} ${d.lastname || ''}</div>
-                <div class="s2-meta">
-                    <span><i class="ri-id-card-line" style="margin-right:3px"></i>${d.admissionNo || 'N/A'}</span>
-                    ${d.gender ? `<span>${d.gender}</span>` : ''}
-                    ${classLabel}
-                </div>
-            </div>
+/* ── Student banner (shown on steps 2-4) ── */
+function adStudentBanner(student, discount) {
+    const [bg, fg] = adAvatarColors(student.id);
+    const className = [student.class_name, student.arm_name].filter(Boolean).join(' ');
+    return `
+    <div class="ad-selected-banner">
+        <div class="ad-selected-avatar" style="background:linear-gradient(135deg,${bg},${fg});">
+            ${student.picture
+                ? `<img src="${student.picture}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+                : adInitials(student)}
         </div>
-    `);
+        <div style="flex:1;min-width:0;">
+            <div style="font-size:14px;font-weight:600;color:#1e293b;">
+                ${student.firstname} ${student.lastname}
+            </div>
+            <div style="font-size:12px;color:#64748b;margin-top:2px;">
+                <i class="ri-id-card-line" style="vertical-align:-2px;margin-right:3px;"></i>${student.admissionNo || '—'}
+                ${className ? `&nbsp;·&nbsp;<i class="ri-school-line" style="vertical-align:-2px;margin-right:3px;"></i>${className}` : ''}
+            </div>
+            ${discount
+                ? `<span style="display:inline-block;margin-top:5px;background:#4f46e5;color:#fff;border-radius:20px;padding:2px 12px;font-size:11px;font-weight:500;">
+                       <i class="ri-discount-percent-line" style="vertical-align:-2px;margin-right:3px;"></i>${discount.title}
+                   </span>`
+                : ''}
+        </div>
+        <button type="button" class="ad-change-btn" onclick="adGoToStep(1)">
+            <i class="ri-pencil-line me-1"></i>Change
+        </button>
+    </div>`;
 }
 
-function formatStudentSelection(student) {
-    if (!student.id) return student.text;
-    const d = student.studentData || {};
-    return $(`<span>${d.firstname || ''} ${d.lastname || ''} &mdash; <small style="color:#64748b">${d.admissionNo || ''}</small></span>`);
+/* ── Navigate to a step ── */
+function adGoToStep(n) {
+    adCurrentStep = n;
+    [1, 2, 3, 4].forEach(i => {
+        document.getElementById('adStep' + i).style.display = i === n ? 'block' : 'none';
+    });
+    document.getElementById('adErrors').classList.add('d-none');
+    adSetStep(n);
+
+    const btnBack = document.getElementById('adBtnBack');
+    const btnNext = document.getElementById('adBtnNext');
+    btnBack.style.visibility = n > 1 ? 'visible' : 'hidden';
+
+    if (n === 1) {
+        btnNext.disabled = !adSelectedStudent;
+        btnNext.innerHTML = 'Continue <i class="ri-arrow-right-line"></i>';
+
+    } else if (n === 2) {
+        document.getElementById('adStep2Banner').innerHTML = adStudentBanner(adSelectedStudent, null);
+        adRenderDiscounts();
+        btnNext.disabled = !adSelectedDiscount;
+        btnNext.innerHTML = 'Continue <i class="ri-arrow-right-line"></i>';
+
+    } else if (n === 3) {
+        document.getElementById('adStep3Banner').innerHTML = adStudentBanner(adSelectedStudent, adSelectedDiscount);
+        btnNext.disabled = false;
+        btnNext.innerHTML = 'Review <i class="ri-arrow-right-line"></i>';
+
+    } else if (n === 4) {
+        document.getElementById('adStep4Banner').innerHTML = adStudentBanner(adSelectedStudent, adSelectedDiscount);
+        adRenderSummary();
+        btnNext.disabled = false;
+        btnNext.innerHTML = '<i class="ri-check-line"></i> Confirm & Assign';
+    }
 }
 
-/* ── Show student preview card after selection ───────────────────────── */
-function showStudentPreview(data) {
-    if (!data || !data.id) {
-        $('#studentPreview').hide();
+function adGoNext() {
+    if (adCurrentStep === 4) { adSubmit(); return; }
+    adGoToStep(adCurrentStep + 1);
+}
+function adGoBack() {
+    if (adCurrentStep > 1) adGoToStep(adCurrentStep - 1);
+}
+
+/* ── STEP 1: Student search ── */
+document.getElementById('adStudentSearch').addEventListener('input', function () {
+    clearTimeout(adSearchTimer);
+    const val = this.value.trim();
+    const box = document.getElementById('adStudentResults');
+
+    if (val.length < 2) {
+        box.innerHTML = `<div class="ad-no-results">
+            <i class="ri-user-search-line ri-2x d-block mb-2"></i>
+            Type at least 2 characters to search
+        </div>`;
         return;
     }
-    const d = data.studentData || {};
-    const initials = ((d.firstname || 'S').charAt(0) + (d.lastname || '').charAt(0)).toUpperCase();
 
-    const avatarHtml = d.picture_url
-        ? `<img src="${d.picture_url}" alt="" class="prev-avatar">`
-        : `<div class="prev-avatar-ph">${initials}</div>`;
+    box.innerHTML = `<div class="ad-loading-cell">
+        <div class="spinner-border spinner-border-sm text-primary me-2"></div>Searching…
+    </div>`;
 
-    $('#prevAvatarWrap').html(avatarHtml);
-    $('#prevName').text(`${d.firstname || ''} ${d.lastname || ''}`);
-    $('#prevDetail').html(`<i class="ri-id-card-line me-1"></i>${d.admissionNo || 'N/A'}${d.gender ? ' · ' + d.gender : ''}`);
+    adSearchTimer = setTimeout(() => {
+        const discId = adSelectedDiscount ? adSelectedDiscount.id : '';
+        fetch(`{{ route('admin.discount.eligible-students') }}?q=${encodeURIComponent(val)}&discount_id=${discId}`)
+            .then(r => r.json())
+            .then(data => {
+                if (!data.success || !data.students || !data.students.length) {
+                    box.innerHTML = `<div class="ad-no-results">
+                        <i class="ri-search-eye-line ri-2x d-block mb-2"></i>
+                        No students found
+                    </div>`;
+                    return;
+                }
+                box.innerHTML = data.students.map(s => {
+                    const [bg, fg] = adAvatarColors(s.id);
+                    const className = [s.class_name, s.arm_name].filter(Boolean).join(' ');
+                    const isSelected = adSelectedStudent && adSelectedStudent.id === s.id;
+                    const pictureHtml = s.picture
+                        ? `<img src="${s.picture}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`
+                        : ((s.firstname || '?')[0] + (s.lastname || '?')[0]).toUpperCase();
+                    return `
+                    <div class="ad-student-row ${isSelected ? 'selected' : ''}"
+                         data-id="${s.id}"
+                         onclick='adSelectStudent(${JSON.stringify(s).replace(/'/g,"&#39;")})'>
+                        <div class="ad-avatar"
+                             style="background:${bg};color:${fg};border:1.5px solid ${bg};">
+                            ${pictureHtml}
+                        </div>
+                        <div style="flex:1;min-width:0;">
+                            <div style="font-size:13px;font-weight:500;color:#1e293b;">
+                                ${s.firstname} ${s.lastname}
+                            </div>
+                            <div style="font-size:11px;color:#64748b;margin-top:2px;">
+                                <i class="ri-id-card-line" style="vertical-align:-2px;margin-right:3px;"></i>${s.admissionNo || '—'}
+                                ${s.gender ? `&nbsp;·&nbsp;${s.gender}` : ''}
+                            </div>
+                        </div>
+                        ${className
+                            ? `<span class="ad-class-badge">${className}</span>`
+                            : ''}
+                    </div>`;
+                }).join('');
+            })
+            .catch(() => {
+                box.innerHTML = `<div class="ad-no-results" style="color:#dc2626;">
+                    <i class="ri-error-warning-line ri-2x d-block mb-2"></i>
+                    Search failed. Please try again.
+                </div>`;
+            });
+    }, 350);
+});
 
-    const classText = d.class_name ? `${d.class_name}${d.arm ? ' ' + d.arm : ''}` : null;
-    $('#prevBadge').html(classText
-        ? `<span class="prev-badge"><i class="ri-book-open-line me-1"></i>${classText}</span>` + (d.session_name ? ` <span class="badge bg-light text-muted" style="font-size:11px">${d.session_name}</span>` : '')
-        : ''
-    );
-
-    $('#studentPreview').fadeIn(200);
-    $('#step2bar').css('background', 'var(--c-accent)');
+function adSelectStudent(student) {
+    adSelectedStudent = student;
+    document.querySelectorAll('.ad-student-row').forEach(r => r.classList.remove('selected'));
+    const row = document.querySelector(`.ad-student-row[data-id="${student.id}"]`);
+    if (row) row.classList.add('selected');
+    document.getElementById('adBtnNext').disabled = false;
 }
 
+/* ── STEP 2: Render discounts ── */
+function adRenderDiscounts() {
+    const list = document.getElementById('adDiscountList');
+    const discounts = @json($discounts ?? []);
+
+    if (!discounts.length) {
+        list.innerHTML = `<div class="ad-no-results">
+            <i class="ri-inbox-line ri-2x d-block mb-2"></i>No active discounts found
+        </div>`;
+        return;
+    }
+
+    list.innerHTML = discounts.map(d => {
+        const val = d.value_type === 'percentage'
+            ? parseFloat(d.value) + '%'
+            : '₦' + parseFloat(d.value).toLocaleString('en-NG', { minimumFractionDigits: 2 });
+        const isPicked = adSelectedDiscount && adSelectedDiscount.id === d.id;
+        return `
+        <div class="ad-discount-opt ${isPicked ? 'picked' : ''}"
+             data-id="${d.id}"
+             onclick='adSelectDiscount(${JSON.stringify(d).replace(/'/g,"&#39;")})'>
+            <div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;">
+                <i class="ri-check-circle-fill check"></i>
+                <div>
+                    <div style="font-size:13px;font-weight:500;color:#1e293b;">${d.title}</div>
+                    <div style="font-size:11px;color:#64748b;margin-top:2px;">
+                        ${d.discount_no}
+                        ${d.description ? `&nbsp;·&nbsp;${d.description}` : ''}
+                    </div>
+                </div>
+            </div>
+            <span class="ad-disc-value">${val}</span>
+        </div>`;
+    }).join('');
+}
+
+function adSelectDiscount(discount) {
+    adSelectedDiscount = discount;
+    document.querySelectorAll('.ad-discount-opt').forEach(el => el.classList.remove('picked'));
+    const opt = document.querySelector(`.ad-discount-opt[data-id="${discount.id}"]`);
+    if (opt) opt.classList.add('picked');
+    document.getElementById('adBtnNext').disabled = false;
+}
+
+/* ── STEP 4: Summary ── */
+function adRenderSummary() {
+    const from   = document.getElementById('adEffectiveFrom').value;
+    const to     = document.getElementById('adEffectiveTo').value;
+    const reason = document.getElementById('adReason').value;
+    const val    = adFormatValue(adSelectedDiscount);
+    const className = [adSelectedStudent.class_name, adSelectedStudent.arm_name].filter(Boolean).join(' ');
+
+    const rows = [
+        ['Student',       `${adSelectedStudent.firstname} ${adSelectedStudent.lastname}`],
+        ['Admission No.', adSelectedStudent.admissionNo || '—'],
+        ['Class',         className || '—'],
+        ['Discount',      `${adSelectedDiscount.title} <span style="color:#94a3b8;font-weight:400;">(${adSelectedDiscount.discount_no})</span>`],
+        ['Value',         `<span style="color:#059669;font-size:15px;">${val}</span>`],
+        ['Effective From',adFormatDate(from)],
+        ['Effective To',  adFormatDate(to)],
+        ...(reason ? [['Reason', reason]] : []),
+    ];
+
+    document.getElementById('adSummaryContent').innerHTML = rows.map(([l, v]) => `
+        <div class="ad-summary-row">
+            <span class="lbl">${l}</span>
+            <span class="val">${v}</span>
+        </div>`).join('');
+}
+
+/* ── Submit ── */
+async function adSubmit() {
+    const btnNext = document.getElementById('adBtnNext');
+    btnNext.disabled = true;
+    btnNext.innerHTML = '<span class="ad-spinner"></span> Assigning…';
+
+    const body = new URLSearchParams({
+        _token:         CSRF_TOKEN,
+        discount_id:    adSelectedDiscount.id,
+        student_id:     adSelectedStudent.id,
+        effective_from: document.getElementById('adEffectiveFrom').value,
+        effective_to:   document.getElementById('adEffectiveTo').value,
+        reason:         document.getElementById('adReason').value,
+    });
+
+    try {
+        const res  = await fetch('{{ route("admin.discount.assign") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+                'X-CSRF-TOKEN': CSRF_TOKEN,
+            },
+            body: body.toString(),
+        });
+        const data = await res.json();
+
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Discount Assigned!',
+                text: data.message,
+                confirmButtonColor: '#4f46e5',
+            }).then(() => location.reload());
+        } else {
+            const errBox = document.getElementById('adErrors');
+            errBox.classList.remove('d-none');
+            errBox.textContent = data.message || 'Assignment failed.';
+            btnNext.disabled = false;
+            btnNext.innerHTML = '<i class="ri-check-line"></i> Confirm & Assign';
+        }
+    } catch {
+        Swal.fire({ icon: 'error', title: 'Error', text: 'Something went wrong.', confirmButtonColor: '#4f46e5' });
+        btnNext.disabled = false;
+        btnNext.innerHTML = '<i class="ri-check-line"></i> Confirm & Assign';
+    }
+}
+
+/* ── Reset modal on open ── */
+document.getElementById('assignModal').addEventListener('show.bs.modal', function () {
+    adCurrentStep      = 1;
+    adSelectedStudent  = null;
+    adSelectedDiscount = null;
+
+    document.getElementById('adStudentSearch').value = '';
+    document.getElementById('adStudentResults').innerHTML = `
+        <div class="ad-no-results">
+            <i class="ri-user-search-line ri-2x d-block mb-2"></i>
+            Type at least 2 characters to search
+        </div>`;
+    document.getElementById('adEffectiveTo').value = '';
+    document.getElementById('adReason').value = '';
+    document.getElementById('adErrors').classList.add('d-none');
+    document.getElementById('adBtnNext').disabled = true;
+    document.getElementById('adBtnNext').innerHTML = 'Continue <i class="ri-arrow-right-line"></i>';
+    document.getElementById('adBtnBack').style.visibility = 'hidden';
+
+    [2, 3, 4].forEach(i => document.getElementById('adStep' + i).style.display = 'none');
+    document.getElementById('adStep1').style.display = 'block';
+    adSetStep(1);
+});
+
+/* ═══════════════════════════════════════════════════════════════
+   REMOVE MODAL
+═══════════════════════════════════════════════════════════════ */
 $(document).ready(function () {
 
-    /* ── Init Select2 ──────────────────────────────────────────────── */
-    $('#studentSelect').select2({
-        dropdownParent: $('#assignModal'),
-        placeholder: 'Search by name or admission number…',
-        minimumInputLength: 2,
-        allowClear: true,
-        templateResult: formatStudentResult,
-        templateSelection: formatStudentSelection,
-        ajax: {
-            url: '{{ route("admin.discount.eligible-students") }}',
-            dataType: 'json',
-            delay: 300,
-            data: function (params) {
-                return {
-                    q: params.term,
-                    discount_id: $('#discountSelect').val()
-                };
-            },
-            processResults: function (data) {
-                if (!data.success || !data.students) return { results: [] };
-                return {
-                    results: data.students.map(s => ({
-                        id: s.id,
-                        text: `${s.firstname} ${s.lastname} (${s.admissionNo})`,
-                        studentData: s
-                    }))
-                };
-            },
-            error: function () {
-                return { results: [] };
-            },
-            cache: true
-        }
+    // Assignment card search
+    $('#searchInput').on('keyup', function () {
+        const value = $(this).val().toLowerCase();
+        $('.assignment-card').each(function () {
+            const searchData = $(this).data('search') || '';
+            $(this).closest('.col-md-6, .col-lg-4')
+                   .toggle(searchData.includes(value) || value === '');
+        });
     });
 
-    /* ── Show preview when student selected ─────────────────────────── */
-    $('#studentSelect').on('select2:select', function (e) {
-        showStudentPreview(e.params.data);
-    });
-    $('#studentSelect').on('select2:unselect select2:clear', function () {
-        $('#studentPreview').hide();
-        $('#step2bar').css('background', 'var(--c-border)');
-    });
-
-    /* ── Reset on discount change ────────────────────────────────────── */
-    $('#discountSelect').on('change', function () {
-        $('#studentSelect').val(null).trigger('change');
-        $('#studentPreview').hide();
-        $('#step2bar').css('background', 'var(--c-border)');
-    });
-
-    /* ── Assign Form Submit ───────────────────────────────────────────── */
-    $('#assignForm').on('submit', async function (e) {
-        e.preventDefault();
-        const btn = $('#submitAssignBtn');
-        btn.prop('disabled', true).html('<i class="ri-loader-4-line me-1"></i>Assigning…');
-
-        const discountId = $('#discountSelect').val();
-        const studentId  = $('#studentSelect').val();
-
-        if (!discountId || !studentId) {
-            $('#assignErrors').removeClass('d-none').text('Please select both a discount and a student.');
-            btn.prop('disabled', false).html('<i class="ri-save-line me-1"></i>Assign Discount');
-            return;
-        }
-
-        try {
-            const response = await fetch('{{ route("admin.discount.assign") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-CSRF-TOKEN': CSRF_TOKEN
-                },
-                body: $(this).serialize()
-            });
-            const data = await response.json();
-            if (data.success) {
-                $('#assignModal').modal('hide');
-                Swal.fire({
-                    icon: 'success', title: 'Assigned!',
-                    text: data.message,
-                    confirmButtonColor: 'var(--c-accent)',
-                    timer: 2200, timerProgressBar: true
-                }).then(() => location.reload());
-            } else {
-                $('#assignErrors').removeClass('d-none')
-                    .html(`<i class="ri-error-warning-line me-1"></i>${data.message}`);
-            }
-        } catch (error) {
-            Swal.fire('Error', 'Something went wrong. Please try again.', 'error');
-        }
-
-        btn.prop('disabled', false).html('<i class="ri-save-line me-1"></i>Assign Discount');
-    });
-
-    /* ── Reset modal on close ─────────────────────────────────────────── */
-    $('#assignModal').on('hidden.bs.modal', function () {
-        document.getElementById('assignForm').reset();
-        $('#studentSelect').val(null).trigger('change');
-        $('#studentPreview').hide();
-        $('#assignErrors').addClass('d-none').text('');
-        $('#step2bar').css('background', 'var(--c-border)');
-    });
-
-    /* ── Remove Button Click ─────────────────────────────────────────── */
+    // Remove button
     $(document).on('click', '.remove-btn', function () {
         removeId = $(this).data('id');
-        $('#removeReason').val('');
         $('#removeModal').modal('show');
     });
 
-    /* ── Confirm Remove ──────────────────────────────────────────────── */
     $('#confirmRemoveBtn').on('click', async function () {
         if (!removeId) return;
-        const btn = $(this);
-        btn.prop('disabled', true).html('<i class="ri-loader-4-line me-1"></i>Removing…');
 
         try {
             const response = await fetch(`/admin/discount/assignment/${removeId}`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': CSRF_TOKEN
+                    'X-CSRF-TOKEN': CSRF_TOKEN,
                 },
-                body: JSON.stringify({ reason: $('#removeReason').val() })
+                body: JSON.stringify({ reason: $('#removeReason').val() }),
             });
             const data = await response.json();
-            $('#removeModal').modal('hide');
             if (data.success) {
-                Swal.fire({
-                    icon: 'success', title: 'Removed!',
-                    text: data.message,
-                    confirmButtonColor: 'var(--c-accent)',
-                    timer: 2000, timerProgressBar: true
-                }).then(() => location.reload());
+                Swal.fire('Removed!', data.message, 'success').then(() => location.reload());
             } else {
-                Swal.fire('Error', data.message, 'error');
+                Swal.fire('Error!', data.message, 'error');
             }
-        } catch (error) {
-            Swal.fire('Error', 'Something went wrong.', 'error');
+        } catch {
+            Swal.fire('Error!', 'Something went wrong.', 'error');
         }
-
-        btn.prop('disabled', false).html('<i class="ri-delete-bin-line me-1"></i>Confirm Removal');
-        removeId = null;
-    });
-
-    /* ── Client-side Search Filter ───────────────────────────────────── */
-    $('#searchInput').on('input', function () {
-        const val = $(this).val().toLowerCase().trim();
-        $('.assignment-item').each(function () {
-            const txt = ($(this).data('search') || '').toLowerCase();
-            $(this).toggle(!val || txt.includes(val));
-        });
+        $('#removeModal').modal('hide');
     });
 });
 </script>
-
 @endsection

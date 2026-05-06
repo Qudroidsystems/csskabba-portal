@@ -15,7 +15,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
-use Yajra\DataTables\Facades\DataTables;
 
 class DiscountController extends Controller
 {
@@ -25,23 +24,23 @@ class DiscountController extends Controller
     {
         $this->discountService = $discountService;
 
-        $this->middleware('permission:View discount', ['only' => ['index', 'show', 'showAssignments']]);
-        $this->middleware('permission:Create discount', ['only' => ['create', 'store']]);
-        $this->middleware('permission:Update discount', ['only' => ['edit', 'update']]);
-        $this->middleware('permission:Delete discount', ['only' => ['destroy', 'bulkDestroy']]);
+        $this->middleware('permission:View discount',    ['only' => ['index', 'show', 'showAssignments']]);
+        $this->middleware('permission:Create discount',  ['only' => ['create', 'store']]);
+        $this->middleware('permission:Update discount',  ['only' => ['edit', 'update']]);
+        $this->middleware('permission:Delete discount',  ['only' => ['destroy', 'bulkDestroy']]);
         $this->middleware('permission:Approve discount', ['only' => ['approve']]);
     }
 
-    /**
-     * Display a listing of discounts.
-     */
+    // ─────────────────────────────────────────────────────────────────
+    // INDEX
+    // ─────────────────────────────────────────────────────────────────
     public function index(Request $request)
     {
         $query = Discount::with(['type', 'createdBy', 'approvedBy']);
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
                   ->orWhere('discount_no', 'like', "%{$search}%");
             });
@@ -55,262 +54,195 @@ class DiscountController extends Controller
             $query->where('discount_type_id', $request->type_id);
         }
 
-        $sort = $request->get('sort', 'id');
+        $sort  = $request->get('sort', 'id');
         $order = $request->get('order', 'desc');
         $query->orderBy($sort, $order);
 
-        $discounts = $query->paginate(15);
-
+        $discounts      = $query->paginate(15);
         $totalDiscounts = Discount::count();
         $activeDiscounts = Discount::where('status', 'active')->count();
-        $discountTypes = DiscountType::where('is_active', true)->get();
-
-        $pagetitle = 'Discount Management';
+        $discountTypes  = DiscountType::where('is_active', true)->get();
+        $pagetitle      = 'Discount Management';
 
         return view('admin.discount.index', compact(
-            'pagetitle',
-            'discounts',
-            'discountTypes',
-            'totalDiscounts',
-            'activeDiscounts'
+            'pagetitle', 'discounts', 'discountTypes', 'totalDiscounts', 'activeDiscounts'
         ));
     }
 
-    /**
-     * Show the form for creating a new discount.
-     */
+    // ─────────────────────────────────────────────────────────────────
+    // CREATE
+    // ─────────────────────────────────────────────────────────────────
     public function create()
     {
         $discountTypes = DiscountType::where('is_active', true)->get();
-        $classes = Schoolclass::with('armRelation')->get();
-        $bills = SchoolBillModel::where('is_active', true)->get();
+        $classes       = Schoolclass::with('armRelation')->get();
+        $bills         = SchoolBillModel::where('is_active', true)->get();
+        $pagetitle     = 'Create New Discount';
 
-        $pagetitle = 'Create New Discount';
-
-        return view('admin.discount.create', compact(
-            'pagetitle',
-            'discountTypes',
-            'classes',
-            'bills'
-        ));
+        return view('admin.discount.create', compact('pagetitle', 'discountTypes', 'classes', 'bills'));
     }
 
-    /**
-     * Store a newly created discount in storage.
-     */
+    // ─────────────────────────────────────────────────────────────────
+    // STORE
+    // ─────────────────────────────────────────────────────────────────
     public function store(Request $request)
     {
         try {
             $validated = $request->validate([
-                'discount_type_id' => 'required|exists:discount_types,id',
-                'title' => 'required|string|max:255',
-                'description' => 'nullable|string',
-                'value_type' => 'required|in:percentage,fixed_amount',
-                'value' => 'required|numeric|min:0.01',
-                'max_amount' => 'nullable|numeric|min:0',
-                'applicable_to' => 'required|in:all_bills,specific_bills,specific_categories',
-                'applicable_bill_ids' => 'nullable|array',
-                'applicable_bill_ids.*' => 'exists:school_bill,id',
-                'applicable_categories' => 'nullable|array',
-                'eligible_classes' => 'nullable|array',
-                'eligible_classes.*' => 'exists:schoolclass,id',
-                'condition_type' => 'required|in:none,early_payment,min_amount,sibling_count',
-                'condition_value' => 'nullable|numeric|min:0',
-                'days_before_due' => 'nullable|integer|min:1',
-                'stackable_with_scholarship' => 'boolean',
+                'discount_type_id'               => 'required|exists:discount_types,id',
+                'title'                          => 'required|string|max:255',
+                'description'                    => 'nullable|string',
+                'value_type'                     => 'required|in:percentage,fixed_amount',
+                'value'                          => 'required|numeric|min:0.01',
+                'max_amount'                     => 'nullable|numeric|min:0',
+                'applicable_to'                  => 'required|in:all_bills,specific_bills,specific_categories',
+                'applicable_bill_ids'            => 'nullable|array',
+                'applicable_bill_ids.*'          => 'exists:school_bill,id',
+                'applicable_categories'          => 'nullable|array',
+                'eligible_classes'               => 'nullable|array',
+                'eligible_classes.*'             => 'exists:schoolclass,id',
+                'condition_type'                 => 'required|in:none,early_payment,min_amount,sibling_count',
+                'condition_value'                => 'nullable|numeric|min:0',
+                'days_before_due'                => 'nullable|integer|min:1',
+                'stackable_with_scholarship'     => 'boolean',
                 'stackable_with_other_discounts' => 'boolean',
-                'stacking_priority' => 'integer|min:1',
-                'effective_from' => 'required|date',
-                'effective_to' => 'nullable|date|after:effective_from',
-                'status' => 'required|in:draft,active,expired,suspended',
+                'stacking_priority'              => 'integer|min:1',
+                'effective_from'                 => 'required|date',
+                'effective_to'                   => 'nullable|date|after:effective_from',
+                'status'                         => 'required|in:draft,active,expired,suspended',
             ]);
 
-            $validated['discount_no'] = $this->generateDiscountNumber();
-            $validated['created_by'] = auth()->id();
-            $validated['stackable_with_scholarship'] = $request->has('stackable_with_scholarship');
+            $validated['discount_no']                    = $this->generateDiscountNumber();
+            $validated['created_by']                     = auth()->id();
+            $validated['stackable_with_scholarship']     = $request->has('stackable_with_scholarship');
             $validated['stackable_with_other_discounts'] = $request->has('stackable_with_other_discounts');
-
-            // Convert arrays to JSON
-            $validated['applicable_bill_ids'] = json_encode($validated['applicable_bill_ids'] ?? []);
-            $validated['applicable_categories'] = json_encode($validated['applicable_categories'] ?? []);
-            $validated['eligible_classes'] = json_encode($validated['eligible_classes'] ?? []);
+            $validated['applicable_bill_ids']            = json_encode($validated['applicable_bill_ids'] ?? []);
+            $validated['applicable_categories']          = json_encode($validated['applicable_categories'] ?? []);
+            $validated['eligible_classes']               = json_encode($validated['eligible_classes'] ?? []);
 
             $discount = Discount::create($validated);
 
             if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
-                    'success' => true,
-                    'message' => 'Discount created successfully.',
+                    'success'  => true,
+                    'message'  => 'Discount created successfully.',
                     'redirect' => route('admin.discount.index'),
-                    'discount' => $discount
+                    'discount' => $discount,
                 ]);
             }
 
-            return redirect()->route('admin.discount.index')
-                ->with('success', 'Discount created successfully.');
+            return redirect()->route('admin.discount.index')->with('success', 'Discount created successfully.');
 
         } catch (ValidationException $e) {
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation error.',
-                    'errors' => $e->errors()
-                ], 422);
+                return response()->json(['success' => false, 'message' => 'Validation error.', 'errors' => $e->errors()], 422);
             }
             throw $e;
         } catch (\Exception $e) {
             Log::error('Error creating discount: ' . $e->getMessage());
-
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to create discount: ' . $e->getMessage()
-                ], 500);
+                return response()->json(['success' => false, 'message' => 'Failed to create discount: ' . $e->getMessage()], 500);
             }
-
             return back()->with('error', 'Failed to create discount.');
         }
     }
 
-    /**
-     * Display the specified discount.
-     */
+    // ─────────────────────────────────────────────────────────────────
+    // SHOW
+    // ─────────────────────────────────────────────────────────────────
     public function show($id)
     {
-        $discount = Discount::with(['type', 'createdBy', 'approvedBy', 'assignments.student'])
-            ->findOrFail($id);
+        $discount = Discount::with(['type', 'createdBy', 'approvedBy', 'assignments.student'])->findOrFail($id);
 
-        $assignments = $discount->assignments()
-            ->with('student')
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
-
+        $assignments   = $discount->assignments()->with('student')->orderBy('created_at', 'desc')->paginate(20);
         $totalStudents = $discount->assignments()->count();
-        $activeCount = $discount->assignments()->where('status', 'active')->count();
+        $activeCount   = $discount->assignments()->where('status', 'active')->count();
+        $pagetitle     = 'Discount Details: ' . $discount->title;
 
-        $pagetitle = 'Discount Details: ' . $discount->title;
-
-        return view('admin.discount.show', compact(
-            'pagetitle',
-            'discount',
-            'assignments',
-            'totalStudents',
-            'activeCount'
-        ));
+        return view('admin.discount.show', compact('pagetitle', 'discount', 'assignments', 'totalStudents', 'activeCount'));
     }
 
-    /**
-     * Show the form for editing the specified discount.
-     */
+    // ─────────────────────────────────────────────────────────────────
+    // EDIT
+    // ─────────────────────────────────────────────────────────────────
     public function edit($id)
     {
-        $discount = Discount::findOrFail($id);
+        $discount      = Discount::findOrFail($id);
         $discountTypes = DiscountType::where('is_active', true)->get();
-        $classes = Schoolclass::with('armRelation')->get();
-        $bills = SchoolBillModel::where('is_active', true)->get();
+        $classes       = Schoolclass::with('armRelation')->get();
+        $bills         = SchoolBillModel::where('is_active', true)->get();
+        $pagetitle     = 'Edit Discount: ' . $discount->title;
 
-        $pagetitle = 'Edit Discount: ' . $discount->title;
-
-        return view('admin.discount.edit', compact(
-            'pagetitle',
-            'discount',
-            'discountTypes',
-            'classes',
-            'bills'
-        ));
+        return view('admin.discount.edit', compact('pagetitle', 'discount', 'discountTypes', 'classes', 'bills'));
     }
 
-    /**
-     * Update the specified discount in storage.
-     */
+    // ─────────────────────────────────────────────────────────────────
+    // UPDATE
+    // ─────────────────────────────────────────────────────────────────
     public function update(Request $request, $id)
     {
         try {
-            $discount = Discount::findOrFail($id);
-
+            $discount  = Discount::findOrFail($id);
             $validated = $request->validate([
-                'discount_type_id' => 'required|exists:discount_types,id',
-                'title' => 'required|string|max:255',
-                'description' => 'nullable|string',
-                'value_type' => 'required|in:percentage,fixed_amount',
-                'value' => 'required|numeric|min:0.01',
-                'max_amount' => 'nullable|numeric|min:0',
-                'applicable_to' => 'required|in:all_bills,specific_bills,specific_categories',
-                'applicable_bill_ids' => 'nullable|array',
-                'applicable_categories' => 'nullable|array',
-                'eligible_classes' => 'nullable|array',
-                'condition_type' => 'required|in:none,early_payment,min_amount,sibling_count',
-                'condition_value' => 'nullable|numeric|min:0',
-                'days_before_due' => 'nullable|integer|min:1',
-                'stackable_with_scholarship' => 'boolean',
+                'discount_type_id'               => 'required|exists:discount_types,id',
+                'title'                          => 'required|string|max:255',
+                'description'                    => 'nullable|string',
+                'value_type'                     => 'required|in:percentage,fixed_amount',
+                'value'                          => 'required|numeric|min:0.01',
+                'max_amount'                     => 'nullable|numeric|min:0',
+                'applicable_to'                  => 'required|in:all_bills,specific_bills,specific_categories',
+                'applicable_bill_ids'            => 'nullable|array',
+                'applicable_categories'          => 'nullable|array',
+                'eligible_classes'               => 'nullable|array',
+                'condition_type'                 => 'required|in:none,early_payment,min_amount,sibling_count',
+                'condition_value'                => 'nullable|numeric|min:0',
+                'days_before_due'                => 'nullable|integer|min:1',
+                'stackable_with_scholarship'     => 'boolean',
                 'stackable_with_other_discounts' => 'boolean',
-                'stacking_priority' => 'integer|min:1',
-                'effective_from' => 'required|date',
-                'effective_to' => 'nullable|date|after:effective_from',
-                'status' => 'required|in:draft,active,expired,suspended',
+                'stacking_priority'              => 'integer|min:1',
+                'effective_from'                 => 'required|date',
+                'effective_to'                   => 'nullable|date|after:effective_from',
+                'status'                         => 'required|in:draft,active,expired,suspended',
             ]);
 
-            $validated['stackable_with_scholarship'] = $request->has('stackable_with_scholarship');
+            $validated['stackable_with_scholarship']     = $request->has('stackable_with_scholarship');
             $validated['stackable_with_other_discounts'] = $request->has('stackable_with_other_discounts');
-
-            $validated['applicable_bill_ids'] = json_encode($validated['applicable_bill_ids'] ?? []);
-            $validated['applicable_categories'] = json_encode($validated['applicable_categories'] ?? []);
-            $validated['eligible_classes'] = json_encode($validated['eligible_classes'] ?? []);
+            $validated['applicable_bill_ids']            = json_encode($validated['applicable_bill_ids'] ?? []);
+            $validated['applicable_categories']          = json_encode($validated['applicable_categories'] ?? []);
+            $validated['eligible_classes']               = json_encode($validated['eligible_classes'] ?? []);
 
             $discount->update($validated);
 
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Discount updated successfully.',
-                    'redirect' => route('admin.discount.index')
-                ]);
+                return response()->json(['success' => true, 'message' => 'Discount updated successfully.', 'redirect' => route('admin.discount.index')]);
             }
-
-            return redirect()->route('admin.discount.index')
-                ->with('success', 'Discount updated successfully.');
+            return redirect()->route('admin.discount.index')->with('success', 'Discount updated successfully.');
 
         } catch (ValidationException $e) {
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Validation error.',
-                    'errors' => $e->errors()
-                ], 422);
+                return response()->json(['success' => false, 'message' => 'Validation error.', 'errors' => $e->errors()], 422);
             }
             throw $e;
         } catch (\Exception $e) {
             Log::error('Error updating discount: ' . $e->getMessage());
-
             if ($request->ajax() || $request->wantsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to update discount: ' . $e->getMessage()
-                ], 500);
+                return response()->json(['success' => false, 'message' => 'Failed to update discount: ' . $e->getMessage()], 500);
             }
-
             return back()->with('error', 'Failed to update discount.');
         }
     }
 
-    /**
-     * Remove the specified discount from storage.
-     */
+    // ─────────────────────────────────────────────────────────────────
+    // DESTROY
+    // ─────────────────────────────────────────────────────────────────
     public function destroy($id)
     {
         try {
             $discount = Discount::findOrFail($id);
 
-            $hasActiveAssignments = $discount->assignments()
-                ->where('status', 'active')
-                ->exists();
-
-            if ($hasActiveAssignments) {
+            if ($discount->assignments()->where('status', 'active')->exists()) {
                 if (request()->ajax()) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'Cannot delete discount with active assignments.'
-                    ], 400);
+                    return response()->json(['success' => false, 'message' => 'Cannot delete discount with active assignments.'], 400);
                 }
                 return back()->with('error', 'Cannot delete discount with active assignments.');
             }
@@ -318,113 +250,77 @@ class DiscountController extends Controller
             $discount->delete();
 
             if (request()->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Discount deleted successfully.'
-                ]);
+                return response()->json(['success' => true, 'message' => 'Discount deleted successfully.']);
             }
-
-            return redirect()->route('admin.discount.index')
-                ->with('success', 'Discount deleted successfully.');
+            return redirect()->route('admin.discount.index')->with('success', 'Discount deleted successfully.');
 
         } catch (\Exception $e) {
             Log::error('Error deleting discount: ' . $e->getMessage());
-
             if (request()->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to delete discount.'
-                ], 500);
+                return response()->json(['success' => false, 'message' => 'Failed to delete discount.'], 500);
             }
-
             return back()->with('error', 'Failed to delete discount.');
         }
     }
 
-    /**
-     * Bulk delete discounts.
-     */
+    // ─────────────────────────────────────────────────────────────────
+    // BULK DESTROY
+    // ─────────────────────────────────────────────────────────────────
     public function bulkDestroy(Request $request)
     {
         try {
             $ids = $request->input('ids', []);
-
             if (empty($ids)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'No discounts selected.'
-                ], 400);
+                return response()->json(['success' => false, 'message' => 'No discounts selected.'], 400);
             }
 
-            $discountsWithActive = Discount::whereIn('id', $ids)
-                ->whereHas('assignments', function($q) {
-                    $q->where('status', 'active');
-                })
+            $withActive = Discount::whereIn('id', $ids)
+                ->whereHas('assignments', fn ($q) => $q->where('status', 'active'))
                 ->count();
 
-            if ($discountsWithActive > 0) {
-                return response()->json([
-                    'success' => false,
-                    'message' => "Cannot delete {$discountsWithActive} discount(s) with active assignments."
-                ], 400);
+            if ($withActive > 0) {
+                return response()->json(['success' => false, 'message' => "Cannot delete {$withActive} discount(s) with active assignments."], 400);
             }
 
             $deleted = Discount::whereIn('id', $ids)->delete();
-
-            return response()->json([
-                'success' => true,
-                'message' => "{$deleted} discount(s) deleted successfully."
-            ]);
+            return response()->json(['success' => true, 'message' => "{$deleted} discount(s) deleted successfully."]);
 
         } catch (\Exception $e) {
             Log::error('Error bulk deleting discounts: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to delete discounts.'
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Failed to delete discounts.'], 500);
         }
     }
 
-    /**
-     * Approve a discount.
-     */
+    // ─────────────────────────────────────────────────────────────────
+    // APPROVE
+    // ─────────────────────────────────────────────────────────────────
     public function approve($id)
     {
         try {
             $discount = Discount::findOrFail($id);
-
             $discount->update([
-                'status' => 'active',
+                'status'      => 'active',
                 'approved_by' => auth()->id(),
                 'approved_at' => now(),
             ]);
 
             if (request()->ajax()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Discount approved successfully.'
-                ]);
+                return response()->json(['success' => true, 'message' => 'Discount approved successfully.']);
             }
-
             return redirect()->back()->with('success', 'Discount approved successfully.');
 
         } catch (\Exception $e) {
             Log::error('Error approving discount: ' . $e->getMessage());
-
             if (request()->ajax()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to approve discount.'
-                ], 500);
+                return response()->json(['success' => false, 'message' => 'Failed to approve discount.'], 500);
             }
-
             return back()->with('error', 'Failed to approve discount.');
         }
     }
 
-    /**
-     * Display discount assignments.
-     */
+    // ─────────────────────────────────────────────────────────────────
+    // SHOW ASSIGNMENTS PAGE
+    // ─────────────────────────────────────────────────────────────────
     public function showAssignments(Request $request)
     {
         $query = DiscountAssignment::with(['discount', 'student', 'assignedBy']);
@@ -435,9 +331,9 @@ class DiscountController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->whereHas('student', function($q) use ($search) {
+            $query->whereHas('student', function ($q) use ($search) {
                 $q->where('firstname', 'like', "%{$search}%")
-                  ->orWhere('lastname', 'like', "%{$search}%")
+                  ->orWhere('lastname',  'like', "%{$search}%")
                   ->orWhere('admissionNo', 'like', "%{$search}%");
             });
         }
@@ -449,35 +345,31 @@ class DiscountController extends Controller
         $assignments = $query->orderBy('created_at', 'desc')->paginate(20);
 
         $statusCounts = [
-            'active' => DiscountAssignment::where('status', 'active')->count(),
+            'active'  => DiscountAssignment::where('status', 'active')->count(),
             'expired' => DiscountAssignment::where('status', 'expired')->count(),
             'removed' => DiscountAssignment::where('status', 'removed')->count(),
         ];
 
         $discounts = Discount::where('status', 'active')->get();
-
         $pagetitle = 'Discount Assignments';
 
         return view('admin.discount.assignments', compact(
-            'pagetitle',
-            'assignments',
-            'statusCounts',
-            'discounts'
+            'pagetitle', 'assignments', 'statusCounts', 'discounts'
         ));
     }
 
-    /**
-     * Assign discount to a student.
-     */
+    // ─────────────────────────────────────────────────────────────────
+    // ASSIGN TO STUDENT
+    // ─────────────────────────────────────────────────────────────────
     public function assignToStudent(Request $request)
     {
         try {
             $validated = $request->validate([
-                'discount_id' => 'required|exists:discounts,id',
-                'student_id' => 'required|exists:studentRegistration,id',
+                'discount_id'    => 'required|exists:discounts,id',
+                'student_id'     => 'required|exists:studentRegistration,id',
                 'effective_from' => 'required|date',
-                'effective_to' => 'nullable|date|after:effective_from',
-                'reason' => 'nullable|string',
+                'effective_to'   => 'nullable|date|after:effective_from',
+                'reason'         => 'nullable|string|max:1000',
             ]);
 
             $discount = Discount::findOrFail($validated['discount_id']);
@@ -490,190 +382,179 @@ class DiscountController extends Controller
             if ($existing) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Student already has an active assignment for this discount.'
+                    'message' => 'Student already has an active assignment for this discount.',
                 ], 400);
             }
 
             $assignment = DiscountAssignment::create([
-                'discount_id' => $validated['discount_id'],
-                'student_id' => $validated['student_id'],
-                'status' => 'active',
+                'discount_id'    => $validated['discount_id'],
+                'student_id'     => $validated['student_id'],
+                'status'         => 'active',
                 'effective_from' => $validated['effective_from'],
-                'effective_to' => $validated['effective_to'],
-                'value_type' => $discount->value_type,
-                'value' => $discount->value,
-                'max_amount' => $discount->max_amount,
-                'reason' => $validated['reason'] ?? null,
-                'assigned_by' => auth()->id(),
+                'effective_to'   => $validated['effective_to'] ?? null,
+                'value_type'     => $discount->value_type,
+                'value'          => $discount->value,
+                'max_amount'     => $discount->max_amount,
+                'reason'         => $validated['reason'] ?? null,
+                'assigned_by'    => auth()->id(),
             ]);
 
             return response()->json([
-                'success' => true,
-                'message' => 'Discount assigned successfully.',
-                'assignment' => $assignment
+                'success'    => true,
+                'message'    => 'Discount assigned successfully.',
+                'assignment' => $assignment,
             ]);
 
         } catch (ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation error.',
-                'errors' => $e->errors()
-            ], 422);
+            return response()->json(['success' => false, 'message' => 'Validation error.', 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
             Log::error('Error assigning discount: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to assign discount: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Failed to assign discount: ' . $e->getMessage()], 500);
         }
     }
 
-    /**
-     * Remove discount assignment from a student.
-     */
+    // ─────────────────────────────────────────────────────────────────
+    // REMOVE ASSIGNMENT
+    // ─────────────────────────────────────────────────────────────────
     public function removeAssignment(Request $request, $assignmentId)
     {
         try {
             $assignment = DiscountAssignment::findOrFail($assignmentId);
-
             $assignment->update([
-                'status' => 'removed',
+                'status'       => 'removed',
                 'effective_to' => now(),
-                'reason' => $request->input('reason', 'Removed by administrator'),
+                'reason'       => $request->input('reason', 'Removed by administrator'),
             ]);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'Discount assignment removed successfully.'
-            ]);
+            return response()->json(['success' => true, 'message' => 'Discount assignment removed successfully.']);
 
         } catch (\Exception $e) {
             Log::error('Error removing assignment: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to remove assignment.'
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Failed to remove assignment.'], 500);
         }
     }
 
-    // ─────────────────────────────────────────────────────────────────────────────
-    // Replace the getEligibleStudents() method in DiscountController with this.
-    // It now returns: picture_url, class_name, arm, session_name, gender, etc.
-    // ─────────────────────────────────────────────────────────────────────────────
-
-    /**
-     * Get eligible students for discount assignment (AJAX – Select2).
-     *
-     * Returns rich student data including profile picture, current class,
-     * arm, session, and gender so the frontend can render a rich dropdown.
-     */
+    // ─────────────────────────────────────────────────────────────────
+    // GET ELIGIBLE STUDENTS  (AJAX — used by the assign modal search)
+    // ─────────────────────────────────────────────────────────────────
     public function getEligibleStudents(Request $request)
     {
         try {
+            // discount_id is required only when we want to filter by eligible classes.
+            // During step 1 the user may not have chosen a discount yet, so we make it optional.
             $request->validate([
-                'discount_id' => 'required|exists:discounts,id',
+                'discount_id' => 'nullable|exists:discounts,id',
                 'q'           => 'nullable|string|max:100',
             ]);
 
-            $discount       = Discount::findOrFail($request->discount_id);
-            $eligibleClasses = json_decode($discount->eligible_classes, true) ?? [];
+            $query = Student::query();
 
-            // ── Base query with eager-loaded relationships ────────────────────
-            $query = Student::with([
-                'picture',                                  // Studentpicture (studentid)
-                'currentTerm.schoolClass.armRelation',      // current class + arm
-                'currentTerm.session',                      // current session
-            ]);
+            // ── Filter by eligible classes if discount is selected ──────
+            if ($request->filled('discount_id')) {
+                $discount        = Discount::findOrFail($request->discount_id);
+                $eligibleClasses = json_decode($discount->eligible_classes, true) ?? [];
 
-            // ── Restrict to eligible classes if configured ────────────────────
-            if (!empty($eligibleClasses)) {
-                $query->whereHas('currentTerm', function ($q) use ($eligibleClasses) {
-                    $q->whereIn('schoolclassId', $eligibleClasses);
+                if (!empty($eligibleClasses)) {
+                    // Use currentTerm relationship first, fall back to studentClass
+                    $query->where(function ($q) use ($eligibleClasses) {
+                        $q->whereHas('currentTerm', fn ($ct) => $ct->whereIn('schoolclassId', $eligibleClasses))
+                          ->orWhereHas('schoolClass',  fn ($sc) => $sc->whereIn('schoolclassid', $eligibleClasses));
+                    });
+                }
+
+                // Exclude students already assigned to this discount
+                $query->whereDoesntHave('discountAssignments', function ($q) use ($discount) {
+                    $q->where('discount_id', $discount->id)->where('status', 'active');
                 });
             }
 
-            // ── Full-text search ──────────────────────────────────────────────
+            // ── Text search ─────────────────────────────────────────────
             if ($request->filled('q')) {
-                $search = trim($request->q);
+                $search = $request->q;
                 $query->where(function ($q) use ($search) {
                     $q->where('firstname',   'like', "%{$search}%")
-                    ->orWhere('lastname',  'like', "%{$search}%")
-                    ->orWhere('admissionNo', 'like', "%{$search}%");
+                      ->orWhere('lastname',  'like', "%{$search}%")
+                      ->orWhere('admissionNo', 'like', "%{$search}%");
                 });
             }
 
-            // ── Exclude students already assigned to this discount ────────────
-            $query->whereDoesntHave('discountAssignments', function ($q) use ($discount) {
-                $q->where('discount_id', $discount->id)
-                ->where('status', 'active');
-            });
+            // ── Eager-load class / arm / picture ────────────────────────
+            $query->with([
+                'picture',
+                // Try currentTerm path first (StudentCurrentTerm model)
+                'currentTerm.schoolClass.armRelation',
+                // Fall back to direct studentClass
+                'schoolClass.schoolclass',
+                'schoolClass.armRelation',
+            ]);
 
             $students = $query
-                ->select('id', 'firstname', 'lastname', 'othername', 'admissionNo', 'gender')
+                ->select('id', 'firstname', 'lastname', 'admissionNo', 'gender')
                 ->orderBy('lastname')
-                ->orderBy('firstname')
                 ->limit(50)
-                ->get();
+                ->get()
+                ->map(function ($s) {
+                    // ── Resolve class name ───────────────────────────────
+                    $className = null;
+                    $armName   = null;
 
-            // ── Transform into rich response payload ──────────────────────────
-            $results = $students->map(function (Student $s) {
-                // Profile picture URL
-                $picturePath = $s->picture?->picture;
-                $pictureUrl  = $picturePath
-                    ? asset('storage/' . $picturePath)
-                    : null;
+                    // Prefer currentTerm (most accurate)
+                    if ($s->currentTerm && $s->currentTerm->schoolClass) {
+                        $className = $s->currentTerm->schoolClass->schoolclass ?? null;
+                        $armName   = $s->currentTerm->schoolClass->armRelation->arm ?? null;
+                    }
+                    // Fall back to studentClass pivot
+                    if (!$className && $s->schoolClass) {
+                        $sc = $s->schoolClass;
+                        // schoolClass relation returns Studentclass model;
+                        // its schoolclass relation returns Schoolclass model
+                        if ($sc->schoolclass) {
+                            $className = $sc->schoolclass->schoolclass ?? null;
+                            $armName   = $sc->armRelation->arm ?? null;
+                        }
+                    }
 
-                // Current class details via StudentCurrentTerm
-                $currentTerm = $s->currentTerm;
-                $schoolClass = $currentTerm?->schoolClass;
-                $arm         = $schoolClass?->armRelation?->arm ?? null;
-                $className   = $schoolClass?->schoolclass ?? null;   // adjust field name if different
-                $sessionName = $currentTerm?->session?->name ?? null;
+                    // ── Resolve picture URL ──────────────────────────────
+                    $pictureUrl = null;
+                    if ($s->picture && $s->picture->picture) {
+                        // Adjust the path prefix to match your storage setup
+                        $pictureUrl = asset('storage/' . $s->picture->picture);
+                    }
 
-                return [
-                    'id'          => $s->id,
-                    'firstname'   => $s->firstname,
-                    'lastname'    => $s->lastname,
-                    'othername'   => $s->othername,
-                    'admissionNo' => $s->admissionNo,
-                    'gender'      => $s->gender,
-                    'picture_url' => $pictureUrl,
-                    'class_name'  => $className,
-                    'arm'         => $arm,
-                    'session_name'=> $sessionName,
-                ];
-            });
+                    return [
+                        'id'          => $s->id,
+                        'firstname'   => $s->firstname,
+                        'lastname'    => $s->lastname,
+                        'admissionNo' => $s->admissionNo,
+                        'gender'      => $s->gender,
+                        'class_name'  => $className,
+                        'arm_name'    => $armName,
+                        'picture'     => $pictureUrl,
+                    ];
+                });
 
             return response()->json([
                 'success'  => true,
-                'students' => $results,
+                'students' => $students,
             ]);
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Invalid request: ' . collect($e->errors())->flatten()->first(),
-            ], 422);
         } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error('getEligibleStudents error: ' . $e->getMessage());
+            Log::error('Error getting eligible students: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to retrieve students.',
+                'message' => 'Failed to get eligible students: ' . $e->getMessage(),
             ], 500);
         }
     }
 
-    /**
-     * Generate unique discount number.
-     */
-    private function generateDiscountNumber()
+    // ─────────────────────────────────────────────────────────────────
+    // GENERATE DISCOUNT NUMBER
+    // ─────────────────────────────────────────────────────────────────
+    private function generateDiscountNumber(): string
     {
-        $year = date('Y');
-        $lastDiscount = Discount::whereYear('created_at', $year)
-            ->orderBy('id', 'desc')
-            ->first();
-
-        $sequence = $lastDiscount ? intval(substr($lastDiscount->discount_no, -4)) + 1 : 1;
+        $year         = date('Y');
+        $lastDiscount = Discount::whereYear('created_at', $year)->orderBy('id', 'desc')->first();
+        $sequence     = $lastDiscount ? intval(substr($lastDiscount->discount_no, -4)) + 1 : 1;
 
         return 'DSC-' . $year . '-' . str_pad($sequence, 4, '0', STR_PAD_LEFT);
     }
