@@ -191,26 +191,32 @@ class SiblingGroupController extends Controller
         ]);
     }
 
-   public function edit($id)
-{
-    // Find the group
-    $group = SiblingGroup::findOrFail($id);
 
-    // Get student IDs from pivot table using direct query
+
+
+    public function edit($id)
+{
+    // Find the group using direct DB query first to verify
+    $group = DB::table('sibling_groups')->where('id', $id)->first();
+
+    if (!$group) {
+        abort(404, 'Group not found');
+    }
+
+    // Get student IDs from pivot table
     $studentIds = DB::table('sibling_group_students')
         ->where('sibling_group_id', $id)
         ->pluck('student_id')
         ->toArray();
 
     // Debug - log the IDs found
-    \Log::info('Edit - Group ID: ' . $id);
-    \Log::info('Edit - Student IDs found: ' . json_encode($studentIds));
+    \Log::info('=== EDIT METHOD DEBUG ===');
+    \Log::info('Group ID being edited: ' . $id);
+    \Log::info('Student IDs found in pivot: ' . json_encode($studentIds));
+    \Log::info('Number of students: ' . count($studentIds));
 
     // Get students
     $students = Student::whereIn('id', $studentIds)->get();
-
-    // Debug - log students count
-    \Log::info('Edit - Students count: ' . $students->count());
 
     // Format initial students for JavaScript
     $initialStudents = [];
@@ -243,18 +249,31 @@ class SiblingGroupController extends Controller
         ];
     }
 
+    \Log::info('Initial students formatted count: ' . count($initialStudents));
+    \Log::info('Initial students data: ' . json_encode($initialStudents));
+
+    // Create a proper Group object for the view
+    $groupObj = new \stdClass();
+    $groupObj->id = $group->id;
+    $groupObj->group_no = $group->group_no;
+    $groupObj->family_name = $group->family_name;
+    $groupObj->parent_phone = $group->parent_phone;
+    $groupObj->parent_email = $group->parent_email;
+    $groupObj->address = $group->address;
+    $groupObj->discount_type = $group->discount_type;
+    $groupObj->discount_value = $group->discount_value;
+    $groupObj->students = $students;
+
     $pagetitle = 'Edit Family Group - ' . $group->family_name;
 
-    // Debug - log initial students
-    \Log::info('Edit - Initial students formatted: ' . json_encode($initialStudents));
-
-    // Make sure to explicitly pass all variables
     return view('sibling.edit', [
-        'group' => $group,
+        'group' => $groupObj,
         'pagetitle' => $pagetitle,
         'initialStudents' => $initialStudents
     ]);
 }
+
+
 
     public function update(Request $request, $id)
     {
