@@ -203,8 +203,9 @@ class SiblingGroupController extends Controller
 
         $students = Student::whereIn('id', $studentIds)->get();
 
-        // Format initial students for JavaScript
+        // Format initial students for JavaScript - MUST be an array
         $initialStudents = [];
+
         foreach ($students as $student) {
             // Get picture
             $pictureUrl = null;
@@ -234,7 +235,17 @@ class SiblingGroupController extends Controller
         }
 
         $pagetitle = 'Edit Family Group - ' . $group->family_name;
-        return view('sibling.edit', compact('group', 'pagetitle', 'initialStudents'));
+
+        // DEBUG: Log to verify data is being prepared
+        \Log::info('Edit method - initialStudents count: ' . count($initialStudents));
+        \Log::info('Edit method - pagetitle: ' . $pagetitle);
+
+        // Make sure to explicitly pass all variables
+        return view('sibling.edit', [
+            'group' => $group,
+            'pagetitle' => $pagetitle,
+            'initialStudents' => $initialStudents
+        ]);
     }
 
     public function update(Request $request, $id)
