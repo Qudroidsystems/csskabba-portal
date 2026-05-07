@@ -729,6 +729,9 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
             Route::get('/income-statement', [FinancialReportController::class, 'incomeStatement'])->name('income-statement');
             Route::get('/trial-balance', [FinancialReportController::class, 'trialBalance'])->name('trial-balance');
             Route::get('/cash-flow', [FinancialReportController::class, 'cashFlow'])->name('cash-flow');
+            Route::get('/class', [FinancialReportController::class, 'classAnalysis'])->name('class');
+            Route::get('/class/export/{format}', [FinancialReportController::class, 'exportClassAnalysis'])->name('class.export');
+
         });
     });
 

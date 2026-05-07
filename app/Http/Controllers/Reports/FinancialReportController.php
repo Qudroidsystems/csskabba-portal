@@ -605,4 +605,231 @@ class FinancialReportController extends Controller
             'message' => 'Excel export will be implemented with Maatwebsite Excel package',
         ]);
     }
+
+    /**
+ * Class Analysis Report
+ */
+public function classAnalysis(Request $request)
+{
+    $pagetitle = 'Class Analysis Report';
+
+    // Get filter data for the view
+    $classes = DB::table('schoolclass')
+        ->leftJoin('schoolarm', 'schoolclass.arm', '=', 'schoolarm.id')
+        ->select(
+            'schoolclass.id',
+            'schoolclass.schoolclass',
+            DB::raw("COALESCE(schoolarm.arm, '') as arm"),
+            DB::raw("TRIM(CONCAT(schoolclass.schoolclass, ' ', COALESCE(schoolarm.arm, ''))) as display_name")
+        )
+        ->orderBy('schoolclass.schoolclass')
+        ->orderBy('schoolarm.arm')
+        ->get();
+
+    $terms = Schoolterm::orderBy('term')->get();
+    $sessions = Schoolsession::orderBy('session', 'desc')->get();
+
+    if ($request->ajax()) {
+        $classId = $request->get('class_id');
+        $termId = $request->get('term_id');
+        $sessionId = $request->get('session_id');
+
+        if (!$classId || !$termId || !$sessionId) {
+            return response()->json(['data' => [], 'recordsTotal' => 0, 'recordsFiltered' => 0]);
+        }
+
+        // Get students in the selected class, term, and session
+        $students = DB::table('studentRegistration')
+            ->join('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
+            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+            ->where('studentclass.schoolclassid', $classId)
+            ->where('studentclass.termid', $termId)
+            ->where('studentclass.sessionid', $sessionId)
+            ->select(
+                'studentRegistration.id as student_id',
+                'studentRegistration.firstname',
+                'studentRegistration.lastname',
+                'studentRegistration.othername',
+                'studentRegistration.admissionNo',
+                'studentpicture.picture as avatar'
+            )
+            ->get();
+
+        $data = [];
+        foreach ($students as $student) {
+            // Get payment summary for this student
+            $paymentBook = StudentBillPaymentBook::where('student_id', $student->student_id)
+                ->where('class_id', $classId)
+                ->where('term_id', $termId)
+                ->where('session_id', $sessionId)
+                ->first();
+
+            // Get total bills for this student in this class/term/session
+            $totalBilled = DB::table('school_bill_class_term_session')
+                ->where('class_id', $classId)
+                ->where('termid_id', $termId)
+                ->where('session_id', $sessionId)
+                ->join('school_bill', 'school_bill.id', '=', 'school_bill_class_term_session.bill_id')
+                ->sum('school_bill.bill_amount');
+
+            $totalPaid = $paymentBook ? $paymentBook->amount_paid : 0;
+            $totalSavings = $paymentBook ? (($paymentBook->scholarship_deduction ?? 0) + ($paymentBook->discount_deduction ?? 0)) : 0;
+            $outstanding = max(0, $totalBilled - $totalSavings - $totalPaid);
+
+            // Determine status
+            if ($outstanding <= 0 && $totalPaid > 0) {
+                $status = 'Fully Paid';
+            } elseif ($totalPaid > 0) {
+                $status = 'Partial';
+            } else {
+                $status = 'No Payment';
+            }
+
+            $studentName = trim($student->firstname . ' ' . $student->lastname);
+            if (!empty($student->othername)) {
+                $studentName .= ' (' . $student->othername . ')';
+            }
+
+            $data[] = [
+                'student_id' => $student->student_id,
+                'student_name' => $studentName,
+                'admission_no' => $student->admissionNo ?? 'N/A',
+                'total_billed' => number_format($totalBilled - $totalSavings, 2),
+                'total_paid' => number_format($totalPaid, 2),
+                'outstanding' => number_format($outstanding, 2),
+                'status' => $status,
+                'class_id' => $classId,
+                'term_id' => $termId,
+                'session_id' => $sessionId,
+            ];
+        }
+
+        // Sort by outstanding amount (highest first)
+        usort($data, function($a, $b) {
+            return floatval($b['outstanding']) - floatval($a['outstanding']);
+        });
+
+        return DataTables::of($data)
+            ->addIndexColumn()
+            ->make(true);
+    }
+
+    return view('reports.class-analysis', compact('pagetitle', 'classes', 'terms', 'sessions'));
+}
+
+/**
+ * Export Class Analysis Report
+ */
+public function exportClassAnalysis($format, Request $request)
+{
+    $classId = $request->get('class_id');
+    $termId = $request->get('term_id');
+    $sessionId = $request->get('session_id');
+
+    // Get class name
+    $class = DB::table('schoolclass')
+        ->leftJoin('schoolarm', 'schoolclass.arm', '=', 'schoolarm.id')
+        ->where('schoolclass.id', $classId)
+        ->select('schoolclass.schoolclass', 'schoolarm.arm')
+        ->first();
+
+    $term = Schoolterm::find($termId);
+    $session = Schoolsession::find($sessionId);
+
+    // Get students and their payment data
+    $students = DB::table('studentRegistration')
+        ->join('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
+        ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+        ->where('studentclass.schoolclassid', $classId)
+        ->where('studentclass.termid', $termId)
+        ->where('studentclass.sessionid', $sessionId)
+        ->select(
+            'studentRegistration.id as student_id',
+            'studentRegistration.firstname',
+            'studentRegistration.lastname',
+            'studentRegistration.othername',
+            'studentRegistration.admissionNo',
+            'studentpicture.picture as avatar'
+        )
+        ->get();
+
+    $reportData = [];
+    $totalBilledAll = 0;
+    $totalPaidAll = 0;
+    $totalOutstandingAll = 0;
+
+    foreach ($students as $student) {
+        $paymentBook = StudentBillPaymentBook::where('student_id', $student->student_id)
+            ->where('class_id', $classId)
+            ->where('term_id', $termId)
+            ->where('session_id', $sessionId)
+            ->first();
+
+        $totalBilled = DB::table('school_bill_class_term_session')
+            ->where('class_id', $classId)
+            ->where('termid_id', $termId)
+            ->where('session_id', $sessionId)
+            ->join('school_bill', 'school_bill.id', '=', 'school_bill_class_term_session.bill_id')
+            ->sum('school_bill.bill_amount');
+
+        $totalSavings = $paymentBook ? (($paymentBook->scholarship_deduction ?? 0) + ($paymentBook->discount_deduction ?? 0)) : 0;
+        $totalPaid = $paymentBook ? $paymentBook->amount_paid : 0;
+        $outstanding = max(0, $totalBilled - $totalSavings - $totalPaid);
+
+        $studentName = trim($student->firstname . ' ' . $student->lastname);
+        if (!empty($student->othername)) {
+            $studentName .= ' (' . $student->othername . ')';
+        }
+
+        $reportData[] = [
+            'student_name' => $studentName,
+            'admission_no' => $student->admissionNo ?? 'N/A',
+            'total_billed' => $totalBilled - $totalSavings,
+            'total_paid' => $totalPaid,
+            'outstanding' => $outstanding,
+        ];
+
+        $totalBilledAll += ($totalBilled - $totalSavings);
+        $totalPaidAll += $totalPaid;
+        $totalOutstandingAll += $outstanding;
+    }
+
+    $className = trim(($class->schoolclass ?? '') . ' ' . ($class->arm ?? ''));
+    $termName = $term->term ?? 'N/A';
+        $sessionName = $session->session ?? 'N/A';
+
+    $data = [
+        'reportData' => $reportData,
+        'className' => $className,
+        'termName' => $termName,
+        'sessionName' => $sessionName,
+        'totalBilled' => $totalBilledAll,
+        'totalPaid' => $totalPaidAll,
+        'totalOutstanding' => $totalOutstandingAll,
+        'generatedAt' => now()->format('d F, Y H:i:s'),
+    ];
+
+    if ($format === 'pdf') {
+        $pdf = PDF::loadView('reports.class-analysis-pdf', $data);
+        $filename = "class_analysis_{$className}_{$termName}_{$sessionName}.pdf";
+        return $pdf->download($filename);
+    }
+
+    // Excel export
+    return $this->exportClassAnalysisToExcel($data, $className, $termName, $sessionName);
+}
+
+/**
+ * Export to Excel helper
+ */
+private function exportClassAnalysisToExcel($data, $className, $termName, $sessionName)
+{
+    // This requires Maatwebsite Excel package
+    // For now, return JSON response
+    return response()->json([
+        'success' => true,
+        'message' => 'Excel export will be available with the Excel package installed',
+        'data' => $data
+    ]);
+}
 }
