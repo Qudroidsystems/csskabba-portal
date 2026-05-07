@@ -20,65 +20,137 @@ class AnalysisReportController extends Controller
         // $this->middleware('permission:Export analysis reports', ['only' => ['exportClassAnalysis', 'exportSchoolWideAnalysis']]);
     }
 
-    /**
+     /**
      * Class Analysis Report
      */
     public function classAnalysis(Request $request)
     {
         $pagetitle = 'Class Financial Analysis';
 
-        if ($request->ajax()) {
+        // Return the view for non-AJAX requests
+        if (!$request->ajax()) {
+            $classes = $this->analysisService->getAllClasses();
+            $terms = $this->analysisService->getAllTerms();
+            $sessions = $this->analysisService->getAllSessions();
+
+            return view('reports.analysis.class-analysis', compact('pagetitle', 'classes', 'terms', 'sessions'));
+        }
+
+        // Handle AJAX request for DataTables
+        try {
             $classId = $request->input('class_id');
             $termId = $request->input('term_id');
             $sessionId = $request->input('session_id');
 
+            // Log the request for debugging
+            Log::info('Class Analysis AJAX Request', [
+                'class_id' => $classId,
+                'term_id' => $termId,
+                'session_id' => $sessionId
+            ]);
+
             if (!$classId || !$termId || !$sessionId) {
-                return response()->json(['success' => false, 'message' => 'Please select class, term, and session'], 400);
+                return response()->json([
+                    'data' => [],
+                    'recordsTotal' => 0,
+                    'recordsFiltered' => 0
+                ]);
             }
 
-            $analysis = $this->analysisService->getClassAnalysis($classId, $termId, $sessionId);
+            // Get students using direct DB query
+            $students = DB::table('studentRegistration as s')
+                ->join('studentclass as sc', 'sc.studentId', '=', 's.id')
+                ->leftJoin('studentpicture as sp', 'sp.studentid', '=', 's.id')
+                ->where('sc.schoolclassid', $classId)
+                ->where('sc.termid', $termId)
+                ->where('sc.sessionid', $sessionId)
+                ->select(
+                    's.id as student_id',
+                    's.firstname',
+                    's.lastname',
+                    's.othername',
+                    's.admissionNo',
+                    'sp.picture as avatar'
+                )
+                ->get();
 
-            return DataTables::of(collect($analysis['students']))
-                ->addIndexColumn()
-                ->addColumn('student_name', fn($student) => $student['name'])
-                ->addColumn('admission_no', fn($student) => $student['admission_no'])
-                ->addColumn('total_billed', fn($student) => '₦' . number_format($student['total_billed'], 2))
-                ->addColumn('total_paid', fn($student) => '₦' . number_format($student['total_paid'], 2))
-                ->addColumn('outstanding', function($student) {
-                    $color = $student['total_outstanding'] > 0 ? 'text-danger' : 'text-success';
-                    return "<span class='{$color}'>₦" . number_format($student['total_outstanding'], 2) . "</span>";
-                })
-                ->addColumn('completion', function($student) {
-                    $percentage = $student['total_billed'] > 0 ? round(($student['total_paid'] / $student['total_billed']) * 100, 1) : 0;
-                    $color = $percentage >= 100 ? 'success' : ($percentage >= 70 ? 'warning' : 'danger');
-                    return "
-                        <div class='d-flex align-items-center gap-2'>
-                            <div class='progress flex-grow-1' style='height: 6px; width: 80px;'>
-                                <div class='progress-bar bg-{$color}' style='width: {$percentage}%'></div>
-                            </div>
-                            <span class='small'>{$percentage}%</span>
-                        </div>
-                    ";
-                })
-                ->addColumn('action', function($student) {
-                    return '<a href="' . route('reports.analysis.class-student-details', [
-                        'studentId' => $student['student_id'],
-                        'classId' => request()->input('class_id'),
-                        'termId' => request()->input('term_id'),
-                        'sessionId' => request()->input('session_id')
-                    ]) . '" class="btn btn-sm btn-info"><i class="ri-eye-line"></i> View</a>';
-                })
-                ->rawColumns(['outstanding', 'completion', 'action'])
-                ->make(true);
+            $data = [];
+            foreach ($students as $student) {
+                // Get payment book
+                $paymentBook = DB::table('student_bill_payment_book')
+                    ->where('student_id', $student->student_id)
+                    ->where('class_id', $classId)
+                    ->where('term_id', $termId)
+                    ->where('session_id', $sessionId)
+                    ->first();
+
+                // Get total bills
+                $totalBilled = (float) DB::table('school_bill_class_term_session as sbcts')
+                    ->where('sbcts.class_id', $classId)
+                    ->where('sbcts.termid_id', $termId)
+                    ->where('sbcts.session_id', $sessionId)
+                    ->join('school_bill as sb', 'sb.id', '=', 'sbcts.bill_id')
+                    ->sum('sb.bill_amount');
+
+                $scholarshipDeduction = $paymentBook ? (float)($paymentBook->scholarship_deduction ?? 0) : 0;
+                $discountDeduction = $paymentBook ? (float)($paymentBook->discount_deduction ?? 0) : 0;
+                $totalSavings = $scholarshipDeduction + $discountDeduction;
+                $adjustedBilled = max(0, $totalBilled - $totalSavings);
+                $totalPaid = $paymentBook ? (float)$paymentBook->amount_paid : 0;
+                $outstanding = max(0, $adjustedBilled - $totalPaid);
+                $collectionPercentage = $adjustedBilled > 0 ? round(($totalPaid / $adjustedBilled) * 100, 1) : 0;
+
+                $studentName = trim($student->firstname . ' ' . $student->lastname);
+                if (!empty($student->othername)) {
+                    $studentName .= ' (' . $student->othername . ')';
+                }
+
+                $data[] = [
+                    'student_id' => $student->student_id,
+                    'student_name' => $studentName,
+                    'admission_no' => $student->admissionNo ?? 'N/A',
+                    'total_billed' => number_format($adjustedBilled, 2),
+                    'total_paid' => number_format($totalPaid, 2),
+                    'outstanding' => number_format($outstanding, 2),
+                    'completion' => $collectionPercentage . '%',
+                    'collection_percentage' => $collectionPercentage,
+                    'class_id' => $classId,
+                    'term_id' => $termId,
+                    'session_id' => $sessionId,
+                ];
+            }
+
+            // Sort by outstanding amount (highest first)
+            usort($data, function($a, $b) {
+                return floatval($b['outstanding']) - floatval($a['outstanding']);
+            });
+
+            // Add row index
+            $dataWithIndex = [];
+            foreach ($data as $index => $row) {
+                $row['DT_RowIndex'] = $index + 1;
+                $dataWithIndex[] = $row;
+            }
+
+            return response()->json([
+                'data' => $dataWithIndex,
+                'recordsTotal' => count($data),
+                'recordsFiltered' => count($data)
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Class Analysis AJAX Error: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+
+            return response()->json([
+                'error' => true,
+                'message' => $e->getMessage(),
+                'data' => [],
+                'recordsTotal' => 0,
+                'recordsFiltered' => 0
+            ], 500);
         }
-
-        $classes = $this->analysisService->getAllClasses();
-        $terms = $this->analysisService->getAllTerms();
-        $sessions = $this->analysisService->getAllSessions();
-
-        return view('reports.analysis.class-analysis', compact('pagetitle', 'classes', 'terms', 'sessions'));
     }
-
     /**
      * School Wide Payment Analysis
      */

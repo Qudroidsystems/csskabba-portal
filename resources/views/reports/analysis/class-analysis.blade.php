@@ -161,7 +161,7 @@
                         <th class="text-end">Total Billed (₦)</th>
                         <th class="text-end">Total Paid (₦)</th>
                         <th class="text-end">Outstanding (₦)</th>
-                        <th width="120">Completion</th>
+                        <th width="100">Completion</th>
                         <th width="80">Action</th>
                     </tr>
                 </thead>
@@ -169,7 +169,7 @@
                     <tr class="text-center">
                         <td colspan="8" class="py-5 text-muted">
                             <i class="ri-inbox-line d-block mb-2 fs-1"></i>
-                            Select class, term, and session to view data
+                            Select class, term, and session then click Load Report
                         </td>
                     </tr>
                 </tbody>
@@ -188,22 +188,28 @@
 
 <script>
 var analysisTable;
-var currentClassId, currentTermId, currentSessionId;
+var currentFilters = {};
 
 $(document).ready(function() {
     initializeDataTable();
 
     $('#loadReportBtn').on('click', function() {
-        currentClassId = $('#class_id').val();
-        currentTermId = $('#term_id').val();
-        currentSessionId = $('#session_id').val();
+        var classId = $('#class_id').val();
+        var termId = $('#term_id').val();
+        var sessionId = $('#session_id').val();
 
-        if (!currentClassId || !currentTermId || !currentSessionId) {
+        if (!classId || !termId || !sessionId) {
             Swal.fire('Warning', 'Please select class, term, and session', 'warning');
             return;
         }
 
-        loadReport();
+        currentFilters = {
+            class_id: classId,
+            term_id: termId,
+            session_id: sessionId
+        };
+
+        loadReportData();
     });
 
     $('#resetBtn').on('click', function() {
@@ -220,84 +226,105 @@ $(document).ready(function() {
 function initializeDataTable() {
     analysisTable = $('#analysisTable').DataTable({
         processing: true,
-        serverSide: true,
+        serverSide: false, // We'll manually load data via AJAX
         pageLength: 25,
         searching: true,
         ordering: true,
         order: [[5, 'desc']],
-        ajax: {
-            url: '{{ route("reports.analysis.class") }}',
-            type: 'GET',
-            data: function(d) {
-                d.class_id = currentClassId;
-                d.term_id = currentTermId;
-                d.session_id = currentSessionId;
-            }
-        },
         columns: [
-            { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false, width: '50px' },
-            { data: 'student_name', name: 'student_name' },
-            { data: 'admission_no', name: 'admission_no' },
-            { data: 'total_billed', name: 'total_billed', className: 'text-end' },
-            { data: 'total_paid', name: 'total_paid', className: 'text-end' },
-            { data: 'outstanding', name: 'outstanding', className: 'text-end' },
-            { data: 'completion', name: 'completion', orderable: false },
-            {
-                data: 'action',
-                name: 'action',
-                orderable: false,
-                searchable: false,
-                className: 'text-center',
-                render: function(data, type, row) {
-                    return '<a href="/reports/analysis/student/' + row.student_id + '/' + currentClassId + '/' + currentTermId + '/' + currentSessionId + '" class="btn btn-sm btn-info" target="_blank"><i class="ri-eye-line"></i> View</a>';
-                }
-            }
+            { data: 'DT_RowIndex', orderable: false, searchable: false, width: '50px' },
+            { data: 'student_name' },
+            { data: 'admission_no' },
+            { data: 'total_billed', className: 'text-end' },
+            { data: 'total_paid', className: 'text-end' },
+            { data: 'outstanding', className: 'text-end' },
+            { data: 'completion', orderable: false },
+            { data: 'action', orderable: false, searchable: false, className: 'text-center' }
         ],
-        drawCallback: function(settings) {
-            var api = this.api();
-            var data = api.ajax.json();
-            if (data && data.data) {
-                updateStats(data);
-            }
-            $('#statsRow, #tableCard').show();
-        },
         language: {
-            emptyTable: '<div class="text-center py-5 text-muted">No data available</div>',
+            emptyTable: '<div class="text-center py-5 text-muted">No data available. Please select filters and click Load Report.</div>',
             processing: '<div class="text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-2">Loading...</p></div>'
         }
     });
 }
 
-function loadReport() {
-    analysisTable.ajax.reload();
+function loadReportData() {
+    // Show loading
+    analysisTable.clear().draw();
+    $('#statsRow, #tableCard').hide();
+
+    $.ajax({
+        url: '{{ route("reports.analysis.class") }}',
+        type: 'GET',
+        data: {
+            class_id: currentFilters.class_id,
+            term_id: currentFilters.term_id,
+            session_id: currentFilters.session_id,
+            _: Date.now() // Prevent caching
+        },
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        success: function(response) {
+            if (response.data && response.data.length > 0) {
+                // Add row index and action button to each row
+                var dataWithIndex = response.data.map(function(item, index) {
+                    return {
+                        ...item,
+                        DT_RowIndex: index + 1,
+                        action: '<a href="/reports/analysis/student/' + item.student_id + '/' + currentFilters.class_id + '/' + currentFilters.term_id + '/' + currentFilters.session_id + '" class="btn btn-sm btn-info" target="_blank"><i class="ri-eye-line"></i> View</a>'
+                    };
+                });
+
+                analysisTable.clear();
+                analysisTable.rows.add(dataWithIndex);
+                analysisTable.draw();
+
+                calculateAndDisplayStats(response.data);
+                $('#statsRow, #tableCard').show();
+            } else {
+                analysisTable.clear().draw();
+                Swal.fire('Info', 'No data found for the selected filters', 'info');
+                $('#statsRow, #tableCard').show();
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX Error:', xhr.responseText);
+            var errorMsg = 'Failed to load data. Please try again.';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMsg = xhr.responseJSON.message;
+            }
+            Swal.fire('Error', errorMsg, 'error');
+            analysisTable.clear().draw();
+        }
+    });
 }
 
-function updateStats(data) {
+function calculateAndDisplayStats(data) {
+    var totalStudents = data.length;
     var totalBilled = 0;
     var totalPaid = 0;
 
-    if (data.data) {
-        data.data.forEach(function(row) {
-            totalBilled += parseFloat(row.total_billed.replace(/[^0-9.-]/g, '')) || 0;
-            totalPaid += parseFloat(row.total_paid.replace(/[^0-9.-]/g, '')) || 0;
-        });
-    }
+    data.forEach(function(row) {
+        totalBilled += parseFloat(row.total_billed) || 0;
+        totalPaid += parseFloat(row.total_paid) || 0;
+    });
 
     var collectionRate = totalBilled > 0 ? ((totalPaid / totalBilled) * 100).toFixed(1) : 0;
 
-    $('#totalStudents').text(data.recordsTotal || 0);
+    $('#totalStudents').text(totalStudents);
     $('#totalBilled').text('₦' + totalBilled.toLocaleString());
     $('#totalPaid').text('₦' + totalPaid.toLocaleString());
     $('#collectionRate').text(collectionRate + '%');
 }
 
 function exportReport(format) {
-    if (!currentClassId || !currentTermId || !currentSessionId) {
+    if (!currentFilters.class_id || !currentFilters.term_id || !currentFilters.session_id) {
         Swal.fire('Warning', 'Please load report data first', 'warning');
         return;
     }
 
-    var url = '{{ route("reports.analysis.class.export") }}?class_id=' + currentClassId + '&term_id=' + currentTermId + '&session_id=' + currentSessionId + '&format=' + format;
+    var url = '{{ route("reports.analysis.class.export") }}?class_id=' + currentFilters.class_id + '&term_id=' + currentFilters.term_id + '&session_id=' + currentFilters.session_id + '&format=' + format;
     window.open(url, '_blank');
 }
 </script>
