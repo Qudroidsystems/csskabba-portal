@@ -20,137 +20,84 @@ class AnalysisReportController extends Controller
         // $this->middleware('permission:Export analysis reports', ['only' => ['exportClassAnalysis', 'exportSchoolWideAnalysis']]);
     }
 
-     /**
-     * Class Analysis Report
-     */
+
     public function classAnalysis(Request $request)
-    {
-        $pagetitle = 'Class Financial Analysis';
+{
+    $pagetitle = 'Class Financial Analysis';
 
-        // Return the view for non-AJAX requests
-        if (!$request->ajax()) {
-            $classes = $this->analysisService->getAllClasses();
-            $terms = $this->analysisService->getAllTerms();
-            $sessions = $this->analysisService->getAllSessions();
-
-            return view('reports.analysis.class-analysis', compact('pagetitle', 'classes', 'terms', 'sessions'));
-        }
-
-        // Handle AJAX request for DataTables
-        try {
-            $classId = $request->input('class_id');
-            $termId = $request->input('term_id');
-            $sessionId = $request->input('session_id');
-
-            // Log the request for debugging
-            Log::info('Class Analysis AJAX Request', [
-                'class_id' => $classId,
-                'term_id' => $termId,
-                'session_id' => $sessionId
-            ]);
-
-            if (!$classId || !$termId || !$sessionId) {
-                return response()->json([
-                    'data' => [],
-                    'recordsTotal' => 0,
-                    'recordsFiltered' => 0
-                ]);
-            }
-
-            // Get students using direct DB query
-            $students = DB::table('studentRegistration as s')
-                ->join('studentclass as sc', 'sc.studentId', '=', 's.id')
-                ->leftJoin('studentpicture as sp', 'sp.studentid', '=', 's.id')
-                ->where('sc.schoolclassid', $classId)
-                ->where('sc.termid', $termId)
-                ->where('sc.sessionid', $sessionId)
-                ->select(
-                    's.id as student_id',
-                    's.firstname',
-                    's.lastname',
-                    's.othername',
-                    's.admissionNo',
-                    'sp.picture as avatar'
-                )
-                ->get();
-
-            $data = [];
-            foreach ($students as $student) {
-                // Get payment book
-                $paymentBook = DB::table('student_bill_payment_book')
-                    ->where('student_id', $student->student_id)
-                    ->where('class_id', $classId)
-                    ->where('term_id', $termId)
-                    ->where('session_id', $sessionId)
-                    ->first();
-
-                // Get total bills
-                $totalBilled = (float) DB::table('school_bill_class_term_session as sbcts')
-                    ->where('sbcts.class_id', $classId)
-                    ->where('sbcts.termid_id', $termId)
-                    ->where('sbcts.session_id', $sessionId)
-                    ->join('school_bill as sb', 'sb.id', '=', 'sbcts.bill_id')
-                    ->sum('sb.bill_amount');
-
-                $scholarshipDeduction = $paymentBook ? (float)($paymentBook->scholarship_deduction ?? 0) : 0;
-                $discountDeduction = $paymentBook ? (float)($paymentBook->discount_deduction ?? 0) : 0;
-                $totalSavings = $scholarshipDeduction + $discountDeduction;
-                $adjustedBilled = max(0, $totalBilled - $totalSavings);
-                $totalPaid = $paymentBook ? (float)$paymentBook->amount_paid : 0;
-                $outstanding = max(0, $adjustedBilled - $totalPaid);
-                $collectionPercentage = $adjustedBilled > 0 ? round(($totalPaid / $adjustedBilled) * 100, 1) : 0;
-
-                $studentName = trim($student->firstname . ' ' . $student->lastname);
-                if (!empty($student->othername)) {
-                    $studentName .= ' (' . $student->othername . ')';
-                }
-
-                $data[] = [
-                    'student_id' => $student->student_id,
-                    'student_name' => $studentName,
-                    'admission_no' => $student->admissionNo ?? 'N/A',
-                    'total_billed' => number_format($adjustedBilled, 2),
-                    'total_paid' => number_format($totalPaid, 2),
-                    'outstanding' => number_format($outstanding, 2),
-                    'completion' => $collectionPercentage . '%',
-                    'collection_percentage' => $collectionPercentage,
-                    'class_id' => $classId,
-                    'term_id' => $termId,
-                    'session_id' => $sessionId,
-                ];
-            }
-
-            // Sort by outstanding amount (highest first)
-            usort($data, function($a, $b) {
-                return floatval($b['outstanding']) - floatval($a['outstanding']);
-            });
-
-            // Add row index
-            $dataWithIndex = [];
-            foreach ($data as $index => $row) {
-                $row['DT_RowIndex'] = $index + 1;
-                $dataWithIndex[] = $row;
-            }
-
-            return response()->json([
-                'data' => $dataWithIndex,
-                'recordsTotal' => count($data),
-                'recordsFiltered' => count($data)
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Class Analysis AJAX Error: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
-
-            return response()->json([
-                'error' => true,
-                'message' => $e->getMessage(),
-                'data' => [],
-                'recordsTotal' => 0,
-                'recordsFiltered' => 0
-            ], 500);
-        }
+    if (!$request->ajax()) {
+        $classes = $this->analysisService->getAllClasses();
+        $terms = $this->analysisService->getAllTerms();
+        $sessions = $this->analysisService->getAllSessions();
+        return view('reports.analysis.class-analysis', compact('pagetitle', 'classes', 'terms', 'sessions'));
     }
+
+    try {
+        $classId = $request->input('class_id');
+        $termId = $request->input('term_id');
+        $sessionId = $request->input('session_id');
+
+        if (!$classId || !$termId || !$sessionId) {
+            return response()->json(['data' => [], 'message' => 'Missing parameters']);
+        }
+
+        // Get students
+        $students = DB::table('studentRegistration as s')
+            ->join('studentclass as sc', 'sc.studentId', '=', 's.id')
+            ->leftJoin('studentpicture as sp', 'sp.studentid', '=', 's.id')
+            ->where('sc.schoolclassid', $classId)
+            ->where('sc.termid', $termId)
+            ->where('sc.sessionid', $sessionId)
+            ->select('s.id as student_id', 's.firstname', 's.lastname', 's.othername', 's.admissionNo')
+            ->get();
+
+        $data = [];
+        foreach ($students as $student) {
+            $paymentBook = DB::table('student_bill_payment_book')
+                ->where('student_id', $student->student_id)
+                ->where('class_id', $classId)
+                ->where('term_id', $termId)
+                ->where('session_id', $sessionId)
+                ->first();
+
+            $totalBilled = (float) DB::table('school_bill_class_term_session as sbcts')
+                ->where('sbcts.class_id', $classId)
+                ->where('sbcts.termid_id', $termId)
+                ->where('sbcts.session_id', $sessionId)
+                ->join('school_bill as sb', 'sb.id', '=', 'sbcts.bill_id')
+                ->sum('sb.bill_amount');
+
+            $totalSavings = $paymentBook ? (($paymentBook->scholarship_deduction ?? 0) + ($paymentBook->discount_deduction ?? 0)) : 0;
+            $adjustedBilled = max(0, $totalBilled - $totalSavings);
+            $totalPaid = $paymentBook ? (float)$paymentBook->amount_paid : 0;
+            $outstanding = max(0, $adjustedBilled - $totalPaid);
+            $percentage = $adjustedBilled > 0 ? round(($totalPaid / $adjustedBilled) * 100, 1) : 0;
+
+            $studentName = trim($student->firstname . ' ' . $student->lastname);
+            if (!empty($student->othername)) {
+                $studentName .= ' (' . $student->othername . ')';
+            }
+
+            $data[] = [
+                'student_id' => $student->student_id,
+                'student_name' => $studentName,
+                'admission_no' => $student->admissionNo ?? 'N/A',
+                'total_billed' => '₦' . number_format($adjustedBilled, 2),
+                'total_paid' => '₦' . number_format($totalPaid, 2),
+                'outstanding' => '₦' . number_format($outstanding, 2),
+                'completion' => $percentage . '%'
+            ];
+        }
+
+        return response()->json(['data' => $data]);
+
+    } catch (\Exception $e) {
+        Log::error('Class Analysis Error: ' . $e->getMessage());
+        return response()->json(['data' => [], 'error' => $e->getMessage()], 500);
+    }
+}
+
+
     /**
      * School Wide Payment Analysis
      */

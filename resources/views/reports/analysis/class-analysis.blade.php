@@ -146,7 +146,7 @@
         </div>
     </div>
 
-    <!-- Table Section -->
+    <!-- IMPORTANT: Table with EXACTLY 8 columns matching the data -->
     <div class="report-card" id="tableCard" style="display: none;">
         <div class="report-header">
             <h5 class="mb-0"><i class="ri-table-line me-2"></i>Student Payment Details</h5>
@@ -166,12 +166,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr class="text-center">
-                        <td colspan="8" class="py-5 text-muted">
-                            <i class="ri-inbox-line d-block mb-2 fs-1"></i>
-                            Select class, term, and session then click Load Report
-                        </td>
-                    </tr>
+                    <!-- Data will be loaded here -->
                 </tbody>
             </table>
         </div>
@@ -191,7 +186,27 @@ var analysisTable;
 var currentFilters = {};
 
 $(document).ready(function() {
-    initializeDataTable();
+    // Initialize DataTable with empty data first
+    analysisTable = $('#analysisTable').DataTable({
+        data: [],
+        columns: [
+            { data: 'DT_RowIndex', title: '#', orderable: false, searchable: false },
+            { data: 'student_name', title: 'Student Name' },
+            { data: 'admission_no', title: 'Admission No' },
+            { data: 'total_billed', title: 'Total Billed (₦)', className: 'text-end' },
+            { data: 'total_paid', title: 'Total Paid (₦)', className: 'text-end' },
+            { data: 'outstanding', title: 'Outstanding (₦)', className: 'text-end' },
+            { data: 'completion', title: 'Completion', orderable: false },
+            { data: 'action', title: 'Action', orderable: false, searchable: false, className: 'text-center' }
+        ],
+        pageLength: 25,
+        ordering: true,
+        order: [[5, 'desc']],
+        language: {
+            emptyTable: '<div class="text-center py-5 text-muted">No data available. Please select filters and click Load Report.</div>',
+            processing: '<div class="text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-2">Loading...</p></div>'
+        }
+    });
 
     $('#loadReportBtn').on('click', function() {
         var classId = $('#class_id').val();
@@ -217,36 +232,9 @@ $(document).ready(function() {
         $('#term_id').val('');
         $('#session_id').val('');
         $('#statsRow, #tableCard').hide();
-        if (analysisTable) {
-            analysisTable.clear().draw();
-        }
+        analysisTable.clear().draw();
     });
 });
-
-function initializeDataTable() {
-    analysisTable = $('#analysisTable').DataTable({
-        processing: true,
-        serverSide: false, // We'll manually load data via AJAX
-        pageLength: 25,
-        searching: true,
-        ordering: true,
-        order: [[5, 'desc']],
-        columns: [
-            { data: 'DT_RowIndex', orderable: false, searchable: false, width: '50px' },
-            { data: 'student_name' },
-            { data: 'admission_no' },
-            { data: 'total_billed', className: 'text-end' },
-            { data: 'total_paid', className: 'text-end' },
-            { data: 'outstanding', className: 'text-end' },
-            { data: 'completion', orderable: false },
-            { data: 'action', orderable: false, searchable: false, className: 'text-center' }
-        ],
-        language: {
-            emptyTable: '<div class="text-center py-5 text-muted">No data available. Please select filters and click Load Report.</div>',
-            processing: '<div class="text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-2">Loading...</p></div>'
-        }
-    });
-}
 
 function loadReportData() {
     // Show loading
@@ -260,24 +248,35 @@ function loadReportData() {
             class_id: currentFilters.class_id,
             term_id: currentFilters.term_id,
             session_id: currentFilters.session_id,
-            _: Date.now() // Prevent caching
+            _: Date.now()
         },
         headers: {
             'X-Requested-With': 'XMLHttpRequest'
         },
         success: function(response) {
+            console.log('Response:', response);
+
             if (response.data && response.data.length > 0) {
-                // Add row index and action button to each row
-                var dataWithIndex = response.data.map(function(item, index) {
-                    return {
-                        ...item,
-                        DT_RowIndex: index + 1,
+                // Prepare data with exactly matching columns
+                var tableData = [];
+                for (var i = 0; i < response.data.length; i++) {
+                    var item = response.data[i];
+                    var rowData = {
+                        DT_RowIndex: i + 1,
+                        student_name: item.student_name || 'N/A',
+                        admission_no: item.admission_no || 'N/A',
+                        total_billed: item.total_billed || '₦0.00',
+                        total_paid: item.total_paid || '₦0.00',
+                        outstanding: item.outstanding || '₦0.00',
+                        completion: item.completion || '0%',
                         action: '<a href="/reports/analysis/student/' + item.student_id + '/' + currentFilters.class_id + '/' + currentFilters.term_id + '/' + currentFilters.session_id + '" class="btn btn-sm btn-info" target="_blank"><i class="ri-eye-line"></i> View</a>'
                     };
-                });
+                    tableData.push(rowData);
+                }
 
+                // Clear and add new data
                 analysisTable.clear();
-                analysisTable.rows.add(dataWithIndex);
+                analysisTable.rows.add(tableData);
                 analysisTable.draw();
 
                 calculateAndDisplayStats(response.data);
@@ -305,10 +304,12 @@ function calculateAndDisplayStats(data) {
     var totalBilled = 0;
     var totalPaid = 0;
 
-    data.forEach(function(row) {
-        totalBilled += parseFloat(row.total_billed) || 0;
-        totalPaid += parseFloat(row.total_paid) || 0;
-    });
+    for (var i = 0; i < data.length; i++) {
+        var billed = parseFloat(String(data[i].total_billed).replace(/[^0-9.-]/g, '')) || 0;
+        var paid = parseFloat(String(data[i].total_paid).replace(/[^0-9.-]/g, '')) || 0;
+        totalBilled += billed;
+        totalPaid += paid;
+    }
 
     var collectionRate = totalBilled > 0 ? ((totalPaid / totalBilled) * 100).toFixed(1) : 0;
 
