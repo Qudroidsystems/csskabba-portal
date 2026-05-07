@@ -220,14 +220,7 @@
                         <th width="80">Action</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr class="text-center">
-                        <td colspan="8" class="py-5 text-muted">
-                            <i class="ri-inbox-line d-block mb-2" style="font-size: 2rem;"></i>
-                            Select class, term, and session to view data
-                        </td>
-                    </tr>
-                </tbody>
+                <tbody></tbody>
                 <tfoot class="table-light">
                     <tr>
                         <td colspan="3" class="fw-bold">Total</td>
@@ -255,7 +248,28 @@ var analysisTable;
 var currentFilters = {};
 
 $(document).ready(function() {
-    initializeDataTable();
+    // Initialize DataTable without AJAX initially
+    analysisTable = $('#analysisTable').DataTable({
+        processing: true,
+        serverSide: false, // Start with client-side, we'll reload with server-side when needed
+        pageLength: 25,
+        ordering: true,
+        order: [[5, 'desc']],
+        columns: [
+            { data: 'DT_RowIndex', orderable: false, searchable: false, width: '50px' },
+            { data: 'student_name', render: function(data) { return '<div class="fw-semibold">' + escapeHtml(data) + '</div>'; } },
+            { data: 'admission_no' },
+            { data: 'total_billed', className: 'text-end', render: function(data) { return '₦' + parseFloat(data || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 }); } },
+            { data: 'total_paid', className: 'text-end', render: function(data) { return '<span class="text-success">₦' + parseFloat(data || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 }) + '</span>'; } },
+            { data: 'outstanding', className: 'text-end', render: function(data) { var amount = parseFloat(data || 0); return amount > 0 ? '<span class="text-danger">₦' + amount.toLocaleString('en-NG', { minimumFractionDigits: 2 }) + '</span>' : '₦0.00'; } },
+            { data: 'status', orderable: false, render: function(data) { return getStatusBadge(data); } },
+            { data: 'action', orderable: false, searchable: false, className: 'text-center' }
+        ],
+        language: {
+            emptyTable: '<div class="text-center py-5 text-muted"><i class="ri-inbox-line d-block mb-2 fs-1"></i>No data available. Please select filters and click Load Report.</div>',
+            processing: '<div class="text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-2 mb-0">Loading data...</p></div>'
+        }
+    });
 
     $('#loadReportBtn').on('click', function() {
         var classId = $('#classSelect').val();
@@ -277,116 +291,78 @@ $(document).ready(function() {
     });
 });
 
-function initializeDataTable() {
-    analysisTable = $('#analysisTable').DataTable({
-        processing: true,
-        serverSide: true,
-        pageLength: 25,
-        ordering: true,
-        order: [[5, 'desc']],
-        columns: [
-            {
-                data: 'DT_RowIndex',
-                name: 'DT_RowIndex',
-                orderable: false,
-                searchable: false,
-                width: '50px'
-            },
-            {
-                data: 'student_name',
-                name: 'student_name',
-                render: function(data) {
-                    return '<div class="fw-semibold">' + escapeHtml(data) + '</div>';
-                }
-            },
-            { data: 'admission_no', name: 'admission_no' },
-            {
-                data: 'total_billed',
-                name: 'total_billed',
-                className: 'text-end',
-                render: function(data) {
-                    return '₦' + parseFloat(data || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 });
-                }
-            },
-            {
-                data: 'total_paid',
-                name: 'total_paid',
-                className: 'text-end',
-                render: function(data) {
-                    return '<span class="text-success">₦' + parseFloat(data || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 }) + '</span>';
-                }
-            },
-            {
-                data: 'outstanding',
-                name: 'outstanding',
-                className: 'text-end',
-                render: function(data) {
-                    var amount = parseFloat(data || 0);
-                    return amount > 0 ?
-                        '<span class="text-danger">₦' + amount.toLocaleString('en-NG', { minimumFractionDigits: 2 }) + '</span>' :
-                        '₦0.00';
-                }
-            },
-            {
-                data: 'status',
-                name: 'status',
-                orderable: false,
-                render: function(data) {
-                    if (data === 'Fully Paid') {
-                        return '<span class="completion-badge completion-high"><i class="ri-checkbox-circle-line me-1"></i>Fully Paid</span>';
-                    } else if (data === 'Partial') {
-                        return '<span class="completion-badge completion-medium"><i class="ri-time-line me-1"></i>Partial</span>';
-                    } else {
-                        return '<span class="completion-badge completion-low"><i class="ri-error-warning-line me-1"></i>No Payment</span>';
-                    }
-                }
-            },
-            {
-                data: 'action',
-                name: 'action',
-                orderable: false,
-                searchable: false,
-                className: 'text-center',
-                render: function(data, type, row) {
-                    return '<a href="/payment/details/' + row.student_id + '/' + row.class_id + '/' + row.term_id + '/' + row.session_id + '" class="btn btn-sm btn-outline-primary" target="_blank" title="View Payment Details"><i class="ri-eye-line"></i></a>';
-                }
-            }
-        ],
-        drawCallback: function() {
-            updateFooterTotals();
-        },
-        language: {
-            emptyTable: '<div class="text-center py-5 text-muted"><i class="ri-inbox-line d-block mb-2 fs-1"></i>No student payment data found for the selected filters</div>',
-            processing: '<div class="text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-2 mb-0">Loading data...</p></div>'
-        }
-    });
+function getStatusBadge(status) {
+    if (status === 'Fully Paid') {
+        return '<span class="completion-badge completion-high"><i class="ri-checkbox-circle-line me-1"></i>Fully Paid</span>';
+    } else if (status === 'Partial') {
+        return '<span class="completion-badge completion-medium"><i class="ri-time-line me-1"></i>Partial</span>';
+    } else {
+        return '<span class="completion-badge completion-low"><i class="ri-error-warning-line me-1"></i>No Payment</span>';
+    }
 }
 
 function loadReportData() {
-    var url = '{{ route("reports.analysis.class") }}';
+    // Show loading
+    analysisTable.clear().draw();
+    $('#statsRow, #summaryCard, #tableCard').hide();
 
-    analysisTable.ajax.url(url + '?class_id=' + currentFilters.class_id + '&term_id=' + currentFilters.term_id + '&session_id=' + currentFilters.session_id);
-    analysisTable.ajax.reload(function(json) {
-        if (json && (json.data || json.recordsTotal > 0)) {
-            updateStats(json);
-            $('#statsRow, #summaryCard, #tableCard').show();
-        } else {
-            $('#statsRow, #summaryCard').hide();
-            $('#tableCard').show();
+    $.ajax({
+        url: '{{ route("reports.analysis.class") }}',
+        type: 'GET',
+        data: {
+            class_id: currentFilters.class_id,
+            term_id: currentFilters.term_id,
+            session_id: currentFilters.session_id,
+            ajax: true
+        },
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        success: function(response) {
+            if (response && response.data) {
+                // Add row index
+                var dataWithIndex = response.data.map(function(item, index) {
+                    return {
+                        ...item,
+                        DT_RowIndex: index + 1,
+                        action: '<a href="/payment/details/' + item.student_id + '/' + item.class_id + '/' + item.term_id + '/' + item.session_id + '" class="btn btn-sm btn-outline-primary" target="_blank" title="View Payment Details"><i class="ri-eye-line"></i></a>'
+                    };
+                });
+
+                analysisTable.clear();
+                analysisTable.rows.add(dataWithIndex);
+                analysisTable.draw();
+
+                updateStats(response);
+                $('#statsRow, #summaryCard, #tableCard').show();
+                updateFooterTotals();
+            } else {
+                analysisTable.clear().draw();
+                Swal.fire('Info', 'No data found for the selected filters', 'info');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('AJAX Error:', xhr.responseText);
+            var errorMsg = 'Failed to load data. Please try again.';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMsg = xhr.responseJSON.message;
+            }
+            Swal.fire('Error', errorMsg, 'error');
+            analysisTable.clear().draw();
         }
     });
 }
 
-function updateStats(data) {
-    var totalStudents = data.recordsTotal || 0;
+function updateStats(response) {
+    var totalStudents = response.data ? response.data.length : 0;
     var totalBilled = 0;
     var totalPaid = 0;
     var totalOutstanding = 0;
     var fullyPaidCount = 0;
     var partialCount = 0;
 
-    if (data.data && data.data.length) {
-        data.data.forEach(function(row) {
+    if (response.data && response.data.length) {
+        response.data.forEach(function(row) {
             var billed = parseFloat(row.total_billed) || 0;
             var paid = parseFloat(row.total_paid) || 0;
             var outstanding = parseFloat(row.outstanding) || 0;
@@ -433,7 +409,7 @@ function updateFooterTotals() {
     var totalPaid = 0;
     var totalOutstanding = 0;
 
-    analysisTable.rows({ search: 'applied' }).every(function() {
+    analysisTable.rows().every(function() {
         var data = this.data();
         totalBilled += parseFloat(data.total_billed) || 0;
         totalPaid += parseFloat(data.total_paid) || 0;
