@@ -1,48 +1,51 @@
 @extends('layouts.master')
 
 @section('content')
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
 <style>
-.details-card {
+.report-card {
     background: white;
     border: 1px solid #e2e8f0;
     border-radius: 12px;
     margin-bottom: 24px;
     overflow: hidden;
 }
-.details-header {
+.report-header {
     background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
     color: white;
+    padding: 15px 20px;
+}
+.filter-bar {
+    background: #f8fafc;
     padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 24px;
 }
-.info-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 12px 0;
-    border-bottom: 1px solid #e2e8f0;
-}
-.info-label {
+.filter-label {
     font-weight: 600;
-    color: #64748b;
+    font-size: 13px;
+    margin-bottom: 8px;
+    color: #1e3a5f;
 }
-.info-value {
-    font-weight: 500;
-    color: #1e293b;
+.filter-label .required {
+    color: #dc2626;
 }
-.payment-table th {
-    background: #f8fafc;
-    padding: 12px;
-    font-weight: 600;
-}
-.payment-table td {
-    padding: 10px 12px;
-    vertical-align: middle;
-}
-.bill-item {
-    background: #f8fafc;
+.stats-card {
+    background: white;
     border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    padding: 15px;
-    margin-bottom: 15px;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+}
+.stats-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: #1e3a5f;
+}
+.stats-label {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 5px;
 }
 </style>
 
@@ -54,149 +57,121 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h4 class="fw-bold">Student Payment Details</h4>
-                    <p class="text-muted">View detailed payment information for {{ $studentName ?? ($student->firstname ?? '') . ' ' . ($student->lastname ?? '') }}</p>
+                    <h4 class="fw-bold">Class Financial Analysis</h4>
+                    <p class="text-muted">Analyze fee collection by class, term, and session</p>
                 </div>
                 <div>
-                    <a href="{{ url()->previous() }}" class="btn btn-outline-secondary">
-                        <i class="ri-arrow-left-line me-1"></i> Back
-                    </a>
+                    <button onclick="window.print()" class="btn btn-outline-secondary me-2">
+                        <i class="ri-printer-line"></i> Print
+                    </button>
+                    <button onclick="exportReport('excel')" class="btn btn-success me-2">
+                        <i class="ri-file-excel-line"></i> Excel
+                    </button>
+                    <button onclick="exportReport('pdf')" class="btn btn-danger">
+                        <i class="ri-file-pdf-line"></i> PDF
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Student Information -->
-    <div class="details-card">
-        <div class="details-header">
-            <h5 class="mb-0"><i class="ri-user-line me-2"></i>Student Information</h5>
+    <!-- Filter Section -->
+    <div class="filter-bar">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <div class="filter-label">Class <span class="required">*</span></div>
+                <select class="form-select" id="class_id">
+                    <option value="">-- Select Class --</option>
+                    @foreach($classes as $class)
+                        <option value="{{ $class->id }}">{{ $class->display_name }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-4">
+                <div class="filter-label">Term <span class="required">*</span></div>
+                <select class="form-select" id="term_id">
+                    <option value="">-- Select Term --</option>
+                    @foreach($terms as $term)
+                        <option value="{{ $term->id }}">{{ $term->term }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-md-4">
+                <div class="filter-label">Session <span class="required">*</span></div>
+                <select class="form-select" id="session_id">
+                    <option value="">-- Select Session --</option>
+                    @foreach($sessions as $session)
+                        <option value="{{ $session->id }}">{{ $session->session }}</option>
+                    @endforeach
+                </select>
+            </div>
         </div>
-        <div class="p-4">
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="info-row">
-                        <span class="info-label">Student Name:</span>
-                        <span class="info-value">{{ $studentName ?? ($student->firstname ?? '') . ' ' . ($student->lastname ?? '') }}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Admission No:</span>
-                        <span class="info-value">{{ $student->admissionNo ?? 'N/A' }}</span>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="info-row">
-                        <span class="info-label">Status:</span>
-                        <span class="info-value">{{ $student->student_status ?? 'Active' }}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Gender:</span>
-                        <span class="info-value">{{ $student->gender ?? 'N/A' }}</span>
-                    </div>
-                </div>
+        <div class="row mt-3">
+            <div class="col-12">
+                <button class="btn btn-primary" id="loadReportBtn">
+                    <i class="ri-search-line me-1"></i> Load Report
+                </button>
+                <button class="btn btn-secondary ms-2" id="resetBtn">
+                    <i class="ri-refresh-line me-1"></i> Reset
+                </button>
             </div>
         </div>
     </div>
 
-    <!-- Payment Summary -->
-    <div class="details-card">
-        <div class="details-header">
-            <h5 class="mb-0"><i class="ri-wallet-line me-2"></i>Payment Summary</h5>
+    <!-- Stats Cards -->
+    <div class="row g-3 mb-4" id="statsRow" style="display: none;">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-value" id="totalStudents">0</div>
+                <div class="stats-label">Total Students</div>
+            </div>
         </div>
-        <div class="p-4">
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="info-row">
-                        <span class="info-label">Total Billed:</span>
-                        <span class="info-value text-primary">₦{{ number_format($paymentBook->adjusted_amount ?? 0, 2) }}</span>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="info-row">
-                        <span class="info-label">Total Paid:</span>
-                        <span class="info-value text-success">₦{{ number_format($paymentBook->amount_paid ?? 0, 2) }}</span>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="info-row">
-                        <span class="info-label">Outstanding:</span>
-                        <span class="info-value text-danger">₦{{ number_format($paymentBook->amount_owed ?? 0, 2) }}</span>
-                    </div>
-                </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-value text-success" id="totalBilled">₦0</div>
+                <div class="stats-label">Total Billed</div>
             </div>
-            @if(($paymentBook->scholarship_deduction ?? 0) > 0 || ($paymentBook->discount_deduction ?? 0) > 0)
-            <div class="mt-3 p-3 bg-warning-subtle rounded">
-                <strong><i class="ri-gift-line me-1"></i> Savings Applied:</strong>
-                @if(($paymentBook->scholarship_deduction ?? 0) > 0)
-                    <span class="badge bg-warning ms-2">Scholarship: ₦{{ number_format($paymentBook->scholarship_deduction, 2) }}</span>
-                @endif
-                @if(($paymentBook->discount_deduction ?? 0) > 0)
-                    <span class="badge bg-info ms-2">Discount: ₦{{ number_format($paymentBook->discount_deduction, 2) }}</span>
-                @endif
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-value text-info" id="totalPaid">₦0</div>
+                <div class="stats-label">Total Paid</div>
             </div>
-            @endif
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-value text-warning" id="collectionRate">0%</div>
+                <div class="stats-label">Collection Rate</div>
+            </div>
         </div>
     </div>
 
-    <!-- Bills List -->
-    <div class="details-card">
-        <div class="details-header">
-            <h5 class="mb-0"><i class="ri-receipt-line me-2"></i>Fee Bills</h5>
-        </div>
-        <div class="p-4">
-            @forelse($bills as $bill)
-            <div class="bill-item">
-                <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                        <h6 class="mb-1">{{ $bill->title }}</h6>
-                        @if($bill->description)
-                            <p class="text-muted small mb-0">{{ $bill->description }}</p>
-                        @endif
-                    </div>
-                    <span class="badge bg-primary">₦{{ number_format($bill->bill_amount, 2) }}</span>
-                </div>
-            </div>
-            @empty
-            <p class="text-center text-muted py-4">No bills assigned for this term/session.</p>
-            @endforelse
-        </div>
-    </div>
-
-    <!-- Payment History -->
-    <div class="details-card">
-        <div class="details-header">
-            <h5 class="mb-0"><i class="ri-history-line me-2"></i>Payment History</h5>
+    <!-- Table Section -->
+    <div class="report-card" id="tableCard" style="display: none;">
+        <div class="report-header">
+            <h5 class="mb-0"><i class="ri-table-line me-2"></i>Student Payment Details</h5>
         </div>
         <div class="table-responsive">
-            <table class="table payment-table mb-0">
-                <thead>
+            <table class="table table-hover mb-0" id="analysisTable" style="width:100%">
+                <thead class="table-light">
                     <tr>
-                        <th>Date</th>
-                        <th>Amount Paid (₦)</th>
-                        <th>Balance (₦)</th>
-                        <th>Method</th>
-                        <th>Status</th>
-                        <th>Received By</th>
+                        <th width="50">#</th>
+                        <th>Student Name</th>
+                        <th>Admission No</th>
+                        <th class="text-end">Total Billed (₦)</th>
+                        <th class="text-end">Total Paid (₦)</th>
+                        <th class="text-end">Outstanding (₦)</th>
+                        <th width="120">Completion</th>
+                        <th width="80">Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($paymentRecords as $record)
-                    <tr>
-                        <td>{{ \Carbon\Carbon::parse($record->payment_date)->format('d M, Y') }}</td>
-                        <td class="text-success">₦{{ number_format($record->amount_paid, 2) }}</td>
-                        <td>₦{{ number_format($record->balance, 2) }}</td>
-                        <td>{{ $record->payment_method ?? 'N/A' }}</td>
-                        <td>
-                            <span class="badge bg-{{ $record->status == 'Completed' ? 'success' : 'warning' }}">
-                                {{ $record->status ?? 'Pending' }}
-                            </span>
+                    <tr class="text-center">
+                        <td colspan="8" class="py-5 text-muted">
+                            <i class="ri-inbox-line d-block mb-2 fs-1"></i>
+                            Select class, term, and session to view data
                         </td>
-                        <td>{{ $record->received_by ?? 'System' }}</td>
                     </tr>
-                    @empty
-                    <tr>
-                        <td colspan="6" class="text-center py-4 text-muted">No payment records found.</td>
-                    </tr>
-                    @endforelse
                 </tbody>
             </table>
         </div>
@@ -205,4 +180,125 @@
 </div>
 </div>
 </div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+var analysisTable;
+var currentClassId, currentTermId, currentSessionId;
+
+$(document).ready(function() {
+    initializeDataTable();
+
+    $('#loadReportBtn').on('click', function() {
+        currentClassId = $('#class_id').val();
+        currentTermId = $('#term_id').val();
+        currentSessionId = $('#session_id').val();
+
+        if (!currentClassId || !currentTermId || !currentSessionId) {
+            Swal.fire('Warning', 'Please select class, term, and session', 'warning');
+            return;
+        }
+
+        loadReport();
+    });
+
+    $('#resetBtn').on('click', function() {
+        $('#class_id').val('');
+        $('#term_id').val('');
+        $('#session_id').val('');
+        $('#statsRow, #tableCard').hide();
+        if (analysisTable) {
+            analysisTable.clear().draw();
+        }
+    });
+});
+
+function initializeDataTable() {
+    analysisTable = $('#analysisTable').DataTable({
+        processing: true,
+        serverSide: true,
+        pageLength: 25,
+        searching: true,
+        ordering: true,
+        order: [[5, 'desc']],
+        ajax: {
+            url: '{{ route("reports.analysis.class") }}',
+            type: 'GET',
+            data: function(d) {
+                d.class_id = currentClassId;
+                d.term_id = currentTermId;
+                d.session_id = currentSessionId;
+            }
+        },
+        columns: [
+            { data: 'DT_RowIndex', name: 'DT_RowIndex', orderable: false, searchable: false, width: '50px' },
+            { data: 'student_name', name: 'student_name' },
+            { data: 'admission_no', name: 'admission_no' },
+            { data: 'total_billed', name: 'total_billed', className: 'text-end' },
+            { data: 'total_paid', name: 'total_paid', className: 'text-end' },
+            { data: 'outstanding', name: 'outstanding', className: 'text-end' },
+            { data: 'completion', name: 'completion', orderable: false },
+            {
+                data: 'action',
+                name: 'action',
+                orderable: false,
+                searchable: false,
+                className: 'text-center',
+                render: function(data, type, row) {
+                    return '<a href="/reports/analysis/student/' + row.student_id + '/' + currentClassId + '/' + currentTermId + '/' + currentSessionId + '" class="btn btn-sm btn-info" target="_blank"><i class="ri-eye-line"></i> View</a>';
+                }
+            }
+        ],
+        drawCallback: function(settings) {
+            var api = this.api();
+            var data = api.ajax.json();
+            if (data && data.data) {
+                updateStats(data);
+            }
+            $('#statsRow, #tableCard').show();
+        },
+        language: {
+            emptyTable: '<div class="text-center py-5 text-muted">No data available</div>',
+            processing: '<div class="text-center py-4"><div class="spinner-border text-primary"></div><p class="mt-2">Loading...</p></div>'
+        }
+    });
+}
+
+function loadReport() {
+    analysisTable.ajax.reload();
+}
+
+function updateStats(data) {
+    var totalBilled = 0;
+    var totalPaid = 0;
+
+    if (data.data) {
+        data.data.forEach(function(row) {
+            totalBilled += parseFloat(row.total_billed.replace(/[^0-9.-]/g, '')) || 0;
+            totalPaid += parseFloat(row.total_paid.replace(/[^0-9.-]/g, '')) || 0;
+        });
+    }
+
+    var collectionRate = totalBilled > 0 ? ((totalPaid / totalBilled) * 100).toFixed(1) : 0;
+
+    $('#totalStudents').text(data.recordsTotal || 0);
+    $('#totalBilled').text('₦' + totalBilled.toLocaleString());
+    $('#totalPaid').text('₦' + totalPaid.toLocaleString());
+    $('#collectionRate').text(collectionRate + '%');
+}
+
+function exportReport(format) {
+    if (!currentClassId || !currentTermId || !currentSessionId) {
+        Swal.fire('Warning', 'Please load report data first', 'warning');
+        return;
+    }
+
+    var url = '{{ route("reports.analysis.class.export") }}?class_id=' + currentClassId + '&term_id=' + currentTermId + '&session_id=' + currentSessionId + '&format=' + format;
+    window.open(url, '_blank');
+}
+</script>
 @endsection
