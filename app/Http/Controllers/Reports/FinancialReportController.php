@@ -500,7 +500,7 @@ class FinancialReportController extends Controller
     }
 
 
- /**
+/**
  * Class Analysis Report
  */
 public function classAnalysis(Request $request)
@@ -521,8 +521,8 @@ public function classAnalysis(Request $request)
             ->orderBy('schoolarm.arm')
             ->get();
 
-        $terms = Schoolterm::orderBy('term')->get();
-        $sessions = Schoolsession::orderBy('session', 'desc')->get();
+        $terms = DB::table('schoolterm')->orderBy('term')->get();
+        $sessions = DB::table('schoolsession')->orderBy('session', 'desc')->get();
 
         return view('reports.class-analysis', compact('pagetitle', 'classes', 'terms', 'sessions'));
     }
@@ -541,7 +541,7 @@ public function classAnalysis(Request $request)
             ]);
         }
 
-        // Get students in the selected class, term, and session
+        // Get students in the selected class, term, and session using DIRECT DB QUERIES
         $students = DB::table('studentRegistration')
             ->join('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
             ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
@@ -560,7 +560,7 @@ public function classAnalysis(Request $request)
 
         $data = [];
         foreach ($students as $student) {
-            // Get payment summary for this student
+            // Get payment summary using DIRECT DB QUERY
             $paymentBook = DB::table('student_bill_payment_book')
                 ->where('student_id', $student->student_id)
                 ->where('class_id', $classId)
@@ -568,7 +568,7 @@ public function classAnalysis(Request $request)
                 ->where('session_id', $sessionId)
                 ->first();
 
-            // Get total bills for this class/term/session
+            // Get total bills using DIRECT DB QUERY
             $totalBilled = DB::table('school_bill_class_term_session')
                 ->where('class_id', $classId)
                 ->where('termid_id', $termId)
@@ -631,163 +631,167 @@ public function classAnalysis(Request $request)
     }
 }
 
-    /**
-     * Export Class Analysis Report
-     */
-    public function exportClassAnalysis($format, Request $request)
-    {
-        try {
-            $classId = $request->get('class_id');
-            $termId = $request->get('term_id');
-            $sessionId = $request->get('session_id');
 
-            if (!$classId || !$termId || !$sessionId) {
-                return redirect()->back()->with('error', 'Please select class, term, and session');
-            }
 
-            // Get class name
-            $class = DB::table('schoolclass')
-                ->leftJoin('schoolarm', 'schoolclass.arm', '=', 'schoolarm.id')
-                ->where('schoolclass.id', $classId)
-                ->select('schoolclass.schoolclass', 'schoolarm.arm')
+
+  /**
+ * Export Class Analysis Report
+ */
+public function exportClassAnalysis($format, Request $request)
+{
+    try {
+        $classId = $request->get('class_id');
+        $termId = $request->get('term_id');
+        $sessionId = $request->get('session_id');
+
+        if (!$classId || !$termId || !$sessionId) {
+            return redirect()->back()->with('error', 'Please select class, term, and session');
+        }
+
+        // Get class name using DIRECT DB QUERY
+        $class = DB::table('schoolclass')
+            ->leftJoin('schoolarm', 'schoolclass.arm', '=', 'schoolarm.id')
+            ->where('schoolclass.id', $classId)
+            ->select('schoolclass.schoolclass', 'schoolarm.arm')
+            ->first();
+
+        $term = DB::table('schoolterm')->where('id', $termId)->first();
+        $session = DB::table('schoolsession')->where('id', $sessionId)->first();
+
+        // Get students using DIRECT DB QUERY
+        $students = DB::table('studentRegistration')
+            ->join('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
+            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+            ->where('studentclass.schoolclassid', $classId)
+            ->where('studentclass.termid', $termId)
+            ->where('studentclass.sessionid', $sessionId)
+            ->select(
+                'studentRegistration.id as student_id',
+                'studentRegistration.firstname',
+                'studentRegistration.lastname',
+                'studentRegistration.othername',
+                'studentRegistration.admissionNo',
+                'studentpicture.picture as avatar'
+            )
+            ->get();
+
+        $reportData = [];
+        $totalBilledAll = 0;
+        $totalPaidAll = 0;
+        $totalOutstandingAll = 0;
+        $fullyPaidCount = 0;
+        $partialCount = 0;
+
+        foreach ($students as $student) {
+            $paymentBook = DB::table('student_bill_payment_book')
+                ->where('student_id', $student->student_id)
+                ->where('class_id', $classId)
+                ->where('term_id', $termId)
+                ->where('session_id', $sessionId)
                 ->first();
 
-            $term = Schoolterm::find($termId);
-            $session = Schoolsession::find($sessionId);
+            $totalBilled = DB::table('school_bill_class_term_session')
+                ->where('class_id', $classId)
+                ->where('termid_id', $termId)
+                ->where('session_id', $sessionId)
+                ->join('school_bill', 'school_bill.id', '=', 'school_bill_class_term_session.bill_id')
+                ->sum('school_bill.bill_amount');
 
-            // Get students and their payment data
-            $students = DB::table('studentRegistration')
-                ->join('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
-                ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-                ->where('studentclass.schoolclassid', $classId)
-                ->where('studentclass.termid', $termId)
-                ->where('studentclass.sessionid', $sessionId)
-                ->select(
-                    'studentRegistration.id as student_id',
-                    'studentRegistration.firstname',
-                    'studentRegistration.lastname',
-                    'studentRegistration.othername',
-                    'studentRegistration.admissionNo',
-                    'studentpicture.picture as avatar'
-                )
-                ->get();
+            $totalSavings = $paymentBook ? (($paymentBook->scholarship_deduction ?? 0) + ($paymentBook->discount_deduction ?? 0)) : 0;
+            $totalPaid = $paymentBook ? $paymentBook->amount_paid : 0;
+            $adjustedBilled = max(0, $totalBilled - $totalSavings);
+            $outstanding = max(0, $adjustedBilled - $totalPaid);
 
-            $reportData = [];
-            $totalBilledAll = 0;
-            $totalPaidAll = 0;
-            $totalOutstandingAll = 0;
-            $fullyPaidCount = 0;
-            $partialCount = 0;
-
-            foreach ($students as $student) {
-                $paymentBook = StudentBillPaymentBook::where('student_id', $student->student_id)
-                    ->where('class_id', $classId)
-                    ->where('term_id', $termId)
-                    ->where('session_id', $sessionId)
-                    ->first();
-
-                $totalBilled = DB::table('school_bill_class_term_session')
-                    ->where('class_id', $classId)
-                    ->where('termid_id', $termId)
-                    ->where('session_id', $sessionId)
-                    ->join('school_bill', 'school_bill.id', '=', 'school_bill_class_term_session.bill_id')
-                    ->sum('school_bill.bill_amount');
-
-                $totalSavings = $paymentBook ? (($paymentBook->scholarship_deduction ?? 0) + ($paymentBook->discount_deduction ?? 0)) : 0;
-                $totalPaid = $paymentBook ? $paymentBook->amount_paid : 0;
-                $adjustedBilled = max(0, $totalBilled - $totalSavings);
-                $outstanding = max(0, $adjustedBilled - $totalPaid);
-
-                $studentName = trim($student->firstname . ' ' . $student->lastname);
-                if (!empty($student->othername)) {
-                    $studentName .= ' (' . $student->othername . ')';
-                }
-
-                $reportData[] = [
-                    'student_name' => $studentName,
-                    'admission_no' => $student->admissionNo ?? 'N/A',
-                    'total_billed' => $adjustedBilled,
-                    'total_paid' => $totalPaid,
-                    'outstanding' => $outstanding,
-                ];
-
-                $totalBilledAll += $adjustedBilled;
-                $totalPaidAll += $totalPaid;
-                $totalOutstandingAll += $outstanding;
-
-                if ($outstanding <= 0 && $totalPaid > 0) {
-                    $fullyPaidCount++;
-                } elseif ($totalPaid > 0) {
-                    $partialCount++;
-                }
+            $studentName = trim($student->firstname . ' ' . $student->lastname);
+            if (!empty($student->othername)) {
+                $studentName .= ' (' . $student->othername . ')';
             }
 
-            $className = trim(($class->schoolclass ?? '') . ' ' . ($class->arm ?? ''));
-            $termName = $term->term ?? 'N/A';
-            $sessionName = $session->session ?? 'N/A';
-
-            $collectionRate = $totalBilledAll > 0 ? round(($totalPaidAll / $totalBilledAll) * 100, 2) : 0;
-
-            $data = [
-                'reportData' => $reportData,
-                'className' => $className,
-                'termName' => $termName,
-                'sessionName' => $sessionName,
-                'totalBilled' => $totalBilledAll,
-                'totalPaid' => $totalPaidAll,
-                'totalOutstanding' => $totalOutstandingAll,
-                'totalStudents' => count($reportData),
-                'fullyPaidCount' => $fullyPaidCount,
-                'partialCount' => $partialCount,
-                'collectionRate' => $collectionRate,
-                'generatedAt' => now()->format('d F, Y H:i:s'),
+            $reportData[] = [
+                'student_name' => $studentName,
+                'admission_no' => $student->admissionNo ?? 'N/A',
+                'total_billed' => $adjustedBilled,
+                'total_paid' => $totalPaid,
+                'outstanding' => $outstanding,
             ];
 
-            if ($format === 'pdf') {
-                $pdf = Pdf::loadView('reports.class-analysis-pdf', $data);
-                $filename = "class_analysis_" . str_replace(' ', '_', $className) . "_" . str_replace(' ', '_', $termName) . "_" . str_replace(' ', '_', $sessionName) . ".pdf";
-                return $pdf->download($filename);
+            $totalBilledAll += $adjustedBilled;
+            $totalPaidAll += $totalPaid;
+            $totalOutstandingAll += $outstanding;
+
+            if ($outstanding <= 0 && $totalPaid > 0) {
+                $fullyPaidCount++;
+            } elseif ($totalPaid > 0) {
+                $partialCount++;
             }
-
-            // Excel export - CSV format
-            $filename = "class_analysis_" . str_replace(' ', '_', $className) . "_" . str_replace(' ', '_', $termName) . "_" . str_replace(' ', '_', $sessionName) . ".csv";
-
-            $handle = fopen('php://output', 'w');
-
-            header('Content-Type: text/csv');
-            header('Content-Disposition: attachment; filename="' . $filename . '"');
-
-            fputcsv($handle, ['Student Name', 'Admission No', 'Total Billed (₦)', 'Total Paid (₦)', 'Outstanding (₦)']);
-
-            foreach ($data['reportData'] as $row) {
-                fputcsv($handle, [
-                    $row['student_name'],
-                    $row['admission_no'],
-                    number_format($row['total_billed'], 2),
-                    number_format($row['total_paid'], 2),
-                    number_format($row['outstanding'], 2),
-                ]);
-            }
-
-            fputcsv($handle, []);
-            fputcsv($handle, ['Summary', '', '', '', '']);
-            fputcsv($handle, ['Total Students:', $data['totalStudents'], '', '', '']);
-            fputcsv($handle, ['Total Billed:', '', '₦' . number_format($data['totalBilled'], 2), '', '']);
-            fputcsv($handle, ['Total Paid:', '', '₦' . number_format($data['totalPaid'], 2), '', '']);
-            fputcsv($handle, ['Total Outstanding:', '', '₦' . number_format($data['totalOutstanding'], 2), '', '']);
-            fputcsv($handle, ['Collection Rate:', '', $data['collectionRate'] . '%', '', '']);
-            fputcsv($handle, ['Fully Paid Students:', $data['fullyPaidCount'], '', '', '']);
-            fputcsv($handle, ['Partial Payment Students:', $data['partialCount'], '', '', '']);
-            fputcsv($handle, ['Generated:', $data['generatedAt'], '', '', '']);
-
-            fclose($handle);
-            exit;
-
-        } catch (\Exception $e) {
-            \Log::error('Export Error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Export failed: ' . $e->getMessage());
         }
+
+        $className = trim(($class->schoolclass ?? '') . ' ' . ($class->arm ?? ''));
+        $termName = $term->term ?? 'N/A';
+        $sessionName = $session->session ?? 'N/A';
+
+        $collectionRate = $totalBilledAll > 0 ? round(($totalPaidAll / $totalBilledAll) * 100, 2) : 0;
+
+        $data = [
+            'reportData' => $reportData,
+            'className' => $className,
+            'termName' => $termName,
+            'sessionName' => $sessionName,
+            'totalBilled' => $totalBilledAll,
+            'totalPaid' => $totalPaidAll,
+            'totalOutstanding' => $totalOutstandingAll,
+            'totalStudents' => count($reportData),
+            'fullyPaidCount' => $fullyPaidCount,
+            'partialCount' => $partialCount,
+            'collectionRate' => $collectionRate,
+            'generatedAt' => now()->format('d F, Y H:i:s'),
+        ];
+
+        if ($format === 'pdf') {
+            $pdf = Pdf::loadView('reports.class-analysis-pdf', $data);
+            $filename = "class_analysis_" . str_replace(' ', '_', $className) . "_" . str_replace(' ', '_', $termName) . "_" . str_replace(' ', '_', $sessionName) . ".pdf";
+            return $pdf->download($filename);
+        }
+
+        // Excel export - CSV format
+        $filename = "class_analysis_" . str_replace(' ', '_', $className) . "_" . str_replace(' ', '_', $termName) . "_" . str_replace(' ', '_', $sessionName) . ".csv";
+
+        $handle = fopen('php://output', 'w');
+
+        header('Content-Type: text/csv');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+        fputcsv($handle, ['Student Name', 'Admission No', 'Total Billed (₦)', 'Total Paid (₦)', 'Outstanding (₦)']);
+
+        foreach ($data['reportData'] as $row) {
+            fputcsv($handle, [
+                $row['student_name'],
+                $row['admission_no'],
+                number_format($row['total_billed'], 2),
+                number_format($row['total_paid'], 2),
+                number_format($row['outstanding'], 2),
+            ]);
+        }
+
+        fputcsv($handle, []);
+        fputcsv($handle, ['Summary', '', '', '', '']);
+        fputcsv($handle, ['Total Students:', $data['totalStudents'], '', '', '']);
+        fputcsv($handle, ['Total Billed:', '', '₦' . number_format($data['totalBilled'], 2), '', '']);
+        fputcsv($handle, ['Total Paid:', '', '₦' . number_format($data['totalPaid'], 2), '', '']);
+        fputcsv($handle, ['Total Outstanding:', '', '₦' . number_format($data['totalOutstanding'], 2), '', '']);
+        fputcsv($handle, ['Collection Rate:', '', $data['collectionRate'] . '%', '', '']);
+        fputcsv($handle, ['Fully Paid Students:', $data['fullyPaidCount'], '', '', '']);
+        fputcsv($handle, ['Partial Payment Students:', $data['partialCount'], '', '', '']);
+        fputcsv($handle, ['Generated:', $data['generatedAt'], '', '', '']);
+
+        fclose($handle);
+        exit;
+
+    } catch (\Exception $e) {
+        \Log::error('Export Error: ' . $e->getMessage());
+        return redirect()->back()->with('error', 'Export failed: ' . $e->getMessage());
     }
+}
 
     /**
      * Export report
