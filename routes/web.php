@@ -656,65 +656,21 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
 
 
 
-    // // ============================================
-    // // LEGACY PAYMENT ROUTES (Backward Compatibility)
-    // // ============================================
-    // Route::prefix('schoolpayment')->name('schoolpayment.')->group(function () {
-    //     Route::get('/', [SchoolPaymentController::class, 'index'])->name('index');
-    //     Route::get('/term-session/{id}', [SchoolPaymentController::class, 'termSession'])->name('termsession');
-    //     Route::get('/termsessionpayments', [SchoolPaymentController::class, 'termsessionpayments'])->name('termsessionpayments');
-    //     Route::get('/get-payment-details', [SchoolPaymentController::class, 'getPaymentDetailsAjax'])->name('getPaymentDetailsAjax');
-    //     Route::post('/store', [SchoolPaymentController::class, 'store'])->name('store');
-    //     Route::post('/bulk-store', [SchoolPaymentController::class, 'bulkStore'])->name('bulk-store');
-    //     Route::post('/delete/{recordId}', [SchoolPaymentController::class, 'deletestudentpayment'])->name('deletestudentpayment');
-    //     Route::get('/invoice/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'invoice'])->name('invoice');
-    //     Route::get('/statement/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'statement'])->name('statement');
-    // });
-
-
-    // Payment Routes
-Route::prefix('payment')->name('payment.')->group(function () {
-    // Main payment page (student list)
-    Route::get('/', [SchoolPaymentController::class, 'index'])->name('index');
-
-    // Term/Session selection page
-    Route::get('/term-session/{id}', [SchoolPaymentController::class, 'termSession'])->name('termsession');
-
-    // Payment details page (called from debtors list or after term/session selection)
-    Route::get('/details/{studentId}/{classId}/{termId}/{sessionId}', [SchoolPaymentController::class, 'showPaymentDetails'])->name('details');
-
-    // AJAX endpoints
-    Route::get('/get-payment-details', [SchoolPaymentController::class, 'getPaymentDetailsAjax'])->name('getPaymentDetailsAjax');
-    Route::post('/store', [SchoolPaymentController::class, 'store'])->name('store');
-    Route::post('/bulk-store', [SchoolPaymentController::class, 'bulkStore'])->name('bulk-store');
-    Route::post('/delete/{recordId}', [SchoolPaymentController::class, 'deletePaymentRecord'])->name('delete');
-
-    // Invoice and Statement
-    Route::get('/invoice/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'invoice'])->name('invoice');
-    Route::get('/statement/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'statement'])->name('statement');
-});
-
-// Legacy routes (backward compatibility)
-Route::prefix('schoolpayment')->name('schoolpayment.')->group(function () {
-    Route::get('/', [SchoolPaymentController::class, 'index'])->name('index');
-    Route::get('/term-session/{id}', [SchoolPaymentController::class, 'termSession'])->name('termsession');
-    Route::get('/termsessionpayments', [SchoolPaymentController::class, 'termsessionpayments'])->name('termsessionpayments');
-    Route::get('/get-payment-details', [SchoolPaymentController::class, 'getPaymentDetailsAjax'])->name('getPaymentDetailsAjax');
-    Route::post('/store', [SchoolPaymentController::class, 'store'])->name('store');
-    Route::post('/bulk-store', [SchoolPaymentController::class, 'bulkStore'])->name('bulk-store');
-    Route::post('/delete/{recordId}', [SchoolPaymentController::class, 'deletePaymentRecord'])->name('deletestudentpayment');
-    Route::get('/invoice/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'invoice'])->name('invoice');
-    Route::get('/statement/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'statement'])->name('statement');
-});
-
-// Financial Reports Routes
-Route::prefix('reports/financial')->name('reports.financial.')->group(function () {
-    Route::get('/debtors', [FinancialReportController::class, 'debtorsList'])->name('debtors');
-    Route::get('/debtors/export', [FinancialReportController::class, 'exportDebtors'])->name('export');
-});
-
-
-
+    // ============================================
+    // LEGACY PAYMENT ROUTES (Backward Compatibility)
+    // ============================================
+    Route::prefix('schoolpayment')->name('schoolpayment.')->group(function () {
+        Route::get('/', [SchoolPaymentController::class, 'index'])->name('index');
+        Route::get('/term-session/{id}', [SchoolPaymentController::class, 'termSession'])->name('termsession');
+        Route::get('/termsessionpayments', [SchoolPaymentController::class, 'termsessionpayments'])->name('termsessionpayments');
+        Route::get('/get-payment-details', [SchoolPaymentController::class, 'getPaymentDetailsAjax'])->name('getPaymentDetailsAjax');
+        Route::post('/store', [SchoolPaymentController::class, 'store'])->name('store');
+        Route::post('/bulk-store', [SchoolPaymentController::class, 'bulkStore'])->name('bulk-store');
+        Route::post('/delete/{recordId}', [SchoolPaymentController::class, 'deletestudentpayment'])->name('deletestudentpayment');
+        Route::get('/invoice/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'invoice'])->name('invoice');
+        Route::get('/statement/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'statement'])->name('statement');
+    });
+    
 
 
     // ============================================
@@ -847,14 +803,14 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
     Route::get('/schoolbilltermsession/{id}/related', 'App\Http\Controllers\SchoolBillTermSessionController@getRelated')->name('schoolbilltermsession.related');
 
 
-    // Route::get('/schoolpayment', [SchoolPaymentController::class, 'index'])->name('schoolpayment.index');
-    // Route::get('/schoolpayment/term-session/{id}', [SchoolPaymentController::class, 'termSession'])->name('schoolpayment.termsession');
-    // Route::get('termsessionpayments', [SchoolPaymentController::class, 'termsessionpayments'])->name('schoolpayment.termsessionpayments');
-    // Route::get('/schoolpayment/term-session-payments', [SchoolPaymentController::class, 'termSessionPayments'])->name('schoolpayment.termsessionpayments');
-    // Route::post('/schoolpayment/store', [SchoolPaymentController::class, 'store'])->name('schoolpayment.store');
-    // Route::post('/schoolpayment/delete/{recordId}', [SchoolPaymentController::class, 'deletestudentpayment'])->name('schoolpayment.deletestudentpayment');
-    // Route::get('/schoolpayment/invoice/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'invoice'])->name('schoolpayment.invoice');
-    // Route::get('/schoolpayment/statement/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'statement'])->name('schoolpayment.statement');
+    Route::get('/schoolpayment', [SchoolPaymentController::class, 'index'])->name('schoolpayment.index');
+    Route::get('/schoolpayment/term-session/{id}', [SchoolPaymentController::class, 'termSession'])->name('schoolpayment.termsession');
+    Route::get('termsessionpayments', [SchoolPaymentController::class, 'termsessionpayments'])->name('schoolpayment.termsessionpayments');
+    Route::get('/schoolpayment/term-session-payments', [SchoolPaymentController::class, 'termSessionPayments'])->name('schoolpayment.termsessionpayments');
+    Route::post('/schoolpayment/store', [SchoolPaymentController::class, 'store'])->name('schoolpayment.store');
+    Route::post('/schoolpayment/delete/{recordId}', [SchoolPaymentController::class, 'deletestudentpayment'])->name('schoolpayment.deletestudentpayment');
+    Route::get('/schoolpayment/invoice/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'invoice'])->name('schoolpayment.invoice');
+    Route::get('/schoolpayment/statement/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'statement'])->name('schoolpayment.statement');
 
       //analysis...
     Route::resource('analysis', AnalysisController::class);
