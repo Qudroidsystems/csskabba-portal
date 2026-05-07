@@ -613,6 +613,7 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
         Route::get('/status/{studentId}/{classId}/{termId}/{sessionId}', [EnhancedSchoolPaymentController::class, 'getPaymentStatus'])->name('status');
         Route::get('/savings/{studentId}', [EnhancedSchoolPaymentController::class, 'getSavingsSummary'])->name('savings');
         Route::get('/history', [EnhancedSchoolPaymentController::class, 'getPaymentHistory'])->name('history');
+        Route::get('/details/ajax', [EnhancedSchoolPaymentController::class, 'getPaymentStatus'])->name('details.ajax');
     });
 
     // ============================================
