@@ -123,66 +123,79 @@ class AnalysisReportController extends Controller
         return view('reports.analysis.scholarship-impact', compact('pagetitle', 'terms', 'sessions'));
     }
 
-    /**
-     * Student Payment Details (from analysis view)
-     */
-    public function studentPaymentDetails($studentId, $classId, $termId, $sessionId)
-    {
-        $pagetitle = 'Student Payment Details';
+   /**
+ * Student Payment Details (from analysis view)
+ */
+public function studentPaymentDetails($studentId, $classId, $termId, $sessionId)
+{
+    $pagetitle = 'Student Payment Details';
 
-        // Get student details
-        $student = DB::table('studentRegistration as s')
-            ->leftJoin('studentpicture as sp', 'sp.studentid', '=', 's.id')
-            ->where('s.id', $studentId)
-            ->select('s.*', 'sp.picture as avatar')
-            ->first();
+    // Get student details
+    $student = DB::table('studentRegistration as s')
+        ->leftJoin('studentpicture as sp', 'sp.studentid', '=', 's.id')
+        ->where('s.id', $studentId)
+        ->select('s.*', 'sp.picture as avatar')
+        ->first();
 
-        // Get payment book
-        $paymentBook = DB::table('student_bill_payment_book')
-            ->where('student_id', $studentId)
-            ->where('class_id', $classId)
-            ->where('term_id', $termId)
-            ->where('session_id', $sessionId)
-            ->first();
-
-        // Get bills
-        $bills = DB::table('school_bill_class_term_session as sbcts')
-            ->where('sbcts.class_id', $classId)
-            ->where('sbcts.termid_id', $termId)
-            ->where('sbcts.session_id', $sessionId)
-            ->join('school_bill as sb', 'sb.id', '=', 'sbcts.bill_id')
-            ->select('sb.*')
-            ->get();
-
-        // Get payment records
-        $paymentRecords = DB::table('student_bill_payment as sbp')
-            ->join('student_bill_payment_record as sbpr', 'sbpr.student_bill_payment_id', '=', 'sbp.id')
-            ->leftJoin('users as u', 'u.id', '=', 'sbp.generated_by')
-            ->where('sbp.student_id', $studentId)
-            ->where('sbp.class_id', $classId)
-            ->where('sbp.termid_id', $termId)
-            ->where('sbp.session_id', $sessionId)
-            ->select(
-                'sbp.created_at as payment_date',
-                'sbp.payment_method',
-                'sbp.status',
-                'sbpr.amount_paid',
-                'sbpr.amount_owed as balance',
-                DB::raw("COALESCE(u.name, 'System') as received_by")
-            )
-            ->orderBy('sbpr.created_at', 'desc')
-            ->get();
-
-        $studentName = trim($student->firstname . ' ' . $student->lastname);
-        if (!empty($student->othername)) {
-            $studentName .= ' (' . $student->othername . ')';
-        }
-
-        return view('reports.analysis.student-payment-details', compact(
-            'pagetitle', 'student', 'studentName', 'paymentBook', 'bills', 'paymentRecords',
-            'studentId', 'classId', 'termId', 'sessionId'
-        ));
+    if (!$student) {
+        abort(404, 'Student not found');
     }
+
+    // Build student name
+    $studentName = trim($student->firstname . ' ' . $student->lastname);
+    if (!empty($student->othername)) {
+        $studentName .= ' (' . $student->othername . ')';
+    }
+
+    // Get payment book
+    $paymentBook = DB::table('student_bill_payment_book')
+        ->where('student_id', $studentId)
+        ->where('class_id', $classId)
+        ->where('term_id', $termId)
+        ->where('session_id', $sessionId)
+        ->first();
+
+    // Get bills
+    $bills = DB::table('school_bill_class_term_session as sbcts')
+        ->where('sbcts.class_id', $classId)
+        ->where('sbcts.termid_id', $termId)
+        ->where('sbcts.session_id', $sessionId)
+        ->join('school_bill as sb', 'sb.id', '=', 'sbcts.bill_id')
+        ->select('sb.*')
+        ->get();
+
+    // Get payment records
+    $paymentRecords = DB::table('student_bill_payment as sbp')
+        ->join('student_bill_payment_record as sbpr', 'sbpr.student_bill_payment_id', '=', 'sbp.id')
+        ->leftJoin('users as u', 'u.id', '=', 'sbp.generated_by')
+        ->where('sbp.student_id', $studentId)
+        ->where('sbp.class_id', $classId)
+        ->where('sbp.termid_id', $termId)
+        ->where('sbp.session_id', $sessionId)
+        ->select(
+            'sbp.created_at as payment_date',
+            'sbp.payment_method',
+            'sbp.status',
+            'sbpr.amount_paid',
+            'sbpr.amount_owed as balance',
+            DB::raw("COALESCE(u.name, 'System') as received_by")
+        )
+        ->orderBy('sbpr.created_at', 'desc')
+        ->get();
+
+    return view('reports.analysis.student-payment-details', compact(
+        'pagetitle',
+        'student',
+        'studentName',
+        'paymentBook',
+        'bills',
+        'paymentRecords',
+        'studentId',
+        'classId',
+        'termId',
+        'sessionId'
+    ));
+}
 
     /**
      * Export Class Analysis

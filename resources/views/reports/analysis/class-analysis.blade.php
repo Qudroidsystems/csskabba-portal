@@ -55,7 +55,7 @@
             <div class="d-flex justify-content-between align-items-center">
                 <div>
                     <h4 class="fw-bold">Student Payment Details</h4>
-                    <p class="text-muted">View detailed payment information for {{ $studentName }}</p>
+                    <p class="text-muted">View detailed payment information for {{ $studentName ?? ($student->firstname ?? '') . ' ' . ($student->lastname ?? '') }}</p>
                 </div>
                 <div>
                     <a href="{{ url()->previous() }}" class="btn btn-outline-secondary">
@@ -76,7 +76,7 @@
                 <div class="col-md-6">
                     <div class="info-row">
                         <span class="info-label">Student Name:</span>
-                        <span class="info-value">{{ $studentName }}</span>
+                        <span class="info-value">{{ $studentName ?? ($student->firstname ?? '') . ' ' . ($student->lastname ?? '') }}</span>
                     </div>
                     <div class="info-row">
                         <span class="info-label">Admission No:</span>
