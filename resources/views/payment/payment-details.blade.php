@@ -3,6 +3,7 @@
 
 @section('content')
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.0.0/fonts/remixicon.css">
 
 <style>
 /* ── Design tokens ─────────────────────────────────────── */
@@ -517,7 +518,7 @@
 
             {{-- Bulk pay strip --}}
             <div class="bulk-strip" id="bulkPayStrip" style="display:none">
-                <p>Pay all outstanding bills in one transaction</p>
+                <p>Pay all outstanding bills in one transaction — <strong id="bulkTotalAmount">₦0.00</strong> total</p>
                 <button class="btn-bulk-pay" id="openBulkPayBtn">
                     <i class="ri-stack-line"></i> Bulk Pay
                 </button>
@@ -627,7 +628,7 @@
                         <option value="Cheque">Cheque</option>
                     </select>
                 </div>
-                <button class="btn-submit-pay" id="submitPayBtn" onclick="submitPayment()">
+                <button class="btn-submit-pay" id="submitPayBtn">
                     <i class="ri-save-line"></i> Record Payment
                 </button>
             </div>
@@ -661,7 +662,7 @@
                         <option value="Cheque">Cheque</option>
                     </select>
                 </div>
-                <button class="btn-submit-pay" id="submitBulkPayBtn" onclick="submitBulkPayment()">
+                <button class="btn-submit-pay" id="submitBulkPayBtn">
                     <i class="ri-save-line"></i> Record Bulk Payment
                 </button>
             </div>
@@ -685,22 +686,22 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-/* ── Route URL injected from Blade so JS never hardcodes paths ── */
-const PAYMENT_DETAILS_AJAX_URL = '{{ route("payment.details.ajax") }}';
+/* ── Route URL from Blade ── */
+const PAYMENT_DETAILS_AJAX_URL = '{{ route("payment.getPaymentDetailsAjax") }}';
 
-/* ── Route params from URL segments ──────────────────────────── */
-const studentId = {{ request()->route('studentId') ?? request('studentId') ?? 0 }};
-const classId   = {{ request()->route('classId')   ?? request('classId')   ?? 0 }};
-const termId    = {{ request()->route('termId')    ?? request('termId')    ?? 0 }};
-const sessionId = {{ request()->route('sessionId') ?? request('sessionId') ?? 0 }};
+/* ── Route params from URL segments ── */
+const studentId = {{ $studentId ?? 0 }};
+const classId   = {{ $classId ?? 0 }};
+const termId    = {{ $termId ?? 0 }};
+const sessionId = {{ $sessionId ?? 0 }};
 const CSRF      = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
-/* ── State ────────────────────────────────────────────── */
+/* ── State ── */
 let paymentData   = null;
-let activeBillId  = null;
 let activeBill    = null;
+let selectedBillsMap = {};
 
-/* ── Helpers ──────────────────────────────────────────── */
+/* ── Helpers ── */
 function fmt(n) {
     const num = parseFloat(String(n ?? 0).replace(/,/g, '')) || 0;
     return num.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -708,33 +709,13 @@ function fmt(n) {
 function naira(n) { return '₦' + fmt(n); }
 
 function getInitials(name) {
-    return (name || '').split(' ').slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || 'ST';
+    if (!name) return 'ST';
+    return name.split(' ').slice(0, 2).map(w => w[0] || '').join('').toUpperCase() || 'ST';
 }
 
-function showZoomModal(imageUrl, name, details) {
-    document.getElementById('zoomedName').textContent    = name || '';
-    document.getElementById('zoomedDetails').innerHTML  = details || '';
-    const imgEl = document.getElementById('zoomedImage');
-
-    if (imageUrl && imageUrl !== '' && imageUrl !== 'null') {
-        imgEl.src = imageUrl;
-        imgEl.style.display = 'block';
-    } else {
-        const initials = getInitials(name);
-        const canvas   = document.createElement('canvas');
-        canvas.width   = 400; canvas.height = 400;
-        const ctx = canvas.getContext('2d');
-        const g   = ctx.createLinearGradient(0, 0, 400, 400);
-        g.addColorStop(0, '#2563eb'); g.addColorStop(1, '#7c3aed');
-        ctx.fillStyle = g;
-        ctx.beginPath(); ctx.arc(200, 200, 200, 0, 2 * Math.PI); ctx.fill();
-        ctx.fillStyle = '#fff';
-        ctx.font = 'bold 150px "DM Sans", Arial, sans-serif';
-        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(initials, 200, 200);
-        imgEl.src = canvas.toDataURL(); imgEl.style.display = 'block';
-    }
-    new bootstrap.Modal(document.getElementById('imageZoomModal')).show();
+function getAvatarUrl(picture) {
+    if (!picture || picture === 'unnamed.jpg' || picture === '') return null;
+    return '/storage/images/student_avatars/' + picture;
 }
 
 function formatDate(str) {
@@ -743,13 +724,44 @@ function formatDate(str) {
     return isNaN(d) ? str : d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
 }
 
-/* ── Load data via AJAX ───────────────────────────────── */
+function showZoomModal(imageUrl, name, details) {
+    document.getElementById('zoomedName').textContent = name || '';
+    document.getElementById('zoomedDetails').innerHTML = details || '';
+    const imgEl = document.getElementById('zoomedImage');
+
+    if (imageUrl && imageUrl !== '' && imageUrl !== 'null') {
+        imgEl.src = imageUrl;
+        imgEl.style.display = 'block';
+    } else {
+        const initials = getInitials(name);
+        const canvas = document.createElement('canvas');
+        canvas.width = 400;
+        canvas.height = 400;
+        const ctx = canvas.getContext('2d');
+        const g = ctx.createLinearGradient(0, 0, 400, 400);
+        g.addColorStop(0, '#2563eb');
+        g.addColorStop(1, '#7c3aed');
+        ctx.fillStyle = g;
+        ctx.beginPath();
+        ctx.arc(200, 200, 200, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 150px "DM Sans", Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(initials, 200, 200);
+        imgEl.src = canvas.toDataURL();
+        imgEl.style.display = 'block';
+    }
+    new bootstrap.Modal(document.getElementById('imageZoomModal')).show();
+}
+
+/* ── Load data via AJAX ── */
 async function loadPaymentDetails() {
     try {
-        /* FIX: URL is now generated by Blade route() helper — never hardcoded */
-        const url = `${PAYMENT_DETAILS_AJAX_URL}?studentId=${studentId}&classId=${classId}&termid=${termId}&sessionid=${sessionId}`;
-        const res  = await fetch(url, {
-            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF }
+        const url = `${PAYMENT_DETAILS_AJAX_URL}?studentId=${studentId}&termid=${termId}&sessionid=${sessionId}`;
+        const res = await fetch(url, {
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' }
         });
 
         if (!res.ok) {
@@ -763,15 +775,21 @@ async function loadPaymentDetails() {
         renderAll();
     } catch (e) {
         console.error(e);
-        Swal.fire('Error', 'Failed to load payment details: ' + e.message, 'error');
-    } finally {
         document.getElementById('pageLoader').style.display = 'none';
+        document.getElementById('mainContent').innerHTML = `
+            <div class="alert alert-danger m-3">
+                <i class="ri-error-warning-line me-2"></i>
+                Failed to load payment details: ${e.message}
+                <br><small>Please check that the student is enrolled in the selected term and session.</small>
+            </div>`;
     }
 }
 
-/* ── Render everything ────────────────────────────────── */
+/* ── Render everything ── */
 function renderAll() {
     const d = paymentData;
+    if (!d) return;
+
     renderHero(d);
     renderProfile(d);
     renderBills(d);
@@ -779,60 +797,59 @@ function renderAll() {
     renderHistory(d);
     renderSidebar(d);
 
-    document.getElementById('mainContent').style.display        = '';
+    document.getElementById('mainContent').style.display = '';
     document.getElementById('studentProfileCard').style.display = '';
+    document.getElementById('pageLoader').style.display = 'none';
 }
 
 function renderHero(d) {
-    document.getElementById('heroSubtitle').textContent =
-        (d.student?.name || '—') + ' · ' + (d.term || '') + ' / ' + (d.session || '');
+    const student = d.student || {};
+    const heroText = (student.name || '—') + ' · ' + (d.term || '') + ' / ' + (d.session || '');
+    document.getElementById('heroSubtitle').textContent = heroText;
 
     const invoiceBtn = document.getElementById('printInvoiceBtn');
-    invoiceBtn.style.display = '';
-    invoiceBtn.onclick = () => {
-        window.open(
-            `/schoolpayment/invoice/${studentId}/${classId}/${termId}/${sessionId}`,
-            '_blank'
-        );
-    };
+    if (invoiceBtn) {
+        invoiceBtn.style.display = '';
+        invoiceBtn.onclick = () => {
+            const classIdVal = student.schoolclassId || classId;
+            window.open(`/payment/invoice/${studentId}/${classIdVal}/${termId}/${sessionId}`, '_blank');
+        };
+    }
 }
 
 function renderProfile(d) {
     const s = d.student || {};
     const avatarWrap = document.getElementById('profileAvatarWrap');
-    const initials   = getInitials(s.name);
-    const avatarUrl  = s.avatar
-        ? ('{{ asset("storage/images/student_avatars") }}/' + s.avatar)
-        : null;
-    const detailStr  = `${s.admissionNo || 'N/A'} | ${s.schoolclass || ''}${s.arm ? ' ' + s.arm : ''}`;
+    const initials = getInitials(s.name);
+    const avatarUrl = s.avatar ? getAvatarUrl(s.avatar) : null;
+    const detailStr = `${s.admissionNo || 'N/A'} | ${s.schoolclass || ''} ${s.arm || ''}`;
 
-    /* FIX: use data-* attributes on the avatar element — no JS inside HTML attribute strings */
     if (avatarUrl) {
         const img = document.createElement('img');
-        img.src       = avatarUrl;
-        img.alt       = s.name || '';
+        img.src = avatarUrl;
+        img.alt = s.name || '';
         img.className = 'student-profile-avatar profile-avatar-zoom';
-        img.dataset.img     = avatarUrl;
-        img.dataset.name    = s.name || '';
+        img.dataset.img = avatarUrl;
+        img.dataset.name = s.name || '';
         img.dataset.details = detailStr;
-        img.onerror = function () {
+        img.onerror = function() {
             const div = document.createElement('div');
-            div.className        = 'student-profile-initials profile-avatar-zoom';
-            div.textContent      = initials;
-            div.dataset.img      = '';
-            div.dataset.name     = s.name || '';
-            div.dataset.details  = detailStr;
+            div.className = 'student-profile-initials profile-avatar-zoom';
+            div.textContent = initials;
+            div.dataset.img = '';
+            div.dataset.name = s.name || '';
+            div.dataset.details = detailStr;
             this.parentNode.replaceChild(div, this);
         };
         avatarWrap.innerHTML = '';
         avatarWrap.appendChild(img);
     } else {
         const div = document.createElement('div');
-        div.className        = 'student-profile-initials profile-avatar-zoom';
-        div.textContent      = initials;
-        div.dataset.img      = '';
-        div.dataset.name     = s.name || '';
-        div.dataset.details  = detailStr;
+        div.className = 'student-profile-initials profile-avatar-zoom';
+        div.textContent = initials;
+        div.dataset.img = '';
+        div.dataset.name = s.name || '';
+        div.dataset.details = detailStr;
         avatarWrap.innerHTML = '';
         avatarWrap.appendChild(div);
     }
@@ -842,7 +859,7 @@ function renderProfile(d) {
     const meta = document.getElementById('profileMeta');
     meta.innerHTML = `
         <span class="profile-chip"><i class="ri-hashtag"></i>${s.admissionNo || 'N/A'}</span>
-        <span class="profile-chip green"><i class="ri-building-line"></i>${s.schoolclass || '—'}${s.arm ? ' ' + s.arm : ''}</span>
+        <span class="profile-chip green"><i class="ri-building-line"></i>${s.schoolclass || '—'} ${s.arm || ''}</span>
         <span class="profile-chip amber"><i class="ri-calendar-line"></i>${d.term || ''} · ${d.session || ''}</span>
         ${s.student_status ? `<span class="profile-chip purple"><i class="ri-user-star-line"></i>${s.student_status}</span>` : ''}
     `;
@@ -869,39 +886,50 @@ function renderProfile(d) {
 }
 
 function renderBills(d) {
-    const bills     = d.bills || [];
+    const bills = d.bills || [];
     const container = document.getElementById('billsContainer');
-    document.getElementById('billTermSession').textContent =
-        (d.term || '') + ' · ' + (d.session || '');
+    document.getElementById('billTermSession').textContent = (d.term || '') + ' · ' + (d.session || '');
 
     if (!bills.length) {
         container.innerHTML = `<div class="empty-state"><i class="ri-inbox-line"></i><p>No bills found for this term and session.</p></div>`;
         return;
     }
 
-    /* Show bulk pay strip if multiple unpaid bills */
+    // Update selectedBillsMap to only include bills that still exist and are unpaid
+    const newMap = {};
+    Object.keys(selectedBillsMap).forEach(id => {
+        const bill = bills.find(b => String(b.id) === String(id));
+        if (bill && !bill.is_paid && !bill.has_pending_invoice) {
+            newMap[id] = bill;
+        }
+    });
+    selectedBillsMap = newMap;
+
+    // Show bulk pay strip if there are unpaid bills
     const unpaidBills = bills.filter(b => !b.is_paid && !b.has_pending_invoice);
-    if (unpaidBills.length > 1) {
+    if (unpaidBills.length > 0) {
         const totalOutstanding = unpaidBills.reduce((s, b) => s + (b.balance || 0), 0);
         const strip = document.getElementById('bulkPayStrip');
         strip.style.display = '';
-        strip.querySelector('p').innerHTML =
-            `Pay all outstanding bills in one transaction — <strong>${naira(totalOutstanding)}</strong> total`;
-        document.getElementById('openBulkPayBtn').onclick = openBulkPayModal;
+        document.getElementById('bulkTotalAmount').innerHTML = naira(totalOutstanding);
+        document.getElementById('openBulkPayBtn').onclick = () => openBulkPayModal(unpaidBills);
+    } else {
+        document.getElementById('bulkPayStrip').style.display = 'none';
     }
 
     container.innerHTML = bills.map(bill => {
-        const scholDeduct  = bill.scholarship_deduction ?? 0;
-        const discDeduct   = bill.discount_deduction    ?? 0;
-        const totalSavings = bill.total_savings         ?? 0;
-        const origAmt      = bill.original_amount       ?? 0;
-        const adjAmt       = bill.adjusted_amount       ?? origAmt;
-        const amtPaid      = bill.amount_paid           ?? 0;
-        const balance      = bill.balance               ?? 0;
-        const progress     = bill.progress              ?? 0;
-        const scholLabel   = bill.scholarship_label     ?? '';
-        const discLabels   = bill.discount_labels       ?? '';
-        const hasPending   = bill.has_pending_invoice   ?? false;
+        const scholDeduct = bill.scholarship_deduction ?? 0;
+        const discDeduct = bill.discount_deduction ?? 0;
+        const totalSavings = bill.total_savings ?? 0;
+        const origAmt = bill.original_amount ?? 0;
+        const adjAmt = bill.adjusted_amount ?? origAmt;
+        const amtPaid = bill.amount_paid ?? 0;
+        const balance = bill.balance ?? 0;
+        const progress = bill.progress ?? 0;
+        const scholLabel = bill.scholarship_label ?? '';
+        const discLabels = bill.discount_labels ?? '';
+        const hasPending = bill.has_pending_invoice ?? false;
+        const isSelected = !!selectedBillsMap[String(bill.id)];
 
         const statusBadge = bill.is_paid
             ? `<span class="bill-status-badge paid"><i class="ri-checkbox-circle-line"></i>Fully Paid</span>`
@@ -909,35 +937,36 @@ function renderBills(d) {
                 ? `<span class="bill-status-badge partial"><i class="ri-time-line"></i>Partial</span>`
                 : `<span class="bill-status-badge unpaid"><i class="ri-error-warning-line"></i>Unpaid</span>`;
 
-        const itemClass      = bill.is_paid ? 'is-paid' : bill.is_partial ? 'is-partial' : '';
-        const progressFill   = progress >= 100 ? 'full' : progress >= 40 ? '' : 'warn';
-
-        /* Encode bill JSON safely for data attribute */
-        const billJson = JSON.stringify(bill).replace(/'/g, '&#39;');
+        const itemClass = bill.is_paid ? 'is-paid' : bill.is_partial ? 'is-partial' : '';
+        const progressFill = progress >= 100 ? 'full' : progress >= 40 ? '' : 'warn';
 
         const savingsHtml = totalSavings > 0 ? `
             <div class="savings-row">
                 ${scholDeduct > 0 ? `<span class="savings-tag scholarship"><i class="ri-award-line"></i>${scholLabel || 'Scholarship'}: -${naira(scholDeduct)}</span>` : ''}
-                ${discDeduct  > 0 ? `<span class="savings-tag discount"><i class="ri-price-tag-3-line"></i>${discLabels || 'Discount'}: -${naira(discDeduct)}</span>` : ''}
+                ${discDeduct > 0 ? `<span class="savings-tag discount"><i class="ri-price-tag-3-line"></i>${discLabels || 'Discount'}: -${naira(discDeduct)}</span>` : ''}
             </div>` : '';
 
-        /* FIX: bill data stored in data attribute, parsed in JS click handler */
         const payBtnHtml = bill.is_paid
             ? `<button class="btn-pay success" disabled><i class="ri-checkbox-circle-line"></i>Paid</button>`
             : hasPending
                 ? `<button class="btn-pay" disabled title="Invoice pending"><i class="ri-time-line"></i>Pending Invoice</button>`
-                : `<button class="btn-pay btn-open-pay" data-bill='${billJson}'><i class="ri-add-circle-line"></i>Pay</button>`;
+                : `<button class="btn-pay btn-open-pay" data-bill-id="${bill.id}"><i class="ri-add-circle-line"></i>Pay</button>`;
+
+        const checkboxHtml = (!bill.is_paid && !hasPending)
+            ? `<input type="checkbox" class="bill-select-checkbox" data-bill-id="${bill.id}" ${isSelected ? 'checked' : ''} style="margin-left:8px;transform:scale(1.1);">`
+            : '';
 
         return `
-        <div class="bill-item ${itemClass}">
+        <div class="bill-item ${itemClass}" data-bill-id="${bill.id}">
             <div class="bill-item-header">
                 <div>
-                    <div class="bill-item-title">${bill.title || 'N/A'}</div>
-                    ${bill.description ? `<div class="bill-item-desc">${bill.description}</div>` : ''}
+                    <div class="bill-item-title">${escapeHtml(bill.title) || 'N/A'}</div>
+                    ${bill.description ? `<div class="bill-item-desc">${escapeHtml(bill.description)}</div>` : ''}
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     ${statusBadge}
                     ${payBtnHtml}
+                    ${checkboxHtml}
                 </div>
             </div>
             ${savingsHtml}
@@ -980,50 +1009,103 @@ function renderBills(d) {
             </div>
         </div>`;
     }).join('');
+
+    // Attach checkbox events
+    document.querySelectorAll('.bill-select-checkbox').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+            e.stopPropagation();
+            const billId = cb.dataset.billId;
+            const bill = bills.find(b => String(b.id) === billId);
+            if (cb.checked && bill) {
+                selectedBillsMap[String(billId)] = bill;
+            } else {
+                delete selectedBillsMap[String(billId)];
+            }
+            // Update bulk pay strip total
+            const remainingUnpaid = Object.values(selectedBillsMap);
+            const totalOutstanding = remainingUnpaid.reduce((s, b) => s + (b.balance || 0), 0);
+            const strip = document.getElementById('bulkPayStrip');
+            if (remainingUnpaid.length > 0) {
+                strip.style.display = '';
+                document.getElementById('bulkTotalAmount').innerHTML = naira(totalOutstanding);
+            } else {
+                strip.style.display = 'none';
+            }
+        });
+    });
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+    });
 }
 
 function renderPendingRecords(d) {
     const records = d.payment_records || [];
-    if (!records.length) return;
+    const container = document.getElementById('pendingSection');
+    const body = document.getElementById('pendingTableBody');
 
-    document.getElementById('pendingSection').style.display = '';
+    if (!records.length) {
+        container.style.display = 'none';
+        return;
+    }
+
+    container.style.display = '';
     document.getElementById('pendingCount').textContent = records.length;
 
-    document.getElementById('pendingTableBody').innerHTML = records.map((r, i) => `
+    body.innerHTML = records.map((r, i) => `
         <tr>
             <td><span style="color:var(--p-muted);font-size:12px">${i + 1}</span></td>
-            <td><span style="font-weight:600">${r.title || '—'}</span></td>
-            <td><span class="profile-chip" style="font-size:11px">${r.paymentMethod || '—'}</span></td>
+            <td><span style="font-weight:600">${escapeHtml(r.title) || '—'}</span></td>
+            <td><span class="profile-chip" style="font-size:11px">${escapeHtml(r.paymentMethod) || '—'}</span></td>
             <td class="text-end"><span class="mono-val green">${naira(r.totalAmountPaid)}</span></td>
             <td class="text-end"><span class="mono-val red">${naira(r.balance)}</span></td>
             <td><span class="status-pill pending">Pending</span></td>
             <td>
-                <button class="btn btn-sm btn-outline-danger"
-                        onclick="deletePaymentRecord(${r.recordId})"
+                <button class="btn btn-sm btn-outline-danger delete-payment"
+                        data-record-id="${r.recordId}"
                         title="Delete record">
                     <i class="ri-delete-bin-line"></i>
                 </button>
             </td>
         </tr>
     `).join('');
+
+    // Attach delete handlers
+    document.querySelectorAll('.delete-payment').forEach(btn => {
+        btn.addEventListener('click', () => deletePaymentRecord(btn.dataset.recordId));
+    });
 }
 
 function renderHistory(d) {
     const history = d.payment_history || [];
-    if (!history.length) return;
+    const container = document.getElementById('historySection');
+    const body = document.getElementById('historyTableBody');
 
-    document.getElementById('historySection').style.display = '';
+    if (!history.length) {
+        container.style.display = 'none';
+        return;
+    }
+
+    container.style.display = '';
     document.getElementById('historyCount').textContent = history.length;
 
-    document.getElementById('historyTableBody').innerHTML = history.map((r, i) => {
+    body.innerHTML = history.map((r, i) => {
         const statusClass = r.paymentStatus === 'Completed' ? 'completed' : 'partial';
+        const student = d.student || {};
+        const invoiceUrl = `/payment/invoice/${studentId}/${student.schoolclassId || ''}/${r.termId || termId}/${r.sessionId || sessionId}`;
         return `
         <tr>
             <td><span style="color:var(--p-muted);font-size:12px">${i + 1}</span></td>
-            <td><span style="font-weight:600">${r.title || '—'}</span></td>
+            <td><span style="font-weight:600">${escapeHtml(r.title) || '—'}</span></td>
             <td><span style="font-size:12px;color:var(--p-muted)">${formatDate(r.receivedDate)}</span></td>
-            <td><span class="profile-chip" style="font-size:11px">${r.paymentMethod || '—'}</span></td>
-            <td><span style="font-size:12px">${r.receivedBy || '—'}</span></td>
+            <td><span class="profile-chip" style="font-size:11px">${escapeHtml(r.paymentMethod) || '—'}</span></td>
+            <td><span style="font-size:12px">${escapeHtml(r.receivedBy) || '—'}</span></td>
             <td class="text-end"><span class="mono-val green">${naira(r.totalAmountPaid)}</span></td>
             <td class="text-end"><span class="mono-val ${parseFloat(String(r.balance).replace(/,/g, '')) > 0 ? 'red' : ''}">${naira(r.balance)}</span></td>
             <td><span class="status-pill ${statusClass}">${r.paymentStatus || '—'}</span></td>
@@ -1035,7 +1117,7 @@ function renderSidebar(d) {
     const sidebar = document.getElementById('sidebarContent');
     let html = '';
 
-    /* Scholarship card */
+    // Scholarship card
     if (d.scholarship) {
         const s = d.scholarship;
         const valDisplay = s.value_type === 'percentage' ? s.value + '%' : naira(s.value);
@@ -1047,7 +1129,7 @@ function renderSidebar(d) {
             <div class="benefit-card-body">
                 <div class="benefit-row">
                     <span class="label">Name</span>
-                    <span class="value">${s.title || '—'}</span>
+                    <span class="value">${escapeHtml(s.title) || '—'}</span>
                 </div>
                 <div class="benefit-row">
                     <span class="label">Value</span>
@@ -1062,7 +1144,7 @@ function renderSidebar(d) {
         </div>`;
     }
 
-    /* Discounts card */
+    // Discounts card
     if (d.discounts && d.discounts.length) {
         html += `
         <div class="benefit-card">
@@ -1075,7 +1157,7 @@ function renderSidebar(d) {
                     const valDisplay = disc.value_type === 'percentage' ? disc.value + '%' : naira(disc.value);
                     return `
                     <div class="benefit-row">
-                        <span class="label">${disc.title || 'Discount'}</span>
+                        <span class="label">${escapeHtml(disc.title) || 'Discount'}</span>
                         <span class="value">${valDisplay}</span>
                     </div>`;
                 }).join('')}
@@ -1083,7 +1165,7 @@ function renderSidebar(d) {
         </div>`;
     }
 
-    /* Summary card */
+    // Summary card
     const totals = d.totals || {};
     html += `
     <div class="pd-card">
@@ -1115,19 +1197,20 @@ function renderSidebar(d) {
         </div>
     </div>`;
 
-    /* Quick actions */
+    // Quick actions
+    const student = d.student || {};
     html += `
     <div class="pd-card">
         <div class="pd-card-header">
             <h5><i class="ri-settings-3-line" style="color:var(--p-muted)"></i>Actions</h5>
         </div>
         <div class="pd-card-body d-grid gap-2">
-            <a href="/schoolpayment/invoice/${studentId}/${classId}/${termId}/${sessionId}"
+            <a href="/payment/invoice/${studentId}/${student.schoolclassId || ''}/${termId}/${sessionId}"
                target="_blank"
                class="btn btn-outline-primary btn-sm d-flex align-items-center gap-2 justify-content-center">
                 <i class="ri-file-text-line"></i> View / Print Invoice
             </a>
-            <a href="/schoolpayment/statement/${studentId}/${classId}/${termId}/${sessionId}"
+            <a href="/payment/statement/${studentId}/${student.schoolclassId || ''}/${termId}/${sessionId}"
                target="_blank"
                class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-2 justify-content-center">
                 <i class="ri-file-list-3-line"></i> Download Statement
@@ -1138,40 +1221,36 @@ function renderSidebar(d) {
     sidebar.innerHTML = html;
 }
 
-/* ── Pay button handler (delegated — FIX: no JS in HTML attrs) ── */
-document.addEventListener('click', function (e) {
+/* ── Pay button handler ── */
+document.addEventListener('click', (e) => {
     const btn = e.target.closest('.btn-open-pay');
     if (!btn) return;
-    try {
-        const bill = JSON.parse(btn.dataset.bill);
-        openPayModal(bill);
-    } catch (err) {
-        console.error('Failed to parse bill data', err);
-    }
+    const billId = btn.dataset.billId;
+    const bill = paymentData?.bills?.find(b => String(b.id) === String(billId));
+    if (bill) openPayModal(bill);
 });
 
-/* ── Profile avatar click → zoom ─────────────────────── */
-document.addEventListener('click', function (e) {
+/* ── Profile avatar click ── */
+document.addEventListener('click', (e) => {
     const el = e.target.closest('.profile-avatar-zoom');
     if (!el) return;
     showZoomModal(el.dataset.img || '', el.dataset.name || '', el.dataset.details || '');
 });
 
-/* ── Zoomed image click → close ──────────────────────── */
-document.addEventListener('click', function (e) {
+/* ── Zoomed image click to close ── */
+document.addEventListener('click', (e) => {
     if (e.target.classList.contains('zoomed-image')) {
         bootstrap.Modal.getInstance(document.getElementById('imageZoomModal'))?.hide();
     }
 });
 
-/* ── Pay Modal ────────────────────────────────────────── */
+/* ── Open Pay Modal ── */
 function openPayModal(bill) {
-    activeBill   = bill;
-    activeBillId = bill.id;
+    activeBill = bill;
 
-    const adjAmt  = bill.adjusted_amount ?? bill.original_amount ?? 0;
-    const amtPaid = bill.amount_paid     ?? 0;
-    const balance = bill.balance         ?? Math.max(0, adjAmt - amtPaid);
+    const adjAmt = bill.adjusted_amount ?? bill.original_amount ?? 0;
+    const amtPaid = bill.amount_paid ?? 0;
+    const balance = bill.balance ?? Math.max(0, adjAmt - amtPaid);
 
     document.getElementById('payModalBillTitle').textContent = bill.title || '—';
     document.getElementById('payAmountDisplay').innerHTML = `
@@ -1189,30 +1268,38 @@ function openPayModal(bill) {
         </div>
     `;
 
-    document.getElementById('payAmount').value   = '';
-    document.getElementById('payAmount').max     = balance;
+    document.getElementById('payAmount').value = '';
+    document.getElementById('payAmount').max = balance;
     document.getElementById('payMaxHint').textContent = `Maximum: ${naira(balance)}`;
-    document.getElementById('payMethod').value   = '';
+    document.getElementById('payMethod').value = '';
     document.getElementById('submitPayBtn').disabled = false;
     document.getElementById('submitPayBtn').innerHTML = '<i class="ri-save-line"></i> Record Payment';
 
     new bootstrap.Modal(document.getElementById('payModal')).show();
 }
 
-async function submitPayment() {
+/* ── Submit Payment ── */
+document.getElementById('submitPayBtn').addEventListener('click', async () => {
     const amount = parseFloat(document.getElementById('payAmount').value);
     const method = document.getElementById('payMethod').value;
-    const bill   = activeBill;
+    const bill = activeBill;
 
-    if (!amount || amount <= 0) { Swal.fire('Error', 'Please enter a valid amount.', 'error'); return; }
-    if (!method)                { Swal.fire('Error', 'Please select a payment method.', 'error'); return; }
+    if (!amount || amount <= 0) {
+        Swal.fire('Error', 'Please enter a valid amount.', 'error');
+        return;
+    }
+    if (!method) {
+        Swal.fire('Error', 'Please select a payment method.', 'error');
+        return;
+    }
 
-    const adjAmt  = bill.adjusted_amount ?? bill.original_amount ?? 0;
-    const amtPaid = bill.amount_paid     ?? 0;
-    const balance = bill.balance         ?? Math.max(0, adjAmt - amtPaid);
+    const adjAmt = bill.adjusted_amount ?? bill.original_amount ?? 0;
+    const amtPaid = bill.amount_paid ?? 0;
+    const balance = bill.balance ?? Math.max(0, adjAmt - amtPaid);
 
     if (amount > balance + 0.01) {
-        Swal.fire('Error', `Amount cannot exceed the balance of ${naira(balance)}.`, 'error'); return;
+        Swal.fire('Error', `Amount cannot exceed the balance of ${naira(balance)}.`, 'error');
+        return;
     }
 
     const btn = document.getElementById('submitPayBtn');
@@ -1220,24 +1307,24 @@ async function submitPayment() {
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing…';
 
     const formData = new FormData();
-    formData.append('_token',                CSRF);
-    formData.append('student_id',            studentId);
-    formData.append('class_id',              bill.class_id  ?? classId);
-    formData.append('term_id',               termId);
-    formData.append('session_id',            sessionId);
-    formData.append('school_bill_id',        bill.id);
-    formData.append('actual_amount',         bill.original_amount ?? adjAmt);
-    formData.append('adjusted_amount',       adjAmt);
-    formData.append('balance2',              balance);
-    formData.append('last_amount_paid',      amtPaid);
-    formData.append('payment_amount',        amount);
-    formData.append('payment_amount2',       amount);
-    formData.append('payment_method2',       method);
+    formData.append('_token', CSRF);
+    formData.append('student_id', studentId);
+    formData.append('class_id', bill.class_id || classId);
+    formData.append('term_id', termId);
+    formData.append('session_id', sessionId);
+    formData.append('school_bill_id', bill.id);
+    formData.append('actual_amount', bill.original_amount ?? adjAmt);
+    formData.append('adjusted_amount', adjAmt);
+    formData.append('balance2', balance);
+    formData.append('last_amount_paid', amtPaid);
+    formData.append('payment_amount', amount);
+    formData.append('payment_amount2', amount);
+    formData.append('payment_method2', method);
     formData.append('scholarship_deduction', bill.scholarship_deduction ?? 0);
-    formData.append('discount_deduction',    bill.discount_deduction    ?? 0);
+    formData.append('discount_deduction', bill.discount_deduction ?? 0);
 
     try {
-        const res  = await fetch('/schoolpayment/store', {
+        const res = await fetch('/payment/store', {
             method: 'POST',
             headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' },
             body: formData
@@ -1247,25 +1334,34 @@ async function submitPayment() {
         if (json.success) {
             bootstrap.Modal.getInstance(document.getElementById('payModal')).hide();
             await Swal.fire({
-                icon: 'success', title: 'Payment Recorded!', text: json.message,
-                confirmButtonText: 'OK', timer: 2500, timerProgressBar: true
+                icon: 'success',
+                title: 'Payment Recorded!',
+                text: json.message,
+                timer: 2500,
+                showConfirmButton: false
             });
             loadPaymentDetails();
         } else {
             Swal.fire('Error', json.message || 'Payment failed.', 'error');
         }
     } catch (e) {
+        console.error('Payment error:', e);
         Swal.fire('Error', 'Something went wrong. Please try again.', 'error');
     } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="ri-save-line"></i> Record Payment';
     }
-}
+});
 
-/* ── Bulk Pay Modal ───────────────────────────────────── */
-function openBulkPayModal() {
-    const bills  = (paymentData?.bills || []).filter(b => !b.is_paid && !b.has_pending_invoice);
-    const total  = bills.reduce((s, b) => s + (b.balance ?? 0), 0);
+/* ── Open Bulk Pay Modal ── */
+function openBulkPayModal(unpaidBills) {
+    const bills = unpaidBills || (paymentData?.bills || []).filter(b => !b.is_paid && !b.has_pending_invoice);
+    const total = bills.reduce((s, b) => s + (b.balance ?? 0), 0);
+
+    if (bills.length === 0) {
+        Swal.fire('Info', 'No unpaid bills available for bulk payment.', 'info');
+        return;
+    }
 
     document.getElementById('bulkBillsSummary').innerHTML = `
         <div class="pay-amount-display">
@@ -1279,54 +1375,68 @@ function openBulkPayModal() {
             </div>
         </div>
         <div style="font-size:12px;color:var(--p-muted);margin-bottom:12px">
-            Payment will be distributed across: ${bills.map(b => `<strong>${b.title}</strong>`).join(', ')}
+            Payment will be distributed across: ${bills.map(b => `<strong>${escapeHtml(b.title)}</strong>`).join(', ')}
         </div>
     `;
 
-    document.getElementById('bulkPayAmount').value  = '';
-    document.getElementById('bulkPayAmount').max    = total;
+    document.getElementById('bulkPayAmount').value = '';
+    document.getElementById('bulkPayAmount').max = total;
     document.getElementById('bulkMaxHint').textContent = `Maximum: ${naira(total)}`;
-    document.getElementById('bulkPayMethod').value  = '';
+    document.getElementById('bulkPayMethod').value = '';
     document.getElementById('submitBulkPayBtn').disabled = false;
     document.getElementById('submitBulkPayBtn').innerHTML = '<i class="ri-save-line"></i> Record Bulk Payment';
+
+    // Store bills for bulk payment
+    window.bulkBills = bills;
 
     new bootstrap.Modal(document.getElementById('bulkPayModal')).show();
 }
 
-async function submitBulkPayment() {
+/* ── Submit Bulk Payment ── */
+document.getElementById('submitBulkPayBtn').addEventListener('click', async () => {
     const amount = parseFloat(document.getElementById('bulkPayAmount').value);
     const method = document.getElementById('bulkPayMethod').value;
-    const bills  = (paymentData?.bills || []).filter(b => !b.is_paid && !b.has_pending_invoice);
-    const total  = bills.reduce((s, b) => s + (b.balance ?? 0), 0);
+    const bills = window.bulkBills || [];
 
-    if (!amount || amount <= 0)  { Swal.fire('Error', 'Please enter a valid amount.', 'error'); return; }
-    if (!method)                 { Swal.fire('Error', 'Please select a payment method.', 'error'); return; }
-    if (amount > total + 0.01)   { Swal.fire('Error', `Amount cannot exceed ${naira(total)}.`, 'error'); return; }
+    if (!amount || amount <= 0) {
+        Swal.fire('Error', 'Please enter a valid amount.', 'error');
+        return;
+    }
+    if (!method) {
+        Swal.fire('Error', 'Please select a payment method.', 'error');
+        return;
+    }
+
+    const total = bills.reduce((s, b) => s + (b.balance ?? 0), 0);
+    if (amount > total + 0.01) {
+        Swal.fire('Error', `Amount cannot exceed ${naira(total)}.`, 'error');
+        return;
+    }
 
     const btn = document.getElementById('submitBulkPayBtn');
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Processing…';
 
     const payload = {
-        _token:         CSRF,
-        student_id:     studentId,
-        class_id:       classId,
-        term_id:        termId,
-        session_id:     sessionId,
+        _token: CSRF,
+        student_id: studentId,
+        class_id: classId,
+        term_id: termId,
+        session_id: sessionId,
         payment_amount: amount,
         payment_method: method,
-        bill_payments:  bills.map(b => ({
-            school_bill_id:        b.id,
-            title:                 b.title,
-            adjusted_amount:       b.adjusted_amount ?? b.original_amount ?? 0,
-            balance:               b.balance ?? 0,
+        bill_payments: bills.map(b => ({
+            school_bill_id: b.id,
+            title: b.title,
+            adjusted_amount: b.adjusted_amount ?? b.original_amount ?? 0,
+            balance: b.balance ?? 0,
             scholarship_deduction: b.scholarship_deduction ?? 0,
-            discount_deduction:    b.discount_deduction    ?? 0,
+            discount_deduction: b.discount_deduction ?? 0,
         })),
     };
 
     try {
-        const res  = await fetch('/schoolpayment/bulk-store', {
+        const res = await fetch('/payment/bulk-store', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' },
             body: JSON.stringify(payload),
@@ -1336,52 +1446,59 @@ async function submitBulkPayment() {
         if (json.success) {
             bootstrap.Modal.getInstance(document.getElementById('bulkPayModal')).hide();
             await Swal.fire({
-                icon: 'success', title: 'Bulk Payment Recorded!', text: json.message,
-                confirmButtonText: 'OK', timer: 2500, timerProgressBar: true
+                icon: 'success',
+                title: 'Bulk Payment Recorded!',
+                text: json.message,
+                timer: 2500,
+                showConfirmButton: false
             });
+            selectedBillsMap = {};
             loadPaymentDetails();
         } else {
             Swal.fire('Error', json.message || 'Bulk payment failed.', 'error');
         }
     } catch (e) {
+        console.error('Bulk payment error:', e);
         Swal.fire('Error', 'Something went wrong. Please try again.', 'error');
     } finally {
         btn.disabled = false;
         btn.innerHTML = '<i class="ri-save-line"></i> Record Bulk Payment';
     }
-}
+});
 
-/* ── Delete record ────────────────────────────────────── */
+/* ── Delete Payment Record ── */
 async function deletePaymentRecord(recordId) {
     const result = await Swal.fire({
         title: 'Delete Payment Record?',
-        text:  'This will reverse the payment amount. This action cannot be undone.',
-        icon:  'warning',
-        showCancelButton:   true,
+        text: 'This will reverse the payment amount. This action cannot be undone.',
+        icon: 'warning',
+        showCancelButton: true,
         confirmButtonColor: '#dc2626',
-        confirmButtonText:  'Yes, Delete',
-        cancelButtonText:   'Cancel',
+        confirmButtonText: 'Yes, Delete',
+        cancelButtonText: 'Cancel',
     });
     if (!result.isConfirmed) return;
 
     try {
-        const res  = await fetch(`/schoolpayment/deletestudentpayment/${recordId}`, {
-            method: 'DELETE',
-            headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' },
+        const res = await fetch(`/payment/delete/${recordId}`, {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json', 'Content-Type': 'application/json' },
+            body: JSON.stringify({})
         });
         const json = await res.json();
         if (json.success) {
-            Swal.fire({ icon: 'success', title: 'Deleted', text: json.message, timer: 1800, showConfirmButton: false });
+            Swal.fire({ icon: 'success', title: 'Deleted!', text: json.message, timer: 1500, showConfirmButton: false });
             loadPaymentDetails();
         } else {
             Swal.fire('Error', json.message || 'Delete failed.', 'error');
         }
     } catch (e) {
+        console.error('Delete error:', e);
         Swal.fire('Error', 'Something went wrong.', 'error');
     }
 }
 
-/* ── Boot ─────────────────────────────────────────────── */
+/* ── Boot ── */
 document.addEventListener('DOMContentLoaded', loadPaymentDetails);
 </script>
 @endsection
