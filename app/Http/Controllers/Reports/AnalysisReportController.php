@@ -143,7 +143,7 @@ class AnalysisReportController extends Controller
         return view('reports.analysis.scholarship-impact', compact('pagetitle', 'terms', 'sessions'));
     }
 
-   /**
+    /**
  * Student Payment Details (from analysis view)
  */
 public function studentPaymentDetails($studentId, $classId, $termId, $sessionId)
@@ -216,6 +216,8 @@ public function studentPaymentDetails($studentId, $classId, $termId, $sessionId)
         'sessionId'
     ));
 }
+
+
 
     /**
      * Export Class Analysis
