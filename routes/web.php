@@ -714,6 +714,7 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
         Route::get('/statement/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'statement'])->name('statement');
     });
 
+
     // ============================================
     // FINANCIAL REPORTS ROUTES
     // ============================================
@@ -721,6 +722,13 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
         Route::prefix('financial')->name('financial.')->group(function () {
             Route::get('/debtors', [FinancialReportController::class, 'debtorsList'])->name('debtors');
             Route::get('/debtors/export/{format}', [FinancialReportController::class, 'exportDebtors'])->name('export');
+            Route::get('/collection-summary', [FinancialReportController::class, 'collectionSummary'])->name('collection-summary');
+            Route::get('/scholarship-impact', [FinancialReportController::class, 'scholarshipImpact'])->name('scholarship-impact');
+            Route::get('/scholarship-impact-data', [FinancialReportController::class, 'getScholarshipImpactData'])->name('scholarship-impact-data');
+            Route::get('/balance-sheet', [FinancialReportController::class, 'balanceSheet'])->name('balance-sheet');
+            Route::get('/income-statement', [FinancialReportController::class, 'incomeStatement'])->name('income-statement');
+            Route::get('/trial-balance', [FinancialReportController::class, 'trialBalance'])->name('trial-balance');
+            Route::get('/cash-flow', [FinancialReportController::class, 'cashFlow'])->name('cash-flow');
         });
     });
 
