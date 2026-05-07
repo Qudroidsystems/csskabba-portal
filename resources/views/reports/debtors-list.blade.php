@@ -1,5 +1,3 @@
-php
-
 {{-- resources/views/reports/debtors-list.blade.php --}}
 @extends('layouts.master')
 
