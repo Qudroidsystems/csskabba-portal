@@ -4,14 +4,6 @@
 namespace App\Http\Controllers\Reports;
 
 use App\Http\Controllers\Controller;
-use App\Models\Student;
-use App\Models\Schoolclass;
-use App\Models\Schoolterm;
-use App\Models\Schoolsession;
-use App\Models\StudentBillPayment;
-use App\Models\StudentBillPaymentBook;
-use App\Models\ScholarshipAssignment;
-use App\Models\DiscountAssignment;
 use App\Services\Analysis\SchoolAnalysisService;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -24,11 +16,12 @@ class AnalysisReportController extends Controller
     public function __construct(SchoolAnalysisService $analysisService)
     {
         $this->analysisService = $analysisService;
-        $this->middleware('permission:View financial reports');
+        $this->middleware('permission:View analysis reports');
+        $this->middleware('permission:Export analysis reports', ['only' => ['exportClassAnalysis', 'exportSchoolWideAnalysis']]);
     }
 
     /**
-     * Class Analysis Report with AJAX DataTable.
+     * Class Analysis Report
      */
     public function classAnalysis(Request $request)
     {
@@ -40,28 +33,17 @@ class AnalysisReportController extends Controller
             $sessionId = $request->input('session_id');
 
             if (!$classId || !$termId || !$sessionId) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Please select class, term, and session'
-                ], 400);
+                return response()->json(['success' => false, 'message' => 'Please select class, term, and session'], 400);
             }
 
             $analysis = $this->analysisService->getClassAnalysis($classId, $termId, $sessionId);
 
             return DataTables::of(collect($analysis['students']))
                 ->addIndexColumn()
-                ->addColumn('student_name', function($student) {
-                    return $student['name'];
-                })
-                ->addColumn('admission_no', function($student) {
-                    return $student['admission_no'];
-                })
-                ->addColumn('total_billed', function($student) {
-                    return '₦' . number_format($student['total_billed'], 2);
-                })
-                ->addColumn('total_paid', function($student) {
-                    return '₦' . number_format($student['total_paid'], 2);
-                })
+                ->addColumn('student_name', fn($student) => $student['name'])
+                ->addColumn('admission_no', fn($student) => $student['admission_no'])
+                ->addColumn('total_billed', fn($student) => '₦' . number_format($student['total_billed'], 2))
+                ->addColumn('total_paid', fn($student) => '₦' . number_format($student['total_paid'], 2))
                 ->addColumn('outstanding', function($student) {
                     $color = $student['total_outstanding'] > 0 ? 'text-danger' : 'text-success';
                     return "<span class='{$color}'>₦" . number_format($student['total_outstanding'], 2) . "</span>";
@@ -79,21 +61,26 @@ class AnalysisReportController extends Controller
                     ";
                 })
                 ->addColumn('action', function($student) {
-                    return '<a href="' . route('payment.details', ['studentId' => $student['student_id']]) . '" class="btn btn-sm btn-info"><i class="ri-eye-line"></i> View</a>';
+                    return '<a href="' . route('reports.analysis.class-student-details', [
+                        'studentId' => $student['student_id'],
+                        'classId' => request()->input('class_id'),
+                        'termId' => request()->input('term_id'),
+                        'sessionId' => request()->input('session_id')
+                    ]) . '" class="btn btn-sm btn-info"><i class="ri-eye-line"></i> View</a>';
                 })
                 ->rawColumns(['outstanding', 'completion', 'action'])
                 ->make(true);
         }
 
-        $classes = Schoolclass::with('armRelation')->get();
-        $terms = Schoolterm::all();
-        $sessions = Schoolsession::all();
+        $classes = $this->analysisService->getAllClasses();
+        $terms = $this->analysisService->getAllTerms();
+        $sessions = $this->analysisService->getAllSessions();
 
-        return view('reports.class-analysis', compact('pagetitle', 'classes', 'terms', 'sessions'));
+        return view('reports.analysis.class-analysis', compact('pagetitle', 'classes', 'terms', 'sessions'));
     }
 
     /**
-     * School Wide Payment Analysis.
+     * School Wide Payment Analysis
      */
     public function schoolWideAnalysis(Request $request)
     {
@@ -105,20 +92,17 @@ class AnalysisReportController extends Controller
 
             $analysis = $this->analysisService->getSchoolFinancialSummary($sessionId, $termId);
 
-            return response()->json([
-                'success' => true,
-                'data' => $analysis
-            ]);
+            return response()->json(['success' => true, 'data' => $analysis]);
         }
 
-        $terms = Schoolterm::all();
-        $sessions = Schoolsession::all();
+        $terms = $this->analysisService->getAllTerms();
+        $sessions = $this->analysisService->getAllSessions();
 
-        return view('reports.school-wide-analysis', compact('pagetitle', 'terms', 'sessions'));
+        return view('reports.analysis.school-wide-analysis', compact('pagetitle', 'terms', 'sessions'));
     }
 
     /**
-     * Scholarship Impact Analysis.
+     * Scholarship Impact Analysis
      */
     public function scholarshipImpactAnalysis(Request $request)
     {
@@ -128,67 +112,216 @@ class AnalysisReportController extends Controller
             $termId = $request->input('term_id');
             $sessionId = $request->input('session_id');
 
-            $query = ScholarshipAssignment::with(['scholarship', 'student']);
+            $data = $this->analysisService->getScholarshipImpactAnalysis($termId, $sessionId);
 
-            if ($termId) {
-                // Filter by term logic
-            }
-
-            $scholarshipData = $query->get();
-
-            $discountData = DiscountAssignment::with(['discount'])
-                ->when($termId, function($q) use ($termId) {
-                    // Filter by term logic
-                })
-                ->get();
-
-            $totalScholarshipValue = $scholarshipData->sum('value');
-            $totalDiscountValue = $discountData->sum('value');
-            $totalBeneficiaries = $scholarshipData->pluck('student_id')->unique()->count();
-
-            return response()->json([
-                'success' => true,
-                'data' => [
-                    'total_scholarship_value' => $totalScholarshipValue,
-                    'total_discount_value' => $totalDiscountValue,
-                    'total_beneficiaries' => $totalBeneficiaries,
-                    'scholarship_by_type' => $scholarshipData->groupBy('scholarship.scholarship_type_id')->map(function($items) {
-                        return $items->sum('value');
-                    }),
-                    'discount_by_type' => $discountData->groupBy('discount.discount_type_id')->map(function($items) {
-                        return $items->sum('value');
-                    }),
-                ]
-            ]);
+            return response()->json(['success' => true, 'data' => $data]);
         }
 
-        return view('reports.scholarship-impact', compact('pagetitle'));
+        $terms = $this->analysisService->getAllTerms();
+        $sessions = $this->analysisService->getAllSessions();
+
+        return view('reports.analysis.scholarship-impact', compact('pagetitle', 'terms', 'sessions'));
     }
 
     /**
-     * Export analysis to PDF.
+     * Student Payment Details (from analysis view)
      */
-    public function exportAnalysis(Request $request, $type)
+    public function studentPaymentDetails($studentId, $classId, $termId, $sessionId)
+    {
+        $pagetitle = 'Student Payment Details';
+
+        // Get student details
+        $student = DB::table('studentRegistration as s')
+            ->leftJoin('studentpicture as sp', 'sp.studentid', '=', 's.id')
+            ->where('s.id', $studentId)
+            ->select('s.*', 'sp.picture as avatar')
+            ->first();
+
+        // Get payment book
+        $paymentBook = DB::table('student_bill_payment_book')
+            ->where('student_id', $studentId)
+            ->where('class_id', $classId)
+            ->where('term_id', $termId)
+            ->where('session_id', $sessionId)
+            ->first();
+
+        // Get bills
+        $bills = DB::table('school_bill_class_term_session as sbcts')
+            ->where('sbcts.class_id', $classId)
+            ->where('sbcts.termid_id', $termId)
+            ->where('sbcts.session_id', $sessionId)
+            ->join('school_bill as sb', 'sb.id', '=', 'sbcts.bill_id')
+            ->select('sb.*')
+            ->get();
+
+        // Get payment records
+        $paymentRecords = DB::table('student_bill_payment as sbp')
+            ->join('student_bill_payment_record as sbpr', 'sbpr.student_bill_payment_id', '=', 'sbp.id')
+            ->leftJoin('users as u', 'u.id', '=', 'sbp.generated_by')
+            ->where('sbp.student_id', $studentId)
+            ->where('sbp.class_id', $classId)
+            ->where('sbp.termid_id', $termId)
+            ->where('sbp.session_id', $sessionId)
+            ->select(
+                'sbp.created_at as payment_date',
+                'sbp.payment_method',
+                'sbp.status',
+                'sbpr.amount_paid',
+                'sbpr.amount_owed as balance',
+                DB::raw("COALESCE(u.name, 'System') as received_by")
+            )
+            ->orderBy('sbpr.created_at', 'desc')
+            ->get();
+
+        $studentName = trim($student->firstname . ' ' . $student->lastname);
+        if (!empty($student->othername)) {
+            $studentName .= ' (' . $student->othername . ')';
+        }
+
+        return view('reports.analysis.student-payment-details', compact(
+            'pagetitle', 'student', 'studentName', 'paymentBook', 'bills', 'paymentRecords',
+            'studentId', 'classId', 'termId', 'sessionId'
+        ));
+    }
+
+    /**
+     * Export Class Analysis
+     */
+    public function exportClassAnalysis(Request $request)
     {
         $classId = $request->input('class_id');
         $termId = $request->input('term_id');
         $sessionId = $request->input('session_id');
+        $format = $request->input('format', 'pdf');
 
-        switch ($type) {
-            case 'class':
-                $analysis = $this->analysisService->getClassAnalysis($classId, $termId, $sessionId);
-                $pdf = PDF::loadView('reports.pdf.class-analysis', compact('analysis'));
-                $filename = "class_analysis_{$classId}_{$termId}_{$sessionId}.pdf";
-                break;
-            case 'school-wide':
-                $analysis = $this->analysisService->getSchoolFinancialSummary($sessionId, $termId);
-                $pdf = PDF::loadView('reports.pdf.school-wide-analysis', compact('analysis'));
-                $filename = "school_wide_analysis_{$termId}_{$sessionId}.pdf";
-                break;
-            default:
-                abort(404);
+        if (!$classId || !$termId || !$sessionId) {
+            return redirect()->back()->with('error', 'Please select class, term, and session');
         }
 
+        $analysis = $this->analysisService->getClassAnalysis($classId, $termId, $sessionId);
+
+        if ($format === 'excel') {
+            return $this->exportClassAnalysisExcel($analysis);
+        }
+
+        $pdf = PDF::loadView('reports.analysis.pdf.class-analysis', compact('analysis'));
+        $filename = "class_analysis_{$classId}_{$termId}_{$sessionId}.pdf";
         return $pdf->download($filename);
+    }
+
+    /**
+     * Export Class Analysis to Excel
+     */
+    private function exportClassAnalysisExcel($analysis)
+    {
+        $filename = "class_analysis_{$analysis['class_name']}.csv";
+        $handle = fopen('php://output', 'w');
+
+        header('Content-Type: text/csv');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+        fputcsv($handle, ['Student Name', 'Admission No', 'Total Billed (₦)', 'Total Paid (₦)', 'Outstanding (₦)', 'Savings (₦)']);
+
+        foreach ($analysis['students'] as $student) {
+            fputcsv($handle, [
+                $student['name'],
+                $student['admission_no'],
+                number_format($student['total_billed'], 2),
+                number_format($student['total_paid'], 2),
+                number_format($student['total_outstanding'], 2),
+                number_format($student['savings'], 2),
+            ]);
+        }
+
+        fputcsv($handle, []);
+        fputcsv($handle, ['SUMMARY', '', '', '', '', '']);
+        fputcsv($handle, ['Total Students:', $analysis['totals']['total_students']]);
+        fputcsv($handle, ['Total Billed:', '₦' . number_format($analysis['totals']['total_billed_amount'], 2)]);
+        fputcsv($handle, ['Total Paid:', '₦' . number_format($analysis['totals']['total_paid_amount'], 2)]);
+        fputcsv($handle, ['Total Outstanding:', '₦' . number_format($analysis['totals']['total_outstanding'], 2)]);
+        fputcsv($handle, ['Collection Rate:', $analysis['totals']['collection_rate'] . '%']);
+
+        fclose($handle);
+        exit;
+    }
+
+    /**
+     * Export School Wide Analysis
+     */
+    public function exportSchoolWideAnalysis(Request $request)
+    {
+        $termId = $request->input('term_id');
+        $sessionId = $request->input('session_id');
+        $format = $request->input('format', 'pdf');
+
+        $analysis = $this->analysisService->getSchoolFinancialSummary($sessionId, $termId);
+
+        if ($format === 'excel') {
+            return $this->exportSchoolWideExcel($analysis);
+        }
+
+        $pdf = PDF::loadView('reports.analysis.pdf.school-wide-analysis', compact('analysis'));
+        $filename = "school_wide_analysis_{$termId}_{$sessionId}.pdf";
+        return $pdf->download($filename);
+    }
+
+    /**
+     * Export School Wide to Excel
+     */
+    private function exportSchoolWideExcel($analysis)
+    {
+        $filename = "school_wide_analysis.csv";
+        $handle = fopen('php://output', 'w');
+
+        header('Content-Type: text/csv');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+        fputcsv($handle, ['SCHOOL WIDE FINANCIAL SUMMARY']);
+        fputcsv($handle, ['Total Revenue:', '₦' . number_format($analysis['total_revenue'], 2)]);
+        fputcsv($handle, ['Total Collected:', '₦' . number_format($analysis['total_collected'], 2)]);
+        fputcsv($handle, ['Total Outstanding:', '₦' . number_format($analysis['total_outstanding'], 2)]);
+        fputcsv($handle, ['Collection Rate:', $analysis['collection_rate'] . '%']);
+        fputcsv($handle, []);
+
+        fputcsv($handle, ['CLASS PERFORMANCE']);
+        fputcsv($handle, ['Class', 'Students', 'Total Billed', 'Total Collected', 'Collection Rate']);
+
+        foreach ($analysis['class_performance'] as $class) {
+            fputcsv($handle, [
+                $class->class_name,
+                $class->student_count,
+                number_format($class->total_billed, 2),
+                number_format($class->total_collected, 2),
+                $class->collection_rate . '%',
+            ]);
+        }
+
+        fclose($handle);
+        exit;
+    }
+
+    /**
+     * Chart Data for Dashboard
+     */
+    public function getChartData(Request $request)
+    {
+        $type = $request->input('type');
+        $period = $request->input('period', 'monthly');
+
+        switch ($type) {
+            case 'collection-trend':
+                $data = $this->analysisService->getCollectionTrendData($period);
+                break;
+            case 'class-performance':
+                $data = $this->analysisService->getClassPerformanceData();
+                break;
+            case 'payment-distribution':
+                $data = $this->analysisService->getPaymentDistributionData();
+                break;
+            default:
+                return response()->json(['success' => false, 'message' => 'Invalid chart type']);
+        }
+
+        return response()->json(['success' => true, 'data' => $data]);
     }
 }

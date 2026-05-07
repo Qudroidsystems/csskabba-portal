@@ -4,35 +4,26 @@
 namespace App\Http\Controllers\Reports;
 
 use App\Http\Controllers\Controller;
-use App\Services\Accounting\AccountingService;
 use App\Services\Reporting\FinancialReportService;
-use App\Models\StudentBillPaymentBook;
-use App\Models\StudentBillPayment;
-use App\Models\Schoolclass;
-use App\Models\Schoolterm;
-use App\Models\Schoolsession;
-use App\Models\ScholarshipAssignment;
-use App\Models\DiscountAssignment;
+use App\Services\Accounting\AccountingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Carbon\Carbon;
 use Yajra\DataTables\Facades\DataTables;
 
 class FinancialReportController extends Controller
 {
+    protected $financialService;
     protected $accountingService;
-    protected $reportService;
 
     public function __construct(
-        AccountingService $accountingService,
-        FinancialReportService $reportService
+        FinancialReportService $financialService,
+        AccountingService $accountingService
     ) {
+        $this->financialService = $financialService;
         $this->accountingService = $accountingService;
-        $this->reportService = $reportService;
-
         $this->middleware('permission:View financial reports');
-        $this->middleware('permission:Export financial reports', ['only' => ['export', 'exportClassAnalysis']]);
+        $this->middleware('permission:Export financial reports', ['only' => ['exportBalanceSheet', 'exportIncomeStatement', 'exportTrialBalance', 'exportCashFlow']]);
     }
 
     /**
@@ -42,88 +33,42 @@ class FinancialReportController extends Controller
     {
         $asAtDate = $request->get('as_at_date', now()->format('Y-m-d'));
 
-        try {
-            $balanceSheet = $this->reportService->generateBalanceSheet($asAtDate);
-            $assets = $balanceSheet['assets'] ?? [];
-            $liabilities = $balanceSheet['liabilities'] ?? [];
-            $equity = $balanceSheet['equity'] ?? [];
-            $totalAssets = $balanceSheet['total_assets'] ?? 0;
-            $totalLiabilities = $balanceSheet['total_liabilities'] ?? 0;
-            $totalEquity = $balanceSheet['total_equity'] ?? 0;
-        } catch (\Exception $e) {
-            $assets = [];
-            $liabilities = [];
-            $equity = [];
-            $totalAssets = 0;
-            $totalLiabilities = 0;
-            $totalEquity = 0;
-        }
-
-        $pagetitle = 'Balance Sheet';
-
         if ($request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'data' => compact('assets', 'liabilities', 'equity', 'totalAssets', 'totalLiabilities', 'totalEquity'),
-            ]);
+            $data = $this->financialService->generateBalanceSheet($asAtDate);
+            return response()->json(['success' => true, 'data' => $data]);
         }
 
         if ($request->get('format') === 'pdf') {
-            $pdf = Pdf::loadView('reports.balance-sheet-pdf', compact(
-                'assets', 'liabilities', 'equity',
-                'totalAssets', 'totalLiabilities', 'totalEquity', 'asAtDate'
-            ));
+            $data = $this->financialService->generateBalanceSheet($asAtDate);
+            $pdf = PDF::loadView('reports.financial.balance-sheet-pdf', compact('data', 'asAtDate'));
             return $pdf->download("balance_sheet_{$asAtDate}.pdf");
         }
 
-        return view('reports.balance-sheet', compact(
-            'pagetitle', 'assets', 'liabilities', 'equity',
-            'totalAssets', 'totalLiabilities', 'totalEquity', 'asAtDate'
-        ));
+        $pagetitle = 'Balance Sheet';
+        return view('reports.financial.balance-sheet', compact('pagetitle', 'asAtDate'));
     }
 
     /**
-     * Income Statement (Profit & Loss)
+     * Income Statement
      */
     public function incomeStatement(Request $request)
     {
         $startDate = $request->get('start_date', now()->startOfMonth()->format('Y-m-d'));
         $endDate = $request->get('end_date', now()->format('Y-m-d'));
 
-        try {
-            $incomeStatement = $this->reportService->generateIncomeStatement($startDate, $endDate);
-            $income = $incomeStatement['income'] ?? [];
-            $expenses = $incomeStatement['expenses'] ?? [];
-            $totalIncome = $incomeStatement['total_income'] ?? 0;
-            $totalExpenses = $incomeStatement['total_expenses'] ?? 0;
-            $netProfit = $incomeStatement['net_profit'] ?? 0;
-        } catch (\Exception $e) {
-            $income = [];
-            $expenses = [];
-            $totalIncome = 0;
-            $totalExpenses = 0;
-            $netProfit = 0;
-        }
-
-        $pagetitle = 'Income Statement';
-
         if ($request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'data' => compact('income', 'expenses', 'totalIncome', 'totalExpenses', 'netProfit'),
-            ]);
+            $data = $this->financialService->generateIncomeStatement($startDate, $endDate);
+            return response()->json(['success' => true, 'data' => $data]);
         }
 
         if ($request->get('format') === 'pdf') {
-            $pdf = Pdf::loadView('reports.income-statement-pdf', compact(
-                'income', 'expenses', 'totalIncome', 'totalExpenses', 'netProfit', 'startDate', 'endDate'
-            ));
+            $data = $this->financialService->generateIncomeStatement($startDate, $endDate);
+            $pdf = PDF::loadView('reports.financial.income-statement-pdf', compact('data', 'startDate', 'endDate'));
             return $pdf->download("income_statement_{$startDate}_to_{$endDate}.pdf");
         }
 
-        return view('reports.income-statement', compact(
-            'pagetitle', 'income', 'expenses', 'totalIncome', 'totalExpenses', 'netProfit', 'startDate', 'endDate'
-        ));
+        $pagetitle = 'Income Statement';
+        return view('reports.financial.income-statement', compact('pagetitle', 'startDate', 'endDate'));
     }
 
     /**
@@ -133,32 +78,22 @@ class FinancialReportController extends Controller
     {
         $asAtDate = $request->get('as_at_date', now()->format('Y-m-d'));
 
-        try {
+        if ($request->ajax()) {
             $trialBalance = $this->accountingService->getTrialBalance($asAtDate);
             $totalDebit = array_sum(array_column($trialBalance, 'debit'));
             $totalCredit = array_sum(array_column($trialBalance, 'credit'));
-        } catch (\Exception $e) {
-            $trialBalance = [];
-            $totalDebit = 0;
-            $totalCredit = 0;
-        }
-
-        $pagetitle = 'Trial Balance';
-
-        if ($request->ajax()) {
             return response()->json([
                 'success' => true,
-                'data' => compact('trialBalance', 'totalDebit', 'totalCredit'),
+                'data' => compact('trialBalance', 'totalDebit', 'totalCredit')
             ]);
         }
 
         if ($request->get('format') === 'excel') {
-            return $this->exportToExcel($trialBalance, 'trial_balance');
+            return $this->exportTrialBalanceExcel($asAtDate);
         }
 
-        return view('reports.trial-balance', compact(
-            'pagetitle', 'trialBalance', 'totalDebit', 'totalCredit', 'asAtDate'
-        ));
+        $pagetitle = 'Trial Balance';
+        return view('reports.financial.trial-balance', compact('pagetitle', 'asAtDate'));
     }
 
     /**
@@ -169,154 +104,132 @@ class FinancialReportController extends Controller
         $startDate = $request->get('start_date', now()->startOfMonth()->format('Y-m-d'));
         $endDate = $request->get('end_date', now()->format('Y-m-d'));
 
-        try {
-            $cashFlowData = $this->reportService->generateCashFlow($startDate, $endDate);
-            $cashFlow = $cashFlowData['cash_flow'] ?? [];
-            $netCashFlow = $cashFlowData['net_cash_flow'] ?? 0;
-        } catch (\Exception $e) {
-            $cashFlow = [
-                'operating_activities' => [],
-                'investing_activities' => [],
-                'financing_activities' => [],
-            ];
-            $netCashFlow = 0;
-        }
-
-        $pagetitle = 'Cash Flow Statement';
-
         if ($request->ajax()) {
-            return response()->json([
-                'success' => true,
-                'data' => compact('cashFlow', 'netCashFlow'),
-            ]);
+            $data = $this->financialService->generateCashFlow($startDate, $endDate);
+            return response()->json(['success' => true, 'data' => $data]);
         }
 
         if ($request->get('format') === 'pdf') {
-            $pdf = Pdf::loadView('reports.cash-flow-pdf', compact('cashFlow', 'netCashFlow', 'startDate', 'endDate'));
+            $data = $this->financialService->generateCashFlow($startDate, $endDate);
+            $pdf = PDF::loadView('reports.financial.cash-flow-pdf', compact('data', 'startDate', 'endDate'));
             return $pdf->download("cash_flow_{$startDate}_to_{$endDate}.pdf");
         }
 
-        return view('reports.cash-flow', compact('pagetitle', 'cashFlow', 'netCashFlow', 'startDate', 'endDate'));
+        $pagetitle = 'Cash Flow Statement';
+        return view('reports.financial.cash-flow', compact('pagetitle', 'startDate', 'endDate'));
     }
 
     /**
-     * Debtors List Report with DataTable AJAX
+     * Debtors List
      */
     public function debtorsList(Request $request)
     {
         $pagetitle = 'Student Debtors List';
 
         if ($request->ajax()) {
-            $query = StudentBillPaymentBook::where('amount_owed', '>', 0)
-                ->with(['student', 'student.picture', 'schoolBill', 'class', 'class.armRelation', 'term', 'session']);
+            $query = DB::table('student_bill_payment_book as sbpb')
+                ->join('studentRegistration as s', 's.id', '=', 'sbpb.student_id')
+                ->leftJoin('school_bill as sb', 'sb.id', '=', 'sbpb.school_bill_id')
+                ->leftJoin('schoolclass as sc', 'sc.id', '=', 'sbpb.class_id')
+                ->leftJoin('schoolarm as sa', 'sa.id', '=', 'sc.arm')
+                ->leftJoin('schoolterm as st', 'st.id', '=', 'sbpb.term_id')
+                ->leftJoin('schoolsession as ss', 'ss.id', '=', 'sbpb.session_id')
+                ->where('sbpb.amount_owed', '>', 0)
+                ->select(
+                    's.id as student_id',
+                    DB::raw("CONCAT(s.firstname, ' ', s.lastname) as student_name"),
+                    's.admissionNo as admission_no',
+                    'sb.title as bill_title',
+                    DB::raw("CONCAT(sc.schoolclass, ' ', COALESCE(sa.arm, '')) as class_name"),
+                    'st.term as term_name',
+                    'ss.session as session_name',
+                    'sbpb.original_amount',
+                    'sbpb.amount_paid',
+                    'sbpb.amount_owed as outstanding',
+                    DB::raw("(sbpb.scholarship_deduction + sbpb.discount_deduction) as savings"),
+                    'sbpb.class_id',
+                    'sbpb.term_id',
+                    'sbpb.session_id'
+                );
 
+            // Apply filters
             if ($request->filled('class_id')) {
-                $query->where('class_id', $request->class_id);
+                $query->where('sbpb.class_id', $request->class_id);
             }
             if ($request->filled('term_id')) {
-                $query->where('term_id', $request->term_id);
+                $query->where('sbpb.term_id', $request->term_id);
             }
             if ($request->filled('session_id')) {
-                $query->where('session_id', $request->session_id);
+                $query->where('sbpb.session_id', $request->session_id);
             }
             if ($request->filled('min_outstanding')) {
-                $query->where('amount_owed', '>=', (float) $request->min_outstanding);
+                $query->where('sbpb.amount_owed', '>=', $request->min_outstanding);
             }
             if ($request->filled('search_value')) {
                 $search = $request->search_value;
-                $query->whereHas('student', function ($q) use ($search) {
-                    $q->where('firstname', 'like', "%{$search}%")
-                        ->orWhere('lastname', 'like', "%{$search}%")
-                        ->orWhere('admissionNo', 'like', "%{$search}%");
+                $query->where(function($q) use ($search) {
+                    $q->where('s.firstname', 'like', "%{$search}%")
+                      ->orWhere('s.lastname', 'like', "%{$search}%")
+                      ->orWhere('s.admissionNo', 'like', "%{$search}%");
                 });
             }
 
-            $debtors = $query->orderBy('amount_owed', 'desc')->get();
+            $debtors = $query->orderBy('sbpb.amount_owed', 'desc')->get();
+
+            // Add collection rate
+            foreach ($debtors as $debtor) {
+                $total = $debtor->original_amount;
+                $paid = $debtor->amount_paid;
+                $debtor->collection_rate = $total > 0 ? round(($paid / $total) * 100, 1) : 0;
+            }
 
             return DataTables::of($debtors)
                 ->addIndexColumn()
-                ->addColumn('student_avatar', function ($row) {
-                    if (!$row->student) return null;
-
-                    $picture = null;
-                    if ($row->student->relationLoaded('picture') && $row->student->picture) {
-                        $picture = $row->student->picture->picture ?? null;
-                    }
-
-                    if (!$picture) {
-                        $pic = DB::table('studentpicture')
-                            ->where('studentid', $row->student_id)
-                            ->value('picture');
-                        $picture = $pic ?? null;
-                    }
-
+                ->addColumn('student_avatar', function($row) {
+                    $picture = DB::table('studentpicture')->where('studentid', $row->student_id)->value('picture');
                     if ($picture && $picture !== 'unnamed.jpg' && $picture !== '') {
-                        return asset('storage/images/student_avatars/' . $picture);
+                        return '<img src="' . asset('storage/images/student_avatars/' . $picture) . '" class="student-avatar-img" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover;">';
                     }
-
-                    return null;
+                    return '<div class="student-avatar-placeholder" style="width: 35px; height: 35px; border-radius: 50%; background: #2563eb; color: white; display: flex; align-items: center; justify-content: center;">' . substr($row->student_id, -2) . '</div>';
                 })
-                ->addColumn('student_name', fn($row) => trim(($row->student->firstname ?? '') . ' ' . ($row->student->lastname ?? '')))
-                ->addColumn('admission_no', fn($row) => $row->student->admissionNo ?? 'N/A')
-                ->addColumn('bill_title', fn($row) => $row->schoolBill->title ?? 'N/A')
-                ->addColumn('class_name', fn($row) => trim(optional($row->class)->schoolclass . ' ' . optional(optional($row->class)->armRelation)->arm))
-                ->addColumn('term_name', fn($row) => optional($row->term)->term ?? 'N/A')
-                ->addColumn('session_name', fn($row) => optional($row->session)->session ?? 'N/A')
-                ->addColumn('original_amount', fn($row) => number_format(
-                    ($row->scholarship_deduction ?? 0) +
-                    ($row->discount_deduction ?? 0) +
-                    $row->amount_paid +
-                    $row->amount_owed,
-                    2
-                ))
-                ->addColumn('amount_paid', fn($row) => number_format($row->amount_paid, 2))
-                ->addColumn('outstanding', fn($row) => number_format($row->amount_owed, 2))
-                ->addColumn('savings', fn($row) => number_format(($row->scholarship_deduction ?? 0) + ($row->discount_deduction ?? 0), 2))
-                ->addColumn('collection_rate', function ($row) {
-                    $total = $row->amount_paid + $row->amount_owed;
-                    return $total > 0 ? round(($row->amount_paid / $total) * 100, 1) : 0;
-                })
-                ->addColumn('action', fn($row) =>
-                    '<a href="' . route('payment.details', [
+                ->addColumn('action', function($row) {
+                    return '<a href="' . route('reports.analysis.class-student-details', [
                         'studentId' => $row->student_id,
                         'classId' => $row->class_id,
                         'termId' => $row->term_id,
-                        'sessionId' => $row->session_id,
-                    ]) . '" class="btn btn-sm btn-outline-primary" target="_blank">
-                        <i class="ri-eye-line"></i>
-                    </a>'
-                )
-                ->rawColumns(['action', 'student_avatar'])
+                        'sessionId' => $row->session_id
+                    ]) . '" class="btn btn-sm btn-outline-primary" target="_blank"><i class="ri-eye-line"></i></a>';
+                })
+                ->rawColumns(['student_avatar', 'action'])
                 ->make(true);
         }
 
+        // Get filter data
         $classes = DB::table('schoolclass')
             ->leftJoin('schoolarm', 'schoolclass.arm', '=', 'schoolarm.id')
             ->select(
                 'schoolclass.id',
-                'schoolclass.schoolclass as class_name',
-                DB::raw("COALESCE(schoolarm.arm, '') as arm_name"),
-                DB::raw("TRIM(CONCAT(schoolclass.schoolclass, ' ', COALESCE(schoolarm.arm, ''))) as display_name")
+                DB::raw("CONCAT(schoolclass.schoolclass, ' ', COALESCE(schoolarm.arm, '')) as display_name")
             )
             ->orderBy('schoolclass.schoolclass')
-            ->orderBy('schoolarm.arm')
             ->get();
 
-        $terms = Schoolterm::orderBy('term')->get();
-        $sessions = Schoolsession::orderBy('session', 'desc')->get();
+        $terms = DB::table('schoolterm')->orderBy('id')->get();
+        $sessions = DB::table('schoolsession')->orderBy('session', 'desc')->get();
 
-        return view('reports.debtors-list', compact('pagetitle', 'classes', 'terms', 'sessions'));
+        return view('reports.financial.debtors-list', compact('pagetitle', 'classes', 'terms', 'sessions'));
     }
 
     /**
-     * Collection Summary Report
+     * Collection Summary
      */
     public function collectionSummary(Request $request)
     {
         $pagetitle = 'School Fee Collection Summary';
 
         if ($request->ajax()) {
-            $query = StudentBillPaymentBook::select(
+            $query = DB::table('student_bill_payment_book')
+                ->select(
                     'class_id',
                     'term_id',
                     'session_id',
@@ -325,8 +238,7 @@ class FinancialReportController extends Controller
                     DB::raw('SUM(amount_owed) as total_outstanding'),
                     DB::raw('SUM(adjusted_amount) as total_adjusted')
                 )
-                ->groupBy('class_id', 'term_id', 'session_id')
-                ->with(['class', 'class.armRelation', 'term', 'session']);
+                ->groupBy('class_id', 'term_id', 'session_id');
 
             if ($request->filled('class_id')) {
                 $query->where('class_id', $request->class_id);
@@ -338,18 +250,26 @@ class FinancialReportController extends Controller
                 $query->where('session_id', $request->session_id);
             }
 
-            $data = $query->get()->map(function ($row) {
-                $totalExpected = $row->total_adjusted;
-                $collectionRate = $totalExpected > 0
-                    ? round(($row->total_collected / $totalExpected) * 100, 2)
-                    : 0;
+            $results = $query->get();
+
+            $data = $results->map(function($row) {
+                $class = DB::table('schoolclass')
+                    ->leftJoin('schoolarm', 'schoolclass.arm', '=', 'schoolarm.id')
+                    ->where('schoolclass.id', $row->class_id)
+                    ->select(DB::raw("CONCAT(schoolclass.schoolclass, ' ', COALESCE(schoolarm.arm, '')) as class_name"))
+                    ->first();
+
+                $term = DB::table('schoolterm')->where('id', $row->term_id)->value('term');
+                $session = DB::table('schoolsession')->where('id', $row->session_id)->value('session');
+
+                $collectionRate = $row->total_adjusted > 0 ? round(($row->total_collected / $row->total_adjusted) * 100, 2) : 0;
 
                 return [
-                    'class' => trim(optional($row->class)->schoolclass . ' ' . optional(optional($row->class)->armRelation)->arm),
-                    'term' => optional($row->term)->term,
-                    'session' => optional($row->session)->session,
+                    'class' => $class->class_name ?? 'N/A',
+                    'term' => $term ?? 'N/A',
+                    'session' => $session ?? 'N/A',
                     'student_count' => $row->student_count,
-                    'total_expected' => number_format($totalExpected, 2),
+                    'total_expected' => number_format($row->total_adjusted, 2),
                     'total_collected' => number_format($row->total_collected, 2),
                     'total_outstanding' => number_format($row->total_outstanding, 2),
                     'collection_rate' => $collectionRate . '%',
@@ -363,15 +283,15 @@ class FinancialReportController extends Controller
             ->leftJoin('schoolarm', 'schoolclass.arm', '=', 'schoolarm.id')
             ->select(
                 'schoolclass.id',
-                DB::raw("TRIM(CONCAT(schoolclass.schoolclass, ' ', COALESCE(schoolarm.arm, ''))) as display_name")
+                DB::raw("CONCAT(schoolclass.schoolclass, ' ', COALESCE(schoolarm.arm, '')) as display_name")
             )
             ->orderBy('schoolclass.schoolclass')
             ->get();
 
-        $terms = Schoolterm::orderBy('term')->get();
-        $sessions = Schoolsession::orderBy('session', 'desc')->get();
+        $terms = DB::table('schoolterm')->orderBy('id')->get();
+        $sessions = DB::table('schoolsession')->orderBy('session', 'desc')->get();
 
-        return view('reports.collection-summary', compact('pagetitle', 'classes', 'terms', 'sessions'));
+        return view('reports.financial.collection-summary', compact('pagetitle', 'classes', 'terms', 'sessions'));
     }
 
     /**
@@ -382,507 +302,136 @@ class FinancialReportController extends Controller
         $pagetitle = 'Scholarship & Discount Impact Report';
 
         if ($request->ajax()) {
-            $scholarships = ScholarshipAssignment::where('status', 'active')
-                ->where('effective_from', '<=', now())
-                ->where(function ($q) {
-                    $q->whereNull('effective_to')->orWhere('effective_to', '>=', now());
+            // Get active scholarships
+            $scholarships = DB::table('scholarship_assignments as sa')
+                ->join('scholarships as s', 's.id', '=', 'sa.scholarship_id')
+                ->where('sa.status', 'active')
+                ->where('sa.effective_from', '<=', now())
+                ->where(function($q) {
+                    $q->whereNull('sa.effective_to')->orWhere('sa.effective_to', '>=', now());
                 })
-                ->with(['scholarship', 'student'])
                 ->get();
 
-            $discounts = DiscountAssignment::where('status', 'active')
-                ->where('effective_from', '<=', now())
-                ->where(function ($q) {
-                    $q->whereNull('effective_to')->orWhere('effective_to', '>=', now());
+            // Get active discounts
+            $discounts = DB::table('discount_assignments as da')
+                ->join('discounts as d', 'd.id', '=', 'da.discount_id')
+                ->where('da.status', 'active')
+                ->where('da.effective_from', '<=', now())
+                ->where(function($q) {
+                    $q->whereNull('da.effective_to')->orWhere('da.effective_to', '>=', now());
                 })
-                ->with(['discount', 'student'])
                 ->get();
 
-            $totalScholarships = $scholarships->count();
-            $totalDiscounts = $discounts->count();
-            $totalBeneficiaries = $scholarships->pluck('student_id')->merge($discounts->pluck('student_id'))->unique()->count();
+            // Calculate total savings from payments
+            $totalSavings = DB::table('student_bill_payment_book')
+                ->sum(DB::raw('scholarship_deduction + discount_deduction'));
 
-            $totalScholarshipValue = $scholarships->sum(function ($s) {
-                return $this->calculateActualScholarshipSavings($s);
-            });
+            $totalBeneficiaries = DB::table('scholarship_assignments')
+                ->distinct('student_id')
+                ->count('student_id');
 
-            $totalDiscountValue = $discounts->sum(function ($d) {
-                return $this->calculateActualDiscountSavings($d);
-            });
+            // Group by type
+            $scholarshipByType = $scholarships->groupBy('title')->map(fn($items) => $items->sum('value'));
+            $discountByType = $discounts->groupBy('title')->map(fn($items) => $items->sum('value'));
 
-            $totalSavings = $totalScholarshipValue + $totalDiscountValue;
-
-            $scholarshipByType = $scholarships->groupBy(function ($item) {
-                return $item->scholarship->title ?? 'Unknown';
-            })->map(function ($items) {
-                return $items->sum(function ($item) {
-                    return $this->calculateActualScholarshipSavings($item);
-                });
-            });
-
-            $discountByType = $discounts->groupBy(function ($item) {
-                return $item->discount->title ?? 'Unknown';
-            })->map(function ($items) {
-                return $items->sum(function ($item) {
-                    return $this->calculateActualDiscountSavings($item);
-                });
-            });
-
-            $impactByClass = [];
-            $classes = Schoolclass::with('armRelation')->get();
-
-            foreach ($classes as $class) {
-                $currentSession = Schoolsession::where('status', 'Current')->first();
-                if ($currentSession) {
-                    $studentIds = DB::table('studentclass')
-                        ->where('schoolclassid', $class->id)
-                        ->where('sessionid', $currentSession->id)
-                        ->pluck('studentId')
-                        ->toArray();
-
-                    $classScholarships = $scholarships->filter(function ($s) use ($studentIds) {
-                        return in_array($s->student_id, $studentIds);
-                    });
-
-                    $classDiscounts = $discounts->filter(function ($d) use ($studentIds) {
-                        return in_array($d->student_id, $studentIds);
-                    });
-
-                    if ($classScholarships->count() > 0 || $classDiscounts->count() > 0) {
-                        $impactByClass[] = [
-                            'class' => $class->schoolclass . ' ' . optional($class->armRelation)->arm,
-                            'scholarship_students' => $classScholarships->count(),
-                            'scholarship_value' => $classScholarships->sum(function ($s) {
-                                return $this->calculateActualScholarshipSavings($s);
-                            }),
-                            'discount_students' => $classDiscounts->count(),
-                            'discount_value' => $classDiscounts->sum(function ($d) {
-                                return $this->calculateActualDiscountSavings($d);
-                            }),
-                        ];
-                    }
-                }
-            }
+            // Impact by class
+            $impactByClass = DB::table('student_bill_payment_book as sbpb')
+                ->join('schoolclass as sc', 'sc.id', '=', 'sbpb.class_id')
+                ->leftJoin('schoolarm as sa', 'sa.id', '=', 'sc.arm')
+                ->select(
+                    DB::raw("CONCAT(sc.schoolclass, ' ', COALESCE(sa.arm, '')) as class_name"),
+                    DB::raw('SUM(sbpb.scholarship_deduction) as scholarship_value'),
+                    DB::raw('SUM(sbpb.discount_deduction) as discount_value'),
+                    DB::raw('COUNT(DISTINCT CASE WHEN sbpb.scholarship_deduction > 0 THEN sbpb.student_id END) as scholarship_students'),
+                    DB::raw('COUNT(DISTINCT CASE WHEN sbpb.discount_deduction > 0 THEN sbpb.student_id END) as discount_students')
+                )
+                ->groupBy('sbpb.class_id', 'sc.schoolclass', 'sa.arm')
+                ->get();
 
             return response()->json([
                 'success' => true,
-                'data' => compact(
-                    'totalScholarships',
-                    'totalDiscounts',
-                    'totalBeneficiaries',
-                    'totalSavings',
-                    'scholarshipByType',
-                    'discountByType',
-                    'impactByClass'
-                ),
+                'data' => [
+                    'total_scholarships' => $scholarships->count(),
+                    'total_discounts' => $discounts->count(),
+                    'total_beneficiaries' => $totalBeneficiaries,
+                    'total_savings' => $totalSavings,
+                    'scholarship_by_type' => $scholarshipByType,
+                    'discount_by_type' => $discountByType,
+                    'impact_by_class' => $impactByClass,
+                ]
             ]);
         }
 
-        return view('reports.scholarship-impact', compact('pagetitle'));
+        return view('reports.financial.scholarship-impact', compact('pagetitle'));
     }
 
     /**
-     * Calculate actual scholarship savings from payment records
+     * Export Balance Sheet
      */
-    private function calculateActualScholarshipSavings($scholarshipAssignment)
+    public function exportBalanceSheet(Request $request)
     {
-        return StudentBillPaymentBook::where('student_id', $scholarshipAssignment->student_id)
-            ->sum('scholarship_deduction');
+        $asAtDate = $request->get('as_at_date', now()->format('Y-m-d'));
+        $data = $this->financialService->generateBalanceSheet($asAtDate);
+        $pdf = PDF::loadView('reports.financial.balance-sheet-pdf', compact('data', 'asAtDate'));
+        return $pdf->download("balance_sheet_{$asAtDate}.pdf");
     }
 
     /**
-     * Calculate actual discount savings from payment records
+     * Export Income Statement
      */
-    private function calculateActualDiscountSavings($discountAssignment)
+    public function exportIncomeStatement(Request $request)
     {
-        return StudentBillPaymentBook::where('student_id', $discountAssignment->student_id)
-            ->sum('discount_deduction');
+        $startDate = $request->get('start_date', now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->get('end_date', now()->format('Y-m-d'));
+        $data = $this->financialService->generateIncomeStatement($startDate, $endDate);
+        $pdf = PDF::loadView('reports.financial.income-statement-pdf', compact('data', 'startDate', 'endDate'));
+        return $pdf->download("income_statement_{$startDate}_to_{$endDate}.pdf");
     }
 
+    /**
+     * Export Trial Balance to Excel
+     */
+    public function exportTrialBalanceExcel($asAtDate)
+    {
+        $trialBalance = $this->accountingService->getTrialBalance($asAtDate);
+        $totalDebit = array_sum(array_column($trialBalance, 'debit'));
+        $totalCredit = array_sum(array_column($trialBalance, 'credit'));
 
-/**
- * Class Analysis Report
- */
-public function classAnalysis(Request $request)
-{
-    $pagetitle = 'Class Analysis Report';
-
-    // Get filter data for the view (only needed for non-AJAX requests)
-    if (!$request->ajax() && !$request->has('class_id')) {
-        $classes = DB::table('schoolclass')
-            ->leftJoin('schoolarm', 'schoolclass.arm', '=', 'schoolarm.id')
-            ->select(
-                'schoolclass.id',
-                'schoolclass.schoolclass',
-                DB::raw("COALESCE(schoolarm.arm, '') as arm"),
-                DB::raw("TRIM(CONCAT(COALESCE(schoolclass.schoolclass, ''), ' ', COALESCE(schoolarm.arm, ''))) as display_name")
-            )
-            ->orderBy('schoolclass.schoolclass')
-            ->orderBy('schoolarm.arm')
-            ->get();
-
-        $terms = DB::table('schoolterm')->orderBy('term')->get();
-        $sessions = DB::table('schoolsession')->orderBy('session', 'desc')->get();
-
-        return view('reports.class-analysis', compact('pagetitle', 'classes', 'terms', 'sessions'));
-    }
-
-    // Handle AJAX request
-    try {
-        $classId = $request->get('class_id');
-        $termId = $request->get('term_id');
-        $sessionId = $request->get('session_id');
-
-        if (!$classId || !$termId || !$sessionId) {
-            return response()->json([
-                'success' => false,
-                'data' => [],
-                'message' => 'Missing required parameters'
-            ]);
-        }
-
-        // Get students in the selected class, term, and session using DIRECT DB QUERIES
-        $students = DB::table('studentRegistration')
-            ->join('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
-            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-            ->where('studentclass.schoolclassid', $classId)
-            ->where('studentclass.termid', $termId)
-            ->where('studentclass.sessionid', $sessionId)
-            ->select(
-                'studentRegistration.id as student_id',
-                'studentRegistration.firstname',
-                'studentRegistration.lastname',
-                'studentRegistration.othername',
-                'studentRegistration.admissionNo',
-                'studentpicture.picture as avatar'
-            )
-            ->get();
-
-        $data = [];
-        foreach ($students as $student) {
-            // Get payment summary using DIRECT DB QUERY
-            $paymentBook = DB::table('student_bill_payment_book')
-                ->where('student_id', $student->student_id)
-                ->where('class_id', $classId)
-                ->where('term_id', $termId)
-                ->where('session_id', $sessionId)
-                ->first();
-
-            // Get total bills using DIRECT DB QUERY
-            $totalBilled = DB::table('school_bill_class_term_session')
-                ->where('class_id', $classId)
-                ->where('termid_id', $termId)
-                ->where('session_id', $sessionId)
-                ->join('school_bill', 'school_bill.id', '=', 'school_bill_class_term_session.bill_id')
-                ->sum('school_bill.bill_amount');
-
-            $totalSavings = $paymentBook ? (($paymentBook->scholarship_deduction ?? 0) + ($paymentBook->discount_deduction ?? 0)) : 0;
-            $totalPaid = $paymentBook ? $paymentBook->amount_paid : 0;
-            $adjustedBilled = max(0, $totalBilled - $totalSavings);
-            $outstanding = max(0, $adjustedBilled - $totalPaid);
-
-            // Determine status
-            if ($outstanding <= 0 && $totalPaid > 0) {
-                $status = 'Fully Paid';
-            } elseif ($totalPaid > 0) {
-                $status = 'Partial';
-            } else {
-                $status = 'No Payment';
-            }
-
-            $studentName = trim($student->firstname . ' ' . $student->lastname);
-            if (!empty($student->othername)) {
-                $studentName .= ' (' . $student->othername . ')';
-            }
-
-            $data[] = [
-                'student_id' => $student->student_id,
-                'student_name' => $studentName,
-                'admission_no' => $student->admissionNo ?? 'N/A',
-                'total_billed' => number_format($adjustedBilled, 2),
-                'total_paid' => number_format($totalPaid, 2),
-                'outstanding' => number_format($outstanding, 2),
-                'status' => $status,
-                'class_id' => $classId,
-                'term_id' => $termId,
-                'session_id' => $sessionId,
-            ];
-        }
-
-        // Sort by outstanding amount (highest first)
-        usort($data, function($a, $b) {
-            return floatval($b['outstanding']) - floatval($a['outstanding']);
-        });
-
-        return response()->json([
-            'success' => true,
-            'data' => $data,
-            'total' => count($data)
-        ]);
-
-    } catch (\Exception $e) {
-        \Log::error('Class Analysis Error: ' . $e->getMessage());
-        \Log::error('Class Analysis Trace: ' . $e->getTraceAsString());
-
-        return response()->json([
-            'success' => false,
-            'message' => $e->getMessage()
-        ], 500);
-    }
-}
-
-
-
-
-  /**
- * Export Class Analysis Report
- */
-public function exportClassAnalysis($format, Request $request)
-{
-    try {
-        $classId = $request->get('class_id');
-        $termId = $request->get('term_id');
-        $sessionId = $request->get('session_id');
-
-        if (!$classId || !$termId || !$sessionId) {
-            return redirect()->back()->with('error', 'Please select class, term, and session');
-        }
-
-        // Get class name using DIRECT DB QUERY
-        $class = DB::table('schoolclass')
-            ->leftJoin('schoolarm', 'schoolclass.arm', '=', 'schoolarm.id')
-            ->where('schoolclass.id', $classId)
-            ->select('schoolclass.schoolclass', 'schoolarm.arm')
-            ->first();
-
-        $term = DB::table('schoolterm')->where('id', $termId)->first();
-        $session = DB::table('schoolsession')->where('id', $sessionId)->first();
-
-        // Get students using DIRECT DB QUERY
-        $students = DB::table('studentRegistration')
-            ->join('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
-            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-            ->where('studentclass.schoolclassid', $classId)
-            ->where('studentclass.termid', $termId)
-            ->where('studentclass.sessionid', $sessionId)
-            ->select(
-                'studentRegistration.id as student_id',
-                'studentRegistration.firstname',
-                'studentRegistration.lastname',
-                'studentRegistration.othername',
-                'studentRegistration.admissionNo',
-                'studentpicture.picture as avatar'
-            )
-            ->get();
-
-        $reportData = [];
-        $totalBilledAll = 0;
-        $totalPaidAll = 0;
-        $totalOutstandingAll = 0;
-        $fullyPaidCount = 0;
-        $partialCount = 0;
-
-        foreach ($students as $student) {
-            $paymentBook = DB::table('student_bill_payment_book')
-                ->where('student_id', $student->student_id)
-                ->where('class_id', $classId)
-                ->where('term_id', $termId)
-                ->where('session_id', $sessionId)
-                ->first();
-
-            $totalBilled = DB::table('school_bill_class_term_session')
-                ->where('class_id', $classId)
-                ->where('termid_id', $termId)
-                ->where('session_id', $sessionId)
-                ->join('school_bill', 'school_bill.id', '=', 'school_bill_class_term_session.bill_id')
-                ->sum('school_bill.bill_amount');
-
-            $totalSavings = $paymentBook ? (($paymentBook->scholarship_deduction ?? 0) + ($paymentBook->discount_deduction ?? 0)) : 0;
-            $totalPaid = $paymentBook ? $paymentBook->amount_paid : 0;
-            $adjustedBilled = max(0, $totalBilled - $totalSavings);
-            $outstanding = max(0, $adjustedBilled - $totalPaid);
-
-            $studentName = trim($student->firstname . ' ' . $student->lastname);
-            if (!empty($student->othername)) {
-                $studentName .= ' (' . $student->othername . ')';
-            }
-
-            $reportData[] = [
-                'student_name' => $studentName,
-                'admission_no' => $student->admissionNo ?? 'N/A',
-                'total_billed' => $adjustedBilled,
-                'total_paid' => $totalPaid,
-                'outstanding' => $outstanding,
-            ];
-
-            $totalBilledAll += $adjustedBilled;
-            $totalPaidAll += $totalPaid;
-            $totalOutstandingAll += $outstanding;
-
-            if ($outstanding <= 0 && $totalPaid > 0) {
-                $fullyPaidCount++;
-            } elseif ($totalPaid > 0) {
-                $partialCount++;
-            }
-        }
-
-        $className = trim(($class->schoolclass ?? '') . ' ' . ($class->arm ?? ''));
-        $termName = $term->term ?? 'N/A';
-        $sessionName = $session->session ?? 'N/A';
-
-        $collectionRate = $totalBilledAll > 0 ? round(($totalPaidAll / $totalBilledAll) * 100, 2) : 0;
-
-        $data = [
-            'reportData' => $reportData,
-            'className' => $className,
-            'termName' => $termName,
-            'sessionName' => $sessionName,
-            'totalBilled' => $totalBilledAll,
-            'totalPaid' => $totalPaidAll,
-            'totalOutstanding' => $totalOutstandingAll,
-            'totalStudents' => count($reportData),
-            'fullyPaidCount' => $fullyPaidCount,
-            'partialCount' => $partialCount,
-            'collectionRate' => $collectionRate,
-            'generatedAt' => now()->format('d F, Y H:i:s'),
-        ];
-
-        if ($format === 'pdf') {
-            $pdf = Pdf::loadView('reports.class-analysis-pdf', $data);
-            $filename = "class_analysis_" . str_replace(' ', '_', $className) . "_" . str_replace(' ', '_', $termName) . "_" . str_replace(' ', '_', $sessionName) . ".pdf";
-            return $pdf->download($filename);
-        }
-
-        // Excel export - CSV format
-        $filename = "class_analysis_" . str_replace(' ', '_', $className) . "_" . str_replace(' ', '_', $termName) . "_" . str_replace(' ', '_', $sessionName) . ".csv";
-
+        $filename = "trial_balance_{$asAtDate}.csv";
         $handle = fopen('php://output', 'w');
 
         header('Content-Type: text/csv');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
 
-        fputcsv($handle, ['Student Name', 'Admission No', 'Total Billed (₦)', 'Total Paid (₦)', 'Outstanding (₦)']);
+        fputcsv($handle, ['Account Code', 'Account Name', 'Account Type', 'Debit (₦)', 'Credit (₦)', 'Balance (₦)']);
 
-        foreach ($data['reportData'] as $row) {
+        foreach ($trialBalance as $row) {
             fputcsv($handle, [
-                $row['student_name'],
-                $row['admission_no'],
-                number_format($row['total_billed'], 2),
-                number_format($row['total_paid'], 2),
-                number_format($row['outstanding'], 2),
+                $row['account_code'],
+                $row['account_name'],
+                $row['account_type'],
+                number_format($row['debit'], 2),
+                number_format($row['credit'], 2),
+                number_format($row['balance'], 2),
             ]);
         }
 
         fputcsv($handle, []);
-        fputcsv($handle, ['Summary', '', '', '', '']);
-        fputcsv($handle, ['Total Students:', $data['totalStudents'], '', '', '']);
-        fputcsv($handle, ['Total Billed:', '', '₦' . number_format($data['totalBilled'], 2), '', '']);
-        fputcsv($handle, ['Total Paid:', '', '₦' . number_format($data['totalPaid'], 2), '', '']);
-        fputcsv($handle, ['Total Outstanding:', '', '₦' . number_format($data['totalOutstanding'], 2), '', '']);
-        fputcsv($handle, ['Collection Rate:', '', $data['collectionRate'] . '%', '', '']);
-        fputcsv($handle, ['Fully Paid Students:', $data['fullyPaidCount'], '', '', '']);
-        fputcsv($handle, ['Partial Payment Students:', $data['partialCount'], '', '', '']);
-        fputcsv($handle, ['Generated:', $data['generatedAt'], '', '', '']);
+        fputcsv($handle, ['TOTALS', '', '', number_format($totalDebit, 2), number_format($totalCredit, 2), '']);
 
         fclose($handle);
         exit;
-
-    } catch (\Exception $e) {
-        \Log::error('Export Error: ' . $e->getMessage());
-        return redirect()->back()->with('error', 'Export failed: ' . $e->getMessage());
-    }
-}
-
-    /**
-     * Export report
-     */
-    public function export($report, $format, Request $request)
-    {
-        $filename = "{$report}_" . date('Y-m-d') . '.' . ($format === 'excel' ? 'xlsx' : 'pdf');
-
-        return response()->json([
-            'success' => true,
-            'message' => "Report exported as {$filename}",
-            'download_url' => '#',
-        ]);
     }
 
     /**
-     * Debtors data for chart (AJAX)
+     * Export Cash Flow
      */
-    public function getDebtorsData(Request $request)
+    public function exportCashFlow(Request $request)
     {
-        $query = StudentBillPaymentBook::where('amount_owed', '>', 0);
-
-        if ($request->filled('class_id')) {
-            $query->where('class_id', $request->class_id);
-        }
-        if ($request->filled('term_id')) {
-            $query->where('term_id', $request->term_id);
-        }
-        if ($request->filled('session_id')) {
-            $query->where('session_id', $request->session_id);
-        }
-
-        $data = $query->selectRaw('
-            CASE
-                WHEN amount_owed <= 10000   THEN "₦0 – ₦10k"
-                WHEN amount_owed <= 50000   THEN "₦10k – ₦50k"
-                WHEN amount_owed <= 100000  THEN "₦50k – ₦100k"
-                ELSE "Above ₦100k"
-            END as `range`,
-            COUNT(*) as count,
-            SUM(amount_owed) as total
-        ')
-        ->groupBy('range')
-        ->get();
-
-        return response()->json([
-            'success' => true,
-            'labels' => $data->pluck('range'),
-            'values' => $data->pluck('count'),
-            'totals' => $data->pluck('total'),
-        ]);
-    }
-
-    /**
-     * Collection data for chart (AJAX)
-     */
-    public function getCollectionData(Request $request)
-    {
-        $year = $request->input('year', date('Y'));
-        $data = [];
-
-        for ($month = 1; $month <= 12; $month++) {
-            $startDate = Carbon::create($year, $month, 1)->startOfMonth();
-            $endDate = Carbon::create($year, $month, 1)->endOfMonth();
-
-            $collected = StudentBillPaymentBook::whereBetween('updated_at', [$startDate, $endDate])
-                ->sum('amount_paid');
-
-            $data[] = [
-                'month' => $startDate->format('F'),
-                'total' => $collected,
-                'short_month' => $startDate->format('M'),
-            ];
-        }
-
-        return response()->json([
-            'success' => true,
-            'data' => $data,
-            'year' => $year,
-            'total_year' => array_sum(array_column($data, 'total')),
-        ]);
-    }
-
-    /**
-     * Export to Excel helper
-     */
-    private function exportToExcel($data, $filename)
-    {
-        return response()->json([
-            'success' => true,
-            'message' => 'Excel export will be implemented with Maatwebsite Excel package',
-        ]);
+        $startDate = $request->get('start_date', now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->get('end_date', now()->format('Y-m-d'));
+        $data = $this->financialService->generateCashFlow($startDate, $endDate);
+        $pdf = PDF::loadView('reports.financial.cash-flow-pdf', compact('data', 'startDate', 'endDate'));
+        return $pdf->download("cash_flow_{$startDate}_to_{$endDate}.pdf");
     }
 }

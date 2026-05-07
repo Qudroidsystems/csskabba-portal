@@ -717,31 +717,61 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
 
 
 
-    // ============================================
-    // FINANCIAL REPORTS ROUTES
-    // ============================================
-    Route::prefix('reports')->name('reports.')->group(function () {
-        Route::prefix('financial')->name('financial.')->group(function () {
-            Route::get('/debtors', [FinancialReportController::class, 'debtorsList'])->name('debtors');
-            Route::get('/debtors/export/{format}', [FinancialReportController::class, 'exportDebtors'])->name('export');
-            Route::get('/balance-sheet', [FinancialReportController::class, 'balanceSheet'])->name('balance-sheet');
-            Route::get('/income-statement', [FinancialReportController::class, 'incomeStatement'])->name('income-statement');
-            Route::get('/trial-balance', [FinancialReportController::class, 'trialBalance'])->name('trial-balance');
-            Route::get('/cash-flow', [FinancialReportController::class, 'cashFlow'])->name('cash-flow');
-            Route::get('/collection-summary', [FinancialReportController::class, 'collectionSummary'])->name('collection-summary');
-            Route::get('/scholarship-impact', [FinancialReportController::class, 'scholarshipImpact'])->name('scholarship-impact');
+      <?php
 
-            // Chart data endpoints
-            Route::get('/debtors-data', [FinancialReportController::class, 'getDebtorsData'])->name('debtors-data');
-            Route::get('/collection-data', [FinancialReportController::class, 'getCollectionData'])->name('collection-data');
-        });
+use App\Http\Controllers\Reports\FinancialReportController;
+use App\Http\Controllers\Reports\AnalysisReportController;
 
-        // Class Analysis Routes
-        Route::prefix('analysis')->name('analysis.')->group(function () {
-            Route::get('/class', [FinancialReportController::class, 'classAnalysis'])->name('class');
-            Route::get('/class/export/{format}', [FinancialReportController::class, 'exportClassAnalysis'])->name('class.export');
-        });
-    });
+// ============================================
+// FINANCIAL REPORTS ROUTES (FinancialReportController)
+// ============================================
+Route::prefix('reports/financial')->name('reports.financial.')->group(function () {
+    // Balance Sheet
+    Route::get('/balance-sheet', [FinancialReportController::class, 'balanceSheet'])->name('balance-sheet');
+    Route::get('/balance-sheet/export', [FinancialReportController::class, 'exportBalanceSheet'])->name('balance-sheet.export');
+
+    // Income Statement
+    Route::get('/income-statement', [FinancialReportController::class, 'incomeStatement'])->name('income-statement');
+    Route::get('/income-statement/export', [FinancialReportController::class, 'exportIncomeStatement'])->name('income-statement.export');
+
+    // Trial Balance
+    Route::get('/trial-balance', [FinancialReportController::class, 'trialBalance'])->name('trial-balance');
+
+    // Cash Flow
+    Route::get('/cash-flow', [FinancialReportController::class, 'cashFlow'])->name('cash-flow');
+    Route::get('/cash-flow/export', [FinancialReportController::class, 'exportCashFlow'])->name('cash-flow.export');
+
+    // Debtors List
+    Route::get('/debtors', [FinancialReportController::class, 'debtorsList'])->name('debtors');
+
+    // Collection Summary
+    Route::get('/collection-summary', [FinancialReportController::class, 'collectionSummary'])->name('collection-summary');
+
+    // Scholarship Impact
+    Route::get('/scholarship-impact', [FinancialReportController::class, 'scholarshipImpact'])->name('scholarship-impact');
+});
+
+// ============================================
+// ANALYSIS REPORTS ROUTES (AnalysisReportController)
+// ============================================
+Route::prefix('reports/analysis')->name('reports.analysis.')->group(function () {
+    // Class Analysis
+    Route::get('/class', [AnalysisReportController::class, 'classAnalysis'])->name('class');
+    Route::get('/class/export', [AnalysisReportController::class, 'exportClassAnalysis'])->name('class.export');
+
+    // School Wide Analysis
+    Route::get('/school-wide', [AnalysisReportController::class, 'schoolWideAnalysis'])->name('school-wide');
+    Route::get('/school-wide/export', [AnalysisReportController::class, 'exportSchoolWideAnalysis'])->name('school-wide.export');
+
+    // Scholarship Impact Analysis
+    Route::get('/scholarship-impact', [AnalysisReportController::class, 'scholarshipImpactAnalysis'])->name('scholarship-impact');
+
+    // Student Payment Details (View from analysis)
+    Route::get('/student/{studentId}/{classId}/{termId}/{sessionId}', [AnalysisReportController::class, 'studentPaymentDetails'])->name('class-student-details');
+
+    // Chart Data API
+    Route::get('/chart-data', [AnalysisReportController::class, 'getChartData'])->name('chart-data');
+});
 
 
     // ============================================

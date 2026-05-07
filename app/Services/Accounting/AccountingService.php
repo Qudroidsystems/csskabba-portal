@@ -123,28 +123,55 @@ class AccountingService
     }
 
     /**
-     * Get account balance
+     * Get account balance as at a specific date
      */
     public function getAccountBalance($accountId, $asAtDate = null)
     {
-        $asAtDate = $asAtDate ?? now();
+        $asAtDate = $asAtDate ?? now()->format('Y-m-d');
 
-        $query = JournalEntryLine::where('account_id', $accountId)
-            ->whereHas('journalEntry', function ($q) use ($asAtDate) {
-                $q->where('entry_date', '<=', $asAtDate)
-                  ->where('status', 'posted');
-            });
+        $result = DB::table('journal_entry_lines as jel')
+            ->join('journal_entries as je', 'je.id', '=', 'jel.journal_entry_id')
+            ->where('jel.account_id', $accountId)
+            ->where('je.entry_date', '<=', $asAtDate)
+            ->where('je.status', 'posted')
+            ->select(
+                DB::raw('COALESCE(SUM(jel.debit), 0) as total_debit'),
+                DB::raw('COALESCE(SUM(jel.credit), 0) as total_credit')
+            )
+            ->first();
 
-        $debitTotal = (clone $query)->sum('debit');
-        $creditTotal = (clone $query)->sum('credit');
-
-        $account = ChartOfAccount::find($accountId);
+        $account = DB::table('chart_of_accounts')->where('id', $accountId)->first();
 
         if ($account && $account->normal_balance === 'debit') {
-            return $debitTotal - $creditTotal;
+            return ($result->total_debit ?? 0) - ($result->total_credit ?? 0);
         }
 
-        return $creditTotal - $debitTotal;
+        return ($result->total_credit ?? 0) - ($result->total_debit ?? 0);
+    }
+
+    /**
+     * Get account balance for a specific period
+     */
+    public function getAccountBalanceForPeriod($accountId, $startDate, $endDate)
+    {
+        $result = DB::table('journal_entry_lines as jel')
+            ->join('journal_entries as je', 'je.id', '=', 'jel.journal_entry_id')
+            ->where('jel.account_id', $accountId)
+            ->whereBetween('je.entry_date', [$startDate, $endDate])
+            ->where('je.status', 'posted')
+            ->select(
+                DB::raw('COALESCE(SUM(jel.debit), 0) as total_debit'),
+                DB::raw('COALESCE(SUM(jel.credit), 0) as total_credit')
+            )
+            ->first();
+
+        $account = DB::table('chart_of_accounts')->where('id', $accountId)->first();
+
+        if ($account && $account->normal_balance === 'debit') {
+            return ($result->total_debit ?? 0) - ($result->total_credit ?? 0);
+        }
+
+        return ($result->total_credit ?? 0) - ($result->total_debit ?? 0);
     }
 
     /**
@@ -152,7 +179,12 @@ class AccountingService
      */
     public function getTrialBalance($asAtDate = null)
     {
-        $accounts = ChartOfAccount::where('is_active', true)->get();
+        $asAtDate = $asAtDate ?? now()->format('Y-m-d');
+
+        $accounts = DB::table('chart_of_accounts')
+            ->where('is_active', true)
+            ->get();
+
         $trialBalance = [];
 
         foreach ($accounts as $account) {
@@ -163,13 +195,25 @@ class AccountingService
                     'account_code' => $account->account_code,
                     'account_name' => $account->account_name,
                     'account_type' => $account->account_type,
-                    'debit' => $balance > 0 && $account->normal_balance === 'debit' ? $balance : 0,
-                    'credit' => $balance > 0 && $account->normal_balance === 'credit' ? $balance : 0,
+                    'debit' => $balance > 0 && $account->normal_balance === 'debit' ? abs($balance) : 0,
+                    'credit' => $balance > 0 && $account->normal_balance === 'credit' ? abs($balance) : 0,
                     'balance' => $balance,
                 ];
             }
         }
 
         return $trialBalance;
+    }
+
+    /**
+     * Get all accounts by type
+     */
+    public function getAccountsByType($type)
+    {
+        return DB::table('chart_of_accounts')
+            ->where('account_type', $type)
+            ->where('is_active', true)
+            ->orderBy('account_code')
+            ->get();
     }
 }
