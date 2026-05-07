@@ -84,7 +84,10 @@
 .kpi-icon.amber { background:var(--d-amber-lt); color:var(--d-amber); }
 .kpi-label { font-size:12px; color:var(--d-muted); font-weight:500; }
 .kpi-value { font-size:22px; font-weight:700; color:var(--d-navy); letter-spacing:-.5px; line-height:1.1; }
-.kpi-value.mono { font-family:var(--ff-mono); font-size:18px; }
+.kpi-value.mono {
+    font-family:var(--ff-mono); font-size:18px;
+    font-feature-settings:"zero" 0, "tnum" 1;
+}
 .kpi-sub   { font-size:11px; color:var(--d-muted); margin-top:2px; }
 
 /* ── Main card ─────────────────────────────────────────── */
@@ -168,11 +171,6 @@
 /* ── Student cell with avatar ────────────────────────────── */
 .student-cell { display:flex; align-items:center; gap:10px; }
 
-.student-avatar-wrap {
-    position: relative;
-    flex-shrink: 0;
-    cursor: pointer;
-}
 .student-avatar-img {
     width: 38px; height: 38px;
     border-radius: 9px;
@@ -181,6 +179,7 @@
     background: #f0f0f0;
     transition: transform .2s, box-shadow .2s;
     display: block;
+    cursor: pointer;
 }
 .student-avatar-img:hover {
     transform: scale(1.12);
@@ -196,6 +195,7 @@
     cursor: pointer;
     transition: transform .2s, box-shadow .2s;
     border: 2px solid transparent;
+    flex-shrink: 0;
 }
 .student-initials:hover {
     transform: scale(1.12);
@@ -204,8 +204,12 @@
 .student-name { font-weight:600; color:var(--d-navy); font-size:13px; }
 .student-adm  { font-size:11px; color:var(--d-muted); font-family:var(--ff-mono); }
 
-/* Amount cells */
-.amt { font-family:var(--ff-mono); font-size:13px; }
+/* Amount cells — FIX: font-feature-settings prevents "0" rendering as "o" */
+.amt {
+    font-family:var(--ff-mono);
+    font-size:13px;
+    font-feature-settings:"zero" 0, "tnum" 1;
+}
 .amt-outstanding { color:var(--d-red);   font-weight:600; }
 .amt-paid        { color:var(--d-green); }
 .amt-savings     { color:var(--d-amber); }
@@ -217,7 +221,11 @@
 .coll-fill { height:100%; border-radius:3px; background:var(--d-green); }
 .coll-fill.warn  { background:var(--d-amber); }
 .coll-fill.alert { background:var(--d-red); }
-.coll-pct  { font-size:11px; font-family:var(--ff-mono); color:var(--d-muted); white-space:nowrap; }
+.coll-pct  {
+    font-size:11px; font-family:var(--ff-mono);
+    font-feature-settings:"zero" 0, "tnum" 1;
+    color:var(--d-muted); white-space:nowrap;
+}
 
 /* Class badge */
 .class-badge {
@@ -234,7 +242,10 @@
     border-top:2px solid var(--d-navy-mid);
 }
 .tfoot-label { font-size:10px; text-transform:uppercase; letter-spacing:.5px; opacity:.7; }
-.tfoot-val   { font-family:var(--ff-mono); font-size:14px; }
+.tfoot-val {
+    font-family:var(--ff-mono); font-size:14px;
+    font-feature-settings:"zero" 0, "tnum" 1;
+}
 .tfoot-val.red   { color:#fca5a5; }
 .tfoot-val.green { color:#86efac; }
 .tfoot-val.amber { color:#fde68a; }
@@ -561,7 +572,6 @@ function showZoomModal(imageUrl, name, details) {
         imgEl.src = imageUrl;
         imgEl.style.display = 'block';
     } else {
-        // Generate canvas with initials
         const initials = getInitials(name);
         const canvas   = document.createElement('canvas');
         canvas.width   = 400;
@@ -639,82 +649,126 @@ $(function () {
             }
         },
         columns: [
-            /* 0 # */
-            { data: 'DT_RowIndex', orderable: false, searchable: false,
-              render: d => `<span style="color:var(--d-muted);font-size:12px">${d}</span>` },
+            /* 0  # */
+            {
+                data: 'DT_RowIndex',
+                orderable: false,
+                searchable: false,
+                render: d => `<span style="color:var(--d-muted);font-size:12px">${d}</span>`
+            },
 
-            /* 1 Photo */
-            { data: 'student_avatar', orderable: false, searchable: false,
-              render: function(d, t, r) {
-                const name    = r.student_name || '';
-                const initials = getInitials(name);
-                const admNo   = r.admission_no || '';
-                const cls     = r.class_name   || '';
-                const details = `<i class="ri-honour-line me-1"></i>${admNo}&nbsp;|&nbsp;<i class="ri-building-line me-1"></i>${cls}`;
+            /* 1  Photo — FIX: all dynamic values stored in data-* attributes,
+                           no JS string interpolation inside HTML event attributes */
+            {
+                data: 'student_avatar',
+                orderable: false,
+                searchable: false,
+                render: function (d, t, r) {
+                    const name     = r.student_name || '';
+                    const initials = getInitials(name);
+                    const safeImg  = (d && d !== 'null' && d !== '') ? d : '';
+                    /* Encode for use inside a double-quoted HTML attribute */
+                    const eName    = name.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+                    const eAdm     = (r.admission_no || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+                    const eCls     = (r.class_name   || '').replace(/&/g,'&amp;').replace(/"/g,'&quot;');
+                    const eImg     = safeImg.replace(/&/g,'&amp;').replace(/"/g,'&quot;');
 
-                if (d && d !== '' && d !== 'null') {
-                    return `<img src="${d}" class="student-avatar-img"
-                                 style="cursor:pointer"
-                                 onclick='showZoomModal("${d.replace(/'/g,"\\'")}","${name.replace(/"/g,"&quot;")}","${details.replace(/"/g,"&quot;")}")'
-                                 onerror="this.onerror=null;
-                                          var el=document.createElement('div');
-                                          el.className='student-initials';
-                                          el.textContent='${initials}';
-                                          el.onclick=function(){ showZoomModal('','${name.replace(/'/g,"\\'")}','${details.replace(/'/g,"\\'")}'); };
-                                          this.parentNode.replaceChild(el,this);"
-                            >`;
+                    const dataAttrs = `data-img="${eImg}" data-name="${eName}" data-adm="${eAdm}" data-cls="${eCls}"`;
+
+                    if (safeImg) {
+                        return `<img src="${eImg}"
+                                     class="student-avatar-img avatar-zoom"
+                                     ${dataAttrs}
+                                     alt="${eName}">`;
+                    }
+                    return `<div class="student-initials avatar-zoom" ${dataAttrs}>${initials}</div>`;
                 }
-                return `<div class="student-initials"
-                              onclick='showZoomModal("","${name.replace(/"/g,"&quot;")}","${details.replace(/"/g,"&quot;")}")'>${initials}</div>`;
-              }},
+            },
 
-            /* 2 Student name */
-            { data: 'student_name', name: 'student_name',
-              render: function (d, t, r) {
-                return `<div>
-                    <div class="student-name">${d}</div>
-                    <div class="student-adm">${r.admission_no || ''}</div>
-                </div>`;
-              }},
+            /* 2  Student name */
+            {
+                data: 'student_name',
+                name: 'student_name',
+                render: function (d, t, r) {
+                    return `<div>
+                        <div class="student-name">${d}</div>
+                        <div class="student-adm">${r.admission_no || ''}</div>
+                    </div>`;
+                }
+            },
 
-            /* 3 Class */
-            { data: 'class_name', name: 'class_name',
-              render: d => d ? `<span class="class-badge">${d}</span>` : '—' },
+            /* 3  Class */
+            {
+                data: 'class_name',
+                name: 'class_name',
+                render: d => d ? `<span class="class-badge">${d}</span>` : '—'
+            },
 
-            /* 4 Bill */
-            { data: 'bill_title', name: 'bill_title',
-              render: d => `<span style="font-size:13px">${d || '—'}</span>` },
+            /* 4  Bill */
+            {
+                data: 'bill_title',
+                name: 'bill_title',
+                render: d => `<span style="font-size:13px">${d || '—'}</span>`
+            },
 
-            /* 5 Term / Session */
-            { data: 'term_name', name: 'term_name',
-              render: (d, t, r) => `<div style="font-size:12px;line-height:1.6">
-                <div style="font-weight:500">${r.term_name || '—'}</div>
-                <div style="color:var(--d-muted)">${r.session_name || ''}</div>
-              </div>` },
+            /* 5  Term / Session */
+            {
+                data: 'term_name',
+                name: 'term_name',
+                render: (d, t, r) => `<div style="font-size:12px;line-height:1.6">
+                    <div style="font-weight:500">${r.term_name || '—'}</div>
+                    <div style="color:var(--d-muted)">${r.session_name || ''}</div>
+                </div>`
+            },
 
-            /* 6 Original */
-            { data: 'original_amount', name: 'original_amount', className: 'text-end',
-              render: d => `<span class="amt amt-original">${naira(d)}</span>` },
+            /* 6  Original */
+            {
+                data: 'original_amount',
+                name: 'original_amount',
+                className: 'text-end',
+                render: d => `<span class="amt amt-original">${naira(d)}</span>`
+            },
 
-            /* 7 Paid */
-            { data: 'amount_paid', name: 'amount_paid', className: 'text-end',
-              render: d => `<span class="amt amt-paid">${naira(d)}</span>` },
+            /* 7  Paid */
+            {
+                data: 'amount_paid',
+                name: 'amount_paid',
+                className: 'text-end',
+                render: d => `<span class="amt amt-paid">${naira(d)}</span>`
+            },
 
-            /* 8 Outstanding */
-            { data: 'outstanding', name: 'outstanding', className: 'text-end',
-              render: d => `<span class="amt amt-outstanding">${naira(d)}</span>` },
+            /* 8  Outstanding */
+            {
+                data: 'outstanding',
+                name: 'outstanding',
+                className: 'text-end',
+                render: d => `<span class="amt amt-outstanding">${naira(d)}</span>`
+            },
 
-            /* 9 Savings */
-            { data: 'savings', name: 'savings', className: 'text-end',
-              render: d => `<span class="amt amt-savings">${naira(d)}</span>` },
+            /* 9  Savings */
+            {
+                data: 'savings',
+                name: 'savings',
+                className: 'text-end',
+                render: d => `<span class="amt amt-savings">${naira(d)}</span>`
+            },
 
             /* 10 Rate */
-            { data: 'collection_rate', name: 'collection_rate', orderable: false,
-              render: d => collBar(d) },
+            {
+                data: 'collection_rate',
+                name: 'collection_rate',
+                orderable: false,
+                render: d => collBar(d)
+            },
 
             /* 11 Action */
-            { data: 'action', name: 'action', orderable: false, searchable: false,
-              className: 'text-center' },
+            {
+                data: 'action',
+                name: 'action',
+                orderable: false,
+                searchable: false,
+                className: 'text-center'
+            },
         ],
         rowCallback: function (row, data) {
             runOrig += parseFloat(String(data.original_amount).replace(/,/g,'')) || 0;
@@ -748,11 +802,52 @@ $(function () {
         pageLength: 25,
     });
 
-    /* filter controls */
-    $('#applyFilters').on('click', function () { resetTotals(); dt.ajax.reload(); });
+    /* ── Avatar interactions ──────────────────────────── */
+
+    /* Broken image → swap to initials div in-place, preserving data attributes */
+    $(document).on('error', '#debtorsTable img.avatar-zoom', function () {
+        const $img     = $(this);
+        const name     = $img.data('name') || '';
+        const initials = getInitials(name);
+        $('<div>')
+            .addClass('student-initials avatar-zoom')
+            .text(initials || '?')
+            .attr({
+                'data-img':  '',
+                'data-name': name,
+                'data-adm':  $img.data('adm') || '',
+                'data-cls':  $img.data('cls') || '',
+            })
+            .insertAfter($img);
+        $img.remove();
+    });
+
+    /* Click avatar (img or initials div) → open zoom modal */
+    $(document).on('click', '.avatar-zoom', function () {
+        const name    = $(this).data('name')  || '';
+        const adm     = $(this).data('adm')   || '';
+        const cls     = $(this).data('cls')   || '';
+        const imgUrl  = $(this).data('img')   || '';
+        const details = `<i class="ri-honour-line me-1"></i>${adm}&nbsp;|&nbsp;<i class="ri-building-line me-1"></i>${cls}`;
+        showZoomModal(imgUrl, name, details);
+    });
+
+    /* Click zoomed image → close modal */
+    $(document).on('click', '.zoomed-image', function () {
+        $('#imageZoomModal').modal('hide');
+    });
+
+    /* ── Filter controls ──────────────────────────────── */
+    $('#applyFilters').on('click', function () {
+        resetTotals();
+        dt.ajax.reload();
+    });
 
     $('#searchInput').on('keydown', function (e) {
-        if (e.key === 'Enter') { resetTotals(); dt.ajax.reload(); }
+        if (e.key === 'Enter') {
+            resetTotals();
+            dt.ajax.reload();
+        }
     });
 
     $('#resetFilters').on('click', function () {
@@ -760,11 +855,6 @@ $(function () {
         $('#minOutstanding, #searchInput').val('');
         resetTotals();
         dt.ajax.reload();
-    });
-
-    /* zoom modal: click image to close */
-    $(document).on('click', '.zoomed-image', function () {
-        $('#imageZoomModal').modal('hide');
     });
 });
 

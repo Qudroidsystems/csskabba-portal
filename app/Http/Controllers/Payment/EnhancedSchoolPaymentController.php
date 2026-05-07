@@ -20,6 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class EnhancedSchoolPaymentController extends Controller
@@ -33,17 +34,21 @@ class EnhancedSchoolPaymentController extends Controller
         ScholarshipService $scholarshipService,
         DiscountService $discountService
     ) {
-        $this->paymentService = $paymentService;
+        $this->paymentService     = $paymentService;
         $this->scholarshipService = $scholarshipService;
-        $this->discountService = $discountService;
+        $this->discountService    = $discountService;
 
-        $this->middleware('permission:View payment', ['only' => ['index', 'showPaymentDetails', 'showInvoice']]);
-        $this->middleware('permission:Create payment', ['only' => ['processPayment']]);
+        $this->middleware('permission:View payment',    ['only' => ['index', 'showPaymentDetails', 'showInvoice', 'getPaymentStatusAjax']]);
+        $this->middleware('permission:Create payment',  ['only' => ['processPayment']]);
         $this->middleware('permission:Process payment', ['only' => ['processOfflinePayment', 'processOnlinePayment']]);
         $this->middleware('permission:Reverse payment', ['only' => ['reversePayment']]);
-        $this->middleware('permission:View invoice', ['only' => ['showInvoice', 'downloadInvoice']]);
-        $this->middleware('permission:Generate invoice', ['only' => ['generateInvoice']]);
+        $this->middleware('permission:View invoice',    ['only' => ['showInvoice', 'downloadInvoice']]);
+        $this->middleware('permission:Generate invoice',['only' => ['generateInvoice']]);
     }
+
+    // =========================================================================
+    // Student list
+    // =========================================================================
 
     /**
      * Display student list for payment selection.
@@ -53,29 +58,29 @@ class EnhancedSchoolPaymentController extends Controller
         $pagetitle = 'Student Payments';
 
         $students = Student::leftJoin('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
-            ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
-            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->leftJoin('schoolterm', 'schoolterm.id', '=', 'studentclass.termid')
+            ->leftJoin('schoolclass',   'schoolclass.id',   '=', 'studentclass.schoolclassid')
+            ->leftJoin('schoolarm',     'schoolarm.id',     '=', 'schoolclass.arm')
+            ->leftJoin('schoolterm',    'schoolterm.id',    '=', 'studentclass.termid')
             ->leftJoin('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
             ->where('schoolsession.status', 'Current')
             ->select([
-                'studentRegistration.id as id',
-                'studentRegistration.admissionNo as admissionNo',
-                'studentRegistration.firstname as firstname',
-                'studentRegistration.lastname as lastname',
-                'studentRegistration.gender as gender',
-                'schoolclass.schoolclass as schoolclass',
-                'schoolarm.arm as arm',
-                'schoolterm.term as term',
-                'schoolsession.session as session',
+                'studentRegistration.id          as id',
+                'studentRegistration.admissionNo  as admissionNo',
+                'studentRegistration.firstname    as firstname',
+                'studentRegistration.lastname     as lastname',
+                'studentRegistration.gender       as gender',
+                'schoolclass.schoolclass          as schoolclass',
+                'schoolarm.arm                    as arm',
+                'schoolterm.term                  as term',
+                'schoolsession.session            as session',
             ]);
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $students->where(function($q) use ($search) {
+            $students->where(function ($q) use ($search) {
                 $q->where('studentRegistration.admissionNo', 'like', "%{$search}%")
-                  ->orWhere('studentRegistration.firstname', 'like', "%{$search}%")
-                  ->orWhere('studentRegistration.lastname', 'like', "%{$search}%");
+                  ->orWhere('studentRegistration.firstname',  'like', "%{$search}%")
+                  ->orWhere('studentRegistration.lastname',   'like', "%{$search}%");
             });
         }
 
@@ -89,81 +94,139 @@ class EnhancedSchoolPaymentController extends Controller
             ->select('schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm')
             ->get();
 
-        // Get scholarship summary for each student
         foreach ($students as $student) {
-            $scholarshipSummary = $this->scholarshipService->getStudentScholarshipSummary($student->id);
-            $discountSummary = $this->discountService->getStudentDiscountSummary($student->id);
+            $scholarshipSummary    = $this->scholarshipService->getStudentScholarshipSummary($student->id);
+            $discountSummary       = $this->discountService->getStudentDiscountSummary($student->id);
             $student->has_scholarship = $scholarshipSummary['has_scholarship'];
-            $student->has_discount = $discountSummary['has_discounts'];
-            $student->total_savings = ($scholarshipSummary['total_savings'] ?? 0) + ($discountSummary['total_savings'] ?? 0);
+            $student->has_discount    = $discountSummary['has_discounts'];
+            $student->total_savings   = ($scholarshipSummary['total_savings'] ?? 0)
+                                      + ($discountSummary['total_savings']    ?? 0);
         }
 
         return view('payment.student-list', compact('pagetitle', 'students', 'classes'));
     }
 
+    // =========================================================================
+    // Payment details (page view)
+    // =========================================================================
+
     /**
-     * Show payment details for a student (with scholarship/discount applied).
+     * Show payment details page for a student.
+     * This renders the Blade view — JS inside that view then calls
+     * getPaymentStatusAjax() to hydrate it with JSON.
      */
     public function showPaymentDetails($studentId, $classId, $termId, $sessionId)
     {
-        $details = $this->paymentService->getStudentPaymentDetails($studentId, $classId, $termId, $sessionId);
-
-        if (!$details['has_outstanding']) {
-            return redirect()->route('payment.index')
-                ->with('info', 'This student has no outstanding fees for the selected term.');
-        }
-
-        $student = $details['student'];
-        $bills = $details['bills'];
-        $summary = $details['summary'];
-
-        // Get payment history
-        $paymentHistory = StudentBillPayment::where('student_id', $studentId)
-            ->where('class_id', $classId)
-            ->where('termid_id', $termId)
-            ->where('session_id', $sessionId)
-            ->where('delete_status', '0')
-            ->with(['schoolBill', 'paymentRecords'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+        // Lightweight check: does the student exist?
+        $student = Student::findOrFail($studentId);
 
         $pagetitle = 'Payment Details - ' . $student->firstname . ' ' . $student->lastname;
 
         return view('payment.payment-details', compact(
             'pagetitle',
-            'student',
-            'bills',
-            'summary',
-            'paymentHistory',
+            'studentId',
             'classId',
             'termId',
             'sessionId'
         ));
     }
 
+    // =========================================================================
+    // AJAX endpoint — called by payment-details.blade.php JS
+    // =========================================================================
+
     /**
-     * Show flexible payment form (parent/student portal).
+     * Return full payment details as JSON (query-string params).
+     *
+     * Route:  GET /payment/details/ajax
+     * Name:   payment.details.ajax
+     *
+     * Query params:
+     *   studentId  – required
+     *   classId    – optional (resolved from studentclass if missing)
+     *   termid     – required
+     *   sessionid  – required
+     */
+    public function getPaymentStatusAjax(Request $request)
+    {
+        try {
+            $studentId = $request->query('studentId');
+            $classId   = $request->query('classId',   $request->query('classid'));
+            $termId    = $request->query('termid',    $request->query('termId'));
+            $sessionId = $request->query('sessionid', $request->query('sessionId'));
+
+            if (!$studentId || !$termId || !$sessionId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Missing required parameters: studentId, termid and sessionid are required.',
+                ], 422);
+            }
+
+            // Resolve classId from studentclass if not supplied
+            if (!$classId) {
+                $classId = DB::table('studentclass')
+                    ->where('studentId', $studentId)
+                    ->where('termid',    $termId)
+                    ->where('sessionid', $sessionId)
+                    ->value('schoolclassid');
+
+                if (!$classId) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Could not determine class for this student in the given term/session.',
+                    ], 422);
+                }
+            }
+
+            $details = $this->paymentService->getStudentPaymentDetails(
+                $studentId, $classId, $termId, $sessionId
+            );
+
+            return response()->json([
+                'success' => true,
+                'data'    => $details,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('AJAX payment details error: ' . $e->getMessage(), [
+                'studentId' => $request->query('studentId'),
+                'termId'    => $request->query('termid'),
+                'sessionId' => $request->query('sessionid'),
+                'trace'     => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to load payment details: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    // =========================================================================
+    // Flexible payment (parent/student portal)
+    // =========================================================================
+
+    /**
+     * Show flexible payment form.
      */
     public function showFlexiblePayment($studentId, $classId, $termId, $sessionId)
     {
         $details = $this->paymentService->getStudentPaymentDetails($studentId, $classId, $termId, $sessionId);
 
         $student = $details['student'];
-        $bills = $details['bills'];
+        $bills   = $details['bills'];
         $summary = $details['summary'];
 
         $pagetitle = 'Make Payment - ' . $student->firstname . ' ' . $student->lastname;
 
         return view('payment.flexible-payment', compact(
-            'pagetitle',
-            'student',
-            'bills',
-            'summary',
-            'classId',
-            'termId',
-            'sessionId'
+            'pagetitle', 'student', 'bills', 'summary', 'classId', 'termId', 'sessionId'
         ));
     }
+
+    // =========================================================================
+    // Process payments
+    // =========================================================================
 
     /**
      * Process offline payment.
@@ -172,19 +235,18 @@ class EnhancedSchoolPaymentController extends Controller
     {
         try {
             $validated = $request->validate([
-                'student_id' => 'required|exists:studentRegistration,id',
-                'class_id' => 'required|exists:schoolclass,id',
-                'term_id' => 'required|exists:schoolterm,id',
-                'session_id' => 'required|exists:schoolsession,id',
-                'payment_items' => 'required|array|min:1',
-                'payment_items.*.bill_id' => 'required|exists:school_bill,id',
-                'payment_items.*.amount' => 'required|numeric|min:0.01',
-                'payment_method' => 'required|in:Bank Deposit,School POS,Bank Transfer,Cheque,Cash',
-                'reference_no' => 'nullable|string|max:100',
-                'notes' => 'nullable|string',
+                'student_id'               => 'required|exists:studentRegistration,id',
+                'class_id'                 => 'required|exists:schoolclass,id',
+                'term_id'                  => 'required|exists:schoolterm,id',
+                'session_id'               => 'required|exists:schoolsession,id',
+                'payment_items'            => 'required|array|min:1',
+                'payment_items.*.bill_id'  => 'required|exists:school_bill,id',
+                'payment_items.*.amount'   => 'required|numeric|min:0.01',
+                'payment_method'           => 'required|in:Bank Deposit,School POS,Bank Transfer,Cheque,Cash',
+                'reference_no'             => 'nullable|string|max:100',
+                'notes'                    => 'nullable|string',
             ]);
 
-            // Decode payment items if sent as JSON
             if (is_string($validated['payment_items'])) {
                 $validated['payment_items'] = json_decode($validated['payment_items'], true);
             }
@@ -195,21 +257,21 @@ class EnhancedSchoolPaymentController extends Controller
                 $validated['term_id'],
                 $validated['session_id'],
                 [
-                    'items' => $validated['payment_items'],
+                    'items'          => $validated['payment_items'],
                     'payment_method' => $validated['payment_method'],
-                    'reference_no' => $validated['reference_no'] ?? null,
-                    'notes' => $validated['notes'] ?? null,
+                    'reference_no'   => $validated['reference_no'] ?? null,
+                    'notes'          => $validated['notes']         ?? null,
                 ]
             );
 
             if ($request->ajax()) {
                 return response()->json([
-                    'success' => true,
-                    'message' => 'Payment processed successfully.',
-                    'receipt_no' => $result['receipt']['receipt_no'],
-                    'total_paid' => $result['total_paid'],
-                    'total_savings' => $result['total_savings'],
-                    'redirect_url' => route('payment.receipt', ['batch_id' => $result['batch']->id])
+                    'success'      => true,
+                    'message'      => 'Payment processed successfully.',
+                    'receipt_no'   => $result['receipt']['receipt_no'],
+                    'total_paid'   => $result['total_paid'],
+                    'total_savings'=> $result['total_savings'],
+                    'redirect_url' => route('payment.receipt', ['batch_id' => $result['batch']->id]),
                 ]);
             }
 
@@ -221,7 +283,7 @@ class EnhancedSchoolPaymentController extends Controller
                 return response()->json([
                     'success' => false,
                     'message' => 'Validation error.',
-                    'errors' => $e->errors()
+                    'errors'  => $e->errors(),
                 ], 422);
             }
             throw $e;
@@ -231,13 +293,17 @@ class EnhancedSchoolPaymentController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to process payment: ' . $e->getMessage()
+                    'message' => 'Failed to process payment: ' . $e->getMessage(),
                 ], 500);
             }
 
             return back()->with('error', 'Failed to process payment: ' . $e->getMessage());
         }
     }
+
+    // =========================================================================
+    // Invoice / receipt
+    // =========================================================================
 
     /**
      * Generate invoice for a payment.
@@ -251,51 +317,38 @@ class EnhancedSchoolPaymentController extends Controller
             $invoice = $payment->generateInvoice();
 
             return response()->json([
-                'success' => true,
-                'message' => 'Invoice generated successfully.',
+                'success'    => true,
+                'message'    => 'Invoice generated successfully.',
                 'invoice_no' => $invoice->invoice_no,
-                'invoice_id' => $invoice->id
+                'invoice_id' => $invoice->id,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error generating invoice: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to generate invoice: ' . $e->getMessage()
+                'message' => 'Failed to generate invoice: ' . $e->getMessage(),
             ], 500);
         }
     }
 
     /**
-     * Show invoice.
+     * Show / download invoice.
      */
     public function showInvoice($studentId, $classId, $termId, $sessionId, Request $request)
     {
         $details = $this->paymentService->getStudentPaymentDetails($studentId, $classId, $termId, $sessionId);
 
-        $student = $details['student'];
-        $bills = $details['bills'];
-        $summary = $details['summary'];
+        $student   = $details['student'];
+        $bills     = $details['bills'];
+        $summary   = $details['summary'];
 
-        // Get paid bills only
-        $paidBills = array_filter($bills, function($bill) {
-            return $bill['paid_amount'] > 0;
-        });
+        $paidBills = array_filter($bills, fn($bill) => $bill['paid_amount'] > 0);
 
         $invoiceNumber = 'INV-' . date('Ymd') . '-' . str_pad($studentId, 4, '0', STR_PAD_LEFT);
+        $schoolInfo    = \App\Models\SchoolInformation::first();
 
-        $schoolInfo = \App\Models\SchoolInformation::first();
-
-        $data = compact(
-            'student',
-            'paidBills',
-            'summary',
-            'invoiceNumber',
-            'schoolInfo',
-            'classId',
-            'termId',
-            'sessionId'
-        );
+        $data = compact('student', 'paidBills', 'summary', 'invoiceNumber', 'schoolInfo', 'classId', 'termId', 'sessionId');
 
         if ($request->has('download')) {
             $pdf = PDF::loadView('payment.invoice-pdf', $data);
@@ -312,12 +365,9 @@ class EnhancedSchoolPaymentController extends Controller
      */
     public function showReceipt($batchId)
     {
-        $batch = PaymentBatch::with(['student', 'items.schoolBill'])
-            ->findOrFail($batchId);
-
+        $batch       = PaymentBatch::with(['student', 'items.schoolBill'])->findOrFail($batchId);
         $receiptData = $batch->receipt_data;
-
-        $pagetitle = 'Payment Receipt';
+        $pagetitle   = 'Payment Receipt';
 
         if (request()->has('download')) {
             $pdf = PDF::loadView('payment.receipt-pdf', compact('batch', 'receiptData'));
@@ -327,40 +377,47 @@ class EnhancedSchoolPaymentController extends Controller
         return view('payment.receipt', compact('pagetitle', 'batch', 'receiptData'));
     }
 
+    // =========================================================================
+    // Payment management
+    // =========================================================================
+
     /**
      * Reverse a payment batch.
      */
     public function reversePayment($batchId, Request $request)
     {
         try {
-            $request->validate([
-                'reason' => 'required|string|min:5'
-            ]);
+            $request->validate(['reason' => 'required|string|min:5']);
 
-            $result = $this->paymentService->reversePayment($batchId, $request->reason);
+            $this->paymentService->reversePayment($batchId, $request->reason);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Payment reversed successfully.'
+                'message' => 'Payment reversed successfully.',
             ]);
 
         } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation error.',
-                'errors' => $e->errors()
+                'errors'  => $e->errors(),
             ], 422);
         } catch (\Exception $e) {
             Log::error('Error reversing payment: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to reverse payment: ' . $e->getMessage()
+                'message' => 'Failed to reverse payment: ' . $e->getMessage(),
             ], 500);
         }
     }
 
+    // =========================================================================
+    // AJAX helpers
+    // =========================================================================
+
     /**
-     * Get student payment status (AJAX).
+     * Get student payment status — route-segment version (used internally / API).
+     * The blade uses getPaymentStatusAjax() via query params instead.
      */
     public function getPaymentStatus($studentId, $classId, $termId, $sessionId)
     {
@@ -369,14 +426,14 @@ class EnhancedSchoolPaymentController extends Controller
 
             return response()->json([
                 'success' => true,
-                'data' => $details
+                'data'    => $details,
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error getting payment status: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to get payment status.'
+                'message' => 'Failed to get payment status.',
             ], 500);
         }
     }
@@ -388,20 +445,21 @@ class EnhancedSchoolPaymentController extends Controller
     {
         try {
             $scholarshipSummary = $this->scholarshipService->getStudentScholarshipSummary($studentId);
-            $discountSummary = $this->discountService->getStudentDiscountSummary($studentId);
+            $discountSummary    = $this->discountService->getStudentDiscountSummary($studentId);
 
             return response()->json([
-                'success' => true,
-                'scholarship' => $scholarshipSummary,
-                'discount' => $discountSummary,
-                'total_savings' => ($scholarshipSummary['total_savings'] ?? 0) + ($discountSummary['total_savings'] ?? 0)
+                'success'       => true,
+                'scholarship'   => $scholarshipSummary,
+                'discount'      => $discountSummary,
+                'total_savings' => ($scholarshipSummary['total_savings'] ?? 0)
+                                 + ($discountSummary['total_savings']    ?? 0),
             ]);
 
         } catch (\Exception $e) {
             Log::error('Error getting savings summary: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to get savings summary.'
+                'message' => 'Failed to get savings summary.',
             ], 500);
         }
     }

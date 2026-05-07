@@ -767,7 +767,7 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
     // ============================================
     // BULK PAYMENT ROUTES
     // ============================================
-    Route::prefix('bulk-payment')->name('bulk-payment.')->middleware(['auth', 'permission:Process payment'])->group(function () {
+    Route::prefix('bulk-payment')->name('bulk-payment.')->group(function () {
         Route::get('/', [EnhancedSchoolPaymentController::class, 'bulkPaymentForm'])->name('form');
         Route::post('/upload', [EnhancedSchoolPaymentController::class, 'uploadBulkPayment'])->name('upload');
         Route::post('/process', [EnhancedSchoolPaymentController::class, 'processBulkPayment'])->name('process');

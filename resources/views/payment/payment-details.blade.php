@@ -128,9 +128,9 @@
     border-radius: 20px; background: var(--p-blue-lt); color: var(--p-blue);
     border: 1px solid #bfdbfe;
 }
-.profile-chip.green { background: var(--p-green-lt); color: var(--p-green); border-color: #bbf7d0; }
-.profile-chip.amber { background: var(--p-amber-lt); color: var(--p-amber); border-color: #fde68a; }
-.profile-chip.purple{ background: var(--p-purple-lt); color: var(--p-purple); border-color: #ddd6fe; }
+.profile-chip.green  { background: var(--p-green-lt);  color: var(--p-green);  border-color: #bbf7d0; }
+.profile-chip.amber  { background: var(--p-amber-lt);  color: var(--p-amber);  border-color: #fde68a; }
+.profile-chip.purple { background: var(--p-purple-lt); color: var(--p-purple); border-color: #ddd6fe; }
 
 .student-profile-totals {
     display: flex; gap: 16px; flex-wrap: wrap; margin-left: auto;
@@ -141,7 +141,12 @@
     padding: 10px 14px;
 }
 .profile-total-label { font-size: 10px; color: var(--p-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
-.profile-total-value { font-size: 15px; font-weight: 700; font-family: var(--ff-mono); margin-top: 3px; }
+.profile-total-value {
+    font-size: 15px; font-weight: 700;
+    font-family: var(--ff-mono);
+    font-feature-settings: "zero" 0, "tnum" 1;
+    margin-top: 3px;
+}
 .profile-total-value.red    { color: var(--p-red); }
 .profile-total-value.green  { color: var(--p-green); }
 .profile-total-value.amber  { color: var(--p-amber); }
@@ -218,7 +223,12 @@
 }
 .bill-amount-col { min-width: 80px; }
 .bill-amount-label { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: var(--p-muted); font-weight: 600; }
-.bill-amount-val   { font-size: 14px; font-weight: 700; font-family: var(--ff-mono); margin-top: 2px; }
+.bill-amount-val {
+    font-size: 14px; font-weight: 700;
+    font-family: var(--ff-mono);
+    font-feature-settings: "zero" 0, "tnum" 1;
+    margin-top: 2px;
+}
 .bill-amount-val.navy   { color: var(--p-navy); }
 .bill-amount-val.green  { color: var(--p-green); }
 .bill-amount-val.red    { color: var(--p-red); }
@@ -291,7 +301,11 @@
 .status-pill.pending   { background: var(--p-amber-lt); color: var(--p-amber); }
 .status-pill.partial   { background: var(--p-blue-lt);  color: var(--p-blue);  }
 
-.mono-val { font-family: var(--ff-mono); font-size: 13px; }
+/* FIX: font-feature-settings on all mono values */
+.mono-val {
+    font-family: var(--ff-mono); font-size: 13px;
+    font-feature-settings: "zero" 0, "tnum" 1;
+}
 .mono-val.red   { color: var(--p-red); font-weight: 600; }
 .mono-val.green { color: var(--p-green); }
 
@@ -326,7 +340,11 @@
 }
 .benefit-row:last-child { border-bottom: none; padding-bottom: 0; }
 .benefit-row .label { color: var(--p-muted); font-weight: 500; }
-.benefit-row .value { font-weight: 700; color: var(--p-navy); font-family: var(--ff-mono); }
+.benefit-row .value {
+    font-weight: 700; color: var(--p-navy);
+    font-family: var(--ff-mono);
+    font-feature-settings: "zero" 0, "tnum" 1;
+}
 
 /* ── Pay modal ────────────────────────────────────────── */
 #payModal .modal-content {
@@ -369,7 +387,11 @@
     display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 16px;
 }
 .pay-amount-item .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: .5px; color: var(--p-muted); font-weight: 600; }
-.pay-amount-item .val { font-size: 15px; font-weight: 700; font-family: var(--ff-mono); }
+.pay-amount-item .val {
+    font-size: 15px; font-weight: 700;
+    font-family: var(--ff-mono);
+    font-feature-settings: "zero" 0, "tnum" 1;
+}
 .pay-amount-item .val.green { color: var(--p-green); }
 .pay-amount-item .val.red   { color: var(--p-red); }
 .pay-amount-item .val.navy  { color: var(--p-navy); }
@@ -438,8 +460,9 @@
     border: 1px solid rgba(255,255,255,.4);
     background: rgba(255,255,255,.15); color: #fff;
     transition: background .15s;
+    text-decoration: none;
 }
-.btn-bulk-pay:hover { background: rgba(255,255,255,.28); }
+.btn-bulk-pay:hover { background: rgba(255,255,255,.28); color: #fff; }
 
 /* Responsive */
 @media (max-width: 768px) {
@@ -467,7 +490,7 @@
                 <p id="heroSubtitle">Loading student information…</p>
             </div>
             <div class="d-flex gap-2 flex-wrap" style="position:relative;z-index:1">
-                <a href="{{ route('schoolpayment.index') }}" class="btn-bulk-pay">
+                <a href="{{ route('payment.index') }}" class="btn-bulk-pay">
                     <i class="ri-arrow-left-line"></i> Back
                 </a>
                 <button class="btn-bulk-pay" id="printInvoiceBtn" style="display:none">
@@ -662,19 +685,22 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-/* ── constants ────────────────────────────────────────── */
+/* ── Route URL injected from Blade so JS never hardcodes paths ── */
+const PAYMENT_DETAILS_AJAX_URL = '{{ route("payment.details.ajax") }}';
+
+/* ── Route params from URL segments ──────────────────────────── */
 const studentId = {{ request()->route('studentId') ?? request('studentId') ?? 0 }};
 const classId   = {{ request()->route('classId')   ?? request('classId')   ?? 0 }};
 const termId    = {{ request()->route('termId')    ?? request('termId')    ?? 0 }};
 const sessionId = {{ request()->route('sessionId') ?? request('sessionId') ?? 0 }};
 const CSRF      = document.querySelector('meta[name="csrf-token"]')?.content || '';
 
-/* ── state ────────────────────────────────────────────── */
+/* ── State ────────────────────────────────────────────── */
 let paymentData   = null;
 let activeBillId  = null;
 let activeBill    = null;
 
-/* ── helpers ──────────────────────────────────────────── */
+/* ── Helpers ──────────────────────────────────────────── */
 function fmt(n) {
     const num = parseFloat(String(n ?? 0).replace(/,/g, '')) || 0;
     return num.toLocaleString('en-NG', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -686,8 +712,8 @@ function getInitials(name) {
 }
 
 function showZoomModal(imageUrl, name, details) {
-    document.getElementById('zoomedName').textContent = name || '';
-    document.getElementById('zoomedDetails').innerHTML = details || '';
+    document.getElementById('zoomedName').textContent    = name || '';
+    document.getElementById('zoomedDetails').innerHTML  = details || '';
     const imgEl = document.getElementById('zoomedImage');
 
     if (imageUrl && imageUrl !== '' && imageUrl !== 'null') {
@@ -701,7 +727,7 @@ function showZoomModal(imageUrl, name, details) {
         const g   = ctx.createLinearGradient(0, 0, 400, 400);
         g.addColorStop(0, '#2563eb'); g.addColorStop(1, '#7c3aed');
         ctx.fillStyle = g;
-        ctx.beginPath(); ctx.arc(200, 200, 200, 0, 2*Math.PI); ctx.fill();
+        ctx.beginPath(); ctx.arc(200, 200, 200, 0, 2 * Math.PI); ctx.fill();
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 150px "DM Sans", Arial, sans-serif';
         ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
@@ -717,14 +743,22 @@ function formatDate(str) {
     return isNaN(d) ? str : d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
 }
 
-/* ── Load data ────────────────────────────────────────── */
+/* ── Load data via AJAX ───────────────────────────────── */
 async function loadPaymentDetails() {
     try {
-        const url = `/payment/details/ajax?studentId=${studentId}&termid=${termId}&sessionid=${sessionId}`;
-        const res  = await fetch(url, { headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF } });
-        const json = await res.json();
+        /* FIX: URL is now generated by Blade route() helper — never hardcoded */
+        const url = `${PAYMENT_DETAILS_AJAX_URL}?studentId=${studentId}&classId=${classId}&termid=${termId}&sessionid=${sessionId}`;
+        const res  = await fetch(url, {
+            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': CSRF }
+        });
 
+        if (!res.ok) {
+            throw new Error(`Server returned ${res.status}: ${res.statusText}`);
+        }
+
+        const json = await res.json();
         if (!json.success) throw new Error(json.message || 'Load failed');
+
         paymentData = json.data;
         renderAll();
     } catch (e) {
@@ -745,7 +779,7 @@ function renderAll() {
     renderHistory(d);
     renderSidebar(d);
 
-    document.getElementById('mainContent').style.display = '';
+    document.getElementById('mainContent').style.display        = '';
     document.getElementById('studentProfileCard').style.display = '';
 }
 
@@ -766,30 +800,41 @@ function renderHero(d) {
 function renderProfile(d) {
     const s = d.student || {};
     const avatarWrap = document.getElementById('profileAvatarWrap');
-    const initials = getInitials(s.name);
-    const avatarUrl = s.avatar
-        ? `{{ asset('storage/images/student_avatars/') }}/${s.avatar}`.replace(/\/+/g, '/').replace(':/', '://')
+    const initials   = getInitials(s.name);
+    const avatarUrl  = s.avatar
+        ? ('{{ asset("storage/images/student_avatars") }}/' + s.avatar)
         : null;
+    const detailStr  = `${s.admissionNo || 'N/A'} | ${s.schoolclass || ''}${s.arm ? ' ' + s.arm : ''}`;
 
-    const detailStr = `${s.admissionNo || 'N/A'} | ${s.schoolclass || ''}${s.arm ? ' ' + s.arm : ''}`;
-
+    /* FIX: use data-* attributes on the avatar element — no JS inside HTML attribute strings */
     if (avatarUrl) {
-        avatarWrap.innerHTML = `
-            <img src="${avatarUrl}"
-                 alt="${s.name}"
-                 class="student-profile-avatar"
-                 onclick='showZoomModal("${avatarUrl}","${(s.name||'').replace(/"/g,'&quot;')}","${detailStr}")'
-                 onerror="this.onerror=null;
-                          var d=document.createElement('div');
-                          d.className='student-profile-initials';
-                          d.textContent='${initials}';
-                          d.onclick=function(){showZoomModal('','${(s.name||'').replace(/'/g,"\\'")}','${detailStr}');};
-                          this.parentNode.replaceChild(d,this);"
-            >`;
+        const img = document.createElement('img');
+        img.src       = avatarUrl;
+        img.alt       = s.name || '';
+        img.className = 'student-profile-avatar profile-avatar-zoom';
+        img.dataset.img     = avatarUrl;
+        img.dataset.name    = s.name || '';
+        img.dataset.details = detailStr;
+        img.onerror = function () {
+            const div = document.createElement('div');
+            div.className        = 'student-profile-initials profile-avatar-zoom';
+            div.textContent      = initials;
+            div.dataset.img      = '';
+            div.dataset.name     = s.name || '';
+            div.dataset.details  = detailStr;
+            this.parentNode.replaceChild(div, this);
+        };
+        avatarWrap.innerHTML = '';
+        avatarWrap.appendChild(img);
     } else {
-        avatarWrap.innerHTML = `
-            <div class="student-profile-initials"
-                 onclick='showZoomModal("","${(s.name||'').replace(/"/g,'&quot;')}","${detailStr}")'>${initials}</div>`;
+        const div = document.createElement('div');
+        div.className        = 'student-profile-initials profile-avatar-zoom';
+        div.textContent      = initials;
+        div.dataset.img      = '';
+        div.dataset.name     = s.name || '';
+        div.dataset.details  = detailStr;
+        avatarWrap.innerHTML = '';
+        avatarWrap.appendChild(div);
     }
 
     document.getElementById('profileName').textContent = s.name || '—';
@@ -797,7 +842,7 @@ function renderProfile(d) {
     const meta = document.getElementById('profileMeta');
     meta.innerHTML = `
         <span class="profile-chip"><i class="ri-hashtag"></i>${s.admissionNo || 'N/A'}</span>
-        <span class="profile-chip green"><i class="ri-building-line"></i>${s.schoolclass || '—'}${s.arm ? ' '+s.arm : ''}</span>
+        <span class="profile-chip green"><i class="ri-building-line"></i>${s.schoolclass || '—'}${s.arm ? ' ' + s.arm : ''}</span>
         <span class="profile-chip amber"><i class="ri-calendar-line"></i>${d.term || ''} · ${d.session || ''}</span>
         ${s.student_status ? `<span class="profile-chip purple"><i class="ri-user-star-line"></i>${s.student_status}</span>` : ''}
     `;
@@ -834,18 +879,18 @@ function renderBills(d) {
         return;
     }
 
-    // Show bulk pay strip if there are unpaid bills
+    /* Show bulk pay strip if multiple unpaid bills */
     const unpaidBills = bills.filter(b => !b.is_paid && !b.has_pending_invoice);
     if (unpaidBills.length > 1) {
-        document.getElementById('bulkPayStrip').style.display = '';
         const totalOutstanding = unpaidBills.reduce((s, b) => s + (b.balance || 0), 0);
-        document.getElementById('bulkPayStrip').querySelector('p').innerHTML =
+        const strip = document.getElementById('bulkPayStrip');
+        strip.style.display = '';
+        strip.querySelector('p').innerHTML =
             `Pay all outstanding bills in one transaction — <strong>${naira(totalOutstanding)}</strong> total`;
         document.getElementById('openBulkPayBtn').onclick = openBulkPayModal;
     }
 
     container.innerHTML = bills.map(bill => {
-        // ── FIX: safe-access every key with nullish coalescing ──
         const scholDeduct  = bill.scholarship_deduction ?? 0;
         const discDeduct   = bill.discount_deduction    ?? 0;
         const totalSavings = bill.total_savings         ?? 0;
@@ -864,9 +909,11 @@ function renderBills(d) {
                 ? `<span class="bill-status-badge partial"><i class="ri-time-line"></i>Partial</span>`
                 : `<span class="bill-status-badge unpaid"><i class="ri-error-warning-line"></i>Unpaid</span>`;
 
-        const itemClass = bill.is_paid ? 'is-paid' : bill.is_partial ? 'is-partial' : '';
+        const itemClass      = bill.is_paid ? 'is-paid' : bill.is_partial ? 'is-partial' : '';
+        const progressFill   = progress >= 100 ? 'full' : progress >= 40 ? '' : 'warn';
 
-        const progressFill = progress >= 100 ? 'full' : progress >= 40 ? '' : 'warn';
+        /* Encode bill JSON safely for data attribute */
+        const billJson = JSON.stringify(bill).replace(/'/g, '&#39;');
 
         const savingsHtml = totalSavings > 0 ? `
             <div class="savings-row">
@@ -874,11 +921,12 @@ function renderBills(d) {
                 ${discDeduct  > 0 ? `<span class="savings-tag discount"><i class="ri-price-tag-3-line"></i>${discLabels || 'Discount'}: -${naira(discDeduct)}</span>` : ''}
             </div>` : '';
 
+        /* FIX: bill data stored in data attribute, parsed in JS click handler */
         const payBtnHtml = bill.is_paid
             ? `<button class="btn-pay success" disabled><i class="ri-checkbox-circle-line"></i>Paid</button>`
             : hasPending
                 ? `<button class="btn-pay" disabled title="Invoice pending"><i class="ri-time-line"></i>Pending Invoice</button>`
-                : `<button class="btn-pay" onclick='openPayModal(${JSON.stringify(bill).replace(/'/g,"\\'")})'><i class="ri-add-circle-line"></i>Pay</button>`;
+                : `<button class="btn-pay btn-open-pay" data-bill='${billJson}'><i class="ri-add-circle-line"></i>Pay</button>`;
 
         return `
         <div class="bill-item ${itemClass}">
@@ -892,9 +940,7 @@ function renderBills(d) {
                     ${payBtnHtml}
                 </div>
             </div>
-
             ${savingsHtml}
-
             <div class="bill-amounts">
                 ${totalSavings > 0 ? `
                 <div class="bill-amount-col">
@@ -923,7 +969,6 @@ function renderBills(d) {
                     <div class="bill-amount-val amber">${naira(totalSavings)}</div>
                 </div>` : ''}
             </div>
-
             <div class="bill-progress">
                 <div class="bill-progress-bar-wrap">
                     <div class="bill-progress-bar-fill ${progressFill}" style="width:${Math.min(100, progress)}%"></div>
@@ -946,7 +991,7 @@ function renderPendingRecords(d) {
 
     document.getElementById('pendingTableBody').innerHTML = records.map((r, i) => `
         <tr>
-            <td><span style="color:var(--p-muted);font-size:12px">${i+1}</span></td>
+            <td><span style="color:var(--p-muted);font-size:12px">${i + 1}</span></td>
             <td><span style="font-weight:600">${r.title || '—'}</span></td>
             <td><span class="profile-chip" style="font-size:11px">${r.paymentMethod || '—'}</span></td>
             <td class="text-end"><span class="mono-val green">${naira(r.totalAmountPaid)}</span></td>
@@ -974,13 +1019,13 @@ function renderHistory(d) {
         const statusClass = r.paymentStatus === 'Completed' ? 'completed' : 'partial';
         return `
         <tr>
-            <td><span style="color:var(--p-muted);font-size:12px">${i+1}</span></td>
+            <td><span style="color:var(--p-muted);font-size:12px">${i + 1}</span></td>
             <td><span style="font-weight:600">${r.title || '—'}</span></td>
             <td><span style="font-size:12px;color:var(--p-muted)">${formatDate(r.receivedDate)}</span></td>
             <td><span class="profile-chip" style="font-size:11px">${r.paymentMethod || '—'}</span></td>
             <td><span style="font-size:12px">${r.receivedBy || '—'}</span></td>
             <td class="text-end"><span class="mono-val green">${naira(r.totalAmountPaid)}</span></td>
-            <td class="text-end"><span class="mono-val ${parseFloat(String(r.balance).replace(/,/g,'')) > 0 ? 'red' : ''}">${naira(r.balance)}</span></td>
+            <td class="text-end"><span class="mono-val ${parseFloat(String(r.balance).replace(/,/g, '')) > 0 ? 'red' : ''}">${naira(r.balance)}</span></td>
             <td><span class="status-pill ${statusClass}">${r.paymentStatus || '—'}</span></td>
         </tr>`;
     }).join('');
@@ -990,7 +1035,7 @@ function renderSidebar(d) {
     const sidebar = document.getElementById('sidebarContent');
     let html = '';
 
-    // Scholarship card
+    /* Scholarship card */
     if (d.scholarship) {
         const s = d.scholarship;
         const valDisplay = s.value_type === 'percentage' ? s.value + '%' : naira(s.value);
@@ -1017,7 +1062,7 @@ function renderSidebar(d) {
         </div>`;
     }
 
-    // Discounts card
+    /* Discounts card */
     if (d.discounts && d.discounts.length) {
         html += `
         <div class="benefit-card">
@@ -1038,7 +1083,7 @@ function renderSidebar(d) {
         </div>`;
     }
 
-    // Summary card
+    /* Summary card */
     const totals = d.totals || {};
     html += `
     <div class="pd-card">
@@ -1048,29 +1093,29 @@ function renderSidebar(d) {
         <div class="pd-card-body">
             <div class="benefit-row">
                 <span class="label">Original Bill</span>
-                <span class="value" style="font-family:var(--ff-mono)">${naira(totals.original ?? 0)}</span>
+                <span class="value">${naira(totals.original ?? 0)}</span>
             </div>
             ${(totals.savings ?? 0) > 0 ? `
             <div class="benefit-row">
                 <span class="label" style="color:var(--p-amber)">Total Savings</span>
-                <span class="value" style="font-family:var(--ff-mono);color:var(--p-amber)">-${naira(totals.savings)}</span>
+                <span class="value" style="color:var(--p-amber)">-${naira(totals.savings)}</span>
             </div>
             <div class="benefit-row">
                 <span class="label">Adjusted Bill</span>
-                <span class="value" style="font-family:var(--ff-mono)">${naira(totals.adjusted ?? 0)}</span>
+                <span class="value">${naira(totals.adjusted ?? 0)}</span>
             </div>` : ''}
             <div class="benefit-row">
                 <span class="label" style="color:var(--p-green)">Total Paid</span>
-                <span class="value" style="font-family:var(--ff-mono);color:var(--p-green)">${naira(totals.paid ?? 0)}</span>
+                <span class="value" style="color:var(--p-green)">${naira(totals.paid ?? 0)}</span>
             </div>
-            <div class="benefit-row" style="border-top: 2px solid var(--p-border); margin-top:4px; padding-top:10px">
+            <div class="benefit-row" style="border-top:2px solid var(--p-border);margin-top:4px;padding-top:10px">
                 <span class="label" style="color:var(--p-red);font-weight:700">Outstanding</span>
-                <span class="value" style="font-family:var(--ff-mono);color:var(--p-red);font-size:16px">${naira(totals.outstanding ?? 0)}</span>
+                <span class="value" style="color:var(--p-red);font-size:16px">${naira(totals.outstanding ?? 0)}</span>
             </div>
         </div>
     </div>`;
 
-    // Quick actions card
+    /* Quick actions */
     html += `
     <div class="pd-card">
         <div class="pd-card-header">
@@ -1093,18 +1138,42 @@ function renderSidebar(d) {
     sidebar.innerHTML = html;
 }
 
+/* ── Pay button handler (delegated — FIX: no JS in HTML attrs) ── */
+document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.btn-open-pay');
+    if (!btn) return;
+    try {
+        const bill = JSON.parse(btn.dataset.bill);
+        openPayModal(bill);
+    } catch (err) {
+        console.error('Failed to parse bill data', err);
+    }
+});
+
+/* ── Profile avatar click → zoom ─────────────────────── */
+document.addEventListener('click', function (e) {
+    const el = e.target.closest('.profile-avatar-zoom');
+    if (!el) return;
+    showZoomModal(el.dataset.img || '', el.dataset.name || '', el.dataset.details || '');
+});
+
+/* ── Zoomed image click → close ──────────────────────── */
+document.addEventListener('click', function (e) {
+    if (e.target.classList.contains('zoomed-image')) {
+        bootstrap.Modal.getInstance(document.getElementById('imageZoomModal'))?.hide();
+    }
+});
+
 /* ── Pay Modal ────────────────────────────────────────── */
 function openPayModal(bill) {
     activeBill   = bill;
     activeBillId = bill.id;
 
-    // safe-access with defaults
     const adjAmt  = bill.adjusted_amount ?? bill.original_amount ?? 0;
     const amtPaid = bill.amount_paid     ?? 0;
     const balance = bill.balance         ?? Math.max(0, adjAmt - amtPaid);
 
     document.getElementById('payModalBillTitle').textContent = bill.title || '—';
-
     document.getElementById('payAmountDisplay').innerHTML = `
         <div class="pay-amount-item">
             <div class="lbl">Bill Amount</div>
@@ -1120,10 +1189,10 @@ function openPayModal(bill) {
         </div>
     `;
 
-    document.getElementById('payAmount').value = '';
-    document.getElementById('payAmount').max   = balance;
+    document.getElementById('payAmount').value   = '';
+    document.getElementById('payAmount').max     = balance;
     document.getElementById('payMaxHint').textContent = `Maximum: ${naira(balance)}`;
-    document.getElementById('payMethod').value = '';
+    document.getElementById('payMethod').value   = '';
     document.getElementById('submitPayBtn').disabled = false;
     document.getElementById('submitPayBtn').innerHTML = '<i class="ri-save-line"></i> Record Payment';
 
@@ -1138,7 +1207,6 @@ async function submitPayment() {
     if (!amount || amount <= 0) { Swal.fire('Error', 'Please enter a valid amount.', 'error'); return; }
     if (!method)                { Swal.fire('Error', 'Please select a payment method.', 'error'); return; }
 
-    // safe-access
     const adjAmt  = bill.adjusted_amount ?? bill.original_amount ?? 0;
     const amtPaid = bill.amount_paid     ?? 0;
     const balance = bill.balance         ?? Math.max(0, adjAmt - amtPaid);
@@ -1169,12 +1237,19 @@ async function submitPayment() {
     formData.append('discount_deduction',    bill.discount_deduction    ?? 0);
 
     try {
-        const res  = await fetch('/schoolpayment/store', { method:'POST', headers:{'X-CSRF-TOKEN':CSRF,'Accept':'application/json'}, body: formData });
+        const res  = await fetch('/schoolpayment/store', {
+            method: 'POST',
+            headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' },
+            body: formData
+        });
         const json = await res.json();
 
         if (json.success) {
             bootstrap.Modal.getInstance(document.getElementById('payModal')).hide();
-            await Swal.fire({ icon:'success', title:'Payment Recorded!', text: json.message, confirmButtonText:'OK', timer:2500, timerProgressBar:true });
+            await Swal.fire({
+                icon: 'success', title: 'Payment Recorded!', text: json.message,
+                confirmButtonText: 'OK', timer: 2500, timerProgressBar: true
+            });
             loadPaymentDetails();
         } else {
             Swal.fire('Error', json.message || 'Payment failed.', 'error');
@@ -1189,8 +1264,8 @@ async function submitPayment() {
 
 /* ── Bulk Pay Modal ───────────────────────────────────── */
 function openBulkPayModal() {
-    const bills   = (paymentData?.bills || []).filter(b => !b.is_paid && !(b.has_pending_invoice));
-    const total   = bills.reduce((s, b) => s + (b.balance ?? 0), 0);
+    const bills  = (paymentData?.bills || []).filter(b => !b.is_paid && !b.has_pending_invoice);
+    const total  = bills.reduce((s, b) => s + (b.balance ?? 0), 0);
 
     document.getElementById('bulkBillsSummary').innerHTML = `
         <div class="pay-amount-display">
@@ -1208,10 +1283,10 @@ function openBulkPayModal() {
         </div>
     `;
 
-    document.getElementById('bulkPayAmount').value = '';
-    document.getElementById('bulkPayAmount').max   = total;
+    document.getElementById('bulkPayAmount').value  = '';
+    document.getElementById('bulkPayAmount').max    = total;
     document.getElementById('bulkMaxHint').textContent = `Maximum: ${naira(total)}`;
-    document.getElementById('bulkPayMethod').value = '';
+    document.getElementById('bulkPayMethod').value  = '';
     document.getElementById('submitBulkPayBtn').disabled = false;
     document.getElementById('submitBulkPayBtn').innerHTML = '<i class="ri-save-line"></i> Record Bulk Payment';
 
@@ -1221,12 +1296,12 @@ function openBulkPayModal() {
 async function submitBulkPayment() {
     const amount = parseFloat(document.getElementById('bulkPayAmount').value);
     const method = document.getElementById('bulkPayMethod').value;
-    const bills  = (paymentData?.bills || []).filter(b => !b.is_paid && !(b.has_pending_invoice));
+    const bills  = (paymentData?.bills || []).filter(b => !b.is_paid && !b.has_pending_invoice);
     const total  = bills.reduce((s, b) => s + (b.balance ?? 0), 0);
 
-    if (!amount || amount <= 0)     { Swal.fire('Error', 'Please enter a valid amount.', 'error'); return; }
-    if (!method)                    { Swal.fire('Error', 'Please select a payment method.', 'error'); return; }
-    if (amount > total + 0.01)      { Swal.fire('Error', `Amount cannot exceed ${naira(total)}.`, 'error'); return; }
+    if (!amount || amount <= 0)  { Swal.fire('Error', 'Please enter a valid amount.', 'error'); return; }
+    if (!method)                 { Swal.fire('Error', 'Please select a payment method.', 'error'); return; }
+    if (amount > total + 0.01)   { Swal.fire('Error', `Amount cannot exceed ${naira(total)}.`, 'error'); return; }
 
     const btn = document.getElementById('submitBulkPayBtn');
     btn.disabled = true;
@@ -1253,14 +1328,17 @@ async function submitBulkPayment() {
     try {
         const res  = await fetch('/schoolpayment/bulk-store', {
             method: 'POST',
-            headers: { 'Content-Type':'application/json', 'X-CSRF-TOKEN':CSRF, 'Accept':'application/json' },
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' },
             body: JSON.stringify(payload),
         });
         const json = await res.json();
 
         if (json.success) {
             bootstrap.Modal.getInstance(document.getElementById('bulkPayModal')).hide();
-            await Swal.fire({ icon:'success', title:'Bulk Payment Recorded!', text: json.message, confirmButtonText:'OK', timer:2500, timerProgressBar:true });
+            await Swal.fire({
+                icon: 'success', title: 'Bulk Payment Recorded!', text: json.message,
+                confirmButtonText: 'OK', timer: 2500, timerProgressBar: true
+            });
             loadPaymentDetails();
         } else {
             Swal.fire('Error', json.message || 'Bulk payment failed.', 'error');
@@ -1279,21 +1357,21 @@ async function deletePaymentRecord(recordId) {
         title: 'Delete Payment Record?',
         text:  'This will reverse the payment amount. This action cannot be undone.',
         icon:  'warning',
-        showCancelButton:  true,
+        showCancelButton:   true,
         confirmButtonColor: '#dc2626',
-        confirmButtonText: 'Yes, Delete',
-        cancelButtonText:  'Cancel',
+        confirmButtonText:  'Yes, Delete',
+        cancelButtonText:   'Cancel',
     });
     if (!result.isConfirmed) return;
 
     try {
         const res  = await fetch(`/schoolpayment/deletestudentpayment/${recordId}`, {
             method: 'DELETE',
-            headers: { 'X-CSRF-TOKEN':CSRF, 'Accept':'application/json' },
+            headers: { 'X-CSRF-TOKEN': CSRF, 'Accept': 'application/json' },
         });
         const json = await res.json();
         if (json.success) {
-            Swal.fire({ icon:'success', title:'Deleted', text: json.message, timer:1800, showConfirmButton:false });
+            Swal.fire({ icon: 'success', title: 'Deleted', text: json.message, timer: 1800, showConfirmButton: false });
             loadPaymentDetails();
         } else {
             Swal.fire('Error', json.message || 'Delete failed.', 'error');
@@ -1303,15 +1381,7 @@ async function deletePaymentRecord(recordId) {
     }
 }
 
-/* ── Zoom modal close on image click ─────────────────── */
-document.addEventListener('DOMContentLoaded', function () {
-    document.addEventListener('click', function (e) {
-        if (e.target.classList.contains('zoomed-image')) {
-            bootstrap.Modal.getInstance(document.getElementById('imageZoomModal'))?.hide();
-        }
-    });
-
-    loadPaymentDetails();
-});
+/* ── Boot ─────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', loadPaymentDetails);
 </script>
 @endsection
