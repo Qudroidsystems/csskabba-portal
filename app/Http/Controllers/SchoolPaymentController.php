@@ -27,6 +27,97 @@ use App\Models\Studentpicture;
 
 class SchoolPaymentController extends Controller
 {
+    /**
+     * Display student list for payment selection.
+     */
+    public function index(Request $request)
+    {
+        $pagetitle = 'Student Payments';
+
+        $student = Student::leftJoin('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
+            ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->leftJoin('schoolterm', 'schoolterm.id', '=', 'studentclass.termid')
+            ->leftJoin('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
+            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+            ->where('schoolsession.status', 'Current')
+            ->select([
+                'studentRegistration.id as id',
+                'studentRegistration.admissionNo as admissionNo',
+                'studentRegistration.firstname as firstname',
+                'studentRegistration.lastname as lastname',
+                'studentRegistration.othername as othername',
+                'studentRegistration.gender as gender',
+                'studentRegistration.student_status as student_status',
+                'schoolclass.id as schoolclassid',
+                'schoolclass.schoolclass as schoolclass',
+                'schoolarm.arm as arm',
+                'schoolterm.term as term',
+                'schoolsession.session as session',
+                'studentpicture.picture as picture',
+            ])
+            ->get();
+
+        foreach ($student as $s) {
+            $s->has_scholarship = $this->studentHasScholarship($s->id);
+            $s->has_discount    = $this->studentHasDiscount($s->id);
+            $s->full_name = $this->getFullNameWithOther($s->firstname, $s->lastname, $s->othername);
+        }
+
+        return view('schoolpayment.index', compact('pagetitle', 'student'));
+    }
+
+    /**
+     * Show payment details page (called from debtors list)
+     */
+    public function showPaymentDetails($studentId, $classId, $termId, $sessionId)
+    {
+        $pagetitle = 'Payment Details';
+
+        // Get student info for the view
+        $student = Student::findOrFail($studentId);
+
+        return view('payment.payment-details', compact(
+            'pagetitle', 'studentId', 'classId', 'termId', 'sessionId'
+        ));
+    }
+
+    /**
+     * Termsession payments page (alternative entry point)
+     */
+    public function termsessionpayments(Request $request)
+    {
+        $studentId = (int) $request->get('studentId');
+        $termid    = (int) $request->get('termid');
+        $sessionid = (int) $request->get('sessionid');
+
+        if (!$studentId || !$termid || !$sessionid) {
+            return redirect()->route('schoolpayment.index')
+                ->with('error', 'Invalid student, term, or session selected.');
+        }
+
+        $pagetitle = 'Student Payment Details';
+
+        return view('schoolpayment.studentpayment', compact('pagetitle', 'studentId', 'termid', 'sessionid'));
+    }
+
+    /**
+     * Term/Session selector page
+     */
+    public function termSession(string $id)
+    {
+        $pagetitle      = 'Student Payments';
+        $schoolterms    = Schoolterm::all();
+        $schoolsessions = Schoolsession::all();
+
+        $studentDetails = Student::leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+            ->where('studentRegistration.id', $id)
+            ->select('studentRegistration.*', 'studentpicture.picture as avatar')
+            ->first();
+
+        return view('schoolpayment.termSession', compact('pagetitle', 'schoolterms', 'schoolsessions', 'id', 'studentDetails'));
+    }
+
     // Helper method to get student avatar URL
     private function getStudentAvatarUrl($picture)
     {
@@ -241,80 +332,6 @@ class SchoolPaymentController extends Controller
         }
 
         return $student;
-    }
-
-    // ── Index ─────────────────────────────────────────────────────────────
-
-    public function index(Request $request)
-    {
-        $pagetitle = 'Student Payments';
-
-        $student = Student::leftJoin('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
-            ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
-            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->leftJoin('schoolterm', 'schoolterm.id', '=', 'studentclass.termid')
-            ->leftJoin('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
-            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-            ->where('schoolsession.status', 'Current')
-            ->select([
-                'studentRegistration.id as id',
-                'studentRegistration.admissionNo as admissionNo',
-                'studentRegistration.firstname as firstname',
-                'studentRegistration.lastname as lastname',
-                'studentRegistration.othername as othername',
-                'studentRegistration.gender as gender',
-                'studentRegistration.student_status as student_status',
-                'schoolclass.id as schoolclassid',
-                'schoolclass.schoolclass as schoolclass',
-                'schoolarm.arm as arm',
-                'schoolterm.term as term',
-                'schoolsession.session as session',
-                'studentpicture.picture as picture',
-            ])
-            ->get();
-
-        foreach ($student as $s) {
-            $s->has_scholarship = $this->studentHasScholarship($s->id);
-            $s->has_discount    = $this->studentHasDiscount($s->id);
-            $s->full_name = $this->getFullNameWithOther($s->firstname, $s->lastname, $s->othername);
-        }
-
-        return view('schoolpayment.index', compact('pagetitle', 'student'));
-    }
-
-    // ── Term/Session selector ─────────────────────────────────────────────
-
-    public function termSession(string $id)
-    {
-        $pagetitle      = 'Student Payments';
-        $schoolterms    = Schoolterm::all();
-        $schoolsessions = Schoolsession::all();
-
-        // Get student details with othername
-        $studentDetails = Student::leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-            ->where('studentRegistration.id', $id)
-            ->select('studentRegistration.*', 'studentpicture.picture as avatar')
-            ->first();
-
-        return view('schoolpayment.termSession', compact('pagetitle', 'schoolterms', 'schoolsessions', 'id', 'studentDetails'));
-    }
-
-    // ── Payment detail page ───────────────────────────────────────────────
-
-    public function termsessionpayments(Request $request)
-    {
-        $studentId = (int) $request->get('studentId');
-        $termid    = (int) $request->get('termid');
-        $sessionid = (int) $request->get('sessionid');
-
-        if (!$studentId || !$termid || !$sessionid) {
-            return redirect()->route('schoolpayment.index')
-                ->with('error', 'Invalid student, term, or session selected.');
-        }
-
-        $pagetitle = 'Student Payment Details';
-
-        return view('schoolpayment.studentpayment', compact('pagetitle', 'studentId', 'termid', 'sessionid'));
     }
 
     // ── AJAX: Get payment details ─────────────────────────────────────────
@@ -1014,7 +1031,7 @@ class SchoolPaymentController extends Controller
         $student = $this->fetchStudentData((int) $studentId, (int) $termid, (int) $sessionid);
 
         if (!$student) {
-            return redirect()->route('schoolpayment.index')->with('error', 'Student not found or not enrolled.');
+            return redirect()->route('payment.index')->with('error', 'Student not found or not enrolled.');
         }
 
         if (!$schoolclassid && $student->schoolclassId) {
@@ -1022,7 +1039,7 @@ class SchoolPaymentController extends Controller
         }
 
         if (!$schoolclassid) {
-            return redirect()->route('schoolpayment.index')->with('error', 'Could not resolve student class for invoice.');
+            return redirect()->route('payment.index')->with('error', 'Could not resolve student class for invoice.');
         }
 
         $safeAdmission = preg_replace('/[\/\\\\]/', '-', $student->admissionNo ?? $studentId);
@@ -1201,7 +1218,7 @@ class SchoolPaymentController extends Controller
         $student = $this->fetchStudentData((int) $studentId, (int) $termid, (int) $sessionid);
 
         if (!$student) {
-            return redirect()->route('schoolpayment.index')->with('error', 'Student not found.');
+            return redirect()->route('payment.index')->with('error', 'Student not found.');
         }
 
         $student_bill_info = SchoolBillModel::select([
