@@ -500,7 +500,7 @@ class FinancialReportController extends Controller
     }
 
 
-    /**
+ /**
  * Class Analysis Report
  */
 public function classAnalysis(Request $request)
@@ -535,6 +535,7 @@ public function classAnalysis(Request $request)
 
         if (!$classId || !$termId || !$sessionId) {
             return response()->json([
+                'success' => false,
                 'data' => [],
                 'message' => 'Missing required parameters'
             ]);
@@ -560,7 +561,8 @@ public function classAnalysis(Request $request)
         $data = [];
         foreach ($students as $student) {
             // Get payment summary for this student
-            $paymentBook = StudentBillPaymentBook::where('student_id', $student->student_id)
+            $paymentBook = DB::table('student_bill_payment_book')
+                ->where('student_id', $student->student_id)
                 ->where('class_id', $classId)
                 ->where('term_id', $termId)
                 ->where('session_id', $sessionId)
