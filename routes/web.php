@@ -597,24 +597,27 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
             Route::post('/test/{gateway}', [PaymentGatewayController::class, 'testGateway'])->name('test');
         });
 
-    // ============================================
-    // ENHANCED PAYMENT ROUTES
-    // ============================================
-    Route::prefix('payment')->name('payment.')->group(function () {
-        Route::get('/', [EnhancedSchoolPaymentController::class, 'index'])->name('index');
-        Route::get('/student/{studentId}/class/{classId}/term/{termId}/session/{sessionId}', [EnhancedSchoolPaymentController::class, 'showPaymentDetails'])->name('details');
-        Route::get('/flexible/{studentId}/{classId}/{termId}/{sessionId}', [EnhancedSchoolPaymentController::class, 'showFlexiblePayment'])->name('flexible');
-        Route::post('/offline/process', [EnhancedSchoolPaymentController::class, 'processOfflinePayment'])->name('offline.process');
-        Route::post('/invoice/generate/{paymentId}', [EnhancedSchoolPaymentController::class, 'generateInvoice'])->name('invoice.generate');
-        Route::get('/invoice/{studentId}/{classId}/{termId}/{sessionId}', [EnhancedSchoolPaymentController::class, 'showInvoice'])->name('invoice');
-        Route::get('/invoice/download/{studentId}/{classId}/{termId}/{sessionId}', [EnhancedSchoolPaymentController::class, 'showInvoice'])->name('invoice.download');
-        Route::get('/receipt/{batchId}', [EnhancedSchoolPaymentController::class, 'showReceipt'])->name('receipt');
-        Route::post('/reverse/{batchId}', [EnhancedSchoolPaymentController::class, 'reversePayment'])->name('reverse');
-        Route::get('/status/{studentId}/{classId}/{termId}/{sessionId}', [EnhancedSchoolPaymentController::class, 'getPaymentStatus'])->name('status');
-        Route::get('/savings/{studentId}', [EnhancedSchoolPaymentController::class, 'getSavingsSummary'])->name('savings');
-        Route::get('/history', [EnhancedSchoolPaymentController::class, 'getPaymentHistory'])->name('history');
-        Route::get('/details/ajax', [EnhancedSchoolPaymentController::class, 'getPaymentStatus'])->name('details.ajax');
-    });
+
+        // ============================================
+        // ENHANCED PAYMENT ROUTES
+        // ============================================
+        Route::prefix('payment')->name('payment.')->group(function () {
+            Route::get('/', [EnhancedSchoolPaymentController::class, 'index'])->name('index');
+            Route::get('/student/{studentId}/class/{classId}/term/{termId}/session/{sessionId}', [EnhancedSchoolPaymentController::class, 'showPaymentDetails'])->name('details');
+            Route::get('/flexible/{studentId}/{classId}/{termId}/{sessionId}', [EnhancedSchoolPaymentController::class, 'showFlexiblePayment'])->name('flexible');
+            Route::post('/offline/process', [EnhancedSchoolPaymentController::class, 'processOfflinePayment'])->name('offline.process');
+            Route::post('/invoice/generate/{paymentId}', [EnhancedSchoolPaymentController::class, 'generateInvoice'])->name('invoice.generate');
+            Route::get('/invoice/{studentId}/{classId}/{termId}/{sessionId}', [EnhancedSchoolPaymentController::class, 'showInvoice'])->name('invoice');
+            Route::get('/invoice/download/{studentId}/{classId}/{termId}/{sessionId}', [EnhancedSchoolPaymentController::class, 'showInvoice'])->name('invoice.download');
+            Route::get('/receipt/{batchId}', [EnhancedSchoolPaymentController::class, 'showReceipt'])->name('receipt');
+            Route::post('/reverse/{batchId}', [EnhancedSchoolPaymentController::class, 'reversePayment'])->name('reverse');
+            Route::get('/status/{studentId}/{classId}/{termId}/{sessionId}', [EnhancedSchoolPaymentController::class, 'getPaymentStatus'])->name('status');
+            Route::get('/savings/{studentId}', [EnhancedSchoolPaymentController::class, 'getSavingsSummary'])->name('savings');
+            Route::get('/history', [EnhancedSchoolPaymentController::class, 'getPaymentHistory'])->name('history');
+
+            // FIXED: Use getPaymentStatusAjax for query string parameters
+            Route::get('/details/ajax', [EnhancedSchoolPaymentController::class, 'getPaymentStatusAjax'])->name('details.ajax');
+        });
 
     // ============================================
     // FLEXIBLE ONLINE PAYMENT ROUTES
