@@ -165,12 +165,12 @@ class FinancialReportController extends Controller
             $totalCredit  = array_sum(array_column($trialBalance, 'credit'));
         } catch (\Exception $e) {
             $trialBalance = [
-                ['account_code' => '1010', 'account_name' => 'Cash in Hand',        'account_type' => 'asset',   'debit' => 1500000, 'credit' => 0,       'balance' => 1500000],
-                ['account_code' => '1020', 'account_name' => 'Bank Account',         'account_type' => 'asset',   'debit' => 5000000, 'credit' => 0,       'balance' => 5000000],
-                ['account_code' => '1030', 'account_name' => 'Accounts Receivable',  'account_type' => 'asset',   'debit' => 2500000, 'credit' => 0,       'balance' => 2500000],
+                ['account_code' => '1010', 'account_name' => 'Cash in Hand',        'account_type' => 'asset',    'debit' => 1500000, 'credit' => 0,       'balance' => 1500000],
+                ['account_code' => '1020', 'account_name' => 'Bank Account',         'account_type' => 'asset',    'debit' => 5000000, 'credit' => 0,       'balance' => 5000000],
+                ['account_code' => '1030', 'account_name' => 'Accounts Receivable',  'account_type' => 'asset',    'debit' => 2500000, 'credit' => 0,       'balance' => 2500000],
                 ['account_code' => '2010', 'account_name' => 'Accounts Payable',     'account_type' => 'liability','debit' => 0,       'credit' => 800000,  'balance' => -800000],
-                ['account_code' => '4000', 'account_name' => 'School Fees Income',   'account_type' => 'income',  'debit' => 0,       'credit' => 8500000, 'balance' => -8500000],
-                ['account_code' => '5000', 'account_name' => 'Staff Salaries',       'account_type' => 'expense', 'debit' => 3500000, 'credit' => 0,       'balance' => 3500000],
+                ['account_code' => '4000', 'account_name' => 'School Fees Income',   'account_type' => 'income',   'debit' => 0,       'credit' => 8500000, 'balance' => -8500000],
+                ['account_code' => '5000', 'account_name' => 'Staff Salaries',       'account_type' => 'expense',  'debit' => 3500000, 'credit' => 0,       'balance' => 3500000],
             ];
             $totalDebit  = array_sum(array_column($trialBalance, 'debit'));
             $totalCredit = array_sum(array_column($trialBalance, 'credit'));
@@ -244,22 +244,62 @@ class FinancialReportController extends Controller
     /**
      * Debtors List Report with DataTable AJAX
      *
-     * FIX: Load classes via raw DB query joining schoolclass + schoolarm
-     *      so the dropdown is always populated correctly regardless of
-     *      model relationship naming conventions.
+     * Includes student_avatar column for photo display + zoom in the blade.
      */
     public function debtorsList(Request $request)
     {
         $pagetitle = 'Student Debtors List';
 
         if ($request->ajax()) {
-            $debtors = StudentBillPaymentBook::where('amount_owed', '>', 0)
-                ->with(['student', 'schoolBill', 'class', 'term', 'session'])
-                ->orderBy('amount_owed', 'desc')
-                ->get();
+            $query = StudentBillPaymentBook::where('amount_owed', '>', 0)
+                ->with(['student', 'student.picture', 'schoolBill', 'class', 'term', 'session']);
+
+            // Optional filters
+            if ($request->filled('class_id'))   $query->where('class_id',   $request->class_id);
+            if ($request->filled('term_id'))    $query->where('term_id',    $request->term_id);
+            if ($request->filled('session_id')) $query->where('session_id', $request->session_id);
+            if ($request->filled('min_outstanding')) {
+                $query->where('amount_owed', '>=', (float) $request->min_outstanding);
+            }
+            if ($request->filled('search_value')) {
+                $search = $request->search_value;
+                $query->whereHas('student', function ($q) use ($search) {
+                    $q->where('firstname',   'like', "%{$search}%")
+                      ->orWhere('lastname',  'like', "%{$search}%")
+                      ->orWhere('admissionNo','like', "%{$search}%");
+                });
+            }
+
+            $debtors = $query->orderBy('amount_owed', 'desc')->get();
 
             return DataTables::of($debtors)
                 ->addIndexColumn()
+
+                // ── FIX: student avatar URL ──────────────────────────────
+                ->addColumn('student_avatar', function ($row) {
+                    if (!$row->student) return null;
+
+                    // Try the eager-loaded picture relation first
+                    $picture = null;
+                    if ($row->student->relationLoaded('picture') && $row->student->picture) {
+                        $picture = $row->student->picture->picture ?? null;
+                    }
+
+                    // Fallback: raw DB lookup
+                    if (!$picture) {
+                        $pic = DB::table('studentpicture')
+                            ->where('studentid', $row->student_id)
+                            ->value('picture');
+                        $picture = $pic ?? null;
+                    }
+
+                    if ($picture && $picture !== 'unnamed.jpg' && $picture !== '') {
+                        return asset('storage/images/student_avatars/' . $picture);
+                    }
+
+                    return null; // JS will render initials
+                })
+
                 ->addColumn('student_name', fn($row) =>
                     trim(($row->student->firstname ?? '') . ' ' . ($row->student->lastname ?? '')))
                 ->addColumn('admission_no', fn($row) =>
@@ -298,11 +338,11 @@ class FinancialReportController extends Controller
                     ]) . '" class="btn btn-sm btn-outline-primary" target="_blank">
                         <i class="ri-eye-line"></i>
                     </a>')
-                ->rawColumns(['action'])
+                ->rawColumns(['action', 'student_avatar'])
                 ->make(true);
         }
 
-        // ── FIX: load classes with their arm name via a single clean JOIN ──
+        // ── load classes with arm name ──
         $classes = DB::table('schoolclass')
             ->leftJoin('schoolarm', 'schoolclass.arm', '=', 'schoolarm.id')
             ->select(
