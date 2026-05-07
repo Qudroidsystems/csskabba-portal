@@ -498,15 +498,15 @@ class FinancialReportController extends Controller
         return StudentBillPaymentBook::where('student_id', $discountAssignment->student_id)
             ->sum('discount_deduction');
     }
+/**
+ * Class Analysis Report
+ */
+public function classAnalysis(Request $request)
+{
+    $pagetitle = 'Class Analysis Report';
 
-    /**
-     * Class Analysis Report
-     */
-    public function classAnalysis(Request $request)
-    {
-        $pagetitle = 'Class Analysis Report';
-
-        // Get filter data for the view
+    // Get filter data for the view (only needed for non-AJAX requests)
+    if (!$request->ajax()) {
         $classes = DB::table('schoolclass')
             ->leftJoin('schoolarm', 'schoolclass.arm', '=', 'schoolarm.id')
             ->select(
@@ -522,108 +522,117 @@ class FinancialReportController extends Controller
         $terms = Schoolterm::orderBy('term')->get();
         $sessions = Schoolsession::orderBy('session', 'desc')->get();
 
-        // Handle AJAX request for DataTables
-        if ($request->ajax()) {
-            try {
-                $classId = $request->get('class_id');
-                $termId = $request->get('term_id');
-                $sessionId = $request->get('session_id');
-
-                if (!$classId || !$termId || !$sessionId) {
-                    return response()->json([
-                        'data' => [],
-                        'recordsTotal' => 0,
-                        'recordsFiltered' => 0
-                    ]);
-                }
-
-                // Get students in the selected class, term, and session
-                $students = DB::table('studentRegistration')
-                    ->join('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
-                    ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-                    ->where('studentclass.schoolclassid', $classId)
-                    ->where('studentclass.termid', $termId)
-                    ->where('studentclass.sessionid', $sessionId)
-                    ->select(
-                        'studentRegistration.id as student_id',
-                        'studentRegistration.firstname',
-                        'studentRegistration.lastname',
-                        'studentRegistration.othername',
-                        'studentRegistration.admissionNo',
-                        'studentpicture.picture as avatar'
-                    )
-                    ->get();
-
-                $data = [];
-                foreach ($students as $student) {
-                    // Get payment summary for this student
-                    $paymentBook = StudentBillPaymentBook::where('student_id', $student->student_id)
-                        ->where('class_id', $classId)
-                        ->where('term_id', $termId)
-                        ->where('session_id', $sessionId)
-                        ->first();
-
-                    // Get total bills for this class/term/session
-                    $totalBilled = DB::table('school_bill_class_term_session')
-                        ->where('class_id', $classId)
-                        ->where('termid_id', $termId)
-                        ->where('session_id', $sessionId)
-                        ->join('school_bill', 'school_bill.id', '=', 'school_bill_class_term_session.bill_id')
-                        ->sum('school_bill.bill_amount');
-
-                    $totalSavings = $paymentBook ? (($paymentBook->scholarship_deduction ?? 0) + ($paymentBook->discount_deduction ?? 0)) : 0;
-                    $totalPaid = $paymentBook ? $paymentBook->amount_paid : 0;
-                    $adjustedBilled = max(0, $totalBilled - $totalSavings);
-                    $outstanding = max(0, $adjustedBilled - $totalPaid);
-
-                    // Determine status
-                    if ($outstanding <= 0 && $totalPaid > 0) {
-                        $status = 'Fully Paid';
-                    } elseif ($totalPaid > 0) {
-                        $status = 'Partial';
-                    } else {
-                        $status = 'No Payment';
-                    }
-
-                    $studentName = trim($student->firstname . ' ' . $student->lastname);
-                    if (!empty($student->othername)) {
-                        $studentName .= ' (' . $student->othername . ')';
-                    }
-
-                    $data[] = [
-                        'student_id' => $student->student_id,
-                        'student_name' => $studentName,
-                        'admission_no' => $student->admissionNo ?? 'N/A',
-                        'total_billed' => number_format($adjustedBilled, 2),
-                        'total_paid' => number_format($totalPaid, 2),
-                        'outstanding' => number_format($outstanding, 2),
-                        'status' => $status,
-                        'class_id' => $classId,
-                        'term_id' => $termId,
-                        'session_id' => $sessionId,
-                    ];
-                }
-
-                // Sort by outstanding amount (highest first)
-                usort($data, function($a, $b) {
-                    return floatval($b['outstanding']) - floatval($a['outstanding']);
-                });
-
-                return DataTables::of($data)
-                    ->addIndexColumn()
-                    ->toJson();
-
-            } catch (\Exception $e) {
-                \Log::error('Class Analysis Error: ' . $e->getMessage());
-                return response()->json([
-                    'error' => true,
-                    'message' => $e->getMessage()
-                ], 500);
-            }
-        }
-
         return view('reports.class-analysis', compact('pagetitle', 'classes', 'terms', 'sessions'));
     }
+
+    // Handle AJAX request for DataTables
+    try {
+        $classId = $request->get('class_id');
+        $termId = $request->get('term_id');
+        $sessionId = $request->get('session_id');
+
+        \Log::info('Class Analysis AJAX Request', [
+            'class_id' => $classId,
+            'term_id' => $termId,
+            'session_id' => $sessionId
+        ]);
+
+        if (!$classId || !$termId || !$sessionId) {
+            return response()->json([
+                'data' => [],
+                'recordsTotal' => 0,
+                'recordsFiltered' => 0
+            ]);
+        }
+
+        // Get students in the selected class, term, and session
+        $students = DB::table('studentRegistration')
+            ->join('studentclass', 'studentclass.studentId', '=', 'studentRegistration.id')
+            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+            ->where('studentclass.schoolclassid', $classId)
+            ->where('studentclass.termid', $termId)
+            ->where('studentclass.sessionid', $sessionId)
+            ->select(
+                'studentRegistration.id as student_id',
+                'studentRegistration.firstname',
+                'studentRegistration.lastname',
+                'studentRegistration.othername',
+                'studentRegistration.admissionNo',
+                'studentpicture.picture as avatar'
+            )
+            ->get();
+
+        \Log::info('Students found: ' . $students->count());
+
+        $data = [];
+        foreach ($students as $student) {
+            // Get payment summary for this student
+            $paymentBook = StudentBillPaymentBook::where('student_id', $student->student_id)
+                ->where('class_id', $classId)
+                ->where('term_id', $termId)
+                ->where('session_id', $sessionId)
+                ->first();
+
+            // Get total bills for this class/term/session
+            $totalBilled = DB::table('school_bill_class_term_session')
+                ->where('class_id', $classId)
+                ->where('termid_id', $termId)
+                ->where('session_id', $sessionId)
+                ->join('school_bill', 'school_bill.id', '=', 'school_bill_class_term_session.bill_id')
+                ->sum('school_bill.bill_amount');
+
+            $totalSavings = $paymentBook ? (($paymentBook->scholarship_deduction ?? 0) + ($paymentBook->discount_deduction ?? 0)) : 0;
+            $totalPaid = $paymentBook ? $paymentBook->amount_paid : 0;
+            $adjustedBilled = max(0, $totalBilled - $totalSavings);
+            $outstanding = max(0, $adjustedBilled - $totalPaid);
+
+            // Determine status
+            if ($outstanding <= 0 && $totalPaid > 0) {
+                $status = 'Fully Paid';
+            } elseif ($totalPaid > 0) {
+                $status = 'Partial';
+            } else {
+                $status = 'No Payment';
+            }
+
+            $studentName = trim($student->firstname . ' ' . $student->lastname);
+            if (!empty($student->othername)) {
+                $studentName .= ' (' . $student->othername . ')';
+            }
+
+            $data[] = [
+                'student_id' => $student->student_id,
+                'student_name' => $studentName,
+                'admission_no' => $student->admissionNo ?? 'N/A',
+                'total_billed' => number_format($adjustedBilled, 2),
+                'total_paid' => number_format($totalPaid, 2),
+                'outstanding' => number_format($outstanding, 2),
+                'status' => $status,
+                'class_id' => $classId,
+                'term_id' => $termId,
+                'session_id' => $sessionId,
+            ];
+        }
+
+        // Sort by outstanding amount (highest first)
+        usort($data, function($a, $b) {
+            return floatval($b['outstanding']) - floatval($a['outstanding']);
+        });
+
+        return DataTables::of($data)
+            ->addIndexColumn()
+            ->toJson();
+
+    } catch (\Exception $e) {
+        \Log::error('Class Analysis Error: ' . $e->getMessage());
+        \Log::error('Class Analysis Trace: ' . $e->getTraceAsString());
+
+        return response()->json([
+            'error' => true,
+            'message' => $e->getMessage()
+        ], 500);
+    }
+}
 
     /**
      * Export Class Analysis Report
