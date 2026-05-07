@@ -659,6 +659,49 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
     // ============================================
     // LEGACY PAYMENT ROUTES (Backward Compatibility)
     // ============================================
+    // Route::prefix('schoolpayment')->name('schoolpayment.')->group(function () {
+    //     Route::get('/', [SchoolPaymentController::class, 'index'])->name('index');
+    //     Route::get('/term-session/{id}', [SchoolPaymentController::class, 'termSession'])->name('termsession');
+    //     Route::get('/termsessionpayments', [SchoolPaymentController::class, 'termsessionpayments'])->name('termsessionpayments');
+    //     Route::get('/get-payment-details', [SchoolPaymentController::class, 'getPaymentDetailsAjax'])->name('getPaymentDetailsAjax');
+    //     Route::post('/store', [SchoolPaymentController::class, 'store'])->name('store');
+    //     Route::post('/bulk-store', [SchoolPaymentController::class, 'bulkStore'])->name('bulk-store');
+    //     Route::post('/delete/{recordId}', [SchoolPaymentController::class, 'deletestudentpayment'])->name('deletestudentpayment');
+    //     Route::get('/invoice/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'invoice'])->name('invoice');
+    //     Route::get('/statement/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'statement'])->name('statement');
+    // });
+
+
+    // ============================================
+    // ENHANCED PAYMENT ROUTES (Using SchoolPaymentController)
+    // ============================================
+    Route::prefix('payment')->name('payment.')->group(function () {
+        // Main index (student list)
+        Route::get('/', [SchoolPaymentController::class, 'index'])->name('index');
+
+        // Term/Session selection
+        Route::get('/term-session/{id}', [SchoolPaymentController::class, 'termSession'])->name('termsession');
+
+        // Payment details page (called from debtors list)
+        Route::get('/details/{studentId}/{classId}/{termId}/{sessionId}', [SchoolPaymentController::class, 'showPaymentDetails'])->name('details');
+
+        // AJAX endpoints
+        Route::get('/get-payment-details', [SchoolPaymentController::class, 'getPaymentDetailsAjax'])->name('getPaymentDetailsAjax');
+        Route::post('/store', [SchoolPaymentController::class, 'store'])->name('store');
+        Route::post('/bulk-store', [SchoolPaymentController::class, 'bulkStore'])->name('bulk-store');
+        Route::post('/delete/{recordId}', [SchoolPaymentController::class, 'deletestudentpayment'])->name('delete');
+
+        // Invoice and Statement
+        Route::get('/invoice/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'invoice'])->name('invoice');
+        Route::get('/statement/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'statement'])->name('statement');
+
+        // Termsession payments (alternative entry)
+        Route::get('/termsessionpayments', [SchoolPaymentController::class, 'termsessionpayments'])->name('termsessionpayments');
+    });
+
+    // ============================================
+    // LEGACY PAYMENT ROUTES (Backward Compatibility)
+    // ============================================
     Route::prefix('schoolpayment')->name('schoolpayment.')->group(function () {
         Route::get('/', [SchoolPaymentController::class, 'index'])->name('index');
         Route::get('/term-session/{id}', [SchoolPaymentController::class, 'termSession'])->name('termsession');
@@ -670,7 +713,16 @@ Route::post('/students/bulk-remove-from-term', [StudentController::class, 'bulkR
         Route::get('/invoice/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'invoice'])->name('invoice');
         Route::get('/statement/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'statement'])->name('statement');
     });
-    
+
+    // ============================================
+    // FINANCIAL REPORTS ROUTES
+    // ============================================
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::prefix('financial')->name('financial.')->group(function () {
+            Route::get('/debtors', [FinancialReportController::class, 'debtorsList'])->name('debtors');
+            Route::get('/debtors/export/{format}', [FinancialReportController::class, 'exportDebtors'])->name('export');
+        });
+    });
 
 
     // ============================================
