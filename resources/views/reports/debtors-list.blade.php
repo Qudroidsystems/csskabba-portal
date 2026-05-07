@@ -165,13 +165,41 @@
     vertical-align:middle;
 }
 
-/* Student cell */
+/* ── Student cell with avatar ────────────────────────────── */
 .student-cell { display:flex; align-items:center; gap:10px; }
+
+.student-avatar-wrap {
+    position: relative;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+.student-avatar-img {
+    width: 38px; height: 38px;
+    border-radius: 9px;
+    object-fit: cover;
+    border: 2px solid var(--d-border);
+    background: #f0f0f0;
+    transition: transform .2s, box-shadow .2s;
+    display: block;
+}
+.student-avatar-img:hover {
+    transform: scale(1.12);
+    box-shadow: 0 4px 14px rgba(37,99,235,.25);
+    border-color: var(--d-blue);
+}
 .student-initials {
-    width:34px; height:34px; border-radius:8px;
-    background:linear-gradient(135deg, var(--d-blue) 0%, #7c3aed 100%);
-    color:white; font-size:12px; font-weight:700;
-    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    width: 38px; height: 38px;
+    border-radius: 9px;
+    background: linear-gradient(135deg, var(--d-blue) 0%, #7c3aed 100%);
+    color: white; font-size: 13px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: transform .2s, box-shadow .2s;
+    border: 2px solid transparent;
+}
+.student-initials:hover {
+    transform: scale(1.12);
+    box-shadow: 0 4px 14px rgba(124,58,237,.3);
 }
 .student-name { font-weight:600; color:var(--d-navy); font-size:13px; }
 .student-adm  { font-size:11px; color:var(--d-muted); font-family:var(--ff-mono); }
@@ -227,9 +255,74 @@
     to   { opacity:1; transform:translateY(0); }
 }
 .row-anim { animation:rowIn .2s ease forwards; }
+
+/* ── Image Zoom Modal ───────────────────────────────────── */
+.image-zoom-modal .modal-content {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+.image-zoom-modal .modal-dialog {
+    max-width: 90vw;
+    margin: 1.75rem auto;
+}
+.image-zoom-modal .modal-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+    padding: 20px;
+}
+.zoomed-image {
+    max-width: 90vw;
+    max-height: 75vh;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px rgba(0,0,0,.35);
+    border: 4px solid white;
+    cursor: pointer;
+    animation: zoomIn .25s ease;
+    object-fit: contain;
+}
+@keyframes zoomIn {
+    from { opacity:0; transform:scale(.8); }
+    to   { opacity:1; transform:scale(1); }
+}
+.image-zoom-modal .btn-close-zoom {
+    position: absolute;
+    top: 20px; right: 30px;
+    background: rgba(0,0,0,.7);
+    border: none;
+    border-radius: 50%;
+    width: 38px; height: 38px;
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-size: 18px;
+    cursor: pointer;
+    z-index: 1060;
+    transition: background .15s, transform .15s;
+}
+.image-zoom-modal .btn-close-zoom:hover {
+    background: rgba(0,0,0,.9);
+    transform: scale(1.1);
+}
+.zoomed-image-name {
+    color: white;
+    margin-top: 18px;
+    font-size: 17px; font-weight: 600;
+    text-shadow: 0 2px 4px rgba(0,0,0,.3);
+    background: rgba(0,0,0,.5);
+    padding: 7px 20px;
+    border-radius: 40px;
+    display: inline-block;
+}
+.zoomed-image-details {
+    color: rgba(255,255,255,.8);
+    margin-top: 8px;
+    font-size: 13px;
+    text-align: center;
+}
 </style>
 
-{{-- ─── CORRECT MASTER LAYOUT WRAPPER (matches every other blade) ─── --}}
 <div class="main-content">
 <div class="page-content">
 <div class="container-fluid">
@@ -363,6 +456,7 @@
                 <thead>
                     <tr>
                         <th style="width:40px">#</th>
+                        <th style="width:50px">Photo</th>
                         <th>Student</th>
                         <th>Class</th>
                         <th>Bill</th>
@@ -378,7 +472,7 @@
                 <tbody></tbody>
                 <tfoot>
                     <tr>
-                        <td colspan="5">
+                        <td colspan="6">
                             <span class="tfoot-label">Page Totals</span>
                         </td>
                         <td class="text-end">
@@ -411,9 +505,25 @@
 
     </div>{{-- /.dbl-card --}}
 
-</div>{{-- /.container-fluid --}}
-</div>{{-- /.page-content --}}
-</div>{{-- /.main-content --}}
+</div>
+</div>
+</div>
+
+{{-- ── Image Zoom Modal ─────────────────────────────────── --}}
+<div class="modal fade image-zoom-modal" id="imageZoomModal" tabindex="-1" data-bs-backdrop="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <button class="btn-close-zoom" data-bs-dismiss="modal" aria-label="Close">
+                <i class="ri-close-line"></i>
+            </button>
+            <div class="modal-body text-center">
+                <img id="zoomedImage" src="" alt="Student Photo" class="zoomed-image">
+                <div class="zoomed-image-name" id="zoomedImageName"></div>
+                <div class="zoomed-image-details" id="zoomedImageDetails"></div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
@@ -438,6 +548,42 @@ function collBar(pct) {
         <div class="coll-bar"><div class="coll-fill${cls}" style="width:${p}%"></div></div>
         <span class="coll-pct">${p}%</span>
     </div>`;
+}
+
+/* ── Image zoom ──────────────────────────────────────── */
+function showZoomModal(imageUrl, name, details) {
+    document.getElementById('zoomedImageName').textContent = name || '';
+    document.getElementById('zoomedImageDetails').innerHTML = details || '';
+
+    const imgEl = document.getElementById('zoomedImage');
+
+    if (imageUrl && imageUrl !== '' && imageUrl !== 'null') {
+        imgEl.src = imageUrl;
+        imgEl.style.display = 'block';
+    } else {
+        // Generate canvas with initials
+        const initials = getInitials(name);
+        const canvas   = document.createElement('canvas');
+        canvas.width   = 400;
+        canvas.height  = 400;
+        const ctx      = canvas.getContext('2d');
+        const grad     = ctx.createLinearGradient(0, 0, 400, 400);
+        grad.addColorStop(0, '#2563eb');
+        grad.addColorStop(1, '#7c3aed');
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(200, 200, 200, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 150px "DM Sans", Arial, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(initials || '??', 200, 200);
+        imgEl.src = canvas.toDataURL();
+        imgEl.style.display = 'block';
+    }
+
+    new bootstrap.Modal(document.getElementById('imageZoomModal')).show();
 }
 
 /* ── page-level accumulators ──────────────────────────── */
@@ -470,7 +616,7 @@ $(function () {
     var dt = $('#debtorsTable').DataTable({
         processing: true,
         serverSide: true,
-        order: [[7, 'desc']],
+        order: [[8, 'desc']],
         ajax: {
             url: '{{ route("reports.financial.debtors") }}',
             type: 'GET',
@@ -493,37 +639,80 @@ $(function () {
             }
         },
         columns: [
+            /* 0 # */
             { data: 'DT_RowIndex', orderable: false, searchable: false,
               render: d => `<span style="color:var(--d-muted);font-size:12px">${d}</span>` },
+
+            /* 1 Photo */
+            { data: 'student_avatar', orderable: false, searchable: false,
+              render: function(d, t, r) {
+                const name    = r.student_name || '';
+                const initials = getInitials(name);
+                const admNo   = r.admission_no || '';
+                const cls     = r.class_name   || '';
+                const details = `<i class="ri-honour-line me-1"></i>${admNo}&nbsp;|&nbsp;<i class="ri-building-line me-1"></i>${cls}`;
+
+                if (d && d !== '' && d !== 'null') {
+                    return `<img src="${d}" class="student-avatar-img"
+                                 style="cursor:pointer"
+                                 onclick='showZoomModal("${d.replace(/'/g,"\\'")}","${name.replace(/"/g,"&quot;")}","${details.replace(/"/g,"&quot;")}")'
+                                 onerror="this.onerror=null;
+                                          var el=document.createElement('div');
+                                          el.className='student-initials';
+                                          el.textContent='${initials}';
+                                          el.onclick=function(){ showZoomModal('','${name.replace(/'/g,"\\'")}','${details.replace(/'/g,"\\'")}'); };
+                                          this.parentNode.replaceChild(el,this);"
+                            >`;
+                }
+                return `<div class="student-initials"
+                              onclick='showZoomModal("","${name.replace(/"/g,"&quot;")}","${details.replace(/"/g,"&quot;")}")'>${initials}</div>`;
+              }},
+
+            /* 2 Student name */
             { data: 'student_name', name: 'student_name',
               render: function (d, t, r) {
-                return `<div class="student-cell">
-                    <div class="student-initials">${getInitials(d)}</div>
-                    <div>
-                        <div class="student-name">${d}</div>
-                        <div class="student-adm">${r.admission_no || ''}</div>
-                    </div>
+                return `<div>
+                    <div class="student-name">${d}</div>
+                    <div class="student-adm">${r.admission_no || ''}</div>
                 </div>`;
               }},
+
+            /* 3 Class */
             { data: 'class_name', name: 'class_name',
               render: d => d ? `<span class="class-badge">${d}</span>` : '—' },
+
+            /* 4 Bill */
             { data: 'bill_title', name: 'bill_title',
               render: d => `<span style="font-size:13px">${d || '—'}</span>` },
+
+            /* 5 Term / Session */
             { data: 'term_name', name: 'term_name',
               render: (d, t, r) => `<div style="font-size:12px;line-height:1.6">
                 <div style="font-weight:500">${r.term_name || '—'}</div>
                 <div style="color:var(--d-muted)">${r.session_name || ''}</div>
               </div>` },
+
+            /* 6 Original */
             { data: 'original_amount', name: 'original_amount', className: 'text-end',
               render: d => `<span class="amt amt-original">${naira(d)}</span>` },
+
+            /* 7 Paid */
             { data: 'amount_paid', name: 'amount_paid', className: 'text-end',
               render: d => `<span class="amt amt-paid">${naira(d)}</span>` },
+
+            /* 8 Outstanding */
             { data: 'outstanding', name: 'outstanding', className: 'text-end',
               render: d => `<span class="amt amt-outstanding">${naira(d)}</span>` },
+
+            /* 9 Savings */
             { data: 'savings', name: 'savings', className: 'text-end',
               render: d => `<span class="amt amt-savings">${naira(d)}</span>` },
+
+            /* 10 Rate */
             { data: 'collection_rate', name: 'collection_rate', orderable: false,
               render: d => collBar(d) },
+
+            /* 11 Action */
             { data: 'action', name: 'action', orderable: false, searchable: false,
               className: 'text-center' },
         ],
@@ -536,7 +725,6 @@ $(function () {
         },
         drawCallback: function () {
             updateFooter();
-            // Move DT-generated controls into our custom slots
             $('#debtorsTable_info').appendTo('#dtInfo');
             $('#debtorsTable_paginate').appendTo('#dtPaginate');
             $('#debtorsTable_length').appendTo('#dtLengthSlot');
@@ -574,6 +762,10 @@ $(function () {
         dt.ajax.reload();
     });
 
+    /* zoom modal: click image to close */
+    $(document).on('click', '.zoomed-image', function () {
+        $('#imageZoomModal').modal('hide');
+    });
 });
 
 /* ── export ── */
