@@ -39,21 +39,34 @@ class AnalysisReportController extends Controller
     /**
      * Display the analysis index page with filters
      */
-    public function index()
-    {
-        $pagetitle = 'School Bill Analysis';
-
-        $classes = DB::table('schoolclass')
-            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->select('schoolclass.id as id', 'schoolclass.schoolclass as schoolclass', 'schoolarm.arm as schoolarm')
-            ->orderBy('schoolclass')
-            ->get();
-
-        $terms = DB::table('schoolterm')->orderBy('id')->get();
-        $sessions = DB::table('schoolsession')->orderBy('session', 'desc')->get();
-
-        return view('reports.analysis.index', compact('pagetitle', 'classes', 'terms', 'sessions'));
+   /**
+ * Display the analysis index page with filters
+ */
+public function index(Request $request)
+{
+    // If this is an AJAX request, return JSON data
+    if ($request->ajax()) {
+        return response()->json([
+            'data' => [],
+            'recordsTotal' => 0,
+            'recordsFiltered' => 0
+        ]);
     }
+
+    // Otherwise, return the view
+    $pagetitle = 'School Bill Analysis';
+
+    $classes = DB::table('schoolclass')
+        ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+        ->select('schoolclass.id as id', 'schoolclass.schoolclass as schoolclass', 'schoolarm.arm as schoolarm')
+        ->orderBy('schoolclass')
+        ->get();
+
+    $terms = DB::table('schoolterm')->orderBy('id')->get();
+    $sessions = DB::table('schoolsession')->orderBy('session', 'desc')->get();
+
+    return view('reports.analysis.index', compact('pagetitle', 'classes', 'terms', 'sessions'));
+}
 
     /**
      * Class Analysis Report - Main AJAX endpoint for DataTable
