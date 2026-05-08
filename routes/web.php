@@ -838,31 +838,28 @@ Route::prefix('reports/analysis')->name('reports.analysis.')->group(function () 
 
 
 
-    // ============================================
-    // FINANCIAL REPORTS ROUTES
-    // ============================================
-    Route::prefix('reports/financial')->name('reports.financial.')->group(function () {
-        Route::get('/balance-sheet', [FinancialReportController::class, 'balanceSheet'])->name('balance-sheet');
-        Route::get('/income-statement', [FinancialReportController::class, 'incomeStatement'])->name('income-statement');
-        Route::get('/trial-balance', [FinancialReportController::class, 'trialBalance'])->name('trial-balance');
-        Route::get('/cash-flow', [FinancialReportController::class, 'cashFlow'])->name('cash-flow');
-        Route::get('/debtors', [FinancialReportController::class, 'debtorsList'])->name('debtors');
-        Route::get('/collection-summary', [FinancialReportController::class, 'collectionSummary'])->name('collection-summary');
-        Route::get('/scholarship-impact', [FinancialReportController::class, 'scholarshipImpact'])->name('scholarship-impact');
-        Route::get('/export/{report}/{format}', [FinancialReportController::class, 'export'])->name('export');
-        Route::get('/data/debtors', [FinancialReportController::class, 'getDebtorsData'])->name('data.debtors');
-        Route::get('/data/collection', [FinancialReportController::class, 'getCollectionData'])->name('data.collection');
-    });
 
-    // ============================================
-    // ANALYSIS REPORTS ROUTES
-    // ============================================
-    Route::prefix('reports/analysis')->name('reports.analysis.')->group(function () {
-        Route::get('/class', [AnalysisReportController::class, 'classAnalysis'])->name('class');
-        Route::get('/school-wide', [AnalysisReportController::class, 'schoolWideAnalysis'])->name('school-wide');
-        Route::get('/scholarship-impact', [AnalysisReportController::class, 'scholarshipImpactAnalysis'])->name('scholarship-impact');
-        Route::get('/export/{type}', [AnalysisReportController::class, 'exportAnalysis'])->name('export');
-    });
+// Analysis Reports - Permissions handled in controller constructor
+Route::prefix('reports/analysis')->name('reports.analysis.')->group(function () {
+    Route::get('/', [AnalysisReportController::class, 'index'])->name('index');
+    Route::get('/class-data', [AnalysisReportController::class, 'getClassAnalysisData'])->name('class-data');
+    Route::get('/export', [AnalysisReportController::class, 'exportClassAnalysis'])->name('export');
+    Route::get('/student/{studentId}/{classId}/{termId}/{sessionId}', [AnalysisReportController::class, 'studentPaymentDetails'])->name('student-details');
+});
+
+// Financial Reports - Permissions handled in controller constructor
+Route::prefix('reports/financial')->name('reports.financial.')->group(function () {
+    Route::get('/debtors', [FinancialReportController::class, 'debtorsList'])->name('debtors');
+    Route::get('/balance-sheet', [FinancialReportController::class, 'balanceSheet'])->name('balance-sheet');
+    Route::get('/income-statement', [FinancialReportController::class, 'incomeStatement'])->name('income-statement');
+    Route::get('/trial-balance', [FinancialReportController::class, 'trialBalance'])->name('trial-balance');
+    Route::get('/cash-flow', [FinancialReportController::class, 'cashFlow'])->name('cash-flow');
+    Route::get('/collection-summary', [FinancialReportController::class, 'collectionSummary'])->name('collection-summary');
+    Route::get('/scholarship-impact', [FinancialReportController::class, 'scholarshipImpact'])->name('scholarship-impact');
+    Route::get('/export/{report}/{format}', [FinancialReportController::class, 'export'])->name('export');
+});
+
+
 
     // ============================================
     // WEBHOOK ROUTES (No CSRF)

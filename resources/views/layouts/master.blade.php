@@ -1019,63 +1019,76 @@
                         </li>
                         @endcan
 
+
                         @can('View financial reports')
-                        <li class="nav-item">
-                            <a href="#sidebarAccounting" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAccounting">
-                                <i class="ph-chart-line"></i> <span data-key="t-accounting">Accounting & Reports</span>
-                            </a>
-                            <div class="collapse menu-dropdown" id="sidebarAccounting">
-                                <ul class="nav nav-sm flex-column">
-                                    <li class="nav-item">
-                                        <a href="{{ route('reports.financial.balance-sheet') }}" class="nav-link" data-key="t-balance-sheet">
-                                            <i class="ri-file-copy-line"></i> Balance Sheet
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="{{ route('reports.financial.income-statement') }}" class="nav-link" data-key="t-income-statement">
-                                            <i class="ri-bar-chart-line"></i> Income Statement
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="{{ route('reports.financial.trial-balance') }}" class="nav-link" data-key="t-trial-balance">
-                                            <i class="ri-calculator-line"></i> Trial Balance
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="{{ route('reports.financial.cash-flow') }}" class="nav-link" data-key="t-cash-flow">
-                                            <i class="ri-wallet-line"></i> Cash Flow
-                                        </a>
-                                    </li>
-                                    <li class="dropdown-divider"></li>
-                                    <li class="nav-item">
-                                        <a href="{{ route('reports.financial.debtors') }}" class="nav-link" data-key="t-debtors-list">
-                                            <i class="ri-user-follow-line"></i> Student Debtors List
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="{{ route('reports.financial.collection-summary') }}" class="nav-link" data-key="t-collection-summary">
-                                            <i class="ri-bar-chart-grouped-line"></i> Collection Summary
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="{{ route('reports.financial.scholarship-impact') }}" class="nav-link" data-key="t-scholarship-impact">
-                                            <i class="ri-graduation-cap-line"></i> Scholarship Impact
-                                        </a>
-                                    </li>
-                                    <li class="dropdown-divider"></li>
-                                    <li class="nav-item">
-                                        <a href="{{ route('reports.analysis.class') }}" class="nav-link" data-key="t-class-analysis">
-                                            <i class="ri-school-line"></i> Class Analysis
-                                        </a>
-                                    </li>
-                                    <li class="nav-item">
-                                        <a href="{{ route('reports.analysis.school-wide') }}" class="nav-link" data-key="t-school-wide-analysis">
-                                            <i class="ri-building-line"></i> School-Wide Analysis
-                                        </a>
-                                    </li>
-                                </ul>
-                            </div>
-                        </li>
+                            <li class="nav-item">
+                                <a href="#sidebarAccounting" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarAccounting">
+                                    <i class="ph-chart-line"></i> <span data-key="t-accounting">Accounting & Reports</span>
+                                </a>
+                                <div class="collapse menu-dropdown" id="sidebarAccounting">
+                                    <ul class="nav nav-sm flex-column">
+                                        {{-- Financial Reports --}}
+                                        <li class="nav-item">
+                                            <a href="{{ route('reports.financial.balance-sheet') }}" class="nav-link" data-key="t-balance-sheet">
+                                                <i class="ri-file-copy-line"></i> Balance Sheet
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a href="{{ route('reports.financial.income-statement') }}" class="nav-link" data-key="t-income-statement">
+                                                <i class="ri-bar-chart-line"></i> Income Statement
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a href="{{ route('reports.financial.trial-balance') }}" class="nav-link" data-key="t-trial-balance">
+                                                <i class="ri-calculator-line"></i> Trial Balance
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a href="{{ route('reports.financial.cash-flow') }}" class="nav-link" data-key="t-cash-flow">
+                                                <i class="ri-wallet-line"></i> Cash Flow
+                                            </a>
+                                        </li>
+
+                                        <li class="dropdown-divider"></li>
+
+                                        {{-- Financial Analysis Reports --}}
+                                        <li class="nav-item">
+                                            <a href="{{ route('reports.financial.debtors') }}" class="nav-link" data-key="t-debtors-list">
+                                                <i class="ri-user-follow-line"></i> Student Debtors List
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a href="{{ route('reports.financial.collection-summary') }}" class="nav-link" data-key="t-collection-summary">
+                                                <i class="ri-bar-chart-grouped-line"></i> Collection Summary
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a href="{{ route('reports.financial.scholarship-impact') }}" class="nav-link" data-key="t-scholarship-impact">
+                                                <i class="ri-graduation-cap-line"></i> Scholarship Impact
+                                            </a>
+                                        </li>
+
+                                        <li class="dropdown-divider"></li>
+
+                                        {{-- School Analysis Reports --}}
+                                        <li class="nav-item">
+                                            <a href="{{ route('reports.analysis.index') }}" class="nav-link" data-key="t-class-analysis">
+                                                <i class="ri-school-line"></i> Class Analysis
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a href="{{ route('reports.analysis.school-wide') }}" class="nav-link" data-key="t-school-wide-analysis">
+                                                <i class="ri-building-line"></i> School-Wide Analysis
+                                            </a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a href="{{ route('reports.analysis.scholarship-impact') }}" class="nav-link" data-key="t-scholarship-impact-analysis">
+                                                <i class="ri-gift-line"></i> Scholarship Impact Analysis
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </li>
                         @endcan
 
                         @can('View payroll')
