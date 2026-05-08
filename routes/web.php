@@ -837,32 +837,51 @@ Route::prefix('reports/analysis')->name('reports.analysis.')->group(function () 
     });
 
 
+// ============================================
+// NEW ANALYSIS REPORTS ROUTES (Using AnalysisReportController)
+// Use a unique prefix to avoid conflicts
+// ============================================
+Route::prefix('reports/analysis')->name('reports.analysis.')->group(function () {
+    // Main index page
+    Route::get('/', [AnalysisReportController::class, 'index'])->name('index');
 
-    // ============================================
-    // FINANCIAL REPORTS ROUTES
-    // ============================================
-    Route::prefix('reports/financial')->name('reports.financial.')->group(function () {
-        Route::get('/balance-sheet', [FinancialReportController::class, 'balanceSheet'])->name('balance-sheet');
-        Route::get('/income-statement', [FinancialReportController::class, 'incomeStatement'])->name('income-statement');
-        Route::get('/trial-balance', [FinancialReportController::class, 'trialBalance'])->name('trial-balance');
-        Route::get('/cash-flow', [FinancialReportController::class, 'cashFlow'])->name('cash-flow');
-        Route::get('/debtors', [FinancialReportController::class, 'debtorsList'])->name('debtors');
-        Route::get('/collection-summary', [FinancialReportController::class, 'collectionSummary'])->name('collection-summary');
-        Route::get('/scholarship-impact', [FinancialReportController::class, 'scholarshipImpact'])->name('scholarship-impact');
-        Route::get('/export/{report}/{format}', [FinancialReportController::class, 'export'])->name('export');
-        Route::get('/data/debtors', [FinancialReportController::class, 'getDebtorsData'])->name('data.debtors');
-        Route::get('/data/collection', [FinancialReportController::class, 'getCollectionData'])->name('data.collection');
-    });
+    // Class Analysis - DataTable AJAX endpoint
+    Route::get('/class-data', [AnalysisReportController::class, 'getClassAnalysisData'])->name('class-data');
 
-    // ============================================
-    // ANALYSIS REPORTS ROUTES
-    // ============================================
-    Route::prefix('reports/analysis')->name('reports.analysis.')->group(function () {
-        Route::get('/class', [AnalysisReportController::class, 'classAnalysis'])->name('class');
-        Route::get('/school-wide', [AnalysisReportController::class, 'schoolWideAnalysis'])->name('school-wide');
-        Route::get('/scholarship-impact', [AnalysisReportController::class, 'scholarshipImpactAnalysis'])->name('scholarship-impact');
-        Route::get('/export/{type}', [AnalysisReportController::class, 'exportAnalysis'])->name('export');
-    });
+    // Class Analysis - Detailed view
+    Route::get('/class-details', [AnalysisReportController::class, 'analysisClassTermSession'])->name('class-details');
+
+    // Export PDF
+    Route::get('/export-pdf/{class_id}/{termid_id}/{session_id}/{action?}', [AnalysisReportController::class, 'exportPDF'])->name('export-pdf');
+
+    // Export CSV
+    Route::get('/export', [AnalysisReportController::class, 'exportClassAnalysis'])->name('export');
+
+    // School Wide Analysis
+    Route::get('/school-wide', [AnalysisReportController::class, 'schoolWideAnalysis'])->name('school-wide');
+    Route::get('/school-wide/export', [AnalysisReportController::class, 'exportSchoolWideAnalysis'])->name('school-wide.export');
+
+    // Scholarship Impact Analysis
+    Route::get('/scholarship-impact', [AnalysisReportController::class, 'scholarshipImpactAnalysis'])->name('scholarship-impact');
+
+    // Student Payment Details
+    Route::get('/student/{studentId}/{classId}/{termId}/{sessionId}', [AnalysisReportController::class, 'studentPaymentDetails'])->name('student-details');
+});
+
+// ============================================
+// FINANCIAL REPORTS ROUTES
+// ============================================
+Route::prefix('reports/financial')->name('reports.financial.')->group(function () {
+    Route::get('/debtors', [FinancialReportController::class, 'debtorsList'])->name('debtors');
+    Route::get('/balance-sheet', [FinancialReportController::class, 'balanceSheet'])->name('balance-sheet');
+    Route::get('/income-statement', [FinancialReportController::class, 'incomeStatement'])->name('income-statement');
+    Route::get('/trial-balance', [FinancialReportController::class, 'trialBalance'])->name('trial-balance');
+    Route::get('/cash-flow', [FinancialReportController::class, 'cashFlow'])->name('cash-flow');
+    Route::get('/collection-summary', [FinancialReportController::class, 'collectionSummary'])->name('collection-summary');
+    Route::get('/scholarship-impact', [FinancialReportController::class, 'scholarshipImpact'])->name('scholarship-impact');
+    Route::get('/export/{report}/{format}', [FinancialReportController::class, 'export'])->name('export');
+});
+
 
     // ============================================
     // WEBHOOK ROUTES (No CSRF)
@@ -916,11 +935,6 @@ Route::prefix('reports/analysis')->name('reports.analysis.')->group(function () 
     Route::get('/schoolpayment/invoice/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'invoice'])->name('schoolpayment.invoice');
     Route::get('/schoolpayment/statement/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'statement'])->name('schoolpayment.statement');
 
-      //analysis...
-    // Route::resource('analysis', AnalysisController::class);
-    // Route::post('analysisClassTermSession', [AnalysisController::class, 'analysisClassTermSession'])->name('analysis.analysisClassTermSession');
-    // Route::get('analysis/export-pdf/{class_id}/{termid_id}/{session_id}', 'App\Http\Controllers\AnalysisController@exportPDF')->name('analysis.exportPDF');
-    // Route::get('/analysis/pdf/{class_id}/{termid_id}/{session_id}/{action?}', [AnalysisController::class, 'exportPDF'])->name('analysis.viewPDF')->where('action', 'view|download');
 
 
     // School-wide payment analysis routes
@@ -951,84 +965,6 @@ Route::prefix('reports/analysis')->name('reports.analysis.')->group(function () 
 
 
 
-    // Route::resource('subjectoperation', SubjectOperationController::class);
-    // Route::get('/subjects', [SubjectOperationController::class, 'index'])->name('subjects.index');
-
-    // Route::post('/subjectregistration', [SubjectOperationController::class, 'store'])->name('subjects.store');
-    // Route::get('/subjectoperation/subjectinfo/{id}/{schoolclassid}/{termid}/{sessionid}', [SubjectOperationController::class, 'subjectinfo'])->name('subjects.subjectinfo');
-
-    // Route::delete('/subjects/registered-classes', [SubjectOperationController::class, 'destroy'])->name('subjects.destroy');
-    // Route::get('/subjects/registered-classes', [SubjectOperationController::class, 'getRegisteredClasses'])->name('subjects.registered-classes');
-    // // Route for batch unregistration
-    // Route::post('/subjectregistration/destroy', [SubjectOperationController::class, 'destroy'])->name('subjectregistration.destroy');
-
-    // // Add (or update) your route for the batch endpoint:
-    // Route::post('/subjectregistration/batch', [SubjectOperationController::class, 'batchRegister'])->name('subjectregistration.batch');
-
-    // Route::prefix('subject-operation')->name('subjectoperation.')->middleware(['auth'])->group(function () {
-
-    //     // Existing routes
-    //     Route::get('/',                  [SubjectOperationController::class, 'index'])              ->name('index');
-    //     Route::post('/store',            [SubjectOperationController::class, 'store'])              ->name('store');
-    //     Route::post('/batch-register',   [SubjectOperationController::class, 'batchRegister'])      ->name('batchRegister');
-    //     Route::delete('/destroy',        [SubjectOperationController::class, 'destroy'])            ->name('destroy');
-    //     Route::get('/subject-info/{id}/{schoolclassid}/{termid}/{sessionid}',
-    //                                     [SubjectOperationController::class, 'subjectinfo'])        ->name('subjectinfo');
-    //     Route::get('/subject-teachers',  [SubjectOperationController::class, 'getSubjectTeachers'])->name('getSubjectTeachers');
-    //     Route::get('/registered-classes',[SubjectOperationController::class, 'getRegisteredClasses'])->name('getRegisteredClasses');
-    //     Route::get('/registered-info',   [SubjectOperationController::class, 'registeredClasses']) ->name('registeredClasses');
-
-    //     // ── NEW: Archive / Restore / Permanent Delete ──────────────────────────
-
-    //     // GET archived (unregistered) records — paginated, filterable
-    //     Route::get('/archived',          [SubjectOperationController::class, 'getArchivedRegistrations'])
-    //         ->name('getArchivedRegistrations');
-
-    //     // POST restore one or many archive records
-    //     Route::post('/restore',          [SubjectOperationController::class, 'restoreRegistration'])
-    //         ->name('restoreRegistration');
-
-    //     // DELETE permanently delete a batch of archive records
-    //     Route::delete('/archive/batch-delete', [SubjectOperationController::class, 'permanentlyDeleteArchiveBatch'])
-    //         ->name('permanentlyDeleteArchiveBatch');
-
-    //     // DELETE permanently delete a single archive record
-    //     Route::delete('/archive/{archiveId}',  [SubjectOperationController::class, 'permanentlyDeleteArchive'])
-    //         ->name('permanentlyDeleteArchive');
-    // });
-
-
-
-
-//     Route::get('/subjects', [SubjectOperationController::class, 'index'])->name('subjects.index');
-
-//     Route::post('/subjectregistration', [SubjectOperationController::class, 'store'])->name('subjects.store');
-//     Route::get('/subjectoperation/subjectinfo/{id}/{schoolclassid}/{termid}/{sessionid}', [SubjectOperationController::class, 'subjectinfo'])->name('subjects.subjectinfo');
-
-//     Route::delete('/subjects/registered-classes', [SubjectOperationController::class, 'destroy'])->name('subjects.destroy');
-//     Route::get('/subjects/registered-classes', [SubjectOperationController::class, 'getRegisteredClasses'])->name('subjects.registered-classes');
-//     // Route for batch unregistration
-//     Route::post('/subjectregistration/destroy', [SubjectOperationController::class, 'destroy'])->name('subjectregistration.destroy');
-
-//     // Add (or update) your route for the batch endpoint:
-//     Route::post('/subjectregistration/batch', [SubjectOperationController::class, 'batchRegister'])->name('subjectregistration.batch');
-
-//     // ============================================================================
-//     // ADD THESE ARCHIVE MANAGEMENT ROUTES (FOLLOWING YOUR EXISTING PATTERN)
-//     // ============================================================================
-
-//     // GET archived (unregistered) records — paginated, filterable
-//     Route::get('/subjectoperation/archived', [SubjectOperationController::class, 'getArchivedRegistrations'])->name('subjectoperation.archived');
-
-//     // POST restore one or many archive records
-//     Route::post('/subjectoperation/restore', [SubjectOperationController::class, 'restoreRegistration'])->name('subjectoperation.restore');
-
-//     // DELETE permanently delete a batch of archive records
-//     Route::delete('/subjectoperation/archive/batch-delete', [SubjectOperationController::class, 'permanentlyDeleteArchiveBatch'])->name('subjectoperation.archive.batch-delete');
-
-//     // DELETE permanently delete a single archive record
-//     Route::delete('/subjectoperation/archive/{archiveId}', [SubjectOperationController::class, 'permanentlyDeleteArchive'])->name('subjectoperation.archive.delete');
-//  Route::resource('subjectoperation', SubjectOperationController::class);
 
 
 
