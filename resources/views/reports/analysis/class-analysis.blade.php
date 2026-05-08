@@ -17,20 +17,9 @@
     border-radius: var(--report-radius);
     padding: 28px 32px;
     margin-bottom: 24px;
-    position: relative;
-    overflow: hidden;
 }
-.report-hero h1 {
-    font-size: 22px;
-    font-weight: 700;
-    color: #fff;
-    margin: 0 0 6px;
-}
-.report-hero p {
-    font-size: 13px;
-    color: rgba(255,255,255,.75);
-    margin: 0;
-}
+.report-hero h1 { font-size: 22px; font-weight: 700; color: #fff; margin: 0; }
+.report-hero p { font-size: 13px; color: rgba(255,255,255,.75); margin: 5px 0 0; }
 
 .stat-card {
     background: #fff;
@@ -40,16 +29,8 @@
     transition: transform .15s;
 }
 .stat-card:hover { transform: translateY(-2px); }
-.stat-card .stat-value {
-    font-size: 28px;
-    font-weight: 700;
-    color: var(--report-primary);
-}
-.stat-card .stat-label {
-    font-size: 12px;
-    color: #6b7280;
-    margin-top: 4px;
-}
+.stat-card .stat-value { font-size: 28px; font-weight: 700; color: var(--report-primary); }
+.stat-card .stat-label { font-size: 12px; color: #6b7280; margin-top: 4px; }
 
 .filter-bar {
     background: #f8fafc;
@@ -57,15 +38,8 @@
     border-radius: 12px;
     margin-bottom: 24px;
 }
-.filter-label {
-    font-weight: 600;
-    font-size: 13px;
-    margin-bottom: 8px;
-    color: var(--report-primary);
-}
-.filter-label .required {
-    color: #dc2626;
-}
+.filter-label { font-weight: 600; font-size: 13px; margin-bottom: 8px; color: var(--report-primary); }
+.filter-label .required { color: #dc2626; }
 
 .report-table th {
     background: var(--report-primary);
@@ -93,25 +67,15 @@
 .completion-progress .progress-bar.high { background: linear-gradient(90deg, #16a34a, #22c55e); }
 .completion-progress .progress-bar.medium { background: linear-gradient(90deg, #d97706, #f59e0b); }
 .completion-progress .progress-bar.low { background: linear-gradient(90deg, #dc2626, #ef4444); }
-.completion-progress span {
-    font-size: 11px;
-    font-weight: 600;
-    min-width: 45px;
-}
+.completion-progress span { font-size: 11px; font-weight: 600; min-width: 45px; }
 
 .student-avatar, .student-avatar-placeholder {
     cursor: pointer;
     transition: transform 0.2s;
 }
-.student-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    object-fit: cover;
-}
+.student-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
 .student-avatar-placeholder {
-    width: 40px;
-    height: 40px;
+    width: 40px; height: 40px;
     border-radius: 50%;
     background: linear-gradient(135deg, #2563eb, #4f46e5);
     color: white;
@@ -121,31 +85,14 @@
     font-weight: 600;
 }
 
-.image-zoom-modal .modal-content {
-    background: transparent;
-    border: none;
-}
-.zoomed-image {
-    max-width: 90vw;
-    max-height: 75vh;
-    border-radius: 16px;
-    border: 4px solid white;
-    cursor: pointer;
-}
+.image-zoom-modal .modal-content { background: transparent; border: none; }
+.zoomed-image { max-width: 90vw; max-height: 75vh; border-radius: 16px; border: 4px solid white; cursor: pointer; }
 .btn-close-zoom {
-    position: absolute;
-    top: 20px;
-    right: 30px;
-    background: rgba(0,0,0,.7);
-    border: none;
-    border-radius: 50%;
-    width: 38px;
-    height: 38px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    cursor: pointer;
+    position: absolute; top: 20px; right: 30px;
+    background: rgba(0,0,0,.7); border: none; border-radius: 50%;
+    width: 38px; height: 38px; display: flex;
+    align-items: center; justify-content: center;
+    color: white; cursor: pointer;
 }
 </style>
 
@@ -268,9 +215,7 @@
 function fmt(n) {
     return parseFloat(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 });
 }
-function naira(n) {
-    return '₦' + fmt(n);
-}
+function naira(n) { return '₦' + fmt(n); }
 function getInitials(name) {
     if (!name) return 'ST';
     return name.split(' ').slice(0,2).map(w => w[0] || '').join('').toUpperCase();
@@ -319,17 +264,18 @@ var analysisTable;
 var currentFilters = {};
 
 $(document).ready(function() {
+    // Initialize DataTable with EXACTLY 9 columns matching the header
     analysisTable = $('#analysisTable').DataTable({
         columns: [
-            { data: 'DT_RowIndex', orderable: false, searchable: false },
-            { data: 'avatar', orderable: false, searchable: false },
+            { data: 'DT_RowIndex', orderable: false, searchable: false, width: '50px' },
+            { data: 'avatar', orderable: false, searchable: false, width: '60px' },
             { data: 'student_name' },
             { data: 'admission_no' },
             { data: 'total_billed', className: 'text-end' },
             { data: 'total_paid', className: 'text-end' },
             { data: 'outstanding', className: 'text-end' },
             { data: 'completion', orderable: false },
-            { data: 'action', orderable: false, searchable: false }
+            { data: 'action', orderable: false, searchable: false, className: 'text-center', width: '80px' }
         ],
         pageLength: 25,
         language: {
@@ -348,12 +294,7 @@ $(document).ready(function() {
             return;
         }
 
-        currentFilters = {
-            class_id: classId,
-            term_id: termId,
-            session_id: sessionId
-        };
-
+        currentFilters = { class_id: classId, term_id: termId, session_id: sessionId };
         loadReportData();
     });
 
@@ -370,7 +311,7 @@ function loadReportData() {
     $('#statsRow, #tableCard').hide();
 
     $.ajax({
-        url: '{{ route("reports.analysis.class") }}',
+        url: '{{ route("reports.analysis.class-data") }}',
         type: 'GET',
         data: currentFilters,
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
@@ -426,18 +367,11 @@ function renderAvatar(item) {
 function updateStats(data) {
     var totalBilled = 0;
     var totalPaid = 0;
-    var fullyPaid = 0;
-    var partial = 0;
 
     for (var i = 0; i < data.length; i++) {
         var item = data[i];
         totalBilled += parseFloat(item.total_billed) || 0;
         totalPaid += parseFloat(item.total_paid) || 0;
-        if (parseFloat(item.outstanding) <= 0 && parseFloat(item.total_paid) > 0) {
-            fullyPaid++;
-        } else if (parseFloat(item.total_paid) > 0) {
-            partial++;
-        }
     }
 
     var rate = totalBilled > 0 ? ((totalPaid / totalBilled) * 100).toFixed(1) : 0;
@@ -466,7 +400,7 @@ function exportReport(format) {
         Swal.fire('Warning', 'Please load report data first', 'warning');
         return;
     }
-    var url = '{{ route("reports.analysis.class.export") }}?class_id=' + currentFilters.class_id + '&term_id=' + currentFilters.term_id + '&session_id=' + currentFilters.session_id + '&format=' + format;
+    var url = '{{ route("reports.analysis.export") }}?class_id=' + currentFilters.class_id + '&term_id=' + currentFilters.term_id + '&session_id=' + currentFilters.session_id + '&format=' + format;
     window.open(url, '_blank');
 }
 </script>
