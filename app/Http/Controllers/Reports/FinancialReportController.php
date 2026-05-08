@@ -434,4 +434,75 @@ class FinancialReportController extends Controller
         $pdf = PDF::loadView('reports.financial.cash-flow-pdf', compact('data', 'startDate', 'endDate'));
         return $pdf->download("cash_flow_{$startDate}_to_{$endDate}.pdf");
     }
+
+    /**
+ * Export Debtors Report
+ */
+public function exportDebtors($report, Request $request)
+{
+    $classId = $request->get('class_id');
+    $termId = $request->get('term_id');
+    $sessionId = $request->get('session_id');
+    $minOutstanding = $request->get('min_outstanding');
+    $format = $request->get('format', 'pdf');
+
+    // Build query
+    $query = DB::table('student_bill_payment_book as sbpb')
+        ->join('studentRegistration as s', 's.id', '=', 'sbpb.student_id')
+        ->leftJoin('school_bill as sb', 'sb.id', '=', 'sbpb.school_bill_id')
+        ->leftJoin('schoolclass as sc', 'sc.id', '=', 'sbpb.class_id')
+        ->leftJoin('schoolarm as sa', 'sa.id', '=', 'sc.arm')
+        ->leftJoin('schoolterm as st', 'st.id', '=', 'sbpb.term_id')
+        ->leftJoin('schoolsession as ss', 'ss.id', '=', 'sbpb.session_id')
+        ->where('sbpb.amount_owed', '>', 0)
+        ->select(
+            DB::raw("CONCAT(s.firstname, ' ', s.lastname) as student_name"),
+            's.admissionNo as admission_no',
+            'sb.title as bill_title',
+            DB::raw("CONCAT(sc.schoolclass, ' ', COALESCE(sa.arm, '')) as class_name"),
+            'st.term as term_name',
+            'ss.session as session_name',
+            'sbpb.original_amount',
+            'sbpb.amount_paid',
+            'sbpb.amount_owed as outstanding',
+            DB::raw("(sbpb.scholarship_deduction + sbpb.discount_deduction) as savings")
+        );
+
+    if ($classId) $query->where('sbpb.class_id', $classId);
+    if ($termId) $query->where('sbpb.term_id', $termId);
+    if ($sessionId) $query->where('sbpb.session_id', $sessionId);
+    if ($minOutstanding) $query->where('sbpb.amount_owed', '>=', $minOutstanding);
+
+    $debtors = $query->orderBy('sbpb.amount_owed', 'desc')->get();
+
+    if ($format === 'excel') {
+        $filename = "debtors_list_" . date('Y-m-d') . ".csv";
+        $handle = fopen('php://output', 'w');
+        header('Content-Type: text/csv');
+        header('Content-Disposition: attachment; filename="' . $filename . '"');
+
+        fputcsv($handle, ['Student Name', 'Admission No', 'Bill Title', 'Class', 'Term', 'Session', 'Original (₦)', 'Paid (₦)', 'Outstanding (₦)', 'Savings (₦)']);
+
+        foreach ($debtors as $debtor) {
+            fputcsv($handle, [
+                $debtor->student_name,
+                $debtor->admission_no,
+                $debtor->bill_title,
+                $debtor->class_name,
+                $debtor->term_name,
+                $debtor->session_name,
+                number_format($debtor->original_amount, 2),
+                number_format($debtor->amount_paid, 2),
+                number_format($debtor->outstanding, 2),
+                number_format($debtor->savings, 2),
+            ]);
+        }
+        fclose($handle);
+        exit;
+    }
+
+    // PDF export
+    $pdf = PDF::loadView('reports.financial.debtors-pdf', compact('debtors'));
+    return $pdf->download("debtors_list_" . date('Y-m-d') . ".pdf");
+}
 }

@@ -744,6 +744,8 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
 
     // Scholarship Impact
     Route::get('/scholarship-impact', [FinancialReportController::class, 'scholarshipImpact'])->name('scholarship-impact');
+    // In your financial reports group
+    Route::get('/debtors/export/{report}', [FinancialReportController::class, 'exportDebtors'])->name('export');
 });
 
 // ============================================
