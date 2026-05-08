@@ -3,7 +3,6 @@
 
 namespace App\Services\Reporting;
 
-use App\Models\ChartOfAccount;
 use App\Services\Accounting\AccountingService;
 use Illuminate\Support\Facades\DB;
 

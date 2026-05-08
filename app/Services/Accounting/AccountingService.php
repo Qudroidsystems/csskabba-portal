@@ -17,7 +17,6 @@ class AccountingService
     public function createJournalEntry(array $data, array $lines)
     {
         return DB::transaction(function () use ($data, $lines) {
-            // Validate debits = credits
             $totalDebit = array_sum(array_column($lines, 'debit'));
             $totalCredit = array_sum(array_column($lines, 'credit'));
 
@@ -72,7 +71,6 @@ class AccountingService
         }
 
         return DB::transaction(function () use ($originalEntry, $reason) {
-            // Create reversal entry with opposite amounts
             $reversalLines = [];
             foreach ($originalEntry->lines as $line) {
                 $reversalLines[] = [
