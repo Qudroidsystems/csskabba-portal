@@ -746,29 +746,34 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
     Route::get('/scholarship-impact', [FinancialReportController::class, 'scholarshipImpact'])->name('scholarship-impact');
     // In your financial reports group
     Route::get('/debtors/export/{report}', [FinancialReportController::class, 'exportDebtors'])->name('export');
-    
+
 });
 
 // ============================================
 // ANALYSIS REPORTS ROUTES (AnalysisReportController)
 // ============================================
-Route::prefix('reports/analysis')->name('reports.analysis.')->group(function () {
-    // Class Analysis
-    Route::get('/class', [AnalysisReportController::class, 'classAnalysis'])->name('class');
-    Route::get('/class/export', [AnalysisReportController::class, 'exportClassAnalysis'])->name('class.export');
+// In routes/web.php, update the analysis routes:
 
-    // School Wide Analysis
+Route::prefix('reports/analysis')->name('reports.analysis.')->group(function () {
+    // Main index page
+    Route::get('/', [AnalysisReportController::class, 'index'])->name('index');
+
+    // Class analysis - FIXED: use the correct method names
+    Route::get('/class', [AnalysisReportController::class, 'getClassAnalysisData'])->name('class');
+    Route::get('/class-details', [AnalysisReportController::class, 'analysisClassTermSession'])->name('class-details');
+    Route::get('/class-data', [AnalysisReportController::class, 'getClassAnalysisData'])->name('class-data');
+    Route::get('/export-pdf/{class_id}/{termid_id}/{session_id}/{action?}', [AnalysisReportController::class, 'exportPDF'])->name('export-pdf');
+    Route::get('/export', [AnalysisReportController::class, 'exportClassAnalysis'])->name('export');
+
+    // School wide analysis
     Route::get('/school-wide', [AnalysisReportController::class, 'schoolWideAnalysis'])->name('school-wide');
     Route::get('/school-wide/export', [AnalysisReportController::class, 'exportSchoolWideAnalysis'])->name('school-wide.export');
 
-    // Scholarship Impact Analysis
+    // Scholarship impact
     Route::get('/scholarship-impact', [AnalysisReportController::class, 'scholarshipImpactAnalysis'])->name('scholarship-impact');
 
-    // Student Payment Details (View from analysis)
-    Route::get('/student/{studentId}/{classId}/{termId}/{sessionId}', [AnalysisReportController::class, 'studentPaymentDetails'])->name('class-student-details');
-
-    // Chart Data API
-    Route::get('/chart-data', [AnalysisReportController::class, 'getChartData'])->name('chart-data');
+    // Student payment details
+    Route::get('/student/{studentId}/{classId}/{termId}/{sessionId}', [AnalysisReportController::class, 'studentPaymentDetails'])->name('student-details');
 });
 
 
