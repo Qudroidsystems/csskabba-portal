@@ -6,8 +6,6 @@
 :root {
     --report-primary: #1e3a5f;
     --report-accent: #2563eb;
-    --report-success: #16a34a;
-    --report-warning: #d97706;
     --report-border: #e2e8f0;
     --report-radius: 12px;
 }
@@ -69,10 +67,7 @@
 .completion-progress .progress-bar.low { background: linear-gradient(90deg, #dc2626, #ef4444); }
 .completion-progress span { font-size: 11px; font-weight: 600; min-width: 45px; }
 
-.student-avatar, .student-avatar-placeholder {
-    cursor: pointer;
-    transition: transform 0.2s;
-}
+.student-avatar, .student-avatar-placeholder { cursor: pointer; transition: transform 0.2s; }
 .student-avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; }
 .student-avatar-placeholder {
     width: 40px; height: 40px;
@@ -179,11 +174,7 @@
                             <th width="80">Action</th>
                         </tr>
                     </thead>
-                    <tbody id="tableBody">
-                        <tr class="text-center">
-                            <td colspan="9" class="py-5 text-muted">Select class, term, and session to view data</td>
-                        </tr>
-                    </tbody>
+                    <tbody></tbody>
                 </table>
             </div>
         </div>
@@ -264,7 +255,7 @@ var analysisTable;
 var currentFilters = {};
 
 $(document).ready(function() {
-    // Initialize DataTable with EXACTLY 9 columns matching the header
+    // Initialize empty DataTable
     analysisTable = $('#analysisTable').DataTable({
         columns: [
             { data: 'DT_RowIndex', orderable: false, searchable: false, width: '50px' },
@@ -279,7 +270,7 @@ $(document).ready(function() {
         ],
         pageLength: 25,
         language: {
-            emptyTable: '<div class="text-center py-5 text-muted">No data available</div>',
+            emptyTable: '<div class="text-center py-5 text-muted">No data available. Please select filters and click Load Report.</div>',
             processing: '<div class="text-center py-4"><div class="spinner-border text-primary"></div><p>Loading...</p></div>'
         }
     });
@@ -294,7 +285,12 @@ $(document).ready(function() {
             return;
         }
 
-        currentFilters = { class_id: classId, term_id: termId, session_id: sessionId };
+        currentFilters = {
+            class_id: classId,
+            term_id: termId,
+            session_id: sessionId
+        };
+
         loadReportData();
     });
 
@@ -302,20 +298,25 @@ $(document).ready(function() {
         $('#class_id, #term_id, #session_id').val('');
         $('#statsRow, #tableCard').hide();
         analysisTable.clear().draw();
-        $('#tableBody').html('<tr class="text-center"><td colspan="9" class="py-5 text-muted">Select class, term, and session to view data</td></tr>');
     });
 });
 
 function loadReportData() {
+    // Show loading
     analysisTable.clear().draw();
     $('#statsRow, #tableCard').hide();
 
     $.ajax({
-        url: '{{ route("reports.analysis.class-data") }}',
+        url: '{{ route("reports.analysis.class") }}',
         type: 'GET',
         data: currentFilters,
-        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        dataType: 'json',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
         success: function(response) {
+            console.log('Response:', response);
+
             if (response.data && response.data.length > 0) {
                 var dataWithIndex = [];
                 for (var i = 0; i < response.data.length; i++) {
@@ -337,15 +338,34 @@ function loadReportData() {
                 analysisTable.draw();
                 updateStats(response.data);
                 $('#statsRow, #tableCard').show();
-            } else {
+            } else if (response.data && response.data.length === 0) {
                 analysisTable.clear().draw();
                 Swal.fire('Info', 'No data found for the selected filters', 'info');
                 $('#statsRow, #tableCard').show();
+            } else {
+                analysisTable.clear().draw();
+                Swal.fire('Error', 'Invalid response format', 'error');
             }
         },
-        error: function(xhr) {
-            console.error('AJAX Error:', xhr.responseText);
-            Swal.fire('Error', 'Failed to load data. Please try again.', 'error');
+        error: function(xhr, status, error) {
+            console.error('AJAX Error:', {
+                status: status,
+                error: error,
+                responseText: xhr.responseText,
+                statusCode: xhr.status
+            });
+
+            var errorMsg = 'Failed to load data. ';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMsg += xhr.responseJSON.message;
+            } else if (xhr.status === 422) {
+                errorMsg += 'Please check your filters.';
+            } else if (xhr.status === 500) {
+                errorMsg += 'Server error. Please check the logs.';
+            } else {
+                errorMsg += 'Please try again.';
+            }
+            Swal.fire('Error', errorMsg, 'error');
             analysisTable.clear().draw();
         }
     });
@@ -367,11 +387,18 @@ function renderAvatar(item) {
 function updateStats(data) {
     var totalBilled = 0;
     var totalPaid = 0;
+    var fullyPaid = 0;
+    var partial = 0;
 
     for (var i = 0; i < data.length; i++) {
         var item = data[i];
         totalBilled += parseFloat(item.total_billed) || 0;
         totalPaid += parseFloat(item.total_paid) || 0;
+        if (parseFloat(item.outstanding) <= 0 && parseFloat(item.total_paid) > 0) {
+            fullyPaid++;
+        } else if (parseFloat(item.total_paid) > 0) {
+            partial++;
+        }
     }
 
     var rate = totalBilled > 0 ? ((totalPaid / totalBilled) * 100).toFixed(1) : 0;
