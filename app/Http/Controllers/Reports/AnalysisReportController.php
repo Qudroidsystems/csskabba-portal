@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Reports;
 
 use App\Http\Controllers\Controller;
 use App\Services\Analysis\SchoolAnalysisService;
+use App\Models\SchoolInformation;
 use Illuminate\Http\Request;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
@@ -16,25 +17,198 @@ class AnalysisReportController extends Controller
     public function __construct(SchoolAnalysisService $analysisService)
     {
         $this->analysisService = $analysisService;
-        // $this->middleware('permission:View analysis reports');
-        // $this->middleware('permission:Export analysis reports', ['only' => ['exportClassAnalysis', 'exportSchoolWideAnalysis']]);
 
+        // Apply permissions
+        $this->middleware('permission:View analysis reports', ['only' => [
+            'index',
+            'analysisClassTermSession',
+            'getClassAnalysisData',
+            'studentPaymentDetails',
+            'schoolWideAnalysis',
+            'scholarshipImpactAnalysis'
+        ]]);
+
+        $this->middleware('permission:Export analysis reports', ['only' => [
+            'exportClassAnalysis',
+            'exportSchoolWideAnalysis',
+            'exportPDF'
+        ]]);
     }
 
     /**
-     * Class Analysis Report
+     * Display the analysis index page with filters
      */
-    public function classAnalysis(Request $request)
+    public function index()
     {
-        $pagetitle = 'Class Financial Analysis';
+        $pagetitle = 'School Bill Analysis';
 
-        if (!$request->ajax()) {
-            $classes = $this->analysisService->getAllClasses();
-            $terms = $this->analysisService->getAllTerms();
-            $sessions = $this->analysisService->getAllSessions();
-            return view('reports.analysis.class-analysis', compact('pagetitle', 'classes', 'terms', 'sessions'));
+        $classes = DB::table('schoolclass')
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->select('schoolclass.id as id', 'schoolclass.schoolclass as schoolclass', 'schoolarm.arm as schoolarm')
+            ->orderBy('schoolclass')
+            ->get();
+
+        $terms = DB::table('schoolterm')->orderBy('id')->get();
+        $sessions = DB::table('schoolsession')->orderBy('session', 'desc')->get();
+
+        return view('reports.analysis.index', compact('pagetitle', 'classes', 'terms', 'sessions'));
+    }
+
+    /**
+     * Display analysis for a specific class, term, and session
+     */
+    public function analysisClassTermSession(Request $request)
+    {
+        $pagetitle = 'School Bill Analysis';
+
+        $request->validate([
+            'class_id' => 'required|exists:schoolclass,id',
+            'termid_id' => 'required|exists:schoolterm,id',
+            'session_id' => 'required|exists:schoolsession,id',
+        ]);
+
+        // Get school information
+        $schoolInfo = SchoolInformation::getActiveSchool();
+
+        // Fetch students
+        $students = DB::table('studentclass')
+            ->where('schoolclassid', $request->class_id)
+            ->where('termid', $request->termid_id)
+            ->where('sessionid', $request->session_id)
+            ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
+            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+            ->select([
+                'studentRegistration.admissionNo as admissionno',
+                'studentRegistration.firstname as firstname',
+                'studentRegistration.lastname as lastname',
+                'studentRegistration.id as stid',
+                'studentRegistration.othername as othername',
+                'studentRegistration.gender as gender',
+                'studentpicture.picture as picture'
+            ])
+            ->get();
+
+        if ($students->isEmpty()) {
+            return redirect()->back()->with('error', 'No students found for the selected class, term, and session.');
         }
 
+        // Fetch bill information
+        $studentBillInfo = DB::table('school_bill_class_term_session')
+            ->where('school_bill_class_term_session.class_id', $request->class_id)
+            ->where('school_bill_class_term_session.termid_id', $request->termid_id)
+            ->where('school_bill_class_term_session.session_id', $request->session_id)
+            ->leftJoin('school_bill', 'school_bill.id', '=', 'school_bill_class_term_session.bill_id')
+            ->select([
+                'school_bill_class_term_session.id as id',
+                'school_bill.id as schoolbillid',
+                'school_bill.title as title',
+                'school_bill_class_term_session.class_id as class_id',
+                'school_bill_class_term_session.termid_id as term_id',
+                'school_bill_class_term_session.session_id as session_id',
+                'school_bill.description as description',
+                'school_bill.bill_amount as amount'
+            ])
+            ->get();
+
+        // Fetch payment records
+        $studentPayments = DB::table('student_bill_payment')
+            ->where('student_bill_payment.class_id', $request->class_id)
+            ->where('student_bill_payment.termid_id', $request->termid_id)
+            ->where('student_bill_payment.session_id', $request->session_id)
+            ->leftJoin('student_bill_payment_record', 'student_bill_payment_record.student_bill_payment_id', '=', 'student_bill_payment.id')
+            ->leftJoin('school_bill', 'school_bill.id', '=', 'student_bill_payment.school_bill_id')
+            ->leftJoin('users', 'users.id', '=', 'student_bill_payment.generated_by')
+            ->select([
+                'student_bill_payment.id as paymentid',
+                'student_bill_payment.student_id as stid',
+                'student_bill_payment.school_bill_id as schoolbillid',
+                'student_bill_payment.status as paymentStatus',
+                'student_bill_payment.payment_method as paymentMethod',
+                'users.name as receivedBy',
+                'student_bill_payment.created_at as receivedDate',
+                'school_bill.title as title',
+                'school_bill.description as description',
+                'school_bill.bill_amount as billAmount',
+                'student_bill_payment_record.amount_paid as totalAmountPaid',
+                'student_bill_payment_record.last_payment as lastPayment',
+                'student_bill_payment_record.amount_owed as balance'
+            ])
+            ->get();
+
+        // Fetch payment book records
+        $studentPaymentBook = DB::table('student_bill_payment_book')
+            ->where('student_bill_payment_book.class_id', $request->class_id)
+            ->where('student_bill_payment_book.term_id', $request->termid_id)
+            ->where('student_bill_payment_book.session_id', $request->session_id)
+            ->get();
+
+        // Fetch class, term, and session details
+        $schoolClass = DB::table('schoolclass')
+            ->where('schoolclass.id', $request->class_id)
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->select('schoolclass.id', 'schoolclass.schoolclass as schoolclass', 'schoolarm.arm as schoolarm')
+            ->get();
+
+        $schoolTerm = DB::table('schoolterm')
+            ->where('id', $request->termid_id)
+            ->select('id', 'schoolterm.term as schoolterm')
+            ->get();
+
+        $schoolSession = DB::table('schoolsession')
+            ->where('id', $request->session_id)
+            ->select('id', 'schoolsession.session as schoolsession')
+            ->get();
+
+        // Calculate student totals
+        $studentTotals = [];
+        foreach ($students as $student) {
+            $totalBilled = 0;
+            $totalPaid = 0;
+            $totalBalance = 0;
+
+            foreach ($studentBillInfo as $bill) {
+                $totalBilled += $bill->amount ?? 0;
+
+                $payment = $studentPayments
+                    ->where('stid', $student->stid)
+                    ->where('schoolbillid', $bill->schoolbillid)
+                    ->first();
+
+                if ($payment) {
+                    $totalPaid += $payment->totalAmountPaid ?? 0;
+                    $totalBalance += $payment->balance ?? 0;
+                } else {
+                    $totalBalance += $bill->amount ?? 0;
+                }
+            }
+
+            $studentTotals[$student->stid] = [
+                'totalBilled' => $totalBilled,
+                'totalPaid' => $totalPaid,
+                'totalBalance' => $totalBalance,
+                'status' => $totalPaid > 0 ? ($totalBalance > 0 ? 'partial' : 'paid') : 'unpaid'
+            ];
+        }
+
+        return view('reports.analysis.class-analysis-details', compact(
+            'pagetitle',
+            'students',
+            'studentBillInfo',
+            'studentPayments',
+            'studentPaymentBook',
+            'schoolClass',
+            'schoolTerm',
+            'schoolSession',
+            'schoolInfo',
+            'studentTotals'
+        ));
+    }
+
+    /**
+     * Get class analysis data for AJAX DataTable
+     */
+    public function getClassAnalysisData(Request $request)
+    {
         try {
             $classId = $request->input('class_id');
             $termId = $request->input('term_id');
@@ -117,7 +291,142 @@ class AnalysisReportController extends Controller
     }
 
     /**
-     * Export Class Analysis
+     * Export Class Analysis as PDF
+     */
+    public function exportPDF($class_id, $termid_id, $session_id, $action = 'view')
+    {
+        // Validate parameters using validator helper
+        $validator = validator(
+            ['class_id' => $class_id, 'termid_id' => $termid_id, 'session_id' => $session_id],
+            ['class_id' => 'required|exists:schoolclass,id', 'termid_id' => 'required|exists:schoolterm,id', 'session_id' => 'required|exists:schoolsession,id']
+        );
+
+        if ($validator->fails()) {
+            return redirect()->route('reports.analysis.index')->withErrors($validator);
+        }
+
+        // Get school information
+        $schoolInfo = SchoolInformation::getActiveSchool();
+
+        // Fetch students
+        $students = DB::table('studentclass')
+            ->where('schoolclassid', $class_id)
+            ->where('termid', $termid_id)
+            ->where('sessionid', $session_id)
+            ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
+            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
+            ->select([
+                'studentRegistration.admissionNo as admissionno',
+                'studentRegistration.firstname as firstname',
+                'studentRegistration.lastname as lastname',
+                'studentRegistration.id as stid',
+                'studentRegistration.othername as othername',
+                'studentRegistration.gender as gender',
+                'studentpicture.picture as picture'
+            ])
+            ->get();
+
+        if ($students->isEmpty()) {
+            return redirect()->route('reports.analysis.index')->with('error', 'No students found.');
+        }
+
+        // Fetch bill information
+        $studentBillInfo = DB::table('school_bill_class_term_session')
+            ->where('school_bill_class_term_session.class_id', $class_id)
+            ->where('school_bill_class_term_session.termid_id', $termid_id)
+            ->where('school_bill_class_term_session.session_id', $session_id)
+            ->leftJoin('school_bill', 'school_bill.id', '=', 'school_bill_class_term_session.bill_id')
+            ->select([
+                'school_bill.id as schoolbillid',
+                'school_bill.title as title',
+                'school_bill.description as description',
+                'school_bill.bill_amount as amount'
+            ])
+            ->get();
+
+        // Fetch payment records
+        $studentPayments = DB::table('student_bill_payment')
+            ->where('student_bill_payment.class_id', $class_id)
+            ->where('student_bill_payment.termid_id', $termid_id)
+            ->where('student_bill_payment.session_id', $session_id)
+            ->leftJoin('student_bill_payment_record', 'student_bill_payment_record.student_bill_payment_id', '=', 'student_bill_payment.id')
+            ->leftJoin('school_bill', 'school_bill.id', '=', 'student_bill_payment.school_bill_id')
+            ->select([
+                'student_bill_payment.student_id as stid',
+                'student_bill_payment.school_bill_id as schoolbillid',
+                'student_bill_payment_record.amount_paid as totalAmountPaid',
+                'student_bill_payment_record.amount_owed as balance'
+            ])
+            ->get();
+
+        // Fetch class, term, and session details
+        $schoolClass = DB::table('schoolclass')
+            ->where('schoolclass.id', $class_id)
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->select('schoolclass.schoolclass as schoolclass', 'schoolarm.arm as schoolarm')
+            ->first();
+
+        $schoolTerm = DB::table('schoolterm')->where('id', $termid_id)->value('term');
+        $schoolSession = DB::table('schoolsession')->where('id', $session_id)->value('session');
+
+        // Calculate student totals
+        $studentTotals = [];
+        foreach ($students as $student) {
+            $totalPaid = 0;
+            $totalBalance = 0;
+
+            foreach ($studentBillInfo as $bill) {
+                $payment = $studentPayments
+                    ->where('stid', $student->stid)
+                    ->where('schoolbillid', $bill->schoolbillid)
+                    ->first();
+
+                if ($payment) {
+                    $totalPaid += $payment->totalAmountPaid ?? 0;
+                    $totalBalance += $payment->balance ?? 0;
+                } else {
+                    $totalBalance += $bill->amount ?? 0;
+                }
+            }
+
+            $totalBilled = $studentBillInfo->sum('amount');
+            $studentTotals[$student->stid] = [
+                'totalBilled' => $totalBilled,
+                'totalPaid' => $totalPaid,
+                'totalBalance' => $totalBalance,
+                'status' => $totalPaid > 0 ? ($totalBalance > 0 ? 'partial' : 'paid') : 'unpaid'
+            ];
+        }
+
+        $data = [
+            'schoolInfo' => $schoolInfo,
+            'students' => $students,
+            'studentBillInfo' => $studentBillInfo,
+            'studentPayments' => $studentPayments,
+            'studentTotals' => $studentTotals,
+            'schoolClass' => $schoolClass,
+            'schoolTerm' => $schoolTerm,
+            'schoolSession' => $schoolSession,
+            'totalBillsAmount' => $studentBillInfo->sum('amount'),
+        ];
+
+        $pdf = PDF::loadView('reports.analysis.pdf.class-analysis', $data);
+        $pdf->setPaper('a3', 'landscape');
+
+        $className = str_replace(['/', '\\'], '_', ($schoolClass->schoolclass ?? '') . ' ' . ($schoolClass->schoolarm ?? ''));
+        $termName = str_replace(['/', '\\'], '_', $schoolTerm);
+        $sessionName = str_replace(['/', '\\'], '_', $schoolSession);
+
+        $filename = "Payment_Analysis_{$className}_{$termName}_{$sessionName}.pdf";
+
+        if ($action === 'download') {
+            return $pdf->download($filename);
+        }
+        return $pdf->stream($filename);
+    }
+
+    /**
+     * Export Class Analysis (simple format)
      */
     public function exportClassAnalysis(Request $request)
     {
@@ -130,34 +439,31 @@ class AnalysisReportController extends Controller
             return redirect()->back()->with('error', 'Please select class, term, and session');
         }
 
-        // Get class name
+        if ($format === 'pdf') {
+            return $this->exportPDF($classId, $termId, $sessionId, 'download');
+        }
+
+        // CSV Export
         $classInfo = DB::table('schoolclass')
             ->leftJoin('schoolarm', 'schoolclass.arm', '=', 'schoolarm.id')
             ->where('schoolclass.id', $classId)
-            ->select(DB::raw("CONCAT(schoolclass.schoolclass, ' ', COALESCE(schoolarm.arm, '')) as class_name"))
             ->first();
-        $className = $classInfo->class_name ?? 'N/A';
+        $className = ($classInfo->schoolclass ?? '') . ' ' . ($classInfo->arm ?? '');
+        $termName = DB::table('schoolterm')->where('id', $termId)->value('term');
+        $sessionName = DB::table('schoolsession')->where('id', $sessionId)->value('session');
 
-        // Get students
-        $students = DB::table('studentRegistration as s')
-            ->join('studentclass as sc', 'sc.studentId', '=', 's.id')
-            ->leftJoin('studentpicture as sp', 'sp.studentid', '=', 's.id')
-            ->where('sc.schoolclassid', $classId)
-            ->where('sc.termid', $termId)
-            ->where('sc.sessionid', $sessionId)
-            ->select('s.id as student_id', 's.firstname', 's.lastname', 's.othername', 's.admissionNo', 'sp.picture as avatar')
+        $students = DB::table('studentclass')
+            ->where('schoolclassid', $classId)
+            ->where('termid', $termId)
+            ->where('sessionid', $sessionId)
+            ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
+            ->select('studentRegistration.admissionNo', 'studentRegistration.firstname', 'studentRegistration.lastname', 'studentRegistration.othername', 'studentRegistration.id as stid')
             ->get();
 
         $reportData = [];
-        $totalBilledAll = 0;
-        $totalPaidAll = 0;
-        $totalOutstandingAll = 0;
-        $fullyPaidCount = 0;
-        $partialCount = 0;
-
         foreach ($students as $student) {
             $paymentBook = DB::table('student_bill_payment_book')
-                ->where('student_id', $student->student_id)
+                ->where('student_id', $student->stid)
                 ->where('class_id', $classId)
                 ->where('term_id', $termId)
                 ->where('session_id', $sessionId)
@@ -187,57 +493,9 @@ class AnalysisReportController extends Controller
                 'total_paid' => $totalPaid,
                 'outstanding' => $outstanding,
             ];
-
-            $totalBilledAll += $adjustedBilled;
-            $totalPaidAll += $totalPaid;
-            $totalOutstandingAll += $outstanding;
-
-            if ($outstanding <= 0 && $totalPaid > 0) {
-                $fullyPaidCount++;
-            } elseif ($totalPaid > 0) {
-                $partialCount++;
-            }
         }
 
-        $termName = DB::table('schoolterm')->where('id', $termId)->value('term') ?? 'N/A';
-        $sessionName = DB::table('schoolsession')->where('id', $sessionId)->value('session') ?? 'N/A';
-        $collectionRate = $totalBilledAll > 0 ? round(($totalPaidAll / $totalBilledAll) * 100, 1) : 0;
-
-        $data = [
-            'reportData' => $reportData,
-            'className' => $className,
-            'termName' => $termName,
-            'sessionName' => $sessionName,
-            'totalBilled' => $totalBilledAll,
-            'totalPaid' => $totalPaidAll,
-            'totalOutstanding' => $totalOutstandingAll,
-            'totalStudents' => count($reportData),
-            'fullyPaidCount' => $fullyPaidCount,
-            'partialCount' => $partialCount,
-            'collectionRate' => $collectionRate,
-            'generatedAt' => now()->format('d F, Y H:i:s'),
-        ];
-
-        // Sanitize filename
-        $safeClassName = $this->sanitizeFilename($className);
-        $safeTermName = $this->sanitizeFilename($termName);
-        $safeSessionName = $this->sanitizeFilename($sessionName);
-
-        if ($format === 'pdf') {
-            $pdf = Pdf::loadView('reports.analysis.pdf.class-analysis', $data);
-            $filename = "class_analysis_{$safeClassName}_{$safeTermName}_{$safeSessionName}.pdf";
-            if (strlen($filename) > 200 || $filename == "class_analysis___.pdf") {
-                $filename = "class_analysis_" . date('Y-m-d_H-i-s') . ".pdf";
-            }
-            return $pdf->download($filename);
-        }
-
-        // CSV Export
-        $filename = "class_analysis_{$safeClassName}_{$safeTermName}_{$safeSessionName}.csv";
-        if (strlen($filename) > 200 || $filename == "class_analysis___.csv") {
-            $filename = "class_analysis_" . date('Y-m-d_H-i-s') . ".csv";
-        }
-
+        $filename = "class_analysis_" . str_replace(['/', '\\'], '_', $className) . "_" . date('Y-m-d') . ".csv";
         $handle = fopen('php://output', 'w');
         header('Content-Type: text/csv');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
@@ -252,21 +510,6 @@ class AnalysisReportController extends Controller
                 number_format($row['outstanding'], 2),
             ]);
         }
-
-        fputcsv($handle, []);
-        fputcsv($handle, ['SUMMARY']);
-        fputcsv($handle, ['Class:', $className]);
-        fputcsv($handle, ['Term:', $termName]);
-        fputcsv($handle, ['Session:', $sessionName]);
-        fputcsv($handle, ['Total Students:', $data['totalStudents']]);
-        fputcsv($handle, ['Total Billed:', '₦' . number_format($totalBilledAll, 2)]);
-        fputcsv($handle, ['Total Paid:', '₦' . number_format($totalPaidAll, 2)]);
-        fputcsv($handle, ['Total Outstanding:', '₦' . number_format($totalOutstandingAll, 2)]);
-        fputcsv($handle, ['Collection Rate:', $collectionRate . '%']);
-        fputcsv($handle, ['Fully Paid Students:', $fullyPaidCount]);
-        fputcsv($handle, ['Partial Payment Students:', $partialCount]);
-        fputcsv($handle, ['Generated:', $data['generatedAt']]);
-
         fclose($handle);
         exit;
     }
@@ -298,40 +541,24 @@ class AnalysisReportController extends Controller
     {
         $termId = $request->input('term_id');
         $sessionId = $request->input('session_id');
-        $format = $request->input('format', 'pdf');
+        $schoolInfo = SchoolInformation::getActiveSchool();
 
         $analysis = $this->analysisService->getSchoolFinancialSummary($sessionId, $termId);
+        $termName = DB::table('schoolterm')->where('id', $termId)->value('term') ?? 'All Terms';
+        $sessionName = DB::table('schoolsession')->where('id', $sessionId)->value('session') ?? 'All Sessions';
 
-        if ($format === 'excel' || $format === 'csv') {
-            $filename = "school_wide_analysis_" . date('Y-m-d_H-i-s') . ".csv";
-            $handle = fopen('php://output', 'w');
-            header('Content-Type: text/csv');
-            header('Content-Disposition: attachment; filename="' . $filename . '"');
+        $data = [
+            'schoolInfo' => $schoolInfo,
+            'analysis' => $analysis,
+            'termName' => $termName,
+            'sessionName' => $sessionName,
+            'generatedAt' => now()->format('d F, Y H:i:s'),
+        ];
 
-            fputcsv($handle, ['School Wide Financial Summary']);
-            fputcsv($handle, ['Total Revenue:', '₦' . number_format($analysis['total_revenue'] ?? 0, 2)]);
-            fputcsv($handle, ['Total Collected:', '₦' . number_format($analysis['total_collected'] ?? 0, 2)]);
-            fputcsv($handle, ['Total Outstanding:', '₦' . number_format($analysis['total_outstanding'] ?? 0, 2)]);
-            fputcsv($handle, ['Collection Rate:', ($analysis['collection_rate'] ?? 0) . '%']);
-            fputcsv($handle, []);
-            fputcsv($handle, ['Class Performance']);
-            fputcsv($handle, ['Class', 'Students', 'Total Billed', 'Total Collected', 'Collection Rate']);
+        $pdf = PDF::loadView('reports.analysis.pdf.school-wide-analysis', $data);
+        $pdf->setPaper('a3', 'landscape');
 
-            foreach ($analysis['class_performance'] ?? [] as $class) {
-                fputcsv($handle, [
-                    $class->class_name,
-                    $class->student_count,
-                    number_format($class->total_billed, 2),
-                    number_format($class->total_collected, 2),
-                    $class->collection_rate . '%'
-                ]);
-            }
-            fclose($handle);
-            exit;
-        }
-
-        $pdf = Pdf::loadView('reports.analysis.pdf.school-wide-analysis', compact('analysis'));
-        $filename = "school_wide_analysis_" . date('Y-m-d_H-i-s') . ".pdf";
+        $filename = "School_Wide_Payment_Analysis_" . str_replace(['/', '\\'], '_', $termName) . "_" . str_replace(['/', '\\'], '_', $sessionName) . ".pdf";
         return $pdf->download($filename);
     }
 
@@ -361,8 +588,8 @@ class AnalysisReportController extends Controller
     public function studentPaymentDetails($studentId, $classId, $termId, $sessionId)
     {
         $pagetitle = 'Student Payment Details';
+        $schoolInfo = SchoolInformation::getActiveSchool();
 
-        // Get student details
         $student = DB::table('studentRegistration as s')
             ->leftJoin('studentpicture as sp', 'sp.studentid', '=', 's.id')
             ->where('s.id', $studentId)
@@ -373,24 +600,19 @@ class AnalysisReportController extends Controller
             abort(404, 'Student not found');
         }
 
-        // Build student name
         $studentName = trim($student->firstname . ' ' . $student->lastname);
         if (!empty($student->othername)) {
             $studentName .= ' (' . $student->othername . ')';
         }
 
-        // Get class name
         $classInfo = DB::table('schoolclass')
             ->leftJoin('schoolarm', 'schoolclass.arm', '=', 'schoolarm.id')
             ->where('schoolclass.id', $classId)
-            ->select(DB::raw("CONCAT(schoolclass.schoolclass, ' ', COALESCE(schoolarm.arm, '')) as class_name"))
             ->first();
 
-        // Get term and session names
         $termInfo = DB::table('schoolterm')->where('id', $termId)->first();
         $sessionInfo = DB::table('schoolsession')->where('id', $sessionId)->first();
 
-        // Get payment book
         $paymentBook = DB::table('student_bill_payment_book')
             ->where('student_id', $studentId)
             ->where('class_id', $classId)
@@ -398,7 +620,6 @@ class AnalysisReportController extends Controller
             ->where('session_id', $sessionId)
             ->first();
 
-        // Get bills
         $bills = DB::table('school_bill_class_term_session as sbcts')
             ->where('sbcts.class_id', $classId)
             ->where('sbcts.termid_id', $termId)
@@ -407,7 +628,6 @@ class AnalysisReportController extends Controller
             ->select('sb.*')
             ->get();
 
-        // Get payment records
         $paymentRecords = DB::table('student_bill_payment as sbp')
             ->join('student_bill_payment_record as sbpr', 'sbpr.student_bill_payment_id', '=', 'sbp.id')
             ->leftJoin('users as u', 'u.id', '=', 'sbp.generated_by')
@@ -428,6 +648,7 @@ class AnalysisReportController extends Controller
 
         return view('reports.analysis.student-payment-details', compact(
             'pagetitle',
+            'schoolInfo',
             'student',
             'studentName',
             'classInfo',
@@ -441,19 +662,5 @@ class AnalysisReportController extends Controller
             'termId',
             'sessionId'
         ));
-    }
-
-    /**
-     * Sanitize filename - remove invalid characters
-     */
-    private function sanitizeFilename($filename)
-    {
-        if (empty($filename)) {
-            return 'report';
-        }
-        $filename = preg_replace('/[\/\\\\:*?"<>|]/', '-', $filename);
-        $filename = preg_replace('/-+/', '-', $filename);
-        $filename = trim($filename, '-');
-        return substr($filename, 0, 100);
     }
 }
