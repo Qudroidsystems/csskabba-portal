@@ -36,24 +36,13 @@ class AnalysisReportController extends Controller
         // ]]);
     }
 
+
+
     /**
-     * Display the analysis index page with filters
-     */
-   /**
  * Display the analysis index page with filters
  */
-public function index(Request $request)
+public function index()
 {
-    // If this is an AJAX request, return JSON data
-    if ($request->ajax()) {
-        return response()->json([
-            'data' => [],
-            'recordsTotal' => 0,
-            'recordsFiltered' => 0
-        ]);
-    }
-
-    // Otherwise, return the view
     $pagetitle = 'School Bill Analysis';
 
     $classes = DB::table('schoolclass')
@@ -67,6 +56,8 @@ public function index(Request $request)
 
     return view('reports.analysis.index', compact('pagetitle', 'classes', 'terms', 'sessions'));
 }
+
+
 
     /**
      * Class Analysis Report - Main AJAX endpoint for DataTable
