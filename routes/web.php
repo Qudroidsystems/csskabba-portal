@@ -917,10 +917,10 @@ Route::prefix('reports/analysis')->name('reports.analysis.')->group(function () 
     Route::get('/schoolpayment/statement/{studentId}/{schoolclassid}/{termid}/{sessionid}', [SchoolPaymentController::class, 'statement'])->name('schoolpayment.statement');
 
       //analysis...
-    Route::resource('analysis', AnalysisController::class);
-    Route::post('analysisClassTermSession', [AnalysisController::class, 'analysisClassTermSession'])->name('analysis.analysisClassTermSession');
-    Route::get('analysis/export-pdf/{class_id}/{termid_id}/{session_id}', 'App\Http\Controllers\AnalysisController@exportPDF')->name('analysis.exportPDF');
-    Route::get('/analysis/pdf/{class_id}/{termid_id}/{session_id}/{action?}', [AnalysisController::class, 'exportPDF'])->name('analysis.viewPDF')->where('action', 'view|download');
+    // Route::resource('analysis', AnalysisController::class);
+    // Route::post('analysisClassTermSession', [AnalysisController::class, 'analysisClassTermSession'])->name('analysis.analysisClassTermSession');
+    // Route::get('analysis/export-pdf/{class_id}/{termid_id}/{session_id}', 'App\Http\Controllers\AnalysisController@exportPDF')->name('analysis.exportPDF');
+    // Route::get('/analysis/pdf/{class_id}/{termid_id}/{session_id}/{action?}', [AnalysisController::class, 'exportPDF'])->name('analysis.viewPDF')->where('action', 'view|download');
 
 
     // School-wide payment analysis routes
