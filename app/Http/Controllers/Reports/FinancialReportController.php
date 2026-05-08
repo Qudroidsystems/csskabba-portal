@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Reports;
 use App\Http\Controllers\Controller;
 use App\Services\Reporting\FinancialReportService;
 use App\Services\Accounting\AccountingService;
+use App\Models\SchoolInformation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -22,12 +23,25 @@ class FinancialReportController extends Controller
     ) {
         $this->financialService = $financialService;
         $this->accountingService = $accountingService;
-        $this->middleware('permission:View financial reports');
-        $this->middleware('permission:Export financial reports', ['only' => ['export']]);
+
+        // Apply permissions
+        $this->middleware('permission:View financial reports', ['only' => [
+            'debtorsList',
+            'balanceSheet',
+            'incomeStatement',
+            'trialBalance',
+            'cashFlow',
+            'collectionSummary',
+            'scholarshipImpact'
+        ]]);
+
+        $this->middleware('permission:Export financial reports', ['only' => [
+            'export'
+        ]]);
     }
 
     /**
-     * MAIN EXPORT METHOD
+     * MAIN EXPORT METHOD - handles all report exports
      */
     public function export($report, $format, Request $request)
     {
@@ -48,11 +62,12 @@ class FinancialReportController extends Controller
     }
 
     /**
-     * Debtors List Report
+     * Debtors List Report with DataTable AJAX
      */
     public function debtorsList(Request $request)
     {
         $pagetitle = 'Student Debtors List';
+        $schoolInfo = SchoolInformation::getActiveSchool();
 
         if ($request->ajax()) {
             $query = DB::table('student_bill_payment_book as sbpb')
@@ -80,6 +95,7 @@ class FinancialReportController extends Controller
                     'sbpb.session_id'
                 );
 
+            // Apply filters
             if ($request->filled('class_id')) {
                 $query->where('sbpb.class_id', $request->class_id);
             }
@@ -102,6 +118,8 @@ class FinancialReportController extends Controller
             }
 
             $debtors = $query->orderBy('sbpb.amount_owed', 'desc')->get();
+
+            // Add collection rate
             foreach ($debtors as $debtor) {
                 $total = $debtor->original_amount;
                 $paid = $debtor->amount_paid;
@@ -119,7 +137,7 @@ class FinancialReportController extends Controller
                     return '<div class="student-avatar-placeholder" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #2563eb, #4f46e5); color: white; display: flex; align-items: center; justify-content: center; font-weight: 600; cursor: pointer;">' . $initials . '</div>';
                 })
                 ->addColumn('action', function($row) {
-                    return '<a href="' . route('reports.analysis.class-student-details', [
+                    return '<a href="' . route('reports.analysis.student-details', [
                         'studentId' => $row->student_id,
                         'classId' => $row->class_id,
                         'termId' => $row->term_id,
@@ -140,57 +158,116 @@ class FinancialReportController extends Controller
         $terms = DB::table('schoolterm')->orderBy('id')->get();
         $sessions = DB::table('schoolsession')->orderBy('session', 'desc')->get();
 
-        return view('reports.financial.debtors-list', compact('pagetitle', 'classes', 'terms', 'sessions'));
+        return view('reports.financial.debtors-list', compact('pagetitle', 'classes', 'terms', 'sessions', 'schoolInfo'));
     }
 
     /**
-     * Balance Sheet
+     * Balance Sheet Report
      */
     public function balanceSheet(Request $request)
     {
-        $asAtDate = $request->get('as_at_date', now()->format('Y-m-d'));
         $pagetitle = 'Balance Sheet';
-        return view('reports.financial.balance-sheet', compact('pagetitle', 'asAtDate'));
+        $asAtDate = $request->get('as_at_date', now()->format('Y-m-d'));
+        $schoolInfo = SchoolInformation::getActiveSchool();
+
+        if ($request->ajax()) {
+            $data = $this->financialService->generateBalanceSheet($asAtDate);
+            return response()->json(['success' => true, 'data' => $data]);
+        }
+
+        if ($request->get('format') === 'pdf') {
+            $data = $this->financialService->generateBalanceSheet($asAtDate);
+            $pdf = PDF::loadView('reports.financial.pdf.balance-sheet', compact('data', 'asAtDate', 'schoolInfo'));
+            $pdf->setPaper('a4', 'portrait');
+            return $pdf->download("balance_sheet_{$asAtDate}.pdf");
+        }
+
+        return view('reports.financial.balance-sheet', compact('pagetitle', 'asAtDate', 'schoolInfo'));
     }
 
     /**
-     * Income Statement
+     * Income Statement Report
      */
     public function incomeStatement(Request $request)
     {
+        $pagetitle = 'Income Statement';
         $startDate = $request->get('start_date', now()->startOfMonth()->format('Y-m-d'));
         $endDate = $request->get('end_date', now()->format('Y-m-d'));
-        $pagetitle = 'Income Statement';
-        return view('reports.financial.income-statement', compact('pagetitle', 'startDate', 'endDate'));
+        $schoolInfo = SchoolInformation::getActiveSchool();
+
+        if ($request->ajax()) {
+            $data = $this->financialService->generateIncomeStatement($startDate, $endDate);
+            return response()->json(['success' => true, 'data' => $data]);
+        }
+
+        if ($request->get('format') === 'pdf') {
+            $data = $this->financialService->generateIncomeStatement($startDate, $endDate);
+            $pdf = PDF::loadView('reports.financial.pdf.income-statement', compact('data', 'startDate', 'endDate', 'schoolInfo'));
+            $pdf->setPaper('a4', 'portrait');
+            return $pdf->download("income_statement_{$startDate}_to_{$endDate}.pdf");
+        }
+
+        return view('reports.financial.income-statement', compact('pagetitle', 'startDate', 'endDate', 'schoolInfo'));
     }
 
     /**
-     * Trial Balance
+     * Trial Balance Report
      */
     public function trialBalance(Request $request)
     {
-        $asAtDate = $request->get('as_at_date', now()->format('Y-m-d'));
         $pagetitle = 'Trial Balance';
-        return view('reports.financial.trial-balance', compact('pagetitle', 'asAtDate'));
+        $asAtDate = $request->get('as_at_date', now()->format('Y-m-d'));
+        $schoolInfo = SchoolInformation::getActiveSchool();
+
+        if ($request->ajax()) {
+            $trialBalance = $this->accountingService->getTrialBalance($asAtDate);
+            $totalDebit = array_sum(array_column($trialBalance, 'debit'));
+            $totalCredit = array_sum(array_column($trialBalance, 'credit'));
+            return response()->json([
+                'success' => true,
+                'data' => compact('trialBalance', 'totalDebit', 'totalCredit')
+            ]);
+        }
+
+        if ($request->get('format') === 'excel') {
+            return $this->exportTrialBalanceExcel($asAtDate);
+        }
+
+        return view('reports.financial.trial-balance', compact('pagetitle', 'asAtDate', 'schoolInfo'));
     }
 
     /**
-     * Cash Flow
+     * Cash Flow Statement Report
      */
     public function cashFlow(Request $request)
     {
+        $pagetitle = 'Cash Flow Statement';
         $startDate = $request->get('start_date', now()->startOfMonth()->format('Y-m-d'));
         $endDate = $request->get('end_date', now()->format('Y-m-d'));
-        $pagetitle = 'Cash Flow Statement';
-        return view('reports.financial.cash-flow', compact('pagetitle', 'startDate', 'endDate'));
+        $schoolInfo = SchoolInformation::getActiveSchool();
+
+        if ($request->ajax()) {
+            $data = $this->financialService->generateCashFlow($startDate, $endDate);
+            return response()->json(['success' => true, 'data' => $data]);
+        }
+
+        if ($request->get('format') === 'pdf') {
+            $data = $this->financialService->generateCashFlow($startDate, $endDate);
+            $pdf = PDF::loadView('reports.financial.pdf.cash-flow', compact('data', 'startDate', 'endDate', 'schoolInfo'));
+            $pdf->setPaper('a4', 'portrait');
+            return $pdf->download("cash_flow_{$startDate}_to_{$endDate}.pdf");
+        }
+
+        return view('reports.financial.cash-flow', compact('pagetitle', 'startDate', 'endDate', 'schoolInfo'));
     }
 
     /**
-     * Collection Summary
+     * Collection Summary Report
      */
     public function collectionSummary(Request $request)
     {
         $pagetitle = 'School Fee Collection Summary';
+        $schoolInfo = SchoolInformation::getActiveSchool();
 
         if ($request->ajax()) {
             $query = DB::table('student_bill_payment_book')
@@ -249,15 +326,16 @@ class FinancialReportController extends Controller
         $terms = DB::table('schoolterm')->orderBy('id')->get();
         $sessions = DB::table('schoolsession')->orderBy('session', 'desc')->get();
 
-        return view('reports.financial.collection-summary', compact('pagetitle', 'classes', 'terms', 'sessions'));
+        return view('reports.financial.collection-summary', compact('pagetitle', 'classes', 'terms', 'sessions', 'schoolInfo'));
     }
 
     /**
-     * Scholarship Impact
+     * Scholarship Impact Report
      */
     public function scholarshipImpact(Request $request)
     {
         $pagetitle = 'Scholarship & Discount Impact Report';
+        $schoolInfo = SchoolInformation::getActiveSchool();
 
         if ($request->ajax()) {
             $scholarships = DB::table('scholarship_assignments as sa')
@@ -312,7 +390,7 @@ class FinancialReportController extends Controller
             ]);
         }
 
-        return view('reports.financial.scholarship-impact', compact('pagetitle'));
+        return view('reports.financial.scholarship-impact', compact('pagetitle', 'schoolInfo'));
     }
 
     // ============================================
@@ -328,6 +406,7 @@ class FinancialReportController extends Controller
         $termId = $request->get('term_id');
         $sessionId = $request->get('session_id');
         $minOutstanding = $request->get('min_outstanding');
+        $schoolInfo = SchoolInformation::getActiveSchool();
 
         $query = DB::table('student_bill_payment_book as sbpb')
             ->join('studentRegistration as s', 's.id', '=', 'sbpb.student_id')
@@ -350,18 +429,10 @@ class FinancialReportController extends Controller
                 DB::raw("(sbpb.scholarship_deduction + sbpb.discount_deduction) as savings")
             );
 
-        if ($classId) {
-            $query->where('sbpb.class_id', $classId);
-        }
-        if ($termId) {
-            $query->where('sbpb.term_id', $termId);
-        }
-        if ($sessionId) {
-            $query->where('sbpb.session_id', $sessionId);
-        }
-        if ($minOutstanding) {
-            $query->where('sbpb.amount_owed', '>=', $minOutstanding);
-        }
+        if ($classId) $query->where('sbpb.class_id', $classId);
+        if ($termId) $query->where('sbpb.term_id', $termId);
+        if ($sessionId) $query->where('sbpb.session_id', $sessionId);
+        if ($minOutstanding) $query->where('sbpb.amount_owed', '>=', $minOutstanding);
 
         $debtors = $query->orderBy('sbpb.amount_owed', 'desc')->get();
 
@@ -395,7 +466,9 @@ class FinancialReportController extends Controller
 
         // PDF export
         $fullFilename = $filename . ".pdf";
-        $pdf = Pdf::loadView('reports.financial.debtors-pdf', compact('debtors'));
+        $data = compact('debtors', 'schoolInfo');
+        $pdf = PDF::loadView('reports.financial.pdf.debtors', $data);
+        $pdf->setPaper('a3', 'landscape');
         return $pdf->download($fullFilename);
     }
 
@@ -404,16 +477,25 @@ class FinancialReportController extends Controller
      */
     private function exportBalanceSheet($format, Request $request)
     {
-        $filename = "balance_sheet_" . date('Y-m-d_H-i-s') . ".csv";
-        $handle = fopen('php://output', 'w');
-        header('Content-Type: text/csv');
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
-        fputcsv($handle, ['Balance Sheet Report']);
-        fputcsv($handle, ['Generated:', now()->format('Y-m-d H:i:s')]);
-        fputcsv($handle, []);
-        fputcsv($handle, ['Export coming soon - Please check back later']);
-        fclose($handle);
-        exit;
+        $asAtDate = $request->get('as_at_date', now()->format('Y-m-d'));
+        $schoolInfo = SchoolInformation::getActiveSchool();
+
+        if ($format === 'excel' || $format === 'csv') {
+            $filename = "balance_sheet_" . date('Y-m-d_H-i-s') . ".csv";
+            $handle = fopen('php://output', 'w');
+            header('Content-Type: text/csv');
+            header('Content-Disposition: attachment; filename="' . $filename . '"');
+            fputcsv($handle, ['Balance Sheet Report']);
+            fputcsv($handle, ['As at:', $asAtDate]);
+            fputcsv($handle, ['Generated:', now()->format('Y-m-d H:i:s')]);
+            fclose($handle);
+            exit;
+        }
+
+        $data = $this->financialService->generateBalanceSheet($asAtDate);
+        $pdf = PDF::loadView('reports.financial.pdf.balance-sheet', compact('data', 'asAtDate', 'schoolInfo'));
+        $pdf->setPaper('a4', 'portrait');
+        return $pdf->download("balance_sheet_{$asAtDate}.pdf");
     }
 
     /**
@@ -421,14 +503,26 @@ class FinancialReportController extends Controller
      */
     private function exportIncomeStatement($format, Request $request)
     {
-        $filename = "income_statement_" . date('Y-m-d_H-i-s') . ".csv";
-        $handle = fopen('php://output', 'w');
-        header('Content-Type: text/csv');
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
-        fputcsv($handle, ['Income Statement Report']);
-        fputcsv($handle, ['Generated:', now()->format('Y-m-d H:i:s')]);
-        fclose($handle);
-        exit;
+        $startDate = $request->get('start_date', now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->get('end_date', now()->format('Y-m-d'));
+        $schoolInfo = SchoolInformation::getActiveSchool();
+
+        if ($format === 'excel' || $format === 'csv') {
+            $filename = "income_statement_{$startDate}_to_{$endDate}.csv";
+            $handle = fopen('php://output', 'w');
+            header('Content-Type: text/csv');
+            header('Content-Disposition: attachment; filename="' . $filename . '"');
+            fputcsv($handle, ['Income Statement Report']);
+            fputcsv($handle, ['Period:', $startDate . ' to ' . $endDate]);
+            fputcsv($handle, ['Generated:', now()->format('Y-m-d H:i:s')]);
+            fclose($handle);
+            exit;
+        }
+
+        $data = $this->financialService->generateIncomeStatement($startDate, $endDate);
+        $pdf = PDF::loadView('reports.financial.pdf.income-statement', compact('data', 'startDate', 'endDate', 'schoolInfo'));
+        $pdf->setPaper('a4', 'portrait');
+        return $pdf->download("income_statement_{$startDate}_to_{$endDate}.pdf");
     }
 
     /**
@@ -436,14 +530,22 @@ class FinancialReportController extends Controller
      */
     private function exportTrialBalance($format, Request $request)
     {
-        $filename = "trial_balance_" . date('Y-m-d_H-i-s') . ".csv";
-        $handle = fopen('php://output', 'w');
-        header('Content-Type: text/csv');
-        header('Content-Disposition: attachment; filename="' . $filename . '"');
-        fputcsv($handle, ['Trial Balance Report']);
-        fputcsv($handle, ['Generated:', now()->format('Y-m-d H:i:s')]);
-        fclose($handle);
-        exit;
+        $asAtDate = $request->get('as_at_date', now()->format('Y-m-d'));
+        $schoolInfo = SchoolInformation::getActiveSchool();
+
+        if ($format === 'excel' || $format === 'csv') {
+            $filename = "trial_balance_" . date('Y-m-d_H-i-s') . ".csv";
+            $handle = fopen('php://output', 'w');
+            header('Content-Type: text/csv');
+            header('Content-Disposition: attachment; filename="' . $filename . '"');
+            fputcsv($handle, ['Trial Balance Report']);
+            fputcsv($handle, ['As at:', $asAtDate]);
+            fputcsv($handle, ['Generated:', now()->format('Y-m-d H:i:s')]);
+            fclose($handle);
+            exit;
+        }
+
+        return redirect()->back()->with('info', 'Trial balance PDF export coming soon');
     }
 
     /**
@@ -451,12 +553,59 @@ class FinancialReportController extends Controller
      */
     private function exportCashFlow($format, Request $request)
     {
-        $filename = "cash_flow_" . date('Y-m-d_H-i-s') . ".csv";
+        $startDate = $request->get('start_date', now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->get('end_date', now()->format('Y-m-d'));
+        $schoolInfo = SchoolInformation::getActiveSchool();
+
+        if ($format === 'excel' || $format === 'csv') {
+            $filename = "cash_flow_{$startDate}_to_{$endDate}.csv";
+            $handle = fopen('php://output', 'w');
+            header('Content-Type: text/csv');
+            header('Content-Disposition: attachment; filename="' . $filename . '"');
+            fputcsv($handle, ['Cash Flow Statement']);
+            fputcsv($handle, ['Period:', $startDate . ' to ' . $endDate]);
+            fputcsv($handle, ['Generated:', now()->format('Y-m-d H:i:s')]);
+            fclose($handle);
+            exit;
+        }
+
+        $data = $this->financialService->generateCashFlow($startDate, $endDate);
+        $pdf = PDF::loadView('reports.financial.pdf.cash-flow', compact('data', 'startDate', 'endDate', 'schoolInfo'));
+        $pdf->setPaper('a4', 'portrait');
+        return $pdf->download("cash_flow_{$startDate}_to_{$endDate}.pdf");
+    }
+
+    /**
+     * Export Trial Balance to Excel
+     */
+    private function exportTrialBalanceExcel($asAtDate)
+    {
+        $trialBalance = $this->accountingService->getTrialBalance($asAtDate);
+        $totalDebit = array_sum(array_column($trialBalance, 'debit'));
+        $totalCredit = array_sum(array_column($trialBalance, 'credit'));
+
+        $filename = "trial_balance_{$asAtDate}.csv";
         $handle = fopen('php://output', 'w');
+
         header('Content-Type: text/csv');
         header('Content-Disposition: attachment; filename="' . $filename . '"');
-        fputcsv($handle, ['Cash Flow Statement']);
-        fputcsv($handle, ['Generated:', now()->format('Y-m-d H:i:s')]);
+
+        fputcsv($handle, ['Account Code', 'Account Name', 'Account Type', 'Debit (₦)', 'Credit (₦)', 'Balance (₦)']);
+
+        foreach ($trialBalance as $row) {
+            fputcsv($handle, [
+                $row['account_code'],
+                $row['account_name'],
+                $row['account_type'],
+                number_format($row['debit'], 2),
+                number_format($row['credit'], 2),
+                number_format($row['balance'], 2),
+            ]);
+        }
+
+        fputcsv($handle, []);
+        fputcsv($handle, ['TOTALS', '', '', number_format($totalDebit, 2), number_format($totalCredit, 2), '']);
+
         fclose($handle);
         exit;
     }
