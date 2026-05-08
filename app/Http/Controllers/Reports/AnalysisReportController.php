@@ -17,8 +17,9 @@ class AnalysisReportController extends Controller
     public function __construct(SchoolAnalysisService $analysisService)
     {
         $this->analysisService = $analysisService;
-        $this->middleware('permission:View analysis reports');
-        $this->middleware('permission:Export analysis reports', ['only' => ['exportClassAnalysis', 'exportSchoolWideAnalysis']]);
+        // $this->middleware('permission:View analysis reports');
+        // $this->middleware('permission:Export analysis reports', ['only' => ['exportClassAnalysis', 'exportSchoolWideAnalysis']]);
+
     }
 
     /**
