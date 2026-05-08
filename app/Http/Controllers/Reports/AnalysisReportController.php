@@ -19,21 +19,21 @@ class AnalysisReportController extends Controller
         $this->analysisService = $analysisService;
 
         // Apply permissions
-        $this->middleware('permission:View analysis reports', ['only' => [
-            'index',
-            'classAnalysis',
-            'analysisClassTermSession',
-            'getClassAnalysisData',
-            'studentPaymentDetails',
-            'schoolWideAnalysis',
-            'scholarshipImpactAnalysis'
-        ]]);
+        // $this->middleware('permission:View analysis reports', ['only' => [
+        //     'index',
+        //     'classAnalysis',
+        //     'analysisClassTermSession',
+        //     'getClassAnalysisData',
+        //     'studentPaymentDetails',
+        //     'schoolWideAnalysis',
+        //     'scholarshipImpactAnalysis'
+        // ]]);
 
-        $this->middleware('permission:Export analysis reports', ['only' => [
-            'exportClassAnalysis',
-            'exportSchoolWideAnalysis',
-            'exportPDF'
-        ]]);
+        // $this->middleware('permission:Export analysis reports', ['only' => [
+        //     'exportClassAnalysis',
+        //     'exportSchoolWideAnalysis',
+        //     'exportPDF'
+        // ]]);
     }
 
     /**
