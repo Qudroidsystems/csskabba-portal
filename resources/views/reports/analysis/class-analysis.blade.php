@@ -114,12 +114,6 @@
     color: var(--ss-muted);
     margin-top: 4px;
 }
-.stat-card .stat-icon {
-    font-size: 32px;
-    opacity: .12;
-    float: right;
-    margin-top: -8px;
-}
 
 .filter-bar {
     background: #f8fafc;
@@ -152,37 +146,16 @@
     vertical-align: middle;
 }
 
-/* Row Entrance Animation */
-#analysisTable tbody tr {
-    opacity: 0;
-    transform: translateY(14px);
-    transition: opacity 0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-                transform 0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-                background 0.18s ease;
-    will-change: opacity, transform;
-}
-#analysisTable tbody tr.row-visible {
-    opacity: 1;
-    transform: translateY(0);
-}
-
 /* Row Hover Effects */
 #analysisTable tbody tr:hover {
     background: #f0f6ff !important;
     box-shadow: inset 3px 0 0 #2563eb;
-    transform: translateY(-1px) !important;
-    transition: background 0.14s ease, box-shadow 0.18s ease, transform 0.18s cubic-bezier(0.34, 1.4, 0.64, 1);
-    position: relative;
-    z-index: 1;
+    transition: background 0.14s ease, box-shadow 0.18s ease;
 }
 #analysisTable tbody tr:hover .student-avatar-table {
     transform: scale(1.12);
     transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1);
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-}
-#analysisTable tbody tr:hover .badge {
-    transform: scale(1.06);
-    transition: transform 0.18s cubic-bezier(0.34, 1.4, 0.64, 1);
 }
 
 /* Status Badges */
@@ -279,121 +252,101 @@
     transition: transform 0.18s ease, box-shadow 0.18s ease;
 }
 
-/* ── Apple-style Tooltip ─────────────────────────────────────────── */
-#studentTooltip {
-    display: none;
+/* ── Popover/Tooltip Styles ──────────────────────────────────────── */
+#studentPopover {
     position: fixed;
-    z-index: 99990;
-    background: #fff;
-    border: 0.5px solid #cbd5e1;
-    border-radius: 12px;
-    padding: 12px 16px;
-    width: 260px;
-    box-shadow: 0 4px 20px rgba(0,0,0,.12), 0 1px 4px rgba(0,0,0,.06);
+    z-index: 99999;
     pointer-events: none;
-    font-family: inherit;
     opacity: 0;
-    transition: opacity .15s ease;
+    transform: scale(0.92) translateY(6px);
+    transition: opacity 0.22s cubic-bezier(.4,0,.2,1),
+                transform 0.22s cubic-bezier(.4,0,.2,1);
 }
-#studentTooltip.tip-above { transform: translateY(-100%); }
-#studentTooltip.tip-below { transform: translateY(0); }
-.tip-header {
+#studentPopover.visible {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    pointer-events: none;
+}
+.popover-card {
+    background: rgba(255,255,255,0.96);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 20px;
+    box-shadow: 0 0 0 0.5px rgba(0,0,0,0.08), 0 8px 32px rgba(0,0,0,0.14);
+    width: 280px;
+    overflow: hidden;
+}
+.popover-header {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+    padding: 16px;
+    position: relative;
+}
+.popover-avatar-wrapper {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-    padding-bottom: 8px;
-    border-bottom: 0.5px solid #e8ecf0;
+    gap: 12px;
 }
-.tip-avatar {
-    width: 40px;
-    height: 40px;
+.popover-avatar {
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
     object-fit: cover;
-    flex-shrink: 0;
-    border: 1.5px solid #e2e8f0;
+    border: 3px solid rgba(255,255,255,0.9);
 }
-.tip-name {
-    font-size: 13px;
+.popover-name {
+    font-size: 14px;
     font-weight: 700;
-    color: #0f172a;
+    color: white;
 }
-.tip-adm {
+.popover-adm {
     font-size: 10px;
-    color: #64748b;
-    margin-top: 2px;
+    color: rgba(255,255,255,0.75);
 }
-.tip-stats {
+.popover-body {
+    padding: 12px 16px;
+}
+.popover-stats-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 8px;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
 }
-.tip-stat {
+.popover-stat {
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 8px;
     text-align: center;
 }
-.tip-stat-label {
-    font-size: 9px;
-    text-transform: uppercase;
-    letter-spacing: .04em;
-    color: #94a3b8;
-    font-weight: 600;
-    margin-bottom: 3px;
-}
-.tip-stat-val {
+.popover-stat-val {
     font-size: 14px;
     font-weight: 700;
-    font-variant-numeric: tabular-nums;
+    color: #1e3a5f;
 }
-.tip-divider {
-    height: 0.5px;
-    background: #e8ecf0;
-    margin-bottom: 10px;
+.popover-stat-lbl {
+    font-size: 9px;
+    color: #9ca3af;
 }
-.tip-progress {
-    margin-top: 5px;
+.popover-subject-list {
+    max-height: 150px;
+    overflow-y: auto;
 }
-.tip-prog-labels {
+.popover-subject-row {
     display: flex;
     justify-content: space-between;
-    font-size: 9px;
-    color: #94a3b8;
-    margin-bottom: 4px;
+    padding: 6px 8px;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 11px;
 }
-.tip-prog-track {
-    height: 3px;
-    background: #f1f5f9;
+.popover-arrow {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: rgba(255,255,255,0.96);
+    transform: rotate(45deg);
     border-radius: 2px;
-    overflow: hidden;
 }
-.tip-prog-fill {
-    height: 100%;
-    border-radius: 2px;
-    background: #2563eb;
-    width: 0%;
-    transition: width .3s ease, background .3s ease;
-}
-.tip-benefits {
-    margin-top: 8px;
-    font-size: 10px;
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-}
-.tip-benefit {
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 9px;
-    font-weight: 600;
-}
-.tip-benefit-scholarship {
-    background: #fef3c7;
-    color: #d97706;
-}
-.tip-benefit-discount {
-    background: #ede9fe;
-    color: #6d28d9;
-}
+.popover-arrow.arrow-top { top: -5px; left: 50%; transform: translateX(-50%) rotate(45deg); }
+.popover-arrow.arrow-bottom { bottom: -5px; left: 50%; transform: translateX(-50%) rotate(45deg); }
 
 /* DataTables */
 .dataTables_wrapper .dataTables_filter input {
@@ -435,15 +388,6 @@
     font-size: 18px;
     cursor: pointer;
 }
-
-@media (prefers-reduced-motion: reduce) {
-    #analysisTable tbody tr,
-    #analysisTable tbody tr:hover {
-        transition: background 0.15s ease !important;
-        transform: none !important;
-        opacity: 1 !important;
-    }
-}
 </style>
 
 <div class="main-content">
@@ -482,7 +426,7 @@
     <div class="filter-bar">
         <div class="row g-3 align-items-end">
             <div class="col-md-4">
-                <label class="filter-label">Class <span class="required">*</span></label>
+                <label class="filter-label">Class</label>
                 <select class="form-select" id="class_id">
                     <option value="">-- All Classes --</option>
                     @foreach($classes as $class)
@@ -550,26 +494,28 @@
 </div>
 </div>
 
-<!-- Apple-style Tooltip -->
-<div id="studentTooltip">
-    <div class="tip-header">
-        <img id="tipAvatar" class="tip-avatar" src="" alt="">
-        <div>
-            <div class="tip-name" id="tipName">—</div>
-            <div class="tip-adm" id="tipAdm">—</div>
+<!-- Popover / Tooltip -->
+<div id="studentPopover">
+    <div class="popover-card">
+        <div class="popover-arrow" id="popoverArrow"></div>
+        <div class="popover-header">
+            <div class="popover-avatar-wrapper">
+                <img id="popAvatar" src="" alt="" class="popover-avatar">
+                <div>
+                    <div class="popover-name" id="popName">—</div>
+                    <div class="popover-adm" id="popAdm">—</div>
+                </div>
+            </div>
+        </div>
+        <div class="popover-body">
+            <div class="popover-stats-grid">
+                <div class="popover-stat"><span class="popover-stat-val" id="popBilled">—</span><span class="popover-stat-lbl">Billed</span></div>
+                <div class="popover-stat"><span class="popover-stat-val" id="popPaid">—</span><span class="popover-stat-lbl">Paid</span></div>
+                <div class="popover-stat"><span class="popover-stat-val" id="popOutstanding">—</span><span class="popover-stat-lbl">Owing</span></div>
+            </div>
+            <div class="popover-subject-list" id="popBillList"></div>
         </div>
     </div>
-    <div class="tip-stats">
-        <div class="tip-stat"><div class="tip-stat-label">Billed</div><div class="tip-stat-val" id="tipBilled">₦0</div></div>
-        <div class="tip-stat"><div class="tip-stat-label">Paid</div><div class="tip-stat-val" id="tipPaid">₦0</div></div>
-        <div class="tip-stat"><div class="tip-stat-label">Owing</div><div class="tip-stat-val" id="tipOwing">₦0</div></div>
-    </div>
-    <div class="tip-divider"></div>
-    <div class="tip-progress">
-        <div class="tip-prog-labels"><span id="tipProgressLabel">Progress</span><span id="tipProgressPct">0%</span></div>
-        <div class="tip-prog-track"><div class="tip-prog-fill" id="tipProgressFill"></div></div>
-    </div>
-    <div class="tip-benefits" id="tipBenefits"></div>
 </div>
 
 <!-- Image Zoom Modal -->
@@ -595,9 +541,8 @@ let analysisTable;
 let currentFilters = {};
 let studentData = {};
 
-// ── Helper Functions ───────────────────────────────────────────────
+// Helper Functions
 function formatMoney(n) { return '₦' + (parseFloat(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 })); }
-function formatNumber(n) { return parseFloat(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 }); }
 
 function getInitials(name) {
     if (!name) return 'ST';
@@ -626,7 +571,7 @@ function showLoading(show) {
     else overlay.classList.remove('active');
 }
 
-// ── Rendering Functions ────────────────────────────────────────────
+// Rendering Functions
 function renderAvatar(avatar, name, admission) {
     const avatarUrl = avatar ? getAvatarUrl(avatar) : null;
     const initials = getInitials(name);
@@ -681,97 +626,74 @@ function updateStats(response) {
     document.getElementById('collectionRate').textContent = collectionRate + '%';
 }
 
-// ── Apple-style Tooltip ────────────────────────────────────────────
-const tooltip = document.getElementById('studentTooltip');
-let tooltipTimeout = null;
-let hideTimeout = null;
+// Popover Functions
+const popover = document.getElementById('studentPopover');
+let popoverTimer = null;
+let hideTimer = null;
 
-function fillTooltip(studentId) {
+function fillPopover(studentId) {
     const s = studentData[studentId];
     if (!s) return;
 
-    document.getElementById('tipName').textContent = s.name;
-    document.getElementById('tipAdm').textContent = s.admission;
-    document.getElementById('tipBilled').textContent = formatMoney(s.billed);
-    document.getElementById('tipPaid').textContent = formatMoney(s.paid);
-    document.getElementById('tipOwing').textContent = formatMoney(s.outstanding);
+    document.getElementById('popName').textContent = s.name;
+    document.getElementById('popAdm').textContent = 'Adm: ' + s.admission;
+    document.getElementById('popBilled').textContent = formatMoney(s.billed);
+    document.getElementById('popPaid').textContent = formatMoney(s.paid);
+    document.getElementById('popOutstanding').textContent = formatMoney(s.outstanding);
 
     const avatarUrl = s.avatar ? getAvatarUrl(s.avatar) : null;
-    if (avatarUrl) document.getElementById('tipAvatar').src = avatarUrl;
-    else document.getElementById('tipAvatar').src = '';
+    if (avatarUrl) document.getElementById('popAvatar').src = avatarUrl;
+    else document.getElementById('popAvatar').src = '';
 
-    const completion = s.completion || 0;
-    const pct = Math.min(completion, 100);
-    document.getElementById('tipProgressLabel').textContent = `${formatMoney(s.paid)} of ${formatMoney(s.billed)}`;
-    document.getElementById('tipProgressPct').textContent = pct + '%';
-    document.getElementById('tipProgressFill').style.width = pct + '%';
-    document.getElementById('tipProgressFill').style.background = pct >= 70 ? '#16a34a' : (pct >= 40 ? '#d97706' : '#dc2626');
-
-    const benefitsHtml = renderBenefits(s.hasScholarship, s.hasDiscount);
-    document.getElementById('tipBenefits').innerHTML = benefitsHtml;
+    const list = document.getElementById('popBillList');
+    list.innerHTML = '';
+    if (s.bills && s.bills.length) {
+        s.bills.forEach(bill => {
+            list.innerHTML += `<div class="popover-subject-row"><span>${escapeHtml(bill.title)}</span><span class="fw-bold">${formatMoney(bill.balance)}</span></div>`;
+        });
+    } else {
+        list.innerHTML = '<div class="popover-subject-row text-muted">No bills available</div>';
+    }
 }
 
-function positionTooltip(e, targetRect) {
+function positionPopover(e) {
     const vw = window.innerWidth, vh = window.innerHeight;
-    const tw = 260, th = 220;
-    let left = targetRect.right + 12;
-    let top = targetRect.top;
+    const pw = 280, ph = 340;
+    let left = e.clientX + 16;
+    let top = e.clientY - 20;
+    const arrow = document.getElementById('popoverArrow');
 
-    if (left + tw > vw) left = targetRect.left - tw - 12;
-    if (top + th > vh) top = vh - th - 8;
-    if (top < 8) top = 8;
+    if (left + pw > vw) left = e.clientX - pw + 4;
+    if (top + ph > vh) {
+        top = e.clientY - ph + 20;
+        arrow.className = 'popover-arrow arrow-bottom';
+    } else {
+        arrow.className = 'popover-arrow arrow-top';
+    }
 
-    tooltip.style.left = left + 'px';
-    tooltip.style.top = top + 'px';
+    left = Math.max(8, Math.min(left, vw - pw - 8));
+    top = Math.max(8, Math.min(top, vh - ph - 8));
+    popover.style.left = left + 'px';
+    popover.style.top = top + 'px';
 }
 
-function showTooltip(row, e) {
-    clearTimeout(hideTimeout);
+function showPopover(row, e) {
+    clearTimeout(hideTimer);
     const studentId = row.getAttribute('data-student-id');
     if (!studentId || !studentData[studentId]) return;
 
-    fillTooltip(studentId);
-    const rect = row.getBoundingClientRect();
-    positionTooltip(e, rect);
-    tooltip.style.display = 'block';
-    setTimeout(() => tooltip.style.opacity = '1', 10);
+    fillPopover(studentId);
+    positionPopover(e);
+    popover.classList.add('visible');
 }
 
-function hideTooltip() {
-    if (hideTimeout) clearTimeout(hideTimeout);
-    hideTimeout = setTimeout(() => {
-        tooltip.style.opacity = '0';
-        setTimeout(() => {
-            if (tooltip.style.opacity === '0') tooltip.style.display = 'none';
-        }, 150);
-    }, 100);
+function hidePopover() {
+    hideTimer = setTimeout(() => {
+        popover.classList.remove('visible');
+    }, 180);
 }
 
-// Row entrance animation observer
-function initRowEntrance() {
-    const rows = document.querySelectorAll('#analysisTable tbody tr');
-    if (!rows.length) return;
-
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        rows.forEach(r => r.classList.add('row-visible'));
-        return;
-    }
-
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (!entry.isIntersecting) return;
-            const row = entry.target;
-            const index = Array.from(rows).indexOf(row);
-            const delay = Math.min(index * 38, 15 * 38) + 60;
-            setTimeout(() => row.classList.add('row-visible'), delay);
-            observer.unobserve(row);
-        });
-    }, { threshold: 0.05, rootMargin: '0px 0px -20px 0px' });
-
-    rows.forEach(row => observer.observe(row));
-}
-
-// ── DataTable Setup ─────────────────────────────────────────────────
+// DataTable Setup
 $(document).ready(function() {
     analysisTable = $('#analysisTable').DataTable({
         processing: true,
@@ -780,15 +702,12 @@ $(document).ready(function() {
             url: '{{ route("reports.analysis.class-data") }}',
             type: 'GET',
             data: function(d) {
-                d.class_id = currentFilters.class_id;
+                d.class_id = currentFilters.class_id || '';
                 d.term_id = currentFilters.term_id;
                 d.session_id = currentFilters.session_id;
             },
             beforeSend: function() { showLoading(true); },
-            complete: function() {
-                showLoading(false);
-                setTimeout(initRowEntrance, 100);
-            },
+            complete: function() { showLoading(false); },
             dataSrc: function(response) {
                 if (response.data && response.data.length) {
                     response.data.forEach(item => {
@@ -799,9 +718,9 @@ $(document).ready(function() {
                             billed: item.total_billed,
                             paid: item.total_paid,
                             outstanding: item.outstanding,
-                            completion: item.completion,
                             hasScholarship: item.has_scholarship,
-                            hasDiscount: item.has_discount
+                            hasDiscount: item.has_discount,
+                            bills: item.bills || []
                         };
                     });
                 }
@@ -857,7 +776,7 @@ $(document).ready(function() {
                 data: null,
                 orderable: false,
                 render: function(data, type, row) {
-                    return '<a href="/reports/analysis/student/' + row.student_id + '/' + currentFilters.class_id + '/' + currentFilters.term_id + '/' + currentFilters.session_id + '" class="btn btn-sm btn-outline-primary" target="_blank"><i class="ri-eye-line"></i></a>';
+                    return '<a href="/reports/analysis/student/' + row.student_id + '/' + (currentFilters.class_id || '') + '/' + currentFilters.term_id + '/' + currentFilters.session_id + '" class="btn btn-sm btn-outline-primary" target="_blank"><i class="ri-eye-line"></i></a>';
                 }
             }
         ],
@@ -866,13 +785,19 @@ $(document).ready(function() {
             const response = api.ajax.json();
             if (response) updateStats(response);
 
-            // Attach hover events for tooltip
-            $('#analysisTable tbody tr').off('mouseenter mouseleave').on('mouseenter', function(e) {
-                clearTimeout(tooltipTimeout);
-                tooltipTimeout = setTimeout(() => showTooltip(this, e), 300);
+            // Attach hover events for popover
+            $('#analysisTable tbody tr').off('mouseenter mouseleave mousemove');
+            $('#analysisTable tbody tr').on('mouseenter', function(e) {
+                clearTimeout(popoverTimer);
+                const $this = $(this);
+                popoverTimer = setTimeout(() => showPopover(this, e), 280);
+            }).on('mousemove', function(e) {
+                if (popover.classList.contains('visible')) {
+                    positionPopover(e);
+                }
             }).on('mouseleave', function() {
-                clearTimeout(tooltipTimeout);
-                hideTooltip();
+                clearTimeout(popoverTimer);
+                hidePopover();
             });
         },
         language: {
@@ -934,10 +859,7 @@ $(document).on('click', '.student-avatar-table, .student-avatar-placeholder', fu
         canvas.width = 400;
         canvas.height = 400;
         const ctx = canvas.getContext('2d');
-        const grad = ctx.createLinearGradient(0, 0, 400, 400);
-        grad.addColorStop(0, '#2563eb');
-        grad.addColorStop(1, '#7c3aed');
-        ctx.fillStyle = grad;
+        ctx.fillStyle = 'linear-gradient(135deg, #2563eb, #4f46e5)';
         ctx.fillRect(0, 0, 400, 400);
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 160px "DM Sans", Arial, sans-serif';
