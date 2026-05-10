@@ -138,6 +138,7 @@
     background: #f0f9ff;
 }
 
+/* Status Badges */
 .status-paid {
     background: #dcfce7;
     color: #16a34a;
@@ -166,6 +167,7 @@
     display: inline-block;
 }
 
+/* Benefit Badges */
 .benefit-badge {
     display: inline-block;
     padding: 3px 8px;
@@ -182,6 +184,7 @@
     color: #6d28d9;
 }
 
+/* Progress Bar */
 .progress-container {
     width: 80px;
     background: #e2e8f0;
@@ -203,6 +206,7 @@
     display: block;
 }
 
+/* Student Avatar */
 .student-avatar {
     width: 35px;
     height: 35px;
@@ -225,6 +229,102 @@
     cursor: pointer;
 }
 
+/* Popover Styles */
+#studentPopover {
+    position: fixed;
+    z-index: 99999;
+    pointer-events: none;
+    opacity: 0;
+    transform: scale(0.92) translateY(6px);
+    transition: opacity 0.22s cubic-bezier(.4,0,.2,1),
+                transform 0.22s cubic-bezier(.4,0,.2,1);
+}
+#studentPopover.visible {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    pointer-events: none;
+}
+.popover-card {
+    background: rgba(255,255,255,0.96);
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    box-shadow: 0 0 0 0.5px rgba(0,0,0,0.08), 0 8px 32px rgba(0,0,0,0.14);
+    width: 280px;
+    overflow: hidden;
+}
+.popover-header {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+    padding: 16px;
+    position: relative;
+}
+.popover-avatar-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.popover-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid rgba(255,255,255,0.9);
+}
+.popover-name {
+    font-size: 14px;
+    font-weight: 700;
+    color: white;
+}
+.popover-adm {
+    font-size: 10px;
+    color: rgba(255,255,255,0.75);
+}
+.popover-body {
+    padding: 12px 16px;
+}
+.popover-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
+}
+.popover-stat {
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 8px;
+    text-align: center;
+}
+.popover-stat-val {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1e3a5f;
+}
+.popover-stat-lbl {
+    font-size: 9px;
+    color: #9ca3af;
+}
+.popover-subject-list {
+    max-height: 150px;
+    overflow-y: auto;
+}
+.popover-subject-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 8px;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 11px;
+}
+.popover-arrow {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: rgba(255,255,255,0.96);
+    transform: rotate(45deg);
+    border-radius: 2px;
+}
+.popover-arrow.arrow-top { top: -5px; left: 50%; transform: translateX(-50%) rotate(45deg); }
+.popover-arrow.arrow-bottom { bottom: -5px; left: 50%; transform: translateX(-50%) rotate(45deg); }
+
+/* DataTables */
 .dataTables_wrapper .dataTables_filter input {
     border: 1.5px solid var(--report-border);
     border-radius: 8px;
@@ -345,7 +445,7 @@
             <div class="table-responsive">
                 <table class="table report-table w-100" id="analysisTable">
                     <thead>
-                        <table>
+                        <tr>
                             <th width="50">#</th>
                             <th width="60">Photo</th>
                             <th>Student Name</th>
@@ -360,11 +460,7 @@
                             <th width="80">Action</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr class="text-center">
-                            <td colspan="12" class="py-5 text-muted">Select class, term, and session then click Load Report</td>
-                        </tr>
-                    </tbody>
+                    <tbody></tbody>
                 </table>
             </div>
         </div>
@@ -372,6 +468,30 @@
 
 </div>
 </div>
+</div>
+
+<!-- Popover -->
+<div id="studentPopover">
+    <div class="popover-card">
+        <div class="popover-arrow" id="popoverArrow"></div>
+        <div class="popover-header">
+            <div class="popover-avatar-wrapper">
+                <img id="popAvatar" src="" alt="" class="popover-avatar">
+                <div>
+                    <div class="popover-name" id="popName">—</div>
+                    <div class="popover-adm" id="popAdm">—</div>
+                </div>
+            </div>
+        </div>
+        <div class="popover-body">
+            <div class="popover-stats-grid">
+                <div class="popover-stat"><span class="popover-stat-val" id="popBilled">—</span><span class="popover-stat-lbl">Billed</span></div>
+                <div class="popover-stat"><span class="popover-stat-val" id="popPaid">—</span><span class="popover-stat-lbl">Paid</span></div>
+                <div class="popover-stat"><span class="popover-stat-val" id="popOutstanding">—</span><span class="popover-stat-lbl">Owing</span></div>
+            </div>
+            <div class="popover-subject-list" id="popBillList"></div>
+        </div>
+    </div>
 </div>
 
 <!-- Image Zoom Modal -->
@@ -395,6 +515,7 @@
 <script>
 let analysisTable;
 let currentFilters = {};
+let studentData = {};
 
 function showLoading(show) {
     if (show) {
@@ -434,11 +555,13 @@ function escapeHtml(str) {
 function renderAvatar(avatar, name, admission) {
     const avatarUrl = avatar ? getAvatarUrl(avatar) : null;
     const initials = getInitials(name);
+    const escapedName = escapeHtml(name);
+    const escapedAdmission = escapeHtml(admission);
 
     if (avatarUrl) {
-        return `<img src="${avatarUrl}" class="student-avatar" data-name="${escapeHtml(name)}" data-admission="${escapeHtml(admission)}">`;
+        return `<img src="${avatarUrl}" class="student-avatar" data-name="${escapedName}" data-admission="${escapedAdmission}">`;
     }
-    return `<div class="student-avatar-placeholder" data-name="${escapeHtml(name)}" data-admission="${escapeHtml(admission)}">${initials}</div>`;
+    return `<div class="student-avatar-placeholder" data-name="${escapedName}" data-admission="${escapedAdmission}">${initials}</div>`;
 }
 
 function renderBenefits(hasScholarship, hasDiscount) {
@@ -483,6 +606,77 @@ function updateStats(response) {
     $('#collectionRate').text(collectionRate + '%');
 }
 
+// Popover Functions
+function fillPopover(studentId) {
+    const s = studentData[studentId];
+    if (!s) return;
+
+    $('#popName').text(s.name);
+    $('#popAdm').text('Adm: ' + s.admission);
+    $('#popBilled').text(formatMoney(s.billed));
+    $('#popPaid').text(formatMoney(s.paid));
+    $('#popOutstanding').text(formatMoney(s.outstanding));
+
+    if (s.avatar) $('#popAvatar').attr('src', s.avatar);
+    else $('#popAvatar').attr('src', '');
+
+    const list = $('#popBillList');
+    list.empty();
+    if (s.bills && s.bills.length) {
+        s.bills.forEach(bill => {
+            list.append(`<div class="popover-subject-row"><span>${escapeHtml(bill.title)}</span><span class="fw-bold">${formatMoney(bill.balance)}</span></div>`);
+        });
+    } else {
+        list.append('<div class="popover-subject-row text-muted">No bills available</div>');
+    }
+}
+
+function positionPopover(e) {
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const pw = 280, ph = 320;
+    let left = e.clientX + 16, top = e.clientY - 20;
+    const arrow = document.getElementById('popoverArrow');
+
+    if (left + pw > vw) left = e.clientX - pw + 4;
+    if (top + ph > vh) { top = e.clientY - ph + 20; arrow.className = 'popover-arrow arrow-bottom'; }
+    else { arrow.className = 'popover-arrow arrow-top'; }
+
+    left = Math.max(8, Math.min(left, vw - pw - 8));
+    top = Math.max(8, Math.min(top, vh - ph - 8));
+    popover.style.left = left + 'px';
+    popover.style.top = top + 'px';
+}
+
+function showPopover(row, e) {
+    clearTimeout(hideTimer);
+    const studentId = row.attr('data-student-id');
+    if (!studentId || !studentData[studentId]) return;
+    fillPopover(studentId);
+    positionPopover(e);
+    popover.classList.add('visible');
+}
+
+function hidePopover() {
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => popover.classList.remove('visible'), 180);
+}
+
+let popoverTimer, hideTimer;
+const popover = document.getElementById('studentPopover');
+
+function attachPopoverEvents() {
+    $('#analysisTable tbody tr').off('mouseenter mouseleave mousemove').on('mouseenter', function(e) {
+        clearTimeout(popoverTimer);
+        const $row = $(this);
+        popoverTimer = setTimeout(() => showPopover($row, e), 280);
+    }).on('mousemove', function(e) {
+        if (popover.classList.contains('visible')) positionPopover(e);
+    }).on('mouseleave', function() {
+        clearTimeout(popoverTimer);
+        hidePopover();
+    });
+}
+
 $(document).ready(function() {
     analysisTable = $('#analysisTable').DataTable({
         processing: true,
@@ -500,14 +694,35 @@ $(document).ready(function() {
             },
             complete: function() {
                 showLoading(false);
+            },
+            dataSrc: function(response) {
+                // Store student data for popover
+                if (response.data && response.data.length) {
+                    response.data.forEach(item => {
+                        studentData[item.student_id] = {
+                            name: item.student_name,
+                            admission: item.admission_no,
+                            avatar: item.avatar ? getAvatarUrl(item.avatar) : null,
+                            billed: item.total_billed,
+                            paid: item.total_paid,
+                            outstanding: item.outstanding,
+                            bills: item.bills || []
+                        };
+                    });
+                }
+                return response.data;
             }
         },
         columns: [
-            { data: 'DT_RowIndex', orderable: false, searchable: false },
             {
-                data: 'avatar',
+                data: null,
+                render: function(data, type, row, meta) {
+                    return meta.row + 1;
+                }
+            },
+            {
+                data: null,
                 orderable: false,
-                searchable: false,
                 render: function(data, type, row) {
                     return renderAvatar(row.avatar, row.student_name, row.admission_no);
                 }
@@ -559,6 +774,7 @@ $(document).ready(function() {
             if (response) {
                 updateStats(response);
             }
+            attachPopoverEvents();
         },
         language: {
             emptyTable: '<div class="text-center py-5 text-muted">No data available. Please select filters and click Load Report.</div>',
@@ -590,6 +806,7 @@ $(document).ready(function() {
     $('#resetBtn').on('click', function() {
         $('#class_id, #term_id, #session_id').val('');
         currentFilters = {};
+        studentData = {};
         analysisTable.ajax.reload();
     });
 });
@@ -603,7 +820,7 @@ function exportReport(format) {
     window.open(url, '_blank');
 }
 
-// Image zoom
+// Image zoom on avatar click
 $(document).on('click', '.student-avatar, .student-avatar-placeholder', function() {
     const imageUrl = $(this).is('img') ? $(this).attr('src') : null;
     const name = $(this).data('name');
