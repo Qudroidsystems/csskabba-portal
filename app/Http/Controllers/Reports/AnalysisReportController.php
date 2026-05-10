@@ -231,10 +231,7 @@ class AnalysisReportController extends Controller
     }
 
 
-
-
-
-    /**
+/**
  * Export PDF
  */
 public function exportPDF($class_id, $termid_id, $session_id, $action = 'view')
@@ -302,90 +299,30 @@ public function exportPDF($class_id, $termid_id, $session_id, $action = 'view')
 
     // Calculate student totals
     $studentTotals = [];
-    $totalBilled = 0;
-    $totalPaid = 0;
-    $totalOutstanding = 0;
-
     foreach ($students as $student) {
-        $studentTotalPaid = 0;
-        $studentTotalBalance = 0;
-        $studentTotalBilled = 0;
+        $totalPaid = 0;
+        $totalBalance = 0;
 
         foreach ($studentBillInfo as $bill) {
-            $studentTotalBilled += $bill->amount ?? 0;
-
             $payment = $studentPayments
                 ->where('stid', $student->stid)
                 ->where('schoolbillid', $bill->schoolbillid)
                 ->first();
 
             if ($payment) {
-                $studentTotalPaid += $payment->totalAmountPaid ?? 0;
-                $studentTotalBalance += $payment->balance ?? 0;
+                $totalPaid += $payment->totalAmountPaid ?? 0;
+                $totalBalance += $payment->balance ?? 0;
             } else {
-                $studentTotalBalance += $bill->amount ?? 0;
+                $totalBalance += $bill->amount ?? 0;
             }
         }
-
-        $totalBilled += $studentTotalBilled;
-        $totalPaid += $studentTotalPaid;
-        $totalOutstanding += $studentTotalBalance;
 
         $studentTotals[$student->stid] = [
-            'totalPaid' => $studentTotalPaid,
-            'totalBalance' => $studentTotalBalance,
-            'status' => $studentTotalPaid > 0 ? ($studentTotalBalance > 0 ? 'partial' : 'paid') : 'unpaid'
+            'totalPaid' => $totalPaid,
+            'totalBalance' => $totalBalance,
+            'status' => $totalPaid > 0 ? ($totalBalance > 0 ? 'partial' : 'paid') : 'unpaid'
         ];
     }
-
-    $collectionRate = $totalBilled > 0 ? round(($totalPaid / $totalBilled) * 100, 1) : 0;
-    $className = ($schoolClass->schoolclass ?? '') . ' ' . ($schoolClass->arm ?? '');
-    $termName = $schoolTerm ?? 'N/A';
-    $sessionName = $schoolSession ?? 'N/A';
-    $generatedAt = now()->format('d F, Y H:i:s');
-    $totalStudents = $students->count();
-
-    // Prepare report data for the summary table
-    $reportData = [];
-    foreach ($students as $student) {
-        $studentTotalBilled = 0;
-        $studentTotalPaid = 0;
-        $studentTotalBalance = 0;
-
-        foreach ($studentBillInfo as $bill) {
-            $studentTotalBilled += $bill->amount ?? 0;
-
-            $payment = $studentPayments
-                ->where('stid', $student->stid)
-                ->where('schoolbillid', $bill->schoolbillid)
-                ->first();
-
-            if ($payment) {
-                $studentTotalPaid += $payment->totalAmountPaid ?? 0;
-                $studentTotalBalance += $payment->balance ?? 0;
-            } else {
-                $studentTotalBalance += $bill->amount ?? 0;
-            }
-        }
-
-        $studentName = trim($student->firstname . ' ' . $student->lastname);
-        if (!empty($student->othername)) {
-            $studentName .= ' (' . $student->othername . ')';
-        }
-
-        $reportData[] = [
-            'student_name' => $studentName,
-            'admission_no' => $student->admissionno ?? 'N/A',
-            'total_billed' => $studentTotalBilled,
-            'total_paid' => $studentTotalPaid,
-            'outstanding' => $studentTotalBalance,
-        ];
-    }
-
-    // Sort by outstanding amount (highest first)
-    usort($reportData, function($a, $b) {
-        return $b['outstanding'] - $a['outstanding'];
-    });
 
     $data = [
         'schoolInfo' => $schoolInfo,
@@ -396,32 +333,23 @@ public function exportPDF($class_id, $termid_id, $session_id, $action = 'view')
         'schoolClass' => $schoolClass,
         'schoolTerm' => $schoolTerm,
         'schoolSession' => $schoolSession,
-        'className' => $className,
-        'termName' => $termName,
-        'sessionName' => $sessionName,
-        'generatedAt' => $generatedAt,
-        'totalStudents' => $totalStudents,
-        'totalBilled' => $totalBilled,
-        'totalPaid' => $totalPaid,
-        'totalOutstanding' => $totalOutstanding,
-        'collectionRate' => $collectionRate,
-        'reportData' => $reportData,
     ];
 
     $pdf = PDF::loadView('reports.analysis.pdf.class-analysis', $data);
     $pdf->setPaper('a3', 'landscape');
 
-    $safeClassName = str_replace(['/', '\\'], '_', $className);
-    $safeTermName = str_replace(['/', '\\'], '_', $termName);
-    $safeSessionName = str_replace(['/', '\\'], '_', $sessionName);
+    $className = str_replace(['/', '\\'], '_', ($schoolClass->schoolclass ?? '') . ' ' . ($schoolClass->arm ?? ''));
+    $termName = str_replace(['/', '\\'], '_', $schoolTerm ?? 'N/A');
+    $sessionName = str_replace(['/', '\\'], '_', $schoolSession ?? 'N/A');
 
-    $filename = "Payment_Analysis_{$safeClassName}_{$safeTermName}_{$safeSessionName}.pdf";
+    $filename = "Payment_Analysis_{$className}_{$termName}_{$sessionName}.pdf";
 
     if ($action === 'download') {
         return $pdf->download($filename);
     }
     return $pdf->stream($filename);
 }
+
 
 
     /**
