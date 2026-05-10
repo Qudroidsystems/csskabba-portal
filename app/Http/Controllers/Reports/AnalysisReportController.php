@@ -19,15 +19,15 @@ class AnalysisReportController extends Controller
         $this->analysisService = $analysisService;
 
         // Permissions
-        $this->middleware('permission:View analysis reports')->only([
-            'index',
-            'getClassAnalysisData',
-            'studentPaymentDetails'
-        ]);
+        // $this->middleware('permission:View analysis reports')->only([
+        //     'index',
+        //     'getClassAnalysisData',
+        //     'studentPaymentDetails'
+        // ]);
 
-        $this->middleware('permission:Export analysis reports')->only([
-            'exportClassAnalysis'
-        ]);
+        // $this->middleware('permission:Export analysis reports')->only([
+        //     'exportClassAnalysis'
+        // ]);
     }
 
     /**
