@@ -146,16 +146,37 @@
     vertical-align: middle;
 }
 
+/* Row Entrance Animation */
+#analysisTable tbody tr {
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                transform 0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                background 0.18s ease;
+    will-change: opacity, transform;
+}
+#analysisTable tbody tr.row-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
 /* Row Hover Effects */
 #analysisTable tbody tr:hover {
     background: #f0f6ff !important;
     box-shadow: inset 3px 0 0 #2563eb;
-    transition: background 0.14s ease, box-shadow 0.18s ease;
+    transform: translateY(-1px) !important;
+    transition: background 0.14s ease, box-shadow 0.18s ease, transform 0.18s cubic-bezier(0.34, 1.4, 0.64, 1);
+    position: relative;
+    z-index: 1;
 }
 #analysisTable tbody tr:hover .student-avatar-table {
     transform: scale(1.12);
     transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1);
     box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+#analysisTable tbody tr:hover .badge {
+    transform: scale(1.06);
+    transition: transform 0.18s cubic-bezier(0.34, 1.4, 0.64, 1);
 }
 
 /* Status Badges */
@@ -348,12 +369,28 @@
 .popover-arrow.arrow-top { top: -5px; left: 50%; transform: translateX(-50%) rotate(45deg); }
 .popover-arrow.arrow-bottom { bottom: -5px; left: 50%; transform: translateX(-50%) rotate(45deg); }
 
-/* DataTables */
+/* DataTables Customization */
+.dataTables_wrapper .dataTables_filter {
+    margin-bottom: 15px;
+}
 .dataTables_wrapper .dataTables_filter input {
     border: 1.5px solid var(--ss-border);
     border-radius: 8px;
-    padding: 7px 14px;
+    padding: 8px 14px;
     margin-left: 8px;
+    font-size: 13px;
+    width: 250px;
+}
+.dataTables_wrapper .dataTables_filter input:focus {
+    border-color: var(--ss-accent);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+}
+.dataTables_wrapper .dataTables_length select {
+    border: 1.5px solid var(--ss-border);
+    border-radius: 8px;
+    padding: 6px 10px;
+    margin: 0 6px;
     font-size: 13px;
 }
 .dataTables_wrapper .paginate_button.current,
@@ -361,6 +398,16 @@
     background: var(--ss-accent) !important;
     border-color: var(--ss-accent) !important;
     color: #fff !important;
+}
+.dataTables_wrapper .dataTables_info {
+    font-size: 13px;
+    color: var(--ss-muted);
+}
+
+/* Search highlight */
+.highlight {
+    background-color: #fef3c7;
+    color: #92400e;
 }
 
 /* Image Zoom Modal */
@@ -387,6 +434,15 @@
     color: white;
     font-size: 18px;
     cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    #analysisTable tbody tr,
+    #analysisTable tbody tr:hover {
+        transition: background 0.15s ease !important;
+        transform: none !important;
+        opacity: 1 !important;
+    }
 }
 </style>
 
@@ -571,6 +627,30 @@ function showLoading(show) {
     else overlay.classList.remove('active');
 }
 
+// Row entrance animation
+function initRowEntrance() {
+    const rows = document.querySelectorAll('#analysisTable tbody tr');
+    if (!rows.length) return;
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        rows.forEach(r => r.classList.add('row-visible'));
+        return;
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (!entry.isIntersecting) return;
+            const row = entry.target;
+            const index = Array.from(rows).indexOf(row);
+            const delay = Math.min(index * 38, 15 * 38) + 60;
+            setTimeout(() => row.classList.add('row-visible'), delay);
+            observer.unobserve(row);
+        });
+    }, { threshold: 0.05, rootMargin: '0px 0px -20px 0px' });
+
+    rows.forEach(row => observer.observe(row));
+}
+
 // Rendering Functions
 function renderAvatar(avatar, name, admission) {
     const avatarUrl = avatar ? getAvatarUrl(avatar) : null;
@@ -693,7 +773,7 @@ function hidePopover() {
     }, 180);
 }
 
-// DataTable Setup
+// DataTable Setup - with client-side search to avoid reloading on each keystroke
 $(document).ready(function() {
     analysisTable = $('#analysisTable').DataTable({
         processing: true,
@@ -707,7 +787,10 @@ $(document).ready(function() {
                 d.session_id = currentFilters.session_id;
             },
             beforeSend: function() { showLoading(true); },
-            complete: function() { showLoading(false); },
+            complete: function() {
+                showLoading(false);
+                setTimeout(initRowEntrance, 100);
+            },
             dataSrc: function(response) {
                 if (response.data && response.data.length) {
                     response.data.forEach(item => {
@@ -789,7 +872,6 @@ $(document).ready(function() {
             $('#analysisTable tbody tr').off('mouseenter mouseleave mousemove');
             $('#analysisTable tbody tr').on('mouseenter', function(e) {
                 clearTimeout(popoverTimer);
-                const $this = $(this);
                 popoverTimer = setTimeout(() => showPopover(this, e), 280);
             }).on('mousemove', function(e) {
                 if (popover.classList.contains('visible')) {
@@ -802,11 +884,38 @@ $(document).ready(function() {
         },
         language: {
             emptyTable: '<div class="text-center py-5 text-muted">No data available. Please select filters and click Load Report.</div>',
-            processing: '<div class="text-center py-4"><div class="spinner-border text-primary"></div><p>Loading...</p></div>'
+            processing: '<div class="text-center py-4"><div class="spinner-border text-primary"></div><p>Loading...</p></div>',
+            search: 'Search:',
+            searchPlaceholder: 'Type to search...',
+            lengthMenu: 'Show _MENU_ entries',
+            info: 'Showing _START_ to _END_ of _TOTAL_ students',
+            infoEmpty: 'Showing 0 to 0 of 0 students',
+            infoFiltered: '(filtered from _MAX_ total students)'
         },
         pageLength: 25,
-        order: [[8, 'desc']]
+        order: [[8, 'desc']],
+        // Disable server-side search - use client-side search instead
+        searchDelay: 500
     });
+
+    // Custom client-side search highlighting
+    $('#analysisTable_filter input').off('keyup').on('keyup', function() {
+        const searchTerm = $(this).val();
+        if (searchTerm.length > 0) {
+            highlightSearchTerm(searchTerm);
+        }
+    });
+
+    function highlightSearchTerm(term) {
+        $('#analysisTable tbody tr').each(function() {
+            const text = $(this).text();
+            if (text.toLowerCase().indexOf(term.toLowerCase()) !== -1) {
+                $(this).addClass('highlight');
+            } else {
+                $(this).removeClass('highlight');
+            }
+        });
+    }
 
     $('#loadReportBtn').on('click', function() {
         const classId = $('#class_id').val();
@@ -859,7 +968,10 @@ $(document).on('click', '.student-avatar-table, .student-avatar-placeholder', fu
         canvas.width = 400;
         canvas.height = 400;
         const ctx = canvas.getContext('2d');
-        ctx.fillStyle = 'linear-gradient(135deg, #2563eb, #4f46e5)';
+        const grad = ctx.createLinearGradient(0, 0, 400, 400);
+        grad.addColorStop(0, '#2563eb');
+        grad.addColorStop(1, '#7c3aed');
+        ctx.fillStyle = grad;
         ctx.fillRect(0, 0, 400, 400);
         ctx.fillStyle = '#fff';
         ctx.font = 'bold 160px "DM Sans", Arial, sans-serif';
