@@ -147,6 +147,13 @@
         color: #1e3a5f;
     }
 
+    /* Action buttons */
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+    }
+
     /* Popover styles */
     #studentPopover {
         position: fixed;
@@ -350,9 +357,20 @@
                         </tr>
                     </thead>
                     <tbody id="tableBody">
-                        <tr><td colspan="11" class="text-center py-5 text-muted">Select class, term, and session to view data</td></tr>
+                        <tr><td colspan="11" class="text-center py-5 text-muted">Select class, term, and session then click Load Report</td></tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    {{-- Signatures --}}
+    <div class="card shadow-sm no-print">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-4 text-center"><div style="border-top:1px solid #374151; margin-top:30px; padding-top:5px;">Bursar</div></div>
+                <div class="col-4 text-center"><div style="border-top:1px solid #374151; margin-top:30px; padding-top:5px;">Principal</div></div>
+                <div class="col-4 text-center"><div style="border-top:1px solid #374151; margin-top:30px; padding-top:5px;">Date: ___________</div></div>
             </div>
         </div>
     </div>
@@ -389,12 +407,24 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
+// Make sure jQuery is loaded first
+console.log('jQuery version:', $.fn.jquery);
+
 let currentFilters = {};
 let studentData = {};
 
-function formatMoney(n) { return '₦' + (parseFloat(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 })); }
-function formatNumber(n) { return parseFloat(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 })); }
-function getInitials(name) { if (!name) return 'ST'; return name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase(); }
+function formatMoney(n) {
+    return '₦' + (parseFloat(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 }));
+}
+
+function formatNumber(n) {
+    return parseFloat(n || 0).toLocaleString('en-NG', { minimumFractionDigits: 2 });
+}
+
+function getInitials(name) {
+    if (!name) return 'ST';
+    return name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
+}
 
 function getAvatarUrl(picture) {
     if (!picture || picture === 'unnamed.jpg') return null;
@@ -454,11 +484,13 @@ function renderTable(data) {
 function renderAvatar(item) {
     const avatarUrl = item.avatar ? getAvatarUrl(item.avatar) : null;
     const initials = getInitials(item.student_name);
+    const name = escapeHtml(item.student_name);
+    const admission = escapeHtml(item.admission_no);
 
     if (avatarUrl) {
-        return `<img src="${avatarUrl}" class="student-avatar-table" data-name="${escapeHtml(item.student_name)}" data-admission="${escapeHtml(item.admission_no)}">`;
+        return `<img src="${avatarUrl}" class="student-avatar-table" data-name="${name}" data-admission="${admission}">`;
     }
-    return `<div class="student-avatar-table" style="background: linear-gradient(135deg, #2563eb, #4f46e5); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; width: 32px; height: 32px; margin: 0 auto; cursor: pointer;">${initials}</div>`;
+    return `<div class="student-avatar-table" style="background: linear-gradient(135deg, #2563eb, #4f46e5); color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 50%; width: 32px; height: 32px; margin: 0 auto; cursor: pointer;" data-name="${name}" data-admission="${admission}">${initials}</div>`;
 }
 
 function renderBenefits(item) {
@@ -487,15 +519,17 @@ function updateStats(data) {
     $('#scholarshipCount').text(scholarshipCount);
     $('#totalStudents').text(data.length);
     $('#totalRate').text(rate + '%');
-    $('#selectedClass').text($('#class_id option:selected').text());
-    $('#selectedTerm').text($('#term_id option:selected').text());
-    $('#selectedSession').text($('#session_id option:selected').text());
+    $('#selectedClass').text($('#class_id option:selected').text() || '—');
+    $('#selectedTerm').text($('#term_id option:selected').text() || '—');
+    $('#selectedSession').text($('#session_id option:selected').text() || '—');
 }
 
 function loadReportData() {
     const classId = $('#class_id').val();
     const termId = $('#term_id').val();
     const sessionId = $('#session_id').val();
+
+    console.log('Load Report Clicked - Values:', { classId, termId, sessionId });
 
     if (!classId || !termId || !sessionId) {
         Swal.fire('Warning', 'Please select class, term, and session', 'warning');
@@ -507,12 +541,20 @@ function loadReportData() {
     $('#tableBody').html('<tr><td colspan="11" class="text-center py-5"><div class="spinner-border text-primary"></div><p class="mt-2">Loading data...</p></td></tr>');
     $('#statsRow, #tableCard').hide();
 
+    // Get the route URL from Laravel
+    const url = '{{ route("reports.analysis.class-data") }}';
+    console.log('AJAX URL:', url);
+
     $.ajax({
-        url: '{{ route("reports.analysis.class-data") }}',
+        url: url,
         type: 'GET',
         data: currentFilters,
-        headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        dataType: 'json',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
         success: function(response) {
+            console.log('AJAX Success:', response);
             if (response.data && response.data.length > 0) {
                 renderTable(response.data);
                 updateStats(response.data);
@@ -523,10 +565,23 @@ function loadReportData() {
                 $('#statsRow, #tableCard').show();
             }
         },
-        error: function(xhr) {
-            console.error('AJAX Error:', xhr.responseText);
-            $('#tableBody').html('<tr><td colspan="11" class="text-center py-5 text-danger">Failed to load data. Please try again.</td></tr>');
-            Swal.fire('Error', 'Failed to load data', 'error');
+        error: function(xhr, status, error) {
+            console.error('AJAX Error:', {
+                status: status,
+                error: error,
+                responseText: xhr.responseText,
+                statusCode: xhr.status
+            });
+            let errorMsg = 'Failed to load data. ';
+            if (xhr.responseJSON && xhr.responseJSON.message) {
+                errorMsg += xhr.responseJSON.message;
+            } else if (xhr.status === 500) {
+                errorMsg += 'Server error. Please check the logs.';
+            } else {
+                errorMsg += 'Please try again.';
+            }
+            $('#tableBody').html('<tr><td colspan="11" class="text-center py-5 text-danger">' + errorMsg + '</td></tr>');
+            Swal.fire('Error', errorMsg, 'error');
         }
     });
 }
@@ -605,14 +660,30 @@ function exportReport(format) {
         Swal.fire('Warning', 'Please load report data first', 'warning');
         return;
     }
-    window.open('{{ route("reports.analysis.export") }}?class_id=' + currentFilters.class_id + '&term_id=' + currentFilters.term_id + '&session_id=' + currentFilters.session_id + '&format=' + format, '_blank');
+    const url = '{{ route("reports.analysis.export") }}?class_id=' + currentFilters.class_id + '&term_id=' + currentFilters.term_id + '&session_id=' + currentFilters.session_id + '&format=' + format;
+    window.open(url, '_blank');
 }
 
-function escapeHtml(str) { if (!str) return ''; return String(str).replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[m]); }
+function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[m]);
+}
 
 $(document).ready(function() {
-    $('#loadReportBtn').on('click', loadReportData);
-    $('#resetBtn').on('click', function() { $('#class_id, #term_id, #session_id').val(''); $('#statsRow, #tableCard').hide(); $('#tableBody').html('<tr><td colspan="11" class="text-center py-5 text-muted">Select class, term, and session to view data</td></tr>'); });
+    console.log('Document ready - Class Analysis Report');
+
+    $('#loadReportBtn').on('click', function(e) {
+        e.preventDefault();
+        console.log('Load Report button clicked');
+        loadReportData();
+    });
+
+    $('#resetBtn').on('click', function() {
+        $('#class_id, #term_id, #session_id').val('');
+        $('#statsRow, #tableCard').hide();
+        $('#tableBody').html('<tr><td colspan="11" class="text-center py-5 text-muted">Select class, term, and session then click Load Report</td></tr>');
+        currentFilters = {};
+    });
 });
 </script>
 @endsection
