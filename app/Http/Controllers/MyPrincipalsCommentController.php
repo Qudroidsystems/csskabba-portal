@@ -26,43 +26,46 @@ class MyPrincipalsCommentController extends Controller
     // INDEX
     // =========================================================================
 
-   public function index()
-{
-    $pagetitle = "My Principal's Comment Assignments";
+    public function index()
+    {
+        $pagetitle = "My Principal's Comment Assignments";
 
-    $assignments = Principalscomment::where('staffId', Auth::id())
-        ->join('schoolclass', 'principalscomments.schoolclassid', '=', 'schoolclass.id')
-        ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-        ->leftJoin('schoolsession', 'principalscomments.sessionid', '=', 'schoolsession.id')
-        ->leftJoin('schoolterm', 'principalscomments.termid', '=', 'schoolterm.id')
-        ->select([
-            'principalscomments.id',
-            'schoolclass.id as schoolclassid',
-            'schoolclass.schoolclass as sclass',
-            'schoolarm.arm as schoolarm',
-            'schoolsession.id as session_id',      // Added session id
-            'schoolsession.session as session_name',
-            'schoolterm.id as term_id',            // Added term id
-            'schoolterm.term as term_name',
-            'principalscomments.updated_at',
-        ])
-        ->orderBy('schoolclass.schoolclass')
-        ->orderBy('schoolarm.arm')
-        ->get();
+        $assignments = Principalscomment::where('staffId', Auth::id())
+            ->join('schoolclass', 'principalscomments.schoolclassid', '=', 'schoolclass.id')
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+            ->leftJoin('schoolsession', 'principalscomments.sessionid', '=', 'schoolsession.id')
+            ->leftJoin('schoolterm', 'principalscomments.termid', '=', 'schoolterm.id')
+            ->select([
+                'principalscomments.id',
+                'schoolclass.id as schoolclassid',
+                'schoolclass.schoolclass as sclass',
+                'schoolarm.arm as schoolarm',
+                'schoolsession.id as session_id',
+                'schoolsession.session as session_name',
+                'schoolterm.id as term_id',
+                'schoolterm.term as term_name',
+                'principalscomments.updated_at',
+            ])
+            ->orderBy('schoolclass.schoolclass')
+            ->orderBy('schoolarm.arm')
+            ->get();
 
-    // Remove the misleading currentSession and currentTerm
-    // They're not needed since each assignment has its own session/term
-
-    return view('myprincipalscomment.index')->with(compact('assignments', 'pagetitle'));
-}
+        return view('myprincipalscomment.index')->with(compact('assignments', 'pagetitle'));
+    }
 
     // =========================================================================
     // CLASS BROADSHEET
     // =========================================================================
 
-    public function classBroadsheet($schoolclassid, $sessionid, $termid)
+    public function classBroadsheet(Request $request, $schoolclassid, $sessionid, $termid)
     {
         $pagetitle = "Principal's Comment & Class Broadsheet";
+
+        // Scoring mode: 'cumulative' (default) or 'term'
+        $scoringMode = $request->get('scoring_mode', 'cumulative');
+        if (!in_array($scoringMode, ['cumulative', 'term'])) {
+            $scoringMode = 'cumulative';
+        }
 
         // ------------------------------------------------------------------
         // 1.  Students enrolled in this class / session
@@ -97,17 +100,7 @@ class MyPrincipalsCommentController extends Controller
             : false;
 
         // ------------------------------------------------------------------
-        // 3.  Broadsheet rows — identical join/filter pattern used in
-        //     ViewStudentReportController::getStudentResultData()
-        //
-        //     Critical details that were wrong before:
-        //       ✓  join key: broadsheets.broadsheet_record_id  (all lowercase)
-        //       ✓  filter:   broadsheet_records.schoolclass_id
-        //       ✓  filter:   broadsheet_records.session_id
-        //       ✓  filter:   broadsheets.term_id
-        //     The old code used a subjectclass triple-join which is only
-        //     needed when filtering by staff/subject — not for a full class
-        //     broadsheet.
+        // 3.  Broadsheet rows
         // ------------------------------------------------------------------
         $broadsheetRows = Broadsheets::where('broadsheet_records.schoolclass_id', $schoolclassid)
             ->where('broadsheets.term_id', $termid)
@@ -160,10 +153,12 @@ class MyPrincipalsCommentController extends Controller
             ->toArray();
 
         // ------------------------------------------------------------------
-        // 7.  Grade analysis per student  (graded on cumulative score)
+        // 7.  Grade analysis per student
+        //     Grades computed for BOTH term and cumulative scores always.
+        //     $activeScoreMap is determined by $scoringMode for comment/analytics.
         // ------------------------------------------------------------------
-        $studentGrades        = [];
-        $studentGradeAnalysis = [];
+        $studentGrades        = [];   // used for tooltip grade table
+        $studentGradeAnalysis = [];   // used for comment generation
 
         foreach ($students as $student) {
             $sid = $student->id;
@@ -178,25 +173,42 @@ class MyPrincipalsCommentController extends Controller
                 $cumTotal  = $cumScoreMap[$sid][$subject]  ?? 0;
                 $termTotal = $termScoreMap[$sid][$subject] ?? 0;
 
-                [$grade, $gradeLetter] = $this->gradeFromScore((float) $cumTotal, $isSenior);
+                // Grade for CUMULATIVE
+                [$cumGrade, $cumGradeLetter] = $this->gradeFromScore((float) $cumTotal, $isSenior);
+
+                // Grade for TERM
+                [$termGrade, $termGradeLetter] = $this->gradeFromScore((float) $termTotal, $isSenior);
+
+                // Active score/grade depends on chosen mode
+                $activeScore       = $scoringMode === 'term' ? $termTotal  : $cumTotal;
+                $activeGrade       = $scoringMode === 'term' ? $termGrade  : $cumGrade;
+                $activeGradeLetter = $scoringMode === 'term' ? $termGradeLetter : $cumGradeLetter;
 
                 $entry = [
-                    'subject'      => $subject,
-                    'score'        => $cumTotal,
-                    'term_score'   => $termTotal,
-                    'grade'        => $grade,
-                    'grade_letter' => $gradeLetter,
+                    'subject'           => $subject,
+                    // Cumulative
+                    'cum_score'         => $cumTotal,
+                    'cum_grade'         => $cumGrade,
+                    'cum_grade_letter'  => $cumGradeLetter,
+                    // Term
+                    'term_score'        => $termTotal,
+                    'term_grade'        => $termGrade,
+                    'term_grade_letter' => $termGradeLetter,
+                    // Legacy fields for tooltip compatibility
+                    'score'             => $activeScore,
+                    'grade'             => $activeGrade,
+                    'grade_letter'      => $activeGradeLetter,
                 ];
 
                 $studentGrades[$sid][]                  = $entry;
                 $studentGradeAnalysis[$sid]['grades'][] = $entry;
-                $studentGradeAnalysis[$sid]['counts'][$gradeLetter]++;
+                $studentGradeAnalysis[$sid]['counts'][$activeGradeLetter]++;
 
-                if (in_array($gradeLetter, ['C', 'D', 'E', 'F'])) {
+                if (in_array($activeGradeLetter, ['C', 'D', 'E', 'F'])) {
                     $studentGradeAnalysis[$sid]['weak_subjects'][] = [
                         'subject'          => $subject,
-                        'grade'            => $grade,
-                        'grade_letter'     => $gradeLetter,
+                        'grade'            => $activeGrade,
+                        'grade_letter'     => $activeGradeLetter,
                         'cumulative_score' => $cumTotal,
                         'term_score'       => $termTotal,
                     ];
@@ -289,7 +301,10 @@ class MyPrincipalsCommentController extends Controller
                 default                                            => '',
             };
 
-            $comment    = "$firstName has $gradeSummary$termInfo. "
+            // Only include termInfo in comment if using cumulative mode
+            $modeTermInfo = $scoringMode === 'cumulative' ? $termInfo : '';
+
+            $comment    = "$firstName has $gradeSummary$modeTermInfo. "
                         . str_replace('{NAME}', $firstName, $baseComment);
             $pronoun    = strtoupper($student->gender) === 'MALE' ? 'He'  : 'She';
             $possessive = strtoupper($student->gender) === 'MALE' ? 'his' : 'her';
@@ -312,6 +327,7 @@ class MyPrincipalsCommentController extends Controller
 
         // ------------------------------------------------------------------
         // 10. Student analytics  (totals, averages, positions)
+        //     Primary analytics follow scoring mode; both are always computed.
         // ------------------------------------------------------------------
         $studentTotals     = [];
         $studentTermTotals = [];
@@ -346,19 +362,30 @@ class MyPrincipalsCommentController extends Controller
             ];
         }
 
-        // Class cumulative average
+        // Class averages for both modes
         $classCumSum      = array_sum(array_column($studentTotals, 'total'));
         $classCumSubjects = array_sum(array_column($studentTotals, 'subjects'));
-        $classAverage     = $classCumSubjects > 0 ? round($classCumSum / $classCumSubjects, 1) : 0;
+        $classCumAverage  = $classCumSubjects > 0 ? round($classCumSum / $classCumSubjects, 1) : 0;
+
+        $classTermSum      = array_sum(array_column($studentTermTotals, 'total'));
+        $classTermAverage  = $classCumSubjects > 0 ? round($classTermSum / $classCumSubjects, 1) : 0;
+
+        $activeClassAverage = $scoringMode === 'term' ? $classTermAverage : $classCumAverage;
 
         $classAnalytics = [
-            'average'        => $classAverage,
+            'average'        => $activeClassAverage,
+            'cum_average'    => $classCumAverage,
+            'term_average'   => $classTermAverage,
             'total_students' => $students->count(),
         ];
 
-        // Positions by cumulative average (descending)
+        // Positions by active scoring mode (descending)
         $sortedStudents = $students
-            ->sortByDesc(fn ($s) => $studentTotals[$s->id]['average'] ?? 0)
+            ->sortByDesc(fn ($s) =>
+                $scoringMode === 'term'
+                    ? ($studentTermTotals[$s->id]['average'] ?? 0)
+                    : ($studentTotals[$s->id]['average']     ?? 0)
+            )
             ->values();
 
         $positions = [];
@@ -366,7 +393,10 @@ class MyPrincipalsCommentController extends Controller
         $prevAvg   = null;
 
         foreach ($sortedStudents as $index => $student) {
-            $avg = $studentTotals[$student->id]['average'];
+            $avg = $scoringMode === 'term'
+                ? $studentTermTotals[$student->id]['average']
+                : $studentTotals[$student->id]['average'];
+
             if ($index > 0 && $avg < $prevAvg) {
                 $rank = $index + 1;
             }
@@ -380,12 +410,14 @@ class MyPrincipalsCommentController extends Controller
             $position = $positions[$sid] ?? null;
 
             $studentAnalytics[$sid] = [
-                'total_score'   => $studentTotals[$sid]['total'],
-                'average'       => $studentTotals[$sid]['average'],
-                'term_total'    => $studentTermTotals[$sid]['total'],
-                'term_average'  => $studentTermTotals[$sid]['average'],
-                'subjects'      => $studentTotals[$sid]['subjects'],
-                'position'      => $position,
+                // Cumulative
+                'total_score'  => $studentTotals[$sid]['total'],
+                'average'      => $studentTotals[$sid]['average'],
+                // Term
+                'term_total'   => $studentTermTotals[$sid]['total'],
+                'term_average' => $studentTermTotals[$sid]['average'],
+                'subjects'     => $studentTotals[$sid]['subjects'],
+                'position'     => $position,
                 'position_text' => $position ? $this->getPositionSuffix($position) : '-',
                 'grade_counts'  => $studentGradeAnalysis[$sid]['counts'] ?? [],
             ];
@@ -414,7 +446,8 @@ class MyPrincipalsCommentController extends Controller
                 'standardPersonalizedComments',
                 'studentAnalytics',
                 'classAnalytics',
-                'isSenior'
+                'isSenior',
+                'scoringMode'
             ));
     }
 
@@ -522,8 +555,6 @@ class MyPrincipalsCommentController extends Controller
 
     /**
      * Return [grade, gradeLetter] for a score.
-     * Uses pure cascading >= — no upper-bound gaps — matching
-     * ViewStudentReportController::calculateGrade().
      */
     private function gradeFromScore(float $score, bool $isSenior): array
     {

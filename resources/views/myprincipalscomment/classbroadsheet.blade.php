@@ -59,6 +59,71 @@
     position: relative;
 }
 
+/* ── Scoring Mode Toggle ── */
+.scoring-mode-bar {
+    background: #fff;
+    border: 1px solid var(--principal-border);
+    border-radius: var(--principal-radius);
+    padding: 14px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    box-shadow: var(--principal-shadow);
+}
+.scoring-mode-bar .mode-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--principal-primary);
+    white-space: nowrap;
+}
+.scoring-mode-toggle {
+    display: flex;
+    background: var(--principal-bg);
+    border: 1.5px solid var(--principal-border);
+    border-radius: 8px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+.scoring-mode-toggle .mode-btn {
+    padding: 7px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    border: none;
+    background: transparent;
+    color: var(--principal-muted);
+    cursor: pointer;
+    transition: all .2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    text-decoration: none;
+}
+.scoring-mode-toggle .mode-btn:hover {
+    background: #e9ecef;
+    color: var(--principal-primary);
+}
+.scoring-mode-toggle .mode-btn.active {
+    background: var(--principal-primary);
+    color: #fff;
+}
+.scoring-mode-toggle .mode-btn.active-term {
+    background: #0891b2;
+    color: #fff;
+}
+.mode-hint {
+    font-size: 12px;
+    color: var(--principal-muted);
+    background: var(--principal-bg);
+    border: 1px dashed var(--principal-border);
+    border-radius: 6px;
+    padding: 5px 10px;
+}
+.mode-hint strong {
+    color: var(--principal-primary);
+}
+
 /* Stat Cards */
 .stat-card {
     background: #fff;
@@ -113,6 +178,22 @@
     background: #6c757d;
     color: #fff;
 }
+.principal-badge-mode-cum {
+    background: linear-gradient(135deg, #1e3a5f, #2563eb);
+    color: #fff;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+}
+.principal-badge-mode-term {
+    background: linear-gradient(135deg, #0891b2, #06b6d4);
+    color: #fff;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+}
 
 /* Clickable Avatar Styles */
 .avatar-clickable {
@@ -123,7 +204,6 @@
     transform: scale(1.1);
     opacity: 0.9;
 }
-
 .student-avatar {
     width: 45px;
     height: 45px;
@@ -180,14 +260,8 @@
     object-fit: contain;
 }
 @keyframes zoomIn {
-    from {
-        opacity: 0;
-        transform: scale(0.8);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
+    from { opacity: 0; transform: scale(0.8); }
+    to   { opacity: 1; transform: scale(1);   }
 }
 .image-zoom-modal .btn-close {
     position: absolute;
@@ -222,7 +296,7 @@
     text-align: center;
 }
 
-/* Subject Score Card */
+/* ── Dual-Score Subject Card ── */
 .subject-score-card {
     background: var(--principal-bg);
     border-radius: 10px;
@@ -237,48 +311,82 @@
     transform: translateY(-2px);
     box-shadow: var(--principal-shadow);
 }
-.term-score {
-    font-size: 1.2rem;
+.subject-score-card .score-subject-name {
+    font-size: .65rem;
     font-weight: 700;
-}
-.cumulative-score {
-    font-size: 0.9rem;
-    font-weight: 600;
-}
-.term-label {
-    font-size: .6rem;
+    color: #374151;
     text-transform: uppercase;
-    font-weight: 700;
-    color: var(--principal-muted);
-    letter-spacing: .5px;
+    letter-spacing: .4px;
+    margin-bottom: 6px;
+    line-height: 1.2;
 }
-.cumulative-label {
-    font-size: .6rem;
+/* Term row */
+.score-row-term {
+    background: rgba(8, 145, 178, .07);
+    border-radius: 6px;
+    padding: 4px 5px;
+    margin-bottom: 4px;
+    border-left: 3px solid #0891b2;
+}
+.score-row-term .score-type-label {
+    font-size: .55rem;
+    font-weight: 700;
     text-transform: uppercase;
-    font-weight: 700;
-    color: #17a2b8;
     letter-spacing: .5px;
+    color: #0891b2;
+    margin-bottom: 1px;
 }
-
-/* Grade badges */
-.grade-badge-sm {
+/* Cumulative row */
+.score-row-cum {
+    background: rgba(30, 58, 95, .07);
+    border-radius: 6px;
+    padding: 4px 5px;
+    border-left: 3px solid var(--principal-primary);
+}
+.score-row-cum .score-type-label {
+    font-size: .55rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--principal-primary);
+    margin-bottom: 1px;
+}
+.score-value {
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1;
+}
+.score-grade-badge {
     display: inline-block;
-    padding: 2px 8px;
-    border-radius: 20px;
-    font-size: .7rem;
+    padding: 1px 6px;
+    border-radius: 10px;
+    font-size: .6rem;
     font-weight: 700;
-    margin-left: 5px;
+    margin-left: 3px;
+    vertical-align: middle;
 }
-.grade-a, .grade-a1 { background: #28a745; color: #fff; }
-.grade-b, .grade-b2, .grade-b3 { background: #17a2b8; color: #fff; }
-.grade-c, .grade-c4, .grade-c5, .grade-c6 { background: #6c757d; color: #fff; }
-.grade-d, .grade-d7 { background: #ffc107; color: #212529; }
-.grade-e, .grade-e8 { background: #fd7e14; color: #fff; }
-.grade-f, .grade-f9 { background: #dc3545; color: #fff; }
 
-.highlight-red { color: #dc3545 !important; font-weight: 600; }
-.highlight-orange { color: #fd7e14 !important; font-weight: 600; }
-.highlight-green { color: #28a745 !important; font-weight: 600; }
+/* Active mode highlight on card */
+.subject-score-card.mode-cum .score-row-cum {
+    background: rgba(30, 58, 95, .13);
+    box-shadow: 0 1px 4px rgba(30,58,95,.1);
+}
+.subject-score-card.mode-term .score-row-term {
+    background: rgba(8, 145, 178, .14);
+    box-shadow: 0 1px 4px rgba(8,145,178,.12);
+}
+
+/* Grade colour system */
+.grade-a, .grade-a1 { background: #16a34a; color: #fff; }
+.grade-b, .grade-b2, .grade-b3 { background: #0891b2; color: #fff; }
+.grade-c, .grade-c4, .grade-c5, .grade-c6 { background: #6b7280; color: #fff; }
+.grade-d, .grade-d7 { background: #d97706; color: #fff; }
+.grade-e, .grade-e8 { background: #ea580c; color: #fff; }
+.grade-f, .grade-f9 { background: #dc2626; color: #fff; }
+
+.highlight-red    { color: #dc2626 !important; font-weight: 600; }
+.highlight-orange { color: #ea580c !important; font-weight: 600; }
+.highlight-green  { color: #16a34a !important; font-weight: 600; }
 
 /* Table Styling */
 .principal-table th {
@@ -386,8 +494,8 @@
     border: 2px solid var(--principal-accent);
     border-radius: 16px;
     box-shadow: 0 20px 60px rgba(0,0,0,.3);
-    width: 480px;
-    max-height: 550px;
+    width: 520px;
+    max-height: 580px;
     overflow: hidden;
     z-index: 10050;
     opacity: 0;
@@ -402,14 +510,8 @@
     animation: tooltipFadeIn .3s ease-out;
 }
 @keyframes tooltipFadeIn {
-    from {
-        opacity: 0;
-        transform: translate(-50%,-48%) scale(.95);
-    }
-    to {
-        opacity: 1;
-        transform: translate(-50%,-50%) scale(1);
-    }
+    from { opacity: 0; transform: translate(-50%,-48%) scale(.95); }
+    to   { opacity: 1; transform: translate(-50%,-50%) scale(1);   }
 }
 .grades-tooltip.position-bottom {
     bottom: 15%;
@@ -447,9 +549,21 @@
 }
 .grades-tooltip .tooltip-body {
     padding: 0 15px 15px 15px;
-    max-height: 420px;
+    max-height: 450px;
     overflow-y: auto;
 }
+
+/* Tooltip grade table column headers */
+.tooltip-grade-header {
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+.tooltip-col-term  { color: #0891b2; }
+.tooltip-col-cum   { color: var(--principal-primary); }
+.tooltip-col-tgrade  { color: #0891b2; }
+.tooltip-col-cgrade  { color: var(--principal-primary); }
 
 /* Auto-save toast */
 .auto-save-toast {
@@ -509,7 +623,7 @@
 }
 .subjects-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
     gap: 10px;
     margin-bottom: 20px;
 }
@@ -568,20 +682,12 @@
 
 /* Responsive */
 @media (min-width: 1200px) {
-    .desktop-table {
-        display: block !important;
-    }
-    .mobile-cards {
-        display: none !important;
-    }
+    .desktop-table  { display: block !important; }
+    .mobile-cards   { display: none  !important; }
 }
 @media (max-width: 1199.98px) {
-    .desktop-table {
-        display: none !important;
-    }
-    .mobile-cards {
-        display: block !important;
-    }
+    .desktop-table  { display: none  !important; }
+    .mobile-cards   { display: block !important; }
 }
 
 .spin-icon {
@@ -589,7 +695,7 @@
 }
 @keyframes spin {
     from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    to   { transform: rotate(360deg); }
 }
 </style>
 
@@ -608,6 +714,43 @@
                     {{ $schoolclass->schoolclass }} {{ $schoolclass->arm_name }} |
                     {{ $schoolterm }} {{ $schoolsession }}
                 </p>
+            </div>
+
+            {{-- ── Scoring Mode Toggle Bar ── --}}
+            <div class="scoring-mode-bar">
+                <span class="mode-label">
+                    <i class="ri-bar-chart-grouped-line me-1"></i>
+                    Grading & Comment Mode:
+                </span>
+                <div class="scoring-mode-toggle">
+                    <a href="{{ request()->fullUrlWithQuery(['scoring_mode' => 'cumulative']) }}"
+                       class="mode-btn {{ $scoringMode === 'cumulative' ? 'active' : '' }}">
+                        <i class="ri-bar-chart-line"></i> Cumulative Score
+                    </a>
+                    <a href="{{ request()->fullUrlWithQuery(['scoring_mode' => 'term']) }}"
+                       class="mode-btn {{ $scoringMode === 'term' ? 'active-term' : '' }}">
+                        <i class="ri-calendar-check-line"></i> Term Score
+                    </a>
+                </div>
+                <span class="mode-hint">
+                    @if($scoringMode === 'cumulative')
+                        <i class="ri-information-line text-primary"></i>
+                        Grades &amp; comments are based on <strong>Cumulative scores</strong>
+                    @else
+                        <i class="ri-information-line text-info"></i>
+                        Grades &amp; comments are based on <strong>Term scores only</strong>
+                    @endif
+                </span>
+                {{-- Current mode badge --}}
+                @if($scoringMode === 'cumulative')
+                    <span class="principal-badge-mode-cum ms-auto">
+                        <i class="ri-bar-chart-line me-1"></i> Cumulative Mode Active
+                    </span>
+                @else
+                    <span class="principal-badge-mode-term ms-auto">
+                        <i class="ri-calendar-check-line me-1"></i> Term Mode Active
+                    </span>
+                @endif
             </div>
 
             {{-- Stat Cards --}}
@@ -629,8 +772,15 @@
                 <div class="col-md-3">
                     <div class="stat-card">
                         <div class="stat-icon"><i class="ri-bar-chart-line"></i></div>
-                        <div class="stat-value text-success">{{ $classAnalytics['average'] }}</div>
-                        <div class="stat-label">Class Average</div>
+                        <div class="stat-value {{ $scoringMode === 'term' ? 'text-info' : 'text-success' }}">
+                            {{ $classAnalytics['average'] }}
+                        </div>
+                        <div class="stat-label">
+                            Class Average
+                            <span class="badge {{ $scoringMode === 'term' ? 'bg-info' : 'bg-primary' }} ms-1" style="font-size:.65rem;">
+                                {{ $scoringMode === 'term' ? 'Term' : 'Cumulative' }}
+                            </span>
+                        </div>
                     </div>
                 </div>
                 <div class="col-md-3">
@@ -638,7 +788,11 @@
                         <div class="stat-icon"><i class="ri-award-line"></i></div>
                         <div class="stat-value text-warning">
                             @php
-                                $topStudent = $students->sortByDesc(fn($s) => $studentAnalytics[$s->id]['average'] ?? 0)->first();
+                                $topStudent = $students->sortByDesc(fn($s) =>
+                                    $scoringMode === 'term'
+                                        ? ($studentAnalytics[$s->id]['term_average'] ?? 0)
+                                        : ($studentAnalytics[$s->id]['average'] ?? 0)
+                                )->first();
                             @endphp
                             @if($topStudent)
                                 {{ $topStudent->firstname }} {{ substr($topStudent->lastname, 0, 1) }}.
@@ -676,13 +830,22 @@
                                         <span class="principal-badge principal-badge-junior ms-2">Junior Class (A–F)</span>
                                     @endif
                                 </h5>
-                                <div class="mt-2 mt-sm-0">
-                                    <span class="principal-badge principal-badge-cumulative me-1">
-                                        <i class="ri-bar-chart-line"></i> Cumulative Score
+                                <div class="mt-2 mt-sm-0 d-flex gap-1 flex-wrap">
+                                    <span class="principal-badge" style="background:#e0f2fe;color:#0891b2;">
+                                        <i class="ri-calendar-check-line me-1"></i> Term Score / Grade
                                     </span>
-                                    <span class="principal-badge principal-badge-term">
-                                        <i class="ri-calendar-line"></i> Term Score
+                                    <span class="principal-badge principal-badge-cumulative">
+                                        <i class="ri-bar-chart-line me-1"></i> Cumulative Score / Grade
                                     </span>
+                                    @if($scoringMode === 'cumulative')
+                                        <span class="principal-badge" style="background:#dcfce7;color:#16a34a;">
+                                            <i class="ri-checkbox-circle-line me-1"></i> Grading: Cumulative
+                                        </span>
+                                    @else
+                                        <span class="principal-badge" style="background:#cffafe;color:#0891b2;">
+                                            <i class="ri-checkbox-circle-line me-1"></i> Grading: Term
+                                        </span>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -693,12 +856,11 @@
                                 <input type="text" class="form-control" id="searchInput"
                                        placeholder="🔍 Search students by name or admission number…"
                                        style="border: 1.5px solid var(--principal-border); border-radius: 8px;">
-                                <i class="ri-search-line search-icon"></i>
                             </div>
 
-                            {{-- ========================================================
+                            {{-- ============================================================
                                  DESKTOP TABLE
-                            ======================================================== --}}
+                            ============================================================ --}}
                             <div class="desktop-table">
                                 <div class="table-responsive">
                                     <table class="table principal-table w-100 mb-0">
@@ -710,8 +872,12 @@
                                                 <th width="180">Student Name</th>
                                                 <th width="70">Gender</th>
                                                 <th class="text-center">
-                                                    <i class="ri-book-open-line me-2"></i>
+                                                    <i class="ri-book-open-line me-1"></i>
                                                     Subjects Performance
+                                                    <small class="d-block fw-normal opacity-75" style="font-size:.65rem;margin-top:2px;">
+                                                        <span style="color:#90cdf4;">■ Term Score/Grade</span> &nbsp;
+                                                        <span style="color:#bfdbfe;">■ Cumulative Score/Grade</span>
+                                                    </small>
                                                 </th>
                                                 <th width="300">Principal's Comment</th>
                                             </tr>
@@ -720,7 +886,6 @@
                                             @foreach ($students as $index => $student)
                                                 @php
                                                     $sid = $student->id;
-                                                    $picture = $student->picture ? basename($student->picture) : 'unnamed.jpg';
                                                     $avatarUrl = null;
                                                     if(isset($student->picture) && $student->picture && $student->picture != 'unnamed.jpg' && $student->picture != '') {
                                                         $avatarUrl = asset('storage/student_avatars/' . $student->picture);
@@ -728,7 +893,7 @@
                                                     $fullName = trim($student->lastname . ' ' . $student->fname);
                                                     $otherName = $student->othername ?? '';
                                                     $fullNameWithOther = trim($fullName . ($otherName ? ' (' . $otherName . ')' : ''));
-                                                    $initials = strtoupper(substr($student->firstname, 0, 1) . substr($student->lastname, 0, 1));
+                                                    $initials = strtoupper(substr($student->fname, 0, 1) . substr($student->lastname, 0, 1));
                                                     if(empty($initials)) $initials = 'ST';
 
                                                     $currentComment = $profiles[$sid] ?? '';
@@ -740,7 +905,7 @@
                                                 <tr data-student-id="{{ $sid }}" class="student-row">
                                                     <td class="fw-bold">{{ $index + 1 }}</td>
 
-                                                    {{-- Photo with click to zoom --}}
+                                                    {{-- Photo --}}
                                                     <td class="text-center">
                                                         @if($avatarUrl)
                                                             <img src="{{ $avatarUrl }}"
@@ -752,8 +917,7 @@
                                                                  data-name="{{ $fullNameWithOther }}"
                                                                  data-admission="{{ $student->admissionNo ?? 'N/A' }}"
                                                                  data-class="{{ $schoolclass->schoolclass }} {{ $schoolclass->arm_name }}"
-                                                                 data-gender="{{ $student->gender ?? 'N/A' }}"
-                                                                 style="cursor: pointer;">
+                                                                 data-gender="{{ $student->gender ?? 'N/A' }}">
                                                         @else
                                                             <div class="avatar-placeholder avatar-clickable"
                                                                  data-bs-toggle="modal"
@@ -786,47 +950,94 @@
                                                         </span>
                                                     </td>
 
-                                                    {{-- Subject scores --}}
+                                                    {{-- ── Subject Scores — dual rows ── --}}
                                                     <td>
                                                         <div class="d-flex flex-wrap gap-2">
                                                             @foreach ($subjects as $subject)
                                                                 @php
                                                                     $termTotal = $termScoreMap[$sid][$subject] ?? 0;
-                                                                    $cumTotal = $cumScoreMap[$sid][$subject] ?? 0;
-                                                                    $termClass = $termTotal < 40 ? 'highlight-red' : ($termTotal < 50 ? 'highlight-orange' : ($termTotal >= 70 ? 'highlight-green' : ''));
-                                                                    $cumClass = $cumTotal < 40 ? 'highlight-red' : ($cumTotal < 50 ? 'highlight-orange' : ($cumTotal >= 70 ? 'highlight-green' : ''));
+                                                                    $cumTotal  = $cumScoreMap[$sid][$subject]  ?? 0;
 
-                                                                    $cumGrade = '';
-                                                                    if ($cumTotal > 0) {
+                                                                    // Term grade
+                                                                    [$termGrade, $termGradeLetter] = [null, null];
+                                                                    if ($termTotal > 0) {
                                                                         if ($isSenior) {
-                                                                            if      ($cumTotal >= 75) $cumGrade = 'A1';
-                                                                            elseif  ($cumTotal >= 70) $cumGrade = 'B2';
-                                                                            elseif  ($cumTotal >= 65) $cumGrade = 'B3';
-                                                                            elseif  ($cumTotal >= 60) $cumGrade = 'C4';
-                                                                            elseif  ($cumTotal >= 55) $cumGrade = 'C5';
-                                                                            elseif  ($cumTotal >= 50) $cumGrade = 'C6';
-                                                                            elseif  ($cumTotal >= 45) $cumGrade = 'D7';
-                                                                            elseif  ($cumTotal >= 40) $cumGrade = 'E8';
-                                                                            else                      $cumGrade = 'F9';
+                                                                            if      ($termTotal >= 75) { $termGrade = 'A1'; $termGradeLetter = 'a1'; }
+                                                                            elseif  ($termTotal >= 70) { $termGrade = 'B2'; $termGradeLetter = 'b2'; }
+                                                                            elseif  ($termTotal >= 65) { $termGrade = 'B3'; $termGradeLetter = 'b3'; }
+                                                                            elseif  ($termTotal >= 60) { $termGrade = 'C4'; $termGradeLetter = 'c4'; }
+                                                                            elseif  ($termTotal >= 55) { $termGrade = 'C5'; $termGradeLetter = 'c5'; }
+                                                                            elseif  ($termTotal >= 50) { $termGrade = 'C6'; $termGradeLetter = 'c6'; }
+                                                                            elseif  ($termTotal >= 45) { $termGrade = 'D7'; $termGradeLetter = 'd7'; }
+                                                                            elseif  ($termTotal >= 40) { $termGrade = 'E8'; $termGradeLetter = 'e8'; }
+                                                                            else                       { $termGrade = 'F9'; $termGradeLetter = 'f9'; }
                                                                         } else {
-                                                                            if      ($cumTotal >= 70) $cumGrade = 'A';
-                                                                            elseif  ($cumTotal >= 60) $cumGrade = 'B';
-                                                                            elseif  ($cumTotal >= 50) $cumGrade = 'C';
-                                                                            elseif  ($cumTotal >= 40) $cumGrade = 'D';
-                                                                            else                      $cumGrade = 'F';
+                                                                            if      ($termTotal >= 70) { $termGrade = 'A'; $termGradeLetter = 'a'; }
+                                                                            elseif  ($termTotal >= 60) { $termGrade = 'B'; $termGradeLetter = 'b'; }
+                                                                            elseif  ($termTotal >= 50) { $termGrade = 'C'; $termGradeLetter = 'c'; }
+                                                                            elseif  ($termTotal >= 40) { $termGrade = 'D'; $termGradeLetter = 'd'; }
+                                                                            else                       { $termGrade = 'F'; $termGradeLetter = 'f'; }
                                                                         }
                                                                     }
+
+                                                                    // Cumulative grade
+                                                                    [$cumGrade, $cumGradeLetter] = [null, null];
+                                                                    if ($cumTotal > 0) {
+                                                                        if ($isSenior) {
+                                                                            if      ($cumTotal >= 75) { $cumGrade = 'A1'; $cumGradeLetter = 'a1'; }
+                                                                            elseif  ($cumTotal >= 70) { $cumGrade = 'B2'; $cumGradeLetter = 'b2'; }
+                                                                            elseif  ($cumTotal >= 65) { $cumGrade = 'B3'; $cumGradeLetter = 'b3'; }
+                                                                            elseif  ($cumTotal >= 60) { $cumGrade = 'C4'; $cumGradeLetter = 'c4'; }
+                                                                            elseif  ($cumTotal >= 55) { $cumGrade = 'C5'; $cumGradeLetter = 'c5'; }
+                                                                            elseif  ($cumTotal >= 50) { $cumGrade = 'C6'; $cumGradeLetter = 'c6'; }
+                                                                            elseif  ($cumTotal >= 45) { $cumGrade = 'D7'; $cumGradeLetter = 'd7'; }
+                                                                            elseif  ($cumTotal >= 40) { $cumGrade = 'E8'; $cumGradeLetter = 'e8'; }
+                                                                            else                      { $cumGrade = 'F9'; $cumGradeLetter = 'f9'; }
+                                                                        } else {
+                                                                            if      ($cumTotal >= 70) { $cumGrade = 'A'; $cumGradeLetter = 'a'; }
+                                                                            elseif  ($cumTotal >= 60) { $cumGrade = 'B'; $cumGradeLetter = 'b'; }
+                                                                            elseif  ($cumTotal >= 50) { $cumGrade = 'C'; $cumGradeLetter = 'c'; }
+                                                                            elseif  ($cumTotal >= 40) { $cumGrade = 'D'; $cumGradeLetter = 'd'; }
+                                                                            else                      { $cumGrade = 'F'; $cumGradeLetter = 'f'; }
+                                                                        }
+                                                                    }
+
+                                                                    $termColorClass = $termTotal < 40 ? 'highlight-red' : ($termTotal < 50 ? 'highlight-orange' : ($termTotal >= 70 ? 'highlight-green' : ''));
+                                                                    $cumColorClass  = $cumTotal  < 40 ? 'highlight-red' : ($cumTotal  < 50 ? 'highlight-orange' : ($cumTotal  >= 70 ? 'highlight-green' : ''));
                                                                 @endphp
-                                                                <div class="subject-score-card" style="min-width: 80px;">
-                                                                    <div class="small fw-bold">{{ $subject }}</div>
-                                                                    <div class="term-score {{ $termClass }}">{{ $termTotal ?: '—' }}</div>
-                                                                    <div class="cumulative-score {{ $cumClass }}">
-                                                                        {{ $cumTotal ?: '—' }}
-                                                                        @if($cumGrade)
-                                                                            <span class="grade-badge-sm grade-{{ strtolower($cumGrade) }}">
-                                                                                {{ $cumGrade }}
-                                                                            </span>
-                                                                        @endif
+                                                                <div class="subject-score-card {{ $scoringMode === 'term' ? 'mode-term' : 'mode-cum' }}">
+                                                                    <div class="score-subject-name">{{ $subject }}</div>
+
+                                                                    {{-- Term row --}}
+                                                                    <div class="score-row-term">
+                                                                        <div class="score-type-label">
+                                                                            <i class="ri-calendar-check-line"></i> Term
+                                                                            @if($scoringMode === 'term')
+                                                                                <span style="color:#ea580c;font-size:.55rem;">★</span>
+                                                                            @endif
+                                                                        </div>
+                                                                        <div>
+                                                                            <span class="score-value {{ $termColorClass }}">{{ $termTotal ?: '—' }}</span>
+                                                                            @if($termGrade)
+                                                                                <span class="score-grade-badge grade-{{ $termGradeLetter }}">{{ $termGrade }}</span>
+                                                                            @endif
+                                                                        </div>
+                                                                    </div>
+
+                                                                    {{-- Cumulative row --}}
+                                                                    <div class="score-row-cum">
+                                                                        <div class="score-type-label">
+                                                                            <i class="ri-bar-chart-line"></i> Cum
+                                                                            @if($scoringMode === 'cumulative')
+                                                                                <span style="color:#ea580c;font-size:.55rem;">★</span>
+                                                                            @endif
+                                                                        </div>
+                                                                        <div>
+                                                                            <span class="score-value {{ $cumColorClass }}">{{ $cumTotal ?: '—' }}</span>
+                                                                            @if($cumGrade)
+                                                                                <span class="score-grade-badge grade-{{ $cumGradeLetter }}">{{ $cumGrade }}</span>
+                                                                            @endif
+                                                                        </div>
                                                                     </div>
                                                                 </div>
                                                             @endforeach
@@ -843,6 +1054,9 @@
                                                                     @if($hasWeakAdvice)
                                                                         <span class="badge bg-warning ms-1">Includes Advice</span>
                                                                     @endif
+                                                                    <span class="badge {{ $scoringMode === 'term' ? 'bg-info' : 'bg-primary' }} ms-1" style="font-size:.6rem;">
+                                                                        Based on {{ $scoringMode === 'term' ? 'Term' : 'Cumulative' }}
+                                                                    </span>
                                                                 </small>
                                                                 <div class="intelligent-comment-preview">
                                                                     <div class="intelligent-comment-text small">
@@ -878,13 +1092,13 @@
                                                                 </option>
                                                             @endforeach
                                                             @php
-                                                                $intPlain = strip_tags($intelligentComments[$sid] ?? '');
+                                                                $intPlain  = strip_tags($intelligentComments[$sid] ?? '');
                                                                 $stdPlains = array_map('strip_tags', $standardPersonalizedComments[$sid] ?? []);
-                                                                $showAI = $intPlain && !in_array($intPlain, $stdPlains);
+                                                                $showAI    = $intPlain && !in_array($intPlain, $stdPlains);
                                                             @endphp
                                                             @if($showAI)
                                                                 <option value="{{ $intPlain }}"
-                                                                        style="background-color: #e8f5e8 !important; font-weight: 600 !important; color: #155724 !important;"
+                                                                        style="background-color:#e8f5e8!important;font-weight:600!important;color:#155724!important;"
                                                                     {{ $currentCommentPlain === $intPlain ? 'selected' : '' }}>
                                                                     💡 Use AI Generated Comment
                                                                 </option>
@@ -908,45 +1122,51 @@
                                                                 </button>
                                                             </div>
                                                             <div class="tooltip-body">
-                                                                <div class="row mb-3">
+                                                                {{-- Summary stats --}}
+                                                                <div class="row mb-2 g-2">
                                                                     <div class="col-6">
-                                                                        <div class="stat-card">
-                                                                            <small class="text-muted">📊 Term Total</small>
-                                                                            <h4 class="mb-0 {{ ($analytics['term_total'] ?? 0) < 50 ? 'text-danger' : 'text-success' }}">
+                                                                        <div class="stat-card" style="border:2px solid #0891b2;padding:10px;">
+                                                                            <small class="text-info fw-bold">
+                                                                                <i class="ri-calendar-check-line"></i> Term Total
+                                                                            </small>
+                                                                            <h4 class="mb-0 {{ ($analytics['term_total'] ?? 0) < 50 ? 'text-danger' : 'text-info' }}">
                                                                                 {{ $analytics['term_total'] ?? 0 }}
                                                                             </h4>
+                                                                            <small class="text-muted">Avg: {{ $analytics['term_average'] ?? 0 }}</small>
                                                                         </div>
                                                                     </div>
                                                                     <div class="col-6">
-                                                                        <div class="stat-card" style="border:2px solid #17a2b8;">
-                                                                            <small class="text-info">📈 Cumulative Total</small>
-                                                                            <h4 class="mb-0 text-info">{{ $analytics['total_score'] ?? 0 }}</h4>
+                                                                        <div class="stat-card" style="border:2px solid var(--principal-primary);padding:10px;">
+                                                                            <small style="color:var(--principal-primary);" class="fw-bold">
+                                                                                <i class="ri-bar-chart-line"></i> Cumulative Total
+                                                                            </small>
+                                                                            <h4 class="mb-0 {{ ($analytics['total_score'] ?? 0) < 50 ? 'text-danger' : '' }}" style="color:var(--principal-primary);">
+                                                                                {{ $analytics['total_score'] ?? 0 }}
+                                                                            </h4>
+                                                                            <small class="text-muted">Avg: {{ $analytics['average'] ?? 0 }}</small>
                                                                         </div>
                                                                     </div>
                                                                 </div>
-                                                                <div class="row mb-3">
+                                                                <div class="row mb-2 g-2">
                                                                     <div class="col-4">
-                                                                        <div class="stat-card">
-                                                                            <small>Term Avg</small>
-                                                                            <strong>{{ $analytics['term_average'] ?? 0 }}</strong>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="col-4">
-                                                                        <div class="stat-card">
-                                                                            <small>Cum Avg</small>
-                                                                            <strong>{{ $analytics['average'] ?? 0 }}</strong>
-                                                                        </div>
-                                                                    </div>
-                                                                    <div class="col-4">
-                                                                        <div class="stat-card">
+                                                                        <div class="stat-card" style="padding:8px;">
                                                                             <small>Position</small>
-                                                                            <strong class="text-primary">{{ $analytics['position_text'] ?? '—' }}</strong>
+                                                                            <strong class="d-block text-primary">{{ $analytics['position_text'] ?? '—' }}</strong>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="col-8">
+                                                                        <div class="stat-card" style="padding:8px;">
+                                                                            <small>Active Mode</small>
+                                                                            <strong class="d-block {{ $scoringMode === 'term' ? 'text-info' : '' }}" style="{{ $scoringMode === 'cumulative' ? 'color:var(--principal-primary);' : '' }}">
+                                                                                {{ $scoringMode === 'term' ? '📅 Term Score' : '📈 Cumulative Score' }}
+                                                                            </strong>
                                                                         </div>
                                                                     </div>
                                                                 </div>
                                                                 <div class="text-center mb-3 p-2 bg-light rounded">
                                                                     <small class="text-muted">
-                                                                        Class Average: <strong>{{ $classAnalytics['average'] }}</strong>
+                                                                        Class Average ({{ $scoringMode === 'term' ? 'Term' : 'Cumulative' }}):
+                                                                        <strong>{{ $classAnalytics['average'] }}</strong>
                                                                     </small>
                                                                     @php $diff = ($analytics['average'] ?? 0) - $classAnalytics['average']; @endphp
                                                                     @if($diff > 0.5)
@@ -955,13 +1175,20 @@
                                                                         <span class="text-danger ms-2"><i class="ri-arrow-down-line"></i> {{ round($diff,1) }}</span>
                                                                     @endif
                                                                 </div>
-                                                                <table class="table table-sm">
+
+                                                                {{-- Grade table: all 4 columns --}}
+                                                                <table class="table table-sm table-hover">
                                                                     <thead>
                                                                         <tr>
-                                                                            <th>Subject</th>
-                                                                            <th>Term</th>
-                                                                            <th>Cumulative</th>
-                                                                            <th>Grade</th>
+                                                                            <th class="tooltip-grade-header">Subject</th>
+                                                                            <th class="tooltip-grade-header tooltip-col-term text-center">
+                                                                                <i class="ri-calendar-check-line"></i> Term Score
+                                                                            </th>
+                                                                            <th class="tooltip-grade-header tooltip-col-tgrade text-center">Term Grade</th>
+                                                                            <th class="tooltip-grade-header tooltip-col-cum text-center">
+                                                                                <i class="ri-bar-chart-line"></i> Cum Score
+                                                                            </th>
+                                                                            <th class="tooltip-grade-header tooltip-col-cgrade text-center">Cum Grade</th>
                                                                         </tr>
                                                                     </thead>
                                                                     <tbody id="grades-body-{{ $sid }}"></tbody>
@@ -976,14 +1203,13 @@
                                 </div>
                             </div>
 
-                            {{-- ========================================================
+                            {{-- ============================================================
                                  MOBILE CARDS
-                            ======================================================== --}}
+                            ============================================================ --}}
                             <div class="mobile-cards">
                                 @foreach ($students as $student)
                                     @php
                                         $sid = $student->id;
-                                        $picture = $student->picture ? basename($student->picture) : 'unnamed.jpg';
                                         $avatarUrl = null;
                                         if(isset($student->picture) && $student->picture && $student->picture != 'unnamed.jpg' && $student->picture != '') {
                                             $avatarUrl = asset('storage/student_avatars/' . $student->picture);
@@ -991,7 +1217,7 @@
                                         $fullName = trim($student->lastname . ' ' . $student->fname);
                                         $otherName = $student->othername ?? '';
                                         $fullNameWithOther = trim($fullName . ($otherName ? ' (' . $otherName . ')' : ''));
-                                        $initials = strtoupper(substr($student->firstname, 0, 1) . substr($student->lastname, 0, 1));
+                                        $initials = strtoupper(substr($student->fname, 0, 1) . substr($student->lastname, 0, 1));
                                         if(empty($initials)) $initials = 'ST';
 
                                         $currentComment = $profiles[$sid] ?? '';
@@ -1044,10 +1270,16 @@
                                         </div>
                                         <div class="student-body">
                                             <div class="performance-summary">
-                                                <div class="summary-title"><i class="ri-bar-chart-line"></i> Performance Summary</div>
+                                                <div class="summary-title">
+                                                    <i class="ri-bar-chart-line"></i>
+                                                    Performance Summary
+                                                    <span class="badge {{ $scoringMode === 'term' ? 'bg-info' : 'bg-light text-dark' }} ms-auto" style="font-size:.65rem;">
+                                                        {{ $scoringMode === 'term' ? '📅 Term Mode' : '📈 Cumulative Mode' }}
+                                                    </span>
+                                                </div>
                                                 <div class="summary-grid">
                                                     <div class="summary-item">
-                                                        <div class="summary-label">Term Average</div>
+                                                        <div class="summary-label">Term Avg</div>
                                                         <div class="summary-value">{{ $myTermAvg }}</div>
                                                     </div>
                                                     <div class="summary-item">
@@ -1065,21 +1297,80 @@
                                                 </div>
                                             </div>
 
+                                            {{-- Mobile subject grid — dual rows --}}
                                             <div class="subjects-grid">
                                                 @foreach ($subjects as $subject)
                                                     @php
                                                         $termTotal = $termScoreMap[$sid][$subject] ?? 0;
-                                                        $cumTotal = $cumScoreMap[$sid][$subject] ?? 0;
+                                                        $cumTotal  = $cumScoreMap[$sid][$subject]  ?? 0;
+
+                                                        [$mTermGrade, $mTermGL] = [null, null];
+                                                        if ($termTotal > 0) {
+                                                            if ($isSenior) {
+                                                                if      ($termTotal >= 75) { $mTermGrade = 'A1'; $mTermGL = 'a1'; }
+                                                                elseif  ($termTotal >= 70) { $mTermGrade = 'B2'; $mTermGL = 'b2'; }
+                                                                elseif  ($termTotal >= 65) { $mTermGrade = 'B3'; $mTermGL = 'b3'; }
+                                                                elseif  ($termTotal >= 60) { $mTermGrade = 'C4'; $mTermGL = 'c4'; }
+                                                                elseif  ($termTotal >= 55) { $mTermGrade = 'C5'; $mTermGL = 'c5'; }
+                                                                elseif  ($termTotal >= 50) { $mTermGrade = 'C6'; $mTermGL = 'c6'; }
+                                                                elseif  ($termTotal >= 45) { $mTermGrade = 'D7'; $mTermGL = 'd7'; }
+                                                                elseif  ($termTotal >= 40) { $mTermGrade = 'E8'; $mTermGL = 'e8'; }
+                                                                else                       { $mTermGrade = 'F9'; $mTermGL = 'f9'; }
+                                                            } else {
+                                                                if      ($termTotal >= 70) { $mTermGrade = 'A'; $mTermGL = 'a'; }
+                                                                elseif  ($termTotal >= 60) { $mTermGrade = 'B'; $mTermGL = 'b'; }
+                                                                elseif  ($termTotal >= 50) { $mTermGrade = 'C'; $mTermGL = 'c'; }
+                                                                elseif  ($termTotal >= 40) { $mTermGrade = 'D'; $mTermGL = 'd'; }
+                                                                else                       { $mTermGrade = 'F'; $mTermGL = 'f'; }
+                                                            }
+                                                        }
+
+                                                        [$mCumGrade, $mCumGL] = [null, null];
+                                                        if ($cumTotal > 0) {
+                                                            if ($isSenior) {
+                                                                if      ($cumTotal >= 75) { $mCumGrade = 'A1'; $mCumGL = 'a1'; }
+                                                                elseif  ($cumTotal >= 70) { $mCumGrade = 'B2'; $mCumGL = 'b2'; }
+                                                                elseif  ($cumTotal >= 65) { $mCumGrade = 'B3'; $mCumGL = 'b3'; }
+                                                                elseif  ($cumTotal >= 60) { $mCumGrade = 'C4'; $mCumGL = 'c4'; }
+                                                                elseif  ($cumTotal >= 55) { $mCumGrade = 'C5'; $mCumGL = 'c5'; }
+                                                                elseif  ($cumTotal >= 50) { $mCumGrade = 'C6'; $mCumGL = 'c6'; }
+                                                                elseif  ($cumTotal >= 45) { $mCumGrade = 'D7'; $mCumGL = 'd7'; }
+                                                                elseif  ($cumTotal >= 40) { $mCumGrade = 'E8'; $mCumGL = 'e8'; }
+                                                                else                      { $mCumGrade = 'F9'; $mCumGL = 'f9'; }
+                                                            } else {
+                                                                if      ($cumTotal >= 70) { $mCumGrade = 'A'; $mCumGL = 'a'; }
+                                                                elseif  ($cumTotal >= 60) { $mCumGrade = 'B'; $mCumGL = 'b'; }
+                                                                elseif  ($cumTotal >= 50) { $mCumGrade = 'C'; $mCumGL = 'c'; }
+                                                                elseif  ($cumTotal >= 40) { $mCumGrade = 'D'; $mCumGL = 'd'; }
+                                                                else                      { $mCumGrade = 'F'; $mCumGL = 'f'; }
+                                                            }
+                                                        }
                                                     @endphp
-                                                    <div class="subject-item">
+                                                    <div class="subject-item {{ $scoringMode === 'term' ? 'mode-term' : 'mode-cum' }}">
                                                         <div class="subject-name">{{ $subject }}</div>
-                                                        <div class="small">
-                                                            <span class="badge bg-secondary">Term</span>
-                                                            <strong class="{{ $termTotal < 50 ? 'text-danger' : 'text-success' }}">{{ $termTotal ?: '—' }}</strong>
+                                                        {{-- Term --}}
+                                                        <div class="score-row-term mb-1" style="border-radius:5px;padding:3px 4px;">
+                                                            <div style="font-size:.55rem;font-weight:700;color:#0891b2;text-transform:uppercase;">
+                                                                Term @if($scoringMode==='term')<span style="color:#ea580c;">★</span>@endif
+                                                            </div>
+                                                            <span class="fw-bold {{ $termTotal < 50 ? 'text-danger' : 'text-success' }}" style="font-size:.85rem;">
+                                                                {{ $termTotal ?: '—' }}
+                                                            </span>
+                                                            @if($mTermGrade)
+                                                                <span class="score-grade-badge grade-{{ $mTermGL }}" style="font-size:.55rem;">{{ $mTermGrade }}</span>
+                                                            @endif
                                                         </div>
-                                                        <div class="small mt-1">
-                                                            <span class="badge bg-primary">Cum</span>
-                                                            <strong class="{{ $cumTotal < 50 ? 'text-danger' : 'text-success' }}">{{ $cumTotal ?: '—' }}</strong>
+                                                        {{-- Cumulative --}}
+                                                        <div class="score-row-cum" style="border-radius:5px;padding:3px 4px;">
+                                                            <div style="font-size:.55rem;font-weight:700;color:var(--principal-primary);text-transform:uppercase;">
+                                                                Cum @if($scoringMode==='cumulative')<span style="color:#ea580c;">★</span>@endif
+                                                            </div>
+                                                            <span class="fw-bold {{ $cumTotal < 50 ? 'text-danger' : 'text-success' }}" style="font-size:.85rem;">
+                                                                {{ $cumTotal ?: '—' }}
+                                                            </span>
+                                                            @if($mCumGrade)
+                                                                <span class="score-grade-badge grade-{{ $mCumGL }}" style="font-size:.55rem;">{{ $mCumGrade }}</span>
+                                                            @endif
                                                         </div>
                                                     </div>
                                                 @endforeach
@@ -1087,7 +1378,13 @@
 
                                             @if($intelligentComment)
                                                 <div class="intelligent-comment-section mb-2">
-                                                    <small><i class="ri-lightbulb-line text-success"></i> <strong>AI Suggestion</strong></small>
+                                                    <small>
+                                                        <i class="ri-lightbulb-line text-success"></i>
+                                                        <strong>AI Suggestion</strong>
+                                                        <span class="badge {{ $scoringMode === 'term' ? 'bg-info' : 'bg-primary' }} ms-1" style="font-size:.6rem;">
+                                                            {{ $scoringMode === 'term' ? 'Term' : 'Cumulative' }}
+                                                        </span>
+                                                    </small>
                                                     <div class="small mt-1 text-muted">
                                                         {{ \Illuminate\Support\Str::limit($intelligentComment, 100) }}
                                                     </div>
@@ -1111,12 +1408,12 @@
                                                         </option>
                                                     @endforeach
                                                     @php
-                                                        $intPlain = strip_tags($intelligentComments[$sid] ?? '');
+                                                        $intPlain  = strip_tags($intelligentComments[$sid] ?? '');
                                                         $stdPlains = array_map('strip_tags', $standardPersonalizedComments[$sid] ?? []);
                                                     @endphp
                                                     @if($intPlain && !in_array($intPlain, $stdPlains))
                                                         <option value="{{ $intPlain }}"
-                                                                style="background-color: #e8f5e8 !important; font-weight: 600 !important;"
+                                                                style="background-color:#e8f5e8!important;font-weight:600!important;"
                                                             {{ $currentCommentPlain === $intPlain ? 'selected' : '' }}>
                                                             💡 Use AI Generated Comment
                                                         </option>
@@ -1206,6 +1503,25 @@ function closeAllTooltips() {
     activeTooltip = null;
 }
 
+function getGradeClass(grade) {
+    const g = (grade || '').toLowerCase().replace(/\s+/g, '');
+    if (g === 'a1') return 'grade-a1';
+    if (g === 'b2') return 'grade-b2';
+    if (g === 'b3') return 'grade-b3';
+    if (g === 'c4') return 'grade-c4';
+    if (g === 'c5') return 'grade-c5';
+    if (g === 'c6') return 'grade-c6';
+    if (g === 'd7') return 'grade-d7';
+    if (g === 'e8') return 'grade-e8';
+    if (g === 'f9') return 'grade-f9';
+    if (g === 'a')  return 'grade-a';
+    if (g === 'b')  return 'grade-b';
+    if (g === 'c')  return 'grade-c';
+    if (g === 'd')  return 'grade-d';
+    if (g === 'f')  return 'grade-f';
+    return 'bg-secondary text-white';
+}
+
 function showTooltip(tooltipId, studentId, studentName) {
     const tooltip = document.getElementById(tooltipId);
     if (!tooltip) return;
@@ -1214,24 +1530,34 @@ function showTooltip(tooltipId, studentId, studentName) {
     const titleEl = document.getElementById(`tooltip-title-${studentId}`);
     if (titleEl) titleEl.textContent = `${studentName}'s Performance`;
 
-    // Populate grades body
+    // Populate grades body — now with 5 columns (term score, term grade, cum score, cum grade)
     const grades = window.studentGradesData[studentId] || [];
     const tbody = document.getElementById(`grades-body-${studentId}`);
     if (tbody) {
         tbody.innerHTML = '';
         if (!grades.length) {
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No grades available</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No grades available</td></tr>';
         } else {
             grades.forEach(g => {
-                const gradeClass = `grade-${g.grade_letter.toLowerCase()}`;
                 const termColor = (g.term_score < 50) ? 'text-danger' : 'text-success';
-                const cumColor = (g.score < 50) ? 'text-danger' : 'text-success';
+                const cumColor  = (g.cum_score  < 50) ? 'text-danger' : 'text-success';
+                const tGradeClass = getGradeClass(g.term_grade);
+                const cGradeClass = getGradeClass(g.cum_grade);
                 const row = document.createElement('tr');
                 row.innerHTML = `
                     <td><strong>${escapeHtml(g.subject)}</strong></td>
-                    <td class="text-center fw-bold ${termColor}">${g.term_score || '—'}</td>
-                    <td class="text-center fw-bold ${cumColor}">${g.score || '—'}</td>
-                    <td class="text-center"><span class="grade-badge-sm ${gradeClass}">${escapeHtml(g.grade)}</span></td>
+                    <td class="text-center fw-bold ${termColor}" style="color:#0891b2!important;">${g.term_score || '—'}</td>
+                    <td class="text-center">
+                        ${g.term_grade
+                            ? `<span class="score-grade-badge ${tGradeClass}">${escapeHtml(g.term_grade)}</span>`
+                            : '<span class="text-muted">—</span>'}
+                    </td>
+                    <td class="text-center fw-bold ${cumColor}">${g.cum_score || '—'}</td>
+                    <td class="text-center">
+                        ${g.cum_grade
+                            ? `<span class="score-grade-badge ${cGradeClass}">${escapeHtml(g.cum_grade)}</span>`
+                            : '<span class="text-muted">—</span>'}
+                    </td>
                 `;
                 tbody.appendChild(row);
             });
@@ -1244,15 +1570,14 @@ function showTooltip(tooltipId, studentId, studentName) {
 
 // Image Zoom Functionality
 function setupImageZoom() {
-    // For images in table
     $('.avatar-clickable').off('click').on('click', function(e) {
         e.stopPropagation();
-        const imageUrl = $(this).data('image');
+        const imageUrl   = $(this).data('image');
         const studentName = $(this).data('name');
         const admissionNo = $(this).data('admission') || 'N/A';
         const studentClass = $(this).data('class') || 'N/A';
-        const gender = $(this).data('gender') || 'N/A';
-        const initials = $(this).data('initials');
+        const gender      = $(this).data('gender') || 'N/A';
+        const initials    = $(this).data('initials');
 
         $('#zoomedImageName').text(studentName || 'Student Photo');
         $('#zoomedImageDetails').html(`
@@ -1264,33 +1589,31 @@ function setupImageZoom() {
         if (imageUrl && imageUrl !== '' && imageUrl !== 'null' && imageUrl !== 'undefined') {
             $('#zoomedImage').attr('src', imageUrl).show();
         } else {
-            // Create canvas with initials
             const canvas = document.createElement('canvas');
-            canvas.width = 400;
-            canvas.height = 400;
+            canvas.width = 400; canvas.height = 400;
             const ctx = canvas.getContext('2d');
-            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            const gradient = ctx.createLinearGradient(0, 0, 400, 400);
             gradient.addColorStop(0, '#667eea');
             gradient.addColorStop(1, '#764ba2');
             ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillRect(0, 0, 400, 400);
             ctx.fillStyle = '#ffffff';
             ctx.font = 'bold 160px "Segoe UI", Arial, sans-serif';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             const displayInitials = (initials && initials !== 'null') ? initials.substring(0, 2) : 'ST';
-            ctx.fillText(displayInitials, canvas.width/2, canvas.height/2);
+            ctx.fillText(displayInitials, 200, 200);
             $('#zoomedImage').attr('src', canvas.toDataURL()).show();
         }
     });
 }
 
-// Auto-save functionality
+// Auto-save on dropdown change
 document.querySelectorAll('.auto-save-comment').forEach(select => {
     select.addEventListener('change', function() {
         const studentId = this.dataset.studentId;
-        const comment = this.value.trim();
-        const original = this.dataset.originalValue || '';
+        const comment   = this.value.trim();
+        const original  = this.dataset.originalValue || '';
         if (comment === original) return;
 
         this.style.backgroundColor = '#fff3cd';
@@ -1323,9 +1646,7 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
             showToast('Error: ' + err.message, 'danger');
             setTimeout(() => { this.style.backgroundColor = ''; }, 2000);
         })
-        .finally(() => {
-            this.disabled = false;
-        });
+        .finally(() => { this.disabled = false; });
     });
 });
 
@@ -1334,8 +1655,8 @@ const commentsForm = document.getElementById('commentsForm');
 if (commentsForm) {
     commentsForm.addEventListener('submit', function(e) {
         e.preventDefault();
-        const btn = document.getElementById('saveAllBtn');
-        const ind = document.getElementById('savingIndicator');
+        const btn  = document.getElementById('saveAllBtn');
+        const ind  = document.getElementById('savingIndicator');
         const orig = btn.innerHTML;
 
         btn.disabled = true;
@@ -1344,7 +1665,6 @@ if (commentsForm) {
 
         const fd = new FormData();
         fd.append('_token', '{{ csrf_token() }}');
-
         document.querySelectorAll('.auto-save-comment').forEach(sel => {
             const val = sel.value.trim();
             if (val) fd.append(`teacher_comments[${sel.dataset.studentId}]`, val);
@@ -1376,15 +1696,15 @@ if (commentsForm) {
     });
 }
 
-// Tooltip triggers
+// Tooltip triggers (desktop only)
 if (window.innerWidth > 1199) {
     document.querySelectorAll('.grades-trigger').forEach(trigger => {
         trigger.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            const sid = this.dataset.studentId;
+            const sid  = this.dataset.studentId;
             const name = this.dataset.studentName;
-            const tid = `tooltip-${sid}`;
+            const tid  = `tooltip-${sid}`;
             activeTooltip === tid ? closeAllTooltips() : showTooltip(tid, sid, name);
         });
     });
@@ -1396,9 +1716,7 @@ if (window.innerWidth > 1199) {
     document.addEventListener('click', e => {
         if (!activeTooltip) return;
         const activeEl = document.getElementById(activeTooltip);
-        if (activeEl && !activeEl.contains(e.target)) {
-            closeAllTooltips();
-        }
+        if (activeEl && !activeEl.contains(e.target)) closeAllTooltips();
     });
 
     document.addEventListener('keydown', e => {
@@ -1406,7 +1724,7 @@ if (window.innerWidth > 1199) {
     });
 }
 
-// Search functionality
+// Search
 document.getElementById('searchInput')?.addEventListener('input', function() {
     const term = this.value.toLowerCase().trim();
     document.querySelectorAll('.desktop-table tbody tr').forEach(row => {
@@ -1417,23 +1735,18 @@ document.getElementById('searchInput')?.addEventListener('input', function() {
     });
 });
 
-// Initialize original values and image zoom
+// Init
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.auto-save-comment').forEach(s => {
         s.dataset.originalValue = s.value;
     });
     setupImageZoom();
 
-    // Also handle click on zoomed image to close
     $(document).on('click', '.zoomed-image', function() {
         $('#imageZoomModal').modal('hide');
     });
-
-    // Close zoom modal on escape key
     $(document).on('keydown', function(e) {
-        if (e.key === 'Escape') {
-            $('#imageZoomModal').modal('hide');
-        }
+        if (e.key === 'Escape') $('#imageZoomModal').modal('hide');
     });
 });
 </script>
