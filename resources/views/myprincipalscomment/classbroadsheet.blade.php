@@ -696,7 +696,7 @@
     </div>
 </div>
 
-@push('scripts')
+
 <script>
 window.studentGradesData = @json($studentGrades);
 let activeTooltip = null;
@@ -975,5 +975,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 </script>
-@endpush
-@endsection 
+
+@endsection
