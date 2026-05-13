@@ -64,6 +64,7 @@
                                         <tr>
                                             <th>#</th>
                                             <th>Class</th>
+                                            <th>Session & Term</th>
                                             <th>Last Updated</th>
                                             <th>Action</th>
                                         </tr>
@@ -71,10 +72,14 @@
                                     <tbody id="assignmentsBody">
                                         @forelse($assignments as $index => $assignment)
                                             <tr class="assignment-row"
-                                                data-search-text="{{ strtolower($assignment->sclass . ' ' . ($assignment->schoolarm ?? '')) }}">
+                                                data-search-text="{{ strtolower($assignment->sclass . ' ' . ($assignment->schoolarm ?? '') . ' ' . $assignment->session_name . ' ' . $assignment->term_name) }}">
                                                 <td class="sn">{{ $loop->iteration }}</td>
                                                 <td>
                                                     <strong>{{ $assignment->sclass }} {{ $assignment->schoolarm ?? '' }}</strong>
+                                                </td>
+                                                <td>
+                                                    <span class="badge bg-info">{{ $assignment->session_name ?? 'N/A' }}</span>
+                                                    <span class="badge bg-secondary">{{ $assignment->term_name ?? 'N/A' }}</span>
                                                 </td>
                                                 <td>
                                                     {{ $assignment->updated_at ? $assignment->updated_at->format('d M Y, h:i A') : 'Never' }}
@@ -82,8 +87,8 @@
                                                 <td>
                                                     <a href="{{ route('myprincipalscomment.classbroadsheet', [
                                                         $assignment->schoolclassid,
-                                                        $currentSession->id ?? 1,
-                                                        $currentTerm->id ?? 1
+                                                        $assignment->session_id,
+                                                        $assignment->term_id
                                                     ]) }}"
                                                        class="btn btn-soft-success btn-sm">
                                                         <i class="ph-eye me-1"></i> View Broadsheet & Enter Comments
@@ -92,7 +97,7 @@
                                             </tr>
                                         @empty
                                             <tr id="emptyStateRow">
-                                                <td colspan="4" class="text-center py-5">
+                                                <td colspan="5" class="text-center py-5">
                                                     <lord-icon src="https://cdn.lordicon.com/msoeawqm.json"
                                                                trigger="loop"
                                                                colors="primary:#121331,secondary:#08a88a"

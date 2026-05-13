@@ -26,35 +26,35 @@ class MyPrincipalsCommentController extends Controller
     // INDEX
     // =========================================================================
 
-    public function index()
-    {
-        $pagetitle = "My Principal's Comment Assignments";
+   public function index()
+{
+    $pagetitle = "My Principal's Comment Assignments";
 
-        $assignments = Principalscomment::where('staffId', Auth::id())
-            ->join('schoolclass', 'principalscomments.schoolclassid', '=', 'schoolclass.id')
-            ->leftJoin('schoolarm',     'schoolarm.id',     '=', 'schoolclass.arm')
-            ->leftJoin('schoolsession', 'principalscomments.sessionid', '=', 'schoolsession.id')
-            ->leftJoin('schoolterm',    'principalscomments.termid',    '=', 'schoolterm.id')
-            ->select([
-                'principalscomments.id',
-                'schoolclass.id as schoolclassid',
-                'schoolclass.schoolclass as sclass',
-                'schoolarm.arm as schoolarm',
-                'schoolsession.session as session_name',
-                'schoolterm.term as term_name',
-                'principalscomments.updated_at',
-            ])
-            ->orderBy('schoolclass.schoolclass')
-            ->orderBy('schoolarm.arm')
-            ->get();
+    $assignments = Principalscomment::where('staffId', Auth::id())
+        ->join('schoolclass', 'principalscomments.schoolclassid', '=', 'schoolclass.id')
+        ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+        ->leftJoin('schoolsession', 'principalscomments.sessionid', '=', 'schoolsession.id')
+        ->leftJoin('schoolterm', 'principalscomments.termid', '=', 'schoolterm.id')
+        ->select([
+            'principalscomments.id',
+            'schoolclass.id as schoolclassid',
+            'schoolclass.schoolclass as sclass',
+            'schoolarm.arm as schoolarm',
+            'schoolsession.id as session_id',      // Added session id
+            'schoolsession.session as session_name',
+            'schoolterm.id as term_id',            // Added term id
+            'schoolterm.term as term_name',
+            'principalscomments.updated_at',
+        ])
+        ->orderBy('schoolclass.schoolclass')
+        ->orderBy('schoolarm.arm')
+        ->get();
 
-        $currentSession = Schoolsession::where('status', 'Current')->first()
-            ?? Schoolsession::latest()->first();
-        $currentTerm = Schoolterm::latest()->first();
+    // Remove the misleading currentSession and currentTerm
+    // They're not needed since each assignment has its own session/term
 
-        return view('myprincipalscomment.index')
-            ->with(compact('assignments', 'pagetitle', 'currentSession', 'currentTerm'));
-    }
+    return view('myprincipalscomment.index')->with(compact('assignments', 'pagetitle'));
+}
 
     // =========================================================================
     // CLASS BROADSHEET
