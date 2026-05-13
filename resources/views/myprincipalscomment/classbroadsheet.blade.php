@@ -114,6 +114,114 @@
     color: #fff;
 }
 
+/* Clickable Avatar Styles */
+.avatar-clickable {
+    cursor: pointer;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.avatar-clickable:hover {
+    transform: scale(1.1);
+    opacity: 0.9;
+}
+
+.student-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--principal-border);
+    background: #f0f0f0;
+}
+.avatar-placeholder {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+    border: 2px solid var(--principal-border);
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+.avatar-placeholder:hover {
+    transform: scale(1.1);
+}
+
+/* Image Zoom Modal */
+.image-zoom-modal .modal-content {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+}
+.image-zoom-modal .modal-dialog {
+    max-width: 90vw;
+    margin: 1.75rem auto;
+}
+.image-zoom-modal .modal-body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+    padding: 20px;
+}
+.zoomed-image {
+    max-width: 90vw;
+    max-height: 75vh;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+    border: 4px solid white;
+    cursor: pointer;
+    animation: zoomIn 0.3s ease;
+    object-fit: contain;
+}
+@keyframes zoomIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+.image-zoom-modal .btn-close {
+    position: absolute;
+    top: 20px;
+    right: 30px;
+    background-color: rgba(0,0,0,0.7);
+    border-radius: 50%;
+    padding: 12px;
+    opacity: 1;
+    z-index: 1060;
+    filter: brightness(0) invert(1);
+}
+.image-zoom-modal .btn-close:hover {
+    background-color: rgba(0,0,0,0.9);
+    transform: scale(1.1);
+}
+.zoomed-image-name {
+    color: white;
+    margin-top: 20px;
+    font-size: 18px;
+    font-weight: 600;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    background: rgba(0,0,0,0.5);
+    padding: 8px 20px;
+    border-radius: 40px;
+    display: inline-block;
+}
+.zoomed-image-details {
+    color: rgba(255,255,255,0.8);
+    margin-top: 8px;
+    font-size: 14px;
+    text-align: center;
+}
+
 /* Subject Score Card */
 .subject-score-card {
     background: var(--principal-bg);
@@ -376,10 +484,16 @@
     gap: 12px;
 }
 .avatar-sm {
-    width: 32px;
-    height: 32px;
+    width: 45px;
+    height: 45px;
     object-fit: cover;
     border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    border: 2px solid var(--principal-border);
+}
+.avatar-sm:hover {
+    transform: scale(1.1);
 }
 .student-details h6 {
     margin: 0;
@@ -591,12 +705,13 @@
                                         <thead>
                                             <tr>
                                                 <th width="40">#</th>
+                                                <th width="60">Photo</th>
                                                 <th width="100">Admission No</th>
                                                 <th width="180">Student Name</th>
                                                 <th width="70">Gender</th>
                                                 <th class="text-center">
                                                     <i class="ri-book-open-line me-2"></i>
-                                                    Subjects Performance (Term | Cumulative)
+                                                    Subjects Performance
                                                 </th>
                                                 <th width="300">Principal's Comment</th>
                                             </tr>
@@ -606,7 +721,16 @@
                                                 @php
                                                     $sid = $student->id;
                                                     $picture = $student->picture ? basename($student->picture) : 'unnamed.jpg';
-                                                    $imgPath = asset('storage/student_avatars/' . $picture);
+                                                    $avatarUrl = null;
+                                                    if(isset($student->picture) && $student->picture && $student->picture != 'unnamed.jpg' && $student->picture != '') {
+                                                        $avatarUrl = asset('storage/student_avatars/' . $student->picture);
+                                                    }
+                                                    $fullName = trim($student->lastname . ' ' . $student->fname);
+                                                    $otherName = $student->othername ?? '';
+                                                    $fullNameWithOther = trim($fullName . ($otherName ? ' (' . $otherName . ')' : ''));
+                                                    $initials = strtoupper(substr($student->firstname, 0, 1) . substr($student->lastname, 0, 1));
+                                                    if(empty($initials)) $initials = 'ST';
+
                                                     $currentComment = $profiles[$sid] ?? '';
                                                     $currentCommentPlain = strip_tags($currentComment);
                                                     $intelligentComment = $intelligentComments[$sid] ?? '';
@@ -615,18 +739,44 @@
                                                 @endphp
                                                 <tr data-student-id="{{ $sid }}" class="student-row">
                                                     <td class="fw-bold">{{ $index + 1 }}</td>
+
+                                                    {{-- Photo with click to zoom --}}
+                                                    <td class="text-center">
+                                                        @if($avatarUrl)
+                                                            <img src="{{ $avatarUrl }}"
+                                                                 alt="{{ $fullNameWithOther }}"
+                                                                 class="student-avatar avatar-clickable"
+                                                                 data-bs-toggle="modal"
+                                                                 data-bs-target="#imageZoomModal"
+                                                                 data-image="{{ $avatarUrl }}"
+                                                                 data-name="{{ $fullNameWithOther }}"
+                                                                 data-admission="{{ $student->admissionNo ?? 'N/A' }}"
+                                                                 data-class="{{ $schoolclass->schoolclass }} {{ $schoolclass->arm_name }}"
+                                                                 data-gender="{{ $student->gender ?? 'N/A' }}"
+                                                                 style="cursor: pointer;">
+                                                        @else
+                                                            <div class="avatar-placeholder avatar-clickable"
+                                                                 data-bs-toggle="modal"
+                                                                 data-bs-target="#imageZoomModal"
+                                                                 data-name="{{ $fullNameWithOther }}"
+                                                                 data-admission="{{ $student->admissionNo ?? 'N/A' }}"
+                                                                 data-class="{{ $schoolclass->schoolclass }} {{ $schoolclass->arm_name }}"
+                                                                 data-gender="{{ $student->gender ?? 'N/A' }}"
+                                                                 data-initials="{{ $initials }}">
+                                                                {{ $initials }}
+                                                            </div>
+                                                        @endif
+                                                    </td>
+
                                                     <td>{{ $student->admissionNo }}</td>
                                                     <td>
-                                                        <div class="d-flex align-items-center">
-                                                            <img src="{{ $imgPath }}" class="avatar-sm me-2" alt="">
-                                                            <div>
-                                                                <strong>{{ $student->lastname }} {{ $student->fname }}</strong>
-                                                                @if($currentComment)
-                                                                    <small class="d-block text-success mt-1">
-                                                                        <i class="ri-check-double-line"></i> Comment saved
-                                                                    </small>
-                                                                @endif
-                                                            </div>
+                                                        <div>
+                                                            <strong>{{ $fullNameWithOther }}</strong>
+                                                            @if($currentComment)
+                                                                <small class="d-block text-success mt-1">
+                                                                    <i class="ri-check-double-line"></i> Comment saved
+                                                                </small>
+                                                            @endif
                                                         </div>
                                                     </td>
                                                     <td>
@@ -645,11 +795,39 @@
                                                                     $cumTotal = $cumScoreMap[$sid][$subject] ?? 0;
                                                                     $termClass = $termTotal < 40 ? 'highlight-red' : ($termTotal < 50 ? 'highlight-orange' : ($termTotal >= 70 ? 'highlight-green' : ''));
                                                                     $cumClass = $cumTotal < 40 ? 'highlight-red' : ($cumTotal < 50 ? 'highlight-orange' : ($cumTotal >= 70 ? 'highlight-green' : ''));
+
+                                                                    $cumGrade = '';
+                                                                    if ($cumTotal > 0) {
+                                                                        if ($isSenior) {
+                                                                            if      ($cumTotal >= 75) $cumGrade = 'A1';
+                                                                            elseif  ($cumTotal >= 70) $cumGrade = 'B2';
+                                                                            elseif  ($cumTotal >= 65) $cumGrade = 'B3';
+                                                                            elseif  ($cumTotal >= 60) $cumGrade = 'C4';
+                                                                            elseif  ($cumTotal >= 55) $cumGrade = 'C5';
+                                                                            elseif  ($cumTotal >= 50) $cumGrade = 'C6';
+                                                                            elseif  ($cumTotal >= 45) $cumGrade = 'D7';
+                                                                            elseif  ($cumTotal >= 40) $cumGrade = 'E8';
+                                                                            else                      $cumGrade = 'F9';
+                                                                        } else {
+                                                                            if      ($cumTotal >= 70) $cumGrade = 'A';
+                                                                            elseif  ($cumTotal >= 60) $cumGrade = 'B';
+                                                                            elseif  ($cumTotal >= 50) $cumGrade = 'C';
+                                                                            elseif  ($cumTotal >= 40) $cumGrade = 'D';
+                                                                            else                      $cumGrade = 'F';
+                                                                        }
+                                                                    }
                                                                 @endphp
                                                                 <div class="subject-score-card" style="min-width: 80px;">
                                                                     <div class="small fw-bold">{{ $subject }}</div>
                                                                     <div class="term-score {{ $termClass }}">{{ $termTotal ?: '—' }}</div>
-                                                                    <div class="cumulative-score {{ $cumClass }}">{{ $cumTotal ?: '—' }}</div>
+                                                                    <div class="cumulative-score {{ $cumClass }}">
+                                                                        {{ $cumTotal ?: '—' }}
+                                                                        @if($cumGrade)
+                                                                            <span class="grade-badge-sm grade-{{ strtolower($cumGrade) }}">
+                                                                                {{ $cumGrade }}
+                                                                            </span>
+                                                                        @endif
+                                                                    </div>
                                                                 </div>
                                                             @endforeach
                                                         </div>
@@ -716,7 +894,7 @@
                                                         <button type="button"
                                                                 class="comment-info-icon grades-trigger"
                                                                 data-student-id="{{ $sid }}"
-                                                                data-student-name="{{ $student->lastname }} {{ $student->fname }}">
+                                                                data-student-name="{{ $fullNameWithOther }}">
                                                             <i class="ri-eye-line"></i>
                                                         </button>
 
@@ -766,6 +944,28 @@
                                                                         </div>
                                                                     </div>
                                                                 </div>
+                                                                <div class="text-center mb-3 p-2 bg-light rounded">
+                                                                    <small class="text-muted">
+                                                                        Class Average: <strong>{{ $classAnalytics['average'] }}</strong>
+                                                                    </small>
+                                                                    @php $diff = ($analytics['average'] ?? 0) - $classAnalytics['average']; @endphp
+                                                                    @if($diff > 0.5)
+                                                                        <span class="text-success ms-2"><i class="ri-arrow-up-line"></i> +{{ round($diff,1) }}</span>
+                                                                    @elseif($diff < -0.5)
+                                                                        <span class="text-danger ms-2"><i class="ri-arrow-down-line"></i> {{ round($diff,1) }}</span>
+                                                                    @endif
+                                                                </div>
+                                                                <table class="table table-sm">
+                                                                    <thead>
+                                                                        <tr>
+                                                                            <th>Subject</th>
+                                                                            <th>Term</th>
+                                                                            <th>Cumulative</th>
+                                                                            <th>Grade</th>
+                                                                        </tr>
+                                                                    </thead>
+                                                                    <tbody id="grades-body-{{ $sid }}"></tbody>
+                                                                </table>
                                                             </div>
                                                         </div>
                                                     </td>
@@ -784,7 +984,16 @@
                                     @php
                                         $sid = $student->id;
                                         $picture = $student->picture ? basename($student->picture) : 'unnamed.jpg';
-                                        $imgPath = asset('storage/student_avatars/' . $picture);
+                                        $avatarUrl = null;
+                                        if(isset($student->picture) && $student->picture && $student->picture != 'unnamed.jpg' && $student->picture != '') {
+                                            $avatarUrl = asset('storage/student_avatars/' . $student->picture);
+                                        }
+                                        $fullName = trim($student->lastname . ' ' . $student->fname);
+                                        $otherName = $student->othername ?? '';
+                                        $fullNameWithOther = trim($fullName . ($otherName ? ' (' . $otherName . ')' : ''));
+                                        $initials = strtoupper(substr($student->firstname, 0, 1) . substr($student->lastname, 0, 1));
+                                        if(empty($initials)) $initials = 'ST';
+
                                         $currentComment = $profiles[$sid] ?? '';
                                         $currentCommentPlain = strip_tags($currentComment);
                                         $intelligentComment = $intelligentComments[$sid] ?? '';
@@ -795,10 +1004,33 @@
                                     <div class="student-card" data-student-id="{{ $sid }}">
                                         <div class="student-header">
                                             <div class="student-info">
-                                                <img src="{{ $imgPath }}" class="avatar-sm" alt="">
+                                                @if($avatarUrl)
+                                                    <img src="{{ $avatarUrl }}"
+                                                         alt="{{ $fullNameWithOther }}"
+                                                         class="avatar-sm avatar-clickable"
+                                                         data-bs-toggle="modal"
+                                                         data-bs-target="#imageZoomModal"
+                                                         data-image="{{ $avatarUrl }}"
+                                                         data-name="{{ $fullNameWithOther }}"
+                                                         data-admission="{{ $student->admissionNo ?? 'N/A' }}"
+                                                         data-class="{{ $schoolclass->schoolclass }} {{ $schoolclass->arm_name }}"
+                                                         data-gender="{{ $student->gender ?? 'N/A' }}">
+                                                @else
+                                                    <div class="avatar-placeholder avatar-clickable"
+                                                         style="width: 45px; height: 45px; font-size: 16px;"
+                                                         data-bs-toggle="modal"
+                                                         data-bs-target="#imageZoomModal"
+                                                         data-name="{{ $fullNameWithOther }}"
+                                                         data-admission="{{ $student->admissionNo ?? 'N/A' }}"
+                                                         data-class="{{ $schoolclass->schoolclass }} {{ $schoolclass->arm_name }}"
+                                                         data-gender="{{ $student->gender ?? 'N/A' }}"
+                                                         data-initials="{{ $initials }}">
+                                                        {{ $initials }}
+                                                    </div>
+                                                @endif
                                                 <div class="student-details">
                                                     <h6>
-                                                        {{ $student->lastname }} {{ $student->fname }}
+                                                        {{ $fullNameWithOther }}
                                                         @if($currentComment)
                                                             <span class="badge bg-success ms-2">✓</span>
                                                         @endif
@@ -929,6 +1161,21 @@
     </div>
 </div>
 
+{{-- IMAGE ZOOM MODAL --}}
+<div class="modal fade image-zoom-modal" id="imageZoomModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content bg-transparent border-0">
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-body text-center">
+                <img id="zoomedImage" src="" alt="Student Photo" class="zoomed-image">
+                <div class="zoomed-image-name" id="zoomedImageName"></div>
+                <div class="zoomed-image-details" id="zoomedImageDetails"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 window.studentGradesData = @json($studentGrades);
@@ -967,8 +1214,75 @@ function showTooltip(tooltipId, studentId, studentName) {
     const titleEl = document.getElementById(`tooltip-title-${studentId}`);
     if (titleEl) titleEl.textContent = `${studentName}'s Performance`;
 
+    // Populate grades body
+    const grades = window.studentGradesData[studentId] || [];
+    const tbody = document.getElementById(`grades-body-${studentId}`);
+    if (tbody) {
+        tbody.innerHTML = '';
+        if (!grades.length) {
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center text-muted">No grades available</td></tr>';
+        } else {
+            grades.forEach(g => {
+                const gradeClass = `grade-${g.grade_letter.toLowerCase()}`;
+                const termColor = (g.term_score < 50) ? 'text-danger' : 'text-success';
+                const cumColor = (g.score < 50) ? 'text-danger' : 'text-success';
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${escapeHtml(g.subject)}</strong></td>
+                    <td class="text-center fw-bold ${termColor}">${g.term_score || '—'}</td>
+                    <td class="text-center fw-bold ${cumColor}">${g.score || '—'}</td>
+                    <td class="text-center"><span class="grade-badge-sm ${gradeClass}">${escapeHtml(g.grade)}</span></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+    }
+
     tooltip.classList.add('show');
     activeTooltip = tooltipId;
+}
+
+// Image Zoom Functionality
+function setupImageZoom() {
+    // For images in table
+    $('.avatar-clickable').off('click').on('click', function(e) {
+        e.stopPropagation();
+        const imageUrl = $(this).data('image');
+        const studentName = $(this).data('name');
+        const admissionNo = $(this).data('admission') || 'N/A';
+        const studentClass = $(this).data('class') || 'N/A';
+        const gender = $(this).data('gender') || 'N/A';
+        const initials = $(this).data('initials');
+
+        $('#zoomedImageName').text(studentName || 'Student Photo');
+        $('#zoomedImageDetails').html(`
+            <i class="ri-id-card-line me-1"></i> ${admissionNo} &nbsp;|&nbsp;
+            <i class="ri-school-line me-1"></i> ${studentClass} &nbsp;|&nbsp;
+            <i class="ri-${gender === 'Male' ? 'male' : 'female'}-line me-1"></i> ${gender}
+        `);
+
+        if (imageUrl && imageUrl !== '' && imageUrl !== 'null' && imageUrl !== 'undefined') {
+            $('#zoomedImage').attr('src', imageUrl).show();
+        } else {
+            // Create canvas with initials
+            const canvas = document.createElement('canvas');
+            canvas.width = 400;
+            canvas.height = 400;
+            const ctx = canvas.getContext('2d');
+            const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = 'bold 160px "Segoe UI", Arial, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const displayInitials = (initials && initials !== 'null') ? initials.substring(0, 2) : 'ST';
+            ctx.fillText(displayInitials, canvas.width/2, canvas.height/2);
+            $('#zoomedImage').attr('src', canvas.toDataURL()).show();
+        }
+    });
 }
 
 // Auto-save functionality
@@ -1103,10 +1417,23 @@ document.getElementById('searchInput')?.addEventListener('input', function() {
     });
 });
 
-// Initialize original values
+// Initialize original values and image zoom
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.auto-save-comment').forEach(s => {
         s.dataset.originalValue = s.value;
+    });
+    setupImageZoom();
+
+    // Also handle click on zoomed image to close
+    $(document).on('click', '.zoomed-image', function() {
+        $('#imageZoomModal').modal('hide');
+    });
+
+    // Close zoom modal on escape key
+    $(document).on('keydown', function(e) {
+        if (e.key === 'Escape') {
+            $('#imageZoomModal').modal('hide');
+        }
     });
 });
 </script>
