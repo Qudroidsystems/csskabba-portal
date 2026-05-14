@@ -493,7 +493,8 @@
         <span><i class="ri-information-line me-1 text-info"></i>
             <strong>Total Grade</strong> = grade based on raw assessment total (saved to DB) &nbsp;|&nbsp;
             <strong>Cum Grade</strong> = grade based on cumulative average (display only) &nbsp;|&nbsp;
-            <strong>Class Avg</strong> = subject class average score
+            <strong>Class Pos</strong> = position across whole class &nbsp;|&nbsp;
+            <strong>Arm Pos</strong> = position within this arm/stream
         </span>
     </div>
 
@@ -581,7 +582,12 @@
                         <th class="col-avg text-center" title="Subject class average score">Class Avg</th>
                         <th class="col-gpa text-center">GPA</th>
                         <th class="col-cgpa text-center">CGPA</th>
-                        <th class="col-position text-center">Pos</th>
+                        <th class="col-position text-center">
+                            Class<br><small class="fw-normal opacity-75">Pos</small>
+                        </th>
+                        <th class="col-arm-position text-center" title="Position within this arm/stream only">
+                            Arm<br><small class="fw-normal opacity-75">Pos</small>
+                        </th>
                         <th class="col-vetted text-center">Status</th>
                     </tr>
                 </thead>
@@ -698,6 +704,12 @@
                                     {{ $broadsheet->position ? \App\Helpers\OrdinalHelper::getOrdinalSuffix($broadsheet->position) : '-' }}
                                 </span>
                             </td>
+                            <td class="col-arm-position text-center">
+                                <span class="badge arm-position-badge" style="background:#0891b2;"
+                                      title="Position within {{ $broadsheet->arm ?? 'this arm' }} only">
+                                    {{ $broadsheet->arm_position ? \App\Helpers\OrdinalHelper::getOrdinalSuffix($broadsheet->arm_position) : '-' }}
+                                </span>
+                            </td>
                             <td class="col-vetted text-center">
                                 @if($broadsheet->vettedstatus === '1')
                                     <span class="badge bg-success-subtle text-success"><i class="ri-check-line me-1"></i>Vetted</span>
@@ -710,7 +722,7 @@
                         </tr>
                     @empty
                         <tr id="noDataRow">
-                            <td colspan="{{ ($assessments->count() ?: 4) + 15 }}" class="text-center py-4 text-muted">
+                            <td colspan="{{ ($assessments->count() ?: 4) + 16 }}" class="text-center py-4 text-muted">
                                 <i class="ri-inbox-line ri-2x d-block mb-2"></i>No scores available.
                             </td>
                         </tr>
@@ -773,7 +785,8 @@
                                 ['col-total','Total'],['col-total-grade','Total Grade (saved)'],
                                 ['col-bf','BF'],['col-cum','Cum'],['col-cum-grade','Cum Grade (display)'],
                                 ['col-avg','Class Avg'],['col-gpa','GPA'],['col-cgpa','CGPA'],
-                                ['col-position','Position'],['col-vetted','Status'],
+                                ['col-position','Class Position'],['col-arm-position','Arm Position'],
+                                ['col-vetted','Status'],
                             ] as [$cls,$lbl])
                             <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" id="chk-{{ $cls }}" data-col="{{ $cls }}" checked><label class="form-check-label" for="chk-{{ $cls }}">{{ $lbl }}</label></div>
                             @endforeach
@@ -1027,12 +1040,10 @@ function tipPosition(inp) {
     const tw  = 230;
     const margin = 8;
 
-    // Horizontal: centre over the input, clamp to viewport
     let left = r.left + r.width / 2 - tw / 2;
     left = Math.max(margin, Math.min(left, window.innerWidth - tw - margin));
     tip.style.left = left + 'px';
 
-    // Vertical: prefer above, fall back to below if not enough space
     const spaceAbove = r.top;
     tip.classList.remove('tip-above', 'tip-below');
     if (spaceAbove > 155) {
@@ -1078,7 +1089,7 @@ function tipRefresh(inp) {
 function tipShow(inp) {
     clearTimeout(tipHideTimer);
     tipInput = inp;
-    tip.style.position = 'absolute'; // use absolute so it scrolls with page
+    tip.style.position = 'absolute';
     tip.style.display  = 'block';
     tipRefresh(inp);
     requestAnimationFrame(() => { tip.style.opacity = '1'; });
@@ -1183,7 +1194,8 @@ function bulkSave() {
             const ab = row.querySelector('.avg-badge'); if (ab && bs.avg != null) ab.textContent = fmtN(bs.avg);
             const gb = row.querySelector('.gpa-badge'); if (gb) gb.textContent = fmtN(bs.gpa, 2);
             const cgpab = row.querySelector('.cgpa-badge'); if (cgpab) cgpab.textContent = fmtN(bs.cgpa, 2);
-            const pb = row.querySelector('.position-badge'); if (pb) pb.textContent = ord(bs.position);
+            const pb  = row.querySelector('.position-badge');     if (pb)  pb.textContent  = ord(bs.position);
+            const apb = row.querySelector('.arm-position-badge'); if (apb) apb.textContent = ord(bs.arm_position);
             row.querySelectorAll('.score-input').forEach(i => { i.classList.add('is-saved'); setTimeout(()=>i.classList.remove('is-saved'),2000); });
         });
     })
@@ -1259,7 +1271,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         inp.addEventListener('blur', function () {
-            // Small delay so tabbing to next input doesn't flash hide/show
             setTimeout(() => { if (tipInput === this) tipHide(); }, 80);
             if (!validateInput(this)) return;
             const orig = parseFloat(this.dataset.original) || 0;
