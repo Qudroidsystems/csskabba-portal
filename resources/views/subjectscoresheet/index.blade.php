@@ -17,6 +17,14 @@
     --ss-shadow:    0 1px 4px rgba(0,0,0,.08);
 }
 
+.spin {
+    animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
 .score-input {
     width: 72px; min-width: 72px;
     height: 36px; padding: 4px 6px;
@@ -76,11 +84,8 @@
     animation: spin .6s linear infinite;
     vertical-align: middle;
 }
-@keyframes spin { to { transform: rotate(360deg); } }
 
-/* ══════════════════════════════════════════════════════════════════
-   ROW ENTRANCE & HOVER
-   ══════════════════════════════════════════════════════════════════ */
+/* ROW ENTRANCE & HOVER */
 #scoresheetTableBody tr[data-id] {
     opacity: 0;
     transform: translateY(14px);
@@ -144,9 +149,7 @@
     }
 }
 
-/* ══════════════════════════════════════════════════════════════════
-   SCORE INPUT TOOLTIP
-   ══════════════════════════════════════════════════════════════════ */
+/* SCORE INPUT TOOLTIP */
 #scoreTooltip {
     display: none;
     position: fixed;
@@ -185,9 +188,7 @@
 .tip-prog-track  { height: 3px; background: #f1f5f9; border-radius: 2px; overflow: hidden; }
 .tip-prog-fill   { height: 100%; border-radius: 2px; background: #2563eb; width: 0%; transition: width .3s ease, background .3s ease; }
 
-/* ══════════════════════════════════════════════════════════════════
-   APPLE-STYLE SAVE MODAL
-   ══════════════════════════════════════════════════════════════════ */
+/* APPLE-STYLE SAVE MODAL */
 #ssSaveOverlay {
     display: none;
     position: fixed;
@@ -489,15 +490,16 @@
     </div>
     @endif
 
-    <div class="d-flex align-items-center gap-3 mb-2 flex-wrap" style="font-size:12px;color:var(--ss-muted);">
+    {{-- Position Info Bar with Recalculate Button --}}
+    <div class="d-flex align-items-center justify-content-between gap-3 mb-2 flex-wrap" style="font-size:12px;color:var(--ss-muted);">
         <span><i class="ri-information-line me-1 text-info"></i>
             <strong>Total Grade</strong> = grade based on raw assessment total (saved to DB) &nbsp;|&nbsp;
             <strong>Cum Grade</strong> = grade based on cumulative average (display only) &nbsp;|&nbsp;
-            <strong>Class Pos</strong> = position across whole class &nbsp;|&nbsp;
-            <strong>Arm Pos</strong> = position within this arm/stream
+            <strong>Class Pos</strong> = position across ALL arms (A+B+C) &nbsp;|&nbsp;
+            <strong>Arm Pos</strong> = position within this arm only
         </span>
-        <button type="button" class="btn btn-sm btn-outline-info" id="updateArmPositionsBtn">
-            <i class="ri-group-line me-1"></i>Update Arm Positions (All Arms)
+        <button type="button" class="btn btn-sm btn-primary" id="updateArmPositionsBtn">
+            <i class="ri-refresh-line me-1"></i>Recalculate All Positions
         </button>
     </div>
 
@@ -598,7 +600,7 @@
                             Arm Pos<br><small class="fw-normal opacity-75">(Cum)</small>
                         </th>
                         <th class="col-vetted text-center">Status</th>
-                    </tr>
+                    </td>
                 </thead>
                 <tbody id="scoresheetTableBody">
                     @php $i = 0; @endphp
@@ -1052,21 +1054,22 @@ function saveIndividualScore(input) {
 }
 
 /* ════════════════════════════════════════════════════════════════════
-   UPDATE ARM POSITIONS ACROSS ALL ARMS (AJAX)
+   UPDATE ARM POSITIONS BUTTON (Recalculate All Positions)
    ════════════════════════════════════════════════════════════════════ */
-async function updateAllArmPositions() {
+document.getElementById('updateArmPositionsBtn')?.addEventListener('click', async function() {
     if (!window.schoolclass_id || !window.term_id || !window.session_id) {
-        showToast('Missing session data. Cannot update arm positions.', 'warning');
+        Swal.fire({
+            icon: 'warning',
+            title: 'Missing Data',
+            text: 'Please refresh the page and try again.'
+        });
         return;
     }
 
-    const btn = document.getElementById('updateArmPositionsBtn');
-    const originalHtml = btn?.innerHTML;
-
-    if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<i class="ri-loader-4-line spin"></i> Updating positions...';
-    }
+    const btn = this;
+    const originalHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="ri-loader-4-line spin"></i> Recalculating positions...';
 
     try {
         const response = await fetch(window.routes.updateArmPositions, {
@@ -1086,22 +1089,34 @@ async function updateAllArmPositions() {
         const data = await response.json();
 
         if (data.success) {
-            showToast(data.message, 'success');
-            // Reload the page to show updated positions
-            setTimeout(() => location.reload(), 1500);
+            Swal.fire({
+                icon: 'success',
+                title: 'Positions Updated!',
+                html: data.message,
+                timer: 3000,
+                showConfirmButton: true
+            }).then(() => {
+                location.reload();
+            });
         } else {
-            showToast(data.message || 'Failed to update arm positions', 'danger');
+            Swal.fire({
+                icon: 'error',
+                title: 'Update Failed',
+                text: data.message
+            });
         }
     } catch (error) {
-        console.error('Error updating arm positions:', error);
-        showToast('Network error while updating arm positions', 'danger');
+        console.error('Error updating positions:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Network error while updating positions'
+        });
     } finally {
-        if (btn) {
-            btn.disabled = false;
-            btn.innerHTML = originalHtml || '<i class="ri-group-line me-1"></i>Update Arm Positions (All Arms)';
-        }
+        btn.disabled = false;
+        btn.innerHTML = originalHtml;
     }
-}
+});
 
 /* ════════════════════════════════════════════════════════════════════
    SCORE INPUT TOOLTIP
@@ -1330,9 +1345,6 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('selectAllScores')?.addEventListener('click', () => { const ca = document.getElementById('checkAll'); if (ca) ca.checked = true; document.querySelectorAll('.score-checkbox').forEach(cb => cb.checked = true); });
     document.getElementById('clearAllScores')?.addEventListener('click',  () => { const ca = document.getElementById('checkAll'); if (ca) ca.checked = false; document.querySelectorAll('.score-checkbox').forEach(cb => cb.checked = false); });
 
-    /* Update Arm Positions button */
-    document.getElementById('updateArmPositionsBtn')?.addEventListener('click', updateAllArmPositions);
-
     /* ── Score inputs ──────────────────────────────────────────────── */
     document.querySelectorAll('.score-input').forEach(inp => {
 
@@ -1444,8 +1456,6 @@ document.addEventListener('DOMContentLoaded', function () {
         rows.forEach(row => observer.observe(row));
     })();
 
-    /* Auto-trigger arm position update on page load (optional - uncomment if desired) */
-    // setTimeout(() => { if (window.schoolclass_id && window.term_id && window.session_id) updateAllArmPositions(); }, 1000);
 });
 
 if (typeof Swal === 'undefined') {
