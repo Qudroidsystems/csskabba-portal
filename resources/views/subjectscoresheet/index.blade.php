@@ -588,6 +588,12 @@
                         <th class="col-arm-position text-center" title="Position within this arm/stream only">
                             Arm<br><small class="fw-normal opacity-75">Pos</small>
                         </th>
+                        <th class="col-position-total text-center">
+                            Class Pos<br><small class="fw-normal opacity-75">(Total)</small>
+                        </th>
+                        <th class="col-arm-position-cum text-center">
+                            Arm Pos<br><small class="fw-normal opacity-75">(Cum)</small>
+                        </th>
                         <th class="col-vetted text-center">Status</th>
                     </tr>
                 </thead>
@@ -710,7 +716,18 @@
                                     {{ $broadsheet->arm_position ? \App\Helpers\OrdinalHelper::getOrdinalSuffix($broadsheet->arm_position) : '-' }}
                                 </span>
                             </td>
-                            <td class="col-vetted text-center">
+                            <td class="col-position-total text-center">
+                                <span class="badge position-total-badge" style="background:#0f766e;">
+                                    {{ $broadsheet->position_total ? \App\Helpers\OrdinalHelper::getOrdinalSuffix($broadsheet->position_total) : '-' }}
+                                </span>
+                            </td>
+                            <td class="col-arm-position-cum text-center">
+                                <span class="badge arm-position-cum-badge" style="background:#7c3aed;"
+                                    title="Arm position by cumulative average">
+                                    {{ $broadsheet->arm_position_cum ? \App\Helpers\OrdinalHelper::getOrdinalSuffix($broadsheet->arm_position_cum) : '-' }}
+                                </span>
+                            </td>
+                                                        <td class="col-vetted text-center">
                                 @if($broadsheet->vettedstatus === '1')
                                     <span class="badge bg-success-subtle text-success"><i class="ri-check-line me-1"></i>Vetted</span>
                                 @elseif($broadsheet->vettedstatus === '0')
