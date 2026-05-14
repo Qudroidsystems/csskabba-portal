@@ -804,6 +804,8 @@
                                 ['col-avg','Class Avg'],['col-gpa','GPA'],['col-cgpa','CGPA'],
                                 ['col-position','Class Position'],['col-arm-position','Arm Position'],
                                 ['col-vetted','Status'],
+                                ['col-position-total',  'Class Position (Total)'],
+                                ['col-arm-position-cum','Arm Position (Cum)'],
                             ] as [$cls,$lbl])
                             <div class="form-check"><input class="form-check-input col-toggle" type="checkbox" id="chk-{{ $cls }}" data-col="{{ $cls }}" checked><label class="form-check-label" for="chk-{{ $cls }}">{{ $lbl }}</label></div>
                             @endforeach
