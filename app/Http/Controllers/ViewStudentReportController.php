@@ -2,1802 +2,2109 @@
 
 namespace App\Http\Controllers;
 
-use Exception;
-use App\Models\Student;
-use App\Models\Subject;
-use App\Models\Schoolarm;
-use Illuminate\View\View;
-use App\Models\Schoolterm;
+use App\Exports\MarksSheetExport;
+use App\Exports\MockMarksSheetExport;
+use App\Exports\MockRecordsheetExport;
+use App\Exports\RecordsheetExport;
+use App\Http\Controllers\Controller;
+use App\Imports\ScoresheetImport;
+use App\Models\Assessment;
+use App\Models\BroadsheetAssessmentScore;
+use App\Models\BroadsheetRecord;
+use App\Models\BroadsheetRecordMock;
 use App\Models\Broadsheets;
-use App\Models\Schoolclass;
-use App\Models\Studentclass;
-use Illuminate\Http\Request;
-use App\Models\Classcategory;
-use App\Models\Schoolsession;
-use Illuminate\Http\Response;
+use App\Models\BroadsheetsMock;
+use App\Models\BroadsheetSubAssessmentScore;
 use App\Models\PromotionStatus;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Models\Schoolclass;
 use App\Models\SchoolInformation;
-use Illuminate\Http\JsonResponse;
+use App\Models\Schoolsession;
+use App\Models\Schoolterm;
+use App\Models\SubAssessment;
+use App\Models\Subjectclass;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Cache;
-use App\Models\CompulsorySubjectClass;
-use App\Models\BroadsheetAssessmentScore;
-use App\Models\Studentpersonalityprofile;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
 
-class ViewStudentReportController extends Controller
+class MyScoreSheetController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware('permission:View student-report', ['only' => [
-            'index', 'show', 'registeredClasses', 'classBroadsheet',
-            'studentresult', 'studentmockresult', 'exportStudentResultPdf', 'exportClassResultsPdf'
-        ]]);
-        $this->middleware('permission:Create student-report', ['only' => ['create', 'store']]);
-        $this->middleware('permission:Update student-report', ['only' => ['edit', 'update']]);
-        $this->middleware('permission:Delete student-report', ['only' => ['destroy']]);
+    // =========================================================================
+    // TERMINAL SCORESHEET — LIST / DETAIL
+    // =========================================================================
 
-        Log::channel('pdf')->info('ViewStudentReportController initialized', ['timestamp' => now()]);
+    public function index(Request $request)
+    {
+        $pagetitle   = 'My Scoresheets';
+        $broadsheets = collect();
+
+        if (!$request->ajax()) {
+            $termId    = $request->query('termid', 'ALL');
+            $sessionId = $request->query('sessionid', 'ALL');
+            if ($termId !== 'ALL' && $sessionId !== 'ALL') {
+                $broadsheets = $this->getBroadsheets($request->user()->id, $termId, $sessionId);
+            }
+        }
+
+        if ($request->ajax()) {
+            $termId    = $request->input('termid', 'ALL');
+            $sessionId = $request->input('sessionid', 'ALL');
+            if ($termId === 'ALL' || $sessionId === 'ALL') {
+                return response()->json(['success' => false, 'message' => 'Please select both term and session.'], 422);
+            }
+            $broadsheets = $this->getBroadsheets($request->user()->id, $termId, $sessionId);
+            return response()->json(['success' => true, 'data' => ['broadsheets' => $broadsheets]]);
+        }
+
+        return view('subjectscoresheet.index', compact('pagetitle', 'broadsheets'));
     }
 
-    /**
-     * Format number with ordinal suffix (st, nd, rd, th)
-     */
-    protected function formatOrdinal($number)
+    public function subjectscoresheet($schoolclassid, $subjectclassid, $staffid, $termid, $sessionid)
     {
-        if (!is_numeric($number) || $number <= 0) {
-            return '-';
-        }
-
-        $lastDigit     = $number % 10;
-        $lastTwoDigits = $number % 100;
-
-        if ($lastTwoDigits >= 11 && $lastTwoDigits <= 13) {
-            return $number . 'th';
-        }
-
-        return $number . match ($lastDigit) {
-            1       => 'st',
-            2       => 'nd',
-            3       => 'rd',
-            default => 'th',
-        };
-    }
-
-    /**
-     * Calculate grade based on total score using WAEC/NECO standard.
-     *
-     * FIX: Removed upper-bound checks (e.g. $score <= 74) that caused decimal
-     * scores like 74.5 to fall through every condition and return F9.
-     * Now uses cascading >= only, which correctly handles any decimal value.
-     */
-    protected function calculateGrade($score)
-    {
-        Log::debug('Calculating grade', ['score' => $score]);
-
-        if ($score === null || $score == 0) {
-            return 'F9';
-        }
-
-        if ($score >= 75) {
-            return 'A1';
-        } elseif ($score >= 70) {
-            return 'B2';
-        } elseif ($score >= 65) {
-            return 'B3';
-        } elseif ($score >= 60) {
-            return 'C4';
-        } elseif ($score >= 55) {
-            return 'C5';
-        } elseif ($score >= 50) {
-            return 'C6';
-        } elseif ($score >= 45) {
-            return 'D7';
-        } elseif ($score >= 40) {
-            return 'E8';
-        } else {
-            return 'F9';
-        }
-    }
-
-    /**
-     * Get grade point based on score using WAEC/NECO standard.
-     *
-     * FIX: Same gap fix as calculateGrade() — cascading >= only.
-     */
-    protected function getGradePoint($score)
-    {
-        Log::debug('Calculating grade point', ['score' => $score]);
-
-        if ($score === null || $score == 0) {
-            return 0.0;
-        }
-
-        if ($score >= 75) {
-            return 5.0; // A1
-        } elseif ($score >= 70) {
-            return 4.5; // B2
-        } elseif ($score >= 65) {
-            return 4.0; // B3
-        } elseif ($score >= 60) {
-            return 3.5; // C4
-        } elseif ($score >= 55) {
-            return 3.0; // C5
-        } elseif ($score >= 50) {
-            return 2.5; // C6
-        } elseif ($score >= 45) {
-            return 2.0; // D7
-        } elseif ($score >= 40) {
-            return 1.0; // E8
-        } else {
-            return 0.0; // F9
-        }
-    }
-
-    /**
-     * Get remark based on grade
-     */
-    protected function getRemark($grade)
-    {
-        Log::debug('Getting remark for grade', ['grade' => $grade]);
-
-        $remarks = [
-            'A1' => 'Excellent',
-            'B2' => 'Very Good',
-            'B3' => 'Good',
-            'C4' => 'Credit',
-            'C5' => 'Credit',
-            'C6' => 'Credit',
-            'D7' => 'Pass',
-            'E8' => 'Pass',
-            'F9' => 'Fail',
-        ];
-
-        $remark = $remarks[$grade] ?? 'Unknown';
-        Log::debug('Remark retrieved', ['grade' => $grade, 'remark' => $remark]);
-
-        return $remark;
-    }
-
-    /**
-     * Get GPA letter grade based on GPA value.
-     *
-     * FIX: Cascading >= only — no upper-bound gaps.
-     */
-    protected function getGpaGrade($gpa)
-    {
-        if ($gpa >= 4.5) {
-            return 'A1';
-        } elseif ($gpa >= 4.0) {
-            return 'B2';
-        } elseif ($gpa >= 3.5) {
-            return 'B3';
-        } elseif ($gpa >= 3.0) {
-            return 'C4';
-        } elseif ($gpa >= 2.5) {
-            return 'C5';
-        } elseif ($gpa >= 2.0) {
-            return 'C6';
-        } elseif ($gpa >= 1.5) {
-            return 'D7';
-        } elseif ($gpa >= 1.0) {
-            return 'E8';
-        } else {
-            return 'F9';
-        }
-    }
-
-    /**
-     * Compute overall GPA and CGPA for a student.
-     * GPA  = Average of grade points for current term using TOTAL score.
-     * CGPA = Average of GPAs for all completed terms in current session.
-     */
-    protected function computeOverallGPAAndCGPAForStudent($studentId, $schoolclass, $termId, $sessionId)
-    {
-        Log::info('Computing GPA/CGPA for student', [
-            'student_id' => $studentId,
-            'term_id'    => $termId,
-            'session_id' => $sessionId,
-            'class_name' => $schoolclass->schoolclass ?? 'Unknown',
+        session([
+            'schoolclass_id'  => $schoolclassid,
+            'subjectclass_id' => $subjectclassid,
+            'staff_id'        => $staffid,
+            'term_id'         => $termid,
+            'session_id'      => $sessionid,
         ]);
 
-        $currentTermBroadsheets = Broadsheets::where('term_id', $termId)
-            ->whereHas('broadsheetRecord', function ($q) use ($studentId, $sessionId) {
-                $q->where('student_id', $studentId)->where('session_id', $sessionId);
-            })
-            ->get(['total']);
-
-        Log::debug('Current term broadsheets', [
-            'student_id'   => $studentId,
-            'count'        => $currentTermBroadsheets->count(),
-            'total_scores' => $currentTermBroadsheets->pluck('total')->toArray(),
-        ]);
-
-        $termGradePoints    = $currentTermBroadsheets->map(fn ($b) => $this->getGradePoint($b->total));
-        $gpa                = $termGradePoints->avg() ?? 0.0;
-        $num_subjects       = $currentTermBroadsheets->count();
-        $total_grade_points = $termGradePoints->sum();
-
-        Log::debug('GPA calculations', [
-            'gpa'                => $gpa,
-            'num_subjects'       => $num_subjects,
-            'total_grade_points' => $total_grade_points,
-            'grade_points'       => $termGradePoints->toArray(),
-        ]);
-
-        // CGPA — average of all completed term GPAs in the current session
-        $termGPAs = [];
-
-        for ($t = 1; $t <= $termId; $t++) {
-            $termBroadsheets = Broadsheets::where('term_id', $t)
-                ->whereHas('broadsheetRecord', function ($q) use ($studentId, $sessionId) {
-                    $q->where('student_id', $studentId)->where('session_id', $sessionId);
-                })
-                ->get(['total']);
-
-            if ($termBroadsheets->isNotEmpty()) {
-                $termGradePointsPast = $termBroadsheets->map(fn ($b) => $this->getGradePoint($b->total));
-                $termGPA             = $termGradePointsPast->avg() ?? 0.0;
-
-                if ($termGPA > 0) {
-                    $termGPAs[] = $termGPA;
-                }
-
-                Log::debug('Term GPA calculation for CGPA', [
-                    'term'             => $t,
-                    'term_gpa'         => $termGPA,
-                    'broadsheet_count' => $termBroadsheets->count(),
-                ]);
-            }
-        }
-
-        $cgpa     = !empty($termGPAs) ? collect($termGPAs)->avg() : 0.0;
-        $gpaGrade = $this->getGpaGrade($gpa);
-
-        $result = [
-            'gpa'                => round($gpa, 2),
-            'cgpa'               => round($cgpa, 2),
-            'gpa_grade'          => $gpaGrade,
-            'num_subjects'       => $num_subjects,
-            'total_grade_points' => round($total_grade_points, 1),
-            'calculated_gpa'     => $num_subjects > 0 ? round($total_grade_points / $num_subjects, 2) : 0.0,
-        ];
-
-        Log::info('GPA/CGPA computation completed', $result);
-
-        return $result;
-    }
-
-    /**
-     * Calculate class positions, averages, and grades for all subjects.
-     *
-     * FIX 1: Class average now uses TOTAL (consistent with report display).
-     * FIX 2: Positions ranked and tied by TOTAL.
-     * FIX 3: Grade boundaries use cascading >= to handle decimal scores.
-     */
-    protected function calculateClassPositionsAndAverages($schoolclassid, $sessionid, $termid)
-    {
-        $cacheKey = "class_metrics_{$schoolclassid}_{$sessionid}_{$termid}";
-
-        Log::info('Starting class metrics calculation', [
-            'schoolclassid' => $schoolclassid,
-            'sessionid'     => $sessionid,
-            'termid'        => $termid,
-            'cache_key'     => $cacheKey,
-        ]);
-
-        Cache::forget($cacheKey);
-
-        $schoolclass = Schoolclass::with('classcategories')->where('id', $schoolclassid)->first(['id', 'schoolclass']);
-        if (!$schoolclass) {
-            Log::error('Schoolclass not found', compact('schoolclassid', 'sessionid', 'termid'));
-            return false;
-        }
-
-        $className = $schoolclass->schoolclass;
-        Log::debug('School class found', ['class_name' => $className, 'class_id' => $schoolclassid]);
-
-        $classIds = Schoolclass::where('schoolclass', $className)->pluck('id')->toArray();
-        if (empty($classIds)) {
-            Log::error('No schoolclass IDs found for class name', compact('className', 'schoolclassid', 'sessionid', 'termid'));
-            return false;
-        }
-
-        $students = Studentclass::whereIn('schoolclassid', $classIds)
-            ->where('sessionid', $sessionid)
-            ->pluck('studentId')
-            ->toArray();
-
-        if (empty($students)) {
-            Log::error('No students found for class', compact('className', 'classIds', 'sessionid', 'termid'));
-            return false;
-        }
-
-        $subjectGroups = null;
-
-        $success = DB::transaction(function () use ($schoolclassid, $sessionid, $termid, $className, $classIds, $students, &$subjectGroups) {
-
-            $broadsheets = Broadsheets::whereIn('broadsheet_records.student_id', $students)
-                ->where('broadsheets.term_id', $termid)
-                ->where('broadsheet_records.session_id', $sessionid)
-                ->whereIn('broadsheet_records.schoolclass_id', $classIds)
-                ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
-                ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
-                ->join('studentRegistration', 'studentRegistration.id', '=', 'broadsheet_records.student_id')
-                ->select([
-                    'broadsheets.id',
-                    'broadsheet_records.student_id',
-                    'broadsheet_records.subject_id',
-                    'subject.subject as subject_name',
-                    'studentRegistration.admissionNo as admission_no',
-                    'broadsheets.total',
-                    'broadsheets.bf',
-                    'broadsheets.cum',
-                    'broadsheets.subject_position_class',
-                    'broadsheets.avg',
-                    'broadsheets.grade',
-                    'broadsheets.remark',
-                ])
-                ->get();
-
-            if ($broadsheets->isEmpty()) {
-                Log::error('No broadsheet records found for class', compact('className', 'classIds', 'sessionid', 'termid', 'students'));
-                return false;
-            }
-
-            $subjectGroups = $broadsheets->groupBy('subject_id');
-            Log::info('Grouped broadsheets by subject', ['subject_count' => $subjectGroups->count()]);
-
-            foreach ($subjectGroups as $subjectId => $subjectRecords) {
-                $subjectName = $subjectRecords->first()->subject_name;
-
-                // FIX: Average from TOTAL (not cum)
-                $validRecords = $subjectRecords->filter(fn ($r) => $r->total != 0 && $r->total !== null);
-                $totalScores  = $validRecords->sum('total');
-                $studentCount = $validRecords->count();
-                $classAvg     = $studentCount > 0 ? round($totalScores / $studentCount, 1) : 0;
-
-                // FIX: Positions based on TOTAL
-                $sortedRecords = $validRecords->sortByDesc('total')->values();
-                $rank          = 0;
-                $lastTotal     = null;
-                $lastPosition  = 0;
-                $positionMap   = [];
-
-                foreach ($sortedRecords as $record) {
-                    $rank++;
-                    if ($lastTotal !== null && $record->total == $lastTotal) {
-                        $positionMap[$record->id] = $lastPosition;
-                    } else {
-                        $lastPosition             = $rank;
-                        $lastTotal                = $record->total;
-                        $positionMap[$record->id] = $lastPosition;
-                    }
-                }
-
-                $updatesCount = 0;
-
-                foreach ($subjectRecords as $record) {
-                    // FIX: Grade uses cascading >= (no upper-bound gaps)
-                    $grade  = $record->total == 0 ? '-' : $this->calculateGrade($record->total);
-                    $remark = $this->getRemark($grade);
-
-                    $newPosition = $record->total == 0 ? '-' : (
-                        isset($positionMap[$record->id]) ? $this->formatOrdinal($positionMap[$record->id]) : '-'
-                    );
-
-                    if (
-                        $record->avg != $classAvg ||
-                        $record->subject_position_class != $newPosition ||
-                        $record->grade != $grade ||
-                        $record->remark != $remark
-                    ) {
-                        $updateResult = Broadsheets::where('id', $record->id)->update([
-                            'avg'                    => $classAvg,
-                            'subject_position_class' => $newPosition,
-                            'grade'                  => $grade,
-                            'remark'                 => $remark,
-                        ]);
-
-                        if ($updateResult) {
-                            $updatesCount++;
-                        }
-
-                        Log::debug('Broadsheet updated', [
-                            'broadsheet_id' => $record->id,
-                            'subject_name'  => $subjectName,
-                            'old_grade'     => $record->grade,
-                            'new_grade'     => $grade,
-                            'old_position'  => $record->subject_position_class,
-                            'new_position'  => $newPosition,
-                            'new_avg'       => $classAvg,
-                        ]);
-                    }
-                }
-
-                Log::info('Subject processing completed', [
-                    'subject_name'    => $subjectName,
-                    'updates_applied' => $updatesCount,
-                    'total_records'   => $subjectRecords->count(),
-                ]);
-            }
-
-            return true;
-        });
-
-        if ($success) {
-            Cache::put($cacheKey, true, now()->addHours(1));
-            Log::info('Class metrics calculation completed successfully', [
-                'class_name'     => $className,
-                'schoolclassids' => $classIds,
-                'sessionid'      => $sessionid,
-                'termid'         => $termid,
-                'total_subjects' => $subjectGroups ? $subjectGroups->count() : 0,
-                'total_students' => count($students),
-            ]);
-        } else {
-            Log::error('Failed to calculate class metrics in transaction', compact('className', 'schoolclassid', 'sessionid', 'termid'));
-        }
-
-        return $success;
-    }
-
-    /**
-     * Get complete student result data
-     */
-    private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
-    {
-        try {
-            Log::channel('pdf')->info('========== START getStudentResultData ==========', [
-                'student_id'    => $id,
-                'schoolclassid' => $schoolclassid,
-                'sessionid'     => $sessionid,
-                'termid'        => $termid,
-                'timestamp'     => now()->toDateTimeString(),
-                'server_ip'     => request()->server('SERVER_ADDR') ?? 'unknown',
-                'client_ip'     => request()->ip(),
-            ]);
-
-            if (!is_numeric($id) || !is_numeric($schoolclassid) || !is_numeric($sessionid) || !is_numeric($termid)) {
-                Log::error('Invalid parameters in getStudentResultData', compact('id', 'schoolclassid', 'sessionid', 'termid'));
-                return [];
-            }
-
-            $students = Student::where('studentRegistration.id', $id)
-                ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-                ->select([
-                    'studentRegistration.id as id',
-                    'studentRegistration.admissionNo as admissionNo',
-                    'studentRegistration.firstname as fname',
-                    'studentRegistration.lastname as lastname',
-                    'studentRegistration.othername as othername',
-                    'studentRegistration.dateofbirth as dateofbirth',
-                    'studentRegistration.gender as gender',
-                    'studentRegistration.home_address2 as present_address',
-                    'studentRegistration.home_address2 as permanent_address',
-                    'studentRegistration.updated_at as updated_at',
-                    'studentpicture.picture as picture',
-                ])
-                ->orderBy('studentRegistration.lastname', 'asc')
-                ->get();
-
-            if ($students->isEmpty()) {
-                Log::error('No active student found for ID', compact('id', 'schoolclassid', 'sessionid', 'termid'));
-                $students = collect([]);
-            }
-
-            $schoolclass = Schoolclass::with(['arms', 'classcategories'])->find($schoolclassid);
-            $assessments = collect();
-
-            if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
-                $categoryIds = $schoolclass->classcategories->pluck('id');
-
-                try {
-                    if (class_exists(\App\Models\Assessment::class)) {
-                        $assessments = \App\Models\Assessment::whereIn('classcategory_id', $categoryIds)
-                            ->with('subAssessments')
-                            ->orderBy('id')
-                            ->get();
-
-                        Log::debug('Assessments loaded', [
-                            'assessment_count' => $assessments->count(),
-                            'assessment_names' => $assessments->pluck('name')->toArray(),
-                        ]);
-                    }
-                } catch (\Exception $e) {
-                    Log::error('Error loading assessments', ['error' => $e->getMessage(), 'category_ids' => $categoryIds->toArray()]);
-                }
-            } else {
-                Log::warning('No class categories found or schoolclass not found', [
-                    'schoolclassid'  => $schoolclassid,
-                    'class_exists'   => !is_null($schoolclass),
-                    'has_categories' => $schoolclass ? $schoolclass->classcategories->isNotEmpty() : false,
-                ]);
-            }
-
-            $scores      = null;
-            $attempts    = 0;
-            $maxAttempts = 3;
-            $retryDelay  = 500;
-
-            while ($attempts < $maxAttempts) {
-                $scores = Broadsheets::where('broadsheet_records.student_id', $id)
-                    ->where('broadsheets.term_id', $termid)
-                    ->where('broadsheet_records.session_id', $sessionid)
-                    ->where('broadsheet_records.schoolclass_id', $schoolclassid)
-                    ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
-                    ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
-                    ->orderBy('subject.subject')
-                    ->select([
-                        'subject.id as subject_id',
-                        'subject.subject as subject_name',
-                        'subject.subject_code',
-                        'broadsheets.total',
-                        'broadsheets.bf',
-                        'broadsheets.cum',
-                        'broadsheets.grade',
-                        'broadsheets.remark',
-                        'broadsheets.subject_position_class as position',
-                        'broadsheets.avg as class_average',
-                        'broadsheets.id as broadsheet_id',
-                        'broadsheets.vettedstatus',
-                    ])->get();
-
-                Log::debug('Broadsheet query attempt', [
-                    'attempt'       => $attempts + 1,
-                    'scores_found'  => $scores->count(),
-                    'subject_names' => $scores->pluck('subject_name')->toArray(),
-                ]);
-
-                foreach ($scores as $score) {
-                    try {
-                        if (class_exists(\App\Models\BroadsheetAssessmentScore::class)) {
-                            $assessmentScores = \App\Models\BroadsheetAssessmentScore::where('broadsheet_id', $score->broadsheet_id)
-                                ->with('assessment')
-                                ->orderBy('assessment_id')
-                                ->get();
-
-                            $assessmentArray = $assessmentScores->values();
-
-                            $score->ca1  = 0;
-                            $score->ca2  = 0;
-                            $score->ca3  = 0;
-                            $score->exam = 0;
-
-                            if ($assessmentArray->count() > 0) $score->ca1  = $assessmentArray->get(0)->score ?? 0;
-                            if ($assessmentArray->count() > 1) $score->ca2  = $assessmentArray->get(1)->score ?? 0;
-                            if ($assessmentArray->count() > 2) $score->ca3  = $assessmentArray->get(2)->score ?? 0;
-                            if ($assessmentArray->count() > 3) $score->exam = $assessmentArray->get(3)->score ?? 0;
-
-                            $score->assessment_scores = $assessmentScores;
-                            $score->assessments       = $assessments;
-                        }
-                    } catch (\Exception $e) {
-                        Log::error('Error loading assessment scores', [
-                            'error'         => $e->getMessage(),
-                            'broadsheet_id' => $score->broadsheet_id,
-                            'subject_name'  => $score->subject_name,
-                        ]);
-                    }
-                }
-
-                $hasValidGrades = $scores->every(fn ($s) => $s->grade !== '-' && $s->grade !== null);
-
-                if ($hasValidGrades || $scores->isEmpty()) {
-                    break;
-                }
-
-                Log::warning('Retrying fetch due to incomplete grades', [
-                    'student_id' => $id,
-                    'attempt'    => $attempts + 1,
-                ]);
-
-                usleep($retryDelay * 1000);
-                $attempts++;
-            }
-
-            Log::info('Fetched broadsheet data', [
-                'student_id'     => $id,
-                'scores_count'   => $scores ? $scores->count() : 0,
-                'total_attempts' => $attempts + 1,
-            ]);
-
-            // -------------------------------------------------------
-            // TOTALS SUMMARY: obtained, obtainable, percentage
-            // Each subject is scored out of 100 (matching the sample
-            // report: 17 subjects × 100 = 1700 obtainable).
-            // -------------------------------------------------------
-            $totalObtained   = 0;
-            $totalObtainable = 0;
-
-            if ($scores && $scores->isNotEmpty()) {
-                foreach ($scores as $score) {
-                    if ($score->total !== null && is_numeric($score->total)) {
-                        $totalObtained += (float) $score->total;
-                    }
-                    // Each subject is out of 100
-                    $totalObtainable += 100;
-                }
-            }
-
-            $totalPercentage = $totalObtainable > 0
-                ? round(($totalObtained / $totalObtainable) * 100, 1)
-                : 0;
-
-            $totalsSummary = [
-                'obtained'    => round($totalObtained, 1),
-                'obtainable'  => $totalObtainable,
-                'percentage'  => $totalPercentage,
-            ];
-
-            Log::info('Totals summary computed', array_merge(['student_id' => $id], $totalsSummary));
-            // -------------------------------------------------------
-
-            $gpaData = [];
-            if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
-                try {
-                    $gpaData = $this->computeOverallGPAAndCGPAForStudent($id, $schoolclass, $termid, $sessionid);
-                    Log::info('GPA/CGPA calculation completed', array_merge(['student_id' => $id], $gpaData));
-                } catch (\Exception $e) {
-                    Log::error('Error calculating GPA/CGPA', ['student_id' => $id, 'error' => $e->getMessage()]);
-                    $gpaData = [
-                        'gpa'                => 0.0,
-                        'cgpa'               => 0.0,
-                        'gpa_grade'          => 'F9',
-                        'num_subjects'       => 0,
-                        'total_grade_points' => 0,
-                        'calculated_gpa'     => 0.0,
-                    ];
-                }
-            }
-
-            try {
-                $studentpp = Studentpersonalityprofile::where('studentpersonalityprofiles.studentid', $id)
-                    ->where('studentpersonalityprofiles.termid', $termid)
-                    ->where('studentpersonalityprofiles.sessionid', $sessionid)
-                    ->where('studentpersonalityprofiles.schoolclassid', $schoolclassid)
-                    ->join('schoolsession', 'schoolsession.id', '=', 'studentpersonalityprofiles.sessionid')
-                    ->join('schoolterm', 'schoolterm.id', '=', 'studentpersonalityprofiles.termid')
-                    ->join('schoolclass', 'schoolclass.id', '=', 'studentpersonalityprofiles.schoolclassid')
-                    ->select(
-                        'studentpersonalityprofiles.*',
-                        'schoolsession.session as session',
-                        'schoolterm.term as term',
-                        'schoolclass.schoolclass as schoolclass'
-                    )
-                    ->get();
-
-                if ($studentpp->isEmpty()) {
-                    $studentpp = collect();
-                }
-            } catch (\Exception $e) {
-                Log::error('Error fetching student personality profile', ['student_id' => $id, 'error' => $e->getMessage()]);
-                $studentpp = collect();
-            }
-
-            $schoolsession    = Schoolsession::where('id', $sessionid)->first();
-            $schoolterm       = Schoolterm::where('id', $termid)->first();
-            $numberOfStudents = Studentclass::where('schoolclassid', $schoolclassid)->where('sessionid', $sessionid)->count();
-
-            $schoolInfo = SchoolInformation::first();
-            if (!$schoolInfo) {
-                $schoolInfo                        = new \stdClass();
-                $schoolInfo->id                    = 0;
-                $schoolInfo->school_name           = 'School Name Not Found';
-                $schoolInfo->school_logo           = null;
-                $schoolInfo->school_stamp          = null; // ADD THIS LINE
-                $schoolInfo->school_motto          = 'Motto Not Found';
-                $schoolInfo->school_address        = 'Address Not Found';
-                $schoolInfo->school_phone          = 'Phone Not Found';
-                $schoolInfo->date_school_opened    = null;
-                $schoolInfo->date_next_term_begins = null;
-            }else {
-               // Ensure school_stamp is included
-               $schoolInfo->school_stamp = $schoolInfo->school_stamp ?? null;
-            }
-
-
-            $promotionStatusValue = null;
-            try {
-                $promotionStatus = PromotionStatus::where('student_id', $id)
-                    ->where('session_id', $sessionid)
-                    ->where('term_id', $termid)
-                    ->first();
-
-                if ($promotionStatus) {
-                    $promotionStatusValue = $promotionStatus->status;
-                }
-            } catch (\Exception $e) {
-                Log::error('Error fetching promotion status', ['student_id' => $id, 'error' => $e->getMessage()]);
-            }
-
-            $compulsorySubjects = [];
-            try {
-                $compulsorySubjects = CompulsorySubjectClass::where('class_id', $schoolclassid)
-                    ->pluck('subject_id')
-                    ->toArray();
-            } catch (\Exception $e) {
-                Log::error('Error fetching compulsory subjects', ['class_id' => $schoolclassid, 'error' => $e->getMessage()]);
-            }
-
-            if ($scores) {
-                foreach ($scores as $score) {
-                    $score->is_compulsory = in_array($score->subject_id, $compulsorySubjects);
-                }
-            }
-
-            $result = [
-                'students'             => $students,
-                'studentpp'            => $studentpp,
-                'scores'               => $scores,
-                'studentid'            => $id,
-                'schoolclassid'        => $schoolclassid,
-                'sessionid'            => $sessionid,
-                'termid'               => $termid,
-                'schoolclass'          => $schoolclass,
-                'schoolterm'           => $schoolterm,
-                'schoolsession'        => $schoolsession,
-                'numberOfStudents'     => $numberOfStudents,
-                'schoolInfo'           => $schoolInfo,
-                'promotionStatusValue' => $promotionStatusValue,
-                'assessments'          => $assessments,
-                'compulsorySubjects'   => $compulsorySubjects,
-                'gpa_data'             => $gpaData,
-                'totals_summary'       => $totalsSummary,   // ← NEW
-            ];
-
-            Log::channel('pdf')->info('========== END getStudentResultData ==========', [
-                'student_id'     => $id,
-                'students_count' => $students->count() ?? 0,
-                'scores_count'   => $scores ? $scores->count() : 0,
-                'memory_usage'   => round(memory_get_usage() / 1024 / 1024, 2) . ' MB',
-            ]);
-
-            return $result;
-
-        } catch (Exception $e) {
-            Log::channel('pdf')->error('========== ERROR in getStudentResultData ==========', [
-                'student_id'    => $id,
-                'schoolclassid' => $schoolclassid,
-                'sessionid'     => $sessionid,
-                'termid'        => $termid,
-                'error_message' => $e->getMessage(),
-                'error_file'    => $e->getFile(),
-                'error_line'    => $e->getLine(),
-                'error_trace'   => $e->getTraceAsString(),
-            ]);
-            return [];
-        }
-    }
-
-    /**
-     * Get column options for PDF generation
-     */
-    public function getColumnOptions(Request $request)
-    {
-        Log::info('Getting column options', ['request' => $request->all()]);
-
-        $schoolclassid = $request->input('schoolclassid');
-        $sessionid     = $request->input('sessionid');
-        $termid        = $request->input('termid');
-
-        if (!$schoolclassid || !$sessionid || !$termid) {
-            Log::error('Missing parameters for column options', $request->all());
-            return response()->json(['success' => false, 'message' => 'Missing parameters'], 400);
-        }
-
+        $broadsheets = $this->getBroadsheets($staffid, $termid, $sessionid, $schoolclassid, $subjectclassid);
         $schoolclass = Schoolclass::with('classcategories')->find($schoolclassid);
         $assessments = collect();
 
-        if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
+        if ($broadsheets->isNotEmpty() && $schoolclass && $schoolclass->classcategories->isNotEmpty()) {
             $categoryIds = $schoolclass->classcategories->pluck('id');
-            try {
-                if (class_exists(\App\Models\Assessment::class)) {
-                    $assessments = \App\Models\Assessment::whereIn('classcategory_id', $categoryIds)
-                        ->with('subAssessments')
-                        ->orderBy('id')
-                        ->get();
+            $assessments = Assessment::whereIn('classcategory_id', $categoryIds)
+                ->with('subAssessments')
+                ->orderBy('id')
+                ->get();
 
-                    Log::debug('Assessments for column options', [
-                        'assessment_count' => $assessments->count(),
-                        'category_ids'     => $categoryIds->toArray(),
-                    ]);
-                }
-            } catch (\Exception $e) {
-                Log::error('Error loading assessments for column options', ['error' => $e->getMessage()]);
+            $this->updateClassMetrics($subjectclassid, $staffid, $termid, $sessionid);
+            $this->computeDynamicTotals($broadsheets, $assessments, $schoolclass, $termid, $sessionid);
+            $this->updateSubjectPositions($subjectclassid, $staffid, $termid, $sessionid);
+            $this->updateClassPositions($schoolclassid, $termid, $sessionid);
+            $this->updateArmPositions($schoolclassid, $termid, $sessionid);
+
+            $broadsheets = $this->getBroadsheets($staffid, $termid, $sessionid, $schoolclassid, $subjectclassid);
+            $this->computeOverallGPAAndCGPA($broadsheets, $schoolclass, $termid, $sessionid);
+
+            $pagetitle = sprintf(
+                'Scoresheet for %s (%s) - %s %s - %s %s',
+                $broadsheets->first()->subject,
+                $broadsheets->first()->subject_code,
+                $broadsheets->first()->schoolclass,
+                $broadsheets->first()->arm,
+                $broadsheets->first()->term,
+                $broadsheets->first()->session
+            );
+        } else {
+            $pagetitle = 'Subject Scoresheet';
+        }
+
+        $is_senior = $schoolclass && $schoolclass->classcategories->isNotEmpty()
+            ? $schoolclass->classcategories->first()->is_senior ?? false
+            : false;
+
+        return view('subjectscoresheet.index', compact('broadsheets', 'pagetitle', 'is_senior', 'assessments'));
+    }
+
+    public function subassessmentScoresheet($schoolclassid, $subjectclassid, $staffid, $termid, $sessionid, $subassessmentid)
+    {
+        session([
+            'schoolclass_id'    => $schoolclassid,
+            'subjectclass_id'   => $subjectclassid,
+            'staff_id'          => $staffid,
+            'term_id'           => $termid,
+            'session_id'        => $sessionid,
+            'subassessment_id'  => $subassessmentid,
+        ]);
+
+        $subassessment  = SubAssessment::findOrFail($subassessmentid);
+        $broadsheets    = $this->getSubassessmentBroadsheets($staffid, $termid, $sessionid, $schoolclassid, $subjectclassid, $subassessmentid);
+        $schoolclass    = Schoolclass::with('classcategories')->find($schoolclassid);
+        $allAssessments = collect();
+
+        if ($broadsheets->isNotEmpty() && $schoolclass && $schoolclass->classcategories->isNotEmpty()) {
+            $categoryIds    = $schoolclass->classcategories->pluck('id');
+            $allAssessments = Assessment::whereIn('classcategory_id', $categoryIds)->with('subAssessments')->orderBy('id')->get();
+
+            $this->updateClassMetrics($subjectclassid, $staffid, $termid, $sessionid);
+            $this->computeDynamicTotals($broadsheets, $allAssessments, $schoolclass, $termid, $sessionid);
+            $this->updateSubjectPositions($subjectclassid, $staffid, $termid, $sessionid);
+            $this->updateClassPositions($schoolclassid, $termid, $sessionid);
+            $this->updateArmPositions($schoolclassid, $termid, $sessionid);
+
+            $broadsheets = $this->getSubassessmentBroadsheets($staffid, $termid, $sessionid, $schoolclassid, $subjectclassid, $subassessmentid);
+            $this->computeOverallGPAAndCGPA($broadsheets, $schoolclass, $termid, $sessionid);
+        }
+
+        $assessments = $allAssessments->flatMap(fn($a) => $a->subAssessments)->where('id', $subassessmentid);
+
+        $pagetitle = sprintf(
+            'Scoresheet for %s (%s) - %s %s - %s %s',
+            $subassessment->name,
+            $subassessment->max_score ?? 'N/A',
+            $broadsheets->first()?->schoolclass ?? 'Class',
+            $broadsheets->first()?->arm ?? '',
+            $broadsheets->first()?->term ?? '',
+            $broadsheets->first()?->session ?? ''
+        );
+
+        $is_senior = $schoolclass && $schoolclass->classcategories->isNotEmpty()
+            ? $schoolclass->classcategories->first()->is_senior ?? false : false;
+
+        return view('subjectscoresheet.subassessment-index', compact('broadsheets', 'pagetitle', 'is_senior', 'assessments', 'subassessment'));
+    }
+
+    public function assessmentScoresheet($schoolclassid, $subjectclassid, $staffid, $termid, $sessionid, $assessmentid)
+    {
+        session([
+            'schoolclass_id'  => $schoolclassid,
+            'subjectclass_id' => $subjectclassid,
+            'staff_id'        => $staffid,
+            'term_id'         => $termid,
+            'session_id'      => $sessionid,
+            'assessment_id'   => $assessmentid,
+        ]);
+
+        $assessment     = Assessment::with('subAssessments')->findOrFail($assessmentid);
+        $broadsheets    = $this->getBroadsheets($staffid, $termid, $sessionid, $schoolclassid, $subjectclassid);
+        $schoolclass    = Schoolclass::with('classcategories')->find($schoolclassid);
+        $realSubs       = $assessment->subAssessments;
+        $is_sub_view    = $realSubs->isNotEmpty();
+        $subAssessments = $is_sub_view
+            ? $realSubs->each(fn($s) => $s->is_sub_item = true)
+            : collect([$assessment])->each(fn($s) => $s->is_sub_item = false);
+        $allAssessments = collect();
+
+        if ($broadsheets->isNotEmpty() && $schoolclass && $schoolclass->classcategories->isNotEmpty()) {
+            $categoryIds    = $schoolclass->classcategories->pluck('id');
+            $allAssessments = Assessment::whereIn('classcategory_id', $categoryIds)->with('subAssessments')->orderBy('id')->get();
+
+            $this->updateClassMetrics($subjectclassid, $staffid, $termid, $sessionid);
+            $this->computeDynamicTotals($broadsheets, $allAssessments, $schoolclass, $termid, $sessionid);
+            $this->updateSubjectPositions($subjectclassid, $staffid, $termid, $sessionid);
+            $this->updateClassPositions($schoolclassid, $termid, $sessionid);
+            $this->updateArmPositions($schoolclassid, $termid, $sessionid);
+
+            $broadsheets = $this->getBroadsheets($staffid, $termid, $sessionid, $schoolclassid, $subjectclassid);
+            $this->computeOverallGPAAndCGPA($broadsheets, $schoolclass, $termid, $sessionid);
+        }
+
+        $pagetitle = sprintf(
+            'Scoresheet for %s (%s) - %s %s - %s %s',
+            $assessment->name,
+            $assessment->max_score,
+            $broadsheets->first()?->schoolclass ?? 'Class',
+            $broadsheets->first()?->arm ?? '',
+            $broadsheets->first()?->term ?? '',
+            $broadsheets->first()?->session ?? ''
+        );
+
+        $is_senior = $schoolclass && $schoolclass->classcategories->isNotEmpty()
+            ? $schoolclass->classcategories->first()->is_senior ?? false : false;
+
+        return view('subjectscoresheet.assessment-index', compact('broadsheets', 'pagetitle', 'is_senior', 'subAssessments', 'assessment', 'is_sub_view'));
+    }
+
+    // =========================================================================
+    // MOCK SCORESHEET
+    // =========================================================================
+
+    public function mockIndex(Request $request)
+    {
+        $pagetitle   = 'My Mock Scoresheets';
+        $broadsheets = collect();
+
+        if (!$request->ajax()) {
+            $termId    = $request->query('termid', 'ALL');
+            $sessionId = $request->query('sessionid', 'ALL');
+            if ($termId !== 'ALL' && $sessionId !== 'ALL') {
+                $broadsheets = $this->getMockBroadsheets($request->user()->id, $termId, $sessionId);
             }
         }
 
-        $columns = [
-            'student_info' => [
-                'sn'           => ['label' => 'SN', 'default' => true],
-                'admission_no' => ['label' => 'Admission No', 'default' => true],
-                'name'         => ['label' => 'Name', 'default' => true],
-                'picture'      => ['label' => 'Picture', 'default' => true],
-                'gender'       => ['label' => 'Gender', 'default' => false],
-                'dob'          => ['label' => 'Date of Birth', 'default' => false],
-            ],
-            'assessments' => [],
-            'scores' => [
-                'total'         => ['label' => 'Total', 'default' => true],
-                'bf'            => ['label' => 'BF', 'default' => true],
-                'cum'           => ['label' => 'Cum', 'default' => true],
-                'grade'         => ['label' => 'Grade', 'default' => true],
-                'position'      => ['label' => 'Position', 'default' => true],
-                'class_average' => ['label' => 'Class Avg', 'default' => true],
-            ],
-            'gpa_metrics' => [
-                'num_subjects'       => ['label' => 'Num Subjects', 'default' => true],
-                'total_grade_points' => ['label' => 'Total GP', 'default' => true],
-                'gpa'                => ['label' => 'GPA', 'default' => true],
-                'calculated_gpa'     => ['label' => 'Calc GPA', 'default' => true],
-                'gpa_grade'          => ['label' => 'GPA Grade', 'default' => true],
-                'cgpa'               => ['label' => 'CGPA', 'default' => true],
-            ],
-            'other' => [
-                'compulsory_flag' => ['label' => 'Compulsory', 'default' => false],
-                'vetted_status'   => ['label' => 'Vetted Status', 'default' => true],
-            ],
-        ];
-
-        foreach ($assessments as $assessment) {
-            $columns['assessments'][$assessment->id] = [
-                'label'               => $assessment->name . ' (' . $assessment->max_score . ')',
-                'default'             => true,
-                'is_assessment'       => true,
-                'max_score'           => $assessment->max_score,
-                'has_sub_assessments' => $assessment->subAssessments->isNotEmpty(),
-            ];
+        if ($request->ajax()) {
+            $termId    = $request->input('termid', 'ALL');
+            $sessionId = $request->input('sessionid', 'ALL');
+            if ($termId === 'ALL' || $sessionId === 'ALL') {
+                return response()->json(['success' => false, 'message' => 'Please select both term and session.'], 422);
+            }
+            $broadsheets = $this->getMockBroadsheets($request->user()->id, $termId, $sessionId);
+            return response()->json(['success' => true, 'data' => ['broadsheets' => $broadsheets]]);
         }
 
-        Log::info('Column options prepared', [
-            'total_columns'    => count($columns['student_info']) + count($columns['assessments']) +
-                                  count($columns['scores']) + count($columns['gpa_metrics']) +
-                                  count($columns['other']),
-            'assessment_count' => count($columns['assessments']),
-        ]);
-
-        return response()->json([
-            'success'           => true,
-            'columns'           => $columns,
-            'assessments_count' => $assessments->count(),
-            'is_senior'         => $schoolclass && $schoolclass->classcategories->isNotEmpty()
-                ? ($schoolclass->classcategories->first()->is_senior ?? false)
-                : false,
-        ]);
+        return view('subjectscoresheet.mock-index', compact('pagetitle', 'broadsheets'));
     }
 
-    /**
-     * Calculate grade preview for AJAX requests
-     */
-    public function calculateGradePreview(Request $request)
+    public function mockSubjectscoresheet($schoolclassid, $subjectclassid, $staffid, $termid, $sessionid)
     {
-        Log::debug('Calculating grade preview', ['request' => $request->all()]);
+        Log::info('mockSubjectscoresheet', compact('schoolclassid', 'subjectclassid', 'staffid', 'termid', 'sessionid'));
 
+        session([
+            'schoolclass_id'  => $schoolclassid,
+            'subjectclass_id' => $subjectclassid,
+            'staff_id'        => $staffid,
+            'term_id'         => $termid,
+            'session_id'      => $sessionid,
+        ]);
+
+        $broadsheets = $this->getMockBroadsheets($staffid, $termid, $sessionid, $schoolclassid, $subjectclassid);
+        $schoolclass = Schoolclass::with('classcategories')->find($schoolclassid);
+
+        if ($broadsheets->isNotEmpty() && $schoolclass) {
+            $this->updateMockClassMetrics($subjectclassid, $staffid, $termid, $sessionid);
+            $this->updateMockSubjectPositions($subjectclassid, $staffid, $termid, $sessionid);
+            $broadsheets = $this->getMockBroadsheets($staffid, $termid, $sessionid, $schoolclassid, $subjectclassid);
+
+            $pagetitle = sprintf(
+                'Mock Scoresheet – %s (%s) | %s %s | %s %s',
+                $broadsheets->first()->subject,
+                $broadsheets->first()->subject_code,
+                $broadsheets->first()->schoolclass,
+                $broadsheets->first()->arm,
+                $broadsheets->first()->term,
+                $broadsheets->first()->session
+            );
+        } else {
+            $pagetitle = 'Mock Subject Scoresheet';
+            Log::warning('No mock broadsheets found', compact('schoolclassid', 'subjectclassid', 'staffid', 'termid', 'sessionid'));
+        }
+
+        $is_senior = $schoolclass && $schoolclass->classcategories->isNotEmpty()
+            ? $schoolclass->classcategories->first()->is_senior ?? false
+            : false;
+
+        return view('subjectscoresheet.mock-scoresheet', compact('broadsheets', 'pagetitle', 'is_senior'));
+    }
+
+    public function mockSingleUpdateScore(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'broadsheet_id' => 'required|exists:broadsheetmock,id',
+                'exam'          => 'required|numeric|min:0|max:100',
+            ]);
+
+            $broadsheetId = $validated['broadsheet_id'];
+            $examScore    = (float) $validated['exam'];
+
+            $broadsheet = BroadsheetsMock::findOrFail($broadsheetId);
+
+            $mockRecord    = BroadsheetRecordMock::find($broadsheet->broadsheet_records_mock_id);
+            $schoolclassId = $mockRecord?->schoolclass_id ?? 0;
+            $sessionId     = $mockRecord?->session_id ?? session('session_id');
+            $schoolclass   = Schoolclass::with('classcategories')->find($schoolclassId);
+
+            $examScore = max(0, min($examScore, 100));
+            $total     = round($examScore, 2);
+
+            $grade  = $schoolclass && $schoolclass->classcategories->isNotEmpty()
+                ? $schoolclass->classcategories->first()->calculateGrade($total)
+                : $this->getDefaultGrade($total);
+            $remark = $this->getRemark($grade);
+
+            $broadsheet->exam   = $examScore;
+            $broadsheet->total  = $total;
+            $broadsheet->grade  = $grade;
+            $broadsheet->remark = $remark;
+            $broadsheet->save();
+
+            $this->updateMockClassMetrics($broadsheet->subjectclass_id, $broadsheet->staff_id, $broadsheet->term_id, $sessionId);
+            $this->updateMockSubjectPositions($broadsheet->subjectclass_id, $broadsheet->staff_id, $broadsheet->term_id, $sessionId);
+
+            $broadsheet->refresh();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Score updated successfully!',
+                'data'    => [
+                    'total'    => $broadsheet->total,
+                    'grade'    => $broadsheet->grade,
+                    'remark'   => $broadsheet->remark,
+                    'position' => $broadsheet->subject_position_class,
+                ],
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['success' => false, 'message' => 'Validation failed.', 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            Log::error('mockSingleUpdateScore error', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Failed to save: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function mockBulkUpdateScores(Request $request)
+    {
+        $validated = $request->validate([
+            'scores'          => 'required|array',
+            'scores.*.id'     => 'required|exists:broadsheetmock,id',
+            'scores.*.exam'   => 'nullable|numeric|min:0|max:100',
+            'term_id'         => 'required|exists:schoolterm,id',
+            'session_id'      => 'required|exists:schoolsession,id',
+            'subjectclass_id' => 'required|exists:subjectclass,id',
+            'staff_id'        => 'required|exists:users,id',
+            'schoolclass_id'  => 'required|exists:schoolclass,id',
+        ]);
+
+        $scores          = $validated['scores'];
+        $term_id         = $validated['term_id'];
+        $session_id      = $validated['session_id'];
+        $subjectclass_id = $validated['subjectclass_id'];
+        $staff_id        = $validated['staff_id'];
+        $schoolclass_id  = $validated['schoolclass_id'];
+
+        $schoolclass = Schoolclass::with('classcategories')->find($schoolclass_id);
+        if (!$schoolclass) {
+            return response()->json(['success' => false, 'message' => 'School class not found.'], 404);
+        }
+
+        $updatedCount = 0;
+        $errors       = [];
+
+        DB::transaction(function () use ($scores, $session_id, $schoolclass, &$updatedCount, &$errors) {
+            foreach ($scores as $scoreData) {
+                $broadsheetId = $scoreData['id'];
+                $examScore    = isset($scoreData['exam']) ? (float) $scoreData['exam'] : 0;
+
+                $broadsheet = BroadsheetsMock::find($broadsheetId);
+                if (!$broadsheet) {
+                    $errors[] = "Mock broadsheet ID {$broadsheetId} not found.";
+                    continue;
+                }
+
+                $examScore = max(0, min($examScore, 100));
+                $total     = round($examScore, 2);
+
+                $grade  = $schoolclass->classcategories->isNotEmpty()
+                    ? $schoolclass->classcategories->first()->calculateGrade($total)
+                    : $this->getDefaultGrade($total);
+                $remark = $this->getRemark($grade);
+
+                $broadsheet->exam   = $examScore;
+                $broadsheet->total  = $total;
+                $broadsheet->grade  = $grade;
+                $broadsheet->remark = $remark;
+                $broadsheet->save();
+
+                $updatedCount++;
+            }
+        });
+
+        $this->updateMockClassMetrics($subjectclass_id, $staff_id, $term_id, $session_id);
+        $this->updateMockSubjectPositions($subjectclass_id, $staff_id, $term_id, $session_id);
+
+        $updatedBroadsheets = $this->getMockBroadsheets($staff_id, $term_id, $session_id, $schoolclass_id, $subjectclass_id);
+
+        $response = [
+            'success' => true,
+            'message' => "{$updatedCount} score(s) updated successfully!",
+            'data'    => ['broadsheets' => $updatedBroadsheets],
+        ];
+        if (!empty($errors)) $response['warnings'] = $errors;
+
+        return response()->json($response, 200);
+    }
+
+    public function mockDestroy(Request $request)
+    {
+        $id         = $request->input('id');
+        $broadsheet = BroadsheetsMock::findOrFail($id);
+
+        $subjectclassid = $broadsheet->subjectclass_id;
+        $staffid        = $broadsheet->staff_id;
+        $termid         = $broadsheet->term_id;
+        $mockRecord     = BroadsheetRecordMock::find($broadsheet->broadsheet_records_mock_id);
+
+        $broadsheet->delete();
+
+        if ($mockRecord) {
+            $this->updateMockClassMetrics($subjectclassid, $staffid, $termid, $mockRecord->session_id);
+            $this->updateMockSubjectPositions($subjectclassid, $staffid, $termid, $mockRecord->session_id);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Score deleted successfully!']);
+    }
+
+    public function mockResults()
+    {
+        try {
+            $subjectclass_id = session('subjectclass_id');
+            $schoolclass_id  = session('schoolclass_id');
+            $term_id         = session('term_id');
+            $session_id      = session('session_id');
+            $staff_id        = session('staff_id');
+
+            if (!$subjectclass_id || !$schoolclass_id || !$term_id || !$session_id) {
+                return response()->json(['success' => false, 'message' => 'Missing session data.', 'scores' => []], 400);
+            }
+
+            $broadsheets = $this->getMockBroadsheets($staff_id, $term_id, $session_id, $schoolclass_id, $subjectclass_id);
+
+            $scoresData = $broadsheets->map(fn($b) => [
+                'id'          => $b->id,
+                'admissionno' => $b->admissionno,
+                'fname'       => $b->fname,
+                'lname'       => $b->lname,
+                'exam'        => $b->exam,
+                'total'       => $b->total,
+                'grade'       => $b->grade,
+                'remark'      => $b->remark,
+                'position'    => $b->position,
+                'cmin'        => $b->cmin,
+                'cmax'        => $b->cmax,
+                'avg'         => $b->avg,
+            ]);
+
+            return response()->json(['success' => true, 'scores' => $scoresData]);
+        } catch (\Exception $e) {
+            Log::error('mockResults error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    // =========================================================================
+    // GRADE PREVIEW ENDPOINTS
+    // =========================================================================
+
+    public function calculateGradeForScore(Request $request)
+    {
         $request->validate([
             'schoolclass_id' => 'required|exists:schoolclass,id',
             'total'          => 'required|numeric|min:0|max:100',
+            'cum'            => 'required|numeric|min:0|max:100',
         ]);
 
-        $grade = $this->calculateGrade($request->total);
+        $schoolclass = Schoolclass::with('classcategories')->findOrFail($request->schoolclass_id);
 
+        $category = $schoolclass->classcategories->isNotEmpty()
+            ? $schoolclass->classcategories->first()
+            : null;
+
+        $totalGrade = $category
+            ? $category->calculateGrade($request->total)
+            : $this->getDefaultGrade($request->total);
+
+        $cumGrade = $category
+            ? $category->calculateGrade($request->cum)
+            : $this->getDefaultGrade($request->cum);
+
+        return response()->json([
+            'success'     => true,
+            'total_grade' => $totalGrade,
+            'cum_grade'   => $cumGrade,
+            'remark'      => $this->getRemark($totalGrade),
+        ]);
+    }
+
+    // =========================================================================
+    // PDF DOWNLOADS
+    // =========================================================================
+
+    public function downloadMarksSheet(Request $request)
+    {
+        try {
+            $subjectclassid = $request->input('subjectclass_id', session('subjectclass_id'));
+            $staffid        = $request->input('staff_id',        session('staff_id'));
+            $termid         = $request->input('term_id',         session('term_id'));
+            $sessionid      = $request->input('session_id',      session('session_id'));
+            $schoolclassid  = $request->input('schoolclass_id',  session('schoolclass_id'));
+
+            if (!$subjectclassid || !$staffid || !$termid || !$sessionid || !$schoolclassid) {
+                return response()->json(['success' => false, 'message' => 'Missing session data. Please open the scoresheet first.'], 400);
+            }
+
+            $broadsheets = $this->getBroadsheets($staffid, $termid, $sessionid, $schoolclassid, $subjectclassid);
+
+            if ($broadsheets->isEmpty()) {
+                return response()->json(['success' => false, 'message' => 'No students found for this subject.'], 404);
+            }
+
+            $teacher     = \App\Models\User::find($staffid);
+            $teacherName = $teacher ? ($teacher->name ?? trim($teacher->firstname . ' ' . $teacher->lastname)) : '';
+
+            $schoolclass = Schoolclass::with('classcategories')->find($schoolclassid);
+            $assessments = collect();
+            if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
+                $categoryIds = $schoolclass->classcategories->pluck('id');
+                $assessments = Assessment::whereIn('classcategory_id', $categoryIds)->with('subAssessments')->orderBy('id')->get();
+            }
+
+            $school = SchoolInformation::first();
+            $pdf    = Pdf::loadView('subjectscoresheet.marksheet', [
+                'broadsheets' => $broadsheets,
+                'assessments' => $assessments,
+                'classInfo'   => $broadsheets->first(),
+                'school'      => $school,
+                'teacherName' => $teacherName,
+            ]);
+            $pdf->setPaper('a4', 'landscape');
+
+            return $pdf->download('marks-sheet-' . date('Y-m-d') . '.pdf');
+        } catch (\Exception $e) {
+            Log::error('Marks sheet download error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function downloadScoresPdf(Request $request)
+    {
+        try {
+            $subjectclassid = $request->input('subjectclass_id', session('subjectclass_id'));
+            $staffid        = $request->input('staff_id',        session('staff_id'));
+            $termid         = $request->input('term_id',         session('term_id'));
+            $sessionid      = $request->input('session_id',      session('session_id'));
+            $schoolclassid  = $request->input('schoolclass_id',  session('schoolclass_id'));
+
+            if (!$subjectclassid || !$staffid || !$termid || !$sessionid || !$schoolclassid) {
+                return response()->json(['success' => false, 'message' => 'Missing session data. Please open the scoresheet first.'], 400);
+            }
+
+            $broadsheets = $this->getBroadsheets($staffid, $termid, $sessionid, $schoolclassid, $subjectclassid);
+
+            if ($broadsheets->isEmpty()) {
+                return response()->json(['success' => false, 'message' => 'No students found for this subject.'], 404);
+            }
+
+            $broadsheets->load(['assessmentScores']);
+
+            $schoolclass = Schoolclass::with('classcategories')->find($schoolclassid);
+            $assessments = collect();
+            if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
+                $categoryIds = $schoolclass->classcategories->pluck('id');
+                $assessments = Assessment::whereIn('classcategory_id', $categoryIds)
+                    ->with('subAssessments')
+                    ->orderBy('id')
+                    ->get();
+            }
+
+            $teacher     = \App\Models\User::find($staffid);
+            $teacherName = $teacher
+                ? ($teacher->name ?? trim($teacher->firstname . ' ' . $teacher->lastname))
+                : '';
+
+            $school = SchoolInformation::first();
+
+            $pdf = Pdf::loadView('subjectscoresheet.scores-pdf', [
+                'broadsheets' => $broadsheets,
+                'assessments' => $assessments,
+                'classInfo'   => $broadsheets->first(),
+                'school'      => $school,
+                'teacherName' => $teacherName,
+            ]);
+            $pdf->setPaper('a4', 'landscape');
+
+            $subject  = preg_replace('/[^a-zA-Z0-9-]/', '_', $broadsheets->first()->subject   ?? 'subject');
+            $class    = preg_replace('/[^a-zA-Z0-9-]/', '_', $broadsheets->first()->schoolclass ?? 'class');
+            $termName = preg_replace('/[^a-zA-Z0-9-]/', '_', $broadsheets->first()->term        ?? 'term');
+            $filename = "scores-{$subject}-{$class}-{$termName}-" . date('Y-m-d') . '.pdf';
+
+            return $pdf->download($filename);
+        } catch (\Exception $e) {
+            Log::error('Scores PDF download error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to generate PDF: ' . $e->getMessage()], 500);
+        }
+    }
+
+    public function mockDownloadMarkSheet(Request $request)
+    {
+        try {
+            $subjectclassid = $request->input('subjectclass_id', session('subjectclass_id'));
+            $staffid        = $request->input('staff_id',        session('staff_id'));
+            $termid         = $request->input('term_id',         session('term_id'));
+            $sessionid      = $request->input('session_id',      session('session_id'));
+            $schoolclassid  = $request->input('schoolclass_id',  session('schoolclass_id'));
+
+            if (!$subjectclassid || !$staffid || !$termid || !$sessionid || !$schoolclassid) {
+                return response()->json(['success' => false, 'message' => 'Missing session data.'], 400);
+            }
+
+            $broadsheets = $this->getMockBroadsheets($staffid, $termid, $sessionid, $schoolclassid, $subjectclassid);
+
+            if ($broadsheets->isEmpty()) {
+                return response()->json(['success' => false, 'message' => 'No mock scores found.'], 404);
+            }
+
+            $teacher     = \App\Models\User::find($staffid);
+            $teacherName = $teacher ? ($teacher->name ?? trim($teacher->firstname . ' ' . $teacher->lastname)) : '';
+
+            $school = SchoolInformation::first();
+            $pdf    = Pdf::loadView('subjectscoresheet.mock-marksheet', [
+                'broadsheets' => $broadsheets,
+                'classInfo'   => $broadsheets->first(),
+                'school'      => $school,
+                'teacherName' => $teacherName,
+            ]);
+            $pdf->setPaper('a4', 'landscape');
+
+            return $pdf->download('mock-marks-sheet-' . date('Y-m-d') . '.pdf');
+        } catch (\Exception $e) {
+            Log::error('Mock marks sheet error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed: ' . $e->getMessage()], 500);
+        }
+    }
+
+    // =========================================================================
+    // EXPORT (Excel)
+    // =========================================================================
+
+    public function export(Request $request)
+    {
+        $schoolclassId  = session('schoolclass_id');
+        $subjectclassId = session('subjectclass_id');
+        $termId         = session('term_id');
+        $sessionId      = session('session_id');
+        $staffId        = session('staff_id');
+
+        if (!$schoolclassId || !$subjectclassId || !$termId || !$sessionId || !$staffId) {
+            return back()->with('error', 'Missing session data. Please open the scoresheet first.');
+        }
+
+        $subjectClass = Subjectclass::with('subject')->find($subjectclassId);
+        $schoolclass  = Schoolclass::find($schoolclassId);
+        $term         = Schoolterm::find($termId);
+        $session      = Schoolsession::find($sessionId);
+
+        $subjectName = preg_replace('/[^a-zA-Z0-9-]/', '_', $subjectClass?->subject?->subject ?? 'subject');
+        $className   = preg_replace('/[^a-zA-Z0-9-]/', '_', $schoolclass?->schoolclass ?? 'class');
+        $arm         = preg_replace('/[^a-zA-Z0-9-]/', '_', $schoolclass?->arm_name ?? '');
+        $termName    = preg_replace('/[^a-zA-Z0-9-]/', '_', $term?->term ?? 'term');
+        $sessionName = preg_replace('/[^a-zA-Z0-9-]/', '_', $session?->session ?? 'session');
+
+        $filename = "{$subjectName}_{$className}" . ($arm && $arm !== '_' ? "_{$arm}" : '') . "_{$termName}_{$sessionName}_scoresheet.xlsx";
+
+        $export = new RecordsheetExport($schoolclassId, $subjectclassId, $termId, $sessionId, $staffId);
+        session(['last_export_password' => $export->getPassword()]);
+
+        return Excel::download($export, $filename);
+    }
+
+    // =========================================================================
+    // IMPORT
+    // =========================================================================
+
+    public function import(Request $request)
+    {
+        try {
+            $request->validate(['file' => 'required|file|mimes:xlsx,xls']);
+
+            $importData = [
+                'subjectclass_id' => $request->input('subjectclass_id', session('subjectclass_id')),
+                'staff_id'        => $request->input('staff_id',        session('staff_id')),
+                'term_id'         => $request->input('term_id',         session('term_id')),
+                'session_id'      => $request->input('session_id',      session('session_id')),
+                'schoolclass_id'  => $request->input('schoolclass_id',  session('schoolclass_id')),
+            ];
+
+            if (empty($importData['subjectclass_id']) || empty($importData['staff_id'])) {
+                return response()->json(['success' => false, 'message' => 'Missing session data. Please refresh and try again.'], 422);
+            }
+
+            $importer = new ScoresheetImport($importData);
+            try {
+                $importer->validateExcelFile($request->file('file'));
+            } catch (\Exception $e) {
+                return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+            }
+
+            Excel::import($importer, $request->file('file'));
+
+            $failures     = $importer->getFailures();
+            $successCount = $importer->getSuccessCount();
+
+            session()->forget(['import_progress', 'import_status', 'import_message']);
+
+            $broadsheets = $this->getBroadsheets(
+                $importData['staff_id'],
+                $importData['term_id'],
+                $importData['session_id'],
+                $importData['schoolclass_id'],
+                $importData['subjectclass_id']
+            );
+
+            $schoolclass = Schoolclass::with('classcategories')->find($importData['schoolclass_id']);
+            $assessments = collect();
+            if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
+                $categoryIds = $schoolclass->classcategories->pluck('id');
+                $assessments = Assessment::whereIn('classcategory_id', $categoryIds)->with('subAssessments')->orderBy('id')->get();
+            }
+
+            $formattedBroadsheets = $this->formatBroadsheetsForResponse($broadsheets, $assessments);
+
+            if ($successCount === 0 && !empty($failures)) {
+                return response()->json(['success' => false, 'message' => 'No records imported.', 'errors' => $failures], 422);
+            }
+
+            $responseData = [
+                'success' => true,
+                'message' => "Successfully imported {$successCount} score(s)!",
+                'data'    => ['broadsheets' => $formattedBroadsheets, 'assessments' => $assessments],
+            ];
+
+            if (!empty($failures)) {
+                $responseData['warning'] = true;
+                $responseData['message'] = "Imported {$successCount} record(s) with " . count($failures) . " warning(s).";
+                $responseData['failures'] = $failures;
+            }
+
+            return response()->json($responseData);
+        } catch (\Exception $e) {
+            Log::error('Import failed', ['error' => $e->getMessage()]);
+            session()->forget(['import_progress', 'import_status', 'import_message']);
+            return response()->json(['success' => false, 'message' => 'Import failed: ' . $e->getMessage()], 500);
+        }
+    }
+
+    protected function formatBroadsheetsForResponse($broadsheets, $assessments)
+    {
+        $formatted = [];
+        foreach ($broadsheets as $b) {
+            $assessmentScores = [];
+            foreach ($assessments as $a) {
+                $s = $b->assessmentScores->where('assessment_id', $a->id)->first();
+                $assessmentScores[] = [
+                    'assessment_id'   => $a->id,
+                    'assessment_name' => $a->name,
+                    'max_score'       => $a->max_score,
+                    'score'           => $s ? floatval($s->score) : 0,
+                ];
+            }
+            $formatted[] = [
+                'id'                => $b->id,
+                'admissionno'       => $b->admissionno,
+                'fname'             => $b->fname,
+                'lname'             => $b->lname,
+                'mname'             => $b->mname,
+                'total'             => floatval($b->total),
+                'bf'                => floatval($b->bf),
+                'cum'               => floatval($b->cum),
+                'grade'             => $b->grade,
+                'position'          => $b->position,
+                'position_total'    => $b->position_total,
+                'arm_position'      => $b->arm_position,
+                'arm_position_cum'  => $b->arm_position_cum,
+                'remark'            => $b->remark,
+                'avg'               => floatval($b->avg ?? 0),
+                'assessment_scores' => $assessmentScores,
+            ];
+        }
+        return $formatted;
+    }
+
+    // =========================================================================
+    // SINGLE UPDATE SCORE (terminal)
+    // =========================================================================
+
+    public function singleUpdateScore(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'broadsheet_id'     => 'required|exists:broadsheets,id',
+                'assessment_id'     => 'required|exists:assessments,id',
+                'score'             => 'required|numeric|min:0',
+                'is_sub'            => 'boolean',
+                'sub_assessment_id' => 'nullable|exists:sub_assessments,id',
+                'total'             => 'nullable|numeric',
+                'raw_total'         => 'nullable|numeric',
+            ]);
+
+            $broadsheetId    = $validated['broadsheet_id'];
+            $assessmentId    = $validated['assessment_id'];
+            $score           = $validated['score'];
+            $isSub           = $validated['is_sub'] ?? false;
+            $subAssessmentId = $validated['sub_assessment_id'] ?? null;
+
+            if ($isSub && !$subAssessmentId) {
+                return response()->json(['success' => false, 'message' => 'Sub-assessment ID required.'], 422);
+            }
+
+            $broadsheet = Broadsheets::findOrFail($broadsheetId);
+            $model      = $isSub ? SubAssessment::findOrFail($subAssessmentId) : Assessment::findOrFail($assessmentId);
+
+            if ($score > $model->max_score) {
+                return response()->json(['success' => false, 'message' => "Score cannot exceed maximum of {$model->max_score}."], 422);
+            }
+
+            $fkValue          = $broadsheet->broadSheet_record_id ?? $broadsheet->broadsheet_record_id;
+            $broadsheetRecord = BroadsheetRecord::find($fkValue);
+
+            $schoolclassId = $broadsheetRecord?->schoolclass_id
+                ?? (int) ($request->input('schoolclass_id') ?: session('schoolclass_id'))
+                ?: 0;
+
+            $sessionId = $broadsheetRecord?->session_id ?? $request->input('session_id') ?? session('session_id');
+
+            if (!$sessionId) {
+                return response()->json(['success' => false, 'message' => 'Session context missing — please reload the scoresheet.'], 200);
+            }
+
+            $termId      = $broadsheet->term_id ?? session('term_id');
+            $schoolclass = Schoolclass::with('classcategories')->find($schoolclassId);
+            $isSenior    = $schoolclass && $schoolclass->classcategories->isNotEmpty()
+                ? $schoolclass->classcategories->first()->is_senior ?? false : false;
+
+            DB::transaction(function () use ($broadsheetId, $assessmentId, $score, $broadsheet, $isSub, $subAssessmentId, $broadsheetRecord, $schoolclass, $sessionId) {
+                if ($isSub) {
+                    BroadsheetSubAssessmentScore::updateOrCreate(
+                        ['broadsheet_id' => $broadsheetId, 'sub_assessment_id' => $subAssessmentId, 'assessment_id' => $assessmentId],
+                        ['score' => $score]
+                    );
+                    // Re-normalise the parent assessment score from all sub-scores
+                    $assessment = Assessment::with('subAssessments')->find($assessmentId);
+                    if ($assessment) {
+                        $subMaxSum  = $assessment->subAssessments->sum('max_score');
+                        $subTotal   = BroadsheetSubAssessmentScore::where('broadsheet_id', $broadsheetId)->where('assessment_id', $assessmentId)->sum('score');
+                        $normalized = $subMaxSum > 0 ? ($subTotal / $subMaxSum) * $assessment->max_score : 0;
+                        BroadsheetAssessmentScore::updateOrCreate(
+                            ['broadsheet_id' => $broadsheetId, 'assessment_id' => $assessmentId],
+                            ['score' => max(0, min($normalized, $assessment->max_score))]
+                        );
+                    }
+                } else {
+                    BroadsheetAssessmentScore::updateOrCreate(
+                        ['broadsheet_id' => $broadsheetId, 'assessment_id' => $assessmentId],
+                        ['score' => $score]
+                    );
+                }
+
+                $assessments = collect();
+                if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
+                    $categoryIds = $schoolclass->classcategories->pluck('id');
+                    $assessments = Assessment::whereIn('classcategory_id', $categoryIds)->with('subAssessments')->get();
+                }
+                $broadsheet->load(['assessmentScores', 'subAssessmentScores']);
+                $this->computeDynamicTotals(collect([$broadsheet]), $assessments, $schoolclass, $broadsheet->term_id, $sessionId);
+            });
+
+            $this->updateClassMetrics($broadsheet->subjectclass_id, $broadsheet->staff_id, $termId, $sessionId);
+            $this->updateSubjectPositions($broadsheet->subjectclass_id, $broadsheet->staff_id, $termId, $sessionId);
+            $this->updateClassPositions($schoolclassId, $termId, $sessionId);
+            $this->updateArmPositions($schoolclassId, $termId, $sessionId);
+
+            $studentId   = $broadsheetRecord?->student_id
+                ?? DB::table('broadsheet_records')->where('id', $fkValue ?? 0)->value('student_id')
+                ?? 0;
+            $gpaCgpaData = $this->computeOverallForStudent($studentId, $schoolclass, $termId, $sessionId, $isSenior);
+            $broadsheet->refresh();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Score updated successfully!',
+                'data'    => [
+                    'total'              => $broadsheet->total,
+                    'cum'                => $broadsheet->cum,
+                    'bf'                 => $broadsheet->bf,
+                    'grade'              => $broadsheet->grade,
+                    'remark'             => $broadsheet->remark,
+                    'gpa'                => round($gpaCgpaData['gpa'], 2),
+                    'gpa_grade'          => $gpaCgpaData['gpa_grade'] ?? 'F',
+                    'cgpa'               => round($gpaCgpaData['cgpa'], 2),
+                    'num_subjects'       => $gpaCgpaData['num_subjects']       ?? 0,
+                    'total_grade_points' => $gpaCgpaData['total_grade_points'] ?? 0.0,
+                ],
+            ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json(['success' => false, 'message' => 'Validation failed.', 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            Log::error('singleUpdateScore error', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => 'Failed: ' . $e->getMessage()], 200);
+        }
+    }
+
+    // =========================================================================
+    // BULK UPDATE SCORES — supports both normal assessments AND sub-assessments
+    // =========================================================================
+
+    public function bulkUpdateScores(Request $request)
+    {
+        $validated = $request->validate([
+            'scores'               => 'required|array',
+            'scores.*.id'          => 'required|exists:broadsheets,id',
+            'scores.*.assessments' => 'sometimes|array',
+            'scores.*.total'       => 'nullable|numeric',
+            'scores.*.raw_total'   => 'nullable|numeric',
+            'term_id'              => 'required|exists:schoolterm,id',
+            'session_id'           => 'required|exists:schoolsession,id',
+            'subjectclass_id'      => 'required|exists:subjectclass,id',
+            'staff_id'             => 'required|exists:users,id',
+            'schoolclass_id'       => 'required|exists:schoolclass,id',
+            'assessment_id'        => 'nullable|exists:assessments,id',
+            'is_sub'               => 'nullable|boolean',
+        ]);
+
+        $scores          = $validated['scores'];
+        $term_id         = $validated['term_id'];
+        $session_id      = $validated['session_id'];
+        $subjectclass_id = $validated['subjectclass_id'];
+        $staff_id        = $validated['staff_id'];
+        $schoolclass_id  = $validated['schoolclass_id'];
+        $assessment_id   = $validated['assessment_id'] ?? null;
+        $is_sub          = (bool) ($validated['is_sub'] ?? false);
+
+        $schoolclass = Schoolclass::with('classcategories')->find($schoolclass_id);
+        if (!$schoolclass) {
+            return response()->json(['success' => false, 'message' => 'School class not found'], 404);
+        }
+
+        $assessments = collect();
+        if ($schoolclass->classcategories->isNotEmpty()) {
+            $categoryIds = $schoolclass->classcategories->pluck('id');
+            $assessments = Assessment::whereIn('classcategory_id', $categoryIds)->with('subAssessments')->get();
+        }
+
+        $updatedCount = 0;
+        $errors       = [];
+
+        DB::transaction(function () use (
+            $scores, $term_id, $session_id, $subjectclass_id, $staff_id, $schoolclass_id,
+            $schoolclass, $assessments, $is_sub, $assessment_id, &$updatedCount, &$errors
+        ) {
+            foreach ($scores as $scoreData) {
+                $broadsheetId    = $scoreData['id'];
+                $broadsheet      = Broadsheets::find($broadsheetId);
+                if (!$broadsheet) { $errors[] = "Broadsheet ID {$broadsheetId} not found."; continue; }
+
+                $assessmentsData = $scoreData['assessments'] ?? [];
+                if (empty($assessmentsData)) continue;
+
+                $localErrors = [];
+
+                if ($is_sub && $assessment_id) {
+                    // ── Sub-assessment path ───────────────────────────────────
+                    $parentAssessment = $assessments->where('id', $assessment_id)->first()
+                        ?? Assessment::with('subAssessments')->find($assessment_id);
+
+                    foreach ($assessmentsData as $subId => $inputScore) {
+                        $subId      = (int) $subId;
+                        $inputScore = max(0, (float) $inputScore);
+
+                        $subModel = SubAssessment::find($subId);
+                        if (!$subModel || $subModel->assessment_id != $assessment_id) {
+                            $localErrors[] = "SubAssessment {$subId} invalid or does not belong to assessment {$assessment_id}.";
+                            continue;
+                        }
+
+                        BroadsheetSubAssessmentScore::updateOrCreate(
+                            [
+                                'broadsheet_id'     => $broadsheetId,
+                                'sub_assessment_id' => $subId,
+                                'assessment_id'     => $assessment_id,
+                            ],
+                            ['score' => min($inputScore, $subModel->max_score)]
+                        );
+                    }
+
+                    // Re-normalise parent assessment score from sum of all saved sub-scores
+                    if ($parentAssessment) {
+                        $subMaxSum  = $parentAssessment->subAssessments->sum('max_score');
+                        $subTotal   = BroadsheetSubAssessmentScore::where('broadsheet_id', $broadsheetId)
+                            ->where('assessment_id', $assessment_id)
+                            ->sum('score');
+                        $normalized = $subMaxSum > 0
+                            ? ($subTotal / $subMaxSum) * $parentAssessment->max_score
+                            : 0;
+
+                        BroadsheetAssessmentScore::updateOrCreate(
+                            ['broadsheet_id' => $broadsheetId, 'assessment_id' => $assessment_id],
+                            ['score' => max(0, min($normalized, $parentAssessment->max_score))]
+                        );
+                    }
+                } else {
+                    // ── Normal assessment path ────────────────────────────────
+                    foreach ($assessmentsData as $componentId => $inputScore) {
+                        $componentId = (int) $componentId;
+                        $inputScore  = max(0, (float) $inputScore);
+
+                        $model = $assessments->where('id', $componentId)->first();
+                        if (!$model) { $localErrors[] = "Assessment {$componentId} invalid."; continue; }
+
+                        BroadsheetAssessmentScore::updateOrCreate(
+                            ['broadsheet_id' => $broadsheetId, 'assessment_id' => $componentId],
+                            ['score' => min($inputScore, $model->max_score)]
+                        );
+                    }
+                }
+
+                if (!empty($localErrors)) {
+                    $errors[] = "Broadsheet {$broadsheetId}: " . implode(', ', $localErrors);
+                    continue;
+                }
+
+                $broadsheet->load(['assessmentScores', 'subAssessmentScores']);
+                $this->computeDynamicTotals(collect([$broadsheet]), $assessments, $schoolclass, $term_id, $session_id);
+                $updatedCount++;
+            }
+
+            $this->updateClassMetrics($subjectclass_id, $staff_id, $term_id, $session_id);
+            $this->updateSubjectPositions($subjectclass_id, $staff_id, $term_id, $session_id);
+            $this->updateClassPositions($schoolclass_id, $term_id, $session_id);
+            $this->updateArmPositions($schoolclass_id, $term_id, $session_id);
+        });
+
+        $updatedBroadsheets = $this->getBroadsheets($staff_id, $term_id, $session_id, $schoolclass_id, $subjectclass_id);
+        $this->computeOverallGPAAndCGPA($updatedBroadsheets, $schoolclass, $term_id, $session_id);
+
+        $response = [
+            'success' => true,
+            'message' => "{$updatedCount} score(s) updated!",
+            'data'    => [
+                'broadsheets' => $updatedBroadsheets,
+                'assessments' => $assessments,
+            ],
+        ];
+        if (!empty($errors)) $response['warnings'] = $errors;
+
+        return response()->json($response, 200);
+    }
+
+    // =========================================================================
+    // RESULTS (terminal AJAX refresh)
+    // =========================================================================
+
+    public function results()
+    {
+        try {
+            $subjectclass_id = session('subjectclass_id');
+            $schoolclass_id  = session('schoolclass_id');
+            $term_id         = session('term_id');
+            $session_id      = session('session_id');
+
+            if (!$subjectclass_id || !$schoolclass_id || !$term_id || !$session_id) {
+                return response()->json(['success' => false, 'message' => 'Missing session data', 'scores' => []], 400);
+            }
+
+            $schoolclass = Schoolclass::with('classcategories')->find($schoolclass_id);
+            $assessments = collect();
+            if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
+                $categoryIds = $schoolclass->classcategories->pluck('id');
+                $assessments = Assessment::whereIn('classcategory_id', $categoryIds)->with('subAssessments')->orderBy('id')->get();
+            }
+
+            $broadsheets = Broadsheets::where(['subjectclass_id' => $subjectclass_id, 'term_id' => $term_id])
+                ->with(['assessmentScores', 'subAssessmentScores'])
+                ->leftJoin('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
+                ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'broadsheet_records.student_id')
+                ->leftJoin('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
+                ->where('broadsheet_records.session_id', $session_id)
+                ->orderBy('studentRegistration.lastname')
+                ->orderBy('studentRegistration.firstname')
+                ->get([
+                    'broadsheets.id',
+                    'studentRegistration.admissionNO as admissionno',
+                    'studentRegistration.firstname as fname',
+                    'studentRegistration.lastname as lname',
+                    'broadsheets.total',
+                    'broadsheets.bf',
+                    'broadsheets.cum',
+                    'broadsheets.grade',
+                    'broadsheets.avg',
+                    'broadsheets.subject_position_class as position',
+                    'broadsheets.subject_position_class_total as position_total',
+                    'broadsheets.arm_position',
+                    'broadsheets.arm_position_cum',
+                    'broadsheets.term_id',
+                ]);
+
+            $this->computeOverallGPAAndCGPA($broadsheets, $schoolclass, $term_id, $session_id);
+
+            $scoresData = $broadsheets->map(function ($b) use ($assessments) {
+                $assessmentData = [];
+                foreach ($assessments as $a) {
+                    $s = $b->assessmentScores->where('assessment_id', $a->id)->first();
+                    $assessmentData[$a->id] = ['name' => $a->name, 'max_score' => $a->max_score, 'score' => $s ? $s->score : 0];
+                }
+                return [
+                    'id'                 => $b->id,
+                    'admissionno'        => $b->admissionno,
+                    'fname'              => $b->fname,
+                    'lname'              => $b->lname,
+                    'assessments'        => $assessmentData,
+                    'total'              => $b->total,
+                    'bf'                 => $b->bf,
+                    'cum'                => $b->cum,
+                    'avg'                => $b->avg ?? 0,
+                    'gpa'                => $b->gpa,
+                    'gpa_grade'          => $b->gpa_grade  ?? 'F',
+                    'cgpa'               => $b->cgpa,
+                    'grade'              => $b->grade,
+                    'position'           => $b->position,
+                    'position_total'     => $b->position_total,
+                    'arm_position'       => $b->arm_position,
+                    'arm_position_cum'   => $b->arm_position_cum,
+                    'num_subjects'       => $b->num_subjects       ?? 0,
+                    'total_grade_points' => $b->total_grade_points ?? 0.0,
+                ];
+            });
+
+            return response()->json(['success' => true, 'assessments' => $assessments, 'scores' => $scoresData]);
+        } catch (\Exception $e) {
+            Log::error('results error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Internal server error.'], 500);
+        }
+    }
+
+    // =========================================================================
+    // EDIT / UPDATE / DESTROY (terminal)
+    // =========================================================================
+
+    public function edit($id)
+    {
+        $broadsheet = Broadsheets::where('broadsheets.id', $id)
+            ->with('assessmentScores')
+            ->leftJoin('broadsheet_records',   'broadsheet_records.id',   '=', 'broadsheets.broadSheet_record_id')
+            ->leftJoin('studentRegistration',  'studentRegistration.id',  '=', 'broadsheet_records.student_id')
+            ->leftJoin('studentpicture',       'studentpicture.studentid','=', 'studentRegistration.id')
+            ->leftJoin('subjectclass',         'subjectclass.id',         '=', 'broadsheets.subjectclass_id')
+            ->leftJoin('schoolclass',          'schoolclass.id',          '=', 'broadsheet_records.schoolclass_id')
+            ->leftJoin('schoolarm',            'schoolarm.id',            '=', 'schoolclass.arm')
+            ->leftJoin('classcategories',      'classcategories.id',      '=', 'schoolclass.classcategoryid')
+            ->leftJoin('subjectteacher',       'subjectteacher.id',       '=', 'subjectclass.subjectteacherid')
+            ->leftJoin('subject',              'subject.id',              '=', 'broadsheet_records.subject_id')
+            ->leftJoin('schoolterm',           'schoolterm.id',           '=', 'broadsheets.term_id')
+            ->leftJoin('schoolsession',        'schoolsession.id',        '=', 'broadsheet_records.session_id')
+            ->first([
+                'broadsheets.id as bid',
+                'studentRegistration.admissionNO as admissionno',
+                'studentRegistration.title',
+                'studentRegistration.firstname as fname',
+                'studentRegistration.lastname as lname',
+                'studentpicture.picture',
+                'broadsheets.total',
+                'broadsheets.bf',
+                'broadsheets.cum',
+                'broadsheets.grade',
+                'broadsheets.avg',
+                'broadsheets.arm_position',
+                'broadsheets.arm_position_cum',
+                'schoolterm.term',
+                'schoolsession.session',
+                'subject.subject',
+                'subject.subject_code',
+                'schoolclass.schoolclass',
+                'schoolarm.id',
+                'broadsheets.subject_position_class as position',
+                'broadsheets.subject_position_class_total as position_total',
+                'broadsheets.remark',
+                'broadsheet_records.student_id',
+                'broadsheets.staff_id',
+                'broadsheets.term_id',
+                'broadsheet_records.session_id as sessionid',
+                'schoolclass.classcategoryid',
+            ]);
+
+        if (!$broadsheet) {
+            return view('error', ['id' => $id, 'title' => 'Not Found', 'message' => 'Score not found.']);
+        }
+
+        $schoolclass = Schoolclass::with('classcategories')->find($broadsheet->schoolclass_id ?? 0);
+        $assessments = collect();
+        if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
+            $categoryIds = $schoolclass->classcategories->pluck('id');
+            $assessments = Assessment::whereIn('classcategory_id', $categoryIds)->with('subAssessments')->orderBy('id')->get();
+        }
+
+        $isSenior = $schoolclass && $schoolclass->classcategories->isNotEmpty()
+            ? $schoolclass->classcategories->first()->is_senior ?? false : false;
+
+        if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
+            $gpaCgpaData = $this->computeOverallForStudent(
+                $broadsheet->student_id, $schoolclass,
+                $broadsheet->term_id, $broadsheet->sessionid, $isSenior
+            );
+            $broadsheet->gpa                = round($gpaCgpaData['gpa'], 2);
+            $broadsheet->cgpa               = round($gpaCgpaData['cgpa'], 2);
+            $broadsheet->gpa_grade          = $gpaCgpaData['gpa_grade']         ?? 'F';
+            $broadsheet->num_subjects       = $gpaCgpaData['num_subjects']       ?? 0;
+            $broadsheet->total_grade_points = $gpaCgpaData['total_grade_points'] ?? 0.0;
+        }
+
+        $pagetitle = sprintf('Edit Score for %s %s - %s (%s)', $broadsheet->fname, $broadsheet->lname, $broadsheet->subject, $id);
+        return view('scoresheet.edit', compact('broadsheet', 'pagetitle', 'assessments'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $broadsheet       = Broadsheets::findOrFail($id);
+        $termId           = $broadsheet->term_id;
+        $broadsheetRecord = BroadsheetRecord::find($broadsheet->broadSheet_record_id);
+        $schoolclassId    = $broadsheetRecord->schoolclass_id ?? 0;
+        $schoolclass      = Schoolclass::with('classcategories')->find($schoolclassId);
+        $assessments      = collect();
+
+        if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
+            $categoryIds = $schoolclass->classcategories->pluck('id');
+            $assessments = Assessment::whereIn('classcategory_id', $categoryIds)->with('subAssessments')->get();
+        }
+
+        $rules = [];
+        foreach ($assessments as $a) {
+            $rules['assessment_' . $a->id] = 'nullable|numeric|min:0|max:' . $a->max_score;
+        }
+        $request->validate($rules);
+
+        foreach ($assessments as $a) {
+            BroadsheetAssessmentScore::updateOrCreate(
+                ['broadsheet_id' => $id, 'assessment_id' => $a->id],
+                ['score' => $request->input('assessment_' . $a->id, 0)]
+            );
+        }
+
+        $broadsheet->load('assessmentScores');
+        $this->computeDynamicTotals(collect([$broadsheet]), $assessments, $schoolclass, $termId, $broadsheetRecord->session_id);
+
+        $isSenior = $schoolclass && $schoolclass->classcategories->isNotEmpty()
+            ? $schoolclass->classcategories->first()->is_senior ?? false : false;
+
+        if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
+            $gpaCgpaData = $this->computeOverallForStudent(
+                $broadsheet->student_id, $schoolclass,
+                $termId, $broadsheetRecord->session_id, $isSenior
+            );
+            $broadsheet->gpa                = round($gpaCgpaData['gpa'], 2);
+            $broadsheet->cgpa               = round($gpaCgpaData['cgpa'], 2);
+            $broadsheet->gpa_grade          = $gpaCgpaData['gpa_grade']         ?? 'F';
+            $broadsheet->num_subjects       = $gpaCgpaData['num_subjects']       ?? 0;
+            $broadsheet->total_grade_points = $gpaCgpaData['total_grade_points'] ?? 0.0;
+        }
+
+        $this->updateClassMetrics($broadsheet->subjectclass_id, $broadsheet->staff_id, $termId, $broadsheetRecord->session_id);
+        $this->updateSubjectPositions($broadsheet->subjectclass_id, $broadsheet->staff_id, $termId, $broadsheetRecord->session_id);
+        $this->updateClassPositions($schoolclassId, $termId, $broadsheetRecord->session_id);
+        $this->updateArmPositions($schoolclassId, $termId, $broadsheetRecord->session_id);
+
+        return redirect()->action([self::class, 'subjectscoresheet'], [
+            'schoolclassid'  => $schoolclassId,
+            'subjectclassid' => $broadsheet->subjectclass_id,
+            'staffid'        => $broadsheet->staff_id,
+            'termid'         => $termId,
+            'sessionid'      => $broadsheetRecord->session_id,
+        ])->with('success', 'Score updated successfully!');
+    }
+
+    public function destroy(Request $request)
+    {
+        $id               = $request->input('id');
+        $broadsheet       = Broadsheets::findOrFail($id);
+        $subjectclassid   = $broadsheet->subjectclass_id;
+        $staffid          = $broadsheet->staff_id;
+        $termid           = $broadsheet->term_id;
+        $broadsheetRecord = DB::table('broadsheet_records')->where('id', $broadsheet->broadSheet_record_id)->first();
+
+        BroadsheetAssessmentScore::where('broadsheet_id', $id)->delete();
+        BroadsheetSubAssessmentScore::where('broadsheet_id', $id)->delete();
+        $broadsheet->delete();
+
+        if ($broadsheetRecord) {
+            $this->updateClassMetrics($subjectclassid, $staffid, $termid, $broadsheetRecord->session_id);
+            $this->updateSubjectPositions($subjectclassid, $staffid, $termid, $broadsheetRecord->session_id);
+            $this->updateClassPositions($broadsheetRecord->schoolclass_id, $termid, $broadsheetRecord->session_id);
+            $this->updateArmPositions($broadsheetRecord->schoolclass_id, $termid, $broadsheetRecord->session_id);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Score deleted successfully!']);
+    }
+
+    // =========================================================================
+    // UPDATE ARM POSITIONS ACROSS ALL ARMS (AJAX) - SUBJECT SPECIFIC
+    // =========================================================================
+
+    /**
+     * Update subject positions across ALL arms of the same class level
+     * This ensures students from different arms (SSS 2 A, B, C) are properly ranked
+     */
+    public function updateAllArmPositions(Request $request)
+    {
+        try {
+            $request->validate([
+                'schoolclass_id' => 'required|exists:schoolclass,id',
+                'term_id' => 'required|exists:schoolterm,id',
+                'session_id' => 'required|exists:schoolsession,id',
+            ]);
+
+            $schoolclassId = $request->schoolclass_id;
+            $termId = $request->term_id;
+            $sessionId = $request->session_id;
+
+            // Get the base class (e.g., "SSS 2" without arm)
+            $baseClass = DB::table('schoolclass')->where('id', $schoolclassId)->first(['schoolclass', 'classcategoryid']);
+            if (!$baseClass) {
+                return response()->json(['success' => false, 'message' => 'Base class not found']);
+            }
+
+            // Get ALL arms of this class (SSS 2 A, SSS 2 B, SSS 2 C, etc.)
+            $allArms = DB::table('schoolclass')
+                ->where('schoolclass', $baseClass->schoolclass)
+                ->where('classcategoryid', $baseClass->classcategoryid)
+                ->pluck('id');
+
+            if ($allArms->isEmpty()) {
+                return response()->json(['success' => false, 'message' => 'No arms found for this class']);
+            }
+
+            // Get all subjectclass entries for these arms
+            $subjectClasses = DB::table('subjectclass')
+                ->whereIn('schoolclassid', $allArms)
+                ->get();
+
+            $updatedCount = 0;
+
+            // For each subject class (each subject in each arm)
+            foreach ($subjectClasses as $subjectClass) {
+                // Get all students for THIS SUBJECT across ALL arms
+                $allStudents = DB::table('broadsheets')
+                    ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
+                    ->where('broadsheets.subjectclass_id', $subjectClass->id)
+                    ->where('broadsheets.term_id', $termId)
+                    ->where('broadsheet_records.session_id', $sessionId)
+                    ->select([
+                        'broadsheets.id as broadsheet_id',
+                        'broadsheets.total',
+                        'broadsheets.cum',
+                        'broadsheet_records.schoolclass_id',
+                        'broadsheet_records.student_id',
+                    ])
+                    ->get();
+
+                if ($allStudents->isEmpty()) continue;
+
+                // ============================================================
+                // 1. Calculate SUBJECT POSITION across WHOLE CLASS (all arms)
+                //    by CUMULATIVE score
+                // ============================================================
+                $rank = 0;
+                $lastVal = null;
+                $lastPos = 0;
+                foreach ($allStudents->sortByDesc('cum')->values() as $index => $student) {
+                    $rank = $index + 1;
+                    if ($lastVal === null || $student->cum != $lastVal) {
+                        $lastPos = $rank;
+                        $lastVal = $student->cum;
+                    }
+                    DB::table('broadsheets')
+                        ->where('id', $student->broadsheet_id)
+                        ->update(['subject_position_class' => $lastPos]);
+                    $updatedCount++;
+                }
+
+                // ============================================================
+                // 2. Calculate SUBJECT POSITION across WHOLE CLASS (all arms)
+                //    by TOTAL score
+                // ============================================================
+                $rank = 0;
+                $lastVal = null;
+                $lastPos = 0;
+                foreach ($allStudents->sortByDesc('total')->values() as $index => $student) {
+                    $rank = $index + 1;
+                    if ($lastVal === null || $student->total != $lastVal) {
+                        $lastPos = $rank;
+                        $lastVal = $student->total;
+                    }
+                    DB::table('broadsheets')
+                        ->where('id', $student->broadsheet_id)
+                        ->update(['subject_position_class_total' => $lastPos]);
+                    $updatedCount++;
+                }
+
+                // ============================================================
+                // 3. Calculate ARM-SPECIFIC POSITIONS (within each arm only)
+                //    by TOTAL score
+                // ============================================================
+                $studentsByArm = $allStudents->groupBy('schoolclass_id');
+                foreach ($studentsByArm as $armClassId => $studentsInArm) {
+                    $rank = 0;
+                    $lastVal = null;
+                    $lastPos = 0;
+                    foreach ($studentsInArm->sortByDesc('total')->values() as $index => $student) {
+                        $rank = $index + 1;
+                        if ($lastVal === null || $student->total != $lastVal) {
+                            $lastPos = $rank;
+                            $lastVal = $student->total;
+                        }
+                        DB::table('broadsheets')
+                            ->where('id', $student->broadsheet_id)
+                            ->update(['arm_position' => $lastPos]);
+                        $updatedCount++;
+                    }
+                }
+
+                // ============================================================
+                // 4. Calculate ARM-SPECIFIC POSITIONS (within each arm only)
+                //    by CUMULATIVE score
+                // ============================================================
+                foreach ($studentsByArm as $armClassId => $studentsInArm) {
+                    $rank = 0;
+                    $lastVal = null;
+                    $lastPos = 0;
+                    foreach ($studentsInArm->sortByDesc('cum')->values() as $index => $student) {
+                        $rank = $index + 1;
+                        if ($lastVal === null || $student->cum != $lastVal) {
+                            $lastPos = $rank;
+                            $lastVal = $student->cum;
+                        }
+                        DB::table('broadsheets')
+                            ->where('id', $student->broadsheet_id)
+                            ->update(['arm_position_cum' => $lastPos]);
+                        $updatedCount++;
+                    }
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => "Subject positions updated! Processed " . $allArms->count() . " arms across " . $subjectClasses->count() . " subjects.",
+                'data' => [
+                    'arms_processed' => $allArms->count(),
+                    'subjects_processed' => $subjectClasses->count(),
+                    'records_updated' => $updatedCount
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('updateAllArmPositions error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update positions: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // =========================================================================
+    // GPA / CGPA HELPERS
+    // =========================================================================
+
+    private function computeOverallGPAAndCGPA($broadsheets, $schoolclass, $termId, $sessionId)
+    {
+        if (!$schoolclass || $schoolclass->classcategories->isEmpty()) return;
+        $isSenior = $schoolclass->classcategories->first()->is_senior ?? false;
+        foreach ($broadsheets as $b) {
+            $data = $this->computeOverallForStudent($b->student_id, $schoolclass, $termId, $sessionId, $isSenior);
+            $b->gpa                = round($data['gpa'], 2);
+            $b->cgpa               = round($data['cgpa'], 2);
+            $b->gpa_grade          = $data['gpa_grade']         ?? 'F';
+            $b->num_subjects       = $data['num_subjects']       ?? 0;
+            $b->total_grade_points = $data['total_grade_points'] ?? 0.0;
+        }
+    }
+
+    private function computeOverallForStudent($studentId, $schoolclass, $termId, $sessionId, $isSenior)
+    {
+        $currentBroadsheets = Broadsheets::where('term_id', $termId)
+            ->whereHas('broadsheetRecord', fn($q) => $q->where('student_id', $studentId)->where('session_id', $sessionId))
+            ->get(['total']);
+
+        $category     = $schoolclass->classcategories->first();
+        $averageTotal = $currentBroadsheets->avg('total') ?? 0.0;
+        $gpaGrade     = $category
+            ? $category->calculateGrade($averageTotal)
+            : $this->getDefaultGrade($averageTotal);
+
+        $termGradePoints  = $currentBroadsheets->map(fn($b) => $this->getGradePoint($b->total, $isSenior));
+        $gpa              = $termGradePoints->avg()  ?? 0.0;
+        $numSubjects      = $currentBroadsheets->count();
+        $totalGradePoints = $termGradePoints->sum();
+
+        $annualGPAs = [];
+        $sessions   = DB::table('broadsheet_records')
+            ->join('schoolclass',      'schoolclass.id',      '=', 'broadsheet_records.schoolclass_id')
+            ->join('classcategories',  'classcategories.id',  '=', 'schoolclass.classcategoryid')
+            ->where('broadsheet_records.student_id', $studentId)
+            ->where('classcategories.is_senior', $isSenior)
+            ->select('broadsheet_records.session_id')
+            ->distinct()
+            ->orderByDesc('broadsheet_records.session_id')
+            ->limit(3)
+            ->pluck('session_id');
+
+        foreach ($sessions as $targetSession) {
+            $sessionGPAs = [];
+            for ($t = 1; $t <= 3; $t++) {
+                $tb = Broadsheets::where('term_id', $t)
+                    ->whereHas('broadsheetRecord', fn($q) => $q->where('student_id', $studentId)->where('session_id', $targetSession))
+                    ->get(['total']);
+                $sessionGPAs[] = $tb->map(fn($b) => $this->getGradePoint($b->total, $isSenior))->avg() ?? 0.0;
+            }
+            $annualGPAs[] = collect($sessionGPAs)->avg() ?? 0.0;
+        }
+
+        return [
+            'gpa'                => $gpa,
+            'cgpa'               => collect($annualGPAs)->avg() ?? 0.0,
+            'gpa_grade'          => $gpaGrade,
+            'num_subjects'       => $numSubjects,
+            'total_grade_points' => $totalGradePoints,
+        ];
+    }
+
+    private function getGradePoint($score, $isSenior = false)
+    {
+        if (!$isSenior) {
+            if ($score >= 70) return 5.0;
+            if ($score >= 60) return 4.0;
+            if ($score >= 50) return 3.0;
+            if ($score >= 40) return 2.0;
+            return 0.0;
+        }
+        if ($score >= 75) return 5.0;
+        if ($score >= 65) return 4.0;
+        if ($score >= 50) return 3.0;
+        if ($score >= 45) return 2.0;
+        if ($score >= 40) return 1.0;
+        return 0.0;
+    }
+
+    // =========================================================================
+    // COMPUTE DYNAMIC TOTALS — grade saved on TOTAL (not cum)
+    // =========================================================================
+
+    private function computeDynamicTotals($broadsheets, $assessments, $schoolclass, $termId, $sessionId)
+    {
+        foreach ($broadsheets as $broadsheet) {
+            $assessmentScores = $broadsheet->assessmentScores ?? collect();
+            $totalRaw         = 0;
+            foreach ($assessments as $a) {
+                $scoreObj  = $assessmentScores->where('assessment_id', $a->id)->first();
+                $totalRaw += $scoreObj ? $scoreObj->score : 0;
+            }
+
+            $newBf    = $this->getPreviousTermCum($broadsheet->student_id, $broadsheet->subject_id, $termId, $sessionId);
+            $newCum   = $termId == 1 ? round($totalRaw, 2) : round(($totalRaw + $newBf) / 2, 2);
+
+            $newGrade  = $schoolclass && $schoolclass->classcategories->isNotEmpty()
+                ? $schoolclass->classcategories->first()->calculateGrade($totalRaw)
+                : $this->getDefaultGrade($totalRaw);
+            $newRemark = $this->getRemark($newGrade);
+
+            $changed = abs($broadsheet->total - $totalRaw) > 0.01
+                || abs($broadsheet->bf    - $newBf)    > 0.01
+                || abs($broadsheet->cum   - $newCum)   > 0.01
+                || $broadsheet->grade  !== $newGrade
+                || $broadsheet->remark !== $newRemark;
+
+            if ($changed) {
+                $broadsheet->total  = $totalRaw;
+                $broadsheet->bf     = $newBf;
+                $broadsheet->cum    = $newCum;
+                $broadsheet->grade  = $newGrade;
+                $broadsheet->remark = $newRemark;
+                $broadsheet->save();
+            }
+        }
+    }
+
+    // =========================================================================
+    // QUERY HELPERS
+    // =========================================================================
+
+    protected function getBroadsheets($staffId, $termId, $sessionId, $schoolClassId = null, $subjectClassId = null)
+    {
+        $query = Broadsheets::query()
+            ->where('broadsheets.staff_id', $staffId)
+            ->where('broadsheets.term_id', $termId)
+            ->with(['assessmentScores', 'subAssessmentScores'])
+            ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
+            ->join('subjectclass', function ($join) use ($subjectClassId) {
+                $join->on('subjectclass.id', '=', 'broadsheets.subjectclass_id')
+                     ->on('broadsheet_records.subject_id',    '=', 'subjectclass.subjectid')
+                     ->on('broadsheet_records.schoolclass_id','=', 'subjectclass.schoolclassid');
+                if ($subjectClassId) $join->where('subjectclass.id', $subjectClassId);
+            })
+            ->leftJoin('studentRegistration', 'studentRegistration.id',  '=', 'broadsheet_records.student_id')
+            ->leftJoin('studentpicture',       'studentpicture.studentid','=', 'studentRegistration.id')
+            ->leftJoin('subject',              'subject.id',              '=', 'broadsheet_records.subject_id')
+            ->leftJoin('schoolclass',          'schoolclass.id',          '=', 'broadsheet_records.schoolclass_id')
+            ->leftJoin('classcategories',      'classcategories.id',      '=', 'schoolclass.classcategoryid')
+            ->leftJoin('schoolarm',            'schoolarm.id',            '=', 'schoolclass.arm')
+            ->leftJoin('subjectteacher',       'subjectteacher.id',       '=', 'subjectclass.subjectteacherid')
+            ->leftJoin('schoolterm',           'schoolterm.id',           '=', 'broadsheets.term_id')
+            ->leftJoin('schoolsession',        'schoolsession.id',        '=', 'broadsheet_records.session_id')
+            ->where('broadsheet_records.session_id', $sessionId)
+            ->orderBy('studentRegistration.lastname',  'asc')
+            ->orderBy('studentRegistration.firstname', 'asc');
+
+        if ($schoolClassId) $query->where('schoolclass.id', $schoolClassId);
+
+        return $query->get([
+            'broadsheets.id',
+            'studentRegistration.admissionNO as admissionno',
+            'broadsheet_records.student_id as student_id',
+            'studentRegistration.firstname as fname',
+            'studentRegistration.lastname as lname',
+            'studentRegistration.othername as mname',
+            'subject.subject as subject',
+            'subject.subject_code as subject_code',
+            'broadsheet_records.subject_id',
+            'schoolclass.schoolclass',
+            'schoolclass.id as schoolclass_id',
+            'schoolclass.classcategoryid',
+            'schoolarm.arm',
+            'schoolarm.id as arm_id',
+            'schoolterm.term',
+            'schoolsession.session',
+            'subjectclass.id as subjectclid',
+            'broadsheets.staff_id',
+            'broadsheets.term_id',
+            'broadsheet_records.session_id as sessionid',
+            'studentpicture.picture',
+            'broadsheets.total',
+            'broadsheets.bf',
+            'broadsheets.cum',
+            'broadsheets.grade',
+            'broadsheets.subject_position_class as position',
+            'broadsheets.subject_position_class_total as position_total',
+            'broadsheets.arm_position',
+            'broadsheets.arm_position_cum',
+            'broadsheets.remark',
+            'broadsheets.vettedstatus',
+            'broadsheets.avg',
+            'broadsheets.cmin',
+            'broadsheets.cmax',
+        ]);
+    }
+
+    protected function getSubassessmentBroadsheets($staffId, $termId, $sessionId, $schoolClassId = null, $subjectClassId = null, $subassessmentId = null)
+    {
+        $query = Broadsheets::query()
+            ->where('broadsheets.staff_id', $staffId)
+            ->where('broadsheets.term_id', $termId)
+            ->with(['assessmentScores', 'subAssessmentScores'])
+            ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
+            ->join('subjectclass', function ($join) use ($subjectClassId) {
+                $join->on('subjectclass.id', '=', 'broadsheets.subjectclass_id')
+                     ->on('broadsheet_records.subject_id',    '=', 'subjectclass.subjectid')
+                     ->on('broadsheet_records.schoolclass_id','=', 'subjectclass.schoolclassid');
+                if ($subjectClassId) $join->where('subjectclass.id', $subjectClassId);
+            })
+            ->leftJoin('studentRegistration', 'studentRegistration.id',  '=', 'broadsheet_records.student_id')
+            ->leftJoin('studentpicture',       'studentpicture.studentid','=', 'studentRegistration.id')
+            ->leftJoin('subject',              'subject.id',              '=', 'broadsheet_records.subject_id')
+            ->leftJoin('schoolclass',          'schoolclass.id',          '=', 'broadsheet_records.schoolclass_id')
+            ->leftJoin('classcategories',      'classcategories.id',      '=', 'schoolclass.classcategoryid')
+            ->leftJoin('schoolarm',            'schoolarm.id',            '=', 'schoolclass.arm')
+            ->leftJoin('subjectteacher',       'subjectteacher.id',       '=', 'subjectclass.subjectteacherid')
+            ->leftJoin('schoolterm',           'schoolterm.id',           '=', 'broadsheets.term_id')
+            ->leftJoin('schoolsession',        'schoolsession.id',        '=', 'broadsheet_records.session_id')
+            ->where('broadsheet_records.session_id', $sessionId)
+            ->orderBy('studentRegistration.lastname',  'asc')
+            ->orderBy('studentRegistration.firstname', 'asc');
+
+        if ($schoolClassId) $query->where('schoolclass.id', $schoolClassId);
+
+        return $query->get([
+            'broadsheets.id',
+            'studentRegistration.admissionNO as admissionno',
+            'broadsheet_records.student_id as student_id',
+            'studentRegistration.firstname as fname',
+            'studentRegistration.lastname as lname',
+            'studentRegistration.othername as mname',
+            'subject.subject',
+            'subject.subject_code',
+            'broadsheet_records.subject_id',
+            'schoolclass.schoolclass',
+            'schoolclass.id as schoolclass_id',
+            'schoolclass.classcategoryid',
+            'schoolarm.arm',
+            'schoolarm.id as arm_id',
+            'schoolterm.term',
+            'schoolsession.session',
+            'subjectclass.id as subjectclid',
+            'broadsheets.staff_id',
+            'broadsheets.term_id',
+            'broadsheet_records.session_id as sessionid',
+            'studentpicture.picture',
+            'broadsheets.total',
+            'broadsheets.bf',
+            'broadsheets.cum',
+            'broadsheets.grade',
+            'broadsheets.subject_position_class as position',
+            'broadsheets.subject_position_class_total as position_total',
+            'broadsheets.arm_position',
+            'broadsheets.arm_position_cum',
+            'broadsheets.remark',
+            'broadsheets.vettedstatus',
+            'broadsheets.avg',
+            'broadsheets.cmin',
+            'broadsheets.cmax',
+        ]);
+    }
+
+    protected function getMockBroadsheets($staffId, $termId, $sessionId, $schoolClassId = null, $subjectClassId = null)
+    {
+        $query = BroadsheetsMock::query()
+            ->where('broadsheetmock.staff_id', $staffId)
+            ->where('broadsheetmock.term_id', $termId)
+            ->join('broadsheet_records_mock', 'broadsheet_records_mock.id', '=', 'broadsheetmock.broadsheet_records_mock_id')
+            ->join('subjectclass', function ($join) use ($subjectClassId) {
+                $join->on('subjectclass.id', '=', 'broadsheetmock.subjectclass_id')
+                     ->on('broadsheet_records_mock.subject_id',    '=', 'subjectclass.subjectid')
+                     ->on('broadsheet_records_mock.schoolclass_id','=', 'subjectclass.schoolclassid');
+                if ($subjectClassId) $join->where('subjectclass.id', $subjectClassId);
+            })
+            ->leftJoin('studentRegistration', 'studentRegistration.id',   '=', 'broadsheet_records_mock.student_id')
+            ->leftJoin('studentpicture',       'studentpicture.studentid', '=', 'studentRegistration.id')
+            ->leftJoin('subject',              'subject.id',               '=', 'broadsheet_records_mock.subject_id')
+            ->leftJoin('schoolclass',          'schoolclass.id',           '=', 'broadsheet_records_mock.schoolclass_id')
+            ->leftJoin('classcategories',      'classcategories.id',       '=', 'schoolclass.classcategoryid')
+            ->leftJoin('schoolarm',            'schoolarm.id',             '=', 'schoolclass.arm')
+            ->leftJoin('subjectteacher',       'subjectteacher.id',        '=', 'subjectclass.subjectteacherid')
+            ->leftJoin('schoolterm',           'schoolterm.id',            '=', 'broadsheetmock.term_id')
+            ->leftJoin('schoolsession',        'schoolsession.id',         '=', 'broadsheet_records_mock.session_id')
+            ->where('broadsheet_records_mock.session_id', $sessionId)
+            ->orderBy('studentRegistration.lastname',  'asc')
+            ->orderBy('studentRegistration.firstname', 'asc');
+
+        if ($schoolClassId) $query->where('schoolclass.id', $schoolClassId);
+
+        return $query->get([
+            'broadsheetmock.id',
+            'studentRegistration.admissionNO as admissionno',
+            'broadsheet_records_mock.student_id as student_id',
+            'studentRegistration.firstname as fname',
+            'studentRegistration.lastname as lname',
+            'studentRegistration.othername as mname',
+            'subject.subject as subject',
+            'subject.subject_code as subject_code',
+            'broadsheet_records_mock.subject_id',
+            'schoolclass.schoolclass',
+            'schoolclass.id as schoolclass_id',
+            'schoolarm.arm',
+            'schoolterm.term',
+            'schoolsession.session',
+            'subjectclass.id as subjectclid',
+            'broadsheetmock.staff_id',
+            'broadsheetmock.term_id',
+            'broadsheet_records_mock.session_id as sessionid',
+            'studentpicture.picture',
+            'broadsheetmock.exam',
+            'broadsheetmock.total',
+            'broadsheetmock.grade',
+            'broadsheetmock.subject_position_class as position',
+            'broadsheetmock.remark',
+            'broadsheetmock.cmin',
+            'broadsheetmock.cmax',
+            'broadsheetmock.avg',
+            'broadsheetmock.vettedstatus',
+        ]);
+    }
+
+    // =========================================================================
+    // POSITION / METRICS HELPERS (terminal)
+    // =========================================================================
+
+    protected function updateClassMetrics($subjectclassid, $staffid, $termid, $sessionid)
+    {
+        $subjectClass = DB::table('subjectclass')->where('id', $subjectclassid)->first(['subjectteacherid']);
+        if (!$subjectClass) return;
+        $subjectTeacher = DB::table('subjectteacher')->where('id', $subjectClass->subjectteacherid)->first(['subjectid']);
+        if (!$subjectTeacher) return;
+        $subjectId = $subjectTeacher->subjectid;
+
+        $metrics = Broadsheets::where('broadsheets.subjectclass_id', $subjectclassid)
+            ->where('broadsheets.staff_id', $staffid)
+            ->where('broadsheets.term_id', $termid)
+            ->leftJoin('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
+            ->where('broadsheet_records.session_id', $sessionid)
+            ->where('broadsheet_records.subject_id', $subjectId)
+            ->select([
+                DB::raw('MIN(broadsheets.cum) as class_min'),
+                DB::raw('MAX(broadsheets.cum) as class_max'),
+                DB::raw('SUM(broadsheets.cum) as cum_sum'),
+                DB::raw('COUNT(broadsheets.id) as student_count'),
+            ])->first();
+
+        $classMin = $metrics->class_min ?? 0;
+        $classMax = $metrics->class_max ?? 0;
+        $classAvg = $metrics->student_count > 0 ? round($metrics->cum_sum / $metrics->student_count, 1) : 0;
+
+        Broadsheets::where('subjectclass_id', $subjectclassid)
+            ->where('staff_id', $staffid)
+            ->where('term_id', $termid)
+            ->leftJoin('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
+            ->where('broadsheet_records.session_id', $sessionid)
+            ->where('broadsheet_records.subject_id', $subjectId)
+            ->update(['cmin' => $classMin, 'cmax' => $classMax, 'avg' => $classAvg]);
+    }
+
+    protected function updateSubjectPositions($subjectclass_id, $staff_id, $term_id, $session_id)
+    {
+        // Get the current subject class
+        $subjectClass = DB::table('subjectclass')->where('id', $subjectclass_id)->first();
+        if (!$subjectClass) return;
+
+        // Get all students for this subject class (only current arm)
+        $rows = Broadsheets::where('subjectclass_id', $subjectclass_id)
+            ->where('staff_id', $staff_id)
+            ->where('term_id', $term_id)
+            ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
+            ->where('broadsheet_records.session_id', $session_id)
+            ->orderByDesc('broadsheets.cum')
+            ->orderBy('broadsheets.id')
+            ->get(['broadsheets.id', 'broadsheets.cum', 'broadsheets.total']);
+
+        // Position by cum (within this arm only - for display in current view)
+        $rank = 0;
+        $lastVal = null;
+        $lastPos = 0;
+        foreach ($rows->sortByDesc('cum')->values() as $index => $b) {
+            $rank = $index + 1;
+            if ($lastVal === null || $b->cum != $lastVal) {
+                $lastPos = $rank;
+                $lastVal = $b->cum;
+            }
+            Broadsheets::where('id', $b->id)->update(['subject_position_class' => $lastPos]);
+        }
+
+        // Position by total (within this arm only - for display in current view)
+        $rank = 0;
+        $lastVal = null;
+        $lastPos = 0;
+        foreach ($rows->sortByDesc('total')->values() as $index => $b) {
+            $rank = $index + 1;
+            if ($lastVal === null || $b->total != $lastVal) {
+                $lastPos = $rank;
+                $lastVal = $b->total;
+            }
+            Broadsheets::where('id', $b->id)->update(['subject_position_class_total' => $lastPos]);
+        }
+    }
+
+    /**
+     * Update class-wide overall positions (stored in promotion_status table).
+     */
+    protected function updateClassPositions($schoolclassid, $termid, $sessionid)
+    {
+        $rank = 0;
+        $lastScore = null;
+        $rows = 0;
+        $pos  = PromotionStatus::where('schoolclassid', $schoolclassid)
+            ->where('termid', $termid)
+            ->where('sessionid', $sessionid)
+            ->orderBy('subjectstotalscores', 'DESC')
+            ->get();
+
+        foreach ($pos as $row) {
+            $rows++;
+            if ($lastScore !== $row->subjectstotalscores) {
+                $lastScore = $row->subjectstotalscores;
+                $rank = $rows;
+            }
+            $suffix = match ($rank) {
+                1 => 'st',
+                2 => 'nd',
+                3 => 'rd',
+                default => 'th'
+            };
+            PromotionStatus::where('id', $row->id)->update(['position' => $rank . $suffix]);
+        }
+    }
+
+    /**
+     * Update arm-specific positions within the current arm only
+     */
+    protected function updateArmPositions($schoolclassid, $termid, $sessionid)
+    {
+        // This calculates positions within the CURRENT ARM only
+        $baseClass = DB::table('schoolclass')->where('id', $schoolclassid)->first(['schoolclass', 'classcategoryid']);
+        if (!$baseClass) return;
+
+        $currentArmId = $schoolclassid;
+
+        $subjectClassIds = DB::table('subjectclass')
+            ->where('schoolclassid', $currentArmId)
+            ->pluck('id');
+
+        foreach ($subjectClassIds as $subjectClassId) {
+            $rows = DB::table('broadsheets')
+                ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
+                ->where('broadsheets.subjectclass_id', $subjectClassId)
+                ->where('broadsheets.term_id', $termid)
+                ->where('broadsheet_records.session_id', $sessionid)
+                ->where('broadsheet_records.schoolclass_id', $currentArmId)
+                ->get(['broadsheets.id', 'broadsheets.total', 'broadsheets.cum']);
+
+            if ($rows->isEmpty()) continue;
+
+            // Arm position by total (within current arm only)
+            $rank = 0;
+            $lastVal = null;
+            $lastPos = 0;
+            foreach ($rows->sortByDesc('total')->values() as $index => $row) {
+                $rank = $index + 1;
+                if ($lastVal === null || $row->total != $lastVal) {
+                    $lastPos = $rank;
+                    $lastVal = $row->total;
+                }
+                DB::table('broadsheets')->where('id', $row->id)->update(['arm_position' => $lastPos]);
+            }
+
+            // Arm position by cum (within current arm only)
+            $rank = 0;
+            $lastVal = null;
+            $lastPos = 0;
+            foreach ($rows->sortByDesc('cum')->values() as $index => $row) {
+                $rank = $index + 1;
+                if ($lastVal === null || $row->cum != $lastVal) {
+                    $lastPos = $rank;
+                    $lastVal = $row->cum;
+                }
+                DB::table('broadsheets')->where('id', $row->id)->update(['arm_position_cum' => $lastPos]);
+            }
+        }
+    }
+
+    // =========================================================================
+    // POSITION / METRICS HELPERS (mock)
+    // =========================================================================
+
+    protected function updateMockClassMetrics($subjectclassid, $staffid, $termid, $sessionid)
+    {
+        $subjectClass = DB::table('subjectclass')->where('id', $subjectclassid)->first(['subjectteacherid']);
+        if (!$subjectClass) return;
+
+        $subjectTeacher = DB::table('subjectteacher')->where('id', $subjectClass->subjectteacherid)->first(['subjectid']);
+        if (!$subjectTeacher) return;
+
+        $subjectId = $subjectTeacher->subjectid;
+
+        $metrics = BroadsheetsMock::query()
+            ->where('broadsheetmock.subjectclass_id', $subjectclassid)
+            ->where('broadsheetmock.staff_id', $staffid)
+            ->where('broadsheetmock.term_id', $termid)
+            ->leftJoin('broadsheet_records_mock', 'broadsheet_records_mock.id', '=', 'broadsheetmock.broadsheet_records_mock_id')
+            ->where('broadsheet_records_mock.session_id', $sessionid)
+            ->where('broadsheet_records_mock.subject_id', $subjectId)
+            ->select([
+                DB::raw('MIN(broadsheetmock.total) as class_min'),
+                DB::raw('MAX(broadsheetmock.total) as class_max'),
+                DB::raw('SUM(broadsheetmock.total)  as total_sum'),
+                DB::raw('COUNT(broadsheetmock.id)   as student_count'),
+            ])->first();
+
+        $classMin = $metrics->class_min ?? 0;
+        $classMax = $metrics->class_max ?? 0;
+        $classAvg = $metrics->student_count > 0
+            ? round((float) $metrics->total_sum / $metrics->student_count, 1)
+            : 0;
+
+        $ids = BroadsheetsMock::query()
+            ->where('broadsheetmock.subjectclass_id', $subjectclassid)
+            ->where('broadsheetmock.staff_id', $staffid)
+            ->where('broadsheetmock.term_id', $termid)
+            ->leftJoin('broadsheet_records_mock', 'broadsheet_records_mock.id', '=', 'broadsheetmock.broadsheet_records_mock_id')
+            ->where('broadsheet_records_mock.session_id', $sessionid)
+            ->where('broadsheet_records_mock.subject_id', $subjectId)
+            ->pluck('broadsheetmock.id');
+
+        BroadsheetsMock::whereIn('id', $ids)->update([
+            'cmin' => $classMin,
+            'cmax' => $classMax,
+            'avg'  => $classAvg,
+        ]);
+
+        Log::info('Mock class metrics updated', compact('subjectclassid', 'classMin', 'classMax', 'classAvg'));
+    }
+
+    protected function updateMockSubjectPositions($subjectclass_id, $staff_id, $term_id, $session_id)
+    {
+        $broadsheets = BroadsheetsMock::query()
+            ->where('broadsheetmock.subjectclass_id', $subjectclass_id)
+            ->where('broadsheetmock.staff_id', $staff_id)
+            ->where('broadsheetmock.term_id', $term_id)
+            ->leftJoin('broadsheet_records_mock', 'broadsheet_records_mock.id', '=', 'broadsheetmock.broadsheet_records_mock_id')
+            ->where('broadsheet_records_mock.session_id', $session_id)
+            ->orderByDesc('broadsheetmock.total')
+            ->orderBy('broadsheetmock.id')
+            ->get([
+                'broadsheetmock.id',
+                'broadsheetmock.total',
+                'broadsheetmock.subject_position_class',
+            ]);
+
+        if ($broadsheets->isEmpty()) return;
+
+        $rank = 0;
+        $lastTotal = null;
+        $lastPosition = 0;
+        foreach ($broadsheets as $b) {
+            $rank++;
+            if ($lastTotal === null || $b->total != $lastTotal) {
+                $lastPosition = $rank;
+                $lastTotal = $b->total;
+            }
+            if ($b->subject_position_class != $lastPosition) {
+                BroadsheetsMock::where('id', $b->id)->update(['subject_position_class' => $lastPosition]);
+            }
+        }
+
+        Log::info('Mock subject positions updated', ['total' => $broadsheets->count()]);
+    }
+
+    // =========================================================================
+    // GRADING HELPERS
+    // =========================================================================
+
+    protected function getDefaultGrade($score)
+    {
+        if ($score >= 70) return 'A';
+        if ($score >= 60) return 'B';
+        if ($score >= 50) return 'C';
+        if ($score >= 40) return 'D';
+        return 'F';
+    }
+
+    protected function getRemark($grade)
+    {
+        return match ($grade) {
+            'A', 'A1'             => 'Excellent',
+            'B', 'B2', 'B3'       => 'Very Good',
+            'C', 'C4', 'C5', 'C6' => 'Good',
+            'D', 'D7', 'E8'       => 'Pass',
+            default               => 'Fail',
+        };
+    }
+
+    protected function getPreviousTermCum($studentId, $subjectId, $termId, $sessionId)
+    {
+        if ($termId == 1) return 0;
+        $prev = Broadsheets::where('broadsheet_records.student_id', $studentId)
+            ->where('broadsheet_records.subject_id', $subjectId)
+            ->where('broadsheets.term_id', $termId - 1)
+            ->where('broadsheet_records.session_id', $sessionId)
+            ->leftJoin('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
+            ->value('broadsheets.cum');
+        return $prev ? round($prev, 2) : 0;
+    }
+
+    public function calculateGradePreview(Request $request)
+    {
+        $request->validate([
+            'schoolclass_id' => 'required|exists:schoolclass,id',
+            'cum'            => 'required|numeric|min:0|max:100',
+        ]);
+        $schoolclass = Schoolclass::with('classcategories')->findOrFail($request->schoolclass_id);
+        $grade       = $schoolclass->classcategories->isNotEmpty()
+            ? $schoolclass->classcategories->first()->calculateGrade($request->cum)
+            : $this->getDefaultGrade($request->cum);
         return response()->json(['grade' => $grade]);
     }
 
-    /**
-     * Display student result view
-     */
-    public function studentresult($id, $schoolclassid, $sessionid, $termid)
+    // =========================================================================
+    // IMPORT PROGRESS
+    // =========================================================================
+
+    public function importProgress()
     {
-        Log::info('Displaying student result view', compact('id', 'schoolclassid', 'sessionid', 'termid'));
-
-        $pagetitle         = "Student Personality Profile";
-        $metricsCalculated = $this->calculateClassPositionsAndAverages($schoolclassid, $sessionid, $termid);
-
-        if (!$metricsCalculated) {
-            return back()->with('error', 'Failed to calculate class metrics. Please try again.');
-        }
-
-        $data = $this->getStudentResultData($id, $schoolclassid, $sessionid, $termid);
-
-        return view('studentreports.studentresult')->with($data)->with('pagetitle', $pagetitle);
-    }
-
-    /**
-     * Display student mock result
-     */
-    public function studentmockresult($id, $schoolclassid, $sessionid, $termid)
-    {
-        Log::info('Displaying student mock result', compact('id', 'schoolclassid', 'sessionid', 'termid'));
-
-        $pagetitle         = "Student Mock Result";
-        $metricsCalculated = $this->calculateClassPositionsAndAverages($schoolclassid, $sessionid, $termid);
-
-        if (!$metricsCalculated) {
-            return back()->with('error', 'Failed to calculate class metrics. Please try again.');
-        }
-
-        $data = $this->getStudentResultData($id, $schoolclassid, $sessionid, $termid);
-
-        return view('studentreports.studentmockresult')->with($data)->with('pagetitle', $pagetitle);
-    }
-
-    /**
-     * Display class broadsheet
-     */
-    public function classBroadsheet($schoolclassid, $sessionid, $termid): View
-    {
-        Log::info('Displaying class broadsheet', compact('schoolclassid', 'sessionid', 'termid'));
-
-        $class     = Schoolclass::findOrFail($schoolclassid);
-        $session   = Schoolsession::findOrFail($sessionid);
-        $term      = $termid;
-        $pagetitle = "Broadsheet for {$class->schoolclass} - {$session->session} - Term {$term}";
-
-        return view('studentreports.broadsheet', [
-            'class'     => $class,
-            'session'   => $session,
-            'term'      => $term,
-            'pagetitle' => $pagetitle,
+        return response()->json([
+            'progress' => session('import_progress', 0),
+            'status'   => session('import_status',   'pending'),
+            'message'  => session('import_message',  'Waiting to start...'),
         ]);
     }
 
-    /**
-     * Get registered classes
-     */
-    public function registeredClasses(Request $request)
+    public function clearImportProgress()
     {
-        Log::info('Getting registered classes', ['request' => $request->all()]);
-
-        $classId   = $request->query('class_id');
-        $sessionId = $request->query('session_id');
-
-        if (!$classId || !$sessionId || $classId === 'ALL' || $sessionId === 'ALL') {
-            return response()->json(['success' => false, 'message' => 'Please select a valid class and session.'], 400);
-        }
-
-        $classes = Studentclass::query()
-            ->join('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
-            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->join('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
-            ->where('schoolclass.id', $classId)
-            ->where('schoolsession.id', $sessionId)
-            ->where('schoolsession.status', 'Current')
-            ->groupBy('schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm', 'schoolsession.session')
-            ->selectRaw('
-                schoolclass.schoolclass as class_name,
-                schoolarm.arm as name_arm,
-                schoolsession.session as session_name,
-                COUNT(DISTINCT studentclass.studentId) as student_count
-            ')
-            ->get();
-
-        return response()->json(['success' => true, 'data' => $classes]);
-    }
-
-    /**
-     * Export single student result as PDF
-     */
-    public function exportStudentResultPdf($id, $schoolclassid, $sessionid, $termid)
-    {
-        try {
-            Log::channel('pdf')->info('========== START SINGLE STUDENT PDF EXPORT ==========', [
-                'student_id'    => $id,
-                'schoolclassid' => $schoolclassid,
-                'sessionid'     => $sessionid,
-                'termid'        => $termid,
-                'timestamp'     => now()->toDateTimeString(),
-                'memory_limit'  => ini_get('memory_limit'),
-            ]);
-
-            ini_set('max_execution_time', 600);
-            ini_set('memory_limit', '1024M');
-
-            $metricsCalculated = $this->calculateClassPositionsAndAverages($schoolclassid, $sessionid, $termid);
-            if (!$metricsCalculated) {
-                return back()->with('error', 'Failed to calculate class metrics. Please try again.');
-            }
-
-            $data = $this->getStudentResultData($id, $schoolclassid, $sessionid, $termid);
-
-            if (empty($data) || empty($data['students']) || $data['students']->isEmpty()) {
-                return back()->with('error', 'No student data found for the provided parameters.');
-            }
-
-            Log::debug('Fixing image paths for single student PDF');
-            $this->fixImagePaths([$data]);
-
-            $student     = $data['students']->first();
-            $studentName = $student ? $student->fname . '_' . $student->lastname : 'Student';
-            $filename    = 'Terminal_Report_' . $studentName . '_' . $data['schoolsession']->session . '_Term_' . $data['termid'] . '.pdf';
-
-            $pdf = Pdf::loadView('studentreports.studentresult_pdf', ['data' => $data])
-                ->setPaper('A4', 'portrait')
-                ->setOptions([
-                    'dpi'                    => 150,
-                    'defaultFont'            => 'DejaVu Sans',
-                    'isRemoteEnabled'        => true,
-                    'isHtml5ParserEnabled'   => true,
-                    'isFontSubsettingEnabled' => true,
-                    'isPhpEnabled'           => false,
-                    'chroot'                 => [public_path(), storage_path()],
-                    'fontCache'              => storage_path('fonts/'),
-                    'logOutputFile'          => storage_path('logs/dompdf.log'),
-                    'debugCss'               => config('app.debug', false),
-                    'debugLayout'            => config('app.debug', false),
-                ]);
-
-            Log::info('PDF generated successfully for single student', [
-                'student_id' => $id,
-                'filename'   => $filename,
-                'file_size'  => strlen($pdf->output()) . ' bytes',
-            ]);
-
-            return $pdf->download($filename);
-
-        } catch (Exception $e) {
-            Log::channel('pdf')->error('========== ERROR SINGLE STUDENT PDF EXPORT ==========', [
-                'student_id'    => $id,
-                'error_message' => $e->getMessage(),
-                'error_file'    => $e->getFile(),
-                'error_line'    => $e->getLine(),
-                'error_trace'   => $e->getTraceAsString(),
-            ]);
-
-            return back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
-        }
-    }
-
-    /**
-     * Export class results as PDF
-     */
-    public function exportClassResultsPdf(Request $request)
-    {
-        try {
-            Log::info('========== START CLASS PDF EXPORT ==========', [
-                'request_data' => $request->all(),
-                'timestamp'    => now()->toDateTimeString(),
-                'server_ip'    => request()->server('SERVER_ADDR') ?? 'unknown',
-                'client_ip'    => request()->ip(),
-                'user_agent'   => request()->header('User-Agent'),
-                'memory_limit' => ini_get('memory_limit'),
-            ]);
-
-            $this->checkServerRequirements();
-            $this->debugStorageStructure();
-
-            ini_set('max_execution_time', 300);
-            ini_set('memory_limit', '512M');
-
-            $schoolclassid   = $request->input('schoolclassid');
-            $sessionid       = $request->input('sessionid');
-            $termid          = $request->input('termid', 3);
-            $studentIds      = $request->input('studentIds', []);
-            $selectedColumns = $request->input('selectedColumns', []);
-
-            if (!$schoolclassid || !$sessionid || !$termid) {
-                return response()->json(['success' => false, 'message' => 'Missing required parameters: schoolclassid, sessionid, termid'], 400);
-            }
-
-            $metricsCalculated = $this->calculateClassPositionsAndAverages($schoolclassid, $sessionid, $termid);
-            if (!$metricsCalculated) {
-                return response()->json(['success' => false, 'message' => 'Failed to calculate class metrics. Please try again.'], 500);
-            }
-
-            $allStudentData = [];
-            $processedCount = 0;
-            $failedCount    = 0;
-
-            foreach ($studentIds as $index => $studentId) {
-                $studentData = $this->getStudentResultData($studentId, $schoolclassid, $sessionid, $termid);
-
-                if (
-                    !empty($studentData) &&
-                    !empty($studentData['students']) &&
-                    $studentData['students']->isNotEmpty()
-                ) {
-                    $studentData['selected_columns'] = $selectedColumns;
-                    $allStudentData[]                = $studentData;
-                    $processedCount++;
-                } else {
-                    $failedCount++;
-                    Log::warning('Skipped student due to empty data', [
-                        'student_id' => $studentId,
-                        'iteration'  => $index + 1,
-                    ]);
-                }
-            }
-
-            Log::info('Student data processing completed', [
-                'total_students' => count($studentIds),
-                'processed'      => $processedCount,
-                'failed'         => $failedCount,
-            ]);
-
-            if (empty($allStudentData)) {
-                $this->debugStudentQuery($studentIds, $schoolclassid, $sessionid, $termid);
-
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to process student data. Check server logs for details.',
-                    'details' => 'No valid student data could be retrieved. Please verify student enrollment and scores.',
-                ], 500);
-            }
-
-            Log::info('Fixing image paths for all student data');
-            $this->fixImagePaths($allStudentData);
-
-            $schoolclass   = Schoolclass::where('id', $schoolclassid)->with(['arms', 'classcategories'])->first(['id', 'schoolclass', 'arm']);
-            $schoolsession = Schoolsession::where('id', $sessionid)->value('session') ?? 'N/A';
-            $term          = $this->getTermName($termid);
-            $className     = $schoolclass
-                ? ($schoolclass->schoolclass . ($schoolclass->arms ? $schoolclass->arms->arm : ''))
-                : 'Class';
-
-            $filename = 'Class_Results_'
-                . preg_replace('/[^A-Za-z0-9_-]/', '_', $className) . '_'
-                . preg_replace('/[^A-Za-z0-9_-]/', '_', $schoolsession) . '_'
-                . $term . '.pdf';
-
-            $viewName = 'studentreports.class_results_pdf';
-            if (!view()->exists($viewName)) {
-                return response()->json(['success' => false, 'message' => 'PDF template view not found: ' . $viewName], 500);
-            }
-
-            $viewData = [
-                'allStudentData' => $allStudentData,
-                'metadata'       => [
-                    'class_name'       => $className,
-                    'session'          => $schoolsession,
-                    'term'             => $term,
-                    'generation_date'  => now()->format('Y-m-d H:i:s'),
-                    'student_count'    => count($allStudentData),
-                    'selected_columns' => $selectedColumns,
-                ],
-            ];
-
-            $pdf = Pdf::loadView($viewName, $viewData)
-                ->setPaper('A4', 'portrait')
-                ->setOptions([
-                    'dpi'                    => 96,
-                    'defaultFont'            => 'DejaVu Sans',
-                    'isRemoteEnabled'        => true,
-                    'isHtml5ParserEnabled'   => true,
-                    'isFontSubsettingEnabled' => true,
-                    'isPhpEnabled'           => false,
-                    'chroot'                 => [public_path(), storage_path()],
-                    'tempDir'                => storage_path('app/temp/'),
-                    'fontCache'              => storage_path('fonts/'),
-                    'logOutputFile'          => storage_path('logs/dompdf.log'),
-                    'isJavascriptEnabled'    => false,
-                    'enable_css_float'       => true,
-                    'debugLayout'            => false,
-                    'debugCss'               => false,
-                    'debugKeepTemp'          => false,
-                ]);
-
-            $pdfContent = $pdf->output();
-
-            if (empty($pdfContent)) {
-                return response()->json(['success' => false, 'message' => 'Generated PDF content is empty'], 500);
-            }
-
-            Log::info('PDF generated successfully, returning inline response', [
-                'size_bytes' => strlen($pdfContent),
-                'filename'   => $filename,
-            ]);
-
-            return response($pdfContent)
-                ->header('Content-Type', 'application/pdf')
-                ->header('Content-Disposition', 'inline; filename="' . $filename . '"')
-                ->header('Content-Length', strlen($pdfContent));
-
-        } catch (Exception $e) {
-            Log::error('========== ERROR CLASS PDF EXPORT ==========', [
-                'error_message' => $e->getMessage(),
-                'error_file'    => $e->getFile(),
-                'error_line'    => $e->getLine(),
-                'error_trace'   => $e->getTraceAsString(),
-                'timestamp'     => now()->toDateTimeString(),
-                'memory_usage'  => round(memory_get_usage() / 1024 / 1024, 2) . ' MB',
-            ]);
-
-            return response()->json([
-                'success'    => false,
-                'message'    => 'Failed to generate PDF: ' . $e->getMessage(),
-                'error_type' => get_class($e),
-            ], 500);
-
-        } finally {
-            Log::info('========== END CLASS PDF EXPORT ==========', [
-                'timestamp'      => now()->toDateTimeString(),
-                'execution_time' => round(microtime(true) - LARAVEL_START, 2) . ' seconds',
-                'final_memory'   => round(memory_get_usage() / 1024 / 1024, 2) . ' MB',
-            ]);
-        }
-    }
-
-    /**
-     * Check server requirements for PDF generation
-     */
-    private function checkServerRequirements()
-    {
-        $checks = [
-            'storage_writable'       => is_writable(storage_path()),
-            'temp_dir_writable'      => is_writable(storage_path('app/temp')),
-            'dompdf_installed'       => class_exists('Barryvdh\DomPDF\PDF'),
-            'php_memory_limit'       => ini_get('memory_limit'),
-            'php_max_execution_time' => ini_get('max_execution_time'),
-            'public_storage_exists'  => file_exists(public_path('storage')),
-            'student_avatars_exists' => file_exists(public_path('storage/student_avatars')),
-            'school_logos_exists'    => file_exists(public_path('storage/school_logos')),
-            'php_version'            => PHP_VERSION,
-            'laravel_version'        => app()->version(),
-            'server_software'        => $_SERVER['SERVER_SOFTWARE'] ?? 'unknown',
-        ];
-
-        Log::info('Server requirements check', $checks);
-
-        if (!$checks['temp_dir_writable']) {
-            $tempDir = storage_path('app/temp');
-            if (!file_exists($tempDir)) {
-                mkdir($tempDir, 0755, true);
-                Log::info('Created temp directory', ['path' => $tempDir]);
-            }
-        }
-
-        $defaultStudentImage = public_path('storage/student_avatars/unnamed.jpg');
-        $defaultSchoolLogo   = public_path('storage/school_logos/default.jpg');
-
-        if (!file_exists($defaultStudentImage)) {
-            Log::warning('Default student image not found', ['path' => $defaultStudentImage]);
-            $studentDir = dirname($defaultStudentImage);
-            if (!file_exists($studentDir)) mkdir($studentDir, 0755, true);
-        }
-
-        if (!file_exists($defaultSchoolLogo)) {
-            Log::warning('Default school logo not found', ['path' => $defaultSchoolLogo]);
-            $logoDir = dirname($defaultSchoolLogo);
-            if (!file_exists($logoDir)) mkdir($logoDir, 0755, true);
-        }
-
-        return $checks;
-    }
-
-    /**
-     * Get absolute image path for a given relative path
-     */
-    private function getAbsoluteImagePath($path, $isStudent = false)
-    {
-        Log::debug('Getting absolute image path', [
-            'original_path' => $path,
-            'is_student'    => $isStudent,
-        ]);
-
-        if (empty($path)) {
-            return null;
-        }
-
-        if (str_starts_with($path, public_path()) || str_starts_with($path, storage_path())) {
-            $exists = file_exists($path);
-            return $exists ? $path : null;
-        }
-
-        if (str_starts_with($path, 'data:image')) {
-            return null;
-        }
-
-        $path = str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $path);
-        $path = preg_replace('/^(http:\/\/|https:\/\/|\/\/)[^\/]+/', '', $path);
-        $path = ltrim($path, DIRECTORY_SEPARATOR);
-
-        $possiblePaths = [];
-
-        if ($isStudent) {
-            $possiblePaths = [
-                public_path('storage/student_avatars/' . $path),
-                storage_path('app/public/student_avatars/' . $path),
-                public_path('storage/' . $path),
-                storage_path('app/public/' . $path),
-                public_path('uploads/students/' . $path),
-                public_path('images/students/' . $path),
-                storage_path('app/uploads/students/' . $path),
-                public_path($path),
-                storage_path($path),
-            ];
-        } else {
-            $possiblePaths = [
-                storage_path('app/public/' . $path),
-                public_path('storage/' . $path),
-                storage_path('app/public/school_logos/' . basename($path)),
-                public_path('storage/school_logos/' . basename($path)),
-                public_path($path),
-                public_path(basename($path)),
-                public_path('school_logos/' . basename($path)),
-                storage_path($path),
-                storage_path(basename($path)),
-                base_path('public/' . $path),
-                base_path('public/storage/' . $path),
-                storage_path('app/' . $path),
-                public_path('uploads/' . $path),
-                public_path('uploads/school_logos/' . basename($path)),
-            ];
-        }
-
-        $possiblePaths = array_unique($possiblePaths);
-
-        foreach ($possiblePaths as $fullPath) {
-            if (file_exists($fullPath)) {
-                Log::debug('Image FOUND at path', [
-                    'path'        => $fullPath,
-                    'file_size'   => filesize($fullPath) . ' bytes',
-                    'is_readable' => is_readable($fullPath),
-                    'is_student'  => $isStudent,
-                ]);
-                return $fullPath;
-            }
-        }
-
-        Log::warning('Image NOT found in any possible paths', [
-            'original_path'         => $path,
-            'is_student'            => $isStudent,
-            'checked_paths_count'   => count($possiblePaths),
-        ]);
-        return null;
-    }
-
-    /**
-     * Convert image to base64 for PDF embedding
-     */
-    private function imageToBase64($imagePath)
-    {
-        if (str_starts_with((string) $imagePath, 'data:image')) {
-            return $imagePath;
-        }
-
-        if (!$imagePath || !file_exists($imagePath)) {
-            Log::warning('Image file does not exist for base64 conversion', ['path' => $imagePath]);
-
-            $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
-                    <rect width="100" height="100" fill="#f0f0f0" stroke="#ddd" stroke-width="2"/>
-                    <circle cx="50" cy="40" r="15" fill="#ddd"/>
-                    <rect x="35" y="60" width="30" height="25" fill="#ddd" rx="2"/>
-                    <text x="50" y="95" text-anchor="middle" fill="#999" font-family="Arial" font-size="8">No Image</text>
-                </svg>';
-
-            return 'data:image/svg+xml;base64,' . base64_encode($svg);
-        }
-
-        try {
-            $imageData = file_get_contents($imagePath);
-            if (empty($imageData)) {
-                throw new \Exception('Image file is empty');
-            }
-
-            $mimeType = mime_content_type($imagePath);
-            if (!$mimeType) {
-                $extension = strtolower(pathinfo($imagePath, PATHINFO_EXTENSION));
-                $mimeTypes = [
-                    'jpg'  => 'image/jpeg',
-                    'jpeg' => 'image/jpeg',
-                    'png'  => 'image/png',
-                    'gif'  => 'image/gif',
-                    'svg'  => 'image/svg+xml',
-                    'webp' => 'image/webp',
-                ];
-                $mimeType = $mimeTypes[$extension] ?? 'image/jpeg';
-            }
-
-            $base64 = base64_encode($imageData);
-            $result = "data:{$mimeType};base64,{$base64}";
-
-            Log::debug('Image converted to base64', [
-                'path'        => $imagePath,
-                'mime_type'   => $mimeType,
-                'file_size'   => filesize($imagePath) . ' bytes',
-                'data_length' => strlen($base64) . ' bytes',
-            ]);
-
-            return $result;
-
-        } catch (\Exception $e) {
-            Log::error('Failed to convert image to base64', [
-                'path'  => $imagePath,
-                'error' => $e->getMessage(),
-            ]);
-
-            return 'data:image/svg+xml;base64,' . base64_encode(
-                '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100">
-                    <rect width="100" height="100" fill="#f8f9fa"/>
-                    <text x="50" y="50" text-anchor="middle" dy=".3em" fill="#6c757d" font-family="Arial" font-size="10">Error</text>
-                </svg>'
-            );
-        }
-    }
-
-    /**
-     * Fix image paths for PDF embedding
-     */
-    private function fixImagePaths(&$studentData)
-    {
-        Log::info('Fixing image paths for student data', ['student_count' => count($studentData)]);
-
-        $defaultStudentImage = public_path('storage/student_avatars/unnamed.jpg');
-        $defaultSchoolLogo   = public_path('storage/school_logos/default.jpg');
-
-        if (!file_exists($defaultStudentImage)) {
-            Log::warning('Default student image not found', ['path' => $defaultStudentImage]);
-            $studentDir = dirname($defaultStudentImage);
-            if (!file_exists($studentDir)) mkdir($studentDir, 0755, true);
-            $this->createPlaceholderImage($defaultStudentImage, 'Student');
-        }
-
-        if (!file_exists($defaultSchoolLogo)) {
-            Log::warning('Default school logo not found', ['path' => $defaultSchoolLogo]);
-            $logoDir = dirname($defaultSchoolLogo);
-            if (!file_exists($logoDir)) mkdir($logoDir, 0755, true);
-            $this->createPlaceholderImage($defaultSchoolLogo, 'School');
-        }
-
-        foreach ($studentData as $index => &$student) {
-            Log::debug("Processing student {$index} image paths");
-
-            // Student image
-            if (isset($student['students']) && $student['students']->isNotEmpty() && $student['students']->first()->picture) {
-                $imagePath    = $student['students']->first()->picture;
-                $absolutePath = $this->getAbsoluteImagePath($imagePath, true);
-
-                if ($absolutePath && file_exists($absolutePath)) {
-                    $student['student_image_base64'] = $this->imageToBase64($absolutePath);
-                    Log::debug('Student image found and converted', [
-                        'student_index' => $index,
-                        'original_path' => $imagePath,
-                        'absolute_path' => $absolutePath,
-                    ]);
-                } else {
-                    $student['student_image_base64'] = $this->imageToBase64($defaultStudentImage);
-                    Log::warning('Using default student image', [
-                        'student_index' => $index,
-                        'original_path' => $imagePath,
-                    ]);
-                }
-            } else {
-                $student['student_image_base64'] = $this->imageToBase64($defaultStudentImage);
-                Log::debug('No student picture, using default', ['student_index' => $index]);
-            }
-
-            // School logo
-            if (isset($student['schoolInfo'])) {
-                $hasLogoInDatabase = !empty($student['schoolInfo']->school_logo);
-                $logoPath          = $student['schoolInfo']->school_logo;
-
-                if ($hasLogoInDatabase && $logoPath) {
-                    $absolutePath = $this->getAbsoluteImagePath($logoPath, false);
-
-                    if ($absolutePath && file_exists($absolutePath)) {
-                        $fileSize = filesize($absolutePath);
-                        if ($fileSize > 100) {
-                            $student['school_logo_base64'] = $this->imageToBase64($absolutePath);
-                            Log::info('Actual school logo found and used', [
-                                'student_index' => $index,
-                                'file_size'     => $fileSize,
-                                'path'          => $absolutePath,
-                            ]);
-                        } else {
-                            Log::warning('Logo file exists but is too small', [
-                                'student_index' => $index,
-                                'file_size'     => $fileSize,
-                            ]);
-                            $student['school_logo_base64'] = $this->imageToBase64($defaultSchoolLogo);
-                        }
-                    } else {
-                        Log::warning('Logo in database but file not found', [
-                            'student_index' => $index,
-                            'logo_path'     => $logoPath,
-                        ]);
-                        $student['school_logo_base64'] = $this->imageToBase64($defaultSchoolLogo);
-                    }
-                } else {
-                    Log::info('No logo in database, using default', ['student_index' => $index]);
-                    $student['school_logo_base64'] = $this->imageToBase64($defaultSchoolLogo);
-                }
-            } else {
-                Log::warning('No schoolInfo found, using default logo', ['student_index' => $index]);
-                $student['school_logo_base64'] = $this->imageToBase64($defaultSchoolLogo);
-            }
-        }
-
-        Log::info('Image path fixing completed', ['students_processed' => count($studentData)]);
-    }
-
-    /**
-     * Create a placeholder image
-     */
-    private function createPlaceholderImage($path, $text)
-    {
-        try {
-            $width           = 300;
-            $height          = 200;
-            $image           = imagecreatetruecolor($width, $height);
-            $backgroundColor = imagecolorallocate($image, 240, 240, 240);
-            $textColor       = imagecolorallocate($image, 153, 153, 153);
-
-            imagefill($image, 0, 0, $backgroundColor);
-
-            $font       = 5;
-            $textWidth  = imagefontwidth($font) * strlen($text);
-            $textHeight = imagefontheight($font);
-            $x          = ($width - $textWidth) / 2;
-            $y          = ($height - $textHeight) / 2;
-
-            imagestring($image, $font, $x, $y, $text, $textColor);
-            imagejpeg($image, $path, 80);
-            imagedestroy($image);
-
-            Log::info('Created placeholder image', ['path' => $path, 'text' => $text]);
-            return true;
-        } catch (\Exception $e) {
-            Log::error('Failed to create placeholder image', ['path' => $path, 'error' => $e->getMessage()]);
-            return false;
-        }
-    }
-
-    /**
-     * Debug storage structure
-     */
-    private function debugStorageStructure()
-    {
-        Log::info('Debugging storage structure');
-
-        $pathsToCheck = [
-            'storage/app/public'              => storage_path('app/public'),
-            'storage/app/public/school_logos' => storage_path('app/public/school_logos'),
-            'public/storage'                  => public_path('storage'),
-            'public/storage/school_logos'     => public_path('storage/school_logos'),
-            'public/school_logos'             => public_path('school_logos'),
-            'storage'                         => storage_path(),
-            'public'                          => public_path(),
-        ];
-
-        foreach ($pathsToCheck as $name => $path) {
-            if (file_exists($path)) {
-                if (is_dir($path)) {
-                    $files     = scandir($path);
-                    $fileCount = count($files) - 2;
-                    Log::info("Directory: {$name}", [
-                        'path'         => $path,
-                        'exists'       => true,
-                        'is_dir'       => true,
-                        'file_count'   => $fileCount,
-                        'files_sample' => array_slice(
-                            array_filter($files, fn ($f) => !in_array($f, ['.', '..'])),
-                            0, 10
-                        ),
-                    ]);
-                } else {
-                    Log::info("File: {$name}", [
-                        'path'    => $path,
-                        'exists'  => true,
-                        'is_dir'  => false,
-                        'size'    => filesize($path) . ' bytes',
-                    ]);
-                }
-            } else {
-                Log::warning("Not found: {$name}", ['path' => $path]);
-            }
-        }
-    }
-
-    /**
-     * Get term name from term ID
-     */
-    private function getTermName($termid)
-    {
-        $terms = [
-            1 => 'First Term',
-            2 => 'Second Term',
-            3 => 'Third Term',
-        ];
-
-        $termName = $terms[$termid] ?? 'Unknown Term';
-        Log::debug('Getting term name', ['term_id' => $termid, 'term_name' => $termName]);
-
-        return $termName;
-    }
-
-    /**
-     * Debug student query for troubleshooting
-     */
-    private function debugStudentQuery($studentIds, $schoolclassid, $sessionid, $termid)
-    {
-        Log::info('DEBUG: Running direct database queries to check data');
-
-        $studentsExist     = Student::whereIn('id', $studentIds)->count();
-        $studentsInClass   = Studentclass::whereIn('studentId', $studentIds)
-            ->where('schoolclassid', $schoolclassid)
-            ->where('sessionid', $sessionid)
-            ->count();
-        $broadsheetRecords = DB::table('broadsheet_records')
-            ->whereIn('student_id', $studentIds)
-            ->where('schoolclass_id', $schoolclassid)
-            ->where('session_id', $sessionid)
-            ->count();
-        $broadsheets       = DB::table('broadsheets')
-            ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
-            ->whereIn('broadsheet_records.student_id', $studentIds)
-            ->where('broadsheet_records.schoolclass_id', $schoolclassid)
-            ->where('broadsheet_records.session_id', $sessionid)
-            ->where('broadsheets.term_id', $termid)
-            ->count();
-
-        Log::info('DEBUG: Student data checks', [
-            'student_ids'         => $studentIds,
-            'students_found'      => $studentsExist,
-            'students_in_class'   => $studentsInClass,
-            'broadsheet_records'  => $broadsheetRecords,
-            'broadsheets_found'   => $broadsheets,
-        ]);
-
-        if ($broadsheets > 0) {
-            $sampleData = DB::table('broadsheets')
-                ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
-                ->join('studentRegistration', 'studentRegistration.id', '=', 'broadsheet_records.student_id')
-                ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
-                ->whereIn('broadsheet_records.student_id', $studentIds)
-                ->where('broadsheet_records.schoolclass_id', $schoolclassid)
-                ->where('broadsheet_records.session_id', $sessionid)
-                ->where('broadsheets.term_id', $termid)
-                ->select(
-                    'studentRegistration.firstname',
-                    'studentRegistration.lastname',
-                    'subject.subject',
-                    'broadsheets.total',
-                    'broadsheets.grade'
-                )
-                ->limit(5)
-                ->get();
-
-            Log::info('DEBUG: Sample broadsheet data', ['sample_data' => $sampleData->toArray()]);
-        }
-    }
-
-    /**
-     * Test PDF generation endpoint
-     */
-    public function testPdfGeneration(Request $request)
-    {
-        Log::info('Test PDF generation endpoint called');
-
-        try {
-            $testStudentId = Student::first()->id ?? null;
-            $testClassId   = Schoolclass::first()->id ?? null;
-            $testSessionId = Schoolsession::first()->id ?? null;
-
-            if (!$testStudentId || !$testClassId || !$testSessionId) {
-                return response()->json(['success' => false, 'message' => 'Test data not available in database']);
-            }
-
-            $studentData = $this->getStudentResultData($testStudentId, $testClassId, $testSessionId, 3);
-
-            $result = [
-                'success'           => !empty($studentData),
-                'student_data_keys' => array_keys($studentData),
-                'has_students'      => isset($studentData['students']) && !$studentData['students']->isEmpty(),
-                'has_scores'        => isset($studentData['scores']) && !$studentData['scores']->isEmpty(),
-                'student_count'     => $studentData['students']->count() ?? 0,
-                'scores_count'      => $studentData['scores']->count() ?? 0,
-                'totals_summary'    => $studentData['totals_summary'] ?? [],
-                'server_info'       => [
-                    'storage_writable'   => is_writable(storage_path()),
-                    'php_version'        => PHP_VERSION,
-                    'memory_limit'       => ini_get('memory_limit'),
-                    'max_execution_time' => ini_get('max_execution_time'),
-                    'laravel_version'    => app()->version(),
-                ],
-                'paths' => [
-                    'public_path'           => public_path(),
-                    'storage_path'          => storage_path(),
-                    'default_student_image' => public_path('storage/student_avatars/unnamed.jpg'),
-                    'default_school_logo'   => public_path('storage/school_logos/default.jpg'),
-                ],
-                'file_exists' => [
-                    'default_student_image' => file_exists(public_path('storage/student_avatars/unnamed.jpg')),
-                    'default_school_logo'   => file_exists(public_path('storage/school_logos/default.jpg')),
-                ],
-            ];
-
-            Log::info('Test completed', $result);
-
-            return response()->json($result);
-
-        } catch (\Exception $e) {
-            Log::error('Test PDF generation failed', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-
-            return response()->json([
-                'success' => false,
-                'error'   => $e->getMessage(),
-                'trace'   => $e->getTraceAsString(),
-            ]);
-        }
-    }
-
-    /**
-     * Display student reports index
-     */
-    public function index(Request $request): View|JsonResponse
-    {
-        Log::info('ViewStudentReportController index method called', [
-            'request_params' => $request->all(),
-            'ajax'           => $request->ajax(),
-            'method'         => $request->method(),
-        ]);
-
-        $pagetitle   = "Student Terminal Report Management";
-        $current     = "Current";
-        $allstudents = new LengthAwarePaginator([], 0, 10);
-
-        if (
-            $request->filled('schoolclassid') && $request->filled('sessionid') &&
-            $request->input('schoolclassid') !== 'ALL' && $request->input('sessionid') !== 'ALL'
-        ) {
-            $query = Studentclass::query()
-                ->where('schoolclassid', $request->input('schoolclassid'))
-                ->where('sessionid', $request->input('sessionid'))
-                ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
-                ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-                ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
-                ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-                ->leftJoin('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
-                ->where('schoolsession.status', '=', $current);
-
-            if ($search = $request->input('search')) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('studentRegistration.admissionNo', 'like', "%{$search}%")
-                      ->orWhere('studentRegistration.firstname', 'like', "%{$search}%")
-                      ->orWhere('studentRegistration.lastname', 'like', "%{$search}%")
-                      ->orWhere('studentRegistration.othername', 'like', "%{$search}%");
-                });
-
-                Log::debug('Search filter applied', ['search_term' => $search]);
-            }
-
-            $allstudents = $query->select([
-                'studentRegistration.admissionNo as admissionno',
-                'studentRegistration.firstname as firstname',
-                'studentRegistration.lastname as lastname',
-                'studentRegistration.othername as othername',
-                'studentRegistration.gender as gender',
-                'studentRegistration.id as stid',
-                'studentpicture.picture as picture',
-                'studentclass.schoolclassid as schoolclassID',
-                'studentclass.sessionid as sessionid',
-                'schoolclass.schoolclass as schoolclass',
-                'schoolarm.arm as schoolarm',
-                'schoolsession.session as session',
-            ])->latest('studentclass.created_at')->paginate(100);
-
-            Log::info('Student query executed', [
-                'schoolclassid' => $request->input('schoolclassid'),
-                'sessionid'     => $request->input('sessionid'),
-                'student_count' => $allstudents->total(),
-            ]);
-        }
-
-        $schoolsessions = Schoolsession::where('status', 'Current')->get();
-        $schoolclasses  = Schoolclass::leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->get(['schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm']);
-
-        if ($request->ajax()) {
-            return response()->json([
-                'tableBody'    => view('studentreports.partials.student_rows', compact('allstudents'))->render(),
-                'pagination'   => $allstudents->links('pagination::bootstrap-5')->render(),
-                'studentCount' => $allstudents->total(),
-            ]);
-        }
-
-        return view('studentreports.index', compact('allstudents', 'schoolsessions', 'schoolclasses', 'pagetitle'));
+        session()->forget(['import_progress', 'import_status', 'import_message']);
+        return response()->json(['success' => true]);
     }
 }
