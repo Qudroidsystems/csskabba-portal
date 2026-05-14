@@ -496,6 +496,9 @@
             <strong>Class Pos</strong> = position across whole class &nbsp;|&nbsp;
             <strong>Arm Pos</strong> = position within this arm/stream
         </span>
+        <button type="button" class="btn btn-sm btn-outline-info" id="updateArmPositionsBtn">
+            <i class="ri-group-line me-1"></i>Update Arm Positions (All Arms)
+        </button>
     </div>
 
     {{-- ══ MAIN SCORESHEET CARD ════════════════════════════════════════ --}}
@@ -610,7 +613,7 @@
                             $totalGrade = $broadsheet->grade ?? '-';
                             $gradeForCum = '-';
                             if (isset($broadsheet->classcategoryid)) {
-                                $cat = \App\Models\ClassCategory::find($broadsheet->classcategoryid);
+                                $cat = \App\Models\Classcategory::find($broadsheet->classcategoryid);
                                 $gradeForCum = $cat ? $cat->calculateGrade($cum) : '-';
                             }
                             $cumColor   = $cum >= 70 ? 'success' : ($cum >= 50 ? 'info' : ($cum >= 40 ? 'warning' : 'danger'));
@@ -727,7 +730,7 @@
                                     {{ $broadsheet->arm_position_cum ? \App\Helpers\OrdinalHelper::getOrdinalSuffix($broadsheet->arm_position_cum) : '-' }}
                                 </span>
                             </td>
-                                                        <td class="col-vetted text-center">
+                            <td class="col-vetted text-center">
                                 @if($broadsheet->vettedstatus === '1')
                                     <span class="badge bg-success-subtle text-success"><i class="ri-check-line me-1"></i>Vetted</span>
                                 @elseif($broadsheet->vettedstatus === '0')
@@ -896,6 +899,7 @@ window.routes = {
     downloadMarksSheet: '{{ route("scoresheet.download-marks-sheet") }}',
     downloadScoresPdf : '{{ route("scoresheet.download-scores-pdf") }}',
     gradeForScore     : '{{ route("subjectscoresheet.grade-for-score") }}',
+    updateArmPositions: '{{ route("update.arm.positions.all") }}',
 };
 window.term_id         = {{ session('term_id')         ?? 'null' }};
 window.session_id      = {{ session('session_id')      ?? 'null' }};
@@ -1045,6 +1049,58 @@ function saveIndividualScore(input) {
         setTimeout(() => input.classList.remove('is-saved'), 2000);
     })
     .catch(err => { console.warn('singleUpdate error:', err.message); showToast('Network issue — score may not have saved.', 'danger'); });
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   UPDATE ARM POSITIONS ACROSS ALL ARMS (AJAX)
+   ════════════════════════════════════════════════════════════════════ */
+async function updateAllArmPositions() {
+    if (!window.schoolclass_id || !window.term_id || !window.session_id) {
+        showToast('Missing session data. Cannot update arm positions.', 'warning');
+        return;
+    }
+
+    const btn = document.getElementById('updateArmPositionsBtn');
+    const originalHtml = btn?.innerHTML;
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="ri-loader-4-line spin"></i> Updating positions...';
+    }
+
+    try {
+        const response = await fetch(window.routes.updateArmPositions, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': CSRF,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                schoolclass_id: window.schoolclass_id,
+                term_id: window.term_id,
+                session_id: window.session_id
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast(data.message, 'success');
+            // Reload the page to show updated positions
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showToast(data.message || 'Failed to update arm positions', 'danger');
+        }
+    } catch (error) {
+        console.error('Error updating arm positions:', error);
+        showToast('Network error while updating arm positions', 'danger');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = originalHtml || '<i class="ri-group-line me-1"></i>Update Arm Positions (All Arms)';
+        }
+    }
 }
 
 /* ════════════════════════════════════════════════════════════════════
@@ -1274,6 +1330,9 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('selectAllScores')?.addEventListener('click', () => { const ca = document.getElementById('checkAll'); if (ca) ca.checked = true; document.querySelectorAll('.score-checkbox').forEach(cb => cb.checked = true); });
     document.getElementById('clearAllScores')?.addEventListener('click',  () => { const ca = document.getElementById('checkAll'); if (ca) ca.checked = false; document.querySelectorAll('.score-checkbox').forEach(cb => cb.checked = false); });
 
+    /* Update Arm Positions button */
+    document.getElementById('updateArmPositionsBtn')?.addEventListener('click', updateAllArmPositions);
+
     /* ── Score inputs ──────────────────────────────────────────────── */
     document.querySelectorAll('.score-input').forEach(inp => {
 
@@ -1385,6 +1444,8 @@ document.addEventListener('DOMContentLoaded', function () {
         rows.forEach(row => observer.observe(row));
     })();
 
+    /* Auto-trigger arm position update on page load (optional - uncomment if desired) */
+    // setTimeout(() => { if (window.schoolclass_id && window.term_id && window.session_id) updateAllArmPositions(); }, 1000);
 });
 
 if (typeof Swal === 'undefined') {
