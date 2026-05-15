@@ -58,8 +58,9 @@ class StudentAssessmentController extends Controller
             return redirect()->route('dashboard')->with('error', 'Student profile not found.');
         }
 
+        // Select othername for full name
         $student = Student::where('id', $studentId)
-            ->select('id', 'firstname', 'lastname', 'admissionNo', 'gender', 'can_view_assessments')
+            ->select('id', 'firstname', 'lastname', 'othername', 'admissionNo', 'gender', 'can_view_assessments')
             ->first();
 
         if (!$student || !$student->can_view_assessments) {
@@ -89,18 +90,18 @@ class StudentAssessmentController extends Controller
             }
         }
 
-        // FIXED QUERY - Arm is in schoolclass table
+        // FIXED: Join schoolarm to get actual arm name (A, B, etc.)
         $studentClassData = DB::table('studentclass')
             ->where('studentclass.studentId', $studentId)
             ->join('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
             ->join('schoolterm', 'schoolterm.id', '=', 'studentclass.termid')
             ->join('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
-            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')   // ← Important
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
             ->when($selectedSessionId, fn ($q) => $q->where('schoolsession.id', $selectedSessionId))
             ->select(
                 'schoolclass.id as class_id',
                 'schoolclass.schoolclass as class_name',
-                'schoolarm.arm as arm_name',           // ← This will now give "A", "B", etc.
+                'schoolarm.arm as arm_name',
                 'schoolterm.id as term_id',
                 'schoolterm.term as term_name',
                 'schoolsession.id as session_id',
@@ -275,7 +276,7 @@ class StudentAssessmentController extends Controller
     }
 
     // =========================================================================
-    // PRINT RESULT (PDF) - FULL METHOD
+    // PRINT RESULT (PDF)
     // =========================================================================
     public function printResult(Request $request)
     {
@@ -299,20 +300,20 @@ class StudentAssessmentController extends Controller
             return back()->with('error', 'You do not have permission to print assessments.');
         }
 
-        // FIXED QUERY - Arm comes from schoolclass table
+        // FIXED: Join schoolarm to get actual arm name
         $studentClassData = DB::table('studentclass')
             ->where('studentclass.studentId', $studentId)
             ->join('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
             ->join('schoolterm', 'schoolterm.id', '=', 'studentclass.termid')
             ->join('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
-            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')   // ← Important
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
             ->when($selectedSessionId, function ($q) use ($selectedSessionId) {
                 $q->where('schoolsession.id', $selectedSessionId);
             })
             ->select(
                 'schoolclass.id as class_id',
                 'schoolclass.schoolclass as class_name',
-               'schoolarm.arm as arm_name',           // ← This will now give "A", "B", etc.
+                'schoolarm.arm as arm_name',
                 'schoolterm.id as term_id',
                 'schoolterm.term as term_name',
                 'schoolsession.id as session_id',
@@ -340,25 +341,14 @@ class StudentAssessmentController extends Controller
             ->leftJoin('subjectclass', 'subjectclass.id', '=', 'ssrr.subjectclassid')
             ->leftJoin('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
             ->leftJoin('schoolsession', 'schoolsession.id', '=', 'ssrr.session')
-            ->when($selectedSessionId, function ($q) use ($selectedSessionId) {
-                $q->where('schoolsession.id', $selectedSessionId);
-            })
-            ->when($selectedTermId, function ($q) use ($selectedTermId) {
-                $q->where('subjectteacher.termid', $selectedTermId);
-            })
+            ->when($selectedSessionId, fn($q) => $q->where('schoolsession.id', $selectedSessionId))
+            ->when($selectedTermId, fn($q) => $q->where('subjectteacher.termid', $selectedTermId))
             ->where('schoolsession.status', '!=', 'Archived')
             ->join('subject', 'subject.id', '=', 'subjectteacher.subjectid')
-            ->select(
-                'subject.id as subject_id',
-                'subject.subject as subject_name',
-                'subject.subject_code'
-            )
-            ->distinct()
-            ->get();
+            ->select('subject.id as subject_id', 'subject.subject as subject_name', 'subject.subject_code')
+            ->distinct()->get();
 
-        $allAssessments = Assessment::whereIn('classcategory_id', $categoryIds)
-            ->orderBy('id')
-            ->get();
+        $allAssessments = Assessment::whereIn('classcategory_id', $categoryIds)->orderBy('id')->get();
 
         $scores = collect();
         $totalObtained = 0;
@@ -394,14 +384,10 @@ class StudentAssessmentController extends Controller
             $scoreData->arm_position = $broadsheet->arm_position ?? null;
             $scoreData->arm_position_cum = $broadsheet->arm_position_cum ?? null;
 
-            $scoreData->position_formatted = $broadsheet->subject_position_class
-                ? $this->formatOrdinal($broadsheet->subject_position_class) : '-';
-            $scoreData->position_total_formatted = $broadsheet->subject_position_class_total
-                ? $this->formatOrdinal($broadsheet->subject_position_class_total) : '-';
-            $scoreData->arm_position_formatted = $broadsheet->arm_position
-                ? $this->formatOrdinal($broadsheet->arm_position) : '-';
-            $scoreData->arm_position_cum_formatted = $broadsheet->arm_position_cum
-                ? $this->formatOrdinal($broadsheet->arm_position_cum) : '-';
+            $scoreData->position_formatted = $broadsheet->subject_position_class ? $this->formatOrdinal($broadsheet->subject_position_class) : '-';
+            $scoreData->position_total_formatted = $broadsheet->subject_position_class_total ? $this->formatOrdinal($broadsheet->subject_position_class_total) : '-';
+            $scoreData->arm_position_formatted = $broadsheet->arm_position ? $this->formatOrdinal($broadsheet->arm_position) : '-';
+            $scoreData->arm_position_cum_formatted = $broadsheet->arm_position_cum ? $this->formatOrdinal($broadsheet->arm_position_cum) : '-';
 
             $scoreData->assessment_scores = collect();
             foreach ($allAssessments as $assessment) {
@@ -472,7 +458,6 @@ class StudentAssessmentController extends Controller
             'dpi' => 150,
             'defaultFont' => 'DejaVu Sans',
             'isRemoteEnabled' => true,
-            'isHtml5ParserEnabled' => true,
         ]);
 
         return $pdf->download($filename);
@@ -563,10 +548,7 @@ class StudentAssessmentController extends Controller
     private function logoToBase64($schoolInfo): string
     {
         $placeholder = 'data:image/svg+xml;base64,' . base64_encode(
-            '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
-                <rect width="80" height="80" rx="40" fill="#1e3a5f"/>
-                <text x="40" y="46" text-anchor="middle" fill="white" font-family="Arial" font-size="14" font-weight="bold">SCH</text>
-            </svg>'
+            '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><rect width="80" height="80" rx="40" fill="#1e3a5f"/><text x="40" y="46" text-anchor="middle" fill="white" font-family="Arial" font-size="14" font-weight="bold">SCH</text></svg>'
         );
 
         if (!$schoolInfo || empty($schoolInfo->school_logo)) return $placeholder;
@@ -582,19 +564,13 @@ class StudentAssessmentController extends Controller
                 return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($path));
             }
         }
-
         return $placeholder;
     }
 
     private function imageToBase64ForPdf(?string $path): string
     {
         $placeholder = 'data:image/svg+xml;base64,' . base64_encode(
-            '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="95" viewBox="0 0 80 95">
-                <rect width="80" height="95" fill="#e2e8f0"/>
-                <circle cx="40" cy="32" r="18" fill="#94a3b8"/>
-                <rect x="20" y="56" width="40" height="28" rx="4" fill="#94a3b8"/>
-                <text x="40" y="90" text-anchor="middle" fill="#475569" font-family="Arial" font-size="8">PHOTO</text>
-            </svg>'
+            '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="95" viewBox="0 0 80 95"><rect width="80" height="95" fill="#e2e8f0"/><circle cx="40" cy="32" r="18" fill="#94a3b8"/><rect x="20" y="56" width="40" height="28" rx="4" fill="#94a3b8"/><text x="40" y="90" text-anchor="middle" fill="#475569" font-family="Arial" font-size="8">PHOTO</text></svg>'
         );
 
         if (!$path) return $placeholder;
@@ -602,7 +578,6 @@ class StudentAssessmentController extends Controller
         $possiblePaths = [
             public_path('storage/student_avatars/' . $path),
             storage_path('app/public/student_avatars/' . $path),
-            public_path('storage/' . $path),
         ];
 
         foreach ($possiblePaths as $fullPath) {
@@ -611,7 +586,6 @@ class StudentAssessmentController extends Controller
                 return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($fullPath));
             }
         }
-
         return $placeholder;
     }
 }
