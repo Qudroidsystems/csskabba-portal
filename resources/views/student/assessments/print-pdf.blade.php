@@ -10,13 +10,18 @@
             box-sizing: border-box;
         }
 
+        @page {
+            size: A4;
+            margin: 8mm 5mm;
+        }
+
         body {
             font-family: 'Times New Roman', Times, serif;
             font-size: 9.5px;
             line-height: 1.3;
             color: #000;
             background: #f5f5f5;
-            padding: 8mm 0;
+            padding: 0;
             text-align: center;
             position: relative;
         }
@@ -71,7 +76,8 @@
 
         /* MAIN CARD */
         .student-section {
-            width: 190mm;
+            width: 100%;
+            max-width: 190mm;
             page-break-after: always;
             background: #ffffff;
             border: 3px double #000000;
@@ -233,7 +239,7 @@
         .col-position { width: 36px; }
 
         .totals-summary {
-            width: 98%;
+            width: calc(100% - 20px);
             background: #0d1a3d;
             color: #ffffff;
             font-weight: 900;
@@ -242,11 +248,11 @@
             border: 2px solid #000000;
             border-top: none;
             text-align: center;
-            margin: 8px auto;
+            margin: 0 10px 8px 10px;
         }
 
         .remarks-table {
-            width: 98%;
+            width: calc(100% - 20px);
             border: 2px solid #000000;
             border-collapse: collapse;
             margin: 8px 10px 4px;
@@ -273,8 +279,7 @@
             padding: 9px 12px 6px;
             border-top: 1px solid #cbd5e1;
             text-align: center;
-            margin: 0 10px 8px;
-            font-size: 8.6px;
+            margin: 8px 10px 8px;
         }
 
         .footer-content {
@@ -321,12 +326,13 @@
         }
 
         @media print {
-            body { background: white; padding: 0; }
+            body { background: white; padding: 0; margin: 0; }
             .student-section {
-                width: 190mm;
+                width: 100%;
                 margin: 0 auto;
                 padding: 0;
                 box-shadow: none;
+                page-break-after: always;
             }
             .watermark-text {
                 -webkit-print-color-adjust: exact;
@@ -339,9 +345,33 @@
     <div class="watermark-text">STUDENT COPY - NOT FOR OFFICIAL USE</div>
 
     @php
+        /**
+         * Format number with ordinal suffix (st, nd, rd, th)
+         */
+        function formatOrdinal($number) {
+            if (!is_numeric($number) || $number <= 0) {
+                return '-';
+            }
+
+            $lastDigit = $number % 10;
+            $lastTwoDigits = $number % 100;
+
+            if ($lastTwoDigits >= 11 && $lastTwoDigits <= 13) {
+                return $number . 'th';
+            }
+
+            switch ($lastDigit) {
+                case 1: return $number . 'st';
+                case 2: return $number . 'nd';
+                case 3: return $number . 'rd';
+                default: return $number . 'th';
+            }
+        }
+
         $selectedColumns = $metadata['selected_columns'] ?? [];
-        $defaultColumns = ['sn', 'admission_no', 'name', 'total', 'cum', 'grade', 'position'];
+        $defaultColumns = ['sn', 'admission_no', 'name', 'total', 'cum', 'grade', 'position', 'position_total', 'arm_position', 'arm_position_cum'];
         $columnsToShow = !empty($selectedColumns) ? $selectedColumns : $defaultColumns;
+
         $baseVisibleCount = 0;
         if (in_array('sn', $columnsToShow)) $baseVisibleCount++;
         if (in_array('admission_no', $columnsToShow)) $baseVisibleCount++;
@@ -354,26 +384,34 @@
             $student = $studentData['students'] && $studentData['students']->isNotEmpty() ? $studentData['students']->first() : null;
             $assessments = $studentData['assessments'] ?? collect();
             $totals = $studentData['totals_summary'] ?? [];
+            $gpaData = $studentData['gpa_data'] ?? [];
             $scores = $studentData['scores'] ?? collect();
+            $profile = $studentData['studentpp'] && $studentData['studentpp']->isNotEmpty() ? $studentData['studentpp']->first() : null;
 
             $assessmentColumnsCount = 0;
             foreach ($assessments as $assessment) {
                 if (in_array($assessment->id, $columnsToShow) || in_array('all_assessments', $columnsToShow)) $assessmentColumnsCount++;
             }
             $currentVisibleColumnCount = $baseVisibleCount + $assessmentColumnsCount;
-            $otherScoreCols = ['total','cum','grade','position'];
+            $otherScoreCols = ['total', 'cum', 'grade', 'position', 'position_total', 'arm_position', 'arm_position_cum'];
             foreach ($otherScoreCols as $col) {
                 if (in_array($col, $columnsToShow)) $currentVisibleColumnCount++;
             }
 
             $fullName = strtoupper($student->lastname ?? '') . ' ' . ($student->firstname ?? '') . ' ' . ($student->othername ?? '');
             $admNo = $student->admissionNo ?? '—';
-            $classVal = $studentData['schoolclass']->schoolclass ?? '—';
+            $classVal = ($studentData['schoolclass']->schoolclass ?? '—') . ' ' . ($studentData['schoolclass']->arms->arm ?? '');
             $schoolOpened = $schoolInfo->date_school_opened ?? '—';
             if ($schoolOpened !== '—') {
                 $schoolOpened = \Carbon\Carbon::parse($schoolInfo->date_school_opened)->format('jS M, Y');
             }
             $numInClass = $studentData['numberOfStudents'] ?? '—';
+
+            // Format phones properly
+            $phones = is_array($schoolInfo->school_phones ?? null)
+                ? $schoolInfo->school_phones
+                : (json_decode($schoolInfo->school_phones ?? '[]', true) ?? []);
+            $formattedPhones = !empty($phones) ? implode(', ', $phones) : '—';
         @endphp
 
         <div class="student-section">
@@ -411,8 +449,8 @@
 
                     <!-- Middle School Info -->
                     <td width="58%" class="middle-info">
-                        <strong>Address:</strong> {{ $schoolInfo->school_address ?? 'No. 1, Education Avenue, City' }}<br>
-                        <strong>Phone:</strong> {{ $schoolInfo->school_phone ?? '—' }}<br>
+                        <strong>Address:</strong> {{ $schoolInfo->school_address ?? '—' }}<br>
+                        <strong>Phone:</strong> {{ $formattedPhones }}<br>
                         <strong>Email:</strong> {{ $schoolInfo->school_email ?? '—' }}<br>
                         <strong>Website:</strong> {{ $schoolInfo->school_website ?? '—' }}
                     </td>
@@ -457,7 +495,7 @@
                             <td><span class="info-bar-label">SEX:</span><span class="info-bar-value">{{ $student->gender ?? '—' }}</span></td>
                         @endif
                         <td><span class="info-bar-label">REPORT DATE:</span><span class="info-bar-value">{{ date('jS M, Y') }}</span></td>
-                        <td><span class="info-bar-label">GPA GRADE:</span><span class="info-bar-value">{{ $totals['gpa_grade'] ?? '-' }}</span></td>
+                        <td><span class="info-bar-label">GPA:</span><span class="info-bar-value">{{ $gpaData['gpa'] ?? '-' }}</span></td>
                     </tr>
                 </table>
             </div>
@@ -478,7 +516,10 @@
                             @if(in_array('total', $columnsToShow)) <th class="col-total">Total</th> @endif
                             @if(in_array('cum', $columnsToShow)) <th class="col-cum">Cum</th> @endif
                             @if(in_array('grade', $columnsToShow)) <th class="col-grade">Grade</th> @endif
-                            @if(in_array('position', $columnsToShow)) <th class="col-position">Pos</th> @endif
+                            @if(in_array('position', $columnsToShow)) <th class="col-position">Pos(Cum)</th> @endif
+                            @if(in_array('position_total', $columnsToShow)) <th class="col-position">Pos(Tot)</th> @endif
+                            @if(in_array('arm_position', $columnsToShow)) <th class="col-position">Arm(Tot)</th> @endif
+                            @if(in_array('arm_position_cum', $columnsToShow)) <th class="col-position">Arm(Cum)</th> @endif
                         </tr>
                     </thead>
                     <tbody>
@@ -493,8 +534,19 @@
                                 str_starts_with($gradeUpper, 'D') => 'grade-D',
                                 default => 'grade-F'
                             };
-                            $posVal = $score->position ?? '-';
+
+                            // Get positions with medal colors
+                            $posVal = $score->position ?? null;
                             $posClass = is_numeric($posVal) ? match((int)$posVal) { 1 => 'position-1', 2 => 'position-2', 3 => 'position-3', default => '' } : '';
+
+                            $posTotalVal = $score->position_total ?? null;
+                            $posTotalClass = is_numeric($posTotalVal) ? match((int)$posTotalVal) { 1 => 'position-1', 2 => 'position-2', 3 => 'position-3', default => '' } : '';
+
+                            $armPosVal = $score->arm_position ?? null;
+                            $armPosClass = is_numeric($armPosVal) ? match((int)$armPosVal) { 1 => 'position-1', 2 => 'position-2', 3 => 'position-3', default => '' } : '';
+
+                            $armPosCumVal = $score->arm_position_cum ?? null;
+                            $armPosCumClass = is_numeric($armPosCumVal) ? match((int)$armPosCumVal) { 1 => 'position-1', 2 => 'position-2', 3 => 'position-3', default => '' } : '';
                         @endphp
                         <tr>
                             @if(in_array('sn', $columnsToShow)) <td>{{ $scoreIndex + 1 }}</td> @endif
@@ -515,10 +567,13 @@
                                     </td>
                                 @endif
                             @endforeach
-                            @if(in_array('total', $columnsToShow)) <td @if($score->total < 50) class="highlight-red" @endif>{{ $score->total ? number_format($score->total, 1) : '-' }}</td> @endif
-                            @if(in_array('cum', $columnsToShow)) <td>{{ $score->cum ? number_format($score->cum, 1) : '-' }}</td> @endif
+                            @if(in_array('total', $columnsToShow)) <td @if(($score->total ?? 0) < 50) class="highlight-red" @endif>{{ isset($score->total) ? number_format($score->total, 1) : '-' }}</td> @endif
+                            @if(in_array('cum', $columnsToShow)) <td>{{ isset($score->cum) ? number_format($score->cum, 1) : '-' }}</td> @endif
                             @if(in_array('grade', $columnsToShow)) <td class="{{ $gradeClass }}">{{ $gradeRaw }}</td> @endif
-                            @if(in_array('position', $columnsToShow)) <td class="{{ $posClass }}">{{ $posVal }}</td> @endif
+                            @if(in_array('position', $columnsToShow)) <td class="{{ $posClass }}">{{ formatOrdinal($posVal) }}</td> @endif
+                            @if(in_array('position_total', $columnsToShow)) <td class="{{ $posTotalClass }}">{{ formatOrdinal($posTotalVal) }}</td> @endif
+                            @if(in_array('arm_position', $columnsToShow)) <td class="{{ $armPosClass }}">{{ formatOrdinal($armPosVal) }}</td> @endif
+                            @if(in_array('arm_position_cum', $columnsToShow)) <td class="{{ $armPosCumClass }}">{{ formatOrdinal($armPosCumVal) }}</td> @endif
                         </tr>
                         @empty
                         <tr>
@@ -533,7 +588,9 @@
             <div class="totals-summary">
                 TOTAL OBTAINED: {{ number_format($totals['obtained'] ?? 0, 1) }}&nbsp;&nbsp;|&nbsp;&nbsp;
                 TOTAL OBTAINABLE: {{ $totals['obtainable'] ?? 0 }}&nbsp;&nbsp;|&nbsp;&nbsp;
-                PERCENTAGE: {{ number_format($totals['percentage'] ?? 0, 1) }}%
+                PERCENTAGE: {{ number_format($totals['percentage'] ?? 0, 1) }}%&nbsp;&nbsp;|&nbsp;&nbsp;
+                GPA: {{ $gpaData['gpa'] ?? 0 }}&nbsp;&nbsp;|&nbsp;&nbsp;
+                CGPA: {{ $gpaData['cgpa'] ?? 0 }}
             </div>
 
             <!-- REMARKS TABLE -->
@@ -542,11 +599,11 @@
                     <tr>
                         <td width="50%">
                             <div class="h6">Class Teacher's Remark</div>
-                            <div style="font-size:8.5px;">{{ $scores->first()->remark ?? 'Performed satisfactorily. Keep improving.' }}</div>
+                            <div style="font-size:8.5px;">{{ $profile->classteachercomment ?? 'Performed satisfactorily. Keep improving.' }}</div>
                         </td>
                         <td width="50%">
                             <div class="h6">Principal's Remark</div>
-                            <div style="font-size:8.5px;">{{ $scores->first()->remark ?? 'Approved. Continue with good work.' }}</div>
+                            <div style="font-size:8.5px;">{{ $profile->principalscomment ?? 'Approved. Continue with good work.' }}</div>
                         </td>
                     </tr>
                 </tbody>
