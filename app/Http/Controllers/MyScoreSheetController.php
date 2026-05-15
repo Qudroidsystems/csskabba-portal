@@ -1851,9 +1851,9 @@ class MyScoreSheetController extends Controller
             ->update(['cmin' => $classMin, 'cmax' => $classMax, 'avg' => $classAvg]);
     }
 
-    protected function updateSubjectPositions($subjectclass_id, $staff_id, $term_id, $session_id)
+protected function updateSubjectPositions($subjectclass_id, $staff_id, $term_id, $session_id)
 {
-    // ── 1. Identify the subject and the "base class" (e.g. "SSS 2") ────────
+    // ── 1. Get the subject and schoolclass for this subjectclass ──────────
     $subjectClass = DB::table('subjectclass')
         ->join('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
         ->where('subjectclass.id', $subjectclass_id)
@@ -1864,26 +1864,26 @@ class MyScoreSheetController extends Controller
     $subjectId     = $subjectClass->subjectid;
     $schoolclassId = $subjectClass->schoolclassid;
 
-    // ── 2. Find every arm that shares this class name + category ───────────
-    //    (e.g. all schoolclass rows named "SSS 2", regardless of arm)
-    $baseClass = DB::table('schoolclass')->where('id', $schoolclassId)
+    // ── 2. Find all arms of the same class (e.g. all SSS 2 arms) ─────────
+    $baseClass = DB::table('schoolclass')
+        ->where('id', $schoolclassId)
         ->first(['schoolclass', 'classcategoryid']);
 
     if (! $baseClass) return;
 
     $allArmIds = DB::table('schoolclass')
-        ->where('schoolclass',       $baseClass->schoolclass)
-        ->where('classcategoryid',   $baseClass->classcategoryid)
+        ->where('schoolclass',     $baseClass->schoolclass)
+        ->where('classcategoryid', $baseClass->classcategoryid)
         ->pluck('id');
 
-    // ── 3. Find ALL subjectclass records for this subject across every arm ──
+    // ── 3. Find all subjectclass records for this subject across all arms ─
     $allSubjectClassIds = DB::table('subjectclass')
         ->join('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
         ->whereIn('subjectclass.schoolclassid', $allArmIds)
         ->where('subjectteacher.subjectid', $subjectId)
         ->pluck('subjectclass.id');
 
-    // ── 4. Pull every student row across ALL arms for this subject ──────────
+    // ── 4. Get every student row for this subject across all arms ─────────
     $allStudents = DB::table('broadsheets')
         ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
         ->whereIn('broadsheets.subjectclass_id', $allSubjectClassIds)
@@ -1898,7 +1898,7 @@ class MyScoreSheetController extends Controller
 
     if ($allStudents->isEmpty()) return;
 
-    // ── 5. Class-wide position by cumulative (subject_position_class) ───────
+    // ── 5. Class-wide subject position by cum (all arms together) ─────────
     $rank        = 0;
     $lastVal     = null;
     $currentRank = 0;
@@ -1913,7 +1913,7 @@ class MyScoreSheetController extends Controller
             ->update(['subject_position_class' => $currentRank]);
     }
 
-    // ── 6. Class-wide position by total (subject_position_class_total) ──────
+    // ── 6. Class-wide subject position by total (all arms together) ───────
     $rank        = 0;
     $lastVal     = null;
     $currentRank = 0;
@@ -1928,12 +1928,12 @@ class MyScoreSheetController extends Controller
             ->update(['subject_position_class_total' => $currentRank]);
     }
 
-    // ── 7. Arm-specific positions (within each individual arm) ───────────────
+    // ── 7. Arm-wide subject position (within each arm separately) ─────────
     $byArm = $allStudents->groupBy('schoolclass_id');
 
     foreach ($byArm as $armClassId => $studentsInArm) {
 
-        // arm_position — by total
+        // arm_position — by total within this arm
         $rank        = 0;
         $lastVal     = null;
         $currentRank = 0;
@@ -1948,7 +1948,7 @@ class MyScoreSheetController extends Controller
                 ->update(['arm_position' => $currentRank]);
         }
 
-        // arm_position_cum — by cumulative
+        // arm_position_cum — by cum within this arm
         $rank        = 0;
         $lastVal     = null;
         $currentRank = 0;
@@ -1964,7 +1964,6 @@ class MyScoreSheetController extends Controller
         }
     }
 }
-
     /**
      * Update class-wide overall positions (stored in promotion_status table).
      */
