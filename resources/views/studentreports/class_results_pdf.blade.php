@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Student Terminal Report</title>
+    <title>Class Results - {{ $metadata['class_name'] }}</title>
     <style>
         * {
             margin: 0;
@@ -182,7 +182,7 @@
         .col-bf            { width: 32px; }
         .col-cum           { width: 36px; }
         .col-grade         { width: 34px; }
-        .col-position      { width: 34px; }   /* shared by all 4 position cols */
+        .col-position      { width: 34px; }
         .col-class-average { width: 36px; }
 
         .totals-summary {
@@ -263,6 +263,29 @@
     <div class="watermark-text">ORIGINAL COPY</div>
 
     @php
+        /**
+         * Format number with ordinal suffix (st, nd, rd, th)
+         */
+        function formatOrdinal($number) {
+            if (!is_numeric($number) || $number <= 0) {
+                return '-';
+            }
+
+            $lastDigit = $number % 10;
+            $lastTwoDigits = $number % 100;
+
+            if ($lastTwoDigits >= 11 && $lastTwoDigits <= 13) {
+                return $number . 'th';
+            }
+
+            switch ($lastDigit) {
+                case 1: return $number . 'st';
+                case 2: return $number . 'nd';
+                case 3: return $number . 'rd';
+                default: return $number . 'th';
+            }
+        }
+
         $selectedColumns = $metadata['selected_columns'] ?? [];
         $defaultColumns  = [
             'sn', 'admission_no', 'name',
@@ -304,13 +327,13 @@
 
         <div class="student-section">
 
-            {{-- ── SCHOOL NAME HEADER ──────────────────────────────── --}}
+            {{-- SCHOOL NAME HEADER --}}
             <div class="school-name-header">
                 <div class="school-full-name">{{ $schoolInfo->school_name ?? 'SCHOOL NAME' }}</div>
                 <div class="motto">{{ $schoolInfo->school_motto ?? 'KNOWLEDGE AND VIRTUE' }}</div>
             </div>
 
-            {{-- ── HEADER: Logo + Contact + Photo ─────────────────── --}}
+            {{-- HEADER: Logo + Contact + Photo --}}
             <table class="header-table">
                 <tr>
                     <td width="20%" style="text-align:center;">
@@ -367,12 +390,12 @@
             <div class="header-divider"></div>
             <div class="header-divider2"></div>
 
-            {{-- ── REPORT TITLE ─────────────────────────────────────── --}}
+            {{-- REPORT TITLE --}}
             <div class="report-title">
                 {{ strtoupper($term) }} {{ strtoupper($session) }} ACADEMIC SESSION TERMINAL PROGRESS REPORT
             </div>
 
-            {{-- ── STUDENT INFO BAR ─────────────────────────────────── --}}
+            {{-- STUDENT INFO BAR --}}
             @if ($studentData['students'] && $studentData['students']->isNotEmpty())
                 @php
                     $profile         = $studentData['studentpp'] && $studentData['studentpp']->isNotEmpty()
@@ -405,7 +428,7 @@
                 </div>
             @endif
 
-            {{-- ── RESULT TABLE ─────────────────────────────────────── --}}
+            {{-- RESULT TABLE --}}
             <div class="result-table">
                 <table>
                     <thead>
@@ -445,7 +468,7 @@
                                 <th class="col-grade">Grade</th>
                             @endif
 
-                            {{-- ── Four position columns ──────────────────────────── --}}
+                            {{-- Four position columns --}}
                             @if(in_array('position', $columnsToShow))
                                 <th class="col-position" title="All arms of this class, ranked by cumulative average">
                                     Class Pos<br><span style="font-size:5px;">(Cum)</span>
@@ -466,7 +489,6 @@
                                     Arm Pos<br><span style="font-size:5px;">(Cum)</span>
                                 </th>
                             @endif
-                            {{-- ─────────────────────────────────────────────────── --}}
 
                             @if(in_array('class_average', $columnsToShow))
                                 <th class="col-class-average">Av</th>
@@ -533,48 +555,65 @@
                                 <td class="{{ $gradeClass }}">{{ $gradeRaw }}</td>
                             @endif
 
-                            {{-- ── Four position cells ───────────────────────────── --}}
-
-                            {{-- Class Pos (Cum) — all arms, ranked by cumulative average --}}
+                            {{-- Class Pos (Cum) — All Arms, ranked by cumulative average --}}
                             @if(in_array('position', $columnsToShow))
                                 @php
-                                    $posVal   = $score->position ?? '-';
-                                    $posNum   = is_numeric($posVal) ? (int)$posVal : 0;
-                                    $posClass = match($posNum) { 1 => 'position-1', 2 => 'position-2', 3 => 'position-3', default => '' };
+                                    $posVal = $score->position;
+                                    $posNum = is_numeric($posVal) ? (int)$posVal : 0;
+                                    $posClass = match($posNum) {
+                                        1 => 'position-1',
+                                        2 => 'position-2',
+                                        3 => 'position-3',
+                                        default => ''
+                                    };
                                 @endphp
-                                <td class="{{ $posClass }}">{{ $posVal }}</td>
+                                <td class="{{ $posClass }}">{{ formatOrdinal($posVal) }}</td>
                             @endif
 
-                            {{-- Class Pos (Total) — all arms, ranked by raw total --}}
+                            {{-- Class Pos (Total) — All Arms, ranked by raw total --}}
                             @if(in_array('position_total', $columnsToShow))
                                 @php
-                                    $posTotalVal   = $score->position_total ?? '-';
-                                    $posTotalNum   = is_numeric($posTotalVal) ? (int)$posTotalVal : 0;
-                                    $posTotalClass = match($posTotalNum) { 1 => 'position-1', 2 => 'position-2', 3 => 'position-3', default => '' };
+                                    $posTotalVal = $score->position_total;
+                                    $posTotalNum = is_numeric($posTotalVal) ? (int)$posTotalVal : 0;
+                                    $posTotalClass = match($posTotalNum) {
+                                        1 => 'position-1',
+                                        2 => 'position-2',
+                                        3 => 'position-3',
+                                        default => ''
+                                    };
                                 @endphp
-                                <td class="{{ $posTotalClass }}">{{ $posTotalVal }}</td>
+                                <td class="{{ $posTotalClass }}">{{ formatOrdinal($posTotalVal) }}</td>
                             @endif
 
-                            {{-- Arm Pos (Total) — this arm only, ranked by raw total --}}
+                            {{-- Arm Pos (Total) — This arm only, ranked by raw total --}}
                             @if(in_array('arm_position', $columnsToShow))
                                 @php
-                                    $armPosVal   = $score->arm_position ?? '-';
-                                    $armPosNum   = is_numeric($armPosVal) ? (int)$armPosVal : 0;
-                                    $armPosClass = match($armPosNum) { 1 => 'position-1', 2 => 'position-2', 3 => 'position-3', default => '' };
+                                    $armPosVal = $score->arm_position;
+                                    $armPosNum = is_numeric($armPosVal) ? (int)$armPosVal : 0;
+                                    $armPosClass = match($armPosNum) {
+                                        1 => 'position-1',
+                                        2 => 'position-2',
+                                        3 => 'position-3',
+                                        default => ''
+                                    };
                                 @endphp
-                                <td class="{{ $armPosClass }}">{{ $armPosVal }}</td>
+                                <td class="{{ $armPosClass }}">{{ formatOrdinal($armPosVal) }}</td>
                             @endif
 
-                            {{-- Arm Pos (Cum) — this arm only, ranked by cumulative average --}}
+                            {{-- Arm Pos (Cum) — This arm only, ranked by cumulative average --}}
                             @if(in_array('arm_position_cum', $columnsToShow))
                                 @php
-                                    $armPosCumVal   = $score->arm_position_cum ?? '-';
-                                    $armPosCumNum   = is_numeric($armPosCumVal) ? (int)$armPosCumVal : 0;
-                                    $armPosCumClass = match($armPosCumNum) { 1 => 'position-1', 2 => 'position-2', 3 => 'position-3', default => '' };
+                                    $armPosCumVal = $score->arm_position_cum;
+                                    $armPosCumNum = is_numeric($armPosCumVal) ? (int)$armPosCumVal : 0;
+                                    $armPosCumClass = match($armPosCumNum) {
+                                        1 => 'position-1',
+                                        2 => 'position-2',
+                                        3 => 'position-3',
+                                        default => ''
+                                    };
                                 @endphp
-                                <td class="{{ $armPosCumClass }}">{{ $armPosCumVal }}</td>
+                                <td class="{{ $armPosCumClass }}">{{ formatOrdinal($armPosCumVal) }}</td>
                             @endif
-                            {{-- ─────────────────────────────────────────────────── --}}
 
                             @if(in_array('class_average', $columnsToShow))
                                 <td>{{ $score->class_average ? number_format($score->class_average, 1) : '-' }}</td>
@@ -589,7 +628,7 @@
                 </table>
             </div>
 
-            {{-- ── TOTALS SUMMARY ───────────────────────────────────── --}}
+            {{-- TOTALS SUMMARY --}}
             <div class="totals-summary">
                 TOTAL OBTAINED: {{ number_format($totals['obtained'] ?? 0, 1) }}
                 &nbsp;&nbsp;|&nbsp;&nbsp;
@@ -598,7 +637,7 @@
                 % OBTAINED: {{ $totals['percentage'] ?? 0 }}%
             </div>
 
-            {{-- ── REMARKS ──────────────────────────────────────────── --}}
+            {{-- REMARKS --}}
             <table class="remarks-table">
                 <tbody>
                     <tr>
@@ -614,7 +653,7 @@
                 </tbody>
             </table>
 
-            {{-- ── BOTTOM STRIP: QR | Footer | Stamp ──────────────── --}}
+            {{-- BOTTOM STRIP: QR | Footer | Stamp --}}
             <div class="bottom-strip">
                 <table>
                     <tr>
