@@ -25,6 +25,30 @@ class StudentAssessmentController extends Controller
         $this->middleware('permission:View student assessments', ['only' => ['index', 'printResult']]);
     }
 
+    /**
+     * Format number with ordinal suffix (st, nd, rd, th)
+     */
+    protected function formatOrdinal($number)
+    {
+        if (!is_numeric($number) || $number <= 0) {
+            return '-';
+        }
+
+        $lastDigit = $number % 10;
+        $lastTwoDigits = $number % 100;
+
+        if ($lastTwoDigits >= 11 && $lastTwoDigits <= 13) {
+            return $number . 'th';
+        }
+
+        return $number . match ($lastDigit) {
+            1 => 'st',
+            2 => 'nd',
+            3 => 'rd',
+            default => 'th',
+        };
+    }
+
     // =========================================================================
     // INDEX
     // =========================================================================
@@ -205,9 +229,11 @@ class StudentAssessmentController extends Controller
                 'grade'        => $broadsheet->grade ?? '-',
                 'subject_gpa'  => round($subjectGPA, 1),
                 'remark'       => $broadsheet->remark ?? '-',
-                'position'     => $broadsheet->position
-                    ? $broadsheet->position . $this->ordinalSuffix($broadsheet->position)
-                    : '-',
+                // Updated positions with proper formatting
+                'position'         => $this->formatOrdinal($broadsheet->subject_position_class),
+                'position_total'   => $this->formatOrdinal($broadsheet->subject_position_class_total),
+                'arm_position'     => $this->formatOrdinal($broadsheet->arm_position),
+                'arm_position_cum' => $this->formatOrdinal($broadsheet->arm_position_cum),
             ]);
 
             $overallProgress['total_subjects']++;
@@ -352,7 +378,11 @@ class StudentAssessmentController extends Controller
             $scoreData->bf = $broadsheet->bf ?? 0;
             $scoreData->cum = $broadsheet->cum ?? 0;
             $scoreData->grade = $broadsheet->grade ?? '-';
-            $scoreData->position = $broadsheet->position ?? '-';
+            // Add all four position columns (raw numbers for formatting in blade)
+            $scoreData->position = $broadsheet->subject_position_class;
+            $scoreData->position_total = $broadsheet->subject_position_class_total;
+            $scoreData->arm_position = $broadsheet->arm_position;
+            $scoreData->arm_position_cum = $broadsheet->arm_position_cum;
             $scoreData->assessment_scores = collect();
 
             foreach ($allAssessments as $assessment) {
@@ -374,6 +404,13 @@ class StudentAssessmentController extends Controller
         $percentage = $totalObtainable > 0 ? round($totalObtained / $totalObtainable * 100, 1) : 0;
 
         $schoolInfo = SchoolInformation::first();
+
+        // Format phones properly for the PDF
+        $phones = is_array($schoolInfo->school_phones ?? null)
+            ? $schoolInfo->school_phones
+            : (json_decode($schoolInfo->school_phones ?? '[]', true) ?? []);
+        $schoolInfo->formatted_phones = !empty($phones) ? implode(', ', $phones) : '—';
+
         $logoBase64 = $this->logoToBase64($schoolInfo);
         $picturePath = DB::table('studentpicture')->where('studentid', $studentId)->value('picture');
         $pictureBase64 = $this->imageToBase64ForPdf($picturePath);
@@ -388,9 +425,18 @@ class StudentAssessmentController extends Controller
             ->where('termid', $selectedTermId)
             ->count();
 
-        // If no columns selected, use defaults
+        // Get GPA data
+        $gpaData = $this->computeOverallForStudent(
+            $studentId,
+            $schoolclass,
+            $selectedTermId,
+            $selectedSessionId ?? $studentClassData->session_id,
+            $isSenior
+        );
+
+        // If no columns selected, use defaults including all position columns
         if (empty($selectedColumns)) {
-            $selectedColumns = ['sn', 'admission_no', 'name', 'total', 'cum', 'grade', 'position'];
+            $selectedColumns = ['sn', 'admission_no', 'name', 'total', 'cum', 'grade', 'position', 'position_total', 'arm_position', 'arm_position_cum'];
             foreach ($allAssessments as $assessment) {
                 $selectedColumns[] = $assessment->id;
             }
@@ -413,6 +459,7 @@ class StudentAssessmentController extends Controller
                 'obtainable' => $totalObtainable,
                 'percentage' => $percentage
             ],
+            'gpa_data' => $gpaData,
             'schoolInfo' => $schoolInfo,
             'school_logo_base64' => $logoBase64,
             'student_image_base64' => $pictureBase64,
@@ -552,16 +599,6 @@ class StudentAssessmentController extends Controller
             'num_subjects' => $num_subjects,
             'total_grade_points' => $total_grade_points,
         ];
-    }
-
-    private function ordinalSuffix(int $n): string
-    {
-        $last2 = $n % 100;
-        $last1 = $n % 10;
-        if ($last2 >= 11 && $last2 <= 13) return 'th';
-        return match ($last1) {
-            1 => 'st', 2 => 'nd', 3 => 'rd', default => 'th'
-        };
     }
 
     private function logoToBase64($schoolInfo): string
