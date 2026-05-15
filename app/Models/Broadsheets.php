@@ -11,19 +11,22 @@ class Broadsheets extends Model
 
     protected $fillable = [
         'broadsheet_record_id',
-        'subjectclass_id',
         'term_id',
+        'subjectclass_id',
         'staff_id',
         // 'ca1',
         // 'ca2',
         // 'ca3',
-        // 'exam',
+        'exam',
         'total',
-        'bf', // Added brought forward
-        'cum', // Added cumulative score
+        'bf',
+        'cum',
         'grade',
-        'allsubjectstotalscores',
-        'subjectpositionclass',
+        'all_subjects_total_score',  // Note: underscore between 'all' and 'subjects'
+        'subject_position_class',
+        'subject_position_class_total',  // New field
+        'arm_position',  // New field
+        'arm_position_cum',  // New field
         'cmin',
         'cmax',
         'avg',
@@ -33,9 +36,25 @@ class Broadsheets extends Model
         'vettedstatus'
     ];
 
+    protected $casts = [
+        'ca1' => 'float',
+        'ca2' => 'float',
+        'ca3' => 'float',
+        'exam' => 'float',
+        'total' => 'float',
+        'bf' => 'decimal:2',
+        'cum' => 'decimal:2',
+        'cmin' => 'float',
+        'cmax' => 'float',
+        'avg' => 'float',
+        'subject_position_class_total' => 'integer',
+        'arm_position' => 'integer',
+        'arm_position_cum' => 'integer',
+    ];
+
     public function broadsheetRecord()
     {
-        return $this->belongsTo(BroadsheetRecord::class,'broadsheet_record_id', 'id');
+        return $this->belongsTo(BroadsheetRecord::class, 'broadsheet_record_id', 'id');
     }
 
     public function term()
