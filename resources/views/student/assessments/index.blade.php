@@ -266,8 +266,7 @@
                             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
                                 <span style="font-size:12px;color:#6b7280;font-weight:600;">Attendance Rate</span>
                                 <span style="font-size:14px;font-weight:700;color:{{ $attColor }};">
-                                    {{ number_format($attPct, 1) }}%
-                                    <span style="font-size:11px;font-weight:600;">({{ $attLabel }})</span>
+                                    {{ number_format($attPct, 1) }}% <span style="font-size:11px;">({{ $attLabel }})</span>
                                 </span>
                             </div>
                             <div class="att-bar-track">
@@ -276,9 +275,7 @@
                         </div>
 
                         @php
-                            $attRemark = $attPct >= 90 ? '🌟 Outstanding attendance! Keep it up.' :
-                                       ($attPct >= 75 ? '👍 Good attendance. Aim for 90% and above.' :
-                                       ($attPct >= 60 ? '⚠️ Your attendance needs improvement.' : '🚨 Poor attendance. Please attend regularly.'));
+                            $attRemark = $attPct >= 90 ? '🌟 Outstanding attendance! Keep it up.' : ($attPct >= 75 ? '👍 Good attendance. Aim for 90% and above.' : ($attPct >= 60 ? '⚠️ Your attendance needs improvement.' : '🚨 Poor attendance. Please attend regularly.'));
                         @endphp
                         <div style="margin-top:10px;padding:10px 14px;border-radius:8px;background:{{ $attBg }};font-size:12px;font-weight:500;color:{{ $attColor }};">
                             {{ $attRemark }}
@@ -291,9 +288,7 @@
                     {{-- GPA TREND CHART --}}
                     @if(isset($gpaTrend) && count($gpaTrend) > 0)
                     <div class="ap-trend-card">
-                        <h4 style="font-size:13px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px;">
-                            GPA Trend
-                        </h4>
+                        <h4 style="font-size:13px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px;">GPA Trend</h4>
                         <div style="height:200px;">
                             <canvas id="gpaTrendChart"></canvas>
                         </div>
@@ -335,14 +330,13 @@
                                 <div style="display:flex;gap:12px;align-items:center;">
                                     <span class="ap-grade-pill {{ $gradeClass }}">{{ $grade }}</span>
                                     <span style="font-weight:600;font-size:14px;">{{ number_format($subject['cum'] ?? 0, 1) }}</span>
-                                    <svg class="ap-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                         <polyline points="6 9 12 15 18 9"/>
                                     </svg>
                                 </div>
                             </button>
 
                             <div class="ap-panel">
-                                {{-- Metrics --}}
                                 <div class="ap-metrics-strip">
                                     <div class="ap-metric-box"><strong>Total</strong><span>{{ number_format($subject['total'] ?? 0, 1) }}</span></div>
                                     <div class="ap-metric-box"><strong>Cumulative</strong><span>{{ number_format($subject['cum'] ?? 0, 1) }}</span></div>
@@ -356,9 +350,7 @@
 
                                 {{-- Assessment Breakdown + TOTAL --}}
                                 @if(isset($subject['assessments']) && $subject['assessments']->isNotEmpty())
-                                <h4 style="font-size:12px;margin-bottom:12px;text-transform:uppercase;letter-spacing:.04em;color:#374151;">
-                                    Assessment Breakdown
-                                </h4>
+                                <h4 style="font-size:12px;margin-bottom:12px;text-transform:uppercase;letter-spacing:.04em;color:#374151;">Assessment Breakdown</h4>
                                 @foreach($subject['assessments'] as $assessment)
                                 @php
                                     $pct = $assessment['percentage'] ?? 0;
@@ -375,21 +367,10 @@
                                     <div class="ap-bar-track">
                                         <div class="ap-bar-fill {{ $barClass }}" style="width:{{ min($pct, 100) }}%;"></div>
                                     </div>
-
-                                    @if(isset($assessment['sub_assessments']) && $assessment['sub_assessments']->isNotEmpty())
-                                    <div style="margin-top:10px;padding-top:8px;border-top:1px dashed #ccc;">
-                                        @foreach($assessment['sub_assessments'] as $sub)
-                                        <div style="display:flex;justify-content:space-between;font-size:11px;color:#6b7280;margin-bottom:4px;">
-                                            <span>↳ {{ $sub['name'] }}</span>
-                                            <span>{{ $sub['score'] }} / {{ $sub['max_score'] }} ({{ $sub['percentage'] }}%)</span>
-                                        </div>
-                                        @endforeach
-                                    </div>
-                                    @endif
                                 </div>
                                 @endforeach
 
-                                {{-- TOTAL SCORE AFTER ASSESSMENTS --}}
+                                {{-- TOTAL SCORE --}}
                                 <div class="ap-assessment-row" style="background:#f0f9f0; border-color:#4ade80; margin-top:12px;">
                                     <div class="ap-assessment-header">
                                         <span><strong style="color:#166534;">TOTAL SCORE</strong></span>
@@ -411,7 +392,7 @@
                 </div>
             </div>
 
-            {{-- PRINT MODAL --}}
+            {{-- PRINT COLUMN SELECTION MODAL --}}
             <div class="modal fade" id="printModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered modal-lg">
                     <div class="modal-content">
@@ -422,7 +403,6 @@
                         <div class="modal-body">
                             <div class="alert alert-info">Select the columns you want to include in your PDF report.</div>
 
-                            {{-- Student info --}}
                             <div class="card mb-3">
                                 <div class="card-header">Student Information</div>
                                 <div class="card-body">
@@ -434,7 +414,6 @@
                                 </div>
                             </div>
 
-                            {{-- Assessments --}}
                             <div class="card mb-3">
                                 <div class="card-header d-flex justify-content-between align-items-center">
                                     <span>Assessments</span>
@@ -454,7 +433,6 @@
                                 </div>
                             </div>
 
-                            {{-- Scores & Metrics --}}
                             <div class="card mb-3">
                                 <div class="card-header">Scores &amp; Metrics</div>
                                 <div class="card-body">
@@ -470,7 +448,6 @@
                                 </div>
                             </div>
 
-                            {{-- Position columns --}}
                             <div class="card mb-3">
                                 <div class="card-header d-flex justify-content-between align-items-center">
                                     <span>Position Columns</span>
@@ -494,7 +471,6 @@
                                 </div>
                             </div>
 
-                            {{-- Attendance --}}
                             <div class="card mb-3">
                                 <div class="card-header">Attendance</div>
                                 <div class="card-body">
@@ -521,12 +497,10 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    // Accordion
     function toggleItem(idx) {
         document.getElementById('item-' + idx).classList.toggle('is-open');
     }
 
-    // Print Modal
     document.getElementById('showPrintModalBtn')?.addEventListener('click', function () {
         new bootstrap.Modal(document.getElementById('printModal')).show();
     });
@@ -535,11 +509,12 @@
         document.querySelectorAll('.assessment-cb').forEach(cb => cb.checked = this.checked);
     });
 
-    // Generate PDF
     document.getElementById('generatePdfBtn')?.addEventListener('click', function () {
         const selectedColumns = ['sn', 'name'];
         document.querySelectorAll('.col-checkbox:checked').forEach(cb => {
-            if (!selectedColumns.includes(cb.value)) selectedColumns.push(cb.value);
+            if (!selectedColumns.includes(cb.value)) {
+                selectedColumns.push(cb.value);
+            }
         });
 
         if (selectedColumns.length <= 2) {
@@ -576,7 +551,6 @@
         setTimeout(() => Swal.close(), 1500);
     });
 
-    // GPA Trend Chart
     @if(isset($gpaTrend) && count($gpaTrend) > 0)
     document.addEventListener('DOMContentLoaded', function() {
         const ctx = document.getElementById('gpaTrendChart')?.getContext('2d');
@@ -601,16 +575,8 @@
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'top' },
-                        title: { display: false }
-                    },
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 5,
-                            ticks: { stepSize: 1 }
-                        }
+                        y: { beginAtZero: true, max: 5 }
                     }
                 }
             });

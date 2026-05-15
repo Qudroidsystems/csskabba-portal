@@ -95,11 +95,12 @@ class StudentAssessmentController extends Controller
             ->join('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
             ->join('schoolterm', 'schoolterm.id', '=', 'studentclass.termid')
             ->join('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')   // ← Important
             ->when($selectedSessionId, fn ($q) => $q->where('schoolsession.id', $selectedSessionId))
             ->select(
                 'schoolclass.id as class_id',
                 'schoolclass.schoolclass as class_name',
-                'schoolclass.arm as arm_name',
+                'schoolarm.arm as arm_name',           // ← This will now give "A", "B", etc.
                 'schoolterm.id as term_id',
                 'schoolterm.term as term_name',
                 'schoolsession.id as session_id',
@@ -304,13 +305,14 @@ class StudentAssessmentController extends Controller
             ->join('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
             ->join('schoolterm', 'schoolterm.id', '=', 'studentclass.termid')
             ->join('schoolsession', 'schoolsession.id', '=', 'studentclass.sessionid')
+            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')   // ← Important
             ->when($selectedSessionId, function ($q) use ($selectedSessionId) {
                 $q->where('schoolsession.id', $selectedSessionId);
             })
             ->select(
                 'schoolclass.id as class_id',
                 'schoolclass.schoolclass as class_name',
-                'schoolclass.arm as arm_name',
+               'schoolarm.arm as arm_name',           // ← This will now give "A", "B", etc.
                 'schoolterm.id as term_id',
                 'schoolterm.term as term_name',
                 'schoolsession.id as session_id',
