@@ -82,11 +82,11 @@ class MyScoreSheetController extends Controller
                 ->orderBy('id')
                 ->get();
 
-            // $this->updateClassMetrics($subjectclassid, $staffid, $termid, $sessionid);
-            // $this->computeDynamicTotals($broadsheets, $assessments, $schoolclass, $termid, $sessionid);
-            // $this->updateSubjectPositions($subjectclassid, $staffid, $termid, $sessionid);
-            // $this->updateClassPositions($schoolclassid, $termid, $sessionid);
-            // $this->updateArmPositions($schoolclassid, $termid, $sessionid);
+            $this->updateClassMetrics($subjectclassid, $staffid, $termid, $sessionid);
+            $this->computeDynamicTotals($broadsheets, $assessments, $schoolclass, $termid, $sessionid);
+            $this->updateSubjectPositions($subjectclassid, $staffid, $termid, $sessionid);
+            $this->updateClassPositions($schoolclassid, $termid, $sessionid);
+            $this->updateArmPositions($schoolclassid, $termid, $sessionid);
 
             $broadsheets = $this->getBroadsheets($staffid, $termid, $sessionid, $schoolclassid, $subjectclassid);
             $this->computeOverallGPAAndCGPA($broadsheets, $schoolclass, $termid, $sessionid);
@@ -1310,136 +1310,170 @@ class MyScoreSheetController extends Controller
     // UPDATE ARM POSITIONS ACROSS ALL ARMS (AJAX) - FIXED VERSION
     // =========================================================================
 
-   public function updateAllArmPositions(Request $request)
-{
-    try {
-        $request->validate([
-            'schoolclass_id' => 'required|exists:schoolclass,id',
-            'term_id' => 'required|exists:schoolterm,id',
-            'session_id' => 'required|exists:schoolsession,id',
-        ]);
+    public function updateAllArmPositions(Request $request)
+    {
+        try {
+            $request->validate([
+                'schoolclass_id' => 'required|exists:schoolclass,id',
+                'term_id' => 'required|exists:schoolterm,id',
+                'session_id' => 'required|exists:schoolsession,id',
+            ]);
 
-        $schoolclassId = $request->schoolclass_id;
-        $termId = $request->term_id;
-        $sessionId = $request->session_id;
+            $schoolclassId = $request->schoolclass_id;
+            $termId = $request->term_id;
+            $sessionId = $request->session_id;
 
-        // Get the base class (e.g., "SSS 1" without arm)
-        $baseClass = DB::table('schoolclass')->where('id', $schoolclassId)->first(['schoolclass', 'classcategoryid']);
-        if (!$baseClass) {
-            return response()->json(['success' => false, 'message' => 'Base class not found']);
-        }
+            // Get the base class (e.g., "SSS 1" without arm)
+            $baseClass = DB::table('schoolclass')->where('id', $schoolclassId)->first(['schoolclass', 'classcategoryid']);
+            if (!$baseClass) {
+                return response()->json(['success' => false, 'message' => 'Base class not found']);
+            }
 
-        // Get ALL arms of this class
-        $allArms = DB::table('schoolclass')
-            ->where('schoolclass', $baseClass->schoolclass)
-            ->where('classcategoryid', $baseClass->classcategoryid)
-            ->pluck('id');
-
-        if ($allArms->isEmpty()) {
-            return response()->json(['success' => false, 'message' => 'No arms found for this class']);
-        }
-
-        // Get all subjects for these arms
-        $subjects = DB::table('subjectclass')
-            ->whereIn('schoolclassid', $allArms)
-            ->select('id', 'schoolclassid', 'subjectid')
-            ->get();
-
-        $totalUpdated = 0;
-        $subjectsProcessed = 0;
-
-        foreach ($subjects as $subject) {
-            // Get ALL students for this subject across ALL arms with their arm identifier
-            $allStudents = DB::table('broadsheets')
-                ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
-                ->join('schoolclass', 'schoolclass.id', '=', 'broadsheet_records.schoolclass_id')
-                ->join('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-                ->where('broadsheets.subjectclass_id', $subject->id)
-                ->where('broadsheets.term_id', $termId)
-                ->where('broadsheet_records.session_id', $sessionId)
-                ->select([
-                    'broadsheets.id as broadsheet_id',
-                    'broadsheets.total',
-                    'broadsheets.cum',
-                    'broadsheet_records.schoolclass_id',
-                    'schoolarm.arm as arm_letter'
-                ])
+            // Get ALL arms of this class (all schoolclass records with same name)
+            $allArms = DB::table('schoolclass')
+                ->where('schoolclass', $baseClass->schoolclass)
+                ->where('classcategoryid', $baseClass->classcategoryid)
                 ->get();
 
-            if ($allStudents->isEmpty()) {
-                continue;
+            if ($allArms->isEmpty()) {
+                return response()->json(['success' => false, 'message' => 'No arms found for this class']);
             }
 
-            $subjectsProcessed++;
+            // Get all subjects for these arms
+            $subjects = DB::table('subjectclass')
+                ->whereIn('schoolclassid', $allArms->pluck('id'))
+                ->select('id', 'schoolclassid', 'subjectid')
+                ->get();
 
-            // ============================================================
-            // CLASS POSITION by CUMULATIVE (across ALL arms together)
-            // ============================================================
-            $sortedByCum = $allStudents->sortByDesc('cum')->values();
-            foreach ($sortedByCum as $index => $student) {
-                DB::table('broadsheets')
-                    ->where('id', $student->broadsheet_id)
-                    ->update(['subject_position_class' => $index + 1]);
-                $totalUpdated++;
-            }
+            $totalUpdated = 0;
+            $subjectsProcessed = 0;
 
-            // ============================================================
-            // CLASS POSITION by TOTAL (across ALL arms together)
-            // ============================================================
-            $sortedByTotal = $allStudents->sortByDesc('total')->values();
-            foreach ($sortedByTotal as $index => $student) {
-                DB::table('broadsheets')
-                    ->where('id', $student->broadsheet_id)
-                    ->update(['subject_position_class_total' => $index + 1]);
-                $totalUpdated++;
-            }
+            foreach ($subjects as $subject) {
+                // Get ALL students for this subject across ALL arms
+                $allStudents = DB::table('broadsheets')
+                    ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
+                    ->join('schoolclass', 'schoolclass.id', '=', 'broadsheet_records.schoolclass_id')
+                    ->where('broadsheets.subjectclass_id', $subject->id)
+                    ->where('broadsheets.term_id', $termId)
+                    ->where('broadsheet_records.session_id', $sessionId)
+                    ->select([
+                        'broadsheets.id as broadsheet_id',
+                        'broadsheets.total',
+                        'broadsheets.cum',
+                        'broadsheet_records.schoolclass_id'
+                    ])
+                    ->get();
 
-            // ============================================================
-            // ARM POSITION by TOTAL (within each arm letter only)
-            // ============================================================
-            $studentsByArm = $allStudents->groupBy('arm_letter');
-            foreach ($studentsByArm as $armLetter => $studentsInArm) {
-                $sortedByTotalArm = $studentsInArm->sortByDesc('total')->values();
-                foreach ($sortedByTotalArm as $index => $student) {
+                if ($allStudents->isEmpty()) {
+                    continue;
+                }
+
+                $subjectsProcessed++;
+
+                // ============================================================
+                // 1. CLASS POSITION by CUMULATIVE (across ALL arms)
+                // ============================================================
+                $sortedByCum = $allStudents->sortByDesc('cum')->values();
+                $rank = 0;
+                $lastCum = null;
+                $currentRank = 0;
+
+                foreach ($sortedByCum as $index => $student) {
+                    $rank = $index + 1;
+                    if ($lastCum === null || $student->cum != $lastCum) {
+                        $currentRank = $rank;
+                        $lastCum = $student->cum;
+                    }
                     DB::table('broadsheets')
                         ->where('id', $student->broadsheet_id)
-                        ->update(['arm_position' => $index + 1]);
+                        ->update(['subject_position_class' => $currentRank]);
                     $totalUpdated++;
+                }
+
+                // ============================================================
+                // 2. CLASS POSITION by TOTAL (across ALL arms)
+                // ============================================================
+                $sortedByTotal = $allStudents->sortByDesc('total')->values();
+                $rank = 0;
+                $lastTotal = null;
+                $currentRank = 0;
+
+                foreach ($sortedByTotal as $index => $student) {
+                    $rank = $index + 1;
+                    if ($lastTotal === null || $student->total != $lastTotal) {
+                        $currentRank = $rank;
+                        $lastTotal = $student->total;
+                    }
+                    DB::table('broadsheets')
+                        ->where('id', $student->broadsheet_id)
+                        ->update(['subject_position_class_total' => $currentRank]);
+                    $totalUpdated++;
+                }
+
+                // ============================================================
+                // 3. ARM POSITION by TOTAL (within each schoolclass/arm only)
+                // ============================================================
+                $studentsByArm = $allStudents->groupBy('schoolclass_id');
+                foreach ($studentsByArm as $armClassId => $studentsInArm) {
+                    $sortedByTotalArm = $studentsInArm->sortByDesc('total')->values();
+                    $rank = 0;
+                    $lastTotal = null;
+                    $currentRank = 0;
+
+                    foreach ($sortedByTotalArm as $index => $student) {
+                        $rank = $index + 1;
+                        if ($lastTotal === null || $student->total != $lastTotal) {
+                            $currentRank = $rank;
+                            $lastTotal = $student->total;
+                        }
+                        DB::table('broadsheets')
+                            ->where('id', $student->broadsheet_id)
+                            ->update(['arm_position' => $currentRank]);
+                        $totalUpdated++;
+                    }
+                }
+
+                // ============================================================
+                // 4. ARM POSITION by CUMULATIVE (within each schoolclass/arm only)
+                // ============================================================
+                foreach ($studentsByArm as $armClassId => $studentsInArm) {
+                    $sortedByCumArm = $studentsInArm->sortByDesc('cum')->values();
+                    $rank = 0;
+                    $lastCum = null;
+                    $currentRank = 0;
+
+                    foreach ($sortedByCumArm as $index => $student) {
+                        $rank = $index + 1;
+                        if ($lastCum === null || $student->cum != $lastCum) {
+                            $currentRank = $rank;
+                            $lastCum = $student->cum;
+                        }
+                        DB::table('broadsheets')
+                            ->where('id', $student->broadsheet_id)
+                            ->update(['arm_position_cum' => $currentRank]);
+                        $totalUpdated++;
+                    }
                 }
             }
 
-            // ============================================================
-            // ARM POSITION by CUMULATIVE (within each arm letter only)
-            // ============================================================
-            foreach ($studentsByArm as $armLetter => $studentsInArm) {
-                $sortedByCumArm = $studentsInArm->sortByDesc('cum')->values();
-                foreach ($sortedByCumArm as $index => $student) {
-                    DB::table('broadsheets')
-                        ->where('id', $student->broadsheet_id)
-                        ->update(['arm_position_cum' => $index + 1]);
-                    $totalUpdated++;
-                }
-            }
+            return response()->json([
+                'success' => true,
+                'message' => "✅ Positions updated! Processed {$subjectsProcessed} subject(s) across " . $allArms->count() . " arms. Updated {$totalUpdated} records.",
+                'data' => [
+                    'arms_count' => $allArms->count(),
+                    'subjects_processed' => $subjectsProcessed,
+                    'records_updated' => $totalUpdated
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('updateAllArmPositions error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update positions: ' . $e->getMessage()
+            ], 500);
         }
-
-        return response()->json([
-            'success' => true,
-            'message' => "✅ Positions updated! Processed {$subjectsProcessed} subject(s). Class positions now rank across ALL arms. Arm positions rank within each arm only.",
-            'data' => [
-                'arms_count' => $allArms->count(),
-                'subjects_processed' => $subjectsProcessed,
-                'records_updated' => $totalUpdated
-            ]
-        ]);
-
-    } catch (\Exception $e) {
-        \Log::error('updateAllArmPositions error: ' . $e->getMessage());
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to update positions: ' . $e->getMessage()
-        ], 500);
     }
-}
 
     // =========================================================================
     // GPA / CGPA HELPERS
@@ -1798,47 +1832,118 @@ class MyScoreSheetController extends Controller
     }
 
     protected function updateSubjectPositions($subjectclass_id, $staff_id, $term_id, $session_id)
-    {
-        // Get the current subject class
-        $subjectClass = DB::table('subjectclass')->where('id', $subjectclass_id)->first();
-        if (!$subjectClass) return;
+{
+    // ── 1. Identify the subject and the "base class" (e.g. "SSS 2") ────────
+    $subjectClass = DB::table('subjectclass')
+        ->join('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
+        ->where('subjectclass.id', $subjectclass_id)
+        ->first(['subjectclass.schoolclassid', 'subjectteacher.subjectid']);
 
-        // Get all students for this subject class (only current arm)
-        $rows = Broadsheets::where('subjectclass_id', $subjectclass_id)
-            ->where('staff_id', $staff_id)
-            ->where('term_id', $term_id)
-            ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
-            ->where('broadsheet_records.session_id', $session_id)
-            ->orderByDesc('broadsheets.cum')
-            ->orderBy('broadsheets.id')
-            ->get(['broadsheets.id', 'broadsheets.cum', 'broadsheets.total']);
+    if (! $subjectClass) return;
 
-        // Position by cum (within this arm only - for display in current view)
-        $rank = 0;
-        $lastVal = null;
-        $lastPos = 0;
-        foreach ($rows->sortByDesc('cum')->values() as $index => $b) {
-            $rank = $index + 1;
-            if ($lastVal === null || $b->cum != $lastVal) {
-                $lastPos = $rank;
-                $lastVal = $b->cum;
-            }
-            Broadsheets::where('id', $b->id)->update(['subject_position_class' => $lastPos]);
+    $subjectId     = $subjectClass->subjectid;
+    $schoolclassId = $subjectClass->schoolclassid;
+
+    // ── 2. Find every arm that shares this class name + category ───────────
+    //    (e.g. all schoolclass rows named "SSS 2", regardless of arm)
+    $baseClass = DB::table('schoolclass')->where('id', $schoolclassId)
+        ->first(['schoolclass', 'classcategoryid']);
+
+    if (! $baseClass) return;
+
+    $allArmIds = DB::table('schoolclass')
+        ->where('schoolclass',       $baseClass->schoolclass)
+        ->where('classcategoryid',   $baseClass->classcategoryid)
+        ->pluck('id');
+
+    // ── 3. Find ALL subjectclass records for this subject across every arm ──
+    $allSubjectClassIds = DB::table('subjectclass')
+        ->join('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
+        ->whereIn('subjectclass.schoolclassid', $allArmIds)
+        ->where('subjectteacher.subjectid', $subjectId)
+        ->pluck('subjectclass.id');
+
+    // ── 4. Pull every student row across ALL arms for this subject ──────────
+    $allStudents = DB::table('broadsheets')
+        ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
+        ->whereIn('broadsheets.subjectclass_id', $allSubjectClassIds)
+        ->where('broadsheets.term_id', $term_id)
+        ->where('broadsheet_records.session_id', $session_id)
+        ->get([
+            'broadsheets.id',
+            'broadsheets.cum',
+            'broadsheets.total',
+            'broadsheet_records.schoolclass_id',
+        ]);
+
+    if ($allStudents->isEmpty()) return;
+
+    // ── 5. Class-wide position by cumulative (subject_position_class) ───────
+    $rank        = 0;
+    $lastVal     = null;
+    $currentRank = 0;
+    foreach ($allStudents->sortByDesc('cum')->values() as $index => $b) {
+        $rank = $index + 1;
+        if ($lastVal === null || $b->cum != $lastVal) {
+            $currentRank = $rank;
+            $lastVal     = $b->cum;
         }
+        DB::table('broadsheets')
+            ->where('id', $b->id)
+            ->update(['subject_position_class' => $currentRank]);
+    }
 
-        // Position by total (within this arm only - for display in current view)
-        $rank = 0;
-        $lastVal = null;
-        $lastPos = 0;
-        foreach ($rows->sortByDesc('total')->values() as $index => $b) {
+    // ── 6. Class-wide position by total (subject_position_class_total) ──────
+    $rank        = 0;
+    $lastVal     = null;
+    $currentRank = 0;
+    foreach ($allStudents->sortByDesc('total')->values() as $index => $b) {
+        $rank = $index + 1;
+        if ($lastVal === null || $b->total != $lastVal) {
+            $currentRank = $rank;
+            $lastVal     = $b->total;
+        }
+        DB::table('broadsheets')
+            ->where('id', $b->id)
+            ->update(['subject_position_class_total' => $currentRank]);
+    }
+
+    // ── 7. Arm-specific positions (within each individual arm) ───────────────
+    $byArm = $allStudents->groupBy('schoolclass_id');
+
+    foreach ($byArm as $armClassId => $studentsInArm) {
+
+        // arm_position — by total
+        $rank        = 0;
+        $lastVal     = null;
+        $currentRank = 0;
+        foreach ($studentsInArm->sortByDesc('total')->values() as $index => $b) {
             $rank = $index + 1;
             if ($lastVal === null || $b->total != $lastVal) {
-                $lastPos = $rank;
-                $lastVal = $b->total;
+                $currentRank = $rank;
+                $lastVal     = $b->total;
             }
-            Broadsheets::where('id', $b->id)->update(['subject_position_class_total' => $lastPos]);
+            DB::table('broadsheets')
+                ->where('id', $b->id)
+                ->update(['arm_position' => $currentRank]);
+        }
+
+        // arm_position_cum — by cumulative
+        $rank        = 0;
+        $lastVal     = null;
+        $currentRank = 0;
+        foreach ($studentsInArm->sortByDesc('cum')->values() as $index => $b) {
+            $rank = $index + 1;
+            if ($lastVal === null || $b->cum != $lastVal) {
+                $currentRank = $rank;
+                $lastVal     = $b->cum;
+            }
+            DB::table('broadsheets')
+                ->where('id', $b->id)
+                ->update(['arm_position_cum' => $currentRank]);
         }
     }
+}
 
     /**
      * Update class-wide overall positions (stored in promotion_status table).
