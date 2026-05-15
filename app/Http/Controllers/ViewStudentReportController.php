@@ -250,8 +250,9 @@ class ViewStudentReportController extends Controller
 
     /**
      * Helper method to calculate positions with tie handling.
+     * Returns RAW NUMERIC positions (not formatted with suffixes).
      */
-    protected function calculatePositions($sortedRecords, $field)
+    protected function calculatePositionsRaw($sortedRecords, $field)
     {
         $positionMap = [];
         $rank = 0;
@@ -276,7 +277,7 @@ class ViewStudentReportController extends Controller
 
     /**
      * Calculate class positions, averages, and grades for all subjects.
-     * Now calculates ALL FOUR position columns.
+     * Stores RAW NUMERIC positions in database (1, 2, 3, 89, etc.)
      */
     protected function calculateClassPositionsAndAverages($schoolclassid, $sessionid, $termid)
     {
@@ -305,7 +306,6 @@ class ViewStudentReportController extends Controller
             return false;
         }
 
-        // Get students in this class (all arms with same class name)
         $students = Studentclass::whereIn('schoolclassid', $classIds)
             ->where('sessionid', $sessionid)
             ->pluck('studentId')
@@ -316,7 +316,6 @@ class ViewStudentReportController extends Controller
             return false;
         }
 
-        // Get the specific arm ID for this class (for arm-specific calculations)
         $armId = $schoolclass->arm;
 
         $success = DB::transaction(function () use ($schoolclassid, $sessionid, $termid, $className, $classIds, $students, $armId) {
@@ -359,36 +358,28 @@ class ViewStudentReportController extends Controller
             foreach ($subjectGroups as $subjectId => $subjectRecords) {
                 $subjectName = $subjectRecords->first()->subject_name;
 
-                // =============================================================
-                // 1. CLASS POSITION (CUM) - All arms, ranked by cumulative (cum)
-                // =============================================================
+                // 1. CLASS POSITION (CUM) - All arms, ranked by cumulative
                 $validRecordsCum = $subjectRecords->filter(fn ($r) => $r->cum != 0 && $r->cum !== null);
                 $sortedByCum = $validRecordsCum->sortByDesc('cum')->values();
-                $positionMapCum = $this->calculatePositions($sortedByCum, 'cum');
+                $positionMapCum = $this->calculatePositionsRaw($sortedByCum, 'cum');
 
-                // =============================================================
                 // 2. CLASS POSITION (TOTAL) - All arms, ranked by raw total
-                // =============================================================
                 $validRecordsTotal = $subjectRecords->filter(fn ($r) => $r->total != 0 && $r->total !== null);
                 $sortedByTotal = $validRecordsTotal->sortByDesc('total')->values();
-                $positionMapTotal = $this->calculatePositions($sortedByTotal, 'total');
+                $positionMapTotal = $this->calculatePositionsRaw($sortedByTotal, 'total');
 
-                // =============================================================
                 // 3. ARM POSITION (TOTAL) - This arm only, ranked by raw total
-                // =============================================================
                 $armOnlyRecords = $subjectRecords->filter(fn ($r) => $r->student_arm_id == $armId);
                 $validArmRecordsTotal = $armOnlyRecords->filter(fn ($r) => $r->total != 0 && $r->total !== null);
                 $sortedByArmTotal = $validArmRecordsTotal->sortByDesc('total')->values();
-                $armPositionMapTotal = $this->calculatePositions($sortedByArmTotal, 'total');
+                $armPositionMapTotal = $this->calculatePositionsRaw($sortedByArmTotal, 'total');
 
-                // =============================================================
                 // 4. ARM POSITION (CUM) - This arm only, ranked by cumulative
-                // =============================================================
                 $validArmRecordsCum = $armOnlyRecords->filter(fn ($r) => $r->cum != 0 && $r->cum !== null);
                 $sortedByArmCum = $validArmRecordsCum->sortByDesc('cum')->values();
-                $armPositionMapCum = $this->calculatePositions($sortedByArmCum, 'cum');
+                $armPositionMapCum = $this->calculatePositionsRaw($sortedByArmCum, 'cum');
 
-                // Calculate class average (based on total scores)
+                // Calculate class average
                 $totalScores = $validRecordsTotal->sum('total');
                 $studentCount = $validRecordsTotal->count();
                 $classAvg = $studentCount > 0 ? round($totalScores / $studentCount, 1) : 0;
@@ -399,20 +390,19 @@ class ViewStudentReportController extends Controller
                     $grade = $record->total == 0 ? '-' : $this->calculateGrade($record->total);
                     $remark = $this->getRemark($grade);
 
-                    // Get positions (default to '-' if no valid score)
-                    $newPositionCum = ($record->cum == 0 || $record->cum === null) ? '-' :
-                        (isset($positionMapCum[$record->id]) ? $this->formatOrdinal($positionMapCum[$record->id]) : '-');
+                    // Store RAW NUMBERS (not formatted strings)
+                    $newPositionCum = ($record->cum == 0 || $record->cum === null) ? null :
+                        ($positionMapCum[$record->id] ?? null);
 
-                    $newPositionTotal = ($record->total == 0 || $record->total === null) ? '-' :
-                        (isset($positionMapTotal[$record->id]) ? $this->formatOrdinal($positionMapTotal[$record->id]) : '-');
+                    $newPositionTotal = ($record->total == 0 || $record->total === null) ? null :
+                        ($positionMapTotal[$record->id] ?? null);
 
-                    $newArmPositionTotal = ($record->total == 0 || $record->total === null || $record->student_arm_id != $armId) ? '-' :
-                        (isset($armPositionMapTotal[$record->id]) ? $this->formatOrdinal($armPositionMapTotal[$record->id]) : '-');
+                    $newArmPositionTotal = ($record->total == 0 || $record->total === null || $record->student_arm_id != $armId) ? null :
+                        ($armPositionMapTotal[$record->id] ?? null);
 
-                    $newArmPositionCum = ($record->cum == 0 || $record->cum === null || $record->student_arm_id != $armId) ? '-' :
-                        (isset($armPositionMapCum[$record->id]) ? $this->formatOrdinal($armPositionMapCum[$record->id]) : '-');
+                    $newArmPositionCum = ($record->cum == 0 || $record->cum === null || $record->student_arm_id != $armId) ? null :
+                        ($armPositionMapCum[$record->id] ?? null);
 
-                    // Update only if changed
                     if (
                         $record->avg != $classAvg ||
                         $record->subject_position_class != $newPositionCum ||
@@ -512,82 +502,70 @@ class ViewStudentReportController extends Controller
                 }
             }
 
-            $scores      = null;
-            $attempts    = 0;
-            $maxAttempts = 3;
-            $retryDelay  = 500;
+            $scores = Broadsheets::where('broadsheet_records.student_id', $id)
+                ->where('broadsheets.term_id', $termid)
+                ->where('broadsheet_records.session_id', $sessionid)
+                ->where('broadsheet_records.schoolclass_id', $schoolclassid)
+                ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
+                ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
+                ->orderBy('subject.subject')
+                ->select([
+                    'subject.id as subject_id',
+                    'subject.subject as subject_name',
+                    'subject.subject_code',
+                    'broadsheets.total',
+                    'broadsheets.bf',
+                    'broadsheets.cum',
+                    'broadsheets.grade',
+                    'broadsheets.remark',
+                    // Raw numeric positions from database
+                    'broadsheets.subject_position_class as position',
+                    'broadsheets.subject_position_class_total as position_total',
+                    'broadsheets.arm_position',
+                    'broadsheets.arm_position_cum',
+                    'broadsheets.avg as class_average',
+                    'broadsheets.id as broadsheet_id',
+                    'broadsheets.vettedstatus',
+                ])->get();
 
-            while ($attempts < $maxAttempts) {
-                // ── Fetch broadsheets including ALL FOUR position columns ──────────
-                $scores = Broadsheets::where('broadsheet_records.student_id', $id)
-                    ->where('broadsheets.term_id', $termid)
-                    ->where('broadsheet_records.session_id', $sessionid)
-                    ->where('broadsheet_records.schoolclass_id', $schoolclassid)
-                    ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
-                    ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
-                    ->orderBy('subject.subject')
-                    ->select([
-                        'subject.id as subject_id',
-                        'subject.subject as subject_name',
-                        'subject.subject_code',
-                        'broadsheets.total',
-                        'broadsheets.bf',
-                        'broadsheets.cum',
-                        'broadsheets.grade',
-                        'broadsheets.remark',
-                        // ── All four position columns ──────────────────────────────
-                        'broadsheets.subject_position_class as position',            // Class Pos (Cum)   — all arms
-                        'broadsheets.subject_position_class_total as position_total', // Class Pos (Total) — all arms
-                        'broadsheets.arm_position',                                   // Arm Pos  (Total)  — this arm
-                        'broadsheets.arm_position_cum',                               // Arm Pos  (Cum)    — this arm
-                        // ──────────────────────────────────────────────────────────
-                        'broadsheets.avg as class_average',
-                        'broadsheets.id as broadsheet_id',
-                        'broadsheets.vettedstatus',
-                    ])->get();
+            // Add formatted versions for display
+            foreach ($scores as $score) {
+                $score->position_formatted = $score->position ? $this->formatOrdinal($score->position) : '-';
+                $score->position_total_formatted = $score->position_total ? $this->formatOrdinal($score->position_total) : '-';
+                $score->arm_position_formatted = $score->arm_position ? $this->formatOrdinal($score->arm_position) : '-';
+                $score->arm_position_cum_formatted = $score->arm_position_cum ? $this->formatOrdinal($score->arm_position_cum) : '-';
 
-                foreach ($scores as $score) {
-                    try {
-                        if (class_exists(\App\Models\BroadsheetAssessmentScore::class)) {
-                            $assessmentScores = \App\Models\BroadsheetAssessmentScore::where('broadsheet_id', $score->broadsheet_id)
-                                ->with('assessment')
-                                ->orderBy('assessment_id')
-                                ->get();
+                try {
+                    if (class_exists(\App\Models\BroadsheetAssessmentScore::class)) {
+                        $assessmentScores = \App\Models\BroadsheetAssessmentScore::where('broadsheet_id', $score->broadsheet_id)
+                            ->with('assessment')
+                            ->orderBy('assessment_id')
+                            ->get();
 
-                            $assessmentArray = $assessmentScores->values();
+                        $assessmentArray = $assessmentScores->values();
 
-                            $score->ca1  = 0;
-                            $score->ca2  = 0;
-                            $score->ca3  = 0;
-                            $score->exam = 0;
+                        $score->ca1  = 0;
+                        $score->ca2  = 0;
+                        $score->ca3  = 0;
+                        $score->exam = 0;
 
-                            if ($assessmentArray->count() > 0) $score->ca1  = $assessmentArray->get(0)->score ?? 0;
-                            if ($assessmentArray->count() > 1) $score->ca2  = $assessmentArray->get(1)->score ?? 0;
-                            if ($assessmentArray->count() > 2) $score->ca3  = $assessmentArray->get(2)->score ?? 0;
-                            if ($assessmentArray->count() > 3) $score->exam = $assessmentArray->get(3)->score ?? 0;
+                        if ($assessmentArray->count() > 0) $score->ca1  = $assessmentArray->get(0)->score ?? 0;
+                        if ($assessmentArray->count() > 1) $score->ca2  = $assessmentArray->get(1)->score ?? 0;
+                        if ($assessmentArray->count() > 2) $score->ca3  = $assessmentArray->get(2)->score ?? 0;
+                        if ($assessmentArray->count() > 3) $score->exam = $assessmentArray->get(3)->score ?? 0;
 
-                            $score->assessment_scores = $assessmentScores;
-                            $score->assessments       = $assessments;
-                        }
-                    } catch (\Exception $e) {
-                        Log::error('Error loading assessment scores', [
-                            'error'         => $e->getMessage(),
-                            'broadsheet_id' => $score->broadsheet_id,
-                        ]);
+                        $score->assessment_scores = $assessmentScores;
+                        $score->assessments       = $assessments;
                     }
+                } catch (\Exception $e) {
+                    Log::error('Error loading assessment scores', [
+                        'error'         => $e->getMessage(),
+                        'broadsheet_id' => $score->broadsheet_id,
+                    ]);
                 }
-
-                $hasValidGrades = $scores->every(fn ($s) => $s->grade !== '-' && $s->grade !== null);
-
-                if ($hasValidGrades || $scores->isEmpty()) {
-                    break;
-                }
-
-                usleep($retryDelay * 1000);
-                $attempts++;
             }
 
-            // ── Totals summary ────────────────────────────────────────────────────
+            // Totals summary
             $totalObtained   = 0;
             $totalObtainable = 0;
 
@@ -610,7 +588,7 @@ class ViewStudentReportController extends Controller
                 'percentage' => $totalPercentage,
             ];
 
-            // ── GPA / CGPA ────────────────────────────────────────────────────────
+            // GPA / CGPA
             $gpaData = [];
             if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
                 try {
@@ -628,7 +606,7 @@ class ViewStudentReportController extends Controller
                 }
             }
 
-            // ── Student personality profile ───────────────────────────────────────
+            // Student personality profile
             try {
                 $studentpp = Studentpersonalityprofile::where('studentpersonalityprofiles.studentid', $id)
                     ->where('studentpersonalityprofiles.termid', $termid)
@@ -673,7 +651,7 @@ class ViewStudentReportController extends Controller
                 $schoolInfo->school_stamp = $schoolInfo->school_stamp ?? null;
             }
 
-            // ── Promotion status ──────────────────────────────────────────────────
+            // Promotion status
             $promotionStatusValue = null;
             try {
                 $promotionStatus = PromotionStatus::where('student_id', $id)
@@ -688,7 +666,7 @@ class ViewStudentReportController extends Controller
                 Log::error('Error fetching promotion status', ['student_id' => $id, 'error' => $e->getMessage()]);
             }
 
-            // ── Compulsory subjects ───────────────────────────────────────────────
+            // Compulsory subjects
             $compulsorySubjects = [];
             try {
                 $compulsorySubjects = CompulsorySubjectClass::where('class_id', $schoolclassid)
@@ -788,12 +766,10 @@ class ViewStudentReportController extends Controller
                 'bf'               => ['label' => 'BF',                           'default' => true],
                 'cum'              => ['label' => 'Cum',                          'default' => true],
                 'grade'            => ['label' => 'Grade',                        'default' => true],
-                // ── All four position columns exposed to the user ──────────────
                 'position'         => ['label' => 'Class Pos (Cum) — All Arms',    'default' => true],
                 'position_total'   => ['label' => 'Class Pos (Total) — All Arms',  'default' => true],
                 'arm_position'     => ['label' => 'Arm Pos (Total) — This Arm',    'default' => true],
                 'arm_position_cum' => ['label' => 'Arm Pos (Cum) — This Arm',      'default' => true],
-                // ──────────────────────────────────────────────────────────────
                 'class_average'    => ['label' => 'Class Avg',                     'default' => true],
             ],
             'gpa_metrics' => [
@@ -1238,7 +1214,6 @@ class ViewStudentReportController extends Controller
         }
 
         foreach ($studentData as &$student) {
-            // Student photo
             if (isset($student['students']) && $student['students']->isNotEmpty() && $student['students']->first()->picture) {
                 $absolutePath = $this->getAbsoluteImagePath($student['students']->first()->picture, true);
                 $student['student_image_base64'] = $absolutePath && file_exists($absolutePath)
@@ -1248,7 +1223,6 @@ class ViewStudentReportController extends Controller
                 $student['student_image_base64'] = $this->imageToBase64($defaultStudentImage);
             }
 
-            // School logo
             if (isset($student['schoolInfo']) && !empty($student['schoolInfo']->school_logo)) {
                 $absolutePath = $this->getAbsoluteImagePath($student['schoolInfo']->school_logo, false);
                 $student['school_logo_base64'] = ($absolutePath && file_exists($absolutePath) && filesize($absolutePath) > 100)
@@ -1258,7 +1232,6 @@ class ViewStudentReportController extends Controller
                 $student['school_logo_base64'] = $this->imageToBase64($defaultSchoolLogo);
             }
 
-            // School stamp
             if (isset($student['schoolInfo']) && !empty($student['schoolInfo']->school_stamp)) {
                 $absolutePath = $this->getAbsoluteImagePath($student['schoolInfo']->school_stamp, false);
                 $student['school_stamp_base64'] = ($absolutePath && file_exists($absolutePath) && filesize($absolutePath) > 100)
@@ -1419,9 +1392,9 @@ class ViewStudentReportController extends Controller
                 'totals_summary' => $studentData['totals_summary'] ?? [],
                 'position_columns_check' => $studentData['scores'] && $studentData['scores']->isNotEmpty()
                     ? [
-                        'position'         => $studentData['scores']->first()->position         ?? 'NOT FOUND',
-                        'position_total'   => $studentData['scores']->first()->position_total   ?? 'NOT FOUND',
-                        'arm_position'     => $studentData['scores']->first()->arm_position     ?? 'NOT FOUND',
+                        'position'         => $studentData['scores']->first()->position ?? 'NOT FOUND',
+                        'position_total'   => $studentData['scores']->first()->position_total ?? 'NOT FOUND',
+                        'arm_position'     => $studentData['scores']->first()->arm_position ?? 'NOT FOUND',
                         'arm_position_cum' => $studentData['scores']->first()->arm_position_cum ?? 'NOT FOUND',
                     ]
                     : 'No scores',
