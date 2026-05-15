@@ -92,7 +92,7 @@
                 .ap-metric-box strong { display:block; font-size:10px; color:#7b85a3; text-transform:uppercase; letter-spacing:.04em; margin-bottom:3px; }
                 .ap-metric-box span { font-size:16px; font-weight:700; color:var(--navy); }
 
-                /* Position boxes — colour-coded by rank */
+                /* Position boxes */
                 .ap-metric-box.pos-class-cum  { border-left:3px solid #2563eb; }
                 .ap-metric-box.pos-class-total { border-left:3px solid #0891b2; }
                 .ap-metric-box.pos-arm-total  { border-left:3px solid #7c3aed; }
@@ -107,16 +107,11 @@
                 .bar-good      { background:#2563eb; }
                 .bar-average   { background:#d4870a; }
                 .bar-low       { background:#c0392b; }
-
-                /* Empty state */
-                .ap-empty { text-align:center; padding:60px; background:var(--paper); border-radius:var(--radius); }
-                .ap-empty h3 { font-size:18px; color:var(--navy); margin-bottom:8px; }
-                .ap-empty p  { color:#7b85a3; font-size:14px; }
             </style>
 
             <div class="assessment-portal">
 
-                {{-- ── HERO ── --}}
+                {{-- HERO --}}
                 <div class="ap-hero">
                     <h1 class="ap-hero-title">My Assessment Report</h1>
                     <p class="ap-hero-sub">View your subject scores, assessment breakdowns, positions and attendance</p>
@@ -127,7 +122,7 @@
                     @endif
                 </div>
 
-                {{-- ── FILTER BAR ── --}}
+                {{-- FILTER BAR --}}
                 <form method="GET" action="{{ route('assessments') }}">
                     <div class="ap-filter-bar">
                         <select name="term_id" class="ap-filter-select" id="termSelect">
@@ -170,7 +165,6 @@
                     @endif
 
                     @if(!isset($subjectsWithAssessments) || $subjectsWithAssessments->isEmpty())
-
                         <div class="ap-empty">
                             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" style="margin:0 auto 16px;display:block;">
                                 <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2"/>
@@ -179,30 +173,35 @@
                             <h3>No Assessments Found</h3>
                             <p>No assessments available for the selected term and session.</p>
                         </div>
-
                     @else
 
-                    {{-- ── IDENTITY CARD ── --}}
+                    {{-- IDENTITY CARD --}}
                     <div class="ap-identity-card">
                         <div class="ap-avatar">
                             @if(!empty($studentPicture))
                                 <img src="{{ asset('storage/student_avatars/' . $studentPicture) }}" alt="Student Photo">
                             @else
-                                {{ strtoupper(substr($student->firstname ?? 'S', 0, 1)) }}{{ strtoupper(substr($student->lastname ?? 'T', 0, 1)) }}
+                                {{ strtoupper(substr($student->lastname ?? 'S', 0, 1)) }}{{ strtoupper(substr($student->firstname ?? 'T', 0, 1)) }}
                             @endif
                         </div>
                         <div>
-                            <p class="ap-identity-name">{{ $student->firstname ?? '' }} {{ $student->lastname ?? '' }}</p>
+                            <p class="ap-identity-name">
+                                {{ $student->lastname ?? '' }},
+                                {{ $student->firstname ?? '' }}
+                                {{ $student->othername ?? '' }}
+                            </p>
                             <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:#6b7280;">
                                 <span>Adm No: {{ $student->admissionNo ?? '—' }}</span>
-                                @isset($class)<span>Class: {{ $class->schoolclass }}</span>@endisset
+                                @isset($class)
+                                    <span>Class: {{ $class->schoolclass }} {{ $class->arm_name ?? '' }}</span>
+                                @endisset
                                 @isset($term)<span>Term: {{ $term->term }}</span>@endisset
                                 @isset($session)<span>Session: {{ $session->session }}</span>@endisset
                             </div>
                         </div>
                     </div>
 
-                    {{-- ── STATS STRIP ── --}}
+                    {{-- STATS STRIP --}}
                     <div class="ap-stats-strip">
                         <div class="ap-stat-card">
                             <div class="ap-stat-value">{{ $overallProgress['total_subjects'] ?? 0 }}</div>
@@ -232,24 +231,22 @@
                         </div>
                     </div>
 
-                    {{-- ══════════════════════════════════════════════════════
-                         ATTENDANCE CARD
-                    ══════════════════════════════════════════════════════ --}}
+                    {{-- ATTENDANCE CARD --}}
                     @php
-                        $att         = $attendanceSummary ?? null;
-                        $attPct      = $att ? (float)($att->attendance_percentage ?? 0) : null;
+                        $att = $attendanceSummary ?? null;
+                        $attPct = $att ? (float)($att->attendance_percentage ?? 0) : null;
                         $attBarClass = $attPct === null ? '' : ($attPct >= 90 ? 'att-excellent' : ($attPct >= 75 ? 'att-good' : ($attPct >= 60 ? 'att-average' : 'att-poor')));
-                        $attLabel    = $attPct === null ? '' : ($attPct >= 90 ? 'Excellent' : ($attPct >= 75 ? 'Good' : ($attPct >= 60 ? 'Average' : 'Poor')));
-                        $attColor    = $attPct === null ? '' : ($attPct >= 90 ? '#16a34a' : ($attPct >= 75 ? '#2563eb' : ($attPct >= 60 ? '#d97706' : '#dc2626')));
-                        $attBg       = $attPct === null ? '' : ($attPct >= 90 ? '#d1fae5' : ($attPct >= 75 ? '#dbeafe' : ($attPct >= 60 ? '#fef3c7' : '#fee2e2')));
+                        $attLabel = $attPct === null ? '' : ($attPct >= 90 ? 'Excellent' : ($attPct >= 75 ? 'Good' : ($attPct >= 60 ? 'Average' : 'Poor')));
+                        $attColor = $attPct === null ? '' : ($attPct >= 90 ? '#16a34a' : ($attPct >= 75 ? '#2563eb' : ($attPct >= 60 ? '#d97706' : '#dc2626')));
+                        $attBg = $attPct === null ? '' : ($attPct >= 90 ? '#d1fae5' : ($attPct >= 75 ? '#dbeafe' : ($attPct >= 60 ? '#fef3c7' : '#fee2e2')));
                     @endphp
                     <div class="ap-attendance-card">
                         <div class="att-section-title">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                                 <rect x="3" y="4" width="18" height="18" rx="2"/>
                                 <line x1="16" y1="2" x2="16" y2="6"/>
-                                <line x1="8"  y1="2" x2="8"  y2="6"/>
-                                <line x1="3"  y1="10" x2="21" y2="10"/>
+                                <line x1="8" y1="2" x2="8" y2="6"/>
+                                <line x1="3" y1="10" x2="21" y2="10"/>
                                 <path d="m9 16 2 2 4-4"/>
                             </svg>
                             Attendance Summary
@@ -257,30 +254,12 @@
 
                         @if($att)
                         <div class="att-grid">
-                            <div class="att-stat">
-                                <div class="att-stat-value">{{ $att->total_school_days ?? 0 }}</div>
-                                <div class="att-stat-label">School Days</div>
-                            </div>
-                            <div class="att-stat" style="background:#d1fae5;border-color:#6ee7b7;">
-                                <div class="att-stat-value" style="color:#065f46;">{{ $att->days_present ?? 0 }}</div>
-                                <div class="att-stat-label">Present</div>
-                            </div>
-                            <div class="att-stat" style="background:#fee2e2;border-color:#fca5a5;">
-                                <div class="att-stat-value" style="color:#991b1b;">{{ $att->days_absent ?? 0 }}</div>
-                                <div class="att-stat-label">Absent</div>
-                            </div>
-                            <div class="att-stat" style="background:#fef9c3;border-color:#fde68a;">
-                                <div class="att-stat-value" style="color:#92400e;">{{ $att->days_late ?? 0 }}</div>
-                                <div class="att-stat-label">Late</div>
-                            </div>
-                            <div class="att-stat" style="background:#e0f2fe;border-color:#7dd3fc;">
-                                <div class="att-stat-value" style="color:#075985;">{{ $att->days_sick_leave ?? 0 }}</div>
-                                <div class="att-stat-label">Sick Leave</div>
-                            </div>
-                            <div class="att-stat" style="background:#f3e8ff;border-color:#d8b4fe;">
-                                <div class="att-stat-value" style="color:#6b21a8;">{{ $att->days_excused ?? 0 }}</div>
-                                <div class="att-stat-label">Excused</div>
-                            </div>
+                            <div class="att-stat"><div class="att-stat-value">{{ $att->total_school_days ?? 0 }}</div><div class="att-stat-label">School Days</div></div>
+                            <div class="att-stat" style="background:#d1fae5;border-color:#6ee7b7;"><div class="att-stat-value" style="color:#065f46;">{{ $att->days_present ?? 0 }}</div><div class="att-stat-label">Present</div></div>
+                            <div class="att-stat" style="background:#fee2e2;border-color:#fca5a5;"><div class="att-stat-value" style="color:#991b1b;">{{ $att->days_absent ?? 0 }}</div><div class="att-stat-label">Absent</div></div>
+                            <div class="att-stat" style="background:#fef9c3;border-color:#fde68a;"><div class="att-stat-value" style="color:#92400e;">{{ $att->days_late ?? 0 }}</div><div class="att-stat-label">Late</div></div>
+                            <div class="att-stat" style="background:#e0f2fe;border-color:#7dd3fc;"><div class="att-stat-value" style="color:#075985;">{{ $att->days_sick_leave ?? 0 }}</div><div class="att-stat-label">Sick Leave</div></div>
+                            <div class="att-stat" style="background:#f3e8ff;border-color:#d8b4fe;"><div class="att-stat-value" style="color:#6b21a8;">{{ $att->days_excused ?? 0 }}</div><div class="att-stat-label">Excused</div></div>
                         </div>
 
                         <div class="att-bar-wrap">
@@ -297,32 +276,19 @@
                         </div>
 
                         @php
-                            $attRemark = $attPct >= 90
-                                ? '🌟 Outstanding attendance! Keep it up.'
-                                : ($attPct >= 75
-                                    ? '👍 Good attendance. Aim for 90% and above.'
-                                    : ($attPct >= 60
-                                        ? '⚠️ Your attendance needs improvement. Regular attendance is key to academic success.'
-                                        : '🚨 Poor attendance. Please ensure you attend school regularly.'));
+                            $attRemark = $attPct >= 90 ? '🌟 Outstanding attendance! Keep it up.' :
+                                       ($attPct >= 75 ? '👍 Good attendance. Aim for 90% and above.' :
+                                       ($attPct >= 60 ? '⚠️ Your attendance needs improvement.' : '🚨 Poor attendance. Please attend regularly.'));
                         @endphp
                         <div style="margin-top:10px;padding:10px 14px;border-radius:8px;background:{{ $attBg }};font-size:12px;font-weight:500;color:{{ $attColor }};">
                             {{ $attRemark }}
                         </div>
-
                         @else
-                        <div class="att-no-data">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5" style="margin:0 auto 10px;display:block;">
-                                <rect x="3" y="4" width="18" height="18" rx="2"/>
-                                <line x1="16" y1="2" x2="16" y2="6"/>
-                                <line x1="8"  y1="2" x2="8"  y2="6"/>
-                                <line x1="3"  y1="10" x2="21" y2="10"/>
-                            </svg>
-                            Attendance data not available for this term/session.
-                        </div>
+                        <div class="att-no-data">Attendance data not available for this term/session.</div>
                         @endif
                     </div>
 
-                    {{-- ── GPA TREND CHART ── --}}
+                    {{-- GPA TREND CHART --}}
                     @if(isset($gpaTrend) && count($gpaTrend) > 0)
                     <div class="ap-trend-card">
                         <h4 style="font-size:13px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.05em;margin-bottom:14px;">
@@ -334,38 +300,28 @@
                     </div>
                     @endif
 
-                    {{-- ══════════════════════════════════════════════════════
-                         SUBJECTS ACCORDION
-                         Each panel shows all 4 position columns:
-                           • Class Position (Cum)   — all arms, ranked by cumulative
-                           • Class Position (Total) — all arms, ranked by raw total
-                           • Arm Position (Total)   — this arm only, ranked by raw total
-                           • Arm Position (Cum)     — this arm only, ranked by cumulative
-                    ══════════════════════════════════════════════════════ --}}
+                    {{-- SUBJECTS ACCORDION --}}
                     <div class="ap-accordion" id="apAccordion">
                         @foreach($subjectsWithAssessments as $idx => $subject)
                         @php
-                            $grade      = $subject['grade'] ?? '-';
+                            $grade = $subject['grade'] ?? '-';
                             $gradeClass = match(true) {
                                 str_starts_with($grade, 'A') => 'grade-A1',
                                 str_starts_with($grade, 'B') => 'grade-B2',
                                 str_starts_with($grade, 'C') => 'grade-C4',
                                 str_starts_with($grade, 'D') => 'grade-D7',
-                                default                      => 'grade-F9',
+                                default => 'grade-F9',
                             };
                             $icons = ['📐','📚','🔬','🌍','💻','🎨','⚗️','📊','🏛️','🌿'];
-                            $icon  = $icons[$idx % count($icons)];
+                            $icon = $icons[$idx % count($icons)];
 
-                            // ── resolve all 4 positions (formatted strings expected from controller) ──
-                            $posClassCum   = $subject['position']           ?? '—';
-                            $posClassTotal = $subject['position_total']     ?? '—';
-                            $posArmTotal   = $subject['arm_position']       ?? '—';
-                            $posArmCum     = $subject['arm_position_cum']   ?? '—';
+                            $posClassCum   = $subject['position'] ?? '—';
+                            $posClassTotal = $subject['position_total'] ?? '—';
+                            $posArmTotal   = $subject['arm_position'] ?? '—';
+                            $posArmCum     = $subject['arm_position_cum'] ?? '—';
                         @endphp
 
                         <div class="ap-accordion-item {{ $idx === 0 ? 'is-open' : '' }}" id="item-{{ $idx }}">
-
-                            {{-- Accordion trigger --}}
                             <button class="ap-accordion-trigger" onclick="toggleItem({{ $idx }})">
                                 <div style="display:flex;align-items:center;gap:14px;">
                                     <div style="width:40px;height:40px;background:var(--navy);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;">
@@ -385,82 +341,34 @@
                                 </div>
                             </button>
 
-                            {{-- Panel --}}
                             <div class="ap-panel">
-
-                                {{-- ── METRICS STRIP ── --}}
+                                {{-- Metrics --}}
                                 <div class="ap-metrics-strip">
+                                    <div class="ap-metric-box"><strong>Total</strong><span>{{ number_format($subject['total'] ?? 0, 1) }}</span></div>
+                                    <div class="ap-metric-box"><strong>Cumulative</strong><span>{{ number_format($subject['cum'] ?? 0, 1) }}</span></div>
+                                    <div class="ap-metric-box"><strong>Subject GPA</strong><span>{{ number_format($subject['subject_gpa'] ?? 0, 1) }}</span></div>
 
-                                    {{-- Core scores --}}
-                                    <div class="ap-metric-box">
-                                        <strong>Total</strong>
-                                        <span>{{ number_format($subject['total'] ?? 0, 1) }}</span>
-                                    </div>
-                                    <div class="ap-metric-box">
-                                        <strong>Cumulative</strong>
-                                        <span>{{ number_format($subject['cum'] ?? 0, 1) }}</span>
-                                    </div>
-                                    <div class="ap-metric-box">
-                                        <strong>Subject GPA</strong>
-                                        <span>{{ number_format($subject['subject_gpa'] ?? 0, 1) }}</span>
-                                    </div>
-
-                                    {{-- ── Four position boxes ── --}}
-                                    <div class="ap-metric-box pos-class-cum"
-                                         title="Position among ALL arms of this class, ranked by cumulative average">
-                                        <strong>Class Pos (Cum)</strong>
-                                        <span>{{ $posClassCum }}</span>
-                                    </div>
-                                    <div class="ap-metric-box pos-class-total"
-                                         title="Position among ALL arms of this class, ranked by term total">
-                                        <strong>Class Pos (Total)</strong>
-                                        <span>{{ $posClassTotal }}</span>
-                                    </div>
-                                    <div class="ap-metric-box pos-arm-total"
-                                         title="Position within THIS arm only, ranked by term total">
-                                        <strong>Arm Pos (Total)</strong>
-                                        <span>{{ $posArmTotal }}</span>
-                                    </div>
-                                    <div class="ap-metric-box pos-arm-cum"
-                                         title="Position within THIS arm only, ranked by cumulative average">
-                                        <strong>Arm Pos (Cum)</strong>
-                                        <span>{{ $posArmCum }}</span>
-                                    </div>
-
+                                    <div class="ap-metric-box pos-class-cum"><strong>Class Pos (Cum)</strong><span>{{ $posClassCum }}</span></div>
+                                    <div class="ap-metric-box pos-class-total"><strong>Class Pos (Total)</strong><span>{{ $posClassTotal }}</span></div>
+                                    <div class="ap-metric-box pos-arm-total"><strong>Arm Pos (Total)</strong><span>{{ $posArmTotal }}</span></div>
+                                    <div class="ap-metric-box pos-arm-cum"><strong>Arm Pos (Cum)</strong><span>{{ $posArmCum }}</span></div>
                                 </div>
 
-                                {{-- ── Position key / legend ── --}}
-                                <div style="margin-bottom:18px;padding:10px 14px;border-radius:8px;background:#f0f4ff;font-size:11px;color:#374151;display:flex;flex-wrap:wrap;gap:12px;align-items:center;">
-                                    <strong style="color:var(--navy);font-size:12px;">Position key:</strong>
-                                    <span><span style="display:inline-block;width:10px;height:10px;background:#2563eb;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Class (Cum) — all arms, by cumulative avg</span>
-                                    <span><span style="display:inline-block;width:10px;height:10px;background:#0891b2;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Class (Total) — all arms, by term total</span>
-                                    <span><span style="display:inline-block;width:10px;height:10px;background:#7c3aed;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Arm (Total) — your arm only, by term total</span>
-                                    <span><span style="display:inline-block;width:10px;height:10px;background:#a21caf;border-radius:2px;margin-right:4px;vertical-align:middle;"></span>Arm (Cum) — your arm only, by cumulative avg</span>
-                                </div>
-
-                                {{-- ── Teacher's remark ── --}}
-                                @if(!empty($subject['remark']) && $subject['remark'] !== '-')
-                                <div style="background:#e0f2fe;padding:10px 14px;border-radius:8px;margin-bottom:16px;font-size:13px;">
-                                    <strong>Teacher's Remark:</strong> {{ $subject['remark'] }}
-                                </div>
-                                @endif
-
-                                {{-- ── Assessment breakdown ── --}}
+                                {{-- Assessment Breakdown + TOTAL --}}
                                 @if(isset($subject['assessments']) && $subject['assessments']->isNotEmpty())
                                 <h4 style="font-size:12px;margin-bottom:12px;text-transform:uppercase;letter-spacing:.04em;color:#374151;">
                                     Assessment Breakdown
                                 </h4>
                                 @foreach($subject['assessments'] as $assessment)
                                 @php
-                                    $pct      = $assessment['percentage'] ?? 0;
+                                    $pct = $assessment['percentage'] ?? 0;
                                     $barClass = $pct >= 70 ? 'bar-excellent' : ($pct >= 50 ? 'bar-good' : ($pct >= 40 ? 'bar-average' : 'bar-low'));
                                 @endphp
                                 <div class="ap-assessment-row">
                                     <div class="ap-assessment-header">
                                         <span><strong>{{ $assessment['name'] }}</strong></span>
                                         <span style="font-size:13px;color:#374151;">
-                                            {{ number_format($assessment['score'] ?? 0, 1) }}
-                                            / {{ $assessment['max_score'] ?? 0 }}
+                                            {{ number_format($assessment['score'] ?? 0, 1) }} / {{ $assessment['max_score'] ?? 0 }}
                                             <span style="color:#7b85a3;">({{ $pct }}%)</span>
                                         </span>
                                     </div>
@@ -468,7 +376,6 @@
                                         <div class="ap-bar-fill {{ $barClass }}" style="width:{{ min($pct, 100) }}%;"></div>
                                     </div>
 
-                                    {{-- Sub-assessments --}}
                                     @if(isset($assessment['sub_assessments']) && $assessment['sub_assessments']->isNotEmpty())
                                     <div style="margin-top:10px;padding-top:8px;border-top:1px dashed #ccc;">
                                         @foreach($assessment['sub_assessments'] as $sub)
@@ -481,20 +388,30 @@
                                     @endif
                                 </div>
                                 @endforeach
+
+                                {{-- TOTAL SCORE AFTER ASSESSMENTS --}}
+                                <div class="ap-assessment-row" style="background:#f0f9f0; border-color:#4ade80; margin-top:12px;">
+                                    <div class="ap-assessment-header">
+                                        <span><strong style="color:#166534;">TOTAL SCORE</strong></span>
+                                        <span style="font-size:15px;font-weight:700;color:#166534;">
+                                            {{ number_format($subject['total'] ?? 0, 1) }} / 100
+                                        </span>
+                                    </div>
+                                    <div class="ap-bar-track">
+                                        <div class="ap-bar-fill bar-excellent" style="width:{{ min($subject['total'] ?? 0, 100) }}%;"></div>
+                                    </div>
+                                </div>
                                 @endif
-
-                            </div>{{-- end .ap-panel --}}
-                        </div>{{-- end .ap-accordion-item --}}
+                            </div>
+                        </div>
                         @endforeach
-                    </div>{{-- end .ap-accordion --}}
+                    </div>
 
-                    @endif {{-- end isEmpty check --}}
-                </div>{{-- end .ap-body --}}
-            </div>{{-- end .assessment-portal --}}
+                    @endif
+                </div>
+            </div>
 
-            {{-- ══════════════════════════════════════════════════════════
-                 PRINT COLUMN SELECTION MODAL
-            ══════════════════════════════════════════════════════════ --}}
+            {{-- PRINT MODAL --}}
             <div class="modal fade" id="printModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered modal-lg">
                     <div class="modal-content">
@@ -562,32 +479,16 @@
                                 <div class="card-body">
                                     <div class="row">
                                         <div class="col-md-6">
-                                            <label>
-                                                <input type="checkbox" class="col-checkbox" value="position" checked>
-                                                <strong>Class Pos (Cum)</strong>
-                                                <small class="text-muted d-block ms-3">All arms — ranked by cumulative average</small>
-                                            </label>
+                                            <label><input type="checkbox" class="col-checkbox" value="position" checked><strong>Class Pos (Cum)</strong></label>
                                         </div>
                                         <div class="col-md-6">
-                                            <label>
-                                                <input type="checkbox" class="col-checkbox" value="position_total" checked>
-                                                <strong>Class Pos (Total)</strong>
-                                                <small class="text-muted d-block ms-3">All arms — ranked by term total</small>
-                                            </label>
+                                            <label><input type="checkbox" class="col-checkbox" value="position_total" checked><strong>Class Pos (Total)</strong></label>
                                         </div>
                                         <div class="col-md-6 mt-2">
-                                            <label>
-                                                <input type="checkbox" class="col-checkbox" value="arm_position" checked>
-                                                <strong>Arm Pos (Total)</strong>
-                                                <small class="text-muted d-block ms-3">Your arm only — ranked by term total</small>
-                                            </label>
+                                            <label><input type="checkbox" class="col-checkbox" value="arm_position" checked><strong>Arm Pos (Total)</strong></label>
                                         </div>
                                         <div class="col-md-6 mt-2">
-                                            <label>
-                                                <input type="checkbox" class="col-checkbox" value="arm_position_cum" checked>
-                                                <strong>Arm Pos (Cum)</strong>
-                                                <small class="text-muted d-block ms-3">Your arm only — ranked by cumulative average</small>
-                                            </label>
+                                            <label><input type="checkbox" class="col-checkbox" value="arm_position_cum" checked><strong>Arm Pos (Cum)</strong></label>
                                         </div>
                                     </div>
                                 </div>
@@ -620,29 +521,25 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    // ── Accordion toggle ──
+    // Accordion
     function toggleItem(idx) {
         document.getElementById('item-' + idx).classList.toggle('is-open');
     }
 
-    // ── Print modal ──
+    // Print Modal
     document.getElementById('showPrintModalBtn')?.addEventListener('click', function () {
         new bootstrap.Modal(document.getElementById('printModal')).show();
     });
 
-    // ── Select-all assessments ──
     document.getElementById('selectAllAssessments')?.addEventListener('change', function () {
         document.querySelectorAll('.assessment-cb').forEach(cb => cb.checked = this.checked);
     });
 
-    // ── Generate PDF ──
+    // Generate PDF
     document.getElementById('generatePdfBtn')?.addEventListener('click', function () {
-        // Always include sn and name
         const selectedColumns = ['sn', 'name'];
         document.querySelectorAll('.col-checkbox:checked').forEach(cb => {
-            if (!selectedColumns.includes(cb.value)) {
-                selectedColumns.push(cb.value);
-            }
+            if (!selectedColumns.includes(cb.value)) selectedColumns.push(cb.value);
         });
 
         if (selectedColumns.length <= 2) {
@@ -650,7 +547,7 @@
             return;
         }
 
-        const termId    = document.getElementById('termSelect').value;
+        const termId = document.getElementById('termSelect').value;
         const sessionId = document.getElementById('sessionSelect').value;
 
         if (!termId || !sessionId) {
@@ -679,35 +576,46 @@
         setTimeout(() => Swal.close(), 1500);
     });
 
-    // ── GPA Trend Chart ──
+    // GPA Trend Chart
     @if(isset($gpaTrend) && count($gpaTrend) > 0)
-    const ctx = document.getElementById('gpaTrendChart')?.getContext('2d');
-    if (ctx) {
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: @json(array_keys($gpaTrend)),
-                datasets: [{
-                    label: 'GPA',
-                    data: @json(array_values($gpaTrend)),
-                    borderColor: '#c9a84c',
-                    backgroundColor: 'rgba(201,168,76,.1)',
-                    borderWidth: 2,
-                    pointBackgroundColor: '#0f1c35',
-                    pointBorderColor: '#c9a84c',
-                    pointRadius: 4,
-                    tension: 0.3,
-                    fill: true,
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'top' } },
-                scales: { y: { beginAtZero: true, max: 5 } }
-            }
-        });
-    }
+    document.addEventListener('DOMContentLoaded', function() {
+        const ctx = document.getElementById('gpaTrendChart')?.getContext('2d');
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: @json(array_keys($gpaTrend)),
+                    datasets: [{
+                        label: 'GPA',
+                        data: @json(array_values($gpaTrend)),
+                        borderColor: '#c9a84c',
+                        backgroundColor: 'rgba(201,168,76,0.1)',
+                        borderWidth: 3,
+                        pointBackgroundColor: '#0f1c35',
+                        pointBorderColor: '#c9a84c',
+                        pointRadius: 5,
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' },
+                        title: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 5,
+                            ticks: { stepSize: 1 }
+                        }
+                    }
+                }
+            });
+        }
+    });
     @endif
 </script>
 @endsection
