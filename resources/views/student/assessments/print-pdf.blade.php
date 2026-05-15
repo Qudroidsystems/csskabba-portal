@@ -3,197 +3,560 @@
 <head>
     <meta charset="UTF-8">
     <title>Student Terminal Report - {{ $allStudentData[0]['schoolInfo']->school_name ?? 'School' }}</title>
-    <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
+  <style>
+    *{
+        margin:0;
+        padding:0;
+        box-sizing:border-box;
+    }
 
-        @page { size:A4; margin:6mm 5mm; }
+    @page{
+        size:A4;
+        margin:3mm;
+    }
 
-        body {
-            font-family:'Times New Roman', Times, serif;
-            font-size:9.5px;
-            line-height:1.3;
-            color:#000;
-            background:#fff;
-            padding:0;
+    html,
+    body{
+        width:100%;
+        height:100%;
+    }
+
+    body{
+        font-family:'Times New Roman', Times, serif;
+        font-size:9.5px;
+        line-height:1.3;
+        color:#000;
+        background:#fff;
+        padding:0;
+    }
+
+    /* =========================================================
+        WATERMARK
+    ========================================================= */
+
+    .watermark-text{
+        position:fixed;
+        top:50%;
+        left:50%;
+        transform:translate(-50%,-50%) rotate(-25deg);
+
+        font-size:60px;
+        font-weight:900;
+
+        color:rgba(220,38,38,0.06);
+
+        font-family:'Arial Black',sans-serif;
+
+        letter-spacing:5px;
+
+        white-space:nowrap;
+
+        pointer-events:none;
+
+        z-index:0;
+
+        text-transform:uppercase;
+
+        width:100%;
+
+        text-align:center;
+    }
+
+    /* =========================================================
+        REPORT CARD
+    ========================================================= */
+
+    .student-section{
+        width:100%;
+
+        background:#ffffff;
+
+        border:3px double #000;
+
+        position:relative;
+
+        overflow:hidden;
+
+        z-index:1;
+
+        min-height:289mm;
+
+        display:flex;
+
+        flex-direction:column;
+
+        justify-content:space-between;
+    }
+
+    .student-section + .student-section{
+        page-break-before:always;
+    }
+
+    /* =========================================================
+        SCHOOL HEADER
+    ========================================================= */
+
+    .school-name-header{
+        width:100%;
+
+        background:#111827;
+
+        color:white;
+
+        padding:8px 10px 5px;
+
+        text-align:center;
+
+        border-bottom:1px solid #1e40af;
+    }
+
+    .school-name-header .school-full-name{
+        font-family:'Arial Black',sans-serif;
+
+        font-size:18px;
+
+        font-weight:900;
+
+        letter-spacing:1.5px;
+
+        text-transform:uppercase;
+
+        line-height:1.05;
+    }
+
+    .school-name-header .motto{
+        font-size:9px;
+
+        font-weight:700;
+
+        letter-spacing:2px;
+
+        opacity:.95;
+
+        margin-top:2px;
+    }
+
+    /* =========================================================
+        HEADER TABLE
+    ========================================================= */
+
+    .header-table{
+        width:100%;
+        border-collapse:collapse;
+    }
+
+    .header-table td{
+        padding:6px 8px;
+        vertical-align:middle;
+    }
+
+    .school-logo,
+    .photo-frame{
+        width:68px;
+        height:80px;
+
+        border:2px solid #47b492;
+
+        border-radius:5px;
+
+        background:white;
+
+        padding:3px;
+
+        overflow:hidden;
+
+        display:block;
+    }
+
+    .school-logo img,
+    .photo-frame img{
+        width:100%;
+        height:100%;
+        object-fit:contain;
+        display:block;
+    }
+
+    .middle-info{
+        font-size:9px;
+        line-height:1.7;
+    }
+
+    .middle-info strong{
+        color:#1e40af;
+        font-weight:700;
+    }
+
+    .header-divider{
+        height:2px;
+        background:#1e40af;
+    }
+
+    .header-divider2{
+        height:1px;
+        background:#64748b;
+        margin:1px 0;
+    }
+
+    /* =========================================================
+        REPORT TITLE
+    ========================================================= */
+
+    .report-title{
+        background:#111827;
+
+        color:white;
+
+        padding:5px 8px;
+
+        font-size:10.5px;
+
+        font-weight:700;
+
+        text-align:center;
+    }
+
+    /* =========================================================
+        STUDENT INFO
+    ========================================================= */
+
+    .student-info-bar{
+        border:2px solid #2aa886;
+
+        border-radius:5px;
+
+        padding:5px 10px;
+
+        margin:6px 8px;
+
+        font-size:8.5px;
+
+        background:#f0f7ff;
+    }
+
+    .info-table{
+        width:100%;
+        border-collapse:collapse;
+    }
+
+    .info-table td{
+        padding:2px 5px;
+    }
+
+    .info-bar-label{
+        color:#1e40af;
+        font-weight:700;
+        font-size:7.8px;
+        white-space:nowrap;
+    }
+
+    .info-bar-value{
+        font-weight:900;
+        font-size:8.5px;
+        padding-left:3px;
+    }
+
+    /* =========================================================
+        RESULT TABLE
+    ========================================================= */
+
+    .result-table{
+        margin:6px 8px 0;
+
+        flex:1;
+    }
+
+    .result-table table{
+        width:100%;
+
+        border:2px solid #000;
+
+        border-collapse:collapse;
+
+        font-size:7.5px;
+    }
+
+    .result-table thead th{
+        background:#0d1a3d;
+
+        color:white;
+
+        font-weight:800;
+
+        border:1px solid #000;
+
+        padding:3px 1px;
+
+        font-size:6.5px;
+
+        text-align:center;
+
+        line-height:1.2;
+    }
+
+    .result-table tbody td{
+        border:1px solid #000;
+
+        padding:2px 1px;
+
+        text-align:center;
+
+        font-size:7.3px;
+
+        background:white;
+
+        font-weight:600;
+
+        height:15px;
+
+        line-height:15px;
+    }
+
+    .result-table tbody td.subject-name{
+        text-align:left;
+
+        font-weight:700;
+
+        padding-left:5px;
+
+        font-size:7.5px;
+    }
+
+    .highlight-red{
+        color:#dc2626;
+        font-weight:900;
+    }
+
+    /* =========================================================
+        COLUMN WIDTHS
+    ========================================================= */
+
+    .col-sn{
+        width:18px;
+    }
+
+    .col-admissionno{
+        width:62px;
+    }
+
+    .col-name{
+        width:110px;
+    }
+
+    .col-assessment{
+        width:32px;
+    }
+
+    .col-total{
+        width:34px;
+    }
+
+    .col-bf{
+        width:26px;
+    }
+
+    .col-cum{
+        width:30px;
+    }
+
+    .col-grade{
+        width:28px;
+    }
+
+    .col-position{
+        width:28px;
+    }
+
+    .col-avg{
+        width:28px;
+    }
+
+    /* =========================================================
+        TOTAL SUMMARY
+    ========================================================= */
+
+    .totals-summary{
+        background:#0d1a3d;
+
+        color:#fff;
+
+        font-weight:900;
+
+        font-size:7.5px;
+
+        padding:4px 10px;
+
+        border:2px solid #000;
+
+        border-top:none;
+
+        text-align:center;
+
+        margin:0 8px 6px;
+    }
+
+    /* =========================================================
+        REMARKS
+    ========================================================= */
+
+    .remarks-table{
+        width:calc(100% - 16px);
+
+        border:2px solid #000;
+
+        border-collapse:collapse;
+
+        margin:0 8px 4px;
+    }
+
+    .remarks-table td{
+        border:1px solid #000;
+
+        padding:5px 7px;
+
+        background:white;
+
+        vertical-align:top;
+
+        font-size:8px;
+    }
+
+    .remarks-table .h6{
+        font-weight:700;
+
+        margin-bottom:3px;
+
+        font-size:8.5px;
+
+        border-bottom:1px solid #ccc;
+
+        display:inline-block;
+    }
+
+    /* =========================================================
+        FOOTER
+    ========================================================= */
+
+    .footer-section{
+        background:#f1f5f9;
+
+        padding:7px 12px 5px;
+
+        border-top:1px solid #cbd5e1;
+
+        text-align:center;
+
+        margin-top:auto;
+
+        margin-left:8px;
+
+        margin-right:8px;
+
+        margin-bottom:6px;
+    }
+
+    .text-dot-space2{
+        border-bottom:1px dotted #333;
+
+        display:inline-block;
+
+        min-width:100px;
+
+        font-weight:bold;
+
+        margin:0 3px;
+    }
+
+    .powered-by{
+        font-size:7.5px;
+
+        margin-top:3px;
+
+        color:#64748b;
+    }
+
+    /* =========================================================
+        STAMP
+    ========================================================= */
+
+    .stamp-inline{
+        display:inline-block;
+
+        opacity:0.12;
+
+        vertical-align:middle;
+
+        width:60px;
+
+        height:60px;
+    }
+
+    /* =========================================================
+        GRADE COLORS
+    ========================================================= */
+
+    .grade-A{
+        color:#16a34a;
+        font-weight:900;
+    }
+
+    .grade-B{
+        color:#2563eb;
+        font-weight:900;
+    }
+
+    .grade-C{
+        color:#ca8a04;
+        font-weight:900;
+    }
+
+    .grade-D{
+        color:#ea580c;
+        font-weight:900;
+    }
+
+    .grade-F{
+        color:#dc2626;
+        font-weight:900;
+    }
+
+    /* =========================================================
+        MEDALS
+    ========================================================= */
+
+    .pos-1{
+        background:gold;
+        color:#000;
+        font-weight:900;
+    }
+
+    .pos-2{
+        background:silver;
+        color:#000;
+        font-weight:900;
+    }
+
+    .pos-3{
+        background:#cd7f32;
+        color:#fff;
+        font-weight:900;
+    }
+
+    /* =========================================================
+        PRINT
+    ========================================================= */
+
+    @media print{
+
+        body{
+            background:white;
         }
 
-        /* WATERMARK — fixed, behind everything */
-        .watermark-text {
-            position:fixed;
-            top:50%; left:50%;
-            transform:translate(-50%,-50%) rotate(-25deg);
-            font-size:60px; font-weight:900;
-            color:rgba(220,38,38,0.06);
-            font-family:'Arial Black',sans-serif;
-            letter-spacing:5px; white-space:nowrap;
-            pointer-events:none; z-index:0;
-            text-transform:uppercase; width:100%; text-align:center;
+        .student-section{
+            box-shadow:none;
         }
+    }
 
-        /* ONE REPORT CARD PER STUDENT */
-        .student-section {
-            width:100%;
-            background:#ffffff;
-            border:3px double #000;
-            position:relative;
-            text-align:left;
-            overflow:hidden;
-            z-index:1;
-            /* No fixed height — content drives height */
-        }
-
-        /* page-break only between multiple students */
-        .student-section + .student-section {
-            page-break-before:always;
-            margin-top:0;
-        }
-
-        /* SCHOOL NAME HEADER */
-        .school-name-header {
-            width:100%;
-            background:#111827;
-            color:white;
-            padding:8px 10px 5px;
-            text-align:center;
-            border-bottom:1px solid #1e40af;
-        }
-        .school-name-header .school-full-name {
-            font-family:'Arial Black',sans-serif;
-            font-size:18px; font-weight:900;
-            letter-spacing:1.5px; text-transform:uppercase; line-height:1.05;
-        }
-        .school-name-header .motto {
-            font-size:9px; font-weight:700; letter-spacing:2px; opacity:.95; margin-top:2px;
-        }
-
-        /* HEADER TABLE */
-        .header-table { width:100%; border-collapse:collapse; }
-        .header-table td { padding:6px 8px; vertical-align:middle; }
-
-        .school-logo, .photo-frame {
-            width:68px; height:80px;
-            border:2px solid #47b492; border-radius:5px;
-            background:white; padding:3px; overflow:hidden;
-            display:block;
-        }
-        .school-logo img, .photo-frame img {
-            width:100%; height:100%; object-fit:contain; display:block;
-        }
-
-        .middle-info { font-size:9px; line-height:1.7; }
-        .middle-info strong { color:#1e40af; font-weight:700; }
-
-        .header-divider  { height:2px; background:#1e40af; }
-        .header-divider2 { height:1px; background:#64748b; margin:1px 0; }
-
-        /* REPORT TITLE */
-        .report-title {
-            background:#111827; color:white;
-            padding:5px 8px; font-size:10.5px; font-weight:700;
-            text-align:center;
-        }
-
-        /* STUDENT INFO BAR */
-        .student-info-bar {
-            border:2px solid #2aa886; border-radius:5px;
-            padding:5px 10px; margin:6px 8px; font-size:8.5px;
-            background:#f0f7ff;
-        }
-        .info-table { width:100%; border-collapse:collapse; }
-        .info-table td { padding:2px 5px; }
-        .info-bar-label { color:#1e40af; font-weight:700; font-size:7.8px; white-space:nowrap; }
-        .info-bar-value { font-weight:900; font-size:8.5px; padding-left:3px; }
-
-        /* RESULT TABLE */
-        .result-table { margin:6px 8px 0; }
-        .result-table table {
-            width:100%; border:2px solid #000; border-collapse:collapse; font-size:7.5px;
-        }
-        .result-table thead th {
-            background:#0d1a3d; color:white; font-weight:800;
-            border:1px solid #000; padding:3px 1px;
-            font-size:6.5px; text-align:center; line-height:1.2;
-        }
-        .result-table tbody td {
-            border:1px solid #000; padding:2px 1px;
-            text-align:center; font-size:7.3px;
-            background:white; font-weight:600;
-            height:15px; line-height:15px;
-        }
-        .result-table tbody td.subject-name {
-            text-align:left; font-weight:700; padding-left:5px; font-size:7.5px;
-        }
-
-        .highlight-red { color:#dc2626; font-weight:900; }
-
-        /* Column widths — tuned for 16-subject table fitting A4 */
-        .col-sn          { width:18px; }
-        .col-admissionno { width:62px; }
-        .col-name        { width:110px; }
-        .col-assessment  { width:32px; }
-        .col-total       { width:34px; }
-        .col-bf          { width:26px; }
-        .col-cum         { width:30px; }
-        .col-grade       { width:28px; }
-        .col-position    { width:28px; }
-        .col-avg         { width:28px; }
-
-        /* TOTALS SUMMARY */
-        .totals-summary {
-            background:#0d1a3d; color:#fff;
-            font-weight:900; font-size:7.5px;
-            padding:4px 10px; border:2px solid #000; border-top:none;
-            text-align:center; margin:0 8px 6px;
-        }
-
-        /* REMARKS */
-        .remarks-table {
-            width:calc(100% - 16px); border:2px solid #000;
-            border-collapse:collapse; margin:0 8px 4px;
-        }
-        .remarks-table td {
-            border:1px solid #000; padding:5px 7px;
-            background:white; vertical-align:top; font-size:8px;
-        }
-        .remarks-table .h6 {
-            font-weight:700; margin-bottom:3px; font-size:8.5px;
-            border-bottom:1px solid #ccc; display:inline-block;
-        }
-
-        /* FOOTER */
-        .footer-section {
-            background:#f1f5f9; padding:7px 12px 5px;
-            border-top:1px solid #cbd5e1; text-align:center; margin:0 8px 6px;
-        }
-        .text-dot-space2 {
-            border-bottom:1px dotted #333; display:inline-block;
-            min-width:100px; font-weight:bold; margin:0 3px;
-        }
-        .powered-by { font-size:7.5px; margin-top:3px; color:#64748b; }
-
-        /* STAMP — inline block, no absolute positioning */
-        .stamp-inline {
-            display:inline-block; opacity:0.12; vertical-align:middle;
-            width:60px; height:60px;
-        }
-
-        /* Grade colours */
-        .grade-A { color:#16a34a; font-weight:900; }
-        .grade-B { color:#2563eb; font-weight:900; }
-        .grade-C { color:#ca8a04; font-weight:900; }
-        .grade-D { color:#ea580c; font-weight:900; }
-        .grade-F { color:#dc2626; font-weight:900; }
-
-        /* Position medal colours */
-        .pos-1 { background:gold;    color:#000; font-weight:900; }
-        .pos-2 { background:silver;  color:#000; font-weight:900; }
-        .pos-3 { background:#cd7f32; color:#fff; font-weight:900; }
-
-        @media print {
-            body { background:white; }
-            .student-section { box-shadow:none; }
-        }
-    </style>
+</style>
 </head>
 <body>
     <div class="watermark-text">STUDENT COPY - NOT FOR OFFICIAL USE</div>
