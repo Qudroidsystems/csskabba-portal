@@ -334,58 +334,58 @@
             </div>
 
             {{-- HEADER: Logo + Contact + Photo --}}
-            <table class="header-table">
-                <tr>
-                    <td width="20%" style="text-align:center;">
-                        <div class="school-logo">
-                            @php
-                                $logoSrc = $studentData['school_logo_base64'] ??
-                                    'data:image/svg+xml;base64,' . base64_encode(
-                                        '<svg xmlns="http://www.w3.org/2000/svg" width="72" height="85" viewBox="0 0 100 100">
-                                         <rect width="100" height="100" fill="#f8f9fa" stroke="#47b492" stroke-width="2"/>
-                                         <circle cx="50" cy="40" r="15" fill="#47b492" opacity="0.6"/>
-                                         <rect x="35" y="60" width="30" height="20" fill="#47b492" opacity="0.6" rx="3"/>
-                                         </svg>'
-                                    );
-                            @endphp
-                            <img src="{{ $logoSrc }}" alt="School Logo">
-                        </div>
-                    </td>
+          <table class="header-table">
+            <tr>
+                <td width="20%" style="text-align:center;">
+                    <div class="school-logo">
+                        @php
+                            $logoSrc = $studentData['school_logo_base64'] ??
+                                'data:image/svg+xml;base64,' . base64_encode(
+                                    '<svg xmlns="http://www.w3.org/2000/svg" width="72" height="85" viewBox="0 0 100 100">
+                                    <rect width="100" height="100" fill="#f8f9fa" stroke="#47b492" stroke-width="2"/>
+                                    <circle cx="50" cy="40" r="15" fill="#47b492" opacity="0.6"/>
+                                    <rect x="35" y="60" width="30" height="20" fill="#47b492" opacity="0.6" rx="3"/>
+                                    </svg>'
+                                );
+                        @endphp
+                        <img src="{{ $logoSrc }}" alt="School Logo">
+                    </div>
+                </td>
 
-                    <td style="vertical-align:top; padding: 4px 8px;">
-                        <table style="border:none; border-collapse:collapse; width:100%; font-size:9px;">
-                            <tr>
-                                <td style="font-weight:900; color:#1e40af; white-space:nowrap; vertical-align:top; padding:0 4px 0 0;">Address:</td>
-                                <td style="vertical-align:top; padding:0;">{{ $schoolInfo->school_address ?? '—' }}</td>
-                            </tr>
-                            <tr>
-                                <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Phone:</td>
-                                <td>{{ $schoolInfo->school_phone ?? '—' }}</td>
-                            </tr>
-                            <tr>
-                                <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Email:</td>
-                                <td>{{ $schoolInfo->school_email ?? '—' }}</td>
-                            </tr>
-                            <tr>
-                                <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Website:</td>
-                                <td>{{ $schoolInfo->school_website ?? '—' }}</td>
-                            </tr>
-                        </table>
-                    </td>
+                <td style="vertical-align:top; padding: 4px 8px;">
+                    <table style="border:none; border-collapse:collapse; width:100%; font-size:9px;">
+                        <tr>
+                            <td style="font-weight:900; color:#1e40af; white-space:nowrap; vertical-align:top; padding:0 4px 0 0;">Address:</td>
+                            <td style="vertical-align:top; padding:0;">{{ $schoolInfo->school_address ?? '—' }}</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Phone:</td>
+                            <td style="vertical-align:top; padding:0;">{{ $schoolInfo->formatted_phones ?? '—' }}</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Email:</td>
+                            <td style="vertical-align:top; padding:0;">{{ $schoolInfo->school_email ?? '—' }}</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Website:</td>
+                            <td style="vertical-align:top; padding:0;">{{ $schoolInfo->school_website ?? '—' }}</td>
+                        </tr>
+                    </table>
+                </td>
 
-                    <td width="29%" style="text-align:right; padding-right:8px; vertical-align:top; padding-top:6px;">
-                        @if(in_array('picture', $columnsToShow))
-                        <div class="photo-frame" style="margin-left:auto; margin-right:0;">
-                            @if(!empty($studentData['student_image_base64']))
-                                <img src="{{ $studentData['student_image_base64'] }}" alt="Student Photo">
-                            @else
-                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='85' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23e2e8f0'/%3E%3Ccircle cx='50' cy='40' r='20' fill='%2394a3b8'/%3E%3Crect x='35' y='65' width='30' height='25' fill='%2394a3b8' rx='4'/%3E%3C/svg%3E" alt="Default Photo">
-                            @endif
-                        </div>
+                <td width="29%" style="text-align:right; padding-right:8px; vertical-align:top; padding-top:6px;">
+                    @if(in_array('picture', $columnsToShow))
+                    <div class="photo-frame" style="margin-left:auto; margin-right:0;">
+                        @if(!empty($studentData['student_image_base64']))
+                            <img src="{{ $studentData['student_image_base64'] }}" alt="Student Photo">
+                        @else
+                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='85' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23e2e8f0'/%3E%3Ccircle cx='50' cy='40' r='20' fill='%2394a3b8'/%3E%3Crect x='35' y='65' width='30' height='25' fill='%2394a3b8' rx='4'/%3E%3C/svg%3E" alt="Default Photo">
                         @endif
-                    </td>
-                </tr>
-            </table>
+                    </div>
+                    @endif
+                </td>
+            </tr>
+          </table>
 
             <div class="header-divider"></div>
             <div class="header-divider2"></div>
