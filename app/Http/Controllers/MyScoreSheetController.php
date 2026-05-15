@@ -1564,39 +1564,59 @@ class MyScoreSheetController extends Controller
     // =========================================================================
 
     private function computeDynamicTotals($broadsheets, $assessments, $schoolclass, $termId, $sessionId)
-    {
-        foreach ($broadsheets as $broadsheet) {
-            $assessmentScores = $broadsheet->assessmentScores ?? collect();
-            $totalRaw         = 0;
-            foreach ($assessments as $a) {
-                $scoreObj  = $assessmentScores->where('assessment_id', $a->id)->first();
-                $totalRaw += $scoreObj ? $scoreObj->score : 0;
-            }
+{
+    foreach ($broadsheets as $broadsheet) {
+        $assessmentScores = $broadsheet->assessmentScores ?? collect();
 
-            $newBf    = $this->getPreviousTermCum($broadsheet->student_id, $broadsheet->subject_id, $termId, $sessionId);
-            $newCum   = $termId == 1 ? round($totalRaw, 2) : round(($totalRaw + $newBf) / 2, 2);
+        $totalRaw = 0;
+        foreach ($assessments as $a) {
+            $scoreObj  = $assessmentScores->where('assessment_id', $a->id)->first();
+            $totalRaw += $scoreObj ? (float) $scoreObj->score : 0;
+        }
 
-            $newGrade  = $schoolclass && $schoolclass->classcategories->isNotEmpty()
-                ? $schoolclass->classcategories->first()->calculateGrade($totalRaw)
-                : $this->getDefaultGrade($totalRaw);
-            $newRemark = $this->getRemark($newGrade);
+        // Resolve subject_id reliably via the broadsheet_record row
+        $subjectId = $broadsheet->subject_id;
+        if (! $subjectId) {
+            $subjectId = DB::table('broadsheet_records')
+                ->where('id', $broadsheet->broadSheet_record_id
+                            ?? $broadsheet->broadsheet_record_id)
+                ->value('subject_id');
+        }
 
-            $changed = abs($broadsheet->total - $totalRaw) > 0.01
-                || abs($broadsheet->bf    - $newBf)    > 0.01
-                || abs($broadsheet->cum   - $newCum)   > 0.01
-                || $broadsheet->grade  !== $newGrade
-                || $broadsheet->remark !== $newRemark;
+        $newBf = $this->getPreviousTermCum(
+            $broadsheet->student_id,
+            $subjectId,
+            $termId,
+            $sessionId
+        );
 
-            if ($changed) {
-                $broadsheet->total  = $totalRaw;
-                $broadsheet->bf     = $newBf;
-                $broadsheet->cum    = $newCum;
-                $broadsheet->grade  = $newGrade;
-                $broadsheet->remark = $newRemark;
-                $broadsheet->save();
-            }
+        // Only average if there is an actual prior term score
+        $newCum = ($termId == 1 || $newBf == 0)
+            ? round($totalRaw, 2)
+            : round(($totalRaw + $newBf) / 2, 2);
+
+        $newGrade = $schoolclass && $schoolclass->classcategories->isNotEmpty()
+            ? $schoolclass->classcategories->first()->calculateGrade($totalRaw)
+            : $this->getDefaultGrade($totalRaw);
+
+        $newRemark = $this->getRemark($newGrade);
+
+        $changed = abs($broadsheet->total - $totalRaw) > 0.001
+            || abs($broadsheet->bf    - $newBf)    > 0.001
+            || abs($broadsheet->cum   - $newCum)   > 0.001
+            || $broadsheet->grade  !== $newGrade
+            || $broadsheet->remark !== $newRemark;
+
+        if ($changed) {
+            $broadsheet->total  = $totalRaw;
+            $broadsheet->bf     = $newBf;
+            $broadsheet->cum    = $newCum;
+            $broadsheet->grade  = $newGrade;
+            $broadsheet->remark = $newRemark;
+            $broadsheet->save();
         }
     }
+}
 
     // =========================================================================
     // QUERY HELPERS
@@ -2140,17 +2160,25 @@ class MyScoreSheetController extends Controller
         };
     }
 
-    protected function getPreviousTermCum($studentId, $subjectId, $termId, $sessionId)
-    {
-        if ($termId == 1) return 0;
-        $prev = Broadsheets::where('broadsheet_records.student_id', $studentId)
-            ->where('broadsheet_records.subject_id', $subjectId)
-            ->where('broadsheets.term_id', $termId - 1)
-            ->where('broadsheet_records.session_id', $sessionId)
-            ->leftJoin('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadSheet_record_id')
-            ->value('broadsheets.cum');
-        return $prev ? round($prev, 2) : 0;
-    }
+   protected function getPreviousTermCum($studentId, $subjectId, $termId, $sessionId)
+{
+    if ($termId == 1) return 0;
+
+    $prev = DB::table('broadsheets')
+        ->join(
+            'broadsheet_records',
+            'broadsheet_records.id',
+            '=',
+            'broadsheets.broadSheet_record_id'
+        )
+        ->where('broadsheet_records.student_id', $studentId)
+        ->where('broadsheet_records.subject_id',  $subjectId)
+        ->where('broadsheet_records.session_id',  $sessionId)
+        ->where('broadsheets.term_id', $termId - 1)
+        ->value('broadsheets.cum');
+
+    return $prev !== null ? round((float) $prev, 2) : 0;
+}
 
     public function calculateGradePreview(Request $request)
     {
