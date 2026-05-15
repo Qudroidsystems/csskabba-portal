@@ -13,6 +13,7 @@ use Illuminate\Http\Request;
 use App\Models\Schoolsession;
 use App\Models\SubAssessment;
 use App\Models\BroadsheetRecord;
+use App\Models\AttendanceSummary;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
@@ -34,7 +35,7 @@ class StudentAssessmentController extends Controller
             return '-';
         }
 
-        $lastDigit = $number % 10;
+        $lastDigit     = $number % 10;
         $lastTwoDigits = $number % 100;
 
         if ($lastTwoDigits >= 11 && $lastTwoDigits <= 13) {
@@ -42,9 +43,9 @@ class StudentAssessmentController extends Controller
         }
 
         return $number . match ($lastDigit) {
-            1 => 'st',
-            2 => 'nd',
-            3 => 'rd',
+            1       => 'st',
+            2       => 'nd',
+            3       => 'rd',
             default => 'th',
         };
     }
@@ -94,7 +95,9 @@ class StudentAssessmentController extends Controller
             }
         }
 
-        $class = null; $term = null; $session = null;
+        $class = null;
+        $term = null;
+        $session = null;
 
         $studentClassData = DB::table('studentclass')
             ->where('studentId', $studentId)
@@ -129,6 +132,14 @@ class StudentAssessmentController extends Controller
 
         $isSenior    = $schoolclass->classcategories->first()->is_senior ?? false;
         $categoryIds = $schoolclass->classcategories->pluck('id');
+
+        // ================================================================
+        // FETCH ATTENDANCE SUMMARY
+        // ================================================================
+        $attendanceSummary = AttendanceSummary::where('student_id', $studentId)
+            ->where('term_id', $selectedTermId)
+            ->where('session_id', $selectedSessionId ?? $studentClassData->session_id)
+            ->first();
 
         $registeredSubjects = DB::table('student_subject_register_record as ssrr')
             ->where('ssrr.studentId', $studentId)
@@ -229,11 +240,11 @@ class StudentAssessmentController extends Controller
                 'grade'        => $broadsheet->grade ?? '-',
                 'subject_gpa'  => round($subjectGPA, 1),
                 'remark'       => $broadsheet->remark ?? '-',
-                // Updated positions with proper formatting
-                'position'         => $this->formatOrdinal($broadsheet->subject_position_class),
-                'position_total'   => $this->formatOrdinal($broadsheet->subject_position_class_total),
-                'arm_position'     => $this->formatOrdinal($broadsheet->arm_position),
-                'arm_position_cum' => $this->formatOrdinal($broadsheet->arm_position_cum),
+                // All four position columns with ordinal formatting
+                'position'         => $broadsheet->subject_position_class ? $this->formatOrdinal($broadsheet->subject_position_class) : '-',
+                'position_total'   => $broadsheet->subject_position_class_total ? $this->formatOrdinal($broadsheet->subject_position_class_total) : '-',
+                'arm_position'     => $broadsheet->arm_position ? $this->formatOrdinal($broadsheet->arm_position) : '-',
+                'arm_position_cum' => $broadsheet->arm_position_cum ? $this->formatOrdinal($broadsheet->arm_position_cum) : '-',
             ]);
 
             $overallProgress['total_subjects']++;
@@ -276,7 +287,8 @@ class StudentAssessmentController extends Controller
             'subjectsWithAssessments', 'terms', 'sessions',
             'userSelectedTermId', 'selectedSessionId', 'overallProgress',
             'gpaTrend', 'studentPicture', 'schoolInfo',
-            'selectedTermId', 'isSenior', 'allAssessments', 'categoryIds'
+            'selectedTermId', 'isSenior', 'allAssessments', 'categoryIds',
+            'attendanceSummary'
         ));
     }
 
@@ -378,11 +390,11 @@ class StudentAssessmentController extends Controller
             $scoreData->bf = $broadsheet->bf ?? 0;
             $scoreData->cum = $broadsheet->cum ?? 0;
             $scoreData->grade = $broadsheet->grade ?? '-';
-            // Add all four position columns (raw numbers for formatting in blade)
-            $scoreData->position = $broadsheet->subject_position_class;
-            $scoreData->position_total = $broadsheet->subject_position_class_total;
-            $scoreData->arm_position = $broadsheet->arm_position;
-            $scoreData->arm_position_cum = $broadsheet->arm_position_cum;
+            $scoreData->position = $broadsheet->subject_position_class ? $this->formatOrdinal($broadsheet->subject_position_class) : '-';
+            $scoreData->position_total = $broadsheet->subject_position_class_total ? $this->formatOrdinal($broadsheet->subject_position_class_total) : '-';
+            $scoreData->arm_position = $broadsheet->arm_position ? $this->formatOrdinal($broadsheet->arm_position) : '-';
+            $scoreData->arm_position_cum = $broadsheet->arm_position_cum ? $this->formatOrdinal($broadsheet->arm_position_cum) : '-';
+            $scoreData->class_average = $broadsheet->avg ?? 0;
             $scoreData->assessment_scores = collect();
 
             foreach ($allAssessments as $assessment) {
@@ -405,11 +417,12 @@ class StudentAssessmentController extends Controller
 
         $schoolInfo = SchoolInformation::first();
 
-        // Format phones properly for the PDF
+        // Format phones properly for PDF
         $phones = is_array($schoolInfo->school_phones ?? null)
             ? $schoolInfo->school_phones
             : (json_decode($schoolInfo->school_phones ?? '[]', true) ?? []);
-        $schoolInfo->formatted_phones = !empty($phones) ? implode(', ', $phones) : '—';
+        $formattedPhones = !empty($phones) ? implode(', ', $phones) : '—';
+        $schoolInfo->formatted_phones = $formattedPhones;
 
         $logoBase64 = $this->logoToBase64($schoolInfo);
         $picturePath = DB::table('studentpicture')->where('studentid', $studentId)->value('picture');
@@ -418,23 +431,12 @@ class StudentAssessmentController extends Controller
         $fullName = strtoupper($student->lastname ?? '') . ' ' . ($student->firstname ?? '') . ' ' . ($student->othername ?? '');
         $className = ($classModel->schoolclass ?? '') . ' ' . ($classModel->arms->arm ?? '');
 
-        // Get number of students in class
         $numberOfStudents = DB::table('studentclass')
             ->where('schoolclassid', $studentClassData->class_id)
             ->where('sessionid', $selectedSessionId ?? $studentClassData->session_id)
             ->where('termid', $selectedTermId)
             ->count();
 
-        // Get GPA data
-        $gpaData = $this->computeOverallForStudent(
-            $studentId,
-            $schoolclass,
-            $selectedTermId,
-            $selectedSessionId ?? $studentClassData->session_id,
-            $isSenior
-        );
-
-        // If no columns selected, use defaults including all position columns
         if (empty($selectedColumns)) {
             $selectedColumns = ['sn', 'admission_no', 'name', 'total', 'cum', 'grade', 'position', 'position_total', 'arm_position', 'arm_position_cum'];
             foreach ($allAssessments as $assessment) {
@@ -459,7 +461,6 @@ class StudentAssessmentController extends Controller
                 'obtainable' => $totalObtainable,
                 'percentage' => $percentage
             ],
-            'gpa_data' => $gpaData,
             'schoolInfo' => $schoolInfo,
             'school_logo_base64' => $logoBase64,
             'student_image_base64' => $pictureBase64,
