@@ -287,38 +287,38 @@
             </div>
 
             {{-- HEADER: Logo + Info + Photo --}}
-            <table class="header-table">
-                <tr>
-                    <td width="20%" style="text-align:center; vertical-align:middle;">
-                        <div class="school-logo">
-                            @php
-                                $logoSrc = !empty($studentData['school_logo_base64'])
-                                    ? $studentData['school_logo_base64']
-                                    : 'data:image/svg+xml;base64,' . base64_encode('<svg xmlns="http://www.w3.org/2000/svg" width="72" height="85" viewBox="0 0 100 100"><rect width="100" height="100" fill="#f8f9fa" stroke="#47b492" stroke-width="2"/><text x="50" y="55" text-anchor="middle" fill="#1e40af" font-size="8" font-weight="bold">LOGO</text></svg>');
-                            @endphp
-                            <img src="{{ $logoSrc }}" alt="School Logo">
-                        </div>
-                    </td>
-                    <td width="58%" class="middle-info">
-                        <strong>Address:</strong> {{ $schoolInfo->school_address ?? '—' }}<br>
-                        <strong>Phone:</strong> {{ $schoolInfo->school_phone ?? '—' }}<br>
-                        <strong>Email:</strong> {{ $schoolInfo->school_email ?? '—' }}<br>
-                        <strong>Website:</strong> {{ $schoolInfo->school_website ?? '—' }}
-                    </td>
-                    <td width="22%" style="text-align:right; padding-right:8px; vertical-align:top; padding-top:6px;">
-                        @if(in_array('picture', $columnsToShow))
-                        <div class="photo-frame" style="margin-left:auto; margin-right:0;">
-                            @if(!empty($studentData['student_image_base64']))
-                                <img src="{{ $studentData['student_image_base64'] }}" alt="Student Photo">
-                            @else
-                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='85' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23e2e8f0'/%3E%3Ccircle cx='50' cy='40' r='20' fill='%2394a3b8'/%3E%3Crect x='35' y='65' width='30' height='25' fill='%2394a3b8' rx='4'/%3E%3C/svg%3E" alt="Default">
-                            @endif
-                        </div>
-                        @endif
-                    </td>
-                </tr>
-            </table>
-
+          {{-- HEADER: Logo + Info + Photo --}}
+<table class="header-table">
+    <tr>
+        <td width="20%" style="text-align:center; vertical-align:middle;">
+            <div class="school-logo">
+                @php
+                    $logoSrc = !empty($studentData['school_logo_base64'])
+                        ? $studentData['school_logo_base64']
+                        : 'data:image/svg+xml;base64,' . base64_encode('<svg xmlns="http://www.w3.org/2000/svg" width="72" height="85" viewBox="0 0 100 100"><rect width="100" height="100" fill="#f8f9fa" stroke="#47b492" stroke-width="2"/><text x="50" y="55" text-anchor="middle" fill="#1e40af" font-size="8" font-weight="bold">LOGO</text></svg>');
+                @endphp
+                <img src="{{ $logoSrc }}" alt="School Logo">
+            </div>
+        </td>
+        <td width="58%" class="middle-info">
+            <strong>Address:</strong> {{ $schoolInfo->school_address ?? '—' }}<br>
+            <strong>Phone:</strong> {{ $schoolInfo->formatted_phones ?? '—' }}<br>
+            <strong>Email:</strong> {{ $schoolInfo->school_email ?? '—' }}<br>
+            <strong>Website:</strong> {{ $schoolInfo->school_website ?? '—' }}
+        </td>
+        <td width="22%" style="text-align:right; padding-right:8px; vertical-align:top; padding-top:6px;">
+            @if(in_array('picture', $columnsToShow))
+            <div class="photo-frame" style="margin-left:auto; margin-right:0;">
+                @if(!empty($studentData['student_image_base64']))
+                    <img src="{{ $studentData['student_image_base64'] }}" alt="Student Photo">
+                @else
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='85' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23e2e8f0'/%3E%3Ccircle cx='50' cy='40' r='20' fill='%2394a3b8'/%3E%3Crect x='35' y='65' width='30' height='25' fill='%2394a3b8' rx='4'/%3E%3C/svg%3E" alt="Default">
+                @endif
+            </div>
+            @endif
+        </td>
+    </tr>
+</table>
             <div class="header-divider"></div>
             <div class="header-divider2"></div>
             <div class="report-title">
