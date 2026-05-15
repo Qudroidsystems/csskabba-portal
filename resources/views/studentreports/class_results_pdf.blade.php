@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Student Terminal Report - Claret Secondary School Kabba</title>
+    <title>Student Terminal Report</title>
     <style>
         * {
             margin: 0;
@@ -105,20 +105,7 @@
             object-fit: contain;
         }
 
-        .middle-info {
-            font-size: 10px;
-            font-weight: 700;
-            line-height: 1.5;
-            padding: 2px 12px;
-            vertical-align: middle;
-        }
-
-        .middle-info strong {
-            color: #1e40af;
-            font-weight: 900;
-        }
-
-        .header-divider { height: 2px; background: #1e40af; width: 100%; }
+        .header-divider  { height: 2px; background: #1e40af; width: 100%; }
         .header-divider2 { height: 1px; background: #64748b; width: 100%; margin: 2px 0; }
 
         .report-title {
@@ -140,33 +127,12 @@
             text-align: center;
         }
 
-        .info-table {
-            width: 100%;
-            margin: 0 auto;
-        }
+        .info-table { width: 100%; margin: 0 auto; }
+        .info-table td { padding: 3px 8px; text-align: center; }
+        .info-bar-label { color: #1e40af; font-weight: 900; font-size: 8.6px; white-space: nowrap; }
+        .info-bar-value { font-weight: 900; font-size: 9.4px; padding-left: 3px; }
 
-        .info-table td {
-            padding: 3px 8px;
-            text-align: center;
-        }
-
-        .info-bar-label {
-            color: #1e40af;
-            font-weight: 900;
-            font-size: 8.6px;
-            white-space: nowrap;
-        }
-
-        .info-bar-value {
-            font-weight: 900;
-            font-size: 9.4px;
-            padding-left: 3px;
-        }
-
-        .result-table {
-            padding: 0 10px;
-            margin: 8px 0;
-        }
+        .result-table { padding: 0 10px; margin: 8px 0; }
 
         .result-table table {
             width: 100%;
@@ -183,6 +149,8 @@
             border: 1px solid #000000;
             padding: 4px 2px;
             font-size: 6.9px;
+            text-align: center;
+            line-height: 1.2;
         }
 
         .result-table tbody td {
@@ -205,16 +173,17 @@
 
         .highlight-red { color: #dc2626; font-weight: 900; }
 
-        .col-sn { width: 28px; }
-        .col-admissionno { width: 78px; }
-        .col-name { width: 165px; }
-        .col-assessment { width: 42px; }
-        .col-total { width: 48px; }
-        .col-bf { width: 38px; }
-        .col-cum { width: 44px; }
-        .col-grade { width: 38px; }
-        .col-position { width: 38px; }
-        .col-class-average { width: 42px; }
+        /* Column widths */
+        .col-sn            { width: 22px; }
+        .col-admissionno   { width: 72px; }
+        .col-name          { width: 155px; }
+        .col-assessment    { width: 38px; }
+        .col-total         { width: 38px; }
+        .col-bf            { width: 32px; }
+        .col-cum           { width: 36px; }
+        .col-grade         { width: 34px; }
+        .col-position      { width: 34px; }   /* shared by all 4 position cols */
+        .col-class-average { width: 36px; }
 
         .totals-summary {
             width: calc(100% - 20px);
@@ -252,62 +221,15 @@
             display: inline-block;
         }
 
-        .bottom-strip {
-            width: 100%;
-            border-top: 1px solid #cbd5e1;
-            background: #f1f5f9;
-            margin-top: 6px;
-        }
-
-        .bottom-strip table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .bottom-strip td {
-            padding: 8px 10px;
-            vertical-align: middle;
-        }
-
-        .bottom-strip .cell-qr {
-            width: 90px;
-            text-align: center;
-            vertical-align: middle;
-        }
-
-        .bottom-strip .cell-footer {
-            text-align: center;
-            font-size: 8.6px;
-            vertical-align: middle;
-        }
-
-        .bottom-strip .cell-stamp {
-            width: 120px;
-            text-align: center;
-            vertical-align: middle;
-        }
-
-        .bottom-strip .cell-qr img {
-            width: 72px;
-            height: 72px;
-            display: block;
-            margin: 0 auto 2px;
-        }
-
-        .qr-label {
-            font-size: 6.5px;
-            color: #333;
-            font-weight: 600;
-            text-align: center;
-        }
-
-        .bottom-strip .cell-stamp img {
-            width: 105px;
-            height: 105px;
-            transform: rotate(-8deg);
-            display: block;
-            margin: 0 auto;
-        }
+        .bottom-strip { width: 100%; border-top: 1px solid #cbd5e1; background: #f1f5f9; margin-top: 6px; }
+        .bottom-strip table { width: 100%; border-collapse: collapse; }
+        .bottom-strip td { padding: 8px 10px; vertical-align: middle; }
+        .bottom-strip .cell-qr    { width: 90px;  text-align: center; vertical-align: middle; }
+        .bottom-strip .cell-footer{ text-align: center; font-size: 8.6px; vertical-align: middle; }
+        .bottom-strip .cell-stamp { width: 120px; text-align: center; vertical-align: middle; }
+        .bottom-strip .cell-qr img { width: 72px; height: 72px; display: block; margin: 0 auto 2px; }
+        .qr-label { font-size: 6.5px; color: #333; font-weight: 600; text-align: center; }
+        .bottom-strip .cell-stamp img { width: 105px; height: 105px; transform: rotate(-8deg); display: block; margin: 0 auto; }
 
         .text-dot-space2 {
             border-bottom: 1px dotted #333;
@@ -317,20 +239,18 @@
             margin: 0 4px;
         }
 
-        .powered-by {
-            font-size: 8px;
-            margin-top: 4px;
-            color: #64748b;
-        }
+        .powered-by { font-size: 8px; margin-top: 4px; color: #64748b; }
 
+        /* Grade colours */
         .grade-A { color: #16a34a; font-weight: 900; }
         .grade-B { color: #2563eb; font-weight: 900; }
         .grade-C { color: #ca8a04; font-weight: 900; }
         .grade-D { color: #ea580c; font-weight: 900; }
         .grade-F { color: #dc2626; font-weight: 900; }
 
-        .position-1 { background: gold; color: black; font-weight: 900; }
-        .position-2 { background: silver; color: black; font-weight: 900; }
+        /* Position medal colours (top 3) */
+        .position-1 { background: gold;    color: black; font-weight: 900; }
+        .position-2 { background: silver;  color: black; font-weight: 900; }
         .position-3 { background: #cd7f32; color: white; font-weight: 900; }
 
         @media print {
@@ -344,18 +264,21 @@
 
     @php
         $selectedColumns = $metadata['selected_columns'] ?? [];
-        $defaultColumns = ['sn', 'admission_no', 'name', 'total', 'bf', 'cum', 'grade', 'position', 'class_average'];
+        $defaultColumns  = [
+            'sn', 'admission_no', 'name',
+            'total', 'bf', 'cum', 'grade',
+            'position', 'position_total', 'arm_position', 'arm_position_cum',
+            'class_average',
+        ];
         $columnsToShow = !empty($selectedColumns) ? $selectedColumns : $defaultColumns;
-        $baseVisibleCount = 0;
-        if (in_array('sn', $columnsToShow)) $baseVisibleCount++;
-        if (in_array('admission_no', $columnsToShow)) $baseVisibleCount++;
-        if (in_array('name', $columnsToShow)) $baseVisibleCount++;
     @endphp
 
     @foreach ($allStudentData as $index => $studentData)
         @php
             $schoolInfo  = $studentData['schoolInfo'] ?? null;
-            $student     = $studentData['students'] && $studentData['students']->isNotEmpty() ? $studentData['students']->first() : null;
+            $student     = $studentData['students'] && $studentData['students']->isNotEmpty()
+                ? $studentData['students']->first()
+                : null;
             $assessments = $studentData['assessments'] ?? collect();
             $totals      = $studentData['totals_summary'] ?? [];
 
@@ -363,9 +286,9 @@
             $fullName = trim(strtoupper($student->lastname ?? '') . ' ' . ($student->fname ?? '') . ' ' . ($student->othername ?? ''));
             $classVal = trim(($studentData['schoolclass']->schoolclass ?? '') . ' ' . ($studentData['schoolclass']->arms->arm ?? ''));
             $session  = $metadata['session'] ?? '2025/2026';
-            $term     = $metadata['term'] ?? 'SECOND TERM';
+            $term     = $metadata['term']    ?? 'SECOND TERM';
 
-            $qrData = "Name: {$fullName}\nAdm No: {$admNo}\nClass: {$classVal}\nTerm: {$term}\nSession: {$session}\nSchool: Claret Secondary School Kabba";
+            $qrData = "Name: {$fullName}\nAdm No: {$admNo}\nClass: {$classVal}\nTerm: {$term}\nSession: {$session}\nSchool: " . ($schoolInfo->school_name ?? 'School');
 
             $qrCodeBase64 = base64_encode(
                 \SimpleSoftwareIO\QrCode\Facades\QrCode::format('png')
@@ -374,7 +297,6 @@
                     ->generate($qrData)
             );
 
-            // ── STAMP: prefer uploaded stamp (base64), fall back to asset ──
             $stampSrc = !empty($studentData['school_stamp_base64'])
                 ? $studentData['school_stamp_base64']
                 : asset('stamp.jpeg');
@@ -382,43 +304,51 @@
 
         <div class="student-section">
 
-            <!-- SCHOOL NAME HEADER -->
+            {{-- ── SCHOOL NAME HEADER ──────────────────────────────── --}}
             <div class="school-name-header">
-                <div class="school-full-name">{{ $schoolInfo->school_name ?? 'CLARET SECONDARY SCHOOL KABBA' }}</div>
+                <div class="school-full-name">{{ $schoolInfo->school_name ?? 'SCHOOL NAME' }}</div>
                 <div class="motto">{{ $schoolInfo->school_motto ?? 'KNOWLEDGE AND VIRTUE' }}</div>
             </div>
 
-            <!-- HEADER: Logo + Info + Photo -->
+            {{-- ── HEADER: Logo + Contact + Photo ─────────────────── --}}
             <table class="header-table">
                 <tr>
                     <td width="20%" style="text-align:center;">
                         <div class="school-logo">
                             @php
                                 $logoSrc = $studentData['school_logo_base64'] ??
-                                    'data:image/svg+xml;base64,' . base64_encode('<svg xmlns="http://www.w3.org/2000/svg" width="72" height="85" viewBox="0 0 100 100"><rect width="100" height="100" fill="#f8f9fa" stroke="#47b492" stroke-width="2"/><circle cx="50" cy="40" r="15" fill="#47b492" opacity="0.6"/><rect x="35" y="60" width="30" height="20" fill="#47b492" opacity="0.6" rx="3"/><text x="50" y="95" text-anchor="middle" fill="#1e40af" font-size="8" font-weight="bold">CLARET</text></svg>');
+                                    'data:image/svg+xml;base64,' . base64_encode(
+                                        '<svg xmlns="http://www.w3.org/2000/svg" width="72" height="85" viewBox="0 0 100 100">
+                                         <rect width="100" height="100" fill="#f8f9fa" stroke="#47b492" stroke-width="2"/>
+                                         <circle cx="50" cy="40" r="15" fill="#47b492" opacity="0.6"/>
+                                         <rect x="35" y="60" width="30" height="20" fill="#47b492" opacity="0.6" rx="3"/>
+                                         </svg>'
+                                    );
                             @endphp
                             <img src="{{ $logoSrc }}" alt="School Logo">
                         </div>
                     </td>
 
-                    <table style="border:none; border-collapse:collapse; width:100%;">
-                        <tr>
-                            <td style="font-weight:900; color:#1e40af; white-space:nowrap; vertical-align:top; padding:0 4px 0 0;">Address:</td>
-                            <td style="vertical-align:top; padding:0;">{{ $schoolInfo->school_address ?? 'No. 1, Claret Avenue, Iludun Quarters, Olle Road, Kabba, Kogi State, Nigeria.' }}</td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Phone:</td>
-                            <td>{{ $schoolInfo->school_phone ?? '08136663185' }}</td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Email:</td>
-                            <td>{{ $schoolInfo->school_email ?? '—' }}</td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Website:</td>
-                            <td>{{ $schoolInfo->school_website ?? '—' }}</td>
-                        </tr>
-                    </table>
+                    <td style="vertical-align:top; padding: 4px 8px;">
+                        <table style="border:none; border-collapse:collapse; width:100%; font-size:9px;">
+                            <tr>
+                                <td style="font-weight:900; color:#1e40af; white-space:nowrap; vertical-align:top; padding:0 4px 0 0;">Address:</td>
+                                <td style="vertical-align:top; padding:0;">{{ $schoolInfo->school_address ?? '—' }}</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Phone:</td>
+                                <td>{{ $schoolInfo->school_phone ?? '—' }}</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Email:</td>
+                                <td>{{ $schoolInfo->school_email ?? '—' }}</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Website:</td>
+                                <td>{{ $schoolInfo->school_website ?? '—' }}</td>
+                            </tr>
+                        </table>
+                    </td>
 
                     <td width="29%" style="text-align:right; padding-right:8px; vertical-align:top; padding-top:6px;">
                         @if(in_array('picture', $columnsToShow))
@@ -426,7 +356,7 @@
                             @if(!empty($studentData['student_image_base64']))
                                 <img src="{{ $studentData['student_image_base64'] }}" alt="Student Photo">
                             @else
-                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='85' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23e2e8f0'/%3E%3Ccircle cx='50' cy='40' r='20' fill='%2394a3b8'/%3E%3Crect x='35' y='65' width='30' height='25' fill='%2394a3b8' rx='4'/%3E%3Ctext x='50' y='95' text-anchor='middle' fill='%23475569' font-size='8'%3EPHOTO%3C/text%3E%3C/svg%3E" alt="Default Photo">
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='85' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23e2e8f0'/%3E%3Ccircle cx='50' cy='40' r='20' fill='%2394a3b8'/%3E%3Crect x='35' y='65' width='30' height='25' fill='%2394a3b8' rx='4'/%3E%3C/svg%3E" alt="Default Photo">
                             @endif
                         </div>
                         @endif
@@ -437,70 +367,128 @@
             <div class="header-divider"></div>
             <div class="header-divider2"></div>
 
-            <!-- REPORT TITLE -->
+            {{-- ── REPORT TITLE ─────────────────────────────────────── --}}
             <div class="report-title">
                 {{ strtoupper($term) }} {{ strtoupper($session) }} ACADEMIC SESSION TERMINAL PROGRESS REPORT
             </div>
 
-            <!-- STUDENT INFO BAR -->
+            {{-- ── STUDENT INFO BAR ─────────────────────────────────── --}}
             @if ($studentData['students'] && $studentData['students']->isNotEmpty())
                 @php
-                    $profile         = $studentData['studentpp'] && $studentData['studentpp']->isNotEmpty() ? $studentData['studentpp']->first() : null;
+                    $profile         = $studentData['studentpp'] && $studentData['studentpp']->isNotEmpty()
+                        ? $studentData['studentpp']->first() : null;
                     $fullNameDisplay = strtoupper($student->lastname ?? '') . ' ' . ($student->fname ?? '') . ' ' . ($student->othername ?? '');
                     $admNoDisplay    = $student->admissionNo ?? '—';
                     $classValDisplay = ($studentData['schoolclass']->schoolclass ?? '') . ' ' . ($studentData['schoolclass']->arms->arm ?? '');
-                    $schoolOpened    = $schoolInfo->date_school_opened ? \Carbon\Carbon::parse($schoolInfo->date_school_opened)->format('jS M, Y') : '—';
-                    $numInClass      = $studentData['numberOfStudents'] ?? '—';
+                    $schoolOpened    = $schoolInfo->date_school_opened
+                        ? \Carbon\Carbon::parse($schoolInfo->date_school_opened)->format('jS M, Y') : '—';
+                    $numInClass = $studentData['numberOfStudents'] ?? '—';
                 @endphp
 
                 <div class="student-info-bar">
                     <table class="info-table">
                         <tr>
-                            <td><span class="info-bar-label">NAME:</span><span class="info-bar-value">{{ $fullNameDisplay }}</span></td>
-                            <td><span class="info-bar-label">SESSION:</span><span class="info-bar-value">{{ $session }}</span></td>
-                            <td><span class="info-bar-label">TERM:</span><span class="info-bar-value">{{ $term }}</span></td>
-                            <td><span class="info-bar-label">CLASS:</span><span class="info-bar-value">{{ $classValDisplay }}</span></td>
+                            <td><span class="info-bar-label">NAME:</span> <span class="info-bar-value">{{ $fullNameDisplay }}</span></td>
+                            <td><span class="info-bar-label">SESSION:</span> <span class="info-bar-value">{{ $session }}</span></td>
+                            <td><span class="info-bar-label">TERM:</span> <span class="info-bar-value">{{ $term }}</span></td>
+                            <td><span class="info-bar-label">CLASS:</span> <span class="info-bar-value">{{ $classValDisplay }}</span></td>
                         </tr>
                         <tr>
-                            <td><span class="info-bar-label">ADM NO:</span><span class="info-bar-value">{{ $admNoDisplay }}</span></td>
-                            <td><span class="info-bar-label">SCHOOL OPENED:</span><span class="info-bar-value">{{ $schoolOpened }}</span></td>
-                            <td><span class="info-bar-label">NO. IN CLASS:</span><span class="info-bar-value">{{ $numInClass }}</span></td>
+                            <td><span class="info-bar-label">ADM NO:</span> <span class="info-bar-value">{{ $admNoDisplay }}</span></td>
+                            <td><span class="info-bar-label">SCHOOL OPENED:</span> <span class="info-bar-value">{{ $schoolOpened }}</span></td>
+                            <td><span class="info-bar-label">NO. IN CLASS:</span> <span class="info-bar-value">{{ $numInClass }}</span></td>
                             @if(in_array('gender', $columnsToShow))
-                                <td><span class="info-bar-label">SEX:</span><span class="info-bar-value">{{ $student->gender ?? '—' }}</span></td>
+                                <td><span class="info-bar-label">SEX:</span> <span class="info-bar-value">{{ $student->gender ?? '—' }}</span></td>
                             @endif
                         </tr>
                     </table>
                 </div>
             @endif
 
-            <!-- RESULT TABLE -->
+            {{-- ── RESULT TABLE ─────────────────────────────────────── --}}
             <div class="result-table">
                 <table>
                     <thead>
                         <tr>
-                            @if(in_array('sn', $columnsToShow)) <th class="col-sn">S/N</th> @endif
-                            @if(in_array('admission_no', $columnsToShow)) <th class="col-admissionno">Adm No</th> @endif
-                            @if(in_array('name', $columnsToShow)) <th class="col-name">Subject</th> @endif
+                            {{-- Student info columns --}}
+                            @if(in_array('sn', $columnsToShow))
+                                <th class="col-sn">S/N</th>
+                            @endif
+                            @if(in_array('admission_no', $columnsToShow))
+                                <th class="col-admissionno">Adm No</th>
+                            @endif
+                            @if(in_array('name', $columnsToShow))
+                                <th class="col-name">Subject</th>
+                            @endif
+
+                            {{-- Dynamic assessment columns --}}
                             @foreach ($assessments as $assessment)
                                 @if(in_array($assessment->id, $columnsToShow) || in_array('all_assessments', $columnsToShow))
-                                    <th class="col-assessment">{{ $assessment->name }}<br><span style="font-size:5.5px;">({{ $assessment->max_score }})</span></th>
+                                    <th class="col-assessment">
+                                        {{ $assessment->name }}<br>
+                                        <span style="font-size:5.5px;">({{ $assessment->max_score }})</span>
+                                    </th>
                                 @endif
                             @endforeach
-                            @if(in_array('total', $columnsToShow)) <th class="col-total">Total</th> @endif
-                            @if(in_array('bf', $columnsToShow)) <th class="col-bf">BF</th> @endif
-                            @if(in_array('cum', $columnsToShow)) <th class="col-cum">Cum</th> @endif
-                            @if(in_array('grade', $columnsToShow)) <th class="col-grade">Grade</th> @endif
-                            @if(in_array('position', $columnsToShow)) <th class="col-position">Pos</th> @endif
-                            @if(in_array('class_average', $columnsToShow)) <th class="col-class-average">Av</th> @endif
+
+                            {{-- Score columns --}}
+                            @if(in_array('total', $columnsToShow))
+                                <th class="col-total">Total</th>
+                            @endif
+                            @if(in_array('bf', $columnsToShow))
+                                <th class="col-bf">BF</th>
+                            @endif
+                            @if(in_array('cum', $columnsToShow))
+                                <th class="col-cum">Cum</th>
+                            @endif
+                            @if(in_array('grade', $columnsToShow))
+                                <th class="col-grade">Grade</th>
+                            @endif
+
+                            {{-- ── Four position columns ──────────────────────────── --}}
+                            @if(in_array('position', $columnsToShow))
+                                <th class="col-position" title="All arms of this class, ranked by cumulative average">
+                                    Class Pos<br><span style="font-size:5px;">(Cum)</span>
+                                </th>
+                            @endif
+                            @if(in_array('position_total', $columnsToShow))
+                                <th class="col-position" title="All arms of this class, ranked by raw total">
+                                    Class Pos<br><span style="font-size:5px;">(Total)</span>
+                                </th>
+                            @endif
+                            @if(in_array('arm_position', $columnsToShow))
+                                <th class="col-position" title="This arm only, ranked by raw total">
+                                    Arm Pos<br><span style="font-size:5px;">(Total)</span>
+                                </th>
+                            @endif
+                            @if(in_array('arm_position_cum', $columnsToShow))
+                                <th class="col-position" title="This arm only, ranked by cumulative average">
+                                    Arm Pos<br><span style="font-size:5px;">(Cum)</span>
+                                </th>
+                            @endif
+                            {{-- ─────────────────────────────────────────────────── --}}
+
+                            @if(in_array('class_average', $columnsToShow))
+                                <th class="col-class-average">Av</th>
+                            @endif
                         </tr>
                     </thead>
+
                     <tbody>
                         @forelse ($studentData['scores'] as $scoreIndex => $score)
                         <tr>
-                            @if(in_array('sn', $columnsToShow)) <td>{{ $scoreIndex + 1 }}</td> @endif
-                            @if(in_array('admission_no', $columnsToShow)) <td>{{ $student->admissionNo ?? '-' }}</td> @endif
-                            @if(in_array('name', $columnsToShow)) <td class="subject-name">{{ $score->subject_name ?? 'NO INFO' }}</td> @endif
+                            {{-- Student info cells --}}
+                            @if(in_array('sn', $columnsToShow))
+                                <td>{{ $scoreIndex + 1 }}</td>
+                            @endif
+                            @if(in_array('admission_no', $columnsToShow))
+                                <td>{{ $student->admissionNo ?? '-' }}</td>
+                            @endif
+                            @if(in_array('name', $columnsToShow))
+                                <td class="subject-name">{{ $score->subject_name ?? 'NO INFO' }}</td>
+                            @endif
 
+                            {{-- Assessment score cells --}}
                             @foreach ($assessments as $assessment)
                                 @if(in_array($assessment->id, $columnsToShow) || in_array('all_assessments', $columnsToShow))
                                     @php
@@ -517,13 +505,18 @@
                                 @endif
                             @endforeach
 
+                            {{-- Score cells --}}
                             @if(in_array('total', $columnsToShow))
-                                <td @if($score->total < 50) class="highlight-red" @endif>
+                                <td @if(($score->total ?? 0) < 50) class="highlight-red" @endif>
                                     {{ $score->total ? number_format($score->total, 1) : '-' }}
                                 </td>
                             @endif
-                            @if(in_array('bf', $columnsToShow)) <td>{{ $score->bf ? number_format($score->bf, 1) : '-' }}</td> @endif
-                            @if(in_array('cum', $columnsToShow)) <td>{{ $score->cum ? number_format($score->cum, 1) : '-' }}</td> @endif
+                            @if(in_array('bf', $columnsToShow))
+                                <td>{{ $score->bf ? number_format($score->bf, 1) : '-' }}</td>
+                            @endif
+                            @if(in_array('cum', $columnsToShow))
+                                <td>{{ $score->cum ? number_format($score->cum, 1) : '-' }}</td>
+                            @endif
 
                             @if(in_array('grade', $columnsToShow))
                                 @php
@@ -534,41 +527,78 @@
                                         str_starts_with($gradeUpper, 'B') => 'grade-B',
                                         str_starts_with($gradeUpper, 'C') => 'grade-C',
                                         str_starts_with($gradeUpper, 'D') => 'grade-D',
-                                        default => 'grade-F'
+                                        default                           => 'grade-F',
                                     };
                                 @endphp
                                 <td class="{{ $gradeClass }}">{{ $gradeRaw }}</td>
                             @endif
 
+                            {{-- ── Four position cells ───────────────────────────── --}}
+
+                            {{-- Class Pos (Cum) — all arms, ranked by cumulative average --}}
                             @if(in_array('position', $columnsToShow))
                                 @php
                                     $posVal   = $score->position ?? '-';
-                                    $posClass = is_numeric($posVal) ? match((int)$posVal) {
-                                        1 => 'position-1', 2 => 'position-2', 3 => 'position-3', default => ''
-                                    } : '';
+                                    $posNum   = is_numeric($posVal) ? (int)$posVal : 0;
+                                    $posClass = match($posNum) { 1 => 'position-1', 2 => 'position-2', 3 => 'position-3', default => '' };
                                 @endphp
                                 <td class="{{ $posClass }}">{{ $posVal }}</td>
                             @endif
+
+                            {{-- Class Pos (Total) — all arms, ranked by raw total --}}
+                            @if(in_array('position_total', $columnsToShow))
+                                @php
+                                    $posTotalVal   = $score->position_total ?? '-';
+                                    $posTotalNum   = is_numeric($posTotalVal) ? (int)$posTotalVal : 0;
+                                    $posTotalClass = match($posTotalNum) { 1 => 'position-1', 2 => 'position-2', 3 => 'position-3', default => '' };
+                                @endphp
+                                <td class="{{ $posTotalClass }}">{{ $posTotalVal }}</td>
+                            @endif
+
+                            {{-- Arm Pos (Total) — this arm only, ranked by raw total --}}
+                            @if(in_array('arm_position', $columnsToShow))
+                                @php
+                                    $armPosVal   = $score->arm_position ?? '-';
+                                    $armPosNum   = is_numeric($armPosVal) ? (int)$armPosVal : 0;
+                                    $armPosClass = match($armPosNum) { 1 => 'position-1', 2 => 'position-2', 3 => 'position-3', default => '' };
+                                @endphp
+                                <td class="{{ $armPosClass }}">{{ $armPosVal }}</td>
+                            @endif
+
+                            {{-- Arm Pos (Cum) — this arm only, ranked by cumulative average --}}
+                            @if(in_array('arm_position_cum', $columnsToShow))
+                                @php
+                                    $armPosCumVal   = $score->arm_position_cum ?? '-';
+                                    $armPosCumNum   = is_numeric($armPosCumVal) ? (int)$armPosCumVal : 0;
+                                    $armPosCumClass = match($armPosCumNum) { 1 => 'position-1', 2 => 'position-2', 3 => 'position-3', default => '' };
+                                @endphp
+                                <td class="{{ $armPosCumClass }}">{{ $armPosCumVal }}</td>
+                            @endif
+                            {{-- ─────────────────────────────────────────────────── --}}
 
                             @if(in_array('class_average', $columnsToShow))
                                 <td>{{ $score->class_average ? number_format($score->class_average, 1) : '-' }}</td>
                             @endif
                         </tr>
                         @empty
-                        <tr><td colspan="20" style="text-align:center; padding:10px;">No scores available.</td></tr>
+                        <tr>
+                            <td colspan="30" style="text-align:center; padding:10px;">No scores available.</td>
+                        </tr>
                         @endforelse
                     </tbody>
                 </table>
             </div>
 
-            <!-- TOTALS -->
+            {{-- ── TOTALS SUMMARY ───────────────────────────────────── --}}
             <div class="totals-summary">
-                TOTAL OBTAINED: {{ number_format($totals['obtained'] ?? 0, 1) }} &nbsp;&nbsp;|&nbsp;&nbsp;
-                TOTAL OBTAINABLE: {{ $totals['obtainable'] ?? 0 }} &nbsp;&nbsp;|&nbsp;&nbsp;
+                TOTAL OBTAINED: {{ number_format($totals['obtained'] ?? 0, 1) }}
+                &nbsp;&nbsp;|&nbsp;&nbsp;
+                TOTAL OBTAINABLE: {{ $totals['obtainable'] ?? 0 }}
+                &nbsp;&nbsp;|&nbsp;&nbsp;
                 % OBTAINED: {{ $totals['percentage'] ?? 0 }}%
             </div>
 
-            <!-- REMARKS -->
+            {{-- ── REMARKS ──────────────────────────────────────────── --}}
             <table class="remarks-table">
                 <tbody>
                     <tr>
@@ -584,17 +614,15 @@
                 </tbody>
             </table>
 
-            <!-- BOTTOM STRIP: QR | Footer text | Stamp -->
+            {{-- ── BOTTOM STRIP: QR | Footer | Stamp ──────────────── --}}
             <div class="bottom-strip">
                 <table>
                     <tr>
-                        <!-- LEFT: QR Code -->
                         <td class="cell-qr">
                             <img src="data:image/png;base64,{{ $qrCodeBase64 }}" alt="QR Code">
                             <div class="qr-label">Scan for Verification</div>
                         </td>
 
-                        <!-- MIDDLE: Footer info -->
                         <td class="cell-footer">
                             <div>
                                 <strong>Issued:</strong>
@@ -609,23 +637,18 @@
                                 <span class="text-dot-space2">
                                     @php
                                         $nextTerm = $schoolInfo->date_next_term_begins ?? null;
-                                        echo $nextTerm ? \Carbon\Carbon::parse($nextTerm)->format('jS F, Y') : '........................';
+                                        echo $nextTerm
+                                            ? \Carbon\Carbon::parse($nextTerm)->format('jS F, Y')
+                                            : '........................';
                                     @endphp
                                 </span>
                             </div>
                             <div class="powered-by">Powered by Qudroid Systems</div>
                         </td>
 
-                       {{-- RIGHT: School Stamp (dynamic from school_info table) --}}
                         <td class="cell-stamp">
-                            @php
-                                $stampSrc = !empty($studentData['school_stamp_base64'])
-                                    ? $studentData['school_stamp_base64']
-                                    : asset('stamp.jpeg');
-                            @endphp
                             <img src="{{ $stampSrc }}" alt="School Stamp">
                         </td>
-
                     </tr>
                 </table>
             </div>
