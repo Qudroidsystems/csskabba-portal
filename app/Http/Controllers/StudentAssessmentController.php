@@ -58,7 +58,6 @@ class StudentAssessmentController extends Controller
             return redirect()->route('dashboard')->with('error', 'Student profile not found.');
         }
 
-        // Select othername for full name
         $student = Student::where('id', $studentId)
             ->select('id', 'firstname', 'lastname', 'othername', 'admissionNo', 'gender', 'can_view_assessments')
             ->first();
@@ -90,7 +89,7 @@ class StudentAssessmentController extends Controller
             }
         }
 
-        // FIXED: Join schoolarm to get actual arm name (A, B, etc.)
+        // FIXED: Join schoolarm
         $studentClassData = DB::table('studentclass')
             ->where('studentclass.studentId', $studentId)
             ->join('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
@@ -147,13 +146,8 @@ class StudentAssessmentController extends Controller
             ->when(!$isAllTerms && $selectedTermId, fn ($q) => $q->where('subjectteacher.termid', $selectedTermId))
             ->where('schoolsession.status', '!=', 'Archived')
             ->join('subject', 'subject.id', '=', 'subjectteacher.subjectid')
-            ->select(
-                'subject.id as subject_id',
-                'subject.subject as subject_name',
-                'subject.subject_code'
-            )
-            ->distinct()
-            ->get();
+            ->select('subject.id as subject_id', 'subject.subject as subject_name', 'subject.subject_code')
+            ->distinct()->get();
 
         $subjectsWithAssessments = collect();
         $allAssessments = Assessment::whereIn('classcategory_id', $categoryIds)
@@ -300,7 +294,6 @@ class StudentAssessmentController extends Controller
             return back()->with('error', 'You do not have permission to print assessments.');
         }
 
-        // FIXED: Join schoolarm to get actual arm name
         $studentClassData = DB::table('studentclass')
             ->where('studentclass.studentId', $studentId)
             ->join('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
@@ -447,7 +440,11 @@ class StudentAssessmentController extends Controller
             'numberOfStudents' => $numberOfStudents,
         ]];
 
-        $filename = 'Assessment_Report_' . ($student->admissionNo ?? 'student') . '_' . ($termModel->term ?? 'Term') . '.pdf';
+        // SAFE FILENAME - Remove invalid characters
+        $safeAdmissionNo = preg_replace('/[^A-Za-z0-9\-]/', '_', $student->admissionNo ?? 'student');
+        $safeTerm = preg_replace('/[^A-Za-z0-9\-]/', '_', $termModel->term ?? 'Term');
+
+        $filename = 'Assessment_Report_' . $safeAdmissionNo . '_' . $safeTerm . '.pdf';
 
         $pdf = Pdf::loadView('student.assessments.print-pdf', [
             'allStudentData' => $allStudentData,
@@ -458,6 +455,7 @@ class StudentAssessmentController extends Controller
             'dpi' => 150,
             'defaultFont' => 'DejaVu Sans',
             'isRemoteEnabled' => true,
+            'isHtml5ParserEnabled' => true,
         ]);
 
         return $pdf->download($filename);
