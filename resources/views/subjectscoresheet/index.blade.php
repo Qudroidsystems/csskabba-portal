@@ -17,13 +17,8 @@
     --ss-shadow:    0 1px 4px rgba(0,0,0,.08);
 }
 
-.spin {
-    animation: spin 0.8s linear infinite;
-}
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to   { transform: rotate(360deg); }
-}
+.spin { animation: spin 0.8s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
 .score-input {
     width: 72px; min-width: 72px;
@@ -32,15 +27,15 @@
     font-size: 13px; text-align: center;
     background: #fff; transition: border-color .15s, box-shadow .15s;
 }
-.score-input:focus        { outline: none; border-color: var(--ss-accent); box-shadow: 0 0 0 3px rgba(37,99,235,.15); }
-.score-input.is-invalid   { border-color: var(--ss-danger)  !important; background: #fef2f2; }
-.score-input.is-saved     { border-color: var(--ss-success) !important; background: #f0fdf4; }
+.score-input:focus      { outline: none; border-color: var(--ss-accent); box-shadow: 0 0 0 3px rgba(37,99,235,.15); }
+.score-input.is-invalid { border-color: var(--ss-danger)  !important; background: #fef2f2; }
+.score-input.is-saved   { border-color: var(--ss-success) !important; background: #f0fdf4; }
 
 #scoresheetTable { font-size: 12.5px; }
-#scoresheetTable thead tr    { background: var(--ss-primary); color: #fff; }
-#scoresheetTable thead th    { padding: 10px 8px; font-weight: 600; white-space: nowrap; border: none; }
-#scoresheetTable tbody tr    { transition: background .12s; }
-#scoresheetTable tbody td    { padding: 6px 8px; vertical-align: middle; border-bottom: 1px solid var(--ss-border); }
+#scoresheetTable thead tr { background: var(--ss-primary); color: #fff; }
+#scoresheetTable thead th { padding: 10px 8px; font-weight: 600; white-space: nowrap; border: none; }
+#scoresheetTable tbody tr { transition: background .12s; }
+#scoresheetTable tbody td { padding: 6px 8px; vertical-align: middle; border-bottom: 1px solid var(--ss-border); }
 
 .row-vetted     { background: #f0fdf4 !important; }
 .row-not-vetted { background: #fef2f2 !important; }
@@ -57,16 +52,14 @@
 .assessment-btn { font-size: 12px; }
 .pass-bar      { height: 8px; border-radius: 4px; background: #e2e8f0; overflow: hidden; margin-top: 6px; }
 .pass-bar-fill { height: 100%; border-radius: 4px; transition: width .4s; }
-.col-group    { border: 1px solid var(--ss-border); border-radius: 8px; padding: 10px 14px; margin-bottom: 10px; }
-.col-group h6 { color: var(--ss-primary); font-weight: 600; margin-bottom: 8px; }
+.col-group     { border: 1px solid var(--ss-border); border-radius: 8px; padding: 10px 14px; margin-bottom: 10px; }
+.col-group h6  { color: var(--ss-primary); font-weight: 600; margin-bottom: 8px; }
 
+/* Grade badges */
 .grade-badge, .cum-grade-badge {
     display: inline-block;
     transition: all .25s ease;
-    font-weight: 700;
-    font-size: 13px;
-    min-width: 28px;
-    text-align: center;
+    font-weight: 700; font-size: 13px; min-width: 28px; text-align: center;
 }
 .grade-badge.updating, .cum-grade-badge.updating { opacity: 0.5; transform: scale(0.9); }
 .grade-badge.updated,  .cum-grade-badge.updated  { animation: gradeFlash .4s ease; }
@@ -76,102 +69,77 @@
     100% { transform: scale(1);    }
 }
 .grade-loading {
-    display: inline-block;
-    width: 12px; height: 12px;
-    border: 2px solid #e2e8f0;
-    border-top-color: var(--ss-accent);
-    border-radius: 50%;
-    animation: spin .6s linear infinite;
-    vertical-align: middle;
+    display: inline-block; width: 12px; height: 12px;
+    border: 2px solid #e2e8f0; border-top-color: var(--ss-accent);
+    border-radius: 50%; animation: spin .6s linear infinite; vertical-align: middle;
+}
+
+/* Position badges flash when updated */
+.position-badge, .position-total-badge, .arm-position-badge, .arm-position-cum-badge {
+    transition: transform .22s cubic-bezier(0.34,1.4,0.64,1), opacity .15s ease;
+}
+.pos-flash {
+    animation: posFlash .5s cubic-bezier(0.34,1.4,0.64,1);
+}
+@keyframes posFlash {
+    0%   { transform: scale(1);    opacity: 1; }
+    30%  { transform: scale(1.25); opacity: .7; }
+    60%  { transform: scale(0.95); opacity: 1; }
+    100% { transform: scale(1);    opacity: 1; }
 }
 
 /* ROW ENTRANCE & HOVER */
 #scoresheetTableBody tr[data-id] {
-    opacity: 0;
-    transform: translateY(14px);
-    transition:
-        opacity   0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-        transform 0.38s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-        background 0.18s ease;
+    opacity: 0; transform: translateY(14px);
+    transition: opacity .38s cubic-bezier(.25,.46,.45,.94), transform .38s cubic-bezier(.25,.46,.45,.94), background .18s ease;
     will-change: opacity, transform;
 }
-#scoresheetTableBody tr[data-id].row-visible {
-    opacity: 1;
-    transform: translateY(0);
-}
+#scoresheetTableBody tr[data-id].row-visible { opacity: 1; transform: translateY(0); }
 #scoresheetTableBody tr[data-id]:hover {
     background: #f0f6ff !important;
     box-shadow: inset 3px 0 0 #2563eb;
     transform: translateY(-1px) !important;
-    transition:
-        background 0.14s ease,
-        box-shadow 0.18s ease,
-        transform  0.18s cubic-bezier(0.34, 1.4, 0.64, 1);
-    position: relative;
-    z-index: 1;
+    transition: background .14s ease, box-shadow .18s ease, transform .18s cubic-bezier(.34,1.4,.64,1);
+    position: relative; z-index: 1;
 }
 #scoresheetTableBody tr.row-vetted:hover     { background: #e6faf0 !important; }
 #scoresheetTableBody tr.row-not-vetted:hover { background: #fff0f0 !important; }
 #scoresheetTableBody tr.row-pending:hover    { background: #fff8e6 !important; }
-
 #scoresheetTableBody tr[data-id]:hover .student-image {
     transform: scale(1.12);
-    transition: transform 0.22s cubic-bezier(0.34, 1.4, 0.64, 1);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    transition: transform .22s cubic-bezier(.34,1.4,.64,1);
+    box-shadow: 0 2px 8px rgba(0,0,0,.15);
 }
-.student-image { transition: transform 0.18s ease, box-shadow 0.18s ease; }
-
+.student-image { transition: transform .18s ease, box-shadow .18s ease; }
 #scoresheetTableBody tr[data-id]:hover .score-input {
-    border-color: #93c5fd;
-    box-shadow: 0 1px 6px rgba(37,99,235,0.10);
+    border-color: #93c5fd; box-shadow: 0 1px 6px rgba(37,99,235,.10);
 }
 #scoresheetTableBody tr[data-id]:hover .badge {
-    transition: transform 0.18s cubic-bezier(0.34, 1.4, 0.64, 1);
+    transition: transform .18s cubic-bezier(.34,1.4,.64,1);
     transform: scale(1.06);
 }
 #scoresheetTableBody tr[data-id] .score-checkbox {
-    opacity: 0.35;
-    transform: scale(0.85);
-    transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.34, 1.4, 0.64, 1);
+    opacity: .35; transform: scale(.85);
+    transition: opacity .18s ease, transform .18s cubic-bezier(.34,1.4,.64,1);
 }
 #scoresheetTableBody tr[data-id]:hover .score-checkbox,
-#scoresheetTableBody tr[data-id] .score-checkbox:checked {
-    opacity: 1;
-    transform: scale(1);
-}
-
+#scoresheetTableBody tr[data-id] .score-checkbox:checked { opacity: 1; transform: scale(1); }
 @media (prefers-reduced-motion: reduce) {
     #scoresheetTableBody tr[data-id],
-    #scoresheetTableBody tr[data-id]:hover {
-        transition: background 0.15s ease !important;
-        transform: none !important;
-        opacity: 1 !important;
-    }
+    #scoresheetTableBody tr[data-id]:hover { transition: background .15s ease !important; transform: none !important; opacity: 1 !important; }
 }
 
 /* SCORE INPUT TOOLTIP */
 #scoreTooltip {
-    display: none;
-    position: fixed;
-    z-index: 99990;
-    background: #fff;
-    border: 0.5px solid #cbd5e1;
-    border-radius: 10px;
-    padding: 10px 13px;
-    width: 230px;
+    display: none; position: fixed; z-index: 99990;
+    background: #fff; border: 0.5px solid #cbd5e1; border-radius: 10px;
+    padding: 10px 13px; width: 230px;
     box-shadow: 0 4px 20px rgba(0,0,0,.10), 0 1px 4px rgba(0,0,0,.06);
-    pointer-events: none;
-    font-family: inherit;
-    opacity: 0;
-    transition: opacity .15s ease;
+    pointer-events: none; font-family: inherit; opacity: 0; transition: opacity .15s ease;
 }
 #scoreTooltip.tip-above { transform: translateY(-100%); }
 #scoreTooltip.tip-below { transform: translateY(0); }
-.tip-top {
-    display: flex; align-items: center; gap: 8px;
-    margin-bottom: 8px; padding-bottom: 8px;
-    border-bottom: 0.5px solid #e8ecf0;
-}
+.tip-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 0.5px solid #e8ecf0; }
 .tip-avatar   { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 1.5px solid #e2e8f0; }
 .tip-name     { font-size: 12px; font-weight: 600; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tip-adm      { font-size: 10px; color: #64748b; margin-top: 1px; }
@@ -186,48 +154,30 @@
 
 /* APPLE-STYLE SAVE MODAL */
 #ssSaveOverlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    z-index: 99999;
-    background: rgba(0,0,0,0.30);
-    align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(2px);
-    -webkit-backdrop-filter: blur(2px);
+    display: none; position: fixed; inset: 0; z-index: 99999;
+    background: rgba(0,0,0,.30); align-items: center; justify-content: center;
+    backdrop-filter: blur(2px); -webkit-backdrop-filter: blur(2px);
 }
-#ssSaveOverlay.ss-visible {
-    display: flex !important;
-    animation: ssOverlayIn .2s ease forwards;
-}
+#ssSaveOverlay.ss-visible { display: flex !important; animation: ssOverlayIn .2s ease forwards; }
 @keyframes ssOverlayIn { from { opacity:0; } to { opacity:1; } }
 #ssSaveModal {
-    background: #fff;
-    border-radius: 20px;
-    border: 0.5px solid rgba(0,0,0,0.10);
-    box-shadow: 0 24px 64px rgba(0,0,0,0.18), 0 4px 16px rgba(0,0,0,0.08);
-    padding: 32px 36px 26px;
-    width: 310px;
-    text-align: center;
-    transform: scale(0.85) translateY(16px);
-    opacity: 0;
+    background: #fff; border-radius: 20px; border: 0.5px solid rgba(0,0,0,.10);
+    box-shadow: 0 24px 64px rgba(0,0,0,.18), 0 4px 16px rgba(0,0,0,.08);
+    padding: 32px 36px 26px; width: 310px; text-align: center;
+    transform: scale(.85) translateY(16px); opacity: 0;
     transition: transform .32s cubic-bezier(.34,1.3,.64,1), opacity .22s ease;
 }
 #ssSaveOverlay.ss-visible  #ssSaveModal { transform: scale(1) translateY(0); opacity: 1; }
-#ssSaveOverlay.ss-closing  #ssSaveModal { transform: scale(0.88) translateY(10px); opacity: 0; }
+#ssSaveOverlay.ss-closing  #ssSaveModal { transform: scale(.88) translateY(10px); opacity: 0; }
+#ssSaveOverlay.ss-closing  { animation: ssOverlayOut .22s ease forwards; }
 @keyframes ssOverlayOut { from { opacity:1; } to { opacity:0; } }
-#ssSaveOverlay.ss-closing { animation: ssOverlayOut .22s ease forwards; }
-
 .ss-icon-ring {
-    width: 56px; height: 56px; border-radius: 50%;
-    margin: 0 auto 16px;
-    display: flex; align-items: center; justify-content: center;
-    position: relative;
+    width: 56px; height: 56px; border-radius: 50%; margin: 0 auto 16px;
+    display: flex; align-items: center; justify-content: center; position: relative;
 }
 .ss-icon-ring svg.ss-arc-svg { position: absolute; top:0; left:0; width:56px; height:56px; }
 .ss-icon-center {
-    width: 36px; height: 36px; border-radius: 50%;
-    background: rgba(30,58,95,0.09);
+    width: 36px; height: 36px; border-radius: 50%; background: rgba(30,58,95,.09);
     display: flex; align-items: center; justify-content: center;
     z-index: 1; position: relative; transition: background .3s;
 }
@@ -235,17 +185,17 @@
 .ss-modal-sub   { font-size: 12px; color: #64748b; margin-bottom: 20px; min-height: 16px; transition: opacity .2s; }
 .ss-progress-track { height: 5px; border-radius: 3px; background: #f1f5f9; overflow: hidden; margin-bottom: 10px; }
 .ss-progress-fill  { height: 100%; border-radius: 3px; background: var(--ss-primary); width: 0%; transition: width .38s cubic-bezier(.4,0,.2,1), background .3s ease; }
-.ss-count-row      { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #94a3b8; }
-.ss-count-num      { font-size: 11px; font-weight: 600; color: #334155; font-variant-numeric: tabular-nums; }
-.ss-check-path     { stroke-dasharray: 22; stroke-dashoffset: 22; transition: stroke-dashoffset .38s ease .08s; }
+.ss-count-row  { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: #94a3b8; }
+.ss-count-num  { font-size: 11px; font-weight: 600; color: #334155; font-variant-numeric: tabular-nums; }
+.ss-check-path { stroke-dasharray: 22; stroke-dashoffset: 22; transition: stroke-dashoffset .38s ease .08s; }
 .ss-check-path.drawn { stroke-dashoffset: 0; }
 
 @media (max-width: 768px) {
-    .score-input    { width: 64px; min-width: 64px; height: 42px; font-size: 1rem; }
-    .stat-card      { padding: 10px 12px; }
+    .score-input  { width: 64px; min-width: 64px; height: 42px; font-size: 1rem; }
+    .stat-card    { padding: 10px 12px; }
     .stat-card .stat-value { font-size: 18px; }
-    #ssSaveModal    { width: 280px; padding: 26px 24px 22px; }
-    #scoreTooltip   { width: calc(100vw - 24px); }
+    #ssSaveModal  { width: 280px; padding: 26px 24px 22px; }
+    #scoreTooltip { width: calc(100vw - 24px); }
 }
 </style>
 
@@ -367,7 +317,7 @@
             <div class="card border-0 shadow-sm h-100" style="border-left:4px solid var(--ss-primary) !important;">
                 <div class="card-body py-3">
                     <div class="d-flex align-items-start gap-3">
-                        <div class="flex-shrink-0 bg-primary rounded-3 p-2" style="background:var(--ss-primary) !important;">
+                        <div class="flex-shrink-0 rounded-3 p-2" style="background:var(--ss-primary);">
                             <i class="ri-book-2-line text-white fs-4"></i>
                         </div>
                         <div class="flex-grow-1">
@@ -455,16 +405,10 @@
                     @else
                         <div class="grade-strip">
                             @foreach($gradeDist->sortKeysDesc() as $grade => $count)
-                                @php
-                                    $pct = $total > 0 ? round($count / $total * 100) : 0;
-                                    $col = $gradeColors[$grade] ?? '#6b7280';
-                                @endphp
-                                <div class="grade-pill"
-                                     style="background:{{ $col }}18; color:{{ $col }}; border:1px solid {{ $col }}40;">
+                                @php $pct = $total > 0 ? round($count/$total*100) : 0; $col = $gradeColors[$grade] ?? '#6b7280'; @endphp
+                                <div class="grade-pill" style="background:{{ $col }}18;color:{{ $col }};border:1px solid {{ $col }}40;">
                                     <div style="font-size:16px;">{{ $grade }}</div>
-                                    <div style="font-size:11px;font-weight:600;">
-                                        {{ $count }} <span style="opacity:.7;">({{ $pct }}%)</span>
-                                    </div>
+                                    <div style="font-size:11px;font-weight:600;">{{ $count }} <span style="opacity:.7;">({{ $pct }}%)</span></div>
                                 </div>
                             @endforeach
                         </div>
@@ -509,17 +453,17 @@
     </div>
     @endif
 
-    {{-- ══ POSITION LEGEND + RECALCULATE BUTTON ═══════════════════════ --}}
+    {{-- ══ POSITION LEGEND + RECALCULATE ══════════════════════════════ --}}
     <div class="d-flex align-items-start justify-content-between gap-3 mb-2 flex-wrap"
          style="font-size:12px;color:var(--ss-muted);">
         <span>
             <i class="ri-information-line me-1 text-info"></i>
-            <strong>Total Grade</strong> = grade based on raw assessment total (saved) &nbsp;|&nbsp;
-            <strong>Cum Grade</strong>   = grade based on cumulative average (display only) &nbsp;|&nbsp;
-            <strong>Class Pos (Cum)</strong>   = all arms, ranked by cumulative avg &nbsp;|&nbsp;
-            <strong>Class Pos (Total)</strong>  = all arms, ranked by raw total &nbsp;|&nbsp;
-            <strong>Arm Pos (Total)</strong>   = this arm only, ranked by raw total &nbsp;|&nbsp;
-            <strong>Arm Pos (Cum)</strong>     = this arm only, ranked by cumulative avg
+            <strong>Total Grade</strong> = grade on raw total (saved) &nbsp;|&nbsp;
+            <strong>Cum Grade</strong>   = grade on cumulative avg (display) &nbsp;|&nbsp;
+            <strong>Class Pos (Cum)</strong>   = all arms, ranked by cum &nbsp;|&nbsp;
+            <strong>Class Pos (Total)</strong>  = all arms, ranked by total &nbsp;|&nbsp;
+            <strong>Arm Pos (Total)</strong>   = this arm, ranked by total &nbsp;|&nbsp;
+            <strong>Arm Pos (Cum)</strong>     = this arm, ranked by cum
         </span>
         <button type="button" class="btn btn-sm btn-primary flex-shrink-0" id="updateArmPositionsBtn">
             <i class="ri-refresh-line me-1"></i>Recalculate All Positions
@@ -548,8 +492,7 @@
                     <button class="btn btn-light border-0" id="clearSearch"><i class="ri-close-line"></i></button>
                 </div>
                 @if ($broadsheets->isNotEmpty())
-                    <button class="btn btn-sm btn-light"
-                            data-bs-toggle="modal" data-bs-target="#columnVisibilityModal">
+                    <button class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#columnVisibilityModal">
                         <i class="ri-eye-line me-1"></i>Columns
                     </button>
                     <button type="button" class="btn btn-sm btn-warning" id="downloadMarksSheet">
@@ -561,8 +504,7 @@
                     <button type="button" class="btn btn-sm btn-success" id="downloadExcel">
                         <i class="ri-download-line me-1"></i>Export Excel
                     </button>
-                    <button class="btn btn-sm btn-info" id="importBtn"
-                            data-bs-toggle="modal" data-bs-target="#importModal">
+                    <button class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#importModal">
                         <i class="ri-upload-line me-1"></i>Import
                     </button>
                 @endif
@@ -582,8 +524,7 @@
                     <div class="flex-grow-1">
                         <div class="fw-semibold mb-1" style="font-size:13px;" id="downloadProgressLabel">Downloading…</div>
                         <div class="progress" style="height:5px;">
-                            <div class="progress-bar progress-bar-animated bg-warning"
-                                 id="downloadProgressBar" style="width:0%"></div>
+                            <div class="progress-bar progress-bar-animated bg-warning" id="downloadProgressBar" style="width:0%"></div>
                         </div>
                     </div>
                 </div>
@@ -608,43 +549,28 @@
                                 <small class="fw-normal opacity-75">({{ $assessment->max_score }})</small>
                             </th>
                         @empty
-                            <th colspan="4" class="col-no-assessments text-center text-white opacity-75">
-                                No Assessments Defined
-                            </th>
+                            <th colspan="4" class="col-no-assessments text-center text-white opacity-75">No Assessments Defined</th>
                         @endforelse
 
                         <th class="col-total text-center">Total</th>
-
-                        <th class="col-total-grade text-center"
-                            title="Grade based on raw total score (persisted to database)">
+                        <th class="col-total-grade text-center" title="Grade based on raw total score (persisted to database)">
                             Total<br><small class="fw-normal opacity-75">Grade</small>
                         </th>
-
                         <th class="col-bf text-center">BF</th>
-
                         <th class="col-cum text-center">Cum</th>
-
-                        <th class="col-cum-grade text-center"
-                            title="Grade based on cumulative average (display only)">
+                        <th class="col-cum-grade text-center" title="Grade based on cumulative average (display only)">
                             Cum<br><small class="fw-normal opacity-75">Grade</small>
                         </th>
-
-                        <th class="col-avg text-center"
-                            title="Subject class average score">Class Avg</th>
-
+                        <th class="col-avg text-center" title="Subject class average score">Class Avg</th>
                         <th class="col-gpa  text-center">GPA</th>
                         <th class="col-cgpa text-center">CGPA</th>
 
                         {{--
-                            Four subject position columns — spec:
-                            ┌──────────────────────────┬──────────────────────┬────────────┐
-                            │ Column                   │ Scope                │ Ranked by  │
-                            ├──────────────────────────┼──────────────────────┼────────────┤
-                            │ subject_position_class   │ All arms of class    │ cum        │
-                            │ subject_position_class_total│ All arms of class │ total      │
-                            │ arm_position             │ This arm only        │ total      │
-                            │ arm_position_cum         │ This arm only        │ cum        │
-                            └──────────────────────────┴──────────────────────┴────────────┘
+                            Four position columns — spec:
+                            subject_position_class        → all arms, by cum
+                            subject_position_class_total  → all arms, by total
+                            arm_position                  → this arm, by total
+                            arm_position_cum              → this arm, by cum
                         --}}
                         <th class="col-position text-center"
                             title="All arms of this class combined, ranked by cumulative average">
@@ -677,14 +603,11 @@
                             }
                             $cum        = $broadsheet->cum ?? 0;
                             $totalGrade = $broadsheet->grade ?? '-';
-
-                            // Cum grade computed server-side via classcategory
                             $gradeForCum = '-';
                             if (isset($broadsheet->classcategoryid)) {
                                 $cat = \App\Models\Classcategory::find($broadsheet->classcategoryid);
                                 $gradeForCum = $cat ? $cat->calculateGrade($cum) : '-';
                             }
-
                             $cumColor        = $cum      >= 70 ? 'success' : ($cum      >= 50 ? 'info' : ($cum      >= 40 ? 'warning' : 'danger'));
                             $totalColor      = $rowTotal >= 70 ? 'success' : ($rowTotal >= 50 ? 'info' : ($rowTotal >= 40 ? 'warning' : 'danger'));
                             $vClass = match(true) {
@@ -710,13 +633,11 @@
 
                             <td class="col-checkbox">
                                 <div class="form-check mb-0">
-                                    <input class="form-check-input score-checkbox" type="checkbox"
-                                           data-id="{{ $broadsheet->id }}">
+                                    <input class="form-check-input score-checkbox" type="checkbox" data-id="{{ $broadsheet->id }}">
                                 </div>
                             </td>
                             <td class="col-sn sn fw-medium">{{ ++$i }}</td>
-                            <td class="col-admissionno admissionno"
-                                data-admissionno="{{ $broadsheet->admissionno }}">
+                            <td class="col-admissionno admissionno" data-admissionno="{{ $broadsheet->admissionno }}">
                                 <span class="text-muted small">{{ $broadsheet->admissionno ?? '-' }}</span>
                             </td>
                             <td class="col-name name"
@@ -739,7 +660,6 @@
                                 </div>
                             </td>
 
-                            {{-- Assessment score inputs --}}
                             @forelse ($assessments as $assessment)
                                 @php
                                     $scoreObj   = $broadsheet->assessmentScores->where('assessment_id', $assessment->id)->first();
@@ -760,72 +680,46 @@
                                 <td colspan="4" class="col-no-assessments text-center text-muted">-</td>
                             @endforelse
 
-                            {{-- Total --}}
                             <td class="col-total text-center">
-                                <span class="badge bg-{{ $totalColor }}-subtle text-{{ $totalColor }} fw-bold total-badge"
-                                      style="font-size:12px;">
+                                <span class="badge bg-{{ $totalColor }}-subtle text-{{ $totalColor }} fw-bold total-badge" style="font-size:12px;">
                                     {{ number_format($rowTotal, 1) }}
                                 </span>
                             </td>
-
-                            {{-- Total Grade (grade saved in DB, computed on total) --}}
                             <td class="col-total-grade text-center">
-                                <span class="grade-badge"
-                                      style="color:{{ $totalGradeColor }};"
-                                      data-score="{{ $rowTotal }}">{{ $totalGrade }}</span>
+                                <span class="grade-badge" style="color:{{ $totalGradeColor }};" data-score="{{ $rowTotal }}">{{ $totalGrade }}</span>
                             </td>
-
-                            {{-- BF --}}
                             <td class="col-bf text-center">
                                 <span class="badge bg-secondary-subtle text-secondary bf-badge">
                                     {{ number_format($broadsheet->bf ?? 0, 1) }}
                                 </span>
                             </td>
-
-                            {{-- Cum --}}
                             <td class="col-cum text-center">
-                                <span class="badge bg-{{ $cumColor }}-subtle text-{{ $cumColor }} fw-bold cum-badge"
-                                      style="font-size:12px;">
+                                <span class="badge bg-{{ $cumColor }}-subtle text-{{ $cumColor }} fw-bold cum-badge" style="font-size:12px;">
                                     {{ number_format($cum, 1) }}
                                 </span>
                             </td>
-
-                            {{-- Cum Grade (display only, computed on cum) --}}
                             <td class="col-cum-grade text-center">
-                                <span class="cum-grade-badge"
-                                      style="color:{{ $cumGradeColor }};"
-                                      data-score="{{ $cum }}">{{ $gradeForCum }}</span>
+                                <span class="cum-grade-badge" style="color:{{ $cumGradeColor }};" data-score="{{ $cum }}">{{ $gradeForCum }}</span>
                             </td>
-
-                            {{-- Class Avg --}}
                             <td class="col-avg text-center">
-                                <span class="badge avg-badge"
-                                      style="background:#f3e8ff;color:#7c3aed;">
+                                <span class="badge avg-badge" style="background:#f3e8ff;color:#7c3aed;">
                                     {{ number_format($broadsheet->avg ?? 0, 1) }}
                                 </span>
                             </td>
-
-                            {{-- GPA --}}
                             <td class="col-gpa text-center">
                                 <span class="badge bg-warning-subtle text-warning fw-semibold gpa-badge">
                                     {{ number_format($broadsheet->gpa ?? 0, 2) }}
                                 </span>
                             </td>
-
-                            {{-- CGPA --}}
                             <td class="col-cgpa text-center">
                                 <span class="badge bg-dark-subtle text-dark cgpa-badge">
                                     {{ number_format($broadsheet->cgpa ?? 0, 2) }}
                                 </span>
                             </td>
 
-                            {{--
-                                subject_position_class → .position-badge
-                                Scope: all arms | Ranked by: cum
-                            --}}
+                            {{-- subject_position_class → .position-badge (all arms, by cum) --}}
                             <td class="col-position text-center">
-                                <span class="badge position-badge"
-                                      style="background:var(--ss-primary);"
+                                <span class="badge position-badge" style="background:var(--ss-primary);"
                                       title="All arms of this class, ranked by cumulative average">
                                     {{ $broadsheet->position
                                         ? \App\Helpers\OrdinalHelper::getOrdinalSuffix($broadsheet->position)
@@ -833,13 +727,9 @@
                                 </span>
                             </td>
 
-                            {{--
-                                subject_position_class_total → .position-total-badge
-                                Scope: all arms | Ranked by: total
-                            --}}
+                            {{-- subject_position_class_total → .position-total-badge (all arms, by total) --}}
                             <td class="col-position-total text-center">
-                                <span class="badge position-total-badge"
-                                      style="background:#0f766e;"
+                                <span class="badge position-total-badge" style="background:#0f766e;"
                                       title="All arms of this class, ranked by raw total">
                                     {{ $broadsheet->position_total
                                         ? \App\Helpers\OrdinalHelper::getOrdinalSuffix($broadsheet->position_total)
@@ -847,13 +737,9 @@
                                 </span>
                             </td>
 
-                            {{--
-                                arm_position → .arm-position-badge
-                                Scope: this arm only | Ranked by: total
-                            --}}
+                            {{-- arm_position → .arm-position-badge (this arm, by total) --}}
                             <td class="col-arm-position text-center">
-                                <span class="badge arm-position-badge"
-                                      style="background:#0891b2;"
+                                <span class="badge arm-position-badge" style="background:#0891b2;"
                                       title="Position within {{ $broadsheet->arm ?? 'this arm' }} only, ranked by raw total">
                                     {{ $broadsheet->arm_position
                                         ? \App\Helpers\OrdinalHelper::getOrdinalSuffix($broadsheet->arm_position)
@@ -861,13 +747,9 @@
                                 </span>
                             </td>
 
-                            {{--
-                                arm_position_cum → .arm-position-cum-badge
-                                Scope: this arm only | Ranked by: cum
-                            --}}
+                            {{-- arm_position_cum → .arm-position-cum-badge (this arm, by cum) --}}
                             <td class="col-arm-position-cum text-center">
-                                <span class="badge arm-position-cum-badge"
-                                      style="background:#7c3aed;"
+                                <span class="badge arm-position-cum-badge" style="background:#7c3aed;"
                                       title="Position within {{ $broadsheet->arm ?? 'this arm' }} only, ranked by cumulative average">
                                     {{ $broadsheet->arm_position_cum
                                         ? \App\Helpers\OrdinalHelper::getOrdinalSuffix($broadsheet->arm_position_cum)
@@ -875,27 +757,19 @@
                                 </span>
                             </td>
 
-                            {{-- Vetted Status --}}
                             <td class="col-vetted text-center">
                                 @if($broadsheet->vettedstatus === '1')
-                                    <span class="badge bg-success-subtle text-success">
-                                        <i class="ri-check-line me-1"></i>Vetted
-                                    </span>
+                                    <span class="badge bg-success-subtle text-success"><i class="ri-check-line me-1"></i>Vetted</span>
                                 @elseif($broadsheet->vettedstatus === '0')
-                                    <span class="badge bg-danger-subtle text-danger">
-                                        <i class="ri-close-line me-1"></i>Not Vetted
-                                    </span>
+                                    <span class="badge bg-danger-subtle text-danger"><i class="ri-close-line me-1"></i>Not Vetted</span>
                                 @else
-                                    <span class="badge bg-warning-subtle text-warning">
-                                        <i class="ri-time-line me-1"></i>Pending
-                                    </span>
+                                    <span class="badge bg-warning-subtle text-warning"><i class="ri-time-line me-1"></i>Pending</span>
                                 @endif
                             </td>
                         </tr>
                     @empty
                         <tr id="noDataRow">
-                            <td colspan="{{ ($assessments->count() ?: 4) + 17 }}"
-                                class="text-center py-4 text-muted">
+                            <td colspan="{{ ($assessments->count() ?: 4) + 17 }}" class="text-center py-4 text-muted">
                                 <i class="ri-inbox-line ri-2x d-block mb-2"></i>No scores available.
                             </td>
                         </tr>
@@ -935,50 +809,37 @@
 
     {{-- ══ MODALS ══════════════════════════════════════════════════════ --}}
 
-    {{-- Column Visibility --}}
     @if ($broadsheets->isNotEmpty())
     <div class="modal fade" id="columnVisibilityModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content border-0 shadow-lg">
                 <div class="modal-header" style="background:var(--ss-primary);">
-                    <h5 class="modal-title text-white">
-                        <i class="ri-eye-line me-2"></i>Column Visibility
-                    </h5>
+                    <h5 class="modal-title text-white"><i class="ri-eye-line me-2"></i>Column Visibility</h5>
                     <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
                     <div class="row g-3">
                         <div class="col-md-4"><div class="col-group">
                             <h6>Student Info</h6>
-                            @foreach([
-                                ['col-checkbox',   'Select'],
-                                ['col-sn',         'SN'],
-                                ['col-admissionno','Adm. No'],
-                                ['col-name',       'Name'],
-                            ] as [$cls, $lbl])
+                            @foreach([['col-checkbox','Select'],['col-sn','SN'],['col-admissionno','Adm. No'],['col-name','Name']] as [$cls,$lbl])
                             <div class="form-check">
-                                <input class="form-check-input col-toggle" type="checkbox"
-                                       id="chk-{{ $cls }}" data-col="{{ $cls }}" checked>
+                                <input class="form-check-input col-toggle" type="checkbox" id="chk-{{ $cls }}" data-col="{{ $cls }}" checked>
                                 <label class="form-check-label" for="chk-{{ $cls }}">{{ $lbl }}</label>
                             </div>
                             @endforeach
                         </div></div>
-
                         @if($assessments->isNotEmpty())
                         <div class="col-md-4"><div class="col-group">
                             <h6>Assessments</h6>
                             @foreach($assessments as $a)
                             <div class="form-check">
                                 <input class="form-check-input col-toggle" type="checkbox"
-                                       id="chk-col-assessment-{{ $a->id }}"
-                                       data-col="col-assessment-{{ $a->id }}" checked>
-                                <label class="form-check-label"
-                                       for="chk-col-assessment-{{ $a->id }}">{{ $a->name }}</label>
+                                       id="chk-col-assessment-{{ $a->id }}" data-col="col-assessment-{{ $a->id }}" checked>
+                                <label class="form-check-label" for="chk-col-assessment-{{ $a->id }}">{{ $a->name }}</label>
                             </div>
                             @endforeach
                         </div></div>
                         @endif
-
                         <div class="col-md-4"><div class="col-group">
                             <h6>Scores &amp; Metrics</h6>
                             @foreach([
@@ -995,10 +856,9 @@
                                 ['col-arm-position',     'Arm Pos (Total) — this arm'],
                                 ['col-arm-position-cum', 'Arm Pos (Cum) — this arm'],
                                 ['col-vetted',           'Status'],
-                            ] as [$cls, $lbl])
+                            ] as [$cls,$lbl])
                             <div class="form-check">
-                                <input class="form-check-input col-toggle" type="checkbox"
-                                       id="chk-{{ $cls }}" data-col="{{ $cls }}" checked>
+                                <input class="form-check-input col-toggle" type="checkbox" id="chk-{{ $cls }}" data-col="{{ $cls }}" checked>
                                 <label class="form-check-label" for="chk-{{ $cls }}">{{ $lbl }}</label>
                             </div>
                             @endforeach
@@ -1013,20 +873,15 @@
     </div>
     @endif
 
-    {{-- Import Modal --}}
     <div class="modal fade" id="importModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg">
                 <div class="modal-header" style="background:var(--ss-primary);">
-                    <h5 class="modal-title text-white">
-                        <i class="ri-upload-line me-2"></i>Import Scores
-                    </h5>
+                    <h5 class="modal-title text-white"><i class="ri-upload-line me-2"></i>Import Scores</h5>
                     <button class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="alert alert-info">
-                        <i class="ri-information-line me-2"></i>Upload the Excel file exported from this scoresheet.
-                    </div>
+                    <div class="alert alert-info"><i class="ri-information-line me-2"></i>Upload the Excel file exported from this scoresheet.</div>
                     <form method="POST" enctype="multipart/form-data" id="importForm">
                         @csrf
                         <input type="hidden" name="schoolclass_id"  value="{{ session('schoolclass_id') }}">
@@ -1036,14 +891,12 @@
                         <input type="hidden" name="session_id"      value="{{ session('session_id') }}">
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Excel File (.xlsx)</label>
-                            <input type="file" name="file" class="form-control"
-                                   accept=".xlsx,.xls" required>
+                            <input type="file" name="file" class="form-control" accept=".xlsx,.xls" required>
                             <small class="text-muted">Only upload files exported from this system</small>
                         </div>
                         <div class="mb-3">
                             <label class="form-label fw-semibold">File Password (if protected)</label>
-                            <input type="password" name="password" class="form-control"
-                                   placeholder="Enter file password">
+                            <input type="password" name="password" class="form-control" placeholder="Enter file password">
                         </div>
                         <div id="importLoader" style="display:none;" class="mb-3">
                             <div class="d-flex align-items-center gap-3 p-2 rounded-3" style="background:#f0fdf4;">
@@ -1051,8 +904,7 @@
                                 <div class="flex-grow-1">
                                     <div style="font-size:12px;margin-bottom:3px;">Uploading...</div>
                                     <div class="progress" style="height:5px;">
-                                        <div class="progress-bar progress-bar-animated bg-success"
-                                             id="uploadProgressBar" style="width:0%"></div>
+                                        <div class="progress-bar progress-bar-animated bg-success" id="uploadProgressBar" style="width:0%"></div>
                                     </div>
                                 </div>
                             </div>
@@ -1069,35 +921,26 @@
         </div>
     </div>
 
-    {{-- Image View Modal --}}
     <div class="modal fade" id="imageViewModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg">
-                <div class="modal-header">
-                    <h5 class="modal-title">Student Photo</h5>
-                    <button class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
+                <div class="modal-header"><h5 class="modal-title">Student Photo</h5><button class="btn-close" data-bs-dismiss="modal"></button></div>
                 <div class="modal-body text-center p-4">
-                    <img id="enlargedImage" src="" alt="Student"
-                         class="img-fluid rounded-3" style="max-height:400px;">
+                    <img id="enlargedImage" src="" alt="Student" class="img-fluid rounded-3" style="max-height:400px;">
                 </div>
             </div>
         </div>
     </div>
 
-</div>{{-- /container-fluid --}}
-</div>{{-- /page-content --}}
-</div>{{-- /main-content --}}
+</div></div></div>
 
 <script>
 /* ══════════════════════════════════════════════════════════════════════
    CSRF
    ══════════════════════════════════════════════════════════════════════ */
 if (!document.querySelector('meta[name="csrf-token"]')) {
-    const m = document.createElement('meta');
-    m.name    = 'csrf-token';
-    m.content = '{{ csrf_token() }}';
-    document.head.appendChild(m);
+    const m = document.createElement('meta'); m.name = 'csrf-token';
+    m.content = '{{ csrf_token() }}'; document.head.appendChild(m);
 }
 const CSRF = document.querySelector('meta[name="csrf-token"]').content;
 
@@ -1124,7 +967,7 @@ window.staff_id        = {{ session('staff_id')        ?? 'null' }};
 window.is_senior       = {{ ($is_senior ?? false) ? 'true' : 'false' }};
 
 /* ══════════════════════════════════════════════════════════════════════
-   GRADE COLOURS
+   CONSTANTS
    ══════════════════════════════════════════════════════════════════════ */
 const GRADE_COLORS = {
     'A' :'#16a34a','A1':'#16a34a',
@@ -1134,7 +977,28 @@ const GRADE_COLORS = {
     'F' :'#dc2626','F9':'#dc2626',
 };
 
-/* Client-side grade estimate (immediate feedback while typing) */
+/* ══════════════════════════════════════════════════════════════════════
+   UTILITIES
+   ══════════════════════════════════════════════════════════════════════ */
+const fmtN = (n, d = 1) => parseFloat(n || 0).toFixed(d);
+
+const ord = n => {
+    if (!n || isNaN(n)) return '-';
+    n = +n; const s = n % 100;
+    return n + (s >= 11 && s <= 13 ? 'th' : (['th','st','nd','rd'][n % 10] || 'th'));
+};
+
+function showToast(msg, type = 'info') {
+    const colors = { success:'#16a34a', warning:'#d97706', danger:'#dc2626', info:'#2563eb' };
+    const id = 'toast_' + Date.now();
+    document.body.insertAdjacentHTML('beforeend',
+        `<div id="${id}" class="toast align-items-center border-0 text-white show" role="alert"
+          style="position:fixed;bottom:20px;right:20px;z-index:99999;background:${colors[type]||colors.info};min-width:280px;border-radius:10px;">
+          <div class="d-flex p-3"><div class="me-auto">${msg}</div>
+          <button class="btn-close btn-close-white ms-2" onclick="this.closest('.toast').remove()"></button></div></div>`);
+    setTimeout(() => document.getElementById(id)?.remove(), 4500);
+}
+
 function clientGrade(score) {
     score = parseFloat(score) || 0;
     if (window.is_senior) {
@@ -1144,42 +1008,11 @@ function clientGrade(score) {
         if (score >= 45) return 'D7'; if (score >= 40) return 'E8';
         return 'F9';
     }
-    if (score >= 70) return 'A';
-    if (score >= 60) return 'B';
-    if (score >= 50) return 'C';
-    if (score >= 40) return 'D';
+    if (score >= 70) return 'A'; if (score >= 60) return 'B';
+    if (score >= 50) return 'C'; if (score >= 40) return 'D';
     return 'F';
 }
 
-/* ══════════════════════════════════════════════════════════════════════
-   UTILITIES
-   ══════════════════════════════════════════════════════════════════════ */
-const fmtN = (n, d = 1) => parseFloat(n || 0).toFixed(d);
-
-/* Convert a numeric rank to an ordinal string (1st, 2nd …) */
-const ord = n => {
-    if (!n || isNaN(n)) return '-';
-    n = +n;
-    const s = n % 100;
-    return n + (s >= 11 && s <= 13 ? 'th' : (['th','st','nd','rd'][n % 10] || 'th'));
-};
-
-function showToast(msg, type = 'info') {
-    const colors = { success:'#16a34a', warning:'#d97706', danger:'#dc2626', info:'#2563eb' };
-    const id     = 'toast_' + Date.now();
-    document.body.insertAdjacentHTML('beforeend',
-        `<div id="${id}" class="toast align-items-center border-0 text-white show" role="alert"
-          style="position:fixed;bottom:20px;right:20px;z-index:99999;
-                 background:${colors[type]||colors.info};min-width:280px;border-radius:10px;">
-          <div class="d-flex p-3">
-            <div class="me-auto">${msg}</div>
-            <button class="btn-close btn-close-white ms-2"
-                    onclick="this.closest('.toast').remove()"></button>
-          </div></div>`);
-    setTimeout(() => document.getElementById(id)?.remove(), 4500);
-}
-
-/* Animate a grade badge to a new grade value */
 function applyGrade(badge, grade) {
     if (!badge) return;
     badge.textContent = grade || '-';
@@ -1187,6 +1020,61 @@ function applyGrade(badge, grade) {
     badge.classList.remove('updating');
     badge.classList.add('updated');
     setTimeout(() => badge.classList.remove('updated'), 500);
+}
+
+function validateInput(inp) {
+    const max = parseFloat(inp.dataset.max) || 0;
+    const val = parseFloat(inp.value)       || 0;
+    inp.classList.toggle('is-invalid', val > max);
+    return val <= max;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   POSITION PATCH  — update all 4 position badges for EVERY visible row
+   Called after every single save AND every bulk save so the whole table
+   stays in sync without a page reload.
+   ══════════════════════════════════════════════════════════════════════ */
+/**
+ * applyAllPositions(broadsheets)
+ *
+ * broadsheets: array of objects from the server, each having:
+ *   id, position, position_total, arm_position, arm_position_cum
+ *
+ * Walks every row in the table and patches all four badge elements,
+ * then plays a small pop animation so the teacher notices the change.
+ */
+function applyAllPositions(broadsheets) {
+    if (!Array.isArray(broadsheets) || !broadsheets.length) return;
+
+    // Build an id→data map for O(1) lookups
+    const map = {};
+    broadsheets.forEach(bs => { map[String(bs.id)] = bs; });
+
+    document.querySelectorAll('#scoresheetTableBody tr[data-id]').forEach(row => {
+        const bs = map[row.dataset.id];
+        if (!bs) return;
+
+        const patches = [
+            [row.querySelector('.position-badge'),         bs.position],
+            [row.querySelector('.position-total-badge'),   bs.position_total],
+            [row.querySelector('.arm-position-badge'),     bs.arm_position],
+            [row.querySelector('.arm-position-cum-badge'), bs.arm_position_cum],
+        ];
+
+        patches.forEach(([badge, val]) => {
+            if (!badge) return;
+            const newText = ord(val);
+            if (badge.textContent.trim() !== newText) {
+                badge.textContent = newText;
+                // Pop animation to draw attention to the change
+                badge.classList.remove('pos-flash');
+                // Force reflow so re-adding the class restarts animation
+                void badge.offsetWidth;
+                badge.classList.add('pos-flash');
+                setTimeout(() => badge.classList.remove('pos-flash'), 520);
+            }
+        });
+    });
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -1201,14 +1089,10 @@ function updateRowGrades(row) {
     const schoolclsId = parseInt(row.dataset.schoolclassid) || window.schoolclass_id;
 
     let totalRaw = 0;
-    row.querySelectorAll('.score-input').forEach(inp => {
-        totalRaw += parseFloat(inp.value) || 0;
-    });
-
-    // Cumulative average preview
+    row.querySelectorAll('.score-input').forEach(inp => { totalRaw += parseFloat(inp.value) || 0; });
     const cum = (termId == 1 || bf === 0) ? totalRaw : (totalRaw + bf) / 2;
 
-    // ── Update total badge ─────────────────────────────────────────
+    // Total badge
     const totalBadge = row.querySelector('.total-badge');
     if (totalBadge) {
         totalBadge.textContent = fmtN(totalRaw);
@@ -1217,7 +1101,7 @@ function updateRowGrades(row) {
         totalBadge.style.fontSize = '12px';
     }
 
-    // ── Update cum badge ───────────────────────────────────────────
+    // Cum badge
     const cumBadge = row.querySelector('.cum-badge');
     if (cumBadge) {
         cumBadge.textContent = fmtN(cum);
@@ -1226,28 +1110,21 @@ function updateRowGrades(row) {
         cumBadge.style.fontSize = '12px';
     }
 
-    // ── Client-side grade preview (instant) ───────────────────────
+    // Client-side grade preview (instant)
     applyGrade(row.querySelector('.grade-badge'),     clientGrade(totalRaw));
     applyGrade(row.querySelector('.cum-grade-badge'), clientGrade(cum));
 
-    // ── Server-side grade (debounced 400 ms) ──────────────────────
+    // Server-side grade confirmation (debounced 400 ms)
     clearTimeout(gradeTimers[bid]);
     gradeTimers[bid] = setTimeout(async () => {
         const totalGradeBadge = row.querySelector('.grade-badge');
         const cumGradeBadge   = row.querySelector('.cum-grade-badge');
         try {
-            if (totalGradeBadge) {
-                totalGradeBadge.classList.add('updating');
-                totalGradeBadge.innerHTML = '<span class="grade-loading"></span>';
-            }
-            if (cumGradeBadge) {
-                cumGradeBadge.classList.add('updating');
-                cumGradeBadge.innerHTML   = '<span class="grade-loading"></span>';
-            }
+            if (totalGradeBadge) { totalGradeBadge.classList.add('updating'); totalGradeBadge.innerHTML = '<span class="grade-loading"></span>'; }
+            if (cumGradeBadge)   { cumGradeBadge.classList.add('updating');   cumGradeBadge.innerHTML   = '<span class="grade-loading"></span>'; }
             const res  = await fetch(window.routes.gradeForScore, {
-                method : 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
-                body   : JSON.stringify({ schoolclass_id: schoolclsId, total: totalRaw, cum }),
+                method: 'POST', headers: { 'Content-Type':'application/json','X-CSRF-TOKEN':CSRF },
+                body: JSON.stringify({ schoolclass_id: schoolclsId, total: totalRaw, cum }),
             });
             const data = await res.json();
             if (data.success) {
@@ -1265,25 +1142,18 @@ function updateRowGrades(row) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   VALIDATION
-   ══════════════════════════════════════════════════════════════════════ */
-function validateInput(inp) {
-    const max = parseFloat(inp.dataset.max) || 0;
-    const val = parseFloat(inp.value)       || 0;
-    inp.classList.toggle('is-invalid', val > max);
-    return val <= max;
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   SINGLE SCORE SAVE  — fires on blur (if changed) or Enter key
-   Updates all 4 position columns, cum, grade, GPA/CGPA in real time
+   SINGLE SCORE SAVE
+   Fires on blur (if value changed) or Enter key.
+   After the server responds:
+     • patches grades / cum / bf / GPA / CGPA for this student
+     • calls applyAllPositions() so EVERY row's positions update
    ══════════════════════════════════════════════════════════════════════ */
 function saveIndividualScore(input) {
     const row = input.closest('tr');
 
     fetch(window.routes.singleUpdate, {
         method : 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+        headers: { 'Content-Type':'application/json','X-CSRF-TOKEN':CSRF },
         body   : JSON.stringify({
             broadsheet_id   : input.dataset.id,
             assessment_id   : parseInt(input.dataset.field),
@@ -1298,64 +1168,41 @@ function saveIndividualScore(input) {
     })
     .then(r => r.json())
     .then(data => {
-        if (!data.success) {
-            showToast(data.message || 'Could not save.', 'warning');
-            return;
-        }
+        if (!data.success) { showToast(data.message || 'Could not save.', 'warning'); return; }
         const d = data.data;
 
-        // ── BF ────────────────────────────────────────────────────
+        // ── This student's row ────────────────────────────────────
         const bfBadge = row.querySelector('.bf-badge');
         if (bfBadge && d.bf != null) bfBadge.textContent = fmtN(d.bf);
 
-        // ── Cum ───────────────────────────────────────────────────
         const cumBadge = row.querySelector('.cum-badge');
         if (cumBadge && d.cum != null) {
             const cum = parseFloat(d.cum);
-            cumBadge.textContent  = fmtN(cum);
+            cumBadge.textContent = fmtN(cum);
             const cc = cum >= 70 ? 'success' : cum >= 50 ? 'info' : cum >= 40 ? 'warning' : 'danger';
-            cumBadge.className    = `badge fw-bold cum-badge bg-${cc}-subtle text-${cc}`;
+            cumBadge.className   = `badge fw-bold cum-badge bg-${cc}-subtle text-${cc}`;
             cumBadge.style.fontSize = '12px';
         }
 
-        // ── Total grade (from server, based on saved total) ───────
         const totalGradeBadge = row.querySelector('.grade-badge');
         if (totalGradeBadge && d.grade != null) applyGrade(totalGradeBadge, d.grade);
 
-        // ── Cum grade (client-side from returned cum) ─────────────
         const cumGradeBadge = row.querySelector('.cum-grade-badge');
         if (cumGradeBadge && d.cum != null) applyGrade(cumGradeBadge, clientGrade(parseFloat(d.cum)));
 
-        // ── GPA / CGPA ────────────────────────────────────────────
         const gpaBadge  = row.querySelector('.gpa-badge');
         const cgpaBadge = row.querySelector('.cgpa-badge');
         if (gpaBadge  && d.gpa  != null) gpaBadge.textContent  = fmtN(d.gpa,  2);
         if (cgpaBadge && d.cgpa != null) cgpaBadge.textContent = fmtN(d.cgpa, 2);
 
-        // ── All 4 position columns ────────────────────────────────
-        //  subject_position_class       → .position-badge        (all arms, by cum)
-        const posBadge = row.querySelector('.position-badge');
-        if (posBadge && d.subject_position_class != null)
-            posBadge.textContent = ord(d.subject_position_class);
-
-        //  subject_position_class_total → .position-total-badge  (all arms, by total)
-        const posTotalBadge = row.querySelector('.position-total-badge');
-        if (posTotalBadge && d.subject_position_class_total != null)
-            posTotalBadge.textContent = ord(d.subject_position_class_total);
-
-        //  arm_position                 → .arm-position-badge    (this arm, by total)
-        const armPosBadge = row.querySelector('.arm-position-badge');
-        if (armPosBadge && d.arm_position != null)
-            armPosBadge.textContent = ord(d.arm_position);
-
-        //  arm_position_cum             → .arm-position-cum-badge (this arm, by cum)
-        const armPosCumBadge = row.querySelector('.arm-position-cum-badge');
-        if (armPosCumBadge && d.arm_position_cum != null)
-            armPosCumBadge.textContent = ord(d.arm_position_cum);
-
-        // ── Visual saved flash ────────────────────────────────────
+        // ── Input saved flash ─────────────────────────────────────
         input.classList.add('is-saved');
         setTimeout(() => input.classList.remove('is-saved'), 2000);
+
+        // ── Patch positions for ALL rows via the results endpoint ─
+        // The server has already recomputed all four position columns
+        // in the DB; we fetch the fresh list and push it to the DOM.
+        refreshAllPositions();
     })
     .catch(err => {
         console.warn('singleUpdate error:', err.message);
@@ -1364,77 +1211,26 @@ function saveIndividualScore(input) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   SCORE INPUT TOOLTIP
+   REFRESH ALL POSITIONS  — fetches /results and patches every row
+   Lightweight: the results endpoint returns only what we need.
+   De-bounced with 120 ms so rapid entry doesn't hammer the server.
    ══════════════════════════════════════════════════════════════════════ */
-const tip      = document.getElementById('scoreTooltip');
-let   tipInput = null;
-let   tipHideTimer = null;
+let positionRefreshTimer = null;
 
-function tipPosition(inp) {
-    const r      = inp.getBoundingClientRect();
-    const tw     = 230;
-    const margin = 8;
-
-    let left = r.left + r.width / 2 - tw / 2;
-    left = Math.max(margin, Math.min(left, window.innerWidth - tw - margin));
-    tip.style.left = left + 'px';
-
-    tip.classList.remove('tip-above', 'tip-below');
-    if (r.top > 155) {
-        tip.style.top = (r.top + window.scrollY - 8) + 'px';
-        tip.classList.add('tip-above');
-    } else {
-        tip.style.top = (r.bottom + window.scrollY + 8) + 'px';
-        tip.classList.add('tip-below');
-    }
-}
-
-function tipRefresh(inp) {
-    if (!inp) return;
-    const row      = inp.closest('tr');
-    const val      = parseFloat(inp.value) || 0;
-    const max      = parseFloat(inp.dataset.max) || 100;
-    const asmtName = inp.dataset.assessmentName || 'Score';
-    let total = 0, totalMax = 0;
-    row.querySelectorAll('.score-input').forEach(i => {
-        total    += parseFloat(i.value)       || 0;
-        totalMax += parseFloat(i.dataset.max) || 0;
-    });
-    const grade = clientGrade(total);
-    const pct   = totalMax > 0 ? Math.min(total / totalMax * 100, 100) : 0;
-    const col   = GRADE_COLORS[grade] || '#6b7280';
-
-    document.getElementById('stAvatar').src       = row.dataset.avatar || '{{ asset("storage/student_avatars/unnamed.jpg") }}';
-    document.getElementById('stName').textContent  = row.dataset.name || '—';
-    document.getElementById('stMeta').textContent  = (row.dataset.admissionno || '—') + ' · ' + asmtName + ' (max ' + max + ')';
-    document.getElementById('stVal').textContent   = val % 1 === 0 ? String(val) : val.toFixed(1);
-    document.getElementById('stTotal').textContent = fmtN(total);
-    const gEl = document.getElementById('stGrade');
-    gEl.textContent = grade; gEl.style.color = col;
-    document.getElementById('stProgLabel').textContent = fmtN(total) + ' / ' + totalMax + ' marks';
-    document.getElementById('stProgPct').textContent   = Math.round(pct) + '%';
-    const fill = document.getElementById('stProgFill');
-    fill.style.width      = pct.toFixed(1) + '%';
-    fill.style.background = pct >= 70 ? '#16a34a' : pct >= 50 ? '#2563eb' : pct >= 40 ? '#d97706' : '#dc2626';
-
-    tipPosition(inp);
-}
-
-function tipShow(inp) {
-    clearTimeout(tipHideTimer);
-    tipInput           = inp;
-    tip.style.position = 'absolute';
-    tip.style.display  = 'block';
-    tipRefresh(inp);
-    requestAnimationFrame(() => { tip.style.opacity = '1'; });
-}
-
-function tipHide() {
-    tip.style.opacity = '0';
-    tipHideTimer = setTimeout(() => {
-        if (tip.style.opacity === '0') tip.style.display = 'none';
-    }, 160);
-    tipInput = null;
+function refreshAllPositions() {
+    clearTimeout(positionRefreshTimer);
+    positionRefreshTimer = setTimeout(() => {
+        fetch(window.routes.results, {
+            headers: { 'X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':CSRF },
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success && Array.isArray(data.scores)) {
+                applyAllPositions(data.scores);
+            }
+        })
+        .catch(() => {}); // silent — positions will be corrected on next save or page load
+    }, 120);
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -1442,94 +1238,66 @@ function tipHide() {
    ══════════════════════════════════════════════════════════════════════ */
 const SS_ARC_CIRC = 157.08;
 function ssEl(id) { return document.getElementById(id); }
-
 function ssResetIcons() {
-    ssEl('ssIconSave').style.display  = '';
-    ssEl('ssIconCheck').style.display = 'none';
-    ssEl('ssIconX').style.display     = 'none';
-    ssEl('ssCheckPath').style.strokeDashoffset = '22';
-    ssEl('ssCheckPath').classList.remove('drawn');
-    ssEl('ssIconCenter').style.background = 'rgba(30,58,95,0.09)';
-    ssEl('ssArcFg').style.stroke           = '#1e3a5f';
+    ssEl('ssIconSave').style.display  = ''; ssEl('ssIconCheck').style.display = 'none'; ssEl('ssIconX').style.display = 'none';
+    ssEl('ssCheckPath').style.strokeDashoffset = '22'; ssEl('ssCheckPath').classList.remove('drawn');
+    ssEl('ssIconCenter').style.background = 'rgba(30,58,95,0.09)'; ssEl('ssArcFg').style.stroke = '#1e3a5f';
 }
-function ssSetArc(pct) {
-    ssEl('ssArcFg').style.strokeDashoffset = (SS_ARC_CIRC * (1 - pct / 100)).toFixed(3);
-}
+function ssSetArc(pct) { ssEl('ssArcFg').style.strokeDashoffset = (SS_ARC_CIRC * (1 - pct / 100)).toFixed(3); }
 function ssOpen(total) {
     ssResetIcons(); ssSetArc(0);
-    ssEl('ssSaveFill').style.width      = '0%';
-    ssEl('ssSaveFill').style.background = '#1e3a5f';
-    ssEl('ssSaveTitle').textContent      = 'Saving scores';
-    ssEl('ssSaveSub').textContent        = 'Preparing…';
-    ssEl('ssSaveCountLabel').textContent = 'Saved';
-    ssEl('ssSaveCountNum').textContent   = `0 / ${total}`;
-    const o = ssEl('ssSaveOverlay');
-    o.classList.remove('ss-closing');
-    o.classList.add('ss-visible');
+    ssEl('ssSaveFill').style.width = '0%'; ssEl('ssSaveFill').style.background = '#1e3a5f';
+    ssEl('ssSaveTitle').textContent = 'Saving scores'; ssEl('ssSaveSub').textContent = 'Preparing…';
+    ssEl('ssSaveCountLabel').textContent = 'Saved'; ssEl('ssSaveCountNum').textContent = `0 / ${total}`;
+    const o = ssEl('ssSaveOverlay'); o.classList.remove('ss-closing'); o.classList.add('ss-visible');
 }
 function ssUpdate(saved, total, pct) {
-    ssEl('ssSaveFill').style.width     = pct.toFixed(1) + '%';
-    ssEl('ssSaveCountNum').textContent = `${saved} / ${total}`;
-    ssSetArc(pct);
+    ssEl('ssSaveFill').style.width = pct.toFixed(1) + '%'; ssEl('ssSaveCountNum').textContent = `${saved} / ${total}`; ssSetArc(pct);
     if      (pct < 25) ssEl('ssSaveSub').textContent = 'Uploading data…';
     else if (pct < 55) ssEl('ssSaveSub').textContent = 'Processing records…';
     else if (pct < 85) ssEl('ssSaveSub').textContent = 'Recalculating grades & positions…';
-    else               ssEl('ssSaveSub').textContent = 'Finalising…';
+    else               ssEl('ssSaveSub').textContent  = 'Finalising…';
 }
 function ssSuccess(total) {
-    ssEl('ssSaveFill').style.width      = '100%';
-    ssEl('ssSaveFill').style.background = '#16a34a';
-    ssEl('ssArcFg').style.strokeDashoffset = '0';
-    ssEl('ssArcFg').style.stroke           = '#16a34a';
+    ssEl('ssSaveFill').style.width = '100%'; ssEl('ssSaveFill').style.background = '#16a34a';
+    ssEl('ssArcFg').style.strokeDashoffset = '0'; ssEl('ssArcFg').style.stroke = '#16a34a';
     ssEl('ssIconCenter').style.background  = '#dcfce7';
-    ssEl('ssIconSave').style.display       = 'none';
-    ssEl('ssIconCheck').style.display      = '';
+    ssEl('ssIconSave').style.display = 'none'; ssEl('ssIconCheck').style.display = '';
     requestAnimationFrame(() => ssEl('ssCheckPath').classList.add('drawn'));
-    ssEl('ssSaveTitle').textContent    = 'All saved';
-    ssEl('ssSaveSub').textContent      = `${total} score${total !== 1 ? 's' : ''} saved successfully`;
+    ssEl('ssSaveTitle').textContent = 'All saved';
+    ssEl('ssSaveSub').textContent   = `${total} score${total !== 1 ? 's' : ''} saved successfully`;
     ssEl('ssSaveCountNum').textContent = `${total} / ${total}`;
     setTimeout(ssClose, 1900);
 }
 function ssError(msg) {
-    ssEl('ssSaveFill').style.background  = '#dc2626';
-    ssEl('ssArcFg').style.stroke         = '#dc2626';
+    ssEl('ssSaveFill').style.background  = '#dc2626'; ssEl('ssArcFg').style.stroke = '#dc2626';
     ssEl('ssIconCenter').style.background = '#fee2e2';
-    ssEl('ssIconSave').style.display      = 'none';
-    ssEl('ssIconX').style.display         = '';
-    ssEl('ssSaveTitle').textContent = 'Save failed';
-    ssEl('ssSaveSub').textContent   = msg || 'Something went wrong.';
+    ssEl('ssIconSave').style.display = 'none'; ssEl('ssIconX').style.display = '';
+    ssEl('ssSaveTitle').textContent = 'Save failed'; ssEl('ssSaveSub').textContent = msg || 'Something went wrong.';
     setTimeout(ssClose, 2400);
 }
 function ssClose() {
-    const o = ssEl('ssSaveOverlay');
-    o.classList.add('ss-closing');
-    setTimeout(() => o.classList.remove('ss-visible', 'ss-closing'), 260);
+    const o = ssEl('ssSaveOverlay'); o.classList.add('ss-closing');
+    setTimeout(() => o.classList.remove('ss-visible','ss-closing'), 260);
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   BULK SAVE  — saves all rows + updates all 4 position columns
+   BULK SAVE  — saves all rows, then patches the whole table
    ══════════════════════════════════════════════════════════════════════ */
 function bulkSave() {
     const invalid = document.querySelectorAll('.score-input.is-invalid').length;
-    if (invalid) {
-        Swal.fire({ icon:'warning', title:'Invalid Scores', text:`${invalid} score(s) exceed their maximum.` });
-        return;
-    }
+    if (invalid) { Swal.fire({ icon:'warning', title:'Invalid Scores', text:`${invalid} score(s) exceed their maximum.` }); return; }
 
     const scores = [];
     document.querySelectorAll('#scoresheetTableBody tr[data-id]').forEach(row => {
         const assessments = {};
-        row.querySelectorAll('.score-input').forEach(inp => {
-            assessments[inp.dataset.field] = parseFloat(inp.value) || 0;
-        });
+        row.querySelectorAll('.score-input').forEach(inp => { assessments[inp.dataset.field] = parseFloat(inp.value) || 0; });
         if (Object.keys(assessments).length) scores.push({ id: row.dataset.id, assessments });
     });
     if (!scores.length) return;
 
     const total = scores.length;
     ssOpen(total);
-
-    // Fake progress until server responds
     let fakeProgress = 0;
     const fakeIv = setInterval(() => {
         fakeProgress = Math.min(fakeProgress + Math.random() * 4 + 2, 88);
@@ -1542,26 +1310,21 @@ function bulkSave() {
 
     fetch(window.routes.bulkUpdate, {
         method : 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+        headers: { 'Content-Type':'application/json','X-CSRF-TOKEN':CSRF },
         body   : JSON.stringify({
-            scores,
-            term_id         : window.term_id,
-            session_id      : window.session_id,
-            subjectclass_id : window.subjectclass_id,
-            staff_id        : window.staff_id,
-            schoolclass_id  : window.schoolclass_id,
-            is_sub          : false,
+            scores, term_id: window.term_id, session_id: window.session_id,
+            subjectclass_id: window.subjectclass_id, staff_id: window.staff_id,
+            schoolclass_id: window.schoolclass_id, is_sub: false,
         }),
     })
     .then(r => r.json())
     .then(data => {
         clearInterval(fakeIv);
         if (!data.success) { ssError(data.message || 'Server error.'); return; }
-
         ssUpdate(total, total, 100);
         setTimeout(() => ssSuccess(total), 220);
 
-        // ── Update every row from server response ─────────────────
+        // ── Patch every row from the server response ──────────────
         (data.data?.broadsheets ?? []).forEach(bs => {
             const row = document.querySelector(`#scoresheetTableBody tr[data-id="${bs.id}"]`);
             if (!row) return;
@@ -1608,38 +1371,18 @@ function bulkSave() {
             if (gb)    gb.textContent    = fmtN(bs.gpa,  2);
             if (cgpab) cgpab.textContent = fmtN(bs.cgpa, 2);
 
-            // ── All 4 position columns ────────────────────────────
-            //  subject_position_class       → .position-badge        (all arms, by cum)
-            const pb = row.querySelector('.position-badge');
-            if (pb && bs.position != null) pb.textContent = ord(bs.position);
-
-            //  subject_position_class_total → .position-total-badge  (all arms, by total)
-            const ptb = row.querySelector('.position-total-badge');
-            if (ptb && bs.position_total != null) ptb.textContent = ord(bs.position_total);
-
-            //  arm_position                 → .arm-position-badge    (this arm, by total)
-            const apb = row.querySelector('.arm-position-badge');
-            if (apb && bs.arm_position != null) apb.textContent = ord(bs.arm_position);
-
-            //  arm_position_cum             → .arm-position-cum-badge (this arm, by cum)
-            const apcb = row.querySelector('.arm-position-cum-badge');
-            if (apcb && bs.arm_position_cum != null) apcb.textContent = ord(bs.arm_position_cum);
-
-            // Saved flash on inputs
+            // Input saved flash
             row.querySelectorAll('.score-input').forEach(i => {
                 i.classList.add('is-saved');
                 setTimeout(() => i.classList.remove('is-saved'), 2000);
             });
         });
+
+        // ── Patch ALL four position columns for every row ─────────
+        applyAllPositions(data.data?.broadsheets ?? []);
     })
-    .catch(err => {
-        clearInterval(fakeIv);
-        ssError('Please check your connection and try again.');
-        console.error(err);
-    })
-    .finally(() => {
-        if (btn) { btn.disabled = false; btn.innerHTML = origHtml || '<i class="ri-save-line me-1"></i>Save All Scores'; }
-    });
+    .catch(err => { clearInterval(fakeIv); ssError('Please check your connection and try again.'); console.error(err); })
+    .finally(() => { if (btn) { btn.disabled = false; btn.innerHTML = origHtml || '<i class="ri-save-line me-1"></i>Save All Scores'; } });
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -1652,32 +1395,20 @@ function startPdfDownload(url, filename, label) {
     if (cont) cont.style.display = 'block';
     if (bar)  bar.style.width    = '10%';
     if (lbl)  lbl.textContent    = label || 'Downloading…';
-
-    fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF } })
+    fetch(url, { headers: { 'X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':CSRF } })
     .then(async r => {
-        if (!r.ok) {
-            const e = await r.json().catch(() => ({}));
-            throw new Error(e.message || 'Download failed.');
-        }
+        if (!r.ok) { const e = await r.json().catch(()=>({})); throw new Error(e.message || 'Download failed.'); }
         if (bar) bar.style.width = '90%';
         return r.blob();
     })
     .then(blob => {
         if (bar) bar.style.width = '100%';
-        const a = document.createElement('a');
-        a.href     = URL.createObjectURL(blob);
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(a.href);
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(a.href);
         showToast('Downloaded successfully!', 'success');
     })
     .catch(err => Swal.fire({ icon:'error', title:'Download Failed', text: err.message }))
-    .finally(() => setTimeout(() => {
-        if (cont) cont.style.display = 'none';
-        if (bar)  bar.style.width    = '0%';
-    }, 1200));
+    .finally(() => setTimeout(() => { if (cont) cont.style.display='none'; if (bar) bar.style.width='0%'; }, 1200));
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -1685,18 +1416,14 @@ function startPdfDownload(url, filename, label) {
    ══════════════════════════════════════════════════════════════════════ */
 document.addEventListener('DOMContentLoaded', function () {
 
-    /* Bootstrap tooltips */
     document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => new bootstrap.Tooltip(el));
 
-    /* Image view modal */
     document.getElementById('imageViewModal')?.addEventListener('show.bs.modal', function(e) {
-        const src = e.relatedTarget?.dataset?.image
-                 || e.relatedTarget?.getAttribute('data-image');
-        document.getElementById('enlargedImage').src =
-            src || '{{ asset("storage/student_avatars/unnamed.jpg") }}';
+        const src = e.relatedTarget?.dataset?.image || e.relatedTarget?.getAttribute('data-image');
+        document.getElementById('enlargedImage').src = src || '{{ asset("storage/student_avatars/unnamed.jpg") }}';
     });
 
-    /* Column visibility toggles */
+    // Column visibility
     document.querySelectorAll('.col-toggle').forEach(cb => {
         cb.addEventListener('change', function () {
             document.querySelectorAll(`th.${this.dataset.col}, td.${this.dataset.col}`)
@@ -1704,7 +1431,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     });
 
-    /* ── Search / filter ──────────────────────────────────────────── */
+    // Search
     function applySearch() {
         const q = (document.getElementById('searchInput')?.value ?? '').trim().toLowerCase();
         let vis = 0;
@@ -1715,19 +1442,15 @@ document.addEventListener('DOMContentLoaded', function () {
             row.style.display = show ? '' : 'none';
             if (show) vis++;
         });
-        const sc = document.getElementById('scoreCount');
-        if (sc) sc.textContent = vis;
-        const nd = document.getElementById('noDataAlert');
-        if (nd) nd.style.display = vis === 0 ? 'block' : 'none';
+        const sc = document.getElementById('scoreCount'); if (sc) sc.textContent = vis;
+        const nd = document.getElementById('noDataAlert'); if (nd) nd.style.display = vis === 0 ? 'block' : 'none';
     }
     document.getElementById('searchInput')?.addEventListener('input', applySearch);
     document.getElementById('clearSearch')?.addEventListener('click', () => {
-        const si = document.getElementById('searchInput');
-        if (si) si.value = '';
-        applySearch();
+        const si = document.getElementById('searchInput'); if (si) si.value = ''; applySearch();
     });
 
-    /* ── Select all / clear checkboxes ───────────────────────────── */
+    // Checkboxes
     document.getElementById('checkAll')?.addEventListener('change', function () {
         document.querySelectorAll('.score-checkbox').forEach(cb => cb.checked = this.checked);
     });
@@ -1736,34 +1459,26 @@ document.addEventListener('DOMContentLoaded', function () {
         const all = document.querySelectorAll('.score-checkbox');
         const chk = document.querySelectorAll('.score-checkbox:checked');
         const ca  = document.getElementById('checkAll');
-        if (ca) {
-            ca.checked       = chk.length === all.length && all.length > 0;
-            ca.indeterminate = chk.length > 0 && chk.length < all.length;
-        }
+        if (ca) { ca.checked = chk.length === all.length && all.length > 0; ca.indeterminate = chk.length > 0 && chk.length < all.length; }
     });
     document.getElementById('selectAllScores')?.addEventListener('click', () => {
-        const ca = document.getElementById('checkAll');
-        if (ca) ca.checked = true;
+        const ca = document.getElementById('checkAll'); if (ca) ca.checked = true;
         document.querySelectorAll('.score-checkbox').forEach(cb => cb.checked = true);
     });
     document.getElementById('clearAllScores')?.addEventListener('click', () => {
-        const ca = document.getElementById('checkAll');
-        if (ca) ca.checked = false;
+        const ca = document.getElementById('checkAll'); if (ca) ca.checked = false;
         document.querySelectorAll('.score-checkbox').forEach(cb => cb.checked = false);
     });
 
     /* ── Score inputs ────────────────────────────────────────────── */
     document.querySelectorAll('.score-input').forEach(inp => {
 
-        inp.addEventListener('focus', function () {
-            this.select();
-            tipShow(this);
-        });
+        inp.addEventListener('focus', function () { this.select(); tipShow(this); });
 
         inp.addEventListener('input', function () {
             validateInput(this);
             const row = this.closest('tr');
-            if (row) updateRowGrades(row);
+            if (row) updateRowGrades(row);    // live total/grade/cum preview
             if (tipInput === this) tipRefresh(this);
         });
 
@@ -1774,7 +1489,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const curr = parseFloat(this.value)            || 0;
             if (Math.abs(curr - orig) > 0.001) {
                 this.dataset.original = this.value;
-                saveIndividualScore(this);   // ← positions update here too
+                saveIndividualScore(this);   // saves + refreshes ALL positions
             }
         });
 
@@ -1783,163 +1498,110 @@ document.addEventListener('DOMContentLoaded', function () {
             if (e.key !== 'Enter')  return;
             e.preventDefault();
             if (validateInput(this)) saveIndividualScore(this);
-            // Move to next input
             const all = Array.from(document.querySelectorAll('.score-input'));
             const idx = all.indexOf(this);
             if (idx < all.length - 1) all[idx + 1].focus();
         });
     });
 
-    /* ── Keyboard shortcuts ──────────────────────────────────────── */
+    // Keyboard shortcuts
     document.addEventListener('keydown', e => {
         if (e.key === 'Escape' && tipInput) { tipHide(); document.activeElement?.blur(); return; }
         if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); bulkSave(); }
     });
 
-    /* ── Bulk save button ────────────────────────────────────────── */
     document.getElementById('bulkUpdateScores')?.addEventListener('click', bulkSave);
 
-    /* ── Delete selected ─────────────────────────────────────────── */
+    // Delete selected
     document.getElementById('deleteSelectedScoresBtn')?.addEventListener('click', function () {
         const ids = Array.from(document.querySelectorAll('.score-checkbox:checked')).map(cb => cb.dataset.id);
-        if (!ids.length) {
-            Swal.fire({ icon:'warning', title:'No Selection', text:'Select rows to delete.' });
-            return;
-        }
-        Swal.fire({
-            title: 'Delete selected scores?', text: 'This cannot be undone.',
-            icon: 'warning', showCancelButton: true,
-            confirmButtonColor: '#dc2626', confirmButtonText: 'Yes, delete',
-        })
+        if (!ids.length) { Swal.fire({ icon:'warning', title:'No Selection', text:'Select rows to delete.' }); return; }
+        Swal.fire({ title:'Delete selected scores?', text:'This cannot be undone.', icon:'warning',
+            showCancelButton:true, confirmButtonColor:'#dc2626', confirmButtonText:'Yes, delete' })
         .then(r => {
             if (!r.isConfirmed) return;
             Promise.all(ids.map(id =>
                 fetch(window.routes.destroy.replace('__ID__', id), {
-                    method: 'DELETE',
-                    headers: { 'X-CSRF-TOKEN': CSRF },
+                    method: 'DELETE', headers: { 'X-CSRF-TOKEN': CSRF }
                 }).then(r => r.json())
             ))
             .then(results => {
                 let deleted = 0;
                 results.forEach((res, i) => {
-                    if (res.success) {
-                        document.querySelector(`tr[data-id="${ids[i]}"]`)?.remove();
-                        deleted++;
-                    }
+                    if (res.success) { document.querySelector(`tr[data-id="${ids[i]}"]`)?.remove(); deleted++; }
                 });
                 showToast(`${deleted} score(s) deleted.`, 'success');
-                if (!document.querySelectorAll('#scoresheetTableBody tr[data-id]').length)
-                    location.reload();
+                if (!document.querySelectorAll('#scoresheetTableBody tr[data-id]').length) location.reload();
+                else refreshAllPositions(); // recompute positions after deletion
             });
         });
     });
 
-    /* ── Recalculate All Positions button ────────────────────────── */
+    // Recalculate All Positions
     document.getElementById('updateArmPositionsBtn')?.addEventListener('click', async function () {
         if (!window.schoolclass_id || !window.term_id || !window.session_id) {
-            Swal.fire({ icon:'warning', title:'Missing Data', text:'Please refresh the page and try again.' });
-            return;
+            Swal.fire({ icon:'warning', title:'Missing Data', text:'Please refresh the page and try again.' }); return;
         }
-        const btn      = this;
-        const origHtml = btn.innerHTML;
-        btn.disabled   = true;
-        btn.innerHTML  = '<i class="ri-loader-4-line spin"></i> Recalculating…';
-
+        const btn = this, origHtml = btn.innerHTML;
+        btn.disabled = true; btn.innerHTML = '<i class="ri-loader-4-line spin"></i> Recalculating…';
         try {
             const response = await fetch(window.routes.updateArmPositions, {
-                method : 'POST',
-                headers: { 'Content-Type':'application/json', 'X-CSRF-TOKEN':CSRF, 'Accept':'application/json' },
-                body   : JSON.stringify({
-                    schoolclass_id: window.schoolclass_id,
-                    term_id       : window.term_id,
-                    session_id    : window.session_id,
-                }),
+                method:'POST', headers:{'Content-Type':'application/json','X-CSRF-TOKEN':CSRF,'Accept':'application/json'},
+                body: JSON.stringify({ schoolclass_id: window.schoolclass_id, term_id: window.term_id, session_id: window.session_id }),
             });
             const data = await response.json();
             if (data.success) {
-                Swal.fire({
-                    icon: 'success', title: 'Positions Updated!',
-                    html: data.message, timer: 3000, showConfirmButton: true,
-                }).then(() => location.reload());
+                // Reload fresh positions from DB after recalculation
+                await fetch(window.routes.results, { headers:{'X-Requested-With':'XMLHttpRequest','X-CSRF-TOKEN':CSRF} })
+                    .then(r => r.json())
+                    .then(d => { if (d.success && Array.isArray(d.scores)) applyAllPositions(d.scores); });
+                Swal.fire({ icon:'success', title:'Positions Updated!', html: data.message, timer:3000, showConfirmButton:true });
             } else {
                 Swal.fire({ icon:'error', title:'Update Failed', text: data.message });
             }
         } catch (error) {
-            console.error('Error updating positions:', error);
             Swal.fire({ icon:'error', title:'Error', text:'Network error while updating positions.' });
         } finally {
-            btn.disabled  = false;
-            btn.innerHTML = origHtml;
+            btn.disabled = false; btn.innerHTML = origHtml;
         }
     });
 
-    /* ── PDF downloads ───────────────────────────────────────────── */
+    // PDF downloads
     document.getElementById('downloadMarksSheet')?.addEventListener('click', () =>
         startPdfDownload(window.routes.downloadMarksSheet, 'marks-sheet.pdf', 'Generating Marks Sheet…'));
     document.getElementById('downloadScoresPdf')?.addEventListener('click',  () =>
         startPdfDownload(window.routes.downloadScoresPdf,  'scores-sheet.pdf','Generating Scores PDF…'));
 
-    /* ── Excel export ────────────────────────────────────────────── */
+    // Excel export
     document.getElementById('downloadExcel')?.addEventListener('click', () => {
-        const btn      = document.getElementById('downloadExcel');
-        const origHtml = btn?.innerHTML;
+        const btn = document.getElementById('downloadExcel'), origHtml = btn?.innerHTML;
         if (btn) { btn.disabled = true; btn.innerHTML = '<i class="ri-loader-4-line"></i> Generating…'; }
-
         fetch(window.routes.export, {
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            },
+            headers: { 'X-Requested-With':'XMLHttpRequest','Accept':'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }
         })
-        .then(r => {
-            const cd = r.headers.get('content-disposition') || '';
-            const m  = cd.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
-            const fn = m ? m[1].replace(/['"]/g, '') : 'scoresheet.xlsx';
-            return r.blob().then(b => ({ blob: b, filename: fn }));
-        })
-        .then(({ blob, filename }) => {
-            const a = document.createElement('a');
-            a.href     = URL.createObjectURL(blob);
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            showToast('Excel downloaded. File may be password-protected.', 'success');
-        })
+        .then(r => { const cd=r.headers.get('content-disposition')||'',m=cd.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/),fn=m?m[1].replace(/['"]/g,''):'scoresheet.xlsx'; return r.blob().then(b=>({blob:b,filename:fn})); })
+        .then(({blob,filename}) => { const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); showToast('Excel downloaded. File may be password-protected.','success'); })
         .catch(err => Swal.fire({ icon:'error', title:'Download Failed', text: err.message }))
-        .finally(() => { if (btn) { btn.disabled = false; btn.innerHTML = origHtml; } });
+        .finally(() => { if (btn) { btn.disabled=false; btn.innerHTML=origHtml; } });
     });
 
-    /* ── Import form ─────────────────────────────────────────────── */
+    // Import form
     document.getElementById('importForm')?.addEventListener('submit', function (e) {
         e.preventDefault();
         const file = this.querySelector('input[name="file"]');
-        if (!file?.files?.length) {
-            Swal.fire({ icon:'warning', title:'No File', text:'Please select an Excel file.' });
-            return;
-        }
-        const btn      = document.getElementById('importSubmit');
-        const loader   = document.getElementById('importLoader');
-        const bar      = document.getElementById('uploadProgressBar');
-        const origHtml = btn?.innerHTML;
-        if (btn)    { btn.disabled = true; btn.innerHTML = '<i class="ri-loader-4-line"></i> Uploading…'; }
-        if (loader)   loader.style.display = 'block';
-        if (bar)      bar.style.width      = '10%';
-
+        if (!file?.files?.length) { Swal.fire({ icon:'warning', title:'No File', text:'Please select an Excel file.' }); return; }
+        const btn=document.getElementById('importSubmit'), loader=document.getElementById('importLoader'),
+              bar=document.getElementById('uploadProgressBar'), origHtml=btn?.innerHTML;
+        if (btn) { btn.disabled=true; btn.innerHTML='<i class="ri-loader-4-line"></i> Uploading…'; }
+        if (loader) loader.style.display='block'; if (bar) bar.style.width='10%';
         fetch(window.routes.import, {
-            method : 'POST',
-            headers: { 'X-CSRF-TOKEN': CSRF, 'X-Requested-With': 'XMLHttpRequest' },
-            body   : new FormData(this),
+            method:'POST', headers:{'X-CSRF-TOKEN':CSRF,'X-Requested-With':'XMLHttpRequest'}, body: new FormData(this)
         })
         .then(r => r.json())
         .then(data => {
             if (bar) bar.style.width = '100%';
             if (data.success || data.warning) {
-                Swal.fire({
-                    icon: data.warning ? 'warning' : 'success',
-                    title: data.warning ? 'Partial Success' : 'Imported!',
-                    text: data.message, timer: 2500, showConfirmButton: false,
-                });
+                Swal.fire({ icon:data.warning?'warning':'success', title:data.warning?'Partial Success':'Imported!', text:data.message, timer:2500, showConfirmButton:false });
                 bootstrap.Modal.getInstance(document.getElementById('importModal'))?.hide();
                 setTimeout(() => location.reload(), 2600);
             } else {
@@ -1948,27 +1610,24 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .catch(err => Swal.fire({ icon:'error', title:'Upload Error', text: err.message }))
         .finally(() => {
-            setTimeout(() => { if (loader) loader.style.display='none'; if (bar) bar.style.width='0%'; }, 1000);
-            if (btn)  { btn.disabled = false; btn.innerHTML = origHtml || 'Upload'; }
-            if (file) file.value = '';
+            setTimeout(() => { if(loader) loader.style.display='none'; if(bar) bar.style.width='0%'; }, 1000);
+            if (btn) { btn.disabled=false; btn.innerHTML=origHtml||'Upload'; }
+            if (file) file.value='';
         });
     });
 
-    /* ── Apple-style staggered row entrance ──────────────────────── */
+    // Apple-style staggered row entrance
     (function initRowEntrance() {
         const rows = Array.from(document.querySelectorAll('#scoresheetTableBody tr[data-id]'));
         if (!rows.length) return;
         if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-            rows.forEach(r => r.classList.add('row-visible'));
-            return;
+            rows.forEach(r => r.classList.add('row-visible')); return;
         }
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (!entry.isIntersecting) return;
-                const row   = entry.target;
-                const index = rows.indexOf(row);
-                const delay = Math.min(index * 38, 15 * 38) + 60;
-                setTimeout(() => row.classList.add('row-visible'), delay);
+                const row = entry.target, index = rows.indexOf(row);
+                setTimeout(() => row.classList.add('row-visible'), Math.min(index * 38, 15 * 38) + 60);
                 observer.unobserve(row);
             });
         }, { threshold: 0.05, rootMargin: '0px 0px -20px 0px' });
@@ -1977,11 +1636,65 @@ document.addEventListener('DOMContentLoaded', function () {
 
 }); // end DOMContentLoaded
 
-/* ── SweetAlert2 lazy load (fallback) ─────────────────────────────── */
+/* ══════════════════════════════════════════════════════════════════════
+   SCORE INPUT TOOLTIP
+   ══════════════════════════════════════════════════════════════════════ */
+const tip      = document.getElementById('scoreTooltip');
+let   tipInput = null;
+let   tipHideTimer = null;
+
+function tipPosition(inp) {
+    const r = inp.getBoundingClientRect(), tw = 230, margin = 8;
+    let left = r.left + r.width / 2 - tw / 2;
+    left = Math.max(margin, Math.min(left, window.innerWidth - tw - margin));
+    tip.style.left = left + 'px';
+    tip.classList.remove('tip-above', 'tip-below');
+    if (r.top > 155) {
+        tip.style.top = (r.top + window.scrollY - 8) + 'px'; tip.classList.add('tip-above');
+    } else {
+        tip.style.top = (r.bottom + window.scrollY + 8) + 'px'; tip.classList.add('tip-below');
+    }
+}
+
+function tipRefresh(inp) {
+    if (!inp) return;
+    const row = inp.closest('tr');
+    const val = parseFloat(inp.value) || 0, max = parseFloat(inp.dataset.max) || 100;
+    const asmtName = inp.dataset.assessmentName || 'Score';
+    let total = 0, totalMax = 0;
+    row.querySelectorAll('.score-input').forEach(i => { total += parseFloat(i.value)||0; totalMax += parseFloat(i.dataset.max)||0; });
+    const grade = clientGrade(total);
+    const pct   = totalMax > 0 ? Math.min(total / totalMax * 100, 100) : 0;
+    const col   = GRADE_COLORS[grade] || '#6b7280';
+
+    document.getElementById('stAvatar').src         = row.dataset.avatar || '{{ asset("storage/student_avatars/unnamed.jpg") }}';
+    document.getElementById('stName').textContent   = row.dataset.name || '—';
+    document.getElementById('stMeta').textContent   = (row.dataset.admissionno || '—') + ' · ' + asmtName + ' (max ' + max + ')';
+    document.getElementById('stVal').textContent    = val % 1 === 0 ? String(val) : val.toFixed(1);
+    document.getElementById('stTotal').textContent  = fmtN(total);
+    const gEl = document.getElementById('stGrade'); gEl.textContent = grade; gEl.style.color = col;
+    document.getElementById('stProgLabel').textContent = fmtN(total) + ' / ' + totalMax + ' marks';
+    document.getElementById('stProgPct').textContent   = Math.round(pct) + '%';
+    const fill = document.getElementById('stProgFill');
+    fill.style.width = pct.toFixed(1) + '%';
+    fill.style.background = pct >= 70 ? '#16a34a' : pct >= 50 ? '#2563eb' : pct >= 40 ? '#d97706' : '#dc2626';
+    tipPosition(inp);
+}
+
+function tipShow(inp) {
+    clearTimeout(tipHideTimer); tipInput = inp;
+    tip.style.position = 'absolute'; tip.style.display = 'block';
+    tipRefresh(inp); requestAnimationFrame(() => { tip.style.opacity = '1'; });
+}
+function tipHide() {
+    tip.style.opacity = '0';
+    tipHideTimer = setTimeout(() => { if (tip.style.opacity === '0') tip.style.display = 'none'; }, 160);
+    tipInput = null;
+}
+
+/* SweetAlert2 lazy load */
 if (typeof Swal === 'undefined') {
-    const s = document.createElement('script');
-    s.src   = 'https://cdn.jsdelivr.net/npm/sweetalert2@11';
-    document.head.appendChild(s);
+    const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/sweetalert2@11'; document.head.appendChild(s);
 }
 </script>
 @endsection
