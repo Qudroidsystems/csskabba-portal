@@ -23,9 +23,10 @@ class ClassTeacherController extends Controller
         $this->middleware('permission:Delete class-teacher', ['only' => ['destroy', 'deleteMultiple']]);
     }
 
-    /**
-     * Display the index page.
-     */
+    // =========================================================================
+    // INDEX
+    // =========================================================================
+
     public function index(Request $request)
     {
         $pagetitle = "Class Teacher Management";
@@ -39,480 +40,464 @@ class ClassTeacherController extends Controller
             $q->where('name', '!=', 'Student');
         })->get(['users.id as userid', 'users.name as name', 'users.avatar as avatar']);
 
-        $schoolterms = Schoolterm::all();
+        $schoolterms    = Schoolterm::all();
         $schoolsessions = Schoolsession::all();
 
         return view('classteacher.index')
-            ->with('schoolclass', $schoolclass)
+            ->with('schoolclass',     $schoolclass)
             ->with('subjectteachers', $subjectteachers)
-            ->with('schoolterms', $schoolterms)
-            ->with('schoolsessions', $schoolsessions)
-            ->with('pagetitle', $pagetitle);
+            ->with('schoolterms',     $schoolterms)
+            ->with('schoolsessions',  $schoolsessions)
+            ->with('pagetitle',       $pagetitle);
     }
 
-    /**
-     * DataTables AJAX data endpoint with UTF-8 handling.
-     */
+    // =========================================================================
+    // DATATABLE — AJAX
+    // =========================================================================
+
     public function data(Request $request)
     {
-        $assignments = ClassTeacher::leftJoin('users', 'users.id', '=', 'classteacher.staffid')
-            ->leftJoin('schoolclass', 'schoolclass.id', '=', 'classteacher.schoolclassid')
-            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->leftJoin('schoolterm', 'schoolterm.id', '=', 'classteacher.termid')
+        $assignments = ClassTeacher::leftJoin('users',        'users.id',        '=', 'classteacher.staffid')
+            ->leftJoin('schoolclass',   'schoolclass.id',   '=', 'classteacher.schoolclassid')
+            ->leftJoin('schoolarm',     'schoolarm.id',     '=', 'schoolclass.arm')
+            ->leftJoin('schoolterm',    'schoolterm.id',    '=', 'classteacher.termid')
             ->leftJoin('schoolsession', 'schoolsession.id', '=', 'classteacher.sessionid')
             ->select([
-                'classteacher.id as id',
-                'users.id as staffid',
-                'users.name as staffname',
-                'users.avatar as avatar',
+                'classteacher.id       as id',
+                'users.id              as staffid',
+                'users.name            as staffname',
+                'users.avatar          as avatar',
                 'schoolclass.schoolclass as schoolclass',
-                'schoolarm.arm as schoolarm',
-                'schoolterm.id as termid',
-                'schoolterm.term as term',
-                'schoolsession.id as sessionid',
+                'schoolarm.arm         as schoolarm',
+                'schoolterm.id         as termid',
+                'schoolterm.term       as term',
+                'schoolsession.id      as sessionid',
                 'schoolsession.session as session',
-                'classteacher.updated_at as updated_at'
+                'classteacher.updated_at as updated_at',
             ]);
 
         return DataTables::of($assignments)
             ->addIndexColumn()
+
+            // ── Teacher cell ──────────────────────────────────────────────
             ->addColumn('teacher_info', function ($row) {
-                // Clean and encode UTF-8 properly
                 $staffname = $this->cleanUtf8String($row->staffname ?? 'Unknown');
 
-                // Handle avatar image
-                $avatarUrl = null;
-                $initials = mb_strtoupper(mb_substr($staffname, 0, 2, 'UTF-8'), 'UTF-8');
+                // Resolve avatar URL — same multi-path logic as original
+                $avatarUrl  = null;
+                $hasImage   = false;
 
-                // Check if avatar exists and is not default
-                if ($row->avatar && !in_array($row->avatar, ['unnamed.jpg', 'unnamed.png', null, ''])) {
-                    // Try multiple possible storage paths
-                    $possiblePaths = [
-                        'public/staff_avatars/' . $row->avatar,
-                        'public/images/staffavatar/' . $row->avatar,
-                        'public/staffavatar/' . $row->avatar,
+                $avatar = $row->avatar ?? '';
+                $isDefault = in_array($avatar, ['unnamed.jpg', 'unnamed.png', '', null], true);
+
+                if (!$isDefault) {
+                    $paths = [
+                        'public/staff_avatars/'        . $avatar,
+                        'public/images/staffavatar/'   . $avatar,
+                        'public/staffavatar/'          . $avatar,
                     ];
 
-                    foreach ($possiblePaths as $path) {
+                    foreach ($paths as $path) {
                         if (Storage::exists($path)) {
                             $avatarUrl = Storage::url($path);
+                            $hasImage  = true;
                             break;
                         }
                     }
 
-                    // Also check public directory directly
-                    if (!$avatarUrl && file_exists(public_path('storage/staff_avatars/' . $row->avatar))) {
-                        $avatarUrl = asset('storage/staff_avatars/' . $row->avatar);
-                    }
-                    if (!$avatarUrl && file_exists(public_path('storage/images/staffavatar/' . $row->avatar))) {
-                        $avatarUrl = asset('storage/images/staffavatar/' . $row->avatar);
+                    // Fallback: check public/storage directly
+                    if (!$hasImage) {
+                        $publicPaths = [
+                            public_path('storage/staff_avatars/'      . $avatar),
+                            public_path('storage/images/staffavatar/' . $avatar),
+                        ];
+                        foreach ($publicPaths as $i => $pp) {
+                            if (file_exists($pp)) {
+                                $avatarUrl = $i === 0
+                                    ? asset('storage/staff_avatars/'      . $avatar)
+                                    : asset('storage/images/staffavatar/' . $avatar);
+                                $hasImage  = true;
+                                break;
+                            }
+                        }
                     }
                 }
 
-                if ($avatarUrl) {
-                    $avatarHtml = '<img src="' . e($avatarUrl) . '"
-                                   alt="' . e($staffname) . '"
-                                   class="teacher-avatar"
-                                   style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; cursor: pointer; border: 2px solid #e2e8f0;"
-                                   data-teacher-name="' . e($staffname) . '">';
+                // Common data-* attributes used by the blade's JS zoom handler
+                $dataAttrs = 'data-staffname="' . e($staffname) . '" '
+                           . 'data-image="'     . e($avatarUrl ?? '') . '" '
+                           . 'data-has-image="' . ($hasImage ? 'true' : 'false') . '"';
+
+                if ($hasImage) {
+                    // Real photo: <img> styled exactly like subjectteacher blade
+                    $avatarHtml = '<img src="' . e($avatarUrl) . '" '
+                        . 'alt="' . e($staffname) . '" '
+                        . 'class="teacher-avatar ct-avatar-trigger" '
+                        . $dataAttrs . ' '
+                        . 'onerror="this.onerror=null;this.src=\'' . asset('storage/staff_avatars/unnamed.jpg') . '\'">';
                 } else {
-                    $avatarHtml = '<div class="avatar-placeholder"
-                                   style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 600; font-size: 16px; cursor: pointer; border: 2px solid #e2e8f0;"
-                                   data-teacher-name="' . e($staffname) . '">' . e($initials) . '</div>';
+                    // No photo: initials bubble
+                    $words    = preg_split('/\s+/', trim($staffname));
+                    $initials = '';
+                    foreach (array_slice($words, 0, 2) as $w) {
+                        $initials .= mb_strtoupper(mb_substr($w, 0, 1, 'UTF-8'), 'UTF-8');
+                    }
+                    $avatarHtml = '<div class="avatar-initials ct-avatar-trigger" ' . $dataAttrs . '>'
+                        . e($initials)
+                        . '</div>';
                 }
 
-                return '<div class="d-flex align-items-center gap-2">
-                            ' . $avatarHtml . '
-                            <div class="fw-semibold text-dark">' . e($staffname) . '</div>
-                        </div>';
+                return '<div class="d-flex align-items-center gap-2">'
+                    . $avatarHtml
+                    . '<span class="fw-semibold text-dark">' . e($staffname) . '</span>'
+                    . '</div>';
             })
+
+            // ── Class badge ───────────────────────────────────────────────
             ->addColumn('class_info', function ($row) {
-                $classText = trim(($this->cleanUtf8String($row->schoolclass ?? '') . ' ' . $this->cleanUtf8String($row->schoolarm ?? '')));
-                return '<span class="ts-badge ts-badge-class" style="background: #fef3c7; color: #d97706; display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;">'
-                    . e($classText) . '</span>';
+                $text = trim(
+                    $this->cleanUtf8String($row->schoolclass ?? '')
+                    . ' '
+                    . $this->cleanUtf8String($row->schoolarm ?? '')
+                );
+                return '<span class="ct-badge ct-badge-class">' . e($text) . '</span>';
             })
+
+            // ── Term badge ────────────────────────────────────────────────
             ->addColumn('term', function ($row) {
-                $termText = $this->cleanUtf8String($row->term ?? '');
-                return '<span class="ts-badge ts-badge-term" style="background: #dbeafe; color: #2563eb; display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;">'
-                    . e($termText) . '</span>';
+                return '<span class="ct-badge ct-badge-term">'
+                    . e($this->cleanUtf8String($row->term ?? ''))
+                    . '</span>';
             })
+
+            // ── Session badge ─────────────────────────────────────────────
             ->addColumn('session', function ($row) {
-                $sessionText = $this->cleanUtf8String($row->session ?? '');
-                return '<span class="ts-badge ts-badge-session" style="background: #ccfbf1; color: #0f766e; display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;">'
-                    . e($sessionText) . '</span>';
+                return '<span class="ct-badge ct-badge-session">'
+                    . e($this->cleanUtf8String($row->session ?? ''))
+                    . '</span>';
             })
+
+            // ── Date ──────────────────────────────────────────────────────
             ->addColumn('formatted_date', function ($row) {
                 if (!$row->updated_at) {
-                    return 'N/A';
+                    return '<span class="text-muted small">—</span>';
                 }
-                return '<span class="text-muted small">' . \Carbon\Carbon::parse($row->updated_at)->format('d M Y') . '<br><span style="font-size:10px">' . \Carbon\Carbon::parse($row->updated_at)->format('H:i') . '</span></span>';
+                $dt = \Carbon\Carbon::parse($row->updated_at);
+                return '<small class="text-muted">'
+                    . $dt->format('d M Y')
+                    . '</small>';
             })
+
+            // ── Actions ───────────────────────────────────────────────────
             ->addColumn('action', function ($row) {
-                $buttons = '<div class="btn-group btn-group-sm">';
+                $staffname  = $this->cleanUtf8String($row->staffname ?? '');
+                $schoolclass = $this->cleanUtf8String($row->schoolclass ?? '');
+                $schoolarm   = $this->cleanUtf8String($row->schoolarm ?? '');
+                $title = e(trim($staffname . ' — ' . $schoolclass . ' ' . $schoolarm));
+
+                $buttons = '<div class="d-flex gap-1">';
+
                 if (auth()->user()->can('Update class-teacher')) {
-                    $buttons .= '<button class="btn btn-primary edit-assignment" title="Edit"
-                        data-id="' . $row->id . '"
-                        data-staffid="' . $row->staffid . '"
-                        data-termid="' . $row->termid . '"
-                        data-sessionid="' . $row->sessionid . '">
-                        <i class="ri-pencil-line"></i>
-                    </button>';
+                    $buttons .= '<button class="btn btn-sm btn-outline-secondary edit-assignment" title="Edit" '
+                        . 'data-id="'        . $row->id        . '" '
+                        . 'data-staffid="'   . $row->staffid   . '" '
+                        . 'data-termid="'    . $row->termid    . '" '
+                        . 'data-sessionid="' . $row->sessionid . '">'
+                        . '<i class="ph-pencil"></i>'
+                        . '</button>';
                 }
+
                 if (auth()->user()->can('Delete class-teacher')) {
-                    $title = e($this->cleanUtf8String($row->staffname ?? '') . ' — ' . $this->cleanUtf8String($row->schoolclass ?? '') . ' ' . $this->cleanUtf8String($row->schoolarm ?? ''));
-                    $buttons .= '<button class="btn btn-danger delete-assignment" title="Delete"
-                        data-id="' . $row->id . '"
-                        data-title="' . $title . '">
-                        <i class="ri-delete-bin-line"></i>
-                    </button>';
+                    $buttons .= '<button class="btn btn-sm btn-outline-danger delete-assignment" title="Delete" '
+                        . 'data-id="'    . $row->id . '" '
+                        . 'data-title="' . $title   . '">'
+                        . '<i class="ph-trash"></i>'
+                        . '</button>';
                 }
+
                 $buttons .= '</div>';
                 return $buttons;
             })
+
             ->rawColumns(['teacher_info', 'class_info', 'term', 'session', 'formatted_date', 'action'])
             ->make(true);
     }
 
-    /**
-     * Clean UTF-8 string - removes invalid characters
-     */
+    // =========================================================================
+    // STATS
+    // =========================================================================
+
+    public function stats()
+    {
+        try {
+            return response()->json([
+                'stats' => [
+                    'total'           => ClassTeacher::count(),
+                    'unique_teachers' => ClassTeacher::distinct('staffid')->count('staffid'),
+                    'unique_classes'  => ClassTeacher::distinct('schoolclassid')->count('schoolclassid'),
+                    'active_sessions' => ClassTeacher::distinct('sessionid')->count('sessionid'),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('ClassTeacher stats error: ' . $e->getMessage());
+            return response()->json([
+                'stats' => ['total' => 0, 'unique_teachers' => 0, 'unique_classes' => 0, 'active_sessions' => 0],
+            ]);
+        }
+    }
+
+    // =========================================================================
+    // STORE
+    // =========================================================================
+
+    public function store(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'staffid'          => 'required|exists:users,id',
+            'schoolclassid'    => 'required|array|min:1',
+            'schoolclassid.*'  => 'exists:schoolclass,id',
+            'termid'           => 'required|exists:schoolterm,id',
+            'sessionid'        => 'required|exists:schoolsession,id',
+        ], [
+            'staffid.required'         => 'Please select a teacher.',
+            'staffid.exists'           => 'Selected teacher does not exist.',
+            'schoolclassid.required'   => 'Please select at least one class.',
+            'schoolclassid.min'        => 'Please select at least one class.',
+            'schoolclassid.*.exists'   => 'One or more selected classes do not exist.',
+            'termid.required'          => 'Please select a term.',
+            'termid.exists'            => 'Selected term does not exist.',
+            'sessionid.required'       => 'Please select a session.',
+            'sessionid.exists'         => 'Selected session does not exist.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        $createdRecords  = [];
+        $duplicateNames  = [];
+        $conflictNames   = [];
+
+        foreach ($request->input('schoolclassid') as $classId) {
+
+            // Duplicate: same teacher already assigned to this class/term/session
+            $dup = ClassTeacher::where('staffid',      $request->input('staffid'))
+                ->where('schoolclassid', $classId)
+                ->where('termid',        $request->input('termid'))
+                ->where('sessionid',     $request->input('sessionid'))
+                ->exists();
+
+            if ($dup) {
+                $sc = Schoolclass::find($classId);
+                $duplicateNames[] = $sc ? $this->cleanUtf8String($sc->schoolclass) : $classId;
+                continue;
+            }
+
+            // Conflict: class already assigned to a *different* teacher for same term/session
+            $conflict = ClassTeacher::where('schoolclassid', $classId)
+                ->where('termid',    $request->input('termid'))
+                ->where('sessionid', $request->input('sessionid'))
+                ->where('staffid',   '!=', $request->input('staffid'))
+                ->exists();
+
+            if ($conflict) {
+                $sc = Schoolclass::find($classId);
+                $conflictNames[] = $sc ? $this->cleanUtf8String($sc->schoolclass) : $classId;
+                continue;
+            }
+
+            $createdRecords[] = ClassTeacher::create([
+                'staffid'      => $request->input('staffid'),
+                'schoolclassid'=> $classId,
+                'termid'       => $request->input('termid'),
+                'sessionid'    => $request->input('sessionid'),
+            ]);
+        }
+
+        if (empty($createdRecords)) {
+            $msg = 'No assignments created.';
+            if (!empty($duplicateNames)) {
+                $msg = 'Already assigned: ' . implode(', ', $duplicateNames) . '.';
+            } elseif (!empty($conflictNames)) {
+                $msg = 'These classes already have another teacher: ' . implode(', ', $conflictNames) . '.';
+            }
+            return response()->json(['success' => false, 'message' => $msg], 422);
+        }
+
+        $msg = count($createdRecords) . ' class teacher assignment(s) added successfully.';
+        if (!empty($duplicateNames) || !empty($conflictNames)) {
+            $skipped = array_merge($duplicateNames, $conflictNames);
+            $msg .= ' Skipped: ' . implode(', ', $skipped) . '.';
+        }
+
+        Log::info('ClassTeacher store', ['created' => count($createdRecords)]);
+        return response()->json(['success' => true, 'message' => $msg, 'data' => $createdRecords], 201);
+    }
+
+    // =========================================================================
+    // UPDATE
+    // =========================================================================
+
+    public function update(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'staffid'          => 'required|exists:users,id',
+            'schoolclassid'    => 'required|array|min:1',
+            'schoolclassid.*'  => 'exists:schoolclass,id',
+            'termid'           => 'required|exists:schoolterm,id',
+            'sessionid'        => 'required|exists:schoolsession,id',
+        ], [
+            'staffid.required'         => 'Please select a teacher.',
+            'staffid.exists'           => 'Selected teacher does not exist.',
+            'schoolclassid.required'   => 'Please select at least one class.',
+            'schoolclassid.min'        => 'Please select at least one class.',
+            'schoolclassid.*.exists'   => 'One or more selected classes do not exist.',
+            'termid.required'          => 'Please select a term.',
+            'termid.exists'            => 'Selected term does not exist.',
+            'sessionid.required'       => 'Please select a session.',
+            'sessionid.exists'         => 'Selected session does not exist.',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => $validator->errors()->first(),
+                'errors'  => $validator->errors(),
+            ], 422);
+        }
+
+        $primary = ClassTeacher::find($id);
+        if (!$primary) {
+            return response()->json(['success' => false, 'message' => 'Assignment not found.'], 404);
+        }
+
+        // Check each incoming class for conflicts with OTHER teachers
+        $conflictNames = [];
+        foreach ($request->input('schoolclassid') as $classId) {
+            $conflict = ClassTeacher::where('schoolclassid', $classId)
+                ->where('termid',    $request->input('termid'))
+                ->where('sessionid', $request->input('sessionid'))
+                ->where('staffid',   '!=', $request->input('staffid'))
+                ->exists();
+
+            if ($conflict) {
+                $sc = Schoolclass::find($classId);
+                $conflictNames[] = $sc ? $this->cleanUtf8String($sc->schoolclass) : $classId;
+            }
+        }
+
+        if (!empty($conflictNames)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'The following classes already have another teacher for this term/session: '
+                    . implode(', ', $conflictNames) . '.',
+            ], 422);
+        }
+
+        // Remove ALL existing assignments for the OLD teacher + OLD term + OLD session,
+        // so we cleanly replace them with the new selection.
+        ClassTeacher::where('staffid',   $primary->staffid)
+            ->where('termid',    $primary->termid)
+            ->where('sessionid', $primary->sessionid)
+            ->delete();
+
+        // Re-create
+        $createdRecords = [];
+        foreach ($request->input('schoolclassid') as $classId) {
+            $createdRecords[] = ClassTeacher::create([
+                'staffid'       => $request->input('staffid'),
+                'schoolclassid' => $classId,
+                'termid'        => $request->input('termid'),
+                'sessionid'     => $request->input('sessionid'),
+            ]);
+        }
+
+        Log::info('ClassTeacher update', ['id' => $id, 'new_records' => count($createdRecords)]);
+        return response()->json([
+            'success' => true,
+            'message' => count($createdRecords) . ' class teacher assignment(s) updated successfully.',
+            'data'    => $createdRecords,
+        ], 200);
+    }
+
+    // =========================================================================
+    // DESTROY (single)
+    // =========================================================================
+
+    public function destroy($id)
+    {
+        $ct = ClassTeacher::find($id);
+        if (!$ct) {
+            return response()->json(['success' => false, 'message' => 'Assignment not found.'], 404);
+        }
+
+        $ct->delete();
+        Log::info('ClassTeacher deleted', ['id' => $id]);
+        return response()->json(['success' => true, 'message' => 'Assignment deleted successfully.'], 200);
+    }
+
+    // =========================================================================
+    // BULK DESTROY
+    // =========================================================================
+
+    public function deleteMultiple(Request $request)
+    {
+        $ids = $request->input('ids', []);
+        if (empty($ids)) {
+            return response()->json(['success' => false, 'message' => 'No assignments selected.'], 400);
+        }
+
+        $deleted = ClassTeacher::whereIn('id', $ids)->delete();
+        Log::info('ClassTeacher bulk delete', ['count' => $deleted]);
+        return response()->json([
+            'success' => true,
+            'message' => $deleted . ' assignment(s) deleted successfully.',
+        ], 200);
+    }
+
+    // =========================================================================
+    // ASSIGNMENTS (for edit modal pre-load)
+    // =========================================================================
+
+    public function assignments($staffId, $termId, $sessionId)
+    {
+        $classIds = ClassTeacher::where('staffid',   $staffId)
+            ->where('termid',    $termId)
+            ->where('sessionid', $sessionId)
+            ->pluck('schoolclassid')
+            ->toArray();
+
+        return response()->json(['success' => true, 'classIds' => $classIds]);
+    }
+
+    // =========================================================================
+    // SHOW
+    // =========================================================================
+
+    public function show($id)
+    {
+        $ct = ClassTeacher::find($id);
+        if (!$ct) {
+            return response()->json(['success' => false, 'message' => 'Assignment not found.'], 404);
+        }
+        return response()->json(['success' => true, 'data' => $ct]);
+    }
+
+    // =========================================================================
+    // HELPERS
+    // =========================================================================
+
     private function cleanUtf8String($string)
     {
         if (empty($string)) {
             return '';
         }
-
-        // Remove invalid UTF-8 characters
         $string = mb_convert_encoding($string, 'UTF-8', 'UTF-8');
-
-        // Remove control characters except newlines and tabs
         $string = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $string);
-
-        // Remove emoji and other 4-byte characters if needed (MySQL utf8 doesn't support them)
-        // $string = preg_replace('/[\x{10000}-\x{10FFFF}]/u', '', $string);
-
         return $string;
-    }
-
-    /**
-     * Stats endpoint for dashboard cards.
-     */
-    public function stats()
-    {
-        try {
-            $total = ClassTeacher::count();
-            $uniqueTeachers = ClassTeacher::distinct('staffid')->count('staffid');
-            $uniqueClasses = ClassTeacher::distinct('schoolclassid')->count('schoolclassid');
-            $activeSessions = ClassTeacher::distinct('sessionid')->count('sessionid');
-
-            return response()->json([
-                'stats' => [
-                    'total' => $total,
-                    'unique_teachers' => $uniqueTeachers,
-                    'unique_classes' => $uniqueClasses,
-                    'active_sessions' => $activeSessions,
-                ]
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Stats error: ' . $e->getMessage());
-            return response()->json([
-                'stats' => [
-                    'total' => 0,
-                    'unique_teachers' => 0,
-                    'unique_classes' => 0,
-                    'active_sessions' => 0,
-                ]
-            ]);
-        }
-    }
-
-    /**
-     * Store new assignment(s) — supports multi-class assignments.
-     */
-    public function store(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'staffid' => 'required|exists:users,id',
-            'schoolclassid' => 'required|array|min:1',
-            'schoolclassid.*' => 'exists:schoolclass,id',
-            'termid' => 'required|exists:schoolterm,id',
-            'sessionid' => 'required|exists:schoolsession,id',
-        ], [
-            'staffid.required' => 'Please select a teacher!',
-            'staffid.exists' => 'Selected teacher does not exist!',
-            'schoolclassid.required' => 'Please select at least one class!',
-            'schoolclassid.min' => 'Please select at least one class!',
-            'schoolclassid.*.exists' => 'Selected class does not exist!',
-            'termid.required' => 'Please select a term!',
-            'termid.exists' => 'Selected term does not exist!',
-            'sessionid.required' => 'Please select a session!',
-            'sessionid.exists' => 'Selected session does not exist!',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $createdRecords = [];
-        $duplicateClasses = [];
-        $assignedClasses = [];
-
-        foreach ($request->input('schoolclassid') as $classId) {
-            // Check if this teacher is already assigned to this class for the term/session
-            $exists = ClassTeacher::where('staffid', $request->input('staffid'))
-                ->where('schoolclassid', $classId)
-                ->where('termid', $request->input('termid'))
-                ->where('sessionid', $request->input('sessionid'))
-                ->exists();
-
-            if ($exists) {
-                $schoolclass = Schoolclass::find($classId);
-                $className = $schoolclass ? ($schoolclass->schoolclass . ' ' . ($schoolclass->arm ?? '')) : $classId;
-                $duplicateClasses[] = $this->cleanUtf8String($className);
-                continue;
-            }
-
-            // Check if this class is already assigned to another teacher for the term/session
-            $otherTeacher = ClassTeacher::where('schoolclassid', $classId)
-                ->where('termid', $request->input('termid'))
-                ->where('sessionid', $request->input('sessionid'))
-                ->where('staffid', '!=', $request->input('staffid'))
-                ->first();
-
-            if ($otherTeacher) {
-                $schoolclass = Schoolclass::find($classId);
-                $className = $schoolclass ? ($schoolclass->schoolclass . ' ' . ($schoolclass->arm ?? '')) : $classId;
-                $assignedClasses[] = $this->cleanUtf8String($className);
-                continue;
-            }
-
-            $classteacher = ClassTeacher::create([
-                'staffid' => $request->input('staffid'),
-                'schoolclassid' => $classId,
-                'termid' => $request->input('termid'),
-                'sessionid' => $request->input('sessionid'),
-            ]);
-            $createdRecords[] = $classteacher;
-        }
-
-        if (!empty($duplicateClasses) && empty($createdRecords)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'This teacher is already assigned to the following class(es) for the selected term and session: ' . implode(', ', $duplicateClasses)
-            ], 422);
-        }
-
-        if (!empty($assignedClasses) && empty($createdRecords)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'The following class(es) are already assigned to another teacher for the selected term and session: ' . implode(', ', $assignedClasses)
-            ], 422);
-        }
-
-        if (empty($createdRecords)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No new class teachers were added due to duplicates or existing assignments.'
-            ], 422);
-        }
-
-        Log::info("Class teacher(s) added", ['records' => count($createdRecords)]);
-        return response()->json([
-            'success' => true,
-            'message' => count($createdRecords) . ' class teacher assignment(s) added successfully.',
-            'data' => $createdRecords
-        ], 201);
-    }
-
-    /**
-     * Update a teacher's assignments.
-     */
-    public function update(Request $request, $id)
-    {
-        $validator = Validator::make($request->all(), [
-            'staffid' => 'required|exists:users,id',
-            'schoolclassid' => 'required|array|min:1',
-            'schoolclassid.*' => 'exists:schoolclass,id',
-            'termid' => 'required|exists:schoolterm,id',
-            'sessionid' => 'required|exists:schoolsession,id',
-        ], [
-            'staffid.required' => 'Please select a teacher!',
-            'staffid.exists' => 'Selected teacher does not exist!',
-            'schoolclassid.required' => 'Please select at least one class!',
-            'schoolclassid.min' => 'Please select at least one class!',
-            'schoolclassid.*.exists' => 'Selected class does not exist!',
-            'termid.required' => 'Please select a term!',
-            'termid.exists' => 'Selected term does not exist!',
-            'sessionid.required' => 'Please select a session!',
-            'sessionid.exists' => 'Selected session does not exist!',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $primaryRecord = ClassTeacher::find($id);
-        if (!$primaryRecord) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Class Teacher assignment not found.'
-            ], 404);
-        }
-
-        // Check for duplicate classes
-        $duplicateClasses = [];
-        $assignedClasses = [];
-
-        foreach ($request->input('schoolclassid') as $classId) {
-            $exists = ClassTeacher::where('staffid', $request->input('staffid'))
-                ->where('schoolclassid', $classId)
-                ->where('termid', $request->input('termid'))
-                ->where('sessionid', $request->input('sessionid'))
-                ->where('id', '!=', $id)
-                ->exists();
-
-            if ($exists) {
-                $schoolclass = Schoolclass::find($classId);
-                $className = $schoolclass ? ($schoolclass->schoolclass . ' ' . ($schoolclass->arm ?? '')) : $classId;
-                $duplicateClasses[] = $this->cleanUtf8String($className);
-                continue;
-            }
-
-            $otherTeacher = ClassTeacher::where('schoolclassid', $classId)
-                ->where('termid', $request->input('termid'))
-                ->where('sessionid', $request->input('sessionid'))
-                ->where('staffid', '!=', $request->input('staffid'))
-                ->first();
-
-            if ($otherTeacher) {
-                $schoolclass = Schoolclass::find($classId);
-                $className = $schoolclass ? ($schoolclass->schoolclass . ' ' . ($schoolclass->arm ?? '')) : $classId;
-                $assignedClasses[] = $this->cleanUtf8String($className);
-                continue;
-            }
-        }
-
-        if (!empty($duplicateClasses)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'This teacher is already assigned to the following class(es) for the selected term and session: ' . implode(', ', $duplicateClasses)
-            ], 422);
-        }
-
-        if (!empty($assignedClasses)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'The following class(es) are already assigned to another teacher for the selected term and session: ' . implode(', ', $assignedClasses)
-            ], 422);
-        }
-
-        // Delete all existing assignments for this teacher, term, and session
-        ClassTeacher::where('staffid', $primaryRecord->staffid)
-            ->where('termid', $primaryRecord->termid)
-            ->where('sessionid', $primaryRecord->sessionid)
-            ->delete();
-
-        // Create new assignments
-        $createdRecords = [];
-        foreach ($request->input('schoolclassid') as $classId) {
-            $classteacher = ClassTeacher::create([
-                'staffid' => $request->input('staffid'),
-                'schoolclassid' => $classId,
-                'termid' => $request->input('termid'),
-                'sessionid' => $request->input('sessionid'),
-            ]);
-            $createdRecords[] = $classteacher;
-        }
-
-        Log::info("Class teacher(s) updated", ['records' => count($createdRecords)]);
-        return response()->json([
-            'success' => true,
-            'message' => count($createdRecords) . ' class teacher assignment(s) updated successfully.',
-            'data' => $createdRecords
-        ], 200);
-    }
-
-    /**
-     * Delete a single class teacher assignment.
-     */
-    public function destroy($id)
-    {
-        $classteacher = ClassTeacher::find($id);
-        if (!$classteacher) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Class Teacher assignment not found.'
-            ], 404);
-        }
-
-        $classteacher->delete();
-        Log::info("Class teacher assignment deleted", ['id' => $id]);
-        return response()->json([
-            'success' => true,
-            'message' => 'Class Teacher assignment deleted successfully.'
-        ], 200);
-    }
-
-    /**
-     * Bulk delete multiple class teacher assignments.
-     */
-    public function deleteMultiple(Request $request)
-    {
-        $ids = $request->input('ids', []);
-        if (empty($ids)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'No class teacher assignments selected for deletion.'
-            ], 400);
-        }
-
-        $deleted = ClassTeacher::whereIn('id', $ids)->delete();
-        Log::info("Multiple class teacher assignments deleted", ['count' => $deleted, 'ids' => $ids]);
-        return response()->json([
-            'success' => true,
-            'message' => $deleted . ' class teacher assignment(s) deleted successfully.'
-        ], 200);
-    }
-
-    /**
-     * Get assignments for a specific teacher, term, and session.
-     */
-    public function assignments($staffId, $termId, $sessionId)
-    {
-        $classIds = ClassTeacher::where('staffid', $staffId)
-            ->where('termid', $termId)
-            ->where('sessionid', $sessionId)
-            ->pluck('schoolclassid')
-            ->toArray();
-
-        return response()->json([
-            'success' => true,
-            'classIds' => $classIds
-        ]);
-    }
-
-    /**
-     * Show a specific assignment.
-     */
-    public function show($id)
-    {
-        $assignment = ClassTeacher::find($id);
-        if (!$assignment) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Assignment not found.'
-            ], 404);
-        }
-
-        return response()->json([
-            'success' => true,
-            'data' => $assignment
-        ]);
     }
 }
