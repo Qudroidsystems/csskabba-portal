@@ -286,7 +286,19 @@
 }
 
 /* ── Avatar styles ─────────────────────────────────────── */
-.avatar-circle {
+.teacher-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--ts-border);
+    cursor: pointer;
+    transition: border-color .15s;
+}
+.teacher-avatar:hover {
+    border-color: var(--ts-accent);
+}
+.avatar-placeholder {
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -297,12 +309,7 @@
     color: #fff;
     font-weight: 600;
     font-size: 16px;
-}
-.avatar-img {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    object-fit: cover;
+    cursor: pointer;
 }
 
 .edit-info-note {
@@ -437,7 +444,6 @@
                         </select>
                     </div>
 
-                    {{-- Classes (checkboxes) --}}
                     <div class="mb-4">
                         <label class="form-label">
                             Classes <span class="text-danger">*</span>
@@ -460,7 +466,6 @@
                         </div>
                     </div>
 
-                    {{-- Term --}}
                     <div class="mb-4">
                         <label class="form-label">Term <span class="text-danger">*</span></label>
                         <div class="radio-group" id="termRadios">
@@ -476,7 +481,6 @@
                         </div>
                     </div>
 
-                    {{-- Session --}}
                     <div class="mb-3">
                         <label class="form-label">Session <span class="text-danger">*</span></label>
                         <div class="radio-group" id="sessionRadios">
@@ -615,6 +619,24 @@
                 <button type="button" class="btn btn-danger" id="confirmDelete">
                     <i class="ri-delete-bin-line me-1"></i>Delete
                 </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- IMAGE PREVIEW MODAL --}}
+<div class="modal fade" id="imageViewModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:360px">
+        <div class="modal-content border-0" style="border-radius:16px;overflow:hidden">
+            <div class="modal-header border-0 pb-0">
+                <h6 class="modal-title fw-semibold">Teacher Photo</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center pt-2 pb-4">
+                <img id="preview-image" src="" alt="Teacher"
+                     class="rounded-circle mb-3"
+                     style="width:160px;height:160px;object-fit:cover;border:4px solid var(--ts-border);">
+                <p id="preview-teachername" class="fw-semibold mb-0" style="color:var(--ts-primary)"></p>
             </div>
         </div>
     </div>
@@ -1029,6 +1051,15 @@ $(document).ready(function () {
     }
 
     $('#bulkDeleteBtn, #bulkDeleteBtn2').on('click', doBulkDelete);
+
+    // ── Image preview modal ───────────────────────────────────────────
+    $(document).on('click', '.teacher-avatar', function () {
+        const imgSrc = $(this).attr('src');
+        const teacherName = $(this).closest('td').find('.fw-semibold').text();
+        $('#preview-image').attr('src', imgSrc);
+        $('#preview-teachername').text(teacherName);
+        $('#imageViewModal').modal('show');
+    });
 });
 </script>
 @endsection

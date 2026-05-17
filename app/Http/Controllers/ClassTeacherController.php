@@ -24,7 +24,7 @@ class ClassTeacherController extends Controller
     }
 
     /**
-     * Display the index page (normal page load only).
+     * Display the index page.
      */
     public function index(Request $request)
     {
@@ -37,7 +37,7 @@ class ClassTeacherController extends Controller
 
         $subjectteachers = User::whereHas('roles', function ($q) {
             $q->where('name', '!=', 'Student');
-        })->get(['users.id as userid', 'users.name as name']);
+        })->get(['users.id as userid', 'users.name as name', 'users.avatar as avatar']);
 
         $schoolterms = Schoolterm::all();
         $schoolsessions = Schoolsession::all();
@@ -51,7 +51,7 @@ class ClassTeacherController extends Controller
     }
 
     /**
-     * DataTables AJAX data endpoint with UTF-8 handling.
+     * DataTables AJAX data endpoint with proper image handling.
      */
     public function data(Request $request)
     {
@@ -77,31 +77,65 @@ class ClassTeacherController extends Controller
         return DataTables::of($assignments)
             ->addIndexColumn()
             ->addColumn('teacher_info', function ($row) {
-                // Sanitize and encode UTF-8 properly
-                $staffname = htmlspecialchars($row->staffname ?? '', ENT_QUOTES, 'UTF-8');
+                // Handle avatar image
+                $avatarUrl = null;
+                $initials = strtoupper(substr($row->staffname ?? 'U', 0, 2));
 
-                $avatarHtml = $row->avatar
-                    ? '<img src="' . e(Storage::url('images/staffavatar/' . $row->avatar)) . '" alt="' . $staffname . '" class="avatar-img" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">'
-                    : '<div class="avatar-circle" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 600; font-size: 16px;">' . mb_substr($staffname, 0, 2) . '</div>';
+                // Check if avatar exists and is not default
+                if ($row->avatar && !in_array($row->avatar, ['unnamed.jpg', 'unnamed.png', null])) {
+                    // Try multiple possible storage paths
+                    $possiblePaths = [
+                        'public/staff_avatars/' . $row->avatar,
+                        'public/images/staffavatar/' . $row->avatar,
+                        'public/staffavatar/' . $row->avatar,
+                    ];
+
+                    foreach ($possiblePaths as $path) {
+                        if (Storage::exists($path)) {
+                            $avatarUrl = Storage::url($path);
+                            break;
+                        }
+                    }
+
+                    // Also check public directory directly
+                    if (!$avatarUrl && file_exists(public_path('storage/staff_avatars/' . $row->avatar))) {
+                        $avatarUrl = asset('storage/staff_avatars/' . $row->avatar);
+                    }
+                    if (!$avatarUrl && file_exists(public_path('storage/images/staffavatar/' . $row->avatar))) {
+                        $avatarUrl = asset('storage/images/staffavatar/' . $row->avatar);
+                    }
+                }
+
+                if ($avatarUrl) {
+                    $avatarHtml = '<img src="' . $avatarUrl . '"
+                                   alt="' . e($row->staffname) . '"
+                                   class="teacher-avatar"
+                                   style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; cursor: pointer; border: 2px solid #e2e8f0;"
+                                   data-teacher-name="' . e($row->staffname) . '">';
+                } else {
+                    $avatarHtml = '<div class="avatar-placeholder"
+                                   style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 600; font-size: 16px; cursor: pointer; border: 2px solid #e2e8f0;"
+                                   data-teacher-name="' . e($row->staffname) . '">' . $initials . '</div>';
+                }
 
                 return '<div class="d-flex align-items-center gap-2">
                             ' . $avatarHtml . '
-                            <div class="fw-semibold">' . $staffname . '</div>
+                            <div class="fw-semibold text-dark">' . e($row->staffname) . '</div>
                         </div>';
             })
             ->addColumn('class_info', function ($row) {
                 $classText = trim(($row->schoolclass ?? '') . ' ' . ($row->schoolarm ?? ''));
-                return '<span class="ts-badge ts-badge-class" style="background: #fef3c7; color: #d97706; display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600;">'
+                return '<span class="ts-badge ts-badge-class" style="background: #fef3c7; color: #d97706; display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;">'
                     . e($classText) . '</span>';
             })
             ->addColumn('term', function ($row) {
                 $termText = $row->term ?? '';
-                return '<span class="ts-badge ts-badge-term" style="background: #dbeafe; color: #2563eb; display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600;">'
+                return '<span class="ts-badge ts-badge-term" style="background: #dbeafe; color: #2563eb; display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;">'
                     . e($termText) . '</span>';
             })
             ->addColumn('session', function ($row) {
                 $sessionText = $row->session ?? '';
-                return '<span class="ts-badge ts-badge-session" style="background: #ccfbf1; color: #0f766e; display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600;">'
+                return '<span class="ts-badge ts-badge-session" style="background: #ccfbf1; color: #0f766e; display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;">'
                     . e($sessionText) . '</span>';
             })
             ->addColumn('formatted_date', function ($row) {
