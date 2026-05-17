@@ -293,10 +293,11 @@
     object-fit: cover;
     border: 2px solid var(--ts-border);
     cursor: pointer;
-    transition: border-color .15s;
+    transition: border-color .15s, transform .15s;
 }
 .teacher-avatar:hover {
     border-color: var(--ts-accent);
+    transform: scale(1.05);
 }
 .avatar-placeholder {
     width: 40px;
@@ -310,6 +311,12 @@
     font-weight: 600;
     font-size: 16px;
     cursor: pointer;
+    transition: transform .15s;
+    border: 2px solid var(--ts-border);
+}
+.avatar-placeholder:hover {
+    transform: scale(1.05);
+    border-color: var(--ts-accent);
 }
 
 .edit-info-note {
@@ -320,6 +327,17 @@
     font-size: 12px;
     color: #2563eb;
     margin-bottom: 16px;
+}
+
+/* ── Image preview modal enhancements ──────────────────── */
+#imageViewModal .modal-content {
+    border-radius: 20px;
+}
+#preview-image {
+    transition: transform 0.3s ease;
+}
+#preview-image:hover {
+    transform: scale(1.02);
 }
 </style>
 
@@ -626,17 +644,20 @@
 
 {{-- IMAGE PREVIEW MODAL --}}
 <div class="modal fade" id="imageViewModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered" style="max-width:360px">
-        <div class="modal-content border-0" style="border-radius:16px;overflow:hidden">
-            <div class="modal-header border-0 pb-0">
-                <h6 class="modal-title fw-semibold">Teacher Photo</h6>
+    <div class="modal-dialog modal-dialog-centered" style="max-width:400px">
+        <div class="modal-content border-0" style="border-radius:20px;overflow:hidden">
+            <div class="modal-header border-0 pb-0 pt-3 px-3">
+                <h6 class="modal-title fw-semibold" style="color:var(--ts-primary)">
+                    <i class="ri-user-star-line me-1"></i> Teacher Photo
+                </h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body text-center pt-2 pb-4">
                 <img id="preview-image" src="" alt="Teacher"
                      class="rounded-circle mb-3"
-                     style="width:160px;height:160px;object-fit:cover;border:4px solid var(--ts-border);">
-                <p id="preview-teachername" class="fw-semibold mb-0" style="color:var(--ts-primary)"></p>
+                     style="width:200px;height:200px;object-fit:cover;border:4px solid var(--ts-border);box-shadow:0 8px 20px rgba(0,0,0,.15);">
+                <p id="preview-teachername" class="fw-semibold mb-0 mt-2" style="color:var(--ts-primary);font-size:16px;"></p>
+                <p class="text-muted small mt-1">Click outside to close</p>
             </div>
         </div>
     </div>
@@ -663,6 +684,52 @@ $(document).ready(function () {
 
     const CSRF = $('meta[name="csrf-token"]').attr('content');
     let table, deleteId = null;
+
+    // ── Function to show image preview ─────────────────────────────────
+    function showImagePreview(element) {
+        let imgSrc, teacherName;
+
+        if (element.is('img')) {
+            imgSrc = element.attr('src');
+            teacherName = element.closest('div').find('.fw-semibold').text();
+        } else {
+            // For placeholder div
+            teacherName = element.closest('div').find('.fw-semibold').text();
+            // Create a nice gradient placeholder SVG
+            const initial = teacherName.charAt(0).toUpperCase();
+            imgSrc = 'data:image/svg+xml,' + encodeURIComponent(`
+                <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
+                    <defs>
+                        <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                            <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+                        </linearGradient>
+                    </defs>
+                    <rect width="200" height="200" fill="url(#grad)"/>
+                    <text x="100" y="130" font-size="90" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-weight="bold">${initial}</text>
+                </svg>
+            `);
+        }
+
+        $('#preview-image').attr('src', imgSrc);
+        $('#preview-teachername').text(teacherName || 'Teacher');
+        $('#imageViewModal').modal('show');
+    }
+
+    // ── Bind image preview functionality ───────────────────────────────
+    function bindImagePreview() {
+        $('.teacher-avatar').off('click').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            showImagePreview($(this));
+        });
+
+        $('.avatar-placeholder').off('click').on('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            showImagePreview($(this));
+        });
+    }
 
     // ── DataTable ──────────────────────────────────────────────────────
     table = $('#classTeachersTable').DataTable({
@@ -706,6 +773,7 @@ $(document).ready(function () {
         responsive: true,
         drawCallback: function () {
             bindCheckboxes();
+            bindImagePreview();
             const info = this.api().page.info();
             $('#totalBadge').text(info.recordsTotal);
         },
@@ -1052,14 +1120,8 @@ $(document).ready(function () {
 
     $('#bulkDeleteBtn, #bulkDeleteBtn2').on('click', doBulkDelete);
 
-    // ── Image preview modal ───────────────────────────────────────────
-    $(document).on('click', '.teacher-avatar', function () {
-        const imgSrc = $(this).attr('src');
-        const teacherName = $(this).closest('td').find('.fw-semibold').text();
-        $('#preview-image').attr('src', imgSrc);
-        $('#preview-teachername').text(teacherName);
-        $('#imageViewModal').modal('show');
-    });
+    // Initial bind for image preview
+    bindImagePreview();
 });
 </script>
 @endsection
