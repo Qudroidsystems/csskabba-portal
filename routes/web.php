@@ -213,9 +213,27 @@ Route::group(['middleware' => ['auth']], function () {
     Route::get('subjectteacher/{id}/subjects', [SubjectTeacherController::class, 'getSubjects'])->name('subjectteacher.subjects');
     Route::post('subjectteacher/delete', [SubjectTeacherController::class, 'deletesubjectteacher'])->name('subjectteacher.delete');
 
-    Route::resource('classteacher', ClassTeacherController::class);
-    Route::get('/classteacher/assignments/{staffId}/{termId}/{sessionId}', [ClassTeacherController::class, 'assignments'])->name('classteacher.assignments');
-    Route::post('/classteacher/delete', [ClassTeacherController::class, 'deleteMultiple'])->name('classteacher.deleteMultiple');
+    // // Class Teacher Management Routes
+    // Route::get('classteacher/data', [ClassTeacherController::class, 'data'])->name('classteacher.data');
+    // Route::get('classteacher/stats', [ClassTeacherController::class, 'stats'])->name('classteacher.stats');
+    // Route::get('classteacher/assignments/{staffId}/{termId}/{sessionId}', [ClassTeacherController::class, 'assignments'])->name('classteacher.assignments');
+    // Route::post('classteacher/bulk-destroy', [ClassTeacherController::class, 'deleteMultiple'])->name('classteacher.bulk-destroy');
+    // Route::get('/classteacher/assignments/{staffId}/{termId}/{sessionId}', [ClassTeacherController::class, 'assignments'])->name('classteacher.assignments');
+    // Route::post('/classteacher/delete', [ClassTeacherController::class, 'deleteMultiple'])->name('classteacher.deleteMultiple');
+    // Route::resource('classteacher', ClassTeacherController::class);
+
+    // Class Teacher Management Routes
+    Route::prefix('classteacher')->name('classteacher.')->group(function () {
+        Route::get('/', [ClassTeacherController::class, 'index'])->name('index');
+        Route::get('/data', [ClassTeacherController::class, 'data'])->name('data');
+        Route::get('/stats', [ClassTeacherController::class, 'stats'])->name('stats');
+        Route::get('/assignments/{staffId}/{termId}/{sessionId}', [ClassTeacherController::class, 'assignments'])->name('assignments');
+        Route::get('/{id}', [ClassTeacherController::class, 'show'])->name('show');
+        Route::post('/', [ClassTeacherController::class, 'store'])->name('store');
+        Route::put('/{id}', [ClassTeacherController::class, 'update'])->name('update');
+        Route::delete('/{id}', [ClassTeacherController::class, 'destroy'])->name('destroy');
+        Route::post('/bulk-destroy', [ClassTeacherController::class, 'deleteMultiple'])->name('bulk-destroy');
+    });
 
 
     Route::resource('session', SchoolsessionController::class);
