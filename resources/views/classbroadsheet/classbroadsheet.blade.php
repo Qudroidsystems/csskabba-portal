@@ -1,803 +1,777 @@
 @extends('layouts.master')
 
 @section('content')
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
 <style>
-    .highlight-red { color: red !important; }
-    .avatar-sm { width: 32px; height: 32px; object-fit: cover; }
-    .table-active { background-color: rgba(0, 0, 0, 0.05); }
-    .table-centered th, .table-centered td { text-align: center; vertical-align: middle; }
-    .table-nowrap th, .table-nowrap td { white-space: nowrap; }
-    .sort.cursor-pointer:hover { background-color: #f5f5f5; }
-    .form-control.teacher-comment-input,
-    .form-control.guidance-comment-input,
-    .form-control.remark-input,
-    .form-control.absence-input { width: 100%; min-width: 150px; }
-    .form-control.signature-input { max-width: 300px; }
-    .btn-primary { margin-top: 1rem; }
-    .signature-container { display: flex; align-items: center; gap: 10px; }
+:root {
+    --ts-primary: #1e3a5f;
+    --ts-accent:  #2563eb;
+    --ts-success: #16a34a;
+    --ts-warning: #d97706;
+    --ts-danger:  #dc2626;
+    --ts-muted:   #6b7280;
+    --ts-border:  #e2e8f0;
+    --ts-bg:      #f8fafc;
+    --ts-radius:  12px;
+    --ts-shadow:  0 2px 8px rgba(0,0,0,.08);
+}
 
-    /* Mobile-specific styles */
-    @media (max-width: 991px) {
-        .desktop-table {
-            display: none;
-        }
-        
-        .mobile-cards {
-            display: block;
-        }
-        
-        .student-card {
-            background: #fff;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        
-        .student-header {
-            background: #f8f9fa;
-            padding: 15px;
-            border-bottom: 1px solid #dee2e6;
-            border-radius: 8px 8px 0 0;
-        }
-        
-        .student-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        
-        .student-details h6 {
-            margin: 0 0 4px 0;
-            font-size: 16px;
-            font-weight: 600;
-        }
-        
-        .student-meta {
-            font-size: 14px;
-            color: #6c757d;
-        }
-        
-        .student-body {
-            padding: 15px;
-        }
-        
-        .subjects-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-        
-        .subject-item {
-            text-align: center;
-            padding: 8px;
-            background: #f8f9fa;
-            border-radius: 6px;
-            border: 1px solid #e9ecef;
-        }
-        
-        .subject-name {
-            font-size: 12px;
-            font-weight: 600;
-            color: #495057;
-            margin-bottom: 4px;
-        }
-        
-        .subject-score {
-            font-size: 18px;
-            font-weight: bold;
-            color: #212529;
-        }
-        
-        .subject-score.highlight-red {
-            color: red !important;
-        }
-        
-        .comments-section {
-            border-top: 1px solid #e9ecef;
-            padding-top: 15px;
-        }
-        
-        .comment-group {
-            margin-bottom: 15px;
-        }
-        
-        .comment-label {
-            font-size: 14px;
-            font-weight: 600;
-            color: #495057;
-            margin-bottom: 6px;
-        }
-        
-        .form-control.mobile-comment {
-            font-size: 14px;
-            min-height: 38px;
-        }
-        
-        .search-box {
-            position: sticky;
-            top: 0;
-            background: white;
-            z-index: 10;
-            padding: 10px 0;
-            margin-bottom: 15px;
-        }
-        
-        .mobile-header-info {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .info-badge {
-            background: #e7f3ff;
-            border: 1px solid #b3d9ff;
-            border-radius: 20px;
-            padding: 8px 16px;
-            font-size: 14px;
-            font-weight: 500;
-            color: #0056b3;
-        }
+/* ── Hero ──────────────────────────────────────────────── */
+.ts-hero {
+    background: linear-gradient(135deg, #1e3a5f 0%, #0f766e 60%, #0891b2 100%);
+    border-radius: var(--ts-radius);
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+}
+.ts-hero::before {
+    content: '';
+    position: absolute;
+    top: -60px;
+    right: -60px;
+    width: 220px;
+    height: 220px;
+    background: rgba(255,255,255,.06);
+    border-radius: 50%;
+}
+.ts-hero::after {
+    content: '';
+    position: absolute;
+    bottom: -80px;
+    left: -30px;
+    width: 260px;
+    height: 260px;
+    background: rgba(255,255,255,.03);
+    border-radius: 50%;
+}
+.ts-hero h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 6px;
+    position: relative;
+}
+.ts-hero p {
+    font-size: 13px;
+    color: rgba(255,255,255,.75);
+    margin: 0;
+    position: relative;
+}
+
+/* ── Stat cards ────────────────────────────────────────── */
+.stat-card {
+    background: #fff;
+    border: 1px solid var(--ts-border);
+    border-radius: var(--ts-radius);
+    padding: 18px 20px;
+    transition: transform .15s, box-shadow .15s;
+}
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--ts-shadow);
+}
+.stat-card .stat-value {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--ts-primary);
+}
+.stat-card .stat-label {
+    font-size: 12px;
+    color: var(--ts-muted);
+    margin-top: 4px;
+}
+.stat-card .stat-icon {
+    font-size: 32px;
+    opacity: .12;
+    float: right;
+    margin-top: -8px;
+}
+
+/* ── Table ─────────────────────────────────────────────── */
+.ts-table th {
+    background: var(--ts-primary);
+    color: #fff;
+    padding: 12px 16px;
+    font-weight: 600;
+    font-size: 13px;
+    white-space: nowrap;
+}
+.ts-table td {
+    padding: 12px 16px;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--ts-border);
+    font-size: 13px;
+}
+.ts-table tr:hover td {
+    background: #f0fdfa;
+}
+
+/* ── Badges ────────────────────────────────────────────── */
+.ts-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+}
+.ts-badge-term {
+    background: #dbeafe;
+    color: #2563eb;
+}
+.ts-badge-session {
+    background: #ccfbf1;
+    color: #0f766e;
+}
+.ts-badge-class {
+    background: #fef3c7;
+    color: #d97706;
+}
+.ts-badge-score {
+    background: #dcfce7;
+    color: #16a34a;
+}
+.ts-badge-score-low {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+/* ── DataTables overrides ──────────────────────────────── */
+.dataTables_wrapper .dataTables_filter input {
+    border: 1.5px solid var(--ts-border);
+    border-radius: 8px;
+    padding: 7px 14px;
+    margin-left: 8px;
+    font-size: 13px;
+    transition: border .15s;
+}
+.dataTables_wrapper .dataTables_filter input:focus {
+    border-color: var(--ts-accent);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+}
+.dataTables_wrapper .dataTables_length select {
+    border: 1.5px solid var(--ts-border);
+    border-radius: 8px;
+    padding: 6px 10px;
+    margin: 0 6px;
+    font-size: 13px;
+}
+.dataTables_wrapper .dataTables_info {
+    font-size: 13px;
+    color: var(--ts-muted);
+}
+.dataTables_wrapper .paginate_button {
+    border-radius: 6px !important;
+    font-size: 13px !important;
+    padding: 4px 10px !important;
+}
+.dataTables_wrapper .paginate_button.current,
+.dataTables_wrapper .paginate_button.current:hover {
+    background: var(--ts-accent) !important;
+    border-color: var(--ts-accent) !important;
+    color: #fff !important;
+}
+
+/* ── Form inputs ───────────────────────────────────────── */
+.form-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 6px;
+}
+.form-control, .form-select {
+    border: 1.5px solid var(--ts-border);
+    border-radius: 8px;
+    font-size: 13px;
+    padding: 9px 14px;
+    transition: border .15s;
+}
+.form-control:focus, .form-select:focus {
+    border-color: var(--ts-accent);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+}
+
+/* ── Avatar styles ─────────────────────────────────────── */
+.student-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--ts-border);
+    cursor: pointer;
+    transition: border-color .15s;
+}
+.student-avatar:hover {
+    border-color: var(--ts-accent);
+}
+
+/* ── Search box ────────────────────────────────────────── */
+.search-box {
+    position: relative;
+    margin-bottom: 20px;
+}
+.search-box input {
+    padding-left: 35px;
+    border-radius: 10px;
+}
+.search-box i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--ts-muted);
+}
+
+/* ── Score styling ─────────────────────────────────────── */
+.score-low {
+    color: #dc2626 !important;
+    font-weight: 700;
+}
+.score-normal {
+    color: #16a34a;
+    font-weight: 600;
+}
+
+/* ── Signature container ───────────────────────────────── */
+.signature-container {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    justify-content: flex-end;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--ts-border);
+}
+
+/* ── Mobile cards ──────────────────────────────────────── */
+@media (max-width: 991px) {
+    .desktop-table {
+        display: none;
     }
-    
-    @media (min-width: 992px) {
-        .mobile-cards {
-            display: none;
-        }
-        
-        .desktop-table {
-            display: block;
-        }
+    .mobile-cards {
+        display: block;
     }
-    
-    /* Enhanced mobile search */
-    @media (max-width: 767px) {
-        .subjects-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-        
-        .container-fluid {
-            padding-left: 10px;
-            padding-right: 10px;
-        }
-        
-        .card-body {
-            padding: 15px;
-        }
-        
-        .mobile-header-info {
-            flex-direction: column;
-            gap: 10px;
-        }
-        
-        .student-header {
-            padding: 12px;
-        }
-        
-        .student-body {
-            padding: 12px;
-        }
-        
-        .signature-container {
-            flex-direction: column;
-            align-items: flex-end;
-        }
+}
+@media (min-width: 992px) {
+    .mobile-cards {
+        display: none;
     }
-    
-    /* Search functionality styles */
-    .search-highlight {
-        background-color: #fff3cd;
-        padding: 2px 4px;
-        border-radius: 3px;
-    }
-    
-    .no-results {
-        text-align: center;
-        padding: 40px 20px;
-        color: #6c757d;
-    }
-    
-    .results-count {
-        font-size: 14px;
-        color: #6c757d;
-        margin-bottom: 15px;
-        text-align: center;
-    }
+}
+
+.student-card {
+    background: #fff;
+    border: 1px solid var(--ts-border);
+    border-radius: var(--ts-radius);
+    margin-bottom: 16px;
+    overflow: hidden;
+    transition: box-shadow .15s;
+}
+.student-card:hover {
+    box-shadow: var(--ts-shadow);
+}
+.student-header {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    padding: 16px;
+    border-bottom: 1px solid var(--ts-border);
+}
+.student-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.student-details h6 {
+    margin: 0 0 4px;
+    font-size: 14px;
+    font-weight: 600;
+}
+.student-meta {
+    font-size: 11px;
+    color: var(--ts-muted);
+}
+.subjects-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+.subject-item {
+    text-align: center;
+    padding: 8px;
+    background: var(--ts-bg);
+    border-radius: 8px;
+    border: 1px solid var(--ts-border);
+}
+.subject-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ts-muted);
+    margin-bottom: 4px;
+}
+.subject-score {
+    font-size: 16px;
+    font-weight: 700;
+}
+.comments-section {
+    border-top: 1px solid var(--ts-border);
+    padding-top: 16px;
+}
+.comment-group {
+    margin-bottom: 12px;
+}
+.comment-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--ts-muted);
+    margin-bottom: 4px;
+}
+
+/* ── Image preview modal ───────────────────────────────── */
+#imageViewModal .modal-content {
+    border-radius: 16px;
+}
+#preview-image {
+    width: 160px;
+    height: 160px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 4px solid var(--ts-border);
+}
 </style>
 
-<div class="main-content class-broadsheet">
-    <div class="page-content">
-        <div class="container-fluid">
-            <!-- Page Title -->
-            <div class="row">
-                <div class="col-12">
-                    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                        <h4 class="mb-sm-0">Class Broadsheet</h4>
-                        <div class="page-title-right">
-                            <ol class="breadcrumb m-0">
-                                <li class="breadcrumb-item"><a href="javascript:void(0);">Class Broadsheet</a></li>
-                                <li class="breadcrumb-item active">Class Broadsheet</li>
-                            </ol>
-                        </div>
-                    </div>
+<div class="main-content">
+<div class="page-content">
+<div class="container-fluid">
+
+    {{-- Hero --}}
+    <div class="ts-hero">
+        <h1><i class="ri-file-list-line me-2"></i>Class Broadsheet</h1>
+        <p>View and manage student scores, comments, and performance across all subjects.</p>
+    </div>
+
+    {{-- Stat cards --}}
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="ri-user-line"></i></div>
+                <div class="stat-value">{{ $students->count() }}</div>
+                <div class="stat-label">Total Students</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="ri-flask-line"></i></div>
+                <div class="stat-value text-primary">{{ $subjects->count() }}</div>
+                <div class="stat-label">Subjects Offered</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="ri-award-line"></i></div>
+                <div class="stat-value text-success" id="statPassing">—</div>
+                <div class="stat-label">Passing Rate</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="ri-medal-line"></i></div>
+                <div class="stat-value text-warning" id="statTopStudent">—</div>
+                <div class="stat-label">Top Performer</div>
+            </div>
+        </div>
+    </div>
+
+    {{-- Class Info Badges --}}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex flex-wrap gap-2">
+                <span class="ts-badge ts-badge-class">
+                    <i class="ri-building-line me-1"></i>{{ $schoolclass ? $schoolclass->schoolclass . ' ' . $schoolclass->arm : 'N/A' }}
+                </span>
+                <span class="ts-badge ts-badge-term">
+                    <i class="ri-calendar-line me-1"></i>{{ $schoolterm }}
+                </span>
+                <span class="ts-badge ts-badge-session">
+                    <i class="ri-calendar-event-line me-1"></i>{{ $schoolsession }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    @if ($students->isNotEmpty())
+        {{-- Main Card --}}
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3 border-bottom">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-semibold" style="color:var(--ts-primary)">
+                        <i class="ri-file-copy-line me-2"></i>Student Performance
+                        <span class="badge bg-primary ms-2">{{ $students->count() }} students</span>
+                    </h5>
                 </div>
             </div>
+            <div class="card-body">
 
-            <!-- Error and Success Messages -->
-            @if ($errors->any())
-                <div class="row">
-                    <div class="col-12">
-                        <div class="alert alert-danger">
-                            <strong>Whoops!</strong> There were some problems with your input.<br><br>
-                            <ul>
-                                @foreach ($errors->all() as $error)
-                                    <li>{{ $error }}</li>
-                                @endforeach
-                            </ul>
+                <form id="commentsForm" action="{{ route('classbroadsheet.updateComments', [$schoolclassid, $sessionid, $termid]) }}" method="POST" enctype="multipart/form-data">
+                    @csrf
+                    @method('PATCH')
+
+                    {{-- Search Box --}}
+                    <div class="search-box">
+                        <i class="ri-search-line"></i>
+                        <input type="text" class="form-control" id="searchInput" placeholder="Search by student name, admission number, or comment...">
+                    </div>
+
+                    {{-- Desktop Table View --}}
+                    <div class="desktop-table">
+                        <div class="table-responsive">
+                            <table class="table ts-table w-100 mb-0" id="broadsheetTable">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Admission No</th>
+                                        <th>Student Name</th>
+                                        <th>Gender</th>
+                                        @foreach ($subjects as $subject)
+                                            <th>{{ $subject->subject }}</th>
+                                        @endforeach
+                                        <th>Teacher's Comment</th>
+                                        <th>Counselor's Comment</th>
+                                        <th>Remark on Activities</th>
+                                        <th>Absences</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse ($students as $key => $student)
+                                        @php
+                                            $picture = $student->picture ? basename($student->picture) : 'unnamed.jpg';
+                                            $imagePath = asset('storage/student_avatars/' . $picture);
+                                            $profile = $personalityProfiles->where('studentid', $student->id)->first();
+                                        @endphp
+                                        <tr data-student-id="{{ $student->id }}">
+                                            <td>{{ $key + 1 }}</td>
+                                            <td>{{ $student->admissionNo }}</td>
+                                            <td>
+                                                <div class="d-flex align-items-center gap-2">
+                                                    <img src="{{ $imagePath }}"
+                                                         alt="{{ $student->lastname }} {{ $student->firstname }}"
+                                                         class="student-avatar"
+                                                         data-bs-toggle="modal"
+                                                         data-bs-target="#imageViewModal"
+                                                         data-image="{{ $imagePath }}"
+                                                         data-studentname="{{ $student->lastname }} {{ $student->firstname }} {{ $student->othername }}"
+                                                         data-admissionno="{{ $student->admissionNo }}"
+                                                         onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'">
+                                                    <div>
+                                                        <a href="{{ route('myclass.studentpersonalityprofile', [$student->id, $schoolclassid, $termid, $sessionid]) }}"
+                                                           class="text-reset text-decoration-none fw-semibold">
+                                                            {{ $student->lastname }} {{ $student->firstname }} {{ $student->othername }}
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>{{ $student->gender ?? 'N/A' }}</td>
+                                            @foreach ($subjects as $subject)
+                                                @php
+                                                    $score = $scores->where('student_id', $student->id)->where('subject_name', $subject->subject)->first();
+                                                    $total = $score ? $score->total : '-';
+                                                    $isLow = is_numeric($total) && $total <= 50;
+                                                @endphp
+                                                <td class="text-center @if($isLow) score-low @else score-normal @endif">
+                                                    {{ $total }}
+                                                </td>
+                                            @endforeach
+                                            <td>
+                                                <input type="text" class="form-control form-control-sm teacher-comment-input"
+                                                       name="teacher_comments[{{ $student->id }}]"
+                                                       value="{{ $profile ? $profile->classteachercomment : '' }}"
+                                                       placeholder="Enter comment...">
+                                            </td>
+                                            <td>
+                                                <input type="text" class="form-control form-control-sm guidance-comment-input"
+                                                       name="guidance_comments[{{ $student->id }}]"
+                                                       value="{{ $profile ? $profile->guidancescomment : '' }}"
+                                                       placeholder="Enter comment...">
+                                            </td>
+                                            <td>
+                                                <input type="text" class="form-control form-control-sm remark-input"
+                                                       name="remarks_on_other_activities[{{ $student->id }}]"
+                                                       value="{{ $profile ? $profile->remark_on_other_activities : '' }}"
+                                                       placeholder="Enter remark...">
+                                            </td>
+                                            <td>
+                                                <input type="number" class="form-control form-control-sm absence-input"
+                                                       name="no_of_times_school_absent[{{ $student->id }}]"
+                                                       value="{{ $profile ? $profile->no_of_times_school_absent : '' }}"
+                                                       min="0" placeholder="0" style="width: 80px;">
+                                            </td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                </div>
-            @endif
 
-            @if (session('status') || session('success'))
-                <div class="row">
-                    <div class="col-12">
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            {{ session('status') ?: session('success') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                        </div>
-                    </div>
-                </div>
-            @endif
-
-            @if ($students->isNotEmpty())
-                <!-- Class Broadsheet Card -->
-                <div class="row">
-                    <div class="col-lg-12">
-                        <div class="card">
-                            <div class="card-header d-flex align-items-center">
-                                <div class="flex-grow-1">
-                                    <h5 class="card-title mb-0">Broadsheet for {{ $schoolclass ? $schoolclass->schoolclass . ' ' . $schoolclass->arm : 'N/A' }}</h5>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <!-- Desktop Info Section -->
-                                <div class="row g-3 desktop-table">
-                                    <div class="d-flex flex-wrap flex-stack mb-4">
-                                        <div class="d-flex flex-column flex-grow-1">
-                                            <div class="d-flex flex-wrap">
-                                                <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">
-                                                    <div class="d-flex align-items-center">
-                                                        <i class="bi bi-building fs-3 text-success me-2"></i>
-                                                        <div class="fs-2 fw-bold">{{ $schoolclass ? $schoolclass->schoolclass . ' ' . $schoolclass->arm : 'N/A' }}</div>
-                                                    </div>
-                                                    <div class="fw-semibold fs-6 text-gray-400">Class</div>
-                                                </div>
-                                                <div class="border border-gray-300 border-dashed rounded min-w-125px py-3 px-4 me-6 mb-3">
-                                                    <div class="d-flex align-items-center">
-                                                        <i class="bi bi-calendar fs-3 text-success me-2"></i>
-                                                        <div class="fs-2 fw-bold text-success">{{ $schoolterm }} | {{ $schoolsession }}</div>
-                                                    </div>
-                                                    <div class="fw-semibold fs-6 text-gray-400">Term | Session</div>
-                                                </div>
+                    {{-- Mobile Card View --}}
+                    <div class="mobile-cards">
+                        @forelse ($students as $key => $student)
+                            @php
+                                $picture = $student->picture ? basename($student->picture) : 'unnamed.jpg';
+                                $imagePath = asset('storage/student_avatars/' . $picture);
+                                $profile = $personalityProfiles->where('studentid', $student->id)->first();
+                            @endphp
+                            <div class="student-card" data-student-id="{{ $student->id }}">
+                                <div class="student-header">
+                                    <div class="student-info">
+                                        <img src="{{ $imagePath }}"
+                                             alt="{{ $student->lastname }} {{ $student->firstname }}"
+                                             class="student-avatar"
+                                             data-bs-toggle="modal"
+                                             data-bs-target="#imageViewModal"
+                                             data-image="{{ $imagePath }}"
+                                             data-studentname="{{ $student->lastname }} {{ $student->firstname }} {{ $student->othername }}"
+                                             data-admissionno="{{ $student->admissionNo }}"
+                                             onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'">
+                                        <div class="student-details">
+                                            <h6>
+                                                <a href="{{ route('myclass.studentpersonalityprofile', [$student->id, $schoolclassid, $termid, $sessionid]) }}"
+                                                   class="text-reset text-decoration-none">
+                                                    {{ $student->lastname }} {{ $student->firstname }} {{ $student->othername }}
+                                                </a>
+                                            </h6>
+                                            <div class="student-meta">
+                                                <span class="me-2">SN: {{ $key + 1 }}</span>
+                                                <span class="me-2">Adm: {{ $student->admissionNo }}</span>
+                                                <span>Gender: {{ $student->gender ?? 'N/A' }}</span>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-
-                                <!-- Mobile Info Section -->
-                                <div class="mobile-cards">
-                                    <div class="mobile-header-info">
-                                        <div class="info-badge">
-                                            <i class="bi bi-building me-1"></i>
-                                            Class: {{ $schoolclass ? $schoolclass->schoolclass . ' ' . $schoolclass->arm : 'N/A' }}
-                                        </div>
-                                        <div class="info-badge">
-                                            <i class="bi bi-calendar me-1"></i>
-                                            {{ $schoolterm }} | {{ $schoolsession }}
-                                        </div>
+                                <div class="student-body" style="padding: 16px;">
+                                    <div class="subjects-grid">
+                                        @foreach ($subjects as $subject)
+                                            @php
+                                                $score = $scores->where('student_id', $student->id)->where('subject_name', $subject->subject)->first();
+                                                $total = $score ? $score->total : '-';
+                                                $isLow = is_numeric($total) && $total <= 50;
+                                            @endphp
+                                            <div class="subject-item">
+                                                <div class="subject-name">{{ $subject->subject }}</div>
+                                                <div class="subject-score @if($isLow) score-low @else score-normal @endif">
+                                                    {{ $total }}
+                                                </div>
+                                            </div>
+                                        @endforeach
                                     </div>
-                                </div>
-
-                                <div class="row mb-2">
-                                    <div class="col-sm bg-white">
-                                        <form id="commentsForm" action="{{ route('classbroadsheet.updateComments', [$schoolclassid, $sessionid, $termid]) }}" method="POST" enctype="multipart/form-data">
-                                            @csrf
-                                            @method('PATCH')
-                                            
-                                            <!-- Search Box -->
-                                            <div class="search-box mb-3">
-                                                <input type="text" class="form-control search" placeholder="Search students, admission no, or comments..." id="searchInput">
-                                                <div class="results-count mt-2" id="resultsCount" style="display: none;"></div>
-                                            </div>
-
-                                            <!-- Desktop Table View -->
-                                            <div class="desktop-table">
-                                                <div class="mt-3 result-table">
-                                                    <div id="studentListTable" class="table-responsive">
-                                                        <table class="table table-centered align-middle table-nowrap mb-0">
-                                                            <thead class="table-active">
-                                                                <tr>
-                                                                    <th class="sort cursor-pointer" data-sort="sn">SN</th>
-                                                                    <th class="sort cursor-pointer" data-sort="admissionno">Admission No</th>
-                                                                    <th class="sort cursor-pointer" data-sort="name">Student Name</th>
-                                                                    <th class="sort cursor-pointer" data-sort="gender">Gender</th>
-                                                                    @foreach ($subjects as $subject)
-                                                                        <th class="sort cursor-pointer" data-sort="subject-{{ \Illuminate\Support\Str::slug($subject->subject) }}">{{ $subject->subject }}</th>
-                                                                    @endforeach
-                                                                    <th class="sort cursor-pointer" data-sort="teacher-comment">Class Teacher's Comment</th>
-                                                                    <th class="sort cursor-pointer" data-sort="guidance-comment">Guidance Counselor's Comment</th>
-                                                                    <th class="sort cursor-pointer" data-sort="remark-other-activities">Remark on Other Activities</th>
-                                                                    <th class="sort cursor-pointer" data-sort="absence-count">No. of Times Absent</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody class="list">
-                                                                @forelse ($students as $key => $student)
-                                                                    @php
-                                                                        $picture = $student->picture ? basename($student->picture) : 'unnamed.jpg';
-                                                                        $imagePath = asset('storage/student_avatars/' . $picture);
-                                                                        $fileExists = file_exists(storage_path('app/public/student_avatars/' . $picture));
-                                                                        $defaultImageExists = file_exists(storage_path('app/public/student_avatars/unnamed.jpg'));
-                                                                        $profile = $personalityProfiles->where('studentid', $student->id)->first();
-                                                                    @endphp
-                                                                    <tr class="student-row" data-student-id="{{ $student->id }}">
-                                                                        <td class="sn">{{ $key + 1 }}</td>
-                                                                        <td class="admissionno" data-admissionno="{{ $student->admissionNo }}">{{ $student->admissionNo }}</td>
-                                                                        <td class="name" data-name="{{ $student->lastname }} {{ $student->firstname }} {{ $student->othername }}">
-                                                                            <div class="d-flex align-items-center">
-                                                                                <img src="{{ $imagePath }}"
-                                                                                     alt="{{ $student->lastname }} {{ $student->firstname }} {{ $student->othername }}"
-                                                                                     class="rounded-circle avatar-sm student-image"
-                                                                                     data-bs-toggle="modal"
-                                                                                     data-bs-target="#imageViewModal"
-                                                                                     data-image="{{ $imagePath }}"
-                                                                                     data-admissionno="{{ $student->admissionNo }}"
-                                                                                     data-file-exists="{{ $fileExists ? 'true' : 'false' }}"
-                                                                                     data-default-exists="{{ $defaultImageExists ? 'true' : 'false' }}"
-                                                                                     onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'; console.log('Table image failed to load for admissionno: {{ $student->admissionNo ?? 'unknown' }}, picture: {{ $student->picture ?? 'none' }}');" />
-                                                                                <div class="ms-3">
-                                                                                    <h6 class="mb-0">
-                                                                                        <a href="{{ route('myclass.studentpersonalityprofile', [$student->id, $schoolclassid, $termid, $sessionid]) }}"
-                                                                                           class="text-reset">
-                                                                                            {{ $student->lastname }} {{ $student->firstname }} {{ $student->othername }}
-                                                                                        </a>
-                                                                                    </h6>
-                                                                                </div>
-                                                                            </div>
-                                                                        </td>
-                                                                        <td class="gender" data-gender="{{ $student->gender ?? 'N/A' }}">{{ $student->gender ?? 'N/A' }}</td>
-                                                                        @foreach ($subjects as $subject)
-                                                                            @php
-                                                                                $score = $scores->where('student_id', $student->id)->where('subject_name', $subject->subject)->first();
-                                                                            @endphp
-                                                                            <td class="subject-{{ \Illuminate\Support\Str::slug($subject->subject) }}"
-                                                                                data-subject-{{ \Illuminate\Support\Str::slug($subject->subject) }}="{{ $score ? $score->total : '-' }}"
-                                                                                align="center" style="font-size: 14px;"
-                                                                                @if ($score && is_numeric($score->total) && $score->total <= 50) class="highlight-red" @endif>
-                                                                                {{ $score ? $score->total : '-' }}
-                                                                            </td>
-                                                                        @endforeach
-                                                                        <td class="teacher-comment">
-                                                                            <input type="text" class="form-control teacher-comment-input"
-                                                                                   name="teacher_comments[{{ $student->id }}]"
-                                                                                   value="{{ $profile ? $profile->classteachercomment : '' }}"
-                                                                                   data-teacher-comment="{{ $profile ? $profile->classteachercomment : 'N/A' }}"
-                                                                                   placeholder="Enter teacher's comment">
-                                                                        </td>
-                                                                        <td class="guidance-comment">
-                                                                            <input type="text" class="form-control guidance-comment-input"
-                                                                                   name="guidance_comments[{{ $student->id }}]"
-                                                                                   value="{{ $profile ? $profile->guidancescomment : '' }}"
-                                                                                   data-guidance-comment="{{ $profile ? $profile->guidancescomment : 'N/A' }}"
-                                                                                   placeholder="Enter guidance counselor's comment">
-                                                                        </td>
-                                                                        <td class="remark-other-activities">
-                                                                            <input type="text" class="form-control remark-input"
-                                                                                   name="remarks_on_other_activities[{{ $student->id }}]"
-                                                                                   value="{{ $profile ? $profile->remark_on_other_activities : '' }}"
-                                                                                   data-remark-other-activities="{{ $profile ? $profile->remark_on_other_activities : 'N/A' }}"
-                                                                                   placeholder="Enter remark on other activities">
-                                                                        </td>
-                                                                        <td class="absence-count">
-                                                                            <input type="number" class="form-control absence-input"
-                                                                                   name="no_of_times_school_absent[{{ $student->id }}]"
-                                                                                   value="{{ $profile ? $profile->no_of_times_school_absent : '' }}"
-                                                                                   data-absence-count="{{ $profile ? $profile->no_of_times_school_absent : '0' }}"
-                                                                                   min="0" placeholder="Enter absence count">
-                                                                        </td>
-                                                                    </tr>
-                                                                @empty
-                                                                    <tr>
-                                                                        <td colspan="{{ 9 + count($subjects) }}" class="noresult" style="display: block;">
-                                                                            <div class="text-center">
-                                                                                <lord-icon src="https://cdn.lordicon.com/msoeawqm.json" trigger="loop"
-                                                                                           colors="primary:#121331,secondary:#08a88a" style="width:75px;height:75px"></lord-icon>
-                                                                                <h5 class="mt-2">Sorry! No Result Found</h5>
-                                                                                <p class="text-muted mb-0">We've searched for the student data but did not find any matches.</p>
-                                                                            </div>
-                                                                        </td>
-                                                                    </tr>
-                                                                @endforelse
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Mobile Card View -->
-                                            <div class="mobile-cards">
-                                                <div id="mobileStudentCards">
-                                                    @forelse ($students as $key => $student)
-                                                        @php
-                                                            $picture = $student->picture ? basename($student->picture) : 'unnamed.jpg';
-                                                            $imagePath = asset('storage/student_avatars/' . $picture);
-                                                            $fileExists = file_exists(storage_path('app/public/student_avatars/' . $picture));
-                                                            $defaultImageExists = file_exists(storage_path('app/public/student_avatars/unnamed.jpg'));
-                                                            $profile = $personalityProfiles->where('studentid', $student->id)->first();
-                                                        @endphp
-                                                        <div class="student-card" data-student-id="{{ $student->id }}" 
-                                                             data-search-content="{{ strtolower($student->lastname . ' ' . $student->firstname . ' ' . $student->othername . ' ' . $student->admissionNo . ' ' . ($profile ? $profile->classteachercomment : '') . ' ' . ($profile ? $profile->guidancescomment : '') . ' ' . ($profile ? $profile->remark_on_other_activities : '') . ' ' . ($profile ? $profile->no_of_times_school_absent : '0')) }}">
-                                                            
-                                                            <!-- Student Header -->
-                                                            <div class="student-header">
-                                                                <div class="student-info">
-                                                                    <img src="{{ $imagePath }}"
-                                                                         alt="{{ $student->lastname }} {{ $student->firstname }} {{ $student->othername }}"
-                                                                         class="rounded-circle avatar-sm student-image"
-                                                                         data-bs-toggle="modal"
-                                                                         data-bs-target="#imageViewModal"
-                                                                         data-image="{{ $imagePath }}"
-                                                                         data-admissionno="{{ $student->admissionNo }}"
-                                                                         data-file-exists="{{ $fileExists ? 'true' : 'false' }}"
-                                                                         data-default-exists="{{ $defaultImageExists ? 'true' : 'false' }}"
-                                                                         onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}';" />
-                                                                    <div class="student-details">
-                                                                        <h6>
-                                                                            <a href="{{ route('myclass.studentpersonalityprofile', [$student->id, $schoolclassid, $termid, $sessionid]) }}"
-                                                                               class="text-reset text-decoration-none">
-                                                                                {{ $student->lastname }} {{ $student->firstname }} {{ $student->othername }}
-                                                                            </a>
-                                                                        </h6>
-                                                                        <div class="student-meta">
-                                                                            <span class="me-3"><strong>SN:</strong> {{ $key + 1 }}</span>
-                                                                            <span class="me-3"><strong>Admission:</strong> {{ $student->admissionNo }}</span>
-                                                                            <span><strong>Gender:</strong> {{ $student->gender ?? 'N/A' }}</span>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-
-                                                            <!-- Student Body -->
-                                                            <div class="student-body">
-                                                                <!-- Subjects Grid -->
-                                                                <div class="subjects-grid">
-                                                                    @foreach ($subjects as $subject)
-                                                                        @php
-                                                                            $score = $scores->where('student_id', $student->id)->where('subject_name', $subject->subject)->first();
-                                                                        @endphp
-                                                                        <div class="subject-item">
-                                                                            <div class="subject-name">{{ $subject->subject }}</div>
-                                                                            <div class="subject-score @if ($score && is_numeric($score->total) && $score->total <= 50) highlight-red @endif">
-                                                                                {{ $score ? $score->total : '-' }}
-                                                                            </div>
-                                                                        </div>
-                                                                    @endforeach
-                                                                </div>
-
-                                                                <!-- Comments Section -->
-                                                                <div class="comments-section">
-                                                                    <div class="comment-group">
-                                                                        <div class="comment-label">Class Teacher's Comment</div>
-                                                                        <input type="text" class="form-control mobile-comment teacher-comment-input"
-                                                                               name="teacher_comments[{{ $student->id }}]"
-                                                                               value="{{ $profile ? $profile->classteachercomment : '' }}"
-                                                                               placeholder="Enter teacher's comment">
-                                                                    </div>
-                                                                    <div class="comment-group">
-                                                                        <div class="comment-label">Guidance Counselor's Comment</div>
-                                                                        <input type="text" class="form-control mobile-comment guidance-comment-input"
-                                                                               name="guidance_comments[{{ $student->id }}]"
-                                                                               value="{{ $profile ? $profile->guidancescomment : '' }}"
-                                                                               placeholder="Enter guidance counselor's comment">
-                                                                    </div>
-                                                                    <div class="comment-group">
-                                                                        <div class="comment-label">Remark on Other Activities</div>
-                                                                        <input type="text" class="form-control mobile-comment remark-input"
-                                                                               name="remarks_on_other_activities[{{ $student->id }}]"
-                                                                               value="{{ $profile ? $profile->remark_on_other_activities : '' }}"
-                                                                               placeholder="Enter remark on other activities">
-                                                                    </div>
-                                                                    <div class="comment-group">
-                                                                        <div class="comment-label">No. of Times Absent</div>
-                                                                        <input type="number" class="form-control mobile-comment absence-input"
-                                                                               name="no_of_times_school_absent[{{ $student->id }}]"
-                                                                               value="{{ $profile ? $profile->no_of_times_school_absent : '' }}"
-                                                                               min="0" placeholder="Enter absence count">
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    @empty
-                                                        <div class="no-results">
-                                                            <lord-icon src="https://cdn.lordicon.com/msoeawqm.json" trigger="loop"
-                                                                       colors="primary:#121331,secondary:#08a88a" style="width:75px;height:75px"></lord-icon>
-                                                            <h5 class="mt-2">Sorry! No Result Found</h5>
-                                                            <p class="text-muted mb-0">We've searched for the student data but did not find any matches.</p>
-                                                        </div>
-                                                    @endforelse
-                                                </div>
-                                                
-                                                <div id="noMobileResults" class="no-results" style="display: none;">
-                                                    <lord-icon src="https://cdn.lordicon.com/msoeawqm.json" trigger="loop"
-                                                               colors="primary:#121331,secondary:#08a88a" style="width:75px;height:75px"></lord-icon>
-                                                    <h5 class="mt-2">No matches found</h5>
-                                                    <p class="text-muted mb-0">Try adjusting your search terms.</p>
-                                                </div>
-                                            </div>
-
-                                            <!-- Save Button and Signature Input -->
-                                            <div class="d-flex justify-content-end mt-3 signature-container">
-                                                <div class="form-group">
-                                                    <label for="signature" class="comment-label">Upload Signature (JPG, PNG, or PDF)</label>
-                                                    <input type="file" class="form-control signature-input" name="signature" id="signature" accept=".jpg,.jpeg,.png,.pdf" >
-                                                </div>
-                                                <button type="submit" class="btn btn-primary">Save Data</button>
-                                            </div>
-
-                                            <!-- Desktop Pagination -->
-                                            <div class="desktop-table">
-                                                <div class="d-flex justify-content-end mt-3">
-                                                    <div class="pagination-wrap hstack gap-2">
-                                                        <span>Showing <span id="pagination-showing">0</span> of <span id="pagination-total">0</span> entries</span>
-                                                        <ul class="pagination listjs-pagination mb-0"></ul>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </form>
+                                    <div class="comments-section">
+                                        <div class="comment-group">
+                                            <div class="comment-label">Teacher's Comment</div>
+                                            <input type="text" class="form-control form-control-sm teacher-comment-input"
+                                                   name="teacher_comments[{{ $student->id }}]"
+                                                   value="{{ $profile ? $profile->classteachercomment : '' }}"
+                                                   placeholder="Enter comment...">
+                                        </div>
+                                        <div class="comment-group">
+                                            <div class="comment-label">Counselor's Comment</div>
+                                            <input type="text" class="form-control form-control-sm guidance-comment-input"
+                                                   name="guidance_comments[{{ $student->id }}]"
+                                                   value="{{ $profile ? $profile->guidancescomment : '' }}"
+                                                   placeholder="Enter comment...">
+                                        </div>
+                                        <div class="comment-group">
+                                            <div class="comment-label">Remark on Activities</div>
+                                            <input type="text" class="form-control form-control-sm remark-input"
+                                                   name="remarks_on_other_activities[{{ $student->id }}]"
+                                                   value="{{ $profile ? $profile->remark_on_other_activities : '' }}"
+                                                   placeholder="Enter remark...">
+                                        </div>
+                                        <div class="comment-group">
+                                            <div class="comment-label">Times Absent</div>
+                                            <input type="number" class="form-control form-control-sm absence-input"
+                                                   name="no_of_times_school_absent[{{ $student->id }}]"
+                                                   value="{{ $profile ? $profile->no_of_times_school_absent : '' }}"
+                                                   min="0" placeholder="0">
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        @endforeach
                     </div>
-                </div>
 
-                <!-- Image View Modal -->
-                <div class="row">
-                    <div class="col-12">
-                        <div id="imageViewModal" class="modal fade" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h5 class="modal-title">Student Picture</h5>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body text-center">
-                                        <img id="enlargedImage" src="" alt="Student Picture" class="img-fluid" />
-                                        <div class="placeholder-text">No image available</div>
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
-                                    </div>
-                                </div>
-                            </div>
+                    {{-- Signature and Save Button --}}
+                    <div class="signature-container">
+                        <div class="flex-grow-1">
+                            <label class="form-label mb-1">Upload Signature (JPG, PNG, or PDF)</label>
+                            <input type="file" class="form-control" name="signature" id="signature" accept=".jpg,.jpeg,.png,.pdf" style="width: 250px;">
                         </div>
+                        <button type="submit" class="btn btn-primary" id="saveBtn">
+                            <i class="ri-save-line me-1"></i>Save All Changes
+                        </button>
                     </div>
-                </div>
-            @else
-                <div class="row">
-                    <div class="col-12">
-                        <div class="alert alert-warning">
-                            No student data found for this class, term, and session.
-                        </div>
-                    </div>
-                </div>
-            @endif
+                </form>
+            </div>
+        </div>
+    @else
+        <div class="alert alert-warning text-center py-4">
+            <i class="ri-information-line fs-1 d-block mb-2"></i>
+            <h5>No Student Data Found</h5>
+            <p class="mb-0">No students are enrolled in this class for the selected term and session.</p>
+        </div>
+    @endif
+</div>
+</div>
+</div>
+
+{{-- IMAGE PREVIEW MODAL --}}
+<div class="modal fade" id="imageViewModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:360px">
+        <div class="modal-content border-0" style="border-radius:16px;overflow:hidden">
+            <div class="modal-header border-0 pb-0">
+                <h6 class="modal-title fw-semibold" style="color:var(--ts-primary)">
+                    <i class="ri-user-star-line me-1"></i> Student Photo
+                </h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center pt-2 pb-4">
+                <img id="preview-image" src="" alt="Student"
+                     class="rounded-circle mb-3"
+                     style="width:160px;height:160px;object-fit:cover;border:4px solid var(--ts-border);">
+                <p id="preview-studentname" class="fw-semibold mb-1" style="color:var(--ts-primary)"></p>
+                <p id="preview-admissionno" class="text-muted small mb-0"></p>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Inline Script to Pass Subjects to JavaScript -->
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    window.subjects = [
-        @foreach ($subjects as $subject)
-            '{{ \Illuminate\Support\Str::slug($subject->subject) }}',
-        @endforeach
-    ];
-</script>
+$(document).ready(function () {
 
+    // ── DataTable initialization ──────────────────────────────────────
+    const table = $('#broadsheetTable').DataTable({
+        pageLength: 15,
+        responsive: true,
+        language: {
+            search: '',
+            searchPlaceholder: 'Search...',
+            lengthMenu: 'Show _MENU_ entries',
+            info: 'Showing _START_ to _END_ of _TOTAL_ students',
+            infoEmpty: 'No students found',
+            zeroRecords: 'No matching students',
+        },
+        order: [[2, 'asc']],
+        columnDefs: [
+            { orderable: false, targets: [0, 4, 5, 6, 7, 8] }
+        ]
+    });
 
+    // ── Search functionality for mobile ───────────────────────────────
+    $('#searchInput').on('keyup', function() {
+        const searchTerm = $(this).val().toLowerCase();
 
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        // Show content after DOM is loaded to prevent FOUC
-        document.querySelector('.main-content').classList.add('loaded');
+        // Desktop DataTable search
+        table.search(searchTerm).draw();
 
-        // Form submission handler to synchronize inputs
-        const form = document.getElementById('commentsForm');
-        form.addEventListener('submit', function (event) {
-            // Synchronize mobile and desktop inputs
-            const studentRows = document.querySelectorAll('.desktop-table .student-row');
-            const studentCards = document.querySelectorAll('.mobile-cards .student-card');
+        // Mobile cards search
+        $('.student-card').each(function() {
+            const cardText = $(this).text().toLowerCase();
+            if (searchTerm === '' || cardText.includes(searchTerm)) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
 
-            studentRows.forEach(row => {
-                const studentId = row.getAttribute('data-student-id');
-                const mobileCard = Array.from(studentCards).find(card => card.getAttribute('data-student-id') === studentId);
+    // ── Image preview modal ──────────────────────────────────────────
+    $(document).on('click', '.student-avatar', function () {
+        const imgSrc = $(this).data('image');
+        const studentName = $(this).data('studentname');
+        const admissionNo = $(this).data('admissionno');
 
-                if (mobileCard) {
-                    // Sync mobile inputs to desktop inputs
-                    const desktopTeacherInput = row.querySelector('.teacher-comment-input');
-                    const desktopGuidanceInput = row.querySelector('.guidance-comment-input');
-                    const desktopRemarkInput = row.querySelector('.remark-input');
-                    const desktopAbsenceInput = row.querySelector('.absence-input');
+        $('#preview-image').attr('src', imgSrc);
+        $('#preview-studentname').text(studentName || 'Student');
+        $('#preview-admissionno').text('Admission No: ' + (admissionNo || 'N/A'));
+        $('#imageViewModal').modal('show');
+    });
 
-                    const mobileTeacherInput = mobileCard.querySelector('.teacher-comment-input');
-                    const mobileGuidanceInput = mobileCard.querySelector('.guidance-comment-input');
-                    const mobileRemarkInput = mobileCard.querySelector('.remark-input');
-                    const mobileAbsenceInput = mobileCard.querySelector('.absence-input');
+    // ── Form submission with validation ──────────────────────────────
+    $('#commentsForm').on('submit', function(e) {
+        const teacherInputs = $('.teacher-comment-input').filter(function() {
+            return $(this).val().trim() !== '';
+        });
+        const guidanceInputs = $('.guidance-comment-input').filter(function() {
+            return $(this).val().trim() !== '';
+        });
+        const remarkInputs = $('.remark-input').filter(function() {
+            return $(this).val().trim() !== '';
+        });
+        const absenceInputs = $('.absence-input').filter(function() {
+            return $(this).val().trim() !== '';
+        });
 
-                    // Update desktop inputs with mobile values if they exist
-                    if (mobileTeacherInput && desktopTeacherInput) {
-                        desktopTeacherInput.value = mobileTeacherInput.value;
-                    }
-                    if (mobileGuidanceInput && desktopGuidanceInput) {
-                        desktopGuidanceInput.value = mobileGuidanceInput.value;
-                    }
-                    if (mobileRemarkInput && desktopRemarkInput) {
-                        desktopRemarkInput.value = mobileRemarkInput.value;
-                    }
-                    if (mobileAbsenceInput && desktopAbsenceInput) {
-                        desktopAbsenceInput.value = mobileAbsenceInput.value;
-                    }
+        const hasData = teacherInputs.length > 0 || guidanceInputs.length > 0 ||
+                        remarkInputs.length > 0 || absenceInputs.length > 0;
+
+        if (!hasData && !$('#signature').val()) {
+            e.preventDefault();
+            Swal.fire({
+                icon: 'warning',
+                title: 'No Data to Save',
+                text: 'Please enter at least one comment, remark, absence count, or upload a signature before saving.',
+                confirmButtonColor: '#2563eb'
+            });
+            return;
+        }
+
+        // Show loading state
+        const saveBtn = $('#saveBtn');
+        const originalHtml = saveBtn.html();
+        saveBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-2"></span>Saving...');
+
+        // Allow form to submit normally
+        setTimeout(() => {
+            saveBtn.prop('disabled', false).html(originalHtml);
+        }, 3000);
+    });
+
+    // ── Calculate and display stats ──────────────────────────────────
+    function calculateStats() {
+        let totalScores = 0;
+        let scoreCount = 0;
+        let studentAverages = [];
+
+        $('.student-row').each(function() {
+            let studentTotal = 0;
+            let studentSubjects = 0;
+
+            $(this).find('td.score-normal, td.score-low').each(function() {
+                const score = parseInt($(this).text());
+                if (!isNaN(score)) {
+                    studentTotal += score;
+                    studentSubjects++;
+                    totalScores += score;
+                    scoreCount++;
                 }
             });
 
-            // Remove mobile inputs to avoid duplicate names in the form
-            document.querySelectorAll('.mobile-cards .teacher-comment-input, .mobile-cards .guidance-comment-input, .mobile-cards .remark-input, .mobile-cards .absence-input').forEach(input => {
-                input.remove();
-            });
-
-            // Log form data for debugging
-            const formData = new FormData(form);
-            console.log('Form data:', Object.fromEntries(formData));
-
-            // Client-side validation to prevent empty submission
-            const teacherInputs = document.querySelectorAll('.teacher-comment-input');
-            const guidanceInputs = document.querySelectorAll('.guidance-comment-input');
-            const remarkInputs = document.querySelectorAll('.remark-input');
-            const absenceInputs = document.querySelectorAll('.absence-input');
-            let hasInput = false;
-
-            teacherInputs.forEach(input => {
-                if (input.value.trim() !== '') hasInput = true;
-            });
-            guidanceInputs.forEach(input => {
-                if (input.value.trim() !== '') hasInput = true;
-            });
-            remarkInputs.forEach(input => {
-                if (input.value.trim() !== '') hasInput = true;
-            });
-            absenceInputs.forEach(input => {
-                if (input.value.trim() !== '') hasInput = true;
-            });
-
-            if (!hasInput) {
-                event.preventDefault();
-                alert('Please enter at least one field (comment, remark, or absence count) before submitting.');
+            if (studentSubjects > 0) {
+                studentAverages.push(studentTotal / studentSubjects);
             }
         });
 
-        // Search functionality (unchanged)
-        const searchInput = document.getElementById('searchInput');
-        const resultsCount = document.getElementById('resultsCount');
+        const passingRate = scoreCount > 0 ? Math.round((totalScores / (scoreCount * 100)) * 100) : 0;
+        $('#statPassing').text(passingRate + '%');
 
-        if (searchInput) {
-            searchInput.addEventListener('input', function() {
-                const searchTerm = this.value.toLowerCase().trim();
+        const topAverage = studentAverages.length > 0 ? Math.max(...studentAverages).toFixed(1) : 0;
+        $('#statTopStudent').text(topAverage + '%');
+    }
 
-                // Desktop table search
-                const desktopRows = document.querySelectorAll('.desktop-table .student-row');
-                let desktopVisibleCount = 0;
-
-                desktopRows.forEach(row => {
-                    const admissionNo = row.querySelector('.admissionno').textContent.toLowerCase();
-                    const name = row.querySelector('.name').textContent.toLowerCase();
-                    const teacherComment = row.querySelector('.teacher-comment-input')?.value.toLowerCase() || '';
-                    const guidanceComment = row.querySelector('.guidance-comment-input')?.value.toLowerCase() || '';
-                    const remarkActivity = row.querySelector('.remark-input')?.value.toLowerCase() || '';
-                    const absenceCount = row.querySelector('.absence-input')?.value.toLowerCase() || '';
-
-                    const searchContent = `${admissionNo} ${name} ${teacherComment} ${guidanceComment} ${remarkActivity} ${absenceCount}`;
-
-                    if (searchTerm === '' || searchContent.includes(searchTerm)) {
-                        row.style.display = '';
-                        desktopVisibleCount++;
-
-                        if (searchTerm) {
-                            highlightSearchTerm(row, searchTerm);
-                        } else {
-                            removeHighlights(row);
-                        }
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
-
-                // Mobile cards search
-                const mobileCards = document.querySelectorAll('.mobile-cards .student-card');
-                const noMobileResults = document.getElementById('noMobileResults');
-                let mobileVisibleCount = 0;
-
-                mobileCards.forEach(card => {
-                    const searchContent = card.getAttribute('data-search-content') || '';
-
-                    if (searchTerm === '' || searchContent.includes(searchTerm)) {
-                        card.style.display = '';
-                        mobileVisibleCount++;
-
-                        if (searchTerm) {
-                            highlightSearchMobile(card, searchTerm);
-                        } else {
-                            removeHighlightsMobile(card);
-                        }
-                    } else {
-                        card.style.display = 'none';
-                    }
-                });
-
-                if (noMobileResults) {
-                    if (mobileCards.length > 0 && mobileVisibleCount === 0 && searchTerm) {
-                        noMobileResults.style.display = 'block';
-                    } else {
-                        noMobileResults.style.display = 'none';
-                    }
-                }
-
-                if (resultsCount) {
-                    if (searchTerm && (desktopVisibleCount > 0 || mobileVisibleCount > 0)) {
-                        resultsCount.textContent = `${desktopVisibleCount + mobileVisibleCount} result(s) found`;
-                        resultsCount.style.display = 'block';
-                    } else if (searchTerm && desktopVisibleCount === 0 && mobileVisibleCount === 0) {
-                        resultsCount.textContent = `No matches found`;
-                        resultsCount.style.display = 'block';
-                    } else {
-                        resultsCount.style.display = 'none';
-                    }
-                }
-            });
-        }
-
-        // Highlight functions (unchanged)
-        function highlightSearchTerm(element, term) {
-            const highlightClass = 'search-highlight';
-            const tagsToSearch = ['.admissionno', '.name'];
-            tagsToSearch.forEach(selector => {
-                const el = element.querySelector(selector);
-                if (el) {
-                    const originalText = el.textContent;
-                    const regex = new RegExp(`(${term})`, 'gi');
-                    el.innerHTML = originalText.replace(regex, `<span class="${highlightClass}">$1</span>`);
-                }
-            });
-        }
-
-        function removeHighlights(element) {
-            const highlightClass = 'search-highlight';
-            element.querySelectorAll('.' + highlightClass).forEach(span => {
-                span.replaceWith(span.textContent);
-            });
-        }
-
-        function highlightSearchMobile(card, term) {
-            // Extend if needed for mobile view
-        }
-
-        function removeHighlightsMobile(card) {
-            // Clear highlights in mobile view if implemented
-        }
-    });
+    // Calculate stats after table is loaded
+    setTimeout(calculateStats, 500);
+});
 </script>
-
-
 @endsection
