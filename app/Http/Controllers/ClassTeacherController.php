@@ -51,7 +51,7 @@ class ClassTeacherController extends Controller
     }
 
     /**
-     * DataTables AJAX data endpoint with proper image handling.
+     * DataTables AJAX data endpoint with UTF-8 handling.
      */
     public function data(Request $request)
     {
@@ -77,12 +77,15 @@ class ClassTeacherController extends Controller
         return DataTables::of($assignments)
             ->addIndexColumn()
             ->addColumn('teacher_info', function ($row) {
+                // Clean and encode UTF-8 properly
+                $staffname = $this->cleanUtf8String($row->staffname ?? 'Unknown');
+
                 // Handle avatar image
                 $avatarUrl = null;
-                $initials = strtoupper(substr($row->staffname ?? 'U', 0, 2));
+                $initials = mb_strtoupper(mb_substr($staffname, 0, 2, 'UTF-8'), 'UTF-8');
 
                 // Check if avatar exists and is not default
-                if ($row->avatar && !in_array($row->avatar, ['unnamed.jpg', 'unnamed.png', null])) {
+                if ($row->avatar && !in_array($row->avatar, ['unnamed.jpg', 'unnamed.png', null, ''])) {
                     // Try multiple possible storage paths
                     $possiblePaths = [
                         'public/staff_avatars/' . $row->avatar,
@@ -107,34 +110,34 @@ class ClassTeacherController extends Controller
                 }
 
                 if ($avatarUrl) {
-                    $avatarHtml = '<img src="' . $avatarUrl . '"
-                                   alt="' . e($row->staffname) . '"
+                    $avatarHtml = '<img src="' . e($avatarUrl) . '"
+                                   alt="' . e($staffname) . '"
                                    class="teacher-avatar"
                                    style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; cursor: pointer; border: 2px solid #e2e8f0;"
-                                   data-teacher-name="' . e($row->staffname) . '">';
+                                   data-teacher-name="' . e($staffname) . '">';
                 } else {
                     $avatarHtml = '<div class="avatar-placeholder"
                                    style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 600; font-size: 16px; cursor: pointer; border: 2px solid #e2e8f0;"
-                                   data-teacher-name="' . e($row->staffname) . '">' . $initials . '</div>';
+                                   data-teacher-name="' . e($staffname) . '">' . e($initials) . '</div>';
                 }
 
                 return '<div class="d-flex align-items-center gap-2">
                             ' . $avatarHtml . '
-                            <div class="fw-semibold text-dark">' . e($row->staffname) . '</div>
+                            <div class="fw-semibold text-dark">' . e($staffname) . '</div>
                         </div>';
             })
             ->addColumn('class_info', function ($row) {
-                $classText = trim(($row->schoolclass ?? '') . ' ' . ($row->schoolarm ?? ''));
+                $classText = trim(($this->cleanUtf8String($row->schoolclass ?? '') . ' ' . $this->cleanUtf8String($row->schoolarm ?? '')));
                 return '<span class="ts-badge ts-badge-class" style="background: #fef3c7; color: #d97706; display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;">'
                     . e($classText) . '</span>';
             })
             ->addColumn('term', function ($row) {
-                $termText = $row->term ?? '';
+                $termText = $this->cleanUtf8String($row->term ?? '');
                 return '<span class="ts-badge ts-badge-term" style="background: #dbeafe; color: #2563eb; display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;">'
                     . e($termText) . '</span>';
             })
             ->addColumn('session', function ($row) {
-                $sessionText = $row->session ?? '';
+                $sessionText = $this->cleanUtf8String($row->session ?? '');
                 return '<span class="ts-badge ts-badge-session" style="background: #ccfbf1; color: #0f766e; display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600;">'
                     . e($sessionText) . '</span>';
             })
@@ -156,7 +159,7 @@ class ClassTeacherController extends Controller
                     </button>';
                 }
                 if (auth()->user()->can('Delete class-teacher')) {
-                    $title = e(($row->staffname ?? '') . ' — ' . ($row->schoolclass ?? '') . ' ' . ($row->schoolarm ?? ''));
+                    $title = e($this->cleanUtf8String($row->staffname ?? '') . ' — ' . $this->cleanUtf8String($row->schoolclass ?? '') . ' ' . $this->cleanUtf8String($row->schoolarm ?? ''));
                     $buttons .= '<button class="btn btn-danger delete-assignment" title="Delete"
                         data-id="' . $row->id . '"
                         data-title="' . $title . '">
@@ -168,6 +171,27 @@ class ClassTeacherController extends Controller
             })
             ->rawColumns(['teacher_info', 'class_info', 'term', 'session', 'formatted_date', 'action'])
             ->make(true);
+    }
+
+    /**
+     * Clean UTF-8 string - removes invalid characters
+     */
+    private function cleanUtf8String($string)
+    {
+        if (empty($string)) {
+            return '';
+        }
+
+        // Remove invalid UTF-8 characters
+        $string = mb_convert_encoding($string, 'UTF-8', 'UTF-8');
+
+        // Remove control characters except newlines and tabs
+        $string = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/', '', $string);
+
+        // Remove emoji and other 4-byte characters if needed (MySQL utf8 doesn't support them)
+        // $string = preg_replace('/[\x{10000}-\x{10FFFF}]/u', '', $string);
+
+        return $string;
     }
 
     /**
@@ -246,7 +270,8 @@ class ClassTeacherController extends Controller
 
             if ($exists) {
                 $schoolclass = Schoolclass::find($classId);
-                $duplicateClasses[] = $schoolclass ? ($schoolclass->schoolclass . ' ' . ($schoolclass->arm ?? '')) : $classId;
+                $className = $schoolclass ? ($schoolclass->schoolclass . ' ' . ($schoolclass->arm ?? '')) : $classId;
+                $duplicateClasses[] = $this->cleanUtf8String($className);
                 continue;
             }
 
@@ -259,7 +284,8 @@ class ClassTeacherController extends Controller
 
             if ($otherTeacher) {
                 $schoolclass = Schoolclass::find($classId);
-                $assignedClasses[] = $schoolclass ? ($schoolclass->schoolclass . ' ' . ($schoolclass->arm ?? '')) : $classId;
+                $className = $schoolclass ? ($schoolclass->schoolclass . ' ' . ($schoolclass->arm ?? '')) : $classId;
+                $assignedClasses[] = $this->cleanUtf8String($className);
                 continue;
             }
 
@@ -302,7 +328,7 @@ class ClassTeacherController extends Controller
     }
 
     /**
-     * Update a teacher's assignments (replaces all classes for that teacher/term/session).
+     * Update a teacher's assignments.
      */
     public function update(Request $request, $id)
     {
@@ -339,12 +365,11 @@ class ClassTeacherController extends Controller
             ], 404);
         }
 
-        // Check for duplicate classes with other teachers (excluding current teacher's assignments)
+        // Check for duplicate classes
         $duplicateClasses = [];
         $assignedClasses = [];
 
         foreach ($request->input('schoolclassid') as $classId) {
-            // Check if this teacher is already assigned to this class (excluding current records)
             $exists = ClassTeacher::where('staffid', $request->input('staffid'))
                 ->where('schoolclassid', $classId)
                 ->where('termid', $request->input('termid'))
@@ -354,11 +379,11 @@ class ClassTeacherController extends Controller
 
             if ($exists) {
                 $schoolclass = Schoolclass::find($classId);
-                $duplicateClasses[] = $schoolclass ? ($schoolclass->schoolclass . ' ' . ($schoolclass->arm ?? '')) : $classId;
+                $className = $schoolclass ? ($schoolclass->schoolclass . ' ' . ($schoolclass->arm ?? '')) : $classId;
+                $duplicateClasses[] = $this->cleanUtf8String($className);
                 continue;
             }
 
-            // Check if this class is already assigned to another teacher
             $otherTeacher = ClassTeacher::where('schoolclassid', $classId)
                 ->where('termid', $request->input('termid'))
                 ->where('sessionid', $request->input('sessionid'))
@@ -367,7 +392,8 @@ class ClassTeacherController extends Controller
 
             if ($otherTeacher) {
                 $schoolclass = Schoolclass::find($classId);
-                $assignedClasses[] = $schoolclass ? ($schoolclass->schoolclass . ' ' . ($schoolclass->arm ?? '')) : $classId;
+                $className = $schoolclass ? ($schoolclass->schoolclass . ' ' . ($schoolclass->arm ?? '')) : $classId;
+                $assignedClasses[] = $this->cleanUtf8String($className);
                 continue;
             }
         }
@@ -472,7 +498,7 @@ class ClassTeacherController extends Controller
     }
 
     /**
-     * Show a specific assignment (for edit pre-fill).
+     * Show a specific assignment.
      */
     public function show($id)
     {
