@@ -287,35 +287,15 @@
 
 /* ── Avatar styles (matching subjectteacher blade) ────── */
 .teacher-avatar {
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     object-fit: cover;
     border: 2px solid var(--ts-border);
     cursor: pointer;
-    transition: border-color .15s, transform .15s;
+    transition: border-color .15s;
 }
 .teacher-avatar:hover {
-    border-color: var(--ts-accent);
-    transform: scale(1.05);
-}
-.avatar-placeholder {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #fff;
-    font-weight: 600;
-    font-size: 16px;
-    cursor: pointer;
-    transition: transform .15s;
-    border: 2px solid var(--ts-border);
-}
-.avatar-placeholder:hover {
-    transform: scale(1.05);
     border-color: var(--ts-accent);
 }
 
@@ -329,15 +309,14 @@
     margin-bottom: 16px;
 }
 
-/* ── Image preview modal (matching subjectteacher blade) ── */
+/* ── Image preview modal ───────────────────────────────── */
 #imageViewModal .modal-content {
-    border-radius: 20px;
+    border-radius: 16px;
 }
 #preview-image {
-    transition: transform 0.3s ease;
-}
-#preview-image:hover {
-    transform: scale(1.02);
+    width: 160px;
+    height: 160px;
+    object-fit: cover;
 }
 </style>
 
@@ -642,22 +621,19 @@
     </div>
 </div>
 
-{{-- IMAGE PREVIEW MODAL (matching subjectteacher blade) --}}
+{{-- IMAGE PREVIEW MODAL (exactly like subjectteacher blade) --}}
 <div class="modal fade" id="imageViewModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered" style="max-width:400px">
-        <div class="modal-content border-0" style="border-radius:20px;overflow:hidden">
-            <div class="modal-header border-0 pb-0 pt-3 px-3">
-                <h6 class="modal-title fw-semibold" style="color:var(--ts-primary)">
-                    <i class="ri-user-star-line me-1"></i> Staff Photo
-                </h6>
+    <div class="modal-dialog modal-dialog-centered" style="max-width:360px">
+        <div class="modal-content border-0" style="border-radius:16px;overflow:hidden">
+            <div class="modal-header border-0 pb-0">
+                <h6 class="modal-title fw-semibold">Staff Photo</h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body text-center pt-2 pb-4">
                 <img id="preview-image" src="" alt="Staff"
                      class="rounded-circle mb-3"
-                     style="width:180px;height:180px;object-fit:cover;border:4px solid var(--ts-border);box-shadow:0 8px 20px rgba(0,0,0,.15);">
-                <p id="preview-staffname" class="fw-semibold mb-0 mt-2" style="color:var(--ts-primary);font-size:16px;"></p>
-                <p class="text-muted small mt-1">Click outside to close</p>
+                     style="width:160px;height:160px;object-fit:cover;border:4px solid var(--ts-border);">
+                <p id="preview-staffname" class="fw-semibold mb-0" style="color:var(--ts-primary)"></p>
             </div>
         </div>
     </div>
@@ -685,39 +661,17 @@ $(document).ready(function () {
     const CSRF = $('meta[name="csrf-token"]').attr('content');
     let table, deleteId = null;
 
-    // ── Function to show image preview (exactly like subjectteacher) ───
-    function showImagePreview(element) {
-        let imgSrc, teacherName;
-
-        if (element.is('img')) {
-            imgSrc = element.attr('src');
-            teacherName = element.data('teacher-name') || element.closest('div').find('.fw-semibold').text();
-        } else {
-            // For placeholder div
-            teacherName = element.data('teacher-name') || element.closest('div').find('.fw-semibold').text();
-            // Use default image like subjectteacher blade
-            imgSrc = '{{ asset("storage/staff_avatars/unnamed.jpg") }}';
-        }
-
-        $('#preview-image').attr('src', imgSrc);
-        $('#preview-staffname').text(teacherName || 'Teacher');
+    // ── Image preview function (exactly like subjectteacher blade) ─────
+    $(document).on('click', '.staff-image', function () {
+        const img    = $(this).data('image');
+        const name   = $(this).data('staffname');
+        const exists = $(this).data('file-exists') === 'true';
+        const defEx  = $(this).data('default-exists') === 'true';
+        $('#preview-image').attr('src',
+            (exists || (!exists && defEx)) ? img : '/storage/staff_avatars/unnamed.jpg');
+        $('#preview-staffname').text(name || 'Unknown');
         $('#imageViewModal').modal('show');
-    }
-
-    // ── Bind image preview functionality ───────────────────────────────
-    function bindImagePreview() {
-        $('.teacher-avatar').off('click').on('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            showImagePreview($(this));
-        });
-
-        $('.avatar-placeholder').off('click').on('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            showImagePreview($(this));
-        });
-    }
+    });
 
     // ── DataTable ──────────────────────────────────────────────────────
     table = $('#classTeachersTable').DataTable({
@@ -761,7 +715,6 @@ $(document).ready(function () {
         responsive: true,
         drawCallback: function () {
             bindCheckboxes();
-            bindImagePreview();
             const info = this.api().page.info();
             $('#totalBadge').text(info.recordsTotal);
         },
@@ -1107,9 +1060,6 @@ $(document).ready(function () {
     }
 
     $('#bulkDeleteBtn, #bulkDeleteBtn2').on('click', doBulkDelete);
-
-    // Initial bind for image preview
-    bindImagePreview();
 });
 </script>
 @endsection
