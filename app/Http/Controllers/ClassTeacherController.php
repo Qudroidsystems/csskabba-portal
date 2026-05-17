@@ -42,53 +42,16 @@ class ClassTeacherController extends Controller
         $schoolterms = Schoolterm::all();
         $schoolsessions = Schoolsession::all();
 
-        // For non-AJAX requests, return the view with data for initial load
-        if (!$request->ajax()) {
-            return view('classteacher.index')
-                ->with('schoolclass', $schoolclass)
-                ->with('subjectteachers', $subjectteachers)
-                ->with('schoolterms', $schoolterms)
-                ->with('schoolsessions', $schoolsessions)
-                ->with('pagetitle', $pagetitle);
-        }
-
-        // For AJAX requests, return JSON with paginated data
-        $classteachers = ClassTeacher::leftJoin('users', 'users.id', '=', 'classteacher.staffid')
-            ->leftJoin('schoolclass', 'schoolclass.id', '=', 'classteacher.schoolclassid')
-            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->leftJoin('schoolterm', 'schoolterm.id', '=', 'classteacher.termid')
-            ->leftJoin('schoolsession', 'schoolsession.id', '=', 'classteacher.sessionid')
-            ->select([
-                'classteacher.id as id',
-                'users.id as userid',
-                'users.name as staffname',
-                'users.avatar as avatar',
-                'schoolclass.id as schoolclassid',
-                'schoolclass.schoolclass as schoolclass',
-                'schoolarm.id as schoolarmid',
-                'schoolarm.arm as schoolarm',
-                'schoolterm.id as termid',
-                'schoolterm.term as term',
-                'schoolsession.id as sessionid',
-                'schoolsession.session as session',
-                'classteacher.updated_at as updated_at'
-            ])
-            ->orderBy('schoolclass.schoolclass')
-            ->orderBy('users.name')
-            ->paginate(100);
-
-        $html = view('classteacher.partials.table', compact('classteachers'))->render();
-
-        return response()->json([
-            'success' => true,
-            'html' => $html,
-            'count' => $classteachers->count(),
-            'total' => $classteachers->total(),
-        ]);
+        return view('classteacher.index')
+            ->with('schoolclass', $schoolclass)
+            ->with('subjectteachers', $subjectteachers)
+            ->with('schoolterms', $schoolterms)
+            ->with('schoolsessions', $schoolsessions)
+            ->with('pagetitle', $pagetitle);
     }
 
     /**
-     * DataTables AJAX data endpoint.
+     * DataTables AJAX data endpoint with UTF-8 handling.
      */
     public function data(Request $request)
     {
@@ -114,31 +77,38 @@ class ClassTeacherController extends Controller
         return DataTables::of($assignments)
             ->addIndexColumn()
             ->addColumn('teacher_info', function ($row) {
+                // Sanitize and encode UTF-8 properly
+                $staffname = htmlspecialchars($row->staffname ?? '', ENT_QUOTES, 'UTF-8');
+
                 $avatarHtml = $row->avatar
-                    ? '<img src="' . Storage::url('images/staffavatar/' . $row->avatar) . '" alt="' . e($row->staffname) . '" class="avatar-img" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">'
-                    : '<div class="avatar-circle" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 600; font-size: 16px;">' . substr($row->staffname, 0, 2) . '</div>';
+                    ? '<img src="' . e(Storage::url('images/staffavatar/' . $row->avatar)) . '" alt="' . $staffname . '" class="avatar-img" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">'
+                    : '<div class="avatar-circle" style="width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 600; font-size: 16px;">' . mb_substr($staffname, 0, 2) . '</div>';
 
                 return '<div class="d-flex align-items-center gap-2">
                             ' . $avatarHtml . '
-                            <div class="fw-semibold">' . e($row->staffname) . '</div>
+                            <div class="fw-semibold">' . $staffname . '</div>
                         </div>';
             })
             ->addColumn('class_info', function ($row) {
+                $classText = trim(($row->schoolclass ?? '') . ' ' . ($row->schoolarm ?? ''));
                 return '<span class="ts-badge ts-badge-class" style="background: #fef3c7; color: #d97706; display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600;">'
-                    . e($row->schoolclass . ' ' . $row->schoolarm) . '</span>';
+                    . e($classText) . '</span>';
             })
             ->addColumn('term', function ($row) {
+                $termText = $row->term ?? '';
                 return '<span class="ts-badge ts-badge-term" style="background: #dbeafe; color: #2563eb; display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600;">'
-                    . e($row->term) . '</span>';
+                    . e($termText) . '</span>';
             })
             ->addColumn('session', function ($row) {
+                $sessionText = $row->session ?? '';
                 return '<span class="ts-badge ts-badge-session" style="background: #ccfbf1; color: #0f766e; display: inline-flex; align-items: center; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600;">'
-                    . e($row->session) . '</span>';
+                    . e($sessionText) . '</span>';
             })
             ->addColumn('formatted_date', function ($row) {
-                return $row->updated_at
-                    ? '<span class="text-muted small">' . \Carbon\Carbon::parse($row->updated_at)->format('d M Y') . '<br><span style="font-size:10px">' . \Carbon\Carbon::parse($row->updated_at)->format('H:i') . '</span></span>'
-                    : 'N/A';
+                if (!$row->updated_at) {
+                    return 'N/A';
+                }
+                return '<span class="text-muted small">' . \Carbon\Carbon::parse($row->updated_at)->format('d M Y') . '<br><span style="font-size:10px">' . \Carbon\Carbon::parse($row->updated_at)->format('H:i') . '</span></span>';
             })
             ->addColumn('action', function ($row) {
                 $buttons = '<div class="btn-group btn-group-sm">';
@@ -152,9 +122,10 @@ class ClassTeacherController extends Controller
                     </button>';
                 }
                 if (auth()->user()->can('Delete class-teacher')) {
+                    $title = e(($row->staffname ?? '') . ' — ' . ($row->schoolclass ?? '') . ' ' . ($row->schoolarm ?? ''));
                     $buttons .= '<button class="btn btn-danger delete-assignment" title="Delete"
                         data-id="' . $row->id . '"
-                        data-title="' . e($row->staffname . ' — ' . $row->schoolclass . ' ' . $row->schoolarm) . '">
+                        data-title="' . $title . '">
                         <i class="ri-delete-bin-line"></i>
                     </button>';
                 }
@@ -170,19 +141,31 @@ class ClassTeacherController extends Controller
      */
     public function stats()
     {
-        $assignments = ClassTeacher::all();
-        $uniqueTeachers = ClassTeacher::distinct('staffid')->count('staffid');
-        $uniqueClasses = ClassTeacher::distinct('schoolclassid')->count('schoolclassid');
-        $activeSessions = ClassTeacher::distinct('sessionid')->count('sessionid');
+        try {
+            $total = ClassTeacher::count();
+            $uniqueTeachers = ClassTeacher::distinct('staffid')->count('staffid');
+            $uniqueClasses = ClassTeacher::distinct('schoolclassid')->count('schoolclassid');
+            $activeSessions = ClassTeacher::distinct('sessionid')->count('sessionid');
 
-        return response()->json([
-            'stats' => [
-                'total' => $assignments->count(),
-                'unique_teachers' => $uniqueTeachers,
-                'unique_classes' => $uniqueClasses,
-                'active_sessions' => $activeSessions,
-            ]
-        ]);
+            return response()->json([
+                'stats' => [
+                    'total' => $total,
+                    'unique_teachers' => $uniqueTeachers,
+                    'unique_classes' => $uniqueClasses,
+                    'active_sessions' => $activeSessions,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Stats error: ' . $e->getMessage());
+            return response()->json([
+                'stats' => [
+                    'total' => 0,
+                    'unique_teachers' => 0,
+                    'unique_classes' => 0,
+                    'active_sessions' => 0,
+                ]
+            ]);
+        }
     }
 
     /**
@@ -229,7 +212,7 @@ class ClassTeacherController extends Controller
 
             if ($exists) {
                 $schoolclass = Schoolclass::find($classId);
-                $duplicateClasses[] = $schoolclass ? $schoolclass->schoolclass . ' ' . ($schoolclass->arm ?? '') : $classId;
+                $duplicateClasses[] = $schoolclass ? ($schoolclass->schoolclass . ' ' . ($schoolclass->arm ?? '')) : $classId;
                 continue;
             }
 
@@ -242,7 +225,7 @@ class ClassTeacherController extends Controller
 
             if ($otherTeacher) {
                 $schoolclass = Schoolclass::find($classId);
-                $assignedClasses[] = $schoolclass ? $schoolclass->schoolclass . ' ' . ($schoolclass->arm ?? '') : $classId;
+                $assignedClasses[] = $schoolclass ? ($schoolclass->schoolclass . ' ' . ($schoolclass->arm ?? '')) : $classId;
                 continue;
             }
 
@@ -337,7 +320,7 @@ class ClassTeacherController extends Controller
 
             if ($exists) {
                 $schoolclass = Schoolclass::find($classId);
-                $duplicateClasses[] = $schoolclass ? $schoolclass->schoolclass . ' ' . ($schoolclass->arm ?? '') : $classId;
+                $duplicateClasses[] = $schoolclass ? ($schoolclass->schoolclass . ' ' . ($schoolclass->arm ?? '')) : $classId;
                 continue;
             }
 
@@ -350,7 +333,7 @@ class ClassTeacherController extends Controller
 
             if ($otherTeacher) {
                 $schoolclass = Schoolclass::find($classId);
-                $assignedClasses[] = $schoolclass ? $schoolclass->schoolclass . ' ' . ($schoolclass->arm ?? '') : $classId;
+                $assignedClasses[] = $schoolclass ? ($schoolclass->schoolclass . ' ' . ($schoolclass->arm ?? '')) : $classId;
                 continue;
             }
         }
@@ -451,7 +434,7 @@ class ClassTeacherController extends Controller
         return response()->json([
             'success' => true,
             'classIds' => $classIds
-        ], 200);
+        ]);
     }
 
     /**

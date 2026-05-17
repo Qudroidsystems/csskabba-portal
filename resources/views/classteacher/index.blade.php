@@ -228,11 +228,11 @@
     border-radius: 10px;
     padding: 14px 16px;
     background: var(--ts-bg);
-    max-height: 200px;
+    max-height: 260px;
     overflow-y: auto;
 }
 .check-group .form-check {
-    margin-bottom: 6px;
+    margin-bottom: 8px;
 }
 .check-group .form-check:last-child {
     margin-bottom: 0;
@@ -274,8 +274,8 @@
 .radio-group {
     display: flex;
     flex-wrap: wrap;
-    gap: 16px;
-    padding: 12px 0;
+    gap: 20px;
+    padding: 8px 0;
 }
 .radio-group .form-check {
     margin: 0;
@@ -304,6 +304,16 @@
     border-radius: 50%;
     object-fit: cover;
 }
+
+.edit-info-note {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 12px;
+    color: #2563eb;
+    margin-bottom: 16px;
+}
 </style>
 
 <div class="main-content">
@@ -312,8 +322,8 @@
 
     {{-- Hero --}}
     <div class="ts-hero">
-        <h1><i class="ri-user-star-line me-2"></i>{{ $pagetitle }}</h1>
-        <p>Assign class teachers, manage assignments, and track responsibilities.</p>
+        <h1><i class="ri-user-star-line me-2"></i>{{ $pagetitle ?? 'Class Teacher Management' }}</h1>
+        <p>Assign class teachers, manage assignments, and track responsibilities across terms and sessions.</p>
     </div>
 
     {{-- Stat cards --}}
@@ -508,7 +518,7 @@
                 <input type="hidden" id="editAssignmentId">
                 <div class="modal-body p-4">
 
-                    <div class="edit-info-note mb-3" style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:8px; padding:10px 14px; font-size:12px; color:#2563eb;">
+                    <div class="edit-info-note">
                         <i class="ri-information-line me-1"></i>
                         You are editing a teacher's assignments. This will replace all existing classes for this teacher, term, and session.
                     </div>
@@ -630,7 +640,7 @@ $(document).ready(function () {
     };
 
     const CSRF = $('meta[name="csrf-token"]').attr('content');
-    let table, deleteId = null, editData = null;
+    let table, deleteId = null;
 
     // ── DataTable ──────────────────────────────────────────────────────
     table = $('#classTeachersTable').DataTable({
@@ -688,6 +698,8 @@ $(document).ready(function () {
                 $('#statClasses').text(data.stats.unique_classes);
                 $('#statActive').text(data.stats.active_sessions);
             }
+        }).fail(function() {
+            console.log('Failed to load stats');
         });
     }
     loadStats();
@@ -776,11 +788,30 @@ $(document).ready(function () {
     $('#tsForm').on('submit', function (e) {
         e.preventDefault();
 
+        const selectedClasses = $('.class-cb:checked').map(function(i, el) { return $(el).val(); }).get();
+        const selectedTerm = $('input[name="termid"]:checked').val();
+        const selectedSession = $('input[name="sessionid"]:checked').val();
+
+        if (selectedClasses.length === 0) {
+            Swal.fire('Error', 'Please select at least one class.', 'error');
+            return;
+        }
+
+        if (!selectedTerm) {
+            Swal.fire('Error', 'Please select a term.', 'error');
+            return;
+        }
+
+        if (!selectedSession) {
+            Swal.fire('Error', 'Please select a session.', 'error');
+            return;
+        }
+
         const payload = {
             staffid: $('#staffid').val(),
-            schoolclassid: $('.class-cb:checked').map(function(i, el) { return el.value; }).get(),
-            termid: $('input[name="termid"]:checked').val() || '',
-            sessionid: $('input[name="sessionid"]:checked').val() || '',
+            schoolclassid: selectedClasses,
+            termid: selectedTerm,
+            sessionid: selectedSession,
             _token: CSRF,
         };
 
@@ -799,8 +830,11 @@ $(document).ready(function () {
                     table.ajax.reload();
                     loadStats();
                     Swal.fire({
-                        icon: 'success', title: 'Saved!', text: res.message,
-                        timer: 2500, showConfirmButton: false,
+                        icon: 'success',
+                        title: 'Saved!',
+                        text: res.message,
+                        timer: 2500,
+                        showConfirmButton: false,
                     });
                 } else {
                     showErrors(res.message, res.errors, '#formErrors');
@@ -826,11 +860,30 @@ $(document).ready(function () {
         e.preventDefault();
 
         const id = $('#editAssignmentId').val();
+        const selectedClasses = $('.edit-class-cb:checked').map(function(i, el) { return $(el).val(); }).get();
+        const selectedTerm = $('input[name="edit_termid"]:checked').val();
+        const selectedSession = $('input[name="edit_sessionid"]:checked').val();
+
+        if (selectedClasses.length === 0) {
+            Swal.fire('Error', 'Please select at least one class.', 'error');
+            return;
+        }
+
+        if (!selectedTerm) {
+            Swal.fire('Error', 'Please select a term.', 'error');
+            return;
+        }
+
+        if (!selectedSession) {
+            Swal.fire('Error', 'Please select a session.', 'error');
+            return;
+        }
+
         const payload = {
             staffid: $('#editStaffid').val(),
-            schoolclassid: $('.edit-class-cb:checked').map(function(i, el) { return el.value; }).get(),
-            termid: $('input[name="edit_termid"]:checked').val() || '',
-            sessionid: $('input[name="edit_sessionid"]:checked').val() || '',
+            schoolclassid: selectedClasses,
+            termid: selectedTerm,
+            sessionid: selectedSession,
             _token: CSRF,
             _method: 'PUT'
         };
@@ -850,8 +903,11 @@ $(document).ready(function () {
                     table.ajax.reload();
                     loadStats();
                     Swal.fire({
-                        icon: 'success', title: 'Updated!', text: res.message,
-                        timer: 2500, showConfirmButton: false,
+                        icon: 'success',
+                        title: 'Updated!',
+                        text: res.message,
+                        timer: 2500,
+                        showConfirmButton: false,
                     });
                 } else {
                     showErrors(res.message, res.errors, '#editFormErrors');
@@ -907,8 +963,11 @@ $(document).ready(function () {
                     table.ajax.reload();
                     loadStats();
                     Swal.fire({
-                        icon: 'success', title: 'Deleted!', text: res.message,
-                        timer: 2000, showConfirmButton: false,
+                        icon: 'success',
+                        title: 'Deleted!',
+                        text: res.message,
+                        timer: 2000,
+                        showConfirmButton: false,
                     });
                 } else {
                     Swal.fire('Error!', res.message, 'error');
@@ -927,7 +986,7 @@ $(document).ready(function () {
 
     // ── Bulk delete ────────────────────────────────────────────────────
     function doBulkDelete() {
-        const ids = $('.row-checkbox:checked').map(function(i, el) { return el.value; }).get();
+        const ids = $('.row-checkbox:checked').map(function(i, el) { return $(el).val(); }).get();
         if (!ids.length) return;
 
         Swal.fire({
@@ -952,9 +1011,14 @@ $(document).ready(function () {
                         $('#selectAll').prop('checked', false);
                         updateBulkBar();
                         Swal.fire({
-                            icon: 'success', title: 'Deleted!', text: res.message,
-                            timer: 2000, showConfirmButton: false,
+                            icon: 'success',
+                            title: 'Deleted!',
+                            text: res.message,
+                            timer: 2000,
+                            showConfirmButton: false,
                         });
+                    } else {
+                        Swal.fire('Error!', res.message, 'error');
                     }
                 },
                 error: function() {
