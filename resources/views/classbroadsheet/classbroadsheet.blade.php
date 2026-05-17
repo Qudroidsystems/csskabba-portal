@@ -507,6 +507,13 @@
                                                        min="0" placeholder="0" style="width: 80px;">
                                             </td>
                                         </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="{{ 9 + count($subjects) }}" class="text-center text-muted py-4">
+                                                <i class="ri-information-line fs-1 d-block mb-2"></i>
+                                                No student data found for this class.
+                                            </td>
+                                        </tr>
                                     @endforelse
                                 </tbody>
                             </table>
@@ -596,7 +603,12 @@
                                     </div>
                                 </div>
                             </div>
-                        @endforeach
+                        @empty
+                            <div class="text-center text-muted py-4">
+                                <i class="ri-information-line fs-1 d-block mb-2"></i>
+                                <p>No student data found for this class.</p>
+                            </div>
+                        @endforelse
                     </div>
 
                     {{-- Signature and Save Button --}}
