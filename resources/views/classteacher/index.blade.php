@@ -285,7 +285,7 @@
     border-color: var(--ts-accent);
 }
 
-/* ── Avatar styles ─────────────────────────────────────── */
+/* ── Avatar styles (matching subjectteacher blade) ────── */
 .teacher-avatar {
     width: 40px;
     height: 40px;
@@ -329,7 +329,7 @@
     margin-bottom: 16px;
 }
 
-/* ── Image preview modal enhancements ──────────────────── */
+/* ── Image preview modal (matching subjectteacher blade) ── */
 #imageViewModal .modal-content {
     border-radius: 20px;
 }
@@ -642,21 +642,21 @@
     </div>
 </div>
 
-{{-- IMAGE PREVIEW MODAL --}}
+{{-- IMAGE PREVIEW MODAL (matching subjectteacher blade) --}}
 <div class="modal fade" id="imageViewModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered" style="max-width:400px">
         <div class="modal-content border-0" style="border-radius:20px;overflow:hidden">
             <div class="modal-header border-0 pb-0 pt-3 px-3">
                 <h6 class="modal-title fw-semibold" style="color:var(--ts-primary)">
-                    <i class="ri-user-star-line me-1"></i> Teacher Photo
+                    <i class="ri-user-star-line me-1"></i> Staff Photo
                 </h6>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body text-center pt-2 pb-4">
-                <img id="preview-image" src="" alt="Teacher"
+                <img id="preview-image" src="" alt="Staff"
                      class="rounded-circle mb-3"
-                     style="width:200px;height:200px;object-fit:cover;border:4px solid var(--ts-border);box-shadow:0 8px 20px rgba(0,0,0,.15);">
-                <p id="preview-teachername" class="fw-semibold mb-0 mt-2" style="color:var(--ts-primary);font-size:16px;"></p>
+                     style="width:180px;height:180px;object-fit:cover;border:4px solid var(--ts-border);box-shadow:0 8px 20px rgba(0,0,0,.15);">
+                <p id="preview-staffname" class="fw-semibold mb-0 mt-2" style="color:var(--ts-primary);font-size:16px;"></p>
                 <p class="text-muted small mt-1">Click outside to close</p>
             </div>
         </div>
@@ -685,34 +685,22 @@ $(document).ready(function () {
     const CSRF = $('meta[name="csrf-token"]').attr('content');
     let table, deleteId = null;
 
-    // ── Function to show image preview ─────────────────────────────────
+    // ── Function to show image preview (exactly like subjectteacher) ───
     function showImagePreview(element) {
         let imgSrc, teacherName;
 
         if (element.is('img')) {
             imgSrc = element.attr('src');
-            teacherName = element.closest('div').find('.fw-semibold').text();
+            teacherName = element.data('teacher-name') || element.closest('div').find('.fw-semibold').text();
         } else {
             // For placeholder div
-            teacherName = element.closest('div').find('.fw-semibold').text();
-            // Create a nice gradient placeholder SVG
-            const initial = teacherName.charAt(0).toUpperCase();
-            imgSrc = 'data:image/svg+xml,' + encodeURIComponent(`
-                <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200">
-                    <defs>
-                        <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
-                            <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
-                        </linearGradient>
-                    </defs>
-                    <rect width="200" height="200" fill="url(#grad)"/>
-                    <text x="100" y="130" font-size="90" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-weight="bold">${initial}</text>
-                </svg>
-            `);
+            teacherName = element.data('teacher-name') || element.closest('div').find('.fw-semibold').text();
+            // Use default image like subjectteacher blade
+            imgSrc = '{{ asset("storage/staff_avatars/unnamed.jpg") }}';
         }
 
         $('#preview-image').attr('src', imgSrc);
-        $('#preview-teachername').text(teacherName || 'Teacher');
+        $('#preview-staffname').text(teacherName || 'Teacher');
         $('#imageViewModal').modal('show');
     }
 
