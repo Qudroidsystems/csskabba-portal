@@ -145,6 +145,25 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     align-items: center;
     gap: 8px;
 }
+.btn-create {
+    background: var(--cb-teal);
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.btn-create:hover {
+    background: #0f766e;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(13,148,136,0.3);
+}
 
 /* Table Styles */
 .cb-table {
@@ -174,12 +193,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     border-bottom: none;
 }
 
-/* Action Buttons */
-.action-buttons {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-}
+/* Button Styles */
 .btn-icon {
     padding: 6px 12px;
     border-radius: 8px;
@@ -203,87 +217,53 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     color: white;
     transform: translateY(-2px);
 }
-.btn-info-icon {
+.btn-broadsheet {
     background: #dcfce7;
     color: #15803d;
 }
-.btn-info-icon:hover {
+.btn-broadsheet:hover {
     background: #22c55e;
     color: white;
     transform: translateY(-2px);
 }
 
-/* Dropdown Menu */
-.cb-dropdown {
-    position: relative;
-    display: inline-block;
-}
-.cb-dropdown-btn {
-    background: #f1f5f9;
-    border: 1px solid var(--cb-border);
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
+/* Badge */
+.cb-badge {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
-}
-.cb-dropdown-btn:hover {
-    background: var(--cb-teal);
-    color: white;
-    border-color: var(--cb-teal);
-}
-.cb-dropdown-menu {
-    position: absolute;
-    top: 100%;
-    right: 0;
-    background: white;
-    border: 1px solid var(--cb-border);
-    border-radius: 10px;
-    box-shadow: var(--cb-shadow-lg);
-    min-width: 200px;
-    z-index: 100;
-    display: none;
-    margin-top: 5px;
-}
-.cb-dropdown-menu.show {
-    display: block;
-    animation: fadeIn 0.15s ease;
-}
-.cb-dropdown-menu .dropdown-header {
-    padding: 8px 16px;
+    padding: 4px 10px;
+    border-radius: 20px;
     font-size: 11px;
-    font-weight: 700;
-    color: var(--cb-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    border-bottom: 1px solid var(--cb-border);
+    font-weight: 600;
 }
-.cb-dropdown-menu .dropdown-item {
-    padding: 8px 16px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    text-decoration: none;
+.badge-current {
+    background: #dcfce7;
+    color: #15803d;
+}
+.badge-past {
+    background: #f1f5f9;
+    color: #64748b;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 60px;
+}
+.empty-state i {
+    font-size: 64px;
+    color: #cbd5e1;
+    margin-bottom: 16px;
+    display: block;
+}
+.empty-state h6 {
+    font-size: 18px;
     color: var(--cb-navy);
-    font-size: 12px;
-    transition: all 0.15s;
+    margin-bottom: 8px;
 }
-.cb-dropdown-menu .dropdown-item:hover {
-    background: #f0fdf9;
-    color: var(--cb-teal);
-}
-.cb-dropdown-menu .dropdown-item.text-danger:hover {
-    background: #fee2e2;
-    color: #dc2626;
-}
-.cb-dropdown-menu .divider {
-    height: 1px;
-    background: var(--cb-border);
-    margin: 6px 0;
+.empty-state p {
+    color: var(--cb-muted);
+    font-size: 13px;
 }
 
 /* Pagination */
@@ -322,59 +302,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     cursor: not-allowed;
 }
 
-/* Badge */
-.cb-badge {
-    display: inline-flex;
-    align-items: center;
-    padding: 4px 10px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 600;
-}
-.badge-current {
-    background: #dcfce7;
-    color: #15803d;
-}
-.badge-past {
-    background: #f1f5f9;
-    color: #64748b;
-}
-
-/* Checkbox */
-.cb-checkbox {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-    accent-color: var(--cb-teal);
-}
-
-/* Empty State */
-.empty-state {
-    text-align: center;
-    padding: 60px;
-}
-.empty-state i {
-    font-size: 64px;
-    color: #cbd5e1;
-    margin-bottom: 16px;
-    display: block;
-}
-.empty-state h6 {
-    font-size: 18px;
-    color: var(--cb-navy);
-    margin-bottom: 8px;
-}
-.empty-state p {
-    color: var(--cb-muted);
-    font-size: 13px;
-}
-
-/* Animations */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
 /* Responsive */
 @media (max-width: 768px) {
     .cb-hero { padding: 24px 20px; }
@@ -396,32 +323,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         color: var(--cb-navy);
     }
 }
-
-/* Toast */
-.cb-toast {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    background: #1e293b;
-    color: white;
-    padding: 12px 20px;
-    border-radius: 12px;
-    font-size: 13px;
-    font-weight: 500;
-    z-index: 9999;
-    animation: slideIn 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.cb-toast-success { background: #059669; }
-.cb-toast-error { background: #dc2626; }
-.cb-toast-info { background: #3b82f6; }
-@keyframes slideIn {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-}
 </style>
 
 <div class="main-content">
@@ -431,7 +332,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 <!-- Hero Section -->
 <div class="cb-hero">
     <h1><i class="ri-graduation-cap-line me-2"></i>My Classes</h1>
-    <p>Manage your assigned classes, view students, and access broadsheet reports.</p>
+    <p>View your assigned classes, manage students, and access broadsheet reports.</p>
     <div class="meta-pills">
         <span class="cb-meta-pill"><i class="ri-user-line"></i>{{ Auth::user()->name }}</span>
         <span class="cb-meta-pill"><i class="ri-calendar-line"></i>{{ date('F j, Y') }}</span>
@@ -471,11 +372,11 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     <div class="cb-card-header">
         <h5>
             <i class="ri-table-alt-line" style="color:var(--cb-teal)"></i>
-            My Current Classes
+            My Assigned Classes
             <span class="cb-badge badge-current ms-2">{{ $myclass->total() }} Classes</span>
         </h5>
         @can('Create my-class')
-        <button type="button" class="btn-search" data-bs-toggle="modal" data-bs-target="#addClassModal" style="background: var(--cb-teal); color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 600; font-size: 13px; cursor: pointer;">
+        <button type="button" class="btn-create" data-bs-toggle="modal" data-bs-target="#addClassModal">
             <i class="ri-add-line"></i> Create Class Setting
         </button>
         @endcan
@@ -485,7 +386,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         <table class="cb-table">
             <thead>
                 <tr>
-                    <th style="width: 40px;"><input type="checkbox" class="cb-checkbox" id="checkAll"></th>
                     <th>#</th>
                     <th>Class</th>
                     <th>Arm</th>
@@ -493,16 +393,12 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                     <th>Session</th>
                     <th>Students</th>
                     <th>Broadsheet</th>
-                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @php $i = ($myclass->currentPage() - 1) * $myclass->perPage() @endphp
                 @forelse ($myclass as $sc)
                 <tr>
-                    <td data-label="Select">
-                        <input type="checkbox" class="cb-checkbox child-checkbox" value="{{ $sc->id }}">
-                    </td>
                     <td data-label="#">{{ ++$i }}</td>
                     <td data-label="Class"><strong>{{ $sc->schoolclass }}</strong></td>
                     <td data-label="Arm"><span class="cb-badge badge-current">{{ $sc->schoolarm }}</span></td>
@@ -514,69 +410,14 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                         </a>
                     </td>
                     <td data-label="Broadsheet">
-                        <div class="cb-dropdown">
-                            <button class="cb-dropdown-btn" onclick="toggleDropdown(this)">
-                                <i class="ri-file-text-line"></i> Broadsheet <i class="ri-arrow-down-s-line"></i>
-                            </button>
-                            <div class="cb-dropdown-menu">
-                                <div class="dropdown-header">Select Term</div>
-                                <a class="dropdown-item" href="{{ route('classbroadsheet.viewcomments', [$sc->schoolclassid, $sc->sessionid, 1]) }}">
-                                    <i class="ri-file-copy-line"></i> Term 1
-                                </a>
-                                <a class="dropdown-item" href="{{ route('classbroadsheet.viewcomments', [$sc->schoolclassid, $sc->sessionid, 2]) }}">
-                                    <i class="ri-file-copy-line"></i> Term 2
-                                </a>
-                                <a class="dropdown-item" href="{{ route('classbroadsheet.viewcomments', [$sc->schoolclassid, $sc->sessionid, 3]) }}">
-                                    <i class="ri-file-copy-line"></i> Term 3
-                                </a>
-                            </div>
-                        </div>
-                    </td>
-                    <td data-label="Actions">
-                        <div class="cb-dropdown">
-                            <button class="cb-dropdown-btn" onclick="toggleDropdown(this)">
-                                <i class="ri-settings-3-line"></i> Actions <i class="ri-arrow-down-s-line"></i>
-                            </button>
-                            <div class="cb-dropdown-menu">
-                                <div class="dropdown-header">Student Reports</div>
-                                <a class="dropdown-item" href="{{ route('viewstudent', [$sc->schoolclassid, 1, $sc->sessionid]) }}">
-                                    <i class="ri-user-line"></i> Term 1 Students
-                                </a>
-                                <a class="dropdown-item" href="{{ route('viewstudent', [$sc->schoolclassid, 2, $sc->sessionid]) }}">
-                                    <i class="ri-user-line"></i> Term 2 Students
-                                </a>
-                                <a class="dropdown-item" href="{{ route('viewstudent', [$sc->schoolclassid, 3, $sc->sessionid]) }}">
-                                    <i class="ri-user-line"></i> Term 3 Students
-                                </a>
-                                <div class="divider"></div>
-                                <div class="dropdown-header">Broadsheets</div>
-                                <a class="dropdown-item" href="{{ route('classbroadsheet.viewcomments', [$sc->schoolclassid, $sc->sessionid, 1]) }}">
-                                    <i class="ri-file-text-line"></i> Term 1
-                                </a>
-                                <a class="dropdown-item" href="{{ route('classbroadsheet.viewcomments', [$sc->schoolclassid, $sc->sessionid, 2]) }}">
-                                    <i class="ri-file-text-line"></i> Term 2
-                                </a>
-                                <a class="dropdown-item" href="{{ route('classbroadsheet.viewcomments', [$sc->schoolclassid, $sc->sessionid, 3]) }}">
-                                    <i class="ri-file-text-line"></i> Term 3
-                                </a>
-                                @can('Update my-class')
-                                <div class="divider"></div>
-                                <a class="dropdown-item edit-item-btn" href="javascript:void(0);" data-id="{{ $sc->id }}">
-                                    <i class="ri-edit-line"></i> Edit Setting
-                                </a>
-                                @endcan
-                                @can('Delete my-class')
-                                <a class="dropdown-item text-danger remove-item-btn" href="javascript:void(0);" data-id="{{ $sc->id }}">
-                                    <i class="ri-delete-bin-line"></i> Delete
-                                </a>
-                                @endcan
-                            </div>
-                        </div>
+                        <a href="{{ route('classbroadsheet.viewcomments', [$sc->schoolclassid, $sc->sessionid, $sc->termid]) }}" class="btn-icon btn-broadsheet">
+                            <i class="ri-file-text-line"></i> View Broadsheet ({{ $sc->term }})
+                        </a>
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="9">
+                    <td colspan="7">
                         <div class="empty-state">
                             <i class="ri-inbox-line"></i>
                             <h6>No Classes Assigned</h6>
@@ -665,47 +506,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 </div></div></div>
 
 <script>
-// Toggle Dropdown
-function toggleDropdown(btn) {
-    event.stopPropagation();
-    var dropdown = btn.closest('.cb-dropdown');
-    var menu = dropdown.querySelector('.cb-dropdown-menu');
-
-    // Close all other dropdowns
-    document.querySelectorAll('.cb-dropdown-menu').forEach(function(m) {
-        if (m !== menu) m.classList.remove('show');
-    });
-
-    menu.classList.toggle('show');
-}
-
-// Close dropdowns when clicking outside
-document.addEventListener('click', function() {
-    document.querySelectorAll('.cb-dropdown-menu').forEach(function(menu) {
-        menu.classList.remove('show');
-    });
-});
-
-// Select All Checkbox
-var checkAll = document.getElementById('checkAll');
-if (checkAll) {
-    checkAll.addEventListener('change', function() {
-        var checkboxes = document.querySelectorAll('.child-checkbox');
-        checkboxes.forEach(function(cb) {
-            cb.checked = checkAll.checked;
-        });
-    });
-}
-
-// Toast notification
-function showToast(message, type) {
-    var toast = document.createElement('div');
-    toast.className = 'cb-toast cb-toast-' + (type || 'success');
-    toast.innerHTML = '<i class="ri-' + (type === 'success' ? 'checkbox-circle-fill' : 'error-warning-fill') + '"></i> ' + message;
-    document.body.appendChild(toast);
-    setTimeout(function() { toast.remove(); }, 3000);
-}
-
 // Calculate total students
 var totalStudents = 0;
 @foreach($myclass as $sc)
@@ -718,45 +518,11 @@ var totalStudents = 0;
 @endforeach
 document.getElementById('totalStudents').textContent = totalStudents;
 
-// Edit and Delete functionality
-@can('Update my-class')
-document.querySelectorAll('.edit-item-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-        var id = this.getAttribute('data-id');
-        showToast('Edit feature - ID: ' + id, 'info');
-        // Implement edit modal population here
-    });
-});
-@endcan
-
-@can('Delete my-class')
-document.querySelectorAll('.remove-item-btn').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-        var id = this.getAttribute('data-id');
-        if (confirm('Are you sure you want to delete this class setting?')) {
-            fetch('{{ url("myclass") }}/' + id, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                    'Content-Type': 'application/json'
-                }
-            })
-            .then(function(response) { return response.json(); })
-            .then(function(data) {
-                if (data.success) {
-                    showToast(data.message, 'success');
-                    setTimeout(function() { location.reload(); }, 1500);
-                } else {
-                    showToast(data.message, 'error');
-                }
-            })
-            .catch(function(error) {
-                showToast('Error deleting class setting', 'error');
-            });
-        }
-    });
-});
-@endcan
+// Toast notification helper (if needed)
+function showToast(message, type) {
+    // Simple alert for now, can be enhanced
+    console.log(message);
+}
 </script>
 
 @endsection
