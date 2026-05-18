@@ -1053,6 +1053,7 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
 
     Route::get('/studentpersonalityprofile/{id}/{schoolclassid}/{sessid}/{termid}', [StudentpersonalityprofileController::class, 'studentpersonalityprofile'])->name('myclass.studentpersonalityprofile');
     Route::post('save', [StudentpersonalityprofileController::class, 'save'])->name('studentpersonalityprofile.save');
+    Route::get('/studentpersonalityprofile/data/{id}/{schoolclassid}/{sessionid}/{termid}',[StudentpersonalityprofileController::class, 'profileData'])->name('myclass.studentpersonalityprofile.data');
 
     Route::get('/classbroadsheet/{schoolclassid}/{sessionid}/{termid}', [ClassBroadsheetController::class, 'classBroadsheet'])->name('classbroadsheet.viewcomments');
     Route::patch('/classbroadsheet/{schoolclassid}/{sessionid}/{termid}/comments', [ClassBroadsheetController::class, 'updateComments'])->name('classbroadsheet.updateComments');

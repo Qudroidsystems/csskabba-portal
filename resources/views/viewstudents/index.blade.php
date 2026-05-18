@@ -307,13 +307,19 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     border-color: var(--cb-teal);
     transform: scale(1.05);
 }
-.student-name-link {
+.student-name-btn {
     font-weight: 600;
     color: var(--cb-navy);
-    text-decoration: none;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 12.5px;
+    text-align: left;
     transition: color 0.15s;
 }
-.student-name-link:hover {
+.student-name-btn:hover {
     color: var(--cb-teal);
 }
 
@@ -345,17 +351,19 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     border-radius: 8px;
     font-size: 11px;
     font-weight: 600;
-    text-decoration: none;
+    cursor: pointer;
     display: inline-flex;
     align-items: center;
     gap: 6px;
     transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
 }
 .btn-view-profile:hover {
     background: linear-gradient(135deg, #0ea5e9, #0284c7);
     color: white;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(14,165,233,0.25);
+    border-color: transparent;
 }
 
 /* Chart Card */
@@ -405,7 +413,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     background: white;
     cursor: pointer;
 }
-.page-item:hover:not(.disabled) {
+.page-item:hover:not(:disabled) {
     background: var(--cb-teal);
     color: white;
     border-color: var(--cb-teal);
@@ -415,7 +423,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     color: white;
     border-color: var(--cb-teal);
 }
-.page-item.disabled {
+.page-item:disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
@@ -441,7 +449,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     font-size: 13px;
 }
 
-/* Modal Styles */
+/* Image Modal */
 #imageViewModal .modal-content {
     border-radius: var(--cb-radius);
     overflow: hidden;
@@ -460,6 +468,39 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     object-fit: contain;
     border-radius: 12px;
 }
+
+/* Toast Notification */
+.cb-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #1e293b;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 9999;
+    animation: slideIn 0.3s ease;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.cb-toast-success { background: #059669; }
+.cb-toast-error   { background: #dc2626; }
+.cb-toast-info    { background: #3b82f6; }
+
+/* Animations */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to   { transform: translateX(0); opacity: 1; }
+}
+.cb-card, .cb-stat, .chart-card { animation: fadeInUp 0.4s ease; }
 
 /* Responsive */
 @media (max-width: 768px) {
@@ -483,45 +524,210 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         color: var(--cb-navy);
         font-size: 11px;
     }
-    .pagination-wrap {
-        justify-content: center;
-        flex-wrap: wrap;
-    }
+    .pagination-wrap { justify-content: center; flex-wrap: wrap; }
 }
 
-/* Animation */
-@keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+/* ──────────────────────────────────────────
+   PROFILE DRAWER STYLES
+────────────────────────────────────────── */
+.sp-pill {
+    background: rgba(255,255,255,.13);
+    border: 1px solid rgba(255,255,255,.22);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11.5px;
+    font-weight: 600;
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
 }
-.cb-card, .cb-stat, .chart-card {
-    animation: fadeInUp 0.4s ease;
+.sp-tab {
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: rgba(255,255,255,.6);
+    font-size: 12.5px;
+    font-weight: 600;
+    font-family: 'DM Sans', sans-serif;
+    padding: 10px 16px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all .2s;
+    border-radius: 10px 10px 0 0;
 }
-
-/* Toast Notification */
-.cb-toast {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
-    background: #1e293b;
-    color: white;
-    padding: 12px 20px;
-    border-radius: 12px;
-    font-size: 13px;
-    font-weight: 500;
-    z-index: 9999;
-    animation: slideIn 0.3s ease;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+.sp-tab:hover { color: rgba(255,255,255,.9); background: rgba(255,255,255,.07); }
+.sp-tab-active {
+    color: #fff !important;
+    border-bottom-color: #0d9488 !important;
+    background: rgba(255,255,255,.1) !important;
+}
+.sp-section-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(15,35,66,.06);
+}
+.sp-section-header {
+    padding: 13px 18px;
+    background: linear-gradient(to right, #f8fafc, #f0fdf9);
+    border-bottom: 1px solid #e2e8f0;
     display: flex;
     align-items: center;
     gap: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #0f2342;
 }
-.cb-toast-success { background: #059669; }
-.cb-toast-error { background: #dc2626; }
-.cb-toast-info { background: #3b82f6; }
-@keyframes slideIn {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+.sp-trait-grid {
+    padding: 12px 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 10px;
+}
+.sp-trait-item {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 12px;
+    transition: border-color .15s, box-shadow .15s;
+}
+.sp-trait-item:hover { border-color: #0d9488; box-shadow: 0 2px 8px rgba(13,148,136,.08); }
+.sp-trait-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.sp-trait-label i { font-size: 13px; color: #94a3b8; }
+.sp-select {
+    width: 100%;
+    padding: 7px 10px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-family: 'DM Sans', sans-serif;
+    background: #fff;
+    color: #0f2342;
+    cursor: pointer;
+    transition: border-color .15s;
+}
+.sp-select:focus {
+    border-color: #0d9488;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(13,148,136,.12);
+}
+.sp-trait-badge {
+    display: inline-block;
+    margin-top: 5px;
+    font-size: 10.5px;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 20px;
+    background: #f1f5f9;
+    color: #64748b;
+    transition: all .2s;
+}
+.sp-badge-excellent  { background: #dcfce7; color: #15803d; }
+.sp-badge-verygood   { background: #dbeafe; color: #1e40af; }
+.sp-badge-good       { background: #ede9fe; color: #6d28d9; }
+.sp-badge-fairlygood { background: #fef9c3; color: #854d0e; }
+.sp-badge-poor       { background: #fee2e2; color: #991b1b; }
+.sp-field-group { display: flex; flex-direction: column; gap: 5px; }
+.sp-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.sp-input, .sp-textarea {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 13px;
+    font-family: 'DM Sans', sans-serif;
+    background: #fff;
+    color: #0f2342;
+    transition: border-color .15s;
+    resize: vertical;
+}
+.sp-input:focus, .sp-textarea:focus {
+    border-color: #0d9488;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(13,148,136,.12);
+}
+.sp-textarea-readonly { background: #f8fafc; color: #94a3b8; cursor: not-allowed; }
+.sp-report-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(15,35,66,.06);
+}
+.sp-report-table thead th {
+    background: #0f2342;
+    color: #fff;
+    padding: 10px 14px;
+    font-weight: 600;
+    font-size: 11px;
+    white-space: nowrap;
+    text-align: center;
+    border-right: 1px solid rgba(255,255,255,.08);
+}
+.sp-report-table thead th:nth-child(2) { text-align: left; }
+.sp-report-table tbody td {
+    padding: 9px 14px;
+    border-bottom: 1px solid #f1f5f9;
+    text-align: center;
+    vertical-align: middle;
+    color: #334155;
+}
+.sp-report-table tbody td:nth-child(2) { text-align: left; font-weight: 600; color: #0f2342; }
+.sp-report-table tbody tr:hover td { background: #f0fdf9; }
+.sp-report-table tbody tr:last-child td { border-bottom: none; }
+.sp-score-low  { color: #dc2626 !important; font-weight: 700; }
+.sp-score-high { color: #16a34a !important; font-weight: 700; }
+.sp-empty-report { text-align: center; padding: 50px; color: #94a3b8; }
+.sp-empty-report i { font-size: 48px; display: block; margin-bottom: 12px; }
+.sp-grade-key {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-top: 14px;
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    font-size: 11.5px;
+    color: #64748b;
+}
+.sp-grade-key span { font-weight: 600; }
+#spDrawerBody::-webkit-scrollbar { width: 5px; }
+#spDrawerBody::-webkit-scrollbar-track { background: transparent; }
+#spDrawerBody::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 20px; }
+@keyframes sp-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: .7; transform: scale(.95); }
+}
+@media (max-width: 600px) {
+    #spDrawer { width: 100vw !important; }
+    .sp-trait-grid { grid-template-columns: 1fr 1fr; }
 }
 </style>
 
@@ -529,7 +735,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 <div class="page-content">
 <div class="container-fluid">
 
-<!-- Hero Section -->
+{{-- ── Hero ── --}}
 <div class="cb-hero">
     <h1><i class="ri-group-line me-2"></i>My Class Students</h1>
     <p>View and manage students in your assigned class.</p>
@@ -541,7 +747,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     </div>
 </div>
 
-<!-- Stat Cards -->
+{{-- ── Stat Cards ── --}}
 <div class="row g-3 mb-4">
     <div class="col-md-3 col-6">
         <div class="cb-stat">
@@ -577,18 +783,18 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     </div>
 </div>
 
-<!-- Students by Gender Chart -->
+{{-- ── Gender Chart ── --}}
 <div class="chart-card">
     <div class="chart-header">
-        <h5><i class="ri-bar-chart-line" style="color: var(--cb-teal);"></i> Students by Gender Distribution</h5>
+        <h5><i class="ri-bar-chart-line" style="color:var(--cb-teal);"></i> Students by Gender Distribution</h5>
     </div>
     <div class="chart-body">
         <canvas id="studentsByGenderChart" height="80"></canvas>
-        <div id="chartError" class="text-danger text-center d-none">Failed to load chart. Please check data.</div>
+        <div id="chartError" class="text-danger text-center d-none">Failed to load chart.</div>
     </div>
 </div>
 
-<!-- Filter Panel -->
+{{-- ── Filter Panel ── --}}
 <div class="filter-panel">
     <h6><i class="ri-filter-line" style="color:var(--cb-teal)"></i> Filter Students</h6>
     <div class="filter-grid">
@@ -622,7 +828,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     </div>
 </div>
 
-<!-- Students Table Card -->
+{{-- ── Student Table ── --}}
 <div class="cb-card">
     <div class="cb-card-header">
         <h5>
@@ -635,45 +841,48 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         </a>
     </div>
 
-    <div style="overflow-x: auto;">
+    <div style="overflow-x:auto;">
         <table class="cb-table" id="studentListTable">
             <thead>
                 <tr>
-                    <th style="width: 60px;">#</th>
+                    <th style="width:60px;">#</th>
                     <th>Admission No</th>
                     <th>Student Name</th>
                     <th>Gender</th>
-                    <th style="width: 120px;">Action</th>
+                    <th style="width:130px;">Action</th>
                 </tr>
             </thead>
             <tbody id="studentTableBody">
                 @forelse ($allstudents as $key => $student)
                 @php
-                    // Format name as: Last Name, First Name Other Names
-                    $lastName = $student->lastname ?? '';
-                    $firstName = $student->firstname ?? '';
+                    $lastName   = $student->lastname  ?? '';
+                    $firstName  = $student->firstname ?? '';
                     $otherNames = $student->othername ?? '';
                     $formattedName = trim($lastName . ' ' . $firstName . ' ' . $otherNames);
-                    $genderClass = ($student->gender ?? '') == 'Male' ? 'gender-male' : 'gender-female';
-                    $genderIcon = ($student->gender ?? '') == 'Male' ? 'ri-men-line' : 'ri-women-line';
+                    $genderClass   = ($student->gender ?? '') == 'Male' ? 'gender-male' : 'gender-female';
+                    $genderIcon    = ($student->gender ?? '') == 'Male' ? 'ri-men-line' : 'ri-women-line';
                 @endphp
-                <tr data-admission="{{ $student->admissionno }}" data-gender="{{ $student->gender }}" data-name="{{ strtolower($formattedName) }}">
-                    <td data-label="#" style="font-weight: 600; color: var(--cb-navy);">{{ $key + 1 }}</td>
+                <tr data-admission="{{ $student->admissionno }}"
+                    data-gender="{{ $student->gender }}"
+                    data-name="{{ strtolower($formattedName) }}">
+                    <td data-label="#" style="font-weight:600;color:var(--cb-navy);">{{ $key + 1 }}</td>
                     <td data-label="Admission No" class="admission-cell">{{ $student->admissionno }}</td>
                     <td data-label="Student Name">
                         <div class="d-flex align-items-center gap-3">
-                            <img src="{{ $student->picture ? asset('storage/student_avatars/' . basename($student->picture)) : asset('storage/student_avatars/unnamed.jpg') }}"
+                            <img src="{{ $student->picture ? asset('storage/student_avatars/'.basename($student->picture)) : asset('storage/student_avatars/unnamed.jpg') }}"
                                  alt="{{ $formattedName }}"
                                  class="student-avatar"
                                  data-bs-toggle="modal"
                                  data-bs-target="#imageViewModal"
-                                 data-image="{{ $student->picture ? asset('storage/student_avatars/' . basename($student->picture)) : asset('storage/student_avatars/unnamed.jpg') }}"
+                                 data-image="{{ $student->picture ? asset('storage/student_avatars/'.basename($student->picture)) : asset('storage/student_avatars/unnamed.jpg') }}"
                                  data-name="{{ $formattedName }}"
                                  data-admission="{{ $student->admissionno }}"
                                  onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'">
-                            <a href="{{ route('myclass.studentpersonalityprofile', [$student->stid, $schoolclassid, $sessionid, $termid]) }}" class="student-name-link">
+                            {{-- Name now opens the profile drawer --}}
+                            <button type="button" class="student-name-btn"
+                                onclick="openProfileDrawer({{ $student->stid }}, {{ $schoolclassid }}, {{ $sessionid }}, {{ $termid }})">
                                 {{ $formattedName }}
-                            </a>
+                            </button>
                         </div>
                     </td>
                     <td data-label="Gender">
@@ -682,9 +891,10 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                         </span>
                     </td>
                     <td data-label="Action">
-                        <a href="{{ route('myclass.studentpersonalityprofile', [$student->stid, $schoolclassid, $sessionid, $termid]) }}" class="btn-view-profile">
-                            <i class="ph-eye"></i> View Profile
-                        </a>
+                        <button type="button" class="btn-view-profile"
+                            onclick="openProfileDrawer({{ $student->stid }}, {{ $schoolclassid }}, {{ $sessionid }}, {{ $termid }})">
+                            <i class="ri-eye-line"></i> View Profile
+                        </button>
                     </td>
                 </tr>
                 @empty
@@ -702,11 +912,11 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         </table>
     </div>
 
-    <!-- Pagination -->
-    <div style="padding: 20px 24px; border-top: 1px solid var(--cb-border); background: #fafbfc;">
+    {{-- Pagination --}}
+    <div style="padding:20px 24px;border-top:1px solid var(--cb-border);background:#fafbfc;">
         <div class="row align-items-center">
             <div class="col-sm">
-                <div class="text-muted" style="font-size: 12px;">
+                <div class="text-muted" style="font-size:12px;">
                     <i class="ri-information-line me-1"></i>
                     Showing <span class="fw-semibold text-dark" id="showingCount">{{ $allstudents->count() }}</span> of
                     <span class="fw-semibold text-dark" id="totalCount">{{ $allstudents->count() }}</span> students
@@ -715,7 +925,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             <div class="col-sm-auto">
                 <div class="pagination-wrap" id="paginationContainer">
                     <button class="page-item" id="prevPage" onclick="changePage(-1)" disabled>Prev</button>
-                    <span id="pageInfo" class="page-item active" style="background: var(--cb-teal); color: white;">Page 1</span>
+                    <span id="pageInfo" class="page-item active" style="background:var(--cb-teal);color:white;">Page 1</span>
                     <button class="page-item" id="nextPage" onclick="changePage(1)">Next</button>
                 </div>
             </div>
@@ -725,7 +935,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
 </div></div></div>
 
-<!-- Image View Modal -->
+{{-- ── Avatar View Modal (unchanged) ── --}}
 <div id="imageViewModal" class="modal fade" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -735,7 +945,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             </div>
             <div class="modal-body text-center">
                 <img id="enlargedImage" src="" alt="Student Picture" class="img-fluid" />
-                <div id="modalStudentName" class="mt-3 fw-semibold" style="color: var(--cb-navy);"></div>
+                <div id="modalStudentName" class="mt-3 fw-semibold" style="color:var(--cb-navy);"></div>
                 <div id="modalStudentAdmission" class="text-muted small"></div>
             </div>
             <div class="modal-footer">
@@ -745,256 +955,713 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     </div>
 </div>
 
+{{-- ══════════════════════════════════════════════════════════
+     PROFILE DRAWER MODAL
+══════════════════════════════════════════════════════════ --}}
+
+{{-- Overlay --}}
+<div id="spDrawerOverlay" onclick="closeProfileDrawer()"
+     style="display:none;position:fixed;inset:0;background:rgba(10,20,40,.55);
+            backdrop-filter:blur(3px);z-index:1040;transition:opacity .3s;"></div>
+
+{{-- Drawer Panel --}}
+<div id="spDrawer" style="
+    position:fixed;top:0;right:0;height:100vh;width:min(760px,100vw);
+    background:#ffffff;z-index:1050;transform:translateX(100%);
+    transition:transform .35s cubic-bezier(.4,0,.2,1);
+    display:flex;flex-direction:column;overflow:hidden;
+    box-shadow:-8px 0 40px rgba(10,20,40,.18);">
+
+    {{-- Drawer Header --}}
+    <div style="background:linear-gradient(135deg,#0f2342 0%,#1e4a7e 55%,#0d9488 100%);
+                flex-shrink:0;position:relative;overflow:hidden;">
+        {{-- decorative orb --}}
+        <div style="position:absolute;top:-60px;right:-60px;width:200px;height:200px;
+            background:radial-gradient(circle,rgba(255,255,255,.08) 0%,transparent 70%);
+            border-radius:50%;pointer-events:none;"></div>
+
+        {{-- Top bar --}}
+        <div style="display:flex;align-items:center;justify-content:space-between;
+                    padding:18px 24px 0;position:relative;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <div id="spAvatarCircle" style="width:44px;height:44px;border-radius:50%;
+                    background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.3);
+                    display:flex;align-items:center;justify-content:center;font-size:18px;
+                    font-weight:700;color:#fff;font-family:'Playfair Display',serif;
+                    flex-shrink:0;">?</div>
+                <div>
+                    <div style="font-size:10.5px;color:rgba(255,255,255,.6);font-weight:600;
+                        text-transform:uppercase;letter-spacing:.7px;margin-bottom:2px;">
+                        Student Personality Profile
+                    </div>
+                    <div id="spDrawerTitle" style="font-size:17px;font-weight:700;color:#fff;
+                        font-family:'Playfair Display',serif;">Loading…</div>
+                </div>
+            </div>
+            <button onclick="closeProfileDrawer()" style="
+                background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);
+                border-radius:10px;padding:8px 16px;color:#fff;font-size:12px;
+                font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;
+                transition:background .2s;font-family:'DM Sans',sans-serif;"
+                onmouseover="this.style.background='rgba(255,255,255,.22)'"
+                onmouseout="this.style.background='rgba(255,255,255,.12)'">
+                <i class="ri-close-line"></i> Close
+            </button>
+        </div>
+
+        {{-- Info pills --}}
+        <div id="spInfoPills" style="display:flex;gap:8px;flex-wrap:wrap;padding:10px 24px 14px;">
+            <span class="sp-pill" id="spPillAdmission"><i class="ri-id-card-line"></i> —</span>
+            <span class="sp-pill" id="spPillGender"><i class="ri-user-line"></i> —</span>
+            <span class="sp-pill" id="spPillClass"><i class="ri-building-line"></i> —</span>
+            <span class="sp-pill" id="spPillTerm"><i class="ri-calendar-line"></i> —</span>
+        </div>
+
+        {{-- Tabs --}}
+        <div style="display:flex;gap:2px;padding:0 24px;position:relative;">
+            <button class="sp-tab sp-tab-active" data-tab="profile" onclick="switchTab('profile',this)">
+                <i class="ri-award-line"></i> Personality
+            </button>
+            <button class="sp-tab" data-tab="terminal" onclick="switchTab('terminal',this)">
+                <i class="ri-file-chart-line"></i> Terminal Report
+            </button>
+            <button class="sp-tab" data-tab="mock" onclick="switchTab('mock',this)">
+                <i class="ri-file-list-3-line"></i> Mock Report
+            </button>
+        </div>
+    </div>
+
+    {{-- Drawer Body --}}
+    <div id="spDrawerBody" style="flex:1;overflow-y:auto;background:#f1f5f9;">
+
+        {{-- Loading --}}
+        <div id="spLoadingState" style="padding:60px;text-align:center;">
+            <div style="width:64px;height:64px;border-radius:50%;
+                background:linear-gradient(135deg,#0f2342,#0d9488);
+                margin:0 auto 18px;display:flex;align-items:center;justify-content:center;
+                animation:sp-pulse 1.5s ease-in-out infinite;">
+                <i class="ri-user-star-line" style="font-size:28px;color:#fff;"></i>
+            </div>
+            <div style="font-size:15px;font-weight:700;color:#0f2342;">Loading student profile…</div>
+            <div style="font-size:13px;color:#64748b;margin-top:4px;">Fetching data, please wait</div>
+        </div>
+
+        {{-- Error --}}
+        <div id="spErrorState" style="display:none;padding:60px;text-align:center;">
+            <i class="ri-error-warning-line" style="font-size:56px;color:#f43f5e;display:block;margin-bottom:14px;"></i>
+            <div style="font-size:15px;font-weight:700;color:#0f2342;">Failed to load profile</div>
+            <div id="spErrorMsg" style="font-size:13px;color:#64748b;margin-top:6px;"></div>
+            <button onclick="retryLoad()" style="margin-top:20px;background:#0d9488;color:#fff;
+                border:none;border-radius:10px;padding:10px 28px;font-weight:700;
+                font-size:13px;cursor:pointer;font-family:'DM Sans',sans-serif;">
+                <i class="ri-refresh-line"></i> Retry
+            </button>
+        </div>
+
+        {{-- ── TAB: Personality ── --}}
+        <div id="spTab-profile" class="sp-tab-content" style="display:none;padding:24px;">
+            <form id="spProfileForm" onsubmit="submitProfileForm(event)">
+                <input type="hidden" name="_token" id="spCsrfToken" value="{{ csrf_token() }}">
+                <input type="hidden" name="studentid"    id="spStudentId">
+                <input type="hidden" name="schoolclassid" id="spSchoolClassId">
+                <input type="hidden" name="staffid"      id="spStaffId" value="{{ Auth::user()->id }}">
+                <input type="hidden" name="termid"       id="spTermId">
+                <input type="hidden" name="sessionid"    id="spSessionId">
+
+                {{-- Behavioral Traits --}}
+                <div class="sp-section-card">
+                    <div class="sp-section-header">
+                        <i class="ri-heart-pulse-line" style="color:#0d9488;font-size:16px;"></i>
+                        Behavioral Traits
+                    </div>
+                    <div class="sp-trait-grid">
+                        @php
+                        $behavioralTraits = [
+                            ['punctuality',  'Punctuality',   'ri-time-line'],
+                            ['neatness',     'Neatness',      'ri-brush-line'],
+                            ['leadership',   'Leadership',    'ri-trophy-line'],
+                            ['attitude',     'Attitude',      'ri-emotion-line'],
+                            ['honesty',      'Honesty',       'ri-shield-check-line'],
+                            ['cooperation',  'Cooperation',   'ri-team-line'],
+                            ['selfcontrol',  'Self-control',  'ri-focus-3-line'],
+                            ['politeness',   'Politeness',    'ri-hand-heart-line'],
+                            ['physicalhealth','Physical Health','ri-heart-line'],
+                            ['stability',    'Stability',     'ri-scales-line'],
+                        ];
+                        @endphp
+                        @foreach ($behavioralTraits as [$name, $label, $icon])
+                        <div class="sp-trait-item">
+                            <div class="sp-trait-label"><i class="{{ $icon }}"></i> {{ $label }}</div>
+                            <select name="{{ $name }}" class="sp-select" id="sp_{{ $name }}" onchange="updateTraitBadge(this)">
+                                <option value="">Select…</option>
+                                <option value="Excellent">Excellent</option>
+                                <option value="Very Good">Very Good</option>
+                                <option value="Good">Good</option>
+                                <option value="Fairly Good">Fairly Good</option>
+                                <option value="Poor">Poor</option>
+                            </select>
+                            <span class="sp-trait-badge" id="badge_{{ $name }}">—</span>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- Academic & Skills --}}
+                <div class="sp-section-card">
+                    <div class="sp-section-header">
+                        <i class="ri-book-open-line" style="color:#0ea5e9;font-size:16px;"></i>
+                        Academic & Skills
+                    </div>
+                    <div class="sp-trait-grid">
+                        @php
+                        $academicTraits = [
+                            ['reading',                   'Reading',             'ri-book-line'],
+                            ['attentiveness_in_class',    'Attentiveness',       'ri-eye-line'],
+                            ['class_participation',       'Class Participation', 'ri-discuss-line'],
+                            ['relationship_with_others',  'Relationship',        'ri-group-line'],
+                            ['doing_assignment',          'Doing Assignment',    'ri-file-list-line'],
+                            ['writing_skill',             'Writing Skill',       'ri-pen-nib-line'],
+                            ['reading_skill',             'Reading Skill',       'ri-book-read-line'],
+                            ['spoken_english_communication','Spoken English',    'ri-speak-line'],
+                            ['hand_writing',              'Hand Writing',        'ri-edit-line'],
+                        ];
+                        @endphp
+                        @foreach ($academicTraits as [$name, $label, $icon])
+                        <div class="sp-trait-item">
+                            <div class="sp-trait-label"><i class="{{ $icon }}"></i> {{ $label }}</div>
+                            <select name="{{ $name }}" class="sp-select" id="sp_{{ $name }}" onchange="updateTraitBadge(this)">
+                                <option value="">Select…</option>
+                                <option value="Excellent">Excellent</option>
+                                <option value="Very Good">Very Good</option>
+                                <option value="Good">Good</option>
+                                <option value="Fairly Good">Fairly Good</option>
+                                <option value="Poor">Poor</option>
+                            </select>
+                            <span class="sp-trait-badge" id="badge_{{ $name }}">—</span>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- Extra-curricular --}}
+                <div class="sp-section-card">
+                    <div class="sp-section-header">
+                        <i class="ri-football-line" style="color:#f59e0b;font-size:16px;"></i>
+                        Extra-curricular
+                    </div>
+                    <div class="sp-trait-grid">
+                        @php
+                        $extraTraits = [
+                            ['gamesandsports', 'Games & Sports', 'ri-football-line'],
+                            ['club',           'Club',           'ri-group-2-line'],
+                            ['music',          'Music',          'ri-music-line'],
+                        ];
+                        @endphp
+                        @foreach ($extraTraits as [$name, $label, $icon])
+                        <div class="sp-trait-item">
+                            <div class="sp-trait-label"><i class="{{ $icon }}"></i> {{ $label }}</div>
+                            <select name="{{ $name }}" class="sp-select" id="sp_{{ $name }}" onchange="updateTraitBadge(this)">
+                                <option value="">Select…</option>
+                                <option value="Excellent">Excellent</option>
+                                <option value="Very Good">Very Good</option>
+                                <option value="Good">Good</option>
+                                <option value="Fairly Good">Fairly Good</option>
+                                <option value="Poor">Poor</option>
+                            </select>
+                            <span class="sp-trait-badge" id="badge_{{ $name }}">—</span>
+                        </div>
+                        @endforeach
+                    </div>
+                </div>
+
+                {{-- Comments & Attendance --}}
+                <div class="sp-section-card">
+                    <div class="sp-section-header">
+                        <i class="ri-chat-3-line" style="color:#8b5cf6;font-size:16px;"></i>
+                        Comments & Attendance
+                    </div>
+                    <div style="padding:16px;display:grid;gap:14px;">
+                        <div class="sp-field-group">
+                            <label class="sp-label"><i class="ri-calendar-check-line"></i> School Attendance (days)</label>
+                            <input type="number" name="attendance" id="sp_attendance" min="0" max="365"
+                                class="sp-input" placeholder="e.g. 90">
+                        </div>
+                        <div class="sp-field-group">
+                            <label class="sp-label"><i class="ri-user-voice-line"></i> Teacher's Comment</label>
+                            <textarea name="classteachercomment" id="sp_classteachercomment"
+                                class="sp-textarea" rows="3" placeholder="Enter class teacher's remark…"></textarea>
+                        </div>
+                        <div class="sp-field-group">
+                            <label class="sp-label"><i class="ri-government-line"></i> Principal's Comment <span style="font-size:10px;font-weight:400;color:#94a3b8;">(read-only)</span></label>
+                            <textarea name="principalscomment" id="sp_principalscomment"
+                                class="sp-textarea sp-textarea-readonly" rows="2"
+                                placeholder="Principal's remark" readonly></textarea>
+                        </div>
+                        <div class="sp-field-group">
+                            <label class="sp-label"><i class="ri-sticky-note-line"></i> Remark on Other Activities</label>
+                            <textarea name="remark_on_other_activities" id="sp_remark_on_other_activities"
+                                class="sp-textarea" rows="2" placeholder="Other activities remark…"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Sticky submit bar --}}
+                <div style="position:sticky;bottom:0;padding:14px 0 2px;
+                    background:linear-gradient(to top,#f1f5f9 75%,transparent);
+                    display:flex;gap:12px;align-items:center;justify-content:flex-end;">
+                    <div id="spSaveStatus" style="font-size:12px;color:#059669;display:none;
+                        align-items:center;gap:6px;font-weight:600;">
+                        <i class="ri-checkbox-circle-fill"></i>
+                        <span id="spSaveStatusText">Profile saved!</span>
+                    </div>
+                    <button type="submit" id="spSubmitBtn" style="
+                        background:linear-gradient(135deg,#0d9488,#0ea5e9);color:#fff;
+                        border:none;padding:12px 30px;border-radius:12px;font-weight:700;
+                        font-size:14px;cursor:pointer;display:flex;align-items:center;gap:8px;
+                        transition:all .2s;box-shadow:0 4px 14px rgba(13,148,136,.35);
+                        font-family:'DM Sans',sans-serif;">
+                        <i class="ri-save-line"></i>
+                        <span id="spSubmitLabel">Update Profile</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        {{-- ── TAB: Terminal Report ── --}}
+        <div id="spTab-terminal" class="sp-tab-content" style="display:none;padding:24px;">
+            <div id="spTerminalReport"></div>
+        </div>
+
+        {{-- ── TAB: Mock Report ── --}}
+        <div id="spTab-mock" class="sp-tab-content" style="display:none;padding:24px;">
+            <div id="spMockReport"></div>
+        </div>
+
+    </div>{{-- /spDrawerBody --}}
+</div>{{-- /spDrawer --}}
+
+{{-- ══════════════════════════════════════════════════════════
+     SCRIPTS
+══════════════════════════════════════════════════════════ --}}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script>
-// Global variables for pagination and filtering
-let allRows = [];
+// ─────────────────────────────────────────────────────
+// TABLE FILTERING & PAGINATION
+// ─────────────────────────────────────────────────────
+let allRows      = [];
 let filteredRows = [];
-let currentPage = 1;
+let currentPage  = 1;
 const rowsPerPage = 10;
 
-// Initialize data on page load
 document.addEventListener("DOMContentLoaded", function () {
-    // Collect all rows from the table
     const tableBody = document.getElementById('studentTableBody');
     if (tableBody) {
-        const rows = tableBody.querySelectorAll('tr');
-        rows.forEach(row => {
+        tableBody.querySelectorAll('tr').forEach(row => {
             if (row.querySelector('.empty-state')) return;
             const admissionCell = row.querySelector('.admission-cell');
-            const nameLink = row.querySelector('.student-name-link');
-            const genderBadge = row.querySelector('.gender-badge');
-
+            const namebtn       = row.querySelector('.student-name-btn');
+            const genderBadge   = row.querySelector('.gender-badge');
             allRows.push({
-                element: row,
+                element:   row,
                 admission: admissionCell ? admissionCell.textContent.trim() : '',
-                name: nameLink ? nameLink.textContent.trim().toLowerCase() : '',
-                gender: genderBadge ? genderBadge.textContent.trim().replace(/[^a-zA-Z]/g, '') : ''
+                name:      namebtn       ? namebtn.textContent.trim().toLowerCase() : '',
+                gender:    genderBadge   ? genderBadge.textContent.trim().replace(/[^a-zA-Z]/g,'') : ''
             });
         });
     }
-
     filteredRows = [...allRows];
     updateDisplay();
-    updateStats();
+    calculateAverageAge();
+    initChart();
 
-    // Initialize Chart.js
-    const ctx = document.getElementById("studentsByGenderChart")?.getContext("2d");
-    const maleCount = {{ $male ?? 0 }};
-    const femaleCount = {{ $female ?? 0 }};
-    const chartError = document.getElementById("chartError");
-
-    if (ctx) {
-        try {
-            new Chart(ctx, {
-                type: "bar",
-                data: {
-                    labels: ["Male", "Female"],
-                    datasets: [{
-                        label: "Number of Students",
-                        data: [maleCount, femaleCount],
-                        backgroundColor: ["#0ea5e9", "#f43f5e"],
-                        borderRadius: 8,
-                        barPercentage: 0.6
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    scales: {
-                        y: { beginAtZero: true, grid: { color: "#e2e8f0" } },
-                        x: { grid: { display: false } }
-                    },
-                    plugins: { legend: { display: false } }
-                }
-            });
-        } catch (error) {
-            console.error("Chart error:", error);
-            if (chartError) chartError.classList.remove("d-none");
-        }
-    }
-
-    // Setup enter key for search
-    document.getElementById('searchInput')?.addEventListener('keypress', function(e) {
+    document.getElementById('searchInput')?.addEventListener('keypress', e => {
         if (e.key === 'Enter') applyFilters();
     });
 });
 
-// Apply filters function
+function initChart() {
+    const ctx = document.getElementById("studentsByGenderChart")?.getContext("2d");
+    const maleCount   = {{ $male ?? 0 }};
+    const femaleCount = {{ $female ?? 0 }};
+    if (!ctx) return;
+    try {
+        new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels: ["Male", "Female"],
+                datasets: [{
+                    label: "Number of Students",
+                    data: [maleCount, femaleCount],
+                    backgroundColor: ["#0ea5e9", "#f43f5e"],
+                    borderRadius: 8,
+                    barPercentage: 0.5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                scales: {
+                    y: { beginAtZero: true, grid: { color: "#e2e8f0" } },
+                    x: { grid: { display: false } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+    } catch(e) {
+        document.getElementById("chartError")?.classList.remove("d-none");
+    }
+}
+
 window.applyFilters = function() {
-    const searchTerm = document.getElementById('searchInput')?.value.toLowerCase().trim() || '';
-    const genderFilter = document.getElementById('genderFilter')?.value || 'all';
+    const searchTerm      = document.getElementById('searchInput')?.value.toLowerCase().trim() || '';
+    const genderFilter    = document.getElementById('genderFilter')?.value || 'all';
     const admissionFilter = document.getElementById('admissionFilter')?.value || 'all';
 
     filteredRows = allRows.filter(row => {
-        // Search filter (name or admission)
-        let matchesSearch = true;
-        if (searchTerm) {
-            matchesSearch = row.name.includes(searchTerm) || row.admission.toLowerCase().includes(searchTerm);
-        }
-
-        // Gender filter
-        let matchesGender = true;
-        if (genderFilter !== 'all') {
-            matchesGender = row.gender === genderFilter;
-        }
-
-        // Admission filter
-        let matchesAdmission = true;
-        if (admissionFilter !== 'all') {
-            matchesAdmission = row.admission === admissionFilter;
-        }
-
-        return matchesSearch && matchesGender && matchesAdmission;
+        const matchSearch    = !searchTerm || row.name.includes(searchTerm) || row.admission.toLowerCase().includes(searchTerm);
+        const matchGender    = genderFilter === 'all'    || row.gender === genderFilter;
+        const matchAdmission = admissionFilter === 'all' || row.admission === admissionFilter;
+        return matchSearch && matchGender && matchAdmission;
     });
-
     currentPage = 1;
     updateDisplay();
     showToast(`Found ${filteredRows.length} student(s)`, 'info');
 };
 
-// Reset filters function
 window.resetFilters = function() {
-    document.getElementById('searchInput').value = '';
-    document.getElementById('genderFilter').value = 'all';
-    document.getElementById('admissionFilter').value = 'all';
-
+    document.getElementById('searchInput').value       = '';
+    document.getElementById('genderFilter').value      = 'all';
+    document.getElementById('admissionFilter').value   = 'all';
     filteredRows = [...allRows];
-    currentPage = 1;
+    currentPage  = 1;
     updateDisplay();
     showToast('Filters reset', 'info');
 };
 
-// Update table display with pagination
 function updateDisplay() {
     const tableBody = document.getElementById('studentTableBody');
     if (!tableBody) return;
-
     const startIndex = (currentPage - 1) * rowsPerPage;
-    const endIndex = startIndex + rowsPerPage;
-    const pageRows = filteredRows.slice(startIndex, endIndex);
+    const pageRows   = filteredRows.slice(startIndex, startIndex + rowsPerPage);
 
-    // Clear current table body
     tableBody.innerHTML = '';
-
-    if (pageRows.length === 0) {
-        tableBody.innerHTML = `
-            <tr>
-                <td colspan="5">
-                    <div class="empty-state">
-                        <i class="ri-inbox-line"></i>
-                        <h6>No Students Found</h6>
-                        <p>No students match your filter criteria.</p>
-                    </div>
-                </td>
-            </tr>
-        `;
+    if (!pageRows.length) {
+        tableBody.innerHTML = `<tr><td colspan="5">
+            <div class="empty-state">
+                <i class="ri-inbox-line"></i>
+                <h6>No Students Found</h6>
+                <p>No students match your filter criteria.</p>
+            </div></td></tr>`;
     } else {
-        pageRows.forEach((row, index) => {
-            const clonedRow = row.element.cloneNode(true);
-            // Update SN
-            const snCell = clonedRow.querySelector('td:first-child');
-            if (snCell) snCell.textContent = startIndex + index + 1;
-            tableBody.appendChild(clonedRow);
+        pageRows.forEach((row, idx) => {
+            const cloned = row.element.cloneNode(true);
+            const snCell = cloned.querySelector('td:first-child');
+            if (snCell) snCell.textContent = startIndex + idx + 1;
+            tableBody.appendChild(cloned);
         });
     }
 
-    // Update pagination info
-    const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
-    const showingCount = document.getElementById('showingCount');
-    const totalCount = document.getElementById('totalCount');
-    const pageInfo = document.getElementById('pageInfo');
-    const prevBtn = document.getElementById('prevPage');
-    const nextBtn = document.getElementById('nextPage');
-
-    if (showingCount) showingCount.textContent = pageRows.length;
-    if (totalCount) totalCount.textContent = filteredRows.length;
-    if (pageInfo) pageInfo.textContent = `Page ${currentPage} of ${totalPages || 1}`;
-
-    if (prevBtn) prevBtn.disabled = currentPage === 1;
-    if (nextBtn) nextBtn.disabled = currentPage === totalPages || totalPages === 0;
-
-    // Update student count badge
-    const studentCountBadge = document.getElementById('studentCount');
-    if (studentCountBadge) studentCountBadge.textContent = filteredRows.length + ' Students';
+    const totalPages  = Math.ceil(filteredRows.length / rowsPerPage) || 1;
+    const el = id => document.getElementById(id);
+    el('showingCount') && (el('showingCount').textContent = pageRows.length);
+    el('totalCount')   && (el('totalCount').textContent   = filteredRows.length);
+    el('pageInfo')     && (el('pageInfo').textContent     = `Page ${currentPage} of ${totalPages}`);
+    el('studentCount') && (el('studentCount').textContent = filteredRows.length + ' Students');
+    if (el('prevPage')) el('prevPage').disabled = currentPage === 1;
+    if (el('nextPage')) el('nextPage').disabled = currentPage >= totalPages;
 }
 
-// Change page function
-window.changePage = function(direction) {
-    const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
-    const newPage = currentPage + direction;
-    if (newPage >= 1 && newPage <= totalPages) {
-        currentPage = newPage;
-        updateDisplay();
-    }
+window.changePage = function(dir) {
+    const total = Math.ceil(filteredRows.length / rowsPerPage);
+    const next  = currentPage + dir;
+    if (next >= 1 && next <= total) { currentPage = next; updateDisplay(); }
 };
 
-// Update stats based on filtered data
-function updateStats() {
-    // Stats are calculated from original data, update with filtered if needed
-    const maleCount = allRows.filter(r => r.gender === 'Male').length;
-    const femaleCount = allRows.filter(r => r.gender === 'Female').length;
-
-    // You can update stat cards dynamically if needed
-}
-
-// Calculate average age
 function calculateAverageAge() {
-    let totalAge = 0;
-    let count = 0;
+    let total = 0, count = 0;
     @foreach ($allstudents as $student)
-        @if($student->dateofbirth)
-            let birthYear = new Date('{{ $student->dateofbirth }}').getFullYear();
-            let currentYear = new Date().getFullYear();
-            let age = currentYear - birthYear;
-            totalAge += age;
-            count++;
+        @if($student->dateofbirth ?? false)
+        total += new Date().getFullYear() - new Date('{{ $student->dateofbirth }}').getFullYear();
+        count++;
         @endif
     @endforeach
-    if (count > 0) {
-        document.getElementById('avgAge').textContent = Math.round(totalAge / count);
-    } else {
-        document.getElementById('avgAge').textContent = '—';
-    }
+    document.getElementById('avgAge').textContent = count ? Math.round(total / count) : '—';
 }
-calculateAverageAge();
 
-// Image modal handling
+// Image modal
 const imageViewModal = document.getElementById('imageViewModal');
 if (imageViewModal) {
-    imageViewModal.addEventListener('show.bs.modal', function (event) {
-        const button = event.relatedTarget;
-        const imageSrc = button.getAttribute('data-image') || '{{ asset('storage/student_avatars/unnamed.jpg') }}';
-        const studentName = button.getAttribute('data-name') || 'Student';
-        const admissionNo = button.getAttribute('data-admission') || '';
-
-        const modalImage = this.querySelector('#enlargedImage');
-        const modalName = this.querySelector('#modalStudentName');
-        const modalAdmission = this.querySelector('#modalStudentAdmission');
-
-        modalImage.src = imageSrc;
-        modalName.textContent = studentName;
-        modalAdmission.textContent = admissionNo ? 'Admission No: ' + admissionNo : '';
-
-        modalImage.onerror = function() {
-            this.src = '{{ asset('storage/student_avatars/unnamed.jpg') }}';
-        };
+    imageViewModal.addEventListener('show.bs.modal', function(e) {
+        const btn = e.relatedTarget;
+        document.getElementById('enlargedImage').src      = btn.getAttribute('data-image') || '';
+        document.getElementById('modalStudentName').textContent = btn.getAttribute('data-name') || '';
+        document.getElementById('modalStudentAdmission').textContent = btn.getAttribute('data-admission')
+            ? 'Admission No: ' + btn.getAttribute('data-admission') : '';
     });
 }
 
-// Toast notification helper
 function showToast(message, type) {
-    const toast = document.createElement('div');
-    toast.className = 'cb-toast cb-toast-' + (type || 'success');
-    toast.innerHTML = '<i class="ri-' + (type === 'success' ? 'checkbox-circle-fill' : 'information-fill') + '"></i> ' + message;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
+    const t = document.createElement('div');
+    t.className = 'cb-toast cb-toast-' + (type || 'success');
+    t.innerHTML = `<i class="ri-information-fill"></i> ${message}`;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3000);
 }
 
-// Export functions for global use
-window.applyFilters = applyFilters;
-window.resetFilters = resetFilters;
-window.changePage = changePage;
-</script>
+// ─────────────────────────────────────────────────────
+// PROFILE DRAWER
+// ─────────────────────────────────────────────────────
+(function() {
+    let _stid, _classid, _sessid, _termid, _activeTab = 'profile';
 
+    window.openProfileDrawer = function(stid, classid, sessid, termid) {
+        _stid = stid; _classid = classid; _sessid = sessid; _termid = termid;
+
+        const overlay = document.getElementById('spDrawerOverlay');
+        const drawer  = document.getElementById('spDrawer');
+        overlay.style.display = 'block';
+        overlay.style.opacity = '0';
+        drawer.style.transform = 'translateX(100%)';
+
+        requestAnimationFrame(() => {
+            overlay.style.opacity    = '1';
+            drawer.style.transform   = 'translateX(0)';
+        });
+        document.body.style.overflow = 'hidden';
+
+        showLoading();
+        switchTab('profile', document.querySelector('.sp-tab[data-tab="profile"]'));
+        fetchProfile(stid, classid, sessid, termid);
+    };
+
+    window.closeProfileDrawer = function() {
+        document.getElementById('spDrawerOverlay').style.opacity = '0';
+        document.getElementById('spDrawer').style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            document.getElementById('spDrawerOverlay').style.display = 'none';
+            document.body.style.overflow = '';
+        }, 350);
+    };
+
+    window.retryLoad = function() {
+        if (_stid) { showLoading(); fetchProfile(_stid, _classid, _sessid, _termid); }
+    };
+
+    window.switchTab = function(tab, btn) {
+        _activeTab = tab;
+        document.querySelectorAll('.sp-tab').forEach(t => t.classList.remove('sp-tab-active'));
+        document.querySelectorAll('.sp-tab-content').forEach(c => c.style.display = 'none');
+        if (btn) btn.classList.add('sp-tab-active');
+        const panel = document.getElementById('spTab-' + tab);
+        if (panel) panel.style.display = 'block';
+    };
+
+    window.updateTraitBadge = function(sel) {
+        const badge = document.getElementById('badge_' + sel.name);
+        if (!badge) return;
+        const map = {
+            'Excellent':   ['Excellent', 'sp-badge-excellent'],
+            'Very Good':   ['Very Good', 'sp-badge-verygood'],
+            'Good':        ['Good',      'sp-badge-good'],
+            'Fairly Good': ['Fair',      'sp-badge-fairlygood'],
+            'Poor':        ['Poor',      'sp-badge-poor'],
+        };
+        badge.className = 'sp-trait-badge';
+        if (map[sel.value]) {
+            badge.textContent = map[sel.value][0];
+            badge.classList.add(map[sel.value][1]);
+        } else {
+            badge.textContent = '—';
+        }
+    };
+
+    function fetchProfile(stid, classid, sessid, termid) {
+        const url = `{{ url('/studentpersonalityprofile/data') }}/${stid}/${classid}/${sessid}/${termid}`;
+        fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
+            .then(r => { if (!r.ok) throw new Error('Server error ' + r.status); return r.json(); })
+            .then(data => populateDrawer(data))
+            .catch(err  => showError(err.message || 'Network error'));
+    }
+
+    function populateDrawer(data) {
+        hideLoading();
+
+        // Avatar initials
+        const initials = (data.student_name || '?').split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase();
+        document.getElementById('spAvatarCircle').textContent = initials;
+
+        document.getElementById('spDrawerTitle').textContent     = data.student_name || '—';
+        document.getElementById('spPillAdmission').innerHTML     = `<i class="ri-id-card-line"></i> ${data.admissionno || '—'}`;
+        document.getElementById('spPillGender').innerHTML        = `<i class="ri-user-line"></i> ${data.gender || '—'}`;
+        document.getElementById('spPillClass').innerHTML         = `<i class="ri-building-line"></i> ${data.schoolclass || '—'}`;
+        document.getElementById('spPillTerm').innerHTML          = `<i class="ri-calendar-line"></i> ${data.term || '—'} · ${data.session || '—'}`;
+
+        document.getElementById('spStudentId').value    = data.studentid;
+        document.getElementById('spSchoolClassId').value = data.schoolclassid;
+        document.getElementById('spTermId').value       = data.termid;
+        document.getElementById('spSessionId').value    = data.sessionid;
+
+        const pp = data.profile || {};
+        const traitFields = [
+            'punctuality','neatness','leadership','attitude','reading','honesty',
+            'cooperation','selfcontrol','politeness','physicalhealth','stability',
+            'gamesandsports','attentiveness_in_class','class_participation',
+            'relationship_with_others','doing_assignment','writing_skill',
+            'reading_skill','spoken_english_communication','hand_writing','club','music'
+        ];
+        traitFields.forEach(f => {
+            const el = document.getElementById('sp_' + f);
+            if (el) { el.value = pp[f] || ''; updateTraitBadge(el); }
+        });
+        ['attendance','classteachercomment','principalscomment','remark_on_other_activities'].forEach(f => {
+            const el = document.getElementById('sp_' + f);
+            if (el) el.value = pp[f] || '';
+        });
+
+        buildTerminalReport(data.scores || []);
+        buildMockReport(data.mock_scores || []);
+    }
+
+    function buildTerminalReport(scores) {
+        const c = document.getElementById('spTerminalReport');
+        if (!scores.length) {
+            c.innerHTML = `<div class="sp-empty-report"><i class="ri-file-damage-line"></i>No terminal report scores available.</div>`;
+            return;
+        }
+        const rows = scores.map((s, i) => {
+            const avg = (s.ca1 != null && s.ca2 != null && s.ca3 != null)
+                ? ((+s.ca1 + +s.ca2 + +s.ca3) / 3).toFixed(1) : '—';
+            return `<tr>
+                <td>${i+1}</td><td>${s.subject_name}</td>
+                <td class="${sc(s.ca1)}">${s.ca1??'—'}</td>
+                <td class="${sc(s.ca2)}">${s.ca2??'—'}</td>
+                <td class="${sc(s.ca3)}">${s.ca3??'—'}</td>
+                <td class="${sc(avg)}">${avg}</td>
+                <td class="${sc(s.exam)}">${s.exam??'—'}</td>
+                <td class="${sc(s.total)}">${s.total??'—'}</td>
+                <td class="${sc(s.bf)}">${s.bf??'—'}</td>
+                <td class="${sc(s.cum)}">${s.cum??'—'}</td>
+                <td>${s.grade??'—'}</td>
+                <td>${s.position??'—'}</td>
+                <td class="${sc(s.class_average)}">${s.class_average??'—'}</td>
+            </tr>`;
+        }).join('');
+        c.innerHTML = `
+            <div style="overflow-x:auto;border-radius:12px;box-shadow:0 2px 8px rgba(15,35,66,.06);">
+            <table class="sp-report-table">
+                <thead>
+                    <tr>
+                        <th>#</th><th>Subject</th>
+                        <th>CA1</th><th>CA2</th><th>CA3</th><th>CA Avg</th>
+                        <th>Exam</th><th>Total</th><th>B/F</th><th>Cum</th>
+                        <th>Grade</th><th>Pos</th><th>Cls Avg</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table></div>
+            <div class="sp-grade-key">
+                <span style="color:#15803d;">A1 = 75–100</span>
+                <span style="color:#1e40af;">B2 = 70–74</span>
+                <span style="color:#6d28d9;">B3 = 65–69</span>
+                <span style="color:#854d0e;">C4 = 60–64</span>
+                <span style="color:#dc2626;">F9 = 0–39</span>
+            </div>`;
+    }
+
+    function buildMockReport(scores) {
+        const c = document.getElementById('spMockReport');
+        if (!scores.length) {
+            c.innerHTML = `<div class="sp-empty-report"><i class="ri-file-damage-line"></i>No mock report scores available.</div>`;
+            return;
+        }
+        const rows = scores.map((s, i) => `
+            <tr>
+                <td>${i+1}</td><td>${s.subject_name}</td>
+                <td class="${sc(s.exam)}">${s.exam??'—'}</td>
+                <td>${s.grade??'—'}</td>
+                <td>${s.position??'—'}</td>
+                <td class="${sc(s.class_average)}">${s.class_average??'—'}</td>
+            </tr>`).join('');
+        c.innerHTML = `
+            <div style="overflow-x:auto;border-radius:12px;box-shadow:0 2px 8px rgba(15,35,66,.06);">
+            <table class="sp-report-table">
+                <thead>
+                    <tr><th>#</th><th>Subject</th><th>Exam</th><th>Grade</th><th>Pos</th><th>Cls Avg</th></tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table></div>`;
+    }
+
+    function sc(v) {
+        if (v == null || isNaN(v)) return '';
+        return +v < 50 ? 'sp-score-low' : (+v >= 70 ? 'sp-score-high' : '');
+    }
+
+    window.submitProfileForm = function(e) {
+        e.preventDefault();
+        const btn   = document.getElementById('spSubmitBtn');
+        const label = document.getElementById('spSubmitLabel');
+        btn.disabled   = true;
+        label.textContent = 'Saving…';
+
+        const fd = new FormData(document.getElementById('spProfileForm'));
+
+        fetch('{{ route("studentpersonalityprofile.save") }}', {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN':      document.getElementById('spCsrfToken').value,
+                'X-Requested-With':  'XMLHttpRequest',
+                'Accept':            'application/json',
+            },
+            body: fd,
+        })
+        .then(r => r.json().then(d => ({ ok: r.ok, data: d })))
+        .then(({ ok, data }) => {
+            btn.disabled = false; label.textContent = 'Update Profile';
+            if (ok || data.success !== false) {
+                const s = document.getElementById('spSaveStatus');
+                s.style.display = 'flex';
+                setTimeout(() => s.style.display = 'none', 3500);
+                drawerToast('Profile updated successfully!', 'success');
+            } else {
+                drawerToast(data.message || 'Save failed', 'error');
+            }
+        })
+        .catch(() => {
+            btn.disabled = false; label.textContent = 'Update Profile';
+            drawerToast('Network error — please try again', 'error');
+        });
+    };
+
+    function showLoading() {
+        document.getElementById('spLoadingState').style.display = 'block';
+        document.getElementById('spErrorState').style.display   = 'none';
+        document.querySelectorAll('.sp-tab-content').forEach(c => c.style.display = 'none');
+    }
+    function hideLoading() {
+        document.getElementById('spLoadingState').style.display = 'none';
+        document.getElementById('spErrorState').style.display   = 'none';
+        switchTab(_activeTab, document.querySelector(`.sp-tab[data-tab="${_activeTab}"]`));
+    }
+    function showError(msg) {
+        document.getElementById('spLoadingState').style.display = 'none';
+        document.getElementById('spErrorState').style.display   = 'block';
+        document.getElementById('spErrorMsg').textContent = msg;
+    }
+    function drawerToast(msg, type) {
+        const t = document.createElement('div');
+        t.style.cssText = `position:fixed;bottom:28px;left:50%;transform:translateX(-50%);
+            background:${type==='success'?'#059669':'#dc2626'};color:#fff;
+            padding:12px 22px;border-radius:12px;font-size:13px;font-weight:600;
+            z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,.2);
+            display:flex;align-items:center;gap:8px;font-family:'DM Sans',sans-serif;
+            animation:slideIn .3s ease;`;
+        t.innerHTML = `<i class="ri-${type==='success'?'checkbox-circle-fill':'error-warning-fill'}"></i> ${msg}`;
+        document.body.appendChild(t);
+        setTimeout(() => t.remove(), 3500);
+    }
+
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeProfileDrawer(); });
+})();
+</script>
 @endsection
