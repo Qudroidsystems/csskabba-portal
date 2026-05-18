@@ -59,198 +59,67 @@ body { font-family: 'DM Sans', sans-serif; }
 .cb-table tbody td { padding: 10px 14px; vertical-align: middle; border-bottom: 1px solid var(--cb-border); text-align: center; }
 .cb-table tbody td.td-name { text-align: left; }
 .cb-table tbody tr:hover td { background: #f0fdf9; }
-.cb-table tbody tr:last-child td { border-bottom: none; }
 
-/* Row status indicators */
+/* Row status */
 .cb-table tbody tr.row-has-comment td.td-name { border-left: 3px solid var(--cb-teal); }
 .cb-table tbody tr.row-no-comment  td.td-name { border-left: 3px solid var(--cb-border); }
 
-/* Score dual rows */
 .score-dual { display: flex; flex-direction: column; gap: 2px; min-width: 80px; }
 .score-row { display: flex; align-items: center; justify-content: center; gap: 4px; padding: 2px 5px; border-radius: 5px; font-size: 11px; font-weight: 700; }
 .score-row-term { background: rgba(14,165,233,.08); border-left: 2.5px solid #0ea5e9; }
-.score-row-cum  { background: rgba(15,35,66,.06);   border-left: 2.5px solid var(--cb-navy); }
+.score-row-cum  { background: rgba(15,35,66,.06); border-left: 2.5px solid var(--cb-navy); }
 .score-lbl { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; opacity: .7; }
 
-/* Grade badges */
 .grade-badge { display: inline-block; padding: 1px 5px; border-radius: 8px; font-size: 9px; font-weight: 700; }
-.g-a,.g-a1             { background: #dcfce7; color: #15803d; }
-.g-b,.g-b2,.g-b3       { background: #dbeafe; color: #1d4ed8; }
+.g-a,.g-a1 { background: #dcfce7; color: #15803d; }
+.g-b,.g-b2,.g-b3 { background: #dbeafe; color: #1d4ed8; }
 .g-c,.g-c4,.g-c5,.g-c6 { background: #fef9c3; color: #a16207; }
-.g-d,.g-d7             { background: #ffedd5; color: #c2410c; }
-.g-e,.g-e8             { background: #ffe4e6; color: #be123c; }
-.g-f,.g-f9             { background: #fee2e2; color: #b91c1c; }
-.score-red   { color: #dc2626 !important; }
-.score-amber { color: #d97706 !important; }
-.score-green { color: #16a34a !important; }
+.g-d,.g-d7 { background: #ffedd5; color: #c2410c; }
+.g-e,.g-e8 { background: #ffe4e6; color: #be123c; }
+.g-f,.g-f9 { background: #fee2e2; color: #b91c1c; }
 
-/* Analytics cell */
 .analytics-cell { min-width: 130px; font-size: 11px; line-height: 1.4; }
-.analytics-row  { display: flex; justify-content: space-between; align-items: center; padding: 2px 0; gap: 6px; }
-.analytics-lbl  { color: var(--cb-muted); font-size: 10px; font-weight: 500; }
-.analytics-val  { font-weight: 700; color: var(--cb-navy); font-size: 11.5px; }
-.pct-bar-wrap   { background: #e2e8f0; border-radius: 4px; height: 5px; margin-top: 3px; overflow: hidden; }
-.pct-bar        { height: 100%; border-radius: 4px; }
-.grade-trigger-btn { background: none; border: none; cursor: pointer; color: var(--cb-sky); font-size: 15px; padding: 2px 5px; border-radius: 5px; transition: color .15s, background .15s; }
-.grade-trigger-btn:hover { color: var(--cb-teal); background: rgba(13,148,136,.08); }
+.analytics-row { display: flex; justify-content: space-between; align-items: center; padding: 2px 0; gap: 6px; }
+.analytics-lbl { color: var(--cb-muted); font-size: 10px; font-weight: 500; }
+.analytics-val { font-weight: 700; color: var(--cb-navy); font-size: 11.5px; }
+.pct-bar-wrap { background: #e2e8f0; border-radius: 4px; height: 5px; margin-top: 3px; overflow: hidden; }
+.pct-bar { height: 100%; border-radius: 4px; }
 
-/* Inputs */
-.cb-input { border: 1.5px solid var(--cb-border); border-radius: 8px; padding: 6px 10px; font-size: 12px; width: 100%; transition: border .15s, box-shadow .15s; background: var(--cb-surface); font-family: 'DM Sans', sans-serif; }
+.cb-input { border: 1.5px solid var(--cb-border); border-radius: 8px; padding: 8px 10px; font-size: 13px; width: 100%; transition: border .15s; background: var(--cb-surface); }
 .cb-input:focus { border-color: var(--cb-teal); outline: none; box-shadow: 0 0 0 3px rgba(13,148,136,.12); background: #fff; }
-.cb-input.has-value { border-left-color: var(--cb-teal); }
 .absence-input { width: 72px !important; text-align: center; }
 
-/* Autosave status on input */
-.cb-input.saving  { border-color: var(--cb-amber) !important; }
-.cb-input.saved   { border-color: var(--cb-green) !important; }
-.cb-input.save-err{ border-color: var(--cb-rose)  !important; }
-
-/* Avatar */
 .student-name-cell { display: flex; align-items: center; gap: 9px; }
-.cb-avatar { width: 38px; height: 38px; border-radius: 50%; overflow: hidden; flex-shrink: 0; border: 2px solid var(--cb-border); cursor: pointer; transition: border-color .15s, transform .15s; display: flex; align-items: center; justify-content: center; }
-.cb-avatar:hover { border-color: var(--cb-teal); transform: scale(1.08); }
+.cb-avatar { width: 38px; height: 38px; border-radius: 50%; overflow: hidden; flex-shrink: 0; border: 2px solid var(--cb-border); cursor: pointer; transition: all .15s; }
+.cb-avatar:hover { border-color: var(--cb-teal); transform: scale(1.05); }
 .cb-avatar img { width: 100%; height: 100%; object-fit: cover; }
-.cb-avatar-initials { background: linear-gradient(135deg, var(--cb-teal), var(--cb-sky)); color: #fff; font-size: 13px; font-weight: 700; }
-.student-name-text { font-weight: 600; font-size: 12.5px; color: var(--cb-navy); }
-.student-adm { font-size: 10.5px; color: var(--cb-muted); margin-top: 1px; }
+.cb-avatar-initials { background: linear-gradient(135deg, var(--cb-teal), var(--cb-sky)); color: #fff; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
 
-/* Autosave chip per-student */
-.autosave-chip {
-    display: inline-flex; align-items: center; gap: 4px;
-    font-size: 10px; font-weight: 700; padding: 2px 8px;
-    border-radius: 20px; margin-top: 3px; transition: all .2s;
+/* Enhanced Comment Features */
+.comment-type-pill {
+    font-size: 10px; padding: 1px 6px; border-radius: 12px; margin: 2px 1px;
+    font-weight: 600; display: inline-flex; align-items: center; gap: 3px;
 }
-.ac-idle    { background: #f1f5f9; color: #94a3b8; }
-.ac-saving  { background: #fef3c7; color: #92400e; }
-.ac-saved   { background: #dcfce7; color: #15803d; }
-.ac-err     { background: #ffe4e6; color: #be123c; }
+.ct-teacher   { background: #e0f2fe; color: #0369a1; }
+.ct-guidance  { background: #f3e8ff; color: #6b21a8; }
+.ct-activities{ background: #fef3c7; color: #854d0e; }
 
-/* Comment status badge */
-.comment-status-dot {
-    display: inline-flex; align-items: center; gap: 3px;
-    font-size: 10px; font-weight: 700; padding: 1px 7px;
-    border-radius: 20px; margin-top: 2px;
+#cbCommentModal .modal-content { border-radius: 20px; overflow: hidden; }
+#cbCommentModal .modal-header { background: linear-gradient(135deg, var(--cb-navy), var(--cb-teal)); color: #fff; }
+.student-modal-header { display: flex; align-items: center; gap: 14px; }
+.past-comment-item {
+    border-left: 4px solid var(--cb-teal); background: #f8fafc; padding: 12px;
+    margin-bottom: 10px; border-radius: 8px; cursor: pointer; transition: all .2s;
 }
-.dot-saved    { background: #dcfce7; color: #15803d; }
-.dot-unsaved  { background: #f1f5f9; color: #94a3b8; }
-
-/* Save bar */
-.save-bar { position: sticky; bottom: 0; z-index: 100; background: rgba(15,35,66,.97); backdrop-filter: blur(10px); border-top: 2px solid var(--cb-teal); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; border-radius: 0 0 var(--cb-radius) var(--cb-radius); }
-.save-bar label { color: rgba(255,255,255,.7); font-size: 12px; font-weight: 500; margin-bottom: 0; }
-.file-input-styled { padding: 6px 12px; border-radius: 8px; border: 1.5px solid rgba(255,255,255,.2); background: rgba(255,255,255,.08); color: #fff; font-size: 12px; cursor: pointer; }
-.file-input-styled:hover { border-color: var(--cb-teal); }
-.btn-save-all { background: var(--cb-teal); color: #fff; border: none; border-radius: 10px; padding: 10px 28px; font-size: 14px; font-weight: 700; cursor: pointer; transition: background .18s, transform .12s, box-shadow .18s; display: flex; align-items: center; gap: 8px; font-family: 'DM Sans', sans-serif; }
-.btn-save-all:hover { background: #0b7c72; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(13,148,136,.4); }
-.btn-save-all:disabled { opacity: .65; transform: none; cursor: not-allowed; }
-
-/* Save counter */
-.save-counter { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.save-counter-pill { font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 20px; display: inline-flex; align-items: center; gap: 5px; }
-.sc-pill-done    { background: rgba(34,197,94,.2);  color: #86efac; }
-.sc-pill-pending { background: rgba(255,255,255,.1); color: rgba(255,255,255,.6); }
-
-/* Toast */
-.cb-toast { position: fixed; bottom: 80px; right: 24px; min-width: 300px; z-index: 99999; padding: 14px 18px; border-radius: 12px; display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; box-shadow: var(--cb-shadow-lg); animation: cbSlideUp .3s ease; }
-.cb-toast-success { background: #ecfdf5; border: 1.5px solid #86efac; color: #15803d; }
-.cb-toast-error   { background: #fff1f2; border: 1.5px solid #fca5a5; color: #be123c; }
-.cb-toast-info    { background: #eff6ff; border: 1.5px solid #93c5fd; color: #1d4ed8; }
-@keyframes cbSlideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
-@keyframes cbSpin    { 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }
-.spin { display:inline-block; animation: cbSpin 1s linear infinite; }
-
-/* Search */
-.cb-search { position: relative; }
-.cb-search input { width: 100%; padding: 9px 14px 9px 38px; border: 1.5px solid var(--cb-border); border-radius: 10px; font-size: 13px; background: var(--cb-surface); font-family: 'DM Sans', sans-serif; transition: border .15s; }
-.cb-search input:focus { border-color: var(--cb-teal); outline: none; box-shadow: 0 0 0 3px rgba(13,148,136,.1); }
-.cb-search i { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: var(--cb-muted); pointer-events: none; }
-
-/* Mobile cards */
-.cb-student-card { background: var(--cb-white); border: 1px solid var(--cb-border); border-radius: var(--cb-radius); margin-bottom: 18px; box-shadow: var(--cb-shadow); overflow: hidden; }
-.cb-student-card .card-top { background: linear-gradient(135deg, #f8fafc, #f0fdf9); padding: 14px 16px; border-bottom: 1px solid var(--cb-border); display: flex; align-items: center; gap: 12px; }
-.cb-student-card.card-has-comment .card-top { border-left: 4px solid var(--cb-teal); }
-.cb-student-card.card-no-comment  .card-top { border-left: 4px solid var(--cb-border); }
-.cb-student-card .card-body-pad { padding: 16px; }
-.performance-strip { background: linear-gradient(135deg, var(--cb-navy), #1e5f74); border-radius: 10px; padding: 12px 16px; color: #fff; margin-bottom: 14px; }
-.ps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 8px; }
-.ps-item { text-align: center; background: rgba(255,255,255,.1); border-radius: 8px; padding: 8px; }
-.ps-lbl  { font-size: 9px; opacity: .8; text-transform: uppercase; letter-spacing: .4px; }
-.ps-val  { font-size: 16px; font-weight: 700; }
-.subjects-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 14px; }
-.subjects-scroll::-webkit-scrollbar { height: 3px; }
-.subjects-scroll::-webkit-scrollbar-thumb { background: var(--cb-border); border-radius: 2px; }
-.subj-chip { flex-shrink: 0; text-align: center; border: 1px solid var(--cb-border); border-radius: 10px; padding: 8px 10px; min-width: 80px; background: var(--cb-surface); }
-.subj-chip .sc-name { font-size: 9.5px; font-weight: 600; color: var(--cb-muted); margin-bottom: 4px; line-height: 1.2; }
-.subj-chip .sc-t { font-size: 10px; font-weight: 700; border-radius: 4px; padding: 1px 4px; margin-bottom: 2px; background: rgba(14,165,233,.1); color: #0369a1; }
-.subj-chip .sc-c { font-size: 10px; font-weight: 700; border-radius: 4px; padding: 1px 4px; background: rgba(15,35,66,.07); color: var(--cb-navy); }
-.comment-field-group { margin-bottom: 10px; }
-.comment-field-group label { font-size: 11px; font-weight: 600; color: var(--cb-muted); margin-bottom: 4px; display: block; }
-
-/* Responsive */
-@media (max-width: 1199px) { .desktop-only { display: none !important; } }
-@media (min-width: 1200px) { .mobile-only  { display: none !important; } }
-
-/* Image zoom modal */
-#cbImgZoomModal .modal-content { background: transparent; border: none; box-shadow: none; }
-#cbImgZoomModal .modal-dialog  { max-width: 92vw; }
-#cbImgZoomModal .modal-body    { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 75vh; padding: 20px; }
-.cb-zoomed-img { max-width: 88vw; max-height: 70vh; border-radius: 16px; border: 4px solid #fff; box-shadow: 0 24px 60px rgba(0,0,0,.4); object-fit: contain; animation: cbZoomIn .3s ease; }
-@keyframes cbZoomIn { from { opacity:0; transform:scale(.82); } to { opacity:1; transform:scale(1); } }
-.cb-zoom-close { position: absolute; top: 16px; right: 22px; background: rgba(0,0,0,.7); border: none; color: #fff; border-radius: 50%; width: 36px; height: 36px; font-size: 18px; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; transition: background .15s; }
-.cb-zoom-close:hover { background: rgba(0,0,0,.9); }
-.cb-zoom-name { color: #fff; margin-top: 16px; font-size: 17px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,.4); background: rgba(0,0,0,.45); padding: 7px 20px; border-radius: 40px; }
-.cb-zoom-meta { color: rgba(255,255,255,.8); margin-top: 6px; font-size: 13px; }
-
-/* Grade breakdown popup */
-#cbGradePopup { display: none; position: fixed; z-index: 9999; background: var(--cb-white); border: 2px solid var(--cb-teal); border-radius: 14px; box-shadow: var(--cb-shadow-lg); width: 360px; max-height: 490px; overflow: hidden; }
-#cbGradePopup.is-open { display: block; }
-.gpop-hdr { background: linear-gradient(135deg, var(--cb-navy), var(--cb-teal)); color: #fff; padding: 11px 16px; border-radius: 12px 12px 0 0; font-weight: 700; font-size: 13px; display: flex; justify-content: space-between; align-items: center; }
-.gpop-close-btn { background: rgba(255,255,255,.18); border: none; color: #fff; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; transition: background .15s; }
-.gpop-close-btn:hover { background: rgba(255,255,255,.35); }
-.gpop-body { padding: 14px; max-height: 400px; overflow-y: auto; }
-.gpop-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
-.gpop-table th { background: var(--cb-surface); color: var(--cb-muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; padding: 6px 8px; border-bottom: 1px solid var(--cb-border); text-align: center; }
-.gpop-table th:first-child { text-align: left; }
-.gpop-table td { padding: 5px 8px; border-bottom: 1px solid #f1f5f9; font-weight: 600; text-align: center; vertical-align: middle; }
-.gpop-table td:first-child { text-align: left; font-size: 11px; color: var(--cb-navy); }
-.gpop-summary { background: var(--cb-surface); border-radius: 8px; padding: 10px 12px; margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.gpop-sum-item { text-align: center; }
-.gpop-sum-lbl  { font-size: 9px; color: var(--cb-muted); text-transform: uppercase; letter-spacing: .4px; }
-.gpop-sum-val  { font-size: 16px; font-weight: 700; color: var(--cb-navy); }
-#cbPopupBackdrop { display: none; position: fixed; inset: 0; z-index: 9998; background: rgba(0,0,0,.28); }
-
-/* Pre-submit Summary Modal */
-#cbSaveConfirmModal .modal-content { border-radius: 18px; overflow: hidden; border: none; box-shadow: 0 24px 60px rgba(0,0,0,.18); }
-#cbSaveConfirmModal .modal-header  { background: linear-gradient(135deg, var(--cb-navy), var(--cb-teal)); border: none; padding: 20px 24px; }
-#cbSaveConfirmModal .modal-title   { color: #fff; font-weight: 700; font-size: 16px; }
-#cbSaveConfirmModal .btn-close     { filter: invert(1); }
-.confirm-summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
-.confirm-stat-box { border-radius: 12px; padding: 14px 16px; text-align: center; }
-.confirm-stat-box.done    { background: #ecfdf5; border: 1.5px solid #86efac; }
-.confirm-stat-box.pending { background: #f8fafc; border: 1.5px solid var(--cb-border); }
-.confirm-stat-box .csb-num  { font-size: 28px; font-weight: 700; line-height: 1; }
-.confirm-stat-box .csb-lbl  { font-size: 11px; font-weight: 600; margin-top: 4px; }
-.confirm-stat-box.done    .csb-num { color: #15803d; }
-.confirm-stat-box.done    .csb-lbl { color: #15803d; }
-.confirm-stat-box.pending .csb-num { color: var(--cb-muted); }
-.confirm-stat-box.pending .csb-lbl { color: var(--cb-muted); }
-.confirm-student-list { max-height: 180px; overflow-y: auto; border: 1px solid var(--cb-border); border-radius: 10px; padding: 10px 14px; background: var(--cb-surface); margin-bottom: 14px; }
-.confirm-student-list .csl-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid #f0f0f0; font-size: 12.5px; font-weight: 500; color: var(--cb-navy); }
-.confirm-student-list .csl-item:last-child { border-bottom: none; }
-.csl-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.csl-dot-done    { background: var(--cb-teal); }
-.csl-dot-pending { background: #cbd5e1; }
-.confirm-section-hdr { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
-.confirm-section-hdr.hdr-done    { color: #15803d; }
-.confirm-section-hdr.hdr-pending { color: var(--cb-muted); }
-.confirm-proceed-btn { background: var(--cb-teal); color: #fff; border: none; border-radius: 10px; padding: 11px 28px; font-size: 14px; font-weight: 700; cursor: pointer; width: 100%; transition: background .18s; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px; }
-.confirm-proceed-btn:hover { background: #0b7c72; }
+.past-comment-item:hover { background: #f0fdf9; transform: translateX(6px); }
+.past-comment-meta { font-size: 10.5px; color: var(--cb-muted); margin-bottom: 4px; }
 </style>
 
 <div class="main-content">
 <div class="page-content">
 <div class="container-fluid">
 
-{{-- Hero --}}
+<!-- Hero -->
 <div class="cb-hero">
     <h1><i class="ri-clipboard-line me-2"></i>Class Broadsheet</h1>
     <p>Review student performance, assign comments, and track attendance for your class.</p>
@@ -261,7 +130,7 @@ body { font-family: 'DM Sans', sans-serif; }
     </div>
 </div>
 
-{{-- Stat Cards --}}
+<!-- Stat Cards -->
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
         <div class="cb-stat">
@@ -297,7 +166,7 @@ body { font-family: 'DM Sans', sans-serif; }
     </div>
 </div>
 
-{{-- Column Toggle --}}
+<!-- Column Toggle -->
 <div class="col-toggle-panel">
     <h6><i class="ri-layout-column-line" style="color:var(--cb-teal)"></i> Show / Hide Columns</h6>
     <div class="toggle-chips">
@@ -308,127 +177,125 @@ body { font-family: 'DM Sans', sans-serif; }
         <span class="toggle-chip active" data-colkey="activities"><i class="ri-football-line"></i> Remark on Activities</span>
         <span class="toggle-chip active" data-colkey="absence"><i class="ri-calendar-close-line"></i> Absences</span>
     </div>
-    <p class="mt-2 mb-0" style="font-size:11px;color:var(--cb-muted);">
-        <i class="ri-information-line me-1"></i>
-        Changes save automatically as you type. You can also use "Save All" to batch-save everything at once.
-    </p>
 </div>
-
-@if ($students->isNotEmpty())
 
 @php $cbAnalyticsJson = json_encode($studentAnalytics, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); @endphp
 
-{{-- Grade popup --}}
-<div id="cbGradePopup">
-    <div class="gpop-hdr">
-        <span id="gpopTitle"><i class="ri-bar-chart-line me-1"></i>Grade Breakdown</span>
-        <button type="button" class="gpop-close-btn" id="gpopCloseBtn">&times;</button>
+<!-- Comment Modal -->
+<div class="modal fade" id="cbCommentModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="student-modal-header w-100">
+                    <div id="modalStudentAvatar" class="cb-avatar" style="width:56px;height:56px;font-size:20px;"></div>
+                    <div style="flex:1">
+                        <h5 class="mb-1 text-white" id="modalStudentName"></h5>
+                        <div class="text-white-50 small" id="modalStudentMeta"></div>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="performance-strip mb-3" id="modalPerformance"></div>
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="mb-0" id="modalCommentType"></h6>
+                    <button type="button" class="btn btn-sm btn-outline-light" id="btnLoadPastComments">
+                        <i class="ri-history-line"></i> Past Comments
+                    </button>
+                </div>
+
+                <textarea id="modalTextarea" class="cb-input" rows="8" style="width:100%; resize:vertical; font-size:14px; line-height:1.6;"></textarea>
+
+                <div class="mt-2 mb-3">
+                    <button type="button" class="btn btn-sm btn-light me-1" onclick="formatText('bold')">𝐁 Bold</button>
+                    <button type="button" class="btn btn-sm btn-light me-1" onclick="formatText('italic')">𝑖 Italic</button>
+                    <button type="button" class="btn btn-sm btn-light" onclick="formatText('bullet')">• Bullet</button>
+                </div>
+
+                <div id="pastCommentsPanel" style="display:none; max-height:320px; overflow-y:auto; border:1px solid var(--cb-border); border-radius:12px; padding:12px;">
+                    <h6 class="small text-muted mb-2">Past Comments (Click to load into current field)</h6>
+                    <div id="pastCommentsList"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="modalSaveBtn"><i class="ri-save-line"></i> Save Comment</button>
+            </div>
+        </div>
     </div>
-    <div class="gpop-body" id="gpopBody"></div>
 </div>
-<div id="cbPopupBackdrop"></div>
 
 <div class="cb-card">
     <div class="cb-card-header">
-        <h5>
-            <i class="ri-table-alt-line" style="color:var(--cb-teal)"></i>
-            Student Performance &amp; Comments
-            <span class="badge" style="background:var(--cb-teal);color:#fff;font-size:11px;">{{ $students->count() }} Students</span>
-        </h5>
+        <h5><i class="ri-table-alt-line" style="color:var(--cb-teal)"></i> Student Performance &amp; Comments <span class="badge bg-teal">{{ $students->count() }} Students</span></h5>
         <div class="cb-search" style="max-width:260px;">
             <i class="ri-search-line"></i>
             <input type="text" id="searchInput" placeholder="Search students…">
         </div>
     </div>
 
-    {{-- ============================================================
-         IMPORTANT: ONE canonical hidden data store per student.
-         Both desktop inputs and mobile inputs sync INTO this store.
-         The form submit reads from here — never from both viewports.
-         ============================================================ --}}
     <form id="commentsForm">
         @csrf
-        {{-- Method spoofing for PATCH --}}
         <input type="hidden" name="_method" value="PATCH">
 
-        {{-- Hidden canonical fields — single source of truth --}}
+        <!-- Canonical Fields -->
         @foreach ($students as $student)
             @php
-                $sid     = $student->id;
+                $sid = $student->id;
                 $profile = $personalityProfiles->where('studentid', $sid)->first();
             @endphp
-            <input type="hidden" class="canonical-teacher"    id="c_teacher_{{ $sid }}"    name="teacher_comments[{{ $sid }}]"            value="{{ $profile ? $profile->classteachercomment : '' }}">
-            <input type="hidden" class="canonical-guidance"   id="c_guidance_{{ $sid }}"   name="guidance_comments[{{ $sid }}]"           value="{{ $profile ? $profile->guidancescomment : '' }}">
-            <input type="hidden" class="canonical-activities" id="c_activities_{{ $sid }}" name="remarks_on_other_activities[{{ $sid }}]"  value="{{ $profile ? $profile->remark_on_other_activities : '' }}">
-            <input type="hidden" class="canonical-absence"    id="c_absence_{{ $sid }}"    name="no_of_times_school_absent[{{ $sid }}]"   value="{{ $profile ? $profile->no_of_times_school_absent : '' }}">
+            <input type="hidden" class="canonical-teacher"    id="c_teacher_{{ $sid }}"    name="teacher_comments[{{ $sid }}]"            value="{{ $profile?->classteachercomment ?? '' }}">
+            <input type="hidden" class="canonical-guidance"   id="c_guidance_{{ $sid }}"   name="guidance_comments[{{ $sid }}]"           value="{{ $profile?->guidancescomment ?? '' }}">
+            <input type="hidden" class="canonical-activities" id="c_activities_{{ $sid }}" name="remarks_on_other_activities[{{ $sid }}]"  value="{{ $profile?->remark_on_other_activities ?? '' }}">
+            <input type="hidden" class="canonical-absence"    id="c_absence_{{ $sid }}"    name="no_of_times_school_absent[{{ $sid }}]"   value="{{ $profile?->no_of_times_school_absent ?? '' }}">
         @endforeach
 
-        {{-- DESKTOP TABLE --}}
+        <!-- DESKTOP TABLE -->
         <div class="desktop-only" style="overflow-x:auto;">
             <table class="cb-table">
                 <thead>
                     <tr>
                         <th style="width:34px;">#</th>
-                        <th class="col-name-hdr" style="min-width:200px;">Student</th>
+                        <th class="col-name-hdr" style="min-width:220px;">Student</th>
                         @foreach ($subjects as $subject)
                             <th class="cbcol-scores" style="min-width:86px;">{{ $subject->subject }}</th>
                         @endforeach
                         <th class="cbcol-summary" style="min-width:140px;">Summary</th>
-                        <th class="cbcol-teacher" style="min-width:200px;">Teacher's Comment</th>
-                        <th class="cbcol-guidance" style="min-width:160px;">Counselor's Comment</th>
-                        <th class="cbcol-activities" style="min-width:160px;">Remark on Activities</th>
+                        <th class="cbcol-teacher" style="min-width:220px;">Teacher's Comment</th>
+                        <th class="cbcol-guidance" style="min-width:180px;">Counselor's Comment</th>
+                        <th class="cbcol-activities" style="min-width:180px;">Remark on Activities</th>
                         <th class="cbcol-absence" style="min-width:80px;">Absent</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($students as $index => $student)
                         @php
-                            $sid      = $student->id;
+                            $sid = $student->id;
                             $initials = strtoupper(substr($student->fname ?? '', 0, 1) . substr($student->lastname ?? '', 0, 1)) ?: 'ST';
-                            $hasPic   = !empty($student->picture) && $student->picture !== 'unnamed.jpg';
-                            $imgUrl   = $hasPic ? asset('storage/student_avatars/' . basename($student->picture)) : null;
+                            $hasPic = !empty($student->picture) && $student->picture !== 'unnamed.jpg';
+                            $imgUrl = $hasPic ? asset('storage/student_avatars/' . basename($student->picture)) : null;
                             $fullName = trim(($student->lastname ?? '') . ' ' . ($student->fname ?? '') . ' ' . ($student->othername ?? ''));
-                            $profile  = $personalityProfiles->where('studentid', $sid)->first();
-                            $an       = $studentAnalytics[$sid] ?? [];
-                            $hasComment = $profile && !empty(trim($profile->classteachercomment ?? ''));
+                            $profile = $personalityProfiles->where('studentid', $sid)->first();
+                            $an = $studentAnalytics[$sid] ?? [];
                         @endphp
-                        <tr class="cb-student-row {{ $hasComment ? 'row-has-comment' : 'row-no-comment' }}"
-                            data-student-id="{{ $sid }}"
-                            data-student-name="{{ $fullName }}"
-                            data-searchkey="{{ strtolower($fullName . ' ' . $student->admissionNo) }}">
-
+                        <tr class="cb-student-row" data-student-id="{{ $sid }}" data-student-name="{{ $fullName }}" data-searchkey="{{ strtolower($fullName . ' ' . ($student->admissionNo ?? '')) }}">
                             <td>{{ $index + 1 }}</td>
-
                             <td class="td-name">
                                 <div class="student-name-cell">
                                     @if($imgUrl)
-                                        <div class="cb-avatar cb-avatar-trigger"
-                                             data-img="{{ $imgUrl }}" data-name="{{ $fullName }}"
-                                             data-adm="{{ $student->admissionNo }}"
-                                             data-class="{{ $schoolclass ? $schoolclass->schoolclass . ' ' . $schoolclass->arm : '' }}"
-                                             data-gender="{{ $student->gender ?? '' }}">
-                                            <img src="{{ $imgUrl }}" alt="{{ $fullName }}"
-                                                 onerror="this.closest('.cb-avatar').classList.add('cb-avatar-initials'); this.remove(); this.closest('.cb-avatar').textContent='{{ $initials }}'">
+                                        <div class="cb-avatar cb-avatar-trigger" data-img="{{ $imgUrl }}" data-name="{{ $fullName }}" data-adm="{{ $student->admissionNo }}" data-class="{{ $schoolclass?->schoolclass . ' ' . $schoolclass?->arm }}" data-gender="{{ $student->gender }}">
+                                            <img src="{{ $imgUrl }}" alt="{{ $fullName }}">
                                         </div>
                                     @else
-                                        <div class="cb-avatar cb-avatar-initials cb-avatar-trigger"
-                                             data-img="" data-name="{{ $fullName }}"
-                                             data-adm="{{ $student->admissionNo }}"
-                                             data-class="{{ $schoolclass ? $schoolclass->schoolclass . ' ' . $schoolclass->arm : '' }}"
-                                             data-gender="{{ $student->gender ?? '' }}"
-                                             data-initials="{{ $initials }}">
+                                        <div class="cb-avatar cb-avatar-initials cb-avatar-trigger" data-name="{{ $fullName }}" data-adm="{{ $student->admissionNo }}" data-class="{{ $schoolclass?->schoolclass . ' ' . $schoolclass?->arm }}" data-initials="{{ $initials }}">
                                             {{ $initials }}
                                         </div>
                                     @endif
                                     <div>
                                         <div class="student-name-text">{{ $fullName }}</div>
                                         <div class="student-adm">{{ $student->admissionNo }} · {{ $student->gender ?? '' }}</div>
-                                        <span class="comment-status-dot {{ $hasComment ? 'dot-saved' : 'dot-unsaved' }}"
-                                              id="status-{{ $sid }}">
-                                            {{ $hasComment ? '✓ Commented' : '○ No comment' }}
-                                        </span>
-                                        {{-- Per-student autosave indicator --}}
-                                        <span class="autosave-chip ac-idle" id="autosave-{{ $sid }}"></span>
+                                        <span class="comment-status-dot" id="status-{{ $sid }}"></span>
                                     </div>
                                 </div>
                             </td>
@@ -436,108 +303,61 @@ body { font-family: 'DM Sans', sans-serif; }
                             @foreach ($subjects as $subject)
                                 @php
                                     $tScore = $termScoreMap[$sid][$subject->subject] ?? 0;
-                                    $cScore = $cumScoreMap[$sid][$subject->subject]  ?? 0;
+                                    $cScore = $cumScoreMap[$sid][$subject->subject] ?? 0;
                                     $tGrade = $cGrade = '-';
                                     if ($isSenior) {
                                         if ($tScore >= 75) $tGrade='A1'; elseif ($tScore >= 70) $tGrade='B2';
                                         elseif ($tScore >= 65) $tGrade='B3'; elseif ($tScore >= 60) $tGrade='C4';
                                         elseif ($tScore >= 55) $tGrade='C5'; elseif ($tScore >= 50) $tGrade='C6';
                                         elseif ($tScore >= 45) $tGrade='D7'; elseif ($tScore >= 40) $tGrade='E8';
-                                        elseif ($tScore > 0)  $tGrade='F9';
+                                        elseif ($tScore > 0) $tGrade='F9';
                                         if ($cScore >= 75) $cGrade='A1'; elseif ($cScore >= 70) $cGrade='B2';
                                         elseif ($cScore >= 65) $cGrade='B3'; elseif ($cScore >= 60) $cGrade='C4';
                                         elseif ($cScore >= 55) $cGrade='C5'; elseif ($cScore >= 50) $cGrade='C6';
                                         elseif ($cScore >= 45) $cGrade='D7'; elseif ($cScore >= 40) $cGrade='E8';
-                                        elseif ($cScore > 0)  $cGrade='F9';
+                                        elseif ($cScore > 0) $cGrade='F9';
                                     } else {
                                         if ($tScore >= 70) $tGrade='A'; elseif ($tScore >= 60) $tGrade='B';
                                         elseif ($tScore >= 50) $tGrade='C'; elseif ($tScore >= 40) $tGrade='D';
-                                        elseif ($tScore > 0)  $tGrade='F';
+                                        elseif ($tScore > 0) $tGrade='F';
                                         if ($cScore >= 70) $cGrade='A'; elseif ($cScore >= 60) $cGrade='B';
                                         elseif ($cScore >= 50) $cGrade='C'; elseif ($cScore >= 40) $cGrade='D';
-                                        elseif ($cScore > 0)  $cGrade='F';
+                                        elseif ($cScore > 0) $cGrade='F';
                                     }
-                                    $tGL = strtolower($tGrade); $cGL = strtolower($cGrade);
-                                    $tC  = $tScore < 40 ? 'score-red' : ($tScore < 50 ? 'score-amber' : 'score-green');
-                                    $cC  = $cScore < 40 ? 'score-red' : ($cScore < 50 ? 'score-amber' : 'score-green');
                                 @endphp
                                 <td class="cbcol-scores">
                                     <div class="score-dual">
                                         <div class="score-row score-row-term">
-                                            <span class="score-lbl" style="color:#0891b2;">T</span>
-                                            <span class="{{ $tC }}">{{ $tScore ?: '—' }}</span>
-                                            @if($tGrade !== '-')<span class="grade-badge g-{{ $tGL }}">{{ $tGrade }}</span>@endif
+                                            <span class="score-lbl">T</span>
+                                            <span>{{ $tScore ?: '—' }}</span>
+                                            @if($tGrade !== '-')<span class="grade-badge g-{{ strtolower($tGrade) }}">{{ $tGrade }}</span>@endif
                                         </div>
                                         <div class="score-row score-row-cum">
-                                            <span class="score-lbl" style="color:var(--cb-navy);">C</span>
-                                            <span class="{{ $cC }}">{{ $cScore ?: '—' }}</span>
-                                            @if($cGrade !== '-')<span class="grade-badge g-{{ $cGL }}">{{ $cGrade }}</span>@endif
+                                            <span class="score-lbl">C</span>
+                                            <span>{{ $cScore ?: '—' }}</span>
+                                            @if($cGrade !== '-')<span class="grade-badge g-{{ strtolower($cGrade) }}">{{ $cGrade }}</span>@endif
                                         </div>
                                     </div>
                                 </td>
                             @endforeach
 
                             <td class="cbcol-summary analytics-cell">
-                                <div class="analytics-row">
-                                    <span class="analytics-lbl">Term Avg</span>
-                                    <span class="analytics-val {{ ($an['term_average']??0)<50?'score-red':'score-green' }}">{{ $an['term_average']??0 }}</span>
-                                </div>
-                                <div class="analytics-row">
-                                    <span class="analytics-lbl">Cum Avg</span>
-                                    <span class="analytics-val {{ ($an['cum_average']??0)<50?'score-red':'score-green' }}">{{ $an['cum_average']??0 }}</span>
-                                </div>
-                                <div class="analytics-row">
-                                    <span class="analytics-lbl">Obtainable</span>
-                                    <span class="analytics-val">{{ $an['total_obtainable']??0 }}</span>
-                                </div>
-                                <div class="analytics-row">
-                                    <span class="analytics-lbl">Cum %</span>
-                                    <span class="analytics-val {{ ($an['cum_percentage']??0)<50?'score-red':'score-green' }}">{{ $an['cum_percentage']??0 }}%</span>
-                                </div>
-                                <div class="pct-bar-wrap mt-1">
-                                    <div class="pct-bar" style="width:{{ $an['cum_percentage']??0 }}%;background:{{ ($an['cum_percentage']??0)>=50?'var(--cb-green)':'var(--cb-rose)' }};"></div>
-                                </div>
-                                <div class="text-center mt-1">
-                                    <button type="button" class="grade-trigger-btn"
-                                            data-sid="{{ $sid }}" data-sname="{{ $fullName }}"
-                                            title="View grade breakdown">
-                                        <i class="ri-eye-line"></i>
-                                    </button>
-                                </div>
+                                <div class="analytics-row"><span class="analytics-lbl">Term Avg</span><span class="analytics-val">{{ $an['term_average']??0 }}</span></div>
+                                <div class="analytics-row"><span class="analytics-lbl">Cum Avg</span><span class="analytics-val">{{ $an['cum_average']??0 }}</span></div>
+                                <div class="analytics-row"><span class="analytics-lbl">Cum %</span><span class="analytics-val">{{ $an['cum_percentage']??0 }}%</span></div>
                             </td>
 
-                            {{-- Desktop visible inputs — these sync to hidden canonical fields --}}
                             <td class="cbcol-teacher">
-                                <input type="text"
-                                       class="cb-input desk-teacher {{ $hasComment ? 'has-value' : '' }}"
-                                       data-sid="{{ $sid }}" data-field="teacher"
-                                       value="{{ $profile ? $profile->classteachercomment : '' }}"
-                                       placeholder="Enter comment (optional)…"
-                                       autocomplete="off">
+                                <input type="text" class="cb-input desk-teacher" data-sid="{{ $sid }}" data-field="teacher" value="{{ $profile?->classteachercomment ?? '' }}" placeholder="Click to edit...">
                             </td>
                             <td class="cbcol-guidance">
-                                <input type="text"
-                                       class="cb-input desk-guidance"
-                                       data-sid="{{ $sid }}" data-field="guidance"
-                                       value="{{ $profile ? $profile->guidancescomment : '' }}"
-                                       placeholder="Optional…"
-                                       autocomplete="off">
+                                <input type="text" class="cb-input desk-guidance" data-sid="{{ $sid }}" data-field="guidance" value="{{ $profile?->guidancescomment ?? '' }}" placeholder="Click to edit...">
                             </td>
                             <td class="cbcol-activities">
-                                <input type="text"
-                                       class="cb-input desk-activities"
-                                       data-sid="{{ $sid }}" data-field="activities"
-                                       value="{{ $profile ? $profile->remark_on_other_activities : '' }}"
-                                       placeholder="Optional…"
-                                       autocomplete="off">
+                                <input type="text" class="cb-input desk-activities" data-sid="{{ $sid }}" data-field="activities" value="{{ $profile?->remark_on_other_activities ?? '' }}" placeholder="Click to edit...">
                             </td>
                             <td class="cbcol-absence">
-                                <input type="number"
-                                       class="cb-input absence-input desk-absence"
-                                       data-sid="{{ $sid }}" data-field="absence"
-                                       value="{{ $profile ? $profile->no_of_times_school_absent : '' }}"
-                                       min="0" placeholder="0"
-                                       autocomplete="off">
+                                <input type="number" class="cb-input absence-input desk-absence" data-sid="{{ $sid }}" data-field="absence" value="{{ $profile?->no_of_times_school_absent ?? '' }}" min="0">
                             </td>
                         </tr>
                     @endforeach
@@ -545,257 +365,41 @@ body { font-family: 'DM Sans', sans-serif; }
             </table>
         </div>
 
-        {{-- MOBILE CARDS --}}
-        <div class="mobile-only" style="padding:16px;">
-            @foreach ($students as $index => $student)
-                @php
-                    $sid      = $student->id;
-                    $initials = strtoupper(substr($student->fname ?? '', 0, 1) . substr($student->lastname ?? '', 0, 1)) ?: 'ST';
-                    $hasPic   = !empty($student->picture) && $student->picture !== 'unnamed.jpg';
-                    $imgUrl   = $hasPic ? asset('storage/student_avatars/' . basename($student->picture)) : null;
-                    $fullName = trim(($student->lastname ?? '') . ' ' . ($student->fname ?? '') . ' ' . ($student->othername ?? ''));
-                    $profile  = $personalityProfiles->where('studentid', $sid)->first();
-                    $an       = $studentAnalytics[$sid] ?? [];
-                    $hasComment = $profile && !empty(trim($profile->classteachercomment ?? ''));
-                @endphp
-                <div class="cb-student-card cb-student-row {{ $hasComment ? 'card-has-comment' : 'card-no-comment' }}"
-                     data-student-id="{{ $sid }}"
-                     data-student-name="{{ $fullName }}"
-                     data-searchkey="{{ strtolower($fullName . ' ' . $student->admissionNo) }}">
-                    <div class="card-top">
-                        @if($imgUrl)
-                            <div class="cb-avatar cb-avatar-trigger" style="width:48px;height:48px;"
-                                 data-img="{{ $imgUrl }}" data-name="{{ $fullName }}"
-                                 data-adm="{{ $student->admissionNo }}"
-                                 data-class="{{ $schoolclass ? $schoolclass->schoolclass . ' ' . $schoolclass->arm : '' }}"
-                                 data-gender="{{ $student->gender ?? '' }}">
-                                <img src="{{ $imgUrl }}" alt="{{ $fullName }}"
-                                     style="width:100%;height:100%;object-fit:cover;"
-                                     onerror="var p=this.closest('.cb-avatar');p.classList.add('cb-avatar-initials');p.textContent='{{ $initials }}'">
-                            </div>
-                        @else
-                            <div class="cb-avatar cb-avatar-initials cb-avatar-trigger"
-                                 style="width:48px;height:48px;font-size:16px;"
-                                 data-img="" data-name="{{ $fullName }}"
-                                 data-adm="{{ $student->admissionNo }}"
-                                 data-class="{{ $schoolclass ? $schoolclass->schoolclass . ' ' . $schoolclass->arm : '' }}"
-                                 data-gender="{{ $student->gender ?? '' }}"
-                                 data-initials="{{ $initials }}">
-                                {{ $initials }}
-                            </div>
-                        @endif
-                        <div style="flex:1;">
-                            <div style="font-weight:700;font-size:14px;color:var(--cb-navy);">{{ $fullName }}</div>
-                            <div style="font-size:11px;color:var(--cb-muted);">{{ $student->admissionNo }} · {{ $student->gender ?? '' }}</div>
-                            <span class="comment-status-dot {{ $hasComment ? 'dot-saved' : 'dot-unsaved' }}"
-                                  id="status-m-{{ $sid }}">
-                                {{ $hasComment ? '✓ Commented' : '○ No comment' }}
-                            </span>
-                            <span class="autosave-chip ac-idle" id="autosave-m-{{ $sid }}"></span>
-                        </div>
-                    </div>
-                    <div class="card-body-pad">
-                        <div class="performance-strip">
-                            <div style="font-size:11px;font-weight:700;opacity:.8;margin-bottom:4px;"><i class="ri-bar-chart-line me-1"></i>Performance Summary</div>
-                            <div class="ps-grid">
-                                <div class="ps-item"><div class="ps-lbl">Term Avg</div><div class="ps-val">{{ $an['term_average']??0 }}</div></div>
-                                <div class="ps-item"><div class="ps-lbl">Cum Avg</div><div class="ps-val">{{ $an['cum_average']??0 }}</div></div>
-                                <div class="ps-item"><div class="ps-lbl">Cum %</div><div class="ps-val">{{ $an['cum_percentage']??0 }}%</div></div>
-                            </div>
-                        </div>
-                        <div class="subjects-scroll">
-                            @foreach ($subjects as $subject)
-                                @php $tS=$termScoreMap[$sid][$subject->subject]??0; $cS=$cumScoreMap[$sid][$subject->subject]??0; @endphp
-                                <div class="subj-chip">
-                                    <div class="sc-name">{{ Str::limit($subject->subject, 10) }}</div>
-                                    <div class="sc-t {{ $tS<50?'score-red':'score-green' }}">T: {{ $tS?:'—' }}</div>
-                                    <div class="sc-c {{ $cS<50?'score-red':'score-green' }}">C: {{ $cS?:'—' }}</div>
-                                </div>
-                            @endforeach
-                        </div>
-                        {{-- Mobile visible inputs — data-field syncs to canonical hidden fields --}}
-                        <div class="comment-field-group">
-                            <label>Teacher's Comment</label>
-                            <input type="text"
-                                   class="cb-input mob-teacher {{ $hasComment ? 'has-value' : '' }}"
-                                   data-sid="{{ $sid }}" data-field="teacher"
-                                   value="{{ $profile ? $profile->classteachercomment : '' }}"
-                                   placeholder="Enter comment (optional)…"
-                                   autocomplete="off">
-                        </div>
-                        <div class="comment-field-group mobile-col-guidance">
-                            <label>Counselor's Comment</label>
-                            <input type="text"
-                                   class="cb-input mob-guidance"
-                                   data-sid="{{ $sid }}" data-field="guidance"
-                                   value="{{ $profile ? $profile->guidancescomment : '' }}"
-                                   placeholder="Optional…"
-                                   autocomplete="off">
-                        </div>
-                        <div class="comment-field-group mobile-col-activities">
-                            <label>Remark on Activities</label>
-                            <input type="text"
-                                   class="cb-input mob-activities"
-                                   data-sid="{{ $sid }}" data-field="activities"
-                                   value="{{ $profile ? $profile->remark_on_other_activities : '' }}"
-                                   placeholder="Optional…"
-                                   autocomplete="off">
-                        </div>
-                        <div class="comment-field-group mobile-col-absence">
-                            <label>Times Absent</label>
-                            <input type="number"
-                                   class="cb-input mob-absence"
-                                   data-sid="{{ $sid }}" data-field="absence"
-                                   value="{{ $profile ? $profile->no_of_times_school_absent : '' }}"
-                                   min="0" placeholder="0"
-                                   style="max-width:100px;"
-                                   autocomplete="off">
-                        </div>
-                    </div>
-                </div>
-            @endforeach
-        </div>
-
-        {{-- Save Bar --}}
+        <!-- Save Bar -->
         <div class="save-bar">
-            <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
-                <label style="margin:0;"><i class="ri-pen-nib-line me-1"></i>Signature (optional)</label>
-                <input type="file" id="signatureFile" accept=".jpg,.jpeg,.png,.pdf" class="file-input-styled">
-            </div>
-            <div class="save-counter">
-                <span class="save-counter-pill sc-pill-done" id="counterDone">
-                    <i class="ri-checkbox-circle-line"></i>
-                    <span id="counterDoneNum">0</span> commented
-                </span>
-                <span class="save-counter-pill sc-pill-pending" id="counterPending">
-                    <i class="ri-time-line"></i>
-                    <span id="counterPendingNum">0</span> pending
-                </span>
-            </div>
-            <div style="display:flex;align-items:center;gap:14px;">
-                <span id="savingText" style="display:none;color:rgba(255,255,255,.75);font-size:13px;align-items:center;gap:6px;">
-                    <i class="spin ri-loader-4-line"></i> Saving…
-                </span>
-                <button type="button" id="saveBtn" class="btn-save-all">
-                    <i class="ri-save-3-line"></i> Save All Changes
-                </button>
-            </div>
+            <button type="button" id="saveBtn" class="btn-save-all">
+                <i class="ri-save-3-line"></i> Save All Changes
+            </button>
         </div>
     </form>
-</div>
-
-@else
-<div class="cb-card" style="padding:60px;text-align:center;">
-    <i class="ri-information-line" style="font-size:56px;color:var(--cb-border);display:block;margin-bottom:16px;"></i>
-    <h5 style="color:var(--cb-navy);">No Students Found</h5>
-    <p style="color:var(--cb-muted);">No students are enrolled in this class for the selected session and term.</p>
-</div>
-@endif
-
-</div></div></div>
-
-{{-- Image zoom modal --}}
-<div class="modal fade" id="cbImgZoomModal" tabindex="-1" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content" style="background:transparent;border:none;box-shadow:none;">
-            <button type="button" class="cb-zoom-close" data-bs-dismiss="modal">&times;</button>
-            <div class="modal-body" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:75vh;padding:20px;">
-                <img id="cbZoomedImg" src="" alt="Student Photo" class="cb-zoomed-img" style="cursor:pointer;">
-                <div class="cb-zoom-name" id="cbZoomedName"></div>
-                <div class="cb-zoom-meta" id="cbZoomedMeta"></div>
-            </div>
-        </div>
-    </div>
-</div>
-
-{{-- Pre-submit Summary Modal --}}
-<div class="modal fade" id="cbSaveConfirmModal" tabindex="-1" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered" style="max-width:500px;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="ri-save-3-line me-2"></i>Review Before Saving</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" style="padding:24px;">
-                <div class="confirm-summary-grid">
-                    <div class="confirm-stat-box done">
-                        <div class="csb-num" id="confirmDoneNum">0</div>
-                        <div class="csb-lbl"><i class="ri-checkbox-circle-line me-1"></i>With Comment</div>
-                    </div>
-                    <div class="confirm-stat-box pending">
-                        <div class="csb-num" id="confirmPendingNum">0</div>
-                        <div class="csb-lbl"><i class="ri-time-line me-1"></i>Without Comment</div>
-                    </div>
-                </div>
-                <div id="confirmDoneSection" style="display:none;">
-                    <div class="confirm-section-hdr hdr-done"><i class="ri-checkbox-circle-fill"></i> Will be saved</div>
-                    <div class="confirm-student-list" id="confirmDoneList"></div>
-                </div>
-                <div id="confirmPendingSection" style="display:none;">
-                    <div class="confirm-section-hdr hdr-pending"><i class="ri-time-line"></i> No comment yet (will be skipped)</div>
-                    <div class="confirm-student-list" id="confirmPendingList"></div>
-                </div>
-                <div id="confirmNothingMsg" style="display:none;text-align:center;padding:20px 0;">
-                    <i class="ri-information-line" style="font-size:36px;color:var(--cb-border);display:block;margin-bottom:10px;"></i>
-                    <p style="color:var(--cb-muted);font-size:13px;margin:0;">
-                        No comments have been entered yet.<br>
-                        Please enter at least one comment before saving.
-                    </p>
-                </div>
-            </div>
-            <div class="modal-footer" style="border:none;padding:0 24px 24px;">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius:10px;">Cancel</button>
-                <button type="button" class="confirm-proceed-btn" id="confirmProceedBtn" style="display:none;">
-                    <i class="ri-save-3-line"></i> Confirm &amp; Save
-                </button>
-            </div>
-        </div>
-    </div>
 </div>
 
 <script>
 (function () {
     'use strict';
 
-    /* ───────────────────────────────────────────────
-       CONFIG
-    ─────────────────────────────────────────────── */
-    var SA       = {!! $cbAnalyticsJson !!};
+    var SA = {!! $cbAnalyticsJson !!};
     var SAVE_URL = '{{ route("classbroadsheet.updateComments", [$schoolclassid, $sessionid, $termid]) }}';
-    var CSRF     = (document.querySelector('meta[name="csrf-token"]') || {}).getAttribute
-                    ? document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    : '{{ csrf_token() }}';
+    var CSRF = '{{ csrf_token() }}';
+    var currentSid = null;
+    var currentField = null;
+    var commentModal = null;
 
-    /* ───────────────────────────────────────────────
-       HELPERS
-    ─────────────────────────────────────────────── */
     function esc(str) {
         var d = document.createElement('div');
         d.textContent = str || '';
         return d.innerHTML;
     }
 
-    function toast(msg, type) {
-        document.querySelectorAll('.cb-toast').forEach(function (t) { t.remove(); });
-        var icons = { success: 'checkbox-circle-fill', error: 'error-warning-fill', info: 'information-fill' };
-        var el = document.createElement('div');
-        el.className = 'cb-toast cb-toast-' + (type || 'info');
-        el.innerHTML = '<i class="ri-' + (icons[type] || icons.info) + '" style="font-size:18px;flex-shrink:0;"></i> ' + esc(msg);
-        document.body.appendChild(el);
-        setTimeout(function () { el.remove(); }, 5000);
+    function toast(msg, type = 'info') {
+        alert(msg); // Replace with your toast system if needed
     }
 
-    /* ───────────────────────────────────────────────
-       CANONICAL DATA LAYER
-       All UI inputs (desktop + mobile) write to hidden
-       canonical fields. Only canonicals are submitted.
-    ─────────────────────────────────────────────── */
-
     var FIELD_MAP = {
-        teacher:    'c_teacher_',
-        guidance:   'c_guidance_',
+        teacher: 'c_teacher_',
+        guidance: 'c_guidance_',
         activities: 'c_activities_',
-        absence:    'c_absence_',
+        absence: 'c_absence_'
     };
 
     function getCanonical(sid, field) {
@@ -808,447 +412,128 @@ body { font-family: 'DM Sans', sans-serif; }
         if (el) el.value = value;
     }
 
-    /* ───────────────────────────────────────────────
-       AUTOSAVE (debounced per-student)
-    ─────────────────────────────────────────────── */
-    var debounceTimers = {};
-    var AUTOSAVE_DELAY = 1200; // ms after last keystroke
-
-    function setChipState(sid, state, text) {
-        ['autosave-' + sid, 'autosave-m-' + sid].forEach(function (id) {
-            var chip = document.getElementById(id);
-            if (!chip) return;
-            chip.className = 'autosave-chip ' + state;
-            chip.textContent = text || '';
-        });
-    }
-
-    function autoSaveStudent(sid) {
-        // Build payload for just this student
-        var fd = new FormData();
-        fd.append('_token', CSRF);
-        fd.append('_method', 'PATCH');
-        fd.append('teacher_comments[' + sid + ']',            getCanonical(sid, 'teacher'));
-        fd.append('guidance_comments[' + sid + ']',           getCanonical(sid, 'guidance'));
-        fd.append('remarks_on_other_activities[' + sid + ']', getCanonical(sid, 'activities'));
-        fd.append('no_of_times_school_absent[' + sid + ']',   getCanonical(sid, 'absence'));
-
-        var sigFile = document.getElementById('signatureFile');
-        if (sigFile && sigFile.files && sigFile.files[0]) {
-            fd.append('signature', sigFile.files[0]);
-        }
-
-        setChipState(sid, 'ac-saving', '⏳ Saving…');
-
-        fetch(SAVE_URL, {
-            method:  'POST',  // POST with _method=PATCH for Laravel
-            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF },
-            body:    fd,
-        })
-        .then(function (res) {
-            return res.json().then(function (data) {
-                if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
-                return data;
-            });
-        })
-        .then(function (data) {
-            if (data.success) {
-                setChipState(sid, 'ac-saved', '✓ Saved');
-                refreshCommentStatus();
-                // Fade chip back to idle after 3s
-                setTimeout(function () {
-                    setChipState(sid, 'ac-idle', '');
-                }, 3000);
-            } else {
-                setChipState(sid, 'ac-err', '✗ Failed');
-            }
-        })
-        .catch(function (err) {
-            console.error('Autosave error sid=' + sid, err);
-            setChipState(sid, 'ac-err', '✗ Error');
-        });
-    }
-
-    function scheduleAutosave(sid) {
-        if (debounceTimers[sid]) clearTimeout(debounceTimers[sid]);
-        debounceTimers[sid] = setTimeout(function () {
-            autoSaveStudent(sid);
-        }, AUTOSAVE_DELAY);
-    }
-
-    /* ───────────────────────────────────────────────
-       SYNC HANDLER
-       When any visible input changes:
-       1. Write value to canonical hidden field
-       2. Mirror to the twin viewport input (if visible)
-       3. Refresh UI state
-       4. Schedule autosave
-    ─────────────────────────────────────────────── */
-    function onInputChange(e) {
-        var inp   = e.target;
-        var sid   = inp.getAttribute('data-sid');
-        var field = inp.getAttribute('data-field');
-        if (!sid || !field) return;
-
-        var val = inp.value;
-
-        // 1. Write canonical
-        setCanonical(sid, field, val);
-
-        // 2. Mirror to twin (desktop ↔ mobile)
-        var isDesktop = inp.classList.contains('desk-' + field);
-        var isMobile  = inp.classList.contains('mob-'  + field);
-        var twinClass = isDesktop ? 'mob-' + field : 'desk-' + field;
-        document.querySelectorAll('.' + twinClass + '[data-sid="' + sid + '"]').forEach(function (twin) {
-            if (twin !== inp) twin.value = val;
-        });
-
-        // 3. Refresh visual state
-        refreshCommentStatusForStudent(sid);
-
-        // 4. Autosave
-        scheduleAutosave(sid);
-    }
-
-    /* ───────────────────────────────────────────────
-       COMMENT STATUS (per-student)
-    ─────────────────────────────────────────────── */
-    function refreshCommentStatusForStudent(sid) {
-        var hasVal = getCanonical(sid, 'teacher').trim() !== '';
-
-        // Status badges (desktop + mobile)
-        ['status-' + sid, 'status-m-' + sid].forEach(function (id) {
-            var badge = document.getElementById(id);
-            if (!badge) return;
-            badge.textContent = hasVal ? '✓ Commented' : '○ No comment';
-            badge.className   = 'comment-status-dot ' + (hasVal ? 'dot-saved' : 'dot-unsaved');
-        });
-
-        // Input border highlight on teacher fields
-        document.querySelectorAll('.desk-teacher[data-sid="' + sid + '"], .mob-teacher[data-sid="' + sid + '"]').forEach(function (inp) {
-            inp.classList.toggle('has-value', hasVal);
-        });
-
-        // Row/card left-border
-        document.querySelectorAll('[data-student-id="' + sid + '"]').forEach(function (row) {
-            row.classList.toggle('row-has-comment',  hasVal);
-            row.classList.toggle('row-no-comment',   !hasVal);
-            row.classList.toggle('card-has-comment', hasVal);
-            row.classList.toggle('card-no-comment',  !hasVal);
-        });
-    }
-
     function refreshCommentStatus() {
-        var done = 0, pending = 0;
-        document.querySelectorAll('.cb-student-row').forEach(function (row) {
+        document.querySelectorAll('.cb-student-row').forEach(function(row) {
             var sid = row.getAttribute('data-student-id');
             if (!sid) return;
-            if (getCanonical(sid, 'teacher').trim() !== '') done++;
-            else pending++;
-            refreshCommentStatusForStudent(sid);
-        });
-        var dNum = document.getElementById('counterDoneNum');
-        var pNum = document.getElementById('counterPendingNum');
-        if (dNum) dNum.textContent = done;
-        if (pNum) pNum.textContent = pending;
-    }
 
-    /* ───────────────────────────────────────────────
-       FULL SAVE (Save All button → confirm modal → POST)
-    ─────────────────────────────────────────────── */
-    function doSaveAll() {
-        var saveBtn    = document.getElementById('saveBtn');
-        var savingText = document.getElementById('savingText');
-        var origHtml   = saveBtn.innerHTML;
+            var t = getCanonical(sid, 'teacher').trim();
+            var g = getCanonical(sid, 'guidance').trim();
+            var a = getCanonical(sid, 'activities').trim();
 
-        saveBtn.disabled  = true;
-        saveBtn.innerHTML = '<i class="spin ri-loader-4-line"></i> Saving…';
-        if (savingText) savingText.style.display = 'inline-flex';
-
-        var fd = new FormData(document.getElementById('commentsForm'));
-        // _method=PATCH is already a hidden field in the form
-        if (!fd.get('_token')) fd.set('_token', CSRF);
-
-        var sigFile = document.getElementById('signatureFile');
-        if (sigFile && sigFile.files && sigFile.files[0]) {
-            fd.set('signature', sigFile.files[0]);
-        }
-
-        fetch(SAVE_URL, {
-            method:  'POST',
-            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF },
-            body:    fd,
-        })
-        .then(function (res) {
-            return res.json().then(function (data) {
-                if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
-                return data;
-            });
-        })
-        .then(function (data) {
-            if (data.success) {
-                toast(data.message || 'Saved successfully!', 'success');
-                refreshCommentStatus();
-            } else {
-                toast(data.message || 'Save failed.', 'error');
+            var statusEl = document.getElementById('status-' + sid);
+            if (statusEl) {
+                var html = '';
+                if (t) html += '<span class="comment-type-pill ct-teacher">T</span>';
+                if (g) html += '<span class="comment-type-pill ct-guidance">G</span>';
+                if (a) html += '<span class="comment-type-pill ct-activities">A</span>';
+                statusEl.innerHTML = html || '○ No comment';
             }
-        })
-        .catch(function (err) {
-            console.error('Save All error:', err);
-            toast('Error: ' + err.message, 'error');
-        })
-        .finally(function () {
-            saveBtn.disabled  = false;
-            saveBtn.innerHTML = origHtml;
-            if (savingText) savingText.style.display = 'none';
         });
     }
 
-    /* ───────────────────────────────────────────────
-       CONFIRM MODAL BUILDER
-    ─────────────────────────────────────────────── */
-    function buildConfirmModal() {
-        var doneNames = [], pendingNames = [];
+    function openCommentModal(sid, field) {
+        currentSid = sid;
+        currentField = field;
 
-        document.querySelectorAll('.cb-student-row').forEach(function (row) {
-            var sid  = row.getAttribute('data-student-id');
-            var name = row.getAttribute('data-student-name') || sid;
-            if (getCanonical(sid, 'teacher').trim() !== '') doneNames.push(name);
-            else pendingNames.push(name);
-        });
+        var row = document.querySelector(`[data-student-id="${sid}"]`);
+        var name = row.getAttribute('data-student-name');
+        var an = SA[sid] || {};
 
-        document.getElementById('confirmDoneNum').textContent    = doneNames.length;
-        document.getElementById('confirmPendingNum').textContent  = pendingNames.length;
+        document.getElementById('modalStudentName').textContent = name;
+        document.getElementById('modalStudentMeta').textContent = row.querySelector('.student-adm').textContent || '';
 
-        var doneSection = document.getElementById('confirmDoneSection');
-        var doneList    = document.getElementById('confirmDoneList');
-        if (doneNames.length > 0) {
-            doneList.innerHTML = doneNames.map(function (n) {
-                return '<div class="csl-item"><span class="csl-dot csl-dot-done"></span>' + esc(n) + '</div>';
-            }).join('');
-            doneSection.style.display = '';
+        // Avatar
+        var avatarEl = document.getElementById('modalStudentAvatar');
+        var img = row.querySelector('img');
+        if (img) {
+            avatarEl.innerHTML = `<img src="${img.src}" style="width:100%;height:100%;object-fit:cover;">`;
         } else {
-            doneSection.style.display = 'none';
+            avatarEl.textContent = row.querySelector('.cb-avatar-initials')?.textContent || 'ST';
         }
 
-        var pendingSection = document.getElementById('confirmPendingSection');
-        var pendingList    = document.getElementById('confirmPendingList');
-        if (pendingNames.length > 0) {
-            pendingList.innerHTML = pendingNames.map(function (n) {
-                return '<div class="csl-item"><span class="csl-dot csl-dot-pending"></span>' + esc(n) + '</div>';
-            }).join('');
-            pendingSection.style.display = '';
-        } else {
-            pendingSection.style.display = 'none';
-        }
+        document.getElementById('modalPerformance').innerHTML = `
+            Term Avg: <strong>${an.term_average || 0}</strong> |
+            Cum Avg: <strong>${an.cum_average || 0}</strong> |
+            Cum %: <strong>${an.cum_percentage || 0}%</strong>
+        `;
 
-        var nothingMsg = document.getElementById('confirmNothingMsg');
-        var proceedBtn = document.getElementById('confirmProceedBtn');
-        if (doneNames.length === 0) {
-            nothingMsg.style.display = '';
-            proceedBtn.style.display = 'none';
-        } else {
-            nothingMsg.style.display = 'none';
-            proceedBtn.style.display = '';
-        }
+        const labels = { teacher: "Teacher's Comment", guidance: "Counselor's Comment", activities: "Remark on Activities" };
+        document.getElementById('modalCommentType').textContent = labels[field] || field;
+
+        document.getElementById('modalTextarea').value = getCanonical(sid, field);
+        document.getElementById('pastCommentsPanel').style.display = 'none';
+
+        commentModal.show();
     }
 
-    /* ───────────────────────────────────────────────
-       DOM READY
-    ─────────────────────────────────────────────── */
-    document.addEventListener('DOMContentLoaded', function () {
+    window.formatText = function(type) {
+        var ta = document.getElementById('modalTextarea');
+        if (type === 'bold') ta.value += ' **Bold Text** ';
+        else if (type === 'italic') ta.value += ' *Italic Text* ';
+        else if (type === 'bullet') ta.value += '\n• ';
+        ta.focus();
+    };
 
-        /* 1. COLUMN TOGGLE */
-        document.querySelectorAll('.toggle-chip').forEach(function (chip) {
-            chip.addEventListener('click', function () {
-                var key    = this.getAttribute('data-colkey');
-                var show   = this.classList.toggle('active') ? '' : 'none';
-                document.querySelectorAll('.cbcol-' + key).forEach(function (el) { el.style.display = show; });
-                var mobileClass = { guidance: '.mobile-col-guidance', activities: '.mobile-col-activities', absence: '.mobile-col-absence' }[key];
-                if (mobileClass) document.querySelectorAll(mobileClass).forEach(function (el) { el.style.display = show; });
-            });
-        });
+    async function loadPastComments() {
+        if (!currentSid) return;
+        const list = document.getElementById('pastCommentsList');
+        list.innerHTML = '<p class="text-center">Loading past comments...</p>';
 
-        /* 2. SEARCH */
-        var searchEl = document.getElementById('searchInput');
-        if (searchEl) {
-            searchEl.addEventListener('input', function () {
-                var q = this.value.toLowerCase().trim();
-                document.querySelectorAll('.cb-student-row').forEach(function (row) {
-                    var key = (row.getAttribute('data-searchkey') || '').toLowerCase();
-                    row.style.display = (!q || key.includes(q)) ? '' : 'none';
-                });
-            });
-        }
+        try {
+            const res = await fetch(`/classbroadsheet/past-comments/${currentSid}`);
+            const data = await res.json();
 
-        /* 3. IMAGE ZOOM */
-        var imgModalEl = document.getElementById('cbImgZoomModal');
-        var imgModal   = (imgModalEl && typeof bootstrap !== 'undefined') ? new bootstrap.Modal(imgModalEl) : null;
-
-        function openImgModal(imgUrl, name, adm, cls, gender, initials) {
-            var imgEl  = document.getElementById('cbZoomedImg');
-            var nameEl = document.getElementById('cbZoomedName');
-            var metaEl = document.getElementById('cbZoomedMeta');
-            nameEl.textContent = name || 'Student';
-            metaEl.innerHTML =
-                (adm    ? '<i class="ri-id-card-line me-1"></i>' + esc(adm) : '') +
-                (cls    ? ' &nbsp;|&nbsp; <i class="ri-building-line me-1"></i>' + esc(cls) : '') +
-                (gender ? ' &nbsp;|&nbsp; ' + esc(gender) : '');
-            if (imgUrl && imgUrl !== '' && imgUrl !== 'null') {
-                imgEl.src = imgUrl;
+            if (data.success && data.data.length) {
+                list.innerHTML = data.data.map(p => `
+                    <div class="past-comment-item" onclick="loadPastIntoCurrent('${esc(p.classteachercomment || p.guidancescomment || p.remark_on_other_activities || '')}')">
+                        <div class="past-comment-meta">${p.session} • ${p.term} • ${p.class}</div>
+                        <div style="font-size:13.5px;">${esc(p.classteachercomment || p.guidancescomment || p.remark_on_other_activities || '—')}</div>
+                    </div>
+                `).join('');
             } else {
-                var canvas = document.createElement('canvas');
-                canvas.width = canvas.height = 400;
-                var ctx = canvas.getContext('2d');
-                var grad = ctx.createLinearGradient(0, 0, 400, 400);
-                grad.addColorStop(0, '#0d9488'); grad.addColorStop(1, '#0ea5e9');
-                ctx.fillStyle = grad; ctx.fillRect(0, 0, 400, 400);
-                ctx.fillStyle = '#fff'; ctx.font = 'bold 150px "DM Sans",Arial,sans-serif';
-                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.fillText(((initials || 'ST') + '').substring(0, 2).toUpperCase(), 200, 200);
-                imgEl.src = canvas.toDataURL();
+                list.innerHTML = '<p class="text-muted text-center">No past comments found for this student.</p>';
             }
-            if (imgModal) imgModal.show();
+            document.getElementById('pastCommentsPanel').style.display = 'block';
+        } catch(e) {
+            list.innerHTML = '<p class="text-danger text-center">Failed to load past comments.</p>';
         }
+    }
 
-        document.addEventListener('click', function (e) {
-            var trigger = e.target.closest('.cb-avatar-trigger');
-            if (!trigger) return;
-            openImgModal(
-                trigger.getAttribute('data-img'), trigger.getAttribute('data-name'),
-                trigger.getAttribute('data-adm'), trigger.getAttribute('data-class'),
-                trigger.getAttribute('data-gender'), trigger.getAttribute('data-initials') || ''
-            );
-        });
-        if (imgModalEl) {
-            imgModalEl.addEventListener('click', function (e) {
-                if (e.target && e.target.id === 'cbZoomedImg' && imgModal) imgModal.hide();
-            });
-        }
+    window.loadPastIntoCurrent = function(text) {
+        document.getElementById('modalTextarea').value = text;
+    };
 
-        /* 4. GRADE POPUP */
-        var gpop      = document.getElementById('cbGradePopup');
-        var gpopBody  = document.getElementById('gpopBody');
-        var gpopTitle = document.getElementById('gpopTitle');
-        var backdrop  = document.getElementById('cbPopupBackdrop');
-        var activeSid = null;
+    function saveFromModal() {
+        if (!currentSid || !currentField) return;
+        const value = document.getElementById('modalTextarea').value.trim();
+        setCanonical(currentSid, currentField, value);
 
-        function closeGradePop() {
-            if (gpop)     gpop.classList.remove('is-open');
-            if (backdrop) backdrop.style.display = 'none';
-            activeSid = null;
-        }
-
-        function gradeClass(g) { return (g || '-').toLowerCase().replace(/[\s-]/g, ''); }
-
-        function openGradePop(sid, name, triggerEl) {
-            var an = SA[sid];
-            if (!an || !gpop) return;
-            gpopTitle.innerHTML = '<i class="ri-bar-chart-line me-1"></i>' + esc(name) + "'s Grade Breakdown";
-            var grades = an.grades || [];
-            var rows = grades.map(function (g) {
-                var tgl = gradeClass(g.term_grade); var cgl = gradeClass(g.cum_grade);
-                var tC = (g.term_score > 0 && g.term_score < 50) ? 'score-red' : '';
-                var cC = (g.cum_score  > 0 && g.cum_score  < 50) ? 'score-red' : '';
-                var tBadge = (g.term_grade && g.term_grade !== '-') ? '<span class="grade-badge g-' + tgl + '">' + esc(g.term_grade) + '</span>' : '—';
-                var cBadge = (g.cum_grade  && g.cum_grade  !== '-') ? '<span class="grade-badge g-' + cgl + '">' + esc(g.cum_grade)  + '</span>' : '—';
-                return '<tr><td>' + esc(g.subject) + '</td><td class="' + tC + '">' + (g.term_score || '—') + '</td><td>' + tBadge + '</td><td class="' + cC + '">' + (g.cum_score || '—') + '</td><td>' + cBadge + '</td></tr>';
-            }).join('');
-            gpopBody.innerHTML =
-                '<table class="gpop-table"><thead><tr><th>Subject</th><th style="color:#0891b2;">T.Score</th><th style="color:#0891b2;">T.Grade</th><th>C.Score</th><th>C.Grade</th></tr></thead><tbody>' +
-                (rows || '<tr><td colspan="5" class="text-center text-muted py-2">No grades</td></tr>') + '</tbody></table>' +
-                '<div class="gpop-summary">' +
-                '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Term Total</div><div class="gpop-sum-val">' + (an.term_total || 0) + '</div></div>' +
-                '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Cum Total</div><div class="gpop-sum-val">' + (an.cum_total || 0) + '</div></div>' +
-                '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Obtainable</div><div class="gpop-sum-val">' + (an.total_obtainable || 0) + '</div></div>' +
-                '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Cum %</div><div class="gpop-sum-val ' + ((an.cum_percentage || 0) < 50 ? 'score-red' : 'score-green') + '">' + (an.cum_percentage || 0) + '%</div></div>' +
-                '</div>';
-            var rect = triggerEl.getBoundingClientRect();
-            var pw = 360, ph = 490;
-            var top  = rect.bottom + window.scrollY + 8;
-            var left = rect.left + window.scrollX - (pw / 2) + (rect.width / 2);
-            if (rect.bottom + ph > window.innerHeight) top = rect.top + window.scrollY - ph - 8;
-            if (left < 8) left = 8;
-            if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
-            gpop.style.top = top + 'px'; gpop.style.left = left + 'px';
-            gpop.classList.add('is-open');
-            if (backdrop) backdrop.style.display = 'block';
-            activeSid = sid;
-        }
-
-        var gpopCloseBtn = document.getElementById('gpopCloseBtn');
-        if (gpopCloseBtn) gpopCloseBtn.addEventListener('click', closeGradePop);
-        if (backdrop)     backdrop.addEventListener('click', closeGradePop);
-        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeGradePop(); });
-        document.addEventListener('click', function (e) {
-            var btn = e.target.closest('.grade-trigger-btn');
-            if (!btn) return;
-            e.stopPropagation();
-            var sid = btn.getAttribute('data-sid'); var name = btn.getAttribute('data-sname');
-            if (sid === activeSid) { closeGradePop(); return; }
-            closeGradePop(); openGradePop(sid, name, btn);
+        document.querySelectorAll(`[data-sid="${currentSid}"][data-field="${currentField}"]`).forEach(function(inp) {
+            inp.value = value;
         });
 
-        /* 5. STAT CARDS */
-        (function () {
-            var vals = Object.values(SA);
-            if (!vals.length) return;
-            var avgPct = Math.round(vals.reduce(function (s, d) { return s + (d.cum_percentage || 0); }, 0) / vals.length);
-            var prEl = document.getElementById('statPassRate');
-            if (prEl) prEl.textContent = avgPct + '%';
-            var topAvg = -1, topName = '—';
-            document.querySelectorAll('.cb-student-row[data-student-id]').forEach(function (row) {
-                var sid = row.getAttribute('data-student-id');
-                if (!sid || !SA[sid]) return;
-                var avg = SA[sid].cum_average || 0;
-                if (avg > topAvg) {
-                    topAvg = avg;
-                    var name = row.getAttribute('data-student-name') || '';
-                    var p = name.trim().split(' ');
-                    topName = p[0] + (p[1] ? ' ' + p[1][0] + '.' : '');
-                }
-            });
-            var topEl = document.getElementById('statTop');
-            if (topEl) topEl.textContent = topName;
-        })();
-
-        /* 6. ATTACH INPUT LISTENERS — all visible inputs (desktop + mobile) */
-        var fieldSelectors = [
-            '.desk-teacher', '.desk-guidance', '.desk-activities', '.desk-absence',
-            '.mob-teacher',  '.mob-guidance',  '.mob-activities',  '.mob-absence',
-        ];
-        fieldSelectors.forEach(function (sel) {
-            document.querySelectorAll(sel).forEach(function (inp) {
-                inp.addEventListener('input', onInputChange);
-            });
-        });
-
-        /* 7. INITIAL STATUS REFRESH */
         refreshCommentStatus();
+        commentModal.hide();
+        toast('Comment saved successfully!', 'success');
+    }
 
-        /* 8. SAVE ALL BUTTON → confirm modal */
-        var saveConfirmModalEl = document.getElementById('cbSaveConfirmModal');
-        var saveConfirmModal   = (saveConfirmModalEl && typeof bootstrap !== 'undefined')
-            ? new bootstrap.Modal(saveConfirmModalEl) : null;
+    document.addEventListener('DOMContentLoaded', function () {
+        commentModal = new bootstrap.Modal(document.getElementById('cbCommentModal'));
 
-        var saveBtn = document.getElementById('saveBtn');
-        if (saveBtn) {
-            saveBtn.addEventListener('click', function () {
-                buildConfirmModal();
-                if (saveConfirmModal) saveConfirmModal.show();
+        // Open modal when clicking comment fields
+        document.querySelectorAll('.desk-teacher, .desk-guidance, .desk-activities').forEach(function(inp) {
+            inp.addEventListener('focus', function() {
+                openCommentModal(this.getAttribute('data-sid'), this.getAttribute('data-field'));
             });
-        }
+        });
 
-        /* 9. CONFIRM & SAVE */
-        var proceedBtn = document.getElementById('confirmProceedBtn');
-        if (proceedBtn) {
-            proceedBtn.addEventListener('click', function () {
-                if (saveConfirmModal) saveConfirmModal.hide();
-                doSaveAll();
-            });
-        }
+        document.getElementById('modalSaveBtn').addEventListener('click', saveFromModal);
+        document.getElementById('btnLoadPastComments').addEventListener('click', loadPastComments);
 
-    }); /* end DOMContentLoaded */
+        refreshCommentStatus();
+    });
 })();
 </script>
+
 @endsection

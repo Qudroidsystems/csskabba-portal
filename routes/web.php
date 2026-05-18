@@ -1056,7 +1056,7 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
 
     Route::get('/classbroadsheet/{schoolclassid}/{sessionid}/{termid}', [ClassBroadsheetController::class, 'classBroadsheet'])->name('classbroadsheet.viewcomments');
     Route::patch('/classbroadsheet/{schoolclassid}/{sessionid}/{termid}/comments', [ClassBroadsheetController::class, 'updateComments'])->name('classbroadsheet.updateComments');
-
+    Route::get('/classbroadsheet/past-comments/{studentId}', [ClassBroadsheetController::class, 'getPastComments']);
 
     // compulsory subject class
     Route::resource('compulsorysubjectclass', CompulsorySubjectClassController::class);
