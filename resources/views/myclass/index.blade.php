@@ -118,93 +118,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     transform: translateY(-50%);
 }
 
-/* Filter Panel */
-.filter-panel {
-    background: var(--cb-white);
-    border: 1px solid var(--cb-border);
-    border-radius: var(--cb-radius);
-    padding: 20px 24px;
-    margin-bottom: 28px;
-    box-shadow: var(--cb-shadow);
-}
-.filter-panel h6 {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--cb-navy);
-    margin: 0 0 16px;
-    display: flex;
-    align-items: center;
-    gap: 7px;
-}
-.filter-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 15px;
-    align-items: end;
-}
-.filter-item label {
-    font-size: 11px;
-    font-weight: 600;
-    color: var(--cb-muted);
-    margin-bottom: 6px;
-    display: block;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-.filter-item input, .filter-item select {
-    width: 100%;
-    padding: 10px 14px;
-    border: 1.5px solid var(--cb-border);
-    border-radius: 10px;
-    font-size: 13px;
-    font-family: 'DM Sans', sans-serif;
-    transition: all 0.15s;
-    background: var(--cb-surface);
-}
-.filter-item input:focus, .filter-item select:focus {
-    border-color: var(--cb-teal);
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(13,148,136,.1);
-}
-.btn-search {
-    background: var(--cb-teal);
-    color: white;
-    border: none;
-    padding: 10px 24px;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 13px;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-}
-.btn-search:hover {
-    background: #0f766e;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(13,148,136,0.3);
-}
-.btn-reset {
-    background: #f1f5f9;
-    color: var(--cb-muted);
-    border: 1.5px solid var(--cb-border);
-    padding: 10px 24px;
-    border-radius: 10px;
-    font-weight: 600;
-    font-size: 13px;
-    cursor: pointer;
-    transition: all 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-}
-.btn-reset:hover {
-    background: #e2e8f0;
-    border-color: var(--cb-teal);
-    color: var(--cb-teal);
-}
-
 /* Main Card */
 .cb-card {
     background: var(--cb-white);
@@ -299,15 +212,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     color: white;
     transform: translateY(-2px);
 }
-.btn-warning-icon {
-    background: #fef3c7;
-    color: #92400e;
-}
-.btn-warning-icon:hover {
-    background: #f59e0b;
-    color: white;
-    transform: translateY(-2px);
-}
 
 /* Dropdown Menu */
 .cb-dropdown {
@@ -392,8 +296,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 }
 .page-item {
     display: inline-flex;
-}
-.page-link, .page-item {
     padding: 8px 12px;
     border: 1px solid var(--cb-border);
     border-radius: 8px;
@@ -405,7 +307,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     background: white;
     cursor: pointer;
 }
-.page-link:hover, .page-item:hover:not(.disabled) {
+.page-item:hover:not(.disabled) {
     background: var(--cb-teal);
     color: white;
     border-color: var(--cb-teal);
@@ -446,6 +348,27 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     accent-color: var(--cb-teal);
 }
 
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 60px;
+}
+.empty-state i {
+    font-size: 64px;
+    color: #cbd5e1;
+    margin-bottom: 16px;
+    display: block;
+}
+.empty-state h6 {
+    font-size: 18px;
+    color: var(--cb-navy);
+    margin-bottom: 8px;
+}
+.empty-state p {
+    color: var(--cb-muted);
+    font-size: 13px;
+}
+
 /* Animations */
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(-10px); }
@@ -456,7 +379,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 @media (max-width: 768px) {
     .cb-hero { padding: 24px 20px; }
     .cb-hero h1 { font-size: 22px; }
-    .filter-grid { grid-template-columns: 1fr; }
     .cb-table thead { display: none; }
     .cb-table tbody td {
         display: block;
@@ -500,20 +422,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     from { transform: translateX(100%); opacity: 0; }
     to { transform: translateX(0); opacity: 1; }
 }
-
-/* Loading Spinner */
-.loading-spinner {
-    display: inline-block;
-    width: 20px;
-    height: 20px;
-    border: 2px solid #e2e8f0;
-    border-top-color: var(--cb-teal);
-    border-radius: 50%;
-    animation: spin 0.6s linear infinite;
-}
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
 </style>
 
 <div class="main-content">
@@ -532,15 +440,15 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
 <!-- Stat Cards -->
 <div class="row g-3 mb-4">
-    <div class="col-md-3 col-6">
+    <div class="col-md-4 col-6">
         <div class="cb-stat">
             <div class="stat-accent" style="background:linear-gradient(90deg,var(--cb-navy),var(--cb-teal));"></div>
             <div class="stat-ico"><i class="ri-book-open-line"></i></div>
-            <div class="stat-value" id="totalClasses">{{ $myclass->total() }}</div>
+            <div class="stat-value">{{ $myclass->total() }}</div>
             <div class="stat-label">Current Classes</div>
         </div>
     </div>
-    <div class="col-md-3 col-6">
+    <div class="col-md-4 col-6">
         <div class="cb-stat">
             <div class="stat-accent" style="background:linear-gradient(90deg,var(--cb-sky),#38bdf8);"></div>
             <div class="stat-ico"><i class="ri-group-line"></i></div>
@@ -548,74 +456,33 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             <div class="stat-label">Total Students</div>
         </div>
     </div>
-    <div class="col-md-3 col-6">
-        <div class="cb-stat">
-            <div class="stat-accent" style="background:linear-gradient(90deg,var(--cb-green),#4ade80);"></div>
-            <div class="stat-ico"><i class="ri-file-text-line"></i></div>
-            <div class="stat-value text-success" id="totalBroadsheets">—</div>
-            <div class="stat-label">Broadsheets</div>
-        </div>
-    </div>
-    <div class="col-md-3 col-6">
+    <div class="col-md-4 col-6">
         <div class="cb-stat">
             <div class="stat-accent" style="background:linear-gradient(90deg,var(--cb-amber),#fcd34d);"></div>
             <div class="stat-ico"><i class="ri-time-line"></i></div>
-            <div class="stat-value text-warning" id="totalHistory">{{ $myclasshistory->count() }}</div>
+            <div class="stat-value text-warning">{{ $myclasshistory->count() }}</div>
             <div class="stat-label">Class History</div>
         </div>
     </div>
 </div>
 
-<!-- Filter Panel -->
-<div class="filter-panel">
-    <h6><i class="ri-filter-line" style="color:var(--cb-teal)"></i> Filter Classes</h6>
-    <div class="filter-grid">
-        <div class="filter-item">
-            <label><i class="ri-search-line"></i> Search</label>
-            <input type="text" id="searchInput" placeholder="Class, Arm, Term, Session..." value="{{ request()->query('search') }}">
-        </div>
-        <div class="filter-item">
-            <label><i class="ri-building-line"></i> Class</label>
-            <select id="classFilter">
-                <option value="ALL">All Classes</option>
-                @foreach ($schoolclasses as $class)
-                    <option value="{{ $class->id }}">{{ $class->schoolclass }} {{ $class->arm }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div class="filter-item">
-            <label><i class="ri-calendar-event-line"></i> Session</label>
-            <select id="sessionFilter">
-                <option value="ALL">All Sessions</option>
-                @foreach ($schoolsessions as $session)
-                    <option value="{{ $session->id }}">{{ $session->session }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div class="filter-item">
-            <button class="btn-search" onclick="filterData()"><i class="ri-search-line"></i> Search</button>
-            <button class="btn-reset ms-2" onclick="resetFilters()"><i class="ri-refresh-line"></i> Reset</button>
-        </div>
-    </div>
-</div>
-
-<!-- Classes Table Card -->
+<!-- Current Classes Card -->
 <div class="cb-card">
     <div class="cb-card-header">
         <h5>
             <i class="ri-table-alt-line" style="color:var(--cb-teal)"></i>
-            My Assigned Classes
-            <span class="cb-badge badge-current ms-2" id="classCountBadge">{{ $myclass->total() }} Active</span>
+            My Current Classes
+            <span class="cb-badge badge-current ms-2">{{ $myclass->total() }} Classes</span>
         </h5>
         @can('Create my-class')
-        <button type="button" class="btn-search" data-bs-toggle="modal" data-bs-target="#addClassModal">
+        <button type="button" class="btn-search" data-bs-toggle="modal" data-bs-target="#addClassModal" style="background: var(--cb-teal); color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 600; font-size: 13px; cursor: pointer;">
             <i class="ri-add-line"></i> Create Class Setting
         </button>
         @endcan
     </div>
 
     <div style="overflow-x: auto;">
-        <table class="cb-table" id="classesTable">
+        <table class="cb-table">
             <thead>
                 <tr>
                     <th style="width: 40px;"><input type="checkbox" class="cb-checkbox" id="checkAll"></th>
@@ -629,10 +496,10 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                     <th>Actions</th>
                 </tr>
             </thead>
-            <tbody id="tableBody">
+            <tbody>
                 @php $i = ($myclass->currentPage() - 1) * $myclass->perPage() @endphp
                 @forelse ($myclass as $sc)
-                <tr data-class-id="{{ $sc->id }}" data-schoolclassid="{{ $sc->schoolclassid }}" data-termid="{{ $sc->termid }}" data-sessionid="{{ $sc->sessionid }}">
+                <tr>
                     <td data-label="Select">
                         <input type="checkbox" class="cb-checkbox child-checkbox" value="{{ $sc->id }}">
                     </td>
@@ -642,83 +509,80 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                     <td data-label="Term">{{ $sc->term }}</td>
                     <td data-label="Session">{{ $sc->session }}</td>
                     <td data-label="Students">
-                        <div class="action-buttons">
-                            <a href="{{ route('viewstudent', [$sc->schoolclassid, $sc->termid, $sc->sessionid]) }}" class="btn-icon btn-primary-icon">
-                                <i class="ri-group-line"></i> View Students
-                            </a>
-                        </div>
+                        <a href="{{ route('viewstudent', [$sc->schoolclassid, $sc->termid, $sc->sessionid]) }}" class="btn-icon btn-primary-icon">
+                            <i class="ri-group-line"></i> View Students
+                        </a>
                     </td>
                     <td data-label="Broadsheet">
-                        <div class="action-buttons">
-                            <div class="cb-dropdown">
-                                <button class="cb-dropdown-btn" onclick="toggleDropdown(this)">
-                                    <i class="ri-file-text-line"></i> Broadsheet <i class="ri-arrow-down-s-line"></i>
-                                </button>
-                                <div class="cb-dropdown-menu">
-                                    <div class="dropdown-header">Select Term</div>
-                                    <a class="dropdown-item" href="{{ route('classbroadsheet.viewcomments', [$sc->schoolclassid, $sc->sessionid, 1]) }}">
-                                        <i class="ri-file-copy-line"></i> Term 1
-                                    </a>
-                                    <a class="dropdown-item" href="{{ route('classbroadsheet.viewcomments', [$sc->schoolclassid, $sc->sessionid, 2]) }}">
-                                        <i class="ri-file-copy-line"></i> Term 2
-                                    </a>
-                                    <a class="dropdown-item" href="{{ route('classbroadsheet.viewcomments', [$sc->schoolclassid, $sc->sessionid, 3]) }}">
-                                        <i class="ri-file-copy-line"></i> Term 3
-                                    </a>
-                                </div>
+                        <div class="cb-dropdown">
+                            <button class="cb-dropdown-btn" onclick="toggleDropdown(this)">
+                                <i class="ri-file-text-line"></i> Broadsheet <i class="ri-arrow-down-s-line"></i>
+                            </button>
+                            <div class="cb-dropdown-menu">
+                                <div class="dropdown-header">Select Term</div>
+                                <a class="dropdown-item" href="{{ route('classbroadsheet.viewcomments', [$sc->schoolclassid, $sc->sessionid, 1]) }}">
+                                    <i class="ri-file-copy-line"></i> Term 1
+                                </a>
+                                <a class="dropdown-item" href="{{ route('classbroadsheet.viewcomments', [$sc->schoolclassid, $sc->sessionid, 2]) }}">
+                                    <i class="ri-file-copy-line"></i> Term 2
+                                </a>
+                                <a class="dropdown-item" href="{{ route('classbroadsheet.viewcomments', [$sc->schoolclassid, $sc->sessionid, 3]) }}">
+                                    <i class="ri-file-copy-line"></i> Term 3
+                                </a>
                             </div>
                         </div>
                     </td>
                     <td data-label="Actions">
-                        <div class="action-buttons">
-                            <div class="cb-dropdown">
-                                <button class="cb-dropdown-btn" onclick="toggleDropdown(this)">
-                                    <i class="ri-settings-3-line"></i> Actions <i class="ri-arrow-down-s-line"></i>
-                                </button>
-                                <div class="cb-dropdown-menu">
-                                    <div class="dropdown-header">Student Reports</div>
-                                    <a class="dropdown-item" href="{{ route('viewstudent', [$sc->schoolclassid, 1, $sc->sessionid]) }}">
-                                        <i class="ri-user-line"></i> Term 1 Students
-                                    </a>
-                                    <a class="dropdown-item" href="{{ route('viewstudent', [$sc->schoolclassid, 2, $sc->sessionid]) }}">
-                                        <i class="ri-user-line"></i> Term 2 Students
-                                    </a>
-                                    <a class="dropdown-item" href="{{ route('viewstudent', [$sc->schoolclassid, 3, $sc->sessionid]) }}">
-                                        <i class="ri-user-line"></i> Term 3 Students
-                                    </a>
-                                    <div class="divider"></div>
-                                    <div class="dropdown-header">Broadsheets</div>
-                                    <a class="dropdown-item" href="{{ route('classbroadsheet.viewcomments', [$sc->schoolclassid, $sc->sessionid, 1]) }}">
-                                        <i class="ri-file-text-line"></i> Term 1
-                                    </a>
-                                    <a class="dropdown-item" href="{{ route('classbroadsheet.viewcomments', [$sc->schoolclassid, $sc->sessionid, 2]) }}">
-                                        <i class="ri-file-text-line"></i> Term 2
-                                    </a>
-                                    <a class="dropdown-item" href="{{ route('classbroadsheet.viewcomments', [$sc->schoolclassid, $sc->sessionid, 3]) }}">
-                                        <i class="ri-file-text-line"></i> Term 3
-                                    </a>
-                                    @can('Update my-class')
-                                    <div class="divider"></div>
-                                    <a class="dropdown-item edit-item-btn" href="javascript:void(0);" data-id="{{ $sc->id }}">
-                                        <i class="ri-edit-line"></i> Edit Setting
-                                    </a>
-                                    @endcan
-                                    @can('Delete my-class')
-                                    <a class="dropdown-item text-danger remove-item-btn" href="javascript:void(0);" data-id="{{ $sc->id }}">
-                                        <i class="ri-delete-bin-line"></i> Delete
-                                    </a>
-                                    @endcan
-                                </div>
+                        <div class="cb-dropdown">
+                            <button class="cb-dropdown-btn" onclick="toggleDropdown(this)">
+                                <i class="ri-settings-3-line"></i> Actions <i class="ri-arrow-down-s-line"></i>
+                            </button>
+                            <div class="cb-dropdown-menu">
+                                <div class="dropdown-header">Student Reports</div>
+                                <a class="dropdown-item" href="{{ route('viewstudent', [$sc->schoolclassid, 1, $sc->sessionid]) }}">
+                                    <i class="ri-user-line"></i> Term 1 Students
+                                </a>
+                                <a class="dropdown-item" href="{{ route('viewstudent', [$sc->schoolclassid, 2, $sc->sessionid]) }}">
+                                    <i class="ri-user-line"></i> Term 2 Students
+                                </a>
+                                <a class="dropdown-item" href="{{ route('viewstudent', [$sc->schoolclassid, 3, $sc->sessionid]) }}">
+                                    <i class="ri-user-line"></i> Term 3 Students
+                                </a>
+                                <div class="divider"></div>
+                                <div class="dropdown-header">Broadsheets</div>
+                                <a class="dropdown-item" href="{{ route('classbroadsheet.viewcomments', [$sc->schoolclassid, $sc->sessionid, 1]) }}">
+                                    <i class="ri-file-text-line"></i> Term 1
+                                </a>
+                                <a class="dropdown-item" href="{{ route('classbroadsheet.viewcomments', [$sc->schoolclassid, $sc->sessionid, 2]) }}">
+                                    <i class="ri-file-text-line"></i> Term 2
+                                </a>
+                                <a class="dropdown-item" href="{{ route('classbroadsheet.viewcomments', [$sc->schoolclassid, $sc->sessionid, 3]) }}">
+                                    <i class="ri-file-text-line"></i> Term 3
+                                </a>
+                                @can('Update my-class')
+                                <div class="divider"></div>
+                                <a class="dropdown-item edit-item-btn" href="javascript:void(0);" data-id="{{ $sc->id }}">
+                                    <i class="ri-edit-line"></i> Edit Setting
+                                </a>
+                                @endcan
+                                @can('Delete my-class')
+                                <a class="dropdown-item text-danger remove-item-btn" href="javascript:void(0);" data-id="{{ $sc->id }}">
+                                    <i class="ri-delete-bin-line"></i> Delete
+                                </a>
+                                @endcan
                             </div>
                         </div>
                     </td>
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="9" style="text-align: center; padding: 40px;">
-                        <i class="ri-inbox-line" style="font-size: 48px; color: #cbd5e1;"></i>
-                        <p class="text-muted mt-2 mb-0">No classes found</p>
-                        <small class="text-muted">Try adjusting your filters</small>
+                    <td colspan="9">
+                        <div class="empty-state">
+                            <i class="ri-inbox-line"></i>
+                            <h6>No Classes Assigned</h6>
+                            <p>You haven't been assigned to any classes for the current session.</p>
+                            <small class="text-muted">Contact the administrator to assign you to classes.</small>
+                        </div>
                     </td>
                 </tr>
                 @endforelse
@@ -727,6 +591,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     </div>
 
     <!-- Pagination -->
+    @if($myclass->total() > 0)
     <div style="padding: 20px 24px; border-top: 1px solid var(--cb-border);">
         <div class="row align-items-center">
             <div class="col-sm">
@@ -759,6 +624,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             </div>
         </div>
     </div>
+    @endif
 </div>
 
 <!-- Class History Section -->
@@ -831,31 +697,6 @@ if (checkAll) {
     });
 }
 
-// Filter Data
-function filterData() {
-    var search = document.getElementById('searchInput').value;
-    var classFilter = document.getElementById('classFilter').value;
-    var sessionFilter = document.getElementById('sessionFilter').value;
-
-    var url = new URL(window.location.href);
-    if (search) url.searchParams.set('search', search);
-    else url.searchParams.delete('search');
-    if (classFilter !== 'ALL') url.searchParams.set('schoolclassid', classFilter);
-    else url.searchParams.delete('schoolclassid');
-    if (sessionFilter !== 'ALL') url.searchParams.set('sessionid', sessionFilter);
-    else url.searchParams.delete('sessionid');
-    url.searchParams.set('page', '1');
-
-    window.location.href = url.toString();
-}
-
-function resetFilters() {
-    document.getElementById('searchInput').value = '';
-    document.getElementById('classFilter').value = 'ALL';
-    document.getElementById('sessionFilter').value = 'ALL';
-    filterData();
-}
-
 // Toast notification
 function showToast(message, type) {
     var toast = document.createElement('div');
@@ -865,14 +706,17 @@ function showToast(message, type) {
     setTimeout(function() { toast.remove(); }, 3000);
 }
 
-// Calculate total students (PHP side calculation)
-var totalStudents = @json($myclass->sum(function($c) {
-    return \App\Models\Studentclass::where('schoolclassid', $c->schoolclassid)
-        ->where('sessionid', $c->sessionid)
-        ->count();
-}));
+// Calculate total students
+var totalStudents = 0;
+@foreach($myclass as $sc)
+    @php
+        $studentCount = \App\Models\Studentclass::where('schoolclassid', $sc->schoolclassid)
+            ->where('sessionid', $sc->sessionid)
+            ->count();
+    @endphp
+    totalStudents += {{ $studentCount }};
+@endforeach
 document.getElementById('totalStudents').textContent = totalStudents;
-document.getElementById('totalBroadsheets').textContent = {{ $myclass->count() * 3 }};
 
 // Edit and Delete functionality
 @can('Update my-class')
