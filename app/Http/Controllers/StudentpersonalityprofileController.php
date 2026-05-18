@@ -23,7 +23,7 @@ class StudentpersonalityprofileController extends Controller
      * @param int $termid School Term ID
      * @return \Illuminate\Http\Response
      */
-    public function studentpersonalityprofile($id, $schoolclassid, $sessionid, $termid) 
+    public function studentpersonalityprofile($id, $schoolclassid, $sessionid, $termid)
     {
         $pagetitle = "Student Personality Profile";
 
@@ -34,7 +34,7 @@ class StudentpersonalityprofileController extends Controller
                 'studentRegistration.id as id',
                 'studentRegistration.admissionNo as admissionNo',
                 'studentRegistration.firstname as fname',
-                'studentRegistration.home_address as homeaddress',
+                'studentRegistration.home_address2 as homeaddress',
                 'studentRegistration.lastname as lastname',
                 'studentRegistration.othername as othername',
                 'studentRegistration.dateofbirth as dateofbirth',
@@ -53,7 +53,7 @@ class StudentpersonalityprofileController extends Controller
                 // 'staffid' => Auth::user()->id,
             ],
             [
-                
+
                 // Add any default values for other fields if needed
             ]
         );
