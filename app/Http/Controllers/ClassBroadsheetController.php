@@ -20,20 +20,14 @@ use Illuminate\Support\Facades\Storage;
 class ClassBroadsheetController extends Controller
 {
     // =========================================================================
-    // GRADE HELPERS  (mirrors ViewStudentReportController / MyPrincipalsCommentController)
+    // GRADE HELPERS
     // =========================================================================
 
-    /**
-     * Public wrapper — called from blade templates via app(controller).
-     */
     public function gradeFromScorePublic(float $score, bool $isSenior): array
     {
         return $this->gradeFromScore($score, $isSenior);
     }
 
-    /**
-     * Return [grade_string, grade_letter] for a score.
-     */
     private function gradeFromScore(float $score, bool $isSenior): array
     {
         if ($score <= 0) return ['-', '-'];
@@ -58,19 +52,14 @@ class ClassBroadsheetController extends Controller
     }
 
     // =========================================================================
-    // CLASS BROADSHEET
+    // CLASS BROADSHEET VIEW
     // =========================================================================
 
-    /**
-     * Display the class broadsheet.
-     */
     public function classBroadsheet($schoolclassid, $sessionid, $termid)
     {
         $pagetitle = "Class Broadsheet";
 
-        // ------------------------------------------------------------------
         // 1. Students
-        // ------------------------------------------------------------------
         $students = Studentclass::where('studentclass.schoolclassid', $schoolclassid)
             ->where('studentclass.sessionid', $sessionid)
             ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
@@ -85,60 +74,52 @@ class ClassBroadsheetController extends Controller
                 'studentpicture.picture          as picture',
             ])->sortBy('lastname');
 
-        // ------------------------------------------------------------------
         // 2. Ensure personality profiles exist for every student
-        // ------------------------------------------------------------------
         foreach ($students as $student) {
             $profile = Studentpersonalityprofile::firstOrNew([
-                'studentid'    => $student->id,
+                'studentid'     => $student->id,
                 'schoolclassid' => $schoolclassid,
-                'sessionid'    => $sessionid,
-                'termid'       => $termid,
+                'sessionid'     => $sessionid,
+                'termid'        => $termid,
             ]);
 
             if (!$profile->exists) {
-                $profile->staffid               = Auth::id();
-                $profile->classteachercomment   = null;
-                $profile->guidancescomment      = null;
+                $profile->staffid                    = Auth::id();
+                $profile->classteachercomment        = null;
+                $profile->guidancescomment           = null;
                 $profile->remark_on_other_activities = null;
                 $profile->no_of_times_school_absent  = null;
-                $profile->signature             = null;
+                $profile->signature                  = null;
                 $profile->save();
             }
         }
 
-        // ------------------------------------------------------------------
         // 3. Subjects for this class/session
-        // ------------------------------------------------------------------
         $subjects = Subject::whereHas('broadsheetRecords', function ($q) use ($schoolclassid, $sessionid) {
             $q->where('schoolclass_id', $schoolclassid)
               ->where('session_id',     $sessionid);
         })->orderBy('subject')->get(['id', 'subject', 'subject_code']);
 
-        // ------------------------------------------------------------------
-        // 4. Broadsheet scores — BOTH term total and cumulative
-        // ------------------------------------------------------------------
+        // 4. Broadsheet scores — term total and cumulative
         $broadsheetRows = Broadsheets::where('broadsheet_records.schoolclass_id', $schoolclassid)
             ->where('broadsheets.term_id',           $termid)
             ->where('broadsheet_records.session_id', $sessionid)
             ->leftJoin('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
             ->leftJoin('subject',             'subject.id',            '=', 'broadsheet_records.subject_id')
-            ->leftJoin('studentRegistration', 'studentRegistration.id','=', 'broadsheet_records.student_id')
+            ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'broadsheet_records.student_id')
             ->get([
                 'broadsheet_records.student_id',
                 'subject.subject as subject_name',
                 'subject.subject_code',
-                'broadsheets.total',   // term score
+                'broadsheets.total',
                 'broadsheets.bf',
-                'broadsheets.cum',     // cumulative score
+                'broadsheets.cum',
                 'broadsheets.grade',
                 'broadsheets.subject_position_class as position',
                 'broadsheets.avg as class_average',
             ]);
 
-        // ------------------------------------------------------------------
-        // 5. Build O(1) lookup maps [student_id][subject_name] => score
-        // ------------------------------------------------------------------
+        // 5. Build O(1) lookup maps
         $termScoreMap = [];
         $cumScoreMap  = [];
 
@@ -149,25 +130,21 @@ class ClassBroadsheetController extends Controller
             $cumScoreMap[$sid][$subj]  = $row->cum   ?? 0;
         }
 
-        // ------------------------------------------------------------------
-        // 6. Is this a senior class? (for grade scale)
-        // ------------------------------------------------------------------
+        // 6. Is this a senior class?
         $schoolclassModel = Schoolclass::with(['arms', 'classcategories'])->find($schoolclassid);
         $isSenior = $schoolclassModel && $schoolclassModel->classcategories->isNotEmpty()
             ? ($schoolclassModel->classcategories->first()->is_senior ?? false)
             : false;
 
-        // ------------------------------------------------------------------
-        // 7. Per-student analytics: totals, averages, grades
-        // ------------------------------------------------------------------
+        // 7. Per-student analytics
         $studentAnalytics = [];
 
         foreach ($students as $student) {
-            $sid         = $student->id;
-            $termTotal   = 0;
-            $cumTotal    = 0;
+            $sid          = $student->id;
+            $termTotal    = 0;
+            $cumTotal     = 0;
             $subjectCount = 0;
-            $grades      = [];
+            $grades       = [];
 
             foreach ($subjects as $subject) {
                 $subj      = $subject->subject;
@@ -210,9 +187,7 @@ class ClassBroadsheetController extends Controller
             ];
         }
 
-        // ------------------------------------------------------------------
-        // 8. Personality profiles (no staffid filter — we load all)
-        // ------------------------------------------------------------------
+        // 8. Personality profiles (no staffid filter — load all for this class/term)
         $personalityProfiles = Studentpersonalityprofile::where('schoolclassid', $schoolclassid)
             ->where('sessionid', $sessionid)
             ->where('termid',    $termid)
@@ -225,14 +200,12 @@ class ClassBroadsheetController extends Controller
                 'signature',
             ]);
 
-        // ------------------------------------------------------------------
         // 9. Class meta
-        // ------------------------------------------------------------------
         $schoolclass = Schoolclass::where('schoolclass.id', $schoolclassid)
             ->leftJoin('schoolarm', 'schoolclass.arm', '=', 'schoolarm.id')
             ->first(['schoolclass.schoolclass', 'schoolclass.arm', 'schoolarm.arm']);
 
-        $schoolterm    = Schoolterm::where('id',  $termid)->value('term')    ?? 'N/A';
+        $schoolterm    = Schoolterm::where('id',    $termid)->value('term')    ?? 'N/A';
         $schoolsession = Schoolsession::where('id', $sessionid)->value('session') ?? 'N/A';
 
         return view('classbroadsheet.classbroadsheet', compact(
@@ -255,7 +228,13 @@ class ClassBroadsheetController extends Controller
     }
 
     // =========================================================================
-    // UPDATE COMMENTS  (AJAX POST — returns JSON)
+    // UPDATE COMMENTS
+    // Accepts both:
+    //   - PATCH  /classbroadsheet/{...}/comments          (native PATCH)
+    //   - POST   /classbroadsheet/{...}/comments + _method=PATCH (form spoofing)
+    //
+    // Works for both per-student autosave (single student ID in payload)
+    // and batch Save All (all student IDs in payload).
     // =========================================================================
 
     public function updateComments(Request $request, $schoolclassid, $sessionid, $termid)
@@ -265,7 +244,8 @@ class ClassBroadsheetController extends Controller
             'sessionid'     => $sessionid,
             'termid'        => $termid,
             'method'        => $request->method(),
-            'ajax'          => $request->ajax(),
+            'is_ajax'       => $request->ajax(),
+            'student_ids'   => array_keys($request->input('teacher_comments', [])),
         ]);
 
         $request->validate([
@@ -276,7 +256,7 @@ class ClassBroadsheetController extends Controller
             'signature'                     => 'nullable|mimes:jpg,jpeg,png,pdf|max:5048',
         ]);
 
-        // Handle signature upload
+        // Handle signature upload (only if provided)
         $signaturePath = null;
         if ($request->hasFile('signature') && $request->file('signature')->isValid()) {
             $file          = $request->file('signature');
@@ -290,7 +270,7 @@ class ClassBroadsheetController extends Controller
         $remarks          = $request->input('remarks_on_other_activities', []);
         $absences         = $request->input('no_of_times_school_absent',   []);
 
-        // All student IDs sent from the form
+        // Collect every student ID present in ANY field of this payload
         $allStudentIds = array_unique(array_merge(
             array_keys($teacherComments),
             array_keys($guidanceComments),
@@ -299,7 +279,10 @@ class ClassBroadsheetController extends Controller
         ));
 
         if (empty($allStudentIds) && !$signaturePath) {
-            return response()->json(['success' => false, 'message' => 'No data provided to update.'], 400);
+            return response()->json([
+                'success' => false,
+                'message' => 'No data provided to update.',
+            ], 400);
         }
 
         DB::beginTransaction();
@@ -312,12 +295,11 @@ class ClassBroadsheetController extends Controller
                 $teacherComment  = trim($teacherComments[$studentId]  ?? '');
                 $guidanceComment = trim($guidanceComments[$studentId]  ?? '');
                 $remark          = trim($remarks[$studentId]           ?? '');
-                $absence         = isset($absences[$studentId]) && $absences[$studentId] !== ''
+                $absence         = (isset($absences[$studentId]) && $absences[$studentId] !== '')
                     ? (int) $absences[$studentId]
                     : null;
 
-                // Skip ONLY if every field is blank AND no signature to attach.
-                // A student with ANY field filled (including just absences) gets saved.
+                // Skip if every field is blank and no signature
                 if ($teacherComment === '' && $guidanceComment === '' && $remark === '' && $absence === null && !$signaturePath) {
                     $skippedCount++;
                     continue;
@@ -330,7 +312,7 @@ class ClassBroadsheetController extends Controller
                     ->first();
 
                 $payload = [
-                    'staffid'                   => Auth::id(),
+                    'staffid'                    => Auth::id(),
                     'classteachercomment'        => $teacherComment  ?: null,
                     'guidancescomment'           => $guidanceComment ?: null,
                     'remark_on_other_activities' => $remark          ?: null,
@@ -369,7 +351,7 @@ class ClassBroadsheetController extends Controller
             $parts = [];
             if ($updatedCount) $parts[] = "{$updatedCount} updated";
             if ($createdCount) $parts[] = "{$createdCount} new";
-            if ($skippedCount) $parts[] = "{$skippedCount} skipped (no data)";
+            if ($skippedCount) $parts[] = "{$skippedCount} skipped";
 
             return response()->json([
                 'success' => true,

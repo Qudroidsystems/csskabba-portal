@@ -97,9 +97,13 @@ body { font-family: 'DM Sans', sans-serif; }
 /* Inputs */
 .cb-input { border: 1.5px solid var(--cb-border); border-radius: 8px; padding: 6px 10px; font-size: 12px; width: 100%; transition: border .15s, box-shadow .15s; background: var(--cb-surface); font-family: 'DM Sans', sans-serif; }
 .cb-input:focus { border-color: var(--cb-teal); outline: none; box-shadow: 0 0 0 3px rgba(13,148,136,.12); background: #fff; }
-.cb-input.required-field { border-left: 3px solid var(--cb-border); }
-.cb-input.required-field.has-value { border-left-color: var(--cb-teal); }
+.cb-input.has-value { border-left-color: var(--cb-teal); }
 .absence-input { width: 72px !important; text-align: center; }
+
+/* Autosave status on input */
+.cb-input.saving  { border-color: var(--cb-amber) !important; }
+.cb-input.saved   { border-color: var(--cb-green) !important; }
+.cb-input.save-err{ border-color: var(--cb-rose)  !important; }
 
 /* Avatar */
 .student-name-cell { display: flex; align-items: center; gap: 9px; }
@@ -110,7 +114,18 @@ body { font-family: 'DM Sans', sans-serif; }
 .student-name-text { font-weight: 600; font-size: 12.5px; color: var(--cb-navy); }
 .student-adm { font-size: 10.5px; color: var(--cb-muted); margin-top: 1px; }
 
-/* Comment status badge on name cell */
+/* Autosave chip per-student */
+.autosave-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px; font-weight: 700; padding: 2px 8px;
+    border-radius: 20px; margin-top: 3px; transition: all .2s;
+}
+.ac-idle    { background: #f1f5f9; color: #94a3b8; }
+.ac-saving  { background: #fef3c7; color: #92400e; }
+.ac-saved   { background: #dcfce7; color: #15803d; }
+.ac-err     { background: #ffe4e6; color: #be123c; }
+
+/* Comment status badge */
 .comment-status-dot {
     display: inline-flex; align-items: center; gap: 3px;
     font-size: 10px; font-weight: 700; padding: 1px 7px;
@@ -118,7 +133,6 @@ body { font-family: 'DM Sans', sans-serif; }
 }
 .dot-saved    { background: #dcfce7; color: #15803d; }
 .dot-unsaved  { background: #f1f5f9; color: #94a3b8; }
-.dot-partial  { background: #fef9c3; color: #a16207; }
 
 /* Save bar */
 .save-bar { position: sticky; bottom: 0; z-index: 100; background: rgba(15,35,66,.97); backdrop-filter: blur(10px); border-top: 2px solid var(--cb-teal); padding: 14px 24px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; border-radius: 0 0 var(--cb-radius) var(--cb-radius); }
@@ -129,12 +143,9 @@ body { font-family: 'DM Sans', sans-serif; }
 .btn-save-all:hover { background: #0b7c72; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(13,148,136,.4); }
 .btn-save-all:disabled { opacity: .65; transform: none; cursor: not-allowed; }
 
-/* Save counter in bar */
+/* Save counter */
 .save-counter { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.save-counter-pill {
-    font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 20px;
-    display: inline-flex; align-items: center; gap: 5px;
-}
+.save-counter-pill { font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 20px; display: inline-flex; align-items: center; gap: 5px; }
 .sc-pill-done    { background: rgba(34,197,94,.2);  color: #86efac; }
 .sc-pill-pending { background: rgba(255,255,255,.1); color: rgba(255,255,255,.6); }
 
@@ -142,6 +153,7 @@ body { font-family: 'DM Sans', sans-serif; }
 .cb-toast { position: fixed; bottom: 80px; right: 24px; min-width: 300px; z-index: 99999; padding: 14px 18px; border-radius: 12px; display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 600; box-shadow: var(--cb-shadow-lg); animation: cbSlideUp .3s ease; }
 .cb-toast-success { background: #ecfdf5; border: 1.5px solid #86efac; color: #15803d; }
 .cb-toast-error   { background: #fff1f2; border: 1.5px solid #fca5a5; color: #be123c; }
+.cb-toast-info    { background: #eff6ff; border: 1.5px solid #93c5fd; color: #1d4ed8; }
 @keyframes cbSlideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
 @keyframes cbSpin    { 0%{transform:rotate(0)} 100%{transform:rotate(360deg)} }
 .spin { display:inline-block; animation: cbSpin 1s linear infinite; }
@@ -204,19 +216,15 @@ body { font-family: 'DM Sans', sans-serif; }
 .gpop-sum-item { text-align: center; }
 .gpop-sum-lbl  { font-size: 9px; color: var(--cb-muted); text-transform: uppercase; letter-spacing: .4px; }
 .gpop-sum-val  { font-size: 16px; font-weight: 700; color: var(--cb-navy); }
-
-/* Popup backdrop */
 #cbPopupBackdrop { display: none; position: fixed; inset: 0; z-index: 9998; background: rgba(0,0,0,.28); }
 
-/* ── Pre-submit Summary Modal ───────────────────────────────────── */
+/* Pre-submit Summary Modal */
 #cbSaveConfirmModal .modal-content { border-radius: 18px; overflow: hidden; border: none; box-shadow: 0 24px 60px rgba(0,0,0,.18); }
 #cbSaveConfirmModal .modal-header  { background: linear-gradient(135deg, var(--cb-navy), var(--cb-teal)); border: none; padding: 20px 24px; }
 #cbSaveConfirmModal .modal-title   { color: #fff; font-weight: 700; font-size: 16px; }
 #cbSaveConfirmModal .btn-close     { filter: invert(1); }
 .confirm-summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
-.confirm-stat-box {
-    border-radius: 12px; padding: 14px 16px; text-align: center;
-}
+.confirm-stat-box { border-radius: 12px; padding: 14px 16px; text-align: center; }
 .confirm-stat-box.done    { background: #ecfdf5; border: 1.5px solid #86efac; }
 .confirm-stat-box.pending { background: #f8fafc; border: 1.5px solid var(--cb-border); }
 .confirm-stat-box .csb-num  { font-size: 28px; font-weight: 700; line-height: 1; }
@@ -225,39 +233,16 @@ body { font-family: 'DM Sans', sans-serif; }
 .confirm-stat-box.done    .csb-lbl { color: #15803d; }
 .confirm-stat-box.pending .csb-num { color: var(--cb-muted); }
 .confirm-stat-box.pending .csb-lbl { color: var(--cb-muted); }
-
-/* Student name lists inside confirm modal */
-.confirm-student-list {
-    max-height: 180px; overflow-y: auto;
-    border: 1px solid var(--cb-border); border-radius: 10px;
-    padding: 10px 14px; background: var(--cb-surface);
-    margin-bottom: 14px;
-}
-.confirm-student-list .csl-item {
-    display: flex; align-items: center; gap: 8px;
-    padding: 5px 0; border-bottom: 1px solid #f0f0f0;
-    font-size: 12.5px; font-weight: 500; color: var(--cb-navy);
-}
+.confirm-student-list { max-height: 180px; overflow-y: auto; border: 1px solid var(--cb-border); border-radius: 10px; padding: 10px 14px; background: var(--cb-surface); margin-bottom: 14px; }
+.confirm-student-list .csl-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid #f0f0f0; font-size: 12.5px; font-weight: 500; color: var(--cb-navy); }
 .confirm-student-list .csl-item:last-child { border-bottom: none; }
-.csl-dot {
-    width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
-}
+.csl-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .csl-dot-done    { background: var(--cb-teal); }
 .csl-dot-pending { background: #cbd5e1; }
-.confirm-section-hdr {
-    font-size: 11px; font-weight: 700; text-transform: uppercase;
-    letter-spacing: .5px; margin-bottom: 6px;
-    display: flex; align-items: center; gap: 6px;
-}
+.confirm-section-hdr { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
 .confirm-section-hdr.hdr-done    { color: #15803d; }
 .confirm-section-hdr.hdr-pending { color: var(--cb-muted); }
-.confirm-proceed-btn {
-    background: var(--cb-teal); color: #fff; border: none;
-    border-radius: 10px; padding: 11px 28px; font-size: 14px;
-    font-weight: 700; cursor: pointer; width: 100%;
-    transition: background .18s; font-family: 'DM Sans', sans-serif;
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-}
+.confirm-proceed-btn { background: var(--cb-teal); color: #fff; border: none; border-radius: 10px; padding: 11px 28px; font-size: 14px; font-weight: 700; cursor: pointer; width: 100%; transition: background .18s; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .confirm-proceed-btn:hover { background: #0b7c72; }
 </style>
 
@@ -325,7 +310,7 @@ body { font-family: 'DM Sans', sans-serif; }
     </div>
     <p class="mt-2 mb-0" style="font-size:11px;color:var(--cb-muted);">
         <i class="ri-information-line me-1"></i>
-        You can save comments for any number of students — you don't need to fill all before saving.
+        Changes save automatically as you type. You can also use "Save All" to batch-save everything at once.
     </p>
 </div>
 
@@ -356,8 +341,27 @@ body { font-family: 'DM Sans', sans-serif; }
         </div>
     </div>
 
+    {{-- ============================================================
+         IMPORTANT: ONE canonical hidden data store per student.
+         Both desktop inputs and mobile inputs sync INTO this store.
+         The form submit reads from here — never from both viewports.
+         ============================================================ --}}
     <form id="commentsForm">
         @csrf
+        {{-- Method spoofing for PATCH --}}
+        <input type="hidden" name="_method" value="PATCH">
+
+        {{-- Hidden canonical fields — single source of truth --}}
+        @foreach ($students as $student)
+            @php
+                $sid     = $student->id;
+                $profile = $personalityProfiles->where('studentid', $sid)->first();
+            @endphp
+            <input type="hidden" class="canonical-teacher"    id="c_teacher_{{ $sid }}"    name="teacher_comments[{{ $sid }}]"            value="{{ $profile ? $profile->classteachercomment : '' }}">
+            <input type="hidden" class="canonical-guidance"   id="c_guidance_{{ $sid }}"   name="guidance_comments[{{ $sid }}]"           value="{{ $profile ? $profile->guidancescomment : '' }}">
+            <input type="hidden" class="canonical-activities" id="c_activities_{{ $sid }}" name="remarks_on_other_activities[{{ $sid }}]"  value="{{ $profile ? $profile->remark_on_other_activities : '' }}">
+            <input type="hidden" class="canonical-absence"    id="c_absence_{{ $sid }}"    name="no_of_times_school_absent[{{ $sid }}]"   value="{{ $profile ? $profile->no_of_times_school_absent : '' }}">
+        @endforeach
 
         {{-- DESKTOP TABLE --}}
         <div class="desktop-only" style="overflow-x:auto;">
@@ -370,7 +374,7 @@ body { font-family: 'DM Sans', sans-serif; }
                             <th class="cbcol-scores" style="min-width:86px;">{{ $subject->subject }}</th>
                         @endforeach
                         <th class="cbcol-summary" style="min-width:140px;">Summary</th>
-                        <th class="cbcol-teacher" style="min-width:180px;">Teacher's Comment</th>
+                        <th class="cbcol-teacher" style="min-width:200px;">Teacher's Comment</th>
                         <th class="cbcol-guidance" style="min-width:160px;">Counselor's Comment</th>
                         <th class="cbcol-activities" style="min-width:160px;">Remark on Activities</th>
                         <th class="cbcol-absence" style="min-width:80px;">Absent</th>
@@ -391,7 +395,6 @@ body { font-family: 'DM Sans', sans-serif; }
                         <tr class="cb-student-row {{ $hasComment ? 'row-has-comment' : 'row-no-comment' }}"
                             data-student-id="{{ $sid }}"
                             data-student-name="{{ $fullName }}"
-                            data-has-comment="{{ $hasComment ? '1' : '0' }}"
                             data-searchkey="{{ strtolower($fullName . ' ' . $student->admissionNo) }}">
 
                             <td>{{ $index + 1 }}</td>
@@ -420,11 +423,12 @@ body { font-family: 'DM Sans', sans-serif; }
                                     <div>
                                         <div class="student-name-text">{{ $fullName }}</div>
                                         <div class="student-adm">{{ $student->admissionNo }} · {{ $student->gender ?? '' }}</div>
-                                        {{-- Live comment status badge --}}
                                         <span class="comment-status-dot {{ $hasComment ? 'dot-saved' : 'dot-unsaved' }}"
                                               id="status-{{ $sid }}">
                                             {{ $hasComment ? '✓ Commented' : '○ No comment' }}
                                         </span>
+                                        {{-- Per-student autosave indicator --}}
+                                        <span class="autosave-chip ac-idle" id="autosave-{{ $sid }}"></span>
                                     </div>
                                 </div>
                             </td>
@@ -502,30 +506,38 @@ body { font-family: 'DM Sans', sans-serif; }
                                 </div>
                             </td>
 
+                            {{-- Desktop visible inputs — these sync to hidden canonical fields --}}
                             <td class="cbcol-teacher">
-                                <input type="text" class="cb-input required-field teacher-comment {{ $hasComment ? 'has-value' : '' }}"
-                                       name="teacher_comments[{{ $sid }}]"
-                                       data-sid="{{ $sid }}"
+                                <input type="text"
+                                       class="cb-input desk-teacher {{ $hasComment ? 'has-value' : '' }}"
+                                       data-sid="{{ $sid }}" data-field="teacher"
                                        value="{{ $profile ? $profile->classteachercomment : '' }}"
-                                       placeholder="Enter comment (optional)…">
+                                       placeholder="Enter comment (optional)…"
+                                       autocomplete="off">
                             </td>
                             <td class="cbcol-guidance">
-                                <input type="text" class="cb-input"
-                                       name="guidance_comments[{{ $sid }}]"
+                                <input type="text"
+                                       class="cb-input desk-guidance"
+                                       data-sid="{{ $sid }}" data-field="guidance"
                                        value="{{ $profile ? $profile->guidancescomment : '' }}"
-                                       placeholder="Optional…">
+                                       placeholder="Optional…"
+                                       autocomplete="off">
                             </td>
                             <td class="cbcol-activities">
-                                <input type="text" class="cb-input"
-                                       name="remarks_on_other_activities[{{ $sid }}]"
+                                <input type="text"
+                                       class="cb-input desk-activities"
+                                       data-sid="{{ $sid }}" data-field="activities"
                                        value="{{ $profile ? $profile->remark_on_other_activities : '' }}"
-                                       placeholder="Optional…">
+                                       placeholder="Optional…"
+                                       autocomplete="off">
                             </td>
                             <td class="cbcol-absence">
-                                <input type="number" class="cb-input absence-input"
-                                       name="no_of_times_school_absent[{{ $sid }}]"
+                                <input type="number"
+                                       class="cb-input absence-input desk-absence"
+                                       data-sid="{{ $sid }}" data-field="absence"
                                        value="{{ $profile ? $profile->no_of_times_school_absent : '' }}"
-                                       min="0" placeholder="0">
+                                       min="0" placeholder="0"
+                                       autocomplete="off">
                             </td>
                         </tr>
                     @endforeach
@@ -549,7 +561,6 @@ body { font-family: 'DM Sans', sans-serif; }
                 <div class="cb-student-card cb-student-row {{ $hasComment ? 'card-has-comment' : 'card-no-comment' }}"
                      data-student-id="{{ $sid }}"
                      data-student-name="{{ $fullName }}"
-                     data-has-comment="{{ $hasComment ? '1' : '0' }}"
                      data-searchkey="{{ strtolower($fullName . ' ' . $student->admissionNo) }}">
                     <div class="card-top">
                         @if($imgUrl)
@@ -580,6 +591,7 @@ body { font-family: 'DM Sans', sans-serif; }
                                   id="status-m-{{ $sid }}">
                                 {{ $hasComment ? '✓ Commented' : '○ No comment' }}
                             </span>
+                            <span class="autosave-chip ac-idle" id="autosave-m-{{ $sid }}"></span>
                         </div>
                     </div>
                     <div class="card-body-pad">
@@ -601,29 +613,43 @@ body { font-family: 'DM Sans', sans-serif; }
                                 </div>
                             @endforeach
                         </div>
+                        {{-- Mobile visible inputs — data-field syncs to canonical hidden fields --}}
                         <div class="comment-field-group">
                             <label>Teacher's Comment</label>
-                            <input type="text" class="cb-input teacher-comment {{ $hasComment ? 'has-value' : '' }}"
-                                   name="teacher_comments[{{ $sid }}]"
-                                   data-sid="{{ $sid }}"
+                            <input type="text"
+                                   class="cb-input mob-teacher {{ $hasComment ? 'has-value' : '' }}"
+                                   data-sid="{{ $sid }}" data-field="teacher"
                                    value="{{ $profile ? $profile->classteachercomment : '' }}"
-                                   placeholder="Enter comment (optional)…">
+                                   placeholder="Enter comment (optional)…"
+                                   autocomplete="off">
                         </div>
                         <div class="comment-field-group mobile-col-guidance">
                             <label>Counselor's Comment</label>
-                            <input type="text" class="cb-input" name="guidance_comments[{{ $sid }}]"
-                                   value="{{ $profile ? $profile->guidancescomment : '' }}" placeholder="Optional…">
+                            <input type="text"
+                                   class="cb-input mob-guidance"
+                                   data-sid="{{ $sid }}" data-field="guidance"
+                                   value="{{ $profile ? $profile->guidancescomment : '' }}"
+                                   placeholder="Optional…"
+                                   autocomplete="off">
                         </div>
                         <div class="comment-field-group mobile-col-activities">
                             <label>Remark on Activities</label>
-                            <input type="text" class="cb-input" name="remarks_on_other_activities[{{ $sid }}]"
-                                   value="{{ $profile ? $profile->remark_on_other_activities : '' }}" placeholder="Optional…">
+                            <input type="text"
+                                   class="cb-input mob-activities"
+                                   data-sid="{{ $sid }}" data-field="activities"
+                                   value="{{ $profile ? $profile->remark_on_other_activities : '' }}"
+                                   placeholder="Optional…"
+                                   autocomplete="off">
                         </div>
                         <div class="comment-field-group mobile-col-absence">
                             <label>Times Absent</label>
-                            <input type="number" class="cb-input" name="no_of_times_school_absent[{{ $sid }}]"
+                            <input type="number"
+                                   class="cb-input mob-absence"
+                                   data-sid="{{ $sid }}" data-field="absence"
                                    value="{{ $profile ? $profile->no_of_times_school_absent : '' }}"
-                                   min="0" placeholder="0" style="max-width:100px;">
+                                   min="0" placeholder="0"
+                                   style="max-width:100px;"
+                                   autocomplete="off">
                         </div>
                     </div>
                 </div>
@@ -637,7 +663,6 @@ body { font-family: 'DM Sans', sans-serif; }
                 <input type="file" id="signatureFile" accept=".jpg,.jpeg,.png,.pdf" class="file-input-styled">
             </div>
             <div class="save-counter">
-                {{-- Live counters updated by JS --}}
                 <span class="save-counter-pill sc-pill-done" id="counterDone">
                     <i class="ri-checkbox-circle-line"></i>
                     <span id="counterDoneNum">0</span> commented
@@ -683,17 +708,15 @@ body { font-family: 'DM Sans', sans-serif; }
     </div>
 </div>
 
-{{-- ══════════════════ PRE-SUBMIT SUMMARY MODAL ══════════════════ --}}
+{{-- Pre-submit Summary Modal --}}
 <div class="modal fade" id="cbSaveConfirmModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered" style="max-width:500px;">
-        <div class="modal-content" id="cbSaveConfirmContent">
+        <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title"><i class="ri-save-3-line me-2"></i>Review Before Saving</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" style="padding:24px;">
-
-                {{-- Counts --}}
                 <div class="confirm-summary-grid">
                     <div class="confirm-stat-box done">
                         <div class="csb-num" id="confirmDoneNum">0</div>
@@ -704,24 +727,14 @@ body { font-family: 'DM Sans', sans-serif; }
                         <div class="csb-lbl"><i class="ri-time-line me-1"></i>Without Comment</div>
                     </div>
                 </div>
-
-                {{-- Students WITH comments --}}
                 <div id="confirmDoneSection" style="display:none;">
-                    <div class="confirm-section-hdr hdr-done">
-                        <i class="ri-checkbox-circle-fill"></i> Will be saved
-                    </div>
+                    <div class="confirm-section-hdr hdr-done"><i class="ri-checkbox-circle-fill"></i> Will be saved</div>
                     <div class="confirm-student-list" id="confirmDoneList"></div>
                 </div>
-
-                {{-- Students WITHOUT comments --}}
                 <div id="confirmPendingSection" style="display:none;">
-                    <div class="confirm-section-hdr hdr-pending">
-                        <i class="ri-time-line"></i> No comment yet (will be skipped)
-                    </div>
+                    <div class="confirm-section-hdr hdr-pending"><i class="ri-time-line"></i> No comment yet (will be skipped)</div>
                     <div class="confirm-student-list" id="confirmPendingList"></div>
                 </div>
-
-                {{-- Nothing to save warning --}}
                 <div id="confirmNothingMsg" style="display:none;text-align:center;padding:20px 0;">
                     <i class="ri-information-line" style="font-size:36px;color:var(--cb-border);display:block;margin-bottom:10px;"></i>
                     <p style="color:var(--cb-muted);font-size:13px;margin:0;">
@@ -729,7 +742,6 @@ body { font-family: 'DM Sans', sans-serif; }
                         Please enter at least one comment before saving.
                     </p>
                 </div>
-
             </div>
             <div class="modal-footer" style="border:none;padding:0 24px 24px;">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius:10px;">Cancel</button>
@@ -745,12 +757,18 @@ body { font-family: 'DM Sans', sans-serif; }
 (function () {
     'use strict';
 
+    /* ───────────────────────────────────────────────
+       CONFIG
+    ─────────────────────────────────────────────── */
     var SA       = {!! $cbAnalyticsJson !!};
     var SAVE_URL = '{{ route("classbroadsheet.updateComments", [$schoolclassid, $sessionid, $termid]) }}';
-    var CSRF     = document.querySelector('meta[name="csrf-token"]')
+    var CSRF     = (document.querySelector('meta[name="csrf-token"]') || {}).getAttribute
                     ? document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                     : '{{ csrf_token() }}';
 
+    /* ───────────────────────────────────────────────
+       HELPERS
+    ─────────────────────────────────────────────── */
     function esc(str) {
         var d = document.createElement('div');
         d.textContent = str || '';
@@ -759,28 +777,299 @@ body { font-family: 'DM Sans', sans-serif; }
 
     function toast(msg, type) {
         document.querySelectorAll('.cb-toast').forEach(function (t) { t.remove(); });
+        var icons = { success: 'checkbox-circle-fill', error: 'error-warning-fill', info: 'information-fill' };
         var el = document.createElement('div');
-        el.className = 'cb-toast cb-toast-' + (type === 'success' ? 'success' : 'error');
-        el.innerHTML = '<i class="ri-' + (type === 'success' ? 'checkbox-circle-fill' : 'error-warning-fill') + '" style="font-size:18px;flex-shrink:0;"></i> ' + esc(msg);
+        el.className = 'cb-toast cb-toast-' + (type || 'info');
+        el.innerHTML = '<i class="ri-' + (icons[type] || icons.info) + '" style="font-size:18px;flex-shrink:0;"></i> ' + esc(msg);
         document.body.appendChild(el);
         setTimeout(function () { el.remove(); }, 5000);
     }
 
+    /* ───────────────────────────────────────────────
+       CANONICAL DATA LAYER
+       All UI inputs (desktop + mobile) write to hidden
+       canonical fields. Only canonicals are submitted.
+    ─────────────────────────────────────────────── */
+
+    var FIELD_MAP = {
+        teacher:    'c_teacher_',
+        guidance:   'c_guidance_',
+        activities: 'c_activities_',
+        absence:    'c_absence_',
+    };
+
+    function getCanonical(sid, field) {
+        var el = document.getElementById(FIELD_MAP[field] + sid);
+        return el ? el.value : '';
+    }
+
+    function setCanonical(sid, field, value) {
+        var el = document.getElementById(FIELD_MAP[field] + sid);
+        if (el) el.value = value;
+    }
+
+    /* ───────────────────────────────────────────────
+       AUTOSAVE (debounced per-student)
+    ─────────────────────────────────────────────── */
+    var debounceTimers = {};
+    var AUTOSAVE_DELAY = 1200; // ms after last keystroke
+
+    function setChipState(sid, state, text) {
+        ['autosave-' + sid, 'autosave-m-' + sid].forEach(function (id) {
+            var chip = document.getElementById(id);
+            if (!chip) return;
+            chip.className = 'autosave-chip ' + state;
+            chip.textContent = text || '';
+        });
+    }
+
+    function autoSaveStudent(sid) {
+        // Build payload for just this student
+        var fd = new FormData();
+        fd.append('_token', CSRF);
+        fd.append('_method', 'PATCH');
+        fd.append('teacher_comments[' + sid + ']',            getCanonical(sid, 'teacher'));
+        fd.append('guidance_comments[' + sid + ']',           getCanonical(sid, 'guidance'));
+        fd.append('remarks_on_other_activities[' + sid + ']', getCanonical(sid, 'activities'));
+        fd.append('no_of_times_school_absent[' + sid + ']',   getCanonical(sid, 'absence'));
+
+        var sigFile = document.getElementById('signatureFile');
+        if (sigFile && sigFile.files && sigFile.files[0]) {
+            fd.append('signature', sigFile.files[0]);
+        }
+
+        setChipState(sid, 'ac-saving', '⏳ Saving…');
+
+        fetch(SAVE_URL, {
+            method:  'POST',  // POST with _method=PATCH for Laravel
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF },
+            body:    fd,
+        })
+        .then(function (res) {
+            return res.json().then(function (data) {
+                if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
+                return data;
+            });
+        })
+        .then(function (data) {
+            if (data.success) {
+                setChipState(sid, 'ac-saved', '✓ Saved');
+                refreshCommentStatus();
+                // Fade chip back to idle after 3s
+                setTimeout(function () {
+                    setChipState(sid, 'ac-idle', '');
+                }, 3000);
+            } else {
+                setChipState(sid, 'ac-err', '✗ Failed');
+            }
+        })
+        .catch(function (err) {
+            console.error('Autosave error sid=' + sid, err);
+            setChipState(sid, 'ac-err', '✗ Error');
+        });
+    }
+
+    function scheduleAutosave(sid) {
+        if (debounceTimers[sid]) clearTimeout(debounceTimers[sid]);
+        debounceTimers[sid] = setTimeout(function () {
+            autoSaveStudent(sid);
+        }, AUTOSAVE_DELAY);
+    }
+
+    /* ───────────────────────────────────────────────
+       SYNC HANDLER
+       When any visible input changes:
+       1. Write value to canonical hidden field
+       2. Mirror to the twin viewport input (if visible)
+       3. Refresh UI state
+       4. Schedule autosave
+    ─────────────────────────────────────────────── */
+    function onInputChange(e) {
+        var inp   = e.target;
+        var sid   = inp.getAttribute('data-sid');
+        var field = inp.getAttribute('data-field');
+        if (!sid || !field) return;
+
+        var val = inp.value;
+
+        // 1. Write canonical
+        setCanonical(sid, field, val);
+
+        // 2. Mirror to twin (desktop ↔ mobile)
+        var isDesktop = inp.classList.contains('desk-' + field);
+        var isMobile  = inp.classList.contains('mob-'  + field);
+        var twinClass = isDesktop ? 'mob-' + field : 'desk-' + field;
+        document.querySelectorAll('.' + twinClass + '[data-sid="' + sid + '"]').forEach(function (twin) {
+            if (twin !== inp) twin.value = val;
+        });
+
+        // 3. Refresh visual state
+        refreshCommentStatusForStudent(sid);
+
+        // 4. Autosave
+        scheduleAutosave(sid);
+    }
+
+    /* ───────────────────────────────────────────────
+       COMMENT STATUS (per-student)
+    ─────────────────────────────────────────────── */
+    function refreshCommentStatusForStudent(sid) {
+        var hasVal = getCanonical(sid, 'teacher').trim() !== '';
+
+        // Status badges (desktop + mobile)
+        ['status-' + sid, 'status-m-' + sid].forEach(function (id) {
+            var badge = document.getElementById(id);
+            if (!badge) return;
+            badge.textContent = hasVal ? '✓ Commented' : '○ No comment';
+            badge.className   = 'comment-status-dot ' + (hasVal ? 'dot-saved' : 'dot-unsaved');
+        });
+
+        // Input border highlight on teacher fields
+        document.querySelectorAll('.desk-teacher[data-sid="' + sid + '"], .mob-teacher[data-sid="' + sid + '"]').forEach(function (inp) {
+            inp.classList.toggle('has-value', hasVal);
+        });
+
+        // Row/card left-border
+        document.querySelectorAll('[data-student-id="' + sid + '"]').forEach(function (row) {
+            row.classList.toggle('row-has-comment',  hasVal);
+            row.classList.toggle('row-no-comment',   !hasVal);
+            row.classList.toggle('card-has-comment', hasVal);
+            row.classList.toggle('card-no-comment',  !hasVal);
+        });
+    }
+
+    function refreshCommentStatus() {
+        var done = 0, pending = 0;
+        document.querySelectorAll('.cb-student-row').forEach(function (row) {
+            var sid = row.getAttribute('data-student-id');
+            if (!sid) return;
+            if (getCanonical(sid, 'teacher').trim() !== '') done++;
+            else pending++;
+            refreshCommentStatusForStudent(sid);
+        });
+        var dNum = document.getElementById('counterDoneNum');
+        var pNum = document.getElementById('counterPendingNum');
+        if (dNum) dNum.textContent = done;
+        if (pNum) pNum.textContent = pending;
+    }
+
+    /* ───────────────────────────────────────────────
+       FULL SAVE (Save All button → confirm modal → POST)
+    ─────────────────────────────────────────────── */
+    function doSaveAll() {
+        var saveBtn    = document.getElementById('saveBtn');
+        var savingText = document.getElementById('savingText');
+        var origHtml   = saveBtn.innerHTML;
+
+        saveBtn.disabled  = true;
+        saveBtn.innerHTML = '<i class="spin ri-loader-4-line"></i> Saving…';
+        if (savingText) savingText.style.display = 'inline-flex';
+
+        var fd = new FormData(document.getElementById('commentsForm'));
+        // _method=PATCH is already a hidden field in the form
+        if (!fd.get('_token')) fd.set('_token', CSRF);
+
+        var sigFile = document.getElementById('signatureFile');
+        if (sigFile && sigFile.files && sigFile.files[0]) {
+            fd.set('signature', sigFile.files[0]);
+        }
+
+        fetch(SAVE_URL, {
+            method:  'POST',
+            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF },
+            body:    fd,
+        })
+        .then(function (res) {
+            return res.json().then(function (data) {
+                if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
+                return data;
+            });
+        })
+        .then(function (data) {
+            if (data.success) {
+                toast(data.message || 'Saved successfully!', 'success');
+                refreshCommentStatus();
+            } else {
+                toast(data.message || 'Save failed.', 'error');
+            }
+        })
+        .catch(function (err) {
+            console.error('Save All error:', err);
+            toast('Error: ' + err.message, 'error');
+        })
+        .finally(function () {
+            saveBtn.disabled  = false;
+            saveBtn.innerHTML = origHtml;
+            if (savingText) savingText.style.display = 'none';
+        });
+    }
+
+    /* ───────────────────────────────────────────────
+       CONFIRM MODAL BUILDER
+    ─────────────────────────────────────────────── */
+    function buildConfirmModal() {
+        var doneNames = [], pendingNames = [];
+
+        document.querySelectorAll('.cb-student-row').forEach(function (row) {
+            var sid  = row.getAttribute('data-student-id');
+            var name = row.getAttribute('data-student-name') || sid;
+            if (getCanonical(sid, 'teacher').trim() !== '') doneNames.push(name);
+            else pendingNames.push(name);
+        });
+
+        document.getElementById('confirmDoneNum').textContent    = doneNames.length;
+        document.getElementById('confirmPendingNum').textContent  = pendingNames.length;
+
+        var doneSection = document.getElementById('confirmDoneSection');
+        var doneList    = document.getElementById('confirmDoneList');
+        if (doneNames.length > 0) {
+            doneList.innerHTML = doneNames.map(function (n) {
+                return '<div class="csl-item"><span class="csl-dot csl-dot-done"></span>' + esc(n) + '</div>';
+            }).join('');
+            doneSection.style.display = '';
+        } else {
+            doneSection.style.display = 'none';
+        }
+
+        var pendingSection = document.getElementById('confirmPendingSection');
+        var pendingList    = document.getElementById('confirmPendingList');
+        if (pendingNames.length > 0) {
+            pendingList.innerHTML = pendingNames.map(function (n) {
+                return '<div class="csl-item"><span class="csl-dot csl-dot-pending"></span>' + esc(n) + '</div>';
+            }).join('');
+            pendingSection.style.display = '';
+        } else {
+            pendingSection.style.display = 'none';
+        }
+
+        var nothingMsg = document.getElementById('confirmNothingMsg');
+        var proceedBtn = document.getElementById('confirmProceedBtn');
+        if (doneNames.length === 0) {
+            nothingMsg.style.display = '';
+            proceedBtn.style.display = 'none';
+        } else {
+            nothingMsg.style.display = 'none';
+            proceedBtn.style.display = '';
+        }
+    }
+
+    /* ───────────────────────────────────────────────
+       DOM READY
+    ─────────────────────────────────────────────── */
     document.addEventListener('DOMContentLoaded', function () {
 
-        /* ── 1. COLUMN TOGGLE ────────────────────────────────────── */
+        /* 1. COLUMN TOGGLE */
         document.querySelectorAll('.toggle-chip').forEach(function (chip) {
             chip.addEventListener('click', function () {
                 var key    = this.getAttribute('data-colkey');
-                var isActive = this.classList.toggle('active');
-                var show   = isActive ? '' : 'none';
+                var show   = this.classList.toggle('active') ? '' : 'none';
                 document.querySelectorAll('.cbcol-' + key).forEach(function (el) { el.style.display = show; });
                 var mobileClass = { guidance: '.mobile-col-guidance', activities: '.mobile-col-activities', absence: '.mobile-col-absence' }[key];
                 if (mobileClass) document.querySelectorAll(mobileClass).forEach(function (el) { el.style.display = show; });
             });
         });
 
-        /* ── 2. SEARCH ───────────────────────────────────────────── */
+        /* 2. SEARCH */
         var searchEl = document.getElementById('searchInput');
         if (searchEl) {
             searchEl.addEventListener('input', function () {
@@ -792,7 +1081,7 @@ body { font-family: 'DM Sans', sans-serif; }
             });
         }
 
-        /* ── 3. IMAGE ZOOM ───────────────────────────────────────── */
+        /* 3. IMAGE ZOOM */
         var imgModalEl = document.getElementById('cbImgZoomModal');
         var imgModal   = (imgModalEl && typeof bootstrap !== 'undefined') ? new bootstrap.Modal(imgModalEl) : null;
 
@@ -837,7 +1126,7 @@ body { font-family: 'DM Sans', sans-serif; }
             });
         }
 
-        /* ── 4. GRADE POPUP ──────────────────────────────────────── */
+        /* 4. GRADE POPUP */
         var gpop      = document.getElementById('cbGradePopup');
         var gpopBody  = document.getElementById('gpopBody');
         var gpopTitle = document.getElementById('gpopTitle');
@@ -887,8 +1176,9 @@ body { font-family: 'DM Sans', sans-serif; }
             activeSid = sid;
         }
 
-        document.getElementById('gpopCloseBtn')?.addEventListener('click', closeGradePop);
-        if (backdrop) backdrop.addEventListener('click', closeGradePop);
+        var gpopCloseBtn = document.getElementById('gpopCloseBtn');
+        if (gpopCloseBtn) gpopCloseBtn.addEventListener('click', closeGradePop);
+        if (backdrop)     backdrop.addEventListener('click', closeGradePop);
         document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeGradePop(); });
         document.addEventListener('click', function (e) {
             var btn = e.target.closest('.grade-trigger-btn');
@@ -899,7 +1189,7 @@ body { font-family: 'DM Sans', sans-serif; }
             closeGradePop(); openGradePop(sid, name, btn);
         });
 
-        /* ── 5. STAT CARDS ───────────────────────────────────────── */
+        /* 5. STAT CARDS */
         (function () {
             var vals = Object.values(SA);
             if (!vals.length) return;
@@ -913,127 +1203,35 @@ body { font-family: 'DM Sans', sans-serif; }
                 var avg = SA[sid].cum_average || 0;
                 if (avg > topAvg) {
                     topAvg = avg;
-                    var el = row.querySelector('.student-name-text');
-                    if (el) { var p = el.textContent.trim().split(' '); topName = p[0] + (p[1] ? ' ' + p[1][0] + '.' : ''); }
+                    var name = row.getAttribute('data-student-name') || '';
+                    var p = name.trim().split(' ');
+                    topName = p[0] + (p[1] ? ' ' + p[1][0] + '.' : '');
                 }
             });
             var topEl = document.getElementById('statTop');
             if (topEl) topEl.textContent = topName;
         })();
 
-        /* ── 6. LIVE COMMENT STATUS ─────────────────────────────── */
-        // Refreshes the status badge + row class + save-bar counter
-        // whenever a teacher-comment field is typed into.
-
-        function refreshCommentStatus() {
-            var done = 0, pending = 0;
-            document.querySelectorAll('.cb-student-row').forEach(function (row) {
-                if (window.getComputedStyle(row).display === 'none') return; // skip hidden (search)
-                var sid    = row.getAttribute('data-student-id');
-                var inp    = row.querySelector('.teacher-comment[data-sid="' + sid + '"]');
-                var hasVal = inp && inp.value.trim() !== '';
-
-                // Update status badge (desktop + mobile both)
-                [
-                    document.getElementById('status-' + sid),
-                    document.getElementById('status-m-' + sid),
-                ].forEach(function (badge) {
-                    if (!badge) return;
-                    badge.textContent = hasVal ? '✓ Commented' : '○ No comment';
-                    badge.className   = 'comment-status-dot ' + (hasVal ? 'dot-saved' : 'dot-unsaved');
-                });
-
-                // Input border
-                if (inp) inp.classList.toggle('has-value', hasVal);
-
-                // Row/card left-border colour
-                row.classList.toggle('row-has-comment',  hasVal);
-                row.classList.toggle('row-no-comment',   !hasVal);
-                row.classList.toggle('card-has-comment', hasVal);
-                row.classList.toggle('card-no-comment',  !hasVal);
-
-                if (hasVal) done++; else pending++;
+        /* 6. ATTACH INPUT LISTENERS — all visible inputs (desktop + mobile) */
+        var fieldSelectors = [
+            '.desk-teacher', '.desk-guidance', '.desk-activities', '.desk-absence',
+            '.mob-teacher',  '.mob-guidance',  '.mob-activities',  '.mob-absence',
+        ];
+        fieldSelectors.forEach(function (sel) {
+            document.querySelectorAll(sel).forEach(function (inp) {
+                inp.addEventListener('input', onInputChange);
             });
-
-            // Save-bar counters
-            var dNum = document.getElementById('counterDoneNum');
-            var pNum = document.getElementById('counterPendingNum');
-            if (dNum) dNum.textContent = done;
-            if (pNum) pNum.textContent = pending;
-        }
-
-        // Initial run
-        refreshCommentStatus();
-
-        // Live updates
-        document.querySelectorAll('.teacher-comment').forEach(function (inp) {
-            inp.addEventListener('input', refreshCommentStatus);
         });
 
-        /* ── 7. PRE-SUBMIT SUMMARY MODAL ─────────────────────────── */
+        /* 7. INITIAL STATUS REFRESH */
+        refreshCommentStatus();
+
+        /* 8. SAVE ALL BUTTON → confirm modal */
         var saveConfirmModalEl = document.getElementById('cbSaveConfirmModal');
-        var saveConfirmModal   = saveConfirmModalEl && typeof bootstrap !== 'undefined'
+        var saveConfirmModal   = (saveConfirmModalEl && typeof bootstrap !== 'undefined')
             ? new bootstrap.Modal(saveConfirmModalEl) : null;
 
-        function buildConfirmModal() {
-            var doneNames    = [];
-            var pendingNames = [];
-
-            document.querySelectorAll('.cb-student-row').forEach(function (row) {
-                var sid  = row.getAttribute('data-student-id');
-                var name = row.getAttribute('data-student-name') || sid;
-                var inp  = row.querySelector('.teacher-comment[data-sid="' + sid + '"]');
-                if (inp && inp.value.trim() !== '') {
-                    doneNames.push(name);
-                } else {
-                    pendingNames.push(name);
-                }
-            });
-
-            // Counts
-            document.getElementById('confirmDoneNum').textContent    = doneNames.length;
-            document.getElementById('confirmPendingNum').textContent  = pendingNames.length;
-
-            // "Will be saved" list
-            var doneSection = document.getElementById('confirmDoneSection');
-            var doneList    = document.getElementById('confirmDoneList');
-            if (doneNames.length > 0) {
-                doneList.innerHTML = doneNames.map(function (n) {
-                    return '<div class="csl-item"><span class="csl-dot csl-dot-done"></span>' + esc(n) + '</div>';
-                }).join('');
-                doneSection.style.display = '';
-            } else {
-                doneSection.style.display = 'none';
-            }
-
-            // "Will be skipped" list
-            var pendingSection = document.getElementById('confirmPendingSection');
-            var pendingList    = document.getElementById('confirmPendingList');
-            if (pendingNames.length > 0) {
-                pendingList.innerHTML = pendingNames.map(function (n) {
-                    return '<div class="csl-item"><span class="csl-dot csl-dot-pending"></span>' + esc(n) + '</div>';
-                }).join('');
-                pendingSection.style.display = '';
-            } else {
-                pendingSection.style.display = 'none';
-            }
-
-            // Nothing to save message
-            var nothingMsg   = document.getElementById('confirmNothingMsg');
-            var proceedBtn   = document.getElementById('confirmProceedBtn');
-            if (doneNames.length === 0) {
-                nothingMsg.style.display  = '';
-                proceedBtn.style.display  = 'none';
-            } else {
-                nothingMsg.style.display  = 'none';
-                proceedBtn.style.display  = '';
-            }
-        }
-
-        // "Save All Changes" now opens the confirm modal first
-        var saveBtn    = document.getElementById('saveBtn');
-        var savingText = document.getElementById('savingText');
-
+        var saveBtn = document.getElementById('saveBtn');
         if (saveBtn) {
             saveBtn.addEventListener('click', function () {
                 buildConfirmModal();
@@ -1041,66 +1239,12 @@ body { font-family: 'DM Sans', sans-serif; }
             });
         }
 
-        /* ── 8. ACTUAL SAVE (triggered by confirm modal) ─────────── */
+        /* 9. CONFIRM & SAVE */
         var proceedBtn = document.getElementById('confirmProceedBtn');
         if (proceedBtn) {
             proceedBtn.addEventListener('click', function () {
                 if (saveConfirmModal) saveConfirmModal.hide();
-                doSave();
-            });
-        }
-
-        function doSave() {
-            var origHtml      = saveBtn.innerHTML;
-            saveBtn.disabled  = true;
-            saveBtn.innerHTML = '<i class="spin ri-loader-4-line"></i> Saving…';
-            if (savingText) savingText.style.display = 'inline-flex';
-
-            var form = document.getElementById('commentsForm');
-            var fd   = new FormData(form);
-            if (!fd.get('_token')) fd.set('_token', CSRF);
-
-            var sigFile = document.getElementById('signatureFile');
-            if (sigFile && sigFile.files && sigFile.files[0]) {
-                fd.set('signature', sigFile.files[0]);
-            }
-
-            fetch(SAVE_URL, {
-                method:  'POST',
-                headers: {
-                    'Accept':           'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN':     CSRF,
-                },
-                body: fd,
-            })
-            .then(function (res) {
-                if (!res.ok) {
-                    return res.json().catch(function () {
-                        throw new Error('HTTP ' + res.status + ' ' + res.statusText);
-                    }).then(function (d) {
-                        throw new Error(d.message || 'HTTP ' + res.status);
-                    });
-                }
-                return res.json();
-            })
-            .then(function (data) {
-                if (data.success) {
-                    toast(data.message || 'Saved successfully!', 'success');
-                    // Refresh status badges after save
-                    refreshCommentStatus();
-                } else {
-                    toast(data.message || 'Save failed.', 'error');
-                }
-            })
-            .catch(function (err) {
-                console.error('ClassBroadsheet save error:', err);
-                toast('Error: ' + err.message, 'error');
-            })
-            .finally(function () {
-                saveBtn.disabled  = false;
-                saveBtn.innerHTML = origHtml;
-                if (savingText) savingText.style.display = 'none';
+                doSaveAll();
             });
         }
 
