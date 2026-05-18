@@ -146,7 +146,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     gap: 8px;
 }
 .btn-create {
-    background: var(--cb-teal);
+    background: linear-gradient(135deg, var(--cb-teal), #0f766e);
     color: white;
     border: none;
     padding: 8px 20px;
@@ -160,7 +160,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     gap: 8px;
 }
 .btn-create:hover {
-    background: #0f766e;
     transform: translateY(-1px);
     box-shadow: 0 4px 12px rgba(13,148,136,0.3);
 }
@@ -169,22 +168,25 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .cb-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 12.5px;
+    font-size: 13px;
 }
 .cb-table thead th {
-    background: var(--cb-navy);
+    background: linear-gradient(135deg, var(--cb-navy), #1e4a7e);
     color: #fff;
-    padding: 12px 16px;
+    padding: 14px 16px;
     font-weight: 600;
-    font-size: 11.5px;
+    font-size: 12px;
     white-space: nowrap;
     text-align: left;
-    border-right: 1px solid rgba(255,255,255,.08);
+    letter-spacing: 0.3px;
 }
+.cb-table thead th:first-child { border-top-left-radius: 0; }
+.cb-table thead th:last-child { border-top-right-radius: 0; }
 .cb-table tbody td {
-    padding: 12px 16px;
+    padding: 14px 16px;
     vertical-align: middle;
     border-bottom: 1px solid var(--cb-border);
+    color: #334155;
 }
 .cb-table tbody tr:hover td {
     background: #f0fdf9;
@@ -193,56 +195,142 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     border-bottom: none;
 }
 
-/* Button Styles */
-.btn-icon {
-    padding: 6px 12px;
-    border-radius: 8px;
-    font-size: 11px;
+/* Enhanced Action Buttons */
+.action-group {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: 10px;
+    font-size: 12px;
     font-weight: 600;
     text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    transition: all 0.2s;
+    transition: all 0.25s ease;
+    cursor: pointer;
+    border: none;
+    position: relative;
+    overflow: hidden;
 }
-.btn-icon i {
-    font-size: 13px;
+.action-btn i {
+    font-size: 14px;
+    transition: transform 0.2s ease;
 }
-.btn-primary-icon {
-    background: #e0f2fe;
-    color: #0369a1;
+.action-btn:hover i {
+    transform: scale(1.1);
 }
-.btn-primary-icon:hover {
-    background: #0ea5e9;
-    color: white;
-    transform: translateY(-2px);
+.action-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.4s, height 0.4s;
 }
-.btn-broadsheet {
-    background: #dcfce7;
-    color: #15803d;
-}
-.btn-broadsheet:hover {
-    background: #22c55e;
-    color: white;
-    transform: translateY(-2px);
+.action-btn:hover::before {
+    width: 200px;
+    height: 200px;
 }
 
-/* Badge */
-.cb-badge {
+/* Students Button */
+.btn-students {
+    background: linear-gradient(135deg, #e0f2fe, #bae6fd);
+    color: #0369a1;
+    border: 1px solid #7dd3fc;
+}
+.btn-students:hover {
+    background: linear-gradient(135deg, #0ea5e9, #0284c7);
+    color: white;
+    border-color: #0ea5e9;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(14,165,233,0.25);
+}
+
+/* Broadsheet Button */
+.btn-broadsheet {
+    background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+    color: #15803d;
+    border: 1px solid #86efac;
+}
+.btn-broadsheet:hover {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+    border-color: #22c55e;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(34,197,94,0.25);
+}
+
+/* Term Badge */
+.term-badge {
     display: inline-flex;
     align-items: center;
+    gap: 6px;
     padding: 4px 10px;
     border-radius: 20px;
     font-size: 11px;
     font-weight: 600;
-}
-.badge-current {
-    background: #dcfce7;
-    color: #15803d;
-}
-.badge-past {
     background: #f1f5f9;
-    color: #64748b;
+    color: #475569;
+}
+.term-badge i {
+    font-size: 11px;
+}
+.term-1 { background: #dbeafe; color: #1e40af; }
+.term-2 { background: #dcfce7; color: #166534; }
+.term-3 { background: #fef3c7; color: #92400e; }
+
+/* Class Badge */
+.class-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+    color: var(--cb-navy);
+    border: 1px solid var(--cb-border);
+}
+.class-badge i {
+    color: var(--cb-teal);
+    font-size: 14px;
+}
+
+/* Arm Badge */
+.arm-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 45px;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 11px;
+    font-weight: 700;
+    background: var(--cb-teal);
+    color: white;
+    text-transform: uppercase;
+}
+
+/* Session Badge */
+.session-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 500;
+    background: #e0e7ff;
+    color: #3730a3;
 }
 
 /* Empty State */
@@ -272,18 +360,18 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     align-items: center;
     justify-content: flex-end;
     gap: 8px;
-    margin-top: 20px;
+    margin-top: 10px;
 }
 .page-item {
     display: inline-flex;
-    padding: 8px 12px;
+    padding: 8px 14px;
     border: 1px solid var(--cb-border);
-    border-radius: 8px;
+    border-radius: 10px;
     color: var(--cb-navy);
     text-decoration: none;
     font-size: 12px;
     font-weight: 500;
-    transition: all 0.15s;
+    transition: all 0.2s;
     background: white;
     cursor: pointer;
 }
@@ -291,6 +379,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     background: var(--cb-teal);
     color: white;
     border-color: var(--cb-teal);
+    transform: translateY(-1px);
 }
 .page-item.active {
     background: var(--cb-teal);
@@ -300,6 +389,14 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .page-item.disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+/* History Table */
+.history-table {
+    background: #f8fafc;
+}
+.history-table tbody tr:hover td {
+    background: #f1f5f9;
 }
 
 /* Responsive */
@@ -312,6 +409,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         text-align: right;
         padding-left: 50%;
         position: relative;
+        border-bottom: 1px solid var(--cb-border);
     }
     .cb-table tbody td:before {
         content: attr(data-label);
@@ -319,9 +417,63 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         left: 16px;
         width: 45%;
         text-align: left;
-        font-weight: 600;
+        font-weight: 700;
         color: var(--cb-navy);
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
+    .action-group {
+        justify-content: flex-end;
+    }
+    .action-btn {
+        padding: 6px 12px;
+        font-size: 11px;
+    }
+}
+
+/* Animation */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+.cb-card {
+    animation: fadeInUp 0.4s ease;
+}
+
+/* Tooltip */
+[data-tooltip] {
+    position: relative;
+    cursor: pointer;
+}
+[data-tooltip]:before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 5px 10px;
+    background: #1e293b;
+    color: white;
+    font-size: 11px;
+    font-weight: 500;
+    border-radius: 6px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s;
+    z-index: 10;
+    margin-bottom: 8px;
+}
+[data-tooltip]:hover:before {
+    opacity: 1;
+    visibility: visible;
 }
 </style>
 
@@ -336,6 +488,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     <div class="meta-pills">
         <span class="cb-meta-pill"><i class="ri-user-line"></i>{{ Auth::user()->name }}</span>
         <span class="cb-meta-pill"><i class="ri-calendar-line"></i>{{ date('F j, Y') }}</span>
+        <span class="cb-meta-pill"><i class="ri-time-line"></i>{{ date('g:i A') }}</span>
     </div>
 </div>
 
@@ -354,15 +507,15 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             <div class="stat-accent" style="background:linear-gradient(90deg,var(--cb-sky),#38bdf8);"></div>
             <div class="stat-ico"><i class="ri-group-line"></i></div>
             <div class="stat-value text-info" id="totalStudents">—</div>
-            <div class="stat-label">Total Students</div>
+            <div class="stat-label">Total Students Enrolled</div>
         </div>
     </div>
     <div class="col-md-4 col-6">
         <div class="cb-stat">
             <div class="stat-accent" style="background:linear-gradient(90deg,var(--cb-amber),#fcd34d);"></div>
-            <div class="stat-ico"><i class="ri-time-line"></i></div>
+            <div class="stat-ico"><i class="ri-history-line"></i></div>
             <div class="stat-value text-warning">{{ $myclasshistory->count() }}</div>
-            <div class="stat-label">Class History</div>
+            <div class="stat-label">Previous Assignments</div>
         </div>
     </div>
 </div>
@@ -372,8 +525,10 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     <div class="cb-card-header">
         <h5>
             <i class="ri-table-alt-line" style="color:var(--cb-teal)"></i>
-            My Assigned Classes
-            <span class="cb-badge badge-current ms-2">{{ $myclass->total() }} Classes</span>
+            My Current Class Assignments
+            <span class="cb-badge" style="background: var(--cb-teal); color: white; border-radius: 20px; padding: 2px 10px; font-size: 11px;">
+                {{ $myclass->total() }} Classes
+            </span>
         </h5>
         @can('Create my-class')
         <button type="button" class="btn-create" data-bs-toggle="modal" data-bs-target="#addClassModal">
@@ -386,32 +541,78 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         <table class="cb-table">
             <thead>
                 <tr>
-                    <th>#</th>
+                    <th style="width: 50px;">#</th>
                     <th>Class</th>
-                    <th>Arm</th>
-                    <th>Term</th>
-                    <th>Session</th>
-                    <th>Students</th>
-                    <th>Broadsheet</th>
+                    <th style="width: 80px;">Arm</th>
+                    <th style="width: 100px;">Term</th>
+                    <th style="width: 130px;">Session</th>
+                    <th style="width: 140px;">Students</th>
+                    <th style="width: 180px;">Broadsheet</th>
                 </tr>
             </thead>
             <tbody>
                 @php $i = ($myclass->currentPage() - 1) * $myclass->perPage() @endphp
                 @forelse ($myclass as $sc)
+                @php
+                    // Determine term badge class
+                    $termClass = 'term-1';
+                    if(stripos($sc->term, '2') !== false) $termClass = 'term-2';
+                    if(stripos($sc->term, '3') !== false) $termClass = 'term-3';
+
+                    // Get student count for this class
+                    $studentCount = \App\Models\Studentclass::where('schoolclassid', $sc->schoolclassid)
+                        ->where('sessionid', $sc->sessionid)
+                        ->count();
+                @endphp
                 <tr>
-                    <td data-label="#">{{ ++$i }}</td>
-                    <td data-label="Class"><strong>{{ $sc->schoolclass }}</strong></td>
-                    <td data-label="Arm"><span class="cb-badge badge-current">{{ $sc->schoolarm }}</span></td>
-                    <td data-label="Term">{{ $sc->term }}</td>
-                    <td data-label="Session">{{ $sc->session }}</td>
+                    <td data-label="#" style="font-weight: 600; color: var(--cb-navy);">{{ ++$i }}</td>
+
+                    <td data-label="Class">
+                        <div class="class-badge">
+                            <i class="ri-building-line"></i>
+                            {{ $sc->schoolclass }}
+                        </div>
+                    </td>
+
+                    <td data-label="Arm">
+                        <span class="arm-badge">{{ $sc->schoolarm }}</span>
+                    </td>
+
+                    <td data-label="Term">
+                        <span class="term-badge {{ $termClass }}">
+                            <i class="ri-calendar-line"></i>
+                            {{ $sc->term }}
+                        </span>
+                    </td>
+
+                    <td data-label="Session">
+                        <span class="session-badge">
+                            <i class="ri-calendar-event-line"></i>
+                            {{ $sc->session }}
+                        </span>
+                    </td>
+
                     <td data-label="Students">
-                        <a href="{{ route('viewstudent', [$sc->schoolclassid, $sc->termid, $sc->sessionid]) }}" class="btn-icon btn-primary-icon">
-                            <i class="ri-group-line"></i> View Students
+                        <a href="{{ route('viewstudent', [$sc->schoolclassid, $sc->termid, $sc->sessionid]) }}"
+                           class="action-btn btn-students"
+                           data-tooltip="View all students in {{ $sc->schoolclass }} {{ $sc->schoolarm }}">
+                            <i class="ri-group-line"></i>
+                            <span>View Students</span>
+                            <span style="background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 20px; font-size: 10px; margin-left: 4px;">
+                                {{ $studentCount }}
+                            </span>
                         </a>
                     </td>
+
                     <td data-label="Broadsheet">
-                        <a href="{{ route('classbroadsheet.viewcomments', [$sc->schoolclassid, $sc->sessionid, $sc->termid]) }}" class="btn-icon btn-broadsheet">
-                            <i class="ri-file-text-line"></i> View Broadsheet ({{ $sc->term }})
+                        <a href="{{ route('classbroadsheet.viewcomments', [$sc->schoolclassid, $sc->sessionid, $sc->termid]) }}"
+                           class="action-btn btn-broadsheet"
+                           data-tooltip="View broadsheet for {{ $sc->term }} {{ $sc->session }}">
+                            <i class="ri-file-text-line"></i>
+                            <span>Broadsheet</span>
+                            <span style="background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 20px; font-size: 10px; margin-left: 4px;">
+                                {{ $sc->term }}
+                            </span>
                         </a>
                     </td>
                 </tr>
@@ -433,22 +634,26 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
     <!-- Pagination -->
     @if($myclass->total() > 0)
-    <div style="padding: 20px 24px; border-top: 1px solid var(--cb-border);">
+    <div style="padding: 20px 24px; border-top: 1px solid var(--cb-border); background: #fafbfc;">
         <div class="row align-items-center">
             <div class="col-sm">
                 <div class="text-muted" style="font-size: 12px;">
-                    Showing <span class="fw-semibold">{{ $myclass->count() }}</span> of <span class="fw-semibold">{{ $myclass->total() }}</span> classes
+                    <i class="ri-information-line me-1"></i>
+                    Showing <span class="fw-semibold text-dark">{{ $myclass->count() }}</span> of
+                    <span class="fw-semibold text-dark">{{ $myclass->total() }}</span> classes
                 </div>
             </div>
             <div class="col-sm-auto">
                 <div class="pagination-wrap">
                     @if($myclass->onFirstPage())
-                        <span class="page-item disabled">Prev</span>
+                        <span class="page-item disabled"><i class="ri-arrow-left-s-line"></i> Prev</span>
                     @else
-                        <a class="page-item" href="{{ $myclass->previousPageUrl() }}">Prev</a>
+                        <a class="page-item" href="{{ $myclass->previousPageUrl() }}">
+                            <i class="ri-arrow-left-s-line"></i> Prev
+                        </a>
                     @endif
 
-                    @foreach ($myclass->getUrlRange(1, $myclass->lastPage()) as $page => $url)
+                    @foreach ($myclass->getUrlRange(max(1, $myclass->currentPage() - 2), min($myclass->lastPage(), $myclass->currentPage() + 2)) as $page => $url)
                         @if($page == $myclass->currentPage())
                             <span class="page-item active">{{ $page }}</span>
                         @else
@@ -457,9 +662,13 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                     @endforeach
 
                     @if($myclass->hasMorePages())
-                        <a class="page-item" href="{{ $myclass->nextPageUrl() }}">Next</a>
+                        <a class="page-item" href="{{ $myclass->nextPageUrl() }}">
+                            Next <i class="ri-arrow-right-s-line"></i>
+                        </a>
                     @else
-                        <span class="page-item disabled">Next</span>
+                        <span class="page-item disabled">
+                            Next <i class="ri-arrow-right-s-line"></i>
+                        </span>
                     @endif
                 </div>
             </div>
@@ -472,29 +681,62 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 @if($myclasshistory->count() > 0)
 <div class="cb-card mt-4">
     <div class="cb-card-header">
-        <h5><i class="ri-history-line" style="color:var(--cb-teal)"></i> Class History</h5>
+        <h5>
+            <i class="ri-history-line" style="color:var(--cb-teal)"></i>
+            Previous Class Assignments (History)
+            <span class="cb-badge" style="background: #94a3b8; color: white; border-radius: 20px; padding: 2px 10px; font-size: 11px;">
+                {{ $myclasshistory->count() }} Records
+            </span>
+        </h5>
     </div>
     <div style="overflow-x: auto;">
-        <table class="cb-table">
+        <table class="cb-table history-table">
             <thead>
                 <tr>
-                    <th>#</th>
+                    <th style="width: 50px;">#</th>
                     <th>Class</th>
-                    <th>Arm</th>
-                    <th>Term</th>
-                    <th>Session</th>
-                    <th>Updated</th>
+                    <th style="width: 80px;">Arm</th>
+                    <th style="width: 100px;">Term</th>
+                    <th style="width: 130px;">Session</th>
+                    <th style="width: 120px;">Last Updated</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach ($myclasshistory as $index => $history)
+                @php
+                    $termClass = 'term-1';
+                    if(stripos($history->term, '2') !== false) $termClass = 'term-2';
+                    if(stripos($history->term, '3') !== false) $termClass = 'term-3';
+                @endphp
                 <tr>
-                    <td data-label="#">{{ $index + 1 }}</td>
-                    <td data-label="Class"><strong>{{ $history->schoolclass }}</strong></td>
-                    <td data-label="Arm"><span class="cb-badge badge-past">{{ $history->schoolarm }}</span></td>
-                    <td data-label="Term">{{ $history->term }}</td>
-                    <td data-label="Session">{{ $history->session }}</td>
-                    <td data-label="Updated">{{ $history->updated_at->format('d M Y') }}</td>
+                    <td data-label="#" style="font-weight: 600; color: var(--cb-muted);">{{ $index + 1 }}</td>
+                    <td data-label="Class">
+                        <div class="class-badge" style="background: #f1f5f9;">
+                            <i class="ri-building-line"></i>
+                            {{ $history->schoolclass }}
+                        </div>
+                    </td>
+                    <td data-label="Arm">
+                        <span class="arm-badge" style="background: #94a3b8;">{{ $history->schoolarm }}</span>
+                    </td>
+                    <td data-label="Term">
+                        <span class="term-badge {{ $termClass }}" style="opacity: 0.8;">
+                            <i class="ri-calendar-line"></i>
+                            {{ $history->term }}
+                        </span>
+                    </td>
+                    <td data-label="Session">
+                        <span class="session-badge" style="background: #e2e8f0; color: #475569;">
+                            <i class="ri-calendar-event-line"></i>
+                            {{ $history->session }}
+                        </span>
+                    </td>
+                    <td data-label="Last Updated">
+                        <span style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #64748b;">
+                            <i class="ri-time-line"></i>
+                            {{ $history->updated_at->format('d M Y') }}
+                        </span>
+                    </td>
                 </tr>
                 @endforeach
             </tbody>
@@ -506,22 +748,70 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 </div></div></div>
 
 <script>
-// Calculate total students
-var totalStudents = 0;
-@foreach($myclass as $sc)
-    @php
-        $studentCount = \App\Models\Studentclass::where('schoolclassid', $sc->schoolclassid)
-            ->where('sessionid', $sc->sessionid)
-            ->count();
-    @endphp
-    totalStudents += {{ $studentCount }};
-@endforeach
-document.getElementById('totalStudents').textContent = totalStudents;
+// Calculate and display total students across all assigned classes
+document.addEventListener('DOMContentLoaded', function() {
+    var totalStudents = 0;
 
-// Toast notification helper (if needed)
-function showToast(message, type) {
-    // Simple alert for now, can be enhanced
-    console.log(message);
+    @foreach($myclass as $sc)
+        @php
+            $studentCount = \App\Models\Studentclass::where('schoolclassid', $sc->schoolclassid)
+                ->where('sessionid', $sc->sessionid)
+                ->count();
+        @endphp
+        totalStudents += {{ $studentCount }};
+    @endforeach
+
+    var totalStudentsEl = document.getElementById('totalStudents');
+    if (totalStudentsEl) {
+        totalStudentsEl.textContent = totalStudents;
+        // Add animation
+        totalStudentsEl.style.opacity = '0';
+        totalStudentsEl.style.transform = 'scale(0.8)';
+        setTimeout(function() {
+            totalStudentsEl.style.transition = 'all 0.3s ease';
+            totalStudentsEl.style.opacity = '1';
+            totalStudentsEl.style.transform = 'scale(1)';
+        }, 100);
+    }
+});
+
+// Add tooltip functionality for buttons with data-tooltip
+document.querySelectorAll('[data-tooltip]').forEach(function(element) {
+    element.addEventListener('mouseenter', function(e) {
+        var tooltip = this.getAttribute('data-tooltip');
+        if (tooltip) {
+            // Optional: Add custom tooltip logic if needed
+        }
+    });
+});
+
+// Smooth page transitions
+document.querySelectorAll('.action-btn, .page-item:not(.disabled)').forEach(function(link) {
+    link.addEventListener('click', function(e) {
+        if (this.classList.contains('page-item') || this.classList.contains('action-btn')) {
+            var href = this.getAttribute('href');
+            if (href && href !== '#') {
+                // Optional: Add loading effect
+                var loader = document.createElement('div');
+                loader.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:40px;height:40px;border:3px solid #e2e8f0;border-top-color:#0d9488;border-radius:50%;animation:spin 0.6s linear infinite;z-index:9999;';
+                loader.id = 'page-loader';
+                document.body.appendChild(loader);
+
+                setTimeout(function() {
+                    var existingLoader = document.getElementById('page-loader');
+                    if (existingLoader) existingLoader.remove();
+                }, 3000);
+            }
+        }
+    });
+});
+
+// Add spin animation keyframes if not exists
+if (!document.querySelector('#spin-keyframes')) {
+    var style = document.createElement('style');
+    style.id = 'spin-keyframes';
+    style.textContent = '@keyframes spin { to { transform: rotate(360deg); } }';
+    document.head.appendChild(style);
 }
 </script>
 
