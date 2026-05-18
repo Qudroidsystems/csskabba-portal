@@ -9,7 +9,7 @@ use App\Models\Schoolclass;
 use App\Models\Schoolterm;
 use App\Models\Schoolsession;
 use App\Models\Subject;
-use App\Models\StudentRegistration;
+use App\Models\Student;  // Changed from StudentRegistration to Student
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -166,12 +166,25 @@ class ClassBroadsheetController extends Controller
     }
 
     // =========================================================================
-    // GET PAST COMMENTS (AJAX GET)
+    // GET PAST COMMENTS (AJAX GET) - FIXED VERSION
     // =========================================================================
 
     public function getPastComments($studentId)
     {
         try {
+            Log::info('getPastComments called for student: ' . $studentId);
+
+            // Use Student model instead of StudentRegistration
+            $student = Student::find($studentId);
+            if (!$student) {
+                Log::error('Student not found: ' . $studentId);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Student not found'
+                ], 404);
+            }
+
+            // Get all profiles for this student
             $profiles = Studentpersonalityprofile::where('studentid', $studentId)
                 ->where(function ($q) {
                     $q->whereNotNull('classteachercomment')
@@ -181,14 +194,9 @@ class ClassBroadsheetController extends Controller
                 })
                 ->orderByDesc('sessionid')
                 ->orderByDesc('termid')
-                ->get([
-                    'id', 'studentid', 'schoolclassid', 'sessionid', 'termid',
-                    'classteachercomment', 'guidancescomment',
-                    'remark_on_other_activities', 'principalscomment',
-                    'no_of_times_school_absent', 'created_at', 'updated_at',
-                ]);
+                ->get();
 
-            $student = StudentRegistration::find($studentId);
+            Log::info('Found ' . $profiles->count() . ' profiles for student');
 
             $commentCounts = [
                 'classteacher' => 0,
@@ -198,63 +206,85 @@ class ClassBroadsheetController extends Controller
                 'total' => 0
             ];
 
-            $result = $profiles->map(function ($p) use (&$commentCounts) {
-                $term = Schoolterm::find($p->termid);
-                $session = Schoolsession::find($p->sessionid);
-                $class = Schoolclass::where('schoolclass.id', $p->schoolclassid)
+            $result = collect();
+
+            foreach ($profiles as $profile) {
+                // Skip if no actual comment text
+                $hasComment = false;
+                $commentText = '';
+                $commentType = '';
+
+                if ($profile->classteachercomment && trim($profile->classteachercomment) !== '') {
+                    $commentText = $profile->classteachercomment;
+                    $commentType = 'Teacher';
+                    $commentCounts['classteacher']++;
+                    $hasComment = true;
+                } elseif ($profile->guidancescomment && trim($profile->guidancescomment) !== '') {
+                    $commentText = $profile->guidancescomment;
+                    $commentType = 'Guidance';
+                    $commentCounts['guidance']++;
+                    $hasComment = true;
+                } elseif ($profile->remark_on_other_activities && trim($profile->remark_on_other_activities) !== '') {
+                    $commentText = $profile->remark_on_other_activities;
+                    $commentType = 'Activities';
+                    $commentCounts['activities']++;
+                    $hasComment = true;
+                } elseif ($profile->principalscomment && trim($profile->principalscomment) !== '') {
+                    $commentText = $profile->principalscomment;
+                    $commentType = 'Principal';
+                    $commentCounts['principal']++;
+                    $hasComment = true;
+                }
+
+                if (!$hasComment) {
+                    continue;
+                }
+
+                // Get related models with error handling
+                $term = Schoolterm::find($profile->termid);
+                $session = Schoolsession::find($profile->sessionid);
+                $class = Schoolclass::where('schoolclass.id', $profile->schoolclassid)
                     ->leftJoin('schoolarm', 'schoolclass.arm', '=', 'schoolarm.id')
                     ->first(['schoolclass.schoolclass', 'schoolarm.arm']);
 
-                if ($p->classteachercomment && trim($p->classteachercomment) !== '') $commentCounts['classteacher']++;
-                if ($p->guidancescomment && trim($p->guidancescomment) !== '') $commentCounts['guidance']++;
-                if ($p->remark_on_other_activities && trim($p->remark_on_other_activities) !== '') $commentCounts['activities']++;
-                if ($p->principalscomment && trim($p->principalscomment) !== '') $commentCounts['principal']++;
-
-                // Get the non-empty comment
-                $commentText = '';
-                $commentType = '';
-                if ($p->classteachercomment && trim($p->classteachercomment) !== '') {
-                    $commentText = $p->classteachercomment;
-                    $commentType = 'Teacher';
-                } elseif ($p->guidancescomment && trim($p->guidancescomment) !== '') {
-                    $commentText = $p->guidancescomment;
-                    $commentType = 'Guidance';
-                } elseif ($p->remark_on_other_activities && trim($p->remark_on_other_activities) !== '') {
-                    $commentText = $p->remark_on_other_activities;
-                    $commentType = 'Activities';
-                } elseif ($p->principalscomment && trim($p->principalscomment) !== '') {
-                    $commentText = $p->principalscomment;
-                    $commentType = 'Principal';
-                } else {
-                    return null; // Skip if no comment
-                }
-
-                return [
-                    'id' => $p->id,
+                $result->push([
+                    'id' => $profile->id,
                     'term' => $term ? $term->term : 'Unknown Term',
                     'session' => $session ? $session->session : 'Unknown Session',
                     'class' => $class ? trim($class->schoolclass . ' ' . $class->arm) : 'Unknown Class',
                     'comment_text' => $commentText,
                     'comment_type' => $commentType,
-                    'date' => optional($p->updated_at ?? $p->created_at)->format('d M Y') ?? '',
-                ];
-            })->filter();
+                    'date' => optional($profile->updated_at ?? $profile->created_at)->format('d M Y') ?? '',
+                ]);
+            }
 
             $commentCounts['total'] = $result->count();
+
+            // Get student name properly
+            $studentName = trim($student->lastname . ' ' . $student->firstname . ' ' . ($student->othername ?? ''));
 
             return response()->json([
                 'success' => true,
                 'data' => $result->values(),
-                'student' => $student ? [
+                'student' => [
                     'id' => $student->id,
-                    'name' => trim($student->lastname . ' ' . $student->firstname . ' ' . $student->othername),
+                    'name' => $studentName,
                     'admission_no' => $student->admissionNo,
-                ] : null,
+                ],
                 'counts' => $commentCounts
             ]);
+
         } catch (\Exception $e) {
-            Log::error('getPastComments error', ['error' => $e->getMessage(), 'studentId' => $studentId]);
-            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+            Log::error('getPastComments error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'studentId' => $studentId
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Server error: ' . $e->getMessage()
+            ], 500);
         }
     }
 
