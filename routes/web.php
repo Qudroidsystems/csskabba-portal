@@ -1054,9 +1054,13 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
     Route::get('/studentpersonalityprofile/{id}/{schoolclassid}/{sessid}/{termid}', [StudentpersonalityprofileController::class, 'studentpersonalityprofile'])->name('myclass.studentpersonalityprofile');
     Route::post('save', [StudentpersonalityprofileController::class, 'save'])->name('studentpersonalityprofile.save');
 
-    Route::get('/classbroadsheet/{schoolclassid}/{sessionid}/{termid}', [ClassBroadsheetController::class, 'classBroadsheet'])->name('classbroadsheet.viewcomments');
-    Route::patch('/classbroadsheet/{schoolclassid}/{sessionid}/{termid}/comments', [ClassBroadsheetController::class, 'updateComments'])->name('classbroadsheet.updateComments');
-    Route::get('/classbroadsheet/past-comments/{studentId}', [ClassBroadsheetController::class, 'getPastComments']);
+
+    // Comment routes for class broadsheet
+    Route::prefix('classbroadsheet')->group(function () {
+        Route::get('/past-comments/{studentId}', [ClassBroadsheetController::class, 'getPastComments'])->name('classbroadsheet.past.comments');
+        Route::get('/student-summary/{studentId}/{schoolclassid}/{sessionid}/{termid}', [ClassBroadsheetController::class, 'getStudentCommentSummary'])->name('classbroadsheet.student.summary');
+        Route::patch('/update-comments/{schoolclassid}/{sessionid}/{termid}', [ClassBroadsheetController::class, 'updateComments'])->name('classbroadsheet.update.comments');
+    });
 
     // compulsory subject class
     Route::resource('compulsorysubjectclass', CompulsorySubjectClassController::class);

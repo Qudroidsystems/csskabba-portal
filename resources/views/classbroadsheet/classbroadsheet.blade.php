@@ -1,708 +1,644 @@
-@extends('layouts.master')
+{{-- resources/views/classbroadsheet/classbroadsheet.blade.php --}}
+
+@extends('layouts.app')
+
+@section('title', $pagetitle)
 
 @section('content')
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-
-<style>
-:root {
-    --cb-navy:      #0f2342;
-    --cb-teal:      #0d9488;
-    --cb-sky:       #0ea5e9;
-    --cb-amber:     #f59e0b;
-    --cb-rose:      #f43f5e;
-    --cb-green:     #22c55e;
-    --cb-muted:     #64748b;
-    --cb-border:    #e2e8f0;
-    --cb-surface:   #f8fafc;
-    --cb-white:     #ffffff;
-    --cb-radius:    14px;
-    --cb-shadow:    0 4px 16px rgba(15,35,66,.10);
-    --cb-shadow-lg: 0 8px 32px rgba(15,35,66,.14);
-}
-*, *::before, *::after { box-sizing: border-box; }
-body { font-family: 'DM Sans', sans-serif; }
-
-/* Original Styles */
-.cb-hero { background: linear-gradient(135deg, var(--cb-navy) 0%, #1e4a7e 55%, #0d9488 100%); border-radius: var(--cb-radius); padding: 32px 36px; margin-bottom: 28px; position: relative; overflow: hidden; }
-.cb-hero::before { content: ''; position: absolute; top: -80px; right: -80px; width: 280px; height: 280px; background: radial-gradient(circle, rgba(255,255,255,.07) 0%, transparent 70%); border-radius: 50%; }
-.cb-hero h1 { font-family: 'Playfair Display', serif; font-size: 26px; font-weight: 700; color: #fff; margin: 0 0 8px; }
-.cb-hero p { font-size: 13px; color: rgba(255,255,255,.72); margin: 0; }
-.cb-hero .meta-pills { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
-.cb-meta-pill { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.2); border-radius: 20px; padding: 4px 14px; font-size: 12px; font-weight: 600; color: #fff; display: inline-flex; align-items: center; gap: 5px; }
-
-.cb-stat { background: var(--cb-white); border: 1px solid var(--cb-border); border-radius: var(--cb-radius); padding: 20px 22px; position: relative; overflow: hidden; transition: transform .15s, box-shadow .15s; }
-.cb-stat:hover { transform: translateY(-2px); box-shadow: var(--cb-shadow); }
-.cb-stat .stat-accent { position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: var(--cb-radius) var(--cb-radius) 0 0; }
-.cb-stat .stat-value { font-size: 30px; font-weight: 700; color: var(--cb-navy); line-height: 1; margin-top: 8px; }
-.cb-stat .stat-label { font-size: 12px; color: var(--cb-muted); margin-top: 5px; font-weight: 500; }
-.cb-stat .stat-ico { font-size: 36px; opacity: .08; position: absolute; right: 16px; top: 50%; transform: translateY(-50%); }
-
-.col-toggle-panel { background: var(--cb-white); border: 1px solid var(--cb-border); border-radius: var(--cb-radius); padding: 18px 22px; margin-bottom: 22px; box-shadow: var(--cb-shadow); }
-.col-toggle-panel h6 { font-size: 13px; font-weight: 700; color: var(--cb-navy); margin: 0 0 14px; display: flex; align-items: center; gap: 7px; }
-.toggle-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.toggle-chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; border: 1.5px solid var(--cb-border); background: var(--cb-surface); color: var(--cb-muted); transition: all .18s ease; user-select: none; }
-.toggle-chip:hover { border-color: var(--cb-teal); color: var(--cb-teal); }
-.toggle-chip.active { background: var(--cb-teal); border-color: var(--cb-teal); color: #fff; box-shadow: 0 2px 8px rgba(13,148,136,.3); }
-
-.cb-card { background: var(--cb-white); border: 1px solid var(--cb-border); border-radius: var(--cb-radius); box-shadow: var(--cb-shadow); overflow: hidden; }
-.cb-card-header { padding: 18px 24px; border-bottom: 1px solid var(--cb-border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; background: linear-gradient(to right, #f8fafc, #f0fdf9); }
-.cb-card-header h5 { font-size: 15px; font-weight: 700; color: var(--cb-navy); margin: 0; display: flex; align-items: center; gap: 8px; }
-
-.cb-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-.cb-table thead th { background: var(--cb-navy); color: #fff; padding: 11px 14px; font-weight: 600; font-size: 11.5px; white-space: nowrap; text-align: center; border-right: 1px solid rgba(255,255,255,.08); }
-.cb-table thead th.col-name-hdr { text-align: left; }
-.cb-table tbody td { padding: 10px 14px; vertical-align: middle; border-bottom: 1px solid var(--cb-border); text-align: center; }
-.cb-table tbody td.td-name { text-align: left; }
-.cb-table tbody tr:hover td { background: #f0fdf9; }
-
-.cb-table tbody tr.row-has-comment td.td-name { border-left: 3px solid var(--cb-teal); }
-.cb-table tbody tr.row-no-comment  td.td-name { border-left: 3px solid var(--cb-border); }
-
-.score-dual { display: flex; flex-direction: column; gap: 2px; min-width: 80px; }
-.score-row { display: flex; align-items: center; justify-content: center; gap: 4px; padding: 2px 5px; border-radius: 5px; font-size: 11px; font-weight: 700; }
-.score-row-term { background: rgba(14,165,233,.08); border-left: 2.5px solid #0ea5e9; }
-.score-row-cum  { background: rgba(15,35,66,.06);   border-left: 2.5px solid var(--cb-navy); }
-.score-lbl { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; opacity: .7; }
-
-.grade-badge { display: inline-block; padding: 1px 5px; border-radius: 8px; font-size: 9px; font-weight: 700; }
-.g-a,.g-a1 { background: #dcfce7; color: #15803d; }
-.g-b,.g-b2,.g-b3 { background: #dbeafe; color: #1d4ed8; }
-.g-c,.g-c4,.g-c5,.g-c6 { background: #fef9c3; color: #a16207; }
-.g-d,.g-d7 { background: #ffedd5; color: #c2410c; }
-.g-e,.g-e8 { background: #ffe4e6; color: #be123c; }
-.g-f,.g-f9 { background: #fee2e2; color: #b91c1c; }
-
-.analytics-cell { min-width: 130px; font-size: 11px; line-height: 1.4; }
-.analytics-row  { display: flex; justify-content: space-between; align-items: center; padding: 2px 0; gap: 6px; }
-.analytics-lbl  { color: var(--cb-muted); font-size: 10px; font-weight: 500; }
-.analytics-val  { font-weight: 700; color: var(--cb-navy); font-size: 11.5px; }
-.pct-bar-wrap   { background: #e2e8f0; border-radius: 4px; height: 5px; margin-top: 3px; overflow: hidden; }
-.pct-bar        { height: 100%; border-radius: 4px; }
-
-.cb-input { border: 1.5px solid var(--cb-border); border-radius: 8px; padding: 8px 10px; font-size: 13px; width: 100%; transition: border .15s; background: var(--cb-surface); }
-.cb-input:focus { border-color: var(--cb-teal); outline: none; box-shadow: 0 0 0 3px rgba(13,148,136,.12); background: #fff; }
-.absence-input { width: 72px !important; text-align: center; }
-
-.student-name-cell { display: flex; align-items: center; gap: 9px; }
-.cb-avatar { width: 38px; height: 38px; border-radius: 50%; overflow: hidden; flex-shrink: 0; border: 2px solid var(--cb-border); cursor: pointer; }
-.cb-avatar img { width: 100%; height: 100%; object-fit: cover; }
-.cb-avatar-initials { background: linear-gradient(135deg, var(--cb-teal), var(--cb-sky)); color: #fff; font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
-
-/* Mobile Cards */
-.cb-student-card { background: var(--cb-white); border: 1px solid var(--cb-border); border-radius: var(--cb-radius); margin-bottom: 18px; box-shadow: var(--cb-shadow); overflow: hidden; }
-.cb-student-card .card-top { background: linear-gradient(135deg, #f8fafc, #f0fdf9); padding: 14px 16px; border-bottom: 1px solid var(--cb-border); display: flex; align-items: center; gap: 12px; }
-
-/* New Styles */
-.comment-type-pill {
-    font-size: 10px; padding: 1px 6px; border-radius: 12px; margin: 2px 1px;
-    font-weight: 600; display: inline-flex; align-items: center; gap: 3px;
-}
-.ct-teacher   { background: #e0f2fe; color: #0369a1; }
-.ct-guidance  { background: #f3e8ff; color: #6b21a8; }
-.ct-activities{ background: #fef3c7; color: #854d0e; }
-
-#cbCommentModal .modal-content { border-radius: 20px; overflow: hidden; }
-#cbCommentModal .modal-header { background: linear-gradient(135deg, var(--cb-navy), var(--cb-teal)); color: #fff; }
-.past-comment-item {
-    border-left: 4px solid var(--cb-teal); background: #f8fafc; padding: 12px;
-    margin-bottom: 10px; border-radius: 8px; cursor: pointer;
-}
-.past-comment-item:hover { background: #f0fdf9; }
-</style>
-
-<div class="main-content">
-<div class="page-content">
 <div class="container-fluid">
-
-<!-- Hero -->
-<div class="cb-hero">
-    <h1><i class="ri-clipboard-line me-2"></i>Class Broadsheet</h1>
-    <p>Review student performance, assign comments, and track attendance for your class.</p>
-    <div class="meta-pills">
-        <span class="cb-meta-pill"><i class="ri-building-line"></i>{{ $schoolclass ? $schoolclass->schoolclass . ' ' . $schoolclass->arm : 'N/A' }}</span>
-        <span class="cb-meta-pill"><i class="ri-calendar-line"></i>{{ $schoolterm }}</span>
-        <span class="cb-meta-pill"><i class="ri-calendar-event-line"></i>{{ $schoolsession }}</span>
-    </div>
-</div>
-
-<!-- Stat Cards -->
-<div class="row g-3 mb-4">
-    <div class="col-6 col-md-3">
-        <div class="cb-stat">
-            <div class="stat-accent" style="background:linear-gradient(90deg,var(--cb-navy),var(--cb-teal));"></div>
-            <div class="stat-ico"><i class="ri-group-line"></i></div>
-            <div class="stat-value">{{ $students->count() }}</div>
-            <div class="stat-label">Total Students</div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="cb-stat">
-            <div class="stat-accent" style="background:linear-gradient(90deg,var(--cb-sky),#38bdf8);"></div>
-            <div class="stat-ico"><i class="ri-book-open-line"></i></div>
-            <div class="stat-value text-info">{{ $subjects->count() }}</div>
-            <div class="stat-label">Subjects</div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="cb-stat">
-            <div class="stat-accent" style="background:linear-gradient(90deg,var(--cb-green),#4ade80);"></div>
-            <div class="stat-ico"><i class="ri-percent-line"></i></div>
-            <div class="stat-value text-success" id="statPassRate">—</div>
-            <div class="stat-label">Avg Cum %</div>
-        </div>
-    </div>
-    <div class="col-6 col-md-3">
-        <div class="cb-stat">
-            <div class="stat-accent" style="background:linear-gradient(90deg,var(--cb-amber),#fcd34d);"></div>
-            <div class="stat-ico"><i class="ri-award-line"></i></div>
-            <div class="stat-value text-warning" id="statTop">—</div>
-            <div class="stat-label">Top Performer</div>
-        </div>
-    </div>
-</div>
-
-<!-- Column Toggle -->
-<div class="col-toggle-panel">
-    <h6><i class="ri-layout-column-line" style="color:var(--cb-teal)"></i> Show / Hide Columns</h6>
-    <div class="toggle-chips">
-        <span class="toggle-chip active" data-colkey="scores"><i class="ri-bar-chart-line"></i> Subject Scores</span>
-        <span class="toggle-chip active" data-colkey="summary"><i class="ri-pie-chart-line"></i> Summary</span>
-        <span class="toggle-chip active" data-colkey="teacher"><i class="ri-chat-3-line"></i> Teacher's Comment</span>
-        <span class="toggle-chip active" data-colkey="guidance"><i class="ri-mental-health-line"></i> Counselor's Comment</span>
-        <span class="toggle-chip active" data-colkey="activities"><i class="ri-football-line"></i> Remark on Activities</span>
-        <span class="toggle-chip active" data-colkey="absence"><i class="ri-calendar-close-line"></i> Absences</span>
-    </div>
-</div>
-
-@php $cbAnalyticsJson = json_encode($studentAnalytics, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); @endphp
-
-<!-- COMMENT MODAL -->
-<div class="modal fade" id="cbCommentModal" tabindex="-1" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="d-flex align-items-center gap-3 w-100">
-                    <div id="modalStudentAvatar" class="cb-avatar" style="width:56px;height:56px;"></div>
-                    <div>
-                        <h5 class="mb-1 text-white" id="modalStudentName"></h5>
-                        <div class="text-white-50 small" id="modalStudentMeta"></div>
-                    </div>
-                </div>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="performance-strip mb-3" id="modalPerformance"></div>
-
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h6 class="mb-0" id="modalCommentType"></h6>
-                    <button type="button" class="btn btn-sm btn-outline-light" id="btnLoadPastComments">
-                        <i class="ri-history-line"></i> Past Comments
-                    </button>
-                </div>
-
-                <textarea id="modalTextarea" class="cb-input" rows="8" style="width:100%; resize:vertical; font-size:14px; line-height:1.6;"></textarea>
-
-                <div class="mt-2 mb-3">
-                    <button type="button" class="btn btn-sm btn-light me-1" onclick="formatText('bold')">𝐁 Bold</button>
-                    <button type="button" class="btn btn-sm btn-light me-1" onclick="formatText('italic')">𝑖 Italic</button>
-                    <button type="button" class="btn btn-sm btn-light" onclick="formatText('bullet')">• Bullet</button>
-                </div>
-
-                <div id="pastCommentsPanel" style="display:none; max-height:300px; overflow-y:auto; border:1px solid var(--cb-border); border-radius:12px; padding:12px;">
-                    <h6 class="small text-muted mb-2">Past Comments (Click to load)</h6>
-                    <div id="pastCommentsList"></div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" id="modalSaveBtn"><i class="ri-save-line"></i> Save Comment</button>
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">{{ $pagetitle }}</h3>
+            <div class="card-tools">
+                <span class="badge badge-info">{{ $schoolclass->schoolclass }} {{ $schoolclass->arm }}</span>
+                <span class="badge badge-success">{{ $schoolterm }}</span>
+                <span class="badge badge-warning">{{ $schoolsession }}</span>
             </div>
         </div>
-    </div>
-</div>
 
-<div class="cb-card">
-    <div class="cb-card-header">
-        <h5><i class="ri-table-alt-line" style="color:var(--cb-teal)"></i> Student Performance &amp; Comments</h5>
-        <div class="cb-search" style="max-width:260px;">
-            <i class="ri-search-line"></i>
-            <input type="text" id="searchInput" placeholder="Search students…">
-        </div>
-    </div>
+        <div class="card-body">
+            <form id="commentsForm" method="POST" action="{{ route('classbroadsheet.update.comments', [$schoolclassid, $sessionid, $termid]) }}" enctype="multipart/form-data">
+                @csrf
+                @method('PATCH')
 
-    <form id="commentsForm">
-        @csrf
-        <input type="hidden" name="_method" value="PATCH">
-
-        @foreach ($students as $student)
-            @php $sid = $student->id; $profile = $personalityProfiles->where('studentid', $sid)->first(); @endphp
-            <input type="hidden" id="c_teacher_{{ $sid }}" name="teacher_comments[{{ $sid }}]" value="{{ $profile?->classteachercomment ?? '' }}">
-            <input type="hidden" id="c_guidance_{{ $sid }}" name="guidance_comments[{{ $sid }}]" value="{{ $profile?->guidancescomment ?? '' }}">
-            <input type="hidden" id="c_activities_{{ $sid }}" name="remarks_on_other_activities[{{ $sid }}]" value="{{ $profile?->remark_on_other_activities ?? '' }}">
-            <input type="hidden" id="c_absence_{{ $sid }}" name="no_of_times_school_absent[{{ $sid }}]" value="{{ $profile?->no_of_times_school_absent ?? '' }}">
-        @endforeach
-
-        <!-- DESKTOP TABLE -->
-        <div class="desktop-only" style="overflow-x:auto;">
-            <table class="cb-table">
-                <thead>
-                    <tr>
-                        <th style="width:34px;">#</th>
-                        <th class="col-name-hdr" style="min-width:220px;">Student</th>
-                        @foreach ($subjects as $subject)
-                            <th class="cbcol-scores" style="min-width:86px;">{{ $subject->subject }}</th>
-                        @endforeach
-                        <th class="cbcol-summary" style="min-width:140px;">Summary</th>
-                        <th class="cbcol-teacher" style="min-width:220px;">Teacher's Comment</th>
-                        <th class="cbcol-guidance" style="min-width:180px;">Counselor's Comment</th>
-                        <th class="cbcol-activities" style="min-width:180px;">Remark on Activities</th>
-                        <th class="cbcol-absence" style="min-width:80px;">Absent</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($students as $index => $student)
-                        @php
-                            $sid = $student->id;
-                            $initials = strtoupper(substr($student->fname ?? '', 0, 1) . substr($student->lastname ?? '', 0, 1)) ?: 'ST';
-                            $hasPic = !empty($student->picture) && $student->picture !== 'unnamed.jpg';
-                            $imgUrl = $hasPic ? asset('storage/student_avatars/' . basename($student->picture)) : null;
-                            $fullName = trim(($student->lastname ?? '') . ' ' . ($student->fname ?? '') . ' ' . ($student->othername ?? ''));
-                            $profile = $personalityProfiles->where('studentid', $sid)->first();
-                            $an = $studentAnalytics[$sid] ?? [];
-                        @endphp
-                        <tr class="cb-student-row" data-student-id="{{ $sid }}" data-student-name="{{ $fullName }}" data-searchkey="{{ strtolower($fullName . ' ' . $student->admissionNo) }}">
-                            <td>{{ $index + 1 }}</td>
-                            <td class="td-name">
-                                <div class="student-name-cell">
-                                    @if($imgUrl)
-                                        <div class="cb-avatar cb-avatar-trigger" data-img="{{ $imgUrl }}" data-name="{{ $fullName }}" data-adm="{{ $student->admissionNo }}" data-class="{{ $schoolclass ? $schoolclass->schoolclass . ' ' . $schoolclass->arm : '' }}" data-gender="{{ $student->gender ?? '' }}">
-                                            <img src="{{ $imgUrl }}" alt="{{ $fullName }}">
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped table-hover" id="broadsheetTable">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Student Details</th>
+                                <th>Performance Summary</th>
+                                <th>
+                                    Teacher's Comment
+                                    <small class="text-muted d-block">(Academic & Behaviour)</small>
+                                </th>
+                                <th>
+                                    Guidance's Comment
+                                    <small class="text-muted d-block">(Counseling Notes)</small>
+                                </th>
+                                <th>
+                                    Remarks on Activities
+                                    <small class="text-muted d-block">(Sports, Clubs, etc.)</small>
+                                </th>
+                                <th>
+                                    Principal's Comment
+                                    <small class="text-muted d-block">(Final Remarks)</small>
+                                </th>
+                                <th>
+                                    Days Absent
+                                    <small class="text-muted d-block">(This Term)</small>
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($students as $index => $student)
+                            @php
+                                $analytics = $studentAnalytics[$student->id] ?? null;
+                                $profile = $personalityProfiles[$student->id] ?? null;
+                                $studentName = trim($student->lastname . ' ' . $student->firstname . ' ' . $student->othername);
+                                $studentInitials = strtoupper(substr($student->firstname, 0, 1) . substr($student->lastname, 0, 1));
+                            @endphp
+                            <tr data-student-id="{{ $student->id }}" data-student-name="{{ $studentName }}" data-student-picture="{{ $student->picture ?? '' }}">
+                                <td>{{ $loop->iteration }}</td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="student-avatar mr-2" style="cursor: pointer;"
+                                             data-toggle="tooltip"
+                                             data-html="true"
+                                             title="<strong>{{ $studentName }}</strong><br>Admission: {{ $student->admissionNo }}<br>Click to view past comments">
+                                            @if($student->picture)
+                                                <img src="{{ asset('storage/' . $student->picture) }}" class="rounded-circle" width="40" height="40" alt="Student">
+                                            @else
+                                                <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                    <span class="text-white">{{ $studentInitials }}</span>
+                                                </div>
+                                            @endif
                                         </div>
-                                    @else
-                                        <div class="cb-avatar cb-avatar-initials cb-avatar-trigger" data-name="{{ $fullName }}" data-initials="{{ $initials }}">{{ $initials }}</div>
-                                    @endif
-                                    <div>
-                                        <div class="student-name-text">{{ $fullName }}</div>
-                                        <div class="student-adm">{{ $student->admissionNo }} · {{ $student->gender ?? '' }}</div>
-                                        <span class="comment-status-dot" id="status-{{ $sid }}"></span>
-                                    </div>
-                                </div>
-                            </td>
-
-                            @foreach ($subjects as $subject)
-                                @php
-                                    $tScore = $termScoreMap[$sid][$subject->subject] ?? 0;
-                                    $cScore = $cumScoreMap[$sid][$subject->subject] ?? 0;
-                                    $tGrade = $cGrade = '-';
-                                    if ($isSenior) {
-                                        if ($tScore >= 75) $tGrade='A1'; elseif ($tScore >= 70) $tGrade='B2'; elseif ($tScore >= 65) $tGrade='B3';
-                                        elseif ($tScore >= 60) $tGrade='C4'; elseif ($tScore >= 55) $tGrade='C5'; elseif ($tScore >= 50) $tGrade='C6';
-                                        elseif ($tScore >= 45) $tGrade='D7'; elseif ($tScore >= 40) $tGrade='E8'; elseif ($tScore > 0) $tGrade='F9';
-                                        if ($cScore >= 75) $cGrade='A1'; elseif ($cScore >= 70) $cGrade='B2'; elseif ($cScore >= 65) $cGrade='B3';
-                                        elseif ($cScore >= 60) $cGrade='C4'; elseif ($cScore >= 55) $cGrade='C5'; elseif ($cScore >= 50) $cGrade='C6';
-                                        elseif ($cScore >= 45) $cGrade='D7'; elseif ($cScore >= 40) $cGrade='E8'; elseif ($cScore > 0) $cGrade='F9';
-                                    } else {
-                                        if ($tScore >= 70) $tGrade='A'; elseif ($tScore >= 60) $tGrade='B';
-                                        elseif ($tScore >= 50) $tGrade='C'; elseif ($tScore >= 40) $tGrade='D';
-                                        elseif ($tScore > 0) $tGrade='F';
-                                        if ($cScore >= 70) $cGrade='A'; elseif ($cScore >= 60) $cGrade='B';
-                                        elseif ($cScore >= 50) $cGrade='C'; elseif ($cScore >= 40) $cGrade='D';
-                                        elseif ($cScore > 0) $cGrade='F';
-                                    }
-                                @endphp
-                                <td class="cbcol-scores">
-                                    <div class="score-dual">
-                                        <div class="score-row score-row-term">
-                                            <span class="score-lbl">T</span>
-                                            <span>{{ $tScore ?: '—' }}</span>
-                                            @if($tGrade !== '-')<span class="grade-badge g-{{ strtolower($tGrade) }}">{{ $tGrade }}</span>@endif
-                                        </div>
-                                        <div class="score-row score-row-cum">
-                                            <span class="score-lbl">C</span>
-                                            <span>{{ $cScore ?: '—' }}</span>
-                                            @if($cGrade !== '-')<span class="grade-badge g-{{ strtolower($cGrade) }}">{{ $cGrade }}</span>@endif
+                                        <div>
+                                            <strong>{{ $studentName }}</strong><br>
+                                            <small class="text-muted">Adm: {{ $student->admissionNo }}</small><br>
+                                            <small class="text-muted">{{ ucfirst($student->gender) }}</small>
                                         </div>
                                     </div>
                                 </td>
+                                <td>
+                                    @if($analytics)
+                                    <div class="performance-summary">
+                                        <div><strong>Term Total:</strong> {{ $analytics['term_total'] }}/{{ $analytics['total_obtainable'] }}</div>
+                                        <div><strong>Term Avg:</strong> {{ $analytics['term_average'] }}%</div>
+                                        <div><strong>Cum Total:</strong> {{ $analytics['cum_total'] }}/{{ $analytics['total_obtainable'] }}</div>
+                                        <div><strong>Cum Avg:</strong> {{ $analytics['cum_average'] }}%</div>
+                                    </div>
+                                    @endif
+                                </td>
+                                <td>
+                                    <div class="form-group comment-group">
+                                        <label class="comment-label">
+                                            <i class="fas fa-chalkboard-teacher"></i> Teacher's Comment
+                                        </label>
+                                        <textarea
+                                            name="teacher_comments[{{ $student->id }}]"
+                                            class="form-control teacher-comment comment-textarea"
+                                            rows="3"
+                                            data-comment-type="teacher"
+                                            data-student-id="{{ $student->id }}"
+                                            placeholder="Enter teacher's comment...">{{ old('teacher_comments.' . $student->id, $profile->classteachercomment ?? '') }}</textarea>
+                                        <small class="text-muted comment-stats">
+                                            <span class="char-count">0</span> characters
+                                        </small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="form-group comment-group">
+                                        <label class="comment-label">
+                                            <i class="fas fa-hand-holding-heart"></i> Guidance's Comment
+                                        </label>
+                                        <textarea
+                                            name="guidance_comments[{{ $student->id }}]"
+                                            class="form-control guidance-comment comment-textarea"
+                                            rows="3"
+                                            data-comment-type="guidance"
+                                            data-student-id="{{ $student->id }}"
+                                            placeholder="Enter guidance counselor's comment...">{{ old('guidance_comments.' . $student->id, $profile->guidancescomment ?? '') }}</textarea>
+                                        <small class="text-muted comment-stats">
+                                            <span class="char-count">0</span> characters
+                                        </small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="form-group comment-group">
+                                        <label class="comment-label">
+                                            <i class="fas fa-futbol"></i> Remarks on Activities
+                                        </label>
+                                        <textarea
+                                            name="remarks_on_other_activities[{{ $student->id }}]"
+                                            class="form-control activities-comment comment-textarea"
+                                            rows="3"
+                                            data-comment-type="activities"
+                                            data-student-id="{{ $student->id }}"
+                                            placeholder="Enter remarks on extracurricular activities...">{{ old('remarks_on_other_activities.' . $student->id, $profile->remark_on_other_activities ?? '') }}</textarea>
+                                        <small class="text-muted comment-stats">
+                                            <span class="char-count">0</span> characters
+                                        </small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="form-group comment-group">
+                                        <label class="comment-label">
+                                            <i class="fas fa-building"></i> Principal's Comment
+                                        </label>
+                                        <textarea
+                                            name="principals_comments[{{ $student->id }}]"
+                                            class="form-control principal-comment comment-textarea"
+                                            rows="3"
+                                            data-comment-type="principal"
+                                            data-student-id="{{ $student->id }}"
+                                            placeholder="Enter principal's comment...">{{ old('principals_comments.' . $student->id, $profile->principalscomment ?? '') }}</textarea>
+                                        <small class="text-muted comment-stats">
+                                            <span class="char-count">0</span> characters
+                                        </small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="form-group">
+                                        <label>
+                                            <i class="fas fa-calendar-times"></i> Days Absent
+                                        </label>
+                                        <input
+                                            type="number"
+                                            name="no_of_times_school_absent[{{ $student->id }}]"
+                                            class="form-control"
+                                            value="{{ old('no_of_times_school_absent.' . $student->id, $profile->no_of_times_school_absent ?? 0) }}"
+                                            min="0"
+                                            placeholder="0">
+                                    </div>
+                                </td>
+                            </tr>
                             @endforeach
+                        </tbody>
+                    </table>
+                </div>
 
-                            <td class="cbcol-summary analytics-cell">
-                                <div class="analytics-row"><span class="analytics-lbl">Term Avg</span><span class="analytics-val">{{ $an['term_average']??0 }}</span></div>
-                                <div class="analytics-row"><span class="analytics-lbl">Cum Avg</span><span class="analytics-val">{{ $an['cum_average']??0 }}</span></div>
-                                <div class="analytics-row"><span class="analytics-lbl">Cum %</span><span class="analytics-val">{{ $an['cum_percentage']??0 }}%</span></div>
-                            </td>
-
-                            <td class="cbcol-teacher"><input type="text" class="cb-input desk-teacher" data-sid="{{ $sid }}" data-field="teacher" value="{{ $profile?->classteachercomment ?? '' }}" placeholder="Click to edit..."></td>
-                            <td class="cbcol-guidance"><input type="text" class="cb-input desk-guidance" data-sid="{{ $sid }}" data-field="guidance" value="{{ $profile?->guidancescomment ?? '' }}" placeholder="Click to edit..."></td>
-                            <td class="cbcol-activities"><input type="text" class="cb-input desk-activities" data-sid="{{ $sid }}" data-field="activities" value="{{ $profile?->remark_on_other_activities ?? '' }}" placeholder="Click to edit..."></td>
-                            <td class="cbcol-absence"><input type="number" class="cb-input absence-input desk-absence" data-sid="{{ $sid }}" data-field="absence" value="{{ $profile?->no_of_times_school_absent ?? '' }}" min="0"></td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-
-        <!-- MOBILE CARDS -->
-        <div class="mobile-only" style="padding:16px;">
-            @foreach ($students as $index => $student)
-                @php
-                    $sid = $student->id;
-                    $initials = strtoupper(substr($student->fname ?? '', 0, 1) . substr($student->lastname ?? '', 0, 1)) ?: 'ST';
-                    $hasPic = !empty($student->picture) && $student->picture !== 'unnamed.jpg';
-                    $imgUrl = $hasPic ? asset('storage/student_avatars/' . basename($student->picture)) : null;
-                    $fullName = trim(($student->lastname ?? '') . ' ' . ($student->fname ?? '') . ' ' . ($student->othername ?? ''));
-                    $profile = $personalityProfiles->where('studentid', $sid)->first();
-                    $an = $studentAnalytics[$sid] ?? [];
-                @endphp
-                <div class="cb-student-card cb-student-row" data-student-id="{{ $sid }}" data-student-name="{{ $fullName }}" data-searchkey="{{ strtolower($fullName . ' ' . $student->admissionNo) }}">
-                    <div class="card-top">
-                        @if($imgUrl)
-                            <div class="cb-avatar cb-avatar-trigger" style="width:48px;height:48px;" data-img="{{ $imgUrl }}" data-name="{{ $fullName }}" data-adm="{{ $student->admissionNo }}" data-class="{{ $schoolclass ? $schoolclass->schoolclass . ' ' . $schoolclass->arm : '' }}" data-gender="{{ $student->gender ?? '' }}">
-                                <img src="{{ $imgUrl }}" alt="{{ $fullName }}">
-                            </div>
-                        @else
-                            <div class="cb-avatar cb-avatar-initials cb-avatar-trigger" style="width:48px;height:48px;font-size:16px;" data-name="{{ $fullName }}" data-initials="{{ $initials }}">{{ $initials }}</div>
-                        @endif
-                        <div style="flex:1;">
-                            <div style="font-weight:700;font-size:14px;color:var(--cb-navy);">{{ $fullName }}</div>
-                            <div style="font-size:11px;color:var(--cb-muted);">{{ $student->admissionNo }} · {{ $student->gender ?? '' }}</div>
-                            <span class="comment-status-dot" id="status-m-{{ $sid }}"></span>
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label for="signature">Upload Signature (Optional)</label>
+                            <input type="file" name="signature" id="signature" class="form-control-file" accept="image/*,.pdf">
+                            <small class="text-muted">Upload signature for all comments (JPEG, PNG, PDF - max 5MB)</small>
                         </div>
                     </div>
-                    <div class="card-body-pad" style="padding:16px;">
-                        <div class="performance-strip">
-                            <div style="font-size:11px;font-weight:700;opacity:.8;margin-bottom:4px;"><i class="ri-bar-chart-line me-1"></i>Performance Summary</div>
-                            <div class="ps-grid">
-                                <div class="ps-item"><div class="ps-lbl">Term Avg</div><div class="ps-val">{{ $an['term_average']??0 }}</div></div>
-                                <div class="ps-item"><div class="ps-lbl">Cum Avg</div><div class="ps-val">{{ $an['cum_average']??0 }}</div></div>
-                                <div class="ps-item"><div class="ps-lbl">Cum %</div><div class="ps-val">{{ $an['cum_percentage']??0 }}%</div></div>
-                            </div>
-                        </div>
-
-                        <div class="subjects-scroll">
-                            @foreach ($subjects as $subject)
-                                @php $tS=$termScoreMap[$sid][$subject->subject]??0; $cS=$cumScoreMap[$sid][$subject->subject]??0; @endphp
-                                <div class="subj-chip">
-                                    <div class="sc-name">{{ Str::limit($subject->subject, 10) }}</div>
-                                    <div class="sc-t">T: {{ $tS?:'—' }}</div>
-                                    <div class="sc-c">C: {{ $cS?:'—' }}</div>
-                                </div>
-                            @endforeach
-                        </div>
-
-                        <div class="comment-field-group">
-                            <label>Teacher's Comment</label>
-                            <input type="text" class="cb-input mob-teacher" data-sid="{{ $sid }}" data-field="teacher" value="{{ $profile?->classteachercomment ?? '' }}" placeholder="Click to edit...">
-                        </div>
-                        <div class="comment-field-group">
-                            <label>Counselor's Comment</label>
-                            <input type="text" class="cb-input mob-guidance" data-sid="{{ $sid }}" data-field="guidance" value="{{ $profile?->guidancescomment ?? '' }}" placeholder="Click to edit...">
-                        </div>
-                        <div class="comment-field-group">
-                            <label>Remark on Activities</label>
-                            <input type="text" class="cb-input mob-activities" data-sid="{{ $sid }}" data-field="activities" value="{{ $profile?->remark_on_other_activities ?? '' }}" placeholder="Click to edit...">
-                        </div>
-                        <div class="comment-field-group">
-                            <label>Times Absent</label>
-                            <input type="number" class="cb-input mob-absence" data-sid="{{ $sid }}" data-field="absence" value="{{ $profile?->no_of_times_school_absent ?? '' }}" min="0">
-                        </div>
+                    <div class="col-md-6 text-right">
+                        <button type="submit" class="btn btn-primary btn-lg" id="saveCommentsBtn">
+                            <i class="fas fa-save"></i> Save All Comments
+                        </button>
                     </div>
                 </div>
-            @endforeach
+            </form>
         </div>
-
-        <!-- Save Bar -->
-        <div class="save-bar">
-            <button type="button" id="saveBtn" class="btn-save-all">
-                <i class="ri-save-3-line"></i> Save All Changes
-            </button>
-        </div>
-    </form>
+    </div>
 </div>
 
-<script>
-(function () {
-    'use strict';
-
-    /* ───────────────────────────────────────────────
-       CONFIG
-    ─────────────────────────────────────────────── */
-    var SA       = {!! $cbAnalyticsJson !!};
-    var SAVE_URL = '{{ route("classbroadsheet.updateComments", [$schoolclassid, $sessionid, $termid]) }}';
-    var CSRF     = '{{ csrf_token() }}';
-
-    var currentSid = null;
-    var currentField = null;
-    var commentModal = null;
-
-    /* ───────────────────────────────────────────────
-       HELPERS
-    ─────────────────────────────────────────────── */
-    function esc(str) {
-        var d = document.createElement('div');
-        d.textContent = str || '';
-        return d.innerHTML;
-    }
-
-    function toast(msg, type) {
-        document.querySelectorAll('.cb-toast').forEach(function (t) { t.remove(); });
-        var icons = { success: 'checkbox-circle-fill', error: 'error-warning-fill', info: 'information-fill' };
-        var el = document.createElement('div');
-        el.className = 'cb-toast cb-toast-' + (type || 'info');
-        el.innerHTML = '<i class="ri-' + (icons[type] || icons.info) + '" style="font-size:18px;flex-shrink:0;"></i> ' + esc(msg);
-        document.body.appendChild(el);
-        setTimeout(function () { el.remove(); }, 5000);
-    }
-
-    /* ───────────────────────────────────────────────
-       CANONICAL DATA LAYER
-    ─────────────────────────────────────────────── */
-    var FIELD_MAP = {
-        teacher:    'c_teacher_',
-        guidance:   'c_guidance_',
-        activities: 'c_activities_',
-        absence:    'c_absence_',
-    };
-
-    function getCanonical(sid, field) {
-        var el = document.getElementById(FIELD_MAP[field] + sid);
-        return el ? el.value : '';
-    }
-
-    function setCanonical(sid, field, value) {
-        var el = document.getElementById(FIELD_MAP[field] + sid);
-        if (el) el.value = value;
-    }
-
-    /* ───────────────────────────────────────────────
-       AUTOSAVE (debounced per-student)
-    ─────────────────────────────────────────────── */
-    var debounceTimers = {};
-    var AUTOSAVE_DELAY = 1200;
-
-    function setChipState(sid, state, text) {
-        ['autosave-' + sid, 'autosave-m-' + sid].forEach(function (id) {
-            var chip = document.getElementById(id);
-            if (!chip) return;
-            chip.className = 'autosave-chip ' + state;
-            chip.textContent = text || '';
-        });
-    }
-
-    function autoSaveStudent(sid) {
-        var fd = new FormData();
-        fd.append('_token', CSRF);
-        fd.append('_method', 'PATCH');
-        fd.append('teacher_comments[' + sid + ']', getCanonical(sid, 'teacher'));
-        fd.append('guidance_comments[' + sid + ']', getCanonical(sid, 'guidance'));
-        fd.append('remarks_on_other_activities[' + sid + ']', getCanonical(sid, 'activities'));
-        fd.append('no_of_times_school_absent[' + sid + ']', getCanonical(sid, 'absence'));
-
-        setChipState(sid, 'ac-saving', '⏳ Saving…');
-
-        fetch(SAVE_URL, {
-            method: 'POST',
-            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF },
-            body: fd,
-        })
-        .then(res => res.json().then(data => { if (!res.ok) throw new Error(data.message || 'Error'); return data; }))
-        .then(data => {
-            if (data.success) {
-                setChipState(sid, 'ac-saved', '✓ Saved');
-                refreshCommentStatus();
-                setTimeout(() => setChipState(sid, 'ac-idle', ''), 3000);
-            } else {
-                setChipState(sid, 'ac-err', '✗ Failed');
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            setChipState(sid, 'ac-err', '✗ Error');
-        });
-    }
-
-    function scheduleAutosave(sid) {
-        if (debounceTimers[sid]) clearTimeout(debounceTimers[sid]);
-        debounceTimers[sid] = setTimeout(() => autoSaveStudent(sid), AUTOSAVE_DELAY);
-    }
-
-    /* ───────────────────────────────────────────────
-       SYNC HANDLER
-    ─────────────────────────────────────────────── */
-    function onInputChange(e) {
-        var inp = e.target;
-        var sid = inp.getAttribute('data-sid');
-        var field = inp.getAttribute('data-field');
-        if (!sid || !field) return;
-
-        var val = inp.value;
-        setCanonical(sid, field, val);
-
-        // Mirror to twin
-        var twinClass = inp.classList.contains('desk-' + field) ? 'mob-' + field : 'desk-' + field;
-        document.querySelectorAll('.' + twinClass + '[data-sid="' + sid + '"]').forEach(twin => {
-            if (twin !== inp) twin.value = val;
-        });
-
-        refreshCommentStatusForStudent(sid);
-        scheduleAutosave(sid);
-    }
-
-    /* ───────────────────────────────────────────────
-       COMMENT STATUS
-    ─────────────────────────────────────────────── */
-    function refreshCommentStatusForStudent(sid) {
-        var hasVal = getCanonical(sid, 'teacher').trim() !== '';
-
-        ['status-' + sid, 'status-m-' + sid].forEach(id => {
-            var badge = document.getElementById(id);
-            if (!badge) return;
-            badge.textContent = hasVal ? '✓ Commented' : '○ No comment';
-            badge.className = 'comment-status-dot ' + (hasVal ? 'dot-saved' : 'dot-unsaved');
-        });
-    }
-
-    function refreshCommentStatus() {
-        document.querySelectorAll('.cb-student-row').forEach(row => {
-            var sid = row.getAttribute('data-student-id');
-            if (!sid) return;
-            refreshCommentStatusForStudent(sid);
-        });
-    }
-
-    /* ───────────────────────────────────────────────
-       FULL SAVE
-    ─────────────────────────────────────────────── */
-    function doSaveAll() { /* Your original doSaveAll function */ }
-    function buildConfirmModal() { /* Your original buildConfirmModal function */ }
-
-    /* ───────────────────────────────────────────────
-       NEW COMMENT MODAL
-    ─────────────────────────────────────────────── */
-    function openCommentModal(sid, field) {
-        currentSid = sid;
-        currentField = field;
-
-        var row = document.querySelector(`[data-student-id="${sid}"]`);
-        var name = row.getAttribute('data-student-name');
-        var an = SA[sid] || {};
-
-        document.getElementById('modalStudentName').textContent = name;
-        document.getElementById('modalStudentMeta').textContent = row.querySelector('.student-adm')?.textContent || '';
-
-        var avatarEl = document.getElementById('modalStudentAvatar');
-        var img = row.querySelector('img');
-        avatarEl.innerHTML = img ? `<img src="${img.src}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">` : 'ST';
-
-        document.getElementById('modalPerformance').innerHTML = `Term Avg: <strong>${an.term_average||0}</strong> | Cum Avg: <strong>${an.cum_average||0}</strong> | Cum %: <strong>${an.cum_percentage||0}%</strong>`;
-
-        const labels = { teacher: "Teacher's Comment", guidance: "Counselor's Comment", activities: "Remark on Activities" };
-        document.getElementById('modalCommentType').textContent = labels[field];
-
-        document.getElementById('modalTextarea').value = getCanonical(sid, field);
-        document.getElementById('pastCommentsPanel').style.display = 'none';
-
-        commentModal.show();
-    }
-
-    window.formatText = function(type) {
-        var ta = document.getElementById('modalTextarea');
-        if (type === 'bold') ta.value += '**bold text** ';
-        else if (type === 'italic') ta.value += '*italic text* ';
-        else if (type === 'bullet') ta.value += '\n• ';
-    };
-
-    async function loadPastComments() {
-        if (!currentSid) return;
-        const listEl = document.getElementById('pastCommentsList');
-        listEl.innerHTML = 'Loading...';
-
-        try {
-            const res = await fetch(`/classbroadsheet/past-comments/${currentSid}`);
-            const data = await res.json();
-            if (data.success && data.data.length) {
-                listEl.innerHTML = data.data.map(p => `
-                    <div class="past-comment-item" onclick="loadPastIntoCurrent('${esc(p.classteachercomment || p.guidancescomment || p.remark_on_other_activities || '')}')">
-                        <div class="past-comment-meta">${p.session} • ${p.term} • ${p.class}</div>
-                        <div>${esc(p.classteachercomment || p.guidancescomment || p.remark_on_other_activities || '—')}</div>
+<!-- Past Comments Modal -->
+<div class="modal fade" id="pastCommentsModal" tabindex="-1" role="dialog" aria-labelledby="pastCommentsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="pastCommentsModalLabel">
+                    <i class="fas fa-history"></i> Past Comments
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="pastCommentsContent">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="sr-only">Loading...</span>
+                        </div>
+                        <p>Loading past comments...</p>
                     </div>
-                `).join('');
-            } else {
-                listEl.innerHTML = '<p class="text-muted">No past comments found.</p>';
-            }
-            document.getElementById('pastCommentsPanel').style.display = 'block';
-        } catch(e) {
-            listEl.innerHTML = '<p class="text-danger">Failed to load past comments.</p>';
-        }
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Comment Tooltip Modal -->
+<div class="modal fade" id="commentTooltipModal" tabindex="-1" role="dialog" aria-labelledby="commentTooltipModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-md" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title" id="commentTooltipModalLabel">
+                    <i class="fas fa-comment-dots"></i> Comment Information
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="commentTooltipContent">
+                <!-- Dynamic content will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@endsection
+
+
+<style>
+    .comment-group {
+        position: relative;
     }
 
-    window.loadPastIntoCurrent = function(text) {
-        document.getElementById('modalTextarea').value = text;
+    .comment-label {
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+        display: block;
+    }
+
+    .comment-textarea {
+        font-size: 0.9rem;
+        resize: vertical;
+        transition: all 0.3s ease;
+    }
+
+    .comment-textarea:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+    }
+
+    .comment-stats {
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+        display: block;
+    }
+
+    .performance-summary {
+        font-size: 0.8rem;
+        line-height: 1.3;
+    }
+
+    .performance-summary div {
+        margin-bottom: 2px;
+    }
+
+    .student-avatar {
+        transition: transform 0.2s ease;
+    }
+
+    .student-avatar:hover {
+        transform: scale(1.05);
+        cursor: pointer;
+    }
+
+    .past-comment-item {
+        background-color: #f8f9fa;
+        border-left: 3px solid #007bff;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        border-radius: 0.25rem;
+        transition: all 0.2s ease;
+    }
+
+    .past-comment-item:hover {
+        background-color: #e9ecef;
+        transform: translateX(5px);
+        cursor: pointer;
+    }
+
+    .past-comment-item.selected {
+        background-color: #d1ecf1;
+        border-left-color: #17a2b8;
+    }
+
+    .comment-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        margin: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border-radius: 0.25rem;
+    }
+
+    .comment-badge.teacher { background-color: #007bff; color: white; }
+    .comment-badge.guidance { background-color: #28a745; color: white; }
+    .comment-badge.activities { background-color: #ffc107; color: #333; }
+    .comment-badge.principal { background-color: #6c757d; color: white; }
+
+    .tooltip-inner {
+        max-width: 350px;
+        text-align: left;
+    }
+
+    .btn-use-comment {
+        margin-top: 0.5rem;
+    }
+</style>
+
+<script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
+<script>
+$(document).ready(function() {
+    // Initialize CKEditor for all textareas (optional - can use simple textarea if preferred)
+    // Uncomment the following lines if you want rich text editing
+    /*
+    $('.comment-textarea').each(function() {
+        ClassicEditor
+            .create(this, {
+                toolbar: ['bold', 'italic', 'bulletedList', 'numberedList', 'undo', 'redo'],
+                placeholder: $(this).attr('placeholder')
+            })
+            .catch(error => {
+                console.error(error);
+            });
+    });
+    */
+
+    // Character counter for textareas (for non-CKEditor textareas)
+    function updateCharCount(textarea) {
+        const count = $(textarea).val().length;
+        $(textarea).closest('.comment-group').find('.char-count').text(count);
+    }
+
+    $('.comment-textarea').each(function() {
+        updateCharCount(this);
+        $(this).on('input', function() {
+            updateCharCount(this);
+        });
+    });
+
+    // Tooltip on avatar click - show student summary with comment counts
+    $('.student-avatar, .student-avatar img, .student-avatar div').click(function(e) {
+        e.stopPropagation();
+        const $row = $(this).closest('tr');
+        const studentId = $row.data('student-id');
+        const studentName = $row.data('student-name');
+
+        // Fetch student comment summary
+        $.ajax({
+            url: `/classbroadsheet/student-summary/${studentId}/${$schoolclassid}/${$sessionid}/${$termid}`,
+            method: 'GET',
+            success: function(response) {
+                if (response.success) {
+                    const data = response.data;
+                    const pictureHtml = data.picture
+                        ? `<img src="{{ asset('storage') }}/${data.picture}" class="rounded-circle" width="80" height="80" alt="Student">`
+                        : `<div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                            <span class="text-white" style="font-size: 2rem;">${data.student_name.charAt(0)}</span>
+                           </div>`;
+
+                    $('#commentTooltipContent').html(`
+                        <div class="text-center mb-3">
+                            ${pictureHtml}
+                            <h4 class="mt-2">${data.student_name}</h4>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="alert alert-info text-center">
+                                    <h5>Current Term</h5>
+                                    <p class="mb-0"><strong>Comments:</strong> ${data.current_comments_count}</p>
+                                    <p><strong>Absences:</strong> ${data.current_profile?.no_of_times_school_absent || 0}</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="alert alert-secondary text-center">
+                                    <h5>Historical</h5>
+                                    <p class="mb-0"><strong>Past Comments:</strong> ${data.total_historical_comments}</p>
+                                    <p><strong>Total Comments:</strong> ${data.current_comments_count + data.total_historical_comments}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <h6>Current Comments:</h6>
+                            ${data.current_profile ? `
+                                ${data.current_profile.classteachercomment ? `<div class="alert alert-primary"><strong>Teacher:</strong> ${data.current_profile.classteachercomment}</div>` : ''}
+                                ${data.current_profile.guidancescomment ? `<div class="alert alert-success"><strong>Guidance:</strong> ${data.current_profile.guidancescomment}</div>` : ''}
+                                ${data.current_profile.remark_on_other_activities ? `<div class="alert alert-warning"><strong>Activities:</strong> ${data.current_profile.remark_on_other_activities}</div>` : ''}
+                                ${data.current_profile.principalscomment ? `<div class="alert alert-secondary"><strong>Principal:</strong> ${data.current_profile.principalscomment}</div>` : ''}
+                            ` : '<p class="text-muted">No comments for current term</p>'}
+                        </div>
+                        <div class="mt-3">
+                            <button class="btn btn-primary btn-sm btn-block" onclick="viewPastComments(${studentId})">
+                                <i class="fas fa-history"></i> View Past Comments
+                            </button>
+                        </div>
+                    `);
+
+                    $('#commentTooltipModal').modal('show');
+                }
+            },
+            error: function() {
+                Swal.fire('Error', 'Unable to load student summary', 'error');
+            }
+        });
+    });
+
+    // Past Comments Modal
+    window.viewPastComments = function(studentId) {
+        $('#commentTooltipModal').modal('hide');
+
+        $.ajax({
+            url: `/classbroadsheet/past-comments/${studentId}`,
+            method: 'GET',
+            success: function(response) {
+                if (response.success && response.data.length > 0) {
+                    let html = '<div class="list-group">';
+
+                    response.data.forEach(function(comment, index) {
+                        html += `
+                            <div class="past-comment-item" data-comment-index="${index}">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <strong>${comment.session} - ${comment.term}</strong>
+                                    <span class="badge badge-secondary">${comment.class}</span>
+                                    <small class="text-muted">${comment.date}</small>
+                                </div>
+                                ${comment.classteachercomment ? `
+                                    <div class="comment-badge teacher">Teacher's Comment</div>
+                                    <p class="mt-1 mb-2">${escapeHtml(comment.classteachercomment)}</p>
+                                ` : ''}
+                                ${comment.guidancescomment ? `
+                                    <div class="comment-badge guidance">Guidance's Comment</div>
+                                    <p class="mt-1 mb-2">${escapeHtml(comment.guidancescomment)}</p>
+                                ` : ''}
+                                ${comment.remark_on_other_activities ? `
+                                    <div class="comment-badge activities">Activities Remark</div>
+                                    <p class="mt-1 mb-2">${escapeHtml(comment.remark_on_other_activities)}</p>
+                                ` : ''}
+                                ${comment.principalscomment ? `
+                                    <div class="comment-badge principal">Principal's Comment</div>
+                                    <p class="mt-1 mb-2">${escapeHtml(comment.principalscomment)}</p>
+                                ` : ''}
+                                <button class="btn btn-sm btn-outline-primary btn-use-comment"
+                                        data-comment-data='${JSON.stringify(comment)}'
+                                        onclick="usePastComment(this, ${studentId})">
+                                    <i class="fas fa-paste"></i> Use This Comment
+                                </button>
+                            </div>
+                        `;
+                    });
+
+                    html += '</div>';
+                    $('#pastCommentsContent').html(html);
+                } else {
+                    $('#pastCommentsContent').html(`
+                        <div class="alert alert-info text-center">
+                            <i class="fas fa-info-circle"></i> No past comments found for this student.
+                        </div>
+                    `);
+                }
+
+                $('#pastCommentsModal').modal('show');
+            },
+            error: function() {
+                $('#pastCommentsContent').html(`
+                    <div class="alert alert-danger text-center">
+                        <i class="fas fa-exclamation-triangle"></i> Error loading past comments. Please try again.
+                    </div>
+                `);
+            }
+        });
     };
 
-    function saveFromModal() {
-        const value = document.getElementById('modalTextarea').value.trim();
-        setCanonical(currentSid, currentField, value);
-
-        document.querySelectorAll(`[data-sid="${currentSid}"][data-field="${currentField}"]`).forEach(inp => inp.value = value);
-
-        refreshCommentStatus();
-        commentModal.hide();
-        toast('Comment saved successfully!', 'success');
+    // Helper function to escape HTML
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
-    /* ───────────────────────────────────────────────
-       DOM READY
-    ─────────────────────────────────────────────── */
-    document.addEventListener('DOMContentLoaded', function () {
+    // Global function to use past comment
+    window.usePastComment = function(button, studentId) {
+        const commentData = JSON.parse($(button).data('comment-data'));
+        const $row = $(`tr[data-student-id="${studentId}"]`);
 
-        commentModal = new bootstrap.Modal(document.getElementById('cbCommentModal'));
+        // Determine which comment type to fill (based on active textarea or current context)
+        // For simplicity, we'll show a prompt to select which field to fill
+        Swal.fire({
+            title: 'Select Comment Field',
+            text: 'Which comment field would you like to fill?',
+            icon: 'question',
+            showCancelButton: true,
+            showDenyButton: true,
+            confirmButtonText: 'Teacher\'s Comment',
+            denyButtonText: 'Guidance\'s Comment',
+            cancelButtonText: 'Cancel',
+            showCloseButton: true
+        }).then((result) => {
+            let targetTextarea = null;
+            let commentText = '';
 
-        /* New: Open modal on focus */
-        document.querySelectorAll('.desk-teacher, .desk-guidance, .desk-activities, .mob-teacher, .mob-guidance, .mob-activities').forEach(inp => {
-            inp.addEventListener('focus', function () {
-                openCommentModal(this.dataset.sid, this.dataset.field);
-            });
-        });
+            if (result.isConfirmed) {
+                targetTextarea = $row.find('.teacher-comment');
+                commentText = commentData.classteachercomment;
+            } else if (result.isDenied) {
+                targetTextarea = $row.find('.guidance-comment');
+                commentText = commentData.guidancescomment;
+            } else if (result.dismiss === Swal.DismissReason.close) {
+                // Show sub-menu for activities and principal
+                Swal.fire({
+                    title: 'More Options',
+                    text: 'Choose additional comment field',
+                    icon: 'info',
+                    showCancelButton: true,
+                    confirmButtonText: 'Activities Remark',
+                    denyButtonText: 'Principal\'s Comment',
+                    cancelButtonText: 'Cancel'
+                }).then((subResult) => {
+                    if (subResult.isConfirmed) {
+                        targetTextarea = $row.find('.activities-comment');
+                        commentText = commentData.remark_on_other_activities;
+                    } else if (subResult.isDenied) {
+                        targetTextarea = $row.find('.principal-comment');
+                        commentText = commentData.principalscomment;
+                    }
 
-        document.getElementById('modalSaveBtn').addEventListener('click', saveFromModal);
-        document.getElementById('btnLoadPastComments').addEventListener('click', loadPastComments);
-
-        /* Your Original Code Continues */
-        /* 1. COLUMN TOGGLE */
-        document.querySelectorAll('.toggle-chip').forEach(function (chip) {
-            chip.addEventListener('click', function () {
-                var key = this.getAttribute('data-colkey');
-                var show = this.classList.toggle('active') ? '' : 'none';
-                document.querySelectorAll('.cbcol-' + key).forEach(function (el) { el.style.display = show; });
-                var mobileClass = { guidance: '.mobile-col-guidance', activities: '.mobile-col-activities', absence: '.mobile-col-absence' }[key];
-                if (mobileClass) document.querySelectorAll(mobileClass).forEach(function (el) { el.style.display = show; });
-            });
-        });
-
-        /* 2. SEARCH */
-        var searchEl = document.getElementById('searchInput');
-        if (searchEl) {
-            searchEl.addEventListener('input', function () {
-                var q = this.value.toLowerCase().trim();
-                document.querySelectorAll('.cb-student-row').forEach(function (row) {
-                    var key = (row.getAttribute('data-searchkey') || '').toLowerCase();
-                    row.style.display = (!q || key.includes(q)) ? '' : 'none';
+                    if (targetTextarea && commentText) {
+                        targetTextarea.val(commentText).trigger('input');
+                        Swal.fire('Success!', 'Past comment has been inserted.', 'success');
+                    } else if (!commentText) {
+                        Swal.fire('Warning', 'No comment available for this field in the selected past comment.', 'warning');
+                    }
                 });
-            });
-        }
+                return;
+            }
 
-        /* Attach input listeners */
-        var fieldSelectors = ['.desk-teacher', '.desk-guidance', '.desk-activities', '.desk-absence', '.mob-teacher', '.mob-guidance', '.mob-activities', '.mob-absence'];
-        fieldSelectors.forEach(sel => {
-            document.querySelectorAll(sel).forEach(inp => {
-                inp.addEventListener('input', onInputChange);
-            });
+            if (targetTextarea && commentText) {
+                targetTextarea.val(commentText).trigger('input');
+                Swal.fire('Success!', 'Past comment has been inserted.', 'success');
+            } else if (!commentText) {
+                Swal.fire('Warning', 'No comment available for this field in the selected past comment.', 'warning');
+            }
+        });
+    };
+
+    // Tooltip for comment textareas when focused
+    $('.comment-textarea').on('focus', function() {
+        const $row = $(this).closest('tr');
+        const studentId = $row.data('student-id');
+        const studentName = $row.data('student-name');
+        const commentType = $(this).data('comment-type');
+
+        // Show tooltip with comment information
+        $(this).tooltip({
+            title: `Adding ${commentType} comment for ${studentName}. Click the student avatar to view past comments.`,
+            placement: 'top',
+            trigger: 'focus',
+            html: true
+        }).tooltip('show');
+    });
+
+    // Form submission with AJAX
+    $('#commentsForm').on('submit', function(e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        formData.append('_method', 'PATCH');
+
+        Swal.fire({
+            title: 'Saving Comments',
+            text: 'Please wait while we save all comments...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
         });
 
-        refreshCommentStatus();
+        $.ajax({
+            url: $(this).attr('action'),
+            method: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Saved!',
+                        text: response.message,
+                        timer: 2000
+                    });
+                } else {
+                    Swal.fire('Error', response.message, 'error');
+                }
+            },
+            error: function(xhr) {
+                let errorMessage = 'An error occurred while saving comments.';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                }
+                Swal.fire('Error', errorMessage, 'error');
+            }
+        });
     });
-})();
+
+    // Initialize tooltips
+    $('[data-toggle="tooltip"]').tooltip();
+});
 </script>
-@endsection

@@ -9,6 +9,7 @@ use App\Models\Schoolclass;
 use App\Models\Schoolterm;
 use App\Models\Schoolsession;
 use App\Models\Subject;
+use App\Models\StudentRegistration;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -146,7 +147,8 @@ class ClassBroadsheetController extends Controller
         $personalityProfiles = Studentpersonalityprofile::where('schoolclassid', $schoolclassid)
             ->where('sessionid', $sessionid)
             ->where('termid',    $termid)
-            ->get();
+            ->get()
+            ->keyBy('studentid');
 
         $schoolclass = Schoolclass::where('schoolclass.id', $schoolclassid)
             ->leftJoin('schoolarm', 'schoolclass.arm', '=', 'schoolarm.id')
@@ -166,7 +168,6 @@ class ClassBroadsheetController extends Controller
 
     // =========================================================================
     // GET PAST COMMENTS  (AJAX GET)
-    // Route: GET /classbroadsheet/past-comments/{studentId}
     // =========================================================================
 
     public function getPastComments($studentId)
@@ -195,11 +196,15 @@ class ClassBroadsheetController extends Controller
                     ->leftJoin('schoolarm', 'schoolclass.arm', '=', 'schoolarm.id')
                     ->first(['schoolclass.schoolclass', 'schoolarm.arm']);
 
+                // Get student details
+                $student = StudentRegistration::find($p->studentid);
+
                 return [
                     'id'                         => $p->id,
                     'term'                       => $term    ? $term->term       : 'Unknown Term',
                     'session'                    => $session ? $session->session : 'Unknown Session',
                     'class'                      => $class   ? trim($class->schoolclass . ' ' . $class->arm) : 'Unknown Class',
+                    'student_name'               => $student ? trim($student->firstname . ' ' . $student->lastname) : 'Unknown Student',
                     'classteachercomment'        => $p->classteachercomment,
                     'guidancescomment'           => $p->guidancescomment,
                     'remark_on_other_activities' => $p->remark_on_other_activities,
@@ -216,6 +221,63 @@ class ClassBroadsheetController extends Controller
     }
 
     // =========================================================================
+    // GET STUDENT COMMENT SUMMARY (for tooltip)
+    // =========================================================================
+
+    public function getStudentCommentSummary($studentId, $schoolclassid, $sessionid, $termid)
+    {
+        try {
+            $profile = Studentpersonalityprofile::where('studentid', $studentId)
+                ->where('schoolclassid', $schoolclassid)
+                ->where('sessionid', $sessionid)
+                ->where('termid', $termid)
+                ->first();
+
+            $student = StudentRegistration::with('picture')->find($studentId);
+
+            // Calculate totals and cumulative stats
+            $totalCommentsCount = 0;
+            $previousComments = Studentpersonalityprofile::where('studentid', $studentId)
+                ->where(function ($q) {
+                    $q->whereNotNull('classteachercomment')
+                      ->orWhereNotNull('guidancescomment')
+                      ->orWhereNotNull('remark_on_other_activities')
+                      ->orWhereNotNull('principalscomment');
+                })
+                ->count();
+
+            $currentCommentCount = 0;
+            if ($profile) {
+                if ($profile->classteachercomment) $currentCommentCount++;
+                if ($profile->guidancescomment) $currentCommentCount++;
+                if ($profile->remark_on_other_activities) $currentCommentCount++;
+                if ($profile->principalscomment) $currentCommentCount++;
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'student_id' => $studentId,
+                    'student_name' => $student ? trim($student->firstname . ' ' . $student->lastname) : 'Unknown',
+                    'picture' => $student && $student->picture ? $student->picture->picture : null,
+                    'current_comments_count' => $currentCommentCount,
+                    'total_historical_comments' => $previousComments,
+                    'current_profile' => $profile ? [
+                        'classteachercomment' => $profile->classteachercomment,
+                        'guidancescomment' => $profile->guidancescomment,
+                        'remark_on_other_activities' => $profile->remark_on_other_activities,
+                        'principalscomment' => $profile->principalscomment,
+                        'no_of_times_school_absent' => $profile->no_of_times_school_absent,
+                    ] : null,
+                ]
+            ]);
+        } catch (\Exception $e) {
+            Log::error('getStudentCommentSummary error', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    // =========================================================================
     // UPDATE COMMENTS  (POST + _method=PATCH spoofing)
     // =========================================================================
 
@@ -225,6 +287,7 @@ class ClassBroadsheetController extends Controller
             'teacher_comments.*'            => 'nullable|string|max:5000',
             'guidance_comments.*'           => 'nullable|string|max:5000',
             'remarks_on_other_activities.*' => 'nullable|string|max:5000',
+            'principals_comments.*'         => 'nullable|string|max:5000',
             'no_of_times_school_absent.*'   => 'nullable|integer|min:0',
             'signature'                     => 'nullable|mimes:jpg,jpeg,png,pdf|max:5048',
         ]);
@@ -237,15 +300,17 @@ class ClassBroadsheetController extends Controller
             $signaturePath = str_replace('public/', '', $stored);
         }
 
-        $teacherComments  = $request->input('teacher_comments',            []);
-        $guidanceComments = $request->input('guidance_comments',            []);
-        $remarks          = $request->input('remarks_on_other_activities', []);
-        $absences         = $request->input('no_of_times_school_absent',   []);
+        $teacherComments   = $request->input('teacher_comments',            []);
+        $guidanceComments  = $request->input('guidance_comments',           []);
+        $remarks           = $request->input('remarks_on_other_activities', []);
+        $principalComments = $request->input('principals_comments',         []);
+        $absences          = $request->input('no_of_times_school_absent',   []);
 
         $allStudentIds = array_unique(array_merge(
             array_keys($teacherComments),
             array_keys($guidanceComments),
             array_keys($remarks),
+            array_keys($principalComments),
             array_keys($absences)
         ));
 
@@ -258,13 +323,14 @@ class ClassBroadsheetController extends Controller
             $updatedCount = $createdCount = $skippedCount = 0;
 
             foreach ($allStudentIds as $studentId) {
-                $teacherComment  = trim($teacherComments[$studentId]  ?? '');
-                $guidanceComment = trim($guidanceComments[$studentId]  ?? '');
-                $remark          = trim($remarks[$studentId]           ?? '');
-                $absence         = (isset($absences[$studentId]) && $absences[$studentId] !== '')
+                $teacherComment   = trim($teacherComments[$studentId]   ?? '');
+                $guidanceComment  = trim($guidanceComments[$studentId]  ?? '');
+                $remark           = trim($remarks[$studentId]           ?? '');
+                $principalComment = trim($principalComments[$studentId] ?? '');
+                $absence          = (isset($absences[$studentId]) && $absences[$studentId] !== '')
                     ? (int) $absences[$studentId] : null;
 
-                if ($teacherComment === '' && $guidanceComment === '' && $remark === '' && $absence === null && !$signaturePath) {
+                if ($teacherComment === '' && $guidanceComment === '' && $remark === '' && $principalComment === '' && $absence === null && !$signaturePath) {
                     $skippedCount++;
                     continue;
                 }
@@ -277,9 +343,10 @@ class ClassBroadsheetController extends Controller
 
                 $payload = [
                     'staffid'                    => Auth::id(),
-                    'classteachercomment'        => $teacherComment  ?: null,
-                    'guidancescomment'           => $guidanceComment ?: null,
-                    'remark_on_other_activities' => $remark          ?: null,
+                    'classteachercomment'        => $teacherComment   ?: null,
+                    'guidancescomment'           => $guidanceComment  ?: null,
+                    'remark_on_other_activities' => $remark           ?: null,
+                    'principalscomment'          => $principalComment ?: null,
                     'no_of_times_school_absent'  => $absence,
                 ];
                 if ($signaturePath) $payload['signature'] = $signaturePath;
