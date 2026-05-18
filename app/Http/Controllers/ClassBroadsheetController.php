@@ -256,9 +256,6 @@ class ClassBroadsheetController extends Controller
 
     // =========================================================================
     // UPDATE COMMENTS  (AJAX POST — returns JSON)
-    // NOTE: Route should be POST, not PATCH, since the blade sends via fetch POST.
-    // In web.php:  Route::post('classbroadsheet/{sc}/{se}/{t}/comments', [...])
-    //                        ->name('classbroadsheet.updateComments');
     // =========================================================================
 
     public function updateComments(Request $request, $schoolclassid, $sessionid, $termid)
@@ -269,15 +266,14 @@ class ClassBroadsheetController extends Controller
             'termid'        => $termid,
             'method'        => $request->method(),
             'ajax'          => $request->ajax(),
-            'all'           => $request->except(['signature']),
         ]);
 
         $request->validate([
-            'teacher_comments.*'             => 'required_without_all:guidance_comments.*,remarks_on_other_activities.*,no_of_times_school_absent.*|nullable|string|max:2000',
-            'guidance_comments.*'            => 'nullable|string|max:2000',
-            'remarks_on_other_activities.*'  => 'nullable|string|max:2000',
-            'no_of_times_school_absent.*'    => 'nullable|integer|min:0',
-            'signature'                      => 'nullable|mimes:jpg,jpeg,png,pdf|max:5048',
+            'teacher_comments.*'            => 'nullable|string|max:2000',
+            'guidance_comments.*'           => 'nullable|string|max:2000',
+            'remarks_on_other_activities.*' => 'nullable|string|max:2000',
+            'no_of_times_school_absent.*'   => 'nullable|integer|min:0',
+            'signature'                     => 'nullable|mimes:jpg,jpeg,png,pdf|max:5048',
         ]);
 
         // Handle signature upload
@@ -287,15 +283,14 @@ class ClassBroadsheetController extends Controller
             $filename      = 'signature_' . Auth::id() . '_' . time() . '.' . $file->getClientOriginalExtension();
             $stored        = $file->storeAs('public/signatures', $filename);
             $signaturePath = str_replace('public/', '', $stored);
-            Log::info('Signature uploaded', ['path' => $signaturePath]);
         }
 
         $teacherComments  = $request->input('teacher_comments',            []);
         $guidanceComments = $request->input('guidance_comments',            []);
         $remarks          = $request->input('remarks_on_other_activities', []);
-        $absences         = $request->input('no_of_times_school_absent',  []);
+        $absences         = $request->input('no_of_times_school_absent',   []);
 
-        // Collect all student IDs from any filled field
+        // All student IDs sent from the form
         $allStudentIds = array_unique(array_merge(
             array_keys($teacherComments),
             array_keys($guidanceComments),
@@ -311,6 +306,7 @@ class ClassBroadsheetController extends Controller
         try {
             $updatedCount = 0;
             $createdCount = 0;
+            $skippedCount = 0;
 
             foreach ($allStudentIds as $studentId) {
                 $teacherComment  = trim($teacherComments[$studentId]  ?? '');
@@ -320,8 +316,10 @@ class ClassBroadsheetController extends Controller
                     ? (int) $absences[$studentId]
                     : null;
 
-                // Skip if teacher comment is empty (it's the only required one)
-                if ($teacherComment === '' && $guidanceComment === '' && $remark === '' && $absence === null) {
+                // Skip ONLY if every field is blank AND no signature to attach.
+                // A student with ANY field filled (including just absences) gets saved.
+                if ($teacherComment === '' && $guidanceComment === '' && $remark === '' && $absence === null && !$signaturePath) {
+                    $skippedCount++;
                     continue;
                 }
 
@@ -332,11 +330,11 @@ class ClassBroadsheetController extends Controller
                     ->first();
 
                 $payload = [
-                    'staffid'                    => Auth::id(),
-                    'classteachercomment'         => $teacherComment  ?: null,
-                    'guidancescomment'            => $guidanceComment ?: null,
-                    'remark_on_other_activities'  => $remark          ?: null,
-                    'no_of_times_school_absent'   => $absence,
+                    'staffid'                   => Auth::id(),
+                    'classteachercomment'        => $teacherComment  ?: null,
+                    'guidancescomment'           => $guidanceComment ?: null,
+                    'remark_on_other_activities' => $remark          ?: null,
+                    'no_of_times_school_absent'  => $absence,
                 ];
 
                 if ($signaturePath) {
@@ -348,10 +346,10 @@ class ClassBroadsheetController extends Controller
                     $updatedCount++;
                 } else {
                     Studentpersonalityprofile::create(array_merge($payload, [
-                        'studentid'    => $studentId,
+                        'studentid'     => $studentId,
                         'schoolclassid' => $schoolclassid,
-                        'sessionid'    => $sessionid,
-                        'termid'       => $termid,
+                        'sessionid'     => $sessionid,
+                        'termid'        => $termid,
                     ]));
                     $createdCount++;
                 }
@@ -359,16 +357,26 @@ class ClassBroadsheetController extends Controller
 
             DB::commit();
 
-            $total   = $updatedCount + $createdCount;
-            $message = $total > 0
-                ? "Saved successfully: {$updatedCount} updated, {$createdCount} created."
-                : 'No changes detected.';
+            $total = $updatedCount + $createdCount;
+
+            if ($total === 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No comments were entered. Please add at least one comment before saving.',
+                ], 400);
+            }
+
+            $parts = [];
+            if ($updatedCount) $parts[] = "{$updatedCount} updated";
+            if ($createdCount) $parts[] = "{$createdCount} new";
+            if ($skippedCount) $parts[] = "{$skippedCount} skipped (no data)";
 
             return response()->json([
                 'success' => true,
-                'message' => $message,
+                'message' => 'Saved successfully: ' . implode(', ', $parts) . '.',
                 'updated' => $updatedCount,
                 'created' => $createdCount,
+                'skipped' => $skippedCount,
             ]);
 
         } catch (\Exception $e) {
@@ -378,7 +386,6 @@ class ClassBroadsheetController extends Controller
                 'line'  => $e->getLine(),
                 'file'  => $e->getFile(),
             ]);
-
             return response()->json([
                 'success' => false,
                 'message' => 'Server error: ' . $e->getMessage(),
