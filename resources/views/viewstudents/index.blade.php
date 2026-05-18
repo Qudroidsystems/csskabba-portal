@@ -594,11 +594,11 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     <div class="filter-grid">
         <div class="filter-item">
             <label><i class="ri-search-line"></i> Search</label>
-            <input type="text" id="searchInput" class="search" placeholder="Name or Admission No...">
+            <input type="text" id="searchInput" placeholder="Name or Admission No...">
         </div>
         <div class="filter-item">
             <label><i class="ri-user-line"></i> Gender</label>
-            <select id="idGender">
+            <select id="genderFilter">
                 <option value="all">All Genders</option>
                 <option value="Male">Male</option>
                 <option value="Female">Female</option>
@@ -606,7 +606,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         </div>
         <div class="filter-item">
             <label><i class="ri-id-card-line"></i> Admission No</label>
-            <select id="idAdmissionNo">
+            <select id="admissionFilter">
                 <option value="all">All Admission Numbers</option>
                 @foreach ($allstudents as $student)
                     <option value="{{ $student->admissionno }}">{{ $student->admissionno }}</option>
@@ -614,7 +614,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             </select>
         </div>
         <div class="filter-item">
-            <button class="btn-filter" onclick="filterData()"><i class="ri-search-line"></i> Apply Filters</button>
+            <button class="btn-filter" onclick="applyFilters()"><i class="ri-search-line"></i> Apply Filters</button>
         </div>
         <div class="filter-item">
             <button class="btn-reset" onclick="resetFilters()"><i class="ri-refresh-line"></i> Reset</button>
@@ -646,30 +646,33 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                     <th style="width: 120px;">Action</th>
                 </tr>
             </thead>
-            <tbody class="list" id="studentTableBody">
+            <tbody id="studentTableBody">
                 @forelse ($allstudents as $key => $student)
                 @php
-                    $picture = $student->picture ? basename($student->picture) : 'unnamed.jpg';
-                    $fullName = trim($student->firstname . ' ' . $student->lastname . ' ' . $student->othername);
-                    $genderClass = $student->gender == 'Male' ? 'gender-male' : 'gender-female';
-                    $genderIcon = $student->gender == 'Male' ? 'ri-men-line' : 'ri-women-line';
+                    // Format name as: Last Name, First Name Other Names
+                    $lastName = $student->lastname ?? '';
+                    $firstName = $student->firstname ?? '';
+                    $otherNames = $student->othername ?? '';
+                    $formattedName = trim($lastName . ' ' . $firstName . ' ' . $otherNames);
+                    $genderClass = ($student->gender ?? '') == 'Male' ? 'gender-male' : 'gender-female';
+                    $genderIcon = ($student->gender ?? '') == 'Male' ? 'ri-men-line' : 'ri-women-line';
                 @endphp
-                <tr>
-                    <td data-label="#" class="sn" style="font-weight: 600; color: var(--cb-navy);">{{ $key + 1 }}</td>
-                    <td data-label="Admission No" class="admissionno">{{ $student->admissionno }}</td>
-                    <td data-label="Student Name" class="name">
+                <tr data-admission="{{ $student->admissionno }}" data-gender="{{ $student->gender }}" data-name="{{ strtolower($formattedName) }}">
+                    <td data-label="#" style="font-weight: 600; color: var(--cb-navy);">{{ $key + 1 }}</td>
+                    <td data-label="Admission No" class="admission-cell">{{ $student->admissionno }}</td>
+                    <td data-label="Student Name">
                         <div class="d-flex align-items-center gap-3">
                             <img src="{{ $student->picture ? asset('storage/student_avatars/' . basename($student->picture)) : asset('storage/student_avatars/unnamed.jpg') }}"
-                                 alt="{{ $fullName }}"
+                                 alt="{{ $formattedName }}"
                                  class="student-avatar"
                                  data-bs-toggle="modal"
                                  data-bs-target="#imageViewModal"
                                  data-image="{{ $student->picture ? asset('storage/student_avatars/' . basename($student->picture)) : asset('storage/student_avatars/unnamed.jpg') }}"
-                                 data-name="{{ $fullName }}"
+                                 data-name="{{ $formattedName }}"
                                  data-admission="{{ $student->admissionno }}"
                                  onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'">
                             <a href="{{ route('myclass.studentpersonalityprofile', [$student->stid, $schoolclassid, $sessionid, $termid]) }}" class="student-name-link">
-                                {{ $fullName }}
+                                {{ $formattedName }}
                             </a>
                         </div>
                     </td>
@@ -706,12 +709,14 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                 <div class="text-muted" style="font-size: 12px;">
                     <i class="ri-information-line me-1"></i>
                     Showing <span class="fw-semibold text-dark" id="showingCount">{{ $allstudents->count() }}</span> of
-                    <span class="fw-semibold text-dark">{{ $allstudents->count() }}</span> students
+                    <span class="fw-semibold text-dark" id="totalCount">{{ $allstudents->count() }}</span> students
                 </div>
             </div>
             <div class="col-sm-auto">
-                <div class="pagination-wrap" id="pagination-container">
-                    <!-- Pagination will be handled by List.js -->
+                <div class="pagination-wrap" id="paginationContainer">
+                    <button class="page-item" id="prevPage" onclick="changePage(-1)" disabled>Prev</button>
+                    <span id="pageInfo" class="page-item active" style="background: var(--cb-teal); color: white;">Page 1</span>
+                    <button class="page-item" id="nextPage" onclick="changePage(1)">Next</button>
                 </div>
             </div>
         </div>
@@ -740,57 +745,44 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/list.js@2.3.1/dist/list.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <script>
+// Global variables for pagination and filtering
+let allRows = [];
+let filteredRows = [];
+let currentPage = 1;
+const rowsPerPage = 10;
+
+// Initialize data on page load
 document.addEventListener("DOMContentLoaded", function () {
-    // Initialize List.js for pagination and filtering
-    const studentListElement = document.getElementById("studentListTable");
-    if (!studentListElement) {
-        console.error("Student list table not found");
-        return;
+    // Collect all rows from the table
+    const tableBody = document.getElementById('studentTableBody');
+    if (tableBody) {
+        const rows = tableBody.querySelectorAll('tr');
+        rows.forEach(row => {
+            if (row.querySelector('.empty-state')) return;
+            const admissionCell = row.querySelector('.admission-cell');
+            const nameLink = row.querySelector('.student-name-link');
+            const genderBadge = row.querySelector('.gender-badge');
+
+            allRows.push({
+                element: row,
+                admission: admissionCell ? admissionCell.textContent.trim() : '',
+                name: nameLink ? nameLink.textContent.trim().toLowerCase() : '',
+                gender: genderBadge ? genderBadge.textContent.trim().replace(/[^a-zA-Z]/g, '') : ''
+            });
+        });
     }
 
-    const options = {
-        valueNames: ["sn", "admissionno", "name", "gender"],
-        page: 10,
-        pagination: {
-            innerWindow: 2,
-            outerWindow: 1,
-            left: 0,
-            right: 0,
-            item: '<li class="page-item"><a class="page-link" href="#"></a></li>'
-        }
-    };
+    filteredRows = [...allRows];
+    updateDisplay();
+    updateStats();
 
-    let studentList;
-    try {
-        studentList = new List("studentListTable", options);
-        console.log("List.js initialized successfully");
-    } catch (error) {
-        console.error("Error initializing List.js:", error);
-        return;
-    }
-
-    // Update showing count on list update
-    studentList.on("updated", function (e) {
-        const showingCount = document.getElementById("showingCount");
-        if (showingCount) {
-            showingCount.innerText = e.matchingItems.length;
-        }
-
-        // Update pagination display
-        const paginationContainer = document.getElementById("pagination-container");
-        if (paginationContainer && studentList.page) {
-            // Pagination is handled by List.js automatically
-        }
-    });
-
-    // Initialize Chart.js for Students by Gender
+    // Initialize Chart.js
     const ctx = document.getElementById("studentsByGenderChart")?.getContext("2d");
-    const chartError = document.getElementById("chartError");
     const maleCount = {{ $male ?? 0 }};
     const femaleCount = {{ $female ?? 0 }};
+    const chartError = document.getElementById("chartError");
 
     if (ctx) {
         try {
@@ -803,93 +795,169 @@ document.addEventListener("DOMContentLoaded", function () {
                         data: [maleCount, femaleCount],
                         backgroundColor: ["#0ea5e9", "#f43f5e"],
                         borderRadius: 8,
-                        barPercentage: 0.6,
-                        categoryPercentage: 0.8
+                        barPercentage: 0.6
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: true,
                     scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: { color: "#e2e8f0" },
-                            title: { display: true, text: "Number of Students", font: { size: 12 } }
-                        },
-                        x: {
-                            grid: { display: false },
-                            title: { display: true, text: "Gender", font: { size: 12 } }
-                        }
+                        y: { beginAtZero: true, grid: { color: "#e2e8f0" } },
+                        x: { grid: { display: false } }
                     },
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: { backgroundColor: "#0f2342", titleColor: "#fff", bodyColor: "#e2e8f0" }
-                    }
+                    plugins: { legend: { display: false } }
                 }
             });
         } catch (error) {
-            console.error("Error initializing chart:", error);
+            console.error("Chart error:", error);
             if (chartError) chartError.classList.remove("d-none");
         }
-    } else {
-        console.error("Canvas element not found");
-        if (chartError) chartError.classList.remove("d-none");
     }
 
-    // Calculate and display average age
-    function calculateAverageAge() {
-        let totalAge = 0;
-        let count = 0;
-        @foreach ($allstudents as $student)
-            @if($student->dateofbirth)
-                let age = new Date().getFullYear() - new Date('{{ $student->dateofbirth }}').getFullYear();
-                totalAge += age;
-                count++;
-            @endif
-        @endforeach
-        if (count > 0) {
-            document.getElementById('avgAge').textContent = Math.round(totalAge / count);
-        } else {
-            document.getElementById('avgAge').textContent = '—';
-        }
-    }
-    calculateAverageAge();
+    // Setup enter key for search
+    document.getElementById('searchInput')?.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') applyFilters();
+    });
 });
 
-// Filter function
-window.filterData = function () {
-    const searchInput = document.getElementById("searchInput")?.value.toLowerCase() || "";
-    const genderSelect = document.getElementById("idGender");
-    const admissionNoSelect = document.getElementById("idAdmissionNo");
-    const selectedGender = genderSelect?.value || "all";
-    const selectedAdmissionNo = admissionNoSelect?.value || "all";
+// Apply filters function
+window.applyFilters = function() {
+    const searchTerm = document.getElementById('searchInput')?.value.toLowerCase().trim() || '';
+    const genderFilter = document.getElementById('genderFilter')?.value || 'all';
+    const admissionFilter = document.getElementById('admissionFilter')?.value || 'all';
 
-    // Get List.js instance
-    const table = document.getElementById("studentListTable");
-    if (table && table.list) {
-        table.list.filter(function (item) {
-            const name = item.values().name.toLowerCase();
-            const admissionno = item.values().admissionno.toLowerCase();
-            const gender = item.values().gender;
+    filteredRows = allRows.filter(row => {
+        // Search filter (name or admission)
+        let matchesSearch = true;
+        if (searchTerm) {
+            matchesSearch = row.name.includes(searchTerm) || row.admission.toLowerCase().includes(searchTerm);
+        }
 
-            const searchMatch = name.includes(searchInput) || admissionno.includes(searchInput);
-            const genderMatch = selectedGender === "all" || gender === selectedGender;
-            const admissionMatch = selectedAdmissionNo === "all" || item.values().admissionno === selectedAdmissionNo;
+        // Gender filter
+        let matchesGender = true;
+        if (genderFilter !== 'all') {
+            matchesGender = row.gender === genderFilter;
+        }
 
-            return searchMatch && genderMatch && admissionMatch;
+        // Admission filter
+        let matchesAdmission = true;
+        if (admissionFilter !== 'all') {
+            matchesAdmission = row.admission === admissionFilter;
+        }
+
+        return matchesSearch && matchesGender && matchesAdmission;
+    });
+
+    currentPage = 1;
+    updateDisplay();
+    showToast(`Found ${filteredRows.length} student(s)`, 'info');
+};
+
+// Reset filters function
+window.resetFilters = function() {
+    document.getElementById('searchInput').value = '';
+    document.getElementById('genderFilter').value = 'all';
+    document.getElementById('admissionFilter').value = 'all';
+
+    filteredRows = [...allRows];
+    currentPage = 1;
+    updateDisplay();
+    showToast('Filters reset', 'info');
+};
+
+// Update table display with pagination
+function updateDisplay() {
+    const tableBody = document.getElementById('studentTableBody');
+    if (!tableBody) return;
+
+    const startIndex = (currentPage - 1) * rowsPerPage;
+    const endIndex = startIndex + rowsPerPage;
+    const pageRows = filteredRows.slice(startIndex, endIndex);
+
+    // Clear current table body
+    tableBody.innerHTML = '';
+
+    if (pageRows.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="5">
+                    <div class="empty-state">
+                        <i class="ri-inbox-line"></i>
+                        <h6>No Students Found</h6>
+                        <p>No students match your filter criteria.</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+    } else {
+        pageRows.forEach((row, index) => {
+            const clonedRow = row.element.cloneNode(true);
+            // Update SN
+            const snCell = clonedRow.querySelector('td:first-child');
+            if (snCell) snCell.textContent = startIndex + index + 1;
+            tableBody.appendChild(clonedRow);
         });
+    }
+
+    // Update pagination info
+    const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+    const showingCount = document.getElementById('showingCount');
+    const totalCount = document.getElementById('totalCount');
+    const pageInfo = document.getElementById('pageInfo');
+    const prevBtn = document.getElementById('prevPage');
+    const nextBtn = document.getElementById('nextPage');
+
+    if (showingCount) showingCount.textContent = pageRows.length;
+    if (totalCount) totalCount.textContent = filteredRows.length;
+    if (pageInfo) pageInfo.textContent = `Page ${currentPage} of ${totalPages || 1}`;
+
+    if (prevBtn) prevBtn.disabled = currentPage === 1;
+    if (nextBtn) nextBtn.disabled = currentPage === totalPages || totalPages === 0;
+
+    // Update student count badge
+    const studentCountBadge = document.getElementById('studentCount');
+    if (studentCountBadge) studentCountBadge.textContent = filteredRows.length + ' Students';
+}
+
+// Change page function
+window.changePage = function(direction) {
+    const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+    const newPage = currentPage + direction;
+    if (newPage >= 1 && newPage <= totalPages) {
+        currentPage = newPage;
+        updateDisplay();
     }
 };
 
-// Reset filters
-window.resetFilters = function () {
-    document.getElementById("searchInput").value = "";
-    const genderSelect = document.getElementById("idGender");
-    const admissionNoSelect = document.getElementById("idAdmissionNo");
-    if (genderSelect) genderSelect.value = "all";
-    if (admissionNoSelect) admissionNoSelect.value = "all";
-    filterData();
-};
+// Update stats based on filtered data
+function updateStats() {
+    // Stats are calculated from original data, update with filtered if needed
+    const maleCount = allRows.filter(r => r.gender === 'Male').length;
+    const femaleCount = allRows.filter(r => r.gender === 'Female').length;
+
+    // You can update stat cards dynamically if needed
+}
+
+// Calculate average age
+function calculateAverageAge() {
+    let totalAge = 0;
+    let count = 0;
+    @foreach ($allstudents as $student)
+        @if($student->dateofbirth)
+            let birthYear = new Date('{{ $student->dateofbirth }}').getFullYear();
+            let currentYear = new Date().getFullYear();
+            let age = currentYear - birthYear;
+            totalAge += age;
+            count++;
+        @endif
+    @endforeach
+    if (count > 0) {
+        document.getElementById('avgAge').textContent = Math.round(totalAge / count);
+    } else {
+        document.getElementById('avgAge').textContent = '—';
+    }
+}
+calculateAverageAge();
 
 // Image modal handling
 const imageViewModal = document.getElementById('imageViewModal');
@@ -914,11 +982,6 @@ if (imageViewModal) {
     });
 }
 
-// Enter key support for search
-document.getElementById("searchInput")?.addEventListener("keypress", function(e) {
-    if (e.key === "Enter") filterData();
-});
-
 // Toast notification helper
 function showToast(message, type) {
     const toast = document.createElement('div');
@@ -927,6 +990,11 @@ function showToast(message, type) {
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
 }
+
+// Export functions for global use
+window.applyFilters = applyFilters;
+window.resetFilters = resetFilters;
+window.changePage = changePage;
 </script>
 
 @endsection
