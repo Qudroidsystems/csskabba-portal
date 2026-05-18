@@ -166,14 +166,12 @@ class ClassBroadsheetController extends Controller
     }
 
     // =========================================================================
-    // GET PAST COMMENTS (Enhanced with specific comment types and counts)
-    // Route: GET /classbroadsheet/past-comments/{studentId}
+    // GET PAST COMMENTS (AJAX GET)
     // =========================================================================
 
     public function getPastComments($studentId)
     {
         try {
-            // Get all profiles for this student across all terms/sessions
             $profiles = Studentpersonalityprofile::where('studentid', $studentId)
                 ->where(function ($q) {
                     $q->whereNotNull('classteachercomment')
@@ -187,14 +185,11 @@ class ClassBroadsheetController extends Controller
                     'id', 'studentid', 'schoolclassid', 'sessionid', 'termid',
                     'classteachercomment', 'guidancescomment',
                     'remark_on_other_activities', 'principalscomment',
-                    'no_of_times_school_absent',
-                    'created_at', 'updated_at',
+                    'no_of_times_school_absent', 'created_at', 'updated_at',
                 ]);
 
-            // Get student info for modal
             $student = StudentRegistration::find($studentId);
 
-            // Count comments by type
             $commentCounts = [
                 'classteacher' => 0,
                 'guidance' => 0,
@@ -204,45 +199,56 @@ class ClassBroadsheetController extends Controller
             ];
 
             $result = $profiles->map(function ($p) use (&$commentCounts) {
-                $term    = Schoolterm::find($p->termid);
+                $term = Schoolterm::find($p->termid);
                 $session = Schoolsession::find($p->sessionid);
-                $class   = Schoolclass::where('schoolclass.id', $p->schoolclassid)
+                $class = Schoolclass::where('schoolclass.id', $p->schoolclassid)
                     ->leftJoin('schoolarm', 'schoolclass.arm', '=', 'schoolarm.id')
                     ->first(['schoolclass.schoolclass', 'schoolarm.arm']);
 
-                // Count non-empty comments
                 if ($p->classteachercomment && trim($p->classteachercomment) !== '') $commentCounts['classteacher']++;
                 if ($p->guidancescomment && trim($p->guidancescomment) !== '') $commentCounts['guidance']++;
                 if ($p->remark_on_other_activities && trim($p->remark_on_other_activities) !== '') $commentCounts['activities']++;
                 if ($p->principalscomment && trim($p->principalscomment) !== '') $commentCounts['principal']++;
 
-                return [
-                    'id'                         => $p->id,
-                    'term'                       => $term    ? $term->term       : 'Unknown Term',
-                    'term_id'                    => $p->termid,
-                    'session'                    => $session ? $session->session : 'Unknown Session',
-                    'session_id'                 => $p->sessionid,
-                    'class'                      => $class   ? trim($class->schoolclass . ' ' . $class->arm) : 'Unknown Class',
-                    'class_id'                   => $p->schoolclassid,
-                    'classteachercomment'        => $p->classteachercomment,
-                    'guidancescomment'           => $p->guidancescomment,
-                    'remark_on_other_activities' => $p->remark_on_other_activities,
-                    'principalscomment'          => $p->principalscomment,
-                    'no_of_times_school_absent'  => $p->no_of_times_school_absent,
-                    'date'                       => optional($p->updated_at ?? $p->created_at)->format('d M Y') ?? '',
-                ];
-            });
+                // Get the non-empty comment
+                $commentText = '';
+                $commentType = '';
+                if ($p->classteachercomment && trim($p->classteachercomment) !== '') {
+                    $commentText = $p->classteachercomment;
+                    $commentType = 'Teacher';
+                } elseif ($p->guidancescomment && trim($p->guidancescomment) !== '') {
+                    $commentText = $p->guidancescomment;
+                    $commentType = 'Guidance';
+                } elseif ($p->remark_on_other_activities && trim($p->remark_on_other_activities) !== '') {
+                    $commentText = $p->remark_on_other_activities;
+                    $commentType = 'Activities';
+                } elseif ($p->principalscomment && trim($p->principalscomment) !== '') {
+                    $commentText = $p->principalscomment;
+                    $commentType = 'Principal';
+                } else {
+                    return null; // Skip if no comment
+                }
 
-            $commentCounts['total'] = $profiles->count();
+                return [
+                    'id' => $p->id,
+                    'term' => $term ? $term->term : 'Unknown Term',
+                    'session' => $session ? $session->session : 'Unknown Session',
+                    'class' => $class ? trim($class->schoolclass . ' ' . $class->arm) : 'Unknown Class',
+                    'comment_text' => $commentText,
+                    'comment_type' => $commentType,
+                    'date' => optional($p->updated_at ?? $p->created_at)->format('d M Y') ?? '',
+                ];
+            })->filter();
+
+            $commentCounts['total'] = $result->count();
 
             return response()->json([
                 'success' => true,
-                'data' => $result,
+                'data' => $result->values(),
                 'student' => $student ? [
                     'id' => $student->id,
                     'name' => trim($student->lastname . ' ' . $student->firstname . ' ' . $student->othername),
                     'admission_no' => $student->admissionNo,
-                    'gender' => $student->gender,
                 ] : null,
                 'counts' => $commentCounts
             ]);
@@ -253,7 +259,7 @@ class ClassBroadsheetController extends Controller
     }
 
     // =========================================================================
-    // UPDATE COMMENTS (Enhanced with specific comment types)
+    // UPDATE COMMENTS
     // =========================================================================
 
     public function updateComments(Request $request, $schoolclassid, $sessionid, $termid)
@@ -276,7 +282,7 @@ class ClassBroadsheetController extends Controller
         }
 
         $teacherComments  = $request->input('teacher_comments',            []);
-        $guidanceComments = $request->input('guidance_comments',            []);
+        $guidanceComments = $request->input('guidance_comments',           []);
         $remarks          = $request->input('remarks_on_other_activities', []);
         $principalComments = $request->input('principals_comments',        []);
         $absences         = $request->input('no_of_times_school_absent',   []);
@@ -296,7 +302,6 @@ class ClassBroadsheetController extends Controller
         DB::beginTransaction();
         try {
             $updatedCount = $createdCount = $skippedCount = 0;
-            $savedComments = [];
 
             foreach ($allStudentIds as $studentId) {
                 $teacherComment  = trim($teacherComments[$studentId]  ?? '');
@@ -330,10 +335,6 @@ class ClassBroadsheetController extends Controller
                 if ($existing) {
                     $existing->update($payload);
                     $updatedCount++;
-                    $savedComments[] = [
-                        'student_id' => $studentId,
-                        'type' => $this->getCommentType($teacherComment, $guidanceComment, $remark, $principalComment)
-                    ];
                 } else {
                     Studentpersonalityprofile::create(array_merge($payload, [
                         'studentid'     => $studentId,
@@ -342,10 +343,6 @@ class ClassBroadsheetController extends Controller
                         'termid'        => $termid,
                     ]));
                     $createdCount++;
-                    $savedComments[] = [
-                        'student_id' => $studentId,
-                        'type' => $this->getCommentType($teacherComment, $guidanceComment, $remark, $principalComment)
-                    ];
                 }
             }
 
@@ -367,7 +364,6 @@ class ClassBroadsheetController extends Controller
                 'updated' => $updatedCount,
                 'created' => $createdCount,
                 'skipped' => $skippedCount,
-                'saved_comments' => $savedComments
             ]);
 
         } catch (\Exception $e) {
@@ -375,15 +371,5 @@ class ClassBroadsheetController extends Controller
             Log::error('ClassBroadsheet updateComments error', ['error' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'Server error: ' . $e->getMessage()], 500);
         }
-    }
-
-    private function getCommentType($teacher, $guidance, $activities, $principal)
-    {
-        $types = [];
-        if ($teacher) $types[] = 'Teacher';
-        if ($guidance) $types[] = 'Guidance';
-        if ($activities) $types[] = 'Activities';
-        if ($principal) $types[] = 'Principal';
-        return implode(', ', $types);
     }
 }

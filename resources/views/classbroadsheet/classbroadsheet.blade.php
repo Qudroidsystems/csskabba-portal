@@ -218,32 +218,14 @@ body { font-family: 'DM Sans', sans-serif; }
 .gpop-sum-val  { font-size: 16px; font-weight: 700; color: var(--cb-navy); }
 #cbPopupBackdrop { display: none; position: fixed; inset: 0; z-index: 9998; background: rgba(0,0,0,.28); }
 
-/* Pre-submit Summary Modal */
-#cbSaveConfirmModal .modal-content { border-radius: 18px; overflow: hidden; border: none; box-shadow: 0 24px 60px rgba(0,0,0,.18); }
-#cbSaveConfirmModal .modal-header  { background: linear-gradient(135deg, var(--cb-navy), var(--cb-teal)); border: none; padding: 20px 24px; }
-#cbSaveConfirmModal .modal-title   { color: #fff; font-weight: 700; font-size: 16px; }
-#cbSaveConfirmModal .btn-close     { filter: invert(1); }
-.confirm-summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
-.confirm-stat-box { border-radius: 12px; padding: 14px 16px; text-align: center; }
-.confirm-stat-box.done    { background: #ecfdf5; border: 1.5px solid #86efac; }
-.confirm-stat-box.pending { background: #f8fafc; border: 1.5px solid var(--cb-border); }
-.confirm-stat-box .csb-num  { font-size: 28px; font-weight: 700; line-height: 1; }
-.confirm-stat-box .csb-lbl  { font-size: 11px; font-weight: 600; margin-top: 4px; }
-.confirm-stat-box.done    .csb-num { color: #15803d; }
-.confirm-stat-box.done    .csb-lbl { color: #15803d; }
-.confirm-stat-box.pending .csb-num { color: var(--cb-muted); }
-.confirm-stat-box.pending .csb-lbl { color: var(--cb-muted); }
-.confirm-student-list { max-height: 180px; overflow-y: auto; border: 1px solid var(--cb-border); border-radius: 10px; padding: 10px 14px; background: var(--cb-surface); margin-bottom: 14px; }
-.confirm-student-list .csl-item { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid #f0f0f0; font-size: 12.5px; font-weight: 500; color: var(--cb-navy); }
-.confirm-student-list .csl-item:last-child { border-bottom: none; }
-.csl-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.csl-dot-done    { background: var(--cb-teal); }
-.csl-dot-pending { background: #cbd5e1; }
-.confirm-section-hdr { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
-.confirm-section-hdr.hdr-done    { color: #15803d; }
-.confirm-section-hdr.hdr-pending { color: var(--cb-muted); }
-.confirm-proceed-btn { background: var(--cb-teal); color: #fff; border: none; border-radius: 10px; padding: 11px 28px; font-size: 14px; font-weight: 700; cursor: pointer; width: 100%; transition: background .18s; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px; }
-.confirm-proceed-btn:hover { background: #0b7c72; }
+/* Comment Modal Styles */
+.past-comment-item {
+    transition: all 0.2s ease;
+}
+.past-comment-item:hover {
+    transform: translateX(4px);
+    background: #e6f7f5 !important;
+}
 </style>
 
 <div class="main-content">
@@ -310,7 +292,7 @@ body { font-family: 'DM Sans', sans-serif; }
     </div>
     <p class="mt-2 mb-0" style="font-size:11px;color:var(--cb-muted);">
         <i class="ri-information-line me-1"></i>
-        Changes save automatically as you type. You can also use "Save All" to batch-save everything at once.
+        Click on any comment field to open the rich text editor with past comments history.
     </p>
 </div>
 
@@ -341,17 +323,10 @@ body { font-family: 'DM Sans', sans-serif; }
         </div>
     </div>
 
-    {{-- ============================================================
-         IMPORTANT: ONE canonical hidden data store per student.
-         Both desktop inputs and mobile inputs sync INTO this store.
-         The form submit reads from here — never from both viewports.
-         ============================================================ --}}
     <form id="commentsForm">
         @csrf
-        {{-- Method spoofing for PATCH --}}
         <input type="hidden" name="_method" value="PATCH">
 
-        {{-- Hidden canonical fields — single source of truth --}}
         @foreach ($students as $student)
             @php
                 $sid     = $student->id;
@@ -395,6 +370,9 @@ body { font-family: 'DM Sans', sans-serif; }
                         <tr class="cb-student-row {{ $hasComment ? 'row-has-comment' : 'row-no-comment' }}"
                             data-student-id="{{ $sid }}"
                             data-student-name="{{ $fullName }}"
+                            data-student-adm="{{ $student->admissionNo }}"
+                            data-student-img="{{ $imgUrl }}"
+                            data-student-analytics='@json($an)'
                             data-searchkey="{{ strtolower($fullName . ' ' . $student->admissionNo) }}">
 
                             <td>{{ $index + 1 }}</td>
@@ -427,7 +405,6 @@ body { font-family: 'DM Sans', sans-serif; }
                                               id="status-{{ $sid }}">
                                             {{ $hasComment ? '✓ Commented' : '○ No comment' }}
                                         </span>
-                                        {{-- Per-student autosave indicator --}}
                                         <span class="autosave-chip ac-idle" id="autosave-{{ $sid }}"></span>
                                     </div>
                                 </div>
@@ -506,29 +483,28 @@ body { font-family: 'DM Sans', sans-serif; }
                                 </div>
                             </td>
 
-                            {{-- Desktop visible inputs — these sync to hidden canonical fields --}}
                             <td class="cbcol-teacher">
                                 <input type="text"
-                                       class="cb-input desk-teacher {{ $hasComment ? 'has-value' : '' }}"
+                                       class="cb-input desk-teacher comment-input {{ $hasComment ? 'has-value' : '' }}"
                                        data-sid="{{ $sid }}" data-field="teacher"
                                        value="{{ $profile ? $profile->classteachercomment : '' }}"
-                                       placeholder="Enter comment (optional)…"
+                                       placeholder="Click to add comment..."
                                        autocomplete="off">
                             </td>
                             <td class="cbcol-guidance">
                                 <input type="text"
-                                       class="cb-input desk-guidance"
+                                       class="cb-input desk-guidance comment-input"
                                        data-sid="{{ $sid }}" data-field="guidance"
                                        value="{{ $profile ? $profile->guidancescomment : '' }}"
-                                       placeholder="Optional…"
+                                       placeholder="Click to add comment..."
                                        autocomplete="off">
                             </td>
                             <td class="cbcol-activities">
                                 <input type="text"
-                                       class="cb-input desk-activities"
+                                       class="cb-input desk-activities comment-input"
                                        data-sid="{{ $sid }}" data-field="activities"
                                        value="{{ $profile ? $profile->remark_on_other_activities : '' }}"
-                                       placeholder="Optional…"
+                                       placeholder="Click to add comment..."
                                        autocomplete="off">
                             </td>
                             <td class="cbcol-absence">
@@ -561,6 +537,9 @@ body { font-family: 'DM Sans', sans-serif; }
                 <div class="cb-student-card cb-student-row {{ $hasComment ? 'card-has-comment' : 'card-no-comment' }}"
                      data-student-id="{{ $sid }}"
                      data-student-name="{{ $fullName }}"
+                     data-student-adm="{{ $student->admissionNo }}"
+                     data-student-img="{{ $imgUrl }}"
+                     data-student-analytics='@json($an)'
                      data-searchkey="{{ strtolower($fullName . ' ' . $student->admissionNo) }}">
                     <div class="card-top">
                         @if($imgUrl)
@@ -613,32 +592,31 @@ body { font-family: 'DM Sans', sans-serif; }
                                 </div>
                             @endforeach
                         </div>
-                        {{-- Mobile visible inputs — data-field syncs to canonical hidden fields --}}
                         <div class="comment-field-group">
                             <label>Teacher's Comment</label>
                             <input type="text"
-                                   class="cb-input mob-teacher {{ $hasComment ? 'has-value' : '' }}"
+                                   class="cb-input mob-teacher comment-input {{ $hasComment ? 'has-value' : '' }}"
                                    data-sid="{{ $sid }}" data-field="teacher"
                                    value="{{ $profile ? $profile->classteachercomment : '' }}"
-                                   placeholder="Enter comment (optional)…"
+                                   placeholder="Click to add comment..."
                                    autocomplete="off">
                         </div>
                         <div class="comment-field-group mobile-col-guidance">
                             <label>Counselor's Comment</label>
                             <input type="text"
-                                   class="cb-input mob-guidance"
+                                   class="cb-input mob-guidance comment-input"
                                    data-sid="{{ $sid }}" data-field="guidance"
                                    value="{{ $profile ? $profile->guidancescomment : '' }}"
-                                   placeholder="Optional…"
+                                   placeholder="Click to add comment..."
                                    autocomplete="off">
                         </div>
                         <div class="comment-field-group mobile-col-activities">
                             <label>Remark on Activities</label>
                             <input type="text"
-                                   class="cb-input mob-activities"
+                                   class="cb-input mob-activities comment-input"
                                    data-sid="{{ $sid }}" data-field="activities"
                                    value="{{ $profile ? $profile->remark_on_other_activities : '' }}"
-                                   placeholder="Optional…"
+                                   placeholder="Click to add comment..."
                                    autocomplete="off">
                         </div>
                         <div class="comment-field-group mobile-col-absence">
@@ -708,46 +686,51 @@ body { font-family: 'DM Sans', sans-serif; }
     </div>
 </div>
 
-{{-- Pre-submit Summary Modal --}}
-<div class="modal fade" id="cbSaveConfirmModal" tabindex="-1" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered" style="max-width:500px;">
+{{-- Comment Modal for Rich Text Editing --}}
+<div class="modal fade" id="cbCommentModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="ri-save-3-line me-2"></i>Review Before Saving</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body" style="padding:24px;">
-                <div class="confirm-summary-grid">
-                    <div class="confirm-stat-box done">
-                        <div class="csb-num" id="confirmDoneNum">0</div>
-                        <div class="csb-lbl"><i class="ri-checkbox-circle-line me-1"></i>With Comment</div>
-                    </div>
-                    <div class="confirm-stat-box pending">
-                        <div class="csb-num" id="confirmPendingNum">0</div>
-                        <div class="csb-lbl"><i class="ri-time-line me-1"></i>Without Comment</div>
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--cb-navy), var(--cb-teal)); color: #fff;">
+                <div class="d-flex align-items-center gap-3 w-100">
+                    <div id="modalStudentAvatar" style="width: 60px; height: 60px; border-radius: 50%; overflow: hidden; border: 3px solid rgba(255,255,255,0.3);"></div>
+                    <div>
+                        <h5 class="mb-1 text-white" id="modalStudentName"></h5>
+                        <div class="text-white-50 small" id="modalStudentMeta"></div>
                     </div>
                 </div>
-                <div id="confirmDoneSection" style="display:none;">
-                    <div class="confirm-section-hdr hdr-done"><i class="ri-checkbox-circle-fill"></i> Will be saved</div>
-                    <div class="confirm-student-list" id="confirmDoneList"></div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="modalPerformance" class="mb-3" style="background: #f8fafc; border-radius: 12px; padding: 12px; display: flex; justify-content: space-around;"></div>
+
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h6 class="mb-0" id="modalCommentType"></h6>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="btnLoadPastComments">
+                        <i class="ri-history-line"></i> View Past Comments
+                        <span id="pastCommentCount" class="badge bg-secondary ms-1">0</span>
+                    </button>
                 </div>
-                <div id="confirmPendingSection" style="display:none;">
-                    <div class="confirm-section-hdr hdr-pending"><i class="ri-time-line"></i> No comment yet (will be skipped)</div>
-                    <div class="confirm-student-list" id="confirmPendingList"></div>
+
+                <div class="mb-2">
+                    <button type="button" class="btn btn-sm btn-light me-1" onclick="formatCommentText('bold')"><b>Bold</b></button>
+                    <button type="button" class="btn btn-sm btn-light me-1" onclick="formatCommentText('italic')"><i>Italic</i></button>
+                    <button type="button" class="btn btn-sm btn-light me-1" onclick="formatCommentText('bullet')">• Bullet</button>
+                    <button type="button" class="btn btn-sm btn-light" onclick="formatCommentText('clear')">Clear</button>
                 </div>
-                <div id="confirmNothingMsg" style="display:none;text-align:center;padding:20px 0;">
-                    <i class="ri-information-line" style="font-size:36px;color:var(--cb-border);display:block;margin-bottom:10px;"></i>
-                    <p style="color:var(--cb-muted);font-size:13px;margin:0;">
-                        No comments have been entered yet.<br>
-                        Please enter at least one comment before saving.
-                    </p>
+
+                <textarea id="modalTextarea" class="form-control" rows="6" style="resize: vertical; font-family: inherit; font-size: 14px; line-height: 1.6;"></textarea>
+
+                <div id="pastCommentsPanel" style="display: none; margin-top: 16px;">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="small fw-bold mb-0"><i class="ri-history-line"></i> Past Comments from Previous Terms</h6>
+                        <button type="button" class="btn-close btn-sm" onclick="document.getElementById('pastCommentsPanel').style.display='none'"></button>
+                    </div>
+                    <div id="pastCommentsList" style="max-height: 350px; overflow-y: auto;"></div>
                 </div>
             </div>
-            <div class="modal-footer" style="border:none;padding:0 24px 24px;">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius:10px;">Cancel</button>
-                <button type="button" class="confirm-proceed-btn" id="confirmProceedBtn" style="display:none;">
-                    <i class="ri-save-3-line"></i> Confirm &amp; Save
-                </button>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-success" id="modalSaveBtn"><i class="ri-save-line"></i> Save Comment</button>
             </div>
         </div>
     </div>
@@ -757,18 +740,25 @@ body { font-family: 'DM Sans', sans-serif; }
 (function () {
     'use strict';
 
-    /* ───────────────────────────────────────────────
-       CONFIG
-    ─────────────────────────────────────────────── */
     var SA       = {!! $cbAnalyticsJson !!};
     var SAVE_URL = '{{ route("classbroadsheet.updateComments", [$schoolclassid, $sessionid, $termid]) }}';
-    var CSRF     = (document.querySelector('meta[name="csrf-token"]') || {}).getAttribute
-                    ? document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    : '{{ csrf_token() }}';
+    var CSRF     = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
 
-    /* ───────────────────────────────────────────────
-       HELPERS
-    ─────────────────────────────────────────────── */
+    var FIELD_MAP = {
+        teacher:    'c_teacher_',
+        guidance:   'c_guidance_',
+        activities: 'c_activities_',
+        absence:    'c_absence_',
+    };
+
+    var debounceTimers = {};
+    var AUTOSAVE_DELAY = 1200;
+
+    // Modal variables
+    var currentModalSid = null;
+    var currentModalField = null;
+    var commentModal = null;
+
     function esc(str) {
         var d = document.createElement('div');
         d.textContent = str || '';
@@ -785,19 +775,6 @@ body { font-family: 'DM Sans', sans-serif; }
         setTimeout(function () { el.remove(); }, 5000);
     }
 
-    /* ───────────────────────────────────────────────
-       CANONICAL DATA LAYER
-       All UI inputs (desktop + mobile) write to hidden
-       canonical fields. Only canonicals are submitted.
-    ─────────────────────────────────────────────── */
-
-    var FIELD_MAP = {
-        teacher:    'c_teacher_',
-        guidance:   'c_guidance_',
-        activities: 'c_activities_',
-        absence:    'c_absence_',
-    };
-
     function getCanonical(sid, field) {
         var el = document.getElementById(FIELD_MAP[field] + sid);
         return el ? el.value : '';
@@ -807,12 +784,6 @@ body { font-family: 'DM Sans', sans-serif; }
         var el = document.getElementById(FIELD_MAP[field] + sid);
         if (el) el.value = value;
     }
-
-    /* ───────────────────────────────────────────────
-       AUTOSAVE (debounced per-student)
-    ─────────────────────────────────────────────── */
-    var debounceTimers = {};
-    var AUTOSAVE_DELAY = 1200; // ms after last keystroke
 
     function setChipState(sid, state, text) {
         ['autosave-' + sid, 'autosave-m-' + sid].forEach(function (id) {
@@ -824,14 +795,13 @@ body { font-family: 'DM Sans', sans-serif; }
     }
 
     function autoSaveStudent(sid) {
-        // Build payload for just this student
         var fd = new FormData();
         fd.append('_token', CSRF);
         fd.append('_method', 'PATCH');
-        fd.append('teacher_comments[' + sid + ']',            getCanonical(sid, 'teacher'));
-        fd.append('guidance_comments[' + sid + ']',           getCanonical(sid, 'guidance'));
+        fd.append('teacher_comments[' + sid + ']', getCanonical(sid, 'teacher'));
+        fd.append('guidance_comments[' + sid + ']', getCanonical(sid, 'guidance'));
         fd.append('remarks_on_other_activities[' + sid + ']', getCanonical(sid, 'activities'));
-        fd.append('no_of_times_school_absent[' + sid + ']',   getCanonical(sid, 'absence'));
+        fd.append('no_of_times_school_absent[' + sid + ']', getCanonical(sid, 'absence'));
 
         var sigFile = document.getElementById('signatureFile');
         if (sigFile && sigFile.files && sigFile.files[0]) {
@@ -841,9 +811,9 @@ body { font-family: 'DM Sans', sans-serif; }
         setChipState(sid, 'ac-saving', '⏳ Saving…');
 
         fetch(SAVE_URL, {
-            method:  'POST',  // POST with _method=PATCH for Laravel
+            method: 'POST',
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF },
-            body:    fd,
+            body: fd,
         })
         .then(function (res) {
             return res.json().then(function (data) {
@@ -854,11 +824,8 @@ body { font-family: 'DM Sans', sans-serif; }
         .then(function (data) {
             if (data.success) {
                 setChipState(sid, 'ac-saved', '✓ Saved');
-                refreshCommentStatus();
-                // Fade chip back to idle after 3s
-                setTimeout(function () {
-                    setChipState(sid, 'ac-idle', '');
-                }, 3000);
+                refreshCommentStatusForStudent(sid);
+                setTimeout(function () { setChipState(sid, 'ac-idle', ''); }, 3000);
             } else {
                 setChipState(sid, 'ac-err', '✗ Failed');
             }
@@ -871,70 +838,47 @@ body { font-family: 'DM Sans', sans-serif; }
 
     function scheduleAutosave(sid) {
         if (debounceTimers[sid]) clearTimeout(debounceTimers[sid]);
-        debounceTimers[sid] = setTimeout(function () {
-            autoSaveStudent(sid);
-        }, AUTOSAVE_DELAY);
+        debounceTimers[sid] = setTimeout(function () { autoSaveStudent(sid); }, AUTOSAVE_DELAY);
     }
 
-    /* ───────────────────────────────────────────────
-       SYNC HANDLER
-       When any visible input changes:
-       1. Write value to canonical hidden field
-       2. Mirror to the twin viewport input (if visible)
-       3. Refresh UI state
-       4. Schedule autosave
-    ─────────────────────────────────────────────── */
     function onInputChange(e) {
-        var inp   = e.target;
-        var sid   = inp.getAttribute('data-sid');
+        var inp = e.target;
+        var sid = inp.getAttribute('data-sid');
         var field = inp.getAttribute('data-field');
         if (!sid || !field) return;
 
         var val = inp.value;
-
-        // 1. Write canonical
         setCanonical(sid, field, val);
 
-        // 2. Mirror to twin (desktop ↔ mobile)
         var isDesktop = inp.classList.contains('desk-' + field);
-        var isMobile  = inp.classList.contains('mob-'  + field);
         var twinClass = isDesktop ? 'mob-' + field : 'desk-' + field;
         document.querySelectorAll('.' + twinClass + '[data-sid="' + sid + '"]').forEach(function (twin) {
             if (twin !== inp) twin.value = val;
         });
 
-        // 3. Refresh visual state
         refreshCommentStatusForStudent(sid);
-
-        // 4. Autosave
         scheduleAutosave(sid);
     }
 
-    /* ───────────────────────────────────────────────
-       COMMENT STATUS (per-student)
-    ─────────────────────────────────────────────── */
     function refreshCommentStatusForStudent(sid) {
         var hasVal = getCanonical(sid, 'teacher').trim() !== '';
 
-        // Status badges (desktop + mobile)
         ['status-' + sid, 'status-m-' + sid].forEach(function (id) {
             var badge = document.getElementById(id);
             if (!badge) return;
             badge.textContent = hasVal ? '✓ Commented' : '○ No comment';
-            badge.className   = 'comment-status-dot ' + (hasVal ? 'dot-saved' : 'dot-unsaved');
+            badge.className = 'comment-status-dot ' + (hasVal ? 'dot-saved' : 'dot-unsaved');
         });
 
-        // Input border highlight on teacher fields
         document.querySelectorAll('.desk-teacher[data-sid="' + sid + '"], .mob-teacher[data-sid="' + sid + '"]').forEach(function (inp) {
             inp.classList.toggle('has-value', hasVal);
         });
 
-        // Row/card left-border
         document.querySelectorAll('[data-student-id="' + sid + '"]').forEach(function (row) {
-            row.classList.toggle('row-has-comment',  hasVal);
-            row.classList.toggle('row-no-comment',   !hasVal);
+            row.classList.toggle('row-has-comment', hasVal);
+            row.classList.toggle('row-no-comment', !hasVal);
             row.classList.toggle('card-has-comment', hasVal);
-            row.classList.toggle('card-no-comment',  !hasVal);
+            row.classList.toggle('card-no-comment', !hasVal);
         });
     }
 
@@ -953,39 +897,255 @@ body { font-family: 'DM Sans', sans-serif; }
         if (pNum) pNum.textContent = pending;
     }
 
-    /* ───────────────────────────────────────────────
-       FULL SAVE (Save All button → confirm modal → POST)
-    ─────────────────────────────────────────────── */
+    // Comment Modal Functions
+    function openCommentModal(sid, field, studentName, studentAdm, studentImg, analytics) {
+        currentModalSid = sid;
+        currentModalField = field;
+
+        if (!commentModal) {
+            commentModal = new bootstrap.Modal(document.getElementById('cbCommentModal'));
+        }
+
+        document.getElementById('modalStudentName').textContent = studentName;
+        document.getElementById('modalStudentMeta').textContent = studentAdm || '';
+
+        var avatarDiv = document.getElementById('modalStudentAvatar');
+        if (studentImg && studentImg !== 'null' && studentImg !== '') {
+            avatarDiv.innerHTML = '<img src="' + studentImg + '" style="width:100%;height:100%;object-fit:cover;">';
+        } else {
+            var initials = studentName.split(' ').map(function(n) { return n[0]; }).join('').substring(0, 2).toUpperCase();
+            avatarDiv.innerHTML = '<div style="width:100%;height:100%;background:linear-gradient(135deg, var(--cb-teal), var(--cb-sky));display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;font-weight:700;">' + esc(initials) + '</div>';
+        }
+
+        var perfHtml = `
+            <div class="text-center"><small class="text-muted d-block">Term Avg</small><strong>${analytics.term_average || 0}</strong></div>
+            <div class="text-center"><small class="text-muted d-block">Cum Avg</small><strong>${analytics.cum_average || 0}</strong></div>
+            <div class="text-center"><small class="text-muted d-block">Cum %</small><strong>${analytics.cum_percentage || 0}%</strong></div>
+            <div class="text-center"><small class="text-muted d-block">Subjects</small><strong>${analytics.subject_count || 0}</strong></div>
+        `;
+        document.getElementById('modalPerformance').innerHTML = perfHtml;
+
+        var labels = { teacher: "Teacher's Comment", guidance: "Counselor's Comment", activities: "Remark on Activities" };
+        document.getElementById('modalCommentType').innerHTML = '<i class="ri-chat-3-line"></i> ' + (labels[field] || field);
+
+        var currentValue = getCanonical(sid, field);
+        document.getElementById('modalTextarea').value = currentValue;
+        document.getElementById('pastCommentsPanel').style.display = 'none';
+
+        commentModal.show();
+    }
+
+    window.formatCommentText = function(type) {
+        var ta = document.getElementById('modalTextarea');
+        if (!ta) return;
+
+        var start = ta.selectionStart;
+        var end = ta.selectionEnd;
+        var text = ta.value;
+        var selectedText = text.substring(start, end);
+
+        if (type === 'bold') {
+            var formatted = '**' + (selectedText || 'bold text') + '**';
+            ta.value = text.substring(0, start) + formatted + text.substring(end);
+            ta.focus();
+            ta.setSelectionRange(start + formatted.length, start + formatted.length);
+        } else if (type === 'italic') {
+            var formatted = '*' + (selectedText || 'italic text') + '*';
+            ta.value = text.substring(0, start) + formatted + text.substring(end);
+            ta.focus();
+            ta.setSelectionRange(start + formatted.length, start + formatted.length);
+        } else if (type === 'bullet') {
+            var formatted = (selectedText ? selectedText.split('\n').map(function(line) { return '• ' + line; }).join('\n') : '• ');
+            ta.value = text.substring(0, start) + formatted + text.substring(end);
+            ta.focus();
+            ta.setSelectionRange(start + formatted.length, start + formatted.length);
+        } else if (type === 'clear') {
+            ta.value = '';
+            ta.focus();
+        }
+    };
+
+    async function loadPastComments() {
+        if (!currentModalSid) return;
+
+        var listEl = document.getElementById('pastCommentsList');
+        listEl.innerHTML = '<div class="text-center py-3"><i class="ri-loader-4-line ri-spin"></i> Loading...</div>';
+
+        try {
+            var response = await fetch('/classbroadsheet/past-comments/' + currentModalSid);
+            var data = await response.json();
+
+            if (data.success && data.data && data.data.length > 0) {
+                document.getElementById('pastCommentCount').textContent = data.data.length;
+
+                var summaryHtml = '<div class="mb-3 p-2 bg-light rounded small"><strong>Comment History:</strong> ';
+                summaryHtml += '<span class="badge bg-info">Teacher: ' + (data.counts.classteacher || 0) + '</span> ';
+                summaryHtml += '<span class="badge bg-secondary">Guidance: ' + (data.counts.guidance || 0) + '</span> ';
+                summaryHtml += '<span class="badge bg-warning">Activities: ' + (data.counts.activities || 0) + '</span> ';
+                summaryHtml += '<span class="badge bg-dark">Total: ' + data.counts.total + '</span></div>';
+
+                var commentsHtml = data.data.map(function(comment) {
+                    var badgeClass = '';
+                    if (comment.comment_type === 'Teacher') badgeClass = 'bg-info';
+                    else if (comment.comment_type === 'Guidance') badgeClass = 'bg-secondary';
+                    else if (comment.comment_type === 'Activities') badgeClass = 'bg-warning';
+                    else badgeClass = 'bg-dark';
+
+                    return `
+                        <div class="past-comment-item" style="border-left: 4px solid var(--cb-teal); background: #f8fafc; padding: 12px; margin-bottom: 10px; border-radius: 8px; cursor: pointer;" onclick="usePastComment('${escapeHtml(comment.comment_text)}')">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <strong class="small">${escapeHtml(comment.session)} · ${escapeHtml(comment.term)}</strong>
+                                <span class="badge ${badgeClass}">${escapeHtml(comment.comment_type)}</span>
+                            </div>
+                            <div class="small text-muted mb-2">${escapeHtml(comment.class)}</div>
+                            <div class="small">${escapeHtml(comment.comment_text.length > 150 ? comment.comment_text.substring(0, 150) + '...' : comment.comment_text)}</div>
+                            <div class="text-muted mt-1 small"><i class="ri-time-line"></i> ${comment.date}</div>
+                        </div>
+                    `;
+                }).join('');
+
+                listEl.innerHTML = summaryHtml + commentsHtml;
+                document.getElementById('pastCommentsPanel').style.display = 'block';
+            } else {
+                listEl.innerHTML = '<div class="text-center py-3 text-muted"><i class="ri-inbox-line"></i><br>No past comments found</div>';
+                document.getElementById('pastCommentCount').textContent = '0';
+                document.getElementById('pastCommentsPanel').style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Error loading past comments:', error);
+            listEl.innerHTML = '<div class="text-center py-3 text-danger"><i class="ri-error-warning-line"></i><br>Failed to load past comments</div>';
+        }
+    }
+
+    window.usePastComment = function(text) {
+        document.getElementById('modalTextarea').value = text;
+        toast('Past comment loaded! You can edit it before saving.', 'info');
+    };
+
+    function saveCommentFromModal() {
+        var newValue = document.getElementById('modalTextarea').value;
+        setCanonical(currentModalSid, currentModalField, newValue);
+
+        document.querySelectorAll('[data-sid="' + currentModalSid + '"][data-field="' + currentModalField + '"]').forEach(function(inp) {
+            inp.value = newValue;
+        });
+
+        refreshCommentStatusForStudent(currentModalSid);
+        scheduleAutosave(currentModalSid);
+
+        commentModal.hide();
+        toast(currentModalField.charAt(0).toUpperCase() + currentModalField.slice(1) + ' comment saved!', 'success');
+    }
+
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function attachModalTriggers() {
+        document.querySelectorAll('.comment-input').forEach(function(input) {
+            input.removeEventListener('focus', handleInputFocus);
+            input.addEventListener('focus', handleInputFocus);
+        });
+    }
+
+    function handleInputFocus(e) {
+        var input = e.target;
+        var sid = input.getAttribute('data-sid');
+        var field = input.getAttribute('data-field');
+        if (!sid || !field) return;
+
+        var row = document.querySelector('[data-student-id="' + sid + '"]');
+        var studentName = row ? row.getAttribute('data-student-name') : 'Student';
+        var studentAdm = row ? (row.getAttribute('data-student-adm') || '') : '';
+        var studentImg = row ? (row.getAttribute('data-student-img') || '') : '';
+
+        var analyticsRaw = row ? row.getAttribute('data-student-analytics') : null;
+        var analytics = {};
+        if (analyticsRaw) {
+            try { analytics = JSON.parse(analyticsRaw); } catch(e) { analytics = {}; }
+        }
+
+        openCommentModal(sid, field, studentName, studentAdm, studentImg, analytics);
+    }
+
+    // Grade popup functions
+    function closeGradePop() {
+        var gpop = document.getElementById('cbGradePopup');
+        var backdrop = document.getElementById('cbPopupBackdrop');
+        if (gpop) gpop.classList.remove('is-open');
+        if (backdrop) backdrop.style.display = 'none';
+    }
+
+    function gradeClass(g) { return (g || '-').toLowerCase().replace(/[\s-]/g, ''); }
+
+    function openGradePop(sid, name, triggerEl) {
+        var an = SA[sid];
+        var gpop = document.getElementById('cbGradePopup');
+        var gpopBody = document.getElementById('gpopBody');
+        var gpopTitle = document.getElementById('gpopTitle');
+        if (!an || !gpop) return;
+
+        gpopTitle.innerHTML = '<i class="ri-bar-chart-line me-1"></i>' + esc(name) + "'s Grade Breakdown";
+        var grades = an.grades || [];
+        var rows = grades.map(function(g) {
+            var tgl = gradeClass(g.term_grade);
+            var cgl = gradeClass(g.cum_grade);
+            var tC = (g.term_score > 0 && g.term_score < 50) ? 'score-red' : '';
+            var cC = (g.cum_score > 0 && g.cum_score < 50) ? 'score-red' : '';
+            var tBadge = (g.term_grade && g.term_grade !== '-') ? '<span class="grade-badge g-' + tgl + '">' + esc(g.term_grade) + '</span>' : '—';
+            var cBadge = (g.cum_grade && g.cum_grade !== '-') ? '<span class="grade-badge g-' + cgl + '">' + esc(g.cum_grade) + '</span>' : '—';
+            return '<tr><td style="text-align:left;">' + esc(g.subject) + '</td><td class="' + tC + '">' + (g.term_score || '—') + '</td><td>' + tBadge + '</td><td class="' + cC + '">' + (g.cum_score || '—') + '</td><td>' + cBadge + '</td></tr>';
+        }).join('');
+
+        gpopBody.innerHTML = '<table class="gpop-table"><thead><tr><th>Subject</th><th style="color:#0891b2;">T.Score</th><th style="color:#0891b2;">T.Grade</th><th>C.Score</th><th>C.Grade</th></tr></thead><tbody>' + (rows || '<tr><td colspan="5" class="text-center text-muted py-2">No grades</td></tr>') + '</tbody></table>' +
+            '<div class="gpop-summary">' +
+            '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Term Total</div><div class="gpop-sum-val">' + (an.term_total || 0) + '</div></div>' +
+            '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Cum Total</div><div class="gpop-sum-val">' + (an.cum_total || 0) + '</div></div>' +
+            '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Obtainable</div><div class="gpop-sum-val">' + (an.total_obtainable || 0) + '</div></div>' +
+            '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Cum %</div><div class="gpop-sum-val ' + ((an.cum_percentage || 0) < 50 ? 'score-red' : 'score-green') + '">' + (an.cum_percentage || 0) + '%</div></div>' +
+            '</div>';
+
+        var rect = triggerEl.getBoundingClientRect();
+        var pw = 360, ph = 490;
+        var top = rect.bottom + window.scrollY + 8;
+        var left = rect.left + window.scrollX - (pw / 2) + (rect.width / 2);
+        if (rect.bottom + ph > window.innerHeight) top = rect.top + window.scrollY - ph - 8;
+        if (left < 8) left = 8;
+        if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+        gpop.style.top = top + 'px';
+        gpop.style.left = left + 'px';
+        gpop.classList.add('is-open');
+        var backdrop = document.getElementById('cbPopupBackdrop');
+        if (backdrop) backdrop.style.display = 'block';
+    }
+
     function doSaveAll() {
-        var saveBtn    = document.getElementById('saveBtn');
-        var savingText = document.getElementById('savingText');
-        var origHtml   = saveBtn.innerHTML;
-
-        saveBtn.disabled  = true;
-        saveBtn.innerHTML = '<i class="spin ri-loader-4-line"></i> Saving…';
-        if (savingText) savingText.style.display = 'inline-flex';
-
         var fd = new FormData(document.getElementById('commentsForm'));
-        // _method=PATCH is already a hidden field in the form
-        if (!fd.get('_token')) fd.set('_token', CSRF);
+        fd.append('_token', CSRF);
+        fd.append('_method', 'PATCH');
 
         var sigFile = document.getElementById('signatureFile');
         if (sigFile && sigFile.files && sigFile.files[0]) {
-            fd.set('signature', sigFile.files[0]);
+            fd.append('signature', sigFile.files[0]);
         }
 
+        var saveBtn = document.getElementById('saveBtn');
+        var savingText = document.getElementById('savingText');
+        var origHtml = saveBtn.innerHTML;
+
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="spin ri-loader-4-line"></i> Saving…';
+        if (savingText) savingText.style.display = 'inline-flex';
+
         fetch(SAVE_URL, {
-            method:  'POST',
+            method: 'POST',
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF },
-            body:    fd,
+            body: fd,
         })
-        .then(function (res) {
-            return res.json().then(function (data) {
-                if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status));
-                return data;
-            });
-        })
-        .then(function (data) {
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
             if (data.success) {
                 toast(data.message || 'Saved successfully!', 'success');
                 refreshCommentStatus();
@@ -993,211 +1153,116 @@ body { font-family: 'DM Sans', sans-serif; }
                 toast(data.message || 'Save failed.', 'error');
             }
         })
-        .catch(function (err) {
-            console.error('Save All error:', err);
+        .catch(function(err) {
+            console.error(err);
             toast('Error: ' + err.message, 'error');
         })
-        .finally(function () {
-            saveBtn.disabled  = false;
+        .finally(function() {
+            saveBtn.disabled = false;
             saveBtn.innerHTML = origHtml;
             if (savingText) savingText.style.display = 'none';
         });
     }
 
-    /* ───────────────────────────────────────────────
-       CONFIRM MODAL BUILDER
-    ─────────────────────────────────────────────── */
-    function buildConfirmModal() {
-        var doneNames = [], pendingNames = [];
-
-        document.querySelectorAll('.cb-student-row').forEach(function (row) {
-            var sid  = row.getAttribute('data-student-id');
-            var name = row.getAttribute('data-student-name') || sid;
-            if (getCanonical(sid, 'teacher').trim() !== '') doneNames.push(name);
-            else pendingNames.push(name);
-        });
-
-        document.getElementById('confirmDoneNum').textContent    = doneNames.length;
-        document.getElementById('confirmPendingNum').textContent  = pendingNames.length;
-
-        var doneSection = document.getElementById('confirmDoneSection');
-        var doneList    = document.getElementById('confirmDoneList');
-        if (doneNames.length > 0) {
-            doneList.innerHTML = doneNames.map(function (n) {
-                return '<div class="csl-item"><span class="csl-dot csl-dot-done"></span>' + esc(n) + '</div>';
-            }).join('');
-            doneSection.style.display = '';
-        } else {
-            doneSection.style.display = 'none';
-        }
-
-        var pendingSection = document.getElementById('confirmPendingSection');
-        var pendingList    = document.getElementById('confirmPendingList');
-        if (pendingNames.length > 0) {
-            pendingList.innerHTML = pendingNames.map(function (n) {
-                return '<div class="csl-item"><span class="csl-dot csl-dot-pending"></span>' + esc(n) + '</div>';
-            }).join('');
-            pendingSection.style.display = '';
-        } else {
-            pendingSection.style.display = 'none';
-        }
-
-        var nothingMsg = document.getElementById('confirmNothingMsg');
-        var proceedBtn = document.getElementById('confirmProceedBtn');
-        if (doneNames.length === 0) {
-            nothingMsg.style.display = '';
-            proceedBtn.style.display = 'none';
-        } else {
-            nothingMsg.style.display = 'none';
-            proceedBtn.style.display = '';
-        }
-    }
-
-    /* ───────────────────────────────────────────────
-       DOM READY
-    ─────────────────────────────────────────────── */
-    document.addEventListener('DOMContentLoaded', function () {
-
-        /* 1. COLUMN TOGGLE */
-        document.querySelectorAll('.toggle-chip').forEach(function (chip) {
-            chip.addEventListener('click', function () {
-                var key    = this.getAttribute('data-colkey');
-                var show   = this.classList.toggle('active') ? '' : 'none';
-                document.querySelectorAll('.cbcol-' + key).forEach(function (el) { el.style.display = show; });
+    document.addEventListener('DOMContentLoaded', function() {
+        // Column toggle
+        document.querySelectorAll('.toggle-chip').forEach(function(chip) {
+            chip.addEventListener('click', function() {
+                var key = this.getAttribute('data-colkey');
+                var show = this.classList.toggle('active') ? '' : 'none';
+                document.querySelectorAll('.cbcol-' + key).forEach(function(el) { el.style.display = show; });
                 var mobileClass = { guidance: '.mobile-col-guidance', activities: '.mobile-col-activities', absence: '.mobile-col-absence' }[key];
-                if (mobileClass) document.querySelectorAll(mobileClass).forEach(function (el) { el.style.display = show; });
+                if (mobileClass) document.querySelectorAll(mobileClass).forEach(function(el) { el.style.display = show; });
             });
         });
 
-        /* 2. SEARCH */
+        // Search
         var searchEl = document.getElementById('searchInput');
         if (searchEl) {
-            searchEl.addEventListener('input', function () {
+            searchEl.addEventListener('input', function() {
                 var q = this.value.toLowerCase().trim();
-                document.querySelectorAll('.cb-student-row').forEach(function (row) {
+                document.querySelectorAll('.cb-student-row').forEach(function(row) {
                     var key = (row.getAttribute('data-searchkey') || '').toLowerCase();
                     row.style.display = (!q || key.includes(q)) ? '' : 'none';
                 });
             });
         }
 
-        /* 3. IMAGE ZOOM */
+        // Image zoom
+        var imgModal = null;
         var imgModalEl = document.getElementById('cbImgZoomModal');
-        var imgModal   = (imgModalEl && typeof bootstrap !== 'undefined') ? new bootstrap.Modal(imgModalEl) : null;
+        if (imgModalEl && typeof bootstrap !== 'undefined') {
+            imgModal = new bootstrap.Modal(imgModalEl);
+        }
 
-        function openImgModal(imgUrl, name, adm, cls, gender, initials) {
-            var imgEl  = document.getElementById('cbZoomedImg');
-            var nameEl = document.getElementById('cbZoomedName');
-            var metaEl = document.getElementById('cbZoomedMeta');
-            nameEl.textContent = name || 'Student';
-            metaEl.innerHTML =
-                (adm    ? '<i class="ri-id-card-line me-1"></i>' + esc(adm) : '') +
-                (cls    ? ' &nbsp;|&nbsp; <i class="ri-building-line me-1"></i>' + esc(cls) : '') +
+        document.addEventListener('click', function(e) {
+            var trigger = e.target.closest('.cb-avatar-trigger');
+            if (!trigger) return;
+            var img = trigger.querySelector('img');
+            var imgUrl = img ? img.src : null;
+            var name = trigger.getAttribute('data-name') || 'Student';
+            var adm = trigger.getAttribute('data-adm') || '';
+            var cls = trigger.getAttribute('data-class') || '';
+            var gender = trigger.getAttribute('data-gender') || '';
+            var initials = trigger.getAttribute('data-initials') || name.substring(0,2).toUpperCase();
+
+            var zoomedImg = document.getElementById('cbZoomedImg');
+            var zoomedName = document.getElementById('cbZoomedName');
+            var zoomedMeta = document.getElementById('cbZoomedMeta');
+
+            zoomedName.textContent = name;
+            zoomedMeta.innerHTML = (adm ? '<i class="ri-id-card-line me-1"></i>' + esc(adm) : '') +
+                (cls ? ' &nbsp;|&nbsp; <i class="ri-building-line me-1"></i>' + esc(cls) : '') +
                 (gender ? ' &nbsp;|&nbsp; ' + esc(gender) : '');
-            if (imgUrl && imgUrl !== '' && imgUrl !== 'null') {
-                imgEl.src = imgUrl;
+
+            if (imgUrl && imgUrl !== 'null' && imgUrl !== '') {
+                zoomedImg.src = imgUrl;
             } else {
                 var canvas = document.createElement('canvas');
                 canvas.width = canvas.height = 400;
                 var ctx = canvas.getContext('2d');
                 var grad = ctx.createLinearGradient(0, 0, 400, 400);
-                grad.addColorStop(0, '#0d9488'); grad.addColorStop(1, '#0ea5e9');
-                ctx.fillStyle = grad; ctx.fillRect(0, 0, 400, 400);
-                ctx.fillStyle = '#fff'; ctx.font = 'bold 150px "DM Sans",Arial,sans-serif';
-                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                ctx.fillText(((initials || 'ST') + '').substring(0, 2).toUpperCase(), 200, 200);
-                imgEl.src = canvas.toDataURL();
+                grad.addColorStop(0, '#0d9488');
+                grad.addColorStop(1, '#0ea5e9');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, 400, 400);
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 150px "DM Sans",Arial,sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(initials.substring(0, 2).toUpperCase(), 200, 200);
+                zoomedImg.src = canvas.toDataURL();
             }
             if (imgModal) imgModal.show();
-        }
-
-        document.addEventListener('click', function (e) {
-            var trigger = e.target.closest('.cb-avatar-trigger');
-            if (!trigger) return;
-            openImgModal(
-                trigger.getAttribute('data-img'), trigger.getAttribute('data-name'),
-                trigger.getAttribute('data-adm'), trigger.getAttribute('data-class'),
-                trigger.getAttribute('data-gender'), trigger.getAttribute('data-initials') || ''
-            );
         });
-        if (imgModalEl) {
-            imgModalEl.addEventListener('click', function (e) {
-                if (e.target && e.target.id === 'cbZoomedImg' && imgModal) imgModal.hide();
-            });
-        }
 
-        /* 4. GRADE POPUP */
-        var gpop      = document.getElementById('cbGradePopup');
-        var gpopBody  = document.getElementById('gpopBody');
-        var gpopTitle = document.getElementById('gpopTitle');
-        var backdrop  = document.getElementById('cbPopupBackdrop');
-        var activeSid = null;
-
-        function closeGradePop() {
-            if (gpop)     gpop.classList.remove('is-open');
-            if (backdrop) backdrop.style.display = 'none';
-            activeSid = null;
-        }
-
-        function gradeClass(g) { return (g || '-').toLowerCase().replace(/[\s-]/g, ''); }
-
-        function openGradePop(sid, name, triggerEl) {
-            var an = SA[sid];
-            if (!an || !gpop) return;
-            gpopTitle.innerHTML = '<i class="ri-bar-chart-line me-1"></i>' + esc(name) + "'s Grade Breakdown";
-            var grades = an.grades || [];
-            var rows = grades.map(function (g) {
-                var tgl = gradeClass(g.term_grade); var cgl = gradeClass(g.cum_grade);
-                var tC = (g.term_score > 0 && g.term_score < 50) ? 'score-red' : '';
-                var cC = (g.cum_score  > 0 && g.cum_score  < 50) ? 'score-red' : '';
-                var tBadge = (g.term_grade && g.term_grade !== '-') ? '<span class="grade-badge g-' + tgl + '">' + esc(g.term_grade) + '</span>' : '—';
-                var cBadge = (g.cum_grade  && g.cum_grade  !== '-') ? '<span class="grade-badge g-' + cgl + '">' + esc(g.cum_grade)  + '</span>' : '—';
-                return '<tr><td>' + esc(g.subject) + '</td><td class="' + tC + '">' + (g.term_score || '—') + '</td><td>' + tBadge + '</td><td class="' + cC + '">' + (g.cum_score || '—') + '</td><td>' + cBadge + '</td></tr>';
-            }).join('');
-            gpopBody.innerHTML =
-                '<table class="gpop-table"><thead><tr><th>Subject</th><th style="color:#0891b2;">T.Score</th><th style="color:#0891b2;">T.Grade</th><th>C.Score</th><th>C.Grade</th></tr></thead><tbody>' +
-                (rows || '<tr><td colspan="5" class="text-center text-muted py-2">No grades</td></tr>') + '</tbody></table>' +
-                '<div class="gpop-summary">' +
-                '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Term Total</div><div class="gpop-sum-val">' + (an.term_total || 0) + '</div></div>' +
-                '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Cum Total</div><div class="gpop-sum-val">' + (an.cum_total || 0) + '</div></div>' +
-                '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Obtainable</div><div class="gpop-sum-val">' + (an.total_obtainable || 0) + '</div></div>' +
-                '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Cum %</div><div class="gpop-sum-val ' + ((an.cum_percentage || 0) < 50 ? 'score-red' : 'score-green') + '">' + (an.cum_percentage || 0) + '%</div></div>' +
-                '</div>';
-            var rect = triggerEl.getBoundingClientRect();
-            var pw = 360, ph = 490;
-            var top  = rect.bottom + window.scrollY + 8;
-            var left = rect.left + window.scrollX - (pw / 2) + (rect.width / 2);
-            if (rect.bottom + ph > window.innerHeight) top = rect.top + window.scrollY - ph - 8;
-            if (left < 8) left = 8;
-            if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
-            gpop.style.top = top + 'px'; gpop.style.left = left + 'px';
-            gpop.classList.add('is-open');
-            if (backdrop) backdrop.style.display = 'block';
-            activeSid = sid;
-        }
-
+        // Grade popup
         var gpopCloseBtn = document.getElementById('gpopCloseBtn');
         if (gpopCloseBtn) gpopCloseBtn.addEventListener('click', closeGradePop);
-        if (backdrop)     backdrop.addEventListener('click', closeGradePop);
-        document.addEventListener('keydown', function (e) { if (e.key === 'Escape') closeGradePop(); });
-        document.addEventListener('click', function (e) {
+        var backdrop = document.getElementById('cbPopupBackdrop');
+        if (backdrop) backdrop.addEventListener('click', closeGradePop);
+        document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeGradePop(); });
+
+        document.addEventListener('click', function(e) {
             var btn = e.target.closest('.grade-trigger-btn');
             if (!btn) return;
             e.stopPropagation();
-            var sid = btn.getAttribute('data-sid'); var name = btn.getAttribute('data-sname');
-            if (sid === activeSid) { closeGradePop(); return; }
-            closeGradePop(); openGradePop(sid, name, btn);
+            var sid = btn.getAttribute('data-sid');
+            var name = btn.getAttribute('data-sname');
+            closeGradePop();
+            openGradePop(sid, name, btn);
         });
 
-        /* 5. STAT CARDS */
-        (function () {
+        // Stats
+        (function() {
             var vals = Object.values(SA);
-            if (!vals.length) return;
-            var avgPct = Math.round(vals.reduce(function (s, d) { return s + (d.cum_percentage || 0); }, 0) / vals.length);
-            var prEl = document.getElementById('statPassRate');
-            if (prEl) prEl.textContent = avgPct + '%';
+            if (vals.length) {
+                var avgPct = Math.round(vals.reduce(function(s, d) { return s + (d.cum_percentage || 0); }, 0) / vals.length);
+                var prEl = document.getElementById('statPassRate');
+                if (prEl) prEl.textContent = avgPct + '%';
+            }
             var topAvg = -1, topName = '—';
-            document.querySelectorAll('.cb-student-row[data-student-id]').forEach(function (row) {
+            document.querySelectorAll('.cb-student-row[data-student-id]').forEach(function(row) {
                 var sid = row.getAttribute('data-student-id');
                 if (!sid || !SA[sid]) return;
                 var avg = SA[sid].cum_average || 0;
@@ -1212,43 +1277,34 @@ body { font-family: 'DM Sans', sans-serif; }
             if (topEl) topEl.textContent = topName;
         })();
 
-        /* 6. ATTACH INPUT LISTENERS — all visible inputs (desktop + mobile) */
+        // Input listeners
         var fieldSelectors = [
             '.desk-teacher', '.desk-guidance', '.desk-activities', '.desk-absence',
-            '.mob-teacher',  '.mob-guidance',  '.mob-activities',  '.mob-absence',
+            '.mob-teacher', '.mob-guidance', '.mob-activities', '.mob-absence',
         ];
-        fieldSelectors.forEach(function (sel) {
-            document.querySelectorAll(sel).forEach(function (inp) {
+        fieldSelectors.forEach(function(sel) {
+            document.querySelectorAll(sel).forEach(function(inp) {
                 inp.addEventListener('input', onInputChange);
             });
         });
 
-        /* 7. INITIAL STATUS REFRESH */
-        refreshCommentStatus();
+        // Modal triggers
+        attachModalTriggers();
 
-        /* 8. SAVE ALL BUTTON → confirm modal */
-        var saveConfirmModalEl = document.getElementById('cbSaveConfirmModal');
-        var saveConfirmModal   = (saveConfirmModalEl && typeof bootstrap !== 'undefined')
-            ? new bootstrap.Modal(saveConfirmModalEl) : null;
+        // Modal buttons
+        var loadBtn = document.getElementById('btnLoadPastComments');
+        if (loadBtn) loadBtn.addEventListener('click', loadPastComments);
 
+        var modalSaveBtn = document.getElementById('modalSaveBtn');
+        if (modalSaveBtn) modalSaveBtn.addEventListener('click', saveCommentFromModal);
+
+        // Save all button
         var saveBtn = document.getElementById('saveBtn');
-        if (saveBtn) {
-            saveBtn.addEventListener('click', function () {
-                buildConfirmModal();
-                if (saveConfirmModal) saveConfirmModal.show();
-            });
-        }
+        if (saveBtn) saveBtn.addEventListener('click', doSaveAll);
 
-        /* 9. CONFIRM & SAVE */
-        var proceedBtn = document.getElementById('confirmProceedBtn');
-        if (proceedBtn) {
-            proceedBtn.addEventListener('click', function () {
-                if (saveConfirmModal) saveConfirmModal.hide();
-                doSaveAll();
-            });
-        }
-
-    }); /* end DOMContentLoaded */
+        // Initial refresh
+        refreshCommentStatus();
+    });
 })();
 </script>
 @endsection
