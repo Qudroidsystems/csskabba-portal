@@ -393,7 +393,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .page-item {
     display: inline-flex;
 }
-.page-link {
+.page-link, .page-item {
     padding: 8px 12px;
     border: 1px solid var(--cb-border);
     border-radius: 8px;
@@ -403,18 +403,19 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     font-weight: 500;
     transition: all 0.15s;
     background: white;
+    cursor: pointer;
 }
-.page-link:hover {
+.page-link:hover, .page-item:hover:not(.disabled) {
     background: var(--cb-teal);
     color: white;
     border-color: var(--cb-teal);
 }
-.page-item.active .page-link {
+.page-item.active {
     background: var(--cb-teal);
     color: white;
     border-color: var(--cb-teal);
 }
-.page-item.disabled .page-link {
+.page-item.disabled {
     opacity: 0.5;
     cursor: not-allowed;
 }
@@ -735,17 +736,25 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             </div>
             <div class="col-sm-auto">
                 <div class="pagination-wrap">
-                    <a class="page-item {{ $myclass->onFirstPage() ? 'disabled' : '' }}" href="javascript:void(0);" data-url="{{ $myclass->previousPageUrl() }}" onclick="goToPage(this)">
-                        <i class="mdi mdi-chevron-left"></i> Prev
-                    </a>
-                    @foreach ($myclass->links()->elements[0] as $page => $url)
-                        <a class="page-item {{ $myclass->currentPage() == $page ? 'active' : '' }}" href="javascript:void(0);" data-url="{{ $url }}" onclick="goToPage(this)">
-                            {{ $page }}
-                        </a>
+                    @if($myclass->onFirstPage())
+                        <span class="page-item disabled">Prev</span>
+                    @else
+                        <a class="page-item" href="{{ $myclass->previousPageUrl() }}">Prev</a>
+                    @endif
+
+                    @foreach ($myclass->getUrlRange(1, $myclass->lastPage()) as $page => $url)
+                        @if($page == $myclass->currentPage())
+                            <span class="page-item active">{{ $page }}</span>
+                        @else
+                            <a class="page-item" href="{{ $url }}">{{ $page }}</a>
+                        @endif
                     @endforeach
-                    <a class="page-item {{ $myclass->hasMorePages() ? '' : 'disabled' }}" href="javascript:void(0);" data-url="{{ $myclass->nextPageUrl() }}" onclick="goToPage(this)">
-                        Next <i class="mdi mdi-chevron-right"></i>
-                    </a>
+
+                    @if($myclass->hasMorePages())
+                        <a class="page-item" href="{{ $myclass->nextPageUrl() }}">Next</a>
+                    @else
+                        <span class="page-item disabled">Next</span>
+                    @endif
                 </div>
             </div>
         </div>
@@ -835,6 +844,7 @@ function filterData() {
     else url.searchParams.delete('schoolclassid');
     if (sessionFilter !== 'ALL') url.searchParams.set('sessionid', sessionFilter);
     else url.searchParams.delete('sessionid');
+    url.searchParams.set('page', '1');
 
     window.location.href = url.toString();
 }
@@ -846,12 +856,6 @@ function resetFilters() {
     filterData();
 }
 
-function goToPage(element) {
-    if (element.classList.contains('disabled')) return;
-    var url = element.getAttribute('data-url');
-    if (url) window.location.href = url;
-}
-
 // Toast notification
 function showToast(message, type) {
     var toast = document.createElement('div');
@@ -861,13 +865,22 @@ function showToast(message, type) {
     setTimeout(function() { toast.remove(); }, 3000);
 }
 
-// Edit and Delete functionality (AJAX)
+// Calculate total students (PHP side calculation)
+var totalStudents = @json($myclass->sum(function($c) {
+    return \App\Models\Studentclass::where('schoolclassid', $c->schoolclassid)
+        ->where('sessionid', $c->sessionid)
+        ->count();
+}));
+document.getElementById('totalStudents').textContent = totalStudents;
+document.getElementById('totalBroadsheets').textContent = {{ $myclass->count() * 3 }};
+
+// Edit and Delete functionality
 @can('Update my-class')
 document.querySelectorAll('.edit-item-btn').forEach(function(btn) {
     btn.addEventListener('click', function() {
         var id = this.getAttribute('data-id');
-        // Fetch and populate edit modal (implement as needed)
-        showToast('Edit feature - implement modal population', 'info');
+        showToast('Edit feature - ID: ' + id, 'info');
+        // Implement edit modal population here
     });
 });
 @endcan
@@ -884,29 +897,22 @@ document.querySelectorAll('.remove-item-btn').forEach(function(btn) {
                     'Content-Type': 'application/json'
                 }
             })
-            .then(response => response.json())
-            .then(data => {
+            .then(function(response) { return response.json(); })
+            .then(function(data) {
                 if (data.success) {
                     showToast(data.message, 'success');
-                    setTimeout(() => location.reload(), 1500);
+                    setTimeout(function() { location.reload(); }, 1500);
                 } else {
                     showToast(data.message, 'error');
                 }
             })
-            .catch(error => {
+            .catch(function(error) {
                 showToast('Error deleting class setting', 'error');
             });
         }
     });
 });
 @endcan
-
-// Calculate total students and broadsheets (via AJAX)
-document.addEventListener('DOMContentLoaded', function() {
-    // You can implement AJAX calls to get actual totals
-    document.getElementById('totalStudents').textContent = '{{ $myclass->sum(function($c) { return \App\Models\Studentclass::where(\'schoolclassid\', $c->schoolclassid)->where(\'sessionid\', $c->sessionid)->count(); }) }}';
-    document.getElementById('totalBroadsheets').textContent = '{{ $myclass->count() * 3 }}';
-});
 </script>
 
 @endsection
