@@ -100,11 +100,6 @@ body { font-family: 'DM Sans', sans-serif; }
 .cb-input.has-value { border-left-color: var(--cb-teal); }
 .absence-input { width: 72px !important; text-align: center; }
 
-/* Autosave status on input */
-.cb-input.saving  { border-color: var(--cb-amber) !important; }
-.cb-input.saved   { border-color: var(--cb-green) !important; }
-.cb-input.save-err{ border-color: var(--cb-rose)  !important; }
-
 /* Avatar */
 .student-name-cell { display: flex; align-items: center; gap: 9px; }
 .cb-avatar { width: 38px; height: 38px; border-radius: 50%; overflow: hidden; flex-shrink: 0; border: 2px solid var(--cb-border); cursor: pointer; transition: border-color .15s, transform .15s; display: flex; align-items: center; justify-content: center; }
@@ -114,7 +109,7 @@ body { font-family: 'DM Sans', sans-serif; }
 .student-name-text { font-weight: 600; font-size: 12.5px; color: var(--cb-navy); }
 .student-adm { font-size: 10.5px; color: var(--cb-muted); margin-top: 1px; }
 
-/* Autosave chip per-student */
+/* Autosave chip */
 .autosave-chip {
     display: inline-flex; align-items: center; gap: 4px;
     font-size: 10px; font-weight: 700; padding: 2px 8px;
@@ -218,13 +213,31 @@ body { font-family: 'DM Sans', sans-serif; }
 .gpop-sum-val  { font-size: 16px; font-weight: 700; color: var(--cb-navy); }
 #cbPopupBackdrop { display: none; position: fixed; inset: 0; z-index: 9998; background: rgba(0,0,0,.28); }
 
-/* Comment Modal Styles */
+/* Enhanced Modal Styles */
 .past-comment-item {
     transition: all 0.2s ease;
 }
-.past-comment-item:hover {
-    transform: translateX(4px);
-    background: #e6f7f5 !important;
+
+.past-comments-timeline {
+    position: relative;
+}
+
+.ps-item .ps-val {
+    transition: all 0.3s ease;
+}
+
+#modalTextarea:focus {
+    border-color: var(--cb-teal) !important;
+    box-shadow: 0 0 0 3px rgba(13,148,136,0.1) !important;
+}
+
+/* Performance strip improvements */
+.performance-strip .ps-item {
+    transition: transform 0.2s ease;
+}
+
+.performance-strip .ps-item:hover {
+    transform: translateY(-2px);
 }
 </style>
 
@@ -686,51 +699,100 @@ body { font-family: 'DM Sans', sans-serif; }
     </div>
 </div>
 
-{{-- Comment Modal for Rich Text Editing --}}
+{{-- Enhanced Comment Modal for Rich Text Editing --}}
 <div class="modal fade" id="cbCommentModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content">
-            <div class="modal-header" style="background: linear-gradient(135deg, var(--cb-navy), var(--cb-teal)); color: #fff;">
+        <div class="modal-content" style="border-radius: var(--cb-radius); overflow: hidden;">
+            <div class="modal-header" style="background: linear-gradient(135deg, var(--cb-navy), var(--cb-teal)); color: #fff; border: none; padding: 20px 24px;">
                 <div class="d-flex align-items-center gap-3 w-100">
-                    <div id="modalStudentAvatar" style="width: 60px; height: 60px; border-radius: 50%; overflow: hidden; border: 3px solid rgba(255,255,255,0.3);"></div>
+                    <div id="modalStudentAvatar" style="width: 65px; height: 65px; border-radius: 50%; overflow: hidden; border: 3px solid rgba(255,255,255,0.3); background: linear-gradient(135deg, var(--cb-teal), var(--cb-sky));"></div>
                     <div>
-                        <h5 class="mb-1 text-white" id="modalStudentName"></h5>
+                        <h5 class="mb-1 text-white" id="modalStudentName" style="font-weight: 700;"></h5>
                         <div class="text-white-50 small" id="modalStudentMeta"></div>
                     </div>
                 </div>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <div id="modalPerformance" class="mb-3" style="background: #f8fafc; border-radius: 12px; padding: 12px; display: flex; justify-content: space-around;"></div>
 
+            <div class="modal-body" style="padding: 24px;">
+                {{-- Performance Strip - Matching the blade design --}}
+                <div class="performance-strip" style="background: linear-gradient(135deg, var(--cb-navy), #1e5f74); border-radius: 12px; padding: 16px 20px; color: #fff; margin-bottom: 24px;">
+                    <div style="font-size: 12px; font-weight: 600; opacity: 0.9; margin-bottom: 12px;">
+                        <i class="ri-bar-chart-line me-1"></i> Performance Summary
+                    </div>
+                    <div class="ps-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+                        <div class="ps-item" style="text-align: center; background: rgba(255,255,255,0.12); border-radius: 10px; padding: 10px;">
+                            <div class="ps-lbl" style="font-size: 10px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px;">Term Avg</div>
+                            <div class="ps-val" id="modalTermAvg" style="font-size: 20px; font-weight: 700; margin-top: 5px;">0</div>
+                        </div>
+                        <div class="ps-item" style="text-align: center; background: rgba(255,255,255,0.12); border-radius: 10px; padding: 10px;">
+                            <div class="ps-lbl" style="font-size: 10px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px;">Cum Avg</div>
+                            <div class="ps-val" id="modalCumAvg" style="font-size: 20px; font-weight: 700; margin-top: 5px;">0</div>
+                        </div>
+                        <div class="ps-item" style="text-align: center; background: rgba(255,255,255,0.12); border-radius: 10px; padding: 10px;">
+                            <div class="ps-lbl" style="font-size: 10px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px;">Cum %</div>
+                            <div class="ps-val" id="modalCumPct" style="font-size: 20px; font-weight: 700; margin-top: 5px;">0%</div>
+                        </div>
+                        <div class="ps-item" style="text-align: center; background: rgba(255,255,255,0.12); border-radius: 10px; padding: 10px;">
+                            <div class="ps-lbl" style="font-size: 10px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px;">Subjects</div>
+                            <div class="ps-val" id="modalSubjects" style="font-size: 20px; font-weight: 700; margin-top: 5px;">0</div>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Comment Type Indicator --}}
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h6 class="mb-0" id="modalCommentType"></h6>
-                    <button type="button" class="btn btn-sm btn-outline-primary" id="btnLoadPastComments">
-                        <i class="ri-history-line"></i> View Past Comments
-                        <span id="pastCommentCount" class="badge bg-secondary ms-1">0</span>
+                    <div>
+                        <h6 class="mb-0" id="modalCommentType" style="font-weight: 700; color: var(--cb-navy);">
+                            <i class="ri-chat-3-line me-1" style="color: var(--cb-teal);"></i> Teacher's Comment
+                        </h6>
+                        <small class="text-muted" id="modalCommentHint">Click on any past comment to load it below</small>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="btnLoadPastComments" style="border-radius: 20px; padding: 6px 16px;">
+                        <i class="ri-history-line me-1"></i> View Past Comments
+                        <span id="pastCommentCount" class="badge bg-secondary ms-1" style="border-radius: 20px;">0</span>
                     </button>
                 </div>
 
-                <div class="mb-2">
-                    <button type="button" class="btn btn-sm btn-light me-1" onclick="formatCommentText('bold')"><b>Bold</b></button>
-                    <button type="button" class="btn btn-sm btn-light me-1" onclick="formatCommentText('italic')"><i>Italic</i></button>
-                    <button type="button" class="btn btn-sm btn-light me-1" onclick="formatCommentText('bullet')">• Bullet</button>
-                    <button type="button" class="btn btn-sm btn-light" onclick="formatCommentText('clear')">Clear</button>
+                {{-- Rich Text Toolbar --}}
+                <div class="mb-2" style="background: #f8fafc; border-radius: 10px; padding: 8px; border: 1px solid var(--cb-border);">
+                    <button type="button" class="btn btn-sm btn-light me-1" onclick="formatCommentText('bold')" style="border-radius: 6px;" title="Bold">
+                        <i class="ri-bold"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-light me-1" onclick="formatCommentText('italic')" style="border-radius: 6px;" title="Italic">
+                        <i class="ri-italic"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-light me-1" onclick="formatCommentText('bullet')" style="border-radius: 6px;" title="Bullet List">
+                        <i class="ri-list-unordered"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-light me-1" onclick="formatCommentText('number')" style="border-radius: 6px;" title="Number List">
+                        <i class="ri-list-ordered"></i>
+                    </button>
+                    <button type="button" class="btn btn-sm btn-light" onclick="formatCommentText('clear')" style="border-radius: 6px;" title="Clear">
+                        <i class="ri-delete-back-line"></i>
+                    </button>
                 </div>
 
-                <textarea id="modalTextarea" class="form-control" rows="6" style="resize: vertical; font-family: inherit; font-size: 14px; line-height: 1.6;"></textarea>
+                {{-- Text Area --}}
+                <textarea id="modalTextarea" class="form-control" rows="6" style="resize: vertical; font-family: inherit; font-size: 14px; line-height: 1.6; border-radius: 10px; border: 1.5px solid var(--cb-border); padding: 12px;"></textarea>
 
-                <div id="pastCommentsPanel" style="display: none; margin-top: 16px;">
+                {{-- Past Comments Panel --}}
+                <div id="pastCommentsPanel" style="display: none; margin-top: 20px;">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h6 class="small fw-bold mb-0"><i class="ri-history-line"></i> Past Comments from Previous Terms</h6>
+                        <h6 class="small fw-bold mb-0" style="color: var(--cb-navy);">
+                            <i class="ri-history-line me-1" style="color: var(--cb-teal);"></i> Past Comments from Previous Terms
+                        </h6>
                         <button type="button" class="btn-close btn-sm" onclick="document.getElementById('pastCommentsPanel').style.display='none'"></button>
                     </div>
-                    <div id="pastCommentsList" style="max-height: 350px; overflow-y: auto;"></div>
+                    <div id="pastCommentsList" style="max-height: 350px; overflow-y: auto; border-radius: 10px;"></div>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-success" id="modalSaveBtn"><i class="ri-save-line"></i> Save Comment</button>
+
+            <div class="modal-footer" style="border-top: 1px solid var(--cb-border); padding: 16px 24px;">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius: 8px; padding: 8px 20px;">Cancel</button>
+                <button type="button" class="btn btn-success" id="modalSaveBtn" style="border-radius: 8px; padding: 8px 24px; background: var(--cb-teal); border: none;">
+                    <i class="ri-save-line me-1"></i> Save Comment
+                </button>
             </div>
         </div>
     </div>
@@ -897,44 +959,7 @@ body { font-family: 'DM Sans', sans-serif; }
         if (pNum) pNum.textContent = pending;
     }
 
-    // Comment Modal Functions
-    function openCommentModal(sid, field, studentName, studentAdm, studentImg, analytics) {
-        currentModalSid = sid;
-        currentModalField = field;
-
-        if (!commentModal) {
-            commentModal = new bootstrap.Modal(document.getElementById('cbCommentModal'));
-        }
-
-        document.getElementById('modalStudentName').textContent = studentName;
-        document.getElementById('modalStudentMeta').textContent = studentAdm || '';
-
-        var avatarDiv = document.getElementById('modalStudentAvatar');
-        if (studentImg && studentImg !== 'null' && studentImg !== '') {
-            avatarDiv.innerHTML = '<img src="' + studentImg + '" style="width:100%;height:100%;object-fit:cover;">';
-        } else {
-            var initials = studentName.split(' ').map(function(n) { return n[0]; }).join('').substring(0, 2).toUpperCase();
-            avatarDiv.innerHTML = '<div style="width:100%;height:100%;background:linear-gradient(135deg, var(--cb-teal), var(--cb-sky));display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;font-weight:700;">' + esc(initials) + '</div>';
-        }
-
-        var perfHtml = `
-            <div class="text-center"><small class="text-muted d-block">Term Avg</small><strong>${analytics.term_average || 0}</strong></div>
-            <div class="text-center"><small class="text-muted d-block">Cum Avg</small><strong>${analytics.cum_average || 0}</strong></div>
-            <div class="text-center"><small class="text-muted d-block">Cum %</small><strong>${analytics.cum_percentage || 0}%</strong></div>
-            <div class="text-center"><small class="text-muted d-block">Subjects</small><strong>${analytics.subject_count || 0}</strong></div>
-        `;
-        document.getElementById('modalPerformance').innerHTML = perfHtml;
-
-        var labels = { teacher: "Teacher's Comment", guidance: "Counselor's Comment", activities: "Remark on Activities" };
-        document.getElementById('modalCommentType').innerHTML = '<i class="ri-chat-3-line"></i> ' + (labels[field] || field);
-
-        var currentValue = getCanonical(sid, field);
-        document.getElementById('modalTextarea').value = currentValue;
-        document.getElementById('pastCommentsPanel').style.display = 'none';
-
-        commentModal.show();
-    }
-
+    // Enhanced formatCommentText function
     window.formatCommentText = function(type) {
         var ta = document.getElementById('modalTextarea');
         if (!ta) return;
@@ -955,71 +980,227 @@ body { font-family: 'DM Sans', sans-serif; }
             ta.focus();
             ta.setSelectionRange(start + formatted.length, start + formatted.length);
         } else if (type === 'bullet') {
-            var formatted = (selectedText ? selectedText.split('\n').map(function(line) { return '• ' + line; }).join('\n') : '• ');
-            ta.value = text.substring(0, start) + formatted + text.substring(end);
+            if (selectedText) {
+                var formatted = selectedText.split('\n').map(function(line) { return '• ' + line; }).join('\n');
+                ta.value = text.substring(0, start) + formatted + text.substring(end);
+            } else {
+                ta.value = text.substring(0, start) + '• ' + text.substring(end);
+            }
             ta.focus();
-            ta.setSelectionRange(start + formatted.length, start + formatted.length);
+        } else if (type === 'number') {
+            if (selectedText) {
+                var formatted = selectedText.split('\n').map(function(line, idx) { return (idx + 1) + '. ' + line; }).join('\n');
+                ta.value = text.substring(0, start) + formatted + text.substring(end);
+            } else {
+                ta.value = text.substring(0, start) + '1. ' + text.substring(end);
+            }
+            ta.focus();
         } else if (type === 'clear') {
             ta.value = '';
             ta.focus();
         }
     };
 
+    // Enhanced openCommentModal function
+    function openCommentModal(sid, field, studentName, studentAdm, studentImg, analytics) {
+        currentModalSid = sid;
+        currentModalField = field;
+
+        if (!commentModal) {
+            commentModal = new bootstrap.Modal(document.getElementById('cbCommentModal'));
+        }
+
+        // Set student info
+        document.getElementById('modalStudentName').textContent = studentName;
+        document.getElementById('modalStudentMeta').innerHTML = '<i class="ri-id-card-line me-1"></i> ' + (studentAdm || '');
+
+        // Set avatar
+        var avatarDiv = document.getElementById('modalStudentAvatar');
+        if (studentImg && studentImg !== 'null' && studentImg !== '') {
+            avatarDiv.innerHTML = '<img src="' + studentImg + '" style="width:100%;height:100%;object-fit:cover;">';
+        } else {
+            var initials = studentName.split(' ').map(function(n) { return n[0]; }).join('').substring(0, 2).toUpperCase();
+            avatarDiv.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;">' + esc(initials) + '</div>';
+        }
+
+        // Update performance metrics
+        document.getElementById('modalTermAvg').textContent = analytics.term_average || 0;
+        document.getElementById('modalCumAvg').textContent = analytics.cum_average || 0;
+        document.getElementById('modalCumPct').textContent = (analytics.cum_percentage || 0) + '%';
+        document.getElementById('modalSubjects').textContent = analytics.subject_count || 0;
+
+        // Color code the percentages
+        var cumPctEl = document.getElementById('modalCumPct');
+        if (analytics.cum_percentage >= 70) {
+            cumPctEl.style.color = '#4ade80';
+        } else if (analytics.cum_percentage >= 50) {
+            cumPctEl.style.color = '#fbbf24';
+        } else {
+            cumPctEl.style.color = '#f87171';
+        }
+
+        // Set comment type label
+        var labels = {
+            teacher: "Teacher's Comment",
+            guidance: "Counselor's Comment",
+            activities: "Remark on Activities"
+        };
+        var icons = {
+            teacher: 'ri-chat-quote-line',
+            guidance: 'ri-mental-health-line',
+            activities: 'ri-football-line'
+        };
+        document.getElementById('modalCommentType').innerHTML = '<i class="' + (icons[field] || 'ri-chat-3-line') + ' me-1" style="color: var(--cb-teal);"></i> ' + (labels[field] || field);
+
+        // Set current value
+        var currentValue = getCanonical(sid, field);
+        document.getElementById('modalTextarea').value = currentValue;
+        document.getElementById('pastCommentsPanel').style.display = 'none';
+
+        commentModal.show();
+    }
+
+    // Enhanced loadPastComments function with better UI
     async function loadPastComments() {
         if (!currentModalSid) return;
 
         var listEl = document.getElementById('pastCommentsList');
-        listEl.innerHTML = '<div class="text-center py-3"><i class="ri-loader-4-line ri-spin"></i> Loading...</div>';
+        listEl.innerHTML = '<div class="text-center py-4"><i class="ri-loader-4-line ri-spin" style="font-size: 24px; color: var(--cb-teal);"></i><br><span class="text-muted mt-2 d-block">Loading past comments...</span></div>';
 
         try {
-            var response = await fetch('/classbroadsheet/past-comments/' + currentModalSid);
+            var url = '/classbroadsheet/past-comments/' + currentModalSid;
+            var response = await fetch(url, {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('HTTP ' + response.status);
+            }
+
             var data = await response.json();
 
             if (data.success && data.data && data.data.length > 0) {
                 document.getElementById('pastCommentCount').textContent = data.data.length;
 
-                var summaryHtml = '<div class="mb-3 p-2 bg-light rounded small"><strong>Comment History:</strong> ';
-                summaryHtml += '<span class="badge bg-info">Teacher: ' + (data.counts.classteacher || 0) + '</span> ';
-                summaryHtml += '<span class="badge bg-secondary">Guidance: ' + (data.counts.guidance || 0) + '</span> ';
-                summaryHtml += '<span class="badge bg-warning">Activities: ' + (data.counts.activities || 0) + '</span> ';
-                summaryHtml += '<span class="badge bg-dark">Total: ' + data.counts.total + '</span></div>';
-
-                var commentsHtml = data.data.map(function(comment) {
-                    var badgeClass = '';
-                    if (comment.comment_type === 'Teacher') badgeClass = 'bg-info';
-                    else if (comment.comment_type === 'Guidance') badgeClass = 'bg-secondary';
-                    else if (comment.comment_type === 'Activities') badgeClass = 'bg-warning';
-                    else badgeClass = 'bg-dark';
-
-                    return `
-                        <div class="past-comment-item" style="border-left: 4px solid var(--cb-teal); background: #f8fafc; padding: 12px; margin-bottom: 10px; border-radius: 8px; cursor: pointer;" onclick="usePastComment('${escapeHtml(comment.comment_text)}')">
-                            <div class="d-flex justify-content-between align-items-center mb-2">
-                                <strong class="small">${escapeHtml(comment.session)} · ${escapeHtml(comment.term)}</strong>
-                                <span class="badge ${badgeClass}">${escapeHtml(comment.comment_type)}</span>
+                // Summary badges
+                var summaryHtml = `
+                    <div class="mb-3" style="background: #f1f5f9; border-radius: 10px; padding: 12px;">
+                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <span class="small fw-bold text-muted"><i class="ri-bar-chart-line"></i> Comment History</span>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <span class="badge" style="background: #0ea5e9; color: white;">Teacher: ${data.counts.classteacher || 0}</span>
+                                <span class="badge" style="background: #8b5cf6; color: white;">Guidance: ${data.counts.guidance || 0}</span>
+                                <span class="badge" style="background: #f59e0b; color: white;">Activities: ${data.counts.activities || 0}</span>
+                                <span class="badge" style="background: #1e293b;">Total: ${data.counts.total}</span>
                             </div>
-                            <div class="small text-muted mb-2">${escapeHtml(comment.class)}</div>
-                            <div class="small">${escapeHtml(comment.comment_text.length > 150 ? comment.comment_text.substring(0, 150) + '...' : comment.comment_text)}</div>
-                            <div class="text-muted mt-1 small"><i class="ri-time-line"></i> ${comment.date}</div>
+                        </div>
+                    </div>
+                `;
+
+                // Group comments by session/term
+                var commentsHtml = '<div class="past-comments-timeline">';
+                data.data.forEach(function(comment) {
+                    var badgeColor = '';
+                    var badgeIcon = '';
+                    if (comment.comment_type === 'Teacher') {
+                        badgeColor = '#0ea5e9';
+                        badgeIcon = 'ri-chat-quote-line';
+                    } else if (comment.comment_type === 'Guidance') {
+                        badgeColor = '#8b5cf6';
+                        badgeIcon = 'ri-mental-health-line';
+                    } else if (comment.comment_type === 'Activities') {
+                        badgeColor = '#f59e0b';
+                        badgeIcon = 'ri-football-line';
+                    } else {
+                        badgeColor = '#64748b';
+                        badgeIcon = 'ri-chat-3-line';
+                    }
+
+                    commentsHtml += `
+                        <div class="past-comment-item" style="border-left: 4px solid ${badgeColor}; background: #ffffff; padding: 14px; margin-bottom: 12px; border-radius: 10px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.2s ease;"
+                             onclick="usePastComment('${escapeHtml(comment.comment_text)}')"
+                             onmouseover="this.style.transform='translateX(4px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)';"
+                             onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)';">
+
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="badge" style="background: ${badgeColor}; color: white; padding: 4px 10px;">
+                                        <i class="${badgeIcon} me-1" style="font-size: 11px;"></i> ${comment.comment_type}
+                                    </span>
+                                    <span class="small text-muted"><i class="ri-calendar-line me-1"></i> ${comment.date}</span>
+                                </div>
+                            </div>
+
+                            <div class="mb-2">
+                                <span class="small fw-semibold" style="color: var(--cb-navy);">
+                                    <i class="ri-calendar-event-line me-1"></i> ${escapeHtml(comment.session)} · ${escapeHtml(comment.term)}
+                                </span>
+                                <span class="mx-1 text-muted">•</span>
+                                <span class="small text-muted"><i class="ri-building-line me-1"></i> ${escapeHtml(comment.class)}</span>
+                            </div>
+
+                            <div class="small" style="color: #334155; line-height: 1.5;">
+                                ${escapeHtml(comment.comment_text.length > 200 ? comment.comment_text.substring(0, 200) + '...' : comment.comment_text)}
+                            </div>
+
+                            <div class="mt-2 text-end">
+                                <span class="small text-primary"><i class="ri-double-quotes-r"></i> Click to load this comment</span>
+                            </div>
                         </div>
                     `;
-                }).join('');
+                });
+                commentsHtml += '</div>';
 
                 listEl.innerHTML = summaryHtml + commentsHtml;
                 document.getElementById('pastCommentsPanel').style.display = 'block';
             } else {
-                listEl.innerHTML = '<div class="text-center py-3 text-muted"><i class="ri-inbox-line"></i><br>No past comments found</div>';
+                listEl.innerHTML = `
+                    <div class="text-center py-5">
+                        <i class="ri-inbox-line" style="font-size: 48px; color: #cbd5e1;"></i>
+                        <p class="text-muted mt-2 mb-0">No past comments found for this student.</p>
+                        <small class="text-muted">Comments from previous terms will appear here</small>
+                    </div>
+                `;
                 document.getElementById('pastCommentCount').textContent = '0';
                 document.getElementById('pastCommentsPanel').style.display = 'block';
             }
         } catch (error) {
             console.error('Error loading past comments:', error);
-            listEl.innerHTML = '<div class="text-center py-3 text-danger"><i class="ri-error-warning-line"></i><br>Failed to load past comments</div>';
+            listEl.innerHTML = `
+                <div class="text-center py-5 text-danger">
+                    <i class="ri-error-warning-line" style="font-size: 48px;"></i>
+                    <p class="mt-2 mb-0">Failed to load past comments</p>
+                    <small>Please refresh and try again</small>
+                </div>
+            `;
         }
     }
 
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Enhanced usePastComment function
     window.usePastComment = function(text) {
-        document.getElementById('modalTextarea').value = text;
-        toast('Past comment loaded! You can edit it before saving.', 'info');
+        var ta = document.getElementById('modalTextarea');
+        ta.value = text;
+        ta.focus();
+
+        // Show a temporary notification
+        var notification = document.createElement('div');
+        notification.className = 'cb-toast cb-toast-success';
+        notification.innerHTML = '<i class="ri-checkbox-circle-fill"></i> Past comment loaded! You can edit it before saving.';
+        notification.style.position = 'fixed';
+        notification.style.bottom = '20px';
+        notification.style.right = '20px';
+        notification.style.zIndex = '10000';
+        document.body.appendChild(notification);
+        setTimeout(function() { notification.remove(); }, 2000);
     };
 
     function saveCommentFromModal() {
@@ -1035,12 +1216,6 @@ body { font-family: 'DM Sans', sans-serif; }
 
         commentModal.hide();
         toast(currentModalField.charAt(0).toUpperCase() + currentModalField.slice(1) + ' comment saved!', 'success');
-    }
-
-    function escapeHtml(text) {
-        var div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
     }
 
     function attachModalTriggers() {
@@ -1096,7 +1271,7 @@ body { font-family: 'DM Sans', sans-serif; }
             var cC = (g.cum_score > 0 && g.cum_score < 50) ? 'score-red' : '';
             var tBadge = (g.term_grade && g.term_grade !== '-') ? '<span class="grade-badge g-' + tgl + '">' + esc(g.term_grade) + '</span>' : '—';
             var cBadge = (g.cum_grade && g.cum_grade !== '-') ? '<span class="grade-badge g-' + cgl + '">' + esc(g.cum_grade) + '</span>' : '—';
-            return '<tr><td style="text-align:left;">' + esc(g.subject) + '</td><td class="' + tC + '">' + (g.term_score || '—') + '</td><td>' + tBadge + '</td><td class="' + cC + '">' + (g.cum_score || '—') + '</td><td>' + cBadge + '</td></tr>';
+            return '<tr><td style="text-align:left;">' + esc(g.subject) + '<td><td class="' + tC + '">' + (g.term_score || '—') + '</td><td>' + tBadge + '</td><td class="' + cC + '">' + (g.cum_score || '—') + '</td><td>' + cBadge + '</td></tr>';
         }).join('');
 
         gpopBody.innerHTML = '<table class="gpop-table"><thead><tr><th>Subject</th><th style="color:#0891b2;">T.Score</th><th style="color:#0891b2;">T.Grade</th><th>C.Score</th><th>C.Grade</th></tr></thead><tbody>' + (rows || '<tr><td colspan="5" class="text-center text-muted py-2">No grades</td></tr>') + '</tbody></table>' +
