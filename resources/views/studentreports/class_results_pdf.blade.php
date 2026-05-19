@@ -198,6 +198,83 @@
             margin: 0 10px 8px 10px;
         }
 
+        /* ── Attendance Box ── */
+        .attendance-box {
+            width: calc(100% - 20px);
+            margin: 0 10px 8px 10px;
+            border: 2px solid #0d9488;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .attendance-box-header {
+            background: #0d9488;
+            color: #ffffff;
+            font-size: 8.5px;
+            font-weight: 900;
+            padding: 5px 10px;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+        }
+
+        .attendance-grid {
+            display: table;
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .att-cell {
+            display: table-cell;
+            padding: 5px 8px;
+            text-align: center;
+            border-right: 1px solid #d1fae5;
+            vertical-align: middle;
+            background: #f0fdf9;
+        }
+
+        .att-cell:last-child { border-right: none; }
+
+        .att-label {
+            font-size: 7px;
+            font-weight: 700;
+            color: #0f766e;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        .att-value {
+            font-size: 10px;
+            font-weight: 900;
+            color: #111827;
+            display: block;
+        }
+
+        .att-value.att-warn { color: #dc2626; }
+        .att-value.att-ok   { color: #16a34a; }
+
+        .att-pct-bar-wrap {
+            width: calc(100% - 20px);
+            margin: 0 10px 2px 10px;
+            background: #e2e8f0;
+            border-radius: 20px;
+            height: 6px;
+            overflow: hidden;
+        }
+
+        .att-pct-bar {
+            height: 100%;
+            border-radius: 20px;
+            background: linear-gradient(90deg, #0d9488, #22c55e);
+        }
+
+        .att-pct-bar.att-pct-warn {
+            background: linear-gradient(90deg, #f59e0b, #dc2626);
+        }
+
+        /* ── end attendance ── */
+
         .remarks-table {
             width: calc(100% - 20px);
             border: 2px solid #000000;
@@ -270,14 +347,11 @@
             if (!is_numeric($number) || $number <= 0) {
                 return '-';
             }
-
-            $lastDigit = $number % 10;
+            $lastDigit     = $number % 10;
             $lastTwoDigits = $number % 100;
-
             if ($lastTwoDigits >= 11 && $lastTwoDigits <= 13) {
                 return $number . 'th';
             }
-
             switch ($lastDigit) {
                 case 1: return $number . 'st';
                 case 2: return $number . 'nd';
@@ -292,8 +366,17 @@
             'total', 'bf', 'cum', 'grade',
             'position', 'position_total', 'arm_position', 'arm_position_cum',
             'class_average',
+            'attendance_days_present', 'attendance_days_absent',
+            'attendance_total_days', 'attendance_percentage',
         ];
         $columnsToShow = !empty($selectedColumns) ? $selectedColumns : $defaultColumns;
+
+        // Helper: is any attendance column requested?
+        $showAnyAttendance = collect([
+            'attendance_days_present', 'attendance_days_absent', 'attendance_days_late',
+            'attendance_sick_leave', 'attendance_excused',
+            'attendance_total_days', 'attendance_percentage',
+        ])->contains(fn($col) => in_array($col, $columnsToShow));
     @endphp
 
     @foreach ($allStudentData as $index => $studentData)
@@ -304,6 +387,7 @@
                 : null;
             $assessments = $studentData['assessments'] ?? collect();
             $totals      = $studentData['totals_summary'] ?? [];
+            $attendance  = $studentData['attendance_summary'] ?? [];
 
             $admNo    = $student->admissionNo ?? 'N/A';
             $fullName = trim(strtoupper($student->lastname ?? '') . ' ' . ($student->fname ?? '') . ' ' . ($student->othername ?? ''));
@@ -323,6 +407,11 @@
             $stampSrc = !empty($studentData['school_stamp_base64'])
                 ? $studentData['school_stamp_base64']
                 : asset('stamp.jpeg');
+
+            // Attendance computed values
+            $attPct    = isset($attendance['attendance_percentage']) ? round($attendance['attendance_percentage'], 1) : 0;
+            $attWarn   = $attPct < 75;
+            $attFound  = $attendance['found'] ?? false;
         @endphp
 
         <div class="student-section">
@@ -334,58 +423,58 @@
             </div>
 
             {{-- HEADER: Logo + Contact + Photo --}}
-          <table class="header-table">
-            <tr>
-                <td width="20%" style="text-align:center;">
-                    <div class="school-logo">
-                        @php
-                            $logoSrc = $studentData['school_logo_base64'] ??
-                                'data:image/svg+xml;base64,' . base64_encode(
-                                    '<svg xmlns="http://www.w3.org/2000/svg" width="72" height="85" viewBox="0 0 100 100">
-                                    <rect width="100" height="100" fill="#f8f9fa" stroke="#47b492" stroke-width="2"/>
-                                    <circle cx="50" cy="40" r="15" fill="#47b492" opacity="0.6"/>
-                                    <rect x="35" y="60" width="30" height="20" fill="#47b492" opacity="0.6" rx="3"/>
-                                    </svg>'
-                                );
-                        @endphp
-                        <img src="{{ $logoSrc }}" alt="School Logo">
-                    </div>
-                </td>
+            <table class="header-table">
+                <tr>
+                    <td width="20%" style="text-align:center;">
+                        <div class="school-logo">
+                            @php
+                                $logoSrc = $studentData['school_logo_base64'] ??
+                                    'data:image/svg+xml;base64,' . base64_encode(
+                                        '<svg xmlns="http://www.w3.org/2000/svg" width="72" height="85" viewBox="0 0 100 100">
+                                        <rect width="100" height="100" fill="#f8f9fa" stroke="#47b492" stroke-width="2"/>
+                                        <circle cx="50" cy="40" r="15" fill="#47b492" opacity="0.6"/>
+                                        <rect x="35" y="60" width="30" height="20" fill="#47b492" opacity="0.6" rx="3"/>
+                                        </svg>'
+                                    );
+                            @endphp
+                            <img src="{{ $logoSrc }}" alt="School Logo">
+                        </div>
+                    </td>
 
-                <td style="vertical-align:top; padding: 4px 8px;">
-                    <table style="border:none; border-collapse:collapse; width:100%; font-size:9px;">
-                        <tr>
-                            <td style="font-weight:900; color:#1e40af; white-space:nowrap; vertical-align:top; padding:0 4px 0 0;">Address:</td>
-                            <td style="vertical-align:top; padding:0;">{{ $schoolInfo->school_address ?? '—' }}</td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Phone:</td>
-                            <td style="vertical-align:top; padding:0;">{{ $schoolInfo->formatted_phones ?? '—' }}</td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Email:</td>
-                            <td style="vertical-align:top; padding:0;">{{ $schoolInfo->school_email ?? '—' }}</td>
-                        </tr>
-                        <tr>
-                            <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Website:</td>
-                            <td style="vertical-align:top; padding:0;">{{ $schoolInfo->school_website ?? '—' }}</td>
-                        </tr>
-                    </table>
-                </td>
+                    <td style="vertical-align:top; padding: 4px 8px;">
+                        <table style="border:none; border-collapse:collapse; width:100%; font-size:9px;">
+                            <tr>
+                                <td style="font-weight:900; color:#1e40af; white-space:nowrap; vertical-align:top; padding:0 4px 0 0;">Address:</td>
+                                <td style="vertical-align:top; padding:0;">{{ $schoolInfo->school_address ?? '—' }}</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Phone:</td>
+                                <td style="vertical-align:top; padding:0;">{{ $schoolInfo->formatted_phones ?? '—' }}</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Email:</td>
+                                <td style="vertical-align:top; padding:0;">{{ $schoolInfo->school_email ?? '—' }}</td>
+                            </tr>
+                            <tr>
+                                <td style="font-weight:900; color:#1e40af; white-space:nowrap; padding:0 4px 0 0;">Website:</td>
+                                <td style="vertical-align:top; padding:0;">{{ $schoolInfo->school_website ?? '—' }}</td>
+                            </tr>
+                        </table>
+                    </td>
 
-                <td width="29%" style="text-align:right; padding-right:8px; vertical-align:top; padding-top:6px;">
-                    @if(in_array('picture', $columnsToShow))
-                    <div class="photo-frame" style="margin-left:auto; margin-right:0;">
-                        @if(!empty($studentData['student_image_base64']))
-                            <img src="{{ $studentData['student_image_base64'] }}" alt="Student Photo">
-                        @else
-                            <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='85' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23e2e8f0'/%3E%3Ccircle cx='50' cy='40' r='20' fill='%2394a3b8'/%3E%3Crect x='35' y='65' width='30' height='25' fill='%2394a3b8' rx='4'/%3E%3C/svg%3E" alt="Default Photo">
+                    <td width="29%" style="text-align:right; padding-right:8px; vertical-align:top; padding-top:6px;">
+                        @if(in_array('picture', $columnsToShow))
+                        <div class="photo-frame" style="margin-left:auto; margin-right:0;">
+                            @if(!empty($studentData['student_image_base64']))
+                                <img src="{{ $studentData['student_image_base64'] }}" alt="Student Photo">
+                            @else
+                                <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='85' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%23e2e8f0'/%3E%3Ccircle cx='50' cy='40' r='20' fill='%2394a3b8'/%3E%3Crect x='35' y='65' width='30' height='25' fill='%2394a3b8' rx='4'/%3E%3C/svg%3E" alt="Default Photo">
+                            @endif
+                        </div>
                         @endif
-                    </div>
-                    @endif
-                </td>
-            </tr>
-          </table>
+                    </td>
+                </tr>
+            </table>
 
             <div class="header-divider"></div>
             <div class="header-divider2"></div>
@@ -555,62 +644,42 @@
                                 <td class="{{ $gradeClass }}">{{ $gradeRaw }}</td>
                             @endif
 
-                            {{-- Class Pos (Cum) — All Arms, ranked by cumulative average --}}
+                            {{-- Class Pos (Cum) --}}
                             @if(in_array('position', $columnsToShow))
                                 @php
-                                    $posVal = $score->position;
-                                    $posNum = is_numeric($posVal) ? (int)$posVal : 0;
-                                    $posClass = match($posNum) {
-                                        1 => 'position-1',
-                                        2 => 'position-2',
-                                        3 => 'position-3',
-                                        default => ''
-                                    };
+                                    $posVal   = $score->position;
+                                    $posNum   = is_numeric($posVal) ? (int)$posVal : 0;
+                                    $posClass = match($posNum) { 1 => 'position-1', 2 => 'position-2', 3 => 'position-3', default => '' };
                                 @endphp
                                 <td class="{{ $posClass }}">{{ formatOrdinal($posVal) }}</td>
                             @endif
 
-                            {{-- Class Pos (Total) — All Arms, ranked by raw total --}}
+                            {{-- Class Pos (Total) --}}
                             @if(in_array('position_total', $columnsToShow))
                                 @php
-                                    $posTotalVal = $score->position_total;
-                                    $posTotalNum = is_numeric($posTotalVal) ? (int)$posTotalVal : 0;
-                                    $posTotalClass = match($posTotalNum) {
-                                        1 => 'position-1',
-                                        2 => 'position-2',
-                                        3 => 'position-3',
-                                        default => ''
-                                    };
+                                    $posTotalVal   = $score->position_total;
+                                    $posTotalNum   = is_numeric($posTotalVal) ? (int)$posTotalVal : 0;
+                                    $posTotalClass = match($posTotalNum) { 1 => 'position-1', 2 => 'position-2', 3 => 'position-3', default => '' };
                                 @endphp
                                 <td class="{{ $posTotalClass }}">{{ formatOrdinal($posTotalVal) }}</td>
                             @endif
 
-                            {{-- Arm Pos (Total) — This arm only, ranked by raw total --}}
+                            {{-- Arm Pos (Total) --}}
                             @if(in_array('arm_position', $columnsToShow))
                                 @php
-                                    $armPosVal = $score->arm_position;
-                                    $armPosNum = is_numeric($armPosVal) ? (int)$armPosVal : 0;
-                                    $armPosClass = match($armPosNum) {
-                                        1 => 'position-1',
-                                        2 => 'position-2',
-                                        3 => 'position-3',
-                                        default => ''
-                                    };
+                                    $armPosVal   = $score->arm_position;
+                                    $armPosNum   = is_numeric($armPosVal) ? (int)$armPosVal : 0;
+                                    $armPosClass = match($armPosNum) { 1 => 'position-1', 2 => 'position-2', 3 => 'position-3', default => '' };
                                 @endphp
                                 <td class="{{ $armPosClass }}">{{ formatOrdinal($armPosVal) }}</td>
                             @endif
 
-                            {{-- Arm Pos (Cum) — This arm only, ranked by cumulative average --}}
+                            {{-- Arm Pos (Cum) --}}
                             @if(in_array('arm_position_cum', $columnsToShow))
                                 @php
-                                    $armPosCumVal = $score->arm_position_cum;
-                                    $armPosCumNum = is_numeric($armPosCumVal) ? (int)$armPosCumVal : 0;
-                                    $armPosCumClass = match($armPosCumNum) {
-                                        1 => 'position-1',
-                                        2 => 'position-2',
-                                        3 => 'position-3',
-                                        default => ''
-                                    };
+                                    $armPosCumVal   = $score->arm_position_cum;
+                                    $armPosCumNum   = is_numeric($armPosCumVal) ? (int)$armPosCumVal : 0;
+                                    $armPosCumClass = match($armPosCumNum) { 1 => 'position-1', 2 => 'position-2', 3 => 'position-3', default => '' };
                                 @endphp
                                 <td class="{{ $armPosCumClass }}">{{ formatOrdinal($armPosCumVal) }}</td>
                             @endif
@@ -636,6 +705,88 @@
                 &nbsp;&nbsp;|&nbsp;&nbsp;
                 % OBTAINED: {{ $totals['percentage'] ?? 0 }}%
             </div>
+
+            {{-- ── ATTENDANCE BOX ────────────────────────────────────────── --}}
+            @if($showAnyAttendance)
+            <div class="attendance-box">
+                <div class="attendance-box-header">&#128197; Attendance Record — {{ $term }}</div>
+
+                @if(!$attFound)
+                    <div style="padding:8px 12px;font-size:8px;color:#6b7280;text-align:center;background:#f9fafb;">
+                        No attendance record available for this term.
+                    </div>
+                @else
+                    <div class="attendance-grid">
+                        @if(in_array('attendance_total_days', $columnsToShow))
+                        <div class="att-cell">
+                            <span class="att-label">School Days</span>
+                            <span class="att-value">{{ $attendance['total_school_days'] ?? 0 }}</span>
+                        </div>
+                        @endif
+
+                        @if(in_array('attendance_days_present', $columnsToShow))
+                        <div class="att-cell">
+                            <span class="att-label">Present</span>
+                            <span class="att-value att-ok">{{ $attendance['days_present'] ?? 0 }}</span>
+                        </div>
+                        @endif
+
+                        @if(in_array('attendance_days_absent', $columnsToShow))
+                        <div class="att-cell">
+                            <span class="att-label">Absent</span>
+                            <span class="att-value {{ ($attendance['days_absent'] ?? 0) > 0 ? 'att-warn' : 'att-ok' }}">
+                                {{ $attendance['days_absent'] ?? 0 }}
+                            </span>
+                        </div>
+                        @endif
+
+                        @if(in_array('attendance_days_late', $columnsToShow))
+                        <div class="att-cell">
+                            <span class="att-label">Late</span>
+                            <span class="att-value {{ ($attendance['days_late'] ?? 0) > 0 ? 'att-warn' : 'att-ok' }}">
+                                {{ $attendance['days_late'] ?? 0 }}
+                            </span>
+                        </div>
+                        @endif
+
+                        @if(in_array('attendance_sick_leave', $columnsToShow))
+                        <div class="att-cell">
+                            <span class="att-label">Sick</span>
+                            <span class="att-value">{{ $attendance['days_sick_leave'] ?? 0 }}</span>
+                        </div>
+                        @endif
+
+                        @if(in_array('attendance_excused', $columnsToShow))
+                        <div class="att-cell">
+                            <span class="att-label">Excused</span>
+                            <span class="att-value">{{ $attendance['days_excused'] ?? 0 }}</span>
+                        </div>
+                        @endif
+
+                        @if(in_array('attendance_percentage', $columnsToShow))
+                        <div class="att-cell" style="min-width:70px;">
+                            <span class="att-label">Attendance %</span>
+                            <span class="att-value {{ $attWarn ? 'att-warn' : 'att-ok' }}">{{ $attPct }}%</span>
+                        </div>
+                        @endif
+                    </div>
+
+                    {{-- Progress bar --}}
+                    @if(in_array('attendance_percentage', $columnsToShow))
+                    <div style="padding:4px 10px 6px;">
+                        <div class="att-pct-bar-wrap">
+                            <div class="att-pct-bar {{ $attWarn ? 'att-pct-warn' : '' }}"
+                                 style="width:{{ min($attPct, 100) }}%;"></div>
+                        </div>
+                        <div style="font-size:7px;color:#6b7280;margin-top:2px;text-align:right;">
+                            {{ $attWarn ? 'Below 75% — requires attention' : 'Satisfactory attendance' }}
+                        </div>
+                    </div>
+                    @endif
+                @endif
+            </div>
+            @endif
+            {{-- ── END ATTENDANCE BOX ── --}}
 
             {{-- REMARKS --}}
             <table class="remarks-table">

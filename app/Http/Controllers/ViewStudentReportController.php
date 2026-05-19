@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Log;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Cache;
 use App\Models\CompulsorySubjectClass;
+use App\Models\AttendanceSummary;
 use App\Models\BroadsheetAssessmentScore;
 use App\Models\Studentpersonalityprofile;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -254,9 +255,9 @@ class ViewStudentReportController extends Controller
      */
     protected function calculatePositionsRaw($sortedRecords, $field)
     {
-        $positionMap = [];
-        $rank = 0;
-        $lastValue = null;
+        $positionMap  = [];
+        $rank         = 0;
+        $lastValue    = null;
         $lastPosition = 0;
 
         foreach ($sortedRecords as $record) {
@@ -266,8 +267,8 @@ class ViewStudentReportController extends Controller
             if ($lastValue !== null && $currentValue == $lastValue) {
                 $positionMap[$record->id] = $lastPosition;
             } else {
-                $lastPosition = $rank;
-                $lastValue = $currentValue;
+                $lastPosition             = $rank;
+                $lastValue                = $currentValue;
                 $positionMap[$record->id] = $lastPosition;
             }
         }
@@ -360,34 +361,34 @@ class ViewStudentReportController extends Controller
 
                 // 1. CLASS POSITION (CUM) - All arms, ranked by cumulative
                 $validRecordsCum = $subjectRecords->filter(fn ($r) => $r->cum != 0 && $r->cum !== null);
-                $sortedByCum = $validRecordsCum->sortByDesc('cum')->values();
-                $positionMapCum = $this->calculatePositionsRaw($sortedByCum, 'cum');
+                $sortedByCum     = $validRecordsCum->sortByDesc('cum')->values();
+                $positionMapCum  = $this->calculatePositionsRaw($sortedByCum, 'cum');
 
                 // 2. CLASS POSITION (TOTAL) - All arms, ranked by raw total
                 $validRecordsTotal = $subjectRecords->filter(fn ($r) => $r->total != 0 && $r->total !== null);
-                $sortedByTotal = $validRecordsTotal->sortByDesc('total')->values();
-                $positionMapTotal = $this->calculatePositionsRaw($sortedByTotal, 'total');
+                $sortedByTotal     = $validRecordsTotal->sortByDesc('total')->values();
+                $positionMapTotal  = $this->calculatePositionsRaw($sortedByTotal, 'total');
 
                 // 3. ARM POSITION (TOTAL) - This arm only, ranked by raw total
-                $armOnlyRecords = $subjectRecords->filter(fn ($r) => $r->student_arm_id == $armId);
+                $armOnlyRecords       = $subjectRecords->filter(fn ($r) => $r->student_arm_id == $armId);
                 $validArmRecordsTotal = $armOnlyRecords->filter(fn ($r) => $r->total != 0 && $r->total !== null);
-                $sortedByArmTotal = $validArmRecordsTotal->sortByDesc('total')->values();
-                $armPositionMapTotal = $this->calculatePositionsRaw($sortedByArmTotal, 'total');
+                $sortedByArmTotal     = $validArmRecordsTotal->sortByDesc('total')->values();
+                $armPositionMapTotal  = $this->calculatePositionsRaw($sortedByArmTotal, 'total');
 
                 // 4. ARM POSITION (CUM) - This arm only, ranked by cumulative
                 $validArmRecordsCum = $armOnlyRecords->filter(fn ($r) => $r->cum != 0 && $r->cum !== null);
-                $sortedByArmCum = $validArmRecordsCum->sortByDesc('cum')->values();
-                $armPositionMapCum = $this->calculatePositionsRaw($sortedByArmCum, 'cum');
+                $sortedByArmCum     = $validArmRecordsCum->sortByDesc('cum')->values();
+                $armPositionMapCum  = $this->calculatePositionsRaw($sortedByArmCum, 'cum');
 
                 // Calculate class average
-                $totalScores = $validRecordsTotal->sum('total');
+                $totalScores  = $validRecordsTotal->sum('total');
                 $studentCount = $validRecordsTotal->count();
-                $classAvg = $studentCount > 0 ? round($totalScores / $studentCount, 1) : 0;
+                $classAvg     = $studentCount > 0 ? round($totalScores / $studentCount, 1) : 0;
 
                 $updatesCount = 0;
 
                 foreach ($subjectRecords as $record) {
-                    $grade = $record->total == 0 ? '-' : $this->calculateGrade($record->total);
+                    $grade  = $record->total == 0 ? '-' : $this->calculateGrade($record->total);
                     $remark = $this->getRemark($grade);
 
                     // Store RAW NUMBERS (not formatted strings)
@@ -413,13 +414,13 @@ class ViewStudentReportController extends Controller
                         $record->remark != $remark
                     ) {
                         Broadsheets::where('id', $record->id)->update([
-                            'avg'                           => $classAvg,
-                            'subject_position_class'        => $newPositionCum,
-                            'subject_position_class_total'  => $newPositionTotal,
-                            'arm_position'                  => $newArmPositionTotal,
-                            'arm_position_cum'              => $newArmPositionCum,
-                            'grade'                         => $grade,
-                            'remark'                        => $remark,
+                            'avg'                          => $classAvg,
+                            'subject_position_class'       => $newPositionCum,
+                            'subject_position_class_total' => $newPositionTotal,
+                            'arm_position'                 => $newArmPositionTotal,
+                            'arm_position_cum'             => $newArmPositionCum,
+                            'grade'                        => $grade,
+                            'remark'                       => $remark,
                         ]);
                         $updatesCount++;
                     }
@@ -443,7 +444,55 @@ class ViewStudentReportController extends Controller
     }
 
     /**
-     * Get complete student result data — includes all 4 subject position columns.
+     * Fetch attendance summary for a student in a given class/term/session.
+     * Returns a structured array (never null — always has defaults).
+     */
+    protected function getAttendanceSummary($studentId, $schoolclassId, $termId, $sessionId): array
+    {
+        try {
+            $record = AttendanceSummary::where('student_id', $studentId)
+                ->where('schoolclass_id', $schoolclassId)
+                ->where('term_id', $termId)
+                ->where('session_id', $sessionId)
+                ->first();
+
+            if ($record) {
+                return [
+                    'total_school_days'    => $record->total_school_days    ?? 0,
+                    'days_present'         => $record->days_present         ?? 0,
+                    'days_absent'          => $record->days_absent          ?? 0,
+                    'days_sick_leave'      => $record->days_sick_leave      ?? 0,
+                    'days_excused'         => $record->days_excused         ?? 0,
+                    'days_late'            => $record->days_late            ?? 0,
+                    'attendance_percentage'=> $record->attendance_percentage ?? 0.0,
+                    'found'                => true,
+                ];
+            }
+        } catch (\Exception $e) {
+            Log::error('Error fetching attendance summary', [
+                'student_id'     => $studentId,
+                'schoolclass_id' => $schoolclassId,
+                'term_id'        => $termId,
+                'session_id'     => $sessionId,
+                'error'          => $e->getMessage(),
+            ]);
+        }
+
+        // Safe defaults when no record found
+        return [
+            'total_school_days'     => 0,
+            'days_present'          => 0,
+            'days_absent'           => 0,
+            'days_sick_leave'       => 0,
+            'days_excused'          => 0,
+            'days_late'             => 0,
+            'attendance_percentage' => 0.0,
+            'found'                 => false,
+        ];
+    }
+
+    /**
+     * Get complete student result data — includes all 4 subject position columns + attendance.
      */
     private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
     {
@@ -530,9 +579,9 @@ class ViewStudentReportController extends Controller
 
             // Add formatted versions for display
             foreach ($scores as $score) {
-                $score->position_formatted = $score->position ? $this->formatOrdinal($score->position) : '-';
-                $score->position_total_formatted = $score->position_total ? $this->formatOrdinal($score->position_total) : '-';
-                $score->arm_position_formatted = $score->arm_position ? $this->formatOrdinal($score->arm_position) : '-';
+                $score->position_formatted         = $score->position         ? $this->formatOrdinal($score->position)         : '-';
+                $score->position_total_formatted   = $score->position_total   ? $this->formatOrdinal($score->position_total)   : '-';
+                $score->arm_position_formatted     = $score->arm_position     ? $this->formatOrdinal($score->arm_position)     : '-';
                 $score->arm_position_cum_formatted = $score->arm_position_cum ? $this->formatOrdinal($score->arm_position_cum) : '-';
 
                 try {
@@ -682,6 +731,9 @@ class ViewStudentReportController extends Controller
                 }
             }
 
+            // ── Attendance ────────────────────────────────────────────────
+            $attendanceSummary = $this->getAttendanceSummary($id, $schoolclassid, $termid, $sessionid);
+
             $result = [
                 'students'             => $students,
                 'studentpp'            => $studentpp,
@@ -700,6 +752,7 @@ class ViewStudentReportController extends Controller
                 'compulsorySubjects'   => $compulsorySubjects,
                 'gpa_data'             => $gpaData,
                 'totals_summary'       => $totalsSummary,
+                'attendance_summary'   => $attendanceSummary,   // ← NEW
             ];
 
             Log::channel('pdf')->info('========== END getStudentResultData ==========', [
@@ -722,7 +775,7 @@ class ViewStudentReportController extends Controller
     }
 
     /**
-     * Get column options for PDF generation — includes all 4 position columns.
+     * Get column options for PDF generation — includes all 4 position columns + attendance.
      */
     public function getColumnOptions(Request $request)
     {
@@ -762,15 +815,15 @@ class ViewStudentReportController extends Controller
             ],
             'assessments' => [],
             'scores' => [
-                'total'            => ['label' => 'Total',                        'default' => true],
-                'bf'               => ['label' => 'BF',                           'default' => true],
-                'cum'              => ['label' => 'Cum',                          'default' => true],
-                'grade'            => ['label' => 'Grade',                        'default' => true],
-                'position'         => ['label' => 'Class Pos (Cum) — All Arms',    'default' => true],
-                'position_total'   => ['label' => 'Class Pos (Total) — All Arms',  'default' => true],
-                'arm_position'     => ['label' => 'Arm Pos (Total) — This Arm',    'default' => true],
-                'arm_position_cum' => ['label' => 'Arm Pos (Cum) — This Arm',      'default' => true],
-                'class_average'    => ['label' => 'Class Avg',                     'default' => true],
+                'total'            => ['label' => 'Total',                       'default' => true],
+                'bf'               => ['label' => 'BF',                          'default' => true],
+                'cum'              => ['label' => 'Cum',                         'default' => true],
+                'grade'            => ['label' => 'Grade',                       'default' => true],
+                'position'         => ['label' => 'Class Pos (Cum) — All Arms',  'default' => true],
+                'position_total'   => ['label' => 'Class Pos (Total) — All Arms','default' => true],
+                'arm_position'     => ['label' => 'Arm Pos (Total) — This Arm',  'default' => true],
+                'arm_position_cum' => ['label' => 'Arm Pos (Cum) — This Arm',    'default' => true],
+                'class_average'    => ['label' => 'Class Avg',                   'default' => true],
             ],
             'gpa_metrics' => [
                 'num_subjects'       => ['label' => 'Num Subjects', 'default' => true],
@@ -780,8 +833,18 @@ class ViewStudentReportController extends Controller
                 'gpa_grade'          => ['label' => 'GPA Grade',     'default' => true],
                 'cgpa'               => ['label' => 'CGPA',          'default' => true],
             ],
+            // ── Attendance columns ──────────────────────────────────────
+            'attendance' => [
+                'attendance_days_present'    => ['label' => 'Days Present',    'default' => true],
+                'attendance_days_absent'     => ['label' => 'Days Absent',     'default' => true],
+                'attendance_days_late'       => ['label' => 'Days Late',       'default' => false],
+                'attendance_sick_leave'      => ['label' => 'Sick Leave',      'default' => false],
+                'attendance_excused'         => ['label' => 'Excused',         'default' => false],
+                'attendance_total_days'      => ['label' => 'Total School Days','default' => true],
+                'attendance_percentage'      => ['label' => 'Attendance %',    'default' => true],
+            ],
             'other' => [
-                'compulsory_flag' => ['label' => 'Compulsory',   'default' => false],
+                'compulsory_flag' => ['label' => 'Compulsory',    'default' => false],
                 'vetted_status'   => ['label' => 'Vetted Status', 'default' => true],
             ],
         ];
@@ -1180,7 +1243,7 @@ class ViewStudentReportController extends Controller
             $imageData = file_get_contents($imagePath);
             if (empty($imageData)) throw new \Exception('Image file is empty');
 
-            $mimeType  = mime_content_type($imagePath);
+            $mimeType = mime_content_type($imagePath);
             if (!$mimeType) {
                 $ext      = strtolower(pathinfo($imagePath, PATHINFO_EXTENSION));
                 $mimeType = ['jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'png' => 'image/png',
@@ -1215,7 +1278,7 @@ class ViewStudentReportController extends Controller
 
         foreach ($studentData as &$student) {
             if (isset($student['students']) && $student['students']->isNotEmpty() && $student['students']->first()->picture) {
-                $absolutePath = $this->getAbsoluteImagePath($student['students']->first()->picture, true);
+                $absolutePath                    = $this->getAbsoluteImagePath($student['students']->first()->picture, true);
                 $student['student_image_base64'] = $absolutePath && file_exists($absolutePath)
                     ? $this->imageToBase64($absolutePath)
                     : $this->imageToBase64($defaultStudentImage);
@@ -1224,7 +1287,7 @@ class ViewStudentReportController extends Controller
             }
 
             if (isset($student['schoolInfo']) && !empty($student['schoolInfo']->school_logo)) {
-                $absolutePath = $this->getAbsoluteImagePath($student['schoolInfo']->school_logo, false);
+                $absolutePath                  = $this->getAbsoluteImagePath($student['schoolInfo']->school_logo, false);
                 $student['school_logo_base64'] = ($absolutePath && file_exists($absolutePath) && filesize($absolutePath) > 100)
                     ? $this->imageToBase64($absolutePath)
                     : $this->imageToBase64($defaultSchoolLogo);
@@ -1233,7 +1296,7 @@ class ViewStudentReportController extends Controller
             }
 
             if (isset($student['schoolInfo']) && !empty($student['schoolInfo']->school_stamp)) {
-                $absolutePath = $this->getAbsoluteImagePath($student['schoolInfo']->school_stamp, false);
+                $absolutePath                   = $this->getAbsoluteImagePath($student['schoolInfo']->school_stamp, false);
                 $student['school_stamp_base64'] = ($absolutePath && file_exists($absolutePath) && filesize($absolutePath) > 100)
                     ? $this->imageToBase64($absolutePath)
                     : null;
@@ -1246,7 +1309,8 @@ class ViewStudentReportController extends Controller
     private function createPlaceholderImage($path, $text)
     {
         try {
-            $width  = 300; $height = 200;
+            $width  = 300;
+            $height = 200;
             $image  = imagecreatetruecolor($width, $height);
             $bg     = imagecolorallocate($image, 240, 240, 240);
             $tc     = imagecolorallocate($image, 153, 153, 153);
@@ -1267,10 +1331,10 @@ class ViewStudentReportController extends Controller
     private function debugStorageStructure()
     {
         $paths = [
-            'storage/app/public'              => storage_path('app/public'),
-            'public/storage'                  => public_path('storage'),
-            'public/storage/school_logos'     => public_path('storage/school_logos'),
-            'public/storage/student_avatars'  => public_path('storage/student_avatars'),
+            'storage/app/public'             => storage_path('app/public'),
+            'public/storage'                 => public_path('storage'),
+            'public/storage/school_logos'    => public_path('storage/school_logos'),
+            'public/storage/student_avatars' => public_path('storage/student_avatars'),
         ];
 
         foreach ($paths as $name => $path) {
@@ -1289,8 +1353,8 @@ class ViewStudentReportController extends Controller
 
     private function debugStudentQuery($studentIds, $schoolclassid, $sessionid, $termid)
     {
-        $studentsExist   = Student::whereIn('id', $studentIds)->count();
-        $broadsheets     = DB::table('broadsheets')
+        $studentsExist = Student::whereIn('id', $studentIds)->count();
+        $broadsheets   = DB::table('broadsheets')
             ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
             ->whereIn('broadsheet_records.student_id', $studentIds)
             ->where('broadsheet_records.schoolclass_id', $schoolclassid)
@@ -1299,8 +1363,8 @@ class ViewStudentReportController extends Controller
             ->count();
 
         Log::info('DEBUG: Student data checks', [
-            'students_found'  => $studentsExist,
-            'broadsheets'     => $broadsheets,
+            'students_found' => $studentsExist,
+            'broadsheets'    => $broadsheets,
         ]);
     }
 
@@ -1390,6 +1454,7 @@ class ViewStudentReportController extends Controller
                 'has_scores'     => isset($studentData['scores'])   && !$studentData['scores']->isEmpty(),
                 'scores_count'   => $studentData['scores']->count() ?? 0,
                 'totals_summary' => $studentData['totals_summary'] ?? [],
+                'attendance'     => $studentData['attendance_summary'] ?? [],
                 'position_columns_check' => $studentData['scores'] && $studentData['scores']->isNotEmpty()
                     ? [
                         'position'         => $studentData['scores']->first()->position ?? 'NOT FOUND',
