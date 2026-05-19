@@ -333,8 +333,14 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     font-size: 11px;
     font-weight: 600;
 }
-.gender-male   { background: #dbeafe; color: #1e40af; }
-.gender-female { background: #fce7f3; color: #be185d; }
+.gender-male {
+    background: #dbeafe;
+    color: #1e40af;
+}
+.gender-female {
+    background: #fce7f3;
+    color: #be185d;
+}
 
 /* Action Button */
 .btn-view-profile {
@@ -382,7 +388,9 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     align-items: center;
     gap: 8px;
 }
-.chart-body { padding: 20px; }
+.chart-body {
+    padding: 20px;
+}
 
 /* Pagination */
 .pagination-wrap {
@@ -415,19 +423,51 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     color: white;
     border-color: var(--cb-teal);
 }
-.page-item:disabled { opacity: 0.5; cursor: not-allowed; }
+.page-item:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
 
 /* Empty State */
-.empty-state { text-align: center; padding: 60px; }
-.empty-state i { font-size: 64px; color: #cbd5e1; margin-bottom: 16px; display: block; }
-.empty-state h6 { font-size: 18px; color: var(--cb-navy); margin-bottom: 8px; }
-.empty-state p  { color: var(--cb-muted); font-size: 13px; }
+.empty-state {
+    text-align: center;
+    padding: 60px;
+}
+.empty-state i {
+    font-size: 64px;
+    color: #cbd5e1;
+    margin-bottom: 16px;
+    display: block;
+}
+.empty-state h6 {
+    font-size: 18px;
+    color: var(--cb-navy);
+    margin-bottom: 8px;
+}
+.empty-state p {
+    color: var(--cb-muted);
+    font-size: 13px;
+}
 
 /* Image Modal */
-#imageViewModal .modal-content { border-radius: var(--cb-radius); overflow: hidden; }
-#imageViewModal .modal-header  { background: linear-gradient(135deg, var(--cb-navy), var(--cb-teal)); color: white; border: none; }
-#imageViewModal .modal-header .btn-close { filter: invert(1); }
-#imageViewModal .modal-body img { max-width: 100%; max-height: 400px; object-fit: contain; border-radius: 12px; }
+#imageViewModal .modal-content {
+    border-radius: var(--cb-radius);
+    overflow: hidden;
+}
+#imageViewModal .modal-header {
+    background: linear-gradient(135deg, var(--cb-navy), var(--cb-teal));
+    color: white;
+    border: none;
+}
+#imageViewModal .modal-header .btn-close {
+    filter: invert(1);
+}
+#imageViewModal .modal-body img {
+    max-width: 100%;
+    max-height: 400px;
+    object-fit: contain;
+    border-radius: 12px;
+}
 
 /* Toast Notification */
 .cb-toast {
@@ -519,7 +559,11 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     border-radius: 10px 10px 0 0;
 }
 .sp-tab:hover { color: rgba(255,255,255,.9); background: rgba(255,255,255,.07); }
-.sp-tab-active { color: #fff !important; border-bottom-color: #0d9488 !important; background: rgba(255,255,255,.1) !important; }
+.sp-tab-active {
+    color: #fff !important;
+    border-bottom-color: #0d9488 !important;
+    background: rgba(255,255,255,.1) !important;
+}
 .sp-section-card {
     background: #fff;
     border: 1px solid #e2e8f0;
@@ -577,7 +621,11 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     cursor: pointer;
     transition: border-color .15s;
 }
-.sp-select:focus { border-color: #0d9488; outline: none; box-shadow: 0 0 0 3px rgba(13,148,136,.12); }
+.sp-select:focus {
+    border-color: #0d9488;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(13,148,136,.12);
+}
 .sp-trait-badge {
     display: inline-block;
     margin-top: 5px;
@@ -617,7 +665,11 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     transition: border-color .15s;
     resize: vertical;
 }
-.sp-input:focus, .sp-textarea:focus { border-color: #0d9488; outline: none; box-shadow: 0 0 0 3px rgba(13,148,136,.12); }
+.sp-input:focus, .sp-textarea:focus {
+    border-color: #0d9488;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(13,148,136,.12);
+}
 .sp-textarea-readonly { background: #f8fafc; color: #94a3b8; cursor: not-allowed; }
 .sp-report-table {
     width: 100%;
@@ -673,102 +725,9 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     0%, 100% { opacity: 1; transform: scale(1); }
     50% { opacity: .7; transform: scale(.95); }
 }
-
-/* ── Attendance Card (inside drawer) ── */
-.sp-att-card {
-    background: #fff;
-    border: 1px solid #d1fae5;
-    border-radius: 14px;
-    margin-bottom: 16px;
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(13,148,136,.07);
-}
-.sp-att-header {
-    background: linear-gradient(to right, #ecfdf5, #d1fae5);
-    border-bottom: 1px solid #a7f3d0;
-    padding: 12px 18px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    font-weight: 700;
-    color: #065f46;
-}
-.sp-att-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-    gap: 0;
-    border-top: 1px solid #d1fae5;
-}
-.sp-att-cell {
-    padding: 14px 16px;
-    text-align: center;
-    border-right: 1px solid #d1fae5;
-    border-bottom: 1px solid #d1fae5;
-    background: #f0fdf9;
-    transition: background .15s;
-}
-.sp-att-cell:hover { background: #dcfce7; }
-.sp-att-cell:last-child { border-right: none; }
-.sp-att-cell-label {
-    font-size: 10.5px;
-    font-weight: 600;
-    color: #0f766e;
-    text-transform: uppercase;
-    letter-spacing: .4px;
-    display: block;
-    margin-bottom: 6px;
-}
-.sp-att-cell-value {
-    font-size: 20px;
-    font-weight: 800;
-    color: #0f2342;
-    display: block;
-    line-height: 1;
-}
-.sp-att-cell-value.att-warn { color: #dc2626; }
-.sp-att-cell-value.att-ok   { color: #16a34a; }
-.sp-att-pct-wrap {
-    padding: 12px 18px;
-    border-top: 1px solid #d1fae5;
-    background: #fff;
-}
-.sp-att-pct-label {
-    font-size: 11.5px;
-    font-weight: 700;
-    color: #0f766e;
-    margin-bottom: 6px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.sp-att-pct-bar-bg {
-    height: 10px;
-    background: #e2e8f0;
-    border-radius: 20px;
-    overflow: hidden;
-}
-.sp-att-pct-bar-fill {
-    height: 100%;
-    border-radius: 20px;
-    background: linear-gradient(90deg, #0d9488, #22c55e);
-    transition: width .6s ease;
-}
-.sp-att-pct-bar-fill.att-pct-warn {
-    background: linear-gradient(90deg, #f59e0b, #dc2626);
-}
-.sp-att-no-record {
-    padding: 24px;
-    text-align: center;
-    color: #94a3b8;
-    font-size: 13px;
-}
-.sp-att-no-record i { display: block; font-size: 32px; margin-bottom: 8px; color: #d1fae5; }
-
 @media (max-width: 600px) {
     #spDrawer { width: 100vw !important; }
     .sp-trait-grid { grid-template-columns: 1fr 1fr; }
-    .sp-att-grid   { grid-template-columns: repeat(3, 1fr); }
 }
 </style>
 
@@ -896,9 +855,9 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             <tbody id="studentTableBody">
                 @forelse ($allstudents as $key => $student)
                 @php
-                    $lastName    = $student->lastname  ?? '';
-                    $firstName   = $student->firstname ?? '';
-                    $otherNames  = $student->othername ?? '';
+                    $lastName   = $student->lastname  ?? '';
+                    $firstName  = $student->firstname ?? '';
+                    $otherNames = $student->othername ?? '';
                     $formattedName = trim($lastName . ' ' . $firstName . ' ' . $otherNames);
                     $genderClass   = ($student->gender ?? '') == 'Male' ? 'gender-male' : 'gender-female';
                     $genderIcon    = ($student->gender ?? '') == 'Male' ? 'ri-men-line' : 'ri-women-line';
@@ -919,8 +878,9 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                  data-name="{{ $formattedName }}"
                                  data-admission="{{ $student->admissionno }}"
                                  onerror="this.src='{{ asset('storage/student_avatars/unnamed.jpg') }}'">
+                            {{-- Name now opens the profile drawer --}}
                             <button type="button" class="student-name-btn"
-                                onclick="openProfileDrawer({{ $student->stid }}, {{ $schoolclassid }}, {{ $sessionid }}, {{ $termid }}, '{{ $student->picture ? asset('storage/student_avatars/'.basename($student->picture)) : asset('storage/student_avatars/unnamed.jpg') }}')">
+                                onclick="openProfileDrawer({{ $student->stid }}, {{ $schoolclassid }}, {{ $sessionid }}, {{ $termid }})">
                                 {{ $formattedName }}
                             </button>
                         </div>
@@ -932,7 +892,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                     </td>
                     <td data-label="Action">
                         <button type="button" class="btn-view-profile"
-                            onclick="openProfileDrawer({{ $student->stid }}, {{ $schoolclassid }}, {{ $sessionid }}, {{ $termid }}, '{{ $student->picture ? asset('storage/student_avatars/'.basename($student->picture)) : asset('storage/student_avatars/unnamed.jpg') }}')">
+                            onclick="openProfileDrawer({{ $student->stid }}, {{ $schoolclassid }}, {{ $sessionid }}, {{ $termid }})">
                             <i class="ri-eye-line"></i> View Profile
                         </button>
                     </td>
@@ -975,7 +935,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
 </div></div></div>
 
-{{-- ── Avatar View Modal ── --}}
+{{-- ── Avatar View Modal (unchanged) ── --}}
 <div id="imageViewModal" class="modal fade" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
@@ -1006,7 +966,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
 {{-- Drawer Panel --}}
 <div id="spDrawer" style="
-    position:fixed;top:0;right:0;height:100vh;width:min(780px,100vw);
+    position:fixed;top:0;right:0;height:100vh;width:min(760px,100vw);
     background:#ffffff;z-index:1050;transform:translateX(100%);
     transition:transform .35s cubic-bezier(.4,0,.2,1);
     display:flex;flex-direction:column;overflow:hidden;
@@ -1024,23 +984,21 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         <div style="display:flex;align-items:center;justify-content:space-between;
                     padding:18px 24px 0;position:relative;">
             <div style="display:flex;align-items:center;gap:12px;">
-                {{-- Avatar: shows photo when available, initials as fallback --}}
-                <div id="spAvatarCircle" style="width:56px;height:56px;border-radius:50%;
-                    background:rgba(255,255,255,.18);border:2.5px solid rgba(255,255,255,.4);
-                    display:flex;align-items:center;justify-content:center;font-size:20px;
+                <div id="spAvatarCircle" style="width:52px;height:52px;border-radius:50%;
+                    background:rgba(255,255,255,.18);border:2px solid rgba(255,255,255,.35);
+                    display:flex;align-items:center;justify-content:center;font-size:18px;
                     font-weight:700;color:#fff;font-family:'Playfair Display',serif;
                     flex-shrink:0;overflow:hidden;position:relative;">
-                    <img id="spAvatarImg"
-                         src=""
-                         alt="Student Photo"
-                         style="display:none;width:100%;height:100%;object-fit:cover;border-radius:50%;"
-                         onerror="this.style.display='none';document.getElementById('spAvatarInitials').style.display='flex';">
-                    <span id="spAvatarInitials" style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;">?</span>
+                    <img id="spAvatarImg" src="" alt=""
+                         style="width:100%;height:100%;object-fit:cover;
+                                position:absolute;inset:0;display:none;"
+                         onerror="spAvatarFallback()">
+                    <span id="spAvatarInitials">?</span>
                 </div>
                 <div>
                     <div style="font-size:10.5px;color:rgba(255,255,255,.6);font-weight:600;
                         text-transform:uppercase;letter-spacing:.7px;margin-bottom:2px;">
-                        Student Profile
+                        Student Personality Profile
                     </div>
                     <div id="spDrawerTitle" style="font-size:17px;font-weight:700;color:#fff;
                         font-family:'Playfair Display',serif;">Loading…</div>
@@ -1063,19 +1021,12 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             <span class="sp-pill" id="spPillGender"><i class="ri-user-line"></i> —</span>
             <span class="sp-pill" id="spPillClass"><i class="ri-building-line"></i> —</span>
             <span class="sp-pill" id="spPillTerm"><i class="ri-calendar-line"></i> —</span>
-            {{-- Attendance quick-pill: populated by JS --}}
-            <span class="sp-pill" id="spPillAttendance" style="display:none;">
-                <i class="ri-calendar-check-line"></i> <span id="spPillAttText">—%</span>
-            </span>
         </div>
 
         {{-- Tabs --}}
         <div style="display:flex;gap:2px;padding:0 24px;position:relative;">
             <button class="sp-tab sp-tab-active" data-tab="profile" onclick="switchTab('profile',this)">
                 <i class="ri-award-line"></i> Personality
-            </button>
-            <button class="sp-tab" data-tab="attendance" onclick="switchTab('attendance',this)">
-                <i class="ri-calendar-check-line"></i> Attendance
             </button>
             <button class="sp-tab" data-tab="terminal" onclick="switchTab('terminal',this)">
                 <i class="ri-file-chart-line"></i> Terminal Report
@@ -1116,10 +1067,10 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         {{-- ── TAB: Personality ── --}}
         <div id="spTab-profile" class="sp-tab-content" style="display:none;padding:24px;">
             <form id="spProfileForm" onsubmit="submitProfileForm(event)">
-                <input type="hidden" name="_token"       id="spCsrfToken"    value="{{ csrf_token() }}">
+                <input type="hidden" name="_token" id="spCsrfToken" value="{{ csrf_token() }}">
                 <input type="hidden" name="studentid"    id="spStudentId">
                 <input type="hidden" name="schoolclassid" id="spSchoolClassId">
-                <input type="hidden" name="staffid"      id="spStaffId"      value="{{ Auth::user()->id }}">
+                <input type="hidden" name="staffid"      id="spStaffId" value="{{ Auth::user()->id }}">
                 <input type="hidden" name="termid"       id="spTermId">
                 <input type="hidden" name="sessionid"    id="spSessionId">
 
@@ -1132,16 +1083,16 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                     <div class="sp-trait-grid">
                         @php
                         $behavioralTraits = [
-                            ['punctuality',   'Punctuality',    'ri-time-line'],
-                            ['neatness',      'Neatness',       'ri-brush-line'],
-                            ['leadership',    'Leadership',     'ri-trophy-line'],
-                            ['attitude',      'Attitude',       'ri-emotion-line'],
-                            ['honesty',       'Honesty',        'ri-shield-check-line'],
-                            ['cooperation',   'Cooperation',    'ri-team-line'],
-                            ['selfcontrol',   'Self-control',   'ri-focus-3-line'],
-                            ['politeness',    'Politeness',     'ri-hand-heart-line'],
+                            ['punctuality',  'Punctuality',   'ri-time-line'],
+                            ['neatness',     'Neatness',      'ri-brush-line'],
+                            ['leadership',   'Leadership',    'ri-trophy-line'],
+                            ['attitude',     'Attitude',      'ri-emotion-line'],
+                            ['honesty',      'Honesty',       'ri-shield-check-line'],
+                            ['cooperation',  'Cooperation',   'ri-team-line'],
+                            ['selfcontrol',  'Self-control',  'ri-focus-3-line'],
+                            ['politeness',   'Politeness',    'ri-hand-heart-line'],
                             ['physicalhealth','Physical Health','ri-heart-line'],
-                            ['stability',     'Stability',      'ri-scales-line'],
+                            ['stability',    'Stability',     'ri-scales-line'],
                         ];
                         @endphp
                         @foreach ($behavioralTraits as [$name, $label, $icon])
@@ -1170,15 +1121,15 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                     <div class="sp-trait-grid">
                         @php
                         $academicTraits = [
-                            ['reading',                    'Reading',             'ri-book-line'],
-                            ['attentiveness_in_class',     'Attentiveness',       'ri-eye-line'],
-                            ['class_participation',        'Class Participation', 'ri-discuss-line'],
-                            ['relationship_with_others',   'Relationship',        'ri-group-line'],
-                            ['doing_assignment',           'Doing Assignment',    'ri-file-list-line'],
-                            ['writing_skill',              'Writing Skill',       'ri-pen-nib-line'],
-                            ['reading_skill',              'Reading Skill',       'ri-book-read-line'],
-                            ['spoken_english_communication','Spoken English',     'ri-speak-line'],
-                            ['hand_writing',               'Hand Writing',        'ri-edit-line'],
+                            ['reading',                   'Reading',             'ri-book-line'],
+                            ['attentiveness_in_class',    'Attentiveness',       'ri-eye-line'],
+                            ['class_participation',       'Class Participation', 'ri-discuss-line'],
+                            ['relationship_with_others',  'Relationship',        'ri-group-line'],
+                            ['doing_assignment',          'Doing Assignment',    'ri-file-list-line'],
+                            ['writing_skill',             'Writing Skill',       'ri-pen-nib-line'],
+                            ['reading_skill',             'Reading Skill',       'ri-book-read-line'],
+                            ['spoken_english_communication','Spoken English',    'ri-speak-line'],
+                            ['hand_writing',              'Hand Writing',        'ri-edit-line'],
                         ];
                         @endphp
                         @foreach ($academicTraits as [$name, $label, $icon])
@@ -1207,9 +1158,9 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                     <div class="sp-trait-grid">
                         @php
                         $extraTraits = [
-                            ['gamesandsports','Games & Sports','ri-football-line'],
-                            ['club',          'Club',          'ri-group-2-line'],
-                            ['music',         'Music',         'ri-music-line'],
+                            ['gamesandsports', 'Games & Sports', 'ri-football-line'],
+                            ['club',           'Club',           'ri-group-2-line'],
+                            ['music',          'Music',          'ri-music-line'],
                         ];
                         @endphp
                         @foreach ($extraTraits as [$name, $label, $icon])
@@ -1229,7 +1180,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                     </div>
                 </div>
 
-                {{-- Comments & Attendance (existing field) --}}
+                {{-- Comments & Attendance --}}
                 <div class="sp-section-card">
                     <div class="sp-section-header">
                         <i class="ri-chat-3-line" style="color:#8b5cf6;font-size:16px;"></i>
@@ -1237,7 +1188,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                     </div>
                     <div style="padding:16px;display:grid;gap:14px;">
                         <div class="sp-field-group">
-                            <label class="sp-label"><i class="ri-calendar-check-line"></i> School Attendance (days present)</label>
+                            <label class="sp-label"><i class="ri-calendar-check-line"></i> School Attendance (days)</label>
                             <input type="number" name="attendance" id="sp_attendance" min="0" max="365"
                                 class="sp-input" placeholder="e.g. 90">
                         </div>
@@ -1280,11 +1231,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                     </button>
                 </div>
             </form>
-        </div>
-
-        {{-- ── TAB: Attendance ── --}}
-        <div id="spTab-attendance" class="sp-tab-content" style="display:none;padding:24px;">
-            <div id="spAttendancePanel"></div>
         </div>
 
         {{-- ── TAB: Terminal Report ── --}}
@@ -1389,9 +1335,9 @@ window.applyFilters = function() {
 };
 
 window.resetFilters = function() {
-    document.getElementById('searchInput').value     = '';
-    document.getElementById('genderFilter').value    = 'all';
-    document.getElementById('admissionFilter').value = 'all';
+    document.getElementById('searchInput').value       = '';
+    document.getElementById('genderFilter').value      = 'all';
+    document.getElementById('admissionFilter').value   = 'all';
     filteredRows = [...allRows];
     currentPage  = 1;
     updateDisplay();
@@ -1421,7 +1367,7 @@ function updateDisplay() {
         });
     }
 
-    const totalPages = Math.ceil(filteredRows.length / rowsPerPage) || 1;
+    const totalPages  = Math.ceil(filteredRows.length / rowsPerPage) || 1;
     const el = id => document.getElementById(id);
     el('showingCount') && (el('showingCount').textContent = pageRows.length);
     el('totalCount')   && (el('totalCount').textContent   = filteredRows.length);
@@ -1453,8 +1399,8 @@ const imageViewModal = document.getElementById('imageViewModal');
 if (imageViewModal) {
     imageViewModal.addEventListener('show.bs.modal', function(e) {
         const btn = e.relatedTarget;
-        document.getElementById('enlargedImage').src           = btn.getAttribute('data-image') || '';
-        document.getElementById('modalStudentName').textContent = btn.getAttribute('data-name')      || '';
+        document.getElementById('enlargedImage').src      = btn.getAttribute('data-image') || '';
+        document.getElementById('modalStudentName').textContent = btn.getAttribute('data-name') || '';
         document.getElementById('modalStudentAdmission').textContent = btn.getAttribute('data-admission')
             ? 'Admission No: ' + btn.getAttribute('data-admission') : '';
     });
@@ -1474,16 +1420,8 @@ function showToast(message, type) {
 (function() {
     let _stid, _classid, _sessid, _termid, _activeTab = 'profile';
 
-    window.openProfileDrawer = function(stid, classid, sessid, termid, pictureUrl) {
+    window.openProfileDrawer = function(stid, classid, sessid, termid) {
         _stid = stid; _classid = classid; _sessid = sessid; _termid = termid;
-
-        // Reset avatar to loading state immediately
-        _setDrawerAvatar(null, null);
-
-        // If we already have the picture URL from the table row, show it straight away
-        if (pictureUrl) {
-            _setDrawerAvatar(null, pictureUrl);
-        }
 
         const overlay = document.getElementById('spDrawerOverlay');
         const drawer  = document.getElementById('spDrawer');
@@ -1492,8 +1430,8 @@ function showToast(message, type) {
         drawer.style.transform = 'translateX(100%)';
 
         requestAnimationFrame(() => {
-            overlay.style.opacity  = '1';
-            drawer.style.transform = 'translateX(0)';
+            overlay.style.opacity    = '1';
+            drawer.style.transform   = 'translateX(0)';
         });
         document.body.style.overflow = 'hidden';
 
@@ -1503,7 +1441,7 @@ function showToast(message, type) {
     };
 
     window.closeProfileDrawer = function() {
-        document.getElementById('spDrawerOverlay').style.opacity  = '0';
+        document.getElementById('spDrawerOverlay').style.opacity = '0';
         document.getElementById('spDrawer').style.transform = 'translateX(100%)';
         setTimeout(() => {
             document.getElementById('spDrawerOverlay').style.display = 'none';
@@ -1543,25 +1481,6 @@ function showToast(message, type) {
         }
     };
 
-    // ── Avatar helper ─────────────────────────────────────────────────
-    function _setDrawerAvatar(name, pictureUrl) {
-        const img      = document.getElementById('spAvatarImg');
-        const initials = document.getElementById('spAvatarInitials');
-        if (!img || !initials) return;
-
-        if (pictureUrl) {
-            img.src = pictureUrl;
-            img.style.display      = 'block';
-            initials.style.display = 'none';
-        } else {
-            img.style.display      = 'none';
-            initials.style.display = 'flex';
-            initials.textContent   = name
-                ? name.split(' ').map(w => w[0]).filter(Boolean).slice(0,2).join('').toUpperCase()
-                : '?';
-        }
-    }
-
     function fetchProfile(stid, classid, sessid, termid) {
         const url = `{{ url('/studentpersonalityprofile/data') }}/${stid}/${classid}/${sessid}/${termid}`;
         fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
@@ -1570,13 +1489,30 @@ function showToast(message, type) {
             .catch(err  => showError(err.message || 'Network error'));
     }
 
+    // Global fallback called by the img onerror attribute
+    window.spAvatarFallback = function() {
+        document.getElementById('spAvatarImg').style.display      = 'none';
+        document.getElementById('spAvatarInitials').style.display = '';
+    };
+
     function populateDrawer(data) {
         hideLoading();
 
-        // Avatar — photo preferred, initials as fallback
-        // data.picture_url should be returned by the API; if absent we keep whatever was pre-loaded
-        const picUrl = data.picture_url || data.picture || null;
-        _setDrawerAvatar(data.student_name, picUrl);
+        // Avatar: try the photo, fall back to initials
+        const initials   = (data.student_name || '?').split(' ').filter(Boolean).map(w => w[0]).slice(0,2).join('').toUpperCase();
+        const avatarImg  = document.getElementById('spAvatarImg');
+        const avatarInit = document.getElementById('spAvatarInitials');
+
+        avatarInit.textContent = initials;
+
+        if (data.picture_url) {
+            avatarImg.src              = data.picture_url;
+            avatarImg.style.display    = 'block';   // show img; onerror will hide it if broken
+            avatarInit.style.display   = 'none';
+        } else {
+            avatarImg.style.display    = 'none';
+            avatarInit.style.display   = '';
+        }
 
         document.getElementById('spDrawerTitle').textContent     = data.student_name || '—';
         document.getElementById('spPillAdmission').innerHTML     = `<i class="ri-id-card-line"></i> ${data.admissionno || '—'}`;
@@ -1606,120 +1542,10 @@ function showToast(message, type) {
             if (el) el.value = pp[f] || '';
         });
 
-        // ── Build Attendance Tab ──────────────────────────────────────
-        buildAttendancePanel(data.attendance || {});
-
         buildTerminalReport(data.scores || []);
         buildMockReport(data.mock_scores || []);
     }
 
-    // ── ATTENDANCE PANEL ──────────────────────────────────────────────
-    function buildAttendancePanel(att) {
-        const container = document.getElementById('spAttendancePanel');
-        const found     = att.found === true || att.found === 1;
-        const pct       = found ? parseFloat(att.attendance_percentage || 0).toFixed(1) : 0;
-        const warn      = parseFloat(pct) < 75;
-
-        // Update header pill
-        const pill = document.getElementById('spPillAttendance');
-        const pillTxt = document.getElementById('spPillAttText');
-        if (found) {
-            pill.style.display = 'inline-flex';
-            pillTxt.textContent = `${pct}% Present`;
-            pill.style.background = warn ? 'rgba(220,38,38,.35)' : 'rgba(22,163,74,.35)';
-        } else {
-            pill.style.display = 'none';
-        }
-
-        if (!found) {
-            container.innerHTML = `
-                <div class="sp-att-card">
-                    <div class="sp-att-header">
-                        <i class="ri-calendar-check-line" style="color:#0d9488;font-size:18px;"></i>
-                        Attendance Summary
-                    </div>
-                    <div class="sp-att-no-record">
-                        <i class="ri-calendar-close-line"></i>
-                        No attendance record found for this student in the selected term and session.
-                    </div>
-                </div>`;
-            return;
-        }
-
-        const barWidth = Math.min(parseFloat(pct), 100);
-        const warnClass = warn ? 'att-pct-warn' : '';
-        const valueCls  = (v) => v > 0 ? 'att-warn' : 'att-ok';
-
-        container.innerHTML = `
-            <div class="sp-att-card">
-                <div class="sp-att-header">
-                    <i class="ri-calendar-check-line" style="color:#0d9488;font-size:18px;"></i>
-                    Attendance Summary — ${att.term_name || 'This Term'}
-                    <span style="margin-left:auto;font-size:11px;font-weight:500;color:#065f46;">
-                        ${warn ? '⚠ Below 75% threshold' : '✓ Satisfactory'}
-                    </span>
-                </div>
-
-                <div class="sp-att-grid">
-                    <div class="sp-att-cell">
-                        <span class="sp-att-cell-label">School Days</span>
-                        <span class="sp-att-cell-value">${att.total_school_days || 0}</span>
-                    </div>
-                    <div class="sp-att-cell">
-                        <span class="sp-att-cell-label">Present</span>
-                        <span class="sp-att-cell-value att-ok">${att.days_present || 0}</span>
-                    </div>
-                    <div class="sp-att-cell">
-                        <span class="sp-att-cell-label">Absent</span>
-                        <span class="sp-att-cell-value ${valueCls(att.days_absent || 0)}">${att.days_absent || 0}</span>
-                    </div>
-                    <div class="sp-att-cell">
-                        <span class="sp-att-cell-label">Late</span>
-                        <span class="sp-att-cell-value ${valueCls(att.days_late || 0)}">${att.days_late || 0}</span>
-                    </div>
-                    <div class="sp-att-cell">
-                        <span class="sp-att-cell-label">Sick Leave</span>
-                        <span class="sp-att-cell-value">${att.days_sick_leave || 0}</span>
-                    </div>
-                    <div class="sp-att-cell">
-                        <span class="sp-att-cell-label">Excused</span>
-                        <span class="sp-att-cell-value">${att.days_excused || 0}</span>
-                    </div>
-                </div>
-
-                <div class="sp-att-pct-wrap">
-                    <div class="sp-att-pct-label">
-                        <span><i class="ri-percent-line"></i> Attendance Rate</span>
-                        <span style="font-size:18px;font-weight:800;color:${warn ? '#dc2626' : '#16a34a'};">${pct}%</span>
-                    </div>
-                    <div class="sp-att-pct-bar-bg">
-                        <div class="sp-att-pct-bar-fill ${warnClass}" style="width:${barWidth}%;"></div>
-                    </div>
-                    <div style="font-size:11px;color:#64748b;margin-top:6px;display:flex;justify-content:space-between;">
-                        <span>${att.days_present || 0} days present out of ${att.total_school_days || 0} school days</span>
-                        <span>${warn ? 'Below required 75%' : 'Above required 75%'}</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="sp-section-card" style="border-color:#d1fae5;">
-                <div class="sp-section-header" style="background:linear-gradient(to right,#ecfdf5,#d1fae5);">
-                    <i class="ri-information-line" style="color:#0d9488;"></i> Attendance Guide
-                </div>
-                <div style="padding:14px 18px;font-size:12.5px;color:#374151;line-height:1.7;">
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                        <div><strong style="color:#0d9488;">Present:</strong> Days physically in school</div>
-                        <div><strong style="color:#dc2626;">Absent:</strong> Unaccounted absence</div>
-                        <div><strong style="color:#f59e0b;">Late:</strong> Arrived after opening time</div>
-                        <div><strong style="color:#6d28d9;">Sick Leave:</strong> Medical absence (authorised)</div>
-                        <div><strong style="color:#2563eb;">Excused:</strong> Pre-approved absence</div>
-                        <div><strong style="color:#0f2342;">Threshold:</strong> Minimum 75% required</div>
-                    </div>
-                </div>
-            </div>`;
-    }
-
-    // ── TERMINAL REPORT ───────────────────────────────────────────────
     function buildTerminalReport(scores) {
         const c = document.getElementById('spTerminalReport');
         if (!scores.length) {
@@ -1799,7 +1625,7 @@ function showToast(message, type) {
         e.preventDefault();
         const btn   = document.getElementById('spSubmitBtn');
         const label = document.getElementById('spSubmitLabel');
-        btn.disabled      = true;
+        btn.disabled   = true;
         label.textContent = 'Saving…';
 
         const fd = new FormData(document.getElementById('spProfileForm'));
@@ -1807,9 +1633,9 @@ function showToast(message, type) {
         fetch('{{ route("studentpersonalityprofile.save") }}', {
             method: 'POST',
             headers: {
-                'X-CSRF-TOKEN':     document.getElementById('spCsrfToken').value,
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept':           'application/json',
+                'X-CSRF-TOKEN':      document.getElementById('spCsrfToken').value,
+                'X-Requested-With':  'XMLHttpRequest',
+                'Accept':            'application/json',
             },
             body: fd,
         })
