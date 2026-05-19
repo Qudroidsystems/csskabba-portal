@@ -1472,18 +1472,14 @@ function showToast(message, type) {
 // PROFILE DRAWER
 // ─────────────────────────────────────────────────────
 (function() {
-    let _stid, _classid, _sessid, _termid, _activeTab = 'profile';
+    let _stid, _classid, _sessid, _termid, _activeTab = 'profile', _preloadedPicture = null;
 
     window.openProfileDrawer = function(stid, classid, sessid, termid, pictureUrl) {
         _stid = stid; _classid = classid; _sessid = sessid; _termid = termid;
+        _preloadedPicture = pictureUrl || null;
 
-        // Reset avatar to loading state immediately
-        _setDrawerAvatar(null, null);
-
-        // If we already have the picture URL from the table row, show it straight away
-        if (pictureUrl) {
-            _setDrawerAvatar(null, pictureUrl);
-        }
+        // Show photo immediately from the table row — no AJAX wait
+        _setDrawerAvatar(null, _preloadedPicture);
 
         const overlay = document.getElementById('spDrawerOverlay');
         const drawer  = document.getElementById('spDrawer');
@@ -1573,9 +1569,10 @@ function showToast(message, type) {
     function populateDrawer(data) {
         hideLoading();
 
-        // Avatar — photo preferred, initials as fallback
-        // data.picture_url should be returned by the API; if absent we keep whatever was pre-loaded
-        const picUrl = data.picture_url || data.picture || null;
+        // Avatar: use URL from API response if present, otherwise keep the photo
+        // that was already shown from the table row — never revert to initials if a
+        // picture was pre-loaded successfully.
+        const picUrl = data.picture_url || data.picture || _preloadedPicture || null;
         _setDrawerAvatar(data.student_name, picUrl);
 
         document.getElementById('spDrawerTitle').textContent     = data.student_name || '—';
