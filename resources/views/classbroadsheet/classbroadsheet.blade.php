@@ -39,6 +39,30 @@ body { font-family: 'DM Sans', sans-serif; }
 .cb-stat .stat-label { font-size: 12px; color: var(--cb-muted); margin-top: 5px; font-weight: 500; }
 .cb-stat .stat-ico { font-size: 36px; opacity: .08; position: absolute; right: 16px; top: 50%; transform: translateY(-50%); }
 
+/* Top performer avatar in stat card */
+.stat-performer-wrap { display:flex; align-items:center; gap:10px; margin-top:10px; }
+.stat-performer-avatar {
+    width:44px; height:44px; border-radius:50%; overflow:hidden; flex-shrink:0;
+    border:2px solid var(--cb-amber); box-shadow:0 2px 10px rgba(245,158,11,.35);
+    display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(135deg,#fbbf24,#f59e0b);
+    transition: transform .2s, box-shadow .2s;
+}
+.stat-performer-avatar:hover { transform:scale(1.08); box-shadow:0 4px 16px rgba(245,158,11,.5); }
+.stat-performer-avatar img { width:100%; height:100%; object-fit:cover; }
+.stat-performer-avatar-initials { color:#fff; font-size:15px; font-weight:700; }
+.stat-performer-info { flex:1; min-width:0; }
+.stat-performer-name { font-size:13px; font-weight:700; color:var(--cb-navy); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.stat-performer-score { display:inline-flex; align-items:center; gap:4px; margin-top:3px; font-size:11px; font-weight:600; padding:2px 8px; border-radius:20px; background:#fef3c7; color:#92400e; }
+
+/* Extra stat cards (2nd row) */
+.cb-stat-sm { background: var(--cb-white); border: 1px solid var(--cb-border); border-radius: 10px; padding: 14px 16px; position: relative; overflow: hidden; transition: transform .15s, box-shadow .15s; }
+.cb-stat-sm:hover { transform: translateY(-2px); box-shadow: var(--cb-shadow); }
+.cb-stat-sm .stat-accent { position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 10px 10px 0 0; }
+.cb-stat-sm .stat-value { font-size: 22px; font-weight: 700; color: var(--cb-navy); line-height: 1; margin-top: 6px; }
+.cb-stat-sm .stat-label { font-size: 11px; color: var(--cb-muted); margin-top: 4px; font-weight: 500; }
+.cb-stat-sm .stat-ico { font-size: 28px; opacity: .07; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); }
+
 /* Column Toggle */
 .col-toggle-panel { background: var(--cb-white); border: 1px solid var(--cb-border); border-radius: var(--cb-radius); padding: 18px 22px; margin-bottom: 22px; box-shadow: var(--cb-shadow); }
 .col-toggle-panel h6 { font-size: 13px; font-weight: 700; color: var(--cb-navy); margin: 0 0 14px; display: flex; align-items: center; gap: 7px; }
@@ -85,7 +109,7 @@ body { font-family: 'DM Sans', sans-serif; }
 .score-green { color: #16a34a !important; }
 
 /* Analytics cell */
-.analytics-cell { min-width: 130px; font-size: 11px; line-height: 1.4; }
+.analytics-cell { min-width: 140px; font-size: 11px; line-height: 1.4; }
 .analytics-row  { display: flex; justify-content: space-between; align-items: center; padding: 2px 0; gap: 6px; }
 .analytics-lbl  { color: var(--cb-muted); font-size: 10px; font-weight: 500; }
 .analytics-val  { font-weight: 700; color: var(--cb-navy); font-size: 11.5px; }
@@ -166,10 +190,10 @@ body { font-family: 'DM Sans', sans-serif; }
 .cb-student-card.card-no-comment  .card-top { border-left: 4px solid var(--cb-border); }
 .cb-student-card .card-body-pad { padding: 16px; }
 .performance-strip { background: linear-gradient(135deg, var(--cb-navy), #1e5f74); border-radius: 10px; padding: 12px 16px; color: #fff; margin-bottom: 14px; }
-.ps-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 8px; }
+.ps-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px; }
 .ps-item { text-align: center; background: rgba(255,255,255,.1); border-radius: 8px; padding: 8px; }
 .ps-lbl  { font-size: 9px; opacity: .8; text-transform: uppercase; letter-spacing: .4px; }
-.ps-val  { font-size: 16px; font-weight: 700; }
+.ps-val  { font-size: 15px; font-weight: 700; }
 .subjects-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 14px; }
 .subjects-scroll::-webkit-scrollbar { height: 3px; }
 .subjects-scroll::-webkit-scrollbar-thumb { background: var(--cb-border); border-radius: 2px; }
@@ -214,31 +238,17 @@ body { font-family: 'DM Sans', sans-serif; }
 #cbPopupBackdrop { display: none; position: fixed; inset: 0; z-index: 9998; background: rgba(0,0,0,.28); }
 
 /* Enhanced Modal Styles */
-.past-comment-item {
-    transition: all 0.2s ease;
-}
+.past-comment-item { transition: all 0.2s ease; }
+.past-comments-timeline { position: relative; }
+.ps-item .ps-val { transition: all 0.3s ease; }
+#modalTextarea:focus { border-color: var(--cb-teal) !important; box-shadow: 0 0 0 3px rgba(13,148,136,0.1) !important; }
+.performance-strip .ps-item { transition: transform 0.2s ease; }
+.performance-strip .ps-item:hover { transform: translateY(-2px); }
 
-.past-comments-timeline {
-    position: relative;
-}
-
-.ps-item .ps-val {
-    transition: all 0.3s ease;
-}
-
-#modalTextarea:focus {
-    border-color: var(--cb-teal) !important;
-    box-shadow: 0 0 0 3px rgba(13,148,136,0.1) !important;
-}
-
-/* Performance strip improvements */
-.performance-strip .ps-item {
-    transition: transform 0.2s ease;
-}
-
-.performance-strip .ps-item:hover {
-    transform: translateY(-2px);
-}
+/* Modal metric coloring */
+.modal-pct-good  { color: #4ade80 !important; }
+.modal-pct-ok    { color: #fbbf24 !important; }
+.modal-pct-bad   { color: #f87171 !important; }
 </style>
 
 <div class="main-content">
@@ -256,8 +266,8 @@ body { font-family: 'DM Sans', sans-serif; }
     </div>
 </div>
 
-{{-- Stat Cards --}}
-<div class="row g-3 mb-4">
+{{-- Stat Cards Row 1 --}}
+<div class="row g-3 mb-3">
     <div class="col-6 col-md-3">
         <div class="cb-stat">
             <div class="stat-accent" style="background:linear-gradient(90deg,var(--cb-navy),var(--cb-teal));"></div>
@@ -282,12 +292,60 @@ body { font-family: 'DM Sans', sans-serif; }
             <div class="stat-label">Avg Cum %</div>
         </div>
     </div>
+    {{-- Top Performer card with picture --}}
     <div class="col-6 col-md-3">
         <div class="cb-stat">
             <div class="stat-accent" style="background:linear-gradient(90deg,var(--cb-amber),#fcd34d);"></div>
             <div class="stat-ico"><i class="ri-award-line"></i></div>
-            <div class="stat-value text-warning" id="statTop">—</div>
-            <div class="stat-label">Top Performer</div>
+            <div class="stat-label" style="margin-top:8px;">Top Performer</div>
+            <div class="stat-performer-wrap" id="statTopWrap">
+                <div class="stat-performer-avatar" id="statTopAvatar">
+                    <i class="ri-award-line" style="font-size:20px;color:#fff;opacity:.8;"></i>
+                </div>
+                <div class="stat-performer-info">
+                    <div class="stat-performer-name" id="statTop">—</div>
+                    <div class="stat-performer-score" id="statTopScore" style="display:none;">
+                        <i class="ri-bar-chart-line" style="font-size:10px;"></i>
+                        <span id="statTopScoreVal"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{{-- Stat Cards Row 2 — extra analytics --}}
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="cb-stat-sm">
+            <div class="stat-accent" style="background:linear-gradient(90deg,var(--cb-teal),#2dd4bf);"></div>
+            <div class="stat-ico"><i class="ri-line-chart-line"></i></div>
+            <div class="stat-value" id="statAvgTermPct">—</div>
+            <div class="stat-label">Avg Term %</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="cb-stat-sm">
+            <div class="stat-accent" style="background:linear-gradient(90deg,#8b5cf6,#a78bfa);"></div>
+            <div class="stat-ico"><i class="ri-trophy-line"></i></div>
+            <div class="stat-value" id="statHighestCum">—</div>
+            <div class="stat-label">Highest Cum %</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="cb-stat-sm">
+            <div class="stat-accent" style="background:linear-gradient(90deg,var(--cb-rose),#fb7185);"></div>
+            <div class="stat-ico"><i class="ri-arrow-down-line"></i></div>
+            <div class="stat-value" id="statLowestCum">—</div>
+            <div class="stat-label">Lowest Cum %</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="cb-stat-sm">
+            <div class="stat-accent" style="background:linear-gradient(90deg,var(--cb-green),#4ade80);"></div>
+            <div class="stat-ico"><i class="ri-check-double-line"></i></div>
+            <div class="stat-value" id="statCommented">—</div>
+            <div class="stat-label">Students Commented</div>
         </div>
     </div>
 </div>
@@ -361,7 +419,7 @@ body { font-family: 'DM Sans', sans-serif; }
                         @foreach ($subjects as $subject)
                             <th class="cbcol-scores" style="min-width:86px;">{{ $subject->subject }}</th>
                         @endforeach
-                        <th class="cbcol-summary" style="min-width:140px;">Summary</th>
+                        <th class="cbcol-summary" style="min-width:150px;">Summary</th>
                         <th class="cbcol-teacher" style="min-width:200px;">Teacher's Comment</th>
                         <th class="cbcol-guidance" style="min-width:160px;">Counselor's Comment</th>
                         <th class="cbcol-activities" style="min-width:160px;">Remark on Activities</th>
@@ -467,6 +525,7 @@ body { font-family: 'DM Sans', sans-serif; }
                                 </td>
                             @endforeach
 
+                            {{-- Summary cell with BOTH term% and cum% --}}
                             <td class="cbcol-summary analytics-cell">
                                 <div class="analytics-row">
                                     <span class="analytics-lbl">Term Avg</span>
@@ -480,11 +539,19 @@ body { font-family: 'DM Sans', sans-serif; }
                                     <span class="analytics-lbl">Obtainable</span>
                                     <span class="analytics-val">{{ $an['total_obtainable']??0 }}</span>
                                 </div>
-                                <div class="analytics-row">
-                                    <span class="analytics-lbl">Cum %</span>
-                                    <span class="analytics-val {{ ($an['cum_percentage']??0)<50?'score-red':'score-green' }}">{{ $an['cum_percentage']??0 }}%</span>
+                                <div class="analytics-row" style="border-top:1px dashed #e2e8f0;margin-top:3px;padding-top:3px;">
+                                    <span class="analytics-lbl" style="color:#0891b2;font-weight:600;">Term %</span>
+                                    <span class="analytics-val {{ ($an['term_percentage']??0)<50?'score-red':'score-green' }}" style="font-size:12px;">{{ $an['term_percentage']??0 }}%</span>
                                 </div>
-                                <div class="pct-bar-wrap mt-1">
+                                <div class="analytics-row">
+                                    <span class="analytics-lbl" style="font-weight:600;">Cum %</span>
+                                    <span class="analytics-val {{ ($an['cum_percentage']??0)<50?'score-red':'score-green' }}" style="font-size:12px;">{{ $an['cum_percentage']??0 }}%</span>
+                                </div>
+                                {{-- Dual progress bars: teal=term, navy=cum --}}
+                                <div title="Term %" class="pct-bar-wrap mt-1">
+                                    <div class="pct-bar" style="width:{{ $an['term_percentage']??0 }}%;background:var(--cb-sky);"></div>
+                                </div>
+                                <div title="Cum %" class="pct-bar-wrap mt-1">
                                     <div class="pct-bar" style="width:{{ $an['cum_percentage']??0 }}%;background:{{ ($an['cum_percentage']??0)>=50?'var(--cb-green)':'var(--cb-rose)' }};"></div>
                                 </div>
                                 <div class="text-center mt-1">
@@ -592,7 +659,8 @@ body { font-family: 'DM Sans', sans-serif; }
                             <div class="ps-grid">
                                 <div class="ps-item"><div class="ps-lbl">Term Avg</div><div class="ps-val">{{ $an['term_average']??0 }}</div></div>
                                 <div class="ps-item"><div class="ps-lbl">Cum Avg</div><div class="ps-val">{{ $an['cum_average']??0 }}</div></div>
-                                <div class="ps-item"><div class="ps-lbl">Cum %</div><div class="ps-val">{{ $an['cum_percentage']??0 }}%</div></div>
+                                <div class="ps-item"><div class="ps-lbl">Term %</div><div class="ps-val" style="color:#7dd3fc;">{{ $an['term_percentage']??0 }}%</div></div>
+                                <div class="ps-item"><div class="ps-lbl">Cum %</div><div class="ps-val" style="color:{{ ($an['cum_percentage']??0)>=50?'#4ade80':'#f87171' }};">{{ $an['cum_percentage']??0 }}%</div></div>
                             </div>
                         </div>
                         <div class="subjects-scroll">
@@ -699,7 +767,7 @@ body { font-family: 'DM Sans', sans-serif; }
     </div>
 </div>
 
-{{-- Enhanced Comment Modal for Rich Text Editing --}}
+{{-- Enhanced Comment Modal --}}
 <div class="modal fade" id="cbCommentModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content" style="border-radius: var(--cb-radius); overflow: hidden;">
@@ -715,27 +783,46 @@ body { font-family: 'DM Sans', sans-serif; }
             </div>
 
             <div class="modal-body" style="padding: 24px;">
-                {{-- Performance Strip - Matching the blade design --}}
+                {{-- Performance Strip — 5 metrics including Term % and Cum % --}}
                 <div class="performance-strip" style="background: linear-gradient(135deg, var(--cb-navy), #1e5f74); border-radius: 12px; padding: 16px 20px; color: #fff; margin-bottom: 24px;">
                     <div style="font-size: 12px; font-weight: 600; opacity: 0.9; margin-bottom: 12px;">
                         <i class="ri-bar-chart-line me-1"></i> Performance Summary
                     </div>
-                    <div class="ps-grid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px;">
-                        <div class="ps-item" style="text-align: center; background: rgba(255,255,255,0.12); border-radius: 10px; padding: 10px;">
-                            <div class="ps-lbl" style="font-size: 10px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px;">Term Avg</div>
-                            <div class="ps-val" id="modalTermAvg" style="font-size: 20px; font-weight: 700; margin-top: 5px;">0</div>
+                    <div style="display:grid; grid-template-columns: repeat(5, 1fr); gap: 10px;">
+                        <div class="ps-item" style="text-align:center; background:rgba(255,255,255,0.12); border-radius:10px; padding:10px;">
+                            <div class="ps-lbl" style="font-size:9px; opacity:0.8; text-transform:uppercase; letter-spacing:0.5px;">Term Avg</div>
+                            <div id="modalTermAvg" style="font-size:18px; font-weight:700; margin-top:4px;">0</div>
                         </div>
-                        <div class="ps-item" style="text-align: center; background: rgba(255,255,255,0.12); border-radius: 10px; padding: 10px;">
-                            <div class="ps-lbl" style="font-size: 10px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px;">Cum Avg</div>
-                            <div class="ps-val" id="modalCumAvg" style="font-size: 20px; font-weight: 700; margin-top: 5px;">0</div>
+                        <div class="ps-item" style="text-align:center; background:rgba(255,255,255,0.12); border-radius:10px; padding:10px;">
+                            <div class="ps-lbl" style="font-size:9px; opacity:0.8; text-transform:uppercase; letter-spacing:0.5px;">Cum Avg</div>
+                            <div id="modalCumAvg" style="font-size:18px; font-weight:700; margin-top:4px;">0</div>
                         </div>
-                        <div class="ps-item" style="text-align: center; background: rgba(255,255,255,0.12); border-radius: 10px; padding: 10px;">
-                            <div class="ps-lbl" style="font-size: 10px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px;">Cum %</div>
-                            <div class="ps-val" id="modalCumPct" style="font-size: 20px; font-weight: 700; margin-top: 5px;">0%</div>
+                        <div class="ps-item" style="text-align:center; background:rgba(14,165,233,0.2); border-radius:10px; padding:10px; border:1px solid rgba(14,165,233,0.3);">
+                            <div class="ps-lbl" style="font-size:9px; opacity:0.9; text-transform:uppercase; letter-spacing:0.5px; color:#7dd3fc;">Term %</div>
+                            <div id="modalTermPct" style="font-size:18px; font-weight:700; margin-top:4px; color:#7dd3fc;">0%</div>
                         </div>
-                        <div class="ps-item" style="text-align: center; background: rgba(255,255,255,0.12); border-radius: 10px; padding: 10px;">
-                            <div class="ps-lbl" style="font-size: 10px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px;">Subjects</div>
-                            <div class="ps-val" id="modalSubjects" style="font-size: 20px; font-weight: 700; margin-top: 5px;">0</div>
+                        <div class="ps-item" style="text-align:center; background:rgba(255,255,255,0.12); border-radius:10px; padding:10px;">
+                            <div class="ps-lbl" style="font-size:9px; opacity:0.8; text-transform:uppercase; letter-spacing:0.5px;">Cum %</div>
+                            <div id="modalCumPct" style="font-size:18px; font-weight:700; margin-top:4px;">0%</div>
+                        </div>
+                        <div class="ps-item" style="text-align:center; background:rgba(255,255,255,0.12); border-radius:10px; padding:10px;">
+                            <div class="ps-lbl" style="font-size:9px; opacity:0.8; text-transform:uppercase; letter-spacing:0.5px;">Subjects</div>
+                            <div id="modalSubjects" style="font-size:18px; font-weight:700; margin-top:4px;">0</div>
+                        </div>
+                    </div>
+                    {{-- Dual progress bars in modal --}}
+                    <div style="margin-top:12px;">
+                        <div style="display:flex; justify-content:space-between; font-size:9px; opacity:.7; margin-bottom:3px;">
+                            <span>Term %</span><span id="modalTermPctBar">0%</span>
+                        </div>
+                        <div style="background:rgba(255,255,255,.15); border-radius:4px; height:5px; overflow:hidden; margin-bottom:6px;">
+                            <div id="modalTermBar" style="height:100%; border-radius:4px; background:#38bdf8; transition:width .5s ease; width:0%;"></div>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; font-size:9px; opacity:.7; margin-bottom:3px;">
+                            <span>Cum %</span><span id="modalCumPctBar">0%</span>
+                        </div>
+                        <div style="background:rgba(255,255,255,.15); border-radius:4px; height:5px; overflow:hidden;">
+                            <div id="modalCumBar" style="height:100%; border-radius:4px; background:#4ade80; transition:width .5s ease; width:0%;"></div>
                         </div>
                     </div>
                 </div>
@@ -756,21 +843,11 @@ body { font-family: 'DM Sans', sans-serif; }
 
                 {{-- Rich Text Toolbar --}}
                 <div class="mb-2" style="background: #f8fafc; border-radius: 10px; padding: 8px; border: 1px solid var(--cb-border);">
-                    <button type="button" class="btn btn-sm btn-light me-1" onclick="formatCommentText('bold')" style="border-radius: 6px;" title="Bold">
-                        <i class="ri-bold"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-light me-1" onclick="formatCommentText('italic')" style="border-radius: 6px;" title="Italic">
-                        <i class="ri-italic"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-light me-1" onclick="formatCommentText('bullet')" style="border-radius: 6px;" title="Bullet List">
-                        <i class="ri-list-unordered"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-light me-1" onclick="formatCommentText('number')" style="border-radius: 6px;" title="Number List">
-                        <i class="ri-list-ordered"></i>
-                    </button>
-                    <button type="button" class="btn btn-sm btn-light" onclick="formatCommentText('clear')" style="border-radius: 6px;" title="Clear">
-                        <i class="ri-delete-back-line"></i>
-                    </button>
+                    <button type="button" class="btn btn-sm btn-light me-1" onclick="formatCommentText('bold')" style="border-radius: 6px;" title="Bold"><i class="ri-bold"></i></button>
+                    <button type="button" class="btn btn-sm btn-light me-1" onclick="formatCommentText('italic')" style="border-radius: 6px;" title="Italic"><i class="ri-italic"></i></button>
+                    <button type="button" class="btn btn-sm btn-light me-1" onclick="formatCommentText('bullet')" style="border-radius: 6px;" title="Bullet List"><i class="ri-list-unordered"></i></button>
+                    <button type="button" class="btn btn-sm btn-light me-1" onclick="formatCommentText('number')" style="border-radius: 6px;" title="Number List"><i class="ri-list-ordered"></i></button>
+                    <button type="button" class="btn btn-sm btn-light" onclick="formatCommentText('clear')" style="border-radius: 6px;" title="Clear"><i class="ri-delete-back-line"></i></button>
                 </div>
 
                 {{-- Text Area --}}
@@ -815,8 +892,6 @@ body { font-family: 'DM Sans', sans-serif; }
 
     var debounceTimers = {};
     var AUTOSAVE_DELAY = 1200;
-
-    // Modal variables
     var currentModalSid = null;
     var currentModalField = null;
     var commentModal = null;
@@ -887,6 +962,7 @@ body { font-family: 'DM Sans', sans-serif; }
             if (data.success) {
                 setChipState(sid, 'ac-saved', '✓ Saved');
                 refreshCommentStatusForStudent(sid);
+                updateCommentedStat();
                 setTimeout(function () { setChipState(sid, 'ac-idle', ''); }, 3000);
             } else {
                 setChipState(sid, 'ac-err', '✗ Failed');
@@ -944,64 +1020,75 @@ body { font-family: 'DM Sans', sans-serif; }
         });
     }
 
-    function refreshCommentStatus() {
+    function updateCommentedStat() {
         var done = 0, pending = 0;
-        document.querySelectorAll('.cb-student-row').forEach(function (row) {
+        document.querySelectorAll('.cb-student-row[data-student-id]').forEach(function (row) {
             var sid = row.getAttribute('data-student-id');
             if (!sid) return;
+            // Count each student once (rows may be duplicated desktop/mobile)
+        });
+        // Count unique student IDs
+        var seen = {};
+        document.querySelectorAll('.cb-student-row[data-student-id]').forEach(function (row) {
+            var sid = row.getAttribute('data-student-id');
+            if (!sid || seen[sid]) return;
+            seen[sid] = true;
             if (getCanonical(sid, 'teacher').trim() !== '') done++;
             else pending++;
-            refreshCommentStatusForStudent(sid);
         });
         var dNum = document.getElementById('counterDoneNum');
         var pNum = document.getElementById('counterPendingNum');
         if (dNum) dNum.textContent = done;
         if (pNum) pNum.textContent = pending;
+
+        var statCommented = document.getElementById('statCommented');
+        if (statCommented) statCommented.textContent = done;
     }
 
-    // Enhanced formatCommentText function
+    function refreshCommentStatus() {
+        var seen = {};
+        document.querySelectorAll('.cb-student-row[data-student-id]').forEach(function (row) {
+            var sid = row.getAttribute('data-student-id');
+            if (!sid || seen[sid]) return;
+            seen[sid] = true;
+            refreshCommentStatusForStudent(sid);
+        });
+        updateCommentedStat();
+    }
+
+    // =========================================================================
+    // MODAL
+    // =========================================================================
+
     window.formatCommentText = function(type) {
         var ta = document.getElementById('modalTextarea');
         if (!ta) return;
-
-        var start = ta.selectionStart;
-        var end = ta.selectionEnd;
-        var text = ta.value;
-        var selectedText = text.substring(start, end);
-
+        var start = ta.selectionStart, end = ta.selectionEnd;
+        var text = ta.value, selectedText = text.substring(start, end);
         if (type === 'bold') {
-            var formatted = '**' + (selectedText || 'bold text') + '**';
-            ta.value = text.substring(0, start) + formatted + text.substring(end);
-            ta.focus();
-            ta.setSelectionRange(start + formatted.length, start + formatted.length);
+            var f = '**' + (selectedText || 'bold text') + '**';
+            ta.value = text.substring(0, start) + f + text.substring(end);
         } else if (type === 'italic') {
-            var formatted = '*' + (selectedText || 'italic text') + '*';
-            ta.value = text.substring(0, start) + formatted + text.substring(end);
-            ta.focus();
-            ta.setSelectionRange(start + formatted.length, start + formatted.length);
+            var f = '*' + (selectedText || 'italic text') + '*';
+            ta.value = text.substring(0, start) + f + text.substring(end);
         } else if (type === 'bullet') {
-            if (selectedText) {
-                var formatted = selectedText.split('\n').map(function(line) { return '• ' + line; }).join('\n');
-                ta.value = text.substring(0, start) + formatted + text.substring(end);
-            } else {
-                ta.value = text.substring(0, start) + '• ' + text.substring(end);
-            }
-            ta.focus();
+            ta.value = selectedText
+                ? text.substring(0, start) + selectedText.split('\n').map(function(l){ return '• '+l; }).join('\n') + text.substring(end)
+                : text.substring(0, start) + '• ' + text.substring(end);
         } else if (type === 'number') {
-            if (selectedText) {
-                var formatted = selectedText.split('\n').map(function(line, idx) { return (idx + 1) + '. ' + line; }).join('\n');
-                ta.value = text.substring(0, start) + formatted + text.substring(end);
-            } else {
-                ta.value = text.substring(0, start) + '1. ' + text.substring(end);
-            }
-            ta.focus();
-        } else if (type === 'clear') {
-            ta.value = '';
-            ta.focus();
-        }
+            ta.value = selectedText
+                ? text.substring(0, start) + selectedText.split('\n').map(function(l,i){ return (i+1)+'. '+l; }).join('\n') + text.substring(end)
+                : text.substring(0, start) + '1. ' + text.substring(end);
+        } else if (type === 'clear') { ta.value = ''; }
+        ta.focus();
     };
 
-    // Enhanced openCommentModal function
+    function pctColor(pct) {
+        if (pct >= 70) return '#4ade80';
+        if (pct >= 50) return '#fbbf24';
+        return '#f87171';
+    }
+
     function openCommentModal(sid, field, studentName, studentAdm, studentImg, analytics) {
         currentModalSid = sid;
         currentModalField = field;
@@ -1010,172 +1097,88 @@ body { font-family: 'DM Sans', sans-serif; }
             commentModal = new bootstrap.Modal(document.getElementById('cbCommentModal'));
         }
 
-        // Set student info
         document.getElementById('modalStudentName').textContent = studentName;
         document.getElementById('modalStudentMeta').innerHTML = '<i class="ri-id-card-line me-1"></i> ' + (studentAdm || '');
 
-        // Set avatar
         var avatarDiv = document.getElementById('modalStudentAvatar');
         if (studentImg && studentImg !== 'null' && studentImg !== '') {
             avatarDiv.innerHTML = '<img src="' + studentImg + '" style="width:100%;height:100%;object-fit:cover;">';
         } else {
-            var initials = studentName.split(' ').map(function(n) { return n[0]; }).join('').substring(0, 2).toUpperCase();
+            var initials = studentName.split(' ').map(function(n){ return n[0]; }).join('').substring(0,2).toUpperCase();
             avatarDiv.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;">' + esc(initials) + '</div>';
         }
 
-        // Update performance metrics
-        document.getElementById('modalTermAvg').textContent = analytics.term_average || 0;
-        document.getElementById('modalCumAvg').textContent = analytics.cum_average || 0;
-        document.getElementById('modalCumPct').textContent = (analytics.cum_percentage || 0) + '%';
-        document.getElementById('modalSubjects').textContent = analytics.subject_count || 0;
+        // Populate all 5 performance metrics
+        var termAvg = analytics.term_average || 0;
+        var cumAvg  = analytics.cum_average  || 0;
+        var termPct = analytics.term_percentage || 0;
+        var cumPct  = analytics.cum_percentage  || 0;
+        var subjCnt = analytics.subject_count   || 0;
 
-        // Color code the percentages
-        var cumPctEl = document.getElementById('modalCumPct');
-        if (analytics.cum_percentage >= 70) {
-            cumPctEl.style.color = '#4ade80';
-        } else if (analytics.cum_percentage >= 50) {
-            cumPctEl.style.color = '#fbbf24';
-        } else {
-            cumPctEl.style.color = '#f87171';
-        }
+        document.getElementById('modalTermAvg').textContent = termAvg;
+        document.getElementById('modalCumAvg').textContent  = cumAvg;
+        document.getElementById('modalTermPct').textContent = termPct + '%';
+        document.getElementById('modalCumPct').textContent  = cumPct + '%';
+        document.getElementById('modalSubjects').textContent = subjCnt;
 
-        // Set comment type label
-        var labels = {
-            teacher: "Teacher's Comment",
-            guidance: "Counselor's Comment",
-            activities: "Remark on Activities"
-        };
-        var icons = {
-            teacher: 'ri-chat-quote-line',
-            guidance: 'ri-mental-health-line',
-            activities: 'ri-football-line'
-        };
+        // Color-code cum % and term %
+        document.getElementById('modalCumPct').style.color  = pctColor(cumPct);
+        document.getElementById('modalTermPct').style.color = '#7dd3fc'; // always sky for term
+
+        // Animated progress bars
+        var termBarEl = document.getElementById('modalTermBar');
+        var cumBarEl  = document.getElementById('modalCumBar');
+        var termBarLbl = document.getElementById('modalTermPctBar');
+        var cumBarLbl  = document.getElementById('modalCumPctBar');
+
+        if (termBarEl) { termBarEl.style.width = '0%'; setTimeout(function(){ termBarEl.style.width = termPct + '%'; termBarEl.style.background = '#38bdf8'; }, 50); }
+        if (cumBarEl)  { cumBarEl.style.width = '0%';  setTimeout(function(){ cumBarEl.style.width = cumPct + '%';   cumBarEl.style.background = pctColor(cumPct); }, 100); }
+        if (termBarLbl) termBarLbl.textContent = termPct + '%';
+        if (cumBarLbl)  cumBarLbl.textContent  = cumPct + '%';
+
+        // Comment type label
+        var labels = { teacher: "Teacher's Comment", guidance: "Counselor's Comment", activities: "Remark on Activities" };
+        var icons  = { teacher: 'ri-chat-quote-line', guidance: 'ri-mental-health-line', activities: 'ri-football-line' };
         document.getElementById('modalCommentType').innerHTML = '<i class="' + (icons[field] || 'ri-chat-3-line') + ' me-1" style="color: var(--cb-teal);"></i> ' + (labels[field] || field);
 
-        // Set current value
-        var currentValue = getCanonical(sid, field);
-        document.getElementById('modalTextarea').value = currentValue;
+        document.getElementById('modalTextarea').value = getCanonical(sid, field);
         document.getElementById('pastCommentsPanel').style.display = 'none';
+        document.getElementById('pastCommentCount').textContent = '0';
 
         commentModal.show();
     }
 
-    // Enhanced loadPastComments function with better UI
     async function loadPastComments() {
         if (!currentModalSid) return;
-
         var listEl = document.getElementById('pastCommentsList');
         listEl.innerHTML = '<div class="text-center py-4"><i class="ri-loader-4-line ri-spin" style="font-size: 24px; color: var(--cb-teal);"></i><br><span class="text-muted mt-2 d-block">Loading past comments...</span></div>';
 
         try {
             var url = '/classbroadsheet/past-comments/' + currentModalSid;
-            var response = await fetch(url, {
-                headers: {
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('HTTP ' + response.status);
-            }
-
+            var response = await fetch(url, { headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' } });
+            if (!response.ok) throw new Error('HTTP ' + response.status);
             var data = await response.json();
 
             if (data.success && data.data && data.data.length > 0) {
                 document.getElementById('pastCommentCount').textContent = data.data.length;
-
-                // Summary badges
-                var summaryHtml = `
-                    <div class="mb-3" style="background: #f1f5f9; border-radius: 10px; padding: 12px;">
-                        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-                            <span class="small fw-bold text-muted"><i class="ri-bar-chart-line"></i> Comment History</span>
-                            <div class="d-flex gap-2 flex-wrap">
-                                <span class="badge" style="background: #0ea5e9; color: white;">Teacher: ${data.counts.classteacher || 0}</span>
-                                <span class="badge" style="background: #8b5cf6; color: white;">Guidance: ${data.counts.guidance || 0}</span>
-                                <span class="badge" style="background: #f59e0b; color: white;">Activities: ${data.counts.activities || 0}</span>
-                                <span class="badge" style="background: #1e293b;">Total: ${data.counts.total}</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-
-                // Group comments by session/term
+                var summaryHtml = '<div class="mb-3" style="background:#f1f5f9;border-radius:10px;padding:12px;"><div class="d-flex justify-content-between align-items-center flex-wrap gap-2"><span class="small fw-bold text-muted"><i class="ri-bar-chart-line"></i> Comment History</span><div class="d-flex gap-2 flex-wrap"><span class="badge" style="background:#0ea5e9;color:white;">Teacher: ' + (data.counts.classteacher||0) + '</span><span class="badge" style="background:#8b5cf6;color:white;">Guidance: ' + (data.counts.guidance||0) + '</span><span class="badge" style="background:#f59e0b;color:white;">Activities: ' + (data.counts.activities||0) + '</span><span class="badge" style="background:#1e293b;">Total: ' + data.counts.total + '</span></div></div></div>';
                 var commentsHtml = '<div class="past-comments-timeline">';
                 data.data.forEach(function(comment) {
-                    var badgeColor = '';
-                    var badgeIcon = '';
-                    if (comment.comment_type === 'Teacher') {
-                        badgeColor = '#0ea5e9';
-                        badgeIcon = 'ri-chat-quote-line';
-                    } else if (comment.comment_type === 'Guidance') {
-                        badgeColor = '#8b5cf6';
-                        badgeIcon = 'ri-mental-health-line';
-                    } else if (comment.comment_type === 'Activities') {
-                        badgeColor = '#f59e0b';
-                        badgeIcon = 'ri-football-line';
-                    } else {
-                        badgeColor = '#64748b';
-                        badgeIcon = 'ri-chat-3-line';
-                    }
-
-                    commentsHtml += `
-                        <div class="past-comment-item" style="border-left: 4px solid ${badgeColor}; background: #ffffff; padding: 14px; margin-bottom: 12px; border-radius: 10px; cursor: pointer; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: all 0.2s ease;"
-                             onclick="usePastComment('${escapeHtml(comment.comment_text)}')"
-                             onmouseover="this.style.transform='translateX(4px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.1)';"
-                             onmouseout="this.style.transform='translateX(0)'; this.style.boxShadow='0 1px 3px rgba(0,0,0,0.05)';">
-
-                            <div class="d-flex justify-content-between align-items-start mb-2">
-                                <div class="d-flex align-items-center gap-2">
-                                    <span class="badge" style="background: ${badgeColor}; color: white; padding: 4px 10px;">
-                                        <i class="${badgeIcon} me-1" style="font-size: 11px;"></i> ${comment.comment_type}
-                                    </span>
-                                    <span class="small text-muted"><i class="ri-calendar-line me-1"></i> ${comment.date}</span>
-                                </div>
-                            </div>
-
-                            <div class="mb-2">
-                                <span class="small fw-semibold" style="color: var(--cb-navy);">
-                                    <i class="ri-calendar-event-line me-1"></i> ${escapeHtml(comment.session)} · ${escapeHtml(comment.term)}
-                                </span>
-                                <span class="mx-1 text-muted">•</span>
-                                <span class="small text-muted"><i class="ri-building-line me-1"></i> ${escapeHtml(comment.class)}</span>
-                            </div>
-
-                            <div class="small" style="color: #334155; line-height: 1.5;">
-                                ${escapeHtml(comment.comment_text.length > 200 ? comment.comment_text.substring(0, 200) + '...' : comment.comment_text)}
-                            </div>
-
-                            <div class="mt-2 text-end">
-                                <span class="small text-primary"><i class="ri-double-quotes-r"></i> Click to load this comment</span>
-                            </div>
-                        </div>
-                    `;
+                    var bColor = comment.comment_type==='Teacher'?'#0ea5e9':comment.comment_type==='Guidance'?'#8b5cf6':comment.comment_type==='Activities'?'#f59e0b':'#64748b';
+                    var bIcon  = comment.comment_type==='Teacher'?'ri-chat-quote-line':comment.comment_type==='Guidance'?'ri-mental-health-line':comment.comment_type==='Activities'?'ri-football-line':'ri-chat-3-line';
+                    var previewText = comment.comment_text.length > 200 ? comment.comment_text.substring(0,200)+'...' : comment.comment_text;
+                    commentsHtml += '<div class="past-comment-item" style="border-left:4px solid '+bColor+';background:#fff;padding:14px;margin-bottom:12px;border-radius:10px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,.05);" onclick="usePastComment(\''+escapeHtml(comment.comment_text).replace(/'/g,"&#39;")+'\');" onmouseover="this.style.transform=\'translateX(4px)\';this.style.boxShadow=\'0 4px 12px rgba(0,0,0,.1)\';" onmouseout="this.style.transform=\'translateX(0)\';this.style.boxShadow=\'0 1px 3px rgba(0,0,0,.05)\';"><div class="d-flex justify-content-between align-items-start mb-2"><div class="d-flex align-items-center gap-2"><span class="badge" style="background:'+bColor+';color:white;padding:4px 10px;"><i class="'+bIcon+' me-1" style="font-size:11px;"></i>'+comment.comment_type+'</span><span class="small text-muted"><i class="ri-calendar-line me-1"></i>'+comment.date+'</span></div></div><div class="mb-2"><span class="small fw-semibold" style="color:var(--cb-navy);"><i class="ri-calendar-event-line me-1"></i>'+escapeHtml(comment.session)+' · '+escapeHtml(comment.term)+'</span><span class="mx-1 text-muted">•</span><span class="small text-muted"><i class="ri-building-line me-1"></i>'+escapeHtml(comment.class)+'</span></div><div class="small" style="color:#334155;line-height:1.5;">'+escapeHtml(previewText)+'</div><div class="mt-2 text-end"><span class="small text-primary"><i class="ri-double-quotes-r"></i> Click to load</span></div></div>';
                 });
                 commentsHtml += '</div>';
-
                 listEl.innerHTML = summaryHtml + commentsHtml;
                 document.getElementById('pastCommentsPanel').style.display = 'block';
             } else {
-                listEl.innerHTML = `
-                    <div class="text-center py-5">
-                        <i class="ri-inbox-line" style="font-size: 48px; color: #cbd5e1;"></i>
-                        <p class="text-muted mt-2 mb-0">No past comments found for this student.</p>
-                        <small class="text-muted">Comments from previous terms will appear here</small>
-                    </div>
-                `;
+                listEl.innerHTML = '<div class="text-center py-5"><i class="ri-inbox-line" style="font-size:48px;color:#cbd5e1;"></i><p class="text-muted mt-2 mb-0">No past comments found.</p></div>';
                 document.getElementById('pastCommentCount').textContent = '0';
                 document.getElementById('pastCommentsPanel').style.display = 'block';
             }
         } catch (error) {
-            console.error('Error loading past comments:', error);
-            listEl.innerHTML = `
-                <div class="text-center py-5 text-danger">
-                    <i class="ri-error-warning-line" style="font-size: 48px;"></i>
-                    <p class="mt-2 mb-0">Failed to load past comments</p>
-                    <small>Please refresh and try again</small>
-                </div>
-            `;
+            listEl.innerHTML = '<div class="text-center py-5 text-danger"><i class="ri-error-warning-line" style="font-size:48px;"></i><p class="mt-2">Failed to load past comments</p></div>';
         }
     }
 
@@ -1185,35 +1188,21 @@ body { font-family: 'DM Sans', sans-serif; }
         return div.innerHTML;
     }
 
-    // Enhanced usePastComment function
     window.usePastComment = function(text) {
         var ta = document.getElementById('modalTextarea');
         ta.value = text;
         ta.focus();
-
-        // Show a temporary notification
-        var notification = document.createElement('div');
-        notification.className = 'cb-toast cb-toast-success';
-        notification.innerHTML = '<i class="ri-checkbox-circle-fill"></i> Past comment loaded! You can edit it before saving.';
-        notification.style.position = 'fixed';
-        notification.style.bottom = '20px';
-        notification.style.right = '20px';
-        notification.style.zIndex = '10000';
-        document.body.appendChild(notification);
-        setTimeout(function() { notification.remove(); }, 2000);
+        toast('Past comment loaded! You can edit it before saving.', 'success');
     };
 
     function saveCommentFromModal() {
         var newValue = document.getElementById('modalTextarea').value;
         setCanonical(currentModalSid, currentModalField, newValue);
-
         document.querySelectorAll('[data-sid="' + currentModalSid + '"][data-field="' + currentModalField + '"]').forEach(function(inp) {
             inp.value = newValue;
         });
-
         refreshCommentStatusForStudent(currentModalSid);
         scheduleAutosave(currentModalSid);
-
         commentModal.hide();
         toast(currentModalField.charAt(0).toUpperCase() + currentModalField.slice(1) + ' comment saved!', 'success');
     }
@@ -1230,22 +1219,20 @@ body { font-family: 'DM Sans', sans-serif; }
         var sid = input.getAttribute('data-sid');
         var field = input.getAttribute('data-field');
         if (!sid || !field) return;
-
         var row = document.querySelector('[data-student-id="' + sid + '"]');
-        var studentName = row ? row.getAttribute('data-student-name') : 'Student';
-        var studentAdm = row ? (row.getAttribute('data-student-adm') || '') : '';
-        var studentImg = row ? (row.getAttribute('data-student-img') || '') : '';
-
-        var analyticsRaw = row ? row.getAttribute('data-student-analytics') : null;
+        var studentName    = row ? row.getAttribute('data-student-name') : 'Student';
+        var studentAdm     = row ? (row.getAttribute('data-student-adm') || '') : '';
+        var studentImg     = row ? (row.getAttribute('data-student-img') || '') : '';
+        var analyticsRaw   = row ? row.getAttribute('data-student-analytics') : null;
         var analytics = {};
-        if (analyticsRaw) {
-            try { analytics = JSON.parse(analyticsRaw); } catch(e) { analytics = {}; }
-        }
-
+        if (analyticsRaw) { try { analytics = JSON.parse(analyticsRaw); } catch(e) { analytics = {}; } }
         openCommentModal(sid, field, studentName, studentAdm, studentImg, analytics);
     }
 
-    // Grade popup functions
+    // =========================================================================
+    // GRADE POPUP
+    // =========================================================================
+
     function closeGradePop() {
         var gpop = document.getElementById('cbGradePopup');
         var backdrop = document.getElementById('cbPopupBackdrop');
@@ -1265,27 +1252,26 @@ body { font-family: 'DM Sans', sans-serif; }
         gpopTitle.innerHTML = '<i class="ri-bar-chart-line me-1"></i>' + esc(name) + "'s Grade Breakdown";
         var grades = an.grades || [];
         var rows = grades.map(function(g) {
-            var tgl = gradeClass(g.term_grade);
-            var cgl = gradeClass(g.cum_grade);
+            var tgl = gradeClass(g.term_grade), cgl = gradeClass(g.cum_grade);
             var tC = (g.term_score > 0 && g.term_score < 50) ? 'score-red' : '';
-            var cC = (g.cum_score > 0 && g.cum_score < 50) ? 'score-red' : '';
-            var tBadge = (g.term_grade && g.term_grade !== '-') ? '<span class="grade-badge g-' + tgl + '">' + esc(g.term_grade) + '</span>' : '—';
-            var cBadge = (g.cum_grade && g.cum_grade !== '-') ? '<span class="grade-badge g-' + cgl + '">' + esc(g.cum_grade) + '</span>' : '—';
-            return '<tr><td style="text-align:left;">' + esc(g.subject) + '<td><td class="' + tC + '">' + (g.term_score || '—') + '</td><td>' + tBadge + '</td><td class="' + cC + '">' + (g.cum_score || '—') + '</td><td>' + cBadge + '</td></tr>';
+            var cC = (g.cum_score  > 0 && g.cum_score  < 50) ? 'score-red' : '';
+            var tBadge = (g.term_grade && g.term_grade !== '-') ? '<span class="grade-badge g-'+tgl+'">'+esc(g.term_grade)+'</span>' : '—';
+            var cBadge = (g.cum_grade  && g.cum_grade  !== '-') ? '<span class="grade-badge g-'+cgl+'">'+esc(g.cum_grade) +'</span>' : '—';
+            return '<tr><td style="text-align:left;">'+esc(g.subject)+'</td><td class="'+tC+'">'+(g.term_score||'—')+'</td><td>'+tBadge+'</td><td class="'+cC+'">'+(g.cum_score||'—')+'</td><td>'+cBadge+'</td></tr>';
         }).join('');
 
-        gpopBody.innerHTML = '<table class="gpop-table"><thead><tr><th>Subject</th><th style="color:#0891b2;">T.Score</th><th style="color:#0891b2;">T.Grade</th><th>C.Score</th><th>C.Grade</th></tr></thead><tbody>' + (rows || '<tr><td colspan="5" class="text-center text-muted py-2">No grades</td></tr>') + '</tbody></table>' +
-            '<div class="gpop-summary">' +
-            '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Term Total</div><div class="gpop-sum-val">' + (an.term_total || 0) + '</div></div>' +
-            '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Cum Total</div><div class="gpop-sum-val">' + (an.cum_total || 0) + '</div></div>' +
-            '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Obtainable</div><div class="gpop-sum-val">' + (an.total_obtainable || 0) + '</div></div>' +
-            '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Cum %</div><div class="gpop-sum-val ' + ((an.cum_percentage || 0) < 50 ? 'score-red' : 'score-green') + '">' + (an.cum_percentage || 0) + '%</div></div>' +
-            '</div>';
+        gpopBody.innerHTML = '<table class="gpop-table"><thead><tr><th>Subject</th><th style="color:#0891b2;">T.Score</th><th style="color:#0891b2;">T.Grade</th><th>C.Score</th><th>C.Grade</th></tr></thead><tbody>'+(rows||'<tr><td colspan="5" class="text-center text-muted py-2">No grades</td></tr>')+'</tbody></table>'
+            + '<div class="gpop-summary">'
+            + '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Term Total</div><div class="gpop-sum-val">'+(an.term_total||0)+'</div></div>'
+            + '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Cum Total</div><div class="gpop-sum-val">'+(an.cum_total||0)+'</div></div>'
+            + '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Term %</div><div class="gpop-sum-val '+(( an.term_percentage||0)<50?'score-red':'score-green')+'">'+(an.term_percentage||0)+'%</div></div>'
+            + '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Cum %</div><div class="gpop-sum-val '+((an.cum_percentage||0)<50?'score-red':'score-green')+'">'+(an.cum_percentage||0)+'%</div></div>'
+            + '</div>';
 
         var rect = triggerEl.getBoundingClientRect();
         var pw = 360, ph = 490;
         var top = rect.bottom + window.scrollY + 8;
-        var left = rect.left + window.scrollX - (pw / 2) + (rect.width / 2);
+        var left = rect.left + window.scrollX - (pw/2) + (rect.width/2);
         if (rect.bottom + ph > window.innerHeight) top = rect.top + window.scrollY - ph - 8;
         if (left < 8) left = 8;
         if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
@@ -1296,20 +1282,20 @@ body { font-family: 'DM Sans', sans-serif; }
         if (backdrop) backdrop.style.display = 'block';
     }
 
+    // =========================================================================
+    // SAVE ALL
+    // =========================================================================
+
     function doSaveAll() {
         var fd = new FormData(document.getElementById('commentsForm'));
         fd.append('_token', CSRF);
         fd.append('_method', 'PATCH');
-
         var sigFile = document.getElementById('signatureFile');
-        if (sigFile && sigFile.files && sigFile.files[0]) {
-            fd.append('signature', sigFile.files[0]);
-        }
+        if (sigFile && sigFile.files && sigFile.files[0]) fd.append('signature', sigFile.files[0]);
 
         var saveBtn = document.getElementById('saveBtn');
         var savingText = document.getElementById('savingText');
         var origHtml = saveBtn.innerHTML;
-
         saveBtn.disabled = true;
         saveBtn.innerHTML = '<i class="spin ri-loader-4-line"></i> Saving…';
         if (savingText) savingText.style.display = 'inline-flex';
@@ -1319,27 +1305,25 @@ body { font-family: 'DM Sans', sans-serif; }
             headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-CSRF-TOKEN': CSRF },
             body: fd,
         })
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
-            if (data.success) {
-                toast(data.message || 'Saved successfully!', 'success');
-                refreshCommentStatus();
-            } else {
-                toast(data.message || 'Save failed.', 'error');
-            }
+        .then(function(res){ return res.json(); })
+        .then(function(data){
+            if (data.success) { toast(data.message || 'Saved successfully!', 'success'); refreshCommentStatus(); }
+            else { toast(data.message || 'Save failed.', 'error'); }
         })
-        .catch(function(err) {
-            console.error(err);
-            toast('Error: ' + err.message, 'error');
-        })
-        .finally(function() {
+        .catch(function(err){ console.error(err); toast('Error: ' + err.message, 'error'); })
+        .finally(function(){
             saveBtn.disabled = false;
             saveBtn.innerHTML = origHtml;
             if (savingText) savingText.style.display = 'none';
         });
     }
 
+    // =========================================================================
+    // DOM READY
+    // =========================================================================
+
     document.addEventListener('DOMContentLoaded', function() {
+
         // Column toggle
         document.querySelectorAll('.toggle-chip').forEach(function(chip) {
             chip.addEventListener('click', function() {
@@ -1366,9 +1350,7 @@ body { font-family: 'DM Sans', sans-serif; }
         // Image zoom
         var imgModal = null;
         var imgModalEl = document.getElementById('cbImgZoomModal');
-        if (imgModalEl && typeof bootstrap !== 'undefined') {
-            imgModal = new bootstrap.Modal(imgModalEl);
-        }
+        if (imgModalEl && typeof bootstrap !== 'undefined') imgModal = new bootstrap.Modal(imgModalEl);
 
         document.addEventListener('click', function(e) {
             var trigger = e.target.closest('.cb-avatar-trigger');
@@ -1381,31 +1363,25 @@ body { font-family: 'DM Sans', sans-serif; }
             var gender = trigger.getAttribute('data-gender') || '';
             var initials = trigger.getAttribute('data-initials') || name.substring(0,2).toUpperCase();
 
+            document.getElementById('cbZoomedName').textContent = name;
+            document.getElementById('cbZoomedMeta').innerHTML =
+                (adm ? '<i class="ri-id-card-line me-1"></i>'+esc(adm) : '') +
+                (cls ? ' &nbsp;|&nbsp; <i class="ri-building-line me-1"></i>'+esc(cls) : '') +
+                (gender ? ' &nbsp;|&nbsp; '+esc(gender) : '');
+
             var zoomedImg = document.getElementById('cbZoomedImg');
-            var zoomedName = document.getElementById('cbZoomedName');
-            var zoomedMeta = document.getElementById('cbZoomedMeta');
-
-            zoomedName.textContent = name;
-            zoomedMeta.innerHTML = (adm ? '<i class="ri-id-card-line me-1"></i>' + esc(adm) : '') +
-                (cls ? ' &nbsp;|&nbsp; <i class="ri-building-line me-1"></i>' + esc(cls) : '') +
-                (gender ? ' &nbsp;|&nbsp; ' + esc(gender) : '');
-
             if (imgUrl && imgUrl !== 'null' && imgUrl !== '') {
                 zoomedImg.src = imgUrl;
             } else {
                 var canvas = document.createElement('canvas');
                 canvas.width = canvas.height = 400;
                 var ctx = canvas.getContext('2d');
-                var grad = ctx.createLinearGradient(0, 0, 400, 400);
-                grad.addColorStop(0, '#0d9488');
-                grad.addColorStop(1, '#0ea5e9');
-                ctx.fillStyle = grad;
-                ctx.fillRect(0, 0, 400, 400);
-                ctx.fillStyle = '#fff';
-                ctx.font = 'bold 150px "DM Sans",Arial,sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(initials.substring(0, 2).toUpperCase(), 200, 200);
+                var grad = ctx.createLinearGradient(0,0,400,400);
+                grad.addColorStop(0,'#0d9488'); grad.addColorStop(1,'#0ea5e9');
+                ctx.fillStyle = grad; ctx.fillRect(0,0,400,400);
+                ctx.fillStyle = '#fff'; ctx.font = 'bold 150px "DM Sans",Arial,sans-serif';
+                ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(initials.substring(0,2).toUpperCase(), 200, 200);
                 zoomedImg.src = canvas.toDataURL();
             }
             if (imgModal) imgModal.show();
@@ -1416,68 +1392,99 @@ body { font-family: 'DM Sans', sans-serif; }
         if (gpopCloseBtn) gpopCloseBtn.addEventListener('click', closeGradePop);
         var backdrop = document.getElementById('cbPopupBackdrop');
         if (backdrop) backdrop.addEventListener('click', closeGradePop);
-        document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeGradePop(); });
-
+        document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeGradePop(); });
         document.addEventListener('click', function(e) {
             var btn = e.target.closest('.grade-trigger-btn');
             if (!btn) return;
             e.stopPropagation();
-            var sid = btn.getAttribute('data-sid');
-            var name = btn.getAttribute('data-sname');
             closeGradePop();
-            openGradePop(sid, name, btn);
+            openGradePop(btn.getAttribute('data-sid'), btn.getAttribute('data-sname'), btn);
         });
 
-        // Stats
+        // =====================================================================
+        // STATS — enhanced with picture, term %, highest, lowest
+        // =====================================================================
         (function() {
             var vals = Object.values(SA);
-            if (vals.length) {
-                var avgPct = Math.round(vals.reduce(function(s, d) { return s + (d.cum_percentage || 0); }, 0) / vals.length);
-                var prEl = document.getElementById('statPassRate');
-                if (prEl) prEl.textContent = avgPct + '%';
-            }
-            var topAvg = -1, topName = '—';
+            if (!vals.length) return;
+
+            // Avg cum %
+            var avgCumPct = Math.round(vals.reduce(function(s,d){ return s+(d.cum_percentage||0); },0) / vals.length);
+            var prEl = document.getElementById('statPassRate');
+            if (prEl) prEl.textContent = avgCumPct + '%';
+
+            // Avg term %
+            var avgTermPct = Math.round(vals.reduce(function(s,d){ return s+(d.term_percentage||0); },0) / vals.length);
+            var atEl = document.getElementById('statAvgTermPct');
+            if (atEl) atEl.textContent = avgTermPct + '%';
+
+            // Highest and lowest cum %
+            var allCumPcts = vals.map(function(d){ return d.cum_percentage||0; });
+            var highEl = document.getElementById('statHighestCum');
+            var lowEl  = document.getElementById('statLowestCum');
+            if (highEl) highEl.textContent = Math.max.apply(null, allCumPcts) + '%';
+            if (lowEl)  lowEl.textContent  = Math.min.apply(null, allCumPcts.filter(function(v){ return v > 0; })) + '%';
+
+            // Top performer — find by highest cum_average
+            var topAvg = -1, topSid = null;
             document.querySelectorAll('.cb-student-row[data-student-id]').forEach(function(row) {
                 var sid = row.getAttribute('data-student-id');
                 if (!sid || !SA[sid]) return;
+                // Only count once per student
+                if (SA[sid]._counted) return;
+                SA[sid]._counted = true;
                 var avg = SA[sid].cum_average || 0;
-                if (avg > topAvg) {
-                    topAvg = avg;
-                    var name = row.getAttribute('data-student-name') || '';
-                    var p = name.trim().split(' ');
-                    topName = p[0] + (p[1] ? ' ' + p[1][0] + '.' : '');
-                }
+                if (avg > topAvg) { topAvg = avg; topSid = sid; }
             });
-            var topEl = document.getElementById('statTop');
-            if (topEl) topEl.textContent = topName;
+
+            if (topSid) {
+                var topRow = document.querySelector('[data-student-id="' + topSid + '"]');
+                var topName = topRow ? topRow.getAttribute('data-student-name') : '—';
+                var topImg  = topRow ? topRow.getAttribute('data-student-img')  : null;
+                var topNameParts = (topName || '').trim().split(' ');
+                var displayName  = topNameParts[0] + (topNameParts[1] ? ' ' + topNameParts[1][0] + '.' : '');
+
+                var topNameEl  = document.getElementById('statTop');
+                var topScoreEl = document.getElementById('statTopScore');
+                var topScoreValEl = document.getElementById('statTopScoreVal');
+                var topAvatarEl = document.getElementById('statTopAvatar');
+
+                if (topNameEl) topNameEl.textContent = displayName;
+                if (topScoreValEl) topScoreValEl.textContent = 'Cum avg: ' + topAvg;
+                if (topScoreEl) topScoreEl.style.display = 'inline-flex';
+
+                // Set avatar
+                if (topAvatarEl) {
+                    if (topImg && topImg !== 'null' && topImg !== '' && topImg !== 'undefined') {
+                        topAvatarEl.innerHTML = '<img src="' + topImg + '" alt="' + esc(displayName) + '" onerror="this.closest(\'.stat-performer-avatar\').innerHTML=\'<span class=\\'stat-performer-avatar-initials\\'>' + topName.substring(0,2).toUpperCase() + '</span>\'">';
+                    } else {
+                        var initials2 = topNameParts.map(function(n){ return n[0]||''; }).join('').substring(0,2).toUpperCase() || '??';
+                        topAvatarEl.innerHTML = '<span class="stat-performer-avatar-initials">' + initials2 + '</span>';
+                    }
+                }
+            }
+
+            // Commented count
+            updateCommentedStat();
         })();
 
         // Input listeners
-        var fieldSelectors = [
-            '.desk-teacher', '.desk-guidance', '.desk-activities', '.desk-absence',
-            '.mob-teacher', '.mob-guidance', '.mob-activities', '.mob-absence',
-        ];
-        fieldSelectors.forEach(function(sel) {
+        ['.desk-teacher','.desk-guidance','.desk-activities','.desk-absence',
+         '.mob-teacher','.mob-guidance','.mob-activities','.mob-absence'].forEach(function(sel) {
             document.querySelectorAll(sel).forEach(function(inp) {
                 inp.addEventListener('input', onInputChange);
             });
         });
 
-        // Modal triggers
         attachModalTriggers();
 
-        // Modal buttons
         var loadBtn = document.getElementById('btnLoadPastComments');
         if (loadBtn) loadBtn.addEventListener('click', loadPastComments);
-
         var modalSaveBtn = document.getElementById('modalSaveBtn');
         if (modalSaveBtn) modalSaveBtn.addEventListener('click', saveCommentFromModal);
-
-        // Save all button
         var saveBtn = document.getElementById('saveBtn');
         if (saveBtn) saveBtn.addEventListener('click', doSaveAll);
 
-        // Initial refresh
         refreshCommentStatus();
     });
 })();
