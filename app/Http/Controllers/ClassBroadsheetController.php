@@ -203,6 +203,15 @@ class ClassBroadsheetController extends Controller
                 ->orderByDesc('termid')
                 ->get();
 
+            // Get all unique staff user IDs to fetch names in one query
+            $staffUserIds = $profiles->pluck('staffid')->filter()->unique()->values()->toArray();
+
+            // Fetch all staff with their users - search by userid column (which maps to users.id)
+            $staffMembers = Staff::with('user')
+                ->whereIn('userid', $staffUserIds)
+                ->get()
+                ->keyBy('userid');
+
             $commentCounts = [
                 'classteacher' => 0,
                 'guidance' => 0,
@@ -217,49 +226,56 @@ class ClassBroadsheetController extends Controller
                 $hasComment = false;
                 $commentText = '';
                 $commentType = '';
-                $staffId = null;
+                $staffUserId = $profile->staffid;
 
                 if ($profile->classteachercomment && trim($profile->classteachercomment) !== '') {
                     $commentText = $profile->classteachercomment;
                     $commentType = 'Teacher';
-                    $staffId = $profile->staffid;
                     $commentCounts['classteacher']++;
                     $hasComment = true;
                 } elseif ($profile->guidancescomment && trim($profile->guidancescomment) !== '') {
                     $commentText = $profile->guidancescomment;
                     $commentType = 'Guidance';
-                    $staffId = $profile->staffid;
                     $commentCounts['guidance']++;
                     $hasComment = true;
                 } elseif ($profile->remark_on_other_activities && trim($profile->remark_on_other_activities) !== '') {
                     $commentText = $profile->remark_on_other_activities;
                     $commentType = 'Activities';
-                    $staffId = $profile->staffid;
                     $commentCounts['activities']++;
                     $hasComment = true;
                 } elseif ($profile->principalscomment && trim($profile->principalscomment) !== '') {
                     $commentText = $profile->principalscomment;
                     $commentType = 'Principal';
-                    $staffId = $profile->staffid;
                     $commentCounts['principal']++;
                     $hasComment = true;
                 }
 
                 if (!$hasComment) continue;
 
+                // Get staff name from our pre-fetched collection using userid
                 $staffName = null;
                 $staffPicture = null;
 
-                if ($staffId) {
-                    try {
-                        $staff = Staff::where('userid', $staffId)->first();
-                        if ($staff) {
-                            $staffName = $staff->getFullNameAttribute();
-                            $staffPicture = null;
+                if ($staffUserId) {
+                    $staff = $staffMembers->get($staffUserId);
+
+                    if (!$staff) {
+                        // Try to find by id directly as fallback
+                        $staff = Staff::with('user')->find($staffUserId);
+                        if ($staff && $staff->userid) {
+                            $staffMembers->put($staff->userid, $staff);
                         }
-                    } catch (\Exception $e) {
-                        Log::warning('Could not fetch staff info', ['staff_id' => $staffId]);
                     }
+
+                    if ($staff && $staff->user) {
+                        $staffName = $staff->user->name;
+                    } elseif ($staff && $staff->employmentid) {
+                        $staffName = 'Staff: ' . $staff->employmentid;
+                    } else {
+                        $staffName = 'Staff Member';
+                    }
+                } else {
+                    $staffName = 'System';
                 }
 
                 $term = Schoolterm::find($profile->termid);
@@ -276,9 +292,9 @@ class ClassBroadsheetController extends Controller
                     'comment_text' => $commentText,
                     'comment_type' => $commentType,
                     'date' => optional($profile->updated_at ?? $profile->created_at)->format('d M Y') ?? '',
-                    'staff_name' => $staffName ?? 'Unknown Staff',
+                    'staff_name' => $staffName,
                     'staff_picture' => $staffPicture,
-                    'staff_id' => $staffId,
+                    'staff_id' => $staffUserId,
                 ]);
             }
 
@@ -299,6 +315,7 @@ class ClassBroadsheetController extends Controller
         } catch (\Exception $e) {
             Log::error('getPastComments error', [
                 'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
                 'studentId' => $studentId
             ]);
 
