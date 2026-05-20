@@ -1559,7 +1559,8 @@ function showToast(message, type) {
     }
 
     function fetchProfile(stid, classid, sessid, termid) {
-        const url = `{{ url('/studentpersonalityprofile/data') }}/${stid}/${classid}/${sessid}/${termid}`;
+        // Use the dedicated drawer endpoint that returns dynamic assessments
+        const url = `{{ url('/studentreport/drawer-data') }}/${stid}/${classid}/${sessid}/${termid}`;
         fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' } })
             .then(r => { if (!r.ok) throw new Error('Server error ' + r.status); return r.json(); })
             .then(data => populateDrawer(data))
@@ -1604,9 +1605,9 @@ function showToast(message, type) {
         });
 
         // ── Build Attendance Tab ──────────────────────────────────────
-        buildAttendancePanel(data.attendance || {});
+        buildAttendancePanel(data.attendance || data.attendance_summary || {});
 
-        buildTerminalReport(data.scores || []);
+        buildTerminalReport(data.scores || [], data.assessments || []);
         buildMockReport(data.mock_scores || []);
     }
 
@@ -1716,75 +1717,163 @@ function showToast(message, type) {
             </div>`;
     }
 
-    // ── TERMINAL REPORT ───────────────────────────────────────────────
-    function buildTerminalReport(scores) {
+    // ── TERMINAL REPORT — dynamic assessments ────────────────────────
+    function buildTerminalReport(scores, assessments) {
         const c = document.getElementById('spTerminalReport');
-        if (!scores.length) {
+        if (!scores || !scores.length) {
             c.innerHTML = `<div class="sp-empty-report"><i class="ri-file-damage-line"></i>No terminal report scores available.</div>`;
             return;
         }
+
+        // assessments = [{id, name, max_score}, ...]  — ordered by id (same as controller)
+        const asses = assessments || [];
+
+        // Build header cells
+        const assessmentHeaders = asses.map(a =>
+            `<th>${escHtml(a.name)}<br><span style="font-size:9px;opacity:.7;">(${a.max_score})</span></th>`
+        ).join('');
+
+        // Build data rows
         const rows = scores.map((s, i) => {
-            const avg = (s.ca1 != null && s.ca2 != null && s.ca3 != null)
-                ? ((+s.ca1 + +s.ca2 + +s.ca3) / 3).toFixed(1) : '—';
+            // Map assessment_scores array to a lookup by assessment_id
+            const scoreMap = {};
+            (s.assessment_scores || []).forEach(as => {
+                scoreMap[as.assessment_id] = as.score;
+            });
+
+            // Assessment score cells
+            const assessmentCells = asses.map(a => {
+                const v = scoreMap[a.assessment_id] ?? scoreMap[a.id] ?? null;
+                const low = v !== null && v < (a.max_score * 0.5);
+                const display = v !== null ? v : '—';
+                return `<td class="${low ? 'sp-score-low' : ''}">${display}</td>`;
+            }).join('');
+
+            // Compute total of all assessment scores for "CA Avg" equivalent
+            const assessVals = asses.map(a => {
+                const v = scoreMap[a.assessment_id] ?? scoreMap[a.id];
+                return (v !== null && v !== undefined) ? parseFloat(v) : null;
+            }).filter(v => v !== null);
+
+            const assessAvg = assessVals.length
+                ? (assessVals.reduce((a, b) => a + b, 0) / assessVals.length).toFixed(1)
+                : '—';
+
             return `<tr>
-                <td>${i+1}</td><td>${s.subject_name}</td>
-                <td class="${sc(s.ca1)}">${s.ca1??'—'}</td>
-                <td class="${sc(s.ca2)}">${s.ca2??'—'}</td>
-                <td class="${sc(s.ca3)}">${s.ca3??'—'}</td>
-                <td class="${sc(avg)}">${avg}</td>
-                <td class="${sc(s.exam)}">${s.exam??'—'}</td>
-                <td class="${sc(s.total)}">${s.total??'—'}</td>
-                <td class="${sc(s.bf)}">${s.bf??'—'}</td>
-                <td class="${sc(s.cum)}">${s.cum??'—'}</td>
-                <td>${s.grade??'—'}</td>
-                <td>${s.position??'—'}</td>
-                <td class="${sc(s.class_average)}">${s.class_average??'—'}</td>
+                <td>${i + 1}</td>
+                <td style="text-align:left;font-weight:600;">${escHtml(s.subject_name)}</td>
+                ${assessmentCells}
+                <td class="${sc(assessAvg)}">${assessAvg}</td>
+                <td class="${sc(s.total)}">${s.total ?? '—'}</td>
+                <td>${s.bf ?? '—'}</td>
+                <td>${s.cum ?? '—'}</td>
+                <td>${gradeClass(s.grade)}</td>
+                <td>${s.position ?? '—'}</td>
+                <td>${s.arm_position ?? '—'}</td>
+                <td class="${sc(s.class_average)}">${s.class_average ?? '—'}</td>
             </tr>`;
         }).join('');
+
         c.innerHTML = `
             <div style="overflow-x:auto;border-radius:12px;box-shadow:0 2px 8px rgba(15,35,66,.06);">
             <table class="sp-report-table">
                 <thead>
                     <tr>
-                        <th>#</th><th>Subject</th>
-                        <th>CA1</th><th>CA2</th><th>CA3</th><th>CA Avg</th>
-                        <th>Exam</th><th>Total</th><th>B/F</th><th>Cum</th>
-                        <th>Grade</th><th>Pos</th><th>Cls Avg</th>
+                        <th>#</th>
+                        <th style="text-align:left;">Subject</th>
+                        ${assessmentHeaders}
+                        <th>Avg</th>
+                        <th>Total</th>
+                        <th>B/F</th>
+                        <th>Cum</th>
+                        <th>Grade</th>
+                        <th>Cls Pos</th>
+                        <th>Arm Pos</th>
+                        <th>Cls Avg</th>
                     </tr>
                 </thead>
                 <tbody>${rows}</tbody>
             </table></div>
             <div class="sp-grade-key">
-                <span style="color:#15803d;">A1 = 75–100</span>
-                <span style="color:#1e40af;">B2 = 70–74</span>
-                <span style="color:#6d28d9;">B3 = 65–69</span>
-                <span style="color:#854d0e;">C4 = 60–64</span>
-                <span style="color:#dc2626;">F9 = 0–39</span>
+                <span style="color:#15803d;">A1 ≥ 75</span>
+                <span style="color:#1e40af;">B2 ≥ 70</span>
+                <span style="color:#6d28d9;">B3 ≥ 65</span>
+                <span style="color:#854d0e;">C4 ≥ 60</span>
+                <span style="color:#ea580c;">D7 ≥ 45</span>
+                <span style="color:#dc2626;">F9 &lt; 40</span>
             </div>`;
     }
 
     function buildMockReport(scores) {
         const c = document.getElementById('spMockReport');
-        if (!scores.length) {
+        if (!scores || !scores.length) {
             c.innerHTML = `<div class="sp-empty-report"><i class="ri-file-damage-line"></i>No mock report scores available.</div>`;
             return;
         }
+
         const rows = scores.map((s, i) => `
             <tr>
-                <td>${i+1}</td><td>${s.subject_name}</td>
-                <td class="${sc(s.exam)}">${s.exam??'—'}</td>
-                <td>${s.grade??'—'}</td>
-                <td>${s.position??'—'}</td>
-                <td class="${sc(s.class_average)}">${s.class_average??'—'}</td>
+                <td>${i + 1}</td>
+                <td style="text-align:left;font-weight:600;">${escHtml(s.subject_name)}</td>
+                <td class="${sc(s.exam)}">${s.exam ?? '—'}</td>
+                <td class="${sc(s.total)}">${s.total ?? '—'}</td>
+                <td>${gradeClass(s.grade)}</td>
+                <td style="font-size:11px;color:#64748b;">${escHtml(s.remark ?? '—')}</td>
+                <td>${escHtml(s.position ?? '—')}</td>
+                <td class="${sc(s.class_average)}">${s.class_average ?? '—'}</td>
+                <td style="color:#6d28d9;font-weight:700;">${s.cmin ?? '—'}</td>
+                <td style="color:#0369a1;font-weight:700;">${s.cmax ?? '—'}</td>
             </tr>`).join('');
+
         c.innerHTML = `
             <div style="overflow-x:auto;border-radius:12px;box-shadow:0 2px 8px rgba(15,35,66,.06);">
             <table class="sp-report-table">
                 <thead>
-                    <tr><th>#</th><th>Subject</th><th>Exam</th><th>Grade</th><th>Pos</th><th>Cls Avg</th></tr>
+                    <tr>
+                        <th>#</th>
+                        <th style="text-align:left;">Subject</th>
+                        <th>Exam</th>
+                        <th>Total</th>
+                        <th>Grade</th>
+                        <th>Remark</th>
+                        <th>Position</th>
+                        <th>Cls Avg</th>
+                        <th>Min</th>
+                        <th>Max</th>
+                    </tr>
                 </thead>
                 <tbody>${rows}</tbody>
-            </table></div>`;
+            </table></div>
+            <div class="sp-grade-key">
+                <span style="color:#15803d;">A1 ≥ 75</span>
+                <span style="color:#1e40af;">B2 ≥ 70</span>
+                <span style="color:#6d28d9;">B3 ≥ 65</span>
+                <span style="color:#854d0e;">C4 ≥ 60</span>
+                <span style="color:#ea580c;">D7 ≥ 45</span>
+                <span style="color:#dc2626;">F9 &lt; 40</span>
+            </div>`;
+    }
+
+    // ── Shared helpers ────────────────────────────────────────────────
+    function escHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
+    }
+
+    function gradeClass(grade) {
+        if (!grade || grade === '-') return '—';
+        const g = grade.toUpperCase();
+        let cls = '';
+        if (g.startsWith('A'))      cls = 'sp-score-high';
+        else if (g.startsWith('B')) cls = 'color:#2563eb;font-weight:700;';
+        else if (g === 'F9')        cls = 'sp-score-low';
+        return cls
+            ? `<span class="${cls.includes(':') ? '' : cls}" style="${cls.includes(':') ? cls : ''}">${escHtml(grade)}</span>`
+            : escHtml(grade);
     }
 
     function sc(v) {

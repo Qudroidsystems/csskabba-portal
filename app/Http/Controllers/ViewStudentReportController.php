@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Cache;
 use App\Models\CompulsorySubjectClass;
 use App\Models\AttendanceSummary;
 use App\Models\BroadsheetAssessmentScore;
+use App\Models\BroadsheetsMock;
 use App\Models\Studentpersonalityprofile;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -1430,6 +1431,204 @@ class ViewStudentReportController extends Controller
         }
 
         return view('studentreports.index', compact('allstudents', 'schoolsessions', 'schoolclasses', 'pagetitle'));
+    }
+
+    /**
+     * Fetch mock scores for the drawer — mirrors the query in
+     * ViewStudentMockReportController::getStudentMockResultData() but returns
+     * a plain serialisable array ready for JSON.
+     */
+    private function fetchMockScoresForDrawer($studentId, $schoolclassId, $sessionId, $termId): array
+    {
+        try {
+            $rows = BroadsheetsMock::where('broadsheet_records_mock.student_id', $studentId)
+                ->where('broadsheetmock.term_id', $termId)
+                ->where('broadsheet_records_mock.session_id', $sessionId)
+                ->where('broadsheet_records_mock.schoolclass_id', $schoolclassId)
+                ->join('broadsheet_records_mock', 'broadsheet_records_mock.id', '=', 'broadsheetmock.broadsheet_records_mock_id')
+                ->join('subject', 'subject.id', '=', 'broadsheet_records_mock.subject_id')
+                ->orderBy('subject.subject')
+                ->select([
+                    'subject.subject as subject_name',
+                    'subject.subject_code',
+                    'broadsheetmock.exam',
+                    'broadsheetmock.total',
+                    'broadsheetmock.grade',
+                    'broadsheetmock.remark',
+                    'broadsheetmock.subject_position_class as position',
+                    'broadsheetmock.avg as class_average',
+                    'broadsheetmock.cmin',
+                    'broadsheetmock.cmax',
+                ])
+                ->get();
+
+            return $rows->map(function ($r) {
+                return [
+                    'subject_name'  => $r->subject_name,
+                    'subject_code'  => $r->subject_code,
+                    'exam'          => $r->exam  !== null ? (float) $r->exam  : null,
+                    'total'         => $r->total !== null ? (float) $r->total : null,
+                    'grade'         => $r->grade,
+                    'remark'        => $r->remark,
+                    'position'      => $r->position,
+                    'class_average' => $r->class_average !== null ? (float) $r->class_average : null,
+                    'cmin'          => $r->cmin !== null ? (float) $r->cmin : null,
+                    'cmax'          => $r->cmax !== null ? (float) $r->cmax : null,
+                ];
+            })->values()->toArray();
+
+        } catch (\Exception $e) {
+            Log::error('fetchMockScoresForDrawer error', [
+                'student_id' => $studentId,
+                'error'      => $e->getMessage(),
+            ]);
+            return [];
+        }
+    }
+
+    /**
+     * Drawer data endpoint — returns full student result data (including dynamic
+     * assessments) plus personality profile, attendance, picture URL.
+     * Called by the profile drawer via AJAX.
+     */
+    public function drawerData($studentId, $schoolclassId, $sessionId, $termId)
+    {
+        try {
+            if (
+                !is_numeric($studentId) || !is_numeric($schoolclassId) ||
+                !is_numeric($sessionId) || !is_numeric($termId)
+            ) {
+                return response()->json(['success' => false, 'message' => 'Invalid parameters'], 400);
+            }
+
+            // ── 1. Full result data (scores + dynamic assessments + attendance) ──
+            $resultData = $this->getStudentResultData($studentId, $schoolclassId, $sessionId, $termId);
+
+            if (empty($resultData)) {
+                return response()->json(['success' => false, 'message' => 'No data found'], 404);
+            }
+
+            // ── 2. Personality profile ──────────────────────────────────────────
+            $profile = null;
+            try {
+                $profile = Studentpersonalityprofile::where('studentid', $studentId)
+                    ->where('termid', $termId)
+                    ->where('sessionid', $sessionId)
+                    ->where('schoolclassid', $schoolclassId)
+                    ->first();
+            } catch (\Exception $e) {
+                Log::error('drawerData: error fetching personality profile', ['error' => $e->getMessage()]);
+            }
+
+            // ── 3. Student basics ───────────────────────────────────────────────
+            $student   = $resultData['students']->first();
+            $schoolclass = $resultData['schoolclass'];
+            $schoolterm  = $resultData['schoolterm'];
+            $schoolsession = $resultData['schoolsession'];
+
+            $fullName = trim(
+                strtoupper($student->lastname ?? '') . ' ' .
+                ($student->fname ?? '') . ' ' .
+                ($student->othername ?? '')
+            );
+
+            // ── 4. Serialise assessments metadata ───────────────────────────────
+            $assessmentsMeta = ($resultData['assessments'] ?? collect())->map(function ($a) {
+                return [
+                    'id'        => $a->id,
+                    'name'      => $a->name,
+                    'max_score' => (float) $a->max_score,
+                ];
+            })->values()->toArray();
+
+            // ── 5. Serialise scores with dynamic assessment_scores ───────────────
+            $scores = ($resultData['scores'] ?? collect())->map(function ($score) {
+                // assessment_scores is already a collection on the score object
+                $assessmentScores = [];
+                if (isset($score->assessment_scores)) {
+                    foreach ($score->assessment_scores as $as) {
+                        $assessmentScores[] = [
+                            'assessment_id' => $as->assessment_id,
+                            'score'         => $as->score !== null ? (float) $as->score : null,
+                        ];
+                    }
+                }
+
+                return [
+                    'subject_name'      => $score->subject_name,
+                    'subject_code'      => $score->subject_code,
+                    'assessment_scores' => $assessmentScores,
+                    'total'             => $score->total !== null ? (float) $score->total : null,
+                    'bf'                => $score->bf    !== null ? (float) $score->bf    : null,
+                    'cum'               => $score->cum   !== null ? (float) $score->cum   : null,
+                    'grade'             => $score->grade,
+                    'remark'            => $score->remark,
+                    'position'          => $score->position_formatted     ?? ($score->position     ? $this->formatOrdinal($score->position)     : '-'),
+                    'position_total'    => $score->position_total_formatted ?? ($score->position_total ? $this->formatOrdinal($score->position_total) : '-'),
+                    'arm_position'      => $score->arm_position_formatted  ?? ($score->arm_position  ? $this->formatOrdinal($score->arm_position)  : '-'),
+                    'arm_position_cum'  => $score->arm_position_cum_formatted ?? ($score->arm_position_cum ? $this->formatOrdinal($score->arm_position_cum) : '-'),
+                    'class_average'     => $score->class_average !== null ? (float) $score->class_average : null,
+                    'is_compulsory'     => $score->is_compulsory ?? false,
+                    'vettedstatus'      => $score->vettedstatus,
+                ];
+            })->values()->toArray();
+
+            // ── 6. Picture URL ──────────────────────────────────────────────────
+            $pictureUrl = null;
+            if ($student && $student->picture) {
+                $pictureUrl = asset('storage/student_avatars/' . basename($student->picture));
+            }
+
+            // ── 7. Attendance ───────────────────────────────────────────────────
+            $attendance = $resultData['attendance_summary'] ?? [];
+            if ($schoolterm) {
+                $attendance['term_name'] = $schoolterm->term ?? null;
+            }
+
+            // ── 8. Build response ───────────────────────────────────────────────
+            return response()->json([
+                'success'       => true,
+                'student_name'  => $fullName,
+                'admissionno'   => $student->admissionNo ?? '—',
+                'gender'        => $student->gender      ?? '—',
+                'schoolclass'   => trim(($schoolclass->schoolclass ?? '') . ' ' . ($schoolclass->arms->arm ?? '')),
+                'term'          => $schoolterm->term      ?? '—',
+                'session'       => $schoolsession->session ?? '—',
+                'studentid'     => $studentId,
+                'schoolclassid' => $schoolclassId,
+                'termid'        => $termId,
+                'sessionid'     => $sessionId,
+                'picture_url'   => $pictureUrl,
+
+                // Dynamic assessments metadata (name + max_score per column)
+                'assessments'   => $assessmentsMeta,
+
+                // Scores with per-row assessment_scores keyed by assessment_id
+                'scores'        => $scores,
+
+                // Mock scores — queried from BroadsheetsMock
+                'mock_scores'   => $this->fetchMockScoresForDrawer($studentId, $schoolclassId, $sessionId, $termId),
+
+                // Personality profile
+                'profile'       => $profile ? $profile->toArray() : null,
+
+                // Attendance
+                'attendance'    => $attendance,
+
+                // GPA / totals
+                'gpa_data'      => $resultData['gpa_data']      ?? [],
+                'totals_summary'=> $resultData['totals_summary'] ?? [],
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('drawerData error', [
+                'student_id' => $studentId,
+                'error'      => $e->getMessage(),
+                'line'       => $e->getLine(),
+            ]);
+
+            return response()->json(['success' => false, 'message' => 'Server error: ' . $e->getMessage()], 500);
+        }
     }
 
     /**

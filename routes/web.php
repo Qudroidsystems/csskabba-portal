@@ -459,6 +459,7 @@ Route::get('scoresheet/download-scores-pdf',[MyScoreSheetController::class, 'dow
 Route::post('subjectscoresheet/grade-for-score', [MyScoreSheetController::class, 'calculateGradeForScore'])->name('subjectscoresheet.grade-for-score');
 
 Route::post('/studentreports/column-options', [ViewStudentReportController::class, 'getColumnOptions'])->name('studentreports.column-options');
+Route::get('/studentreport/drawer-data/{studentId}/{schoolclassId}/{sessionId}/{termId}',[ViewStudentReportController::class, 'drawerData'])->name('studentreport.drawer-data');
 
     // // Mock Scoresheet Routes
     // Route::get('subjectscoresheet-mock', [MyScoreSheetController::class, 'mockIndex'])->name('subjectscoresheet-mock.index');
