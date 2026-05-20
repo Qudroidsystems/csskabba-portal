@@ -9,7 +9,8 @@ use App\Models\Schoolclass;
 use App\Models\Schoolterm;
 use App\Models\Schoolsession;
 use App\Models\Subject;
-use App\Models\Student;  // Changed from StudentRegistration to Student
+use App\Models\Student;
+use App\Models\Staff;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -17,10 +18,6 @@ use Illuminate\Support\Facades\Log;
 
 class ClassBroadsheetController extends Controller
 {
-    // =========================================================================
-    // GRADE HELPERS
-    // =========================================================================
-
     public function gradeFromScorePublic(float $score, bool $isSenior): array
     {
         return $this->gradeFromScore($score, $isSenior);
@@ -46,10 +43,6 @@ class ClassBroadsheetController extends Controller
         if ($score >= 40) return ['D', 'D'];
         return ['F', 'F'];
     }
-
-    // =========================================================================
-    // CLASS BROADSHEET VIEW
-    // =========================================================================
 
     public function classBroadsheet($schoolclassid, $sessionid, $termid)
     {
@@ -115,10 +108,15 @@ class ClassBroadsheetController extends Controller
             : false;
 
         $studentAnalytics = [];
+        $topPerformer = null;
+        $topPerformerPicture = null;
+        $topCumPercentage = -1;
+
         foreach ($students as $student) {
             $sid = $student->id;
             $termTotal = $cumTotal = $subjectCount = 0;
             $grades = [];
+
             foreach ($subjects as $subject) {
                 $subj      = $subject->subject;
                 $termScore = $termScoreMap[$sid][$subj] ?? 0;
@@ -130,18 +128,27 @@ class ClassBroadsheetController extends Controller
                 [$cumGrade]  = $this->gradeFromScore((float) $cumScore,  $isSenior);
                 $grades[] = ['subject' => $subj, 'term_score' => $termScore, 'cum_score' => $cumScore, 'term_grade' => $termGrade, 'cum_grade' => $cumGrade];
             }
+
             $totalObtainable = $subjectCount * 100;
+            $percentageObtained = $totalObtainable > 0 ? round(($cumTotal / $totalObtainable) * 100, 1) : 0;
+
             $studentAnalytics[$sid] = [
-                'term_total'       => $termTotal,
-                'cum_total'        => $cumTotal,
-                'term_average'     => $subjectCount > 0 ? round($termTotal / $subjectCount, 1) : 0,
-                'cum_average'      => $subjectCount > 0 ? round($cumTotal  / $subjectCount, 1) : 0,
-                'subject_count'    => $subjectCount,
-                'total_obtainable' => $totalObtainable,
-                'term_percentage'  => $totalObtainable > 0 ? round(($termTotal / $totalObtainable) * 100, 1) : 0,
-                'cum_percentage'   => $totalObtainable > 0 ? round(($cumTotal  / $totalObtainable) * 100, 1) : 0,
-                'grades'           => $grades,
+                'term_total'           => $termTotal,
+                'cum_total'            => $cumTotal,
+                'term_average'         => $subjectCount > 0 ? round($termTotal / $subjectCount, 1) : 0,
+                'cum_average'          => $subjectCount > 0 ? round($cumTotal  / $subjectCount, 1) : 0,
+                'subject_count'        => $subjectCount,
+                'total_obtainable'     => $totalObtainable,
+                'term_percentage'      => $totalObtainable > 0 ? round(($termTotal / $totalObtainable) * 100, 1) : 0,
+                'cum_percentage'       => $percentageObtained,
+                'grades'               => $grades,
             ];
+
+            if ($percentageObtained > $topCumPercentage) {
+                $topCumPercentage = $percentageObtained;
+                $topPerformer = trim(($student->lastname ?? '') . ' ' . ($student->fname ?? ''));
+                $topPerformerPicture = $student->picture ? asset('storage/student_avatars/' . basename($student->picture)) : null;
+            }
         }
 
         $personalityProfiles = Studentpersonalityprofile::where('schoolclassid', $schoolclassid)
@@ -156,35 +163,35 @@ class ClassBroadsheetController extends Controller
         $schoolterm    = Schoolterm::where('id',    $termid)->value('term')    ?? 'N/A';
         $schoolsession = Schoolsession::where('id', $sessionid)->value('session') ?? 'N/A';
 
+        $avgCumPercentage = 0;
+        if (count($studentAnalytics) > 0) {
+            $totalCumPct = array_sum(array_column($studentAnalytics, 'cum_percentage'));
+            $avgCumPercentage = round($totalCumPct / count($studentAnalytics), 1);
+        }
+
         return view('classbroadsheet.classbroadsheet', compact(
             'students', 'subjects', 'broadsheetRows',
             'termScoreMap', 'cumScoreMap', 'personalityProfiles',
             'schoolclass', 'schoolterm', 'schoolsession',
             'schoolclassid', 'sessionid', 'termid',
-            'isSenior', 'studentAnalytics', 'pagetitle'
+            'isSenior', 'studentAnalytics', 'pagetitle',
+            'topPerformer', 'topPerformerPicture', 'avgCumPercentage'
         ));
     }
-
-    // =========================================================================
-    // GET PAST COMMENTS (AJAX GET) - FIXED VERSION
-    // =========================================================================
 
     public function getPastComments($studentId)
     {
         try {
             Log::info('getPastComments called for student: ' . $studentId);
 
-            // Use Student model instead of StudentRegistration
             $student = Student::find($studentId);
             if (!$student) {
-                Log::error('Student not found: ' . $studentId);
                 return response()->json([
                     'success' => false,
                     'message' => 'Student not found'
                 ], 404);
             }
 
-            // Get all profiles for this student
             $profiles = Studentpersonalityprofile::where('studentid', $studentId)
                 ->where(function ($q) {
                     $q->whereNotNull('classteachercomment')
@@ -195,8 +202,6 @@ class ClassBroadsheetController extends Controller
                 ->orderByDesc('sessionid')
                 ->orderByDesc('termid')
                 ->get();
-
-            Log::info('Found ' . $profiles->count() . ' profiles for student');
 
             $commentCounts = [
                 'classteacher' => 0,
@@ -209,38 +214,54 @@ class ClassBroadsheetController extends Controller
             $result = collect();
 
             foreach ($profiles as $profile) {
-                // Skip if no actual comment text
                 $hasComment = false;
                 $commentText = '';
                 $commentType = '';
+                $staffId = null;
 
                 if ($profile->classteachercomment && trim($profile->classteachercomment) !== '') {
                     $commentText = $profile->classteachercomment;
                     $commentType = 'Teacher';
+                    $staffId = $profile->staffid;
                     $commentCounts['classteacher']++;
                     $hasComment = true;
                 } elseif ($profile->guidancescomment && trim($profile->guidancescomment) !== '') {
                     $commentText = $profile->guidancescomment;
                     $commentType = 'Guidance';
+                    $staffId = $profile->staffid;
                     $commentCounts['guidance']++;
                     $hasComment = true;
                 } elseif ($profile->remark_on_other_activities && trim($profile->remark_on_other_activities) !== '') {
                     $commentText = $profile->remark_on_other_activities;
                     $commentType = 'Activities';
+                    $staffId = $profile->staffid;
                     $commentCounts['activities']++;
                     $hasComment = true;
                 } elseif ($profile->principalscomment && trim($profile->principalscomment) !== '') {
                     $commentText = $profile->principalscomment;
                     $commentType = 'Principal';
+                    $staffId = $profile->staffid;
                     $commentCounts['principal']++;
                     $hasComment = true;
                 }
 
-                if (!$hasComment) {
-                    continue;
+                if (!$hasComment) continue;
+
+                $staffName = null;
+                $staffPicture = null;
+
+                if ($staffId) {
+                    try {
+                        $staff = Staff::where('userid', $staffId)->first();
+                        if ($staff) {
+                            $staffName = $staff->getFullNameAttribute();
+                            $staffPicture = null;
+                        }
+                    } catch (\Exception $e) {
+                        Log::warning('Could not fetch staff info', ['staff_id' => $staffId]);
+                    }
                 }
 
-                // Get related models with error handling
                 $term = Schoolterm::find($profile->termid);
                 $session = Schoolsession::find($profile->sessionid);
                 $class = Schoolclass::where('schoolclass.id', $profile->schoolclassid)
@@ -255,12 +276,13 @@ class ClassBroadsheetController extends Controller
                     'comment_text' => $commentText,
                     'comment_type' => $commentType,
                     'date' => optional($profile->updated_at ?? $profile->created_at)->format('d M Y') ?? '',
+                    'staff_name' => $staffName ?? 'Unknown Staff',
+                    'staff_picture' => $staffPicture,
+                    'staff_id' => $staffId,
                 ]);
             }
 
             $commentCounts['total'] = $result->count();
-
-            // Get student name properly
             $studentName = trim($student->lastname . ' ' . $student->firstname . ' ' . ($student->othername ?? ''));
 
             return response()->json([
@@ -277,7 +299,6 @@ class ClassBroadsheetController extends Controller
         } catch (\Exception $e) {
             Log::error('getPastComments error', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
                 'studentId' => $studentId
             ]);
 
@@ -287,10 +308,6 @@ class ClassBroadsheetController extends Controller
             ], 500);
         }
     }
-
-    // =========================================================================
-    // UPDATE COMMENTS
-    // =========================================================================
 
     public function updateComments(Request $request, $schoolclassid, $sessionid, $termid)
     {
@@ -305,17 +322,17 @@ class ClassBroadsheetController extends Controller
 
         $signaturePath = null;
         if ($request->hasFile('signature') && $request->file('signature')->isValid()) {
-            $file          = $request->file('signature');
-            $filename      = 'signature_' . Auth::id() . '_' . time() . '.' . $file->getClientOriginalExtension();
-            $stored        = $file->storeAs('public/signatures', $filename);
+            $file = $request->file('signature');
+            $filename = 'signature_' . Auth::id() . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $stored = $file->storeAs('public/signatures', $filename);
             $signaturePath = str_replace('public/', '', $stored);
         }
 
-        $teacherComments  = $request->input('teacher_comments',            []);
-        $guidanceComments = $request->input('guidance_comments',           []);
-        $remarks          = $request->input('remarks_on_other_activities', []);
-        $principalComments = $request->input('principals_comments',        []);
-        $absences         = $request->input('no_of_times_school_absent',   []);
+        $teacherComments = $request->input('teacher_comments', []);
+        $guidanceComments = $request->input('guidance_comments', []);
+        $remarks = $request->input('remarks_on_other_activities', []);
+        $principalComments = $request->input('principals_comments', []);
+        $absences = $request->input('no_of_times_school_absent', []);
 
         $allStudentIds = array_unique(array_merge(
             array_keys($teacherComments),
@@ -334,11 +351,11 @@ class ClassBroadsheetController extends Controller
             $updatedCount = $createdCount = $skippedCount = 0;
 
             foreach ($allStudentIds as $studentId) {
-                $teacherComment  = trim($teacherComments[$studentId]  ?? '');
-                $guidanceComment = trim($guidanceComments[$studentId]  ?? '');
-                $remark          = trim($remarks[$studentId]           ?? '');
+                $teacherComment = trim($teacherComments[$studentId] ?? '');
+                $guidanceComment = trim($guidanceComments[$studentId] ?? '');
+                $remark = trim($remarks[$studentId] ?? '');
                 $principalComment = trim($principalComments[$studentId] ?? '');
-                $absence         = (isset($absences[$studentId]) && $absences[$studentId] !== '')
+                $absence = (isset($absences[$studentId]) && $absences[$studentId] !== '')
                     ? (int) $absences[$studentId] : null;
 
                 if ($teacherComment === '' && $guidanceComment === '' && $remark === '' && $principalComment === '' && $absence === null && !$signaturePath) {
@@ -346,19 +363,19 @@ class ClassBroadsheetController extends Controller
                     continue;
                 }
 
-                $existing = Studentpersonalityprofile::where('studentid',     $studentId)
+                $existing = Studentpersonalityprofile::where('studentid', $studentId)
                     ->where('schoolclassid', $schoolclassid)
-                    ->where('sessionid',     $sessionid)
-                    ->where('termid',        $termid)
+                    ->where('sessionid', $sessionid)
+                    ->where('termid', $termid)
                     ->first();
 
                 $payload = [
-                    'staffid'                    => Auth::id(),
-                    'classteachercomment'        => $teacherComment  ?: null,
-                    'guidancescomment'           => $guidanceComment ?: null,
-                    'remark_on_other_activities' => $remark          ?: null,
-                    'principalscomment'          => $principalComment ?: null,
-                    'no_of_times_school_absent'  => $absence,
+                    'staffid' => Auth::id(),
+                    'classteachercomment' => $teacherComment ?: null,
+                    'guidancescomment' => $guidanceComment ?: null,
+                    'remark_on_other_activities' => $remark ?: null,
+                    'principalscomment' => $principalComment ?: null,
+                    'no_of_times_school_absent' => $absence,
                 ];
                 if ($signaturePath) $payload['signature'] = $signaturePath;
 
@@ -367,10 +384,10 @@ class ClassBroadsheetController extends Controller
                     $updatedCount++;
                 } else {
                     Studentpersonalityprofile::create(array_merge($payload, [
-                        'studentid'     => $studentId,
+                        'studentid' => $studentId,
                         'schoolclassid' => $schoolclassid,
-                        'sessionid'     => $sessionid,
-                        'termid'        => $termid,
+                        'sessionid' => $sessionid,
+                        'termid' => $termid,
                     ]));
                     $createdCount++;
                 }
