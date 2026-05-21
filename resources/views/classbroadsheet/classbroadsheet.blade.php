@@ -23,6 +23,42 @@
 *, *::before, *::after { box-sizing: border-box; }
 body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
+/* Animations */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeInLeft {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+@keyframes fadeInRight {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+@keyframes shimmer {
+    0% { background-position: -1000px 0; }
+    100% { background-position: 1000px 0; }
+}
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.animate-fadeInUp { animation: fadeInUp 0.5s ease forwards; }
+.animate-fadeInLeft { animation: fadeInLeft 0.5s ease forwards; }
+.animate-fadeInRight { animation: fadeInRight 0.5s ease forwards; }
+.animate-pulse:hover { animation: pulse 0.3s ease-in-out; }
+.animate-shimmer { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 1000px 100%; animation: shimmer 2s infinite; }
+
 .cb-hero {
     background: linear-gradient(135deg, var(--cb-navy) 0%, #1e4a7e 55%, #0d9488 100%);
     border-radius: var(--cb-radius);
@@ -30,6 +66,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     margin-bottom: 28px;
     position: relative;
     overflow: hidden;
+    animation: fadeInUp 0.6s ease;
 }
 .cb-hero::before {
     content: '';
@@ -39,6 +76,16 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     width: 280px;
     height: 280px;
     background: radial-gradient(circle, rgba(255,255,255,.07) 0%, transparent 70%);
+    border-radius: 50%;
+}
+.cb-hero::after {
+    content: '';
+    position: absolute;
+    bottom: -60px;
+    left: -60px;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(255,255,255,.05) 0%, transparent 70%);
     border-radius: 50%;
 }
 .cb-hero h1 {
@@ -70,6 +117,11 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     display: inline-flex;
     align-items: center;
     gap: 5px;
+    transition: all 0.3s ease;
+}
+.cb-meta-pill:hover {
+    background: rgba(255,255,255,.22);
+    transform: translateY(-2px);
 }
 
 .btn-back {
@@ -84,11 +136,12 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    transition: all .2s;
+    transition: all .3s ease;
 }
 .btn-back:hover {
     background: rgba(255,255,255,.22);
     color: #fff;
+    transform: translateX(-3px);
 }
 
 .cb-stat {
@@ -98,11 +151,16 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     padding: 20px 22px;
     position: relative;
     overflow: hidden;
-    transition: transform .15s, box-shadow .15s;
+    transition: all 0.3s ease;
+    animation: fadeInUp 0.5s ease backwards;
 }
+.cb-stat:nth-child(1) { animation-delay: 0.1s; }
+.cb-stat:nth-child(2) { animation-delay: 0.2s; }
+.cb-stat:nth-child(3) { animation-delay: 0.3s; }
+.cb-stat:nth-child(4) { animation-delay: 0.4s; }
 .cb-stat:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--cb-shadow);
+    transform: translateY(-5px);
+    box-shadow: var(--cb-shadow-lg);
 }
 .cb-stat .stat-accent {
     position: absolute;
@@ -141,6 +199,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     padding: 18px 22px;
     margin-bottom: 22px;
     box-shadow: var(--cb-shadow);
+    animation: fadeInLeft 0.5s ease;
 }
 .col-toggle-panel h6 {
     font-size: 13px;
@@ -168,12 +227,13 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     border: 1.5px solid var(--cb-border);
     background: var(--cb-surface);
     color: var(--cb-muted);
-    transition: all .18s ease;
+    transition: all 0.3s ease;
     user-select: none;
 }
 .toggle-chip:hover {
     border-color: var(--cb-teal);
     color: var(--cb-teal);
+    transform: translateY(-2px);
 }
 .toggle-chip.active {
     background: var(--cb-teal);
@@ -188,6 +248,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     border-radius: var(--cb-radius);
     box-shadow: var(--cb-shadow);
     overflow: hidden;
+    animation: fadeInUp 0.5s ease;
 }
 .cb-card-header {
     padding: 18px 24px;
@@ -198,15 +259,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     flex-wrap: wrap;
     gap: 10px;
     background: linear-gradient(to right, #f8fafc, #f0fdf9);
-}
-.cb-card-header h5 {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--cb-navy);
-    margin: 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
 }
 
 .cb-table {
@@ -236,8 +288,12 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .cb-table tbody td.td-name {
     text-align: left;
 }
+.cb-table tbody tr {
+    transition: all 0.3s ease;
+}
 .cb-table tbody tr:hover td {
     background: #f0fdf9;
+    transform: scale(1.01);
 }
 
 .score-dual {
@@ -255,6 +311,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     border-radius: 5px;
     font-size: 11px;
     font-weight: 700;
+    transition: all 0.2s ease;
 }
 .score-row-term {
     background: rgba(14,165,233,.08);
@@ -263,6 +320,9 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .score-row-cum {
     background: rgba(15,35,66,.06);
     border-left: 2.5px solid var(--cb-navy);
+}
+.score-row:hover {
+    transform: translateX(3px);
 }
 .score-lbl {
     font-size: 8.5px;
@@ -278,6 +338,10 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     border-radius: 8px;
     font-size: 9px;
     font-weight: 700;
+    transition: all 0.2s ease;
+}
+.grade-badge:hover {
+    transform: scale(1.1);
 }
 .g-a,.g-a1             { background: #dcfce7; color: #15803d; }
 .g-b,.g-b2,.g-b3       { background: #dbeafe; color: #1d4ed8; }
@@ -290,7 +354,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .score-green { color: #16a34a !important; }
 
 .analytics-cell {
-    min-width: 160px;
+    min-width: 180px;
     font-size: 11px;
     line-height: 1.4;
 }
@@ -298,7 +362,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 2px 0;
+    padding: 3px 0;
     gap: 6px;
 }
 .analytics-lbl {
@@ -311,6 +375,10 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     color: var(--cb-navy);
     font-size: 11.5px;
 }
+.analytics-percentage {
+    font-weight: 800;
+    font-size: 12px;
+}
 .pct-bar-wrap {
     background: #e2e8f0;
     border-radius: 4px;
@@ -321,6 +389,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .pct-bar {
     height: 100%;
     border-radius: 4px;
+    transition: width 0.5s ease;
 }
 .grade-trigger-btn {
     background: none;
@@ -328,13 +397,14 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     cursor: pointer;
     color: var(--cb-sky);
     font-size: 15px;
-    padding: 2px 5px;
-    border-radius: 5px;
-    transition: color .15s, background .15s;
+    padding: 5px 8px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
 }
 .grade-trigger-btn:hover {
     color: var(--cb-teal);
-    background: rgba(13,148,136,.08);
+    background: rgba(13,148,136,.1);
+    transform: scale(1.1);
 }
 
 .cb-input {
@@ -343,7 +413,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     padding: 6px 10px;
     font-size: 12px;
     width: 100%;
-    transition: border .15s, box-shadow .15s;
+    transition: all 0.3s ease;
     background: var(--cb-surface);
     font-family: 'DM Sans', sans-serif;
 }
@@ -352,9 +422,11 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     outline: none;
     box-shadow: 0 0 0 3px rgba(13,148,136,.12);
     background: #fff;
+    transform: translateX(2px);
 }
 .cb-input.has-value {
     border-left-color: var(--cb-teal);
+    background: #f0fdf9;
 }
 .absence-input {
     width: 72px !important;
@@ -374,14 +446,15 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     flex-shrink: 0;
     border: 2px solid var(--cb-border);
     cursor: pointer;
-    transition: border-color .15s, transform .15s;
+    transition: all 0.3s ease;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 .cb-avatar:hover {
     border-color: var(--cb-teal);
-    transform: scale(1.08);
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(13,148,136,.2);
 }
 .cb-avatar img {
     width: 100%;
@@ -414,10 +487,10 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     padding: 2px 8px;
     border-radius: 20px;
     margin-top: 3px;
-    transition: all .2s;
+    transition: all 0.3s ease;
 }
 .ac-idle    { background: #f1f5f9; color: #94a3b8; }
-.ac-saving  { background: #fef3c7; color: #92400e; }
+.ac-saving  { background: #fef3c7; color: #92400e; animation: pulse 1s infinite; }
 .ac-saved   { background: #dcfce7; color: #15803d; }
 .ac-err     { background: #ffe4e6; color: #be123c; }
 
@@ -430,6 +503,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     padding: 1px 7px;
     border-radius: 20px;
     margin-top: 2px;
+    transition: all 0.3s ease;
 }
 .dot-saved    { background: #dcfce7; color: #15803d; }
 .dot-unsaved  { background: #f1f5f9; color: #94a3b8; }
@@ -448,6 +522,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     flex-wrap: wrap;
     gap: 12px;
     border-radius: 0 0 var(--cb-radius) var(--cb-radius);
+    animation: fadeInUp 0.5s ease;
 }
 .save-bar label {
     color: rgba(255,255,255,.7);
@@ -463,9 +538,11 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     color: #fff;
     font-size: 12px;
     cursor: pointer;
+    transition: all 0.3s ease;
 }
 .file-input-styled:hover {
     border-color: var(--cb-teal);
+    transform: translateY(-2px);
 }
 .btn-save-all {
     background: var(--cb-teal);
@@ -476,7 +553,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     font-size: 14px;
     font-weight: 700;
     cursor: pointer;
-    transition: background .18s, transform .12s, box-shadow .18s;
+    transition: all 0.3s ease;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -484,27 +561,9 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 }
 .btn-save-all:hover {
     background: #0b7c72;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 14px rgba(13,148,136,.4);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(13,148,136,.4);
 }
-
-.save-counter {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-}
-.save-counter-pill {
-    font-size: 12px;
-    font-weight: 700;
-    padding: 4px 12px;
-    border-radius: 20px;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-}
-.sc-pill-done    { background: rgba(34,197,94,.2); color: #86efac; }
-.sc-pill-pending { background: rgba(255,255,255,.1); color: rgba(255,255,255,.6); }
 
 .cb-toast {
     position: fixed;
@@ -520,19 +579,11 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     font-size: 13px;
     font-weight: 600;
     box-shadow: var(--cb-shadow-lg);
-    animation: cbSlideUp .3s ease;
+    animation: slideIn 0.3s ease;
 }
 .cb-toast-success { background: #ecfdf5; border: 1.5px solid #86efac; color: #15803d; }
 .cb-toast-error   { background: #fff1f2; border: 1.5px solid #fca5a5; color: #be123c; }
 .cb-toast-info    { background: #eff6ff; border: 1.5px solid #93c5fd; color: #1d4ed8; }
-@keyframes cbSlideUp {
-    from { opacity:0; transform:translateY(20px); }
-    to { opacity:1; transform:translateY(0); }
-}
-@keyframes cbSpin {
-    0%{transform:rotate(0)} 100%{transform:rotate(360deg)}
-}
-.spin { display:inline-block; animation: cbSpin 1s linear infinite; }
 
 .cb-search {
     position: relative;
@@ -545,12 +596,13 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     font-size: 13px;
     background: var(--cb-surface);
     font-family: 'DM Sans', sans-serif;
-    transition: border .15s;
+    transition: all 0.3s ease;
 }
 .cb-search input:focus {
     border-color: var(--cb-teal);
     outline: none;
     box-shadow: 0 0 0 3px rgba(13,148,136,.1);
+    transform: translateX(2px);
 }
 .cb-search i {
     position: absolute;
@@ -583,11 +635,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     border: 4px solid #fff;
     box-shadow: 0 24px 60px rgba(0,0,0,.4);
     object-fit: contain;
-    animation: cbZoomIn .3s ease;
-}
-@keyframes cbZoomIn {
-    from { opacity:0; transform:scale(.82); }
-    to { opacity:1; transform:scale(1); }
+    animation: fadeInUp 0.3s ease;
 }
 
 #cbGradePopup {
@@ -598,9 +646,10 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     border: 2px solid var(--cb-teal);
     border-radius: 14px;
     box-shadow: var(--cb-shadow-lg);
-    width: 360px;
-    max-height: 490px;
+    width: 380px;
+    max-height: 520px;
     overflow: hidden;
+    animation: fadeInUp 0.2s ease;
 }
 #cbGradePopup.is-open {
     display: block;
@@ -608,7 +657,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .gpop-hdr {
     background: linear-gradient(135deg, var(--cb-navy), var(--cb-teal));
     color: #fff;
-    padding: 11px 16px;
+    padding: 12px 18px;
     border-radius: 12px 12px 0 0;
     font-weight: 700;
     font-size: 13px;
@@ -616,9 +665,27 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     justify-content: space-between;
     align-items: center;
 }
+.gpop-close-btn {
+    background: rgba(255,255,255,.18);
+    border: none;
+    color: #fff;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    cursor: pointer;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+.gpop-close-btn:hover {
+    background: rgba(255,255,255,.35);
+    transform: rotate(90deg);
+}
 .gpop-body {
-    padding: 14px;
-    max-height: 400px;
+    padding: 16px;
+    max-height: 420px;
     overflow-y: auto;
 }
 .gpop-table {
@@ -633,25 +700,52 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: .5px;
-    padding: 6px 8px;
+    padding: 8px 10px;
     border-bottom: 1px solid var(--cb-border);
     text-align: center;
 }
 .gpop-table td {
-    padding: 5px 8px;
+    padding: 6px 8px;
     border-bottom: 1px solid #f1f5f9;
     font-weight: 600;
     text-align: center;
     vertical-align: middle;
+    transition: background 0.2s ease;
+}
+.gpop-table tr:hover td {
+    background: #f0fdf9;
 }
 .gpop-summary {
-    background: var(--cb-surface);
-    border-radius: 8px;
-    padding: 10px 12px;
-    margin-top: 10px;
+    background: linear-gradient(135deg, #f8fafc, #f0fdf9);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-top: 12px;
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+.gpop-sum-item {
+    text-align: center;
+    padding: 6px;
+    border-radius: 8px;
+    background: white;
+    transition: all 0.2s ease;
+}
+.gpop-sum-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+.gpop-sum-lbl {
+    font-size: 9px;
+    color: var(--cb-muted);
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    margin-bottom: 4px;
+}
+.gpop-sum-val {
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--cb-navy);
 }
 #cbPopupBackdrop {
     display: none;
@@ -659,15 +753,16 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     inset: 0;
     z-index: 9998;
     background: rgba(0,0,0,.28);
+    animation: fadeInUp 0.2s ease;
 }
 
 .past-comment-item {
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
     animation: fadeInUp 0.3s ease;
 }
-@keyframes fadeInUp {
-    from { opacity:0; transform:translateY(10px); }
-    to { opacity:1; transform:translateY(0); }
+.past-comment-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
 }
 
 .cb-student-card {
@@ -677,6 +772,12 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     margin-bottom: 18px;
     box-shadow: var(--cb-shadow);
     overflow: hidden;
+    transition: all 0.3s ease;
+    animation: fadeInUp 0.4s ease;
+}
+.cb-student-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--cb-shadow-lg);
 }
 .cb-student-card .card-top {
     background: linear-gradient(135deg, #f8fafc, #f0fdf9);
@@ -695,6 +796,10 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     padding: 12px 16px;
     color: #fff;
     margin-bottom: 14px;
+    transition: all 0.3s ease;
+}
+.performance-strip:hover {
+    transform: translateY(-2px);
 }
 .ps-grid {
     display: grid;
@@ -707,6 +812,11 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     background: rgba(255,255,255,.1);
     border-radius: 8px;
     padding: 8px;
+    transition: all 0.2s ease;
+}
+.ps-item:hover {
+    background: rgba(255,255,255,.2);
+    transform: scale(1.02);
 }
 .ps-lbl {
     font-size: 9px;
@@ -725,14 +835,31 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     padding-bottom: 4px;
     margin-bottom: 14px;
 }
+.subjects-scroll::-webkit-scrollbar {
+    height: 4px;
+}
+.subjects-scroll::-webkit-scrollbar-track {
+    background: #e2e8f0;
+    border-radius: 10px;
+}
+.subjects-scroll::-webkit-scrollbar-thumb {
+    background: var(--cb-teal);
+    border-radius: 10px;
+}
 .subj-chip {
     flex-shrink: 0;
     text-align: center;
     border: 1px solid var(--cb-border);
     border-radius: 10px;
-    padding: 8px 10px;
-    min-width: 80px;
+    padding: 8px 12px;
+    min-width: 85px;
     background: var(--cb-surface);
+    transition: all 0.2s ease;
+}
+.subj-chip:hover {
+    transform: translateY(-2px);
+    border-color: var(--cb-teal);
+    box-shadow: 0 2px 6px rgba(13,148,136,.15);
 }
 .comment-field-group {
     margin-bottom: 10px;
@@ -748,12 +875,42 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 #cbCommentModal .modal-content {
     border-radius: var(--cb-radius);
     overflow: hidden;
+    animation: fadeInUp 0.3s ease;
 }
 #cbCommentModal .modal-header {
     background: linear-gradient(135deg, var(--cb-navy), var(--cb-teal));
     color: #fff;
     border: none;
     padding: 20px 24px;
+}
+
+/* Tooltip styles */
+[data-tooltip] {
+    position: relative;
+    cursor: pointer;
+}
+[data-tooltip]:before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1e293b;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 10px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    pointer-events: none;
+    z-index: 1000;
+}
+[data-tooltip]:hover:before {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(-5px);
 }
 </style>
 
@@ -841,7 +998,10 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 @php $cbAnalyticsJson = json_encode($studentAnalytics, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); @endphp
 
 <div id="cbGradePopup">
-    <div class="gpop-hdr"><span id="gpopTitle"><i class="ri-bar-chart-line me-1"></i>Grade Breakdown</span><button type="button" class="gpop-close-btn" id="gpopCloseBtn">&times;</button></div>
+    <div class="gpop-hdr">
+        <span id="gpopTitle"><i class="ri-bar-chart-line me-1"></i>Grade Breakdown</span>
+        <button type="button" class="gpop-close-btn" id="gpopCloseBtn">&times;</button>
+    </div>
     <div class="gpop-body" id="gpopBody"></div>
 </div>
 <div id="cbPopupBackdrop"></div>
@@ -873,7 +1033,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                         @foreach ($subjects as $subject)
                             <th class="cbcol-scores" style="min-width:86px;">{{ $subject->subject }}</th>
                         @endforeach
-                        <th class="cbcol-summary" style="min-width:180px;">Summary</th>
+                        <th class="cbcol-summary" style="min-width:200px;">Summary</th>
                         <th class="cbcol-teacher" style="min-width:200px;">Teacher's Comment</th>
                         <th class="cbcol-guidance" style="min-width:160px;">Counselor's Comment</th>
                         <th class="cbcol-activities" style="min-width:160px;">Remark on Activities</th>
@@ -940,16 +1100,37 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                 </td>
                             @endforeach
                             <td class="cbcol-summary analytics-cell">
-                                <div class="analytics-row"><span class="analytics-lbl">Total (Term)</span><span class="analytics-val">{{ $an['term_total']??0 }}</span></div>
-                                <div class="analytics-row"><span class="analytics-lbl">Total (Cum)</span><span class="analytics-val">{{ $an['cum_total']??0 }}</span></div>
-                                <div class="analytics-row"><span class="analytics-lbl">Obtainable</span><span class="analytics-val">{{ $an['total_obtainable']??0 }}</span></div>
-                                <div class="analytics-row"><span class="analytics-lbl">% (Term)</span><span class="analytics-val {{ ($an['term_percentage']??0)<50?'score-red':'score-green' }}">{{ $an['term_percentage']??0 }}%</span></div>
-                                <div class="analytics-row"><span class="analytics-lbl">% (Cum)</span><span class="analytics-val {{ ($an['cum_percentage']??0)<50?'score-red':'score-green' }}">{{ $an['cum_percentage']??0 }}%</span></div>
+                                <div class="analytics-row">
+                                    <span class="analytics-lbl">Total (Term)</span>
+                                    <span class="analytics-val">{{ $an['term_total']??0 }}</span>
+                                </div>
+                                <div class="analytics-row">
+                                    <span class="analytics-lbl">Total (Cum)</span>
+                                    <span class="analytics-val">{{ $an['cum_total']??0 }}</span>
+                                </div>
+                                <div class="analytics-row">
+                                    <span class="analytics-lbl">Obtainable</span>
+                                    <span class="analytics-val">{{ $an['total_obtainable']??0 }}</span>
+                                </div>
+                                <div class="analytics-row">
+                                    <span class="analytics-lbl">% (Term)</span>
+                                    <span class="analytics-val analytics-percentage {{ ($an['term_percentage']??0)<50?'score-red':(($an['term_percentage']??0)<70?'score-amber':'score-green') }}">
+                                        {{ $an['term_percentage']??0 }}%
+                                    </span>
+                                </div>
+                                <div class="analytics-row">
+                                    <span class="analytics-lbl">% (Cum)</span>
+                                    <span class="analytics-val analytics-percentage {{ ($an['cum_percentage']??0)<50?'score-red':(($an['cum_percentage']??0)<70?'score-amber':'score-green') }}">
+                                        {{ $an['cum_percentage']??0 }}%
+                                    </span>
+                                </div>
                                 <div class="pct-bar-wrap mt-1">
                                     <div class="pct-bar" style="width:{{ $an['cum_percentage']??0 }}%;background:{{ ($an['cum_percentage']??0)>=50?'var(--cb-green)':'var(--cb-rose)' }};"></div>
                                 </div>
                                 <div class="text-center mt-1">
-                                    <button type="button" class="grade-trigger-btn" data-sid="{{ $sid }}" data-sname="{{ $fullName }}" title="View grade breakdown"><i class="ri-eye-line"></i></button>
+                                    <button type="button" class="grade-trigger-btn" data-sid="{{ $sid }}" data-sname="{{ $fullName }}" data-tooltip="View Grade Breakdown">
+                                        <i class="ri-eye-line"></i>
+                                    </button>
                                 </div>
                             </td>
                             <td class="cbcol-teacher"><input type="text" class="cb-input desk-teacher comment-input {{ $hasComment ? 'has-value' : '' }}" data-sid="{{ $sid }}" data-field="teacher" value="{{ $profile ? $profile->classteachercomment : '' }}" placeholder="Click to add comment..." autocomplete="off"></td>
@@ -997,8 +1178,8 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                 <div class="ps-item"><div class="ps-lbl">Total (Term)</div><div class="ps-val">{{ $an['term_total']??0 }}</div></div>
                                 <div class="ps-item"><div class="ps-lbl">Total (Cum)</div><div class="ps-val">{{ $an['cum_total']??0 }}</div></div>
                                 <div class="ps-item"><div class="ps-lbl">Obtainable</div><div class="ps-val">{{ $an['total_obtainable']??0 }}</div></div>
-                                <div class="ps-item"><div class="ps-lbl">% (Term)</div><div class="ps-val">{{ $an['term_percentage']??0 }}%</div></div>
-                                <div class="ps-item"><div class="ps-lbl">% (Cum)</div><div class="ps-val">{{ $an['cum_percentage']??0 }}%</div></div>
+                                <div class="ps-item"><div class="ps-lbl">% (Term)</div><div class="ps-val {{ ($an['term_percentage']??0)<50?'score-red':(($an['term_percentage']??0)<70?'score-amber':'score-green') }}">{{ $an['term_percentage']??0 }}%</div></div>
+                                <div class="ps-item"><div class="ps-lbl">% (Cum)</div><div class="ps-val {{ ($an['cum_percentage']??0)<50?'score-red':(($an['cum_percentage']??0)<70?'score-amber':'score-green') }}">{{ $an['cum_percentage']??0 }}%</div></div>
                             </div>
                         </div>
                         <div class="subjects-scroll">
@@ -1332,25 +1513,93 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     function closeGradePop() { var gpop = document.getElementById('cbGradePopup'); var backdrop = document.getElementById('cbPopupBackdrop'); if (gpop) gpop.classList.remove('is-open'); if (backdrop) backdrop.style.display = 'none'; }
     function gradeClass(g) { return (g || '-').toLowerCase().replace(/[\s-]/g, ''); }
     function openGradePop(sid, name, triggerEl) {
-        var an = SA[sid], gpop = document.getElementById('cbGradePopup'), gpopBody = document.getElementById('gpopBody'), gpopTitle = document.getElementById('gpopTitle');
-        if (!an || !gpop) return;
+        var an = SA[sid];
+        var gpop = document.getElementById('cbGradePopup');
+        var gpopBody = document.getElementById('gpopBody');
+        var gpopTitle = document.getElementById('gpopTitle');
+
+        if (!an || !gpop) {
+            console.error('Missing data for grade popup', { an: an, gpop: gpop });
+            toast('Unable to load grade breakdown', 'error');
+            return;
+        }
+
         gpopTitle.innerHTML = '<i class="ri-bar-chart-line me-1"></i>' + esc(name) + "'s Grade Breakdown";
         var grades = an.grades || [];
-        var rows = grades.map(function(g) {
-            var tgl = gradeClass(g.term_grade), cgl = gradeClass(g.cum_grade);
-            var tC = (g.term_score > 0 && g.term_score < 50) ? 'score-red' : '';
-            var cC = (g.cum_score > 0 && g.cum_score < 50) ? 'score-red' : '';
-            var tBadge = (g.term_grade && g.term_grade !== '-') ? '<span class="grade-badge g-' + tgl + '">' + esc(g.term_grade) + '</span>' : '—';
-            var cBadge = (g.cum_grade && g.cum_grade !== '-') ? '<span class="grade-badge g-' + cgl + '">' + esc(g.cum_grade) + '</span>' : '—';
-            return '<tr><td style="text-align:left;">' + esc(g.subject) + '<td class="' + tC + '">' + (g.term_score || '—') + '<td>' + tBadge + '<td class="' + cC + '">' + (g.cum_score || '—') + '<td>' + cBadge + '<\/tr>';
-        }).join('');
-        gpopBody.innerHTML = '<table class="gpop-table"><thead><tr><th>Subject</th><th style="color:#0891b2;">T.Score</th><th style="color:#0891b2;">T.Grade</th><th>C.Score</th><th>C.Grade</th><\/thead><tbody>' + (rows || '<tr><td colspan="5" class="text-center text-muted py-2">No grades<\/tr>') + '<\/tbody><\/table><div class="gpop-summary"><div class="gpop-sum-item"><div class="gpop-sum-lbl">Total (Term)</div><div class="gpop-sum-val">' + (an.term_total || 0) + '</div></div><div class="gpop-sum-item"><div class="gpop-sum-lbl">Total (Cum)</div><div class="gpop-sum-val">' + (an.cum_total || 0) + '</div></div><div class="gpop-sum-item"><div class="gpop-sum-lbl">% (Term)</div><div class="gpop-sum-val ' + ((an.term_percentage || 0) < 50 ? 'score-red' : 'score-green') + '">' + (an.term_percentage || 0) + '%</div></div><div class="gpop-sum-item"><div class="gpop-sum-lbl">% (Cum)</div><div class="gpop-sum-val ' + ((an.cum_percentage || 0) < 50 ? 'score-red' : 'score-green') + '">' + (an.cum_percentage || 0) + '%</div></div><div class="gpop-sum-item"><div class="gpop-sum-lbl">Obtainable</div><div class="gpop-sum-val">' + (an.total_obtainable || 0) + '</div></div><div class="gpop-sum-item"><div class="gpop-sum-lbl">Subjects</div><div class="gpop-sum-val">' + (an.subject_count || 0) + '</div></div></div>';
-        var rect = triggerEl.getBoundingClientRect(), pw = 360, ph = 490;
-        var top = rect.bottom + window.scrollY + 8, left = rect.left + window.scrollX - (pw / 2) + (rect.width / 2);
-        if (rect.bottom + ph > window.innerHeight) top = rect.top + window.scrollY - ph - 8;
-        if (left < 8) left = 8; if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
-        gpop.style.top = top + 'px'; gpop.style.left = left + 'px'; gpop.classList.add('is-open');
-        var backdrop = document.getElementById('cbPopupBackdrop'); if (backdrop) backdrop.style.display = 'block';
+        var rows = '';
+
+        if (grades.length) {
+            rows = grades.map(function(g) {
+                var tgl = gradeClass(g.term_grade);
+                var cgl = gradeClass(g.cum_grade);
+                var tC = (g.term_score > 0 && g.term_score < 50) ? 'score-red' : '';
+                var cC = (g.cum_score > 0 && g.cum_score < 50) ? 'score-red' : '';
+                var tBadge = (g.term_grade && g.term_grade !== '-') ? '<span class="grade-badge g-' + tgl + '">' + esc(g.term_grade) + '</span>' : '—';
+                var cBadge = (g.cum_grade && g.cum_grade !== '-') ? '<span class="grade-badge g-' + cgl + '">' + esc(g.cum_grade) + '</span>' : '—';
+                return '<tr><td style="text-align:left;">' + esc(g.subject) + '</td><td class="' + tC + '">' + (g.term_score || '—') + '</td><td>' + tBadge + '</td><td class="' + cC + '">' + (g.cum_score || '—') + '</td><td>' + cBadge + '</td></tr>';
+            }).join('');
+        } else {
+            rows = '<tr><td colspan="5" class="text-center text-muted py-3">No grade records available</td></tr>';
+        }
+
+        gpopBody.innerHTML = `
+            <table class="gpop-table">
+                <thead>
+                    <tr>
+                        <th>Subject</th>
+                        <th style="color:#0891b2;">T.Score</th>
+                        <th style="color:#0891b2;">T.Grade</th>
+                        <th>C.Score</th>
+                        <th>C.Grade</th>
+                    </tr>
+                </thead>
+                <tbody>${rows}</tbody>
+            </table>
+            <div class="gpop-summary">
+                <div class="gpop-sum-item">
+                    <div class="gpop-sum-lbl">Total (Term)</div>
+                    <div class="gpop-sum-val">${an.term_total || 0}</div>
+                </div>
+                <div class="gpop-sum-item">
+                    <div class="gpop-sum-lbl">Total (Cum)</div>
+                    <div class="gpop-sum-val">${an.cum_total || 0}</div>
+                </div>
+                <div class="gpop-sum-item">
+                    <div class="gpop-sum-lbl">Obtainable</div>
+                    <div class="gpop-sum-val">${an.total_obtainable || 0}</div>
+                </div>
+                <div class="gpop-sum-item">
+                    <div class="gpop-sum-lbl">% (Term)</div>
+                    <div class="gpop-sum-val ${(an.term_percentage || 0) < 50 ? 'score-red' : ((an.term_percentage || 0) < 70 ? 'score-amber' : 'score-green')}">${an.term_percentage || 0}%</div>
+                </div>
+                <div class="gpop-sum-item">
+                    <div class="gpop-sum-lbl">% (Cum)</div>
+                    <div class="gpop-sum-val ${(an.cum_percentage || 0) < 50 ? 'score-red' : ((an.cum_percentage || 0) < 70 ? 'score-amber' : 'score-green')}">${an.cum_percentage || 0}%</div>
+                </div>
+                <div class="gpop-sum-item">
+                    <div class="gpop-sum-lbl">Subjects</div>
+                    <div class="gpop-sum-val">${an.subject_count || 0}</div>
+                </div>
+            </div>
+        `;
+
+        var rect = triggerEl.getBoundingClientRect();
+        var pw = 380, ph = 520;
+        var top = rect.bottom + window.scrollY + 8;
+        var left = rect.left + window.scrollX - (pw / 2) + (rect.width / 2);
+
+        if (rect.bottom + ph > window.innerHeight) {
+            top = rect.top + window.scrollY - ph - 8;
+        }
+        if (left < 8) left = 8;
+        if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+
+        gpop.style.top = top + 'px';
+        gpop.style.left = left + 'px';
+        gpop.classList.add('is-open');
+
+        var backdrop = document.getElementById('cbPopupBackdrop');
+        if (backdrop) backdrop.style.display = 'block';
     }
 
     function doSaveAll() {
@@ -1409,7 +1658,18 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         var backdrop = document.getElementById('cbPopupBackdrop');
         if (backdrop) backdrop.addEventListener('click', closeGradePop);
         document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeGradePop(); });
-        document.addEventListener('click', function(e) { var btn = e.target.closest('.grade-trigger-btn'); if (!btn) return; e.stopPropagation(); var sid = btn.getAttribute('data-sid'); var name = btn.getAttribute('data-sname'); closeGradePop(); openGradePop(sid, name, btn); });
+
+        // Fix for grade trigger button - ensure it opens the popup
+        document.addEventListener('click', function(e) {
+            var btn = e.target.closest('.grade-trigger-btn');
+            if (!btn) return;
+            e.stopPropagation();
+            e.preventDefault();
+            var sid = btn.getAttribute('data-sid');
+            var name = btn.getAttribute('data-sname');
+            closeGradePop();
+            openGradePop(sid, name, btn);
+        });
 
         (function() {
             var vals = Object.values(SA);
