@@ -290,7 +290,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .score-green { color: #16a34a !important; }
 
 .analytics-cell {
-    min-width: 130px;
+    min-width: 140px;
     font-size: 11px;
     line-height: 1.4;
 }
@@ -670,26 +670,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     to { opacity:1; transform:translateY(0); }
 }
 
-.staff-avatar-img {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid;
-}
-.staff-avatar-initials {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 11px;
-    font-weight: 700;
-    color: white;
-    background: linear-gradient(135deg, var(--cb-teal), var(--cb-sky));
-}
-
 .cb-student-card {
     background: var(--cb-white);
     border: 1px solid var(--cb-border);
@@ -819,7 +799,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         <div class="cb-stat">
             <div class="stat-accent" style="background:linear-gradient(90deg,var(--cb-green),#4ade80);"></div>
             <div class="stat-ico"><i class="ri-percent-line"></i></div>
-            <div class="stat-value text-success" id="statAvgPct">{{ $avgCumPercentage ?? 0 }}%</div>
+            <div class="stat-value text-success" id="statAvgPct">{{ $avgPercentageObtained ?? 0 }}%</div>
             <div class="stat-label">Avg % Obtained</div>
         </div>
     </div>
@@ -955,14 +935,31 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                         <div class="score-row score-row-term"><span class="score-lbl" style="color:#0891b2;">T</span><span class="{{ $tC }}">{{ $tScore ?: '—' }}</span>@if($tGrade !== '-')<span class="grade-badge g-{{ strtolower($tGrade) }}">{{ $tGrade }}</span>@endif</div>
                                         <div class="score-row score-row-cum"><span class="score-lbl" style="color:var(--cb-navy);">C</span><span class="{{ $cC }}">{{ $cScore ?: '—' }}</span>@if($cGrade !== '-')<span class="grade-badge g-{{ strtolower($cGrade) }}">{{ $cGrade }}</span>@endif</div>
                                     </div>
-                                </td>
+                                </table>
                             @endforeach
                             <td class="cbcol-summary analytics-cell">
-                                <div class="analytics-row"><span class="analytics-lbl">Cum Total</span><span class="analytics-val">{{ $an['cum_total']??0 }}</span></div>
-                                <div class="analytics-row"><span class="analytics-lbl">Obtainable</span><span class="analytics-val">{{ $an['total_obtainable']??0 }}</span></div>
-                                <div class="analytics-row"><span class="analytics-lbl">% Obtained</span><span class="analytics-val {{ ($an['cum_percentage']??0)<50?'score-red':'score-green' }}">{{ $an['cum_percentage']??0 }}%</span></div>
-                                <div class="pct-bar-wrap mt-1"><div class="pct-bar" style="width:{{ $an['cum_percentage']??0 }}%;background:{{ ($an['cum_percentage']??0)>=50?'var(--cb-green)':'var(--cb-rose)' }};"></div></div>
-                                <div class="text-center mt-1"><button type="button" class="grade-trigger-btn" data-sid="{{ $sid }}" data-sname="{{ $fullName }}" title="View grade breakdown"><i class="ri-eye-line"></i></button></div>
+                                <div class="analytics-row">
+                                    <span class="analytics-lbl">Total Obtained</span>
+                                    <span class="analytics-val">{{ $an['cum_total']??0 }}</span>
+                                </div>
+                                <div class="analytics-row">
+                                    <span class="analytics-lbl">Total Obtainable</span>
+                                    <span class="analytics-val">{{ $an['total_obtainable']??0 }}</span>
+                                </div>
+                                <div class="analytics-row">
+                                    <span class="analytics-lbl">% Obtained</span>
+                                    <span class="analytics-val {{ ($an['percentage_obtained']??0)<50?'score-red':'score-green' }}">
+                                        {{ $an['percentage_obtained']??0 }}%
+                                    </span>
+                                </div>
+                                <div class="pct-bar-wrap mt-1">
+                                    <div class="pct-bar" style="width:{{ $an['percentage_obtained']??0 }}%;background:{{ ($an['percentage_obtained']??0)>=50?'var(--cb-green)':'var(--cb-rose)' }};"></div>
+                                </div>
+                                <div class="text-center mt-1">
+                                    <button type="button" class="grade-trigger-btn" data-sid="{{ $sid }}" data-sname="{{ $fullName }}" title="View grade breakdown">
+                                        <i class="ri-eye-line"></i>
+                                    </button>
+                                </div>
                             </td>
                             <td class="cbcol-teacher"><input type="text" class="cb-input desk-teacher comment-input {{ $hasComment ? 'has-value' : '' }}" data-sid="{{ $sid }}" data-field="teacher" value="{{ $profile ? $profile->classteachercomment : '' }}" placeholder="Click to add comment..." autocomplete="off"></td>
                             <td class="cbcol-guidance"><input type="text" class="cb-input desk-guidance comment-input" data-sid="{{ $sid }}" data-field="guidance" value="{{ $profile ? $profile->guidancescomment : '' }}" placeholder="Click to add comment..." autocomplete="off"></td>
@@ -1004,13 +1001,32 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                     </div>
                     <div class="card-body-pad">
                         <div class="performance-strip">
-                            <div style="font-size:11px;font-weight:700;opacity:.8;margin-bottom:4px;"><i class="ri-bar-chart-line me-1"></i>Performance Summary</div>
+                            <div style="font-size:11px;font-weight:700;opacity:.8;margin-bottom:4px;">
+                                <i class="ri-bar-chart-line me-1"></i>Performance Summary
+                            </div>
                             <div class="ps-grid">
-                                <div class="ps-item"><div class="ps-lbl">Cum Total</div><div class="ps-val">{{ $an['cum_total']??0 }}</div></div>
-                                <div class="ps-item"><div class="ps-lbl">Obtainable</div><div class="ps-val">{{ $an['total_obtainable']??0 }}</div></div>
-                                <div class="ps-item"><div class="ps-lbl">% Obtained</div><div class="ps-val">{{ $an['cum_percentage']??0 }}%</div></div>
-                                <div class="ps-item"><div class="ps-lbl">Cum Avg</div><div class="ps-val">{{ $an['cum_average']??0 }}</div></div>
-                                <div class="ps-item"><div class="ps-lbl">Subjects</div><div class="ps-val">{{ $an['subject_count']??0 }}</div></div>
+                                <div class="ps-item">
+                                    <div class="ps-lbl">Total Obtained</div>
+                                    <div class="ps-val">{{ $an['cum_total']??0 }}</div>
+                                </div>
+                                <div class="ps-item">
+                                    <div class="ps-lbl">Obtainable</div>
+                                    <div class="ps-val">{{ $an['total_obtainable']??0 }}</div>
+                                </div>
+                                <div class="ps-item">
+                                    <div class="ps-lbl">% Obtained</div>
+                                    <div class="ps-val {{ ($an['percentage_obtained']??0)<50?'score-red':'score-green' }}">
+                                        {{ $an['percentage_obtained']??0 }}%
+                                    </div>
+                                </div>
+                                <div class="ps-item">
+                                    <div class="ps-lbl">Cum Avg</div>
+                                    <div class="ps-val">{{ $an['cum_average']??0 }}</div>
+                                </div>
+                                <div class="ps-item">
+                                    <div class="ps-lbl">Subjects</div>
+                                    <div class="ps-val">{{ $an['subject_count']??0 }}</div>
+                                </div>
                             </div>
                         </div>
                         <div class="subjects-scroll">
@@ -1088,10 +1104,12 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
             <div class="modal-body" style="padding: 24px;">
                 <div class="performance-strip" style="background: linear-gradient(135deg, var(--cb-navy), #1e5f74); border-radius: 12px; padding: 16px 20px; color: #fff; margin-bottom: 24px;">
-                    <div style="font-size: 12px; font-weight: 600; opacity: 0.9; margin-bottom: 12px;"><i class="ri-bar-chart-line me-1"></i> Performance Summary</div>
+                    <div style="font-size: 12px; font-weight: 600; opacity: 0.9; margin-bottom: 12px;">
+                        <i class="ri-bar-chart-line me-1"></i> Performance Summary
+                    </div>
                     <div class="ps-grid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px;">
                         <div class="ps-item" style="text-align: center; background: rgba(255,255,255,0.12); border-radius: 10px; padding: 10px;">
-                            <div class="ps-lbl" style="font-size: 10px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px;">Cum Total</div>
+                            <div class="ps-lbl" style="font-size: 10px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px;">Total Obtained</div>
                             <div class="ps-val" id="modalCumTotal" style="font-size: 20px; font-weight: 700; margin-top: 5px;">0</div>
                         </div>
                         <div class="ps-item" style="text-align: center; background: rgba(255,255,255,0.12); border-radius: 10px; padding: 10px;">
@@ -1240,7 +1258,8 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     };
 
     function openCommentModal(sid, field, studentName, studentAdm, studentImg, analytics) {
-        currentModalSid = sid; currentModalField = field;
+        currentModalSid = sid;
+        currentModalField = field;
         if (!commentModal) commentModal = new bootstrap.Modal(document.getElementById('cbCommentModal'));
         document.getElementById('modalStudentName').textContent = studentName;
         document.getElementById('modalStudentMeta').innerHTML = '<i class="ri-id-card-line me-1"></i> ' + (studentAdm || '');
@@ -1249,12 +1268,12 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         else { var initials = studentName.split(' ').map(function(n) { return n[0]; }).join('').substring(0, 2).toUpperCase(); avatarDiv.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;">' + esc(initials) + '</div>'; }
         document.getElementById('modalCumTotal').textContent = analytics.cum_total || 0;
         document.getElementById('modalObtainable').textContent = analytics.total_obtainable || 0;
-        document.getElementById('modalCumPct').textContent = (analytics.cum_percentage || 0) + '%';
+        document.getElementById('modalCumPct').textContent = (analytics.percentage_obtained || 0) + '%';
         document.getElementById('modalCumAvg').textContent = analytics.cum_average || 0;
         document.getElementById('modalSubjects').textContent = analytics.subject_count || 0;
         var cumPctEl = document.getElementById('modalCumPct');
-        if (analytics.cum_percentage >= 70) cumPctEl.style.color = '#4ade80';
-        else if (analytics.cum_percentage >= 50) cumPctEl.style.color = '#fbbf24';
+        if (analytics.percentage_obtained >= 70) cumPctEl.style.color = '#4ade80';
+        else if (analytics.percentage_obtained >= 50) cumPctEl.style.color = '#fbbf24';
         else cumPctEl.style.color = '#f87171';
         var labels = { teacher: "Teacher's Comment", guidance: "Counselor's Comment", activities: "Remark on Activities" };
         var icons = { teacher: 'ri-chat-quote-line', guidance: 'ri-mental-health-line', activities: 'ri-football-line' };
@@ -1347,7 +1366,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             var cBadge = (g.cum_grade && g.cum_grade !== '-') ? '<span class="grade-badge g-' + cgl + '">' + esc(g.cum_grade) + '</span>' : '—';
             return '<tr><td style="text-align:left;">' + esc(g.subject) + '<td class="' + tC + '">' + (g.term_score || '—') + '<td>' + tBadge + '<td class="' + cC + '">' + (g.cum_score || '—') + '<td>' + cBadge + '<\/tr>';
         }).join('');
-        gpopBody.innerHTML = '<table class="gpop-table"><thead><tr><th>Subject</th><th style="color:#0891b2;">T.Score</th><th style="color:#0891b2;">T.Grade</th><th>C.Score</th><th>C.Grade</th><\/thead><tbody>' + (rows || '<tr><td colspan="5" class="text-center text-muted py-2">No grades<\/tr>') + '<\/tbody><\/table><div class="gpop-summary"><div class="gpop-sum-item"><div class="gpop-sum-lbl">Cum Total</div><div class="gpop-sum-val">' + (an.cum_total || 0) + '</div></div><div class="gpop-sum-item"><div class="gpop-sum-lbl">Obtainable</div><div class="gpop-sum-val">' + (an.total_obtainable || 0) + '</div></div><div class="gpop-sum-item"><div class="gpop-sum-lbl">% Obtained</div><div class="gpop-sum-val ' + ((an.cum_percentage || 0) < 50 ? 'score-red' : 'score-green') + '">' + (an.cum_percentage || 0) + '%</div></div></div>';
+        gpopBody.innerHTML = '<table class="gpop-table"><thead><tr><th>Subject</th><th style="color:#0891b2;">T.Score</th><th style="color:#0891b2;">T.Grade</th><th>C.Score</th><th>C.Grade</th><\/thead><tbody>' + (rows || '<tr><td colspan="5" class="text-center text-muted py-2">No grades<\/tr>') + '<\/tbody><\/table><div class="gpop-summary"><div class="gpop-sum-item"><div class="gpop-sum-lbl">Total Obtained</div><div class="gpop-sum-val">' + (an.cum_total || 0) + '</div></div><div class="gpop-sum-item"><div class="gpop-sum-lbl">Total Obtainable</div><div class="gpop-sum-val">' + (an.total_obtainable || 0) + '</div></div><div class="gpop-sum-item"><div class="gpop-sum-lbl">% Obtained</div><div class="gpop-sum-val ' + ((an.percentage_obtained || 0) < 50 ? 'score-red' : 'score-green') + '">' + (an.percentage_obtained || 0) + '%</div></div></div>';
         var rect = triggerEl.getBoundingClientRect(), pw = 360, ph = 490;
         var top = rect.bottom + window.scrollY + 8, left = rect.left + window.scrollX - (pw / 2) + (rect.width / 2);
         if (rect.bottom + ph > window.innerHeight) top = rect.top + window.scrollY - ph - 8;
@@ -1416,16 +1435,33 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
         (function() {
             var vals = Object.values(SA);
-            if (vals.length) { var avgPct = Math.round(vals.reduce(function(s, d) { return s + (d.cum_percentage || 0); }, 0) / vals.length); var prEl = document.getElementById('statAvgPct'); if (prEl) prEl.textContent = avgPct + '%'; }
+            if (vals.length) {
+                var avgPct = Math.round(vals.reduce(function(s, d) { return s + (d.percentage_obtained || 0); }, 0) / vals.length);
+                var prEl = document.getElementById('statAvgPct');
+                if (prEl) prEl.textContent = avgPct + '%';
+            }
             var topAvg = -1, topName = '—', topPicture = null;
             document.querySelectorAll('.cb-student-row[data-student-id]').forEach(function(row) {
                 var sid = row.getAttribute('data-student-id');
                 if (!sid || !SA[sid]) return;
-                var pct = SA[sid].cum_percentage || 0;
-                if (pct > topAvg) { topAvg = pct; topName = row.getAttribute('data-student-name') || ''; topPicture = row.getAttribute('data-student-img') || null; }
+                var pct = SA[sid].percentage_obtained || 0;
+                if (pct > topAvg) {
+                    topAvg = pct;
+                    topName = row.getAttribute('data-student-name') || '';
+                    topPicture = row.getAttribute('data-student-img') || null;
+                }
             });
-            var topEl = document.getElementById('statTop'); if (topEl) topEl.textContent = topName;
-            if (topPicture && !document.querySelector('#topPerformerStat img')) { var statCard = document.getElementById('topPerformerStat'); if (statCard) { var imgDiv = document.createElement('div'); imgDiv.className = 'mt-2'; imgDiv.innerHTML = '<img src="' + topPicture + '" alt="Top Performer" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--cb-amber); object-fit: cover;">'; statCard.appendChild(imgDiv); } }
+            var topEl = document.getElementById('statTop');
+            if (topEl) topEl.textContent = topName;
+            if (topPicture && !document.querySelector('#topPerformerStat img')) {
+                var statCard = document.getElementById('topPerformerStat');
+                if (statCard) {
+                    var imgDiv = document.createElement('div');
+                    imgDiv.className = 'mt-2';
+                    imgDiv.innerHTML = '<img src="' + topPicture + '" alt="Top Performer" style="width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--cb-amber); object-fit: cover;">';
+                    statCard.appendChild(imgDiv);
+                }
+            }
         })();
 
         var fieldSelectors = ['.desk-teacher','.desk-guidance','.desk-activities','.desk-absence','.mob-teacher','.mob-guidance','.mob-activities','.mob-absence'];

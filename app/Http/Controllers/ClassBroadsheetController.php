@@ -110,7 +110,7 @@ class ClassBroadsheetController extends Controller
         $studentAnalytics = [];
         $topPerformer = null;
         $topPerformerPicture = null;
-        $topCumPercentage = -1;
+        $topPercentageObtained = -1;
 
         foreach ($students as $student) {
             $sid = $student->id;
@@ -136,16 +136,16 @@ class ClassBroadsheetController extends Controller
                 'term_total'           => $termTotal,
                 'cum_total'            => $cumTotal,
                 'term_average'         => $subjectCount > 0 ? round($termTotal / $subjectCount, 1) : 0,
-                'cum_average'          => $subjectCount > 0 ? round($cumTotal  / $subjectCount, 1) : 0,
+                'cum_average'          => $subjectCount > 0 ? round($cumTotal / $subjectCount, 1) : 0,
                 'subject_count'        => $subjectCount,
                 'total_obtainable'     => $totalObtainable,
                 'term_percentage'      => $totalObtainable > 0 ? round(($termTotal / $totalObtainable) * 100, 1) : 0,
-                'cum_percentage'       => $percentageObtained,
+                'percentage_obtained'  => $percentageObtained,
                 'grades'               => $grades,
             ];
 
-            if ($percentageObtained > $topCumPercentage) {
-                $topCumPercentage = $percentageObtained;
+            if ($percentageObtained > $topPercentageObtained) {
+                $topPercentageObtained = $percentageObtained;
                 $topPerformer = trim(($student->lastname ?? '') . ' ' . ($student->fname ?? ''));
                 $topPerformerPicture = $student->picture ? asset('storage/student_avatars/' . basename($student->picture)) : null;
             }
@@ -163,10 +163,10 @@ class ClassBroadsheetController extends Controller
         $schoolterm    = Schoolterm::where('id',    $termid)->value('term')    ?? 'N/A';
         $schoolsession = Schoolsession::where('id', $sessionid)->value('session') ?? 'N/A';
 
-        $avgCumPercentage = 0;
+        $avgPercentageObtained = 0;
         if (count($studentAnalytics) > 0) {
-            $totalCumPct = array_sum(array_column($studentAnalytics, 'cum_percentage'));
-            $avgCumPercentage = round($totalCumPct / count($studentAnalytics), 1);
+            $totalPct = array_sum(array_column($studentAnalytics, 'percentage_obtained'));
+            $avgPercentageObtained = round($totalPct / count($studentAnalytics), 1);
         }
 
         return view('classbroadsheet.classbroadsheet', compact(
@@ -175,7 +175,7 @@ class ClassBroadsheetController extends Controller
             'schoolclass', 'schoolterm', 'schoolsession',
             'schoolclassid', 'sessionid', 'termid',
             'isSenior', 'studentAnalytics', 'pagetitle',
-            'topPerformer', 'topPerformerPicture', 'avgCumPercentage'
+            'topPerformer', 'topPerformerPicture', 'avgPercentageObtained'
         ));
     }
 
@@ -203,10 +203,8 @@ class ClassBroadsheetController extends Controller
                 ->orderByDesc('termid')
                 ->get();
 
-            // Get all unique staff user IDs to fetch names in one query
             $staffUserIds = $profiles->pluck('staffid')->filter()->unique()->values()->toArray();
 
-            // Fetch all staff with their users - search by userid column (which maps to users.id)
             $staffMembers = Staff::with('user')
                 ->whereIn('userid', $staffUserIds)
                 ->get()
@@ -252,7 +250,6 @@ class ClassBroadsheetController extends Controller
 
                 if (!$hasComment) continue;
 
-                // Get staff name from our pre-fetched collection using userid
                 $staffName = null;
                 $staffPicture = null;
 
@@ -260,7 +257,6 @@ class ClassBroadsheetController extends Controller
                     $staff = $staffMembers->get($staffUserId);
 
                     if (!$staff) {
-                        // Try to find by id directly as fallback
                         $staff = Staff::with('user')->find($staffUserId);
                         if ($staff && $staff->userid) {
                             $staffMembers->put($staff->userid, $staff);
