@@ -23,7 +23,6 @@
 *, *::before, *::after { box-sizing: border-box; }
 body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
-/* ── Keyframes ── */
 @keyframes fadeInUp    { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:translateY(0); } }
 @keyframes fadeInDown  { from { opacity:0; transform:translateY(-22px); } to { opacity:1; transform:translateY(0); } }
 @keyframes fadeInLeft  { from { opacity:0; transform:translateX(-22px); } to { opacity:1; transform:translateX(0); } }
@@ -108,7 +107,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .cb-stat .stat-value  { font-size:30px; font-weight:700; color:var(--cb-navy); line-height:1; margin-top:8px; animation:countUp .6s ease both; animation-delay:.4s; }
 .cb-stat .stat-label  { font-size:12px; color:var(--cb-muted); margin-top:5px; font-weight:500; }
 .cb-stat .stat-ico    { font-size:36px; opacity:.08; position:absolute; right:16px; top:50%; transform:translateY(-50%); }
-/* NEW – dual % line inside the percentage stat card */
 .stat-pct-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
 .stat-pct-pill {
     display:inline-flex; align-items:center; gap:4px;
@@ -135,13 +133,23 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .toggle-chip:hover { border-color:var(--cb-teal); color:var(--cb-teal); transform:translateY(-2px) scale(1.03); }
 .toggle-chip.active { background:var(--cb-teal); border-color:var(--cb-teal); color:#fff; box-shadow:0 2px 10px rgba(13,148,136,.35); }
 
-/* ── Main Card ── */
-.cb-card { background:var(--cb-white); border:1px solid var(--cb-border); border-radius:var(--cb-radius); box-shadow:var(--cb-shadow); overflow:hidden; animation:fadeInUp .5s ease .2s both; }
+/* ── Main Card ──
+   IMPORTANT: overflow must be visible so the grade popup is not clipped */
+.cb-card {
+    background:var(--cb-white); border:1px solid var(--cb-border);
+    border-radius:var(--cb-radius); box-shadow:var(--cb-shadow);
+    overflow:visible;           /* FIX: was overflow:hidden — caused popup clipping */
+    animation:fadeInUp .5s ease .2s both;
+}
 .cb-card-header {
     padding:18px 24px; border-bottom:1px solid var(--cb-border);
     display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px;
     background:linear-gradient(to right,#f8fafc,#f0fdf9);
+    border-radius:var(--cb-radius) var(--cb-radius) 0 0;
 }
+
+/* Scrollable table wrapper — keeps horizontal scroll without clipping popup */
+.cb-table-scroll { overflow-x:auto; overflow-y:visible; }
 
 /* ── Table ── */
 .cb-table { width:100%; border-collapse:collapse; font-size:12.5px; }
@@ -319,12 +327,15 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .cb-zoom-meta { margin-top:6px; font-size:13px; color:rgba(255,255,255,.75); text-align:center; }
 
 /* ═══════════════════════════════════
-   GRADE POP-UP — fully rebuilt & fixed
+   GRADE POP-UP
+   Uses position:fixed so it always
+   escapes any overflow:hidden ancestor.
+   Appended to <body> by JS on first use.
    ═══════════════════════════════════ */
 #cbGradePopup {
     display:none;
-    position:fixed;
-    z-index:10001;
+    position:fixed;          /* FIX: stays fixed to viewport, never clipped */
+    z-index:99999;           /* FIX: above everything including modals */
     background:var(--cb-white);
     border:2px solid var(--cb-teal);
     border-radius:16px;
@@ -384,10 +395,10 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .gpop-sum-lbl { font-size:9px; color:var(--cb-muted); text-transform:uppercase; letter-spacing:.4px; margin-bottom:4px; }
 .gpop-sum-val { font-size:17px; font-weight:800; color:var(--cb-navy); }
 
-/* backdrop */
+/* backdrop — also fixed, appended to body by JS */
 #cbPopupBackdrop {
     display:none;
-    position:fixed; inset:0; z-index:10000;
+    position:fixed; inset:0; z-index:99998;
     background:rgba(0,0,0,.3);
     animation:backdropIn .2s ease;
 }
@@ -482,7 +493,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             <div class="stat-label">Subjects</div>
         </div>
     </div>
-    {{-- FIXED: shows both Term % and Cum % with distinct pills --}}
     <div class="col-6 col-md-3">
         <div class="cb-stat">
             <div class="stat-accent" style="background:linear-gradient(90deg,var(--cb-green),#4ade80);"></div>
@@ -532,7 +542,12 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
 @php $cbAnalyticsJson = json_encode($studentAnalytics, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); @endphp
 
-{{-- ── Grade Pop-up (fixed) ── --}}
+{{--
+    GRADE POP-UP & BACKDROP
+    Placed here in markup but JS immediately moves both elements
+    to document.body on DOMContentLoaded so they are never inside
+    any overflow:hidden ancestor.
+--}}
 <div id="cbPopupBackdrop"></div>
 <div id="cbGradePopup">
     <div class="gpop-hdr">
@@ -568,7 +583,8 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         @endforeach
 
         {{-- ════ DESKTOP TABLE ════ --}}
-        <div class="desktop-only" style="overflow-x:auto;">
+        {{-- cb-table-scroll: overflow-x:auto but overflow-y:visible so popup is not clipped --}}
+        <div class="desktop-only cb-table-scroll">
             <table class="cb-table">
                 <thead>
                     <tr>
@@ -677,7 +693,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                     <span class="analytics-lbl">Obtainable</span>
                                     <span class="analytics-val">{{ $an['total_obtainable'] ?? 0 }}</span>
                                 </div>
-                                {{-- FIXED: both Term% and Cum% shown --}}
                                 <div class="analytics-row">
                                     <span class="analytics-lbl">% (Term)</span>
                                     <span class="analytics-val analytics-percentage {{ ($an['term_percentage'] ?? 0) < 50 ? 'score-red' : (($an['term_percentage'] ?? 0) < 70 ? 'score-amber' : 'score-green') }}">
@@ -690,7 +705,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                         {{ $an['cum_percentage'] ?? 0 }}%
                                     </span>
                                 </div>
-                                {{-- dual progress bar --}}
                                 <div style="margin-top:5px;">
                                     <div style="font-size:9px;color:var(--cb-muted);margin-bottom:2px;">Term</div>
                                     <div class="pct-bar-wrap">
@@ -926,9 +940,16 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     var currentModalField = null;
     var commentModal      = null;
 
+    /*
+     * FIX (Bug 2): Past-comment registry.
+     * Instead of inlining JSON text inside onclick attributes
+     * (which breaks on quotes/apostrophes), we store loaded
+     * comments in this map and reference them by index.
+     */
+    var pastCommentRegistry = [];
+
     /* ── helpers ── */
     function esc(str) { var d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
-    function escapeHtml(text) { return esc(text); }
 
     function toast(msg, type) {
         document.querySelectorAll('.cb-toast').forEach(function(t){ t.remove(); });
@@ -1051,6 +1072,9 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         document.getElementById('modalCommentType').innerHTML = '<i class="' + (icons[field]||'ri-chat-3-line') + ' me-1" style="color:var(--cb-teal);"></i> ' + (labels[field] || field);
         document.getElementById('modalTextarea').value = getCanonical(sid, field);
         document.getElementById('pastCommentsPanel').style.display = 'none';
+        /* reset registry whenever modal opens for a new student/field */
+        pastCommentRegistry = [];
+        document.getElementById('pastCommentCount').textContent = '0';
         commentModal.show();
     }
 
@@ -1065,26 +1089,38 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             if (!res.ok) throw new Error('HTTP ' + res.status);
             var data = await res.json();
             if (data.success && data.data && data.data.length > 0) {
-                document.getElementById('pastCommentCount').textContent = data.data.length;
+
+                /*
+                 * FIX (Bug 2): store all comments in registry array.
+                 * onclick calls usePastComment(index) instead of
+                 * embedding the raw text, which broke on special chars.
+                 */
+                pastCommentRegistry = data.data.slice();
+                document.getElementById('pastCommentCount').textContent = pastCommentRegistry.length;
+
                 var summaryHtml = '<div class="mb-3" style="background:#f1f5f9;border-radius:10px;padding:12px;"><div class="d-flex justify-content-between align-items-center flex-wrap gap-2"><span class="small fw-bold text-muted"><i class="ri-bar-chart-line"></i> Comment History</span><div class="d-flex gap-2 flex-wrap"><span class="badge" style="background:#0ea5e9;color:white;">Teacher: ' + (data.counts.classteacher||0) + '</span><span class="badge" style="background:#8b5cf6;color:white;">Guidance: ' + (data.counts.guidance||0) + '</span><span class="badge" style="background:#f59e0b;color:white;">Activities: ' + (data.counts.activities||0) + '</span><span class="badge" style="background:#1e293b;">Total: ' + data.counts.total + '</span></div></div></div>';
+
                 var commentsHtml = '<div>';
-                data.data.forEach(function(comment) {
+                pastCommentRegistry.forEach(function(comment, idx) {
                     var bc='', bi='';
-                    if (comment.comment_type==='Teacher')    { bc='#0ea5e9'; bi='ri-chat-quote-line'; }
+                    if (comment.comment_type==='Teacher')         { bc='#0ea5e9'; bi='ri-chat-quote-line'; }
                     else if (comment.comment_type==='Guidance')   { bc='#8b5cf6'; bi='ri-mental-health-line'; }
                     else if (comment.comment_type==='Activities') { bc='#f59e0b'; bi='ri-football-line'; }
-                    else { bc='#64748b'; bi='ri-chat-3-line'; }
+                    else                                          { bc='#64748b'; bi='ri-chat-3-line'; }
                     var si = comment.staff_name.split(' ').map(function(n){ return n[0]; }).join('').substring(0,2).toUpperCase();
                     var snippet = comment.comment_text.length > 200 ? comment.comment_text.substring(0,200) + '…' : comment.comment_text;
-                    commentsHtml += '<div class="past-comment-item" style="border-left:4px solid ' + bc + ';background:#fff;padding:16px;margin-bottom:14px;border-radius:12px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.05);" onclick="usePastComment(' + JSON.stringify(comment.comment_text) + ')">';
+
+                    /* FIX: use idx to reference registry — no inline JSON */
+                    commentsHtml += '<div class="past-comment-item" style="border-left:4px solid ' + bc + ';background:#fff;padding:16px;margin-bottom:14px;border-radius:12px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.05);" onclick="usePastComment(' + idx + ')">';
                     commentsHtml += '<div class="d-flex justify-content-between align-items-start mb-2"><span class="badge" style="background:' + bc + ';color:white;"><i class="' + bi + ' me-1"></i>' + comment.comment_type + '</span><small class="text-muted"><i class="ri-calendar-line me-1"></i>' + (comment.date||'—') + '</small></div>';
-                    commentsHtml += '<div class="d-flex align-items-center gap-2 mb-2"><div style="width:32px;height:32px;border-radius:50%;background:' + bc + ';display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;">' + si + '</div><div><div class="small fw-semibold">' + escapeHtml(comment.staff_name) + '</div><div class="small text-muted">' + escapeHtml(comment.session) + ' · ' + escapeHtml(comment.term) + '</div></div></div>';
-                    commentsHtml += '<div class="small" style="color:#334155;line-height:1.6;background:#fefce8;padding:10px 12px;border-radius:8px;border-left:3px solid ' + bc + ';">' + escapeHtml(snippet) + '</div>';
+                    commentsHtml += '<div class="d-flex align-items-center gap-2 mb-2"><div style="width:32px;height:32px;border-radius:50%;background:' + bc + ';display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;">' + si + '</div><div><div class="small fw-semibold">' + esc(comment.staff_name) + '</div><div class="small text-muted">' + esc(comment.session) + ' · ' + esc(comment.term) + '</div></div></div>';
+                    commentsHtml += '<div class="small" style="color:#334155;line-height:1.6;background:#fefce8;padding:10px 12px;border-radius:8px;border-left:3px solid ' + bc + ';">' + esc(snippet) + '</div>';
                     commentsHtml += '<div class="mt-2 text-end"><small class="text-primary" style="cursor:pointer;"><i class="ri-double-quotes-r"></i> Click to load</small></div></div>';
                 });
                 commentsHtml += '</div>';
                 listEl.innerHTML = summaryHtml + commentsHtml;
             } else {
+                pastCommentRegistry = [];
                 document.getElementById('pastCommentCount').textContent = '0';
                 listEl.innerHTML = '<div class="text-center py-5"><i class="ri-inbox-line" style="font-size:48px;color:#cbd5e1;"></i><p class="text-muted mt-2 mb-0">No past comments found for this student.</p></div>';
             }
@@ -1094,9 +1130,20 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         }
     }
 
-    window.usePastComment = function(text) {
+    /*
+     * FIX (Bug 2): receives array INDEX, not raw text.
+     * Looks up the full comment from pastCommentRegistry — safe
+     * for any characters including quotes and apostrophes.
+     */
+    window.usePastComment = function(idx) {
+        var comment = pastCommentRegistry[idx];
+        if (!comment) { toast('Comment not found.', 'error'); return; }
         var ta = document.getElementById('modalTextarea');
-        ta.value = text; ta.focus();
+        if (!ta) return;
+        ta.value = comment.comment_text;
+        ta.focus();
+        /* Scroll textarea into view on mobile */
+        ta.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         toast('Past comment loaded — edit before saving.', 'success');
     };
 
@@ -1129,13 +1176,20 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         openCommentModal(sid, field, studentName, studentAdm, studentImg, analytics);
     }
 
-    /* ═══════════════════════════════
-       GRADE POP-UP — fully rewritten
-       ═══════════════════════════════ */
+    /* ═══════════════════════════════════════════
+       GRADE POP-UP
+       FIX (Bug 1):
+       1. On DOMContentLoaded both #cbGradePopup and
+          #cbPopupBackdrop are moved to document.body so
+          they are never inside any overflow:hidden ancestor.
+       2. Positioning uses getBoundingClientRect() coordinates
+          directly with position:fixed — no scroll offset needed.
+       ═══════════════════════════════════════════ */
+
     function closeGradePop() {
         var gpop     = document.getElementById('cbGradePopup');
         var backdrop = document.getElementById('cbPopupBackdrop');
-        if (gpop)     gpop.classList.remove('is-open');
+        if (gpop)     { gpop.classList.remove('is-open'); gpop.removeAttribute('data-active-sid'); }
         if (backdrop) backdrop.style.display = 'none';
     }
 
@@ -1181,26 +1235,35 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                 '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Subjects</div><div class="gpop-sum-val">' + (an.subject_count||0) + '</div></div>' +
             '</div>';
 
-        /* smart positioning */
+        /*
+         * FIX (Bug 1 — positioning):
+         * The popup uses position:fixed so coordinates come directly
+         * from getBoundingClientRect() with NO scroll offset added.
+         * The popup has been moved to document.body so it is outside
+         * every overflow:hidden container.
+         */
         var rect = triggerEl.getBoundingClientRect();
-        var pw = 400, ph = Math.min(540, window.innerHeight - 40);
-        var scrollX = window.scrollX || window.pageXOffset;
-        var scrollY = window.scrollY || window.pageYOffset;
+        var pw   = 400;
+        var ph   = Math.min(540, window.innerHeight - 40);
+        var vw   = window.innerWidth;
+        var vh   = window.innerHeight;
 
-        var top  = rect.bottom + scrollY + 8;
-        var left = rect.left + scrollX - (pw / 2) + (rect.width / 2);
+        /* Default: open below the trigger, horizontally centred */
+        var top  = rect.bottom + 8;
+        var left = rect.left + (rect.width / 2) - (pw / 2);
 
-        /* flip upward if it would overflow viewport bottom */
-        if (rect.bottom + ph + 8 > window.innerHeight) {
-            top = Math.max(scrollY + 8, rect.top + scrollY - ph - 8);
+        /* Flip upward if not enough space below */
+        if (top + ph > vh - 8) {
+            top = Math.max(8, rect.top - ph - 8);
         }
-        /* clamp horizontal */
-        if (left < scrollX + 8) left = scrollX + 8;
-        if (left + pw > scrollX + window.innerWidth - 8) left = scrollX + window.innerWidth - pw - 8;
+        /* Clamp horizontal within viewport */
+        if (left < 8)          left = 8;
+        if (left + pw > vw - 8) left = vw - pw - 8;
 
-        gpop.style.top  = top  + 'px';
-        gpop.style.left = left + 'px';
-        gpop.style.maxHeight = ph + 'px';
+        gpop.style.top       = top  + 'px';
+        gpop.style.left      = left + 'px';
+        gpop.style.maxHeight = ph   + 'px';
+        gpop.dataset.activeSid = sid;
         gpop.classList.add('is-open');
 
         var backdrop = document.getElementById('cbPopupBackdrop');
@@ -1226,6 +1289,17 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     /* ── DOM ready ── */
     document.addEventListener('DOMContentLoaded', function() {
 
+        /*
+         * FIX (Bug 1 — DOM relocation):
+         * Move both the popup and its backdrop to document.body.
+         * This guarantees they are never inside an overflow:hidden
+         * ancestor no matter where they appear in the template.
+         */
+        var gpop     = document.getElementById('cbGradePopup');
+        var backdrop = document.getElementById('cbPopupBackdrop');
+        if (gpop     && gpop.parentNode     !== document.body) document.body.appendChild(gpop);
+        if (backdrop && backdrop.parentNode !== document.body) document.body.appendChild(backdrop);
+
         /* column toggles */
         document.querySelectorAll('.toggle-chip').forEach(function(chip) {
             chip.addEventListener('click', function() {
@@ -1249,8 +1323,8 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         }
 
         /* image zoom */
-        var imgModal    = null;
-        var imgModalEl  = document.getElementById('cbImgZoomModal');
+        var imgModal   = null;
+        var imgModalEl = document.getElementById('cbImgZoomModal');
         if (imgModalEl && typeof bootstrap !== 'undefined') imgModal = new bootstrap.Modal(imgModalEl);
         document.addEventListener('click', function(e) {
             var trigger = e.target.closest('.cb-avatar-trigger');
@@ -1282,14 +1356,19 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             if (imgModal) imgModal.show();
         });
 
-        /* grade pop-up: close */
+        /* grade pop-up: close button */
         var gpopCloseBtn = document.getElementById('gpopCloseBtn');
         if (gpopCloseBtn) gpopCloseBtn.addEventListener('click', closeGradePop);
-        var backdrop = document.getElementById('cbPopupBackdrop');
-        if (backdrop) backdrop.addEventListener('click', closeGradePop);
+
+        /* grade pop-up: backdrop click closes */
+        document.addEventListener('click', function(e) {
+            var bd = document.getElementById('cbPopupBackdrop');
+            if (bd && e.target === bd) closeGradePop();
+        });
+
         document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeGradePop(); });
 
-        /* ★ GRADE POP-UP OPEN — uses event delegation, stopPropagation prevents accidental close */
+        /* grade pop-up: open via event delegation */
         document.addEventListener('click', function(e) {
             var btn = e.target.closest('.grade-trigger-btn');
             if (!btn) return;
@@ -1298,16 +1377,15 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             var sid  = btn.getAttribute('data-sid');
             var name = btn.getAttribute('data-sname');
             if (!sid) return;
-            /* if already open for same student, close */
             var gpop = document.getElementById('cbGradePopup');
+            /* Toggle: clicking same student's button closes the popup */
             if (gpop && gpop.classList.contains('is-open') && gpop.dataset.activeSid === sid) {
                 closeGradePop();
                 return;
             }
-            if (gpop) gpop.dataset.activeSid = sid;
-            closeGradePop(); /* close any previous */
-            /* small delay so the close animation doesn't block the open */
-            setTimeout(function(){ openGradePop(sid, name, btn); }, 10);
+            closeGradePop();
+            /* Tiny delay so closeGradePop's display:none settles before re-opening */
+            setTimeout(function(){ openGradePop(sid, name, btn); }, 16);
         });
 
         /* input listeners */
@@ -1318,14 +1396,14 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         attachModalTriggers();
 
         /* modal buttons */
-        var loadBtn     = document.getElementById('btnLoadPastComments');
+        var loadBtn      = document.getElementById('btnLoadPastComments');
         var modalSaveBtn = document.getElementById('modalSaveBtn');
-        var saveBtn     = document.getElementById('saveBtn');
+        var saveBtn      = document.getElementById('saveBtn');
         if (loadBtn)      loadBtn.addEventListener('click', loadPastComments);
         if (modalSaveBtn) modalSaveBtn.addEventListener('click', saveCommentFromModal);
         if (saveBtn)      saveBtn.addEventListener('click', doSaveAll);
 
-        /* ── update top-stat cards from SA data ── */
+        /* update top-stat cards from SA data */
         (function() {
             var vals = Object.values(SA);
             if (!vals.length) return;
@@ -1338,7 +1416,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             if (pillT) pillT.innerHTML = '<i class="ri-time-line me-1"></i>Term: ' + avgTermPct + '%';
             if (pillC) pillC.innerHTML = '<i class="ri-history-line me-1"></i>Cum: '  + avgCumPct  + '%';
 
-            /* top performers */
             var topCumAvg = -1, topCumName = '—', topTermAvg = -1, topTermName = '—', topPicture = null;
             document.querySelectorAll('.cb-student-row[data-student-id]').forEach(function(row) {
                 var sid = row.getAttribute('data-student-id');
