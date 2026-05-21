@@ -108,13 +108,17 @@ class ClassBroadsheetController extends Controller
             : false;
 
         $studentAnalytics = [];
-        $topPerformer = null;
+        $topPerformerByCum = null;
+        $topPerformerByTerm = null;
         $topPerformerPicture = null;
-        $topPercentageObtained = -1;
+        $topCumPercentage = -1;
+        $topTermPercentage = -1;
 
         foreach ($students as $student) {
             $sid = $student->id;
-            $termTotal = $cumTotal = $subjectCount = 0;
+            $termTotal = 0;
+            $cumTotal = 0;
+            $subjectCount = 0;
             $grades = [];
 
             foreach ($subjects as $subject) {
@@ -130,24 +134,30 @@ class ClassBroadsheetController extends Controller
             }
 
             $totalObtainable = $subjectCount * 100;
-            $percentageObtained = $totalObtainable > 0 ? round(($cumTotal / $totalObtainable) * 100, 1) : 0;
+            $termPercentage = $totalObtainable > 0 ? round(($termTotal / $totalObtainable) * 100, 1) : 0;
+            $cumPercentage = $totalObtainable > 0 ? round(($cumTotal / $totalObtainable) * 100, 1) : 0;
 
             $studentAnalytics[$sid] = [
-                'term_total'           => $termTotal,
-                'cum_total'            => $cumTotal,
-                'term_average'         => $subjectCount > 0 ? round($termTotal / $subjectCount, 1) : 0,
-                'cum_average'          => $subjectCount > 0 ? round($cumTotal / $subjectCount, 1) : 0,
-                'subject_count'        => $subjectCount,
-                'total_obtainable'     => $totalObtainable,
-                'term_percentage'      => $totalObtainable > 0 ? round(($termTotal / $totalObtainable) * 100, 1) : 0,
-                'percentage_obtained'  => $percentageObtained,
-                'grades'               => $grades,
+                'term_total'              => $termTotal,
+                'cum_total'               => $cumTotal,
+                'term_average'            => $subjectCount > 0 ? round($termTotal / $subjectCount, 1) : 0,
+                'cum_average'             => $subjectCount > 0 ? round($cumTotal / $subjectCount, 1) : 0,
+                'subject_count'           => $subjectCount,
+                'total_obtainable'        => $totalObtainable,
+                'term_percentage'         => $termPercentage,
+                'cum_percentage'          => $cumPercentage,
+                'grades'                  => $grades,
             ];
 
-            if ($percentageObtained > $topPercentageObtained) {
-                $topPercentageObtained = $percentageObtained;
-                $topPerformer = trim(($student->lastname ?? '') . ' ' . ($student->fname ?? ''));
+            if ($cumPercentage > $topCumPercentage) {
+                $topCumPercentage = $cumPercentage;
+                $topPerformerByCum = trim(($student->lastname ?? '') . ' ' . ($student->fname ?? ''));
                 $topPerformerPicture = $student->picture ? asset('storage/student_avatars/' . basename($student->picture)) : null;
+            }
+
+            if ($termPercentage > $topTermPercentage) {
+                $topTermPercentage = $termPercentage;
+                $topPerformerByTerm = trim(($student->lastname ?? '') . ' ' . ($student->fname ?? ''));
             }
         }
 
@@ -163,10 +173,13 @@ class ClassBroadsheetController extends Controller
         $schoolterm    = Schoolterm::where('id',    $termid)->value('term')    ?? 'N/A';
         $schoolsession = Schoolsession::where('id', $sessionid)->value('session') ?? 'N/A';
 
-        $avgPercentageObtained = 0;
+        $avgTermPercentage = 0;
+        $avgCumPercentage = 0;
         if (count($studentAnalytics) > 0) {
-            $totalPct = array_sum(array_column($studentAnalytics, 'percentage_obtained'));
-            $avgPercentageObtained = round($totalPct / count($studentAnalytics), 1);
+            $totalTermPct = array_sum(array_column($studentAnalytics, 'term_percentage'));
+            $totalCumPct = array_sum(array_column($studentAnalytics, 'cum_percentage'));
+            $avgTermPercentage = round($totalTermPct / count($studentAnalytics), 1);
+            $avgCumPercentage = round($totalCumPct / count($studentAnalytics), 1);
         }
 
         return view('classbroadsheet.classbroadsheet', compact(
@@ -175,7 +188,8 @@ class ClassBroadsheetController extends Controller
             'schoolclass', 'schoolterm', 'schoolsession',
             'schoolclassid', 'sessionid', 'termid',
             'isSenior', 'studentAnalytics', 'pagetitle',
-            'topPerformer', 'topPerformerPicture', 'avgPercentageObtained'
+            'topPerformerByCum', 'topPerformerByTerm', 'topPerformerPicture',
+            'avgTermPercentage', 'avgCumPercentage'
         ));
     }
 
@@ -204,11 +218,7 @@ class ClassBroadsheetController extends Controller
                 ->get();
 
             $staffUserIds = $profiles->pluck('staffid')->filter()->unique()->values()->toArray();
-
-            $staffMembers = Staff::with('user')
-                ->whereIn('userid', $staffUserIds)
-                ->get()
-                ->keyBy('userid');
+            $staffMembers = Staff::with('user')->whereIn('userid', $staffUserIds)->get()->keyBy('userid');
 
             $commentCounts = [
                 'classteacher' => 0,
@@ -255,14 +265,12 @@ class ClassBroadsheetController extends Controller
 
                 if ($staffUserId) {
                     $staff = $staffMembers->get($staffUserId);
-
                     if (!$staff) {
                         $staff = Staff::with('user')->find($staffUserId);
                         if ($staff && $staff->userid) {
                             $staffMembers->put($staff->userid, $staff);
                         }
                     }
-
                     if ($staff && $staff->user) {
                         $staffName = $staff->user->name;
                     } elseif ($staff && $staff->employmentid) {
