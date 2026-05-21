@@ -133,12 +133,11 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .toggle-chip:hover { border-color:var(--cb-teal); color:var(--cb-teal); transform:translateY(-2px) scale(1.03); }
 .toggle-chip.active { background:var(--cb-teal); border-color:var(--cb-teal); color:#fff; box-shadow:0 2px 10px rgba(13,148,136,.35); }
 
-/* ── Main Card ──
-   IMPORTANT: overflow must be visible so the grade popup is not clipped */
+/* ── Main Card ── */
 .cb-card {
     background:var(--cb-white); border:1px solid var(--cb-border);
     border-radius:var(--cb-radius); box-shadow:var(--cb-shadow);
-    overflow:visible;           /* FIX: was overflow:hidden — caused popup clipping */
+    overflow:visible;
     animation:fadeInUp .5s ease .2s both;
 }
 .cb-card-header {
@@ -148,7 +147,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     border-radius:var(--cb-radius) var(--cb-radius) 0 0;
 }
 
-/* Scrollable table wrapper — keeps horizontal scroll without clipping popup */
 .cb-table-scroll { overflow-x:auto; overflow-y:visible; }
 
 /* ── Table ── */
@@ -326,16 +324,11 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .cb-zoom-name { margin-top:16px; font-size:18px; font-weight:700; color:#fff; text-align:center; text-shadow:0 2px 8px rgba(0,0,0,.5); }
 .cb-zoom-meta { margin-top:6px; font-size:13px; color:rgba(255,255,255,.75); text-align:center; }
 
-/* ═══════════════════════════════════
-   GRADE POP-UP
-   Uses position:fixed so it always
-   escapes any overflow:hidden ancestor.
-   Appended to <body> by JS on first use.
-   ═══════════════════════════════════ */
+/* ── GRADE POP-UP ── */
 #cbGradePopup {
     display:none;
-    position:fixed;          /* FIX: stays fixed to viewport, never clipped */
-    z-index:99999;           /* FIX: above everything including modals */
+    position:fixed;
+    z-index:99999;
     background:var(--cb-white);
     border:2px solid var(--cb-teal);
     border-radius:16px;
@@ -395,7 +388,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .gpop-sum-lbl { font-size:9px; color:var(--cb-muted); text-transform:uppercase; letter-spacing:.4px; margin-bottom:4px; }
 .gpop-sum-val { font-size:17px; font-weight:800; color:var(--cb-navy); }
 
-/* backdrop — also fixed, appended to body by JS */
 #cbPopupBackdrop {
     display:none;
     position:fixed; inset:0; z-index:99998;
@@ -459,7 +451,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 <div class="page-content">
 <div class="container-fluid">
 
-{{-- ── Hero ── --}}
+{{-- Hero --}}
 <div class="cb-hero">
     <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
         <div>
@@ -475,7 +467,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     </div>
 </div>
 
-{{-- ── Stat cards ── --}}
+{{-- Stat cards --}}
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
         <div class="cb-stat">
@@ -522,7 +514,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     </div>
 </div>
 
-{{-- ── Column toggles ── --}}
+{{-- Column toggles --}}
 <div class="col-toggle-panel">
     <h6><i class="ri-layout-column-line" style="color:var(--cb-teal)"></i> Show / Hide Columns</h6>
     <div class="toggle-chips">
@@ -542,12 +534,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
 @php $cbAnalyticsJson = json_encode($studentAnalytics, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); @endphp
 
-{{--
-    GRADE POP-UP & BACKDROP
-    Placed here in markup but JS immediately moves both elements
-    to document.body on DOMContentLoaded so they are never inside
-    any overflow:hidden ancestor.
---}}
+{{-- GRADE POP-UP & BACKDROP --}}
 <div id="cbPopupBackdrop"></div>
 <div id="cbGradePopup">
     <div class="gpop-hdr">
@@ -582,8 +569,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             <input type="hidden" class="canonical-absence"    id="c_absence_{{ $student->id }}"    name="no_of_times_school_absent[{{ $student->id }}]"  value="{{ $profile ? $profile->no_of_times_school_absent : '' }}">
         @endforeach
 
-        {{-- ════ DESKTOP TABLE ════ --}}
-        {{-- cb-table-scroll: overflow-x:auto but overflow-y:visible so popup is not clipped --}}
+        {{-- DESKTOP TABLE --}}
         <div class="desktop-only cb-table-scroll">
             <table class="cb-table">
                 <thead>
@@ -737,7 +723,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             </table>
         </div>
 
-        {{-- ════ MOBILE CARDS ════ --}}
+        {{-- MOBILE CARDS --}}
         <div class="mobile-only" style="padding:16px;">
             @foreach ($students as $index => $student)
                 @php
@@ -811,7 +797,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             @endforeach
         </div>
 
-        {{-- ── Save bar ── --}}
+        {{-- Save bar --}}
         <div class="save-bar">
             <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
                 <label style="margin:0;"><i class="ri-pen-nib-line me-1"></i>Signature (optional)</label>
@@ -839,7 +825,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
 </div></div></div>
 
-{{-- ── Image zoom modal ── --}}
+{{-- Image zoom modal --}}
 <div class="modal fade" id="cbImgZoomModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content" style="background:transparent;border:none;box-shadow:none;">
@@ -853,7 +839,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     </div>
 </div>
 
-{{-- ── Comment modal ── --}}
+{{-- Comment modal --}}
 <div class="modal fade" id="cbCommentModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content" style="border-radius:var(--cb-radius);overflow:hidden;">
@@ -923,12 +909,11 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     </div>
 </div>
 
-{{-- ═══════════════════════ JAVASCRIPT ═══════════════════════ --}}
+{{-- JAVASCRIPT --}}
 <script>
 (function () {
     'use strict';
 
-    /* ── data & config ── */
     var SA       = {!! $cbAnalyticsJson !!};
     var SAVE_URL = '{{ route("classbroadsheet.updateComments", [$schoolclassid, $sessionid, $termid]) }}';
     var CSRF     = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
@@ -939,16 +924,8 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     var currentModalSid   = null;
     var currentModalField = null;
     var commentModal      = null;
-
-    /*
-     * FIX (Bug 2): Past-comment registry.
-     * Instead of inlining JSON text inside onclick attributes
-     * (which breaks on quotes/apostrophes), we store loaded
-     * comments in this map and reference them by index.
-     */
     var pastCommentRegistry = [];
 
-    /* ── helpers ── */
     function esc(str) { var d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
 
     function toast(msg, type) {
@@ -973,7 +950,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         });
     }
 
-    /* ── autosave ── */
     function autoSaveStudent(sid) {
         var fd = new FormData();
         fd.append('_token', CSRF); fd.append('_method', 'PATCH');
@@ -1026,7 +1002,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         if (pNum) pNum.textContent = pending;
     }
 
-    /* ── comment text formatting ── */
     window.formatCommentText = function(type) {
         var ta = document.getElementById('modalTextarea'); if (!ta) return;
         var start = ta.selectionStart, end = ta.selectionEnd, text = ta.value, sel = text.substring(start, end);
@@ -1040,7 +1015,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         ta.focus();
     };
 
-    /* ── comment modal ── */
     function openCommentModal(sid, field, studentName, studentAdm, studentImg, analytics) {
         currentModalSid = sid; currentModalField = field;
         if (!commentModal) commentModal = new bootstrap.Modal(document.getElementById('cbCommentModal'));
@@ -1072,13 +1046,11 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         document.getElementById('modalCommentType').innerHTML = '<i class="' + (icons[field]||'ri-chat-3-line') + ' me-1" style="color:var(--cb-teal);"></i> ' + (labels[field] || field);
         document.getElementById('modalTextarea').value = getCanonical(sid, field);
         document.getElementById('pastCommentsPanel').style.display = 'none';
-        /* reset registry whenever modal opens for a new student/field */
         pastCommentRegistry = [];
         document.getElementById('pastCommentCount').textContent = '0';
         commentModal.show();
     }
 
-    /* ── past comments ── */
     async function loadPastComments() {
         if (!currentModalSid) return;
         var listEl = document.getElementById('pastCommentsList');
@@ -1089,12 +1061,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             if (!res.ok) throw new Error('HTTP ' + res.status);
             var data = await res.json();
             if (data.success && data.data && data.data.length > 0) {
-
-                /*
-                 * FIX (Bug 2): store all comments in registry array.
-                 * onclick calls usePastComment(index) instead of
-                 * embedding the raw text, which broke on special chars.
-                 */
                 pastCommentRegistry = data.data.slice();
                 document.getElementById('pastCommentCount').textContent = pastCommentRegistry.length;
 
@@ -1107,13 +1073,20 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                     else if (comment.comment_type==='Guidance')   { bc='#8b5cf6'; bi='ri-mental-health-line'; }
                     else if (comment.comment_type==='Activities') { bc='#f59e0b'; bi='ri-football-line'; }
                     else                                          { bc='#64748b'; bi='ri-chat-3-line'; }
-                    var si = comment.staff_name.split(' ').map(function(n){ return n[0]; }).join('').substring(0,2).toUpperCase();
+
+                    var staffAvatarHtml = '';
+                    if (comment.staff_picture && comment.staff_picture !== 'null' && comment.staff_picture !== '') {
+                        staffAvatarHtml = '<img src="' + comment.staff_picture + '" alt="' + esc(comment.staff_name) + '" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">';
+                    } else {
+                        var staffInitials = (comment.staff_name || 'S').split(' ').map(function(n){ return n[0]; }).join('').substring(0,2).toUpperCase();
+                        staffAvatarHtml = '<div style="width:32px;height:32px;border-radius:50%;background:' + bc + ';display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;">' + staffInitials + '</div>';
+                    }
+
                     var snippet = comment.comment_text.length > 200 ? comment.comment_text.substring(0,200) + '…' : comment.comment_text;
 
-                    /* FIX: use idx to reference registry — no inline JSON */
                     commentsHtml += '<div class="past-comment-item" style="border-left:4px solid ' + bc + ';background:#fff;padding:16px;margin-bottom:14px;border-radius:12px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.05);" onclick="usePastComment(' + idx + ')">';
                     commentsHtml += '<div class="d-flex justify-content-between align-items-start mb-2"><span class="badge" style="background:' + bc + ';color:white;"><i class="' + bi + ' me-1"></i>' + comment.comment_type + '</span><small class="text-muted"><i class="ri-calendar-line me-1"></i>' + (comment.date||'—') + '</small></div>';
-                    commentsHtml += '<div class="d-flex align-items-center gap-2 mb-2"><div style="width:32px;height:32px;border-radius:50%;background:' + bc + ';display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;">' + si + '</div><div><div class="small fw-semibold">' + esc(comment.staff_name) + '</div><div class="small text-muted">' + esc(comment.session) + ' · ' + esc(comment.term) + '</div></div></div>';
+                    commentsHtml += '<div class="d-flex align-items-center gap-2 mb-2"><div style="width:32px;height:32px;border-radius:50%;overflow:hidden;">' + staffAvatarHtml + '</div><div><div class="small fw-semibold">' + esc(comment.staff_name) + '</div><div class="small text-muted">' + esc(comment.session) + ' · ' + esc(comment.term) + '</div></div></div>';
                     commentsHtml += '<div class="small" style="color:#334155;line-height:1.6;background:#fefce8;padding:10px 12px;border-radius:8px;border-left:3px solid ' + bc + ';">' + esc(snippet) + '</div>';
                     commentsHtml += '<div class="mt-2 text-end"><small class="text-primary" style="cursor:pointer;"><i class="ri-double-quotes-r"></i> Click to load</small></div></div>';
                 });
@@ -1130,11 +1103,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         }
     }
 
-    /*
-     * FIX (Bug 2): receives array INDEX, not raw text.
-     * Looks up the full comment from pastCommentRegistry — safe
-     * for any characters including quotes and apostrophes.
-     */
     window.usePastComment = function(idx) {
         var comment = pastCommentRegistry[idx];
         if (!comment) { toast('Comment not found.', 'error'); return; }
@@ -1142,7 +1110,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         if (!ta) return;
         ta.value = comment.comment_text;
         ta.focus();
-        /* Scroll textarea into view on mobile */
         ta.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         toast('Past comment loaded — edit before saving.', 'success');
     };
@@ -1157,13 +1124,13 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         toast(currentModalField.charAt(0).toUpperCase() + currentModalField.slice(1) + ' comment saved!', 'success');
     }
 
-    /* ── input focus → open modal ── */
     function attachModalTriggers() {
         document.querySelectorAll('.comment-input').forEach(function(input){
             input.removeEventListener('focus', handleInputFocus);
             input.addEventListener('focus', handleInputFocus);
         });
     }
+
     function handleInputFocus(e) {
         var input = e.target, sid = input.getAttribute('data-sid'), field = input.getAttribute('data-field');
         if (!sid || !field) return;
@@ -1175,16 +1142,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         if (row) { try { analytics = JSON.parse(row.getAttribute('data-student-analytics') || '{}'); } catch(e){} }
         openCommentModal(sid, field, studentName, studentAdm, studentImg, analytics);
     }
-
-    /* ═══════════════════════════════════════════
-       GRADE POP-UP
-       FIX (Bug 1):
-       1. On DOMContentLoaded both #cbGradePopup and
-          #cbPopupBackdrop are moved to document.body so
-          they are never inside any overflow:hidden ancestor.
-       2. Positioning uses getBoundingClientRect() coordinates
-          directly with position:fixed — no scroll offset needed.
-       ═══════════════════════════════════════════ */
 
     function closeGradePop() {
         var gpop     = document.getElementById('cbGradePopup');
@@ -1216,14 +1173,14 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                 var cB  = (g.cum_grade  && g.cum_grade  !== '-') ? '<span class="grade-badge g-' + cgl + '">' + esc(g.cum_grade)  + '</span>' : '—';
                 return '<tr><td style="text-align:left;">' + esc(g.subject) + '</td><td class="' + tC + '">' + (g.term_score||'—') + '</td><td>' + tB + '</td><td class="' + cC + '">' + (g.cum_score||'—') + '</td><td>' + cB + '</td></tr>';
             }).join('')
-            : '<tr><td colspan="5" class="text-center text-muted py-3">No records available</td></tr>';
+            : '<tr><td colspan="5" class="text-center text-muted py-3">No records available</td></td>';
 
         var tPct = an.term_percentage || 0, cPct = an.cum_percentage || 0;
         var clr = function(p){ return p < 50 ? 'score-red' : (p < 70 ? 'score-amber' : 'score-green'); };
 
         gpopBody.innerHTML =
             '<table class="gpop-table">' +
-                '<thead><tr><th style="text-align:left;">Subject</th><th style="color:#0891b2;">T.Score</th><th style="color:#0891b2;">T.Grade</th><th>C.Score</th><th>C.Grade</th></tr></thead>' +
+                '<thead><tr><th style="text-align:left;">Subject</th><th style="color:#0891b2;">T.Score</th><th style="color:#0891b2;">T.Grade</th><th>C.Score</th><th>C.Grade</th></table></thead>' +
                 '<tbody>' + rows + '</tbody>' +
             '</table>' +
             '<div class="gpop-summary">' +
@@ -1235,28 +1192,18 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                 '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Subjects</div><div class="gpop-sum-val">' + (an.subject_count||0) + '</div></div>' +
             '</div>';
 
-        /*
-         * FIX (Bug 1 — positioning):
-         * The popup uses position:fixed so coordinates come directly
-         * from getBoundingClientRect() with NO scroll offset added.
-         * The popup has been moved to document.body so it is outside
-         * every overflow:hidden container.
-         */
         var rect = triggerEl.getBoundingClientRect();
         var pw   = 400;
         var ph   = Math.min(540, window.innerHeight - 40);
         var vw   = window.innerWidth;
         var vh   = window.innerHeight;
 
-        /* Default: open below the trigger, horizontally centred */
         var top  = rect.bottom + 8;
         var left = rect.left + (rect.width / 2) - (pw / 2);
 
-        /* Flip upward if not enough space below */
         if (top + ph > vh - 8) {
             top = Math.max(8, rect.top - ph - 8);
         }
-        /* Clamp horizontal within viewport */
         if (left < 8)          left = 8;
         if (left + pw > vw - 8) left = vw - pw - 8;
 
@@ -1270,7 +1217,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         if (backdrop) backdrop.style.display = 'block';
     }
 
-    /* ── save all ── */
     function doSaveAll() {
         var fd = new FormData(document.getElementById('commentsForm'));
         fd.append('_token', CSRF); fd.append('_method', 'PATCH');
@@ -1286,21 +1232,12 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             .finally(function(){ saveBtn.disabled = false; saveBtn.innerHTML = origHtml; if (savingText) savingText.style.display = 'none'; });
     }
 
-    /* ── DOM ready ── */
     document.addEventListener('DOMContentLoaded', function() {
-
-        /*
-         * FIX (Bug 1 — DOM relocation):
-         * Move both the popup and its backdrop to document.body.
-         * This guarantees they are never inside an overflow:hidden
-         * ancestor no matter where they appear in the template.
-         */
         var gpop     = document.getElementById('cbGradePopup');
         var backdrop = document.getElementById('cbPopupBackdrop');
         if (gpop     && gpop.parentNode     !== document.body) document.body.appendChild(gpop);
         if (backdrop && backdrop.parentNode !== document.body) document.body.appendChild(backdrop);
 
-        /* column toggles */
         document.querySelectorAll('.toggle-chip').forEach(function(chip) {
             chip.addEventListener('click', function() {
                 var key  = this.getAttribute('data-colkey');
@@ -1311,7 +1248,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             });
         });
 
-        /* search */
         var searchEl = document.getElementById('searchInput');
         if (searchEl) {
             searchEl.addEventListener('input', function() {
@@ -1322,7 +1258,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             });
         }
 
-        /* image zoom */
         var imgModal   = null;
         var imgModalEl = document.getElementById('cbImgZoomModal');
         if (imgModalEl && typeof bootstrap !== 'undefined') imgModal = new bootstrap.Modal(imgModalEl);
@@ -1356,11 +1291,9 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             if (imgModal) imgModal.show();
         });
 
-        /* grade pop-up: close button */
         var gpopCloseBtn = document.getElementById('gpopCloseBtn');
         if (gpopCloseBtn) gpopCloseBtn.addEventListener('click', closeGradePop);
 
-        /* grade pop-up: backdrop click closes */
         document.addEventListener('click', function(e) {
             var bd = document.getElementById('cbPopupBackdrop');
             if (bd && e.target === bd) closeGradePop();
@@ -1368,7 +1301,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
         document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeGradePop(); });
 
-        /* grade pop-up: open via event delegation */
         document.addEventListener('click', function(e) {
             var btn = e.target.closest('.grade-trigger-btn');
             if (!btn) return;
@@ -1378,24 +1310,20 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             var name = btn.getAttribute('data-sname');
             if (!sid) return;
             var gpop = document.getElementById('cbGradePopup');
-            /* Toggle: clicking same student's button closes the popup */
             if (gpop && gpop.classList.contains('is-open') && gpop.dataset.activeSid === sid) {
                 closeGradePop();
                 return;
             }
             closeGradePop();
-            /* Tiny delay so closeGradePop's display:none settles before re-opening */
             setTimeout(function(){ openGradePop(sid, name, btn); }, 16);
         });
 
-        /* input listeners */
         ['.desk-teacher','.desk-guidance','.desk-activities','.desk-absence',
          '.mob-teacher','.mob-guidance','.mob-activities','.mob-absence'].forEach(function(sel) {
             document.querySelectorAll(sel).forEach(function(inp){ inp.addEventListener('input', onInputChange); });
         });
         attachModalTriggers();
 
-        /* modal buttons */
         var loadBtn      = document.getElementById('btnLoadPastComments');
         var modalSaveBtn = document.getElementById('modalSaveBtn');
         var saveBtn      = document.getElementById('saveBtn');
@@ -1403,7 +1331,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         if (modalSaveBtn) modalSaveBtn.addEventListener('click', saveCommentFromModal);
         if (saveBtn)      saveBtn.addEventListener('click', doSaveAll);
 
-        /* update top-stat cards from SA data */
         (function() {
             var vals = Object.values(SA);
             if (!vals.length) return;

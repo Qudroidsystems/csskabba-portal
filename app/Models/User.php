@@ -68,12 +68,7 @@ class User extends Authenticatable
         return $this->hasOne(Student::class, 'id', 'student_id');
     }
 
-    // Journal entries
-    public function journal(): HasMany
-    {
-        return $this->hasMany(Journals::class, 'user_id');
-    }
-
+   
     // Check if user has Staff role
     public function isStaff(): bool
     {

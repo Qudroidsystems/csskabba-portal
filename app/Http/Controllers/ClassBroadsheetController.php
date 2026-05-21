@@ -11,6 +11,7 @@ use App\Models\Schoolsession;
 use App\Models\Subject;
 use App\Models\Student;
 use App\Models\Staff;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -217,8 +218,13 @@ class ClassBroadsheetController extends Controller
                 ->orderByDesc('termid')
                 ->get();
 
+            // Get all staff user IDs
             $staffUserIds = $profiles->pluck('staffid')->filter()->unique()->values()->toArray();
-            $staffMembers = Staff::with('user')->whereIn('userid', $staffUserIds)->get()->keyBy('userid');
+
+            // Load staff with their User and picture relationships properly
+            $staffMembers = Staff::with(['user' => function($q) {
+                $q->with('staffPicture');
+            }])->whereIn('userid', $staffUserIds)->get()->keyBy('userid');
 
             $commentCounts = [
                 'classteacher' => 0,
@@ -263,23 +269,49 @@ class ClassBroadsheetController extends Controller
                 $staffName = null;
                 $staffPicture = null;
 
+                // Get staff details
                 if ($staffUserId) {
                     $staff = $staffMembers->get($staffUserId);
+
                     if (!$staff) {
-                        $staff = Staff::with('user')->find($staffUserId);
-                        if ($staff && $staff->userid) {
+                        // Try direct lookup with eager loading
+                        $staff = Staff::with(['user' => function($q) {
+                            $q->with('staffPicture');
+                        }])->where('userid', $staffUserId)->first();
+                        if ($staff) {
                             $staffMembers->put($staff->userid, $staff);
                         }
                     }
+
                     if ($staff && $staff->user) {
+                        // Get staff name from User model
                         $staffName = $staff->user->name;
+
+                        // Get staff picture using the relationship from User
+                        if ($staff->user->staffPicture && $staff->user->staffPicture->picture) {
+                            $staffPicture = asset('storage/staff_avatars/' . $staff->user->staffPicture->picture);
+                        }
                     } elseif ($staff && $staff->employmentid) {
-                        $staffName = 'Staff: ' . $staff->employmentid;
+                        $staffName = $staff->employmentid;
                     } else {
-                        $staffName = 'Staff Member';
+                        // Try to find user directly
+                        $user = User::with('staffPicture')->find($staffUserId);
+                        if ($user) {
+                            $staffName = $user->name;
+                            if ($user->staffPicture && $user->staffPicture->picture) {
+                                $staffPicture = asset('storage/staff_avatars/' . $user->staffPicture->picture);
+                            }
+                        } else {
+                            $staffName = 'Unknown Staff';
+                        }
                     }
                 } else {
                     $staffName = 'System';
+                }
+
+                // Fallback if name still not found
+                if (!$staffName || $staffName === 'Staff Member') {
+                    $staffName = 'System User';
                 }
 
                 $term = Schoolterm::find($profile->termid);
