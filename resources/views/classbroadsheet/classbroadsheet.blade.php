@@ -832,7 +832,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                         {{ $posIcon }}
                                     </div>
                                 </div>
-                            </td>
+                             </td>
 
                             @foreach ($subjects as $subject)
                                 @php
@@ -862,7 +862,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                             @if($cGrade !== '-')<span class="grade-badge g-{{ strtolower($cGrade) }}">{{ $cGrade }}</span>@endif
                                         </div>
                                     </div>
-                                </td>
+                                 </td>
                             @endforeach
 
                             {{-- ── Summary / Analytics cell ── --}}
@@ -918,22 +918,22 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                         <i class="ri-eye-line"></i>
                                     </button>
                                 </div>
-                            </td>
+                             </td>
 
                             <td class="cbcol-teacher">
                                 <div class="comment-field-group" style="margin:0;position:relative;">
                                     <input type="text" class="cb-input desk-teacher comment-input {{ $hasComment ? 'has-value' : '' }}" data-sid="{{ $sid }}" data-field="teacher" value="{{ $profile ? $profile->classteachercomment : '' }}" placeholder="Click to add comment…" autocomplete="off">
                                 </div>
-                            </td>
+                             </td>
                             <td class="cbcol-guidance">
                                 <input type="text" class="cb-input desk-guidance comment-input" data-sid="{{ $sid }}" data-field="guidance" value="{{ $profile ? $profile->guidancescomment : '' }}" placeholder="Click to add comment…" autocomplete="off">
-                            </td>
+                             </td>
                             <td class="cbcol-activities">
                                 <input type="text" class="cb-input desk-activities comment-input" data-sid="{{ $sid }}" data-field="activities" value="{{ $profile ? $profile->remark_on_other_activities : '' }}" placeholder="Click to add comment…" autocomplete="off">
-                            </td>
+                             </td>
                             <td class="cbcol-absence">
                                 <input type="number" class="cb-input absence-input desk-absence" data-sid="{{ $sid }}" data-field="absence" value="{{ $profile ? $profile->no_of_times_school_absent : '' }}" min="0" placeholder="0" autocomplete="off">
-                            </td>
+                             </td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -1514,35 +1514,35 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         });
     }
 
-    /* ── Template picker ── */
+    /* ── Template picker (FIXED: escaped placeholders) ── */
     var TEMPLATES = [
-        { cat:'excellent', label:'Outstanding Performer', text:'{{name}} has demonstrated exceptional academic performance this term, consistently achieving outstanding results across all subjects. A truly gifted student whose dedication and hard work serve as an inspiration to peers.' },
-        { cat:'excellent', label:'Top of Class', text:'{{name}} has continued to excel academically, maintaining a top position in the class. With excellent study habits and a keen intellect, this student is well on track for great achievements ahead.' },
-        { cat:'excellent', label:'Brilliant & Consistent', text:'A brilliant and consistent performer. {{name}} approaches every task with enthusiasm, precision, and maturity beyond their years. Keep up this outstanding work!' },
-        { cat:'excellent', label:'Exceptional Effort', text:'{{name}} has shown exceptional effort, commitment, and diligence throughout this term. The results obtained are a true reflection of the hard work invested. Well done!' },
-        { cat:'good', label:'Good Performance', text:'{{name}} has performed well this term, showing a solid grasp of the subjects studied. With continued focus and dedication, even higher results are achievable next term.' },
-        { cat:'good', label:'Commendable Work', text:'{{name}} has worked commendably this term and shown steady improvement. A little more attention to weaker subjects will lead to excellent outcomes.' },
-        { cat:'good', label:'Above Average', text:'{{name}} consistently performs above average and demonstrates a good understanding of course material. We encourage continued seriousness and participation in class activities.' },
-        { cat:'good', label:'Promising Student', text:'A promising student who shows great potential. {{name}} should maintain current momentum and seek deeper understanding in all subjects for even better performance.' },
-        { cat:'average', label:'Satisfactory Performance', text:'{{name}} has shown satisfactory performance this term. There is room for improvement, and we encourage more consistent effort and study habits going forward.' },
-        { cat:'average', label:'Moderate Progress', text:'{{name}} made moderate progress this term. With increased dedication, regular revision, and active participation in class, better results can be achieved in subsequent terms.' },
-        { cat:'average', label:'Fair Results', text:'The results obtained by {{name}} this term are fair. We urge this student to be more proactive, seek help where needed, and put in extra effort in areas of weakness.' },
-        { cat:'improvement', label:'Needs Improvement', text:'{{name}} needs to put in significantly more effort to achieve their potential. We encourage this student to revise regularly, pay close attention in class, and seek assistance when faced with difficulties.' },
-        { cat:'improvement', label:'Poor Concentration', text:'{{name}} has shown poor concentration and inconsistency in performance this term. We urge a more serious and disciplined approach to studies in the next term.' },
-        { cat:'improvement', label:'At Risk – Urgent Attention', text:'{{name}}\'s academic performance this term is a cause for concern. Immediate improvement in study habits, attendance, and class engagement is strongly advised. Parents/guardians are encouraged to provide additional support at home.' },
-        { cat:'improvement', label:'Work Harder', text:'{{name}} is capable of much better performance. This term\'s results do not reflect the full potential of this student. More dedication, focus, and effort are needed urgently.' },
-        { cat:'conduct', label:'Excellent Conduct', text:'{{name}} has exhibited exemplary conduct and character throughout this term. A respectful, disciplined, and well-mannered student who is a positive influence in the classroom.' },
-        { cat:'conduct', label:'Good Behaviour', text:'{{name}} maintains good behaviour and adheres to school rules. A cooperative and respectful member of the class who interacts well with peers and teachers.' },
-        { cat:'conduct', label:'Conduct Could Improve', text:'{{name}} is advised to show greater respect for school rules and fellow students. Improvements in behaviour and attitude toward learning will greatly benefit this student\'s overall development.' },
-        { cat:'conduct', label:'Disruptive Behaviour', text:'{{name}} has been disruptive in class on several occasions this term. A more disciplined and focused approach is required. Parents/guardians are urged to reinforce the importance of good conduct at home.' },
-        { cat:'counselor', label:'Positive Wellbeing', text:'{{name}} demonstrates a healthy sense of self-esteem and interacts positively with peers and teachers. Continue to nurture this positive outlook and engage in open communication whenever challenges arise.' },
-        { cat:'counselor', label:'Social & Emotional Growth', text:'{{name}} has shown commendable social and emotional growth this term. This student handles challenges maturely and shows empathy toward others. Encourage continued self-development.' },
-        { cat:'counselor', label:'Needs Counseling Support', text:'{{name}} is encouraged to make use of available counseling services to address social and emotional challenges identified this term. Open communication and a supportive environment will help this student thrive.' },
-        { cat:'counselor', label:'Peer Relations Concern', text:'{{name}} has experienced some difficulties in peer relationships this term. Counseling sessions are recommended to build stronger social skills and conflict resolution strategies.' },
-        { cat:'activities', label:'Active Participation', text:'{{name}} actively participates in school extracurricular activities and has demonstrated excellent sportsmanship and teamwork. A well-rounded student who contributes positively to the school community.' },
-        { cat:'activities', label:'Sports Excellence', text:'{{name}} has excelled in sporting activities this term, demonstrating physical fitness, team spirit, and competitive spirit. We encourage continued participation and development in sports.' },
-        { cat:'activities', label:'Cultural Involvement', text:'{{name}} has shown keen interest and talent in cultural and creative activities. This student\'s participation in school events has been commendable and enriching for the entire school community.' },
-        { cat:'activities', label:'Low Participation', text:'{{name}} is encouraged to be more actively involved in extracurricular activities. Participation in sports, cultural events, and clubs will contribute greatly to overall personal development.' },
+        { cat:'excellent', label:'Outstanding Performer', text:'{\{name}} has demonstrated exceptional academic performance this term, consistently achieving outstanding results across all subjects. A truly gifted student whose dedication and hard work serve as an inspiration to peers.' },
+        { cat:'excellent', label:'Top of Class', text:'{\{name}} has continued to excel academically, maintaining a top position in the class. With excellent study habits and a keen intellect, this student is well on track for great achievements ahead.' },
+        { cat:'excellent', label:'Brilliant & Consistent', text:'A brilliant and consistent performer. {\{name}} approaches every task with enthusiasm, precision, and maturity beyond their years. Keep up this outstanding work!' },
+        { cat:'excellent', label:'Exceptional Effort', text:'{\{name}} has shown exceptional effort, commitment, and diligence throughout this term. The results obtained are a true reflection of the hard work invested. Well done!' },
+        { cat:'good', label:'Good Performance', text:'{\{name}} has performed well this term, showing a solid grasp of the subjects studied. With continued focus and dedication, even higher results are achievable next term.' },
+        { cat:'good', label:'Commendable Work', text:'{\{name}} has worked commendably this term and shown steady improvement. A little more attention to weaker subjects will lead to excellent outcomes.' },
+        { cat:'good', label:'Above Average', text:'{\{name}} consistently performs above average and demonstrates a good understanding of course material. We encourage continued seriousness and participation in class activities.' },
+        { cat:'good', label:'Promising Student', text:'A promising student who shows great potential. {\{name}} should maintain current momentum and seek deeper understanding in all subjects for even better performance.' },
+        { cat:'average', label:'Satisfactory Performance', text:'{\{name}} has shown satisfactory performance this term. There is room for improvement, and we encourage more consistent effort and study habits going forward.' },
+        { cat:'average', label:'Moderate Progress', text:'{\{name}} made moderate progress this term. With increased dedication, regular revision, and active participation in class, better results can be achieved in subsequent terms.' },
+        { cat:'average', label:'Fair Results', text:'The results obtained by {\{name}} this term are fair. We urge this student to be more proactive, seek help where needed, and put in extra effort in areas of weakness.' },
+        { cat:'improvement', label:'Needs Improvement', text:'{\{name}} needs to put in significantly more effort to achieve their potential. We encourage this student to revise regularly, pay close attention in class, and seek assistance when faced with difficulties.' },
+        { cat:'improvement', label:'Poor Concentration', text:'{\{name}} has shown poor concentration and inconsistency in performance this term. We urge a more serious and disciplined approach to studies in the next term.' },
+        { cat:'improvement', label:'At Risk – Urgent Attention', text:'{\{name}}\'s academic performance this term is a cause for concern. Immediate improvement in study habits, attendance, and class engagement is strongly advised. Parents/guardians are encouraged to provide additional support at home.' },
+        { cat:'improvement', label:'Work Harder', text:'{\{name}} is capable of much better performance. This term\'s results do not reflect the full potential of this student. More dedication, focus, and effort are needed urgently.' },
+        { cat:'conduct', label:'Excellent Conduct', text:'{\{name}} has exhibited exemplary conduct and character throughout this term. A respectful, disciplined, and well-mannered student who is a positive influence in the classroom.' },
+        { cat:'conduct', label:'Good Behaviour', text:'{\{name}} maintains good behaviour and adheres to school rules. A cooperative and respectful member of the class who interacts well with peers and teachers.' },
+        { cat:'conduct', label:'Conduct Could Improve', text:'{\{name}} is advised to show greater respect for school rules and fellow students. Improvements in behaviour and attitude toward learning will greatly benefit this student\'s overall development.' },
+        { cat:'conduct', label:'Disruptive Behaviour', text:'{\{name}} has been disruptive in class on several occasions this term. A more disciplined and focused approach is required. Parents/guardians are urged to reinforce the importance of good conduct at home.' },
+        { cat:'counselor', label:'Positive Wellbeing', text:'{\{name}} demonstrates a healthy sense of self-esteem and interacts positively with peers and teachers. Continue to nurture this positive outlook and engage in open communication whenever challenges arise.' },
+        { cat:'counselor', label:'Social & Emotional Growth', text:'{\{name}} has shown commendable social and emotional growth this term. This student handles challenges maturely and shows empathy toward others. Encourage continued self-development.' },
+        { cat:'counselor', label:'Needs Counseling Support', text:'{\{name}} is encouraged to make use of available counseling services to address social and emotional challenges identified this term. Open communication and a supportive environment will help this student thrive.' },
+        { cat:'counselor', label:'Peer Relations Concern', text:'{\{name}} has experienced some difficulties in peer relationships this term. Counseling sessions are recommended to build stronger social skills and conflict resolution strategies.' },
+        { cat:'activities', label:'Active Participation', text:'{\{name}} actively participates in school extracurricular activities and has demonstrated excellent sportsmanship and teamwork. A well-rounded student who contributes positively to the school community.' },
+        { cat:'activities', label:'Sports Excellence', text:'{\{name}} has excelled in sporting activities this term, demonstrating physical fitness, team spirit, and competitive spirit. We encourage continued participation and development in sports.' },
+        { cat:'activities', label:'Cultural Involvement', text:'{\{name}} has shown keen interest and talent in cultural and creative activities. This student\'s participation in school events has been commendable and enriching for the entire school community.' },
+        { cat:'activities', label:'Low Participation', text:'{\{name}} is encouraged to be more actively involved in extracurricular activities. Participation in sports, cultural events, and clubs will contribute greatly to overall personal development.' },
     ];
 
     var tplActiveCategory = 'all';
@@ -1571,7 +1571,8 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             var row = document.querySelector('[data-student-id="' + currentModalSid + '"]');
             if (row) sName = (row.getAttribute('data-student-name') || '').split(' ')[0] || 'Student';
         }
-        ta.value = tpl.text.replace(/\{\{name\}\}/g, sName || 'Student');
+        // Replace escaped placeholder with actual name
+        ta.value = tpl.text.replace(/\\{\\{name\\}\\}/g, sName || 'Student');
         ta.focus();
         closeTplPicker();
         toast('Template loaded — personalise before saving.', 'success');
