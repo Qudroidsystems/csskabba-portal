@@ -26,13 +26,17 @@
 *, *::before, *::after { box-sizing: border-box; }
 body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
+/* ── Keyframes ── */
 @keyframes fadeInUp    { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:translateY(0); } }
 @keyframes fadeInDown  { from { opacity:0; transform:translateY(-22px); } to { opacity:1; transform:translateY(0); } }
 @keyframes fadeInLeft  { from { opacity:0; transform:translateX(-22px); } to { opacity:1; transform:translateX(0); } }
 @keyframes fadeInRight { from { opacity:0; transform:translateX(22px); }  to { opacity:1; transform:translateX(0); } }
 @keyframes scaleIn     { from { opacity:0; transform:scale(.88); } to { opacity:1; transform:scale(1); } }
 @keyframes pulse       { 0%,100% { transform:scale(1); } 50% { transform:scale(1.06); } }
-@keyframes shimmer     { 0% { background-position:-1000px 0; } 100% { background-position:1000px 0; } }
+@keyframes shimmer     {
+    0%   { background-position:-800px 0; }
+    100% { background-position:800px 0; }
+}
 @keyframes slideInRight{ from { transform:translateX(110%); opacity:0; } to { transform:translateX(0); opacity:1; } }
 @keyframes spin        { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
 @keyframes popIn       { 0% { opacity:0; transform:scale(.7) translateY(12px); } 60% { transform:scale(1.04) translateY(-3px); } 100% { opacity:1; transform:scale(1) translateY(0); } }
@@ -43,6 +47,14 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 @keyframes countUp     { from { opacity:0; transform:scale(.6); } to { opacity:1; transform:scale(1); } }
 @keyframes rowSlide    { from { opacity:0; transform:translateX(-12px); } to { opacity:1; transform:translateX(0); } }
 @keyframes backdropIn  { from { opacity:0; } to { opacity:1; } }
+
+/* ── Shimmer skeleton (now actually used) ── */
+.shimmer-skeleton {
+    background: linear-gradient(90deg,#e2e8f0 25%,#f8fafc 50%,#e2e8f0 75%);
+    background-size: 800px 100%;
+    animation: shimmer 1.4s infinite linear;
+    border-radius: 4px;
+}
 
 .spin { animation:spin .8s linear infinite; }
 
@@ -151,7 +163,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 }
 
 .cb-table-scroll { overflow-x:auto; overflow-y:visible; }
-
 .cb-table { width:100%; border-collapse:collapse; font-size:12.5px; }
 .cb-table thead th {
     background:var(--cb-navy); color:#fff; padding:11px 14px;
@@ -217,13 +228,26 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .score-green { color:#16a34a !important; }
 
 /* ── Analytics Cell ── */
-.analytics-cell { min-width:180px; font-size:11px; line-height:1.4; }
+.analytics-cell { min-width:200px; font-size:11px; line-height:1.4; }
 .analytics-row  { display:flex; justify-content:space-between; align-items:center; padding:3px 0; gap:6px; }
 .analytics-lbl  { color:var(--cb-muted); font-size:10px; font-weight:500; }
 .analytics-val  { font-weight:700; color:var(--cb-navy); font-size:11.5px; }
-.analytics-percentage { font-weight:800; font-size:12px; }
-.pct-bar-wrap { background:#e2e8f0; border-radius:4px; height:5px; margin-top:3px; overflow:hidden; }
-.pct-bar { height:100%; border-radius:4px; animation:progressFill .8s ease both; animation-delay:.3s; }
+
+/* ── QUICK WIN 2: animated percentage spans ── */
+.analytics-percentage {
+    font-weight:800; font-size:12px;
+    display:inline-block;
+    animation:countUp .6s ease both;
+}
+
+/* ── QUICK WIN 3: Progress bars with color transition ── */
+.pct-bar-wrap { background:#e2e8f0; border-radius:4px; height:6px; margin-top:3px; overflow:hidden; }
+.pct-bar {
+    height:100%; border-radius:4px;
+    background:#f43f5e;                   /* start red */
+    transition: background-color 1s ease; /* color transitions after fill */
+    animation:progressFill .8s ease both;
+}
 
 /* ── Grade Popup Trigger ── */
 .grade-trigger-btn {
@@ -393,50 +417,29 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
 /* ── Grade Popup ── */
 #cbGradePopup {
-    display:none;
-    position:fixed;
-    z-index:99999;
-    background:var(--cb-white);
-    border:2px solid var(--cb-teal);
-    border-radius:16px;
-    box-shadow:0 20px 60px rgba(15,35,66,.22);
-    width:460px;
-    max-height:580px;
-    overflow:hidden;
-    flex-direction:column;
+    display:none; position:fixed; z-index:99999;
+    background:var(--cb-white); border:2px solid var(--cb-teal);
+    border-radius:16px; box-shadow:0 20px 60px rgba(15,35,66,.22);
+    width:460px; max-height:580px; overflow:hidden; flex-direction:column;
 }
 #cbGradePopup.is-open { display:flex; animation:popIn .28s cubic-bezier(.22,1,.36,1); }
 .gpop-hdr {
     background:linear-gradient(135deg, var(--cb-navy), var(--cb-teal));
     color:#fff; padding:13px 18px; border-radius:14px 14px 0 0;
     font-weight:700; font-size:14px;
-    display:flex; justify-content:space-between; align-items:center;
-    flex-shrink:0;
+    display:flex; justify-content:space-between; align-items:center; flex-shrink:0;
 }
-.gpop-close-btn {
-    background:rgba(255,255,255,.18); border:none; color:#fff; border-radius:50%;
-    width:28px; height:28px; cursor:pointer; font-size:16px;
-    display:flex; align-items:center; justify-content:center; transition:all .25s ease;
-}
+.gpop-close-btn { background:rgba(255,255,255,.18); border:none; color:#fff; border-radius:50%; width:28px; height:28px; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; transition:all .25s ease; }
 .gpop-close-btn:hover { background:rgba(255,255,255,.4); transform:rotate(90deg) scale(1.1); }
 .gpop-body { padding:16px; overflow-y:auto; flex:1; }
-.gpop-legend {
-    display:flex; align-items:center; gap:12px; margin-bottom:10px;
-    padding:6px 10px; background:var(--cb-surface); border-radius:8px;
-    border:1px solid var(--cb-border);
-}
+.gpop-legend { display:flex; align-items:center; gap:12px; margin-bottom:10px; padding:6px 10px; background:var(--cb-surface); border-radius:8px; border:1px solid var(--cb-border); }
 .gpop-legend-item { display:flex; align-items:center; gap:4px; font-size:10px; font-weight:700; color:var(--cb-muted); }
 .gpop-legend-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
 .gpop-legend-dot.t { background:#0ea5e9; }
 .gpop-legend-dot.c { background:var(--cb-navy); }
 .gpop-scroll { max-height:280px; overflow-y:auto; border:1px solid var(--cb-border); border-radius:10px; }
 .gpop-table { width:100%; border-collapse:collapse; font-size:12px; table-layout:fixed; }
-.gpop-table thead th {
-    background:var(--cb-navy); color:#fff;
-    font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.4px;
-    padding:9px 8px; border-right:1px solid rgba(255,255,255,.08);
-    text-align:center; position:sticky; top:0; z-index:2;
-}
+.gpop-table thead th { background:var(--cb-navy); color:#fff; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.4px; padding:9px 8px; border-right:1px solid rgba(255,255,255,.08); text-align:center; position:sticky; top:0; z-index:2; }
 .gpop-table thead th:first-child { text-align:left; padding-left:12px; width:38%; }
 .gpop-table thead th.col-score { width:28%; }
 .gpop-table thead th.col-grade { width:34%; }
@@ -447,11 +450,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .score-cell { display:flex; align-items:center; justify-content:center; gap:3px; padding:2px 4px; border-radius:4px; font-size:11px; font-weight:700; }
 .score-cell.term { background:rgba(14,165,233,.08); border-left:2px solid #0ea5e9; }
 .score-cell.cum  { background:rgba(15,35,66,.06);   border-left:2px solid var(--cb-navy); }
-.gpop-summary {
-    background:linear-gradient(135deg,#f8fafc,#f0fdf9);
-    border-radius:12px; padding:12px; margin-top:14px;
-    display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
-}
+.gpop-summary { background:linear-gradient(135deg,#f8fafc,#f0fdf9); border-radius:12px; padding:12px; margin-top:14px; display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
 .gpop-sum-item { text-align:center; padding:10px 6px; border-radius:10px; background:white; transition:all .2s ease; border:1px solid #e2e8f0; }
 .gpop-sum-item:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.09); border-color:var(--cb-teal); }
 .gpop-sum-lbl { font-size:9px; color:var(--cb-muted); text-transform:uppercase; letter-spacing:.4px; margin-bottom:6px; font-weight:600; line-height:1.4; }
@@ -514,108 +513,64 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
    PRINT STYLES
 ───────────────────────────────────────────── */
 @media print {
-    /* Hide all non-essential UI */
     .cb-hero::before, .cb-hero::after,
-    .col-toggle-panel,
-    .cb-card-header .cb-search,
-    .save-bar,
-    .cb-toast,
-    .grade-trigger-btn,
-    .autosave-chip,
-    .comment-status-dot,
-    .btn-back,
-    nav, header, footer,
-    .sidebar, .navbar,
+    .col-toggle-panel, .cb-card-header .cb-search,
+    .save-bar, .cb-toast, .grade-trigger-btn,
+    .autosave-chip, .comment-status-dot, .btn-back,
+    nav, header, footer, .sidebar, .navbar,
     #cbGradePopup, #cbPopupBackdrop, #cbImgZoomModal, #cbCommentModal,
-    .mobile-only,
-    .ri-eye-line,
-    .pct-bar-wrap { display:none !important; }
+    .mobile-only, .ri-eye-line, .pct-bar-wrap { display:none !important; }
 
-    /* Reset body/page */
     * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
     body { background:#fff !important; font-family:'DM Sans',sans-serif; font-size:10px; }
     .main-content, .page-content, .container-fluid { padding:0 !important; margin:0 !important; }
 
-    /* Hero → compact header */
-    .cb-hero {
-        background: linear-gradient(135deg, var(--cb-navy) 0%, #1e4a7e 55%, #0d9488 100%) !important;
-        border-radius:8px !important;
-        padding:14px 18px !important;
-        margin-bottom:14px !important;
-        animation:none !important;
-        page-break-inside: avoid;
-    }
+    .cb-hero { background: linear-gradient(135deg, var(--cb-navy) 0%, #1e4a7e 55%, #0d9488 100%) !important; border-radius:8px !important; padding:14px 18px !important; margin-bottom:14px !important; animation:none !important; page-break-inside: avoid; }
     .cb-hero h1 { font-size:16px !important; }
     .cb-hero p  { font-size:10px !important; }
     .cb-meta-pill { font-size:9px !important; padding:2px 8px !important; animation:none !important; }
 
-    /* Stats row */
-    .cb-stat {
-        animation:none !important;
-        box-shadow:none !important;
-        border:1px solid #e2e8f0 !important;
-        break-inside:avoid;
-    }
+    .cb-stat { animation:none !important; box-shadow:none !important; border:1px solid #e2e8f0 !important; break-inside:avoid; }
     .cb-stat .stat-value { font-size:20px !important; }
 
-    /* Table */
     .cb-card { box-shadow:none !important; border:1px solid #cbd5e1 !important; animation:none !important; break-inside:auto; }
     .cb-card-header { background:#f8fafc !important; padding:10px 14px !important; border-radius:0 !important; }
     .cb-card-header h5 { font-size:12px !important; }
 
     .cb-table-scroll { overflow:visible !important; }
     .cb-table { font-size:9px !important; }
-    .cb-table thead th {
-        background:var(--cb-navy) !important;
-        color:#fff !important;
-        font-size:8px !important;
-        padding:6px 8px !important;
-        position:static !important;
-    }
+    .cb-table thead th { background:var(--cb-navy) !important; color:#fff !important; font-size:8px !important; padding:6px 8px !important; position:static !important; }
     .cb-table tbody td { padding:5px 8px !important; }
     .cb-table tbody tr { animation:none !important; }
     .cb-table tbody tr:hover td { background:transparent !important; }
 
-    /* Avatar: smaller for print */
     .cb-avatar { width:28px !important; height:28px !important; border:1.5px solid #e2e8f0 !important; }
     .cb-avatar-initials { font-size:10px !important; }
     .student-name-text { font-size:9px !important; }
     .student-adm { font-size:8px !important; }
 
-    /* Score cells: compact */
     .score-dual { min-width:60px !important; gap:1px !important; }
     .score-row { font-size:9px !important; padding:1px 3px !important; }
     .grade-badge { font-size:7px !important; padding:0 3px !important; }
 
-    /* Analytics cell: hide bars, keep numbers */
     .analytics-cell { min-width:120px !important; font-size:9px !important; }
     .analytics-row { padding:1px 0 !important; }
     .pct-bar-wrap { display:none !important; }
     .analytics-percentage { font-size:10px !important; }
 
-    /* Comment inputs: show as plain text */
     .cb-input { border:none !important; background:transparent !important; padding:0 !important; font-size:9px !important; box-shadow:none !important; }
     .absence-input { width:40px !important; }
 
-    /* Position badge */
     .pos-badge { width:26px !important; height:26px !important; font-size:10px !important; border-width:1.5px !important; }
 
-    /* Page breaks */
     .cb-student-card { break-inside:avoid; }
     .cb-table tbody tr { break-inside:avoid; }
 
-    /* Print footer per page */
     @page {
         margin: 1.5cm 1.2cm;
         @bottom-center { content: "Class Broadsheet — Confidential | Page " counter(page) " of " counter(pages); font-size:8pt; color:#64748b; }
     }
 
-    /* Print title */
-    .cb-card-header::before {
-        display:none;
-    }
-
-    /* Force full width for table */
     .desktop-only { display:block !important; }
     .mobile-only  { display:none !important; }
 }
@@ -710,7 +665,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 @if ($students->isNotEmpty())
 
 @php
-    /* ── Compute per-student positions based on cum_percentage ── */
     $rankedByCum  = collect($studentAnalytics)->sortByDesc('cum_percentage')->values();
     $positionMap  = [];
     $prevPct      = null;
@@ -718,13 +672,11 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     $counter      = 0;
     foreach ($rankedByCum as $an) {
         $counter++;
-        $sid = array_search($an, $studentAnalytics);
-        // find the sid properly
         foreach ($studentAnalytics as $s => $a) {
             if ($a === $an) { $sid = $s; break; }
         }
         if ($prevPct !== null && $an['cum_percentage'] == $prevPct) {
-            $positionMap[$sid] = $prevPos; // tie
+            $positionMap[$sid] = $prevPos;
         } else {
             $positionMap[$sid] = $counter;
             $prevPos  = $counter;
@@ -745,7 +697,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     <div class="gpop-body" id="gpopBody"></div>
 </div>
 
-{{-- ── Template Picker (shared, repositioned by JS) ── --}}
 <div id="tplBackdrop"></div>
 <div id="tplPicker" class="tpl-picker">
     <div class="tpl-hdr">
@@ -807,7 +758,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                         @foreach ($subjects as $subject)
                             <th class="cbcol-scores" style="min-width:86px;">{{ $subject->subject }}</th>
                         @endforeach
-                        <th class="cbcol-summary" style="min-width:200px;">Summary</th>
+                        <th class="cbcol-summary" style="min-width:220px;">Summary</th>
                         <th class="cbcol-teacher" style="min-width:200px;">Teacher's Comment</th>
                         <th class="cbcol-guidance" style="min-width:160px;">Counselor's Comment</th>
                         <th class="cbcol-activities" style="min-width:160px;">Remark on Activities</th>
@@ -828,6 +779,14 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                             $pos        = $positionMap[$sid] ?? 0;
                             $posClass   = $pos === 1 ? 'pos-1' : ($pos === 2 ? 'pos-2' : ($pos === 3 ? 'pos-3' : 'pos-other'));
                             $posIcon    = $pos === 1 ? '🥇' : ($pos === 2 ? '🥈' : ($pos === 3 ? '🥉' : $pos));
+
+                            /* QUICK WIN 1: stagger delay per row */
+                            $rowDelay   = 0.3 + ($index * 0.04);
+
+                            $termPct    = $an['term_percentage'] ?? 0;
+                            $cumPct     = $an['cum_percentage'] ?? 0;
+                            $termColor  = $termPct < 40 ? '#f43f5e' : ($termPct < 70 ? '#f59e0b' : '#22c55e');
+                            $cumColor   = $cumPct  < 40 ? '#f43f5e' : ($cumPct  < 70 ? '#f59e0b' : '#22c55e');
                         @endphp
                         <tr class="cb-student-row {{ $hasComment ? 'row-has-comment' : 'row-no-comment' }}"
                             data-student-id="{{ $sid }}"
@@ -867,7 +826,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                 </div>
                             </td>
 
-                            {{-- ── Position cell ── --}}
                             <td class="cbcol-position">
                                 <div style="display:flex;justify-content:center;">
                                     <div class="pos-badge {{ $posClass }}" data-tooltip="{{ $pos }}{{ $pos === 1 ? 'st' : ($pos === 2 ? 'nd' : ($pos === 3 ? 'rd' : 'th')) }} position (Cum)">
@@ -907,6 +865,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                 </td>
                             @endforeach
 
+                            {{-- ── Summary / Analytics cell ── --}}
                             <td class="cbcol-summary analytics-cell">
                                 <div class="analytics-row">
                                     <span class="analytics-lbl">Obtained (Term)</span>
@@ -922,24 +881,31 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                 </div>
                                 <div class="analytics-row">
                                     <span class="analytics-lbl">% Obtained (Term)</span>
-                                    <span class="analytics-val analytics-percentage {{ ($an['term_percentage'] ?? 0) < 50 ? 'score-red' : (($an['term_percentage'] ?? 0) < 70 ? 'score-amber' : 'score-green') }}">
-                                        {{ number_format($an['term_percentage'] ?? 0, 1) }}%
-                                    </span>
+                                    {{-- QUICK WIN 2: data-target for JS counter --}}
+                                    <span class="analytics-val analytics-percentage {{ $termPct < 50 ? 'score-red' : ($termPct < 70 ? 'score-amber' : 'score-green') }}"
+                                          data-target="{{ number_format($termPct, 1) }}"
+                                          data-type="pct">0%</span>
                                 </div>
                                 <div class="analytics-row">
                                     <span class="analytics-lbl">% Obtained (Cum)</span>
-                                    <span class="analytics-val analytics-percentage {{ ($an['cum_percentage'] ?? 0) < 50 ? 'score-red' : (($an['cum_percentage'] ?? 0) < 70 ? 'score-amber' : 'score-green') }}">
-                                        {{ number_format($an['cum_percentage'] ?? 0, 1) }}%
-                                    </span>
+                                    <span class="analytics-val analytics-percentage {{ $cumPct < 50 ? 'score-red' : ($cumPct < 70 ? 'score-amber' : 'score-green') }}"
+                                          data-target="{{ number_format($cumPct, 1) }}"
+                                          data-type="pct">0%</span>
                                 </div>
+
+                                {{-- QUICK WIN 1 + 3: staggered bars with color transition --}}
                                 <div style="margin-top:5px;">
                                     <div style="font-size:9px;color:var(--cb-muted);margin-bottom:2px;">Term</div>
                                     <div class="pct-bar-wrap">
-                                        <div class="pct-bar" style="width:{{ $an['term_percentage'] ?? 0 }}%;background:{{ ($an['term_percentage'] ?? 0) >= 50 ? 'var(--cb-sky)' : 'var(--cb-rose)' }};"></div>
+                                        <div class="pct-bar"
+                                             data-final-color="{{ $termColor }}"
+                                             style="width:{{ $termPct }}%;animation-delay:{{ $rowDelay }}s;"></div>
                                     </div>
                                     <div style="font-size:9px;color:var(--cb-muted);margin:3px 0 2px;">Cum</div>
                                     <div class="pct-bar-wrap">
-                                        <div class="pct-bar" style="width:{{ $an['cum_percentage'] ?? 0 }}%;background:{{ ($an['cum_percentage'] ?? 0) >= 50 ? 'var(--cb-green)' : 'var(--cb-rose)' }};"></div>
+                                        <div class="pct-bar"
+                                             data-final-color="{{ $cumColor }}"
+                                             style="width:{{ $cumPct }}%;animation-delay:{{ $rowDelay + 0.1 }}s;"></div>
                                     </div>
                                 </div>
                                 <div class="text-center mt-2">
@@ -988,6 +954,11 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                     $hasComment = $profile && !empty(trim($profile->classteachercomment ?? ''));
                     $pos        = $positionMap[$sid] ?? 0;
                     $posClass   = $pos === 1 ? 'pos-1' : ($pos === 2 ? 'pos-2' : ($pos === 3 ? 'pos-3' : 'pos-other'));
+                    $rowDelay   = 0.3 + ($index * 0.04);
+                    $termPct    = $an['term_percentage'] ?? 0;
+                    $cumPct     = $an['cum_percentage'] ?? 0;
+                    $termColor  = $termPct < 40 ? '#f43f5e' : ($termPct < 70 ? '#f59e0b' : '#22c55e');
+                    $cumColor   = $cumPct  < 40 ? '#f43f5e' : ($cumPct  < 70 ? '#f59e0b' : '#22c55e');
                 @endphp
                 <div class="cb-student-card cb-student-row {{ $hasComment ? 'card-has-comment' : 'card-no-comment' }}"
                      data-student-id="{{ $sid }}" data-student-name="{{ $fullName }}"
@@ -1029,8 +1000,29 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                 <div class="ps-item"><div class="ps-lbl">Obtained (T)</div><div class="ps-val">{{ number_format($an['term_total'] ?? 0, 1) }}</div></div>
                                 <div class="ps-item"><div class="ps-lbl">Obtained (C)</div><div class="ps-val">{{ number_format($an['cum_total'] ?? 0, 1) }}</div></div>
                                 <div class="ps-item"><div class="ps-lbl">Obtainable</div><div class="ps-val">{{ $an['total_obtainable'] ?? 0 }}</div></div>
-                                <div class="ps-item"><div class="ps-lbl">% Obt. (T)</div><div class="ps-val {{ ($an['term_percentage'] ?? 0) < 50 ? 'score-red' : (($an['term_percentage'] ?? 0) < 70 ? 'score-amber' : 'score-green') }}">{{ number_format($an['term_percentage'] ?? 0, 1) }}%</div></div>
-                                <div class="ps-item"><div class="ps-lbl">% Obt. (C)</div><div class="ps-val {{ ($an['cum_percentage'] ?? 0) < 50 ? 'score-red' : (($an['cum_percentage'] ?? 0) < 70 ? 'score-amber' : 'score-green') }}">{{ number_format($an['cum_percentage'] ?? 0, 1) }}%</div></div>
+                                <div class="ps-item">
+                                    <div class="ps-lbl">% Obt. (T)</div>
+                                    <div class="ps-val {{ $termPct < 50 ? 'score-red' : ($termPct < 70 ? 'score-amber' : 'score-green') }}"
+                                         data-target="{{ number_format($termPct, 1) }}" data-type="pct">0%</div>
+                                </div>
+                                <div class="ps-item">
+                                    <div class="ps-lbl">% Obt. (C)</div>
+                                    <div class="ps-val {{ $cumPct < 50 ? 'score-red' : ($cumPct < 70 ? 'score-amber' : 'score-green') }}"
+                                         data-target="{{ number_format($cumPct, 1) }}" data-type="pct">0%</div>
+                                </div>
+                            </div>
+                            {{-- Mobile bars --}}
+                            <div style="margin-top:10px;">
+                                <div style="font-size:9px;opacity:.7;margin-bottom:3px;">Term %</div>
+                                <div class="pct-bar-wrap">
+                                    <div class="pct-bar" data-final-color="{{ $termColor }}"
+                                         style="width:{{ $termPct }}%;animation-delay:{{ $rowDelay }}s;"></div>
+                                </div>
+                                <div style="font-size:9px;opacity:.7;margin:4px 0 3px;">Cum %</div>
+                                <div class="pct-bar-wrap">
+                                    <div class="pct-bar" data-final-color="{{ $cumColor }}"
+                                         style="width:{{ $cumPct }}%;animation-delay:{{ $rowDelay + 0.1 }}s;"></div>
+                                </div>
                             </div>
                         </div>
                         <div class="subjects-scroll">
@@ -1111,7 +1103,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" style="padding:24px;">
-                {{-- Performance strip --}}
                 <div class="performance-strip" style="background:linear-gradient(135deg,var(--cb-navy),#1e5f74);border-radius:12px;padding:16px 20px;color:#fff;margin-bottom:24px;">
                     <div style="font-size:12px;font-weight:600;opacity:.9;margin-bottom:12px;"><i class="ri-bar-chart-line me-1"></i>Performance Summary</div>
                     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:15px;">
@@ -1137,7 +1128,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                     </div>
                 </div>
 
-                {{-- Comment type label + template button + past comments button --}}
                 <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                     <div>
                         <h6 class="mb-0" id="modalCommentType" style="font-weight:700;color:var(--cb-navy);"><i class="ri-chat-3-line me-1" style="color:var(--cb-teal);"></i> Teacher's Comment</h6>
@@ -1154,7 +1144,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                     </div>
                 </div>
 
-                {{-- Formatting toolbar --}}
                 <div class="mb-2" style="background:#f8fafc;border-radius:10px;padding:8px;border:1px solid var(--cb-border);">
                     <button type="button" class="btn btn-sm btn-light me-1" onclick="formatCommentText('bold')"   style="border-radius:6px;" title="Bold"><i class="ri-bold"></i></button>
                     <button type="button" class="btn btn-sm btn-light me-1" onclick="formatCommentText('italic')" style="border-radius:6px;" title="Italic"><i class="ri-italic"></i></button>
@@ -1165,7 +1154,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                 <textarea id="modalTextarea" class="form-control" rows="6"
                     style="resize:vertical;font-family:inherit;font-size:14px;line-height:1.6;border-radius:10px;border:1.5px solid var(--cb-border);padding:12px;"></textarea>
 
-                {{-- Past comments panel --}}
                 <div id="pastCommentsPanel" style="display:none;margin-top:20px;">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <h6 class="small fw-bold mb-0" style="color:var(--cb-navy);"><i class="ri-history-line me-1" style="color:var(--cb-teal);"></i> Past Comments from Previous Terms</h6>
@@ -1203,9 +1191,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     var pastCommentRegistry = [];
 
     /* ─── Print ─── */
-    window.triggerPrint = function() {
-        window.print();
-    };
+    window.triggerPrint = function() { window.print(); };
 
     /* ─── Utilities ─── */
     function esc(str) { var d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
@@ -1323,7 +1309,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         document.getElementById('modalObtainable').textContent = analytics.total_obtainable || 0;
         document.getElementById('modalSubjects').textContent   = analytics.subject_count    || 0;
 
-        // Show position in modal
         var posEl = document.getElementById('modalPosition');
         if (posEl) {
             var p = PM[sid] || 0;
@@ -1498,40 +1483,62 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             .finally(function(){ saveBtn.disabled = false; saveBtn.innerHTML = origHtml; if (savingText) savingText.style.display = 'none'; });
     }
 
-    /* ─────────────────────────────────────────────────
-       COMMENT TEMPLATES
-    ──────────────────────────────────────────────── */
+    /* ─── QUICK WIN 3: Color-transitioning bars ─── */
+    function applyBarFinalColors() {
+        document.querySelectorAll('.pct-bar[data-final-color]').forEach(function(bar) {
+            var color = bar.getAttribute('data-final-color');
+            var delay = parseFloat(bar.style.animationDelay || '0') * 1000 + 820;
+            setTimeout(function() {
+                bar.style.backgroundColor = color;
+            }, delay);
+        });
+    }
+
+    /* ─── QUICK WIN 2: Number counter for % spans ─── */
+    function runCounters() {
+        var duration = 700; // ms
+        var fps = 60;
+        var steps = Math.round(duration / (1000 / fps));
+
+        document.querySelectorAll('[data-target][data-type="pct"]').forEach(function(el) {
+            var target = parseFloat(el.getAttribute('data-target') || '0');
+            var current = 0;
+            var increment = target / steps;
+            var step = 0;
+            var timer = setInterval(function() {
+                step++;
+                current += increment;
+                if (step >= steps) { current = target; clearInterval(timer); }
+                el.textContent = current.toFixed(1) + '%';
+            }, 1000 / fps);
+        });
+    }
+
+    /* ── Template picker ── */
     var TEMPLATES = [
-        // Excellent
         { cat:'excellent', label:'Outstanding Performer', text:'{{name}} has demonstrated exceptional academic performance this term, consistently achieving outstanding results across all subjects. A truly gifted student whose dedication and hard work serve as an inspiration to peers.' },
         { cat:'excellent', label:'Top of Class', text:'{{name}} has continued to excel academically, maintaining a top position in the class. With excellent study habits and a keen intellect, this student is well on track for great achievements ahead.' },
         { cat:'excellent', label:'Brilliant & Consistent', text:'A brilliant and consistent performer. {{name}} approaches every task with enthusiasm, precision, and maturity beyond their years. Keep up this outstanding work!' },
         { cat:'excellent', label:'Exceptional Effort', text:'{{name}} has shown exceptional effort, commitment, and diligence throughout this term. The results obtained are a true reflection of the hard work invested. Well done!' },
-        // Good
         { cat:'good', label:'Good Performance', text:'{{name}} has performed well this term, showing a solid grasp of the subjects studied. With continued focus and dedication, even higher results are achievable next term.' },
         { cat:'good', label:'Commendable Work', text:'{{name}} has worked commendably this term and shown steady improvement. A little more attention to weaker subjects will lead to excellent outcomes.' },
         { cat:'good', label:'Above Average', text:'{{name}} consistently performs above average and demonstrates a good understanding of course material. We encourage continued seriousness and participation in class activities.' },
         { cat:'good', label:'Promising Student', text:'A promising student who shows great potential. {{name}} should maintain current momentum and seek deeper understanding in all subjects for even better performance.' },
-        // Average
         { cat:'average', label:'Satisfactory Performance', text:'{{name}} has shown satisfactory performance this term. There is room for improvement, and we encourage more consistent effort and study habits going forward.' },
         { cat:'average', label:'Moderate Progress', text:'{{name}} made moderate progress this term. With increased dedication, regular revision, and active participation in class, better results can be achieved in subsequent terms.' },
         { cat:'average', label:'Fair Results', text:'The results obtained by {{name}} this term are fair. We urge this student to be more proactive, seek help where needed, and put in extra effort in areas of weakness.' },
-        // Needs Improvement
         { cat:'improvement', label:'Needs Improvement', text:'{{name}} needs to put in significantly more effort to achieve their potential. We encourage this student to revise regularly, pay close attention in class, and seek assistance when faced with difficulties.' },
         { cat:'improvement', label:'Poor Concentration', text:'{{name}} has shown poor concentration and inconsistency in performance this term. We urge a more serious and disciplined approach to studies in the next term.' },
         { cat:'improvement', label:'At Risk – Urgent Attention', text:'{{name}}\'s academic performance this term is a cause for concern. Immediate improvement in study habits, attendance, and class engagement is strongly advised. Parents/guardians are encouraged to provide additional support at home.' },
         { cat:'improvement', label:'Work Harder', text:'{{name}} is capable of much better performance. This term\'s results do not reflect the full potential of this student. More dedication, focus, and effort are needed urgently.' },
-        // Conduct
         { cat:'conduct', label:'Excellent Conduct', text:'{{name}} has exhibited exemplary conduct and character throughout this term. A respectful, disciplined, and well-mannered student who is a positive influence in the classroom.' },
         { cat:'conduct', label:'Good Behaviour', text:'{{name}} maintains good behaviour and adheres to school rules. A cooperative and respectful member of the class who interacts well with peers and teachers.' },
         { cat:'conduct', label:'Conduct Could Improve', text:'{{name}} is advised to show greater respect for school rules and fellow students. Improvements in behaviour and attitude toward learning will greatly benefit this student\'s overall development.' },
         { cat:'conduct', label:'Disruptive Behaviour', text:'{{name}} has been disruptive in class on several occasions this term. A more disciplined and focused approach is required. Parents/guardians are urged to reinforce the importance of good conduct at home.' },
-        // Counselor
         { cat:'counselor', label:'Positive Wellbeing', text:'{{name}} demonstrates a healthy sense of self-esteem and interacts positively with peers and teachers. Continue to nurture this positive outlook and engage in open communication whenever challenges arise.' },
         { cat:'counselor', label:'Social & Emotional Growth', text:'{{name}} has shown commendable social and emotional growth this term. This student handles challenges maturely and shows empathy toward others. Encourage continued self-development.' },
         { cat:'counselor', label:'Needs Counseling Support', text:'{{name}} is encouraged to make use of available counseling services to address social and emotional challenges identified this term. Open communication and a supportive environment will help this student thrive.' },
         { cat:'counselor', label:'Peer Relations Concern', text:'{{name}} has experienced some difficulties in peer relationships this term. Counseling sessions are recommended to build stronger social skills and conflict resolution strategies.' },
-        // Activities
         { cat:'activities', label:'Active Participation', text:'{{name}} actively participates in school extracurricular activities and has demonstrated excellent sportsmanship and teamwork. A well-rounded student who contributes positively to the school community.' },
         { cat:'activities', label:'Sports Excellence', text:'{{name}} has excelled in sporting activities this term, demonstrating physical fitness, team spirit, and competitive spirit. We encourage continued participation and development in sports.' },
         { cat:'activities', label:'Cultural Involvement', text:'{{name}} has shown keen interest and talent in cultural and creative activities. This student\'s participation in school events has been commendable and enriching for the entire school community.' },
@@ -1539,11 +1546,9 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     ];
 
     var tplActiveCategory = 'all';
-    var tplCurrentSid = null, tplCurrentField = null;
 
     function renderTemplates(filter, catFilter) {
-        var list = document.getElementById('tplList');
-        if (!list) return;
+        var list = document.getElementById('tplList'); if (!list) return;
         var filt = (filter || '').toLowerCase().trim();
         var cat  = catFilter || tplActiveCategory;
         var shown = TEMPLATES.filter(function(t){
@@ -1551,17 +1556,10 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             var matchText = !filt || t.label.toLowerCase().includes(filt) || t.text.toLowerCase().includes(filt);
             return matchCat && matchText;
         });
-        if (!shown.length) {
-            list.innerHTML = '<div class="tpl-no-results"><i class="ri-inbox-line" style="font-size:36px;color:#cbd5e1;display:block;margin-bottom:8px;"></i>No matching templates</div>';
-            return;
-        }
-        list.innerHTML = shown.map(function(t, i) {
-            var orig = t;
-            var idx  = TEMPLATES.indexOf(orig);
-            return '<div class="tpl-item" onclick="applyTemplate(' + idx + ')">' +
-                '<span class="tpl-item-label">' + esc(t.label) + '</span>' +
-                '<span class="tpl-item-text">' + esc(t.text.substring(0,90) + (t.text.length > 90 ? '…' : '')) + '</span>' +
-            '</div>';
+        if (!shown.length) { list.innerHTML = '<div class="tpl-no-results"><i class="ri-inbox-line" style="font-size:36px;color:#cbd5e1;display:block;margin-bottom:8px;"></i>No matching templates</div>'; return; }
+        list.innerHTML = shown.map(function(t) {
+            var idx = TEMPLATES.indexOf(t);
+            return '<div class="tpl-item" onclick="applyTemplate(' + idx + ')"><span class="tpl-item-label">' + esc(t.label) + '</span><span class="tpl-item-text">' + esc(t.text.substring(0,90) + (t.text.length > 90 ? '…' : '')) + '</span></div>';
         }).join('');
     }
 
@@ -1580,17 +1578,13 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     };
 
     function openTplPicker() {
-        renderTemplates('', 'all');
-        tplActiveCategory = 'all';
+        renderTemplates('', 'all'); tplActiveCategory = 'all';
         document.querySelectorAll('.tpl-cat-btn').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-cat') === 'all'); });
         document.getElementById('tplSearchInput').value = '';
         var picker   = document.getElementById('tplPicker');
         var backdrop = document.getElementById('tplBackdrop');
-        var modalEl  = document.getElementById('cbCommentModal');
         if (!picker) return;
-        picker.classList.add('is-open');
-        backdrop.style.display = 'block';
-        // Position near Templates button
+        picker.classList.add('is-open'); backdrop.style.display = 'block';
         var btn = document.getElementById('btnOpenTemplates');
         if (btn) {
             var rect = btn.getBoundingClientRect();
@@ -1599,11 +1593,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             if (top + ph > window.innerHeight - 8) top = Math.max(8, rect.top - ph - 8);
             if (left + pw > window.innerWidth - 8)  left = window.innerWidth - pw - 8;
             if (left < 8) left = 8;
-            picker.style.position = 'fixed';
-            picker.style.top  = top + 'px';
-            picker.style.left = left + 'px';
-            picker.style.maxHeight = ph + 'px';
-            picker.style.zIndex = '999999';
+            picker.style.position = 'fixed'; picker.style.top = top + 'px'; picker.style.left = left + 'px'; picker.style.maxHeight = ph + 'px'; picker.style.zIndex = '999999';
         }
     }
 
@@ -1623,6 +1613,10 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         var tplPicker = document.getElementById('tplPicker'), tplBd = document.getElementById('tplBackdrop');
         if (tplPicker && tplPicker.parentNode !== document.body) document.body.appendChild(tplPicker);
         if (tplBd     && tplBd.parentNode     !== document.body) document.body.appendChild(tplBd);
+
+        /* QUICK WIN 2 + 3: run on load */
+        runCounters();
+        applyBarFinalColors();
 
         /* Column toggles */
         document.querySelectorAll('.toggle-chip').forEach(function(chip) {
@@ -1745,21 +1739,17 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             if (pillT) pillT.innerHTML = '<i class="ri-time-line me-1"></i>Term: ' + avgTermPct + '%';
             if (pillC) pillC.innerHTML = '<i class="ri-history-line me-1"></i>Cum: '  + avgCumPct  + '%';
 
-            var topCumAvg = -1, topCumName = '—', topTermAvg = -1, topTermName = '—', topPicture = null;
+            var topCumAvg = -1, topCumName = '—', topTermAvg = -1, topTermName = '—';
             document.querySelectorAll('.cb-student-row[data-student-id]').forEach(function(row) {
                 var sid = row.getAttribute('data-student-id');
                 if (!sid || !SA[sid]) return;
                 var cumPct  = SA[sid].cum_percentage  || 0;
                 var termPct = SA[sid].term_percentage || 0;
-                if (cumPct  > topCumAvg)  { topCumAvg  = cumPct;  topCumName  = row.getAttribute('data-student-name') || ''; topPicture = row.getAttribute('data-student-img') || null; }
+                if (cumPct  > topCumAvg)  { topCumAvg  = cumPct;  topCumName  = row.getAttribute('data-student-name') || ''; }
                 if (termPct > topTermAvg) { topTermAvg = termPct; topTermName = row.getAttribute('data-student-name') || ''; }
             });
             var topEl = document.getElementById('statTop'); if (topEl) topEl.textContent = topCumName;
             var termTopSpan = document.getElementById('statTermTop'); if (termTopSpan) termTopSpan.textContent = topTermName;
-            if (topPicture && topPicture !== 'null' && topPicture !== '' && !document.querySelector('#topPerformerStat img')) {
-                var statCard = document.getElementById('topPerformerStat');
-                if (statCard) { var imgDiv = document.createElement('div'); imgDiv.className = 'mt-2'; imgDiv.innerHTML = '<img src="' + topPicture + '" alt="Top Performer" style="width:40px;height:40px;border-radius:50%;border:2px solid var(--cb-amber);object-fit:cover;">'; statCard.appendChild(imgDiv); }
-            }
         })();
 
         refreshCommentStatus();
