@@ -48,7 +48,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 @keyframes rowSlide    { from { opacity:0; transform:translateX(-12px); } to { opacity:1; transform:translateX(0); } }
 @keyframes backdropIn  { from { opacity:0; } to { opacity:1; } }
 
-/* ── Shimmer skeleton (now actually used) ── */
+/* ── Shimmer skeleton ── */
 .shimmer-skeleton {
     background: linear-gradient(90deg,#e2e8f0 25%,#f8fafc 50%,#e2e8f0 75%);
     background-size: 800px 100%;
@@ -244,8 +244,8 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .pct-bar-wrap { background:#e2e8f0; border-radius:4px; height:6px; margin-top:3px; overflow:hidden; }
 .pct-bar {
     height:100%; border-radius:4px;
-    background:#f43f5e;                   /* start red */
-    transition: background-color 1s ease; /* color transitions after fill */
+    background:#f43f5e;
+    transition: background-color 1s ease;
     animation:progressFill .8s ease both;
 }
 
@@ -794,7 +794,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                             data-student-pos="{{ $pos }}"
                             data-searchkey="{{ strtolower($fullName . ' ' . $student->admissionNo) }}">
 
-                            <td>{{ $index + 1 }}</td>
+                            <tr>{{ $index + 1 }}</td>
                             <td class="td-name">
                                 <div class="student-name-cell">
                                     @if($imgUrl)
@@ -1434,10 +1434,10 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                 var csDisplay = (g.cum_score  && g.cum_score  > 0) ? parseFloat(g.cum_score).toFixed(1)  : '—';
                 var termGradeBadge = (g.term_grade && g.term_grade !== '-') ? '<span class="grade-badge g-' + tgl + '">' + esc(g.term_grade) + '</span>' : '<span style="color:#94a3b8;font-size:11px;">—</span>';
                 var cumGradeBadge  = (g.cum_grade  && g.cum_grade  !== '-') ? '<span class="grade-badge g-' + cgl + '">' + esc(g.cum_grade)  + '</span>' : '<span style="color:#94a3b8;font-size:11px;">—</span>';
-                rows += '<tr><td>' + esc(g.subject) + '</td><td><div class="score-pair"><div class="score-cell term"><span class="score-lbl" style="color:#0891b2;">T</span><span class="' + tC + '">' + tsDisplay + '</span></div><div class="score-cell cum"><span class="score-lbl" style="color:var(--cb-navy);">C</span><span class="' + cC + '">' + csDisplay + '</span></div></div></td><td><div style="display:flex;flex-direction:column;align-items:center;gap:3px;">' + termGradeBadge + cumGradeBadge + '</div></td></tr>';
+                rows += '<tr><td style="text-align:left;font-weight:600;">' + esc(g.subject) + '</td><td><div class="score-pair"><div class="score-cell term"><span class="score-lbl" style="color:#0891b2;">T</span><span class="' + tC + '">' + tsDisplay + '</span></div><div class="score-cell cum"><span class="score-lbl" style="color:var(--cb-navy);">C</span><span class="' + cC + '">' + csDisplay + '</span></div></div></td><td><div style="display:flex;flex-direction:column;align-items:center;gap:3px;">' + termGradeBadge + cumGradeBadge + '</div></td></tr>';
             }
         } else {
-            rows = '<tr><td colspan="3" class="text-center text-muted py-3">No subject records available</td</tr>';
+            rows = '<tr><td colspan="3" class="text-center text-muted py-3">No subject records available</td></tr>';
         }
         var tPct = parseFloat(an.term_percentage || 0), cPct = parseFloat(an.cum_percentage || 0);
         var pos = PM[sid] || 0;
@@ -1490,7 +1490,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
     /* ─── QUICK WIN 2: Number counter for % spans ─── */
     function runCounters() {
-        var duration = 700; // ms
+        var duration = 700;
         var fps = 60;
         var steps = Math.round(duration / (1000 / fps));
 
@@ -1508,37 +1508,37 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         });
     }
 
-    /* ── Template picker (FIXED: using [STUDENT_NAME] placeholder) ── */
-/* ── Template picker ── */
-var TEMPLATES = [
-    { cat:'excellent', label:'Outstanding Performer', text:'@{{name}} has demonstrated exceptional academic performance this term, consistently achieving outstanding results across all subjects. A truly gifted student whose dedication and hard work serve as an inspiration to peers.' },
-    { cat:'excellent', label:'Top of Class', text:'@{{name}} has continued to excel academically, maintaining a top position in the class. With excellent study habits and a keen intellect, this student is well on track for great achievements ahead.' },
-    { cat:'excellent', label:'Brilliant & Consistent', text:'A brilliant and consistent performer. @{{name}} approaches every task with enthusiasm, precision, and maturity beyond their years. Keep up this outstanding work!' },
-    { cat:'excellent', label:'Exceptional Effort', text:'@{{name}} has shown exceptional effort, commitment, and diligence throughout this term. The results obtained are a true reflection of the hard work invested. Well done!' },
-    { cat:'good', label:'Good Performance', text:'@{{name}} has performed well this term, showing a solid grasp of the subjects studied. With continued focus and dedication, even higher results are achievable next term.' },
-    { cat:'good', label:'Commendable Work', text:'@{{name}} has worked commendably this term and shown steady improvement. A little more attention to weaker subjects will lead to excellent outcomes.' },
-    { cat:'good', label:'Above Average', text:'@{{name}} consistently performs above average and demonstrates a good understanding of course material. We encourage continued seriousness and participation in class activities.' },
-    { cat:'good', label:'Promising Student', text:'A promising student who shows great potential. @{{name}} should maintain current momentum and seek deeper understanding in all subjects for even better performance.' },
-    { cat:'average', label:'Satisfactory Performance', text:'@{{name}} has shown satisfactory performance this term. There is room for improvement, and we encourage more consistent effort and study habits going forward.' },
-    { cat:'average', label:'Moderate Progress', text:'@{{name}} made moderate progress this term. With increased dedication, regular revision, and active participation in class, better results can be achieved in subsequent terms.' },
-    { cat:'average', label:'Fair Results', text:'The results obtained by @{{name}} this term are fair. We urge this student to be more proactive, seek help where needed, and put in extra effort in areas of weakness.' },
-    { cat:'improvement', label:'Needs Improvement', text:'@{{name}} needs to put in significantly more effort to achieve their potential. We encourage this student to revise regularly, pay close attention in class, and seek assistance when faced with difficulties.' },
-    { cat:'improvement', label:'Poor Concentration', text:'@{{name}} has shown poor concentration and inconsistency in performance this term. We urge a more serious and disciplined approach to studies in the next term.' },
-    { cat:'improvement', label:'At Risk – Urgent Attention', text:'@{{name}}\'s academic performance this term is a cause for concern. Immediate improvement in study habits, attendance, and class engagement is strongly advised. Parents/guardians are encouraged to provide additional support at home.' },
-    { cat:'improvement', label:'Work Harder', text:'@{{name}} is capable of much better performance. This term\'s results do not reflect the full potential of this student. More dedication, focus, and effort are needed urgently.' },
-    { cat:'conduct', label:'Excellent Conduct', text:'@{{name}} has exhibited exemplary conduct and character throughout this term. A respectful, disciplined, and well-mannered student who is a positive influence in the classroom.' },
-    { cat:'conduct', label:'Good Behaviour', text:'@{{name}} maintains good behaviour and adheres to school rules. A cooperative and respectful member of the class who interacts well with peers and teachers.' },
-    { cat:'conduct', label:'Conduct Could Improve', text:'@{{name}} is advised to show greater respect for school rules and fellow students. Improvements in behaviour and attitude toward learning will greatly benefit this student\'s overall development.' },
-    { cat:'conduct', label:'Disruptive Behaviour', text:'@{{name}} has been disruptive in class on several occasions this term. A more disciplined and focused approach is required. Parents/guardians are urged to reinforce the importance of good conduct at home.' },
-    { cat:'counselor', label:'Positive Wellbeing', text:'@{{name}} demonstrates a healthy sense of self-esteem and interacts positively with peers and teachers. Continue to nurture this positive outlook and engage in open communication whenever challenges arise.' },
-    { cat:'counselor', label:'Social & Emotional Growth', text:'@{{name}} has shown commendable social and emotional growth this term. This student handles challenges maturely and shows empathy toward others. Encourage continued self-development.' },
-    { cat:'counselor', label:'Needs Counseling Support', text:'@{{name}} is encouraged to make use of available counseling services to address social and emotional challenges identified this term. Open communication and a supportive environment will help this student thrive.' },
-    { cat:'counselor', label:'Peer Relations Concern', text:'@{{name}} has experienced some difficulties in peer relationships this term. Counseling sessions are recommended to build stronger social skills and conflict resolution strategies.' },
-    { cat:'activities', label:'Active Participation', text:'@{{name}} actively participates in school extracurricular activities and has demonstrated excellent sportsmanship and teamwork. A well-rounded student who contributes positively to the school community.' },
-    { cat:'activities', label:'Sports Excellence', text:'@{{name}} has excelled in sporting activities this term, demonstrating physical fitness, team spirit, and competitive spirit. We encourage continued participation and development in sports.' },
-    { cat:'activities', label:'Cultural Involvement', text:'@{{name}} has shown keen interest and talent in cultural and creative activities. This student\'s participation in school events has been commendable and enriching for the entire school community.' },
-    { cat:'activities', label:'Low Participation', text:'@{{name}} is encouraged to be more actively involved in extracurricular activities. Participation in sports, cultural events, and clubs will contribute greatly to overall personal development.' },
-];
+    /* ── Template picker (FIXED: using %%NAME%% placeholder that Blade won't parse) ── */
+    var TEMPLATES = [
+        { cat:'excellent', label:'Outstanding Performer', text:'%%NAME%% has demonstrated exceptional academic performance this term, consistently achieving outstanding results across all subjects. A truly gifted student whose dedication and hard work serve as an inspiration to peers.' },
+        { cat:'excellent', label:'Top of Class', text:'%%NAME%% has continued to excel academically, maintaining a top position in the class. With excellent study habits and a keen intellect, this student is well on track for great achievements ahead.' },
+        { cat:'excellent', label:'Brilliant & Consistent', text:'A brilliant and consistent performer. %%NAME%% approaches every task with enthusiasm, precision, and maturity beyond their years. Keep up this outstanding work!' },
+        { cat:'excellent', label:'Exceptional Effort', text:'%%NAME%% has shown exceptional effort, commitment, and diligence throughout this term. The results obtained are a true reflection of the hard work invested. Well done!' },
+        { cat:'good', label:'Good Performance', text:'%%NAME%% has performed well this term, showing a solid grasp of the subjects studied. With continued focus and dedication, even higher results are achievable next term.' },
+        { cat:'good', label:'Commendable Work', text:'%%NAME%% has worked commendably this term and shown steady improvement. A little more attention to weaker subjects will lead to excellent outcomes.' },
+        { cat:'good', label:'Above Average', text:'%%NAME%% consistently performs above average and demonstrates a good understanding of course material. We encourage continued seriousness and participation in class activities.' },
+        { cat:'good', label:'Promising Student', text:'A promising student who shows great potential. %%NAME%% should maintain current momentum and seek deeper understanding in all subjects for even better performance.' },
+        { cat:'average', label:'Satisfactory Performance', text:'%%NAME%% has shown satisfactory performance this term. There is room for improvement, and we encourage more consistent effort and study habits going forward.' },
+        { cat:'average', label:'Moderate Progress', text:'%%NAME%% made moderate progress this term. With increased dedication, regular revision, and active participation in class, better results can be achieved in subsequent terms.' },
+        { cat:'average', label:'Fair Results', text:'The results obtained by %%NAME%% this term are fair. We urge this student to be more proactive, seek help where needed, and put in extra effort in areas of weakness.' },
+        { cat:'improvement', label:'Needs Improvement', text:'%%NAME%% needs to put in significantly more effort to achieve their potential. We encourage this student to revise regularly, pay close attention in class, and seek assistance when faced with difficulties.' },
+        { cat:'improvement', label:'Poor Concentration', text:'%%NAME%% has shown poor concentration and inconsistency in performance this term. We urge a more serious and disciplined approach to studies in the next term.' },
+        { cat:'improvement', label:'At Risk – Urgent Attention', text:'%%NAME%%\'s academic performance this term is a cause for concern. Immediate improvement in study habits, attendance, and class engagement is strongly advised. Parents/guardians are encouraged to provide additional support at home.' },
+        { cat:'improvement', label:'Work Harder', text:'%%NAME%% is capable of much better performance. This term\'s results do not reflect the full potential of this student. More dedication, focus, and effort are needed urgently.' },
+        { cat:'conduct', label:'Excellent Conduct', text:'%%NAME%% has exhibited exemplary conduct and character throughout this term. A respectful, disciplined, and well-mannered student who is a positive influence in the classroom.' },
+        { cat:'conduct', label:'Good Behaviour', text:'%%NAME%% maintains good behaviour and adheres to school rules. A cooperative and respectful member of the class who interacts well with peers and teachers.' },
+        { cat:'conduct', label:'Conduct Could Improve', text:'%%NAME%% is advised to show greater respect for school rules and fellow students. Improvements in behaviour and attitude toward learning will greatly benefit this student\'s overall development.' },
+        { cat:'conduct', label:'Disruptive Behaviour', text:'%%NAME%% has been disruptive in class on several occasions this term. A more disciplined and focused approach is required. Parents/guardians are urged to reinforce the importance of good conduct at home.' },
+        { cat:'counselor', label:'Positive Wellbeing', text:'%%NAME%% demonstrates a healthy sense of self-esteem and interacts positively with peers and teachers. Continue to nurture this positive outlook and engage in open communication whenever challenges arise.' },
+        { cat:'counselor', label:'Social & Emotional Growth', text:'%%NAME%% has shown commendable social and emotional growth this term. This student handles challenges maturely and shows empathy toward others. Encourage continued self-development.' },
+        { cat:'counselor', label:'Needs Counseling Support', text:'%%NAME%% is encouraged to make use of available counseling services to address social and emotional challenges identified this term. Open communication and a supportive environment will help this student thrive.' },
+        { cat:'counselor', label:'Peer Relations Concern', text:'%%NAME%% has experienced some difficulties in peer relationships this term. Counseling sessions are recommended to build stronger social skills and conflict resolution strategies.' },
+        { cat:'activities', label:'Active Participation', text:'%%NAME%% actively participates in school extracurricular activities and has demonstrated excellent sportsmanship and teamwork. A well-rounded student who contributes positively to the school community.' },
+        { cat:'activities', label:'Sports Excellence', text:'%%NAME%% has excelled in sporting activities this term, demonstrating physical fitness, team spirit, and competitive spirit. We encourage continued participation and development in sports.' },
+        { cat:'activities', label:'Cultural Involvement', text:'%%NAME%% has shown keen interest and talent in cultural and creative activities. This student\'s participation in school events has been commendable and enriching for the entire school community.' },
+        { cat:'activities', label:'Low Participation', text:'%%NAME%% is encouraged to be more actively involved in extracurricular activities. Participation in sports, cultural events, and clubs will contribute greatly to overall personal development.' },
+    ];
+
     var tplActiveCategory = 'all';
 
     function renderTemplates(filter, catFilter) {
@@ -1557,21 +1557,20 @@ var TEMPLATES = [
         }).join('');
     }
 
-
-window.applyTemplate = function(idx) {
-    var tpl = TEMPLATES[idx]; if (!tpl) return;
-    var ta = document.getElementById('modalTextarea'); if (!ta) return;
-    var sName = '';
-    if (currentModalSid) {
-        var row = document.querySelector('[data-student-id="' + currentModalSid + '"]');
-        if (row) sName = (row.getAttribute('data-student-name') || '').split(' ')[0] || 'Student';
-    }
-    // Replace @{{name}} with actual student name (remove @ and replace {{name}})
-    ta.value = tpl.text.replace(/@\{\{name\}\}/g, sName || 'Student');
-    ta.focus();
-    closeTplPicker();
-    toast('Template loaded — personalise before saving.', 'success');
-};
+    window.applyTemplate = function(idx) {
+        var tpl = TEMPLATES[idx]; if (!tpl) return;
+        var ta = document.getElementById('modalTextarea'); if (!ta) return;
+        var sName = '';
+        if (currentModalSid) {
+            var row = document.querySelector('[data-student-id="' + currentModalSid + '"]');
+            if (row) sName = (row.getAttribute('data-student-name') || '').split(' ')[0] || 'Student';
+        }
+        // Replace %%NAME%% with actual student name
+        ta.value = tpl.text.replace(/%%NAME%%/g, sName || 'Student');
+        ta.focus();
+        closeTplPicker();
+        toast('Template loaded — personalise before saving.', 'success');
+    };
 
     function openTplPicker() {
         renderTemplates('', 'all'); tplActiveCategory = 'all';
