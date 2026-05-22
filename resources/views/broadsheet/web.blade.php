@@ -701,7 +701,7 @@
                                     @if($gpaColspan > 0)
                                         <th colspan="{{ $gpaColspan }}" style="background:#0a1e38;border-left:2px solid #3b82f6;font-size:10px;">GPA METRICS</th>
                                     @endif
-                                  </tr>
+                                  </table>
                                 <tr class="assessment-header">
                                     @foreach($subjects as $subId => $subInfo)
                                         @foreach($activeAssessments as $aIdx => $a)
@@ -757,8 +757,6 @@
                                         data-has-failure="{{ $hasFailure ? 'true' : 'false' }}"
                                         data-class-avg="{{ $stu['class_average'] ?? 0 }}"
                                         data-term-percentage="{{ $termPercentage }}"
-                                        data-student-json='@json($stu)'
-                                        data-subjects-json='@json($subjects)'
                                         style="animation-delay: {{ $idx * 0.05 }}s">
 
                                         <td class="sn-cell">{{ $idx + 1 }}</td>
@@ -826,7 +824,7 @@
                                         <td class="stats-label" colspan="{{ $frozenCols + 2 }}">{{ $label }}</td>
                                         @foreach($subjects as $subId => $subInfo)
                                             @php $st = $subjectStats[$subId] ?? []; @endphp
-                                            @foreach($activeAssessments as $a)  <td>—</td> @endforeach
+                                            @foreach($activeAssessments as $a)   <td>—</td> @endforeach
                                             @if($showTotal)     <td>{{ $st[$key] ?? '—' }}</td> @endif
                                             @if($showBF)        <td>—</td> @endif
                                             @if($showCum)       <td>—</td> @endif
@@ -963,6 +961,10 @@
 const studentDataMap = {};
 
 @foreach($studentRows as $stu)
+    @php
+        $totalObtainable = count($subjects) * 100;
+        $termPercentage = $totalObtainable > 0 ? round(($stu['total_cum'] / $totalObtainable) * 100, 1) : 0;
+    @endphp
     studentDataMap[{{ $stu['id'] }}] = {
         id: {{ $stu['id'] }},
         name: '{{ addslashes($stu['lastname'] . ' ' . $stu['firstname']) }}',
@@ -970,7 +972,7 @@ const studentDataMap = {};
         total_cum: {{ $stu['total_cum'] }},
         num_subjects: {{ count($subjects) }},
         total_obtainable: {{ count($subjects) * 100 }},
-        term_percentage: {{ $totalObtainable = count($subjects) * 100; echo $totalObtainable > 0 ? round(($stu['total_cum'] / $totalObtainable) * 100, 1) : 0; }},
+        term_percentage: {{ $termPercentage }},
         gpa: {{ $stu['gpa'] }},
         gpa_grade: '{{ $stu['gpa_grade'] ?? '-' }}',
         subjects: @json($stu['subjects']),
@@ -1078,7 +1080,6 @@ function showPerformanceModal(studentId) {
     const termColor = termPct < 40 ? 'score-red' : (termPct < 70 ? 'score-amber' : 'score-green');
     const obtainable = student.total_obtainable;
     const obtained = student.total_cum;
-    const pctColor = termPct < 50 ? 'score-red' : (termPct < 70 ? 'score-amber' : 'score-green');
 
     const statsGrid = document.getElementById('perfStatsGrid');
     statsGrid.innerHTML = `
@@ -1101,8 +1102,8 @@ function showPerformanceModal(studentId) {
             </div>
         </div>
         <div class="perf-stat-item animate-scale" style="animation-delay: 0.2s">
-            <div class="perf-stat-label">Class Position</div>
-            <div class="perf-stat-value">—</div>
+            <div class="perf-stat-label">GPA</div>
+            <div class="perf-stat-value">${student.gpa.toFixed(2)}</div>
         </div>
     `;
 
