@@ -89,9 +89,20 @@ class MyPrincipalsCommentController extends Controller
         // ------------------------------------------------------------------
         // 2.  School / class meta
         // ------------------------------------------------------------------
-        $schoolclass = Schoolclass::with(['arm'])->findOrFail($schoolclassid);
-        $schoolclass->full_class_name = $schoolclass->schoolclass .($schoolclass->arm ? ' ' . $schoolclass->arm->arm : '');
+       // ------------------------------------------------------------------
+// 2. School / class meta
+// ------------------------------------------------------------------
+$schoolclass = Schoolclass::with(['arm'])->findOrFail($schoolclassid);
 
+// Safe way to get arm name
+$armName = '';
+if ($schoolclass->arm && is_object($schoolclass->arm)) {
+    $armName = $schoolclass->arm->arm ?? '';
+} elseif ($schoolclass->arms && is_object($schoolclass->arms)) {
+    $armName = $schoolclass->arms->arm ?? '';
+}
+
+$schoolclass->full_class_name = trim($schoolclass->schoolclass . ' ' . $armName);
         $schoolterm    = Schoolterm::find($termid)?->term         ?? 'N/A';
         $schoolsession = Schoolsession::find($sessionid)?->session ?? 'N/A';
 

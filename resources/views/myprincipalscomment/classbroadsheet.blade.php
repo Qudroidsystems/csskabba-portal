@@ -1636,7 +1636,7 @@ function setupImageZoom() {
     });
 }
 
-// ====================== AUTO-SAVE WITH CLASS + ARM ======================
+// ====================== AUTO-SAVE ======================
 document.querySelectorAll('.auto-save-comment').forEach(select => {
     select.addEventListener('change', function() {
         const studentId   = this.dataset.studentId;
@@ -1652,15 +1652,7 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
             if (nameCell) studentName = nameCell.textContent.trim();
         }
 
-        // Final robust class + arm
-        let classArm = "{{ $schoolclass->schoolclass ?? 'Class' }}";
-        @if($schoolclass->arm && $schoolclass->arm->arm)
-            classArm += " {{ $schoolclass->arm->arm }}";
-        @elseif($schoolclass->arms && $schoolclass->arms->arm)
-            classArm += " {{ $schoolclass->arms->arm }}";
-        @elseif($schoolclass->arm_name)
-            classArm += " {{ $schoolclass->arm_name }}";
-        @endif
+        const classArm = "{{ $schoolclass->full_class_name ?? $schoolclass->schoolclass ?? 'Class' }}";
 
         this.style.borderColor = '#f59e0b';
         this.style.backgroundColor = '#fffbeb';
@@ -1691,7 +1683,6 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
             }
         })
         .catch(err => {
-            console.error('Auto-save failed:', err);
             this.value = original;
             this.style.borderColor = '#dc2626';
             this.style.backgroundColor = '#fee2e2';
@@ -1707,7 +1698,7 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
     });
 });
 
-// ====================== BULK SAVE ======================
+// Bulk Save
 const commentsForm = document.getElementById('commentsForm');
 if (commentsForm) {
     commentsForm.addEventListener('submit', function(e) {
@@ -1715,15 +1706,7 @@ if (commentsForm) {
         const btn  = document.getElementById('saveAllBtn');
         const ind  = document.getElementById('savingIndicator');
         const orig = btn.innerHTML;
-
-        let classArm = "{{ $schoolclass->schoolclass ?? 'Class' }}";
-        @if($schoolclass->arm && $schoolclass->arm->arm)
-            classArm += " {{ $schoolclass->arm->arm }}";
-        @elseif($schoolclass->arms && $schoolclass->arms->arm)
-            classArm += " {{ $schoolclass->arms->arm }}";
-        @elseif($schoolclass->arm_name)
-            classArm += " {{ $schoolclass->arm_name }}";
-        @endif
+        const classArm = "{{ $schoolclass->full_class_name ?? $schoolclass->schoolclass ?? 'Class' }}";
 
         btn.disabled = true;
         btn.innerHTML = '<i class="ri-loader-4-line spin-icon me-1"></i> Saving All...';
@@ -1757,7 +1740,7 @@ if (commentsForm) {
     });
 }
 
-// Tooltip triggers
+// Tooltip, Search, Init
 if (window.innerWidth > 1199) {
     document.querySelectorAll('.grades-trigger').forEach(trigger => {
         trigger.addEventListener('click', function(e) {
@@ -1784,7 +1767,6 @@ if (window.innerWidth > 1199) {
     });
 }
 
-// Search
 document.getElementById('searchInput')?.addEventListener('input', function() {
     const term = this.value.toLowerCase().trim();
     document.querySelectorAll('.desktop-table tbody tr').forEach(row => {
@@ -1795,7 +1777,6 @@ document.getElementById('searchInput')?.addEventListener('input', function() {
     });
 });
 
-// Initialize
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.auto-save-comment').forEach(s => {
         s.dataset.originalValue = s.value;
