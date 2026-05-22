@@ -43,7 +43,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
 .spin { animation:spin .8s linear infinite; }
 
-/* ── Hero ── */
 .cb-hero {
     background: linear-gradient(135deg, var(--cb-navy) 0%, #1e4a7e 55%, #0d9488 100%);
     border-radius: var(--cb-radius);
@@ -90,7 +89,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 }
 .btn-back:hover { background:rgba(255,255,255,.22); color:#fff; transform:translateX(-4px); }
 
-/* ── Stat Cards ── */
 .cb-stat {
     background:var(--cb-white); border:1px solid var(--cb-border);
     border-radius:var(--cb-radius); padding:20px 22px;
@@ -116,7 +114,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .stat-pct-term { background:rgba(14,165,233,.12); color:#0369a1; }
 .stat-pct-cum  { background:rgba(34,197,94,.12);  color:#15803d; }
 
-/* ── Column Toggle ── */
 .col-toggle-panel {
     background:var(--cb-white); border:1px solid var(--cb-border);
     border-radius:var(--cb-radius); padding:18px 22px; margin-bottom:22px;
@@ -133,7 +130,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .toggle-chip:hover { border-color:var(--cb-teal); color:var(--cb-teal); transform:translateY(-2px) scale(1.03); }
 .toggle-chip.active { background:var(--cb-teal); border-color:var(--cb-teal); color:#fff; box-shadow:0 2px 10px rgba(13,148,136,.35); }
 
-/* ── Main Card ── */
 .cb-card {
     background:var(--cb-white); border:1px solid var(--cb-border);
     border-radius:var(--cb-radius); box-shadow:var(--cb-shadow);
@@ -149,7 +145,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
 .cb-table-scroll { overflow-x:auto; overflow-y:visible; }
 
-/* ── Table ── */
 .cb-table { width:100%; border-collapse:collapse; font-size:12.5px; }
 .cb-table thead th {
     background:var(--cb-navy); color:#fff; padding:11px 14px;
@@ -172,7 +167,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .cb-table tbody tr:nth-child(n+6){animation-delay:.20s}
 .cb-table tbody tr:hover td { background:#f0fdf9; }
 
-/* ── Score cells ── */
 .score-dual { display:flex; flex-direction:column; gap:2px; min-width:80px; }
 .score-row {
     display:flex; align-items:center; justify-content:center; gap:4px;
@@ -199,7 +193,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .score-amber { color:#d97706 !important; }
 .score-green { color:#16a34a !important; }
 
-/* ── Summary / analytics cell ── */
 .analytics-cell { min-width:180px; font-size:11px; line-height:1.4; }
 .analytics-row  { display:flex; justify-content:space-between; align-items:center; padding:3px 0; gap:6px; }
 .analytics-lbl  { color:var(--cb-muted); font-size:10px; font-weight:500; }
@@ -208,7 +201,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .pct-bar-wrap { background:#e2e8f0; border-radius:4px; height:5px; margin-top:3px; overflow:hidden; }
 .pct-bar { height:100%; border-radius:4px; animation:progressFill .8s ease both; animation-delay:.3s; }
 
-/* ── Grade trigger button (eye icon) ── */
 .grade-trigger-btn {
     background:none; border:none; cursor:pointer;
     color:var(--cb-sky); font-size:17px;
@@ -223,7 +215,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     animation:glowPulse .8s ease infinite;
 }
 
-/* ── Inputs ── */
 .cb-input {
     border:1.5px solid var(--cb-border); border-radius:8px; padding:6px 10px;
     font-size:12px; width:100%; transition:all .25s ease;
@@ -233,7 +224,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .cb-input.has-value { border-left-color:var(--cb-teal); background:#f0fdf9; }
 .absence-input { width:72px !important; text-align:center; }
 
-/* ── Student avatar ── */
 .student-name-cell { display:flex; align-items:center; gap:9px; }
 .cb-avatar {
     width:38px; height:38px; border-radius:50%; overflow:hidden;
@@ -247,7 +237,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .student-name-text { font-weight:600; font-size:12.5px; color:var(--cb-navy); }
 .student-adm { font-size:10.5px; color:var(--cb-muted); margin-top:1px; }
 
-/* ── Autosave chip ── */
 .autosave-chip {
     display:inline-flex; align-items:center; gap:4px;
     font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px;
@@ -258,7 +247,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .ac-saved   { background:#dcfce7; color:#15803d; }
 .ac-err     { background:#ffe4e6; color:#be123c; }
 
-/* ── Comment status dot ── */
 .comment-status-dot {
     display:inline-flex; align-items:center; gap:3px;
     font-size:10px; font-weight:700; padding:1px 7px; border-radius:20px;
@@ -267,7 +255,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .dot-saved   { background:#dcfce7; color:#15803d; }
 .dot-unsaved { background:#f1f5f9; color:#94a3b8; }
 
-/* ── Save bar ── */
 .save-bar {
     position:sticky; bottom:0; z-index:100;
     background:rgba(15,35,66,.97); backdrop-filter:blur(10px);
@@ -291,7 +278,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .btn-save-all:hover { background:#0b7c72; transform:translateY(-3px); box-shadow:0 8px 22px rgba(13,148,136,.45); }
 .btn-save-all:active{ transform:translateY(0); }
 
-/* ── Toast ── */
 .cb-toast {
     position:fixed; bottom:80px; right:24px; min-width:300px; z-index:99999;
     padding:14px 18px; border-radius:12px; display:flex; align-items:center; gap:10px;
@@ -302,7 +288,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .cb-toast-error   { background:#fff1f2; border:1.5px solid #fca5a5; color:#be123c; }
 .cb-toast-info    { background:#eff6ff; border:1.5px solid #93c5fd; color:#1d4ed8; }
 
-/* ── Search ── */
 .cb-search { position:relative; }
 .cb-search input {
     width:100%; padding:9px 14px 9px 38px; border:1.5px solid var(--cb-border); border-radius:10px;
@@ -311,11 +296,9 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .cb-search input:focus { border-color:var(--cb-teal); outline:none; box-shadow:0 0 0 3px rgba(13,148,136,.1); transform:translateX(2px); }
 .cb-search i { position:absolute; left:13px; top:50%; transform:translateY(-50%); color:var(--cb-muted); pointer-events:none; }
 
-/* ── Responsive ── */
 @media (max-width:1199px) { .desktop-only { display:none !important; } }
 @media (min-width:1200px) { .mobile-only  { display:none !important; } }
 
-/* ── Image zoom modal ── */
 #cbImgZoomModal .modal-content { background:transparent; border:none; box-shadow:none; }
 #cbImgZoomModal .modal-dialog  { max-width:92vw; }
 .cb-zoomed-img { max-width:88vw; max-height:70vh; border-radius:16px; border:4px solid #fff; box-shadow:0 24px 60px rgba(0,0,0,.4); object-fit:contain; animation:scaleIn .3s ease; }
@@ -324,7 +307,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .cb-zoom-name { margin-top:16px; font-size:18px; font-weight:700; color:#fff; text-align:center; text-shadow:0 2px 8px rgba(0,0,0,.5); }
 .cb-zoom-meta { margin-top:6px; font-size:13px; color:rgba(255,255,255,.75); text-align:center; }
 
-/* ── GRADE POP-UP ── */
 #cbGradePopup {
     display:none;
     position:fixed;
@@ -333,8 +315,8 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     border:2px solid var(--cb-teal);
     border-radius:16px;
     box-shadow:0 20px 60px rgba(15,35,66,.22);
-    width:400px;
-    max-height:540px;
+    width:420px;
+    max-height:560px;
     overflow:hidden;
     flex-direction:column;
 }
@@ -345,7 +327,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .gpop-hdr {
     background:linear-gradient(135deg, var(--cb-navy), var(--cb-teal));
     color:#fff; padding:13px 18px; border-radius:14px 14px 0 0;
-    font-weight:700; font-size:13px;
+    font-weight:700; font-size:14px;
     display:flex; justify-content:space-between; align-items:center;
     flex-shrink:0;
 }
@@ -356,37 +338,34 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 }
 .gpop-close-btn:hover { background:rgba(255,255,255,.4); transform:rotate(90deg) scale(1.1); }
 .gpop-body { padding:16px; overflow-y:auto; flex:1; }
-.gpop-table { width:100%; border-collapse:collapse; font-size:11.5px; }
+.gpop-table { width:100%; border-collapse:collapse; font-size:12px; }
 .gpop-table th {
-    background:var(--cb-surface); color:var(--cb-muted);
-    font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px;
-    padding:8px 10px; border-bottom:1px solid var(--cb-border); text-align:center;
+    background:var(--cb-surface); color:var(--cb-navy);
+    font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px;
+    padding:10px 8px; border-bottom:2px solid var(--cb-border); text-align:center;
 }
 .gpop-table th:first-child { text-align:left; }
 .gpop-table td {
-    padding:6px 8px; border-bottom:1px solid #f1f5f9;
-    font-weight:600; text-align:center; vertical-align:middle; transition:background .2s ease;
+    padding:8px 6px; border-bottom:1px solid #f1f5f9;
+    font-weight:500; text-align:center; vertical-align:middle;
 }
-.gpop-table td:first-child { text-align:left; }
+.gpop-table td:first-child { text-align:left; font-weight:600; color:var(--cb-navy); }
 .gpop-table tr:hover td { background:#f0fdf9; }
 .gpop-summary {
     background:linear-gradient(135deg,#f8fafc,#f0fdf9);
-    border-radius:12px; padding:12px 16px; margin-top:12px;
+    border-radius:12px; padding:12px 16px; margin-top:16px;
     display:grid; grid-template-columns:repeat(3,1fr); gap:10px;
 }
 .gpop-sum-item {
-    text-align:center; padding:6px; border-radius:8px; background:white;
-    transition:all .2s ease; animation:fadeInUp .3s ease both;
+    text-align:center; padding:8px 6px; border-radius:10px; background:white;
+    transition:all .2s ease; border:1px solid #e2e8f0;
 }
-.gpop-sum-item:nth-child(1){animation-delay:.05s}
-.gpop-sum-item:nth-child(2){animation-delay:.10s}
-.gpop-sum-item:nth-child(3){animation-delay:.15s}
-.gpop-sum-item:nth-child(4){animation-delay:.20s}
-.gpop-sum-item:nth-child(5){animation-delay:.25s}
-.gpop-sum-item:nth-child(6){animation-delay:.30s}
-.gpop-sum-item:hover { transform:translateY(-3px); box-shadow:0 4px 12px rgba(0,0,0,.09); }
-.gpop-sum-lbl { font-size:9px; color:var(--cb-muted); text-transform:uppercase; letter-spacing:.4px; margin-bottom:4px; }
-.gpop-sum-val { font-size:17px; font-weight:800; color:var(--cb-navy); }
+.gpop-sum-item:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.09); border-color:var(--cb-teal); }
+.gpop-sum-lbl { font-size:9px; color:var(--cb-muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; font-weight:600; }
+.gpop-sum-val { font-size:18px; font-weight:800; color:var(--cb-navy); }
+.gpop-sum-val.score-red { color:#dc2626; }
+.gpop-sum-val.score-amber { color:#d97706; }
+.gpop-sum-val.score-green { color:#16a34a; }
 
 #cbPopupBackdrop {
     display:none;
@@ -395,7 +374,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     animation:backdropIn .2s ease;
 }
 
-/* ── Mobile student cards ── */
 .cb-student-card {
     background:var(--cb-white); border:1px solid var(--cb-border);
     border-radius:var(--cb-radius); margin-bottom:18px;
@@ -421,15 +399,12 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .comment-field-group { margin-bottom:10px; }
 .comment-field-group label { font-size:11px; font-weight:600; color:var(--cb-muted); margin-bottom:4px; display:block; }
 
-/* ── Comment modal ── */
 #cbCommentModal .modal-content { border-radius:var(--cb-radius); overflow:hidden; animation:scaleIn .25s ease; }
 #cbCommentModal .modal-header  { background:linear-gradient(135deg,var(--cb-navy),var(--cb-teal)); color:#fff; border:none; padding:20px 24px; }
 
-/* ── Past comments ── */
 .past-comment-item { transition:all .3s ease; animation:fadeInUp .3s ease both; }
 .past-comment-item:hover { transform:translateX(5px); box-shadow:0 6px 16px rgba(0,0,0,.12); }
 
-/* ── Tooltip ── */
 [data-tooltip] { position:relative; cursor:pointer; }
 [data-tooltip]:before {
     content:attr(data-tooltip); position:absolute; bottom:100%; left:50%;
@@ -440,7 +415,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 }
 [data-tooltip]:hover:before { opacity:1; visibility:visible; transform:translateX(-50%) translateY(-5px); }
 
-/* ── Counter pills ── */
 .save-counter { display:flex; gap:8px; align-items:center; }
 .sc-pill-done,.sc-pill-pending { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; padding:4px 12px; border-radius:20px; }
 .sc-pill-done    { background:rgba(34,197,94,.15); color:#4ade80; border:1px solid rgba(34,197,94,.2); }
@@ -451,7 +425,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 <div class="page-content">
 <div class="container-fluid">
 
-{{-- Hero --}}
 <div class="cb-hero">
     <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
         <div>
@@ -467,7 +440,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     </div>
 </div>
 
-{{-- Stat cards --}}
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
         <div class="cb-stat">
@@ -514,7 +486,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     </div>
 </div>
 
-{{-- Column toggles --}}
 <div class="col-toggle-panel">
     <h6><i class="ri-layout-column-line" style="color:var(--cb-teal)"></i> Show / Hide Columns</h6>
     <div class="toggle-chips">
@@ -534,7 +505,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
 @php $cbAnalyticsJson = json_encode($studentAnalytics, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); @endphp
 
-{{-- GRADE POP-UP & BACKDROP --}}
 <div id="cbPopupBackdrop"></div>
 <div id="cbGradePopup">
     <div class="gpop-hdr">
@@ -569,7 +539,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             <input type="hidden" class="canonical-absence"    id="c_absence_{{ $student->id }}"    name="no_of_times_school_absent[{{ $student->id }}]"  value="{{ $profile ? $profile->no_of_times_school_absent : '' }}">
         @endforeach
 
-        {{-- DESKTOP TABLE --}}
         <div class="desktop-only cb-table-scroll">
             <table class="cb-table">
                 <thead>
@@ -669,11 +638,11 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                             <td class="cbcol-summary analytics-cell">
                                 <div class="analytics-row">
                                     <span class="analytics-lbl">Total (Term)</span>
-                                    <span class="analytics-val">{{ $an['term_total'] ?? 0 }}</span>
+                                    <span class="analytics-val">{{ number_format($an['term_total'] ?? 0, 1) }}</span>
                                 </div>
                                 <div class="analytics-row">
                                     <span class="analytics-lbl">Total (Cum)</span>
-                                    <span class="analytics-val">{{ $an['cum_total'] ?? 0 }}</span>
+                                    <span class="analytics-val">{{ number_format($an['cum_total'] ?? 0, 1) }}</span>
                                 </div>
                                 <div class="analytics-row">
                                     <span class="analytics-lbl">Obtainable</span>
@@ -682,13 +651,13 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                 <div class="analytics-row">
                                     <span class="analytics-lbl">% (Term)</span>
                                     <span class="analytics-val analytics-percentage {{ ($an['term_percentage'] ?? 0) < 50 ? 'score-red' : (($an['term_percentage'] ?? 0) < 70 ? 'score-amber' : 'score-green') }}">
-                                        {{ $an['term_percentage'] ?? 0 }}%
+                                        {{ number_format($an['term_percentage'] ?? 0, 1) }}%
                                     </span>
                                 </div>
                                 <div class="analytics-row">
                                     <span class="analytics-lbl">% (Cum)</span>
                                     <span class="analytics-val analytics-percentage {{ ($an['cum_percentage'] ?? 0) < 50 ? 'score-red' : (($an['cum_percentage'] ?? 0) < 70 ? 'score-amber' : 'score-green') }}">
-                                        {{ $an['cum_percentage'] ?? 0 }}%
+                                        {{ number_format($an['cum_percentage'] ?? 0, 1) }}%
                                     </span>
                                 </div>
                                 <div style="margin-top:5px;">
@@ -723,7 +692,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             </table>
         </div>
 
-        {{-- MOBILE CARDS --}}
         <div class="mobile-only" style="padding:16px;">
             @foreach ($students as $index => $student)
                 @php
@@ -771,11 +739,11 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                         <div class="performance-strip">
                             <div style="font-size:11px;font-weight:700;opacity:.8;margin-bottom:4px;"><i class="ri-bar-chart-line me-1"></i>Performance Summary</div>
                             <div class="ps-grid">
-                                <div class="ps-item"><div class="ps-lbl">Total (T)</div><div class="ps-val">{{ $an['term_total'] ?? 0 }}</div></div>
-                                <div class="ps-item"><div class="ps-lbl">Total (C)</div><div class="ps-val">{{ $an['cum_total'] ?? 0 }}</div></div>
+                                <div class="ps-item"><div class="ps-lbl">Total (T)</div><div class="ps-val">{{ number_format($an['term_total'] ?? 0, 1) }}</div></div>
+                                <div class="ps-item"><div class="ps-lbl">Total (C)</div><div class="ps-val">{{ number_format($an['cum_total'] ?? 0, 1) }}</div></div>
                                 <div class="ps-item"><div class="ps-lbl">Obtainable</div><div class="ps-val">{{ $an['total_obtainable'] ?? 0 }}</div></div>
-                                <div class="ps-item"><div class="ps-lbl">% (Term)</div><div class="ps-val {{ ($an['term_percentage'] ?? 0) < 50 ? 'score-red' : (($an['term_percentage'] ?? 0) < 70 ? 'score-amber' : 'score-green') }}">{{ $an['term_percentage'] ?? 0 }}%</div></div>
-                                <div class="ps-item"><div class="ps-lbl">% (Cum)</div><div class="ps-val {{ ($an['cum_percentage'] ?? 0) < 50 ? 'score-red' : (($an['cum_percentage'] ?? 0) < 70 ? 'score-amber' : 'score-green') }}">{{ $an['cum_percentage'] ?? 0 }}%</div></div>
+                                <div class="ps-item"><div class="ps-lbl">% (Term)</div><div class="ps-val {{ ($an['term_percentage'] ?? 0) < 50 ? 'score-red' : (($an['term_percentage'] ?? 0) < 70 ? 'score-amber' : 'score-green') }}">{{ number_format($an['term_percentage'] ?? 0, 1) }}%</div></div>
+                                <div class="ps-item"><div class="ps-lbl">% (Cum)</div><div class="ps-val {{ ($an['cum_percentage'] ?? 0) < 50 ? 'score-red' : (($an['cum_percentage'] ?? 0) < 70 ? 'score-amber' : 'score-green') }}">{{ number_format($an['cum_percentage'] ?? 0, 1) }}%</div></div>
                             </div>
                         </div>
                         <div class="subjects-scroll">
@@ -797,7 +765,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             @endforeach
         </div>
 
-        {{-- Save bar --}}
         <div class="save-bar">
             <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;">
                 <label style="margin:0;"><i class="ri-pen-nib-line me-1"></i>Signature (optional)</label>
@@ -825,7 +792,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
 </div></div></div>
 
-{{-- Image zoom modal --}}
 <div class="modal fade" id="cbImgZoomModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content" style="background:transparent;border:none;box-shadow:none;">
@@ -839,7 +805,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     </div>
 </div>
 
-{{-- Comment modal --}}
 <div class="modal fade" id="cbCommentModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content" style="border-radius:var(--cb-radius);overflow:hidden;">
@@ -859,19 +824,19 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:15px;">
                         <div style="text-align:center;background:rgba(255,255,255,.12);border-radius:10px;padding:10px;">
                             <div style="font-size:10px;opacity:.8;text-transform:uppercase;letter-spacing:.5px;">Total (Term)</div>
-                            <div id="modalTermTotal" style="font-size:20px;font-weight:700;margin-top:5px;">0</div>
+                            <div id="modalTermTotal" style="font-size:20px;font-weight:700;margin-top:5px;">0.0</div>
                         </div>
                         <div style="text-align:center;background:rgba(255,255,255,.12);border-radius:10px;padding:10px;">
                             <div style="font-size:10px;opacity:.8;text-transform:uppercase;letter-spacing:.5px;">Total (Cum)</div>
-                            <div id="modalCumTotal" style="font-size:20px;font-weight:700;margin-top:5px;">0</div>
+                            <div id="modalCumTotal" style="font-size:20px;font-weight:700;margin-top:5px;">0.0</div>
                         </div>
                         <div style="text-align:center;background:rgba(255,255,255,.12);border-radius:10px;padding:10px;">
                             <div style="font-size:10px;opacity:.8;text-transform:uppercase;letter-spacing:.5px;">% (Term)</div>
-                            <div id="modalTermPct" style="font-size:20px;font-weight:700;margin-top:5px;">0%</div>
+                            <div id="modalTermPct" style="font-size:20px;font-weight:700;margin-top:5px;">0.0%</div>
                         </div>
                         <div style="text-align:center;background:rgba(255,255,255,.12);border-radius:10px;padding:10px;">
                             <div style="font-size:10px;opacity:.8;text-transform:uppercase;letter-spacing:.5px;">% (Cum)</div>
-                            <div id="modalCumPct" style="font-size:20px;font-weight:700;margin-top:5px;">0%</div>
+                            <div id="modalCumPct" style="font-size:20px;font-weight:700;margin-top:5px;">0.0%</div>
                         </div>
                     </div>
                     <div class="mt-2 pt-1" style="border-top:1px solid rgba(255,255,255,.15);">
@@ -909,7 +874,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     </div>
 </div>
 
-{{-- JAVASCRIPT --}}
 <script>
 (function () {
     'use strict';
@@ -1030,10 +994,10 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             avatarDiv.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;">' + esc(initials) + '</div>';
         }
 
-        document.getElementById('modalTermTotal').textContent = analytics.term_total || 0;
-        document.getElementById('modalCumTotal').textContent  = analytics.cum_total  || 0;
-        document.getElementById('modalTermPct').textContent   = (analytics.term_percentage || 0) + '%';
-        document.getElementById('modalCumPct').textContent    = (analytics.cum_percentage  || 0) + '%';
+        document.getElementById('modalTermTotal').textContent = (analytics.term_total || 0).toFixed(1);
+        document.getElementById('modalCumTotal').textContent  = (analytics.cum_total || 0).toFixed(1);
+        document.getElementById('modalTermPct').textContent   = (analytics.term_percentage || 0).toFixed(1) + '%';
+        document.getElementById('modalCumPct').textContent    = (analytics.cum_percentage || 0).toFixed(1) + '%';
         document.getElementById('modalObtainable').textContent = analytics.total_obtainable || 0;
         document.getElementById('modalSubjects').textContent   = analytics.subject_count    || 0;
 
@@ -1164,52 +1128,103 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         gpopTitle.innerHTML = '<i class="ri-bar-chart-line me-1"></i>' + esc(name) + "'s Grades";
 
         var grades = an.grades || [];
-        var rows = grades.length
-            ? grades.map(function(g) {
-                var tgl = gradeClass(g.term_grade), cgl = gradeClass(g.cum_grade);
-                var tC  = (g.term_score > 0 && g.term_score < 50) ? 'score-red' : '';
-                var cC  = (g.cum_score  > 0 && g.cum_score  < 50) ? 'score-red' : '';
-                var tB  = (g.term_grade && g.term_grade !== '-') ? '<span class="grade-badge g-' + tgl + '">' + esc(g.term_grade) + '</span>' : '—';
-                var cB  = (g.cum_grade  && g.cum_grade  !== '-') ? '<span class="grade-badge g-' + cgl + '">' + esc(g.cum_grade)  + '</span>' : '—';
-                return '<tr><td style="text-align:left;">' + esc(g.subject) + '</td><td class="' + tC + '">' + (g.term_score||'—') + '</td><td>' + tB + '</td><td class="' + cC + '">' + (g.cum_score||'—') + '</td><td>' + cB + '</td></tr>';
-            }).join('')
-            : '<tr><td colspan="5" class="text-center text-muted py-3">No records available</td></td>';
+        var rows = '';
+        if (grades.length) {
+            for (var i = 0; i < grades.length; i++) {
+                var g = grades[i];
+                var tgl = gradeClass(g.term_grade);
+                var cgl = gradeClass(g.cum_grade);
+                var tC = (g.term_score > 0 && g.term_score < 50) ? 'score-red' : '';
+                var cC = (g.cum_score > 0 && g.cum_score < 50) ? 'score-red' : '';
 
-        var tPct = an.term_percentage || 0, cPct = an.cum_percentage || 0;
-        var clr = function(p){ return p < 50 ? 'score-red' : (p < 70 ? 'score-amber' : 'score-green'); };
+                var termScoreDisplay = (g.term_score && g.term_score > 0) ? g.term_score : '—';
+                var cumScoreDisplay = (g.cum_score && g.cum_score > 0) ? g.cum_score : '—';
+
+                var termGradeDisplay = (g.term_grade && g.term_grade !== '-') ? '<span class="grade-badge g-' + tgl + '">' + esc(g.term_grade) + '</span>' : '—';
+                var cumGradeDisplay = (g.cum_grade && g.cum_grade !== '-') ? '<span class="grade-badge g-' + cgl + '">' + esc(g.cum_grade) + '</span>' : '—';
+
+                rows += '<tr>' +
+                    '<td style="text-align:left; font-weight:600;">' + esc(g.subject) + '</td>' +
+                    '<td class="' + tC + '">' + termScoreDisplay + '</td>' +
+                    '<td>' + termGradeDisplay + '</td>' +
+                    '<td class="' + cC + '">' + cumScoreDisplay + '</td>' +
+                    '<td>' + cumGradeDisplay + '</td>' +
+                    '</tr>';
+            }
+        } else {
+            rows = '<tr><td colspan="5" class="text-center text-muted py-3">No subject records available</td></tr>';
+        }
+
+        var tPct = an.term_percentage || 0;
+        var cPct = an.cum_percentage || 0;
+
+        function getPctClass(p) {
+            if (p < 40) return 'score-red';
+            if (p < 70) return 'score-amber';
+            return 'score-green';
+        }
 
         gpopBody.innerHTML =
-            '<table class="gpop-table">' +
-                '<thead><tr><th style="text-align:left;">Subject</th><th style="color:#0891b2;">T.Score</th><th style="color:#0891b2;">T.Grade</th><th>C.Score</th><th>C.Grade</th></table></thead>' +
+            '<div style="max-height:380px; overflow-y:auto;">' +
+            '<table class="gpop-table" style="width:100%;">' +
+                '<thead>' +
+                    '<tr>' +
+                        '<th style="text-align:left;">Subject</th>' +
+                        '<th style="color:#0891b2;">Term<br><small>Score</small></th>' +
+                        '<th style="color:#0891b2;">Term<br><small>Grade</small></th>' +
+                        '<th>Cum.<br><small>Score</small></th>' +
+                        '<th>Cum.<br><small>Grade</small></th>' +
+                    '</tr>' +
+                '</thead>' +
                 '<tbody>' + rows + '</tbody>' +
             '</table>' +
-            '<div class="gpop-summary">' +
-                '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Term Total</div><div class="gpop-sum-val">' + (an.term_total||0) + '</div></div>' +
-                '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Cum Total</div><div class="gpop-sum-val">' + (an.cum_total||0) + '</div></div>' +
-                '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Obtainable</div><div class="gpop-sum-val">' + (an.total_obtainable||0) + '</div></div>' +
-                '<div class="gpop-sum-item"><div class="gpop-sum-lbl">% (Term)</div><div class="gpop-sum-val ' + clr(tPct) + '">' + tPct + '%</div></div>' +
-                '<div class="gpop-sum-item"><div class="gpop-sum-lbl">% (Cum)</div><div class="gpop-sum-val ' + clr(cPct) + '">' + cPct + '%</div></div>' +
-                '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Subjects</div><div class="gpop-sum-val">' + (an.subject_count||0) + '</div></div>' +
+            '</div>' +
+            '<div class="gpop-summary" style="margin-top:16px;">' +
+                '<div class="gpop-sum-item">' +
+                    '<div class="gpop-sum-lbl">Term Total</div>' +
+                    '<div class="gpop-sum-val">' + (an.term_total || 0).toFixed(1) + '</div>' +
+                '</div>' +
+                '<div class="gpop-sum-item">' +
+                    '<div class="gpop-sum-lbl">Cum Total</div>' +
+                    '<div class="gpop-sum-val">' + (an.cum_total || 0).toFixed(1) + '</div>' +
+                '</div>' +
+                '<div class="gpop-sum-item">' +
+                    '<div class="gpop-sum-lbl">Obtainable</div>' +
+                    '<div class="gpop-sum-val">' + (an.total_obtainable || 0) + '</div>' +
+                '</div>' +
+                '<div class="gpop-sum-item">' +
+                    '<div class="gpop-sum-lbl">% (Term)</div>' +
+                    '<div class="gpop-sum-val ' + getPctClass(tPct) + '">' + tPct.toFixed(1) + '%</div>' +
+                '</div>' +
+                '<div class="gpop-sum-item">' +
+                    '<div class="gpop-sum-lbl">% (Cum)</div>' +
+                    '<div class="gpop-sum-val ' + getPctClass(cPct) + '">' + cPct.toFixed(1) + '%</div>' +
+                '</div>' +
+                '<div class="gpop-sum-item">' +
+                    '<div class="gpop-sum-lbl">Subjects</div>' +
+                    '<div class="gpop-sum-val">' + (an.subject_count || 0) + '</div>' +
+                '</div>' +
             '</div>';
 
         var rect = triggerEl.getBoundingClientRect();
-        var pw   = 400;
-        var ph   = Math.min(540, window.innerHeight - 40);
-        var vw   = window.innerWidth;
-        var vh   = window.innerHeight;
+        var pw = 420;
+        var ph = Math.min(540, window.innerHeight - 40);
+        var vw = window.innerWidth;
+        var vh = window.innerHeight;
 
-        var top  = rect.bottom + 8;
+        var top = rect.bottom + 8;
         var left = rect.left + (rect.width / 2) - (pw / 2);
 
         if (top + ph > vh - 8) {
             top = Math.max(8, rect.top - ph - 8);
         }
-        if (left < 8)          left = 8;
+        if (left < 8) left = 8;
         if (left + pw > vw - 8) left = vw - pw - 8;
 
-        gpop.style.top       = top  + 'px';
-        gpop.style.left      = left + 'px';
-        gpop.style.maxHeight = ph   + 'px';
+        gpop.style.width = pw + 'px';
+        gpop.style.top = top + 'px';
+        gpop.style.left = left + 'px';
+        gpop.style.maxHeight = ph + 'px';
         gpop.dataset.activeSid = sid;
         gpop.classList.add('is-open');
 

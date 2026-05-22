@@ -139,8 +139,8 @@ class ClassBroadsheetController extends Controller
             $cumPercentage = $totalObtainable > 0 ? round(($cumTotal / $totalObtainable) * 100, 1) : 0;
 
             $studentAnalytics[$sid] = [
-                'term_total'              => $termTotal,
-                'cum_total'               => $cumTotal,
+                'term_total'              => round($termTotal, 1),
+                'cum_total'               => round($cumTotal, 1),
                 'term_average'            => $subjectCount > 0 ? round($termTotal / $subjectCount, 1) : 0,
                 'cum_average'             => $subjectCount > 0 ? round($cumTotal / $subjectCount, 1) : 0,
                 'subject_count'           => $subjectCount,
@@ -218,10 +218,8 @@ class ClassBroadsheetController extends Controller
                 ->orderByDesc('termid')
                 ->get();
 
-            // Get all staff user IDs
             $staffUserIds = $profiles->pluck('staffid')->filter()->unique()->values()->toArray();
 
-            // Load staff with their User and picture relationships properly
             $staffMembers = Staff::with(['user' => function($q) {
                 $q->with('staffPicture');
             }])->whereIn('userid', $staffUserIds)->get()->keyBy('userid');
@@ -269,12 +267,10 @@ class ClassBroadsheetController extends Controller
                 $staffName = null;
                 $staffPicture = null;
 
-                // Get staff details
                 if ($staffUserId) {
                     $staff = $staffMembers->get($staffUserId);
 
                     if (!$staff) {
-                        // Try direct lookup with eager loading
                         $staff = Staff::with(['user' => function($q) {
                             $q->with('staffPicture');
                         }])->where('userid', $staffUserId)->first();
@@ -284,17 +280,14 @@ class ClassBroadsheetController extends Controller
                     }
 
                     if ($staff && $staff->user) {
-                        // Get staff name from User model
                         $staffName = $staff->user->name;
 
-                        // Get staff picture using the relationship from User
                         if ($staff->user->staffPicture && $staff->user->staffPicture->picture) {
                             $staffPicture = asset('storage/staff_avatars/' . $staff->user->staffPicture->picture);
                         }
                     } elseif ($staff && $staff->employmentid) {
                         $staffName = $staff->employmentid;
                     } else {
-                        // Try to find user directly
                         $user = User::with('staffPicture')->find($staffUserId);
                         if ($user) {
                             $staffName = $user->name;
@@ -309,7 +302,6 @@ class ClassBroadsheetController extends Controller
                     $staffName = 'System';
                 }
 
-                // Fallback if name still not found
                 if (!$staffName || $staffName === 'Staff Member') {
                     $staffName = 'System User';
                 }
