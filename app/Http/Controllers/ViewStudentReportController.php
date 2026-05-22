@@ -495,9 +495,6 @@ class ViewStudentReportController extends Controller
     /**
      * Get complete student result data — includes all 4 subject position columns + attendance.
      */
-     /**
-     * Get complete student result data — includes all 4 subject position columns + attendance + Principal Comment fallback.
-     */
     private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
     {
         try {
@@ -571,6 +568,7 @@ class ViewStudentReportController extends Controller
                     'broadsheets.cum',
                     'broadsheets.grade',
                     'broadsheets.remark',
+                    // Raw numeric positions from database
                     'broadsheets.subject_position_class as position',
                     'broadsheets.subject_position_class_total as position_total',
                     'broadsheets.arm_position',
@@ -658,7 +656,7 @@ class ViewStudentReportController extends Controller
                 }
             }
 
-            // ── Student personality profile + Principal Comment Fallback ─────────────────────
+            // Student personality profile
             try {
                 $studentpp = Studentpersonalityprofile::where('studentpersonalityprofiles.studentid', $id)
                     ->where('studentpersonalityprofiles.termid', $termid)
@@ -674,37 +672,6 @@ class ViewStudentReportController extends Controller
                         'schoolclass.schoolclass as schoolclass'
                     )
                     ->get();
-
-                // === PRINCIPAL COMMENT FALLBACK ===
-                $hasPrincipalComment = $studentpp->isNotEmpty() && !empty(trim($studentpp->first()->principalscomment ?? ''));
-
-                if (!$hasPrincipalComment) {
-                    $assignedPrincipal = \App\Models\Principalscomment::with('staff')
-                        ->where('schoolclassid', $schoolclassid)
-                        ->where('sessionid', $sessionid)
-                        ->where('termid', $termid)
-                        ->first();
-
-                    if ($assignedPrincipal && $assignedPrincipal->staff) {
-                        $defaultComment = "Satisfactory performance. Keep it up. — " . $assignedPrincipal->staff->name;
-
-                        if ($studentpp->isNotEmpty()) {
-                            $studentpp->first()->principalscomment = $defaultComment;
-                        } else {
-                            $fallback = new \stdClass();
-                            $fallback->principalscomment = $defaultComment;
-                            $fallback->classteachercomment = '';
-                            $fallback->guidancescomment = '';
-                            $fallback->remark_on_other_activities = '';
-                            $studentpp = collect([$fallback]);
-                        }
-
-                        Log::info('Principal comment fallback applied in PDF', [
-                            'student_id' => $id,
-                            'principal_name' => $assignedPrincipal->staff->name
-                        ]);
-                    }
-                }
 
                 if ($studentpp->isEmpty()) {
                     $studentpp = collect();
@@ -765,7 +732,7 @@ class ViewStudentReportController extends Controller
                 }
             }
 
-            // Attendance
+            // ── Attendance ────────────────────────────────────────────────
             $attendanceSummary = $this->getAttendanceSummary($id, $schoolclassid, $termid, $sessionid);
 
             $result = [
@@ -786,14 +753,13 @@ class ViewStudentReportController extends Controller
                 'compulsorySubjects'   => $compulsorySubjects,
                 'gpa_data'             => $gpaData,
                 'totals_summary'       => $totalsSummary,
-                'attendance_summary'   => $attendanceSummary,
+                'attendance_summary'   => $attendanceSummary,   // ← NEW
             ];
 
             Log::channel('pdf')->info('========== END getStudentResultData ==========', [
                 'student_id'     => $id,
                 'students_count' => $students->count() ?? 0,
                 'scores_count'   => $scores ? $scores->count() : 0,
-                'has_principal_comment' => $studentpp->isNotEmpty() && !empty(trim($studentpp->first()->principalscomment ?? '')),
             ]);
 
             return $result;
