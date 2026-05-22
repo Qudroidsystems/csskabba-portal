@@ -1,5 +1,8 @@
 @extends('layouts.master')
 
+@section('content')
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
 <style>
     /* Grade colors */
     .grade-a1 { background-color: #dcfce7 !important; color: #166534; font-weight: bold; }
@@ -19,6 +22,10 @@
     }
     @keyframes fadeInLeft {
         from { opacity: 0; transform: translateX(-20px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes fadeInRight {
+        from { opacity: 0; transform: translateX(20px); }
         to { opacity: 1; transform: translateX(0); }
     }
     @keyframes scaleIn {
@@ -44,9 +51,18 @@
         0%, 100% { box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.4); }
         50% { box-shadow: 0 0 0 8px rgba(37, 99, 235, 0); }
     }
+    @keyframes floatUp {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
 
     .animate-fade-up { animation: fadeInUp 0.5s ease both; }
     .animate-fade-left { animation: fadeInLeft 0.5s ease both; }
+    .animate-fade-right { animation: fadeInRight 0.5s ease both; }
     .animate-scale { animation: scaleIn 0.4s ease both; }
     .animate-count { animation: countUp 0.6s ease both; }
 
@@ -119,7 +135,6 @@
         vertical-align: middle;
         white-space: nowrap;
         font-size: 11px;
-        cursor: pointer;
         transition: all 0.2s ease;
     }
 
@@ -181,17 +196,24 @@
         animation: progressFill 0.8s ease both;
     }
 
-    /* Performance Strip */
-    .performance-strip {
-        background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
-        border-radius: 8px;
-        padding: 10px 12px;
-        margin-bottom: 12px;
+    /* Performance Summary Button */
+    .perf-summary-btn {
+        background: linear-gradient(135deg, #1e3a5f, #2563eb);
+        border: none;
+        color: white;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 10px;
+        cursor: pointer;
         transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
     }
-    .performance-strip:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    .perf-summary-btn:hover {
+        transform: scale(1.05);
+        background: linear-gradient(135deg, #2563eb, #1e3a5f);
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
     }
 
     /* Score colors */
@@ -321,59 +343,109 @@
         letter-spacing: 0.5px;
     }
 
-    /* Popover styles (same as before) */
-    #studentPopover {
-        position: fixed;
-        z-index: 99999;
-        pointer-events: none;
-        opacity: 0;
-        transform: scale(0.92) translateY(6px);
-        transition: opacity 0.22s cubic-bezier(.4,0,.2,1), transform 0.22s cubic-bezier(.4,0,.2,1);
-    }
-    #studentPopover.visible {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
-    .popover-card {
-        background: rgba(255,255,255,0.92);
-        backdrop-filter: blur(24px) saturate(180%);
-        border-radius: 20px;
-        box-shadow: 0 0 0 0.5px rgba(0,0,0,0.08), 0 8px 32px rgba(0,0,0,0.14);
-        width: 280px;
+    /* Performance Modal */
+    .perf-modal .modal-content {
+        border-radius: 16px;
         overflow: hidden;
+        animation: scaleIn 0.3s ease;
     }
-    .popover-header {
-        background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
-        padding: 16px;
+    .perf-modal .modal-header {
+        background: linear-gradient(135deg, #1e3a5f, #2563eb);
+        color: white;
+        border: none;
+        padding: 20px 24px;
     }
-    .popover-avatar {
-        width: 56px;
-        height: 56px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 3px solid rgba(255,255,255,0.9);
+    .perf-modal .modal-body {
+        padding: 24px;
     }
-    .popover-stats-grid {
+    .perf-stats-grid {
         display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 8px;
-        padding: 12px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-top: 16px;
     }
-    .popover-stat {
-        background: #f8fafc;
+    .perf-stat-item {
+        background: linear-gradient(135deg, #f8fafc, #f0fdf9);
         border-radius: 12px;
-        padding: 8px;
+        padding: 12px;
         text-align: center;
+        transition: all 0.3s ease;
+        border: 1px solid #e2e8f0;
     }
-    .popover-stat-val {
-        font-size: 18px;
+    .perf-stat-item:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        border-color: #2563eb;
+    }
+    .perf-stat-label {
+        font-size: 10px;
+        color: #6b7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+    }
+    .perf-stat-value {
+        font-size: 24px;
         font-weight: 700;
         color: #1e3a5f;
     }
+    .perf-subjects-list {
+        max-height: 300px;
+        overflow-y: auto;
+        margin-top: 16px;
+    }
+    .perf-subject-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 12px;
+        border-bottom: 1px solid #e2e8f0;
+        transition: all 0.2s ease;
+    }
+    .perf-subject-item:hover {
+        background: #f0fdf9;
+        transform: translateX(5px);
+    }
+    .perf-subject-name {
+        font-weight: 600;
+        color: #1e3a5f;
+    }
+    .perf-subject-scores {
+        display: flex;
+        gap: 12px;
+    }
+    .perf-subject-score {
+        font-size: 11px;
+    }
+    .progress-bar-lg {
+        background: #e2e8f0;
+        border-radius: 10px;
+        height: 8px;
+        overflow: hidden;
+        margin-top: 8px;
+    }
+    .progress-bar-lg .progress-fill {
+        height: 100%;
+        border-radius: 10px;
+        transition: width 0.8s ease;
+    }
+
+    .student-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid #e2e8f0;
+        transition: transform 0.2s ease;
+    }
+    .student-avatar:hover {
+        transform: scale(1.1);
+    }
+    .spin { animation: spin 0.8s linear infinite; }
 
     @media print {
         .no-print { display: none !important; }
-        #studentPopover { display: none !important; }
+        .perf-modal { display: none !important; }
         .broadsheet-table { font-size: 8px; }
         .stat-card, .meta-cell, .grade-item { animation: none !important; }
         .broadsheet-table tbody tr { animation: none !important; }
@@ -381,7 +453,6 @@
     }
 </style>
 
-@section('content')
 <div class="main-content">
     <div class="page-content">
         <div class="container-fluid">
@@ -404,25 +475,25 @@
             {{-- Stats Cards Row --}}
             <div class="row g-3 mb-4">
                 <div class="col-md-3">
-                    <div class="stat-card">
+                    <div class="stat-card animate-scale" style="animation-delay: 0.05s">
                         <div class="stat-value" id="statTotalStudents">{{ $totalStudents }}</div>
                         <div class="stat-label">Total Students</div>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="stat-card">
+                    <div class="stat-card animate-scale" style="animation-delay: 0.1s">
                         <div class="stat-value" id="statTotalSubjects">{{ count($subjects) }}</div>
                         <div class="stat-label">Subjects</div>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="stat-card">
+                    <div class="stat-card animate-scale" style="animation-delay: 0.15s">
                         <div class="stat-value" id="statAvgPercentage">0%</div>
                         <div class="stat-label">Avg % (Cumulative)</div>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="stat-card">
+                    <div class="stat-card animate-scale" style="animation-delay: 0.2s">
                         <div class="stat-value" id="statTopPerformer">—</div>
                         <div class="stat-label">Top Performer</div>
                     </div>
@@ -430,7 +501,7 @@
             </div>
 
             @if(session('success'))
-                <div class="alert alert-success alert-dismissible fade show">
+                <div class="alert alert-success alert-dismissible fade show animate-fade-up">
                     <i class="ri-checkbox-circle-line me-2"></i>{{ session('success') }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
@@ -441,7 +512,7 @@
                 <div class="d-flex align-items-center">
                     @if(!empty($school_logo_base64))
                         <img src="{{ $school_logo_base64 }}" alt="Logo"
-                             style="width:65px;height:65px;object-fit:contain;border-radius:50%;border:2px solid white;margin-right:16px;">
+                             style="width:65px;height:65px;object-fit:contain;border-radius:50%;border:2px solid white;margin-right:16px;animation: floatUp 3s ease-in-out infinite;">
                     @endif
                     <div class="flex-grow-1 text-center">
                         <h4 class="mb-1 fw-bold text-uppercase">{{ $schoolInfo->school_name ?? 'SCHOOL NAME' }}</h4>
@@ -456,7 +527,7 @@
             </div>
 
             {{-- Title Strip --}}
-            <div style="background:#1e3a5f;color:white;text-align:center;padding:10px;font-size:15px;font-weight:bold;letter-spacing:1.5px;border-radius:6px;margin-bottom:14px;">
+            <div class="animate-fade-up" style="background:#1e3a5f;color:white;text-align:center;padding:10px;font-size:15px;font-weight:bold;letter-spacing:1.5px;border-radius:6px;margin-bottom:14px;">
                 CLASS ACADEMIC BROADSHEET
                 @if(!empty($is_combined))
                     <span style="font-size:11px;opacity:.75;font-weight:400;margin-left:8px;">— Combined Arms</span>
@@ -465,19 +536,19 @@
 
             {{-- Meta Grid --}}
             <div class="meta-grid">
-                <div class="meta-cell">
+                <div class="meta-cell animate-fade-left" style="animation-delay: 0.05s">
                     <span class="meta-label">Class</span>
                     <span class="meta-value">{{ $schoolclass->schoolclass ?? '-' }} {{ $schoolclass->arm_name ?? '' }}</span>
                 </div>
-                <div class="meta-cell">
+                <div class="meta-cell animate-fade-left" style="animation-delay: 0.1s">
                     <span class="meta-label">Academic Session</span>
                     <span class="meta-value">{{ $schoolsession->session ?? '-' }}</span>
                 </div>
-                <div class="meta-cell">
+                <div class="meta-cell animate-fade-left" style="animation-delay: 0.15s">
                     <span class="meta-label">Term</span>
                     <span class="meta-value">{{ $schoolterm->term ?? '-' }}</span>
                 </div>
-                <div class="meta-cell">
+                <div class="meta-cell animate-fade-left" style="animation-delay: 0.2s">
                     <span class="meta-label">Generated</span>
                     <span class="meta-value" style="font-size:11px;">{{ $generatedAt }}</span>
                 </div>
@@ -494,7 +565,7 @@
                 ];
                 @endphp
                 @foreach($gradeKey as $grade => $info)
-                    <span class="grade-item">
+                    <span class="grade-item animate-scale" style="animation-delay: {{ $loop->index * 0.03 }}s">
                         <span class="badge me-1" style="background:{{ $info[1] }};font-size:11px;">{{ $grade }} ({{ $info[0] }})</span>
                     </span>
                 @endforeach
@@ -506,7 +577,7 @@
             </div>
 
             {{-- Toolbar --}}
-            <div class="card shadow-sm mb-3 no-print">
+            <div class="card shadow-sm mb-3 no-print animate-fade-up">
                 <div class="card-body py-2">
                     <div class="row align-items-center g-2">
                         <div class="col-md-4">
@@ -546,7 +617,7 @@
             </div>
 
             {{-- Main Table --}}
-            <div class="card shadow-sm mb-4">
+            <div class="card shadow-sm mb-4 animate-fade-up">
                 <div class="card-body p-0">
                     <div style="overflow-x:auto;">
                         @php
@@ -626,11 +697,11 @@
                                             @endif
                                         </th>
                                     @endforeach
-                                    <th class="subj-name-hdr" style="min-width:180px;">Performance Summary</th>
+                                    <th class="subj-name-hdr" style="min-width:100px;">Actions</th>
                                     @if($gpaColspan > 0)
                                         <th colspan="{{ $gpaColspan }}" style="background:#0a1e38;border-left:2px solid #3b82f6;font-size:10px;">GPA METRICS</th>
                                     @endif
-                                 </tr>
+                                  </tr>
                                 <tr class="assessment-header">
                                     @foreach($subjects as $subId => $subInfo)
                                         @foreach($activeAssessments as $aIdx => $a)
@@ -647,13 +718,13 @@
                                         @if($showAvg)      <th style="min-width:32px;">Avg</th>    @endif
                                         @if($showRemark)   <th style="min-width:45px;">Rmk</th>    @endif
                                     @endforeach
-                                    <th style="min-width:180px;background:#163562;">Performance Metrics</th>
+                                    <th style="min-width:100px;background:#163562;">Quick View</th>
                                     @if($showGPA)      <th style="background:#0a1e38;color:#93c5fd;min-width:36px;border-left:2px solid #3b82f6;">GPA</th>   @endif
                                     @if($showCGPA)     <th style="background:#0a1e38;color:#86efac;min-width:36px;">CGPA</th>  @endif
                                     @if($showGPAGrade) <th style="background:#0a1e38;color:#fcd34d;min-width:30px;">GGrd</th>  @endif
                                     @if($showNumSub)   <th style="background:#0a1e38;color:#a8d4ef;min-width:30px;">NS</th>    @endif
                                     @if($showTotalGP)  <th style="background:#0a1e38;color:#a8d4ef;min-width:36px;">TGP</th>   @endif
-                                 </tr>
+                                  </tr>
                             </thead>
                             <tbody>
                                 @foreach($studentRows as $idx => $stu)
@@ -671,8 +742,13 @@
 
                                         // Calculate percentages for the student
                                         $totalObtainable = count($subjects) * 100;
-                                        $termPercentage = $totalObtainable > 0 ? round(($stu['total_cum'] / $totalObtainable) * 100, 1) : 0;
+                                        $termTotal = $stu['total_cum'];
+                                        $termPercentage = $totalObtainable > 0 ? round(($termTotal / $totalObtainable) * 100, 1) : 0;
                                         $termColor = $termPercentage < 40 ? '#dc2626' : ($termPercentage < 70 ? '#f59e0b' : '#22c55e');
+
+                                        // Calculate cumulative (using same as term for now - adjust if you have separate cumulative data)
+                                        $cumPercentage = $termPercentage;
+                                        $cumColor = $cumPercentage < 40 ? '#dc2626' : ($cumPercentage < 70 ? '#f59e0b' : '#22c55e');
                                     @endphp
                                     <tr data-student-id="{{ $stu['id'] }}"
                                         data-student-name="{{ strtolower($stu['lastname'] . ' ' . $stu['firstname']) }}"
@@ -681,6 +757,8 @@
                                         data-has-failure="{{ $hasFailure ? 'true' : 'false' }}"
                                         data-class-avg="{{ $stu['class_average'] ?? 0 }}"
                                         data-term-percentage="{{ $termPercentage }}"
+                                        data-student-json='@json($stu)'
+                                        data-subjects-json='@json($subjects)'
                                         style="animation-delay: {{ $idx * 0.05 }}s">
 
                                         <td class="sn-cell">{{ $idx + 1 }}</td>
@@ -722,44 +800,19 @@
                                             @if($showRemark)   <td class="score-cell" style="font-size:10px;white-space:nowrap;">{{ $sd['remark'] ?? '—' }}</td> @endif
                                         @endforeach
 
-                                        {{-- Performance Summary Cell with Animations --}}
-                                        <td class="performance-cell" style="min-width:180px;padding:8px;">
-                                            <div class="performance-strip">
-                                                <div style="font-size:10px;font-weight:700;margin-bottom:6px;">
-                                                    <i class="ri-bar-chart-line me-1"></i>Performance
-                                                </div>
-                                                <div class="d-flex justify-content-between mb-1">
-                                                    <span style="font-size:9px;">Obtained (Cum):</span>
-                                                    <strong>{{ number_format($stu['total_cum'], 1) }}</strong>
-                                                </div>
-                                                <div class="d-flex justify-content-between mb-1">
-                                                    <span style="font-size:9px;">Obtainable:</span>
-                                                    <strong>{{ count($subjects) * 100 }}</strong>
-                                                </div>
-                                                <div class="d-flex justify-content-between mb-1">
-                                                    <span style="font-size:9px;">% Obtained:</span>
-                                                    <strong class="{{ $termPercentage < 50 ? 'score-red' : ($termPercentage < 70 ? 'score-amber' : 'score-green') }}"
-                                                            data-percentage="{{ $termPercentage }}">0%</strong>
-                                                </div>
-                                                <div class="progress-bar-wrap mt-2">
-                                                    <div class="progress-bar" data-final-color="{{ $termColor }}"
-                                                         style="width:0%;transition:width 0.8s ease, background-color 0.8s ease;"></div>
-                                                </div>
-                                                <div class="d-flex justify-content-between mt-2">
-                                                    <span style="font-size:9px;">GPA:</span>
-                                                    <strong class="gpa-cell" style="padding:2px 6px;border-radius:4px;">
-                                                        {{ number_format($stu['gpa'], 2) }}
-                                                    </strong>
-                                                </div>
-                                            </div>
+                                        {{-- Actions Cell with Eye Button --}}
+                                        <td style="text-align:center;">
+                                            <button class="perf-summary-btn" onclick="showPerformanceModal({{ $stu['id'] }})">
+                                                <i class="ri-eye-line"></i> Summary
+                                            </button>
                                         </td>
 
                                         @if($showGPA)      <td class="gpa-cell">{{ number_format($stu['gpa'],2) }}</td>      @endif
                                         @if($showCGPA)     <td class="gpa-cell" style="background:#f0fdf4!important;color:#166534;">{{ number_format($stu['cgpa'],2) }}</td> @endif
                                         @if($showGPAGrade) @php $ggc = $gradeColors[$stu['gpa_grade']??'-']??''; @endphp
                                                            <td class="gpa-cell {{ $ggc }}" style="font-weight:bold;">{{ $stu['gpa_grade']??'—' }}</td> @endif
-                                        @if($showNumSub)   <td>{{ $stu['num_subjects']??'—' }}</td> @endif
-                                        @if($showTotalGP)  <td>{{ number_format($stu['total_grade_points'],1) }}</td> @endif
+                                        @if($showNumSub)    <td>{{ $stu['num_subjects']??'—' }}</td> @endif
+                                        @if($showTotalGP)   <td>{{ number_format($stu['total_grade_points'],1) }}</td> @endif
                                     </tr>
                                 @endforeach
 
@@ -773,21 +826,21 @@
                                         <td class="stats-label" colspan="{{ $frozenCols + 2 }}">{{ $label }}</td>
                                         @foreach($subjects as $subId => $subInfo)
                                             @php $st = $subjectStats[$subId] ?? []; @endphp
-                                            @foreach($activeAssessments as $a) <td>—</td> @endforeach
-                                            @if($showTotal)    <td>{{ $st[$key] ?? '—' }}</td> @endif
-                                            @if($showBF)       <td>—</td> @endif
-                                            @if($showCum)      <td>—</td> @endif
-                                            @if($showGrade)    <td>—</td> @endif
-                                            @if($showPosition) <td>—</td> @endif
-                                            @if($showAvg)      <td>{{ $key==='avg' ? ($st['avg']??'—') : '—' }}</td> @endif
-                                            @if($showRemark)   <td>—</td> @endif
+                                            @foreach($activeAssessments as $a)  <td>—</td> @endforeach
+                                            @if($showTotal)     <td>{{ $st[$key] ?? '—' }}</td> @endif
+                                            @if($showBF)        <td>—</td> @endif
+                                            @if($showCum)       <td>—</td> @endif
+                                            @if($showGrade)     <td>—</td> @endif
+                                            @if($showPosition)  <td>—</td> @endif
+                                            @if($showAvg)       <td>{{ $key==='avg' ? ($st['avg']??'—') : '—' }}</td> @endif
+                                            @if($showRemark)    <td>—</td> @endif
                                         @endforeach
                                         <td class="stats-label">—</td>
-                                        @if($showGPA)      <td>—</td> @endif
-                                        @if($showCGPA)     <td>—</td> @endif
-                                        @if($showGPAGrade) <td>—</td> @endif
-                                        @if($showNumSub)   <td>—</td> @endif
-                                        @if($showTotalGP)  <td>—</td> @endif
+                                        @if($showGPA)       <td>—</td> @endif
+                                        @if($showCGPA)      <td>—</td> @endif
+                                        @if($showGPAGrade)  <td>—</td> @endif
+                                        @if($showNumSub)    <td>—</td> @endif
+                                        @if($showTotalGP)   <td>—</td> @endif
                                     </tr>
                                 @endforeach
                             </tbody>
@@ -805,7 +858,7 @@
                 </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
-                        <table class="sum-table">
+                        <table class="table table-sm mb-0">
                             <thead>
                                 <tr>
                                     <th style="min-width:160px;">Subject</th>
@@ -839,7 +892,7 @@
                                         <td style="text-align:center;color:#16a34a;">{{ $p }}</td>
                                         <td style="text-align:center;color:#dc2626;">{{ $f }}</td>
                                         <td style="text-align:center;">
-                                            <span class="{{ $pr >= 50 ? 'pass-good' : 'pass-bad' }}">{{ $pr }}%</span>
+                                            <span class="{{ $pr >= 50 ? 'text-success' : 'text-danger' }} fw-bold">{{ $pr }}%</span>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -852,11 +905,19 @@
             {{-- Signatures --}}
             <div class="card shadow-sm mb-4 no-print animate-fade-up">
                 <div class="card-body">
-                    <div class="signature-row">
-                        <div class="sig-cell"><div class="sig-line">Class Teacher</div></div>
-                        <div class="sig-cell"><div class="sig-line">Head of Department</div></div>
-                        <div class="sig-cell"><div class="sig-line">Vice Principal</div></div>
-                        <div class="sig-cell"><div class="sig-line">Principal</div></div>
+                    <div class="row">
+                        <div class="col-3 text-center">
+                            <div class="border-top pt-2 mt-3">Class Teacher</div>
+                        </div>
+                        <div class="col-3 text-center">
+                            <div class="border-top pt-2 mt-3">Head of Department</div>
+                        </div>
+                        <div class="col-3 text-center">
+                            <div class="border-top pt-2 mt-3">Vice Principal</div>
+                        </div>
+                        <div class="col-3 text-center">
+                            <div class="border-top pt-2 mt-3">Principal</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -865,16 +926,65 @@
     </div>
 </div>
 
+{{-- Performance Modal --}}
+<div class="modal fade perf-modal" id="performanceModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="d-flex align-items-center gap-3">
+                    <i class="ri-bar-chart-line" style="font-size: 24px;"></i>
+                    <div>
+                        <h5 class="mb-0" id="modalStudentName">Student Performance Summary</h5>
+                        <small class="opacity-75" id="modalStudentInfo"></small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="perf-stats-grid" id="perfStatsGrid">
+                    <!-- Stats will be populated by JS -->
+                </div>
+                <div class="mt-4">
+                    <h6 class="fw-bold mb-3"><i class="ri-bar-chart-line me-1"></i>Subject Performance Details</h6>
+                    <div class="perf-subjects-list" id="perfSubjectsList">
+                        <!-- Subjects will be populated by JS -->
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-// Data passed from PHP
-const studentData = @json($studentDataForJs ?? []);
-const subjectMap = @json($subjectsForJs ?? []);
+// Store student data for modal
+const studentDataMap = {};
 
-let picsVisible = true;
+@foreach($studentRows as $stu)
+    studentDataMap[{{ $stu['id'] }}] = {
+        id: {{ $stu['id'] }},
+        name: '{{ addslashes($stu['lastname'] . ' ' . $stu['firstname']) }}',
+        admissionno: '{{ $stu['admissionno'] }}',
+        total_cum: {{ $stu['total_cum'] }},
+        num_subjects: {{ count($subjects) }},
+        total_obtainable: {{ count($subjects) * 100 }},
+        term_percentage: {{ $totalObtainable = count($subjects) * 100; echo $totalObtainable > 0 ? round(($stu['total_cum'] / $totalObtainable) * 100, 1) : 0; }},
+        gpa: {{ $stu['gpa'] }},
+        gpa_grade: '{{ $stu['gpa_grade'] ?? '-' }}',
+        subjects: @json($stu['subjects']),
+        subjects_map: @json($subjects)
+    };
+@endforeach
 
-// Run animations on page load
+let performanceModal;
+
 document.addEventListener('DOMContentLoaded', function() {
-    // Animate percentage counters
+    // Initialize modal
+    performanceModal = new bootstrap.Modal(document.getElementById('performanceModal'));
+
+    // Animate percentage counters in the table
     document.querySelectorAll('[data-percentage]').forEach(el => {
         const target = parseFloat(el.getAttribute('data-percentage'));
         if (isNaN(target)) return;
@@ -946,6 +1056,134 @@ function animateNumber(elementId, target, suffix = '') {
         }
         el.textContent = current.toFixed(1) + suffix;
     }, duration / steps);
+}
+
+// Show performance modal
+function showPerformanceModal(studentId) {
+    const student = studentDataMap[studentId];
+    if (!student) {
+        showToast('Student data not found', 'error');
+        return;
+    }
+
+    // Update modal header
+    document.getElementById('modalStudentName').textContent = student.name;
+    document.getElementById('modalStudentInfo').innerHTML =
+        '<i class="ri-id-card-line me-1"></i>' + student.admissionno +
+        ' &nbsp;|&nbsp; <i class="ri-bar-chart-line me-1"></i>GPA: ' + student.gpa.toFixed(2) +
+        ' &nbsp;|&nbsp; <i class="ri-award-line me-1"></i>Grade: ' + student.gpa_grade;
+
+    // Build stats grid
+    const termPct = student.term_percentage;
+    const termColor = termPct < 40 ? 'score-red' : (termPct < 70 ? 'score-amber' : 'score-green');
+    const obtainable = student.total_obtainable;
+    const obtained = student.total_cum;
+    const pctColor = termPct < 50 ? 'score-red' : (termPct < 70 ? 'score-amber' : 'score-green');
+
+    const statsGrid = document.getElementById('perfStatsGrid');
+    statsGrid.innerHTML = `
+        <div class="perf-stat-item animate-scale" style="animation-delay: 0.05s">
+            <div class="perf-stat-label">Obtained (Cumulative)</div>
+            <div class="perf-stat-value">${obtained.toFixed(1)}</div>
+            <div class="progress-bar-lg mt-2">
+                <div class="progress-fill" style="width: ${(obtained/obtainable)*100}%; background: #2563eb;"></div>
+            </div>
+        </div>
+        <div class="perf-stat-item animate-scale" style="animation-delay: 0.1s">
+            <div class="perf-stat-label">Total Obtainable</div>
+            <div class="perf-stat-value">${obtainable}</div>
+        </div>
+        <div class="perf-stat-item animate-scale" style="animation-delay: 0.15s">
+            <div class="perf-stat-label">% Obtained (Term)</div>
+            <div class="perf-stat-value ${termColor}" data-perf-percentage="${termPct}">0%</div>
+            <div class="progress-bar-lg mt-2">
+                <div class="progress-fill" style="width: 0%; background: ${termPct < 40 ? '#dc2626' : (termPct < 70 ? '#f59e0b' : '#22c55e')};"></div>
+            </div>
+        </div>
+        <div class="perf-stat-item animate-scale" style="animation-delay: 0.2s">
+            <div class="perf-stat-label">Class Position</div>
+            <div class="perf-stat-value">—</div>
+        </div>
+    `;
+
+    // Animate the percentage in modal
+    setTimeout(() => {
+        const pctEl = statsGrid.querySelector('[data-perf-percentage]');
+        if (pctEl) {
+            const target = parseFloat(pctEl.getAttribute('data-perf-percentage'));
+            let current = 0;
+            const duration = 800;
+            const steps = 60;
+            const increment = target / steps;
+            let step = 0;
+            const timer = setInterval(() => {
+                step++;
+                current += increment;
+                if (step >= steps) {
+                    current = target;
+                    clearInterval(timer);
+                }
+                pctEl.textContent = current.toFixed(1) + '%';
+            }, duration / steps);
+        }
+
+        // Animate progress bars in modal
+        statsGrid.querySelectorAll('.progress-fill').forEach((bar, idx) => {
+            const targetWidth = idx === 0 ? (obtained/obtainable)*100 : termPct;
+            setTimeout(() => {
+                bar.style.width = targetWidth + '%';
+            }, 100 + idx * 100);
+        });
+    }, 100);
+
+    // Build subjects list
+    const subjectsList = document.getElementById('perfSubjectsList');
+    let subjectsHtml = '';
+
+    for (const [subId, subject] of Object.entries(student.subjects_map)) {
+        const subData = student.subjects[subId] || {};
+        const total = subData.cum || 0;
+        const grade = subData.grade || '-';
+        const gradeClass = grade === 'A1' ? 'grade-a1' : (grade === 'F9' ? 'grade-f9' : '');
+        const totalObtainable = 100;
+        const percentage = totalObtainable > 0 ? (total / totalObtainable) * 100 : 0;
+        const pctClass = percentage < 40 ? 'score-red' : (percentage < 70 ? 'score-amber' : 'score-green');
+
+        subjectsHtml += `
+            <div class="perf-subject-item animate-fade-right" style="animation-delay: ${Object.keys(student.subjects_map).indexOf(subId) * 0.03}s">
+                <div class="perf-subject-name">${subject.subject_name}</div>
+                <div class="perf-subject-scores">
+                    <span class="perf-subject-score">Score: <strong>${total > 0 ? total.toFixed(1) : '—'}</strong></span>
+                    <span class="perf-subject-score grade-badge ${gradeClass}" style="padding: 2px 8px; border-radius: 12px;">Grade: ${grade}</span>
+                    <span class="perf-subject-score ${pctClass}">${percentage.toFixed(1)}%</span>
+                </div>
+            </div>
+            <div class="progress-bar-lg mb-2" style="margin: 0 12px 8px 12px;">
+                <div class="progress-fill" style="width: 0%; background: ${percentage < 40 ? '#dc2626' : (percentage < 70 ? '#f59e0b' : '#22c55e')}; height: 4px;"></div>
+            </div>
+        `;
+    }
+
+    subjectsList.innerHTML = subjectsHtml;
+
+    // Animate subject progress bars
+    setTimeout(() => {
+        subjectsList.querySelectorAll('.progress-fill').forEach(bar => {
+            const parent = bar.closest('.perf-subject-item');
+            if (parent) {
+                const scoreSpan = parent.querySelector('.perf-subject-score:first-child strong');
+                if (scoreSpan) {
+                    const score = parseFloat(scoreSpan.textContent);
+                    if (!isNaN(score)) {
+                        const width = (score / 100) * 100;
+                        bar.style.width = width + '%';
+                    }
+                }
+            }
+        });
+    }, 200);
+
+    performanceModal.show();
 }
 
 // Search functionality
@@ -1055,82 +1293,46 @@ function scrollToTop() {
 }
 
 function showToast(msg, type = 'info') {
-    const colors = { success: '#16a34a', warning: '#d97706', info: '#2563eb', danger: '#dc2626' };
+    const colors = { success: '#16a34a', warning: '#d97706', info: '#2563eb', error: '#dc2626' };
     const div = document.createElement('div');
     div.className = 'toast-notification';
     div.style.background = colors[type] || colors.info;
-    div.textContent = msg;
+    div.innerHTML = '<i class="ri-information-line me-2"></i>' + msg;
     document.body.appendChild(div);
     setTimeout(() => div.remove(), 3000);
 }
 
 // Make functions global
 window.scrollToTop = scrollToTop;
+window.showPerformanceModal = showPerformanceModal;
 </script>
 
 <style>
-.student-avatar {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 2px solid #e2e8f0;
-    transition: transform 0.2s ease;
+.student-name-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
-.student-avatar:hover {
-    transform: scale(1.1);
+.perf-subject-item {
+    transition: all 0.3s ease;
 }
-.score-cell {
-    transition: all 0.2s ease;
+.perf-subject-item:hover {
+    background: #f0fdf9;
+    transform: translateX(5px);
 }
-.score-cell:hover {
-    transform: scale(1.05);
-    filter: brightness(0.95);
-}
-.performance-strip {
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.performance-strip:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-.progress-bar {
-    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.8s ease;
-}
-.toast-notification {
-    animation: slideInRight 0.3s ease;
-}
-@keyframes slideInRight {
-    from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
-}
-[data-tooltip] {
-    position: relative;
-    cursor: pointer;
-}
-[data-tooltip]:before {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #1e293b;
-    color: white;
-    padding: 4px 8px;
-    border-radius: 6px;
+.grade-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
     font-size: 10px;
-    white-space: nowrap;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.2s ease;
-    pointer-events: none;
-    z-index: 1000;
+    font-weight: 600;
 }
-[data-tooltip]:hover:before {
-    opacity: 1;
-    visibility: visible;
-    transform: translateX(-50%) translateY(-5px);
+.progress-fill {
+    transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.modal-body {
+    max-height: 70vh;
+    overflow-y: auto;
 }
 </style>
-
 @endsection
