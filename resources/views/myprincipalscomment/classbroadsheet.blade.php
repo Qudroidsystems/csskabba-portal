@@ -697,6 +697,25 @@
     from { transform: rotate(0deg); }
     to   { transform: rotate(360deg); }
 }
+/* Enhanced Auto-save Feedback */
+.class-arm-badge {
+    font-size: 10px;
+    padding: 2px 7px;
+    background: #e0f2fe;
+    color: #0369a1;
+    border-radius: 12px;
+    font-weight: 600;
+    margin-left: 6px;
+}
+
+.comment-saved-badge {
+    font-size: 11px;
+    color: #16a34a;
+}
+
+.auto-save-comment {
+    transition: all 0.3s ease;
+}
 </style>
 
 <div class="main-content class-broadsheet">
@@ -936,14 +955,16 @@
                                                     <td>
                                                         <div>
                                                             <strong>{{ $fullNameWithOther }}</strong>
+                                                            <span class="class-arm-badge">{{ $schoolclass->schoolclass }} {{ $schoolclass->arm_name }}</span>
+
                                                             @if($currentComment)
-                                                                <small class="d-block text-success mt-1">
-                                                                    <i class="ri-check-double-line"></i> Comment saved
+                                                                <small class="comment-saved-badge d-block mt-1">
+                                                                    <i class="ri-check-double-line"></i> Comment Saved
                                                                 </small>
                                                             @endif
                                                         </div>
                                                     </td>
-                                                    <td>
+                                                     <td>
                                                         <span class="badge bg-light text-dark">
                                                             <i class="ri-{{ $student->gender === 'Male' ? 'male' : 'female' }}-line"></i>
                                                             {{ $student->gender ?? 'N/A' }}
@@ -1479,17 +1500,22 @@ window.studentGradesData = @json($studentGrades);
 let activeTooltip = null;
 
 function showToast(message, type = 'info') {
-    document.querySelector('.auto-save-toast')?.remove();
+    document.querySelectorAll('.auto-save-toast').forEach(t => t.remove());
+
     const toast = document.createElement('div');
-    toast.className = `auto-save-toast alert alert-${type} alert-dismissible fade show`;
+    toast.className = `auto-save-toast alert alert-${type} alert-dismissible fade show shadow`;
+    toast.style.cssText = 'position:fixed; bottom:20px; right:20px; z-index:99999; min-width:360px;';
+
     toast.innerHTML = `
-        <div class="d-flex align-items-center">
-            <i class="ri-${type === 'success' ? 'checkbox-circle' : 'information'}-fill me-2 fs-5"></i>
-            <span>${escapeHtml(message)}</span>
-            <button type="button" class="btn-close ms-3" data-bs-dismiss="alert"></button>
+        <div class="d-flex align-items-start">
+            <i class="ri-${type === 'success' ? 'checkbox-circle' : type === 'danger' ? 'error-warning' : 'information'}-fill me-2 fs-4 mt-1"></i>
+            <div>${message}</div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
         </div>`;
+
     document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
+
+    setTimeout(() => toast.remove(), 4500);
 }
 
 function escapeHtml(text) {
@@ -1530,7 +1556,6 @@ function showTooltip(tooltipId, studentId, studentName) {
     const titleEl = document.getElementById(`tooltip-title-${studentId}`);
     if (titleEl) titleEl.textContent = `${studentName}'s Performance`;
 
-    // Populate grades body — now with 5 columns (term score, term grade, cum score, cum grade)
     const grades = window.studentGradesData[studentId] || [];
     const tbody = document.getElementById(`grades-body-${studentId}`);
     if (tbody) {
@@ -1548,27 +1573,21 @@ function showTooltip(tooltipId, studentId, studentName) {
                     <td><strong>${escapeHtml(g.subject)}</strong></td>
                     <td class="text-center fw-bold ${termColor}" style="color:#0891b2!important;">${g.term_score || '—'}</td>
                     <td class="text-center">
-                        ${g.term_grade
-                            ? `<span class="score-grade-badge ${tGradeClass}">${escapeHtml(g.term_grade)}</span>`
-                            : '<span class="text-muted">—</span>'}
+                        ${g.term_grade ? `<span class="score-grade-badge ${tGradeClass}">${escapeHtml(g.term_grade)}</span>` : '<span class="text-muted">—</span>'}
                     </td>
                     <td class="text-center fw-bold ${cumColor}">${g.cum_score || '—'}</td>
                     <td class="text-center">
-                        ${g.cum_grade
-                            ? `<span class="score-grade-badge ${cGradeClass}">${escapeHtml(g.cum_grade)}</span>`
-                            : '<span class="text-muted">—</span>'}
+                        ${g.cum_grade ? `<span class="score-grade-badge ${cGradeClass}">${escapeHtml(g.cum_grade)}</span>` : '<span class="text-muted">—</span>'}
                     </td>
                 `;
                 tbody.appendChild(row);
             });
         }
     }
-
     tooltip.classList.add('show');
     activeTooltip = tooltipId;
 }
 
-// Image Zoom Functionality
 function setupImageZoom() {
     $('.avatar-clickable').off('click').on('click', function(e) {
         e.stopPropagation();
@@ -1608,15 +1627,29 @@ function setupImageZoom() {
     });
 }
 
-// Auto-save on dropdown change
+// ====================== IMPROVED AUTO-SAVE WITH CLASS-ARM ======================
 document.querySelectorAll('.auto-save-comment').forEach(select => {
     select.addEventListener('change', function() {
-        const studentId = this.dataset.studentId;
-        const comment   = this.value.trim();
-        const original  = this.dataset.originalValue || '';
+        const studentId   = this.dataset.studentId;
+        const comment     = this.value.trim();
+        const original    = this.dataset.originalValue || '';
+
         if (comment === original) return;
 
-        this.style.backgroundColor = '#fff3cd';
+        // Get student name
+        const row = this.closest('tr') || this.closest('.student-card');
+        let studentName = 'Student';
+        if (row) {
+            const nameCell = row.querySelector('td:nth-child(4) strong') ||
+                           row.querySelector('.student-details h6');
+            if (nameCell) studentName = nameCell.textContent.trim();
+        }
+
+        const classArm = '{{ $schoolclass->schoolclass ?? "" }} {{ $schoolclass->arm_name ?? "" }}'.trim();
+
+        // Visual feedback - Saving
+        this.style.borderColor = '#f59e0b';
+        this.style.backgroundColor = '#fffbeb';
         this.disabled = true;
 
         const fd = new FormData();
@@ -1626,31 +1659,53 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
         fetch('{{ route("myprincipalscomment.updateComments", [$schoolclassid, $sessionid, $termid]) }}', {
             method: 'POST',
             body: fd,
-            headers: { 'Accept': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
         })
         .then(r => r.json())
         .then(data => {
-            if (!data.success) throw new Error(data.message || 'Save failed');
-            document.querySelectorAll(`.auto-save-comment[data-student-id="${studentId}"]`).forEach(s => {
-                s.value = comment;
-                s.dataset.originalValue = comment;
-            });
-            this.style.backgroundColor = '#d1e7dd';
-            showToast('Comment saved!', 'success');
-            setTimeout(() => { this.style.backgroundColor = ''; }, 1500);
+            if (data.success) {
+                this.dataset.originalValue = comment;
+                this.style.borderColor = '#16a34a';
+                this.style.backgroundColor = '#d1fae5';
+
+                showToast(`✅ Comment saved for <strong>${studentName}</strong><br><small class="text-muted">${classArm}</small>`, 'success');
+
+                // Show saved badge
+                if (row) {
+                    let badge = row.querySelector('.comment-saved-badge');
+                    if (!badge) {
+                        badge = document.createElement('small');
+                        badge.className = 'comment-saved-badge d-block mt-1';
+                        badge.innerHTML = `<i class="ri-check-double-line"></i> Saved`;
+                        const nameDiv = row.querySelector('td:nth-child(4) div') || row.querySelector('.student-details');
+                        if (nameDiv) nameDiv.appendChild(badge);
+                    }
+                }
+            } else {
+                throw new Error(data.message || 'Save failed');
+            }
         })
         .catch(err => {
-            console.error('Auto-save error:', err);
+            console.error('Auto-save failed:', err);
             this.value = original;
-            this.style.backgroundColor = '#f8d7da';
-            showToast('Error: ' + err.message, 'danger');
-            setTimeout(() => { this.style.backgroundColor = ''; }, 2000);
+            this.style.borderColor = '#dc2626';
+            this.style.backgroundColor = '#fee2e2';
+            showToast(`❌ Failed to save for ${studentName}`, 'danger');
         })
-        .finally(() => { this.disabled = false; });
+        .finally(() => {
+            this.disabled = false;
+            setTimeout(() => {
+                this.style.borderColor = '';
+                this.style.backgroundColor = '';
+            }, 1800);
+        });
     });
 });
 
-// Bulk save
+// Bulk Save All Comments
 const commentsForm = document.getElementById('commentsForm');
 if (commentsForm) {
     commentsForm.addEventListener('submit', function(e) {
@@ -1658,9 +1713,10 @@ if (commentsForm) {
         const btn  = document.getElementById('saveAllBtn');
         const ind  = document.getElementById('savingIndicator');
         const orig = btn.innerHTML;
+        const classArm = '{{ $schoolclass->schoolclass ?? "" }} {{ $schoolclass->arm_name ?? "" }}'.trim();
 
         btn.disabled = true;
-        btn.innerHTML = '<i class="ri-loader-4-line spin-icon me-1"></i> Saving All Comments…';
+        btn.innerHTML = '<i class="ri-loader-4-line spin-icon me-1"></i> Saving All Comments...';
         ind.style.display = 'inline-block';
 
         const fd = new FormData();
@@ -1678,15 +1734,16 @@ if (commentsForm) {
         .then(r => r.json())
         .then(data => {
             if (!data.success) throw new Error(data.message || 'Save failed');
+
+            showToast(`✅ All comments saved successfully!<br><small class="text-muted">${classArm}</small>`, 'success');
+
             document.querySelectorAll('.auto-save-comment').forEach(sel => {
-                const val = sel.value.trim();
-                if (val) sel.dataset.originalValue = val;
+                if (sel.value.trim()) sel.dataset.originalValue = sel.value.trim();
             });
-            showToast(data.message || 'All comments saved!', 'success');
         })
         .catch(err => {
             console.error('Bulk save error:', err);
-            showToast('Error: ' + err.message, 'danger');
+            showToast('❌ Error saving comments: ' + err.message, 'danger');
         })
         .finally(() => {
             btn.disabled = false;
@@ -1696,7 +1753,7 @@ if (commentsForm) {
     });
 }
 
-// Tooltip triggers (desktop only)
+// Tooltip triggers
 if (window.innerWidth > 1199) {
     document.querySelectorAll('.grades-trigger').forEach(trigger => {
         trigger.addEventListener('click', function(e) {
@@ -1735,7 +1792,7 @@ document.getElementById('searchInput')?.addEventListener('input', function() {
     });
 });
 
-// Init
+// Initialize
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.auto-save-comment').forEach(s => {
         s.dataset.originalValue = s.value;
@@ -1750,4 +1807,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 </script>
+
 @endsection
