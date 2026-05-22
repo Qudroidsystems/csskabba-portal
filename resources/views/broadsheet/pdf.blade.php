@@ -27,6 +27,22 @@ body {
     width: 100%;
 }
 
+/* ── Animations (for reference - PDFs don't animate but styles apply) ── */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes countUp {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+}
+@keyframes progressFill {
+    from { width: 0; }
+}
+
+.animate-fade-up { animation: fadeInUp 0.5s ease both; }
+.animate-count { animation: countUp 0.6s ease both; }
+
 /* ── School header ───────────────────────────────────────────────────── */
 .school-header {
     border-bottom: 2.5px solid #1e3a5f;
@@ -76,6 +92,34 @@ body {
     margin-bottom: 7px;
 }
 
+/* ── Stat Cards ──────────────────────────────────────────────────────── */
+.stat-cards {
+    display: table;
+    width: 100%;
+    margin-bottom: 10px;
+    border-collapse: collapse;
+}
+.stat-card {
+    display: table-cell;
+    background: #f0f4fa;
+    border: 1px solid #c5d3e8;
+    border-radius: 8px;
+    padding: 6px 8px;
+    text-align: center;
+    width: 25%;
+}
+.stat-value {
+    font-size: 14pt;
+    font-weight: bold;
+    color: #1e3a5f;
+}
+.stat-label {
+    font-size: 6pt;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
 /* ── Meta info ───────────────────────────────────────────────────────── */
 .meta-grid { display: table; width: 100%; margin-bottom: 7px; border: 1px solid #c5d3e8; background: #f0f4fa; }
 .meta-cell {
@@ -95,11 +139,58 @@ body {
 .grade-item { display: inline-block; margin-right: 7px; font-size: 6pt; }
 .grade-badge { display: inline-block; padding: 1px 4px; border-radius: 2px; font-weight: bold; color: white; font-size: 6.5pt; }
 
+/* ── Position Badge ──────────────────────────────────────────────────── */
+.pos-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    font-size: 9pt;
+    font-weight: 800;
+    border: 1.5px solid;
+}
+.pos-1 { background: linear-gradient(135deg, #fef9c3, #fde68a); border-color: #f59e0b; color: #92400e; }
+.pos-2 { background: linear-gradient(135deg, #f1f5f9, #e2e8f0); border-color: #94a3b8; color: #475569; }
+.pos-3 { background: linear-gradient(135deg, #ffedd5, #fed7aa); border-color: #f97316; color: #9a3412; }
+.pos-other { background: #f0f4fa; border-color: #c5d3e8; color: #6b7280; }
+
+/* ── Progress Bar ────────────────────────────────────────────────────── */
+.progress-bar-wrap {
+    background: #e2e8f0;
+    border-radius: 3px;
+    height: 3px;
+    overflow: hidden;
+    margin-top: 2px;
+}
+.progress-bar {
+    height: 100%;
+    border-radius: 3px;
+    background: #22c55e;
+}
+.progress-bar.red { background: #dc2626; }
+.progress-bar.amber { background: #f59e0b; }
+.progress-bar.green { background: #22c55e; }
+
+/* ── Performance Strip ───────────────────────────────────────────────── */
+.performance-strip {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+    border-radius: 6px;
+    padding: 5px 8px;
+    color: white;
+}
+.performance-strip table { width: 100%; }
+.performance-strip td { padding: 1px 2px; border: none; color: white; }
+.performance-label { font-size: 5.5pt; opacity: 0.8; }
+.performance-value { font-size: 6.5pt; font-weight: bold; }
+
+/* ── Score colors ────────────────────────────────────────────────────── */
+.score-red { color: #dc2626 !important; font-weight: bold; }
+.score-amber { color: #d97706 !important; font-weight: bold; }
+.score-green { color: #16a34a !important; font-weight: bold; }
+
 /* ── MAIN TABLE ──────────────────────────────────────────────────────── */
-/*
-  CRITICAL: table-layout:auto lets the table be as wide as content needs.
-  DO NOT set a max-width. DomPDF renders whatever width is defined.
-*/
 .broadsheet-table {
     width: 100%;
     border-collapse: collapse;
@@ -182,6 +273,10 @@ body {
 .broadsheet-table tbody td.sub-boundary {
     border-left: 1.5px solid #2563eb66;
 }
+.broadsheet-table tbody td.performance-cell {
+    padding: 4px;
+    min-width: 140px;
+}
 
 /* Grade colour coding */
 .score-a1 { background: #dcfce7 !important; color: #166534; font-weight: bold; }
@@ -258,9 +353,56 @@ body {
 }
 .footer-left  { display: table-cell; text-align: left; }
 .footer-right { display: table-cell; text-align: right; }
+
+/* Print optimization */
+@media print {
+    .progress-bar {
+        background-color: #22c55e !important;
+    }
+    .progress-bar.red { background-color: #dc2626 !important; }
+    .progress-bar.amber { background-color: #f59e0b !important; }
+    .progress-bar.green { background-color: #22c55e !important; }
+}
 </style>
 </head>
 <body>
+
+@php
+    // Calculate positions based on cumulative total
+    $positionMap = [];
+    $sortedByCum = collect($studentRows)->sortByDesc('total_cum')->values();
+    $prevPct = null;
+    $prevPos = 0;
+    $counter = 0;
+    foreach($sortedByCum as $stu) {
+        $counter++;
+        if($prevPct !== null && $stu['total_cum'] == $prevPct) {
+            $positionMap[$stu['id']] = $prevPos;
+        } else {
+            $positionMap[$stu['id']] = $counter;
+            $prevPos = $counter;
+        }
+        $prevPct = $stu['total_cum'];
+    }
+
+    // Calculate class average percentage
+    $totalObtainable = count($subjects) * 100;
+    $totalPct = 0;
+    foreach($studentRows as $stu) {
+        $totalPct += $totalObtainable > 0 ? ($stu['total_cum'] / $totalObtainable) * 100 : 0;
+    }
+    $avgClassPercentage = count($studentRows) > 0 ? round($totalPct / count($studentRows), 1) : 0;
+
+    // Find top performer
+    $topGPA = 0;
+    $topName = '—';
+    foreach($studentRows as $stu) {
+        if($stu['gpa'] > $topGPA) {
+            $topGPA = $stu['gpa'];
+            $topName = $stu['lastname'] . ' ' . $stu['firstname'];
+        }
+    }
+@endphp
 
 {{-- ── School header ── --}}
 <div class="school-header">
@@ -291,6 +433,28 @@ body {
 
 <div class="doc-title-strip">CLASS ACADEMIC BROADSHEET</div>
 
+{{-- ── Stat Cards ── --}}
+<table class="stat-cards">
+    <tr>
+        <td class="stat-card">
+            <div class="stat-value">{{ count($studentRows) }}</div>
+            <div class="stat-label">Total Students</div>
+        </td>
+        <td class="stat-card">
+            <div class="stat-value">{{ count($subjects) }}</div>
+            <div class="stat-label">Subjects</div>
+        </td>
+        <td class="stat-card">
+            <div class="stat-value">{{ $avgClassPercentage }}%</div>
+            <div class="stat-label">Avg % (Cum)</div>
+        </td>
+        <td class="stat-card">
+            <div class="stat-value">{{ $topName }}</div>
+            <div class="stat-label">Top Performer</div>
+        </td>
+    </tr>
+</table>
+
 {{-- ── Meta row ── --}}
 <div class="meta-grid">
     <div class="meta-cell">
@@ -307,7 +471,7 @@ body {
     </div>
     <div class="meta-cell">
         <span class="meta-label">No. of Students</span>
-        <span class="meta-value">{{ $totalStudents }}</span>
+        <span class="meta-value">{{ count($studentRows) }}</span>
     </div>
     <div class="meta-cell">
         <span class="meta-label">No. of Subjects</span>
@@ -386,7 +550,7 @@ body {
     if ($showAvg)      $subColspan++;
     if ($showRemark)   $subColspan++;
 
-    $frozenCols = 1 + ($showAdmNo ? 1 : 0) + 1 + ($showGender ? 1 : 0);
+    $frozenCols = 2 + ($showAdmNo ? 1 : 0) + 1 + ($showGender ? 1 : 0); // SN + Pos + Name + AdmNo + Gender
 
     /* GPA colspan */
     $gpaColspan = ($showGPA?1:0)+($showCGPA?1:0)+($showGPAGrade?1:0)+($showNumSub?1:0)+($showTotalGP?1:0);
@@ -398,12 +562,13 @@ body {
   {{-- Row 1: Subject names --}}
   <tr class="subject-header">
     <th class="student-col" rowspan="2" style="width:18px;">#</th>
+    <th class="student-col" rowspan="2" style="width:28px;">Pos</th>
     @if($showAdmNo)
       <th class="student-col" rowspan="2" style="min-width:50px;">Adm. No</th>
     @endif
     <th class="student-col" rowspan="2" style="min-width:100px;text-align:left;padding-left:4px;">Student Name</th>
     @if($showGender)
-      <th class="student-col" rowspan="2" style="width:28px;">Sex</th>
+      <th class="student-col" rowspan="2" style="width:22px;">Sex</th>
     @endif
 
     @foreach($subjects as $subId => $subInfo)
@@ -414,6 +579,8 @@ body {
         @endif
       </th>
     @endforeach
+
+    <th class="subj-name-hdr" style="min-width:140px;">Performance Summary</th>
 
     @if($gpaColspan > 0)
       <th colspan="{{ $gpaColspan }}" style="background:#0a1e38;border-left:2px solid #3b82f6;font-size:6pt;">
@@ -439,6 +606,7 @@ body {
       @if($showAvg)      <th style="min-width:22px;">Avg</th>    @endif
       @if($showRemark)   <th style="min-width:30px;">Rmk</th>    @endif
     @endforeach
+    <th style="min-width:140px;background:#163562;">Performance Metrics</th>
     @if($showGPA)      <th style="background:#0a1e38;color:#93c5fd;min-width:26px;border-left:2px solid #3b82f6;">GPA</th>      @endif
     @if($showCGPA)     <th style="background:#0a1e38;color:#86efac;min-width:26px;">CGPA</th>    @endif
     @if($showGPAGrade) <th style="background:#0a1e38;color:#fcd34d;min-width:22px;">GGrd</th>   @endif
@@ -450,8 +618,20 @@ body {
 <tbody>
 
   @foreach($studentRows as $idx => $stu)
+    @php
+        $totalObtainable = count($subjects) * 100;
+        $termPercentage = $totalObtainable > 0 ? round(($stu['total_cum'] / $totalObtainable) * 100, 1) : 0;
+        $termColorClass = $termPercentage < 40 ? 'red' : ($termPercentage < 70 ? 'amber' : 'green');
+        $pos = $positionMap[$stu['id']] ?? 0;
+        $posClass = $pos === 1 ? 'pos-1' : ($pos === 2 ? 'pos-2' : ($pos === 3 ? 'pos-3' : 'pos-other'));
+        $posIcon = $pos === 1 ? '🥇' : ($pos === 2 ? '🥈' : ($pos === 3 ? '🥉' : $pos));
+        $imgSrc = $stu['picture'] ? asset('storage/student_avatars/' . basename($stu['picture'])) : '';
+    @endphp
     <tr>
       <td class="sn-cell">{{ $idx + 1 }}</td>
+      <td style="text-align:center;">
+        <div class="pos-badge {{ $posClass }}">{{ $posIcon }}</div>
+      </td>
       @if($showAdmNo)
         <td class="adm-cell">{{ $stu['admissionno'] }}</td>
       @endif
@@ -471,13 +651,50 @@ body {
           </td>
         @endforeach
         @if($showTotal)    <td class="{{ $gc }}">{{ ($sd['total']??0)>0 ? number_format($sd['total'],1) : '—' }}</td> @endif
-        @if($showBF)       <td>{{ ($sd['bf']??0)>0 ? number_format($sd['bf'],1) : '—' }}</td> @endif
+        @if($showBF)        <td>{{ ($sd['bf']??0)>0 ? number_format($sd['bf'],1) : '—' }}</td> @endif
         @if($showCum)      <td class="{{ $gc }}" style="font-weight:bold;">{{ ($sd['cum']??0)>0 ? number_format($sd['cum'],1) : '—' }}</td> @endif
         @if($showGrade)    <td class="{{ $gc }}" style="font-weight:bold;">{{ $g }}</td> @endif
         @if($showPosition) <td style="font-size:6pt;">{{ $sd['position'] ?? '—' }}</td> @endif
         @if($showAvg)      <td style="font-size:5.5pt;color:#6b7280;">{{ $subjectStats[$subId]['avg'] ?? '—' }}</td> @endif
         @if($showRemark)   <td style="font-size:5.5pt;white-space:nowrap;">{{ $sd['remark'] ?? '—' }}</td> @endif
       @endforeach
+
+      {{-- Performance Summary Cell --}}
+      <td class="performance-cell">
+        <div class="performance-strip">
+            <table>
+                <tr>
+                    <td class="performance-label">Obtained (Cum):</td>
+                    <td class="performance-value" style="text-align:right;">{{ number_format($stu['total_cum'], 1) }}</td>
+                </tr>
+                <tr>
+                    <td class="performance-label">Obtainable:</td>
+                    <td class="performance-value" style="text-align:right;">{{ $totalObtainable }}</td>
+                </tr>
+                <tr>
+                    <td class="performance-label">% Obtained:</td>
+                    <td class="performance-value {{ $termPercentage < 50 ? 'score-red' : ($termPercentage < 70 ? 'score-amber' : 'score-green') }}" style="text-align:right;">
+                        {{ $termPercentage }}%
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="2" style="padding-top:2px;">
+                        <div class="progress-bar-wrap">
+                            <div class="progress-bar {{ $termColorClass }}" style="width: {{ $termPercentage }}%;"></div>
+                        </div>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="performance-label">GPA:</td>
+                    <td class="performance-value" style="text-align:right;">{{ number_format($stu['gpa'], 2) }}</td>
+                </tr>
+                <tr>
+                    <td class="performance-label">CGPA:</td>
+                    <td class="performance-value" style="text-align:right;">{{ number_format($stu['cgpa'], 2) }}</td>
+                </tr>
+            </table>
+        </div>
+      </td>
 
       @if($showGPA)      <td class="gpa-cell">{{ number_format($stu['gpa'],2) }}</td>      @endif
       @if($showCGPA)     <td class="gpa-cell" style="background:#f0fdf4!important;color:#166534;">{{ number_format($stu['cgpa'],2) }}</td> @endif
@@ -491,9 +708,9 @@ body {
   {{-- Stats rows --}}
   @php
   $statRows = [
-    ['AVG',     'stats-avg', 'avg'],
-    ['HIGHEST', 'stats-hi',  'highest'],
-    ['LOWEST',  'stats-lo',  'lowest'],
+    ['CLASS AVG', 'stats-avg', 'avg'],
+    ['HIGHEST',   'stats-hi',  'highest'],
+    ['LOWEST',    'stats-lo',  'lowest'],
   ];
   $styles = ['stats-avg'=>'background:#1e3a5f','stats-hi'=>'background:#0a2240','stats-lo'=>'background:#111c2a'];
   @endphp
@@ -511,6 +728,7 @@ body {
         @if($showAvg)      <td>{{ $key==='avg' ? ($st['avg']??'—') : '—' }}</td> @endif
         @if($showRemark)   <td>—</td> @endif
       @endforeach
+      <td class="stats-label">—</td>
       @if($showGPA)      <td>—</td> @endif
       @if($showCGPA)     <td>—</td> @endif
       @if($showGPAGrade) <td>—</td> @endif
