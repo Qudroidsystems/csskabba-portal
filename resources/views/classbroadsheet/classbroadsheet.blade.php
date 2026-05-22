@@ -1557,20 +1557,21 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         }).join('');
     }
 
+
     window.applyTemplate = function(idx) {
-        var tpl = TEMPLATES[idx]; if (!tpl) return;
-        var ta = document.getElementById('modalTextarea'); if (!ta) return;
-        var sName = '';
-        if (currentModalSid) {
-            var row = document.querySelector('[data-student-id="' + currentModalSid + '"]');
-            if (row) sName = (row.getAttribute('data-student-name') || '').split(' ')[0] || 'Student';
-        }
-        // Replace [STUDENT_NAME] with actual student name
-        ta.value = tpl.text.replace(/\[STUDENT_NAME\]/g, sName || 'Student');
-        ta.focus();
-        closeTplPicker();
-        toast('Template loaded — personalise before saving.', 'success');
-    };
+    var tpl = TEMPLATES[idx]; if (!tpl) return;
+    var ta = document.getElementById('modalTextarea'); if (!ta) return;
+    var sName = '';
+    if (currentModalSid) {
+        var row = document.querySelector('[data-student-id="' + currentModalSid + '"]');
+        if (row) sName = (row.getAttribute('data-student-name') || '').split(' ')[0] || 'Student';
+    }
+    // Replace {{name}} with actual student name
+    ta.value = tpl.text.replace(/\{\{name\}\}/g, sName || 'Student');
+    ta.focus();
+    closeTplPicker();
+    toast('Template loaded — personalise before saving.', 'success');
+};
 
     function openTplPicker() {
         renderTemplates('', 'all'); tplActiveCategory = 'all';
