@@ -1636,7 +1636,7 @@ function setupImageZoom() {
     });
 }
 
-// ====================== AUTO-SAVE WITH CLASS-ARM ======================
+// ====================== AUTO-SAVE WITH CLASS + ARM ======================
 document.querySelectorAll('.auto-save-comment').forEach(select => {
     select.addEventListener('change', function() {
         const studentId   = this.dataset.studentId;
@@ -1652,14 +1652,13 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
             if (nameCell) studentName = nameCell.textContent.trim();
         }
 
-        // Improved Class + Arm Logic
-        let classArm = '{{ $schoolclass->schoolclass ?? "" }}';
-        @if(isset($schoolclass->arm_name) && $schoolclass->arm_name)
-            classArm += ' {{ $schoolclass->arm_name }}';
-        @elseif(isset($schoolclass->arm) && $schoolclass->arm)
-            classArm += ' {{ $schoolclass->arm->arm ?? "" }}';
+        // Robust Class + Arm
+        let classArm = "{{ $schoolclass->schoolclass ?? 'Class' }}";
+        @if($schoolclass->arm)
+            classArm += " {{ $schoolclass->arm->arm ?? '' }}";
+        @elseif($schoolclass->arms)
+            classArm += " {{ $schoolclass->arms->arm ?? '' }}";
         @endif
-        classArm = classArm.trim();
 
         // Visual feedback
         this.style.borderColor = '#f59e0b';
@@ -1727,14 +1726,12 @@ if (commentsForm) {
         const ind  = document.getElementById('savingIndicator');
         const orig = btn.innerHTML;
 
-        // Improved Class + Arm for bulk save
-        let classArm = '{{ $schoolclass->schoolclass ?? "" }}';
-        @if(isset($schoolclass->arm_name) && $schoolclass->arm_name)
-            classArm += ' {{ $schoolclass->arm_name }}';
-        @elseif(isset($schoolclass->arm) && $schoolclass->arm)
-            classArm += ' {{ $schoolclass->arm->arm ?? "" }}';
+        let classArm = "{{ $schoolclass->schoolclass ?? 'Class' }}";
+        @if($schoolclass->arm)
+            classArm += " {{ $schoolclass->arm->arm ?? '' }}";
+        @elseif($schoolclass->arms)
+            classArm += " {{ $schoolclass->arms->arm ?? '' }}";
         @endif
-        classArm = classArm.trim();
 
         btn.disabled = true;
         btn.innerHTML = '<i class="ri-loader-4-line spin-icon me-1"></i> Saving All...';
@@ -1773,7 +1770,7 @@ if (commentsForm) {
     });
 }
 
-// Tooltip triggers
+// Tooltip, Search, Init
 if (window.innerWidth > 1199) {
     document.querySelectorAll('.grades-trigger').forEach(trigger => {
         trigger.addEventListener('click', function(e) {
@@ -1800,7 +1797,6 @@ if (window.innerWidth > 1199) {
     });
 }
 
-// Search
 document.getElementById('searchInput')?.addEventListener('input', function() {
     const term = this.value.toLowerCase().trim();
     document.querySelectorAll('.desktop-table tbody tr').forEach(row => {
@@ -1811,7 +1807,6 @@ document.getElementById('searchInput')?.addEventListener('input', function() {
     });
 });
 
-// Initialize
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.auto-save-comment').forEach(s => {
         s.dataset.originalValue = s.value;
