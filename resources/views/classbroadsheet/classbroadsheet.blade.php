@@ -5,6 +5,9 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
 
 <style>
+/* ─────────────────────────────────────────────
+   SCREEN STYLES
+───────────────────────────────────────────── */
 :root {
     --cb-navy:      #0f2342;
     --cb-teal:      #0d9488;
@@ -43,6 +46,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
 .spin { animation:spin .8s linear infinite; }
 
+/* ── Hero ── */
 .cb-hero {
     background: linear-gradient(135deg, var(--cb-navy) 0%, #1e4a7e 55%, #0d9488 100%);
     border-radius: var(--cb-radius);
@@ -89,6 +93,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 }
 .btn-back:hover { background:rgba(255,255,255,.22); color:#fff; transform:translateX(-4px); }
 
+/* ── Stats ── */
 .cb-stat {
     background:var(--cb-white); border:1px solid var(--cb-border);
     border-radius:var(--cb-radius); padding:20px 22px;
@@ -114,6 +119,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .stat-pct-term { background:rgba(14,165,233,.12); color:#0369a1; }
 .stat-pct-cum  { background:rgba(34,197,94,.12);  color:#15803d; }
 
+/* ── Column Toggle Panel ── */
 .col-toggle-panel {
     background:var(--cb-white); border:1px solid var(--cb-border);
     border-radius:var(--cb-radius); padding:18px 22px; margin-bottom:22px;
@@ -130,6 +136,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .toggle-chip:hover { border-color:var(--cb-teal); color:var(--cb-teal); transform:translateY(-2px) scale(1.03); }
 .toggle-chip.active { background:var(--cb-teal); border-color:var(--cb-teal); color:#fff; box-shadow:0 2px 10px rgba(13,148,136,.35); }
 
+/* ── Card & Table ── */
 .cb-card {
     background:var(--cb-white); border:1px solid var(--cb-border);
     border-radius:var(--cb-radius); box-shadow:var(--cb-shadow);
@@ -167,6 +174,22 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .cb-table tbody tr:nth-child(n+6){animation-delay:.20s}
 .cb-table tbody tr:hover td { background:#f0fdf9; }
 
+/* ── Position Badge ── */
+.pos-badge {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:36px; height:36px; border-radius:50%;
+    font-size:13px; font-weight:800; border:2px solid;
+    transition:all .3s cubic-bezier(.22,1,.36,1);
+    flex-shrink:0;
+}
+.pos-badge:hover { transform:scale(1.18) rotate(-5deg); }
+.pos-1 { background:linear-gradient(135deg,#fef9c3,#fde68a); border-color:#f59e0b; color:#92400e; box-shadow:0 2px 8px rgba(245,158,11,.35); }
+.pos-2 { background:linear-gradient(135deg,#f1f5f9,#e2e8f0); border-color:#94a3b8; color:#475569; box-shadow:0 2px 8px rgba(148,163,184,.25); }
+.pos-3 { background:linear-gradient(135deg,#ffedd5,#fed7aa); border-color:#f97316; color:#9a3412; box-shadow:0 2px 8px rgba(249,115,22,.25); }
+.pos-other { background:var(--cb-surface); border-color:var(--cb-border); color:var(--cb-muted); font-size:12px; }
+.cbcol-position { min-width:60px; }
+
+/* ── Score / Grade Cells ── */
 .score-dual { display:flex; flex-direction:column; gap:2px; min-width:80px; }
 .score-row {
     display:flex; align-items:center; justify-content:center; gap:4px;
@@ -193,6 +216,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .score-amber { color:#d97706 !important; }
 .score-green { color:#16a34a !important; }
 
+/* ── Analytics Cell ── */
 .analytics-cell { min-width:180px; font-size:11px; line-height:1.4; }
 .analytics-row  { display:flex; justify-content:space-between; align-items:center; padding:3px 0; gap:6px; }
 .analytics-lbl  { color:var(--cb-muted); font-size:10px; font-weight:500; }
@@ -201,6 +225,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .pct-bar-wrap { background:#e2e8f0; border-radius:4px; height:5px; margin-top:3px; overflow:hidden; }
 .pct-bar { height:100%; border-radius:4px; animation:progressFill .8s ease both; animation-delay:.3s; }
 
+/* ── Grade Popup Trigger ── */
 .grade-trigger-btn {
     background:none; border:none; cursor:pointer;
     color:var(--cb-sky); font-size:17px;
@@ -215,6 +240,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     animation:glowPulse .8s ease infinite;
 }
 
+/* ── Inputs ── */
 .cb-input {
     border:1.5px solid var(--cb-border); border-radius:8px; padding:6px 10px;
     font-size:12px; width:100%; transition:all .25s ease;
@@ -224,6 +250,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .cb-input.has-value { border-left-color:var(--cb-teal); background:#f0fdf9; }
 .absence-input { width:72px !important; text-align:center; }
 
+/* ── Student Name Cell ── */
 .student-name-cell { display:flex; align-items:center; gap:9px; }
 .cb-avatar {
     width:38px; height:38px; border-radius:50%; overflow:hidden;
@@ -237,6 +264,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .student-name-text { font-weight:600; font-size:12.5px; color:var(--cb-navy); }
 .student-adm { font-size:10.5px; color:var(--cb-muted); margin-top:1px; }
 
+/* ── Autosave Chip ── */
 .autosave-chip {
     display:inline-flex; align-items:center; gap:4px;
     font-size:10px; font-weight:700; padding:2px 8px; border-radius:20px;
@@ -247,6 +275,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .ac-saved   { background:#dcfce7; color:#15803d; }
 .ac-err     { background:#ffe4e6; color:#be123c; }
 
+/* ── Comment Status Dot ── */
 .comment-status-dot {
     display:inline-flex; align-items:center; gap:3px;
     font-size:10px; font-weight:700; padding:1px 7px; border-radius:20px;
@@ -255,6 +284,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .dot-saved   { background:#dcfce7; color:#15803d; }
 .dot-unsaved { background:#f1f5f9; color:#94a3b8; }
 
+/* ── Save Bar ── */
 .save-bar {
     position:sticky; bottom:0; z-index:100;
     background:rgba(15,35,66,.97); backdrop-filter:blur(10px);
@@ -278,6 +308,16 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .btn-save-all:hover { background:#0b7c72; transform:translateY(-3px); box-shadow:0 8px 22px rgba(13,148,136,.45); }
 .btn-save-all:active{ transform:translateY(0); }
 
+/* ── Print Button ── */
+.btn-print {
+    background:rgba(255,255,255,.12); border:1.5px solid rgba(255,255,255,.25);
+    border-radius:10px; padding:9px 20px; color:#fff; font-size:13px; font-weight:600;
+    cursor:pointer; display:inline-flex; align-items:center; gap:8px;
+    transition:all .3s ease; font-family:'DM Sans',sans-serif;
+}
+.btn-print:hover { background:rgba(255,255,255,.22); transform:translateY(-2px); box-shadow:0 4px 14px rgba(0,0,0,.2); }
+
+/* ── Toast ── */
 .cb-toast {
     position:fixed; bottom:80px; right:24px; min-width:300px; z-index:99999;
     padding:14px 18px; border-radius:12px; display:flex; align-items:center; gap:10px;
@@ -288,6 +328,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .cb-toast-error   { background:#fff1f2; border:1.5px solid #fca5a5; color:#be123c; }
 .cb-toast-info    { background:#eff6ff; border:1.5px solid #93c5fd; color:#1d4ed8; }
 
+/* ── Search ── */
 .cb-search { position:relative; }
 .cb-search input {
     width:100%; padding:9px 14px 9px 38px; border:1.5px solid var(--cb-border); border-radius:10px;
@@ -296,9 +337,52 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .cb-search input:focus { border-color:var(--cb-teal); outline:none; box-shadow:0 0 0 3px rgba(13,148,136,.1); transform:translateX(2px); }
 .cb-search i { position:absolute; left:13px; top:50%; transform:translateY(-50%); color:var(--cb-muted); pointer-events:none; }
 
+/* ── Comment Template Picker ── */
+.tpl-picker {
+    display:none; position:absolute; z-index:10000;
+    background:var(--cb-white); border:1.5px solid var(--cb-teal);
+    border-radius:14px; box-shadow:0 16px 40px rgba(15,35,66,.18);
+    width:380px; max-height:420px; overflow:hidden;
+    flex-direction:column;
+    animation:popIn .22s cubic-bezier(.22,1,.36,1);
+}
+.tpl-picker.is-open { display:flex; }
+.tpl-hdr {
+    background:linear-gradient(135deg,var(--cb-navy),var(--cb-teal));
+    color:#fff; padding:12px 16px; font-weight:700; font-size:13px;
+    display:flex; justify-content:space-between; align-items:center;
+    border-radius:12px 12px 0 0; flex-shrink:0;
+}
+.tpl-close { background:rgba(255,255,255,.18); border:none; color:#fff; border-radius:50%; width:26px; height:26px; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; transition:all .2s ease; }
+.tpl-close:hover { background:rgba(255,255,255,.4); transform:rotate(90deg); }
+.tpl-search-wrap { padding:10px 12px; border-bottom:1px solid var(--cb-border); flex-shrink:0; }
+.tpl-search { width:100%; border:1.5px solid var(--cb-border); border-radius:8px; padding:7px 10px 7px 32px; font-size:12px; font-family:'DM Sans',sans-serif; background:var(--cb-surface); position:relative; }
+.tpl-search:focus { outline:none; border-color:var(--cb-teal); box-shadow:0 0 0 3px rgba(13,148,136,.12); }
+.tpl-search-icon { position:absolute; margin-left:10px; margin-top:-26px; color:var(--cb-muted); font-size:14px; pointer-events:none; }
+.tpl-cats { display:flex; gap:6px; padding:8px 12px; overflow-x:auto; flex-shrink:0; border-bottom:1px solid var(--cb-border); }
+.tpl-cat-btn {
+    flex-shrink:0; padding:4px 12px; border-radius:20px; font-size:11px; font-weight:700;
+    border:1.5px solid var(--cb-border); background:var(--cb-surface); color:var(--cb-muted);
+    cursor:pointer; transition:all .2s ease;
+}
+.tpl-cat-btn.active { background:var(--cb-teal); border-color:var(--cb-teal); color:#fff; }
+.tpl-list { flex:1; overflow-y:auto; padding:8px; }
+.tpl-item {
+    padding:10px 12px; border-radius:10px; cursor:pointer; margin-bottom:4px;
+    border:1px solid transparent; transition:all .2s ease;
+    display:flex; flex-direction:column; gap:3px;
+}
+.tpl-item:hover { background:#f0fdf9; border-color:var(--cb-teal); transform:translateX(3px); }
+.tpl-item-label { font-size:11px; font-weight:700; color:var(--cb-teal); text-transform:uppercase; letter-spacing:.5px; }
+.tpl-item-text  { font-size:12px; color:var(--cb-navy); line-height:1.5; }
+.tpl-no-results { text-align:center; padding:24px 12px; color:var(--cb-muted); font-size:12px; }
+#tplBackdrop { display:none; position:fixed; inset:0; z-index:9999; }
+
+/* ── Responsive ── */
 @media (max-width:1199px) { .desktop-only { display:none !important; } }
 @media (min-width:1200px) { .mobile-only  { display:none !important; } }
 
+/* ── Image Zoom Modal ── */
 #cbImgZoomModal .modal-content { background:transparent; border:none; box-shadow:none; }
 #cbImgZoomModal .modal-dialog  { max-width:92vw; }
 .cb-zoomed-img { max-width:88vw; max-height:70vh; border-radius:16px; border:4px solid #fff; box-shadow:0 24px 60px rgba(0,0,0,.4); object-fit:contain; animation:scaleIn .3s ease; }
@@ -321,10 +405,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     overflow:hidden;
     flex-direction:column;
 }
-#cbGradePopup.is-open {
-    display:flex;
-    animation:popIn .28s cubic-bezier(.22,1,.36,1);
-}
+#cbGradePopup.is-open { display:flex; animation:popIn .28s cubic-bezier(.22,1,.36,1); }
 .gpop-hdr {
     background:linear-gradient(135deg, var(--cb-navy), var(--cb-teal));
     color:#fff; padding:13px 18px; border-radius:14px 14px 0 0;
@@ -339,8 +420,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 }
 .gpop-close-btn:hover { background:rgba(255,255,255,.4); transform:rotate(90deg) scale(1.1); }
 .gpop-body { padding:16px; overflow-y:auto; flex:1; }
-
-/* Grade popup legend */
 .gpop-legend {
     display:flex; align-items:center; gap:12px; margin-bottom:10px;
     padding:6px 10px; background:var(--cb-surface); border-radius:8px;
@@ -350,8 +429,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .gpop-legend-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
 .gpop-legend-dot.t { background:#0ea5e9; }
 .gpop-legend-dot.c { background:var(--cb-navy); }
-
-/* Grade popup table */
 .gpop-scroll { max-height:280px; overflow-y:auto; border:1px solid var(--cb-border); border-radius:10px; }
 .gpop-table { width:100%; border-collapse:collapse; font-size:12px; table-layout:fixed; }
 .gpop-table thead th {
@@ -363,49 +440,28 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .gpop-table thead th:first-child { text-align:left; padding-left:12px; width:38%; }
 .gpop-table thead th.col-score { width:28%; }
 .gpop-table thead th.col-grade { width:34%; }
-.gpop-table tbody td {
-    padding:8px 6px; border-bottom:1px solid #f1f5f9;
-    font-weight:500; text-align:center; vertical-align:middle;
-}
+.gpop-table tbody td { padding:8px 6px; border-bottom:1px solid #f1f5f9; font-weight:500; text-align:center; vertical-align:middle; }
 .gpop-table tbody td:first-child { text-align:left; font-weight:600; color:var(--cb-navy); padding-left:12px; }
 .gpop-table tbody tr:hover td { background:#f0fdf9; }
-
-/* Score pair inside popup table */
 .score-pair { display:flex; flex-direction:column; gap:2px; }
-.score-cell {
-    display:flex; align-items:center; justify-content:center; gap:3px;
-    padding:2px 4px; border-radius:4px; font-size:11px; font-weight:700;
-}
+.score-cell { display:flex; align-items:center; justify-content:center; gap:3px; padding:2px 4px; border-radius:4px; font-size:11px; font-weight:700; }
 .score-cell.term { background:rgba(14,165,233,.08); border-left:2px solid #0ea5e9; }
 .score-cell.cum  { background:rgba(15,35,66,.06);   border-left:2px solid var(--cb-navy); }
-
-/* Summary grid */
 .gpop-summary {
     background:linear-gradient(135deg,#f8fafc,#f0fdf9);
     border-radius:12px; padding:12px; margin-top:14px;
     display:grid; grid-template-columns:repeat(3,1fr); gap:8px;
 }
-.gpop-sum-item {
-    text-align:center; padding:10px 6px; border-radius:10px; background:white;
-    transition:all .2s ease; border:1px solid #e2e8f0;
-}
+.gpop-sum-item { text-align:center; padding:10px 6px; border-radius:10px; background:white; transition:all .2s ease; border:1px solid #e2e8f0; }
 .gpop-sum-item:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,.09); border-color:var(--cb-teal); }
-.gpop-sum-lbl {
-    font-size:9px; color:var(--cb-muted); text-transform:uppercase;
-    letter-spacing:.4px; margin-bottom:6px; font-weight:600; line-height:1.4;
-}
+.gpop-sum-lbl { font-size:9px; color:var(--cb-muted); text-transform:uppercase; letter-spacing:.4px; margin-bottom:6px; font-weight:600; line-height:1.4; }
 .gpop-sum-val { font-size:17px; font-weight:800; color:var(--cb-navy); }
 .gpop-sum-val.score-red   { color:#dc2626; }
 .gpop-sum-val.score-amber { color:#d97706; }
 .gpop-sum-val.score-green { color:#16a34a; }
+#cbPopupBackdrop { display:none; position:fixed; inset:0; z-index:99998; background:rgba(0,0,0,.3); animation:backdropIn .2s ease; }
 
-#cbPopupBackdrop {
-    display:none;
-    position:fixed; inset:0; z-index:99998;
-    background:rgba(0,0,0,.3);
-    animation:backdropIn .2s ease;
-}
-
+/* ── Mobile Cards ── */
 .cb-student-card {
     background:var(--cb-white); border:1px solid var(--cb-border);
     border-radius:var(--cb-radius); margin-bottom:18px;
@@ -428,15 +484,16 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .subjects-scroll::-webkit-scrollbar-thumb { background:var(--cb-teal); border-radius:10px; }
 .subj-chip { flex-shrink:0; text-align:center; border:1px solid var(--cb-border); border-radius:10px; padding:8px 12px; min-width:85px; background:var(--cb-surface); transition:all .2s ease; }
 .subj-chip:hover { transform:translateY(-3px); border-color:var(--cb-teal); box-shadow:0 3px 8px rgba(13,148,136,.18); }
-.comment-field-group { margin-bottom:10px; }
+.comment-field-group { margin-bottom:10px; position:relative; }
 .comment-field-group label { font-size:11px; font-weight:600; color:var(--cb-muted); margin-bottom:4px; display:block; }
 
-#cbCommentModal .modal-content { border-radius:var(--cb-radius); overflow:hidden; animation:scaleIn .25s ease; }
-#cbCommentModal .modal-header  { background:linear-gradient(135deg,var(--cb-navy),var(--cb-teal)); color:#fff; border:none; padding:20px 24px; }
+/* ── Save Counter ── */
+.save-counter { display:flex; gap:8px; align-items:center; }
+.sc-pill-done,.sc-pill-pending { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; padding:4px 12px; border-radius:20px; }
+.sc-pill-done    { background:rgba(34,197,94,.15); color:#4ade80; border:1px solid rgba(34,197,94,.2); }
+.sc-pill-pending { background:rgba(248,113,113,.15); color:#f87171; border:1px solid rgba(248,113,113,.2); }
 
-.past-comment-item { transition:all .3s ease; animation:fadeInUp .3s ease both; }
-.past-comment-item:hover { transform:translateX(5px); box-shadow:0 6px 16px rgba(0,0,0,.12); }
-
+/* ── Tooltips ── */
 [data-tooltip] { position:relative; cursor:pointer; }
 [data-tooltip]:before {
     content:attr(data-tooltip); position:absolute; bottom:100%; left:50%;
@@ -447,16 +504,128 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 }
 [data-tooltip]:hover:before { opacity:1; visibility:visible; transform:translateX(-50%) translateY(-5px); }
 
-.save-counter { display:flex; gap:8px; align-items:center; }
-.sc-pill-done,.sc-pill-pending { display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:700; padding:4px 12px; border-radius:20px; }
-.sc-pill-done    { background:rgba(34,197,94,.15); color:#4ade80; border:1px solid rgba(34,197,94,.2); }
-.sc-pill-pending { background:rgba(248,113,113,.15); color:#f87171; border:1px solid rgba(248,113,113,.2); }
+/* ── Comment Modal ── */
+#cbCommentModal .modal-content { border-radius:var(--cb-radius); overflow:hidden; animation:scaleIn .25s ease; }
+#cbCommentModal .modal-header  { background:linear-gradient(135deg,var(--cb-navy),var(--cb-teal)); color:#fff; border:none; padding:20px 24px; }
+.past-comment-item { transition:all .3s ease; animation:fadeInUp .3s ease both; }
+.past-comment-item:hover { transform:translateX(5px); box-shadow:0 6px 16px rgba(0,0,0,.12); }
+
+/* ─────────────────────────────────────────────
+   PRINT STYLES
+───────────────────────────────────────────── */
+@media print {
+    /* Hide all non-essential UI */
+    .cb-hero::before, .cb-hero::after,
+    .col-toggle-panel,
+    .cb-card-header .cb-search,
+    .save-bar,
+    .cb-toast,
+    .grade-trigger-btn,
+    .autosave-chip,
+    .comment-status-dot,
+    .btn-back,
+    nav, header, footer,
+    .sidebar, .navbar,
+    #cbGradePopup, #cbPopupBackdrop, #cbImgZoomModal, #cbCommentModal,
+    .mobile-only,
+    .ri-eye-line,
+    .pct-bar-wrap { display:none !important; }
+
+    /* Reset body/page */
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    body { background:#fff !important; font-family:'DM Sans',sans-serif; font-size:10px; }
+    .main-content, .page-content, .container-fluid { padding:0 !important; margin:0 !important; }
+
+    /* Hero → compact header */
+    .cb-hero {
+        background: linear-gradient(135deg, var(--cb-navy) 0%, #1e4a7e 55%, #0d9488 100%) !important;
+        border-radius:8px !important;
+        padding:14px 18px !important;
+        margin-bottom:14px !important;
+        animation:none !important;
+        page-break-inside: avoid;
+    }
+    .cb-hero h1 { font-size:16px !important; }
+    .cb-hero p  { font-size:10px !important; }
+    .cb-meta-pill { font-size:9px !important; padding:2px 8px !important; animation:none !important; }
+
+    /* Stats row */
+    .cb-stat {
+        animation:none !important;
+        box-shadow:none !important;
+        border:1px solid #e2e8f0 !important;
+        break-inside:avoid;
+    }
+    .cb-stat .stat-value { font-size:20px !important; }
+
+    /* Table */
+    .cb-card { box-shadow:none !important; border:1px solid #cbd5e1 !important; animation:none !important; break-inside:auto; }
+    .cb-card-header { background:#f8fafc !important; padding:10px 14px !important; border-radius:0 !important; }
+    .cb-card-header h5 { font-size:12px !important; }
+
+    .cb-table-scroll { overflow:visible !important; }
+    .cb-table { font-size:9px !important; }
+    .cb-table thead th {
+        background:var(--cb-navy) !important;
+        color:#fff !important;
+        font-size:8px !important;
+        padding:6px 8px !important;
+        position:static !important;
+    }
+    .cb-table tbody td { padding:5px 8px !important; }
+    .cb-table tbody tr { animation:none !important; }
+    .cb-table tbody tr:hover td { background:transparent !important; }
+
+    /* Avatar: smaller for print */
+    .cb-avatar { width:28px !important; height:28px !important; border:1.5px solid #e2e8f0 !important; }
+    .cb-avatar-initials { font-size:10px !important; }
+    .student-name-text { font-size:9px !important; }
+    .student-adm { font-size:8px !important; }
+
+    /* Score cells: compact */
+    .score-dual { min-width:60px !important; gap:1px !important; }
+    .score-row { font-size:9px !important; padding:1px 3px !important; }
+    .grade-badge { font-size:7px !important; padding:0 3px !important; }
+
+    /* Analytics cell: hide bars, keep numbers */
+    .analytics-cell { min-width:120px !important; font-size:9px !important; }
+    .analytics-row { padding:1px 0 !important; }
+    .pct-bar-wrap { display:none !important; }
+    .analytics-percentage { font-size:10px !important; }
+
+    /* Comment inputs: show as plain text */
+    .cb-input { border:none !important; background:transparent !important; padding:0 !important; font-size:9px !important; box-shadow:none !important; }
+    .absence-input { width:40px !important; }
+
+    /* Position badge */
+    .pos-badge { width:26px !important; height:26px !important; font-size:10px !important; border-width:1.5px !important; }
+
+    /* Page breaks */
+    .cb-student-card { break-inside:avoid; }
+    .cb-table tbody tr { break-inside:avoid; }
+
+    /* Print footer per page */
+    @page {
+        margin: 1.5cm 1.2cm;
+        @bottom-center { content: "Class Broadsheet — Confidential | Page " counter(page) " of " counter(pages); font-size:8pt; color:#64748b; }
+    }
+
+    /* Print title */
+    .cb-card-header::before {
+        display:none;
+    }
+
+    /* Force full width for table */
+    .desktop-only { display:block !important; }
+    .mobile-only  { display:none !important; }
+}
 </style>
 
 <div class="main-content">
 <div class="page-content">
 <div class="container-fluid">
 
+{{-- ── Hero ── --}}
 <div class="cb-hero">
     <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
         <div>
@@ -472,6 +641,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     </div>
 </div>
 
+{{-- ── Stats ── --}}
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
         <div class="cb-stat">
@@ -518,9 +688,11 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     </div>
 </div>
 
+{{-- ── Column Toggle ── --}}
 <div class="col-toggle-panel">
     <h6><i class="ri-layout-column-line" style="color:var(--cb-teal)"></i> Show / Hide Columns</h6>
     <div class="toggle-chips">
+        <span class="toggle-chip active" data-colkey="position"><i class="ri-trophy-line"></i> Position</span>
         <span class="toggle-chip active" data-colkey="scores"><i class="ri-bar-chart-line"></i> Subject Scores</span>
         <span class="toggle-chip active" data-colkey="summary"><i class="ri-pie-chart-line"></i> Summary</span>
         <span class="toggle-chip active" data-colkey="teacher"><i class="ri-chat-3-line"></i> Teacher's Comment</span>
@@ -529,13 +701,40 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         <span class="toggle-chip active" data-colkey="absence"><i class="ri-calendar-close-line"></i> Absences</span>
     </div>
     <p class="mt-2 mb-0" style="font-size:11px;color:var(--cb-muted);">
-        <i class="ri-information-line me-1"></i> Click any comment field to open the rich text editor with past comment history.
+        <i class="ri-information-line me-1"></i>
+        Click any comment field to open the rich editor with templates &amp; past history.
+        <span class="ms-3"><i class="ri-magic-line me-1" style="color:var(--cb-teal);"></i>Use the <strong>✦ Templates</strong> button inside comments for quick-fill suggestions.</span>
     </p>
 </div>
 
 @if ($students->isNotEmpty())
 
-@php $cbAnalyticsJson = json_encode($studentAnalytics, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); @endphp
+@php
+    /* ── Compute per-student positions based on cum_percentage ── */
+    $rankedByCum  = collect($studentAnalytics)->sortByDesc('cum_percentage')->values();
+    $positionMap  = [];
+    $prevPct      = null;
+    $prevPos      = 0;
+    $counter      = 0;
+    foreach ($rankedByCum as $an) {
+        $counter++;
+        $sid = array_search($an, $studentAnalytics);
+        // find the sid properly
+        foreach ($studentAnalytics as $s => $a) {
+            if ($a === $an) { $sid = $s; break; }
+        }
+        if ($prevPct !== null && $an['cum_percentage'] == $prevPct) {
+            $positionMap[$sid] = $prevPos; // tie
+        } else {
+            $positionMap[$sid] = $counter;
+            $prevPos  = $counter;
+        }
+        $prevPct = $an['cum_percentage'];
+    }
+
+    $cbAnalyticsJson = json_encode($studentAnalytics, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+    $positionMapJson = json_encode($positionMap,       JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP);
+@endphp
 
 <div id="cbPopupBackdrop"></div>
 <div id="cbGradePopup">
@@ -546,6 +745,30 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     <div class="gpop-body" id="gpopBody"></div>
 </div>
 
+{{-- ── Template Picker (shared, repositioned by JS) ── --}}
+<div id="tplBackdrop"></div>
+<div id="tplPicker" class="tpl-picker">
+    <div class="tpl-hdr">
+        <span><i class="ri-magic-line me-1"></i>Comment Templates</span>
+        <button class="tpl-close" id="tplCloseBtn">&times;</button>
+    </div>
+    <div class="tpl-search-wrap" style="position:relative;">
+        <i class="ri-search-line tpl-search-icon"></i>
+        <input type="text" class="tpl-search" id="tplSearchInput" placeholder="Search templates…">
+    </div>
+    <div class="tpl-cats" id="tplCats">
+        <button class="tpl-cat-btn active" data-cat="all">All</button>
+        <button class="tpl-cat-btn" data-cat="excellent">Excellent</button>
+        <button class="tpl-cat-btn" data-cat="good">Good</button>
+        <button class="tpl-cat-btn" data-cat="average">Average</button>
+        <button class="tpl-cat-btn" data-cat="improvement">Needs Work</button>
+        <button class="tpl-cat-btn" data-cat="conduct">Conduct</button>
+        <button class="tpl-cat-btn" data-cat="counselor">Counselor</button>
+        <button class="tpl-cat-btn" data-cat="activities">Activities</button>
+    </div>
+    <div class="tpl-list" id="tplList"></div>
+</div>
+
 <div class="cb-card">
     <div class="cb-card-header">
         <h5 style="margin:0;font-size:15px;font-weight:700;color:var(--cb-navy);">
@@ -553,9 +776,11 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             Student Performance &amp; Comments
             <span class="badge ms-2" style="background:var(--cb-teal);color:#fff;font-size:11px;border-radius:20px;padding:3px 10px;">{{ $students->count() }} Students</span>
         </h5>
-        <div class="cb-search" style="max-width:260px;">
-            <i class="ri-search-line"></i>
-            <input type="text" id="searchInput" placeholder="Search students…">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+            <div class="cb-search" style="max-width:240px;">
+                <i class="ri-search-line"></i>
+                <input type="text" id="searchInput" placeholder="Search students…">
+            </div>
         </div>
     </div>
 
@@ -571,12 +796,14 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             <input type="hidden" class="canonical-absence"    id="c_absence_{{ $student->id }}"    name="no_of_times_school_absent[{{ $student->id }}]"  value="{{ $profile ? $profile->no_of_times_school_absent : '' }}">
         @endforeach
 
+        {{-- ── DESKTOP TABLE ── --}}
         <div class="desktop-only cb-table-scroll">
             <table class="cb-table">
                 <thead>
                     <tr>
                         <th style="width:34px;">#</th>
                         <th class="col-name-hdr" style="min-width:200px;">Student</th>
+                        <th class="cbcol-position" style="min-width:70px;">Position</th>
                         @foreach ($subjects as $subject)
                             <th class="cbcol-scores" style="min-width:86px;">{{ $subject->subject }}</th>
                         @endforeach
@@ -590,14 +817,17 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                 <tbody>
                     @foreach ($students as $index => $student)
                         @php
-                            $sid      = $student->id;
-                            $initials = strtoupper(substr($student->fname ?? '', 0, 1) . substr($student->lastname ?? '', 0, 1)) ?: 'ST';
-                            $hasPic   = !empty($student->picture) && $student->picture !== 'unnamed.jpg';
-                            $imgUrl   = $hasPic ? asset('storage/student_avatars/' . basename($student->picture)) : null;
-                            $fullName = trim(($student->lastname ?? '') . ' ' . ($student->fname ?? '') . ' ' . ($student->othername ?? ''));
-                            $profile  = $personalityProfiles->where('studentid', $sid)->first();
-                            $an       = $studentAnalytics[$sid] ?? [];
+                            $sid        = $student->id;
+                            $initials   = strtoupper(substr($student->fname ?? '', 0, 1) . substr($student->lastname ?? '', 0, 1)) ?: 'ST';
+                            $hasPic     = !empty($student->picture) && $student->picture !== 'unnamed.jpg';
+                            $imgUrl     = $hasPic ? asset('storage/student_avatars/' . basename($student->picture)) : null;
+                            $fullName   = trim(($student->lastname ?? '') . ' ' . ($student->fname ?? '') . ' ' . ($student->othername ?? ''));
+                            $profile    = $personalityProfiles->where('studentid', $sid)->first();
+                            $an         = $studentAnalytics[$sid] ?? [];
                             $hasComment = $profile && !empty(trim($profile->classteachercomment ?? ''));
+                            $pos        = $positionMap[$sid] ?? 0;
+                            $posClass   = $pos === 1 ? 'pos-1' : ($pos === 2 ? 'pos-2' : ($pos === 3 ? 'pos-3' : 'pos-other'));
+                            $posIcon    = $pos === 1 ? '🥇' : ($pos === 2 ? '🥈' : ($pos === 3 ? '🥉' : $pos));
                         @endphp
                         <tr class="cb-student-row {{ $hasComment ? 'row-has-comment' : 'row-no-comment' }}"
                             data-student-id="{{ $sid }}"
@@ -605,6 +835,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                             data-student-adm="{{ $student->admissionNo }}"
                             data-student-img="{{ $imgUrl }}"
                             data-student-analytics='@json($an)'
+                            data-student-pos="{{ $pos }}"
                             data-searchkey="{{ strtolower($fullName . ' ' . $student->admissionNo) }}">
 
                             <td>{{ $index + 1 }}</td>
@@ -636,10 +867,19 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                 </div>
                             </td>
 
+                            {{-- ── Position cell ── --}}
+                            <td class="cbcol-position">
+                                <div style="display:flex;justify-content:center;">
+                                    <div class="pos-badge {{ $posClass }}" data-tooltip="{{ $pos }}{{ $pos === 1 ? 'st' : ($pos === 2 ? 'nd' : ($pos === 3 ? 'rd' : 'th')) }} position (Cum)">
+                                        {{ $posIcon }}
+                                    </div>
+                                </div>
+                            </td>
+
                             @foreach ($subjects as $subject)
                                 @php
                                     $tScore = $termScoreMap[$sid][$subject->subject] ?? 0;
-                                    $cScore = $cumScoreMap[$sid][$subject->subject] ?? 0;
+                                    $cScore = $cumScoreMap[$sid][$subject->subject]  ?? 0;
                                     $tGrade = $cGrade = '-';
                                     if ($isSenior) {
                                         if ($tScore >= 75) $tGrade='A1'; elseif ($tScore >= 70) $tGrade='B2'; elseif ($tScore >= 65) $tGrade='B3'; elseif ($tScore >= 60) $tGrade='C4'; elseif ($tScore >= 55) $tGrade='C5'; elseif ($tScore >= 50) $tGrade='C6'; elseif ($tScore >= 45) $tGrade='D7'; elseif ($tScore >= 40) $tGrade='E8'; elseif ($tScore > 0) $tGrade='F9';
@@ -714,16 +954,27 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                 </div>
                             </td>
 
-                            <td class="cbcol-teacher"><input type="text" class="cb-input desk-teacher comment-input {{ $hasComment ? 'has-value' : '' }}" data-sid="{{ $sid }}" data-field="teacher" value="{{ $profile ? $profile->classteachercomment : '' }}" placeholder="Click to add comment…" autocomplete="off"></td>
-                            <td class="cbcol-guidance"><input type="text" class="cb-input desk-guidance comment-input" data-sid="{{ $sid }}" data-field="guidance" value="{{ $profile ? $profile->guidancescomment : '' }}" placeholder="Click to add comment…" autocomplete="off"></td>
-                            <td class="cbcol-activities"><input type="text" class="cb-input desk-activities comment-input" data-sid="{{ $sid }}" data-field="activities" value="{{ $profile ? $profile->remark_on_other_activities : '' }}" placeholder="Click to add comment…" autocomplete="off"></td>
-                            <td class="cbcol-absence"><input type="number" class="cb-input absence-input desk-absence" data-sid="{{ $sid }}" data-field="absence" value="{{ $profile ? $profile->no_of_times_school_absent : '' }}" min="0" placeholder="0" autocomplete="off"></td>
+                            <td class="cbcol-teacher">
+                                <div class="comment-field-group" style="margin:0;position:relative;">
+                                    <input type="text" class="cb-input desk-teacher comment-input {{ $hasComment ? 'has-value' : '' }}" data-sid="{{ $sid }}" data-field="teacher" value="{{ $profile ? $profile->classteachercomment : '' }}" placeholder="Click to add comment…" autocomplete="off">
+                                </div>
+                            </td>
+                            <td class="cbcol-guidance">
+                                <input type="text" class="cb-input desk-guidance comment-input" data-sid="{{ $sid }}" data-field="guidance" value="{{ $profile ? $profile->guidancescomment : '' }}" placeholder="Click to add comment…" autocomplete="off">
+                            </td>
+                            <td class="cbcol-activities">
+                                <input type="text" class="cb-input desk-activities comment-input" data-sid="{{ $sid }}" data-field="activities" value="{{ $profile ? $profile->remark_on_other_activities : '' }}" placeholder="Click to add comment…" autocomplete="off">
+                            </td>
+                            <td class="cbcol-absence">
+                                <input type="number" class="cb-input absence-input desk-absence" data-sid="{{ $sid }}" data-field="absence" value="{{ $profile ? $profile->no_of_times_school_absent : '' }}" min="0" placeholder="0" autocomplete="off">
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
         </div>
 
+        {{-- ── MOBILE CARDS ── --}}
         <div class="mobile-only" style="padding:16px;">
             @foreach ($students as $index => $student)
                 @php
@@ -735,11 +986,14 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                     $profile    = $personalityProfiles->where('studentid', $sid)->first();
                     $an         = $studentAnalytics[$sid] ?? [];
                     $hasComment = $profile && !empty(trim($profile->classteachercomment ?? ''));
+                    $pos        = $positionMap[$sid] ?? 0;
+                    $posClass   = $pos === 1 ? 'pos-1' : ($pos === 2 ? 'pos-2' : ($pos === 3 ? 'pos-3' : 'pos-other'));
                 @endphp
                 <div class="cb-student-card cb-student-row {{ $hasComment ? 'card-has-comment' : 'card-no-comment' }}"
                      data-student-id="{{ $sid }}" data-student-name="{{ $fullName }}"
                      data-student-adm="{{ $student->admissionNo }}" data-student-img="{{ $imgUrl }}"
                      data-student-analytics='@json($an)'
+                     data-student-pos="{{ $pos }}"
                      data-searchkey="{{ strtolower($fullName . ' ' . $student->admissionNo) }}"
                      style="animation-delay:{{ $index * 0.04 }}s">
                     <div class="card-top">
@@ -766,6 +1020,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                             <span class="comment-status-dot {{ $hasComment ? 'dot-saved' : 'dot-unsaved' }}" id="status-m-{{ $sid }}">{{ $hasComment ? '✓ Commented' : '○ No comment' }}</span>
                             <span class="autosave-chip ac-idle" id="autosave-m-{{ $sid }}"></span>
                         </div>
+                        <div class="pos-badge {{ $posClass }}" style="margin-left:auto;">{{ $pos }}</div>
                     </div>
                     <div class="card-body-pad">
                         <div class="performance-strip">
@@ -806,7 +1061,10 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                 <span class="sc-pill-done"><i class="ri-checkbox-circle-line"></i><span id="counterDoneNum">0</span> commented</span>
                 <span class="sc-pill-pending"><i class="ri-time-line"></i><span id="counterPendingNum">0</span> pending</span>
             </div>
-            <div style="display:flex;align-items:center;gap:14px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+                <button type="button" class="btn-print" onclick="triggerPrint()" title="Print Broadsheet">
+                    <i class="ri-printer-line"></i> Print
+                </button>
                 <span id="savingText" style="display:none;color:rgba(255,255,255,.75);font-size:13px;align-items:center;gap:6px;"><i class="spin ri-loader-4-line"></i> Saving…</span>
                 <button type="button" id="saveBtn" class="btn-save-all"><i class="ri-save-3-line"></i> Save All Changes</button>
             </div>
@@ -824,6 +1082,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
 </div></div></div>
 
+{{-- ── Image Zoom Modal ── --}}
 <div class="modal fade" id="cbImgZoomModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content" style="background:transparent;border:none;box-shadow:none;">
@@ -837,6 +1096,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     </div>
 </div>
 
+{{-- ── Comment Modal ── --}}
 <div class="modal fade" id="cbCommentModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content" style="border-radius:var(--cb-radius);overflow:hidden;">
@@ -851,6 +1111,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" style="padding:24px;">
+                {{-- Performance strip --}}
                 <div class="performance-strip" style="background:linear-gradient(135deg,var(--cb-navy),#1e5f74);border-radius:12px;padding:16px 20px;color:#fff;margin-bottom:24px;">
                     <div style="font-size:12px;font-weight:600;opacity:.9;margin-bottom:12px;"><i class="ri-bar-chart-line me-1"></i>Performance Summary</div>
                     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:15px;">
@@ -872,16 +1133,28 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                         </div>
                     </div>
                     <div class="mt-2 pt-1" style="border-top:1px solid rgba(255,255,255,.15);">
-                        <div class="small text-center opacity-75">Obtainable: <span id="modalObtainable">0</span> | Subjects: <span id="modalSubjects">0</span></div>
+                        <div class="small text-center opacity-75">Obtainable: <span id="modalObtainable">0</span> | Subjects: <span id="modalSubjects">0</span> | Position: <span id="modalPosition">—</span></div>
                     </div>
                 </div>
-                <div class="d-flex justify-content-between align-items-center mb-3">
+
+                {{-- Comment type label + template button + past comments button --}}
+                <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
                     <div>
                         <h6 class="mb-0" id="modalCommentType" style="font-weight:700;color:var(--cb-navy);"><i class="ri-chat-3-line me-1" style="color:var(--cb-teal);"></i> Teacher's Comment</h6>
                         <small class="text-muted" id="modalCommentHint">Click on any past comment to load it below</small>
                     </div>
-                    <button type="button" class="btn btn-sm btn-outline-primary" id="btnLoadPastComments" style="border-radius:20px;padding:6px 16px;"><i class="ri-history-line me-1"></i> View Past Comments <span id="pastCommentCount" class="badge bg-secondary ms-1" style="border-radius:20px;">0</span></button>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <button type="button" class="btn btn-sm" id="btnOpenTemplates"
+                                style="border-radius:20px;padding:6px 16px;background:var(--cb-teal);color:#fff;border:none;">
+                            <i class="ri-magic-line me-1"></i> ✦ Templates
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-primary" id="btnLoadPastComments" style="border-radius:20px;padding:6px 16px;">
+                            <i class="ri-history-line me-1"></i> Past Comments <span id="pastCommentCount" class="badge bg-secondary ms-1" style="border-radius:20px;">0</span>
+                        </button>
+                    </div>
                 </div>
+
+                {{-- Formatting toolbar --}}
                 <div class="mb-2" style="background:#f8fafc;border-radius:10px;padding:8px;border:1px solid var(--cb-border);">
                     <button type="button" class="btn btn-sm btn-light me-1" onclick="formatCommentText('bold')"   style="border-radius:6px;" title="Bold"><i class="ri-bold"></i></button>
                     <button type="button" class="btn btn-sm btn-light me-1" onclick="formatCommentText('italic')" style="border-radius:6px;" title="Italic"><i class="ri-italic"></i></button>
@@ -889,7 +1162,10 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                     <button type="button" class="btn btn-sm btn-light me-1" onclick="formatCommentText('number')" style="border-radius:6px;" title="Number List"><i class="ri-list-ordered"></i></button>
                     <button type="button" class="btn btn-sm btn-light"      onclick="formatCommentText('clear')"  style="border-radius:6px;" title="Clear"><i class="ri-delete-back-line"></i></button>
                 </div>
-                <textarea id="modalTextarea" class="form-control" rows="6" style="resize:vertical;font-family:inherit;font-size:14px;line-height:1.6;border-radius:10px;border:1.5px solid var(--cb-border);padding:12px;"></textarea>
+                <textarea id="modalTextarea" class="form-control" rows="6"
+                    style="resize:vertical;font-family:inherit;font-size:14px;line-height:1.6;border-radius:10px;border:1.5px solid var(--cb-border);padding:12px;"></textarea>
+
+                {{-- Past comments panel --}}
                 <div id="pastCommentsPanel" style="display:none;margin-top:20px;">
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <h6 class="small fw-bold mb-0" style="color:var(--cb-navy);"><i class="ri-history-line me-1" style="color:var(--cb-teal);"></i> Past Comments from Previous Terms</h6>
@@ -910,9 +1186,13 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 (function () {
     'use strict';
 
-    var SA       = {!! $cbAnalyticsJson !!};
-    var SAVE_URL = '{{ route("classbroadsheet.updateComments", [$schoolclassid, $sessionid, $termid]) }}';
-    var CSRF     = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+    var SA          = {!! $cbAnalyticsJson !!};
+    var PM          = {!! $positionMapJson !!};
+    var SAVE_URL    = '{{ route("classbroadsheet.updateComments", [$schoolclassid, $sessionid, $termid]) }}';
+    var CSRF        = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '{{ csrf_token() }}';
+    var CLASS_NAME  = '{{ $schoolclass ? $schoolclass->schoolclass . " " . $schoolclass->arm : "" }}';
+    var TERM_NAME   = '{{ $schoolterm }}';
+    var SESSION_NAME= '{{ $schoolsession }}';
 
     var FIELD_MAP = { teacher:'c_teacher_', guidance:'c_guidance_', activities:'c_activities_', absence:'c_absence_' };
     var debounceTimers = {};
@@ -922,6 +1202,12 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     var commentModal      = null;
     var pastCommentRegistry = [];
 
+    /* ─── Print ─── */
+    window.triggerPrint = function() {
+        window.print();
+    };
+
+    /* ─── Utilities ─── */
     function esc(str) { var d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
 
     function toast(msg, type) {
@@ -962,7 +1248,10 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             .catch(function(err){ console.error('Autosave error sid=' + sid, err); setChipState(sid,'ac-err','✗ Error'); });
     }
 
-    function scheduleAutosave(sid) { if (debounceTimers[sid]) clearTimeout(debounceTimers[sid]); debounceTimers[sid] = setTimeout(function(){ autoSaveStudent(sid); }, AUTOSAVE_DELAY); }
+    function scheduleAutosave(sid) {
+        if (debounceTimers[sid]) clearTimeout(debounceTimers[sid]);
+        debounceTimers[sid] = setTimeout(function(){ autoSaveStudent(sid); }, AUTOSAVE_DELAY);
+    }
 
     function onInputChange(e) {
         var inp = e.target, sid = inp.getAttribute('data-sid'), field = inp.getAttribute('data-field');
@@ -984,8 +1273,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     }
 
     function refreshCommentStatus() {
-        var done = 0, pending = 0;
-        var seen = {};
+        var done = 0, pending = 0, seen = {};
         document.querySelectorAll('.cb-student-row').forEach(function(row){
             var sid = row.getAttribute('data-student-id');
             if (!sid || seen[sid]) return;
@@ -998,6 +1286,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         if (pNum) pNum.textContent = pending;
     }
 
+    /* ─── Format helpers ─── */
     window.formatCommentText = function(type) {
         var ta = document.getElementById('modalTextarea'); if (!ta) return;
         var start = ta.selectionStart, end = ta.selectionEnd, text = ta.value, sel = text.substring(start, end);
@@ -1011,6 +1300,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         ta.focus();
     };
 
+    /* ─── Comment Modal ─── */
     function openCommentModal(sid, field, studentName, studentAdm, studentImg, analytics) {
         currentModalSid = sid; currentModalField = field;
         if (!commentModal) commentModal = new bootstrap.Modal(document.getElementById('cbCommentModal'));
@@ -1033,6 +1323,14 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         document.getElementById('modalObtainable').textContent = analytics.total_obtainable || 0;
         document.getElementById('modalSubjects').textContent   = analytics.subject_count    || 0;
 
+        // Show position in modal
+        var posEl = document.getElementById('modalPosition');
+        if (posEl) {
+            var p = PM[sid] || 0;
+            var suffix = p === 1 ? 'st' : p === 2 ? 'nd' : p === 3 ? 'rd' : 'th';
+            posEl.textContent = p ? (p + suffix + ' / ' + Object.keys(PM).length) : '—';
+        }
+
         var colorOf = function(pct){ return pct >= 70 ? '#4ade80' : pct >= 50 ? '#fbbf24' : '#f87171'; };
         document.getElementById('modalTermPct').style.color = colorOf(analytics.term_percentage || 0);
         document.getElementById('modalCumPct').style.color  = colorOf(analytics.cum_percentage  || 0);
@@ -1047,6 +1345,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         commentModal.show();
     }
 
+    /* ─── Past Comments ─── */
     async function loadPastComments() {
         if (!currentModalSid) return;
         var listEl = document.getElementById('pastCommentsList');
@@ -1059,9 +1358,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             if (data.success && data.data && data.data.length > 0) {
                 pastCommentRegistry = data.data.slice();
                 document.getElementById('pastCommentCount').textContent = pastCommentRegistry.length;
-
                 var summaryHtml = '<div class="mb-3" style="background:#f1f5f9;border-radius:10px;padding:12px;"><div class="d-flex justify-content-between align-items-center flex-wrap gap-2"><span class="small fw-bold text-muted"><i class="ri-bar-chart-line"></i> Comment History</span><div class="d-flex gap-2 flex-wrap"><span class="badge" style="background:#0ea5e9;color:white;">Teacher: ' + (data.counts.classteacher||0) + '</span><span class="badge" style="background:#8b5cf6;color:white;">Guidance: ' + (data.counts.guidance||0) + '</span><span class="badge" style="background:#f59e0b;color:white;">Activities: ' + (data.counts.activities||0) + '</span><span class="badge" style="background:#1e293b;">Total: ' + data.counts.total + '</span></div></div></div>';
-
                 var commentsHtml = '<div>';
                 pastCommentRegistry.forEach(function(comment, idx) {
                     var bc='', bi='';
@@ -1069,7 +1366,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                     else if (comment.comment_type==='Guidance')   { bc='#8b5cf6'; bi='ri-mental-health-line'; }
                     else if (comment.comment_type==='Activities') { bc='#f59e0b'; bi='ri-football-line'; }
                     else                                          { bc='#64748b'; bi='ri-chat-3-line'; }
-
                     var staffAvatarHtml = '';
                     if (comment.staff_picture && comment.staff_picture !== 'null' && comment.staff_picture !== '') {
                         staffAvatarHtml = '<img src="' + comment.staff_picture + '" alt="' + esc(comment.staff_name) + '" style="width:32px;height:32px;border-radius:50%;object-fit:cover;">';
@@ -1077,9 +1373,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                         var staffInitials = (comment.staff_name || 'S').split(' ').map(function(n){ return n[0]; }).join('').substring(0,2).toUpperCase();
                         staffAvatarHtml = '<div style="width:32px;height:32px;border-radius:50%;background:' + bc + ';display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;">' + staffInitials + '</div>';
                     }
-
                     var snippet = comment.comment_text.length > 200 ? comment.comment_text.substring(0,200) + '…' : comment.comment_text;
-
                     commentsHtml += '<div class="past-comment-item" style="border-left:4px solid ' + bc + ';background:#fff;padding:16px;margin-bottom:14px;border-radius:12px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.05);" onclick="usePastComment(' + idx + ')">';
                     commentsHtml += '<div class="d-flex justify-content-between align-items-start mb-2"><span class="badge" style="background:' + bc + ';color:white;"><i class="' + bi + ' me-1"></i>' + comment.comment_type + '</span><small class="text-muted"><i class="ri-calendar-line me-1"></i>' + (comment.date||'—') + '</small></div>';
                     commentsHtml += '<div class="d-flex align-items-center gap-2 mb-2"><div style="width:32px;height:32px;border-radius:50%;overflow:hidden;">' + staffAvatarHtml + '</div><div><div class="small fw-semibold">' + esc(comment.staff_name) + '</div><div class="small text-muted">' + esc(comment.session) + ' · ' + esc(comment.term) + '</div></div></div>';
@@ -1120,13 +1414,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         toast(currentModalField.charAt(0).toUpperCase() + currentModalField.slice(1) + ' comment saved!', 'success');
     }
 
-    function attachModalTriggers() {
-        document.querySelectorAll('.comment-input').forEach(function(input){
-            input.removeEventListener('focus', handleInputFocus);
-            input.addEventListener('focus', handleInputFocus);
-        });
-    }
-
     function handleInputFocus(e) {
         var input = e.target, sid = input.getAttribute('data-sid'), field = input.getAttribute('data-field');
         if (!sid || !field) return;
@@ -1139,149 +1426,63 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         openCommentModal(sid, field, studentName, studentAdm, studentImg, analytics);
     }
 
+    /* ─── Grade Popup ─── */
     function closeGradePop() {
-        var gpop     = document.getElementById('cbGradePopup');
-        var backdrop = document.getElementById('cbPopupBackdrop');
+        var gpop = document.getElementById('cbGradePopup'), backdrop = document.getElementById('cbPopupBackdrop');
         if (gpop)     { gpop.classList.remove('is-open'); gpop.removeAttribute('data-active-sid'); }
         if (backdrop) backdrop.style.display = 'none';
     }
 
     function gradeClass(g) { return (g || '-').toLowerCase().replace(/[\s-]/g, ''); }
-
-    function getPctClass(p) {
-        if (p < 40) return 'score-red';
-        if (p < 70) return 'score-amber';
-        return 'score-green';
-    }
+    function getPctClass(p) { return p < 40 ? 'score-red' : p < 70 ? 'score-amber' : 'score-green'; }
 
     function openGradePop(sid, name, triggerEl) {
-        var an = SA[sid];
-        if (!an) { toast('No data found for this student.', 'error'); return; }
-
-        var gpop      = document.getElementById('cbGradePopup');
-        var gpopBody  = document.getElementById('gpopBody');
-        var gpopTitle = document.getElementById('gpopTitle');
+        var an = SA[sid]; if (!an) { toast('No data found for this student.', 'error'); return; }
+        var gpop = document.getElementById('cbGradePopup'), gpopBody = document.getElementById('gpopBody'), gpopTitle = document.getElementById('gpopTitle');
         if (!gpop) return;
-
         gpopTitle.innerHTML = '<i class="ri-bar-chart-line me-1"></i>' + esc(name) + "'s Grades";
-
         var grades = an.grades || [];
         var rows = '';
         if (grades.length) {
             for (var i = 0; i < grades.length; i++) {
-                var g    = grades[i];
-                var tgl  = gradeClass(g.term_grade);
-                var cgl  = gradeClass(g.cum_grade);
-                var tC   = (g.term_score > 0 && g.term_score < 50) ? 'score-red' : (g.term_score >= 70 ? 'score-green' : 'score-amber');
-                var cC   = (g.cum_score  > 0 && g.cum_score  < 50) ? 'score-red' : (g.cum_score  >= 70 ? 'score-green' : 'score-amber');
+                var g = grades[i];
+                var tgl = gradeClass(g.term_grade), cgl = gradeClass(g.cum_grade);
+                var tC = (g.term_score > 0 && g.term_score < 50) ? 'score-red' : (g.term_score >= 70 ? 'score-green' : 'score-amber');
+                var cC = (g.cum_score  > 0 && g.cum_score  < 50) ? 'score-red' : (g.cum_score  >= 70 ? 'score-green' : 'score-amber');
                 if (!g.term_score || g.term_score <= 0) tC = '';
                 if (!g.cum_score  || g.cum_score  <= 0) cC = '';
-
                 var tsDisplay = (g.term_score && g.term_score > 0) ? parseFloat(g.term_score).toFixed(1) : '—';
                 var csDisplay = (g.cum_score  && g.cum_score  > 0) ? parseFloat(g.cum_score).toFixed(1)  : '—';
-
-                var termGradeBadge = (g.term_grade && g.term_grade !== '-')
-                    ? '<span class="grade-badge g-' + tgl + '">' + esc(g.term_grade) + '</span>'
-                    : '<span style="color:#94a3b8;font-size:11px;">—</span>';
-                var cumGradeBadge  = (g.cum_grade  && g.cum_grade  !== '-')
-                    ? '<span class="grade-badge g-' + cgl + '">' + esc(g.cum_grade)  + '</span>'
-                    : '<span style="color:#94a3b8;font-size:11px;">—</span>';
-
-                rows += '<tr>' +
-                    '<td>' + esc(g.subject) + '</td>' +
-                    '<td>' +
-                        '<div class="score-pair">' +
-                            '<div class="score-cell term"><span class="score-lbl" style="color:#0891b2;">T</span><span class="' + tC + '">' + tsDisplay + '</span></div>' +
-                            '<div class="score-cell cum"><span class="score-lbl" style="color:var(--cb-navy);">C</span><span class="' + cC + '">' + csDisplay + '</span></div>' +
-                        '</div>' +
-                    '</td>' +
-                    '<td>' +
-                        '<div style="display:flex;flex-direction:column;align-items:center;gap:3px;">' +
-                            termGradeBadge + cumGradeBadge +
-                        '</div>' +
-                    '</td>' +
-                    '</tr>';
+                var termGradeBadge = (g.term_grade && g.term_grade !== '-') ? '<span class="grade-badge g-' + tgl + '">' + esc(g.term_grade) + '</span>' : '<span style="color:#94a3b8;font-size:11px;">—</span>';
+                var cumGradeBadge  = (g.cum_grade  && g.cum_grade  !== '-') ? '<span class="grade-badge g-' + cgl + '">' + esc(g.cum_grade)  + '</span>' : '<span style="color:#94a3b8;font-size:11px;">—</span>';
+                rows += '<tr><td>' + esc(g.subject) + '</td><td><div class="score-pair"><div class="score-cell term"><span class="score-lbl" style="color:#0891b2;">T</span><span class="' + tC + '">' + tsDisplay + '</span></div><div class="score-cell cum"><span class="score-lbl" style="color:var(--cb-navy);">C</span><span class="' + cC + '">' + csDisplay + '</span></div></div></td><td><div style="display:flex;flex-direction:column;align-items:center;gap:3px;">' + termGradeBadge + cumGradeBadge + '</div></td></tr>';
             }
         } else {
             rows = '<tr><td colspan="3" class="text-center text-muted py-3">No subject records available</td></tr>';
         }
-
-        var tPct = parseFloat(an.term_percentage || 0);
-        var cPct = parseFloat(an.cum_percentage  || 0);
-
+        var tPct = parseFloat(an.term_percentage || 0), cPct = parseFloat(an.cum_percentage || 0);
+        var pos = PM[sid] || 0;
+        var suffix = pos === 1 ? 'st' : pos === 2 ? 'nd' : pos === 3 ? 'rd' : 'th';
         gpopBody.innerHTML =
-            /* legend */
-            '<div class="gpop-legend">' +
-                '<span style="font-size:10px;font-weight:700;color:var(--cb-muted);">Legend:</span>' +
-                '<span class="gpop-legend-item"><span class="gpop-legend-dot t"></span>Term score / grade</span>' +
-                '<span class="gpop-legend-item"><span class="gpop-legend-dot c"></span>Cumulative score / grade</span>' +
-            '</div>' +
+            '<div class="gpop-legend"><span style="font-size:10px;font-weight:700;color:var(--cb-muted);">Legend:</span><span class="gpop-legend-item"><span class="gpop-legend-dot t"></span>Term score / grade</span><span class="gpop-legend-item"><span class="gpop-legend-dot c"></span>Cumulative score / grade</span><div style="margin-left:auto;"><span class="badge" style="background:var(--cb-amber);color:#92400e;font-size:10px;">Position: ' + (pos ? pos + suffix : '—') + '</span></div></div>' +
+            '<div class="gpop-scroll"><table class="gpop-table"><thead><tr><th style="text-align:left;padding-left:12px;">Subject</th><th class="col-score">Score<br><small style="opacity:.65;font-weight:400;font-size:9px;text-transform:none;letter-spacing:0;">Term / Cum</small></th><th class="col-grade">Grade<br><small style="opacity:.65;font-weight:400;font-size:9px;text-transform:none;letter-spacing:0;">Term / Cum</small></th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+            '<div class="gpop-summary"><div class="gpop-sum-item"><div class="gpop-sum-lbl">Obtained (Term)</div><div class="gpop-sum-val">' + parseFloat(an.term_total || 0).toFixed(1) + '</div></div><div class="gpop-sum-item"><div class="gpop-sum-lbl">Obtained (Cum)</div><div class="gpop-sum-val">' + parseFloat(an.cum_total || 0).toFixed(1) + '</div></div><div class="gpop-sum-item"><div class="gpop-sum-lbl">Obtainable</div><div class="gpop-sum-val">' + (an.total_obtainable || 0) + '</div></div><div class="gpop-sum-item"><div class="gpop-sum-lbl">% Obtained (Term)</div><div class="gpop-sum-val ' + getPctClass(tPct) + '">' + tPct.toFixed(1) + '%</div></div><div class="gpop-sum-item"><div class="gpop-sum-lbl">% Obtained (Cum)</div><div class="gpop-sum-val ' + getPctClass(cPct) + '">' + cPct.toFixed(1) + '%</div></div><div class="gpop-sum-item"><div class="gpop-sum-lbl">Class Position</div><div class="gpop-sum-val ' + (pos <= 3 ? 'score-green' : '') + '">' + (pos ? pos + suffix : '—') + '</div></div></div>';
 
-            /* scrollable table */
-            '<div class="gpop-scroll">' +
-                '<table class="gpop-table">' +
-                    '<thead><tr>' +
-                        '<th style="text-align:left;padding-left:12px;">Subject</th>' +
-                        '<th class="col-score">Score<br><small style="opacity:.65;font-weight:400;font-size:9px;text-transform:none;letter-spacing:0;">Term / Cum</small></th>' +
-                        '<th class="col-grade">Grade<br><small style="opacity:.65;font-weight:400;font-size:9px;text-transform:none;letter-spacing:0;">Term / Cum</small></th>' +
-                    '</tr></thead>' +
-                    '<tbody>' + rows + '</tbody>' +
-                '</table>' +
-            '</div>' +
-
-            /* summary cards */
-            '<div class="gpop-summary">' +
-                '<div class="gpop-sum-item">' +
-                    '<div class="gpop-sum-lbl">Obtained (Term)</div>' +
-                    '<div class="gpop-sum-val">' + parseFloat(an.term_total || 0).toFixed(1) + '</div>' +
-                '</div>' +
-                '<div class="gpop-sum-item">' +
-                    '<div class="gpop-sum-lbl">Obtained (Cum)</div>' +
-                    '<div class="gpop-sum-val">' + parseFloat(an.cum_total || 0).toFixed(1) + '</div>' +
-                '</div>' +
-                '<div class="gpop-sum-item">' +
-                    '<div class="gpop-sum-lbl">Obtainable</div>' +
-                    '<div class="gpop-sum-val">' + (an.total_obtainable || 0) + '</div>' +
-                '</div>' +
-                '<div class="gpop-sum-item">' +
-                    '<div class="gpop-sum-lbl">% Obtained (Term)</div>' +
-                    '<div class="gpop-sum-val ' + getPctClass(tPct) + '">' + tPct.toFixed(1) + '%</div>' +
-                '</div>' +
-                '<div class="gpop-sum-item">' +
-                    '<div class="gpop-sum-lbl">% Obtained (Cum)</div>' +
-                    '<div class="gpop-sum-val ' + getPctClass(cPct) + '">' + cPct.toFixed(1) + '%</div>' +
-                '</div>' +
-                '<div class="gpop-sum-item">' +
-                    '<div class="gpop-sum-lbl">Subjects</div>' +
-                    '<div class="gpop-sum-val">' + (an.subject_count || 0) + '</div>' +
-                '</div>' +
-            '</div>';
-
-        /* position popup */
         var rect = triggerEl.getBoundingClientRect();
-        var pw = 460;
-        var ph = Math.min(560, window.innerHeight - 40);
-        var vw = window.innerWidth;
-        var vh = window.innerHeight;
-
-        var top  = rect.bottom + 8;
-        var left = rect.left + (rect.width / 2) - (pw / 2);
-
+        var pw = 460, ph = Math.min(560, window.innerHeight - 40);
+        var vw = window.innerWidth, vh = window.innerHeight;
+        var top = rect.bottom + 8, left = rect.left + (rect.width / 2) - (pw / 2);
         if (top + ph > vh - 8) top  = Math.max(8, rect.top - ph - 8);
         if (left < 8)          left = 8;
         if (left + pw > vw - 8) left = vw - pw - 8;
-
-        gpop.style.width    = pw + 'px';
-        gpop.style.top      = top  + 'px';
-        gpop.style.left     = left + 'px';
-        gpop.style.maxHeight = ph  + 'px';
+        gpop.style.width = pw + 'px'; gpop.style.top = top + 'px'; gpop.style.left = left + 'px'; gpop.style.maxHeight = ph + 'px';
         gpop.dataset.activeSid = sid;
         gpop.classList.add('is-open');
-
         var backdrop = document.getElementById('cbPopupBackdrop');
         if (backdrop) backdrop.style.display = 'block';
     }
 
+    /* ─── Save All ─── */
     function doSaveAll() {
         var fd = new FormData(document.getElementById('commentsForm'));
         fd.append('_token', CSRF); fd.append('_method', 'PATCH');
@@ -1297,12 +1498,133 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             .finally(function(){ saveBtn.disabled = false; saveBtn.innerHTML = origHtml; if (savingText) savingText.style.display = 'none'; });
     }
 
+    /* ─────────────────────────────────────────────────
+       COMMENT TEMPLATES
+    ──────────────────────────────────────────────── */
+    var TEMPLATES = [
+        // Excellent
+        { cat:'excellent', label:'Outstanding Performer', text:'{{name}} has demonstrated exceptional academic performance this term, consistently achieving outstanding results across all subjects. A truly gifted student whose dedication and hard work serve as an inspiration to peers.' },
+        { cat:'excellent', label:'Top of Class', text:'{{name}} has continued to excel academically, maintaining a top position in the class. With excellent study habits and a keen intellect, this student is well on track for great achievements ahead.' },
+        { cat:'excellent', label:'Brilliant & Consistent', text:'A brilliant and consistent performer. {{name}} approaches every task with enthusiasm, precision, and maturity beyond their years. Keep up this outstanding work!' },
+        { cat:'excellent', label:'Exceptional Effort', text:'{{name}} has shown exceptional effort, commitment, and diligence throughout this term. The results obtained are a true reflection of the hard work invested. Well done!' },
+        // Good
+        { cat:'good', label:'Good Performance', text:'{{name}} has performed well this term, showing a solid grasp of the subjects studied. With continued focus and dedication, even higher results are achievable next term.' },
+        { cat:'good', label:'Commendable Work', text:'{{name}} has worked commendably this term and shown steady improvement. A little more attention to weaker subjects will lead to excellent outcomes.' },
+        { cat:'good', label:'Above Average', text:'{{name}} consistently performs above average and demonstrates a good understanding of course material. We encourage continued seriousness and participation in class activities.' },
+        { cat:'good', label:'Promising Student', text:'A promising student who shows great potential. {{name}} should maintain current momentum and seek deeper understanding in all subjects for even better performance.' },
+        // Average
+        { cat:'average', label:'Satisfactory Performance', text:'{{name}} has shown satisfactory performance this term. There is room for improvement, and we encourage more consistent effort and study habits going forward.' },
+        { cat:'average', label:'Moderate Progress', text:'{{name}} made moderate progress this term. With increased dedication, regular revision, and active participation in class, better results can be achieved in subsequent terms.' },
+        { cat:'average', label:'Fair Results', text:'The results obtained by {{name}} this term are fair. We urge this student to be more proactive, seek help where needed, and put in extra effort in areas of weakness.' },
+        // Needs Improvement
+        { cat:'improvement', label:'Needs Improvement', text:'{{name}} needs to put in significantly more effort to achieve their potential. We encourage this student to revise regularly, pay close attention in class, and seek assistance when faced with difficulties.' },
+        { cat:'improvement', label:'Poor Concentration', text:'{{name}} has shown poor concentration and inconsistency in performance this term. We urge a more serious and disciplined approach to studies in the next term.' },
+        { cat:'improvement', label:'At Risk – Urgent Attention', text:'{{name}}\'s academic performance this term is a cause for concern. Immediate improvement in study habits, attendance, and class engagement is strongly advised. Parents/guardians are encouraged to provide additional support at home.' },
+        { cat:'improvement', label:'Work Harder', text:'{{name}} is capable of much better performance. This term\'s results do not reflect the full potential of this student. More dedication, focus, and effort are needed urgently.' },
+        // Conduct
+        { cat:'conduct', label:'Excellent Conduct', text:'{{name}} has exhibited exemplary conduct and character throughout this term. A respectful, disciplined, and well-mannered student who is a positive influence in the classroom.' },
+        { cat:'conduct', label:'Good Behaviour', text:'{{name}} maintains good behaviour and adheres to school rules. A cooperative and respectful member of the class who interacts well with peers and teachers.' },
+        { cat:'conduct', label:'Conduct Could Improve', text:'{{name}} is advised to show greater respect for school rules and fellow students. Improvements in behaviour and attitude toward learning will greatly benefit this student\'s overall development.' },
+        { cat:'conduct', label:'Disruptive Behaviour', text:'{{name}} has been disruptive in class on several occasions this term. A more disciplined and focused approach is required. Parents/guardians are urged to reinforce the importance of good conduct at home.' },
+        // Counselor
+        { cat:'counselor', label:'Positive Wellbeing', text:'{{name}} demonstrates a healthy sense of self-esteem and interacts positively with peers and teachers. Continue to nurture this positive outlook and engage in open communication whenever challenges arise.' },
+        { cat:'counselor', label:'Social & Emotional Growth', text:'{{name}} has shown commendable social and emotional growth this term. This student handles challenges maturely and shows empathy toward others. Encourage continued self-development.' },
+        { cat:'counselor', label:'Needs Counseling Support', text:'{{name}} is encouraged to make use of available counseling services to address social and emotional challenges identified this term. Open communication and a supportive environment will help this student thrive.' },
+        { cat:'counselor', label:'Peer Relations Concern', text:'{{name}} has experienced some difficulties in peer relationships this term. Counseling sessions are recommended to build stronger social skills and conflict resolution strategies.' },
+        // Activities
+        { cat:'activities', label:'Active Participation', text:'{{name}} actively participates in school extracurricular activities and has demonstrated excellent sportsmanship and teamwork. A well-rounded student who contributes positively to the school community.' },
+        { cat:'activities', label:'Sports Excellence', text:'{{name}} has excelled in sporting activities this term, demonstrating physical fitness, team spirit, and competitive spirit. We encourage continued participation and development in sports.' },
+        { cat:'activities', label:'Cultural Involvement', text:'{{name}} has shown keen interest and talent in cultural and creative activities. This student\'s participation in school events has been commendable and enriching for the entire school community.' },
+        { cat:'activities', label:'Low Participation', text:'{{name}} is encouraged to be more actively involved in extracurricular activities. Participation in sports, cultural events, and clubs will contribute greatly to overall personal development.' },
+    ];
+
+    var tplActiveCategory = 'all';
+    var tplCurrentSid = null, tplCurrentField = null;
+
+    function renderTemplates(filter, catFilter) {
+        var list = document.getElementById('tplList');
+        if (!list) return;
+        var filt = (filter || '').toLowerCase().trim();
+        var cat  = catFilter || tplActiveCategory;
+        var shown = TEMPLATES.filter(function(t){
+            var matchCat  = cat === 'all' || t.cat === cat;
+            var matchText = !filt || t.label.toLowerCase().includes(filt) || t.text.toLowerCase().includes(filt);
+            return matchCat && matchText;
+        });
+        if (!shown.length) {
+            list.innerHTML = '<div class="tpl-no-results"><i class="ri-inbox-line" style="font-size:36px;color:#cbd5e1;display:block;margin-bottom:8px;"></i>No matching templates</div>';
+            return;
+        }
+        list.innerHTML = shown.map(function(t, i) {
+            var orig = t;
+            var idx  = TEMPLATES.indexOf(orig);
+            return '<div class="tpl-item" onclick="applyTemplate(' + idx + ')">' +
+                '<span class="tpl-item-label">' + esc(t.label) + '</span>' +
+                '<span class="tpl-item-text">' + esc(t.text.substring(0,90) + (t.text.length > 90 ? '…' : '')) + '</span>' +
+            '</div>';
+        }).join('');
+    }
+
+    window.applyTemplate = function(idx) {
+        var tpl = TEMPLATES[idx]; if (!tpl) return;
+        var ta = document.getElementById('modalTextarea'); if (!ta) return;
+        var sName = '';
+        if (currentModalSid) {
+            var row = document.querySelector('[data-student-id="' + currentModalSid + '"]');
+            if (row) sName = (row.getAttribute('data-student-name') || '').split(' ')[0] || 'Student';
+        }
+        ta.value = tpl.text.replace(/\{\{name\}\}/g, sName || 'Student');
+        ta.focus();
+        closeTplPicker();
+        toast('Template loaded — personalise before saving.', 'success');
+    };
+
+    function openTplPicker() {
+        renderTemplates('', 'all');
+        tplActiveCategory = 'all';
+        document.querySelectorAll('.tpl-cat-btn').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-cat') === 'all'); });
+        document.getElementById('tplSearchInput').value = '';
+        var picker   = document.getElementById('tplPicker');
+        var backdrop = document.getElementById('tplBackdrop');
+        var modalEl  = document.getElementById('cbCommentModal');
+        if (!picker) return;
+        picker.classList.add('is-open');
+        backdrop.style.display = 'block';
+        // Position near Templates button
+        var btn = document.getElementById('btnOpenTemplates');
+        if (btn) {
+            var rect = btn.getBoundingClientRect();
+            var pw = 380, ph = Math.min(420, window.innerHeight - 40);
+            var top = rect.bottom + 8, left = rect.left;
+            if (top + ph > window.innerHeight - 8) top = Math.max(8, rect.top - ph - 8);
+            if (left + pw > window.innerWidth - 8)  left = window.innerWidth - pw - 8;
+            if (left < 8) left = 8;
+            picker.style.position = 'fixed';
+            picker.style.top  = top + 'px';
+            picker.style.left = left + 'px';
+            picker.style.maxHeight = ph + 'px';
+            picker.style.zIndex = '999999';
+        }
+    }
+
+    function closeTplPicker() {
+        var picker   = document.getElementById('tplPicker');
+        var backdrop = document.getElementById('tplBackdrop');
+        if (picker)   picker.classList.remove('is-open');
+        if (backdrop) backdrop.style.display = 'none';
+    }
+
+    /* ─── DOM Ready ─── */
     document.addEventListener('DOMContentLoaded', function() {
-        var gpop     = document.getElementById('cbGradePopup');
-        var backdrop = document.getElementById('cbPopupBackdrop');
+        /* Move popups to body */
+        var gpop = document.getElementById('cbGradePopup'), backdrop = document.getElementById('cbPopupBackdrop');
         if (gpop     && gpop.parentNode     !== document.body) document.body.appendChild(gpop);
         if (backdrop && backdrop.parentNode !== document.body) document.body.appendChild(backdrop);
+        var tplPicker = document.getElementById('tplPicker'), tplBd = document.getElementById('tplBackdrop');
+        if (tplPicker && tplPicker.parentNode !== document.body) document.body.appendChild(tplPicker);
+        if (tplBd     && tplBd.parentNode     !== document.body) document.body.appendChild(tplBd);
 
+        /* Column toggles */
         document.querySelectorAll('.toggle-chip').forEach(function(chip) {
             chip.addEventListener('click', function() {
                 var key  = this.getAttribute('data-colkey');
@@ -1313,6 +1635,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             });
         });
 
+        /* Search */
         var searchEl = document.getElementById('searchInput');
         if (searchEl) {
             searchEl.addEventListener('input', function() {
@@ -1323,19 +1646,19 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             });
         }
 
-        var imgModal   = null;
-        var imgModalEl = document.getElementById('cbImgZoomModal');
+        /* Avatar zoom */
+        var imgModal = null, imgModalEl = document.getElementById('cbImgZoomModal');
         if (imgModalEl && typeof bootstrap !== 'undefined') imgModal = new bootstrap.Modal(imgModalEl);
         document.addEventListener('click', function(e) {
             var trigger = e.target.closest('.cb-avatar-trigger');
             if (!trigger) return;
-            var img     = trigger.querySelector('img');
-            var imgUrl  = img ? img.src : null;
-            var name    = trigger.getAttribute('data-name')    || 'Student';
-            var adm     = trigger.getAttribute('data-adm')     || '';
-            var cls     = trigger.getAttribute('data-class')   || '';
-            var gender  = trigger.getAttribute('data-gender')  || '';
-            var initials= trigger.getAttribute('data-initials')|| name.substring(0,2).toUpperCase();
+            var img = trigger.querySelector('img');
+            var imgUrl   = img ? img.src : null;
+            var name     = trigger.getAttribute('data-name')    || 'Student';
+            var adm      = trigger.getAttribute('data-adm')     || '';
+            var cls      = trigger.getAttribute('data-class')   || '';
+            var gender   = trigger.getAttribute('data-gender')  || '';
+            var initials = trigger.getAttribute('data-initials')|| name.substring(0,2).toUpperCase();
             document.getElementById('cbZoomedName').textContent = name;
             document.getElementById('cbZoomedMeta').innerHTML   =
                 (adm    ? '<i class="ri-id-card-line me-1"></i>' + esc(adm) : '') +
@@ -1356,39 +1679,53 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             if (imgModal) imgModal.show();
         });
 
+        /* Grade popup */
         var gpopCloseBtn = document.getElementById('gpopCloseBtn');
         if (gpopCloseBtn) gpopCloseBtn.addEventListener('click', closeGradePop);
-
-        document.addEventListener('click', function(e) {
-            var bd = document.getElementById('cbPopupBackdrop');
-            if (bd && e.target === bd) closeGradePop();
-        });
-
-        document.addEventListener('keydown', function(e){ if (e.key === 'Escape') closeGradePop(); });
-
+        document.addEventListener('click', function(e) { var bd = document.getElementById('cbPopupBackdrop'); if (bd && e.target === bd) closeGradePop(); });
+        document.addEventListener('keydown', function(e){ if (e.key === 'Escape') { closeGradePop(); closeTplPicker(); } });
         document.addEventListener('click', function(e) {
             var btn = e.target.closest('.grade-trigger-btn');
             if (!btn) return;
-            e.stopPropagation();
-            e.preventDefault();
-            var sid  = btn.getAttribute('data-sid');
-            var name = btn.getAttribute('data-sname');
+            e.stopPropagation(); e.preventDefault();
+            var sid = btn.getAttribute('data-sid'), name = btn.getAttribute('data-sname');
             if (!sid) return;
             var gpop = document.getElementById('cbGradePopup');
-            if (gpop && gpop.classList.contains('is-open') && gpop.dataset.activeSid === sid) {
-                closeGradePop();
-                return;
-            }
+            if (gpop && gpop.classList.contains('is-open') && gpop.dataset.activeSid === sid) { closeGradePop(); return; }
             closeGradePop();
             setTimeout(function(){ openGradePop(sid, name, btn); }, 16);
         });
 
+        /* Input change handlers */
         ['.desk-teacher','.desk-guidance','.desk-activities','.desk-absence',
          '.mob-teacher','.mob-guidance','.mob-activities','.mob-absence'].forEach(function(sel) {
             document.querySelectorAll(sel).forEach(function(inp){ inp.addEventListener('input', onInputChange); });
         });
-        attachModalTriggers();
 
+        /* Comment modal triggers */
+        document.querySelectorAll('.comment-input').forEach(function(input){
+            input.addEventListener('focus', handleInputFocus);
+        });
+
+        /* Template picker */
+        var btnOpenTemplates = document.getElementById('btnOpenTemplates');
+        if (btnOpenTemplates) btnOpenTemplates.addEventListener('click', function(e){ e.stopPropagation(); openTplPicker(); });
+        var tplCloseBtn = document.getElementById('tplCloseBtn');
+        if (tplCloseBtn) tplCloseBtn.addEventListener('click', closeTplPicker);
+        document.getElementById('tplBackdrop').addEventListener('click', closeTplPicker);
+        document.getElementById('tplSearchInput').addEventListener('input', function(){
+            renderTemplates(this.value, tplActiveCategory);
+        });
+        document.querySelectorAll('.tpl-cat-btn').forEach(function(btn){
+            btn.addEventListener('click', function(){
+                tplActiveCategory = this.getAttribute('data-cat');
+                document.querySelectorAll('.tpl-cat-btn').forEach(function(b){ b.classList.remove('active'); });
+                this.classList.add('active');
+                renderTemplates(document.getElementById('tplSearchInput').value, tplActiveCategory);
+            });
+        });
+
+        /* Past comments + modal save */
         var loadBtn      = document.getElementById('btnLoadPastComments');
         var modalSaveBtn = document.getElementById('modalSaveBtn');
         var saveBtn      = document.getElementById('saveBtn');
@@ -1396,6 +1733,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         if (modalSaveBtn) modalSaveBtn.addEventListener('click', saveCommentFromModal);
         if (saveBtn)      saveBtn.addEventListener('click', doSaveAll);
 
+        /* Compute dynamic stats from SA */
         (function() {
             var vals = Object.values(SA);
             if (!vals.length) return;
@@ -1403,8 +1741,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             var avgCumPct  = Math.round(vals.reduce(function(s,d){ return s + (d.cum_percentage||0);  },0) / vals.length);
             var statEl = document.getElementById('statAvgTermPct');
             if (statEl) statEl.textContent = avgTermPct + '%';
-            var pillT = document.getElementById('pillTermPct');
-            var pillC = document.getElementById('pillCumPct');
+            var pillT = document.getElementById('pillTermPct'), pillC = document.getElementById('pillCumPct');
             if (pillT) pillT.innerHTML = '<i class="ri-time-line me-1"></i>Term: ' + avgTermPct + '%';
             if (pillC) pillC.innerHTML = '<i class="ri-history-line me-1"></i>Cum: '  + avgCumPct  + '%';
 
@@ -1417,10 +1754,8 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                 if (cumPct  > topCumAvg)  { topCumAvg  = cumPct;  topCumName  = row.getAttribute('data-student-name') || ''; topPicture = row.getAttribute('data-student-img') || null; }
                 if (termPct > topTermAvg) { topTermAvg = termPct; topTermName = row.getAttribute('data-student-name') || ''; }
             });
-            var topEl = document.getElementById('statTop');
-            if (topEl) topEl.textContent = topCumName;
-            var termTopSpan = document.getElementById('statTermTop');
-            if (termTopSpan) termTopSpan.textContent = topTermName;
+            var topEl = document.getElementById('statTop'); if (topEl) topEl.textContent = topCumName;
+            var termTopSpan = document.getElementById('statTermTop'); if (termTopSpan) termTopSpan.textContent = topTermName;
             if (topPicture && topPicture !== 'null' && topPicture !== '' && !document.querySelector('#topPerformerStat img')) {
                 var statCard = document.getElementById('topPerformerStat');
                 if (statCard) { var imgDiv = document.createElement('div'); imgDiv.className = 'mt-2'; imgDiv.innerHTML = '<img src="' + topPicture + '" alt="Top Performer" style="width:40px;height:40px;border-radius:50%;border:2px solid var(--cb-amber);object-fit:cover;">'; statCard.appendChild(imgDiv); }
