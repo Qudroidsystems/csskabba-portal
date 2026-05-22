@@ -716,6 +716,15 @@
 .auto-save-comment {
     transition: all 0.3s ease;
 }
+.class-arm-badge {
+    font-size: 10px;
+    padding: 2px 7px;
+    background: #e0f2fe;
+    color: #0369a1;
+    border-radius: 12px;
+    font-weight: 600;
+    margin-left: 6px;
+}
 </style>
 
 <div class="main-content class-broadsheet">
@@ -1493,6 +1502,7 @@
     </div>
 </div>
 
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
@@ -1514,7 +1524,6 @@ function showToast(message, type = 'info') {
         </div>`;
 
     document.body.appendChild(toast);
-
     setTimeout(() => toast.remove(), 4500);
 }
 
@@ -1627,7 +1636,7 @@ function setupImageZoom() {
     });
 }
 
-// ====================== IMPROVED AUTO-SAVE WITH CLASS-ARM ======================
+// ====================== AUTO-SAVE WITH CLASS-ARM ======================
 document.querySelectorAll('.auto-save-comment').forEach(select => {
     select.addEventListener('change', function() {
         const studentId   = this.dataset.studentId;
@@ -1636,18 +1645,23 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
 
         if (comment === original) return;
 
-        // Get student name
         const row = this.closest('tr') || this.closest('.student-card');
         let studentName = 'Student';
         if (row) {
-            const nameCell = row.querySelector('td:nth-child(4) strong') ||
-                           row.querySelector('.student-details h6');
+            const nameCell = row.querySelector('td:nth-child(4) strong') || row.querySelector('.student-details h6');
             if (nameCell) studentName = nameCell.textContent.trim();
         }
 
-        const classArm = '{{ $schoolclass->schoolclass ?? "" }} {{ $schoolclass->arm_name ?? "" }}'.trim();
+        // Improved Class + Arm Logic
+        let classArm = '{{ $schoolclass->schoolclass ?? "" }}';
+        @if(isset($schoolclass->arm_name) && $schoolclass->arm_name)
+            classArm += ' {{ $schoolclass->arm_name }}';
+        @elseif(isset($schoolclass->arm) && $schoolclass->arm)
+            classArm += ' {{ $schoolclass->arm->arm ?? "" }}';
+        @endif
+        classArm = classArm.trim();
 
-        // Visual feedback - Saving
+        // Visual feedback
         this.style.borderColor = '#f59e0b';
         this.style.backgroundColor = '#fffbeb';
         this.disabled = true;
@@ -1673,7 +1687,6 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
 
                 showToast(`✅ Comment saved for <strong>${studentName}</strong><br><small class="text-muted">${classArm}</small>`, 'success');
 
-                // Show saved badge
                 if (row) {
                     let badge = row.querySelector('.comment-saved-badge');
                     if (!badge) {
@@ -1705,7 +1718,7 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
     });
 });
 
-// Bulk Save All Comments
+// ====================== BULK SAVE ======================
 const commentsForm = document.getElementById('commentsForm');
 if (commentsForm) {
     commentsForm.addEventListener('submit', function(e) {
@@ -1713,10 +1726,18 @@ if (commentsForm) {
         const btn  = document.getElementById('saveAllBtn');
         const ind  = document.getElementById('savingIndicator');
         const orig = btn.innerHTML;
-        const classArm = '{{ $schoolclass->schoolclass ?? "" }} {{ $schoolclass->arm_name ?? "" }}'.trim();
+
+        // Improved Class + Arm for bulk save
+        let classArm = '{{ $schoolclass->schoolclass ?? "" }}';
+        @if(isset($schoolclass->arm_name) && $schoolclass->arm_name)
+            classArm += ' {{ $schoolclass->arm_name }}';
+        @elseif(isset($schoolclass->arm) && $schoolclass->arm)
+            classArm += ' {{ $schoolclass->arm->arm ?? "" }}';
+        @endif
+        classArm = classArm.trim();
 
         btn.disabled = true;
-        btn.innerHTML = '<i class="ri-loader-4-line spin-icon me-1"></i> Saving All Comments...';
+        btn.innerHTML = '<i class="ri-loader-4-line spin-icon me-1"></i> Saving All...';
         ind.style.display = 'inline-block';
 
         const fd = new FormData();
@@ -1734,7 +1755,6 @@ if (commentsForm) {
         .then(r => r.json())
         .then(data => {
             if (!data.success) throw new Error(data.message || 'Save failed');
-
             showToast(`✅ All comments saved successfully!<br><small class="text-muted">${classArm}</small>`, 'success');
 
             document.querySelectorAll('.auto-save-comment').forEach(sel => {
@@ -1766,14 +1786,13 @@ if (window.innerWidth > 1199) {
         });
     });
 
-    document.querySelectorAll('.tooltip-close').forEach(btn => {
-        btn.addEventListener('click', closeAllTooltips);
-    });
+    document.querySelectorAll('.tooltip-close').forEach(btn => btn.addEventListener('click', closeAllTooltips));
 
     document.addEventListener('click', e => {
-        if (!activeTooltip) return;
-        const activeEl = document.getElementById(activeTooltip);
-        if (activeEl && !activeEl.contains(e.target)) closeAllTooltips();
+        if (activeTooltip) {
+            const activeEl = document.getElementById(activeTooltip);
+            if (activeEl && !activeEl.contains(e.target)) closeAllTooltips();
+        }
     });
 
     document.addEventListener('keydown', e => {
