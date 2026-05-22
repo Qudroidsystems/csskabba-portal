@@ -1652,15 +1652,16 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
             if (nameCell) studentName = nameCell.textContent.trim();
         }
 
-        // Robust Class + Arm
+        // Final robust class + arm
         let classArm = "{{ $schoolclass->schoolclass ?? 'Class' }}";
-        @if($schoolclass->arm)
-            classArm += " {{ $schoolclass->arm->arm ?? '' }}";
-        @elseif($schoolclass->arms)
-            classArm += " {{ $schoolclass->arms->arm ?? '' }}";
+        @if($schoolclass->arm && $schoolclass->arm->arm)
+            classArm += " {{ $schoolclass->arm->arm }}";
+        @elseif($schoolclass->arms && $schoolclass->arms->arm)
+            classArm += " {{ $schoolclass->arms->arm }}";
+        @elseif($schoolclass->arm_name)
+            classArm += " {{ $schoolclass->arm_name }}";
         @endif
 
-        // Visual feedback
         this.style.borderColor = '#f59e0b';
         this.style.backgroundColor = '#fffbeb';
         this.disabled = true;
@@ -1685,17 +1686,6 @@ document.querySelectorAll('.auto-save-comment').forEach(select => {
                 this.style.backgroundColor = '#d1fae5';
 
                 showToast(`✅ Comment saved for <strong>${studentName}</strong><br><small class="text-muted">${classArm}</small>`, 'success');
-
-                if (row) {
-                    let badge = row.querySelector('.comment-saved-badge');
-                    if (!badge) {
-                        badge = document.createElement('small');
-                        badge.className = 'comment-saved-badge d-block mt-1';
-                        badge.innerHTML = `<i class="ri-check-double-line"></i> Saved`;
-                        const nameDiv = row.querySelector('td:nth-child(4) div') || row.querySelector('.student-details');
-                        if (nameDiv) nameDiv.appendChild(badge);
-                    }
-                }
             } else {
                 throw new Error(data.message || 'Save failed');
             }
@@ -1727,10 +1717,12 @@ if (commentsForm) {
         const orig = btn.innerHTML;
 
         let classArm = "{{ $schoolclass->schoolclass ?? 'Class' }}";
-        @if($schoolclass->arm)
-            classArm += " {{ $schoolclass->arm->arm ?? '' }}";
-        @elseif($schoolclass->arms)
-            classArm += " {{ $schoolclass->arms->arm ?? '' }}";
+        @if($schoolclass->arm && $schoolclass->arm->arm)
+            classArm += " {{ $schoolclass->arm->arm }}";
+        @elseif($schoolclass->arms && $schoolclass->arms->arm)
+            classArm += " {{ $schoolclass->arms->arm }}";
+        @elseif($schoolclass->arm_name)
+            classArm += " {{ $schoolclass->arm_name }}";
         @endif
 
         btn.disabled = true;
@@ -1753,13 +1745,8 @@ if (commentsForm) {
         .then(data => {
             if (!data.success) throw new Error(data.message || 'Save failed');
             showToast(`✅ All comments saved successfully!<br><small class="text-muted">${classArm}</small>`, 'success');
-
-            document.querySelectorAll('.auto-save-comment').forEach(sel => {
-                if (sel.value.trim()) sel.dataset.originalValue = sel.value.trim();
-            });
         })
         .catch(err => {
-            console.error('Bulk save error:', err);
             showToast('❌ Error saving comments: ' + err.message, 'danger');
         })
         .finally(() => {
@@ -1770,7 +1757,7 @@ if (commentsForm) {
     });
 }
 
-// Tooltip, Search, Init
+// Tooltip triggers
 if (window.innerWidth > 1199) {
     document.querySelectorAll('.grades-trigger').forEach(trigger => {
         trigger.addEventListener('click', function(e) {
@@ -1797,6 +1784,7 @@ if (window.innerWidth > 1199) {
     });
 }
 
+// Search
 document.getElementById('searchInput')?.addEventListener('input', function() {
     const term = this.value.toLowerCase().trim();
     document.querySelectorAll('.desktop-table tbody tr').forEach(row => {
@@ -1807,6 +1795,7 @@ document.getElementById('searchInput')?.addEventListener('input', function() {
     });
 });
 
+// Initialize
 document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.auto-save-comment').forEach(s => {
         s.dataset.originalValue = s.value;

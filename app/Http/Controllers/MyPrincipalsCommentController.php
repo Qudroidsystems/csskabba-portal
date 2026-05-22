@@ -89,8 +89,8 @@ class MyPrincipalsCommentController extends Controller
         // ------------------------------------------------------------------
         // 2.  School / class meta
         // ------------------------------------------------------------------
-        $schoolclass           = Schoolclass::with(['arm', 'classcategories'])->findOrFail($schoolclassid);
-        $schoolclass->arm_name = $schoolclass->arm?->arm ?? '';
+        $schoolclass = Schoolclass::with(['arm'])->findOrFail($schoolclassid);
+        $schoolclass->full_class_name = $schoolclass->schoolclass .($schoolclass->arm ? ' ' . $schoolclass->arm->arm : '');
 
         $schoolterm    = Schoolterm::find($termid)?->term         ?? 'N/A';
         $schoolsession = Schoolsession::find($sessionid)?->session ?? 'N/A';
