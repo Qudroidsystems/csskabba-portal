@@ -72,8 +72,8 @@ class BroadsheetController extends Controller
                 ->get();
         }
 
-        // Actual subject count in this class
-        $subjectCount = DB::table('subjectclass as sc')
+        // Count actual subjects in the class (not the 7 score column types)
+        $actualSubjectCount = DB::table('subjectclass as sc')
             ->join('subjectteacher as st', 'st.id', '=', 'sc.subjectteacherid')
             ->where('sc.schoolclassid', $schoolclassid)
             ->distinct()
@@ -88,24 +88,14 @@ class BroadsheetController extends Controller
             ],
             'assessments' => [],
             'scores' => [
-                'total'                    => ['label' => 'Total',                         'default' => true],
-                'bf'                       => ['label' => 'BF (Prev Cum)',                 'default' => true],
-                'cum'                      => ['label' => 'Cum (BF+T)÷2',                 'default' => true],
-                'grade'                    => ['label' => 'Grade',                         'default' => true],
-                // 4 per-subject positions (from DB)
-                'subj_pos_class_cum'       => ['label' => 'Class Pos (Cum)',               'default' => true],
-                'subj_pos_class_total'     => ['label' => 'Class Pos (Term)',              'default' => true],
-                'subj_pos_arm_cum'         => ['label' => 'Arm Pos (Cum)',                 'default' => false],
-                'subj_pos_arm_total'       => ['label' => 'Arm Pos (Term)',                'default' => false],
-                'class_average'            => ['label' => 'Class Avg',                    'default' => true],
-                'remark'                   => ['label' => 'Remark',                        'default' => false],
-            ],
-            // 4 overall student positions (computed from aggregate scores)
-            'overall_positions' => [
-                'position_class_cum'  => ['label' => 'Overall: Class Pos (Cum)',  'default' => true],
-                'position_class_term' => ['label' => 'Overall: Class Pos (Term)', 'default' => true],
-                'position_arm_cum'    => ['label' => 'Overall: Arm Pos (Cum)',    'default' => false],
-                'position_arm_term'   => ['label' => 'Overall: Arm Pos (Term)',   'default' => false],
+                'total'         => ['label' => 'Total',       'default' => true],
+                'bf'            => ['label' => 'BF',          'default' => true],
+                'cum'           => ['label' => 'Cum',         'default' => true],
+                'grade'         => ['label' => 'Grade',       'default' => true],
+                'position_term' => ['label' => 'Pos (Term)',  'default' => true],
+                'position_cum'  => ['label' => 'Pos (Cum)',   'default' => true],
+                'class_average' => ['label' => 'Class Avg',   'default' => true],
+                'remark'        => ['label' => 'Remark',      'default' => false],
             ],
             'gpa_metrics' => [
                 'gpa'                => ['label' => 'GPA',          'default' => true],
@@ -131,7 +121,7 @@ class BroadsheetController extends Controller
             'columns'          => $columns,
             'is_senior'        => $schoolclass && $schoolclass->classcategories->isNotEmpty()
                 ? ($schoolclass->classcategories->first()->is_senior ?? false) : false,
-            'subject_count'    => $subjectCount,
+            'subject_count'    => $actualSubjectCount,
             'assessment_count' => count($columns['assessments']),
         ]);
     }
@@ -150,13 +140,9 @@ class BroadsheetController extends Controller
         if ($classgroup && $sessionid) {
             $matchingClasses = Schoolclass::where('schoolclass', $classgroup)->get();
             $classIds        = $matchingClasses->pluck('id')->toArray();
-            $count = Studentclass::whereIn('schoolclassid', $classIds)
+            $count           = Studentclass::whereIn('schoolclassid', $classIds)
                 ->where('sessionid', $sessionid)->count();
-            return response()->json([
-                'success'    => true,
-                'count'      => $count,
-                'arms_count' => $matchingClasses->count(),
-            ]);
+            return response()->json(['success' => true, 'count' => $count, 'arms_count' => $matchingClasses->count()]);
         }
 
         if (!$schoolclassid || !$sessionid) {
@@ -185,7 +171,7 @@ class BroadsheetController extends Controller
             ->distinct()->count('sc.subjectid');
 
         $assessmentCount = 0;
-        $schoolclass = Schoolclass::with('classcategories')->find($schoolclassid);
+        $schoolclass     = Schoolclass::with('classcategories')->find($schoolclassid);
         if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
             $categoryIds     = $schoolclass->classcategories->pluck('id');
             $assessmentCount = Assessment::whereIn('classcategory_id', $categoryIds)->count();
@@ -201,50 +187,76 @@ class BroadsheetController extends Controller
     }
 
     // =========================================================================
-    // BUILD BROADSHEET DATA
+    // HELPER: Fetch previous term's cum scores for a set of students & subjects
     //
-    // BF   = previous term's cumulative score (stored in broadsheets.bf)
-    // CUM  = (BF + Total) / 2  — stored in broadsheets.cum
-    //         When BF = 0 (first term), cum = total (correct pass-through).
+    // Returns: [ student_id => [ subject_id => cum_score ] ]
     //
-    // PER-SUBJECT POSITIONS (4 types — pulled directly from DB):
-    //   subject_position_class       → class-wide rank by CUM
-    //   subject_position_class_total → class-wide rank by TERM total
-    //   arm_position                 → arm-only rank by TERM total
-    //   arm_position_cum             → arm-only rank by CUM
-    //
-    // OVERALL STUDENT POSITIONS (4 types — computed here by summing across subjects):
-    //   position_class_cum   → class-wide rank by sum of CUM scores
-    //   position_class_term  → class-wide rank by sum of TERM scores
-    //   position_arm_cum     → arm-only rank by sum of CUM scores
-    //   position_arm_term    → arm-only rank by sum of TERM scores
+    // Logic: find the broadsheet record for (same session, same class, previous
+    // term) and return its `cum` value — that is the BF for the current term.
+    // "Previous term" = the highest term_id that is less than $currentTermId
+    // within the same session.  If none exists we return 0 (first term).
+    // =========================================================================
+
+    private function fetchPreviousTermCums(
+        array  $studentIds,
+        int    $sessionid,
+        int    $currentTermId,
+        array  $classIds        // one class or many (combined view)
+    ): array {
+        if (empty($studentIds)) return [];
+
+        // Find the immediately previous term for this session
+        $prevTerm = Schoolterm::where('id', '<', $currentTermId)
+            ->orderByDesc('id')
+            ->first();
+
+        if (!$prevTerm) return [];   // current term IS the first term — no BF
+
+        $rows = Broadsheets::whereIn('broadsheet_records.student_id', $studentIds)
+            ->where('broadsheets.term_id', $prevTerm->id)
+            ->where('broadsheet_records.session_id', $sessionid)
+            ->whereIn('broadsheet_records.schoolclass_id', $classIds)
+            ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
+            ->select([
+                'broadsheet_records.student_id',
+                'broadsheet_records.subject_id',
+                'broadsheets.cum',
+            ])
+            ->get();
+
+        $map = [];
+        foreach ($rows as $r) {
+            $map[(int)$r->student_id][(int)$r->subject_id] = (float)$r->cum;
+        }
+
+        return $map;
+    }
+
+    // =========================================================================
+    // BUILD BROADSHEET DATA (single class)
     // =========================================================================
 
     private function buildBroadsheetData(
-        int $schoolclassid,
-        int $sessionid,
-        int $termid,
+        int   $schoolclassid,
+        int   $sessionid,
+        int   $termid,
         array $selectedColumns = []
     ): array {
-        $schoolInfo = SchoolInformation::getActiveSchool() ?? new \stdClass();
-
-        $schoolclass = Schoolclass::with('classcategories')
+        $schoolInfo    = SchoolInformation::getActiveSchool() ?? new \stdClass();
+        $schoolclass   = Schoolclass::with('classcategories')
             ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
             ->select(['schoolclass.*', 'schoolarm.arm as arm_name'])
             ->where('schoolclass.id', $schoolclassid)
             ->first();
-
         $schoolsession = Schoolsession::find($sessionid);
         $schoolterm    = Schoolterm::find($termid);
 
         $assessments = collect();
         if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
             $categoryIds = $schoolclass->classcategories->pluck('id');
-            $assessments = Assessment::whereIn('classcategory_id', $categoryIds)
-                ->orderBy('id')->get();
+            $assessments = Assessment::whereIn('classcategory_id', $categoryIds)->orderBy('id')->get();
         }
 
-        // ── Subjects map ──────────────────────────────────────────────────────
         $subjectsMap    = [];
         $subjectClasses = DB::table('subjectclass as sc')
             ->join('subjectteacher as st', 'st.id', '=', 'sc.subjectteacherid')
@@ -255,8 +267,8 @@ class BroadsheetController extends Controller
             ->distinct()->get();
 
         foreach ($subjectClasses as $sc) {
-            $subjectsMap[$sc->subjectid] = [
-                'subject_id'       => $sc->subjectid,
+            $subjectsMap[(int)$sc->subjectid] = [
+                'subject_id'       => (int)$sc->subjectid,
                 'subject_name'     => $sc->subject_name,
                 'subject_code'     => $sc->subject_code ?? '',
                 'subjectteacherid' => $sc->subjectteacherid,
@@ -265,7 +277,10 @@ class BroadsheetController extends Controller
         }
 
         $studentIds = Studentclass::where('schoolclassid', $schoolclassid)
-            ->where('sessionid', $sessionid)->pluck('studentId')->toArray();
+            ->where('sessionid', $sessionid)
+            ->pluck('studentId')
+            ->map(fn($v) => (int)$v)
+            ->toArray();
 
         if (empty($studentIds)) {
             return $this->emptyBroadsheetResult(
@@ -274,7 +289,12 @@ class BroadsheetController extends Controller
             );
         }
 
-        // ── Raw broadsheet rows — pull ALL 4 per-subject position columns ─────
+        // ── Fetch previous term cum scores (the real BF source) ──────────────
+        $prevCumMap = $this->fetchPreviousTermCums(
+            $studentIds, $sessionid, $termid, [$schoolclassid]
+        );
+
+        // ── Current term broadsheet rows ──────────────────────────────────────
         $broadsheets = Broadsheets::whereIn('broadsheet_records.student_id', $studentIds)
             ->where('broadsheets.term_id', $termid)
             ->where('broadsheet_records.session_id', $sessionid)
@@ -299,11 +319,7 @@ class BroadsheetController extends Controller
                 'broadsheets.cum',
                 'broadsheets.grade',
                 'broadsheets.remark',
-                // ── 4 per-subject positions from DB ──
-                'broadsheets.subject_position_class as subj_pos_class_cum',        // class-wide, by CUM
-                'broadsheets.subject_position_class_total as subj_pos_class_total', // class-wide, by TERM
-                'broadsheets.arm_position as subj_pos_arm_total',                   // arm-only,   by TERM
-                'broadsheets.arm_position_cum as subj_pos_arm_cum',                 // arm-only,   by CUM
+                'broadsheets.subject_position_class as position',
                 'broadsheets.avg as class_average',
                 'broadsheets.vettedstatus',
             ])
@@ -316,11 +332,10 @@ class BroadsheetController extends Controller
         $assessmentScoresAll = BroadsheetAssessmentScore::whereIn('broadsheet_id', $broadsheetIds)
             ->get()->groupBy('broadsheet_id');
 
-        // ── Build per-student subject map ─────────────────────────────────────
         $studentSubjectMap = [];
         foreach ($broadsheets as $row) {
-            $sid   = $row->student_id;
-            $sub   = $row->subject_id;
+            $sid = (int)$row->student_id;
+            $sub = (int)$row->subject_id;
 
             if (!isset($subjectsMap[$sub])) {
                 $subjectsMap[$sub] = [
@@ -334,53 +349,73 @@ class BroadsheetController extends Controller
             $assessmentData     = [];
             foreach ($assessments as $a) {
                 $score = $assessmentScoreRow->firstWhere('assessment_id', $a->id);
-                $assessmentData[$a->id] = $score ? (float) $score->score : 0;
+                $assessmentData[$a->id] = $score ? (float)$score->score : 0;
             }
 
-            $total     = (float) ($row->total ?? 0);
-            $bf        = (float) ($row->bf    ?? 0);
-            $cumStored = (float) ($row->cum   ?? 0);
+            $rawTotal = (float)($row->total ?? 0);
 
-            // CUM logic:
-            //   - Use the stored value when it is non-zero (DB is authoritative).
-            //   - If stored cum is 0 but BF > 0, recompute as (BF + total) / 2.
-            //   - If both are 0 (no BF — first term), cum = total.
-            // NOTE: when BF = 0, cum correctly equals total. This is NOT a bug.
-            //       It looks odd in the UI so we show "—" for BF and a tooltip on CUM.
-            if ($cumStored > 0) {
-                $cum = $cumStored;
-            } elseif ($bf > 0) {
-                $cum = round(($bf + $total) / 2, 1);
-            } else {
-                $cum = $total; // first term — no BF
-            }
+            // BF = previous term's cum (looked up from DB); fall back to
+            // broadsheets.bf if the lookup returns nothing (e.g. student
+            // transferred in mid-session).
+            $bf = $prevCumMap[$sid][$sub] ?? (float)($row->bf ?? 0);
+
+            // CUM rule:
+            //   • BF > 0  → (BF + Total) ÷ 2
+            //   • BF = 0  → Total  (first term or no prior record)
+            $cum = $bf > 0 ? round(($bf + $rawTotal) / 2, 1) : $rawTotal;
 
             $studentSubjectMap[$sid][$sub] = [
-                'total'              => $total,
-                'bf'                 => $bf,
-                'cum'                => $cum,
-                'bf_is_zero'         => ($bf == 0), // flag for view — show "—" instead of "0"
-                'grade'              => $row->grade ?? '-',
-                'remark'             => $row->remark ?? '-',
-                // 4 per-subject positions from DB
-                'subj_pos_class_cum'   => $row->subj_pos_class_cum   ?? null,
-                'subj_pos_class_total' => $row->subj_pos_class_total ?? null,
-                'subj_pos_arm_total'   => $row->subj_pos_arm_total   ?? null,
-                'subj_pos_arm_cum'     => $row->subj_pos_arm_cum     ?? null,
-                'class_average'        => (float) ($row->class_average ?? 0),
-                'assessments'          => $assessmentData,
+                'total'         => $rawTotal,
+                'bf'            => $bf,
+                'cum'           => $cum,
+                'grade'         => $row->grade ?? '-',
+                'remark'        => $row->remark ?? '-',
+                'position'      => $row->position ?? '-',
+                'class_average' => (float)($row->class_average ?? 0),
+                'assessments'   => $assessmentData,
             ];
         }
 
-        // ── Determine arm id for this class ──────────────────────────────────
-        $thisArmId = $schoolclass->arm ?? null;
+        return $this->assembleStudentRows(
+            $studentIds, $sessionid, $schoolclassid, null,
+            $studentSubjectMap, $subjectsMap, $assessments,
+            $schoolInfo, $schoolclass, $schoolsession, $schoolterm,
+            $selectedColumns
+        );
+    }
 
-        // ── Student info + arm mapping ────────────────────────────────────────
-        $studentInfo = Studentclass::where('schoolclassid', $schoolclassid)
-            ->where('sessionid', $sessionid)
+    // =========================================================================
+    // SHARED: Assemble student rows, compute positions, build result array
+    // =========================================================================
+
+    private function assembleStudentRows(
+        array  $studentIds,
+        int    $sessionid,
+        ?int   $schoolclassid,   // null for combined view
+        ?array $classIds,        // non-null for combined view
+        array  $studentSubjectMap,
+        array  $subjectsMap,
+        $assessments,
+        $schoolInfo,
+        $schoolclass,
+        $schoolsession,
+        $schoolterm,
+        array  $selectedColumns,
+        array  $armLabels       = [],
+        ?array $studentClassMap = null,
+        bool   $isCombined      = false
+    ): array {
+        // Build the student info query
+        $query = Studentclass::where('sessionid', $sessionid);
+        if ($schoolclassid) {
+            $query->where('schoolclassid', $schoolclassid);
+        } else {
+            $query->whereIn('schoolclassid', $classIds ?? []);
+        }
+
+        $studentInfoRows = $query
             ->join('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
             ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-            ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
             ->select([
                 'studentRegistration.id as id',
                 'studentRegistration.admissionNo as admissionno',
@@ -389,29 +424,44 @@ class BroadsheetController extends Controller
                 'studentRegistration.gender',
                 'studentRegistration.dateofbirth',
                 'studentpicture.picture',
-                'schoolclass.arm as arm_id',
+                'studentclass.schoolclassid',
             ])
             ->orderBy('studentRegistration.lastname')
             ->orderBy('studentRegistration.firstname')
             ->get();
 
-        // ── Build student rows (positions filled in next step) ────────────────
+        // Key by integer student id
         $studentRows = [];
-        foreach ($studentInfo as $stu) {
-            $sid       = $stu->id;
+        foreach ($studentInfoRows as $stu) {
+            $sid       = (int)$stu->id;
             $subScores = $studentSubjectMap[$sid] ?? [];
 
-            $termValues  = collect(array_values($subScores))->pluck('total')->filter(fn ($v) => $v > 0);
-            $totalTerm   = round($termValues->sum(), 1);
+            $cumValues    = [];
+            $totalValues  = [];
+            $gradePointsA = [];
 
-            $cumValues   = collect(array_values($subScores))->pluck('cum')->filter(fn ($v) => $v > 0);
-            $totalCum    = round($cumValues->sum(), 1);
-            $numSubjects = $cumValues->count();
+            foreach ($subScores as $subData) {
+                if (($subData['cum'] ?? 0) > 0) {
+                    $cumValues[] = $subData['cum'];
+                }
+                if (($subData['total'] ?? 0) > 0) {
+                    $totalValues[]  = $subData['total'];
+                    $gradePointsA[] = $this->getGradePoint($subData['total']);
+                }
+            }
 
-            $gradePoints = $termValues->map(fn ($s) => $this->getGradePoint($s));
-            $gpa         = $gradePoints->count() > 0 ? round($gradePoints->avg(), 2) : 0.0;
-            $gpaGrade    = $this->getGpaGrade($gpa);
+            $totalCum    = array_sum($cumValues);
+            $totalTerm   = array_sum($totalValues);
+            $numSubjects = count($cumValues);
+            $gpa         = count($gradePointsA) > 0
+                ? round(array_sum($gradePointsA) / count($gradePointsA), 2) : 0.0;
 
+            $armLabel = '';
+            if ($isCombined && $studentClassMap && isset($studentClassMap[$sid])) {
+                $armLabel = $armLabels[$studentClassMap[$sid]] ?? '';
+            }
+
+            // Use integer key so position map lookups are always reliable
             $studentRows[$sid] = [
                 'id'                 => $sid,
                 'admissionno'        => $stu->admissionno,
@@ -420,130 +470,126 @@ class BroadsheetController extends Controller
                 'gender'             => $stu->gender,
                 'dateofbirth'        => $stu->dateofbirth,
                 'picture'            => $stu->picture,
-                'arm_id'             => $stu->arm_id,
+                'arm'                => $armLabel,
+                'schoolclassid'      => (int)$stu->schoolclassid,
                 'subjects'           => $subScores,
-                'total_term'         => $totalTerm,
-                'total_cum'          => $totalCum,
+                'total_cum'          => round($totalCum, 1),
+                'total_term'         => round($totalTerm, 1),
                 'num_subjects'       => $numSubjects,
                 'class_average'      => $numSubjects > 0 ? round($totalCum / $numSubjects, 1) : 0,
                 'gpa'                => $gpa,
                 'cgpa'               => $gpa,
-                'gpa_grade'          => $gpaGrade,
-                'total_grade_points' => round($gradePoints->sum(), 1),
-                // 4 overall positions — computed below
-                'position_class_cum'  => 0,
-                'position_class_term' => 0,
-                'position_arm_cum'    => 0,
-                'position_arm_term'   => 0,
+                'gpa_grade'          => $this->getGpaGrade($gpa),
+                'total_grade_points' => round(array_sum($gradePointsA), 1),
+                // positions set below
+                'position_cum'       => 0,
+                'position_term'      => 0,
             ];
         }
 
-        // ── Assign 4 overall positions ────────────────────────────────────────
-        // Class-wide (all students in this class):
-        $studentRows = $this->assignPositions($studentRows, 'total_cum',  'position_class_cum');
-        $studentRows = $this->assignPositions($studentRows, 'total_term', 'position_class_term');
+        // Build position maps using integer-keyed $studentRows
+        $posMapCum  = $this->buildPositionMap($studentRows, 'total_cum');
+        $posMapTerm = $this->buildPositionMap($studentRows, 'total_term');
 
-        // Arm-only (students whose arm_id matches this class's arm):
-        $studentRows = $this->assignPositionsFiltered(
-            $studentRows, 'total_cum',  'position_arm_cum',  'arm_id', $thisArmId
-        );
-        $studentRows = $this->assignPositionsFiltered(
-            $studentRows, 'total_term', 'position_arm_term', 'arm_id', $thisArmId
-        );
-
-        // ── Subject stats ─────────────────────────────────────────────────────
-        $subjectStats = [];
-        foreach ($subjectsMap as $sub => $subInfo) {
-            $allTotals = collect(array_values($studentRows))
-                ->map(fn ($r) => $r['subjects'][$sub]['total'] ?? 0)
-                ->filter(fn ($v) => $v > 0);
-
-            $subjectStats[$sub] = [
-                'avg'     => $allTotals->count() > 0 ? round($allTotals->avg(), 1) : 0,
-                'highest' => $allTotals->count() > 0 ? $allTotals->max() : 0,
-                'lowest'  => $allTotals->count() > 0 ? $allTotals->min() : 0,
-                'passed'  => $allTotals->filter(fn ($v) => $v >= 40)->count(),
-                'failed'  => $allTotals->filter(fn ($v) => $v < 40)->count(),
-            ];
+        // Stamp positions directly into each row (both maps keyed by integer sid)
+        foreach ($studentRows as $sid => &$row) {
+            $row['position_cum']  = $posMapCum[(int)$sid]  ?? 0;
+            $row['position_term'] = $posMapTerm[(int)$sid] ?? 0;
         }
+        unset($row);
 
+        $subjectStats = $this->buildSubjectStats($subjectsMap, $studentRows);
         uasort($subjectsMap, fn ($a, $b) => strcmp($a['subject_name'], $b['subject_name']));
 
-        return [
+        $result = [
             'schoolInfo'      => $schoolInfo,
             'schoolclass'     => $schoolclass,
             'schoolsession'   => $schoolsession,
             'schoolterm'      => $schoolterm,
             'assessments'     => $assessments,
             'subjects'        => $subjectsMap,
+            // Keep integer-keyed here; array_values only for Blade iteration
             'studentRows'     => array_values($studentRows),
             'subjectStats'    => $subjectStats,
             'selectedColumns' => $selectedColumns,
             'totalStudents'   => count($studentRows),
             'generatedAt'     => now()->format('d M Y, H:i'),
         ];
+
+        if ($isCombined) {
+            $result['arm_labels']  = $armLabels;
+            $result['is_combined'] = true;
+        }
+
+        return $result;
     }
 
     // =========================================================================
-    // POSITION HELPERS
-    // Standard competition ranking (1, 1, 3 for ties). Works on all students.
+    // HELPER: Build position map (dense ranking by any numeric key)
+    // Keys are integer student IDs.
     // =========================================================================
 
-    private function assignPositions(array $studentRows, string $scoreKey, string $posKey): array
+    private function buildPositionMap(array $studentRows, string $key): array
     {
-        $sorted    = collect(array_values($studentRows))->sortByDesc(fn ($r) => $r[$scoreKey])->values();
-        $rank      = 0;
-        $prevScore = null;
+        // Clone so uasort doesn't alter the original reference
+        $sorted = $studentRows;
+        uasort($sorted, fn ($a, $b) => ($b[$key] ?? 0) <=> ($a[$key] ?? 0));
 
-        foreach ($sorted as $i => $row) {
-            $score = $row[$scoreKey];
-            if ($score !== $prevScore) {
-                $rank = $i + 1;
+        $positionMap = [];
+        $prevVal     = null;
+        $prevPos     = 0;
+        $counter     = 0;
+
+        foreach ($sorted as $sid => $row) {
+            $counter++;
+            $val = (float)($row[$key] ?? 0);
+
+            if ($prevVal !== null && $val === $prevVal) {
+                $positionMap[(int)$sid] = $prevPos;
+            } else {
+                $positionMap[(int)$sid] = $counter;
+                $prevPos = $counter;
             }
-            $prevScore = $score;
-            $studentRows[$row['id']][$posKey] = $rank;
+            $prevVal = $val;
         }
 
-        return $studentRows;
-    }
-
-    /**
-     * Like assignPositions but only ranks students where $filterKey === $filterValue.
-     * Students who don't match get position 0.
-     */
-    private function assignPositionsFiltered(
-        array $studentRows, string $scoreKey, string $posKey,
-        string $filterKey, $filterValue
-    ): array {
-        $subset = collect(array_values($studentRows))
-            ->filter(fn ($r) => $r[$filterKey] == $filterValue)
-            ->sortByDesc(fn ($r) => $r[$scoreKey])
-            ->values();
-
-        $rank      = 0;
-        $prevScore = null;
-
-        foreach ($subset as $i => $row) {
-            $score = $row[$scoreKey];
-            if ($score !== $prevScore) {
-                $rank = $i + 1;
-            }
-            $prevScore = $score;
-            $studentRows[$row['id']][$posKey] = $rank;
-        }
-
-        return $studentRows;
+        return $positionMap;
     }
 
     // =========================================================================
-    // EMPTY RESULT HELPER
+    // HELPER: Subject stats (explicit loops — avoids nested pluck issues)
+    // =========================================================================
+
+    private function buildSubjectStats(array $subjectsMap, array $studentRows): array
+    {
+        $subjectStats = [];
+        foreach ($subjectsMap as $sub => $subInfo) {
+            $totals = [];
+            foreach ($studentRows as $row) {
+                $val = $row['subjects'][$sub]['total'] ?? 0;
+                if ($val > 0) $totals[] = $val;
+            }
+            $count = count($totals);
+            $subjectStats[$sub] = [
+                'avg'     => $count > 0 ? round(array_sum($totals) / $count, 1) : 0,
+                'highest' => $count > 0 ? max($totals) : 0,
+                'lowest'  => $count > 0 ? min($totals) : 0,
+                'passed'  => count(array_filter($totals, fn ($v) => $v >= 40)),
+                'failed'  => count(array_filter($totals, fn ($v) => $v < 40)),
+            ];
+        }
+        return $subjectStats;
+    }
+
+    // =========================================================================
+    // HELPER: Empty result
     // =========================================================================
 
     private function emptyBroadsheetResult(
         $schoolInfo, $schoolclass, $schoolsession, $schoolterm,
-        $assessments, $subjectsMap, array $selectedColumns
+        $assessments, $subjectsMap, array $selectedColumns, array $extra = []
     ): array {
-        return [
+        return array_merge([
             'schoolInfo'      => $schoolInfo,
             'schoolclass'     => $schoolclass,
             'schoolsession'   => $schoolsession,
@@ -555,7 +601,7 @@ class BroadsheetController extends Controller
             'selectedColumns' => $selectedColumns,
             'totalStudents'   => 0,
             'generatedAt'     => now()->format('d M Y, H:i'),
-        ];
+        ], $extra);
     }
 
     // =========================================================================
@@ -572,22 +618,19 @@ class BroadsheetController extends Controller
                 'selectedColumns' => 'nullable|array',
             ]);
 
-            $selectedColumns = $request->input('selectedColumns', []);
-
             $data = $this->buildBroadsheetData(
-                (int) $validated['schoolclassid'],
-                (int) $validated['sessionid'],
-                (int) $validated['termid'],
-                $selectedColumns
+                (int)$validated['schoolclassid'],
+                (int)$validated['sessionid'],
+                (int)$validated['termid'],
+                $request->input('selectedColumns', [])
             );
 
             $data['school_logo_base64'] = $this->getLogoBase64($data['schoolInfo']);
             $data['pagetitle']          = 'Class Broadsheet – Web View';
 
             return view('broadsheet.web', $data);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
-            return back()->withErrors($e->errors())->with('error', 'Invalid input: ' . implode(', ', $e->errors()));
+            return back()->withErrors($e->errors())->with('error', 'Invalid input.');
         } catch (\Exception $e) {
             Log::error('Broadsheet web view error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return back()->with('error', 'Failed to generate broadsheet: ' . $e->getMessage());
@@ -618,27 +661,39 @@ class BroadsheetController extends Controller
             $paperSize       = $request->input('paper_size', null);
 
             $data = $this->buildBroadsheetData(
-                (int) $validated['schoolclassid'],
-                (int) $validated['sessionid'],
-                (int) $validated['termid'],
+                (int)$validated['schoolclassid'],
+                (int)$validated['sessionid'],
+                (int)$validated['termid'],
                 $selectedColumns
             );
-
             $data['school_logo_base64'] = $this->getLogoBase64($data['schoolInfo']);
 
-            [$customPaper, $widthPt, $heightPt, $paperSize] =
-                $this->computePdfDimensions($data, $selectedColumns, $paperSize, $orientation);
+            $subjectCount = count($data['subjects'] ?? []);
+            $perSubjCols  = $this->countActivePerSubjectCols($data['assessments'] ?? collect(), $selectedColumns);
 
+            if (!$paperSize) {
+                $total = $subjectCount * max(1, $perSubjCols);
+                $paperSize = $total <= 30 ? 'A3' : ($total <= 60 ? 'A2' : ($total <= 100 ? 'A1' : 'A0'));
+            }
+
+            [$widthPt, $heightPt] = $this->computePdfDimensions($paperSize, $subjectCount, $perSubjCols);
             $data['pdf_width_pt']   = $widthPt;
             $data['pdf_height_pt']  = $heightPt;
             $data['pdf_paper_size'] = $paperSize;
 
             $pdf = Pdf::loadView('broadsheet.pdf', $data)
-                ->setPaper($customPaper, $orientation)
-                ->setOptions($this->pdfOptions());
+                ->setPaper([0, 0, $widthPt, $heightPt], $orientation)
+                ->setOptions([
+                    'isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true,
+                    'isFontSubsettingEnabled' => true, 'defaultFont' => 'DejaVu Sans',
+                    'dpi' => 96, 'enable_css_float' => false, 'enable_javascript' => false,
+                ]);
 
-            return $pdf->stream($this->buildFilename($data));
-
+            return $pdf->stream($this->buildFilename(
+                ($data['schoolclass']->schoolclass ?? 'Class') . ' ' . ($data['schoolclass']->arm_name ?? ''),
+                $data['schoolsession']->session ?? '',
+                $data['schoolterm']->term ?? 'Term'
+            ));
         } catch (\Exception $e) {
             Log::error('Broadsheet PDF export error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
@@ -660,19 +715,18 @@ class BroadsheetController extends Controller
             ]);
 
             $selectedColumns = $request->input('selectedColumns', []);
-
             $data = $this->buildBroadsheetData(
-                $validated['schoolclassid'],
-                $validated['sessionid'],
-                $validated['termid'],
-                $selectedColumns
+                $validated['schoolclassid'], $validated['sessionid'], $validated['termid'], $selectedColumns
             );
 
             return Excel::download(
                 new \App\Exports\BroadsheetExport($data),
-                $this->buildFilename($data, 'xlsx')
+                $this->buildFilename(
+                    ($data['schoolclass']->schoolclass ?? 'Class') . ' ' . ($data['schoolclass']->arm_name ?? ''),
+                    $data['schoolsession']->session ?? '',
+                    $data['schoolterm']->term ?? 'Term', 'xlsx'
+                )
             );
-
         } catch (\Exception $e) {
             Log::error('Broadsheet Excel export error', ['error' => $e->getMessage()]);
             return back()->with('error', 'Failed to generate Excel: ' . $e->getMessage());
@@ -680,7 +734,7 @@ class BroadsheetController extends Controller
     }
 
     // =========================================================================
-    // ALL CLASSES BROADSHEET (all arms of e.g. JSS 1 combined)
+    // ALL CLASSES WEB VIEW
     // =========================================================================
 
     public function allClassesWebView(Request $request): View|JsonResponse
@@ -695,8 +749,8 @@ class BroadsheetController extends Controller
 
             $data = $this->buildAllClassesBroadsheetData(
                 $validated['classgroup'],
-                (int) $validated['sessionid'],
-                (int) $validated['termid'],
+                (int)$validated['sessionid'],
+                (int)$validated['termid'],
                 $request->input('selectedColumns', [])
             );
 
@@ -705,7 +759,6 @@ class BroadsheetController extends Controller
             $data['is_combined']        = true;
 
             return view('broadsheet.web', $data);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             return back()->withErrors($e->errors())->with('error', 'Invalid input.');
         } catch (\Exception $e) {
@@ -713,6 +766,10 @@ class BroadsheetController extends Controller
             return back()->with('error', 'Failed to generate broadsheet: ' . $e->getMessage());
         }
     }
+
+    // =========================================================================
+    // ALL CLASSES EXPORT PDF
+    // =========================================================================
 
     public function allClassesExportPdf(Request $request)
     {
@@ -735,32 +792,30 @@ class BroadsheetController extends Controller
 
             $data = $this->buildAllClassesBroadsheetData(
                 $validated['classgroup'],
-                (int) $validated['sessionid'],
-                (int) $validated['termid'],
+                (int)$validated['sessionid'],
+                (int)$validated['termid'],
                 $selectedColumns
             );
-
             $data['school_logo_base64'] = $this->getLogoBase64($data['schoolInfo']);
             $data['is_combined']        = true;
 
-            [$customPaper, $widthPt, $heightPt, $paperSize] =
-                $this->computePdfDimensions($data, $selectedColumns, $paperSize, $orientation);
-
-            $data['pdf_width_pt']   = $widthPt;
-            $data['pdf_height_pt']  = $heightPt;
-            $data['pdf_paper_size'] = $paperSize;
+            $subjectCount = count($data['subjects'] ?? []);
+            $perSubjCols  = $this->countActivePerSubjectCols($data['assessments'] ?? collect(), $selectedColumns);
+            [$widthPt, $heightPt] = $this->computePdfDimensions($paperSize, $subjectCount, $perSubjCols);
 
             $pdf = Pdf::loadView('broadsheet.pdf', $data)
-                ->setPaper($customPaper, $orientation)
-                ->setOptions($this->pdfOptions());
+                ->setPaper([0, 0, $widthPt, $heightPt], $orientation)
+                ->setOptions([
+                    'isHtml5ParserEnabled' => true, 'isRemoteEnabled' => true,
+                    'isFontSubsettingEnabled' => true, 'defaultFont' => 'DejaVu Sans',
+                    'dpi' => 96, 'enable_css_float' => false, 'enable_javascript' => false,
+                ]);
 
-            $filename = 'Broadsheet_'
-                . preg_replace('/[^A-Za-z0-9_\-]/', '_', trim($validated['classgroup'])) . '_'
-                . preg_replace('/[^A-Za-z0-9_\-]/', '_', $data['schoolsession']->session ?? '') . '_'
-                . preg_replace('/[^A-Za-z0-9_\-]/', '_', $data['schoolterm']->term ?? '') . '.pdf';
-
-            return $pdf->stream($filename);
-
+            return $pdf->stream($this->buildFilename(
+                $validated['classgroup'],
+                $data['schoolsession']->session ?? '',
+                $data['schoolterm']->term ?? ''
+            ));
         } catch (\Exception $e) {
             Log::error('All-classes PDF error', ['error' => $e->getMessage()]);
             return back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
@@ -773,9 +828,9 @@ class BroadsheetController extends Controller
 
     private function buildAllClassesBroadsheetData(
         string $classgroup,
-        int $sessionid,
-        int $termid,
-        array $selectedColumns = []
+        int    $sessionid,
+        int    $termid,
+        array  $selectedColumns = []
     ): array {
         $schoolInfo    = SchoolInformation::getActiveSchool() ?? new \stdClass();
         $schoolsession = Schoolsession::find($sessionid);
@@ -788,12 +843,18 @@ class BroadsheetController extends Controller
             ->orderBy('schoolarm.arm')
             ->get();
 
-        $emptyClass = (object)['schoolclass' => $classgroup, 'arm_name' => '(All Arms)', 'id' => null, 'arm' => null];
+        $combinedClass = (object)[
+            'schoolclass' => $classgroup,
+            'arm_name'    => $matchingClasses->isEmpty()
+                ? '(All Arms)'
+                : '(' . $matchingClasses->pluck('arm_name')->filter()->implode(', ') . ')',
+            'id'          => null,
+        ];
 
         if ($matchingClasses->isEmpty()) {
-            return array_merge(
-                $this->emptyBroadsheetResult($schoolInfo, $emptyClass, $schoolsession, $schoolterm,
-                    collect(), [], $selectedColumns),
+            return $this->emptyBroadsheetResult(
+                $schoolInfo, $combinedClass, $schoolsession, $schoolterm,
+                collect(), [], $selectedColumns,
                 ['classgroup' => $classgroup, 'arm_labels' => [], 'is_combined' => true]
             );
         }
@@ -801,16 +862,14 @@ class BroadsheetController extends Controller
         $assessments = collect();
         foreach ($matchingClasses as $cls) {
             if ($cls->classcategories->isNotEmpty()) {
-                $categoryIds = $cls->classcategories->pluck('id');
-                $assessments = Assessment::whereIn('classcategory_id', $categoryIds)->orderBy('id')->get();
+                $assessments = Assessment::whereIn(
+                    'classcategory_id', $cls->classcategories->pluck('id')
+                )->orderBy('id')->get();
                 break;
             }
         }
 
-        $classIds   = $matchingClasses->pluck('id')->toArray();
-        $armLabels  = $matchingClasses->pluck('arm_name', 'id')->toArray();
-        // Map class_id → arm_id
-        $classArmMap = $matchingClasses->pluck('arm', 'id')->toArray();
+        $classIds = $matchingClasses->pluck('id')->map(fn($v) => (int)$v)->toArray();
 
         $subjectsMap    = [];
         $subjectClasses = DB::table('subjectclass as sc')
@@ -821,33 +880,35 @@ class BroadsheetController extends Controller
             ->distinct()->get();
 
         foreach ($subjectClasses as $sc) {
-            $subjectsMap[$sc->subjectid] = [
-                'subject_id'   => $sc->subjectid,
+            $subjectsMap[(int)$sc->subjectid] = [
+                'subject_id'   => (int)$sc->subjectid,
                 'subject_name' => $sc->subject_name,
                 'subject_code' => $sc->subject_code ?? '',
             ];
         }
 
         $studentClassRecords = Studentclass::whereIn('schoolclassid', $classIds)
-            ->where('sessionid', $sessionid)->get(['studentId', 'schoolclassid']);
+            ->where('sessionid', $sessionid)
+            ->get(['studentId', 'schoolclassid']);
 
-        $studentClassMap = $studentClassRecords->pluck('schoolclassid', 'studentId')->toArray();
-        $allStudentIds   = $studentClassRecords->pluck('studentId')->toArray();
-
-        $combinedClass = (object)[
-            'schoolclass' => $classgroup,
-            'arm_name'    => '(' . $matchingClasses->pluck('arm_name')->filter()->implode(', ') . ')',
-            'id'          => null,
-            'arm'         => null,
-        ];
+        $studentClassMap = [];
+        foreach ($studentClassRecords as $r) {
+            $studentClassMap[(int)$r->studentId] = (int)$r->schoolclassid;
+        }
+        $allStudentIds = array_keys($studentClassMap);
 
         if (empty($allStudentIds)) {
-            return array_merge(
-                $this->emptyBroadsheetResult($schoolInfo, $combinedClass, $schoolsession, $schoolterm,
-                    $assessments, $subjectsMap, $selectedColumns),
-                ['classgroup' => $classgroup, 'arm_labels' => $armLabels, 'is_combined' => true]
+            return $this->emptyBroadsheetResult(
+                $schoolInfo, $combinedClass, $schoolsession, $schoolterm,
+                $assessments, $subjectsMap, $selectedColumns,
+                ['classgroup' => $classgroup,
+                 'arm_labels' => $matchingClasses->pluck('arm_name', 'id')->toArray(),
+                 'is_combined' => true]
             );
         }
+
+        // Fetch previous term BF
+        $prevCumMap = $this->fetchPreviousTermCums($allStudentIds, $sessionid, $termid, $classIds);
 
         $broadsheets = Broadsheets::whereIn('broadsheet_records.student_id', $allStudentIds)
             ->where('broadsheets.term_id', $termid)
@@ -864,24 +925,14 @@ class BroadsheetController extends Controller
                 'broadsheet_records.schoolclass_id',
                 'subject.subject as subject_name',
                 'subject.subject_code',
-                'studentRegistration.admissionNo as admissionno',
-                'studentRegistration.firstname',
-                'studentRegistration.lastname',
-                'studentRegistration.gender',
-                'studentpicture.picture',
                 'broadsheets.total',
                 'broadsheets.bf',
                 'broadsheets.cum',
                 'broadsheets.grade',
                 'broadsheets.remark',
-                'broadsheets.subject_position_class as subj_pos_class_cum',
-                'broadsheets.subject_position_class_total as subj_pos_class_total',
-                'broadsheets.arm_position as subj_pos_arm_total',
-                'broadsheets.arm_position_cum as subj_pos_arm_cum',
+                'broadsheets.subject_position_class as position',
                 'broadsheets.avg as class_average',
             ])
-            ->orderBy('studentRegistration.lastname')
-            ->orderBy('studentRegistration.firstname')
             ->get();
 
         $broadsheetIds       = $broadsheets->pluck('broadsheet_id')->unique()->toArray();
@@ -890,8 +941,8 @@ class BroadsheetController extends Controller
 
         $studentSubjectMap = [];
         foreach ($broadsheets as $row) {
-            $sid   = $row->student_id;
-            $sub   = $row->subject_id;
+            $sid = (int)$row->student_id;
+            $sub = (int)$row->subject_id;
 
             if (!isset($subjectsMap[$sub])) {
                 $subjectsMap[$sub] = [
@@ -905,148 +956,39 @@ class BroadsheetController extends Controller
             $assessmentData     = [];
             foreach ($assessments as $a) {
                 $score = $assessmentScoreRow->firstWhere('assessment_id', $a->id);
-                $assessmentData[$a->id] = $score ? (float) $score->score : 0;
+                $assessmentData[$a->id] = $score ? (float)$score->score : 0;
             }
 
-            $total     = (float) ($row->total ?? 0);
-            $bf        = (float) ($row->bf    ?? 0);
-            $cumStored = (float) ($row->cum   ?? 0);
-
-            if ($cumStored > 0) {
-                $cum = $cumStored;
-            } elseif ($bf > 0) {
-                $cum = round(($bf + $total) / 2, 1);
-            } else {
-                $cum = $total;
-            }
+            $rawTotal = (float)($row->total ?? 0);
+            $bf       = $prevCumMap[$sid][$sub] ?? (float)($row->bf ?? 0);
+            $cum      = $bf > 0 ? round(($bf + $rawTotal) / 2, 1) : $rawTotal;
 
             $studentSubjectMap[$sid][$sub] = [
-                'total'              => $total,
-                'bf'                 => $bf,
-                'cum'                => $cum,
-                'bf_is_zero'         => ($bf == 0),
-                'grade'              => $row->grade ?? '-',
-                'remark'             => $row->remark ?? '-',
-                'subj_pos_class_cum'   => $row->subj_pos_class_cum   ?? null,
-                'subj_pos_class_total' => $row->subj_pos_class_total ?? null,
-                'subj_pos_arm_total'   => $row->subj_pos_arm_total   ?? null,
-                'subj_pos_arm_cum'     => $row->subj_pos_arm_cum     ?? null,
-                'class_average'        => (float) ($row->class_average ?? 0),
-                'assessments'          => $assessmentData,
+                'total'         => $rawTotal,
+                'bf'            => $bf,
+                'cum'           => $cum,
+                'grade'         => $row->grade ?? '-',
+                'remark'        => $row->remark ?? '-',
+                'position'      => $row->position ?? '-',
+                'class_average' => (float)($row->class_average ?? 0),
+                'assessments'   => $assessmentData,
             ];
         }
 
-        $studentInfo = Studentclass::whereIn('schoolclassid', $classIds)
-            ->where('sessionid', $sessionid)
-            ->join('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
-            ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-            ->leftJoin('schoolclass', 'schoolclass.id', '=', 'studentclass.schoolclassid')
-            ->select([
-                'studentRegistration.id as id',
-                'studentRegistration.admissionNo as admissionno',
-                'studentRegistration.firstname',
-                'studentRegistration.lastname',
-                'studentRegistration.gender',
-                'studentRegistration.dateofbirth',
-                'studentpicture.picture',
-                'studentclass.schoolclassid',
-                'schoolclass.arm as arm_id',
-            ])
-            ->orderBy('studentRegistration.lastname')
-            ->orderBy('studentRegistration.firstname')
-            ->get();
+        $armLabels = $matchingClasses->pluck('arm_name', 'id')
+            ->mapWithKeys(fn ($v, $k) => [(int)$k => $v])->toArray();
 
-        $studentRows = [];
-        foreach ($studentInfo as $stu) {
-            $sid       = $stu->id;
-            $subScores = $studentSubjectMap[$sid] ?? [];
-
-            $termValues  = collect(array_values($subScores))->pluck('total')->filter(fn ($v) => $v > 0);
-            $totalTerm   = round($termValues->sum(), 1);
-            $cumValues   = collect(array_values($subScores))->pluck('cum')->filter(fn ($v) => $v > 0);
-            $totalCum    = round($cumValues->sum(), 1);
-            $numSubjects = $cumValues->count();
-
-            $gradePoints = $termValues->map(fn ($s) => $this->getGradePoint($s));
-            $gpa         = $gradePoints->count() > 0 ? round($gradePoints->avg(), 2) : 0.0;
-            $gpaGrade    = $this->getGpaGrade($gpa);
-
-            $studentClassId = $studentClassMap[$sid] ?? null;
-            $armLabel       = $studentClassId ? ($armLabels[$studentClassId] ?? '') : '';
-            $armId          = $studentClassId ? ($classArmMap[$studentClassId] ?? null) : null;
-
-            $studentRows[$sid] = [
-                'id'                 => $sid,
-                'admissionno'        => $stu->admissionno,
-                'firstname'          => $stu->firstname,
-                'lastname'           => $stu->lastname,
-                'gender'             => $stu->gender,
-                'dateofbirth'        => $stu->dateofbirth,
-                'picture'            => $stu->picture,
-                'arm'                => $armLabel,
-                'arm_id'             => $armId,
-                'schoolclassid'      => $studentClassId,
-                'subjects'           => $subScores,
-                'total_term'         => $totalTerm,
-                'total_cum'          => $totalCum,
-                'num_subjects'       => $numSubjects,
-                'class_average'      => $numSubjects > 0 ? round($totalCum / $numSubjects, 1) : 0,
-                'gpa'                => $gpa,
-                'cgpa'               => $gpa,
-                'gpa_grade'          => $gpaGrade,
-                'total_grade_points' => round($gradePoints->sum(), 1),
-                'position_class_cum'  => 0,
-                'position_class_term' => 0,
-                'position_arm_cum'    => 0,
-                'position_arm_term'   => 0,
-            ];
-        }
-
-        // Assign positions — class-wide across all arms combined, arm-wise per arm_id
-        $studentRows = $this->assignPositions($studentRows, 'total_cum',  'position_class_cum');
-        $studentRows = $this->assignPositions($studentRows, 'total_term', 'position_class_term');
-
-        // For combined broadsheet, arm positions are per-arm
-        $uniqueArmIds = collect(array_values($studentRows))->pluck('arm_id')->unique()->filter();
-        foreach ($uniqueArmIds as $armId) {
-            $studentRows = $this->assignPositionsFiltered($studentRows, 'total_cum',  'position_arm_cum',  'arm_id', $armId);
-            $studentRows = $this->assignPositionsFiltered($studentRows, 'total_term', 'position_arm_term', 'arm_id', $armId);
-        }
-
-        $subjectStats = [];
-        foreach ($subjectsMap as $sub => $subInfo) {
-            $allTotals = collect(array_values($studentRows))
-                ->map(fn ($r) => $r['subjects'][$sub]['total'] ?? 0)
-                ->filter(fn ($v) => $v > 0);
-
-            $subjectStats[$sub] = [
-                'avg'     => $allTotals->count() > 0 ? round($allTotals->avg(), 1) : 0,
-                'highest' => $allTotals->count() > 0 ? $allTotals->max() : 0,
-                'lowest'  => $allTotals->count() > 0 ? $allTotals->min() : 0,
-                'passed'  => $allTotals->filter(fn ($v) => $v >= 40)->count(),
-                'failed'  => $allTotals->filter(fn ($v) => $v < 40)->count(),
-            ];
-        }
-
-        uasort($subjectsMap, fn ($a, $b) => strcmp($a['subject_name'], $b['subject_name']));
-
-        return [
-            'schoolInfo'      => $schoolInfo,
-            'schoolclass'     => $combinedClass,
-            'schoolsession'   => $schoolsession,
-            'schoolterm'      => $schoolterm,
-            'assessments'     => $assessments,
-            'subjects'        => $subjectsMap,
-            'studentRows'     => array_values($studentRows),
-            'subjectStats'    => $subjectStats,
-            'selectedColumns' => $selectedColumns,
-            'totalStudents'   => count($studentRows),
-            'generatedAt'     => now()->format('d M Y, H:i'),
-            'classgroup'      => $classgroup,
-            'arm_labels'      => $armLabels,
-            'is_combined'     => true,
-        ];
+        return $this->assembleStudentRows(
+            $allStudentIds, $sessionid, null, $classIds,
+            $studentSubjectMap, $subjectsMap, $assessments,
+            $schoolInfo, $combinedClass, $schoolsession, $schoolterm,
+            $selectedColumns, $armLabels, $studentClassMap, true
+        );
     }
+
+    // =========================================================================
+    // AJAX: Get class groups
+    // =========================================================================
 
     public function getClassGroups(): JsonResponse
     {
@@ -1055,76 +997,43 @@ class BroadsheetController extends Controller
     }
 
     // =========================================================================
-    // SHARED PDF HELPERS
+    // PDF HELPERS
     // =========================================================================
 
-    private function computePdfDimensions(
-        array $data, array $selectedColumns, ?string $paperSize, string $orientation
-    ): array {
-        $subjectCount = count($data['subjects'] ?? []);
-
-        $perSubjCols = 0;
-        foreach ($data['assessments'] ?? [] as $a) {
-            if (empty($selectedColumns) || in_array('assessment_' . $a->id, $selectedColumns)) $perSubjCols++;
+    private function countActivePerSubjectCols($assessments, array $selectedColumns): float
+    {
+        $cols = 0.0;
+        foreach ($assessments as $a) {
+            if (empty($selectedColumns) || in_array('assessment_' . $a->id, $selectedColumns)) $cols++;
         }
-        // 8 possible per-subject columns
-        foreach (['total','bf','cum','grade','subj_pos_class_cum','subj_pos_class_total',
-                  'subj_pos_arm_cum','subj_pos_arm_total','class_average','remark'] as $col) {
-            if (empty($selectedColumns) || in_array($col, $selectedColumns)) $perSubjCols++;
+        foreach (['total', 'bf', 'cum', 'grade', 'position_term', 'position_cum', 'class_average', 'remark'] as $col) {
+            if (empty($selectedColumns) || in_array($col, $selectedColumns)) $cols++;
         }
-        foreach (['gpa','cgpa','gpa_grade','num_subjects','total_grade_points',
-                  'position_class_cum','position_class_term','position_arm_cum','position_arm_term'] as $col) {
-            if (empty($selectedColumns) || in_array($col, $selectedColumns)) $perSubjCols += 0.5;
+        foreach (['gpa', 'cgpa', 'gpa_grade', 'num_subjects', 'total_grade_points'] as $col) {
+            if (empty($selectedColumns) || in_array($col, $selectedColumns)) $cols += 0.5;
         }
-
-        $frozenWidth = 200;
-        $marginPt    = 57;
-        $neededWidth = $frozenWidth + ($subjectCount * max(1, ceil($perSubjCols)) * 22) + $marginPt;
-
-        if (!$paperSize) {
-            $totalCols = $subjectCount * max(1, (int) $perSubjCols);
-            if      ($totalCols <= 30)  $paperSize = 'A3';
-            elseif  ($totalCols <= 60)  $paperSize = 'A2';
-            elseif  ($totalCols <= 100) $paperSize = 'A1';
-            else                        $paperSize = 'A0';
-        }
-
-        $paperHeights   = ['A0'=>2384,'A1'=>1684,'A2'=>1190,'A3'=>842,'A4'=>595];
-        $standardWidths = ['A0'=>3370,'A1'=>2384,'A2'=>1684,'A3'=>1190,'A4'=>842];
-
-        $heightPt    = $paperHeights[$paperSize]    ?? 842;
-        $widthPt     = max($standardWidths[$paperSize] ?? 1190, $neededWidth + 100);
-        $customPaper = [0, 0, $widthPt, $heightPt];
-
-        return [$customPaper, $widthPt, $heightPt, $paperSize];
+        return $cols;
     }
 
-    private function pdfOptions(): array
+    private function computePdfDimensions(string $paperSize, int $subjectCount, float $perSubjCols): array
     {
+        $heights = ['A0' => 2384, 'A1' => 1684, 'A2' => 1190, 'A3' => 842,  'A4' => 595];
+        $widths  = ['A0' => 3370, 'A1' => 2384, 'A2' => 1684, 'A3' => 1190, 'A4' => 842];
+        $needed  = 200 + ($subjectCount * max(1, ceil($perSubjCols)) * 22) + 57;
         return [
-            'isHtml5ParserEnabled'    => true,
-            'isRemoteEnabled'         => true,
-            'isFontSubsettingEnabled' => true,
-            'defaultFont'             => 'DejaVu Sans',
-            'dpi'                     => 96,
-            'enable_css_float'        => false,
-            'enable_javascript'       => false,
+            max($widths[$paperSize] ?? 1190, $needed + 100),
+            $heights[$paperSize] ?? 842,
         ];
     }
 
-    private function buildFilename(array $data, string $ext = 'pdf'): string
+    private function buildFilename(string $class, string $session, string $term, string $ext = 'pdf'): string
     {
-        $className   = ($data['schoolclass']->schoolclass ?? 'Class') . ' ' . ($data['schoolclass']->arm_name ?? '');
-        $sessionName = $data['schoolsession']->session ?? '';
-        $termName    = $data['schoolterm']->term ?? 'Term';
-        return 'Broadsheet_'
-            . preg_replace('/[^A-Za-z0-9_\-]/', '_', trim($className))   . '_'
-            . preg_replace('/[^A-Za-z0-9_\-]/', '_', trim($sessionName)) . '_'
-            . preg_replace('/[^A-Za-z0-9_\-]/', '_', trim($termName))    . '.' . $ext;
+        $c = fn (string $s) => preg_replace('/[^A-Za-z0-9_\-]/', '_', trim($s));
+        return 'Broadsheet_' . $c($class) . '_' . $c($session) . '_' . $c($term) . '.' . $ext;
     }
 
     // =========================================================================
-    // HELPERS
+    // GRADE HELPERS
     // =========================================================================
 
     private function getGradePoint(float $score): float
@@ -1153,31 +1062,41 @@ class BroadsheetController extends Controller
         return 'F9';
     }
 
+    private function calculateGrade(float $score): string
+    {
+        if ($score >= 75) return 'A1';
+        if ($score >= 70) return 'B2';
+        if ($score >= 65) return 'B3';
+        if ($score >= 60) return 'C4';
+        if ($score >= 55) return 'C5';
+        if ($score >= 50) return 'C6';
+        if ($score >= 45) return 'D7';
+        if ($score >= 40) return 'E8';
+        return 'F9';
+    }
+
     private function getLogoBase64($schoolInfo): string
     {
         $placeholder = 'data:image/svg+xml;base64,' . base64_encode(
-            '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
-                <rect width="80" height="80" rx="40" fill="#1e3a5f"/>
-                <text x="40" y="45" text-anchor="middle" fill="white" font-family="Arial" font-size="14" font-weight="bold">SCH</text>
-            </svg>'
+            '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">'
+            . '<rect width="80" height="80" rx="40" fill="#1e3a5f"/>'
+            . '<text x="40" y="45" text-anchor="middle" fill="white" font-family="Arial" font-size="14" font-weight="bold">SCH</text>'
+            . '</svg>'
         );
 
         if (!$schoolInfo || empty($schoolInfo->school_logo)) return $placeholder;
 
-        $paths = [
+        foreach ([
             storage_path('app/public/' . $schoolInfo->school_logo),
             public_path('storage/' . $schoolInfo->school_logo),
             public_path($schoolInfo->school_logo),
-        ];
-
-        foreach ($paths as $path) {
+        ] as $path) {
             if (file_exists($path) && filesize($path) > 100) {
-                $mime = mime_content_type($path) ?: 'image/jpeg';
-                return 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($path));
+                return 'data:' . (mime_content_type($path) ?: 'image/jpeg')
+                    . ';base64,' . base64_encode(file_get_contents($path));
             }
         }
 
         return $placeholder;
     }
 }
-
