@@ -1210,7 +1210,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         </div>
     </div>
 </div>
-
 <script>
 (function () {
     'use strict';
@@ -1240,8 +1239,16 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         return div.innerHTML;
     }
 
-    function esc(str) { var d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
-    function nl2br(str) { if (!str) return ''; return str.replace(/\n/g, '<br>'); }
+    function esc(str) {
+        var d = document.createElement('div');
+        d.textContent = str || '';
+        return d.innerHTML;
+    }
+
+    function nl2br(str) {
+        if (!str) return '';
+        return str.replace(/\n/g, '<br>');
+    }
 
     function toast(msg, type) {
         document.querySelectorAll('.cb-toast').forEach(function(t){ t.remove(); });
@@ -1253,8 +1260,15 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         setTimeout(function(){ el.remove(); }, 5000);
     }
 
-    function getCanonical(sid, field) { var el = document.getElementById(FIELD_MAP[field] + sid); return el ? el.value : ''; }
-    function setCanonical(sid, field, value) { var el = document.getElementById(FIELD_MAP[field] + sid); if (el) el.value = value; }
+    function getCanonical(sid, field) {
+        var el = document.getElementById(FIELD_MAP[field] + sid);
+        return el ? el.value : '';
+    }
+
+    function setCanonical(sid, field, value) {
+        var el = document.getElementById(FIELD_MAP[field] + sid);
+        if (el) el.value = value;
+    }
 
     function setChipState(sid, state, text) {
         ['autosave-' + sid, 'autosave-m-' + sid].forEach(function(id){
@@ -1291,7 +1305,8 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
     function autoSaveStudent(sid) {
         var fd = new FormData();
-        fd.append('_token', CSRF); fd.append('_method', 'PATCH');
+        fd.append('_token', CSRF);
+        fd.append('_method', 'PATCH');
         fd.append('teacher_comments[' + sid + ']',              getCanonical(sid, 'teacher'));
         fd.append('guidance_comments[' + sid + ']',             getCanonical(sid, 'guidance'));
         fd.append('remarks_on_other_activities[' + sid + ']',   getCanonical(sid, 'activities'));
@@ -1299,9 +1314,25 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         var sigFile = document.getElementById('signatureFile');
         if (sigFile && sigFile.files && sigFile.files[0]) fd.append('signature', sigFile.files[0]);
         setChipState(sid, 'ac-saving', '⏳ Saving…');
-        fetch(SAVE_URL, { method:'POST', headers:{ 'Accept':'application/json', 'X-Requested-With':'XMLHttpRequest', 'X-CSRF-TOKEN':CSRF }, body:fd })
+        fetch(SAVE_URL, {
+            method:'POST',
+            headers:{
+                'Accept':'application/json',
+                'X-Requested-With':'XMLHttpRequest',
+                'X-CSRF-TOKEN':CSRF
+            },
+            body:fd
+        })
             .then(function(res){ return res.json().then(function(data){ if (!res.ok) throw new Error(data.message || ('HTTP ' + res.status)); return data; }); })
-            .then(function(data){ if (data.success){ setChipState(sid,'ac-saved','✓ Saved'); refreshCommentStatusForStudent(sid); setTimeout(function(){ setChipState(sid,'ac-idle',''); }, 3000); } else { setChipState(sid,'ac-err','✗ Failed'); } })
+            .then(function(data){
+                if (data.success){
+                    setChipState(sid,'ac-saved','✓ Saved');
+                    refreshCommentStatusForStudent(sid);
+                    setTimeout(function(){ setChipState(sid,'ac-idle',''); }, 3000);
+                } else {
+                    setChipState(sid,'ac-err','✗ Failed');
+                }
+            })
             .catch(function(err){ console.error('Autosave error sid=' + sid, err); setChipState(sid,'ac-err','✗ Error'); });
     }
 
@@ -1312,7 +1343,12 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
     function refreshCommentStatusForStudent(sid) {
         var hasVal = getCanonical(sid, 'teacher').trim() !== '';
-        ['status-' + sid, 'status-m-' + sid].forEach(function(id){ var badge = document.getElementById(id); if (!badge) return; badge.textContent = hasVal ? '✓ Commented' : '○ No comment'; badge.className = 'comment-status-dot ' + (hasVal ? 'dot-saved' : 'dot-unsaved'); });
+        ['status-' + sid, 'status-m-' + sid].forEach(function(id){
+            var badge = document.getElementById(id);
+            if (!badge) return;
+            badge.textContent = hasVal ? '✓ Commented' : '○ No comment';
+            badge.className = 'comment-status-dot ' + (hasVal ? 'dot-saved' : 'dot-unsaved');
+        });
     }
 
     function refreshCommentStatus() {
@@ -1330,7 +1366,8 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     }
 
     window.formatCommentText = function(type) {
-        var ta = document.getElementById('modalTextarea'); if (!ta) return;
+        var ta = document.getElementById('modalTextarea');
+        if (!ta) return;
         var start = ta.selectionStart, end = ta.selectionEnd, text = ta.value, sel = text.substring(start, end);
         var formatted;
         if (type === 'bold')   { formatted = '**' + (sel || 'bold text') + '**'; }
@@ -1342,9 +1379,21 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         ta.focus();
     };
 
-    function openCommentModal(sid, field, studentName, studentAdm, studentImg, analytics) {
-        currentModalSid = sid; currentModalField = field;
-        if (!commentModal) commentModal = new bootstrap.Modal(document.getElementById('cbCommentModal'));
+    // Make openCommentModal available globally
+    window.openCommentModal = function(sid, field, studentName, studentAdm, studentImg, analytics) {
+        console.log('openCommentModal called:', sid, field, studentName);
+        currentModalSid = sid;
+        currentModalField = field;
+
+        if (!commentModal) {
+            var modalElement = document.getElementById('cbCommentModal');
+            if (modalElement && typeof bootstrap !== 'undefined') {
+                commentModal = new bootstrap.Modal(modalElement);
+            } else {
+                console.error('Bootstrap modal not available');
+                return;
+            }
+        }
 
         document.getElementById('modalStudentName').textContent = studentName;
         document.getElementById('modalStudentMeta').innerHTML = '<i class="ri-id-card-line me-1"></i>' + esc(studentAdm || '');
@@ -1357,12 +1406,15 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             avatarDiv.innerHTML = '<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;">' + esc(initials) + '</div>';
         }
 
-        document.getElementById('modalTermTotal').textContent = parseFloat(analytics.term_total || 0).toFixed(1);
-        document.getElementById('modalCumTotal').textContent  = parseFloat(analytics.cum_total  || 0).toFixed(1);
-        document.getElementById('modalTermPct').textContent   = parseFloat(analytics.term_percentage || 0).toFixed(1) + '%';
-        document.getElementById('modalCumPct').textContent    = parseFloat(analytics.cum_percentage  || 0).toFixed(1) + '%';
-        document.getElementById('modalObtainable').textContent = analytics.total_obtainable || 0;
-        document.getElementById('modalSubjects').textContent   = analytics.subject_count    || 0;
+        // Parse analytics if it's a string
+        var analyticsData = typeof analytics === 'string' ? JSON.parse(analytics) : analytics;
+
+        document.getElementById('modalTermTotal').textContent = parseFloat(analyticsData.term_total || 0).toFixed(1);
+        document.getElementById('modalCumTotal').textContent  = parseFloat(analyticsData.cum_total || 0).toFixed(1);
+        document.getElementById('modalTermPct').textContent   = parseFloat(analyticsData.term_percentage || 0).toFixed(1) + '%';
+        document.getElementById('modalCumPct').textContent    = parseFloat(analyticsData.cum_percentage || 0).toFixed(1) + '%';
+        document.getElementById('modalObtainable').textContent = analyticsData.total_obtainable || 0;
+        document.getElementById('modalSubjects').textContent   = analyticsData.subject_count || 0;
 
         var posEl = document.getElementById('modalPosition');
         if (posEl) {
@@ -1378,8 +1430,9 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         document.getElementById('pastCommentsPanel').style.display = 'none';
         pastCommentRegistry = [];
         document.getElementById('pastCommentCount').textContent = '0';
+
         commentModal.show();
-    }
+    };
 
     async function loadPastComments() {
         if (!currentModalSid) return;
@@ -1387,7 +1440,9 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         listEl.innerHTML = '<div class="text-center py-4"><i class="ri-loader-4-line ri-spin" style="font-size:24px;color:var(--cb-teal);"></i><br><span class="text-muted mt-2 d-block">Loading past comments…</span></div>';
         document.getElementById('pastCommentsPanel').style.display = 'block';
         try {
-            var res = await fetch('/classbroadsheet/past-comments/' + currentModalSid, { headers:{ 'Accept':'application/json', 'X-Requested-With':'XMLHttpRequest' } });
+            var res = await fetch('/classbroadsheet/past-comments/' + currentModalSid, {
+                headers:{ 'Accept':'application/json', 'X-Requested-With':'XMLHttpRequest' }
+            });
             if (!res.ok) throw new Error('HTTP ' + res.status);
             var data = await res.json();
             if (data.success && data.data && data.data.length > 0) {
@@ -1409,7 +1464,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                         staffAvatarHtml = '<div style="width:32px;height:32px;border-radius:50%;background:' + bc + ';display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:12px;">' + staffInitials + '</div>';
                     }
                     var snippet = comment.comment_text.length > 200 ? comment.comment_text.substring(0,200) + '…' : comment.comment_text;
-                    commentsHtml += '<div class="past-comment-item" style="border-left:4px solid ' + bc + ';background:#fff;padding:16px;margin-bottom:14px;border-radius:12px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.05);" onclick="usePastComment(' + idx + ')">';
+                    commentsHtml += '<div class="past-comment-item" style="border-left:4px solid ' + bc + ';background:#fff;padding:16px;margin-bottom:14px;border-radius:12px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,.05);" onclick="window.usePastComment(' + idx + ')">';
                     commentsHtml += '<div class="d-flex justify-content-between align-items-start mb-2"><span class="badge" style="background:' + bc + ';color:white;"><i class="' + bi + ' me-1"></i>' + comment.comment_type + '</span><small class="text-muted"><i class="ri-calendar-line me-1"></i>' + (comment.date||'—') + '</small></div>';
                     commentsHtml += '<div class="d-flex align-items-center gap-2 mb-2"><div style="width:32px;height:32px;border-radius:50%;overflow:hidden;">' + staffAvatarHtml + '</div><div><div class="small fw-semibold">' + esc(comment.staff_name) + '</div><div class="small text-muted">' + esc(comment.session) + ' · ' + esc(comment.term) + '</div></div></div>';
                     commentsHtml += '<div class="small" style="color:#334155;line-height:1.6;background:#fefce8;padding:10px 12px;border-radius:8px;border-left:3px solid ' + bc + ';">' + esc(snippet) + '</div>';
@@ -1463,7 +1518,8 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     function getPctClass(p) { return p < 40 ? 'score-red' : p < 70 ? 'score-amber' : 'score-green'; }
 
     function openGradePop(sid, name, triggerEl) {
-        var an = SA[sid]; if (!an) { toast('No data found for this student.', 'error'); return; }
+        var an = SA[sid];
+        if (!an) { toast('No data found for this student.', 'error'); return; }
         var gpop = document.getElementById('cbGradePopup'), gpopBody = document.getElementById('gpopBody'), gpopTitle = document.getElementById('gpopTitle');
         if (!gpop) return;
         gpopTitle.innerHTML = '<i class="ri-bar-chart-line me-1"></i>' + esc(name) + "'s Grades";
@@ -1484,7 +1540,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                 rows += '<tr><td style="text-align:left;font-weight:600;">' + esc(g.subject) + '</td><td><div class="score-pair"><div class="score-cell term"><span class="score-lbl" style="color:#0891b2;">T</span><span class="' + tC + '">' + tsDisplay + '</span></div><div class="score-cell cum"><span class="score-lbl" style="color:var(--cb-navy);">C</span><span class="' + cC + '">' + csDisplay + '</span></div></div></td><td><div style="display:flex;flex-direction:column;align-items:center;gap:3px;">' + termGradeBadge + cumGradeBadge + '</div></td></tr>';
             }
         } else {
-            rows = '<tr><td colspan="3" class="text-center text-muted py-3">No subject records available</td></tr>';
+            rows = '<tr><td colspan="3" class="text-center text-muted py-3">No subject records available</td><td></td><td></td></tr>';
         }
         var tPct = parseFloat(an.term_percentage || 0), cPct = parseFloat(an.cum_percentage || 0);
         var pos = PM[sid] || 0;
@@ -1510,17 +1566,38 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
     function doSaveAll() {
         var fd = new FormData(document.getElementById('commentsForm'));
-        fd.append('_token', CSRF); fd.append('_method', 'PATCH');
+        fd.append('_token', CSRF);
+        fd.append('_method', 'PATCH');
         var sigFile = document.getElementById('signatureFile');
         if (sigFile && sigFile.files && sigFile.files[0]) fd.append('signature', sigFile.files[0]);
         var saveBtn = document.getElementById('saveBtn'), savingText = document.getElementById('savingText'), origHtml = saveBtn.innerHTML;
-        saveBtn.disabled = true; saveBtn.innerHTML = '<i class="ri-loader-4-line spin"></i> Saving…';
+        saveBtn.disabled = true;
+        saveBtn.innerHTML = '<i class="ri-loader-4-line spin"></i> Saving…';
         if (savingText) savingText.style.display = 'inline-flex';
-        fetch(SAVE_URL, { method:'POST', headers:{ 'Accept':'application/json', 'X-Requested-With':'XMLHttpRequest', 'X-CSRF-TOKEN':CSRF }, body:fd })
+        fetch(SAVE_URL, {
+            method:'POST',
+            headers:{
+                'Accept':'application/json',
+                'X-Requested-With':'XMLHttpRequest',
+                'X-CSRF-TOKEN':CSRF
+            },
+            body:fd
+        })
             .then(function(res){ return res.json(); })
-            .then(function(data){ if (data.success){ toast(data.message || 'Saved successfully!', 'success'); refreshCommentStatus(); } else { toast(data.message || 'Save failed.', 'error'); } })
+            .then(function(data){
+                if (data.success){
+                    toast(data.message || 'Saved successfully!', 'success');
+                    refreshCommentStatus();
+                } else {
+                    toast(data.message || 'Save failed.', 'error');
+                }
+            })
             .catch(function(err){ console.error(err); toast('Error: ' + err.message, 'error'); })
-            .finally(function(){ saveBtn.disabled = false; saveBtn.innerHTML = origHtml; if (savingText) savingText.style.display = 'none'; });
+            .finally(function(){
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = origHtml;
+                if (savingText) savingText.style.display = 'none';
+            });
     }
 
     function applyBarFinalColors() {
@@ -1596,7 +1673,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         if (!shown.length) { list.innerHTML = '<div class="tpl-no-results"><i class="ri-inbox-line" style="font-size:36px;color:#cbd5e1;display:block;margin-bottom:8px;"></i>No matching templates</div>'; return; }
         list.innerHTML = shown.map(function(t) {
             var idx = TEMPLATES.indexOf(t);
-            return '<div class="tpl-item" onclick="applyTemplate(' + idx + ')"><span class="tpl-item-label">' + esc(t.label) + '</span><span class="tpl-item-text">' + esc(t.text.substring(0,90) + (t.text.length > 90 ? '…' : '')) + '</span></div>';
+            return '<div class="tpl-item" onclick="window.applyTemplate(' + idx + ')"><span class="tpl-item-label">' + esc(t.label) + '</span><span class="tpl-item-text">' + esc(t.text.substring(0,90) + (t.text.length > 90 ? '…' : '')) + '</span></div>';
         }).join('');
     }
 
@@ -1615,13 +1692,15 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     };
 
     function openTplPicker() {
-        renderTemplates('', 'all'); tplActiveCategory = 'all';
+        renderTemplates('', 'all');
+        tplActiveCategory = 'all';
         document.querySelectorAll('.tpl-cat-btn').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-cat') === 'all'); });
         document.getElementById('tplSearchInput').value = '';
         var picker   = document.getElementById('tplPicker');
         var backdrop = document.getElementById('tplBackdrop');
         if (!picker) return;
-        picker.classList.add('is-open'); backdrop.style.display = 'block';
+        picker.classList.add('is-open');
+        backdrop.style.display = 'block';
         var btn = document.getElementById('btnOpenTemplates');
         if (btn) {
             var rect = btn.getBoundingClientRect();
@@ -1630,7 +1709,11 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             if (top + ph > window.innerHeight - 8) top = Math.max(8, rect.top - ph - 8);
             if (left + pw > window.innerWidth - 8)  left = window.innerWidth - pw - 8;
             if (left < 8) left = 8;
-            picker.style.position = 'fixed'; picker.style.top = top + 'px'; picker.style.left = left + 'px'; picker.style.maxHeight = ph + 'px'; picker.style.zIndex = '999999';
+            picker.style.position = 'fixed';
+            picker.style.top = top + 'px';
+            picker.style.left = left + 'px';
+            picker.style.maxHeight = ph + 'px';
+            picker.style.zIndex = '999999';
         }
     }
 
@@ -1641,7 +1724,16 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         if (backdrop) backdrop.style.display = 'none';
     }
 
+    function onInputChange(e) {
+        var inp = e.target, sid = inp.getAttribute('data-sid'), field = inp.getAttribute('data-field');
+        if (!sid || !field) return;
+        var val = inp.value;
+        setCanonical(sid, field, val);
+        scheduleAutosave(sid);
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
+        // Move popups to body
         var gpop = document.getElementById('cbGradePopup'), backdrop = document.getElementById('cbPopupBackdrop');
         if (gpop && gpop.parentNode !== document.body) document.body.appendChild(gpop);
         if (backdrop && backdrop.parentNode !== document.body) document.body.appendChild(backdrop);
@@ -1657,9 +1749,13 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             chip.addEventListener('click', function() {
                 var key = this.getAttribute('data-colkey');
                 var show = this.classList.toggle('active') ? '' : 'none';
-                document.querySelectorAll('.cbcol-' + key).forEach(function(el) { el.style.display = show; });
+                document.querySelectorAll('.cbcol-' + key).forEach(function(el) {
+                    if (el) el.style.display = show;
+                });
                 var mobileClass = { guidance:'.mobile-col-guidance', activities:'.mobile-col-activities', absence:'.mobile-col-absence' }[key];
-                if (mobileClass) document.querySelectorAll(mobileClass).forEach(function(el) { el.style.display = show; });
+                if (mobileClass) document.querySelectorAll(mobileClass).forEach(function(el) {
+                    if (el) el.style.display = show;
+                });
             });
         });
 
@@ -1669,14 +1765,16 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             searchEl.addEventListener('input', function() {
                 var q = this.value.toLowerCase().trim();
                 document.querySelectorAll('.cb-student-row').forEach(function(row) {
+                    if (!row) return;
                     row.style.display = (!q || (row.getAttribute('data-searchkey') || '').toLowerCase().includes(q)) ? '' : 'none';
                 });
             });
         }
 
-        // Image zoom
+        // Image zoom modal
         var imgModal = null, imgModalEl = document.getElementById('cbImgZoomModal');
         if (imgModalEl && typeof bootstrap !== 'undefined') imgModal = new bootstrap.Modal(imgModalEl);
+
         document.addEventListener('click', function(e) {
             var trigger = e.target.closest('.cb-avatar-trigger');
             if (!trigger) return;
@@ -1693,46 +1791,78 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             if (imgUrl && imgUrl !== 'null' && imgUrl !== '') {
                 zoomedImg.src = imgUrl;
             } else {
-                var canvas = document.createElement('canvas'); canvas.width = canvas.height = 400;
+                var canvas = document.createElement('canvas');
+                canvas.width = canvas.height = 400;
                 var ctx = canvas.getContext('2d');
-                var grad = ctx.createLinearGradient(0,0,400,400); grad.addColorStop(0,'#0d9488'); grad.addColorStop(1,'#0ea5e9');
-                ctx.fillStyle = grad; ctx.fillRect(0,0,400,400);
-                ctx.fillStyle = '#fff'; ctx.font = 'bold 150px "DM Sans",Arial,sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                var grad = ctx.createLinearGradient(0,0,400,400);
+                grad.addColorStop(0,'#0d9488');
+                grad.addColorStop(1,'#0ea5e9');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0,0,400,400);
+                ctx.fillStyle = '#fff';
+                ctx.font = 'bold 150px "DM Sans",Arial,sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
                 ctx.fillText(initials.substring(0,2).toUpperCase(), 200, 200);
                 zoomedImg.src = canvas.toDataURL();
             }
             if (imgModal) imgModal.show();
         });
 
-        // Grade popup
+        // Grade popup close
         var gpopCloseBtn = document.getElementById('gpopCloseBtn');
         if (gpopCloseBtn) gpopCloseBtn.addEventListener('click', closeGradePop);
-        document.addEventListener('click', function(e) { var bd = document.getElementById('cbPopupBackdrop'); if (bd && e.target === bd) closeGradePop(); });
-        document.addEventListener('keydown', function(e){ if (e.key === 'Escape') { closeGradePop(); closeTplPicker(); } });
+        document.addEventListener('click', function(e) {
+            var bd = document.getElementById('cbPopupBackdrop');
+            if (bd && e.target === bd) closeGradePop();
+        });
+        document.addEventListener('keydown', function(e){
+            if (e.key === 'Escape') {
+                closeGradePop();
+                closeTplPicker();
+            }
+        });
+
+        // Grade trigger button
         document.addEventListener('click', function(e) {
             var btn = e.target.closest('.grade-trigger-btn');
             if (!btn) return;
-            e.stopPropagation(); e.preventDefault();
+            e.stopPropagation();
+            e.preventDefault();
             var sid = btn.getAttribute('data-sid'), name = btn.getAttribute('data-sname');
             if (!sid) return;
             var gpop = document.getElementById('cbGradePopup');
-            if (gpop && gpop.classList.contains('is-open') && gpop.dataset.activeSid === sid) { closeGradePop(); return; }
+            if (gpop && gpop.classList.contains('is-open') && gpop.dataset.activeSid === sid) {
+                closeGradePop();
+                return;
+            }
             closeGradePop();
             setTimeout(function(){ openGradePop(sid, name, btn); }, 16);
         });
 
         // Absence inputs
-        document.querySelectorAll('.desk-absence, .mob-absence').forEach(function(inp){ inp.addEventListener('input', onInputChange); });
+        document.querySelectorAll('.desk-absence, .mob-absence').forEach(function(inp){
+            if (inp) inp.addEventListener('input', onInputChange);
+        });
 
         // Template picker
         var btnOpenTemplates = document.getElementById('btnOpenTemplates');
-        if (btnOpenTemplates) btnOpenTemplates.addEventListener('click', function(e){ e.stopPropagation(); openTplPicker(); });
+        if (btnOpenTemplates) {
+            btnOpenTemplates.addEventListener('click', function(e){
+                e.stopPropagation();
+                openTplPicker();
+            });
+        }
         var tplCloseBtn = document.getElementById('tplCloseBtn');
         if (tplCloseBtn) tplCloseBtn.addEventListener('click', closeTplPicker);
-        document.getElementById('tplBackdrop').addEventListener('click', closeTplPicker);
-        document.getElementById('tplSearchInput').addEventListener('input', function(){
-            renderTemplates(this.value, tplActiveCategory);
-        });
+        var tplBackdrop = document.getElementById('tplBackdrop');
+        if (tplBackdrop) tplBackdrop.addEventListener('click', closeTplPicker);
+        var tplSearchInput = document.getElementById('tplSearchInput');
+        if (tplSearchInput) {
+            tplSearchInput.addEventListener('input', function(){
+                renderTemplates(this.value, tplActiveCategory);
+            });
+        }
         document.querySelectorAll('.tpl-cat-btn').forEach(function(btn){
             btn.addEventListener('click', function(){
                 tplActiveCategory = this.getAttribute('data-cat');
@@ -1764,6 +1894,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
             var topCumAvg = -1, topCumName = '—', topTermAvg = -1, topTermName = '—';
             document.querySelectorAll('.cb-student-row[data-student-id]').forEach(function(row) {
+                if (!row) return;
                 var sid = row.getAttribute('data-student-id');
                 if (!sid || !SA[sid]) return;
                 var cumPct = SA[sid].cum_percentage || 0;
@@ -1771,21 +1902,17 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                 if (cumPct > topCumAvg) { topCumAvg = cumPct; topCumName = row.getAttribute('data-student-name') || ''; }
                 if (termPct > topTermAvg) { topTermAvg = termPct; topTermName = row.getAttribute('data-student-name') || ''; }
             });
-            var topEl = document.getElementById('statTop'); if (topEl) topEl.textContent = topCumName;
-            var termTopSpan = document.getElementById('statTermTop'); if (termTopSpan) termTopSpan.textContent = topTermName;
+            var topEl = document.getElementById('statTop');
+            if (topEl) topEl.textContent = topCumName;
+            var termTopSpan = document.getElementById('statTermTop');
+            if (termTopSpan) termTopSpan.textContent = topTermName;
         })();
 
         refreshCommentStatus();
+
+        console.log('DOM fully loaded and modals initialized');
     });
-
-    function onInputChange(e) {
-        var inp = e.target, sid = inp.getAttribute('data-sid'), field = inp.getAttribute('data-field');
-        if (!sid || !field) return;
-        var val = inp.value;
-        setCanonical(sid, field, val);
-        scheduleAutosave(sid);
-    }
-
 })();
 </script>
 @endsection
+
