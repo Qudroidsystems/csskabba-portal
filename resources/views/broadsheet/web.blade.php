@@ -971,29 +971,76 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 </div>{{-- /main-content --}}
 
 <script>
-(function() {
+(function () {
     'use strict';
 
+    /* ─────────────────────────────────────────
+       GRADE COLOR MAP  (pure JS — no PHP arrows)
+    ───────────────────────────────────────── */
     var GRADE_COLORS = {
-        'A1':'grade-a1','B2':'grade-b2','B3':'grade-b3',
-        'C4':'grade-c4','C5'=>'grade-c5','C6':'grade-c6',
-        'D7':'grade-d7','E8':'grade-e8','F9':'grade-f9','-':''
+        'A1': 'grade-a1',
+        'B2': 'grade-b2',
+        'B3': 'grade-b3',
+        'C4': 'grade-c4',
+        'C5': 'grade-c5',
+        'C6': 'grade-c6',
+        'D7': 'grade-d7',
+        'E8': 'grade-e8',
+        'F9': 'grade-f9',
+        '-':  ''
     };
 
-    /* ── Utilities ── */
-    function esc(str) { var d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
+    /* ─────────────────────────────────────────
+       UTILITIES
+    ───────────────────────────────────────── */
+    function esc(str) {
+        var d = document.createElement('div');
+        d.textContent = str || '';
+        return d.innerHTML;
+    }
+
+    function ordinal(n) {
+        n = parseInt(n, 10);
+        if (!n) return '—';
+        var s = ['th','st','nd','rd'];
+        var v = n % 100;
+        return n + (s[(v - 20) % 10] || s[v] || s[0]);
+    }
+
+    function getPctClass(p) {
+        return p < 40 ? 'score-red' : (p < 70 ? 'score-amber' : 'score-green');
+    }
 
     function toast(msg, type) {
-        document.querySelectorAll('.cb-toast').forEach(function(t){ t.remove(); });
-        var icons = { success:'checkbox-circle-fill', error:'error-warning-fill', info:'information-fill', warning:'alert-fill' };
+        document.querySelectorAll('.cb-toast').forEach(function (t) { t.remove(); });
+        var icons = {
+            success: 'checkbox-circle-fill',
+            error:   'error-warning-fill',
+            info:    'information-fill',
+            warning: 'alert-fill'
+        };
         var el = document.createElement('div');
         el.className = 'cb-toast cb-toast-' + (type || 'info');
         el.innerHTML = '<i class="ri-' + (icons[type] || icons.info) + '" style="font-size:18px;flex-shrink:0;"></i> ' + esc(msg);
         document.body.appendChild(el);
-        setTimeout(function(){ el.remove(); }, 4000);
+        setTimeout(function () { el.remove(); }, 4000);
     }
 
-    /* ── Grade popup: close ── */
+    function animateNumber(elId, target, suffix, decimals) {
+        var el = document.getElementById(elId);
+        if (!el) return;
+        var steps = 60, step = 0, current = 0, inc = target / steps;
+        var timer = setInterval(function () {
+            step++;
+            current += inc;
+            if (step >= steps) { current = target; clearInterval(timer); }
+            el.textContent = current.toFixed(decimals || 0) + (suffix || '');
+        }, 800 / steps);
+    }
+
+    /* ─────────────────────────────────────────
+       POPUP: CLOSE
+    ───────────────────────────────────────── */
     function closeGradePop() {
         var gpop     = document.getElementById('cbGradePopup');
         var backdrop = document.getElementById('cbPopupBackdrop');
@@ -1001,16 +1048,16 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         if (backdrop) backdrop.style.display = 'none';
     }
 
-    function getPctClass(p) { return p < 40 ? 'score-red' : (p < 70 ? 'score-amber' : 'score-green'); }
-
-    function ordinal(n) {
-        return n + (n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th');
-    }
-
-    /* ── Grade popup: open ── */
+    /* ─────────────────────────────────────────
+       POPUP: OPEN
+    ───────────────────────────────────────── */
     function openGradePop(btn) {
-        var sid          = btn.getAttribute('data-sid');
-        var name         = btn.getAttribute('data-sname');
+        var gpop = document.getElementById('cbGradePopup');
+        if (!gpop) return;
+
+        /* — read all data attributes — */
+        var sid          = btn.getAttribute('data-sid')           || '';
+        var name         = btn.getAttribute('data-sname')         || '';
         var adm          = btn.getAttribute('data-sadm')          || '';
         var termObtained = parseFloat(btn.getAttribute('data-term-obtained') || 0);
         var cumObtained  = parseFloat(btn.getAttribute('data-cum-obtained')  || 0);
@@ -1018,291 +1065,359 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         var termPct      = parseFloat(btn.getAttribute('data-term-pct')      || 0);
         var cumPct       = parseFloat(btn.getAttribute('data-cum-pct')       || 0);
         var gpa          = parseFloat(btn.getAttribute('data-gpa')           || 0);
-        var gpaGrade     = btn.getAttribute('data-gpa-grade') || '—';
-        var posCum       = parseInt(btn.getAttribute('data-pos-cum')   || 0);
-        var posTerm      = parseInt(btn.getAttribute('data-pos-term')  || 0);
-        var posTotal     = parseInt(btn.getAttribute('data-pos-total') || 0);
+        var gpaGrade     = btn.getAttribute('data-gpa-grade')  || '—';
+        var posCum       = parseInt(btn.getAttribute('data-pos-cum')   || 0, 10);
+        var posTerm      = parseInt(btn.getAttribute('data-pos-term')  || 0, 10);
+        var posTotal     = parseInt(btn.getAttribute('data-pos-total') || 0, 10);
         var hasBF        = btn.getAttribute('data-has-bf') === 'true';
         var grades       = [];
-        try { grades = JSON.parse(btn.getAttribute('data-grades') || '[]'); } catch(e) {}
+        try { grades = JSON.parse(btn.getAttribute('data-grades') || '[]'); } catch (e) {}
 
-        var gpop = document.getElementById('cbGradePopup');
-        if (!gpop) return;
-
+        /* — header title — */
         document.getElementById('gpopTitle').innerHTML =
-            '<i class="ri-bar-chart-line me-1"></i>' + esc(name) + "'s Performance";
+            '<i class="ri-bar-chart-line me-1"></i>' + esc(name) + '\'s Performance';
 
-        var posCumDisplay  = posCum  ? (ordinal(posCum)  + ' / ' + posTotal) : '—';
-        var posTermDisplay = posTerm ? (ordinal(posTerm) + ' / ' + posTotal) : '—';
+        /* — position strings — */
+        var posCumStr  = posCum  ? (ordinal(posCum)  + ' / ' + posTotal) : '—';
+        var posTermStr = posTerm ? (ordinal(posTerm) + ' / ' + posTotal) : '—';
 
+        /* — bar colours — */
         var termColor = termPct < 40 ? '#f43f5e' : (termPct < 70 ? '#f59e0b' : '#22c55e');
         var cumColor  = cumPct  < 40 ? '#f43f5e' : (cumPct  < 70 ? '#f59e0b' : '#22c55e');
 
-        /* ── FIX: distinguish cum vs term totals and positions clearly ── */
-        /* When no BF exists, cum = term (mathematically correct for first term).
-           We show a clear note instead of two identical-looking numbers. */
-        var noBFNote = !hasBF
-            ? '<span style="font-size:9px;opacity:.65;display:block;font-weight:400;margin-top:2px;">= Term total (no BF yet)</span>'
-            : '';
-        var cumValDisplay = hasBF
-            ? cumObtained.toFixed(1)
-            : cumObtained.toFixed(1);
+        /* — no-BF note — */
+        var noBFNote   = !hasBF ? '<span style="font-size:9px;opacity:.65;display:block;font-weight:400;margin-top:2px;">= Term (no BF yet)</span>' : '';
+        var noBFBanner = !hasBF ? '<span style="font-size:10px;color:#92400e;font-weight:600;margin-left:auto;background:#fef3c7;padding:2px 8px;border-radius:6px;">First term — no BF on record</span>' : '';
+        var posNote    = (!hasBF && posCum === posTerm) ? '<div style="font-size:9px;color:#64748b;font-weight:400;margin-top:2px;">Equal — no BF this term</div>' : '';
 
-        /* Positions note: identical when no BF because totals are equal */
-        var posNote = (!hasBF && posCum === posTerm)
-            ? '<div style="font-size:9px;color:rgba(255,255,255,.55);margin-top:3px;font-weight:400;">Same — no BF this term</div>'
-            : '';
-
-        /* ── Grades table rows (now includes per-subject positions) ── */
+        /* — subject rows — */
         var rows = '';
         if (grades.length) {
-            grades.forEach(function(g) {
-                var tC = (g.term_score > 0 && g.term_score < 50) ? 'score-red' : (g.term_score >= 70 ? 'score-green' : (g.term_score > 0 ? 'score-amber' : ''));
-                var cC = (g.cum_score  > 0 && g.cum_score  < 50) ? 'score-red' : (g.cum_score  >= 70 ? 'score-green' : (g.cum_score  > 0 ? 'score-amber' : ''));
-                var grBadge = g.grade && g.grade !== '-'
-                    ? '<span class="badge ' + (GRADE_COLORS[g.grade]||'') + '" style="font-size:9px;border-radius:6px;">' + esc(g.grade) + '</span>'
-                    : '<span style="color:#94a3b8;font-size:11px;">—</span>';
-                var tS = (g.term_score && g.term_score > 0) ? parseFloat(g.term_score).toFixed(1) : '—';
-                var cS = (g.cum_score  && g.cum_score  > 0) ? parseFloat(g.cum_score).toFixed(1)  : '—';
-                var bS = (g.bf_score   && g.bf_score   > 0) ? parseFloat(g.bf_score).toFixed(1)   : '—';
-
-                /* Per-subject positions */
-                var subPosTStr = g.pos_class_total ? ('<span style="background:#fef3c7;color:#92400e;border-radius:3px;padding:1px 4px;font-size:9px;font-weight:700;">T:' + g.pos_class_total + '</span>') : '';
-                var subPosCStr = g.pos_class_cum   ? ('<span style="background:#dbeafe;color:#1e40af;border-radius:3px;padding:1px 4px;font-size:9px;font-weight:700;">C:' + g.pos_class_cum + '</span>') : '';
-                var subPosCell = (subPosTStr || subPosCStr)
-                    ? '<div style="display:flex;flex-direction:column;gap:2px;align-items:center;">' + subPosTStr + subPosCStr + '</div>'
+            grades.forEach(function (g) {
+                var tC = g.term_score > 0 ? (g.term_score < 50 ? 'score-red' : (g.term_score >= 70 ? 'score-green' : 'score-amber')) : '';
+                var cC = g.cum_score  > 0 ? (g.cum_score  < 50 ? 'score-red' : (g.cum_score  >= 70 ? 'score-green' : 'score-amber')) : '';
+                var grBadge = (g.grade && g.grade !== '-')
+                    ? '<span class="badge ' + (GRADE_COLORS[g.grade] || '') + '" style="font-size:9px;border-radius:6px;">' + esc(g.grade) + '</span>'
+                    : '<span style="color:#94a3b8;">—</span>';
+                var tS = g.term_score > 0 ? parseFloat(g.term_score).toFixed(1) : '—';
+                var cS = g.cum_score  > 0 ? parseFloat(g.cum_score).toFixed(1)  : '—';
+                var bS = g.bf_score   > 0 ? parseFloat(g.bf_score).toFixed(1)   : '—';
+                var subPosTHTML = g.pos_class_total
+                    ? '<span style="background:#fef3c7;color:#92400e;border-radius:3px;padding:1px 4px;font-size:9px;font-weight:700;">T:' + g.pos_class_total + '</span>' : '';
+                var subPosCHTML = g.pos_class_cum
+                    ? '<span style="background:#dbeafe;color:#1e40af;border-radius:3px;padding:1px 4px;font-size:9px;font-weight:700;">C:' + g.pos_class_cum + '</span>' : '';
+                var subPos = (subPosTHTML || subPosCHTML)
+                    ? '<div style="display:flex;flex-direction:column;gap:2px;align-items:center;">' + subPosTHTML + subPosCHTML + '</div>'
                     : '<span style="color:#94a3b8;">—</span>';
 
-                rows += '<tr>';
-                rows += '<td style="text-align:left;font-weight:600;padding-left:12px;">' + esc(g.subject) + '</td>';
-                rows += '<td><div class="score-pair">'
-                      + '<div class="score-cell-inner term"><span style="font-size:8px;opacity:.7;">T</span><span class="' + tC + '">' + tS + '</span></div>'
-                      + '<div class="score-cell-inner cum"><span style="font-size:8px;opacity:.7;">BF</span><span>' + bS + '</span></div>'
-                      + '</div></td>';
-                rows += '<td><div class="score-cell-inner cum" style="justify-content:center;"><span style="font-size:8px;opacity:.7;">C</span><span class="' + cC + '">' + cS + '</span></div></td>';
-                rows += '<td>' + grBadge + '</td>';
-                rows += '<td>' + subPosCell + '</td>';
-                rows += '</tr>';
+                rows += '<tr>'
+                      + '<td style="text-align:left;font-weight:600;padding-left:12px;">' + esc(g.subject) + '</td>'
+                      + '<td><div class="score-pair">'
+                      +   '<div class="score-cell-inner term"><span style="font-size:8px;opacity:.7;">T</span><span class="' + tC + '">' + tS + '</span></div>'
+                      +   '<div class="score-cell-inner cum"><span style="font-size:8px;opacity:.7;">BF</span><span>' + bS + '</span></div>'
+                      + '</div></td>'
+                      + '<td><div class="score-cell-inner cum" style="justify-content:center;"><span style="font-size:8px;opacity:.7;">C</span><span class="' + cC + '">' + cS + '</span></div></td>'
+                      + '<td>' + grBadge + '</td>'
+                      + '<td>' + subPos + '</td>'
+                      + '</tr>';
             });
         } else {
-            rows = '<tr><td colspan="5" class="text-center text-muted py-3">No subject records</td></tr>';
+            rows = '<tr><td colspan="5" style="text-align:center;padding:16px;color:#94a3b8;">No subject records</td></tr>';
         }
 
+        /* — build popup body — */
         var body = document.getElementById('gpopBody');
         body.innerHTML =
-            /* Performance strip */
+            /* performance strip */
             '<div class="gpop-perf-strip">'
-          + '<div style="font-size:11px;font-weight:700;opacity:.8;margin-bottom:6px;"><i class="ri-dashboard-line me-1"></i>Performance Snapshot</div>'
-          + '<div class="gpop-perf-grid">'
-          + '<div class="gpop-perf-item"><div class="gpop-perf-lbl">Adm. No</div><div class="gpop-perf-val" style="font-size:12px;">' + esc(adm) + '</div></div>'
-          + '<div class="gpop-perf-item"><div class="gpop-perf-lbl">Term Total</div><div class="gpop-perf-val">' + termObtained.toFixed(1) + '</div></div>'
-          /* FIX: cum total with BF note when applicable */
-          + '<div class="gpop-perf-item"><div class="gpop-perf-lbl">Cum Total</div><div class="gpop-perf-val ' + (hasBF ? 'score-green' : '') + '">' + cumValDisplay + noBFNote + '</div></div>'
-          + '<div class="gpop-perf-item"><div class="gpop-perf-lbl">Obtainable</div><div class="gpop-perf-val">' + obtainable + '</div></div>'
-          + '<div class="gpop-perf-item"><div class="gpop-perf-lbl">% (Term)</div><div class="gpop-perf-val ' + getPctClass(termPct) + '" data-popup-pct="term" data-popup-pct-val="' + termPct + '">0%</div></div>'
-          + '<div class="gpop-perf-item"><div class="gpop-perf-lbl">% (Cum)</div><div class="gpop-perf-val ' + getPctClass(cumPct) + '" data-popup-pct="cum" data-popup-pct-val="' + cumPct + '">0%</div></div>'
+          +   '<div style="font-size:11px;font-weight:700;opacity:.8;margin-bottom:6px;"><i class="ri-dashboard-line me-1"></i>Performance Snapshot</div>'
+          +   '<div class="gpop-perf-grid">'
+          +     '<div class="gpop-perf-item"><div class="gpop-perf-lbl">Adm. No</div><div class="gpop-perf-val" style="font-size:12px;">' + esc(adm) + '</div></div>'
+          +     '<div class="gpop-perf-item"><div class="gpop-perf-lbl">Term Total</div><div class="gpop-perf-val">' + termObtained.toFixed(1) + '</div></div>'
+          +     '<div class="gpop-perf-item"><div class="gpop-perf-lbl">Cum Total</div><div class="gpop-perf-val ' + (hasBF ? 'score-green' : '') + '">' + cumObtained.toFixed(1) + noBFNote + '</div></div>'
+          +     '<div class="gpop-perf-item"><div class="gpop-perf-lbl">Obtainable</div><div class="gpop-perf-val">' + obtainable.toFixed(0) + '</div></div>'
+          +     '<div class="gpop-perf-item"><div class="gpop-perf-lbl">% (Term)</div><div class="gpop-perf-val ' + getPctClass(termPct) + '" id="ppct-term">0%</div></div>'
+          +     '<div class="gpop-perf-item"><div class="gpop-perf-lbl">% (Cum)</div><div class="gpop-perf-val ' + getPctClass(cumPct) + '" id="ppct-cum">0%</div></div>'
+          +   '</div>'
+          /* progress bars */
+          +   '<div style="margin-top:10px;">'
+          +     '<div style="font-size:9px;opacity:.7;margin-bottom:3px;">Term % — ' + termPct.toFixed(1) + '%</div>'
+          +     '<div class="pct-bar-wrap"><div id="pbar-term" class="pct-bar" style="width:0%;background:#22c55e;"></div></div>'
+          +     '<div style="font-size:9px;opacity:.7;margin:5px 0 3px;">Cum % — ' + cumPct.toFixed(1) + '%' + (!hasBF ? ' <span style="opacity:.6;">(no BF — same as term)</span>' : '') + '</div>'
+          +     '<div class="pct-bar-wrap"><div id="pbar-cum" class="pct-bar" style="width:0%;background:#22c55e;"></div></div>'
+          +   '</div>'
+          /* position badges */
+          +   '<div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">'
+          +     '<span class="badge" style="background:#fef3c7;color:#92400e;font-size:10px;border-radius:6px;padding:3px 10px;">T-Pos: ' + posTermStr + '</span>'
+          +     '<span class="badge" style="background:#dbeafe;color:#1e40af;font-size:10px;border-radius:6px;padding:3px 10px;">C-Pos: ' + posCumStr + '</span>'
+          +     posNote
+          +   '</div>'
           + '</div>'
-          /* Progress bars */
-          + '<div style="margin-top:10px;">'
-          + '<div style="font-size:9px;opacity:.7;margin-bottom:3px;">Term % — ' + termPct.toFixed(1) + '%</div>'
-          + '<div class="pct-bar-wrap"><div class="pct-bar" data-final-color="' + termColor + '" style="width:' + termPct + '%;"></div></div>'
-          + '<div style="font-size:9px;opacity:.7;margin:4px 0 3px;">Cum % — ' + cumPct.toFixed(1) + '%' + (!hasBF ? ' <span style="opacity:.6;">(no BF — same as term)</span>' : '') + '</div>'
-          + '<div class="pct-bar-wrap"><div class="pct-bar" data-final-color="' + cumColor + '" style="width:' + cumPct + '%;"></div></div>'
-          + '</div>'
-          /* FIX: Overall position with note when no BF */
-          + '<div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">'
-          + '<span class="badge" style="background:#fef3c7;color:#92400e;font-size:10px;border-radius:6px;padding:3px 8px;">T-Pos: ' + posTermDisplay + '</span>'
-          + '<span class="badge" style="background:#dbeafe;color:#1e40af;font-size:10px;border-radius:6px;padding:3px 8px;">C-Pos: ' + posCumDisplay + '</span>'
-          + posNote
-          + '</div>'
-          + '</div>'
-          /* Legend */
+          /* legend */
           + '<div class="gpop-legend">'
-          + '<span style="font-size:10px;font-weight:700;color:var(--cb-muted);">Legend:</span>'
-          + '<span class="gpop-legend-item"><span class="gpop-legend-dot t"></span>Term score</span>'
-          + '<span class="gpop-legend-item"><span class="gpop-legend-dot c"></span>BF / Cum score</span>'
-          + (!hasBF ? '<span style="font-size:10px;color:#92400e;font-weight:600;margin-left:auto;background:#fef3c7;padding:2px 8px;border-radius:6px;">First term — no BF on record</span>' : '')
+          +   '<span style="font-size:10px;font-weight:700;color:var(--cb-muted);">Legend:</span>'
+          +   '<span class="gpop-legend-item"><span class="gpop-legend-dot t"></span>Term score</span>'
+          +   '<span class="gpop-legend-item"><span class="gpop-legend-dot c"></span>BF / Cum score</span>'
+          +   noBFBanner
           + '</div>'
-          /* Grades table (now with 5 columns including sub-positions) */
+          /* subject grades table */
           + '<div class="gpop-scroll">'
-          + '<table class="gpop-table"><thead><tr>'
-          + '<th style="text-align:left;padding-left:12px;width:34%;">Subject</th>'
-          + '<th style="width:20%;">Term / BF</th>'
-          + '<th style="width:18%;">Cum<br><small style="opacity:.65;font-weight:400;font-size:9px;">(BF+T)÷2</small></th>'
-          + '<th style="width:14%;">Grade</th>'
-          + '<th style="width:14%;">Sub-Pos<br><small style="opacity:.65;font-weight:400;font-size:9px;">T / C</small></th>'
-          + '</tr></thead><tbody>' + rows + '</tbody></table>'
+          +   '<table class="gpop-table"><thead><tr>'
+          +     '<th style="text-align:left;padding-left:12px;width:32%;">Subject</th>'
+          +     '<th style="width:20%;">Term / BF</th>'
+          +     '<th style="width:16%;">Cum</th>'
+          +     '<th style="width:14%;">Grade</th>'
+          +     '<th style="width:18%;">Sub-Pos<br><small style="opacity:.65;font-weight:400;font-size:9px;">T / C</small></th>'
+          +   '</tr></thead><tbody>' + rows + '</tbody></table>'
           + '</div>'
-          /* Summary footer */
+          /* summary footer */
           + '<div class="gpop-summary">'
-          + '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Term Total</div><div class="gpop-sum-val">' + termObtained.toFixed(1) + '</div></div>'
-          + '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Cum Total</div>'
-          + '<div class="gpop-sum-val ' + (hasBF ? 'score-green' : '') + '">' + cumObtained.toFixed(1)
-          + (!hasBF ? '<span class="bf-note">= Term (no BF)</span>' : '') + '</div></div>'
-          + '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Obtainable</div><div class="gpop-sum-val">' + obtainable + '</div></div>'
-          + '<div class="gpop-sum-item"><div class="gpop-sum-lbl">% (Term)</div><div class="gpop-sum-val ' + getPctClass(termPct) + '">' + termPct.toFixed(1) + '%</div></div>'
-          + '<div class="gpop-sum-item"><div class="gpop-sum-lbl">% (Cum)</div><div class="gpop-sum-val ' + getPctClass(cumPct) + '">' + cumPct.toFixed(1) + '%</div></div>'
-          + '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Term Pos / Cum Pos</div>'
-          + '<div class="gpop-sum-val" style="font-size:12px;display:flex;flex-direction:column;gap:2px;">'
-          + '<span style="color:#92400e;font-weight:800;">' + posTermDisplay + '</span>'
-          + '<span style="color:#1e40af;font-weight:800;">' + posCumDisplay + '</span>'
-          + (!hasBF && posCum === posTerm ? '<span style="font-size:9px;color:#64748b;font-weight:400;margin-top:1px;">Equal — no BF this term</span>' : '')
-          + '</div></div>'
+          +   '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Term Total</div><div class="gpop-sum-val">' + termObtained.toFixed(1) + '</div></div>'
+          +   '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Cum Total</div><div class="gpop-sum-val ' + (hasBF ? 'score-green' : '') + '">' + cumObtained.toFixed(1) + (!hasBF ? '<span class="bf-note">= Term (no BF)</span>' : '') + '</div></div>'
+          +   '<div class="gpop-sum-item"><div class="gpop-sum-lbl">Obtainable</div><div class="gpop-sum-val">' + obtainable.toFixed(0) + '</div></div>'
+          +   '<div class="gpop-sum-item"><div class="gpop-sum-lbl">% (Term)</div><div class="gpop-sum-val ' + getPctClass(termPct) + '">' + termPct.toFixed(1) + '%</div></div>'
+          +   '<div class="gpop-sum-item"><div class="gpop-sum-lbl">% (Cum)</div><div class="gpop-sum-val ' + getPctClass(cumPct) + '">' + cumPct.toFixed(1) + '%</div></div>'
+          +   '<div class="gpop-sum-item"><div class="gpop-sum-lbl">GPA</div><div class="gpop-sum-val ' + getPctClass(gpa * 20) + '">' + gpa.toFixed(2) + ' <span style="font-size:11px;">' + esc(gpaGrade) + '</span></div></div>'
           + '</div>';
 
-        /* Position popup */
-        var pw = 540, ph = Math.min(620, window.innerHeight - 40);
+        /* — position popup — */
+        var pw  = 540;
+        var ph  = Math.min(620, window.innerHeight - 40);
         var rect = btn.getBoundingClientRect();
-        var vw = window.innerWidth, vh = window.innerHeight;
+        var vw   = window.innerWidth;
+        var vh   = window.innerHeight;
         var top  = rect.bottom + 8;
-        var left = rect.left + (rect.width / 2) - (pw / 2);
-        if (top + ph > vh - 8) top  = Math.max(8, rect.top - ph - 8);
-        if (left < 8)          left = 8;
+        var left = rect.left + rect.width / 2 - pw / 2;
+        if (top + ph > vh - 8)  top  = Math.max(8, rect.top - ph - 8);
+        if (left < 8)           left = 8;
         if (left + pw > vw - 8) left = vw - pw - 8;
-        gpop.style.width = pw + 'px'; gpop.style.top = top + 'px'; gpop.style.left = left + 'px'; gpop.style.maxHeight = ph + 'px';
+
+        gpop.style.cssText = 'width:' + pw + 'px;top:' + top + 'px;left:' + left + 'px;max-height:' + ph + 'px;';
         gpop.dataset.activeSid = sid;
         gpop.classList.add('is-open');
         document.getElementById('cbPopupBackdrop').style.display = 'block';
 
-        /* Animate pct counters */
-        setTimeout(function() {
-            body.querySelectorAll('[data-popup-pct-val]').forEach(function(el) {
-                var target = parseFloat(el.getAttribute('data-popup-pct-val') || 0);
+        /* — animate counters and bars — */
+        setTimeout(function () {
+            /* term pct counter */
+            var termEl = document.getElementById('ppct-term');
+            var cumEl  = document.getElementById('ppct-cum');
+            var termBar = document.getElementById('pbar-term');
+            var cumBar  = document.getElementById('pbar-cum');
+
+            function animPct(el, target) {
+                if (!el) return;
                 var steps = 50, step = 0, current = 0, inc = target / steps;
-                var t = setInterval(function() {
+                var t = setInterval(function () {
                     step++; current += inc;
                     if (step >= steps) { current = target; clearInterval(t); }
                     el.textContent = current.toFixed(1) + '%';
-                    /* re-add the noBFNote if this is the cum cell and no BF */
-                    if (!hasBF && el.getAttribute('data-popup-pct') === 'cum' && step >= steps) {
-                        el.innerHTML = current.toFixed(1) + '% <span style="font-size:9px;opacity:.65;font-weight:400;">(= term)</span>';
-                    }
                 }, 800 / steps);
-            });
-            body.querySelectorAll('.pct-bar[data-final-color]').forEach(function(bar) {
-                setTimeout(function() { bar.style.backgroundColor = bar.getAttribute('data-final-color'); }, 820);
-            });
+            }
+            animPct(termEl, termPct);
+            animPct(cumEl,  cumPct);
+
+            if (termBar) {
+                termBar.style.transition = 'width .8s ease, background-color .8s ease';
+                termBar.style.width = termPct + '%';
+                termBar.style.backgroundColor = termColor;
+            }
+            if (cumBar) {
+                cumBar.style.transition = 'width .8s ease, background-color .8s ease';
+                cumBar.style.width = cumPct + '%';
+                cumBar.style.backgroundColor = cumColor;
+            }
         }, 60);
     }
 
-    /* ── Search ── */
-    var tableRows = document.querySelectorAll('#broadsheetTable tbody tr:not(.stats-row)');
+    /* ─────────────────────────────────────────
+       SEARCH
+    ───────────────────────────────────────── */
+    var tableRows = [];
 
-    document.getElementById('searchStudent').addEventListener('input', function() {
-        var q = this.value.toLowerCase().trim();
-        var count = 0;
-        tableRows.forEach(function(row) {
-            var name = row.getAttribute('data-student-name') || '';
-            var adm  = row.getAttribute('data-admission')    || '';
-            var show = !q || name.includes(q) || adm.includes(q);
-            row.style.display = show ? '' : 'none';
-            if (show) count++;
-        });
-        if (q) toast('Found ' + count + ' student(s)', 'info');
-    });
+    function initSearch() {
+        tableRows = Array.from(document.querySelectorAll('#broadsheetTable tbody tr[data-student-id]'));
 
-    /* ── Locate ── */
-    document.getElementById('locateStudent').addEventListener('change', function() {
-        var val = this.value;
-        if (!val) return;
-        tableRows.forEach(function(r) { r.style.outline = ''; r.style.backgroundColor = ''; });
-        if      (val === 'top5')       highlightTop(5);
-        else if (val === 'top10')      highlightTop(10);
-        else if (val === 'failures')   highlightFailures();
-        else if (val === 'below_avg')  highlightBelowAvg();
-        else if (val.startsWith('student_')) {
-            var id  = val.replace('student_', '');
-            var row = document.querySelector('tr[data-student-id="' + id + '"]');
-            if (row) {
-                row.style.outline = '3px solid var(--cb-teal)';
-                row.style.backgroundColor = '#f0fdf9';
-                row.scrollIntoView({ behavior:'smooth', block:'center' });
-                toast('Located: ' + (row.getAttribute('data-student-name') || ''), 'success');
-            }
+        var searchEl = document.getElementById('searchStudent');
+        if (searchEl) {
+            searchEl.addEventListener('input', function () {
+                var q = this.value.toLowerCase().trim();
+                var count = 0;
+                tableRows.forEach(function (row) {
+                    var name = (row.getAttribute('data-student-name') || '').toLowerCase();
+                    var adm  = (row.getAttribute('data-admission')    || '').toLowerCase();
+                    var show = !q || name.indexOf(q) !== -1 || adm.indexOf(q) !== -1;
+                    row.style.display = show ? '' : 'none';
+                    if (show) count++;
+                });
+                if (q) toast('Found ' + count + ' student(s)', 'info');
+            });
         }
-        setTimeout(function() { document.getElementById('locateStudent').value = ''; }, 120);
-    });
+    }
+
+    /* ─────────────────────────────────────────
+       LOCATE DROPDOWN
+    ───────────────────────────────────────── */
+    function initLocate() {
+        var el = document.getElementById('locateStudent');
+        if (!el) return;
+
+        el.addEventListener('change', function () {
+            var val = this.value;
+            if (!val) return;
+
+            /* clear previous highlights */
+            tableRows.forEach(function (r) {
+                r.style.outline         = '';
+                r.style.backgroundColor = '';
+            });
+
+            if      (val === 'top5')      { highlightTop(5); }
+            else if (val === 'top10')     { highlightTop(10); }
+            else if (val === 'failures')  { highlightFailures(); }
+            else if (val === 'below_avg') { highlightBelowAvg(); }
+            else if (val.indexOf('student_') === 0) {
+                var id  = val.replace('student_', '');
+                var row = document.querySelector('tr[data-student-id="' + id + '"]');
+                if (row) {
+                    row.style.outline         = '3px solid var(--cb-teal)';
+                    row.style.backgroundColor = '#f0fdf9';
+                    row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    toast('Located: ' + (row.getAttribute('data-student-name') || ''), 'success');
+                }
+            }
+
+            /* reset select after short delay */
+            var self = this;
+            setTimeout(function () { self.value = ''; }, 200);
+        });
+    }
 
     function highlightTop(n) {
-        var rows = Array.from(tableRows).filter(function(r){ return r.style.display !== 'none'; });
-        rows.sort(function(a,b){ return parseFloat(b.dataset.totalCum||0) - parseFloat(a.dataset.totalCum||0); });
-        rows.slice(0,n).forEach(function(r){ r.style.backgroundColor = '#fef9c3'; r.style.outline = '2px solid #d97706'; });
+        var visible = tableRows.filter(function (r) { return r.style.display !== 'none'; });
+        visible.sort(function (a, b) {
+            return parseFloat(b.getAttribute('data-total-cum') || 0) - parseFloat(a.getAttribute('data-total-cum') || 0);
+        });
+        visible.slice(0, n).forEach(function (r) {
+            r.style.backgroundColor = '#fef9c3';
+            r.style.outline         = '2px solid #d97706';
+        });
         toast('Top ' + n + ' students highlighted', 'success');
     }
+
     function highlightFailures() {
         var c = 0;
-        tableRows.forEach(function(r){ if(r.dataset.hasFailure === 'true'){ r.style.backgroundColor='#fee2e2'; r.style.outline='2px solid #dc2626'; c++; } });
+        tableRows.forEach(function (r) {
+            if (r.getAttribute('data-has-failure') === 'true') {
+                r.style.backgroundColor = '#fee2e2';
+                r.style.outline         = '2px solid #dc2626';
+                c++;
+            }
+        });
         toast(c + ' student(s) with F9 highlighted', 'warning');
     }
+
     function highlightBelowAvg() {
-        var totals = Array.from(tableRows).map(function(r){ return parseFloat(r.dataset.totalCum||0); }).filter(function(v){ return v > 0; });
-        var avg = totals.length ? totals.reduce(function(a,b){ return a+b; },0) / totals.length : 0;
+        var totals = tableRows
+            .map(function (r) { return parseFloat(r.getAttribute('data-total-cum') || 0); })
+            .filter(function (v) { return v > 0; });
+        var avg = totals.length ? totals.reduce(function (a, b) { return a + b; }, 0) / totals.length : 0;
         var c = 0;
-        tableRows.forEach(function(r){ var v = parseFloat(r.dataset.totalCum||0); if(v > 0 && v < avg){ r.style.backgroundColor='#fff7ed'; r.style.outline='2px solid #f97316'; c++; } });
+        tableRows.forEach(function (r) {
+            var v = parseFloat(r.getAttribute('data-total-cum') || 0);
+            if (v > 0 && v < avg) {
+                r.style.backgroundColor = '#fff7ed';
+                r.style.outline         = '2px solid #f97316';
+                c++;
+            }
+        });
         toast(c + ' student(s) below class average', 'info');
     }
 
-    window.scrollToTop = function() { window.scrollTo({ top:0, behavior:'smooth' }); };
+    /* ─────────────────────────────────────────
+       SCROLL TO TOP
+    ───────────────────────────────────────── */
+    window.scrollToTop = function () {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
-    /* ── Animate number ── */
-    function animateNumber(elId, target, suffix, decimals) {
-        var el = document.getElementById(elId); if (!el) return;
-        var steps = 60, step = 0, current = 0, inc = target / steps;
-        var t = setInterval(function() {
-            step++; current += inc;
-            if (step >= steps) { current = target; clearInterval(t); }
-            el.textContent = current.toFixed(decimals || 0) + (suffix || '');
-        }, 800 / steps);
+    /* ─────────────────────────────────────────
+       STATS CARDS ANIMATION
+    ───────────────────────────────────────── */
+    function animateStats() {
+        var rows = Array.from(document.querySelectorAll('#broadsheetTable tbody tr[data-student-id]'));
+        if (!rows.length) return;
+
+        var totalPct = 0, topCum = -1, topName = '—';
+        rows.forEach(function (r) {
+            totalPct += parseFloat(r.getAttribute('data-cum-pct')  || 0);
+            var cum   = parseFloat(r.getAttribute('data-total-cum') || 0);
+            if (cum > topCum) {
+                topCum  = cum;
+                topName = r.getAttribute('data-student-name') || '—';
+            }
+        });
+
+        var avg = rows.length ? totalPct / rows.length : 0;
+        animateNumber('statAvgPct', avg, '%', 1);
+
+        var topEl = document.getElementById('statTopPerformer');
+        if (topEl) {
+            topEl.textContent = topName
+                .split(' ')
+                .map(function (w) { return w.charAt(0).toUpperCase() + w.slice(1); })
+                .join(' ');
+        }
     }
 
-    /* ── DOM Ready ── */
-    document.addEventListener('DOMContentLoaded', function() {
-        /* Move popup/backdrop to body */
-        ['cbGradePopup','cbPopupBackdrop'].forEach(function(id) {
+    /* ─────────────────────────────────────────
+       DOM READY — wire everything up
+    ───────────────────────────────────────── */
+    document.addEventListener('DOMContentLoaded', function () {
+
+        /* move popup & backdrop to <body> so z-index works correctly */
+        ['cbGradePopup', 'cbPopupBackdrop'].forEach(function (id) {
             var el = document.getElementById(id);
-            if (el && el.parentNode !== document.body) document.body.appendChild(el);
+            if (el && el.parentNode !== document.body) {
+                document.body.appendChild(el);
+            }
         });
 
-        /* Grade popup: open */
-        document.addEventListener('click', function(e) {
+        /* ── open popup ── */
+        document.addEventListener('click', function (e) {
             var btn = e.target.closest('.grade-trigger-btn');
             if (!btn) return;
-            e.stopPropagation(); e.preventDefault();
+            e.stopPropagation();
+            e.preventDefault();
             var gpop = document.getElementById('cbGradePopup');
             if (gpop && gpop.classList.contains('is-open') && gpop.dataset.activeSid === btn.getAttribute('data-sid')) {
-                closeGradePop(); return;
+                closeGradePop();
+                return;
             }
             closeGradePop();
-            setTimeout(function(){ openGradePop(btn); }, 16);
+            setTimeout(function () { openGradePop(btn); }, 16);
         });
 
-        /* Close button */
-        document.getElementById('gpopCloseBtn').addEventListener('click', closeGradePop);
+        /* ── close popup ── */
+        var closeBtn = document.getElementById('gpopCloseBtn');
+        if (closeBtn) closeBtn.addEventListener('click', closeGradePop);
 
-        /* Backdrop click */
-        document.addEventListener('click', function(e) {
-            if (e.target === document.getElementById('cbPopupBackdrop')) closeGradePop();
+        document.addEventListener('click', function (e) {
+            if (e.target && e.target.id === 'cbPopupBackdrop') closeGradePop();
         });
 
-        /* Escape key */
-        document.addEventListener('keydown', function(e) { if (e.key === 'Escape') closeGradePop(); });
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeGradePop();
+        });
 
-        /* Animate stats */
-        (function() {
-            var rows = Array.from(document.querySelectorAll('#broadsheetTable tbody tr[data-cum-pct]'));
-            if (!rows.length) return;
-            var totalPct = 0, topCum = -1, topName = '—';
-            rows.forEach(function(r) {
-                totalPct += parseFloat(r.getAttribute('data-cum-pct') || 0);
-                var cum = parseFloat(r.getAttribute('data-total-cum') || 0);
-                if (cum > topCum) { topCum = cum; topName = r.getAttribute('data-student-name') || '—'; }
-            });
-            var avg = rows.length ? totalPct / rows.length : 0;
-            animateNumber('statAvgPct', avg, '%', 1);
-            var topEl = document.getElementById('statTopPerformer');
-            if (topEl) topEl.textContent = topName.split(' ').map(function(w){ return w.charAt(0).toUpperCase() + w.slice(1); }).join(' ');
-        })();
+        /* ── search & locate ── */
+        initSearch();
+        initLocate();
+
+        /* ── stats cards ── */
+        animateStats();
     });
+
 })();
 </script>
 @endsection
