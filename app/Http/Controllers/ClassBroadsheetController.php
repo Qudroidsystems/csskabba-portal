@@ -5,10 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Studentclass;
 use App\Models\Studentpersonalityprofile;
 use App\Models\Broadsheets;
+use App\Models\BroadsheetRecords;
+use App\Models\BroadsheetAssessmentScore;
 use App\Models\Schoolclass;
 use App\Models\Schoolterm;
 use App\Models\Schoolsession;
 use App\Models\Subject;
+use App\Models\Assessment;
 use App\Models\Student;
 use App\Models\Staff;
 use App\Models\User;
@@ -19,6 +22,11 @@ use Illuminate\Support\Facades\Log;
 
 class ClassBroadsheetController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('permission:View student-report');
+    }
+
     public function gradeFromScorePublic(float $score, bool $isSenior): array
     {
         return $this->gradeFromScore($score, $isSenior);
@@ -45,15 +53,79 @@ class ClassBroadsheetController extends Controller
         return ['F', 'F'];
     }
 
+    private function getGradePoint(float $score): float
+    {
+        if ($score >= 75) return 5.0;
+        if ($score >= 70) return 4.5;
+        if ($score >= 65) return 4.0;
+        if ($score >= 60) return 3.5;
+        if ($score >= 55) return 3.0;
+        if ($score >= 50) return 2.5;
+        if ($score >= 45) return 2.0;
+        if ($score >= 40) return 1.0;
+        return 0.0;
+    }
+
+    private function getGpaGrade(float $gpa): string
+    {
+        if ($gpa >= 4.5) return 'A1';
+        if ($gpa >= 4.0) return 'B2';
+        if ($gpa >= 3.5) return 'B3';
+        if ($gpa >= 3.0) return 'C4';
+        if ($gpa >= 2.5) return 'C5';
+        if ($gpa >= 2.0) return 'C6';
+        if ($gpa >= 1.5) return 'D7';
+        if ($gpa >= 1.0) return 'E8';
+        return 'F9';
+    }
+
+    /**
+     * Fetch previous term's cum scores for BF calculation
+     */
+    private function fetchPreviousTermCums(
+        array $studentIds,
+        int   $sessionid,
+        int   $currentTermId,
+        array $classIds
+    ): array {
+        if (empty($studentIds)) return [];
+
+        $prevTerm = Schoolterm::where('id', '<', $currentTermId)
+            ->orderByDesc('id')
+            ->first();
+
+        if (!$prevTerm) return [];
+
+        $rows = Broadsheets::whereIn('broadsheet_records.student_id', $studentIds)
+            ->where('broadsheets.term_id', $prevTerm->id)
+            ->where('broadsheet_records.session_id', $sessionid)
+            ->whereIn('broadsheet_records.schoolclass_id', $classIds)
+            ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
+            ->select([
+                'broadsheet_records.student_id',
+                'broadsheet_records.subject_id',
+                'broadsheets.cum',
+            ])
+            ->get();
+
+        $map = [];
+        foreach ($rows as $r) {
+            $map[(int)$r->student_id][(int)$r->subject_id] = (float)$r->cum;
+        }
+
+        return $map;
+    }
+
     public function classBroadsheet($schoolclassid, $sessionid, $termid)
     {
         $pagetitle = "Class Broadsheet";
 
+        // Get students in the class
         $students = Studentclass::where('studentclass.schoolclassid', $schoolclassid)
             ->where('studentclass.sessionid', $sessionid)
             ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'studentclass.studentId')
             ->leftJoin('studentpicture', 'studentpicture.studentid', '=', 'studentRegistration.id')
-            ->get([
+            ->select([
                 'studentRegistration.id          as id',
                 'studentRegistration.admissionNo as admissionNo',
                 'studentRegistration.firstname   as fname',
@@ -61,8 +133,118 @@ class ClassBroadsheetController extends Controller
                 'studentRegistration.othername   as othername',
                 'studentRegistration.gender      as gender',
                 'studentpicture.picture          as picture',
-            ])->sortBy('lastname');
+            ])
+            ->orderBy('studentRegistration.lastname')
+            ->orderBy('studentRegistration.firstname')
+            ->get();
 
+        // Get subjects for this class
+        $subjects = DB::table('subjectclass as sc')
+            ->join('subjectteacher as st', 'st.id', '=', 'sc.subjectteacherid')
+            ->join('subject', 'subject.id', '=', 'sc.subjectid')
+            ->where('sc.schoolclassid', $schoolclassid)
+            ->select(['subject.id', 'subject.subject', 'subject.subject_code'])
+            ->distinct()
+            ->orderBy('subject.subject')
+            ->get();
+
+        // Get assessments for this class
+        $schoolclassModel = Schoolclass::with('classcategories')->find($schoolclassid);
+        $assessments = collect();
+        if ($schoolclassModel && $schoolclassModel->classcategories->isNotEmpty()) {
+            $categoryIds = $schoolclassModel->classcategories->pluck('id');
+            $assessments = Assessment::whereIn('classcategory_id', $categoryIds)->orderBy('id')->get();
+        }
+
+        $studentIds = $students->pluck('id')->map(fn($v) => (int)$v)->toArray();
+
+        // Fetch previous term cum scores for BF calculation
+        $prevCumMap = $this->fetchPreviousTermCums($studentIds, $sessionid, $termid, [$schoolclassid]);
+
+        // Fetch current term broadsheet data
+        $broadsheets = Broadsheets::whereIn('broadsheet_records.student_id', $studentIds)
+            ->where('broadsheets.term_id', $termid)
+            ->where('broadsheet_records.session_id', $sessionid)
+            ->where('broadsheet_records.schoolclass_id', $schoolclassid)
+            ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
+            ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
+            ->select([
+                'broadsheets.id as broadsheet_id',
+                'broadsheet_records.student_id',
+                'broadsheet_records.subject_id',
+                'subject.subject as subject_name',
+                'broadsheets.total',
+                'broadsheets.bf',
+                'broadsheets.cum',
+                'broadsheets.grade',
+                'broadsheets.subject_position_class as pos_class_cum',
+                'broadsheets.subject_position_class_total as pos_class_total',
+                'broadsheets.arm_position as pos_arm_total',
+                'broadsheets.arm_position_cum as pos_arm_cum',
+                'broadsheets.avg as class_average',
+            ])
+            ->get();
+
+        // Fetch assessment scores
+        $broadsheetIds = $broadsheets->pluck('broadsheet_id')->unique()->toArray();
+        $assessmentScoresAll = BroadsheetAssessmentScore::whereIn('broadsheet_id', $broadsheetIds)
+            ->get()
+            ->groupBy('broadsheet_id');
+
+        $isSenior = $schoolclassModel && $schoolclassModel->classcategories->isNotEmpty()
+            ? ($schoolclassModel->classcategories->first()->is_senior ?? false)
+            : false;
+
+        // Build term score map and cum score map with proper BF calculation
+        $termScoreMap = [];
+        $cumScoreMap = [];
+        $positionMaps = [];
+        $studentSubjectData = [];
+
+        foreach ($broadsheets as $row) {
+            $sid = (int)$row->student_id;
+            $subjName = $row->subject_name;
+            $subId = (int)$row->subject_id;
+
+            $rawTotal = (float)($row->total ?? 0);
+
+            // BF resolution (3-level priority)
+            $prevCum = $prevCumMap[$sid][$subId] ?? null;
+            if ($prevCum !== null && $prevCum > 0) {
+                $bf = $prevCum;
+            } elseif (!empty($row->bf) && (float)$row->bf > 0) {
+                $bf = (float)$row->bf;
+            } else {
+                $bf = 0.0;
+            }
+
+            // CUM rule: BF > 0 → (BF + Total) ÷ 2, BF = 0 → Total
+            $cum = $bf > 0 ? round(($bf + $rawTotal) / 2, 1) : $rawTotal;
+
+            $termScoreMap[$sid][$subjName] = $rawTotal;
+            $cumScoreMap[$sid][$subjName] = $cum;
+
+            $studentSubjectData[$sid][$subjName] = [
+                'total' => $rawTotal,
+                'bf' => $bf,
+                'cum' => $cum,
+                'grade' => $row->grade ?? '-',
+                'pos_class_cum' => $row->pos_class_cum ?? null,
+                'pos_class_total' => $row->pos_class_total ?? null,
+                'pos_arm_total' => $row->pos_arm_total ?? null,
+                'pos_arm_cum' => $row->pos_arm_cum ?? null,
+                'class_average' => (float)($row->class_average ?? 0),
+            ];
+
+            // Store assessment scores
+            $assessmentScoreRow = $assessmentScoresAll->get($row->broadsheet_id, collect());
+            foreach ($assessments as $a) {
+                $score = $assessmentScoreRow->firstWhere('assessment_id', $a->id);
+                $studentSubjectData[$sid][$subjName]['assessments'][$a->id] = $score ? (float)$score->score : 0;
+            }
+        }
+
+        // Create personality profiles for students
         foreach ($students as $student) {
             $profile = Studentpersonalityprofile::firstOrNew([
                 'studentid'     => $student->id,
@@ -76,38 +258,7 @@ class ClassBroadsheetController extends Controller
             }
         }
 
-        $subjects = Subject::whereHas('broadsheetRecords', function ($q) use ($schoolclassid, $sessionid) {
-            $q->where('schoolclass_id', $schoolclassid)->where('session_id', $sessionid);
-        })->orderBy('subject')->get(['id', 'subject', 'subject_code']);
-
-        $broadsheetRows = Broadsheets::where('broadsheet_records.schoolclass_id', $schoolclassid)
-            ->where('broadsheets.term_id',           $termid)
-            ->where('broadsheet_records.session_id', $sessionid)
-            ->leftJoin('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
-            ->leftJoin('subject',             'subject.id',            '=', 'broadsheet_records.subject_id')
-            ->leftJoin('studentRegistration', 'studentRegistration.id', '=', 'broadsheet_records.student_id')
-            ->get([
-                'broadsheet_records.student_id',
-                'subject.subject as subject_name',
-                'broadsheets.total',
-                'broadsheets.cum',
-                'broadsheets.grade',
-                'broadsheets.subject_position_class as position',
-                'broadsheets.avg as class_average',
-            ]);
-
-        $termScoreMap = [];
-        $cumScoreMap  = [];
-        foreach ($broadsheetRows as $row) {
-            $termScoreMap[$row->student_id][$row->subject_name] = $row->total ?? 0;
-            $cumScoreMap[$row->student_id][$row->subject_name]  = $row->cum   ?? 0;
-        }
-
-        $schoolclassModel = Schoolclass::with(['arms', 'classcategories'])->find($schoolclassid);
-        $isSenior = $schoolclassModel && $schoolclassModel->classcategories->isNotEmpty()
-            ? ($schoolclassModel->classcategories->first()->is_senior ?? false)
-            : false;
-
+        // Calculate student analytics with proper totals
         $studentAnalytics = [];
         $topPerformerByCum = null;
         $topPerformerByTerm = null;
@@ -115,63 +266,138 @@ class ClassBroadsheetController extends Controller
         $topCumPercentage = -1;
         $topTermPercentage = -1;
 
+        // First pass: calculate totals for each student
         foreach ($students as $student) {
             $sid = $student->id;
             $termTotal = 0;
             $cumTotal = 0;
             $subjectCount = 0;
             $grades = [];
+            $gradePoints = [];
 
             foreach ($subjects as $subject) {
-                $subj      = $subject->subject;
-                $termScore = $termScoreMap[$sid][$subj] ?? 0;
-                $cumScore  = $cumScoreMap[$sid][$subj]  ?? 0;
-                if ($termScore > 0 || $cumScore > 0) $subjectCount++;
-                $termTotal += $termScore;
-                $cumTotal  += $cumScore;
-                [$termGrade] = $this->gradeFromScore((float) $termScore, $isSenior);
-                [$cumGrade]  = $this->gradeFromScore((float) $cumScore,  $isSenior);
-                $grades[] = ['subject' => $subj, 'term_score' => $termScore, 'cum_score' => $cumScore, 'term_grade' => $termGrade, 'cum_grade' => $cumGrade];
+                $subjName = $subject->subject;
+                $data = $studentSubjectData[$sid][$subjName] ?? null;
+
+                if ($data) {
+                    $termScore = $data['total'] ?? 0;
+                    $cumScore = $data['cum'] ?? 0;
+
+                    if ($termScore > 0 || $cumScore > 0) $subjectCount++;
+                    $termTotal += $termScore;
+                    $cumTotal += $cumScore;
+
+                    [$termGrade, $cumGradeLetter] = $this->gradeFromScore((float)$termScore, $isSenior);
+                    [$cumGrade, $cumGradeLetter2] = $this->gradeFromScore((float)$cumScore, $isSenior);
+
+                    $gradePoints[] = $this->getGradePoint($termScore);
+
+                    $grades[] = [
+                        'subject' => $subjName,
+                        'term_score' => $termScore,
+                        'cum_score' => $cumScore,
+                        'bf_score' => $data['bf'] ?? 0,
+                        'term_grade' => $termGrade,
+                        'cum_grade' => $cumGrade,
+                        'pos_class_cum' => $data['pos_class_cum'] ?? null,
+                        'pos_class_total' => $data['pos_class_total'] ?? null,
+                        'pos_arm_total' => $data['pos_arm_total'] ?? null,
+                        'pos_arm_cum' => $data['pos_arm_cum'] ?? null,
+                    ];
+                } else {
+                    $grades[] = [
+                        'subject' => $subjName,
+                        'term_score' => 0,
+                        'cum_score' => 0,
+                        'bf_score' => 0,
+                        'term_grade' => '-',
+                        'cum_grade' => '-',
+                        'pos_class_cum' => null,
+                        'pos_class_total' => null,
+                        'pos_arm_total' => null,
+                        'pos_arm_cum' => null,
+                    ];
+                }
             }
 
             $totalObtainable = $subjectCount * 100;
             $termPercentage = $totalObtainable > 0 ? round(($termTotal / $totalObtainable) * 100, 1) : 0;
             $cumPercentage = $totalObtainable > 0 ? round(($cumTotal / $totalObtainable) * 100, 1) : 0;
 
+            $gpa = count($gradePoints) > 0 ? round(array_sum($gradePoints) / count($gradePoints), 2) : 0;
+
             $studentAnalytics[$sid] = [
-                'term_total'              => round($termTotal, 1),
-                'cum_total'               => round($cumTotal, 1),
-                'term_average'            => $subjectCount > 0 ? round($termTotal / $subjectCount, 1) : 0,
-                'cum_average'             => $subjectCount > 0 ? round($cumTotal / $subjectCount, 1) : 0,
-                'subject_count'           => $subjectCount,
-                'total_obtainable'        => $totalObtainable,
-                'term_percentage'         => $termPercentage,
-                'cum_percentage'          => $cumPercentage,
-                'grades'                  => $grades,
+                'term_total' => round($termTotal, 1),
+                'cum_total' => round($cumTotal, 1),
+                'term_average' => $subjectCount > 0 ? round($termTotal / $subjectCount, 1) : 0,
+                'cum_average' => $subjectCount > 0 ? round($cumTotal / $subjectCount, 1) : 0,
+                'subject_count' => $subjectCount,
+                'total_obtainable' => $totalObtainable,
+                'term_percentage' => $termPercentage,
+                'cum_percentage' => $cumPercentage,
+                'gpa' => $gpa,
+                'gpa_grade' => $this->getGpaGrade($gpa),
+                'grades' => $grades,
             ];
 
-            if ($cumPercentage > $topCumPercentage) {
-                $topCumPercentage = $cumPercentage;
-                $topPerformerByCum = trim(($student->lastname ?? '') . ' ' . ($student->fname ?? ''));
-                $topPerformerPicture = $student->picture ? asset('storage/student_avatars/' . basename($student->picture)) : null;
+            // Calculate positions after we have all percentages
+        }
+
+        // Calculate positions (ranking)
+        $positionMap = [];
+        $rankedByCum = collect($studentAnalytics)->sortByDesc('cum_percentage')->values();
+        $prevPct = null;
+        $prevPos = 0;
+        $counter = 0;
+        foreach ($rankedByCum as $an) {
+            $counter++;
+            $sid = null;
+            foreach ($studentAnalytics as $s => $a) {
+                if ($a === $an) { $sid = $s; break; }
+            }
+            if ($sid) {
+                if ($prevPct !== null && $an['cum_percentage'] == $prevPct) {
+                    $positionMap[$sid] = $prevPos;
+                } else {
+                    $positionMap[$sid] = $counter;
+                    $prevPos = $counter;
+                }
+                $prevPct = $an['cum_percentage'];
+            }
+        }
+
+        // Add position to analytics
+        foreach ($studentAnalytics as $sid => &$an) {
+            $an['position'] = $positionMap[$sid] ?? 0;
+
+            if ($an['cum_percentage'] > $topCumPercentage) {
+                $topCumPercentage = $an['cum_percentage'];
+                $student = $students->firstWhere('id', $sid);
+                if ($student) {
+                    $topPerformerByCum = trim(($student->lastname ?? '') . ' ' . ($student->fname ?? ''));
+                    $topPerformerPicture = $student->picture ? asset('storage/student_avatars/' . basename($student->picture)) : null;
+                }
             }
 
-            if ($termPercentage > $topTermPercentage) {
-                $topTermPercentage = $termPercentage;
-                $topPerformerByTerm = trim(($student->lastname ?? '') . ' ' . ($student->fname ?? ''));
+            if ($an['term_percentage'] > $topTermPercentage) {
+                $topTermPercentage = $an['term_percentage'];
+                $student = $students->firstWhere('id', $sid);
+                if ($student) {
+                    $topPerformerByTerm = trim(($student->lastname ?? '') . ' ' . ($student->fname ?? ''));
+                }
             }
         }
 
         $personalityProfiles = Studentpersonalityprofile::where('schoolclassid', $schoolclassid)
             ->where('sessionid', $sessionid)
-            ->where('termid',    $termid)
+            ->where('termid', $termid)
             ->get();
 
         $schoolclass = Schoolclass::where('schoolclass.id', $schoolclassid)
             ->leftJoin('schoolarm', 'schoolclass.arm', '=', 'schoolarm.id')
             ->first(['schoolclass.schoolclass', 'schoolclass.arm', 'schoolarm.arm']);
 
-        $schoolterm    = Schoolterm::where('id',    $termid)->value('term')    ?? 'N/A';
+        $schoolterm = Schoolterm::where('id', $termid)->value('term') ?? 'N/A';
         $schoolsession = Schoolsession::where('id', $sessionid)->value('session') ?? 'N/A';
 
         $avgTermPercentage = 0;
@@ -184,11 +410,11 @@ class ClassBroadsheetController extends Controller
         }
 
         return view('classbroadsheet.classbroadsheet', compact(
-            'students', 'subjects', 'broadsheetRows',
+            'students', 'subjects', 'assessments',
             'termScoreMap', 'cumScoreMap', 'personalityProfiles',
             'schoolclass', 'schoolterm', 'schoolsession',
             'schoolclassid', 'sessionid', 'termid',
-            'isSenior', 'studentAnalytics', 'pagetitle',
+            'isSenior', 'studentAnalytics', 'pagetitle', 'positionMap',
             'topPerformerByCum', 'topPerformerByTerm', 'topPerformerPicture',
             'avgTermPercentage', 'avgCumPercentage'
         ));
