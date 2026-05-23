@@ -92,11 +92,10 @@ class BroadsheetController extends Controller
                 'bf'            => ['label' => 'BF',                 'default' => true],
                 'cum'           => ['label' => 'Cum',                'default' => true],
                 'grade'         => ['label' => 'Grade',              'default' => true],
-                // ── 4 position columns (mirrors ViewStudentReportController) ──
                 'pos_class_cum'   => ['label' => 'Class Pos (Cum)',       'default' => true],
                 'pos_class_total' => ['label' => 'Class Pos (Total)',     'default' => false],
-                'pos_arm_total'   => ['label' => 'Arm Pos (Total)',       'default' => false],
-                'pos_arm_cum'     => ['label' => 'Arm Pos (Cum)',         'default' => false],
+                'pos_arm_total'   => ['label' => 'Arm Pos (Total)',       'default' => true],
+                'pos_arm_cum'     => ['label' => 'Arm Pos (Cum)',         'default' => true],
                 'class_average'   => ['label' => 'Class Avg',             'default' => true],
                 'remark'          => ['label' => 'Remark',               'default' => false],
             ],
@@ -195,11 +194,6 @@ class BroadsheetController extends Controller
 
     // =========================================================================
     // HELPER: Fetch previous term's cum scores for a set of students & subjects
-    //
-    // Returns: [ student_id => [ subject_id => cum_score ] ]
-    //
-    // "Previous term" = the highest term_id strictly less than $currentTermId.
-    // Falls back gracefully — if none, returns empty array (first term).
     // =========================================================================
 
     private function fetchPreviousTermCums(
@@ -210,12 +204,11 @@ class BroadsheetController extends Controller
     ): array {
         if (empty($studentIds)) return [];
 
-        // Find the immediately previous term for this session
         $prevTerm = Schoolterm::where('id', '<', $currentTermId)
             ->orderByDesc('id')
             ->first();
 
-        if (!$prevTerm) return [];   // current term IS the first term — no BF
+        if (!$prevTerm) return [];
 
         $rows = Broadsheets::whereIn('broadsheet_records.student_id', $studentIds)
             ->where('broadsheets.term_id', $prevTerm->id)
@@ -294,12 +287,10 @@ class BroadsheetController extends Controller
             );
         }
 
-        // ── Fetch previous term cum scores (the real BF source) ──────────────
         $prevCumMap = $this->fetchPreviousTermCums(
             $studentIds, $sessionid, $termid, [$schoolclassid]
         );
 
-        // ── Current term broadsheet rows ──────────────────────────────────────
         $broadsheets = Broadsheets::whereIn('broadsheet_records.student_id', $studentIds)
             ->where('broadsheets.term_id', $termid)
             ->where('broadsheet_records.session_id', $sessionid)
@@ -324,11 +315,10 @@ class BroadsheetController extends Controller
                 'broadsheets.cum',
                 'broadsheets.grade',
                 'broadsheets.remark',
-                // ── All 4 position columns (mirrors ViewStudentReportController) ──
-                'broadsheets.subject_position_class as pos_class_cum',        // class-wide, by cum
-                'broadsheets.subject_position_class_total as pos_class_total', // class-wide, by total
-                'broadsheets.arm_position as pos_arm_total',                   // arm-only, by total
-                'broadsheets.arm_position_cum as pos_arm_cum',                 // arm-only, by cum
+                'broadsheets.subject_position_class as pos_class_cum',
+                'broadsheets.subject_position_class_total as pos_class_total',
+                'broadsheets.arm_position as pos_arm_total',
+                'broadsheets.arm_position_cum as pos_arm_cum',
                 'broadsheets.avg as class_average',
                 'broadsheets.vettedstatus',
             ])
@@ -363,10 +353,6 @@ class BroadsheetController extends Controller
 
             $rawTotal = (float)($row->total ?? 0);
 
-            // ── BF resolution (3-level priority) ────────────────────────────
-            // 1. Previous term cum lookup (most accurate — "true BF")
-            // 2. broadsheets.bf stored in DB (manual entry / transfer student)
-            // 3. 0 (genuine first term — no prior record anywhere)
             $prevCum = $prevCumMap[$sid][$sub] ?? null;
             if ($prevCum !== null && $prevCum > 0) {
                 $bf = $prevCum;
@@ -376,9 +362,6 @@ class BroadsheetController extends Controller
                 $bf = 0.0;
             }
 
-            // ── CUM rule ─────────────────────────────────────────────────────
-            // BF > 0  → (BF + Total) ÷ 2
-            // BF = 0  → Total  (first term or no prior record)
             $cum = $bf > 0 ? round(($bf + $rawTotal) / 2, 1) : $rawTotal;
 
             $studentSubjectMap[$sid][$sub] = [
@@ -387,7 +370,6 @@ class BroadsheetController extends Controller
                 'cum'             => $cum,
                 'grade'           => $row->grade ?? '-',
                 'remark'          => $row->remark ?? '-',
-                // 4 position columns
                 'pos_class_cum'   => $row->pos_class_cum   ?? null,
                 'pos_class_total' => $row->pos_class_total ?? null,
                 'pos_arm_total'   => $row->pos_arm_total   ?? null,
@@ -975,7 +957,6 @@ class BroadsheetController extends Controller
 
             $rawTotal = (float)($row->total ?? 0);
 
-            // 3-level BF resolution
             $prevCum = $prevCumMap[$sid][$sub] ?? null;
             if ($prevCum !== null && $prevCum > 0) {
                 $bf = $prevCum;
