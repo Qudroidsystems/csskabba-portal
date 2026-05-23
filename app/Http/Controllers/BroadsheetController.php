@@ -188,7 +188,7 @@ class BroadsheetController extends Controller
     }
 
     // =========================================================================
-    // HELPER: Fetch previous term's cum scores for a set of students & subjects
+    // HELPER: Fetch previous term's cum scores (BF source)
     // =========================================================================
 
     private function fetchPreviousTermCums(
@@ -203,13 +203,15 @@ class BroadsheetController extends Controller
             ->orderByDesc('id')
             ->first();
 
+        // Initialize empty map for all students
+        $map = [];
+        foreach ($studentIds as $sid) {
+            $map[$sid] = [];
+        }
+
         if (!$prevTerm) {
-            // No previous term exists - return empty map
-            $emptyMap = [];
-            foreach ($studentIds as $sid) {
-                $emptyMap[$sid] = [];
-            }
-            return $emptyMap;
+            // No previous term exists - return empty map (all BFs = 0)
+            return $map;
         }
 
         $rows = Broadsheets::whereIn('broadsheet_records.student_id', $studentIds)
@@ -224,7 +226,6 @@ class BroadsheetController extends Controller
             ])
             ->get();
 
-        $map = [];
         foreach ($rows as $r) {
             $map[(int)$r->student_id][(int)$r->subject_id] = (float)$r->cum;
         }
@@ -257,6 +258,7 @@ class BroadsheetController extends Controller
             $assessments = Assessment::whereIn('classcategory_id', $categoryIds)->orderBy('id')->get();
         }
 
+        // Build subjects map
         $subjectsMap    = [];
         $subjectClasses = DB::table('subjectclass as sc')
             ->join('subjectteacher as st', 'st.id', '=', 'sc.subjectteacherid')
@@ -276,6 +278,7 @@ class BroadsheetController extends Controller
             ];
         }
 
+        // Get students in this class
         $studentIds = Studentclass::where('schoolclassid', $schoolclassid)
             ->where('sessionid', $sessionid)
             ->pluck('studentId')
@@ -332,6 +335,7 @@ class BroadsheetController extends Controller
         $assessmentScoresAll = BroadsheetAssessmentScore::whereIn('broadsheet_id', $broadsheetIds)
             ->get()->groupBy('broadsheet_id');
 
+        // Build student-subject score map
         $studentSubjectMap = [];
         foreach ($broadsheets as $row) {
             $sid = (int)$row->student_id;
@@ -354,8 +358,8 @@ class BroadsheetController extends Controller
 
             $rawTotal = (float)($row->total ?? 0);
 
-            // BF = previous term's cum (looked up from DB)
-            // If no previous term cum exists, use 0 (so cum = total)
+            // BF = previous term's cum score (from DB lookup)
+            // If no previous term cum exists, BF = 0
             $bf = isset($prevCumMap[$sid][$sub]) ? $prevCumMap[$sid][$sub] : 0;
 
             // CUM rule:
@@ -375,17 +379,21 @@ class BroadsheetController extends Controller
             ];
         }
 
-        // Build arm map for the class (for arm-based positions)
+        // Build arm map for the class (all students in same class = same arm)
         $armMap = [];
         foreach ($studentIds as $sid) {
             $armMap[$sid] = $schoolclassid;
         }
 
+        // Get arm label for this class
+        $armLabels = [];
+        $armLabels[$schoolclassid] = $schoolclass->arm_name ?? '';
+
         return $this->assembleStudentRows(
             $studentIds, $sessionid, $schoolclassid, null,
             $studentSubjectMap, $subjectsMap, $assessments,
             $schoolInfo, $schoolclass, $schoolsession, $schoolterm,
-            $selectedColumns, [], $armMap, false
+            $selectedColumns, $armLabels, $armMap, false
         );
     }
 
@@ -410,6 +418,7 @@ class BroadsheetController extends Controller
         ?array $armMap          = null,
         bool   $isCombined      = false
     ): array {
+        // Build the student info query
         $query = Studentclass::where('sessionid', $sessionid);
         if ($schoolclassid) {
             $query->where('schoolclassid', $schoolclassid);
@@ -439,30 +448,39 @@ class BroadsheetController extends Controller
             $sid       = (int)$stu->id;
             $subScores = $studentSubjectMap[$sid] ?? [];
 
-            $cumValues    = [];
-            $totalValues  = [];
+            $totalValues  = [];  // Term scores
+            $cumValues    = [];  // Cumulative scores
             $gradePointsA = [];
+            $subjectCount  = 0;
 
-            foreach ($subScores as $subData) {
-                if (($subData['cum'] ?? 0) > 0) {
-                    $cumValues[] = $subData['cum'];
-                }
-                if (($subData['total'] ?? 0) > 0) {
-                    $totalValues[]  = $subData['total'];
-                    $gradePointsA[] = $this->getGradePoint($subData['total']);
+            // Only count subjects that have actual scores
+            foreach ($subScores as $subId => $subData) {
+                $hasScore = ($subData['total'] ?? 0) > 0 || ($subData['cum'] ?? 0) > 0;
+                if ($hasScore) {
+                    $subjectCount++;
+                    if (($subData['total'] ?? 0) > 0) {
+                        $totalValues[]  = $subData['total'];
+                        $gradePointsA[] = $this->getGradePoint($subData['total']);
+                    }
+                    if (($subData['cum'] ?? 0) > 0) {
+                        $cumValues[] = $subData['cum'];
+                    }
                 }
             }
 
-            $totalCum    = array_sum($cumValues);
+            // Term total = sum of all term scores
             $totalTerm   = array_sum($totalValues);
-            $numSubjects = count($cumValues);
-            $gpa         = count($gradePointsA) > 0
+            // Cum total = sum of all cumulative scores
+            $totalCum    = array_sum($cumValues);
+            $numSubjects = $subjectCount;
+
+            $gpa = count($gradePointsA) > 0
                 ? round(array_sum($gradePointsA) / count($gradePointsA), 2) : 0.0;
 
             $armLabel = '';
             if ($isCombined && $armMap && isset($armMap[$sid])) {
                 $armLabel = $armLabels[$armMap[$sid]] ?? '';
-            } elseif (!$isCombined) {
+            } elseif (!$isCombined && $armLabels) {
                 $armLabel = $armLabels[$schoolclassid] ?? '';
             }
 
@@ -491,6 +509,15 @@ class BroadsheetController extends Controller
         // Calculate all position types
         $posMapsCum  = $this->buildPositionMaps($studentRows, 'total_cum', $armMap);
         $posMapsTerm = $this->buildPositionMaps($studentRows, 'total_term', $armMap);
+
+        // Debug: Log position maps to verify
+        Log::info('Position calculation', [
+            'student_count' => count($studentRows),
+            'cum_class_positions' => $posMapsCum['class'],
+            'term_class_positions' => $posMapsTerm['class'],
+            'cum_arm_positions' => $posMapsCum['arm'],
+            'term_arm_positions' => $posMapsTerm['arm'],
+        ]);
 
         // Assign positions to each student
         foreach ($studentRows as $sid => &$row) {
@@ -541,7 +568,13 @@ class BroadsheetController extends Controller
             'arm'   => [],
         ];
 
-        // Class-wide positions
+        if (empty($studentRows)) {
+            return $positionMaps;
+        }
+
+        // =====================================================================
+        // CLASS-WIDE POSITIONS
+        // =====================================================================
         $sorted = $studentRows;
         uasort($sorted, fn($a, $b) => ($b[$key] ?? 0) <=> ($a[$key] ?? 0));
 
@@ -553,7 +586,14 @@ class BroadsheetController extends Controller
             $counter++;
             $val = (float)($row[$key] ?? 0);
 
+            if ($val <= 0) {
+                // Students with no scores get no position
+                $positionMaps['class'][(int)$sid] = 0;
+                continue;
+            }
+
             if ($prevVal !== null && $val === $prevVal) {
+                // Same score = same position (dense ranking)
                 $positionMaps['class'][(int)$sid] = $prevPos;
             } else {
                 $positionMaps['class'][(int)$sid] = $counter;
@@ -562,8 +602,11 @@ class BroadsheetController extends Controller
             $prevVal = $val;
         }
 
-        // Arm-based positions
+        // =====================================================================
+        // ARM-BASED POSITIONS
+        // =====================================================================
         if ($armMap && !empty($armMap)) {
+            // Group students by arm
             $armGroups = [];
             foreach ($studentRows as $sid => $row) {
                 $arm = $armMap[$sid] ?? 'default';
@@ -580,6 +623,11 @@ class BroadsheetController extends Controller
                 foreach ($armStudents as $sid => $row) {
                     $counter++;
                     $val = (float)($row[$key] ?? 0);
+
+                    if ($val <= 0) {
+                        $positionMaps['arm'][(int)$sid] = 0;
+                        continue;
+                    }
 
                     if ($prevVal !== null && $val === $prevVal) {
                         $positionMaps['arm'][(int)$sid] = $prevPos;
