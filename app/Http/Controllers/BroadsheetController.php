@@ -17,6 +17,7 @@ use App\Models\Subjectclass;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
@@ -617,10 +618,10 @@ class BroadsheetController extends Controller
     }
 
     // =========================================================================
-    // WEB VIEW
+    // WEB VIEW - FIXED RETURN TYPE
     // =========================================================================
 
-    public function webView(Request $request): View|JsonResponse
+    public function webView(Request $request): View|JsonResponse|RedirectResponse
     {
         try {
             $validated = $request->validate([
@@ -749,7 +750,7 @@ class BroadsheetController extends Controller
     // ALL CLASSES WEB VIEW
     // =========================================================================
 
-    public function allClassesWebView(Request $request): View|JsonResponse
+    public function allClassesWebView(Request $request): View|JsonResponse|RedirectResponse
     {
         try {
             $validated = $request->validate([
