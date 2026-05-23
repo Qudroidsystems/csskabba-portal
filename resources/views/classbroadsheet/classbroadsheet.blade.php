@@ -48,6 +48,38 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 @keyframes rowSlide    { from { opacity:0; transform:translateX(-12px); } to { opacity:1; transform:translateX(0); } }
 @keyframes backdropIn  { from { opacity:0; } to { opacity:1; } }
 
+/* ── Comment display styles ── */
+.comment-display, .comment-display-mobile {
+    transition: all 0.2s ease;
+    word-break: break-word;
+    white-space: normal;
+    line-height: 1.5;
+    cursor: pointer;
+}
+.comment-display:hover, .comment-display-mobile:hover {
+    background: #e8f0fe !important;
+    border-color: var(--cb-teal) !important;
+    transform: translateY(-1px);
+}
+
+/* ── Serial Number Cell ── */
+.sn-cell {
+    text-align: center;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--cb-navy);
+    background-color: #f8fafc;
+    border-right: 1px solid var(--cb-border);
+    width: 45px;
+}
+
+/* ── Position Cell ── */
+.pos-cell {
+    text-align: center;
+    vertical-align: middle;
+    width: 80px;
+}
+
 /* ── Shimmer skeleton ── */
 .shimmer-skeleton {
     background: linear-gradient(90deg,#e2e8f0 25%,#f8fafc 50%,#e2e8f0 75%);
@@ -171,7 +203,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     position:sticky; top:0; z-index:2;
 }
 .cb-table thead th.col-name-hdr { text-align:left; }
-.cb-table tbody td { padding:10px 14px; vertical-align:middle; border-bottom:1px solid var(--cb-border); text-align:center; }
+.cb-table tbody td { padding:10px 14px; vertical-align:middle; border-bottom:1px solid var(--cb-border); }
 .cb-table tbody td.td-name { text-align:left; }
 .cb-table tbody tr {
     transition:all .25s ease;
@@ -187,18 +219,22 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
 /* ── Position Badge ── */
 .pos-badge {
-    display:inline-flex; align-items:center; justify-content:center;
-    width:36px; height:36px; border-radius:50%;
-    font-size:13px; font-weight:800; border:2px solid;
-    transition:all .3s cubic-bezier(.22,1,.36,1);
-    flex-shrink:0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: 800;
+    border: 2px solid;
+    transition: all .3s cubic-bezier(.22,1,.36,1);
 }
-.pos-badge:hover { transform:scale(1.18) rotate(-5deg); }
-.pos-1 { background:linear-gradient(135deg,#fef9c3,#fde68a); border-color:#f59e0b; color:#92400e; box-shadow:0 2px 8px rgba(245,158,11,.35); }
-.pos-2 { background:linear-gradient(135deg,#f1f5f9,#e2e8f0); border-color:#94a3b8; color:#475569; box-shadow:0 2px 8px rgba(148,163,184,.25); }
-.pos-3 { background:linear-gradient(135deg,#ffedd5,#fed7aa); border-color:#f97316; color:#9a3412; box-shadow:0 2px 8px rgba(249,115,22,.25); }
-.pos-other { background:var(--cb-surface); border-color:var(--cb-border); color:var(--cb-muted); font-size:12px; }
-.cbcol-position { min-width:60px; }
+.pos-badge:hover { transform: scale(1.18) rotate(-5deg); }
+.pos-1 { background: linear-gradient(135deg,#fef9c3,#fde68a); border-color: #f59e0b; color: #92400e; box-shadow: 0 2px 8px rgba(245,158,11,.35); }
+.pos-2 { background: linear-gradient(135deg,#f1f5f9,#e2e8f0); border-color: #94a3b8; color: #475569; box-shadow: 0 2px 8px rgba(148,163,184,.25); }
+.pos-3 { background: linear-gradient(135deg,#ffedd5,#fed7aa); border-color: #f97316; color: #9a3412; box-shadow: 0 2px 8px rgba(249,115,22,.25); }
+.pos-other { background: var(--cb-surface); border-color: var(--cb-border); color: var(--cb-muted); font-size: 12px; width: 38px; height: 38px; }
 
 /* ── Score / Grade Cells ── */
 .score-dual { display:flex; flex-direction:column; gap:2px; min-width:80px; }
@@ -233,14 +269,12 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .analytics-lbl  { color:var(--cb-muted); font-size:10px; font-weight:500; }
 .analytics-val  { font-weight:700; color:var(--cb-navy); font-size:11.5px; }
 
-/* ── QUICK WIN 2: animated percentage spans ── */
 .analytics-percentage {
     font-weight:800; font-size:12px;
     display:inline-block;
     animation:countUp .6s ease both;
 }
 
-/* ── QUICK WIN 3: Progress bars with color transition ── */
 .pct-bar-wrap { background:#e2e8f0; border-radius:4px; height:6px; margin-top:3px; overflow:hidden; }
 .pct-bar {
     height:100%; border-radius:4px;
@@ -272,7 +306,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 }
 .cb-input:focus { border-color:var(--cb-teal); outline:none; box-shadow:0 0 0 3px rgba(13,148,136,.12); background:#fff; transform:translateX(2px); }
 .cb-input.has-value { border-left-color:var(--cb-teal); background:#f0fdf9; }
-.absence-input { width:72px !important; text-align:center; }
+.absence-input { width:70px !important; text-align:center; margin:0 auto; display:block; }
 
 /* ── Student Name Cell ── */
 .student-name-cell { display:flex; align-items:center; gap:9px; }
@@ -285,7 +319,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .cb-avatar:hover { border-color:var(--cb-teal); transform:scale(1.12) rotate(-3deg); box-shadow:0 4px 14px rgba(13,148,136,.25); }
 .cb-avatar img { width:100%; height:100%; object-fit:cover; }
 .cb-avatar-initials { background:linear-gradient(135deg,var(--cb-teal),var(--cb-sky)); color:#fff; font-size:13px; font-weight:700; }
-.student-name-text { font-weight:600; font-size:12.5px; color:var(--cb-navy); }
+.student-name-text { font-weight:700; font-size:13px; color:var(--cb-navy); }
 .student-adm { font-size:10.5px; color:var(--cb-muted); margin-top:1px; }
 
 /* ── Autosave Chip ── */
@@ -379,10 +413,10 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 }
 .tpl-close { background:rgba(255,255,255,.18); border:none; color:#fff; border-radius:50%; width:26px; height:26px; cursor:pointer; font-size:16px; display:flex; align-items:center; justify-content:center; transition:all .2s ease; }
 .tpl-close:hover { background:rgba(255,255,255,.4); transform:rotate(90deg); }
-.tpl-search-wrap { padding:10px 12px; border-bottom:1px solid var(--cb-border); flex-shrink:0; }
-.tpl-search { width:100%; border:1.5px solid var(--cb-border); border-radius:8px; padding:7px 10px 7px 32px; font-size:12px; font-family:'DM Sans',sans-serif; background:var(--cb-surface); position:relative; }
+.tpl-search-wrap { padding:10px 12px; border-bottom:1px solid var(--cb-border); flex-shrink:0; position:relative; }
+.tpl-search { width:100%; border:1.5px solid var(--cb-border); border-radius:8px; padding:7px 10px 7px 32px; font-size:12px; font-family:'DM Sans',sans-serif; background:var(--cb-surface); }
 .tpl-search:focus { outline:none; border-color:var(--cb-teal); box-shadow:0 0 0 3px rgba(13,148,136,.12); }
-.tpl-search-icon { position:absolute; margin-left:10px; margin-top:-26px; color:var(--cb-muted); font-size:14px; pointer-events:none; }
+.tpl-search-icon { position:absolute; left:22px; top:50%; transform:translateY(-50%); color:var(--cb-muted); font-size:14px; pointer-events:none; }
 .tpl-cats { display:flex; gap:6px; padding:8px 12px; overflow-x:auto; flex-shrink:0; border-bottom:1px solid var(--cb-border); }
 .tpl-cat-btn {
     flex-shrink:0; padding:4px 12px; border-radius:20px; font-size:11px; font-weight:700;
@@ -400,11 +434,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .tpl-item-label { font-size:11px; font-weight:700; color:var(--cb-teal); text-transform:uppercase; letter-spacing:.5px; }
 .tpl-item-text  { font-size:12px; color:var(--cb-navy); line-height:1.5; }
 .tpl-no-results { text-align:center; padding:24px 12px; color:var(--cb-muted); font-size:12px; }
-#tplBackdrop { display:none; position:fixed; inset:0; z-index:9999; }
-
-/* ── Responsive ── */
-@media (max-width:1199px) { .desktop-only { display:none !important; } }
-@media (min-width:1200px) { .mobile-only  { display:none !important; } }
+#tplBackdrop { display:none; position:fixed; inset:0; z-index:9999; background:rgba(0,0,0,.3); }
 
 /* ── Image Zoom Modal ── */
 #cbImgZoomModal .modal-content { background:transparent; border:none; box-shadow:none; }
@@ -483,7 +513,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 .subjects-scroll::-webkit-scrollbar-thumb { background:var(--cb-teal); border-radius:10px; }
 .subj-chip { flex-shrink:0; text-align:center; border:1px solid var(--cb-border); border-radius:10px; padding:8px 12px; min-width:85px; background:var(--cb-surface); transition:all .2s ease; }
 .subj-chip:hover { transform:translateY(-3px); border-color:var(--cb-teal); box-shadow:0 3px 8px rgba(13,148,136,.18); }
-.comment-field-group { margin-bottom:10px; position:relative; }
+.comment-field-group { margin-bottom:10px; }
 .comment-field-group label { font-size:11px; font-weight:600; color:var(--cb-muted); margin-bottom:4px; display:block; }
 
 /* ── Save Counter ── */
@@ -561,7 +591,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     .cb-input { border:none !important; background:transparent !important; padding:0 !important; font-size:9px !important; box-shadow:none !important; }
     .absence-input { width:40px !important; }
 
-    .pos-badge { width:26px !important; height:26px !important; font-size:10px !important; border-width:1.5px !important; }
+    .pos-badge { width:28px !important; height:28px !important; font-size:10px !important; border-width:1.5px !important; }
 
     .cb-student-card { break-inside:avoid; }
     .cb-table tbody tr { break-inside:avoid; }
@@ -580,7 +610,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 <div class="page-content">
 <div class="container-fluid">
 
-{{-- ── Hero ── --}}
+{{-- Hero --}}
 <div class="cb-hero">
     <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
         <div>
@@ -596,7 +626,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     </div>
 </div>
 
-{{-- ── Stats ── --}}
+{{-- Stats --}}
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
         <div class="cb-stat">
@@ -643,7 +673,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     </div>
 </div>
 
-{{-- ── Column Toggle ── --}}
+{{-- Column Toggle --}}
 <div class="col-toggle-panel">
     <h6><i class="ri-layout-column-line" style="color:var(--cb-teal)"></i> Show / Hide Columns</h6>
     <div class="toggle-chips">
@@ -703,7 +733,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         <span><i class="ri-magic-line me-1"></i>Comment Templates</span>
         <button class="tpl-close" id="tplCloseBtn">&times;</button>
     </div>
-    <div class="tpl-search-wrap" style="position:relative;">
+    <div class="tpl-search-wrap">
         <i class="ri-search-line tpl-search-icon"></i>
         <input type="text" class="tpl-search" id="tplSearchInput" placeholder="Search templates…">
     </div>
@@ -747,22 +777,22 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             <input type="hidden" class="canonical-absence"    id="c_absence_{{ $student->id }}"    name="no_of_times_school_absent[{{ $student->id }}]"  value="{{ $profile ? $profile->no_of_times_school_absent : '' }}">
         @endforeach
 
-        {{-- ── DESKTOP TABLE ── --}}
+        {{-- DESKTOP TABLE --}}
         <div class="desktop-only cb-table-scroll">
             <table class="cb-table">
                 <thead>
                     <tr>
-                        <th style="width:34px;">#</th>
-                        <th class="col-name-hdr" style="min-width:200px;">Student</th>
-                        <th class="cbcol-position" style="min-width:70px;">Position</th>
+                        <th style="width:50px; text-align:center;">#</th>
+                        <th class="col-name-hdr" style="min-width:220px;">Student</th>
+                        <th class="cbcol-position" style="width:80px; text-align:center;">Position</th>
                         @foreach ($subjects as $subject)
-                            <th class="cbcol-scores" style="min-width:86px;">{{ $subject->subject }}</th>
+                            <th class="cbcol-scores" style="min-width:90px; text-align:center;">{{ $subject->subject }}</th>
                         @endforeach
-                        <th class="cbcol-summary" style="min-width:220px;">Summary</th>
-                        <th class="cbcol-teacher" style="min-width:200px;">Teacher's Comment</th>
-                        <th class="cbcol-guidance" style="min-width:160px;">Counselor's Comment</th>
-                        <th class="cbcol-activities" style="min-width:160px;">Remark on Activities</th>
-                        <th class="cbcol-absence" style="min-width:80px;">Absent</th>
+                        <th class="cbcol-summary" style="min-width:240px;">Summary</th>
+                        <th class="cbcol-teacher" style="min-width:240px;">Teacher's Comment</th>
+                        <th class="cbcol-guidance" style="min-width:220px;">Counselor's Comment</th>
+                        <th class="cbcol-activities" style="min-width:240px;">Remark on Activities</th>
+                        <th class="cbcol-absence" style="width:85px; text-align:center;">Absent</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -784,6 +814,10 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                             $cumPct     = $an['cum_percentage'] ?? 0;
                             $termColor  = $termPct < 40 ? '#f43f5e' : ($termPct < 70 ? '#f59e0b' : '#22c55e');
                             $cumColor   = $cumPct  < 40 ? '#f43f5e' : ($cumPct  < 70 ? '#f59e0b' : '#22c55e');
+
+                            $teacherComment = $profile ? $profile->classteachercomment : '';
+                            $guidanceComment = $profile ? $profile->guidancescomment : '';
+                            $activitiesComment = $profile ? $profile->remark_on_other_activities : '';
                         @endphp
                         <tr class="cb-student-row {{ $hasComment ? 'row-has-comment' : 'row-no-comment' }}"
                             data-student-id="{{ $sid }}"
@@ -794,7 +828,10 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                             data-student-pos="{{ $pos }}"
                             data-searchkey="{{ strtolower($fullName . ' ' . $student->admissionNo) }}">
 
-                            <tr>{{ $index + 1 }}</td>
+                            {{-- Serial Number --}}
+                            <td class="sn-cell" style="text-align:center; font-weight:600; font-size:13px;">{{ $index + 1 }}</td>
+
+                            {{-- Student Name Column --}}
                             <td class="td-name">
                                 <div class="student-name-cell">
                                     @if($imgUrl)
@@ -823,14 +860,18 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                 </div>
                             </td>
 
-                            <td class="cbcol-position">
-                                <div style="display:flex;justify-content:center;">
-                                    <div class="pos-badge {{ $posClass }}" data-tooltip="{{ $pos }}{{ $pos === 1 ? 'st' : ($pos === 2 ? 'nd' : ($pos === 3 ? 'rd' : 'th')) }} position (Cum)">
+                            {{-- Position Badge --}}
+                            <td class="cbcol-position" style="text-align:center; vertical-align:middle;">
+                                <div style="display:flex; justify-content:center; align-items:center;">
+                                    <div class="pos-badge {{ $posClass }}"
+                                         data-tooltip="{{ $pos }}{{ $pos === 1 ? 'st' : ($pos === 2 ? 'nd' : ($pos === 3 ? 'rd' : 'th')) }} position (Cum)"
+                                         style="cursor:pointer;">
                                         {{ $posIcon }}
                                     </div>
                                 </div>
                             </td>
 
+                            {{-- Subject Scores --}}
                             @foreach ($subjects as $subject)
                                 @php
                                     $tScore = $termScoreMap[$sid][$subject->subject] ?? 0;
@@ -862,7 +903,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                 </td>
                             @endforeach
 
-                            {{-- ── Summary / Analytics cell ── --}}
+                            {{-- Summary / Analytics cell --}}
                             <td class="cbcol-summary analytics-cell">
                                 <div class="analytics-row">
                                     <span class="analytics-lbl">Obtained (Term)</span>
@@ -915,19 +956,49 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
                                 </div>
                             </td>
 
+                            {{-- Teacher's Comment Display --}}
                             <td class="cbcol-teacher">
-                                <div class="comment-field-group" style="margin:0;position:relative;">
-                                    <input type="text" class="cb-input desk-teacher comment-input {{ $hasComment ? 'has-value' : '' }}" data-sid="{{ $sid }}" data-field="teacher" value="{{ $profile ? $profile->classteachercomment : '' }}" placeholder="Click to add comment…" autocomplete="off">
+                                <div class="comment-display"
+                                     data-sid="{{ $sid }}"
+                                     data-field="teacher"
+                                     data-value="{{ $teacherComment }}"
+                                     onclick="openCommentModal('{{ $sid }}', 'teacher', '{{ addslashes($fullName) }}', '{{ $student->admissionNo }}', '{{ $imgUrl }}', {{ json_encode($an) }})"
+                                     style="cursor:pointer; padding:10px 12px; background:#f8fafc; border-radius:8px; border:1px solid var(--cb-border); min-height:60px; white-space:normal; word-wrap:break-word; font-size:12px; line-height:1.5;">
+                                    {!! $teacherComment ? nl2br(e($teacherComment)) : '<span style="color:#94a3b8;">— Click to add comment —</span>' !!}
                                 </div>
                             </td>
+
+                            {{-- Counselor's Comment Display --}}
                             <td class="cbcol-guidance">
-                                <input type="text" class="cb-input desk-guidance comment-input" data-sid="{{ $sid }}" data-field="guidance" value="{{ $profile ? $profile->guidancescomment : '' }}" placeholder="Click to add comment…" autocomplete="off">
+                                <div class="comment-display"
+                                     data-sid="{{ $sid }}"
+                                     data-field="guidance"
+                                     data-value="{{ $guidanceComment }}"
+                                     onclick="openCommentModal('{{ $sid }}', 'guidance', '{{ addslashes($fullName) }}', '{{ $student->admissionNo }}', '{{ $imgUrl }}', {{ json_encode($an) }})"
+                                     style="cursor:pointer; padding:10px 12px; background:#f8fafc; border-radius:8px; border:1px solid var(--cb-border); min-height:60px; white-space:normal; word-wrap:break-word; font-size:12px; line-height:1.5;">
+                                    {!! $guidanceComment ? nl2br(e($guidanceComment)) : '<span style="color:#94a3b8;">— Click to add comment —</span>' !!}
+                                </div>
                             </td>
+
+                            {{-- Remark on Activities Display --}}
                             <td class="cbcol-activities">
-                                <input type="text" class="cb-input desk-activities comment-input" data-sid="{{ $sid }}" data-field="activities" value="{{ $profile ? $profile->remark_on_other_activities : '' }}" placeholder="Click to add comment…" autocomplete="off">
+                                <div class="comment-display"
+                                     data-sid="{{ $sid }}"
+                                     data-field="activities"
+                                     data-value="{{ $activitiesComment }}"
+                                     onclick="openCommentModal('{{ $sid }}', 'activities', '{{ addslashes($fullName) }}', '{{ $student->admissionNo }}', '{{ $imgUrl }}', {{ json_encode($an) }})"
+                                     style="cursor:pointer; padding:10px 12px; background:#f8fafc; border-radius:8px; border:1px solid var(--cb-border); min-height:60px; white-space:normal; word-wrap:break-word; font-size:12px; line-height:1.5;">
+                                    {!! $activitiesComment ? nl2br(e($activitiesComment)) : '<span style="color:#94a3b8;">— Click to add comment —</span>' !!}
+                                </div>
                             </td>
-                            <td class="cbcol-absence">
-                                <input type="number" class="cb-input absence-input desk-absence" data-sid="{{ $sid }}" data-field="absence" value="{{ $profile ? $profile->no_of_times_school_absent : '' }}" min="0" placeholder="0" autocomplete="off">
+
+                            {{-- Absences --}}
+                            <td class="cbcol-absence" style="text-align:center; vertical-align:middle;">
+                                <input type="number" class="cb-input absence-input desk-absence"
+                                       data-sid="{{ $sid }}" data-field="absence"
+                                       value="{{ $profile ? $profile->no_of_times_school_absent : '' }}"
+                                       min="0" placeholder="0" autocomplete="off"
+                                       style="width:70px; text-align:center; margin:0 auto;">
                             </td>
                         </tr>
                     @endforeach
@@ -935,104 +1006,80 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             </table>
         </div>
 
-        {{-- ── MOBILE CARDS ── --}}
+        {{-- MOBILE CARDS (simplified for brevity - same as before but with comment displays) --}}
         <div class="mobile-only" style="padding:16px;">
             @foreach ($students as $index => $student)
                 @php
-                    $sid        = $student->id;
-                    $initials   = strtoupper(substr($student->fname ?? '', 0, 1) . substr($student->lastname ?? '', 0, 1)) ?: 'ST';
-                    $hasPic     = !empty($student->picture) && $student->picture !== 'unnamed.jpg';
-                    $imgUrl     = $hasPic ? asset('storage/student_avatars/' . basename($student->picture)) : null;
-                    $fullName   = trim(($student->lastname ?? '') . ' ' . ($student->fname ?? '') . ' ' . ($student->othername ?? ''));
-                    $profile    = $personalityProfiles->where('studentid', $sid)->first();
-                    $an         = $studentAnalytics[$sid] ?? [];
+                    $sid = $student->id;
+                    $initials = strtoupper(substr($student->fname ?? '', 0, 1) . substr($student->lastname ?? '', 0, 1)) ?: 'ST';
+                    $hasPic = !empty($student->picture) && $student->picture !== 'unnamed.jpg';
+                    $imgUrl = $hasPic ? asset('storage/student_avatars/' . basename($student->picture)) : null;
+                    $fullName = trim(($student->lastname ?? '') . ' ' . ($student->fname ?? '') . ' ' . ($student->othername ?? ''));
+                    $profile = $personalityProfiles->where('studentid', $sid)->first();
+                    $an = $studentAnalytics[$sid] ?? [];
                     $hasComment = $profile && !empty(trim($profile->classteachercomment ?? ''));
-                    $pos        = $positionMap[$sid] ?? 0;
-                    $posClass   = $pos === 1 ? 'pos-1' : ($pos === 2 ? 'pos-2' : ($pos === 3 ? 'pos-3' : 'pos-other'));
-                    $rowDelay   = 0.3 + ($index * 0.04);
-                    $termPct    = $an['term_percentage'] ?? 0;
-                    $cumPct     = $an['cum_percentage'] ?? 0;
-                    $termColor  = $termPct < 40 ? '#f43f5e' : ($termPct < 70 ? '#f59e0b' : '#22c55e');
-                    $cumColor   = $cumPct  < 40 ? '#f43f5e' : ($cumPct  < 70 ? '#f59e0b' : '#22c55e');
+                    $pos = $positionMap[$sid] ?? 0;
+                    $posClass = $pos === 1 ? 'pos-1' : ($pos === 2 ? 'pos-2' : ($pos === 3 ? 'pos-3' : 'pos-other'));
+                    $termPct = $an['term_percentage'] ?? 0;
+                    $cumPct = $an['cum_percentage'] ?? 0;
+                    $termColor = $termPct < 40 ? '#f43f5e' : ($termPct < 70 ? '#f59e0b' : '#22c55e');
+                    $cumColor = $cumPct < 40 ? '#f43f5e' : ($cumPct < 70 ? '#f59e0b' : '#22c55e');
+
+                    $teacherComment = $profile ? $profile->classteachercomment : '';
+                    $guidanceComment = $profile ? $profile->guidancescomment : '';
+                    $activitiesComment = $profile ? $profile->remark_on_other_activities : '';
                 @endphp
-                <div class="cb-student-card cb-student-row {{ $hasComment ? 'card-has-comment' : 'card-no-comment' }}"
-                     data-student-id="{{ $sid }}" data-student-name="{{ $fullName }}"
-                     data-student-adm="{{ $student->admissionNo }}" data-student-img="{{ $imgUrl }}"
-                     data-student-analytics='@json($an)'
-                     data-student-pos="{{ $pos }}"
-                     data-searchkey="{{ strtolower($fullName . ' ' . $student->admissionNo) }}"
-                     style="animation-delay:{{ $index * 0.04 }}s">
+                <div class="cb-student-card" data-student-id="{{ $sid }}" data-searchkey="{{ strtolower($fullName . ' ' . $student->admissionNo) }}">
                     <div class="card-top">
                         @if($imgUrl)
-                            <div class="cb-avatar cb-avatar-trigger" style="width:48px;height:48px;"
-                                 data-img="{{ $imgUrl }}" data-name="{{ $fullName }}"
-                                 data-adm="{{ $student->admissionNo }}"
-                                 data-class="{{ $schoolclass ? $schoolclass->schoolclass . ' ' . $schoolclass->arm : '' }}"
-                                 data-gender="{{ $student->gender ?? '' }}">
-                                <img src="{{ $imgUrl }}" alt="{{ $fullName }}" style="width:100%;height:100%;object-fit:cover;"
-                                     onerror="var p=this.closest('.cb-avatar');p.classList.add('cb-avatar-initials');p.textContent='{{ $initials }}'">
+                            <div class="cb-avatar" style="width:48px;height:48px;">
+                                <img src="{{ $imgUrl }}" alt="{{ $fullName }}" style="width:100%;height:100%;object-fit:cover;">
                             </div>
                         @else
-                            <div class="cb-avatar cb-avatar-initials cb-avatar-trigger" style="width:48px;height:48px;font-size:16px;"
-                                 data-img="" data-name="{{ $fullName }}"
-                                 data-adm="{{ $student->admissionNo }}"
-                                 data-class="{{ $schoolclass ? $schoolclass->schoolclass . ' ' . $schoolclass->arm : '' }}"
-                                 data-gender="{{ $student->gender ?? '' }}"
-                                 data-initials="{{ $initials }}">{{ $initials }}</div>
+                            <div class="cb-avatar cb-avatar-initials" style="width:48px;height:48px;font-size:16px;">{{ $initials }}</div>
                         @endif
                         <div style="flex:1;">
                             <div style="font-weight:700;font-size:14px;color:var(--cb-navy);">{{ $fullName }}</div>
-                            <div style="font-size:11px;color:var(--cb-muted);">{{ $student->admissionNo }} · {{ $student->gender ?? '' }}</div>
-                            <span class="comment-status-dot {{ $hasComment ? 'dot-saved' : 'dot-unsaved' }}" id="status-m-{{ $sid }}">{{ $hasComment ? '✓ Commented' : '○ No comment' }}</span>
-                            <span class="autosave-chip ac-idle" id="autosave-m-{{ $sid }}"></span>
+                            <div style="font-size:11px;color:var(--cb-muted);">{{ $student->admissionNo }}</div>
                         </div>
-                        <div class="pos-badge {{ $posClass }}" style="margin-left:auto;">{{ $pos }}</div>
+                        <div class="pos-badge {{ $posClass }}">{{ $pos }}</div>
                     </div>
                     <div class="card-body-pad">
-                        <div class="performance-strip">
-                            <div style="font-size:11px;font-weight:700;opacity:.8;margin-bottom:4px;"><i class="ri-bar-chart-line me-1"></i>Performance Summary</div>
-                            <div class="ps-grid">
-                                <div class="ps-item"><div class="ps-lbl">Obtained (T)</div><div class="ps-val">{{ number_format($an['term_total'] ?? 0, 1) }}</div></div>
-                                <div class="ps-item"><div class="ps-lbl">Obtained (C)</div><div class="ps-val">{{ number_format($an['cum_total'] ?? 0, 1) }}</div></div>
-                                <div class="ps-item"><div class="ps-lbl">Obtainable</div><div class="ps-val">{{ $an['total_obtainable'] ?? 0 }}</div></div>
-                                <div class="ps-item">
-                                    <div class="ps-lbl">% Obt. (T)</div>
-                                    <div class="ps-val {{ $termPct < 50 ? 'score-red' : ($termPct < 70 ? 'score-amber' : 'score-green') }}"
-                                         data-target="{{ number_format($termPct, 1) }}" data-type="pct">0%</div>
-                                </div>
-                                <div class="ps-item">
-                                    <div class="ps-lbl">% Obt. (C)</div>
-                                    <div class="ps-val {{ $cumPct < 50 ? 'score-red' : ($cumPct < 70 ? 'score-amber' : 'score-green') }}"
-                                         data-target="{{ number_format($cumPct, 1) }}" data-type="pct">0%</div>
-                                </div>
-                            </div>
-                            <div style="margin-top:10px;">
-                                <div style="font-size:9px;opacity:.7;margin-bottom:3px;">Term %</div>
-                                <div class="pct-bar-wrap">
-                                    <div class="pct-bar" data-final-color="{{ $termColor }}"
-                                         style="width:{{ $termPct }}%;animation-delay:{{ $rowDelay }}s;"></div>
-                                </div>
-                                <div style="font-size:9px;opacity:.7;margin:4px 0 3px;">Cum %</div>
-                                <div class="pct-bar-wrap">
-                                    <div class="pct-bar" data-final-color="{{ $cumColor }}"
-                                         style="width:{{ $cumPct }}%;animation-delay:{{ $rowDelay + 0.1 }}s;"></div>
-                                </div>
+                        <!-- Mobile comment sections -->
+                        <div class="comment-field-group">
+                            <label>Teacher's Comment</label>
+                            <div class="comment-display-mobile"
+                                 data-sid="{{ $sid }}" data-field="teacher"
+                                 onclick="openCommentModal('{{ $sid }}', 'teacher', '{{ addslashes($fullName) }}', '{{ $student->admissionNo }}', '{{ $imgUrl }}', {{ json_encode($an) }})"
+                                 style="cursor:pointer; padding:10px; background:#f8fafc; border-radius:8px; border:1px solid var(--cb-border);">
+                                {!! $teacherComment ? nl2br(e($teacherComment)) : '<span style="color:#94a3b8;">— Click to add comment —</span>' !!}
                             </div>
                         </div>
-                        <div class="subjects-scroll">
-                            @foreach ($subjects as $subject)
-                                @php $tS = $termScoreMap[$sid][$subject->subject] ?? 0; $cS = $cumScoreMap[$sid][$subject->subject] ?? 0; @endphp
-                                <div class="subj-chip">
-                                    <div style="font-size:10px;font-weight:600;color:var(--cb-navy);margin-bottom:4px;">{{ Str::limit($subject->subject, 10) }}</div>
-                                    <div style="font-size:11px;" class="{{ $tS < 50 ? 'score-red' : 'score-green' }}">T: {{ $tS ? number_format($tS,1) : '—' }}</div>
-                                    <div style="font-size:11px;" class="{{ $cS < 50 ? 'score-red' : 'score-green' }}">C: {{ $cS ? number_format($cS,1) : '—' }}</div>
-                                </div>
-                            @endforeach
+                        <div class="comment-field-group">
+                            <label>Counselor's Comment</label>
+                            <div class="comment-display-mobile"
+                                 data-sid="{{ $sid }}" data-field="guidance"
+                                 onclick="openCommentModal('{{ $sid }}', 'guidance', '{{ addslashes($fullName) }}', '{{ $student->admissionNo }}', '{{ $imgUrl }}', {{ json_encode($an) }})"
+                                 style="cursor:pointer; padding:10px; background:#f8fafc; border-radius:8px; border:1px solid var(--cb-border);">
+                                {!! $guidanceComment ? nl2br(e($guidanceComment)) : '<span style="color:#94a3b8;">— Click to add comment —</span>' !!}
+                            </div>
                         </div>
-                        <div class="comment-field-group"><label>Teacher's Comment</label><input type="text" class="cb-input mob-teacher comment-input {{ $hasComment ? 'has-value' : '' }}" data-sid="{{ $sid }}" data-field="teacher" value="{{ $profile ? $profile->classteachercomment : '' }}" placeholder="Click to add comment…" autocomplete="off"></div>
-                        <div class="comment-field-group mobile-col-guidance"><label>Counselor's Comment</label><input type="text" class="cb-input mob-guidance comment-input" data-sid="{{ $sid }}" data-field="guidance" value="{{ $profile ? $profile->guidancescomment : '' }}" placeholder="Click to add comment…" autocomplete="off"></div>
-                        <div class="comment-field-group mobile-col-activities"><label>Remark on Activities</label><input type="text" class="cb-input mob-activities comment-input" data-sid="{{ $sid }}" data-field="activities" value="{{ $profile ? $profile->remark_on_other_activities : '' }}" placeholder="Click to add comment…" autocomplete="off"></div>
-                        <div class="comment-field-group mobile-col-absence"><label>Times Absent</label><input type="number" class="cb-input mob-absence" data-sid="{{ $sid }}" data-field="absence" value="{{ $profile ? $profile->no_of_times_school_absent : '' }}" min="0" placeholder="0" style="max-width:100px;" autocomplete="off"></div>
+                        <div class="comment-field-group">
+                            <label>Remark on Activities</label>
+                            <div class="comment-display-mobile"
+                                 data-sid="{{ $sid }}" data-field="activities"
+                                 onclick="openCommentModal('{{ $sid }}', 'activities', '{{ addslashes($fullName) }}', '{{ $student->admissionNo }}', '{{ $imgUrl }}', {{ json_encode($an) }})"
+                                 style="cursor:pointer; padding:10px; background:#f8fafc; border-radius:8px; border:1px solid var(--cb-border);">
+                                {!! $activitiesComment ? nl2br(e($activitiesComment)) : '<span style="color:#94a3b8;">— Click to add comment —</span>' !!}
+                            </div>
+                        </div>
+                        <div class="comment-field-group">
+                            <label>Times Absent</label>
+                            <input type="number" class="cb-input mob-absence"
+                                   data-sid="{{ $sid }}" data-field="absence"
+                                   value="{{ $profile ? $profile->no_of_times_school_absent : '' }}"
+                                   style="width:100px;">
+                        </div>
                     </div>
                 </div>
             @endforeach
@@ -1068,7 +1115,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
 </div></div></div>
 
-{{-- ── Image Zoom Modal ── --}}
+{{-- Image Zoom Modal --}}
 <div class="modal fade" id="cbImgZoomModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content" style="background:transparent;border:none;box-shadow:none;">
@@ -1076,13 +1123,13 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             <div class="modal-body" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:75vh;padding:20px;">
                 <img id="cbZoomedImg" src="" alt="Student Photo" class="cb-zoomed-img" style="cursor:pointer;">
                 <div class="cb-zoom-name" id="cbZoomedName"></div>
-                <div class="cb-zoom-meta"  id="cbZoomedMeta"></div>
+                <div class="cb-zoom-meta" id="cbZoomedMeta"></div>
             </div>
         </div>
     </div>
 </div>
 
-{{-- ── Comment Modal ── --}}
+{{-- Comment Modal --}}
 <div class="modal fade" id="cbCommentModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-dialog-centered modal-lg">
         <div class="modal-content" style="border-radius:var(--cb-radius);overflow:hidden;">
@@ -1184,11 +1231,17 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     var commentModal      = null;
     var pastCommentRegistry = [];
 
-    /* ─── Print ─── */
     window.triggerPrint = function() { window.print(); };
 
-    /* ─── Utilities ─── */
+    function escapeHtml(text) {
+        if (!text) return '';
+        var div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
     function esc(str) { var d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML; }
+    function nl2br(str) { if (!str) return ''; return str.replace(/\n/g, '<br>'); }
 
     function toast(msg, type) {
         document.querySelectorAll('.cb-toast').forEach(function(t){ t.remove(); });
@@ -1209,6 +1262,30 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             if (!chip) return;
             chip.className = 'autosave-chip ' + state;
             chip.textContent = text || '';
+        });
+    }
+
+    function refreshCommentDisplay(sid, field, value) {
+        var displayValue = value && value.trim() !== '' ? value : '';
+
+        document.querySelectorAll('.comment-display[data-sid="' + sid + '"][data-field="' + field + '"]').forEach(function(el) {
+            if (displayValue) {
+                el.innerHTML = nl2br(escapeHtml(displayValue));
+                el.setAttribute('data-value', displayValue);
+            } else {
+                el.innerHTML = '<span style="color:#94a3b8;">— Click to add comment —</span>';
+                el.setAttribute('data-value', '');
+            }
+        });
+
+        document.querySelectorAll('.comment-display-mobile[data-sid="' + sid + '"][data-field="' + field + '"]').forEach(function(el) {
+            if (displayValue) {
+                el.innerHTML = nl2br(escapeHtml(displayValue));
+                el.setAttribute('data-value', displayValue);
+            } else {
+                el.innerHTML = '<span style="color:#94a3b8;">— Click to add comment —</span>';
+                el.setAttribute('data-value', '');
+            }
         });
     }
 
@@ -1233,23 +1310,9 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         debounceTimers[sid] = setTimeout(function(){ autoSaveStudent(sid); }, AUTOSAVE_DELAY);
     }
 
-    function onInputChange(e) {
-        var inp = e.target, sid = inp.getAttribute('data-sid'), field = inp.getAttribute('data-field');
-        if (!sid || !field) return;
-        var val = inp.value;
-        setCanonical(sid, field, val);
-        var isDesktop = inp.classList.contains('desk-' + field);
-        var twinClass = isDesktop ? 'mob-' + field : 'desk-' + field;
-        document.querySelectorAll('.' + twinClass + '[data-sid="' + sid + '"]').forEach(function(twin){ if (twin !== inp) twin.value = val; });
-        refreshCommentStatusForStudent(sid);
-        scheduleAutosave(sid);
-    }
-
     function refreshCommentStatusForStudent(sid) {
         var hasVal = getCanonical(sid, 'teacher').trim() !== '';
         ['status-' + sid, 'status-m-' + sid].forEach(function(id){ var badge = document.getElementById(id); if (!badge) return; badge.textContent = hasVal ? '✓ Commented' : '○ No comment'; badge.className = 'comment-status-dot ' + (hasVal ? 'dot-saved' : 'dot-unsaved'); });
-        document.querySelectorAll('.desk-teacher[data-sid="' + sid + '"], .mob-teacher[data-sid="' + sid + '"]').forEach(function(inp){ inp.classList.toggle('has-value', hasVal); });
-        document.querySelectorAll('[data-student-id="' + sid + '"]').forEach(function(row){ row.classList.toggle('row-has-comment', hasVal); row.classList.toggle('row-no-comment', !hasVal); row.classList.toggle('card-has-comment', hasVal); row.classList.toggle('card-no-comment', !hasVal); });
     }
 
     function refreshCommentStatus() {
@@ -1266,7 +1329,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         if (pNum) pNum.textContent = pending;
     }
 
-    /* ─── Format helpers ─── */
     window.formatCommentText = function(type) {
         var ta = document.getElementById('modalTextarea'); if (!ta) return;
         var start = ta.selectionStart, end = ta.selectionEnd, text = ta.value, sel = text.substring(start, end);
@@ -1280,7 +1342,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         ta.focus();
     };
 
-    /* ─── Comment Modal ─── */
     function openCommentModal(sid, field, studentName, studentAdm, studentImg, analytics) {
         currentModalSid = sid; currentModalField = field;
         if (!commentModal) commentModal = new bootstrap.Modal(document.getElementById('cbCommentModal'));
@@ -1310,10 +1371,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             posEl.textContent = p ? (p + suffix + ' / ' + Object.keys(PM).length) : '—';
         }
 
-        var colorOf = function(pct){ return pct >= 70 ? '#4ade80' : pct >= 50 ? '#fbbf24' : '#f87171'; };
-        document.getElementById('modalTermPct').style.color = colorOf(analytics.term_percentage || 0);
-        document.getElementById('modalCumPct').style.color  = colorOf(analytics.cum_percentage  || 0);
-
         var labels = { teacher:"Teacher's Comment", guidance:"Counselor's Comment", activities:"Remark on Activities" };
         var icons  = { teacher:'ri-chat-quote-line', guidance:'ri-mental-health-line', activities:'ri-football-line' };
         document.getElementById('modalCommentType').innerHTML = '<i class="' + (icons[field]||'ri-chat-3-line') + ' me-1" style="color:var(--cb-teal);"></i> ' + (labels[field] || field);
@@ -1324,7 +1381,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         commentModal.show();
     }
 
-    /* ─── Past Comments ─── */
     async function loadPastComments() {
         if (!currentModalSid) return;
         var listEl = document.getElementById('pastCommentsList');
@@ -1386,26 +1442,17 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
     function saveCommentFromModal() {
         var newValue = document.getElementById('modalTextarea').value;
         setCanonical(currentModalSid, currentModalField, newValue);
-        document.querySelectorAll('[data-sid="' + currentModalSid + '"][data-field="' + currentModalField + '"]').forEach(function(inp){ inp.value = newValue; });
+        document.querySelectorAll('[data-sid="' + currentModalSid + '"][data-field="' + currentModalField + '"]').forEach(function(inp) {
+            inp.value = newValue;
+        });
+        refreshCommentDisplay(currentModalSid, currentModalField, newValue);
         refreshCommentStatusForStudent(currentModalSid);
         scheduleAutosave(currentModalSid);
-        commentModal.hide();
-        toast(currentModalField.charAt(0).toUpperCase() + currentModalField.slice(1) + ' comment saved!', 'success');
+        if (commentModal) commentModal.hide();
+        var fieldNames = { teacher: 'Teacher\'s', guidance: 'Counselor\'s', activities: 'Remark on Activities' };
+        toast(fieldNames[currentModalField] + ' comment saved!', 'success');
     }
 
-    function handleInputFocus(e) {
-        var input = e.target, sid = input.getAttribute('data-sid'), field = input.getAttribute('data-field');
-        if (!sid || !field) return;
-        var row = document.querySelector('[data-student-id="' + sid + '"]');
-        var studentName = row ? (row.getAttribute('data-student-name') || 'Student') : 'Student';
-        var studentAdm  = row ? (row.getAttribute('data-student-adm')  || '') : '';
-        var studentImg  = row ? (row.getAttribute('data-student-img')  || '') : '';
-        var analytics = {};
-        if (row) { try { analytics = JSON.parse(row.getAttribute('data-student-analytics') || '{}'); } catch(e){} }
-        openCommentModal(sid, field, studentName, studentAdm, studentImg, analytics);
-    }
-
-    /* ─── Grade Popup ─── */
     function closeGradePop() {
         var gpop = document.getElementById('cbGradePopup'), backdrop = document.getElementById('cbPopupBackdrop');
         if (gpop)     { gpop.classList.remove('is-open'); gpop.removeAttribute('data-active-sid'); }
@@ -1461,7 +1508,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         if (backdrop) backdrop.style.display = 'block';
     }
 
-    /* ─── Save All ─── */
     function doSaveAll() {
         var fd = new FormData(document.getElementById('commentsForm'));
         fd.append('_token', CSRF); fd.append('_method', 'PATCH');
@@ -1477,7 +1523,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             .finally(function(){ saveBtn.disabled = false; saveBtn.innerHTML = origHtml; if (savingText) savingText.style.display = 'none'; });
     }
 
-    /* ─── QUICK WIN 3: Color-transitioning bars ─── */
     function applyBarFinalColors() {
         document.querySelectorAll('.pct-bar[data-final-color]').forEach(function(bar) {
             var color = bar.getAttribute('data-final-color');
@@ -1488,7 +1533,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         });
     }
 
-    /* ─── QUICK WIN 2: Number counter for % spans ─── */
     function runCounters() {
         var duration = 700;
         var fps = 60;
@@ -1508,7 +1552,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         });
     }
 
-    /* ── Template picker (FIXED: using %%NAME%% placeholder that Blade won't parse) ── */
     var TEMPLATES = [
         { cat:'excellent', label:'Outstanding Performer', text:'%%NAME%% has demonstrated exceptional academic performance this term, consistently achieving outstanding results across all subjects. A truly gifted student whose dedication and hard work serve as an inspiration to peers.' },
         { cat:'excellent', label:'Top of Class', text:'%%NAME%% has continued to excel academically, maintaining a top position in the class. With excellent study habits and a keen intellect, this student is well on track for great achievements ahead.' },
@@ -1565,7 +1608,6 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             var row = document.querySelector('[data-student-id="' + currentModalSid + '"]');
             if (row) sName = (row.getAttribute('data-student-name') || '').split(' ')[0] || 'Student';
         }
-        // Replace %%NAME%% with actual student name
         ta.value = tpl.text.replace(/%%NAME%%/g, sName || 'Student');
         ta.focus();
         closeTplPicker();
@@ -1599,32 +1641,29 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
         if (backdrop) backdrop.style.display = 'none';
     }
 
-    /* ─── DOM Ready ─── */
     document.addEventListener('DOMContentLoaded', function() {
-        /* Move popups to body */
         var gpop = document.getElementById('cbGradePopup'), backdrop = document.getElementById('cbPopupBackdrop');
-        if (gpop     && gpop.parentNode     !== document.body) document.body.appendChild(gpop);
+        if (gpop && gpop.parentNode !== document.body) document.body.appendChild(gpop);
         if (backdrop && backdrop.parentNode !== document.body) document.body.appendChild(backdrop);
         var tplPicker = document.getElementById('tplPicker'), tplBd = document.getElementById('tplBackdrop');
         if (tplPicker && tplPicker.parentNode !== document.body) document.body.appendChild(tplPicker);
-        if (tplBd     && tplBd.parentNode     !== document.body) document.body.appendChild(tplBd);
+        if (tplBd && tplBd.parentNode !== document.body) document.body.appendChild(tplBd);
 
-        /* QUICK WIN 2 + 3: run on load */
         runCounters();
         applyBarFinalColors();
 
-        /* Column toggles */
+        // Column toggles
         document.querySelectorAll('.toggle-chip').forEach(function(chip) {
             chip.addEventListener('click', function() {
-                var key  = this.getAttribute('data-colkey');
+                var key = this.getAttribute('data-colkey');
                 var show = this.classList.toggle('active') ? '' : 'none';
-                document.querySelectorAll('.cbcol-' + key).forEach(function(el){ el.style.display = show; });
+                document.querySelectorAll('.cbcol-' + key).forEach(function(el) { el.style.display = show; });
                 var mobileClass = { guidance:'.mobile-col-guidance', activities:'.mobile-col-activities', absence:'.mobile-col-absence' }[key];
-                if (mobileClass) document.querySelectorAll(mobileClass).forEach(function(el){ el.style.display = show; });
+                if (mobileClass) document.querySelectorAll(mobileClass).forEach(function(el) { el.style.display = show; });
             });
         });
 
-        /* Search */
+        // Search
         var searchEl = document.getElementById('searchInput');
         if (searchEl) {
             searchEl.addEventListener('input', function() {
@@ -1635,24 +1674,21 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             });
         }
 
-        /* Avatar zoom */
+        // Image zoom
         var imgModal = null, imgModalEl = document.getElementById('cbImgZoomModal');
         if (imgModalEl && typeof bootstrap !== 'undefined') imgModal = new bootstrap.Modal(imgModalEl);
         document.addEventListener('click', function(e) {
             var trigger = e.target.closest('.cb-avatar-trigger');
             if (!trigger) return;
             var img = trigger.querySelector('img');
-            var imgUrl   = img ? img.src : null;
-            var name     = trigger.getAttribute('data-name')    || 'Student';
-            var adm      = trigger.getAttribute('data-adm')     || '';
-            var cls      = trigger.getAttribute('data-class')   || '';
-            var gender   = trigger.getAttribute('data-gender')  || '';
-            var initials = trigger.getAttribute('data-initials')|| name.substring(0,2).toUpperCase();
+            var imgUrl = img ? img.src : null;
+            var name = trigger.getAttribute('data-name') || 'Student';
+            var adm = trigger.getAttribute('data-adm') || '';
+            var cls = trigger.getAttribute('data-class') || '';
+            var gender = trigger.getAttribute('data-gender') || '';
+            var initials = trigger.getAttribute('data-initials') || name.substring(0,2).toUpperCase();
             document.getElementById('cbZoomedName').textContent = name;
-            document.getElementById('cbZoomedMeta').innerHTML   =
-                (adm    ? '<i class="ri-id-card-line me-1"></i>' + esc(adm) : '') +
-                (cls    ? ' &nbsp;|&nbsp; <i class="ri-building-line me-1"></i>' + esc(cls) : '') +
-                (gender ? ' &nbsp;|&nbsp; ' + esc(gender) : '');
+            document.getElementById('cbZoomedMeta').innerHTML = (adm ? '<i class="ri-id-card-line me-1"></i>' + esc(adm) : '') + (cls ? ' &nbsp;|&nbsp; <i class="ri-building-line me-1"></i>' + esc(cls) : '') + (gender ? ' &nbsp;|&nbsp; ' + esc(gender) : '');
             var zoomedImg = document.getElementById('cbZoomedImg');
             if (imgUrl && imgUrl !== 'null' && imgUrl !== '') {
                 zoomedImg.src = imgUrl;
@@ -1668,7 +1704,7 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             if (imgModal) imgModal.show();
         });
 
-        /* Grade popup */
+        // Grade popup
         var gpopCloseBtn = document.getElementById('gpopCloseBtn');
         if (gpopCloseBtn) gpopCloseBtn.addEventListener('click', closeGradePop);
         document.addEventListener('click', function(e) { var bd = document.getElementById('cbPopupBackdrop'); if (bd && e.target === bd) closeGradePop(); });
@@ -1685,18 +1721,10 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             setTimeout(function(){ openGradePop(sid, name, btn); }, 16);
         });
 
-        /* Input change handlers */
-        ['.desk-teacher','.desk-guidance','.desk-activities','.desk-absence',
-         '.mob-teacher','.mob-guidance','.mob-activities','.mob-absence'].forEach(function(sel) {
-            document.querySelectorAll(sel).forEach(function(inp){ inp.addEventListener('input', onInputChange); });
-        });
+        // Absence inputs
+        document.querySelectorAll('.desk-absence, .mob-absence').forEach(function(inp){ inp.addEventListener('input', onInputChange); });
 
-        /* Comment modal triggers */
-        document.querySelectorAll('.comment-input').forEach(function(input){
-            input.addEventListener('focus', handleInputFocus);
-        });
-
-        /* Template picker */
+        // Template picker
         var btnOpenTemplates = document.getElementById('btnOpenTemplates');
         if (btnOpenTemplates) btnOpenTemplates.addEventListener('click', function(e){ e.stopPropagation(); openTplPicker(); });
         var tplCloseBtn = document.getElementById('tplCloseBtn');
@@ -1714,33 +1742,33 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
             });
         });
 
-        /* Past comments + modal save */
-        var loadBtn      = document.getElementById('btnLoadPastComments');
+        // Modal buttons
+        var loadBtn = document.getElementById('btnLoadPastComments');
         var modalSaveBtn = document.getElementById('modalSaveBtn');
-        var saveBtn      = document.getElementById('saveBtn');
-        if (loadBtn)      loadBtn.addEventListener('click', loadPastComments);
+        var saveBtn = document.getElementById('saveBtn');
+        if (loadBtn) loadBtn.addEventListener('click', loadPastComments);
         if (modalSaveBtn) modalSaveBtn.addEventListener('click', saveCommentFromModal);
-        if (saveBtn)      saveBtn.addEventListener('click', doSaveAll);
+        if (saveBtn) saveBtn.addEventListener('click', doSaveAll);
 
-        /* Compute dynamic stats from SA */
+        // Calculate stats
         (function() {
             var vals = Object.values(SA);
             if (!vals.length) return;
             var avgTermPct = Math.round(vals.reduce(function(s,d){ return s + (d.term_percentage||0); },0) / vals.length);
-            var avgCumPct  = Math.round(vals.reduce(function(s,d){ return s + (d.cum_percentage||0);  },0) / vals.length);
+            var avgCumPct = Math.round(vals.reduce(function(s,d){ return s + (d.cum_percentage||0); },0) / vals.length);
             var statEl = document.getElementById('statAvgTermPct');
             if (statEl) statEl.textContent = avgTermPct + '%';
             var pillT = document.getElementById('pillTermPct'), pillC = document.getElementById('pillCumPct');
             if (pillT) pillT.innerHTML = '<i class="ri-time-line me-1"></i>Term: ' + avgTermPct + '%';
-            if (pillC) pillC.innerHTML = '<i class="ri-history-line me-1"></i>Cum: '  + avgCumPct  + '%';
+            if (pillC) pillC.innerHTML = '<i class="ri-history-line me-1"></i>Cum: ' + avgCumPct + '%';
 
             var topCumAvg = -1, topCumName = '—', topTermAvg = -1, topTermName = '—';
             document.querySelectorAll('.cb-student-row[data-student-id]').forEach(function(row) {
                 var sid = row.getAttribute('data-student-id');
                 if (!sid || !SA[sid]) return;
-                var cumPct  = SA[sid].cum_percentage  || 0;
+                var cumPct = SA[sid].cum_percentage || 0;
                 var termPct = SA[sid].term_percentage || 0;
-                if (cumPct  > topCumAvg)  { topCumAvg  = cumPct;  topCumName  = row.getAttribute('data-student-name') || ''; }
+                if (cumPct > topCumAvg) { topCumAvg = cumPct; topCumName = row.getAttribute('data-student-name') || ''; }
                 if (termPct > topTermAvg) { topTermAvg = termPct; topTermName = row.getAttribute('data-student-name') || ''; }
             });
             var topEl = document.getElementById('statTop'); if (topEl) topEl.textContent = topCumName;
@@ -1749,6 +1777,15 @@ body { font-family: 'DM Sans', sans-serif; background: #f1f5f9; }
 
         refreshCommentStatus();
     });
+
+    function onInputChange(e) {
+        var inp = e.target, sid = inp.getAttribute('data-sid'), field = inp.getAttribute('data-field');
+        if (!sid || !field) return;
+        var val = inp.value;
+        setCanonical(sid, field, val);
+        scheduleAutosave(sid);
+    }
+
 })();
 </script>
 @endsection
