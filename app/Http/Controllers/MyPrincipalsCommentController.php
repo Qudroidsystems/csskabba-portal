@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Broadsheets;
+use App\Models\BroadsheetsMock;
+use App\Models\BroadsheetRecordMock;
 use App\Models\Principalscomment;
 use App\Models\Schoolclass;
 use App\Models\Schoolsession;
@@ -61,9 +63,9 @@ class MyPrincipalsCommentController extends Controller
     {
         $pagetitle = "Principal's Comment & Class Broadsheet";
 
-        // Scoring mode: 'cumulative' (default) or 'term'
+        // Scoring mode: 'cumulative' (default), 'term', or 'mock'
         $scoringMode = $request->get('scoring_mode', 'cumulative');
-        if (!in_array($scoringMode, ['cumulative', 'term'])) {
+        if (!in_array($scoringMode, ['cumulative', 'term', 'mock'])) {
             $scoringMode = 'cumulative';
         }
 
@@ -87,71 +89,228 @@ class MyPrincipalsCommentController extends Controller
             ]);
 
         // ------------------------------------------------------------------
-        // 2.  School / class meta
+        // 2. School / class meta
         // ------------------------------------------------------------------
-       // ------------------------------------------------------------------
-// 2. School / class meta
-// ------------------------------------------------------------------
-$schoolclass = Schoolclass::with(['arm'])->findOrFail($schoolclassid);
+        $schoolclass = Schoolclass::with(['arm', 'classcategories'])->findOrFail($schoolclassid);
 
-// Safe way to get arm name
-$armName = '';
-if ($schoolclass->arm && is_object($schoolclass->arm)) {
-    $armName = $schoolclass->arm->arm ?? '';
-} elseif ($schoolclass->arms && is_object($schoolclass->arms)) {
-    $armName = $schoolclass->arms->arm ?? '';
-}
+        $armName = '';
+        if ($schoolclass->arm && is_object($schoolclass->arm)) {
+            $armName = $schoolclass->arm->arm ?? '';
+        } elseif ($schoolclass->arms && is_object($schoolclass->arms)) {
+            $armName = $schoolclass->arms->arm ?? '';
+        }
 
-$schoolclass->full_class_name = trim($schoolclass->schoolclass . ' ' . $armName);
-        $schoolterm    = Schoolterm::find($termid)?->term         ?? 'N/A';
+        $schoolclass->full_class_name = trim($schoolclass->schoolclass . ' ' . $armName);
+        $schoolterm    = Schoolterm::find($termid);
+        $schooltermName = $schoolterm?->term ?? 'N/A';
         $schoolsession = Schoolsession::find($sessionid)?->session ?? 'N/A';
 
         $isSenior = $schoolclass->classcategories->isNotEmpty()
             ? ($schoolclass->classcategories->first()->is_senior ?? false)
             : false;
 
-        // ------------------------------------------------------------------
-        // 3.  Broadsheet rows
-        // ------------------------------------------------------------------
-        $broadsheetRows = Broadsheets::where('broadsheet_records.schoolclass_id', $schoolclassid)
-            ->where('broadsheets.term_id', $termid)
-            ->where('broadsheet_records.session_id', $sessionid)
-            ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
-            ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
-            ->orderBy('subject.subject')
-            ->select([
-                'broadsheet_records.student_id',
-                'subject.subject as subject_name',
-                'broadsheets.total',   // term score
-                'broadsheets.bf',
-                'broadsheets.cum',     // cumulative
-                'broadsheets.grade',
-                'broadsheets.remark',
-            ])
-            ->get();
+        $studentIds = $students->pluck('id')->map(fn($v) => (int)$v)->toArray();
 
         // ------------------------------------------------------------------
-        // 4.  Distinct, ordered subject list
-        // ------------------------------------------------------------------
-        $subjects = $broadsheetRows
-            ->pluck('subject_name')
-            ->unique()
-            ->sort()
-            ->values()
-            ->toArray();
-
-        // ------------------------------------------------------------------
-        // 5.  O(1) lookup maps  [student_id][subject_name] => score
+        // 3a. Terminal broadsheet rows (with proper BF/Cum like BroadsheetController)
         // ------------------------------------------------------------------
         $termScoreMap = [];
         $cumScoreMap  = [];
+        $bfMap        = [];
+        // Position maps: [student_id][subject_name] => position value
+        $posClassCumMap   = [];
+        $posClassTotalMap = [];
+        $posArmTotalMap   = [];
+        $posArmCumMap     = [];
 
-        foreach ($broadsheetRows as $row) {
-            $sid  = $row->student_id;
+        if ($scoringMode !== 'mock') {
+            // Fetch previous term cum scores for BF computation (mirrors BroadsheetController)
+            $prevCumMap = $this->fetchPreviousTermCums($studentIds, $sessionid, $termid, [$schoolclassid]);
+
+            $broadsheetRows = Broadsheets::where('broadsheet_records.schoolclass_id', $schoolclassid)
+                ->where('broadsheets.term_id', $termid)
+                ->where('broadsheet_records.session_id', $sessionid)
+                ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
+                ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
+                ->orderBy('subject.subject')
+                ->select([
+                    'broadsheet_records.student_id',
+                    'broadsheet_records.subject_id',
+                    'subject.subject as subject_name',
+                    'broadsheets.total',
+                    'broadsheets.bf',
+                    'broadsheets.cum',
+                    'broadsheets.grade',
+                    'broadsheets.remark',
+                    'broadsheets.subject_position_class     as pos_class_cum',
+                    'broadsheets.subject_position_class_total as pos_class_total',
+                    'broadsheets.arm_position               as pos_arm_total',
+                    'broadsheets.arm_position_cum           as pos_arm_cum',
+                ])
+                ->get();
+
+            foreach ($broadsheetRows as $row) {
+                $sid     = (int)$row->student_id;
+                $subj    = $row->subject_name;
+                $subId   = (int)$row->subject_id;
+                $rawTotal = (float)($row->total ?? 0);
+
+                // Mirror BroadsheetController BF logic
+                $prevCum = $prevCumMap[$sid][$subId] ?? null;
+                if ($prevCum !== null && $prevCum > 0) {
+                    $bf = $prevCum;
+                } elseif (!empty($row->bf) && (float)$row->bf > 0) {
+                    $bf = (float)$row->bf;
+                } else {
+                    $bf = 0.0;
+                }
+
+                // Compute cum exactly as BroadsheetController does
+                $cum = ($termid == 1 || $bf == 0)
+                    ? round($rawTotal, 2)
+                    : round(($rawTotal + $bf) / 2, 2);
+
+                $termScoreMap[$sid][$subj] = $rawTotal;
+                $cumScoreMap[$sid][$subj]  = $cum;
+                $bfMap[$sid][$subj]        = $bf;
+
+                // Position maps
+                $posClassCumMap[$sid][$subj]   = $row->pos_class_cum   ?? null;
+                $posClassTotalMap[$sid][$subj] = $row->pos_class_total ?? null;
+                $posArmTotalMap[$sid][$subj]   = $row->pos_arm_total   ?? null;
+                $posArmCumMap[$sid][$subj]     = $row->pos_arm_cum     ?? null;
+            }
+        }
+
+        // ------------------------------------------------------------------
+        // 3b. Mock broadsheet rows
+        // ------------------------------------------------------------------
+        $mockScoreMap     = [];
+        $mockPositionMap  = []; // [student_id][subject_name] => position
+        $hasMockData      = false;
+
+        // Check if this class has any mock data for this session/term
+        $mockRows = BroadsheetsMock::where('broadsheet_records_mock.schoolclass_id', $schoolclassid)
+            ->where('broadsheetmock.term_id', $termid)
+            ->where('broadsheet_records_mock.session_id', $sessionid)
+            ->join('broadsheet_records_mock', 'broadsheet_records_mock.id', '=', 'broadsheetmock.broadsheet_records_mock_id')
+            ->join('subject', 'subject.id', '=', 'broadsheet_records_mock.subject_id')
+            ->orderBy('subject.subject')
+            ->select([
+                'broadsheet_records_mock.student_id',
+                'subject.subject as subject_name',
+                'broadsheetmock.total',
+                'broadsheetmock.grade',
+                'broadsheetmock.remark',
+                'broadsheetmock.subject_position_class as pos_class',
+                'broadsheetmock.avg as class_avg',
+                'broadsheetmock.cmin',
+                'broadsheetmock.cmax',
+            ])
+            ->get();
+
+        foreach ($mockRows as $row) {
+            $sid  = (int)$row->student_id;
             $subj = $row->subject_name;
+            $mockScoreMap[$sid][$subj]    = (float)($row->total ?? 0);
+            $mockPositionMap[$sid][$subj] = $row->pos_class ?? null;
+        }
 
-            $termScoreMap[$sid][$subj] = $row->total ?? 0;
-            $cumScoreMap[$sid][$subj]  = $row->cum   ?? 0;
+        $hasMockData = $mockRows->isNotEmpty();
+
+        // ------------------------------------------------------------------
+        // 4.  Distinct, ordered subject list (per mode)
+        // ------------------------------------------------------------------
+        if ($scoringMode === 'mock') {
+            $subjects = collect($mockRows)
+                ->pluck('subject_name')
+                ->unique()->sort()->values()->toArray();
+        } else {
+            $subjects = collect($broadsheetRows ?? [])
+                ->pluck('subject_name')
+                ->unique()->sort()->values()->toArray();
+        }
+
+        // ------------------------------------------------------------------
+        // 5.  Grade analysis per student (mode-aware)
+        // ------------------------------------------------------------------
+        $studentGrades        = [];
+        $studentGradeAnalysis = [];
+
+        foreach ($students as $student) {
+            $sid = $student->id;
+
+            $studentGradeAnalysis[$sid] = [
+                'grades'        => [],
+                'counts'        => ['A' => 0, 'B' => 0, 'C' => 0, 'D' => 0, 'E' => 0, 'F' => 0],
+                'weak_subjects' => [],
+            ];
+
+            foreach ($subjects as $subject) {
+                // Active score depends on mode
+                if ($scoringMode === 'mock') {
+                    $activeScore = $mockScoreMap[$sid][$subject] ?? 0;
+                    [$activeGrade, $activeGradeLetter] = $this->gradeFromScore((float)$activeScore, $isSenior);
+
+                    $entry = [
+                        'subject'           => $subject,
+                        'mock_score'        => $activeScore,
+                        'mock_grade'        => $activeGrade,
+                        'mock_grade_letter' => $activeGradeLetter,
+                        // fill legacy fields for tooltip compatibility
+                        'cum_score'         => 0,
+                        'cum_grade'         => '-',
+                        'cum_grade_letter'  => '',
+                        'term_score'        => 0,
+                        'term_grade'        => '-',
+                        'term_grade_letter' => '',
+                        'score'             => $activeScore,
+                        'grade'             => $activeGrade,
+                        'grade_letter'      => $activeGradeLetter,
+                    ];
+                } else {
+                    $cumTotal  = $cumScoreMap[$sid][$subject]  ?? 0;
+                    $termTotal = $termScoreMap[$sid][$subject] ?? 0;
+
+                    [$cumGrade, $cumGradeLetter]   = $this->gradeFromScore((float)$cumTotal, $isSenior);
+                    [$termGrade, $termGradeLetter] = $this->gradeFromScore((float)$termTotal, $isSenior);
+
+                    $activeScore       = $scoringMode === 'term' ? $termTotal  : $cumTotal;
+                    $activeGrade       = $scoringMode === 'term' ? $termGrade  : $cumGrade;
+                    $activeGradeLetter = $scoringMode === 'term' ? $termGradeLetter : $cumGradeLetter;
+
+                    $entry = [
+                        'subject'           => $subject,
+                        'cum_score'         => $cumTotal,
+                        'cum_grade'         => $cumGrade,
+                        'cum_grade_letter'  => $cumGradeLetter,
+                        'term_score'        => $termTotal,
+                        'term_grade'        => $termGrade,
+                        'term_grade_letter' => $termGradeLetter,
+                        'mock_score'        => 0,
+                        'mock_grade'        => '-',
+                        'mock_grade_letter' => '',
+                        'score'             => $activeScore,
+                        'grade'             => $activeGrade,
+                        'grade_letter'      => $activeGradeLetter,
+                    ];
+                }
+
+                $studentGrades[$sid][]                  = $entry;
+                $studentGradeAnalysis[$sid]['grades'][] = $entry;
+                $studentGradeAnalysis[$sid]['counts'][$entry['grade_letter']]++;
+
+                if (in_array($entry['grade_letter'], ['C', 'D', 'E', 'F'])) {
+                    $studentGradeAnalysis[$sid]['weak_subjects'][] = [
+                        'subject'          => $subject,
+                        'grade'            => $entry['grade'],
+                        'grade_letter'     => $entry['grade_letter'],
+                        'cumulative_score' => $entry['cum_score'] ?? 0,
+                        'term_score'       => $entry['term_score'] ?? 0,
+                        'mock_score'       => $entry['mock_score'] ?? 0,
+                    ];
+                }
+            }
         }
 
         // ------------------------------------------------------------------
@@ -164,71 +323,7 @@ $schoolclass->full_class_name = trim($schoolclass->schoolclass . ' ' . $armName)
             ->toArray();
 
         // ------------------------------------------------------------------
-        // 7.  Grade analysis per student
-        //     Grades computed for BOTH term and cumulative scores always.
-        //     $activeScoreMap is determined by $scoringMode for comment/analytics.
-        // ------------------------------------------------------------------
-        $studentGrades        = [];   // used for tooltip grade table
-        $studentGradeAnalysis = [];   // used for comment generation
-
-        foreach ($students as $student) {
-            $sid = $student->id;
-
-            $studentGradeAnalysis[$sid] = [
-                'grades'        => [],
-                'counts'        => ['A' => 0, 'B' => 0, 'C' => 0, 'D' => 0, 'E' => 0, 'F' => 0],
-                'weak_subjects' => [],
-            ];
-
-            foreach ($subjects as $subject) {
-                $cumTotal  = $cumScoreMap[$sid][$subject]  ?? 0;
-                $termTotal = $termScoreMap[$sid][$subject] ?? 0;
-
-                // Grade for CUMULATIVE
-                [$cumGrade, $cumGradeLetter] = $this->gradeFromScore((float) $cumTotal, $isSenior);
-
-                // Grade for TERM
-                [$termGrade, $termGradeLetter] = $this->gradeFromScore((float) $termTotal, $isSenior);
-
-                // Active score/grade depends on chosen mode
-                $activeScore       = $scoringMode === 'term' ? $termTotal  : $cumTotal;
-                $activeGrade       = $scoringMode === 'term' ? $termGrade  : $cumGrade;
-                $activeGradeLetter = $scoringMode === 'term' ? $termGradeLetter : $cumGradeLetter;
-
-                $entry = [
-                    'subject'           => $subject,
-                    // Cumulative
-                    'cum_score'         => $cumTotal,
-                    'cum_grade'         => $cumGrade,
-                    'cum_grade_letter'  => $cumGradeLetter,
-                    // Term
-                    'term_score'        => $termTotal,
-                    'term_grade'        => $termGrade,
-                    'term_grade_letter' => $termGradeLetter,
-                    // Legacy fields for tooltip compatibility
-                    'score'             => $activeScore,
-                    'grade'             => $activeGrade,
-                    'grade_letter'      => $activeGradeLetter,
-                ];
-
-                $studentGrades[$sid][]                  = $entry;
-                $studentGradeAnalysis[$sid]['grades'][] = $entry;
-                $studentGradeAnalysis[$sid]['counts'][$activeGradeLetter]++;
-
-                if (in_array($activeGradeLetter, ['C', 'D', 'E', 'F'])) {
-                    $studentGradeAnalysis[$sid]['weak_subjects'][] = [
-                        'subject'          => $subject,
-                        'grade'            => $activeGrade,
-                        'grade_letter'     => $activeGradeLetter,
-                        'cumulative_score' => $cumTotal,
-                        'term_score'       => $termTotal,
-                    ];
-                }
-            }
-        }
-
-        // ------------------------------------------------------------------
-        // 8.  Standard personalised comments  (second-person)
+        // 7.  Standard personalised comments (second-person)
         // ------------------------------------------------------------------
         $baseTemplates = [
             "Excellent result {NAME}, keep it up!",
@@ -274,7 +369,7 @@ $schoolclass->full_class_name = trim($schoolclass->schoolclass . ' ' . $armName)
         }
 
         // ------------------------------------------------------------------
-        // 9.  Intelligent comments  (third-person, gender-aware)
+        // 8.  Intelligent comments (third-person, gender-aware)
         // ------------------------------------------------------------------
         $intelligentComments = [];
 
@@ -306,16 +401,19 @@ $schoolclass->full_class_name = trim($schoolclass->schoolclass . ' ' . $armName)
                 default               => "{NAME}, wake up and be serious.",
             };
 
-            $termInfo = match (true) {
-                in_array($schoolterm, ['2nd Term', 'Second Term']) => ' (Cumulative average of 1st and 2nd terms)',
-                in_array($schoolterm, ['3rd Term', 'Third Term'])  => ' (Cumulative average of 1st, 2nd and 3rd terms)',
-                default                                            => '',
-            };
+            // Term/cum info suffix only for non-mock cumulative mode
+            $termInfo = '';
+            if ($scoringMode === 'cumulative') {
+                $termInfo = match (true) {
+                    in_array($schooltermName, ['2nd Term', 'Second Term']) => ' (Cumulative average of 1st and 2nd terms)',
+                    in_array($schooltermName, ['3rd Term', 'Third Term'])  => ' (Cumulative average of 1st, 2nd and 3rd terms)',
+                    default                                                => '',
+                };
+            } elseif ($scoringMode === 'mock') {
+                $termInfo = ' (Mock examination result)';
+            }
 
-            // Only include termInfo in comment if using cumulative mode
-            $modeTermInfo = $scoringMode === 'cumulative' ? $termInfo : '';
-
-            $comment    = "$firstName has $gradeSummary$modeTermInfo. "
+            $comment    = "$firstName has $gradeSummary$termInfo. "
                         . str_replace('{NAME}', $firstName, $baseComment);
             $pronoun    = strtoupper($student->gender) === 'MALE' ? 'He'  : 'She';
             $possessive = strtoupper($student->gender) === 'MALE' ? 'his' : 'her';
@@ -337,21 +435,24 @@ $schoolclass->full_class_name = trim($schoolclass->schoolclass . ' ' . $armName)
         }
 
         // ------------------------------------------------------------------
-        // 10. Student analytics  (totals, averages, positions)
-        //     Primary analytics follow scoring mode; both are always computed.
+        // 9.  Student analytics — mode-aware totals, averages, positions
         // ------------------------------------------------------------------
-        $studentTotals     = [];
-        $studentTermTotals = [];
+        $studentTotals     = [];   // cumulative
+        $studentTermTotals = [];   // term only
+        $studentMockTotals = [];   // mock only
 
         foreach ($students as $student) {
-            $sid     = $student->id;
-            $cumSum  = 0;
-            $termSum = 0;
-            $count   = 0;
+            $sid      = $student->id;
+            $cumSum   = 0;
+            $termSum  = 0;
+            $mockSum  = 0;
+            $count    = 0;
+            $mockCount = 0;
 
             foreach ($subjects as $subject) {
                 $cum  = $cumScoreMap[$sid][$subject]  ?? null;
                 $term = $termScoreMap[$sid][$subject] ?? null;
+                $mock = $mockScoreMap[$sid][$subject] ?? null;
 
                 if (!is_null($cum) && $cum > 0) {
                     $cumSum += $cum;
@@ -360,54 +461,73 @@ $schoolclass->full_class_name = trim($schoolclass->schoolclass . ' ' . $armName)
                 if (!is_null($term)) {
                     $termSum += $term;
                 }
+                if (!is_null($mock) && $mock > 0) {
+                    $mockSum += $mock;
+                    $mockCount++;
+                }
             }
 
             $studentTotals[$sid] = [
                 'total'    => $cumSum,
-                'average'  => $count > 0 ? round($cumSum  / $count, 1) : 0,
+                'average'  => $count > 0 ? round($cumSum / $count, 1) : 0,
                 'subjects' => $count,
             ];
             $studentTermTotals[$sid] = [
                 'total'   => $termSum,
                 'average' => $count > 0 ? round($termSum / $count, 1) : 0,
             ];
+            $studentMockTotals[$sid] = [
+                'total'   => $mockSum,
+                'average' => $mockCount > 0 ? round($mockSum / $mockCount, 1) : 0,
+                'subjects' => $mockCount,
+            ];
         }
 
-        // Class averages for both modes
-        $classCumSum      = array_sum(array_column($studentTotals, 'total'));
-        $classCumSubjects = array_sum(array_column($studentTotals, 'subjects'));
-        $classCumAverage  = $classCumSubjects > 0 ? round($classCumSum / $classCumSubjects, 1) : 0;
+        // Class averages
+        $classCumSubjects  = array_sum(array_column($studentTotals, 'subjects'));
+        $classCumSum       = array_sum(array_column($studentTotals, 'total'));
+        $classCumAverage   = $classCumSubjects > 0 ? round($classCumSum / $classCumSubjects, 1) : 0;
 
         $classTermSum      = array_sum(array_column($studentTermTotals, 'total'));
         $classTermAverage  = $classCumSubjects > 0 ? round($classTermSum / $classCumSubjects, 1) : 0;
 
-        $activeClassAverage = $scoringMode === 'term' ? $classTermAverage : $classCumAverage;
+        $classMockSubjects = array_sum(array_column($studentMockTotals, 'subjects'));
+        $classMockSum      = array_sum(array_column($studentMockTotals, 'total'));
+        $classMockAverage  = $classMockSubjects > 0 ? round($classMockSum / $classMockSubjects, 1) : 0;
+
+        $activeClassAverage = match ($scoringMode) {
+            'term' => $classTermAverage,
+            'mock' => $classMockAverage,
+            default => $classCumAverage,
+        };
 
         $classAnalytics = [
             'average'        => $activeClassAverage,
             'cum_average'    => $classCumAverage,
             'term_average'   => $classTermAverage,
+            'mock_average'   => $classMockAverage,
             'total_students' => $students->count(),
         ];
 
-        // Positions by active scoring mode (descending)
-        $sortedStudents = $students
-            ->sortByDesc(fn ($s) =>
-                $scoringMode === 'term'
-                    ? ($studentTermTotals[$s->id]['average'] ?? 0)
-                    : ($studentTotals[$s->id]['average']     ?? 0)
-            )
-            ->values();
+        // Positions (overall ranking by active mode)
+        $sortedStudents = $students->sortByDesc(function ($s) use ($scoringMode, $studentTermTotals, $studentTotals, $studentMockTotals) {
+            return match ($scoringMode) {
+                'term' => $studentTermTotals[$s->id]['average'] ?? 0,
+                'mock' => $studentMockTotals[$s->id]['average'] ?? 0,
+                default => $studentTotals[$s->id]['average']    ?? 0,
+            };
+        })->values();
 
         $positions = [];
         $rank      = 1;
         $prevAvg   = null;
 
         foreach ($sortedStudents as $index => $student) {
-            $avg = $scoringMode === 'term'
-                ? $studentTermTotals[$student->id]['average']
-                : $studentTotals[$student->id]['average'];
-
+            $avg = match ($scoringMode) {
+                'term' => $studentTermTotals[$student->id]['average'],
+                'mock' => $studentMockTotals[$student->id]['average'],
+                default => $studentTotals[$student->id]['average'],
+            };
             if ($index > 0 && $avg < $prevAvg) {
                 $rank = $index + 1;
             }
@@ -427,6 +547,9 @@ $schoolclass->full_class_name = trim($schoolclass->schoolclass . ' ' . $armName)
                 // Term
                 'term_total'   => $studentTermTotals[$sid]['total'],
                 'term_average' => $studentTermTotals[$sid]['average'],
+                // Mock
+                'mock_total'   => $studentMockTotals[$sid]['total'],
+                'mock_average' => $studentMockTotals[$sid]['average'],
                 'subjects'     => $studentTotals[$sid]['subjects'],
                 'position'     => $position,
                 'position_text' => $position ? $this->getPositionSuffix($position) : '-',
@@ -435,7 +558,7 @@ $schoolclass->full_class_name = trim($schoolclass->schoolclass . ' ' . $armName)
         }
 
         // ------------------------------------------------------------------
-        // 11. Render view
+        // 10. Render view
         // ------------------------------------------------------------------
         return view('myprincipalscomment.classbroadsheet')
             ->with(compact(
@@ -443,9 +566,17 @@ $schoolclass->full_class_name = trim($schoolclass->schoolclass . ' ' . $armName)
                 'subjects',
                 'termScoreMap',
                 'cumScoreMap',
+                'bfMap',
+                'mockScoreMap',
+                'mockPositionMap',
+                'posClassCumMap',
+                'posClassTotalMap',
+                'posArmTotalMap',
+                'posArmCumMap',
                 'profiles',
                 'schoolclass',
                 'schoolterm',
+                'schooltermName',
                 'schoolsession',
                 'schoolclassid',
                 'sessionid',
@@ -458,7 +589,8 @@ $schoolclass->full_class_name = trim($schoolclass->schoolclass . ' ' . $armName)
                 'studentAnalytics',
                 'classAnalytics',
                 'isSenior',
-                'scoringMode'
+                'scoringMode',
+                'hasMockData'
             ));
     }
 
@@ -563,6 +695,44 @@ $schoolclass->full_class_name = trim($schoolclass->schoolclass . ' ' . $armName)
     // =========================================================================
     // HELPERS
     // =========================================================================
+
+    /**
+     * Fetch previous term's cum scores for BF computation.
+     * Mirrors BroadsheetController::fetchPreviousTermCums().
+     */
+    private function fetchPreviousTermCums(
+        array $studentIds,
+        int   $sessionid,
+        int   $currentTermId,
+        array $classIds
+    ): array {
+        if (empty($studentIds) || $currentTermId == 1) return [];
+
+        $prevTerm = \App\Models\Schoolterm::where('id', '<', $currentTermId)
+            ->orderByDesc('id')
+            ->first();
+
+        if (!$prevTerm) return [];
+
+        $rows = Broadsheets::whereIn('broadsheet_records.student_id', $studentIds)
+            ->where('broadsheets.term_id', $prevTerm->id)
+            ->where('broadsheet_records.session_id', $sessionid)
+            ->whereIn('broadsheet_records.schoolclass_id', $classIds)
+            ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
+            ->select([
+                'broadsheet_records.student_id',
+                'broadsheet_records.subject_id',
+                'broadsheets.cum',
+            ])
+            ->get();
+
+        $map = [];
+        foreach ($rows as $r) {
+            $map[(int)$r->student_id][(int)$r->subject_id] = (float)$r->cum;
+        }
+
+        return $map;
+    }
 
     /**
      * Return [grade, gradeLetter] for a score.
