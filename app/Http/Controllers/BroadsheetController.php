@@ -17,7 +17,6 @@ use App\Models\Subjectclass;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
@@ -618,37 +617,37 @@ class BroadsheetController extends Controller
     }
 
     // =========================================================================
-    // WEB VIEW - FIXED RETURN TYPE
+    // WEB VIEW
     // =========================================================================
 
-public function webView(Request $request): View|JsonResponse|RedirectResponse
-{
-    try {
-        $validated = $request->validate([
-            'schoolclassid'   => 'required|integer|exists:schoolclass,id',
-            'sessionid'       => 'required|integer|exists:schoolsession,id',
-            'termid'          => 'required|integer',
-            'selectedColumns' => 'nullable|array',
-        ]);
+    public function webView(Request $request): View|JsonResponse
+    {
+        try {
+            $validated = $request->validate([
+                'schoolclassid'   => 'required|integer|exists:schoolclass,id',
+                'sessionid'       => 'required|integer|exists:schoolsession,id',
+                'termid'          => 'required|integer',
+                'selectedColumns' => 'nullable|array',
+            ]);
 
-        $data = $this->buildBroadsheetData(
-            (int)$validated['schoolclassid'],
-            (int)$validated['sessionid'],
-            (int)$validated['termid'],
-            $request->input('selectedColumns', [])
-        );
+            $data = $this->buildBroadsheetData(
+                (int)$validated['schoolclassid'],
+                (int)$validated['sessionid'],
+                (int)$validated['termid'],
+                $request->input('selectedColumns', [])
+            );
 
-        $data['school_logo_base64'] = $this->getLogoBase64($data['schoolInfo']);
-        $data['pagetitle']          = 'Class Broadsheet – Web View';
+            $data['school_logo_base64'] = $this->getLogoBase64($data['schoolInfo']);
+            $data['pagetitle']          = 'Class Broadsheet – Web View';
 
-        return view('broadsheet.web', $data);
-    } catch (\Illuminate\Validation\ValidationException $e) {
-        return back()->withErrors($e->errors())->with('error', 'Invalid input.');
-    } catch (\Exception $e) {
-        Log::error('Broadsheet web view error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-        return back()->with('error', 'Failed to generate broadsheet: ' . $e->getMessage());
+            return view('broadsheet.web', $data);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return back()->withErrors($e->errors())->with('error', 'Invalid input.');
+        } catch (\Exception $e) {
+            Log::error('Broadsheet web view error', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return back()->with('error', 'Failed to generate broadsheet: ' . $e->getMessage());
+        }
     }
-}
 
     // =========================================================================
     // EXPORT PDF
@@ -750,7 +749,7 @@ public function webView(Request $request): View|JsonResponse|RedirectResponse
     // ALL CLASSES WEB VIEW
     // =========================================================================
 
-    public function allClassesWebView(Request $request): View|JsonResponse|RedirectResponse
+    public function allClassesWebView(Request $request): View|JsonResponse
     {
         try {
             $validated = $request->validate([
