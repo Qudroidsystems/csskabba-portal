@@ -72,7 +72,7 @@ class BroadsheetController extends Controller
                 ->get();
         }
 
-        // Count actual subjects in the class (not the 7 score column types)
+        // Count actual subjects in the class
         $actualSubjectCount = DB::table('subjectclass as sc')
             ->join('subjectteacher as st', 'st.id', '=', 'sc.subjectteacherid')
             ->where('sc.schoolclassid', $schoolclassid)
@@ -88,14 +88,21 @@ class BroadsheetController extends Controller
             ],
             'assessments' => [],
             'scores' => [
-                'total'         => ['label' => 'Total',       'default' => true],
-                'bf'            => ['label' => 'BF',          'default' => true],
-                'cum'           => ['label' => 'Cum',         'default' => true],
-                'grade'         => ['label' => 'Grade',       'default' => true],
-                'position_term' => ['label' => 'Pos (Term)',  'default' => true],
-                'position_cum'  => ['label' => 'Pos (Cum)',   'default' => true],
-                'class_average' => ['label' => 'Class Avg',   'default' => true],
-                'remark'        => ['label' => 'Remark',      'default' => false],
+                'total'         => ['label' => 'Total',              'default' => true],
+                'bf'            => ['label' => 'BF',                 'default' => true],
+                'cum'           => ['label' => 'Cum',                'default' => true],
+                'grade'         => ['label' => 'Grade',              'default' => true],
+                // ── 4 position columns (mirrors ViewStudentReportController) ──
+                'pos_class_cum'   => ['label' => 'Class Pos (Cum)',       'default' => true],
+                'pos_class_total' => ['label' => 'Class Pos (Total)',     'default' => false],
+                'pos_arm_total'   => ['label' => 'Arm Pos (Total)',       'default' => false],
+                'pos_arm_cum'     => ['label' => 'Arm Pos (Cum)',         'default' => false],
+                'class_average'   => ['label' => 'Class Avg',             'default' => true],
+                'remark'          => ['label' => 'Remark',               'default' => false],
+            ],
+            'summary' => [
+                'position_cum'  => ['label' => 'Overall Pos (Cum)',  'default' => true],
+                'position_term' => ['label' => 'Overall Pos (Term)', 'default' => true],
             ],
             'gpa_metrics' => [
                 'gpa'                => ['label' => 'GPA',          'default' => true],
@@ -191,17 +198,15 @@ class BroadsheetController extends Controller
     //
     // Returns: [ student_id => [ subject_id => cum_score ] ]
     //
-    // Logic: find the broadsheet record for (same session, same class, previous
-    // term) and return its `cum` value — that is the BF for the current term.
-    // "Previous term" = the highest term_id that is less than $currentTermId
-    // within the same session.  If none exists we return 0 (first term).
+    // "Previous term" = the highest term_id strictly less than $currentTermId.
+    // Falls back gracefully — if none, returns empty array (first term).
     // =========================================================================
 
     private function fetchPreviousTermCums(
-        array  $studentIds,
-        int    $sessionid,
-        int    $currentTermId,
-        array  $classIds        // one class or many (combined view)
+        array $studentIds,
+        int   $sessionid,
+        int   $currentTermId,
+        array $classIds
     ): array {
         if (empty($studentIds)) return [];
 
@@ -319,7 +324,11 @@ class BroadsheetController extends Controller
                 'broadsheets.cum',
                 'broadsheets.grade',
                 'broadsheets.remark',
-                'broadsheets.subject_position_class as position',
+                // ── All 4 position columns (mirrors ViewStudentReportController) ──
+                'broadsheets.subject_position_class as pos_class_cum',        // class-wide, by cum
+                'broadsheets.subject_position_class_total as pos_class_total', // class-wide, by total
+                'broadsheets.arm_position as pos_arm_total',                   // arm-only, by total
+                'broadsheets.arm_position_cum as pos_arm_cum',                 // arm-only, by cum
                 'broadsheets.avg as class_average',
                 'broadsheets.vettedstatus',
             ])
@@ -354,25 +363,37 @@ class BroadsheetController extends Controller
 
             $rawTotal = (float)($row->total ?? 0);
 
-            // BF = previous term's cum (looked up from DB); fall back to
-            // broadsheets.bf if the lookup returns nothing (e.g. student
-            // transferred in mid-session).
-            $bf = $prevCumMap[$sid][$sub] ?? (float)($row->bf ?? 0);
+            // ── BF resolution (3-level priority) ────────────────────────────
+            // 1. Previous term cum lookup (most accurate — "true BF")
+            // 2. broadsheets.bf stored in DB (manual entry / transfer student)
+            // 3. 0 (genuine first term — no prior record anywhere)
+            $prevCum = $prevCumMap[$sid][$sub] ?? null;
+            if ($prevCum !== null && $prevCum > 0) {
+                $bf = $prevCum;
+            } elseif (!empty($row->bf) && (float)$row->bf > 0) {
+                $bf = (float)$row->bf;
+            } else {
+                $bf = 0.0;
+            }
 
-            // CUM rule:
-            //   • BF > 0  → (BF + Total) ÷ 2
-            //   • BF = 0  → Total  (first term or no prior record)
+            // ── CUM rule ─────────────────────────────────────────────────────
+            // BF > 0  → (BF + Total) ÷ 2
+            // BF = 0  → Total  (first term or no prior record)
             $cum = $bf > 0 ? round(($bf + $rawTotal) / 2, 1) : $rawTotal;
 
             $studentSubjectMap[$sid][$sub] = [
-                'total'         => $rawTotal,
-                'bf'            => $bf,
-                'cum'           => $cum,
-                'grade'         => $row->grade ?? '-',
-                'remark'        => $row->remark ?? '-',
-                'position'      => $row->position ?? '-',
-                'class_average' => (float)($row->class_average ?? 0),
-                'assessments'   => $assessmentData,
+                'total'           => $rawTotal,
+                'bf'              => $bf,
+                'cum'             => $cum,
+                'grade'           => $row->grade ?? '-',
+                'remark'          => $row->remark ?? '-',
+                // 4 position columns
+                'pos_class_cum'   => $row->pos_class_cum   ?? null,
+                'pos_class_total' => $row->pos_class_total ?? null,
+                'pos_arm_total'   => $row->pos_arm_total   ?? null,
+                'pos_arm_cum'     => $row->pos_arm_cum     ?? null,
+                'class_average'   => (float)($row->class_average ?? 0),
+                'assessments'     => $assessmentData,
             ];
         }
 
@@ -391,8 +412,8 @@ class BroadsheetController extends Controller
     private function assembleStudentRows(
         array  $studentIds,
         int    $sessionid,
-        ?int   $schoolclassid,   // null for combined view
-        ?array $classIds,        // non-null for combined view
+        ?int   $schoolclassid,
+        ?array $classIds,
         array  $studentSubjectMap,
         array  $subjectsMap,
         $assessments,
@@ -405,7 +426,6 @@ class BroadsheetController extends Controller
         ?array $studentClassMap = null,
         bool   $isCombined      = false
     ): array {
-        // Build the student info query
         $query = Studentclass::where('sessionid', $sessionid);
         if ($schoolclassid) {
             $query->where('schoolclassid', $schoolclassid);
@@ -430,7 +450,6 @@ class BroadsheetController extends Controller
             ->orderBy('studentRegistration.firstname')
             ->get();
 
-        // Key by integer student id
         $studentRows = [];
         foreach ($studentInfoRows as $stu) {
             $sid       = (int)$stu->id;
@@ -461,7 +480,6 @@ class BroadsheetController extends Controller
                 $armLabel = $armLabels[$studentClassMap[$sid]] ?? '';
             }
 
-            // Use integer key so position map lookups are always reliable
             $studentRows[$sid] = [
                 'id'                 => $sid,
                 'admissionno'        => $stu->admissionno,
@@ -481,17 +499,14 @@ class BroadsheetController extends Controller
                 'cgpa'               => $gpa,
                 'gpa_grade'          => $this->getGpaGrade($gpa),
                 'total_grade_points' => round(array_sum($gradePointsA), 1),
-                // positions set below
                 'position_cum'       => 0,
                 'position_term'      => 0,
             ];
         }
 
-        // Build position maps using integer-keyed $studentRows
         $posMapCum  = $this->buildPositionMap($studentRows, 'total_cum');
         $posMapTerm = $this->buildPositionMap($studentRows, 'total_term');
 
-        // Stamp positions directly into each row (both maps keyed by integer sid)
         foreach ($studentRows as $sid => &$row) {
             $row['position_cum']  = $posMapCum[(int)$sid]  ?? 0;
             $row['position_term'] = $posMapTerm[(int)$sid] ?? 0;
@@ -508,7 +523,6 @@ class BroadsheetController extends Controller
             'schoolterm'      => $schoolterm,
             'assessments'     => $assessments,
             'subjects'        => $subjectsMap,
-            // Keep integer-keyed here; array_values only for Blade iteration
             'studentRows'     => array_values($studentRows),
             'subjectStats'    => $subjectStats,
             'selectedColumns' => $selectedColumns,
@@ -525,13 +539,11 @@ class BroadsheetController extends Controller
     }
 
     // =========================================================================
-    // HELPER: Build position map (dense ranking by any numeric key)
-    // Keys are integer student IDs.
+    // HELPER: Build position map (dense ranking)
     // =========================================================================
 
     private function buildPositionMap(array $studentRows, string $key): array
     {
-        // Clone so uasort doesn't alter the original reference
         $sorted = $studentRows;
         uasort($sorted, fn ($a, $b) => ($b[$key] ?? 0) <=> ($a[$key] ?? 0));
 
@@ -557,7 +569,7 @@ class BroadsheetController extends Controller
     }
 
     // =========================================================================
-    // HELPER: Subject stats (explicit loops — avoids nested pluck issues)
+    // HELPER: Subject stats
     // =========================================================================
 
     private function buildSubjectStats(array $subjectsMap, array $studentRows): array
@@ -907,7 +919,6 @@ class BroadsheetController extends Controller
             );
         }
 
-        // Fetch previous term BF
         $prevCumMap = $this->fetchPreviousTermCums($allStudentIds, $sessionid, $termid, $classIds);
 
         $broadsheets = Broadsheets::whereIn('broadsheet_records.student_id', $allStudentIds)
@@ -930,7 +941,10 @@ class BroadsheetController extends Controller
                 'broadsheets.cum',
                 'broadsheets.grade',
                 'broadsheets.remark',
-                'broadsheets.subject_position_class as position',
+                'broadsheets.subject_position_class as pos_class_cum',
+                'broadsheets.subject_position_class_total as pos_class_total',
+                'broadsheets.arm_position as pos_arm_total',
+                'broadsheets.arm_position_cum as pos_arm_cum',
                 'broadsheets.avg as class_average',
             ])
             ->get();
@@ -960,18 +974,31 @@ class BroadsheetController extends Controller
             }
 
             $rawTotal = (float)($row->total ?? 0);
-            $bf       = $prevCumMap[$sid][$sub] ?? (float)($row->bf ?? 0);
-            $cum      = $bf > 0 ? round(($bf + $rawTotal) / 2, 1) : $rawTotal;
+
+            // 3-level BF resolution
+            $prevCum = $prevCumMap[$sid][$sub] ?? null;
+            if ($prevCum !== null && $prevCum > 0) {
+                $bf = $prevCum;
+            } elseif (!empty($row->bf) && (float)$row->bf > 0) {
+                $bf = (float)$row->bf;
+            } else {
+                $bf = 0.0;
+            }
+
+            $cum = $bf > 0 ? round(($bf + $rawTotal) / 2, 1) : $rawTotal;
 
             $studentSubjectMap[$sid][$sub] = [
-                'total'         => $rawTotal,
-                'bf'            => $bf,
-                'cum'           => $cum,
-                'grade'         => $row->grade ?? '-',
-                'remark'        => $row->remark ?? '-',
-                'position'      => $row->position ?? '-',
-                'class_average' => (float)($row->class_average ?? 0),
-                'assessments'   => $assessmentData,
+                'total'           => $rawTotal,
+                'bf'              => $bf,
+                'cum'             => $cum,
+                'grade'           => $row->grade ?? '-',
+                'remark'          => $row->remark ?? '-',
+                'pos_class_cum'   => $row->pos_class_cum   ?? null,
+                'pos_class_total' => $row->pos_class_total ?? null,
+                'pos_arm_total'   => $row->pos_arm_total   ?? null,
+                'pos_arm_cum'     => $row->pos_arm_cum     ?? null,
+                'class_average'   => (float)($row->class_average ?? 0),
+                'assessments'     => $assessmentData,
             ];
         }
 
@@ -1006,10 +1033,11 @@ class BroadsheetController extends Controller
         foreach ($assessments as $a) {
             if (empty($selectedColumns) || in_array('assessment_' . $a->id, $selectedColumns)) $cols++;
         }
-        foreach (['total', 'bf', 'cum', 'grade', 'position_term', 'position_cum', 'class_average', 'remark'] as $col) {
+        $scoreCols = ['total','bf','cum','grade','pos_class_cum','pos_class_total','pos_arm_total','pos_arm_cum','class_average','remark'];
+        foreach ($scoreCols as $col) {
             if (empty($selectedColumns) || in_array($col, $selectedColumns)) $cols++;
         }
-        foreach (['gpa', 'cgpa', 'gpa_grade', 'num_subjects', 'total_grade_points'] as $col) {
+        foreach (['gpa','cgpa','gpa_grade','num_subjects','total_grade_points'] as $col) {
             if (empty($selectedColumns) || in_array($col, $selectedColumns)) $cols += 0.5;
         }
         return $cols;
