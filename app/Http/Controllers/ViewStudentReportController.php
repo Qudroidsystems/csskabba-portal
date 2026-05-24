@@ -137,7 +137,7 @@ class ViewStudentReportController extends Controller
 
     /**
      * Compute GPA and CGPA for a student using ONLY subjects they are
-     * registered for (subject_registration_status). Unregistered subject
+     * registered for (subjectRegistrationStatus). Unregistered subject
      * placeholders in broadsheet_records are excluded so they cannot
      * inflate denominators or drag down grade-point averages.
      */
@@ -157,13 +157,13 @@ class ViewStudentReportController extends Controller
             })
             ->whereExists(function ($query) use ($studentId, $termId, $sessionId) {
                 $query->select(DB::raw(1))
-                    ->from('subject_registration_status')
-                    ->join('subjectclass', 'subjectclass.id', '=', 'subject_registration_status.subjectclassid')
+                    ->from('subjectRegistrationStatus')
+                    ->join('subjectclass', 'subjectclass.id', '=', 'subjectRegistrationStatus.subjectclassid')
                     ->join('broadsheet_records as br_inner', 'br_inner.subject_id', '=', 'subjectclass.subjectid')
                     ->whereColumn('br_inner.id', 'broadsheets.broadsheet_record_id')
-                    ->where('subject_registration_status.studentid', $studentId)
-                    ->where('subject_registration_status.termid', $termId)
-                    ->where('subject_registration_status.sessionid', $sessionId);
+                    ->where('subjectRegistrationStatus.studentid', $studentId)
+                    ->where('subjectRegistrationStatus.termid', $termId)
+                    ->where('subjectRegistrationStatus.sessionid', $sessionId);
             })
             ->get(['broadsheets.total']);
 
@@ -187,13 +187,13 @@ class ViewStudentReportController extends Controller
                 })
                 ->whereExists(function ($query) use ($studentId, $t, $sessionId) {
                     $query->select(DB::raw(1))
-                        ->from('subject_registration_status')
-                        ->join('subjectclass', 'subjectclass.id', '=', 'subject_registration_status.subjectclassid')
+                        ->from('subjectRegistrationStatus')
+                        ->join('subjectclass', 'subjectclass.id', '=', 'subjectRegistrationStatus.subjectclassid')
                         ->join('broadsheet_records as br_inner', 'br_inner.subject_id', '=', 'subjectclass.subjectid')
                         ->whereColumn('br_inner.id', 'broadsheets.broadsheet_record_id')
-                        ->where('subject_registration_status.studentid', $studentId)
-                        ->where('subject_registration_status.termid', $t)
-                        ->where('subject_registration_status.sessionid', $sessionId);
+                        ->where('subjectRegistrationStatus.studentid', $studentId)
+                        ->where('subjectRegistrationStatus.termid', $t)
+                        ->where('subjectRegistrationStatus.sessionid', $sessionId);
                 })
                 ->get(['broadsheets.total']);
 
@@ -255,7 +255,7 @@ class ViewStudentReportController extends Controller
      * Calculate positions, averages, and grades for all subjects in a class.
      *
      * KEY FIX: the broadsheet query now contains a whereExists sub-query that
-     * gates each row through subject_registration_status. This means:
+     * gates each row through subjectRegistrationStatus. This means:
      *   - Students NOT registered for a subject are excluded from that
      *     subject's average and position ranking.
      *   - Unregistered subject placeholder rows (total = 0) can no longer
@@ -313,12 +313,12 @@ class ViewStudentReportController extends Controller
                 ->whereIn('broadsheet_records.schoolclass_id', $classIds)
                 ->whereExists(function ($query) use ($termid, $sessionid) {
                     $query->select(DB::raw(1))
-                        ->from('subject_registration_status')
-                        ->join('subjectclass', 'subjectclass.id', '=', 'subject_registration_status.subjectclassid')
+                        ->from('subjectRegistrationStatus')
+                        ->join('subjectclass', 'subjectclass.id', '=', 'subjectRegistrationStatus.subjectclassid')
                         ->whereColumn('subjectclass.subjectid', 'broadsheet_records.subject_id')
-                        ->whereColumn('subject_registration_status.studentid', 'broadsheet_records.student_id')
-                        ->where('subject_registration_status.termid', $termid)
-                        ->where('subject_registration_status.sessionid', $sessionid);
+                        ->whereColumn('subjectRegistrationStatus.studentid', 'broadsheet_records.student_id')
+                        ->where('subjectRegistrationStatus.termid', $termid)
+                        ->where('subjectRegistrationStatus.sessionid', $sessionid);
                 })
                 ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
                 ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
@@ -493,7 +493,7 @@ class ViewStudentReportController extends Controller
      * Get complete student result data.
      *
      * KEY FIX: the scores query is now filtered through
-     * subject_registration_status so that only subjects the student is
+     * subjectRegistrationStatus so that only subjects the student is
      * actually registered for appear. This fixes:
      *   - F9 grades appearing for unregistered subjects
      *   - Obtainable being inflated (e.g. 1200 instead of 800)
@@ -566,12 +566,12 @@ class ViewStudentReportController extends Controller
                 ->where('broadsheet_records.schoolclass_id', $schoolclassid)
                 ->whereExists(function ($query) use ($id, $termid, $sessionid) {
                     $query->select(DB::raw(1))
-                        ->from('subject_registration_status')
-                        ->join('subjectclass', 'subjectclass.id', '=', 'subject_registration_status.subjectclassid')
+                        ->from('subjectRegistrationStatus')
+                        ->join('subjectclass', 'subjectclass.id', '=', 'subjectRegistrationStatus.subjectclassid')
                         ->whereColumn('subjectclass.subjectid', 'broadsheet_records.subject_id')
-                        ->where('subject_registration_status.studentid', $id)
-                        ->where('subject_registration_status.termid', $termid)
-                        ->where('subject_registration_status.sessionid', $sessionid);
+                        ->where('subjectRegistrationStatus.studentid', $id)
+                        ->where('subjectRegistrationStatus.termid', $termid)
+                        ->where('subjectRegistrationStatus.sessionid', $sessionid);
                 })
                 ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
                 ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
@@ -1388,13 +1388,13 @@ class ViewStudentReportController extends Controller
                 ->where('broadsheet_records_mock.schoolclass_id', $schoolclassId)
                 ->whereExists(function ($query) use ($studentId, $termId, $sessionId) {
                     $query->select(DB::raw(1))
-                        ->from('subject_registration_status')
-                        ->join('subjectclass', 'subjectclass.id', '=', 'subject_registration_status.subjectclassid')
+                        ->from('subjectRegistrationStatus')
+                        ->join('subjectclass', 'subjectclass.id', '=', 'subjectRegistrationStatus.subjectclassid')
                         ->join('broadsheet_records_mock as brm_inner', 'brm_inner.subject_id', '=', 'subjectclass.subjectid')
                         ->whereColumn('brm_inner.id', 'broadsheetmock.broadsheet_records_mock_id')
-                        ->where('subject_registration_status.studentid', $studentId)
-                        ->where('subject_registration_status.termid', $termId)
-                        ->where('subject_registration_status.sessionid', $sessionId);
+                        ->where('subjectRegistrationStatus.studentid', $studentId)
+                        ->where('subjectRegistrationStatus.termid', $termId)
+                        ->where('subjectRegistrationStatus.sessionid', $sessionId);
                 })
                 ->join('broadsheet_records_mock', 'broadsheet_records_mock.id', '=', 'broadsheetmock.broadsheet_records_mock_id')
                 ->join('subject', 'subject.id', '=', 'broadsheet_records_mock.subject_id')
