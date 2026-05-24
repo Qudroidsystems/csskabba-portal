@@ -187,7 +187,7 @@ class ViewStudentReportController extends Controller
     /**
      * Compute overall GPA and CGPA for a student.
      */
-    protected function computeOverallGPAAndCGPAForStudent($studentId, $schoolclass, $termId, $sessionId)
+   protected function computeOverallGPAAndCGPAForStudent($studentId, $schoolclass, $termId, $sessionId)
     {
         Log::info('Computing GPA/CGPA for student', [
             'student_id' => $studentId,
@@ -196,13 +196,34 @@ class ViewStudentReportController extends Controller
             'class_name' => $schoolclass->schoolclass ?? 'Unknown',
         ]);
 
-        $currentTermBroadsheets = Broadsheets::where('term_id', $termId)
+        // ── Current term: only registered subjects ────────────────────────
+        $currentTermBroadsheets = Broadsheets::where('broadsheets.term_id', $termId)
             ->whereHas('broadsheetRecord', function ($q) use ($studentId, $sessionId) {
                 $q->where('student_id', $studentId)->where('session_id', $sessionId);
             })
-            ->get(['total']);
+            ->whereExists(function ($query) use ($studentId, $termId, $sessionId) {
+                $query->select(DB::raw(1))
+                    ->from('subject_registration_status')
+                    ->join(
+                        'subjectclass',
+                        'subjectclass.id',
+                        '=',
+                        'subject_registration_status.subjectclassid'
+                    )
+                    ->join(
+                        'broadsheet_records as br_inner',
+                        'br_inner.subject_id',
+                        '=',
+                        'subjectclass.subjectid'
+                    )
+                    ->whereColumn('br_inner.id', 'broadsheets.broadsheet_record_id')
+                    ->where('subject_registration_status.studentid', $studentId)
+                    ->where('subject_registration_status.termid', $termId)
+                    ->where('subject_registration_status.sessionid', $sessionId);
+            })
+            ->get(['broadsheets.total']);
 
-        Log::debug('Current term broadsheets', [
+        Log::debug('Current term broadsheets (registered only)', [
             'student_id'   => $studentId,
             'count'        => $currentTermBroadsheets->count(),
             'total_scores' => $currentTermBroadsheets->pluck('total')->toArray(),
@@ -213,15 +234,36 @@ class ViewStudentReportController extends Controller
         $num_subjects       = $currentTermBroadsheets->count();
         $total_grade_points = $termGradePoints->sum();
 
-        // CGPA — average of all completed term GPAs in the current session
+        // ── CGPA: average of all completed-term GPAs in this session ─────
+        // Each term's GPA is also filtered to registered subjects.
         $termGPAs = [];
 
         for ($t = 1; $t <= $termId; $t++) {
-            $termBroadsheets = Broadsheets::where('term_id', $t)
+            $termBroadsheets = Broadsheets::where('broadsheets.term_id', $t)
                 ->whereHas('broadsheetRecord', function ($q) use ($studentId, $sessionId) {
                     $q->where('student_id', $studentId)->where('session_id', $sessionId);
                 })
-                ->get(['total']);
+                ->whereExists(function ($query) use ($studentId, $t, $sessionId) {
+                    $query->select(DB::raw(1))
+                        ->from('subject_registration_status')
+                        ->join(
+                            'subjectclass',
+                            'subjectclass.id',
+                            '=',
+                            'subject_registration_status.subjectclassid'
+                        )
+                        ->join(
+                            'broadsheet_records as br_inner',
+                            'br_inner.subject_id',
+                            '=',
+                            'subjectclass.subjectid'
+                        )
+                        ->whereColumn('br_inner.id', 'broadsheets.broadsheet_record_id')
+                        ->where('subject_registration_status.studentid', $studentId)
+                        ->where('subject_registration_status.termid', $t)
+                        ->where('subject_registration_status.sessionid', $sessionId);
+                })
+                ->get(['broadsheets.total']);
 
             if ($termBroadsheets->isNotEmpty()) {
                 $termGradePointsPast = $termBroadsheets->map(fn ($b) => $this->getGradePoint($b->total));
@@ -245,7 +287,7 @@ class ViewStudentReportController extends Controller
             'calculated_gpa'     => $num_subjects > 0 ? round($total_grade_points / $num_subjects, 2) : 0.0,
         ];
 
-        Log::info('GPA/CGPA computation completed', $result);
+        Log::info('GPA/CGPA computation completed (registered subjects only)', $result);
 
         return $result;
     }
@@ -289,10 +331,9 @@ class ViewStudentReportController extends Controller
             'schoolclassid' => $schoolclassid,
             'sessionid'     => $sessionid,
             'termid'        => $termid,
-            'cache_key'     => $cacheKey,
         ]);
 
-        Cache::forget($cacheKey);
+        \Illuminate\Support\Facades\Cache::forget($cacheKey);
 
         $schoolclass = Schoolclass::with(['classcategories', 'arms'])->where('id', $schoolclassid)->first(['id', 'schoolclass', 'arm']);
         if (!$schoolclass) {
@@ -304,17 +345,17 @@ class ViewStudentReportController extends Controller
         $classIds  = Schoolclass::where('schoolclass', $className)->pluck('id')->toArray();
 
         if (empty($classIds)) {
-            Log::error('No schoolclass IDs found for class name', compact('className', 'schoolclassid', 'sessionid', 'termid'));
+            Log::error('No schoolclass IDs found', compact('className', 'schoolclassid'));
             return false;
         }
 
-        $students = Studentclass::whereIn('schoolclassid', $classIds)
+        $students = \App\Models\Studentclass::whereIn('schoolclassid', $classIds)
             ->where('sessionid', $sessionid)
             ->pluck('studentId')
             ->toArray();
 
         if (empty($students)) {
-            Log::error('No students found for class', compact('className', 'classIds', 'sessionid', 'termid'));
+            Log::error('No students found for class', compact('className', 'classIds', 'sessionid'));
             return false;
         }
 
@@ -322,10 +363,46 @@ class ViewStudentReportController extends Controller
 
         $success = DB::transaction(function () use ($schoolclassid, $sessionid, $termid, $className, $classIds, $students, $armId) {
 
+            // ── CORE FIX: add whereExists to exclude unregistered students
+            // from each subject's broadsheet rows.
+            //
+            // A broadsheet_records row is created for every subject the
+            // class offers when a student is first registered for ANY subject
+            // in that class. Previously that meant a student registered for
+            // only 8 of 12 class subjects still appeared (with total=0) in
+            // all 12 subject broadsheets, pulling class averages down and
+            // inflating the position count.
+            //
+            // The whereExists sub-query confirms that for this specific
+            // student + subject_id + term + session, a
+            // subject_registration_status row exists, i.e. the student was
+            // explicitly registered for that subject.
+            // ──────────────────────────────────────────────────────────────
             $broadsheets = Broadsheets::whereIn('broadsheet_records.student_id', $students)
                 ->where('broadsheets.term_id', $termid)
                 ->where('broadsheet_records.session_id', $sessionid)
                 ->whereIn('broadsheet_records.schoolclass_id', $classIds)
+                // Only include rows where the student is registered for this subject
+                ->whereExists(function ($query) use ($termid, $sessionid) {
+                    $query->select(DB::raw(1))
+                        ->from('subject_registration_status')
+                        ->join(
+                            'subjectclass',
+                            'subjectclass.id',
+                            '=',
+                            'subject_registration_status.subjectclassid'
+                        )
+                        ->whereColumn(
+                            'subjectclass.subjectid',
+                            'broadsheet_records.subject_id'
+                        )
+                        ->whereColumn(
+                            'subject_registration_status.studentid',
+                            'broadsheet_records.student_id'
+                        )
+                        ->where('subject_registration_status.termid', $termid)
+                        ->where('subject_registration_status.sessionid', $sessionid);
+                })
                 ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
                 ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
                 ->join('studentRegistration', 'studentRegistration.id', '=', 'broadsheet_records.student_id')
@@ -351,7 +428,7 @@ class ViewStudentReportController extends Controller
                 ->get();
 
             if ($broadsheets->isEmpty()) {
-                Log::error('No broadsheet records found for class', compact('className', 'classIds', 'sessionid', 'termid', 'students'));
+                Log::warning('No broadsheet records found for class (after registration filter)', compact('className', 'classIds', 'sessionid', 'termid'));
                 return false;
             }
 
@@ -360,28 +437,28 @@ class ViewStudentReportController extends Controller
             foreach ($subjectGroups as $subjectId => $subjectRecords) {
                 $subjectName = $subjectRecords->first()->subject_name;
 
-                // 1. CLASS POSITION (CUM) - All arms, ranked by cumulative
+                // 1. CLASS POSITION (CUM) — all arms, ranked by cumulative
                 $validRecordsCum = $subjectRecords->filter(fn ($r) => $r->cum != 0 && $r->cum !== null);
                 $sortedByCum     = $validRecordsCum->sortByDesc('cum')->values();
                 $positionMapCum  = $this->calculatePositionsRaw($sortedByCum, 'cum');
 
-                // 2. CLASS POSITION (TOTAL) - All arms, ranked by raw total
+                // 2. CLASS POSITION (TOTAL) — all arms, ranked by total
                 $validRecordsTotal = $subjectRecords->filter(fn ($r) => $r->total != 0 && $r->total !== null);
                 $sortedByTotal     = $validRecordsTotal->sortByDesc('total')->values();
                 $positionMapTotal  = $this->calculatePositionsRaw($sortedByTotal, 'total');
 
-                // 3. ARM POSITION (TOTAL) - This arm only, ranked by raw total
+                // 3. ARM POSITION (TOTAL) — this arm only, ranked by total
                 $armOnlyRecords       = $subjectRecords->filter(fn ($r) => $r->student_arm_id == $armId);
                 $validArmRecordsTotal = $armOnlyRecords->filter(fn ($r) => $r->total != 0 && $r->total !== null);
                 $sortedByArmTotal     = $validArmRecordsTotal->sortByDesc('total')->values();
                 $armPositionMapTotal  = $this->calculatePositionsRaw($sortedByArmTotal, 'total');
 
-                // 4. ARM POSITION (CUM) - This arm only, ranked by cumulative
+                // 4. ARM POSITION (CUM) — this arm only, ranked by cumulative
                 $validArmRecordsCum = $armOnlyRecords->filter(fn ($r) => $r->cum != 0 && $r->cum !== null);
                 $sortedByArmCum     = $validArmRecordsCum->sortByDesc('cum')->values();
                 $armPositionMapCum  = $this->calculatePositionsRaw($sortedByArmCum, 'cum');
 
-                // Calculate class average
+                // Class average — only registered students' scores
                 $totalScores  = $validRecordsTotal->sum('total');
                 $studentCount = $validRecordsTotal->count();
                 $classAvg     = $studentCount > 0 ? round($totalScores / $studentCount, 1) : 0;
@@ -392,7 +469,6 @@ class ViewStudentReportController extends Controller
                     $grade  = $record->total == 0 ? '-' : $this->calculateGrade($record->total);
                     $remark = $this->getRemark($grade);
 
-                    // Store RAW NUMBERS (not formatted strings)
                     $newPositionCum = ($record->cum == 0 || $record->cum === null) ? null :
                         ($positionMapCum[$record->id] ?? null);
 
@@ -430,7 +506,8 @@ class ViewStudentReportController extends Controller
                 Log::info('Subject processing completed', [
                     'subject_name'    => $subjectName,
                     'updates_applied' => $updatesCount,
-                    'total_records'   => $subjectRecords->count(),
+                    'registered_rows' => $subjectRecords->count(),
+                    'class_avg'       => $classAvg,
                 ]);
             }
 
@@ -438,7 +515,7 @@ class ViewStudentReportController extends Controller
         });
 
         if ($success) {
-            Cache::put($cacheKey, true, now()->addHours(1));
+            \Illuminate\Support\Facades\Cache::put($cacheKey, true, now()->addHours(1));
         }
 
         return $success;
@@ -495,7 +572,7 @@ class ViewStudentReportController extends Controller
     /**
      * Get complete student result data — includes all 4 subject position columns + attendance.
      */
-    private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
+     private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
     {
         try {
             Log::channel('pdf')->info('========== START getStudentResultData ==========', [
@@ -552,10 +629,37 @@ class ViewStudentReportController extends Controller
                 }
             }
 
+            // ─────────────────────────────────────────────────────────────
+            // CORE FIX: filter scores to ONLY subjects the student is
+            // actually registered for via subject_registration_status.
+            //
+            // Previously this query fetched ALL broadsheet_records rows
+            // for the student in this class/session/term, which included
+            // subjects not registered for the student (showing F9 and
+            // inflating the obtainable total).
+            // ─────────────────────────────────────────────────────────────
             $scores = Broadsheets::where('broadsheet_records.student_id', $id)
                 ->where('broadsheets.term_id', $termid)
                 ->where('broadsheet_records.session_id', $sessionid)
                 ->where('broadsheet_records.schoolclass_id', $schoolclassid)
+                // Gate to registered subjects only
+                ->whereExists(function ($query) use ($id, $termid, $sessionid) {
+                    $query->select(DB::raw(1))
+                        ->from('subject_registration_status')
+                        ->join(
+                            'subjectclass',
+                            'subjectclass.id',
+                            '=',
+                            'subject_registration_status.subjectclassid'
+                        )
+                        ->whereColumn(
+                            'subjectclass.subjectid',
+                            'broadsheet_records.subject_id'
+                        )
+                        ->where('subject_registration_status.studentid', $id)
+                        ->where('subject_registration_status.termid', $termid)
+                        ->where('subject_registration_status.sessionid', $sessionid);
+                })
                 ->join('broadsheet_records', 'broadsheet_records.id', '=', 'broadsheets.broadsheet_record_id')
                 ->join('subject', 'subject.id', '=', 'broadsheet_records.subject_id')
                 ->orderBy('subject.subject')
@@ -568,7 +672,6 @@ class ViewStudentReportController extends Controller
                     'broadsheets.cum',
                     'broadsheets.grade',
                     'broadsheets.remark',
-                    // Raw numeric positions from database
                     'broadsheets.subject_position_class as position',
                     'broadsheets.subject_position_class_total as position_total',
                     'broadsheets.arm_position',
@@ -578,7 +681,7 @@ class ViewStudentReportController extends Controller
                     'broadsheets.vettedstatus',
                 ])->get();
 
-            // Add formatted versions for display
+            // Add formatted positions and assessment scores to each score row
             foreach ($scores as $score) {
                 $score->position_formatted         = $score->position         ? $this->formatOrdinal($score->position)         : '-';
                 $score->position_total_formatted   = $score->position_total   ? $this->formatOrdinal($score->position_total)   : '-';
@@ -615,7 +718,12 @@ class ViewStudentReportController extends Controller
                 }
             }
 
-            // Totals summary
+            // ─────────────────────────────────────────────────────────────
+            // Totals summary — now accurate because $scores only contains
+            // subjects the student is actually registered for.
+            // obtained   = sum of the student's actual scores
+            // obtainable = 100 × number of REGISTERED subjects (not all class subjects)
+            // ─────────────────────────────────────────────────────────────
             $totalObtained   = 0;
             $totalObtainable = 0;
 
@@ -732,7 +840,7 @@ class ViewStudentReportController extends Controller
                 }
             }
 
-            // ── Attendance ────────────────────────────────────────────────
+            // Attendance
             $attendanceSummary = $this->getAttendanceSummary($id, $schoolclassid, $termid, $sessionid);
 
             $result = [
@@ -753,18 +861,19 @@ class ViewStudentReportController extends Controller
                 'compulsorySubjects'   => $compulsorySubjects,
                 'gpa_data'             => $gpaData,
                 'totals_summary'       => $totalsSummary,
-                'attendance_summary'   => $attendanceSummary,   // ← NEW
+                'attendance_summary'   => $attendanceSummary,
             ];
 
             Log::channel('pdf')->info('========== END getStudentResultData ==========', [
-                'student_id'     => $id,
-                'students_count' => $students->count() ?? 0,
-                'scores_count'   => $scores ? $scores->count() : 0,
+                'student_id'          => $id,
+                'registered_subjects' => $scores ? $scores->count() : 0,
+                'obtainable'          => $totalObtainable,
+                'obtained'            => round($totalObtained, 1),
             ]);
 
             return $result;
 
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             Log::channel('pdf')->error('========== ERROR in getStudentResultData ==========', [
                 'student_id'    => $id,
                 'error_message' => $e->getMessage(),
@@ -1438,13 +1547,34 @@ class ViewStudentReportController extends Controller
      * ViewStudentMockReportController::getStudentMockResultData() but returns
      * a plain serialisable array ready for JSON.
      */
-    private function fetchMockScoresForDrawer($studentId, $schoolclassId, $sessionId, $termId): array
+  private function fetchMockScoresForDrawer($studentId, $schoolclassId, $sessionId, $termId): array
     {
         try {
             $rows = BroadsheetsMock::where('broadsheet_records_mock.student_id', $studentId)
                 ->where('broadsheetmock.term_id', $termId)
                 ->where('broadsheet_records_mock.session_id', $sessionId)
                 ->where('broadsheet_records_mock.schoolclass_id', $schoolclassId)
+                // Only registered subjects
+                ->whereExists(function ($query) use ($studentId, $termId, $sessionId) {
+                    $query->select(DB::raw(1))
+                        ->from('subject_registration_status')
+                        ->join(
+                            'subjectclass',
+                            'subjectclass.id',
+                            '=',
+                            'subject_registration_status.subjectclassid'
+                        )
+                        ->join(
+                            'broadsheet_records_mock as brm_inner',
+                            'brm_inner.subject_id',
+                            '=',
+                            'subjectclass.subjectid'
+                        )
+                        ->whereColumn('brm_inner.id', 'broadsheetmock.broadsheet_records_mock_id')
+                        ->where('subject_registration_status.studentid', $studentId)
+                        ->where('subject_registration_status.termid', $termId)
+                        ->where('subject_registration_status.sessionid', $sessionId);
+                })
                 ->join('broadsheet_records_mock', 'broadsheet_records_mock.id', '=', 'broadsheetmock.broadsheet_records_mock_id')
                 ->join('subject', 'subject.id', '=', 'broadsheet_records_mock.subject_id')
                 ->orderBy('subject.subject')
@@ -1485,6 +1615,7 @@ class ViewStudentReportController extends Controller
             return [];
         }
     }
+
 
     /**
      * Drawer data endpoint — returns full student result data (including dynamic

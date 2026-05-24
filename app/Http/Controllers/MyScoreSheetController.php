@@ -1469,11 +1469,34 @@ class MyScoreSheetController extends Controller
         }
     }
 
-    private function computeOverallForStudent($studentId, $schoolclass, $termId, $sessionId, $isSenior)
+     private function computeOverallForStudent($studentId, $schoolclass, $termId, $sessionId, $isSenior)
     {
-        $currentBroadsheets = Broadsheets::where('term_id', $termId)
-            ->whereHas('broadsheetRecord', fn($q) => $q->where('student_id', $studentId)->where('session_id', $sessionId))
-            ->get(['total']);
+        // Current term — registered subjects only
+        $currentBroadsheets = Broadsheets::where('broadsheets.term_id', $termId)
+            ->whereHas('broadsheetRecord', fn ($q) =>
+                $q->where('student_id', $studentId)->where('session_id', $sessionId)
+            )
+            ->whereExists(function ($query) use ($studentId, $termId, $sessionId) {
+                $query->select(DB::raw(1))
+                    ->from('subject_registration_status')
+                    ->join(
+                        'subjectclass',
+                        'subjectclass.id',
+                        '=',
+                        'subject_registration_status.subjectclassid'
+                    )
+                    ->join(
+                        'broadsheet_records as br_inner',
+                        'br_inner.subject_id',
+                        '=',
+                        'subjectclass.subjectid'
+                    )
+                    ->whereColumn('br_inner.id', 'broadsheets.broadsheet_record_id')
+                    ->where('subject_registration_status.studentid', $studentId)
+                    ->where('subject_registration_status.termid', $termId)
+                    ->where('subject_registration_status.sessionid', $sessionId);
+            })
+            ->get(['broadsheets.total']);
 
         $category     = $schoolclass->classcategories->first();
         $averageTotal = $currentBroadsheets->avg('total') ?? 0.0;
@@ -1481,11 +1504,12 @@ class MyScoreSheetController extends Controller
             ? $category->calculateGrade($averageTotal)
             : $this->getDefaultGrade($averageTotal);
 
-        $termGradePoints  = $currentBroadsheets->map(fn($b) => $this->getGradePoint($b->total, $isSenior));
+        $termGradePoints  = $currentBroadsheets->map(fn ($b) => $this->getGradePoint($b->total, $isSenior));
         $gpa              = $termGradePoints->avg()  ?? 0.0;
         $numSubjects      = $currentBroadsheets->count();
         $totalGradePoints = $termGradePoints->sum();
 
+        // CGPA — average of term GPAs across sessions, registered subjects only
         $annualGPAs = [];
         $sessions   = DB::table('broadsheet_records')
             ->join('schoolclass',     'schoolclass.id',     '=', 'broadsheet_records.schoolclass_id')
@@ -1501,10 +1525,33 @@ class MyScoreSheetController extends Controller
         foreach ($sessions as $targetSession) {
             $sessionGPAs = [];
             for ($t = 1; $t <= 3; $t++) {
-                $tb = Broadsheets::where('term_id', $t)
-                    ->whereHas('broadsheetRecord', fn($q) => $q->where('student_id', $studentId)->where('session_id', $targetSession))
-                    ->get(['total']);
-                $sessionGPAs[] = $tb->map(fn($b) => $this->getGradePoint($b->total, $isSenior))->avg() ?? 0.0;
+                $tb = Broadsheets::where('broadsheets.term_id', $t)
+                    ->whereHas('broadsheetRecord', fn ($q) =>
+                        $q->where('student_id', $studentId)->where('session_id', $targetSession)
+                    )
+                    ->whereExists(function ($query) use ($studentId, $t, $targetSession) {
+                        $query->select(DB::raw(1))
+                            ->from('subject_registration_status')
+                            ->join(
+                                'subjectclass',
+                                'subjectclass.id',
+                                '=',
+                                'subject_registration_status.subjectclassid'
+                            )
+                            ->join(
+                                'broadsheet_records as br_inner',
+                                'br_inner.subject_id',
+                                '=',
+                                'subjectclass.subjectid'
+                            )
+                            ->whereColumn('br_inner.id', 'broadsheets.broadsheet_record_id')
+                            ->where('subject_registration_status.studentid', $studentId)
+                            ->where('subject_registration_status.termid', $t)
+                            ->where('subject_registration_status.sessionid', $targetSession);
+                    })
+                    ->get(['broadsheets.total']);
+
+                $sessionGPAs[] = $tb->map(fn ($b) => $this->getGradePoint($b->total, $isSenior))->avg() ?? 0.0;
             }
             $annualGPAs[] = collect($sessionGPAs)->avg() ?? 0.0;
         }
