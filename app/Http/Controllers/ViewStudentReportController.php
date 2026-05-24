@@ -45,9 +45,10 @@ class ViewStudentReportController extends Controller
         Log::channel('pdf')->info('ViewStudentReportController initialized', ['timestamp' => now()]);
     }
 
-    /**
-     * Format number with ordinal suffix (st, nd, rd, th)
-     */
+    // =========================================================================
+    // FORMAT ORDINAL
+    // =========================================================================
+
     protected function formatOrdinal($number)
     {
         if (!is_numeric($number) || $number <= 0) {
@@ -69,77 +70,40 @@ class ViewStudentReportController extends Controller
         };
     }
 
-    /**
-     * Calculate grade based on total score using WAEC/NECO standard.
-     */
+    // =========================================================================
+    // GRADE HELPERS
+    // =========================================================================
+
     protected function calculateGrade($score)
     {
-        Log::debug('Calculating grade', ['score' => $score]);
-
-        if ($score === null || $score == 0) {
-            return 'F9';
-        }
-
-        if ($score >= 75) {
-            return 'A1';
-        } elseif ($score >= 70) {
-            return 'B2';
-        } elseif ($score >= 65) {
-            return 'B3';
-        } elseif ($score >= 60) {
-            return 'C4';
-        } elseif ($score >= 55) {
-            return 'C5';
-        } elseif ($score >= 50) {
-            return 'C6';
-        } elseif ($score >= 45) {
-            return 'D7';
-        } elseif ($score >= 40) {
-            return 'E8';
-        } else {
-            return 'F9';
-        }
+        if ($score === null || $score == 0) return 'F9';
+        if ($score >= 75) return 'A1';
+        if ($score >= 70) return 'B2';
+        if ($score >= 65) return 'B3';
+        if ($score >= 60) return 'C4';
+        if ($score >= 55) return 'C5';
+        if ($score >= 50) return 'C6';
+        if ($score >= 45) return 'D7';
+        if ($score >= 40) return 'E8';
+        return 'F9';
     }
 
-    /**
-     * Get grade point based on score using WAEC/NECO standard.
-     */
     protected function getGradePoint($score)
     {
-        Log::debug('Calculating grade point', ['score' => $score]);
-
-        if ($score === null || $score == 0) {
-            return 0.0;
-        }
-
-        if ($score >= 75) {
-            return 5.0;
-        } elseif ($score >= 70) {
-            return 4.5;
-        } elseif ($score >= 65) {
-            return 4.0;
-        } elseif ($score >= 60) {
-            return 3.5;
-        } elseif ($score >= 55) {
-            return 3.0;
-        } elseif ($score >= 50) {
-            return 2.5;
-        } elseif ($score >= 45) {
-            return 2.0;
-        } elseif ($score >= 40) {
-            return 1.0;
-        } else {
-            return 0.0;
-        }
+        if ($score === null || $score == 0) return 0.0;
+        if ($score >= 75) return 5.0;
+        if ($score >= 70) return 4.5;
+        if ($score >= 65) return 4.0;
+        if ($score >= 60) return 3.5;
+        if ($score >= 55) return 3.0;
+        if ($score >= 50) return 2.5;
+        if ($score >= 45) return 2.0;
+        if ($score >= 40) return 1.0;
+        return 0.0;
     }
 
-    /**
-     * Get remark based on grade
-     */
     protected function getRemark($grade)
     {
-        Log::debug('Getting remark for grade', ['grade' => $grade]);
-
         $remarks = [
             'A1' => 'Excellent',
             'B2' => 'Very Good',
@@ -151,43 +115,33 @@ class ViewStudentReportController extends Controller
             'E8' => 'Pass',
             'F9' => 'Fail',
         ];
-
-        $remark = $remarks[$grade] ?? 'Unknown';
-        Log::debug('Remark retrieved', ['grade' => $grade, 'remark' => $remark]);
-
-        return $remark;
+        return $remarks[$grade] ?? 'Unknown';
     }
 
-    /**
-     * Get GPA letter grade based on GPA value.
-     */
     protected function getGpaGrade($gpa)
     {
-        if ($gpa >= 4.5) {
-            return 'A1';
-        } elseif ($gpa >= 4.0) {
-            return 'B2';
-        } elseif ($gpa >= 3.5) {
-            return 'B3';
-        } elseif ($gpa >= 3.0) {
-            return 'C4';
-        } elseif ($gpa >= 2.5) {
-            return 'C5';
-        } elseif ($gpa >= 2.0) {
-            return 'C6';
-        } elseif ($gpa >= 1.5) {
-            return 'D7';
-        } elseif ($gpa >= 1.0) {
-            return 'E8';
-        } else {
-            return 'F9';
-        }
+        if ($gpa >= 4.5) return 'A1';
+        if ($gpa >= 4.0) return 'B2';
+        if ($gpa >= 3.5) return 'B3';
+        if ($gpa >= 3.0) return 'C4';
+        if ($gpa >= 2.5) return 'C5';
+        if ($gpa >= 2.0) return 'C6';
+        if ($gpa >= 1.5) return 'D7';
+        if ($gpa >= 1.0) return 'E8';
+        return 'F9';
     }
 
+    // =========================================================================
+    // GPA / CGPA — REGISTERED SUBJECTS ONLY
+    // =========================================================================
+
     /**
-     * Compute overall GPA and CGPA for a student.
+     * Compute GPA and CGPA for a student using ONLY subjects they are
+     * registered for (subject_registration_status). Unregistered subject
+     * placeholders in broadsheet_records are excluded so they cannot
+     * inflate denominators or drag down grade-point averages.
      */
-   protected function computeOverallGPAAndCGPAForStudent($studentId, $schoolclass, $termId, $sessionId)
+    protected function computeOverallGPAAndCGPAForStudent($studentId, $schoolclass, $termId, $sessionId)
     {
         Log::info('Computing GPA/CGPA for student', [
             'student_id' => $studentId,
@@ -196,7 +150,7 @@ class ViewStudentReportController extends Controller
             'class_name' => $schoolclass->schoolclass ?? 'Unknown',
         ]);
 
-        // ── Current term: only registered subjects ────────────────────────
+        // ── Current term broadsheets — registered subjects only ───────────
         $currentTermBroadsheets = Broadsheets::where('broadsheets.term_id', $termId)
             ->whereHas('broadsheetRecord', function ($q) use ($studentId, $sessionId) {
                 $q->where('student_id', $studentId)->where('session_id', $sessionId);
@@ -204,18 +158,8 @@ class ViewStudentReportController extends Controller
             ->whereExists(function ($query) use ($studentId, $termId, $sessionId) {
                 $query->select(DB::raw(1))
                     ->from('subject_registration_status')
-                    ->join(
-                        'subjectclass',
-                        'subjectclass.id',
-                        '=',
-                        'subject_registration_status.subjectclassid'
-                    )
-                    ->join(
-                        'broadsheet_records as br_inner',
-                        'br_inner.subject_id',
-                        '=',
-                        'subjectclass.subjectid'
-                    )
+                    ->join('subjectclass', 'subjectclass.id', '=', 'subject_registration_status.subjectclassid')
+                    ->join('broadsheet_records as br_inner', 'br_inner.subject_id', '=', 'subjectclass.subjectid')
                     ->whereColumn('br_inner.id', 'broadsheets.broadsheet_record_id')
                     ->where('subject_registration_status.studentid', $studentId)
                     ->where('subject_registration_status.termid', $termId)
@@ -234,10 +178,8 @@ class ViewStudentReportController extends Controller
         $num_subjects       = $currentTermBroadsheets->count();
         $total_grade_points = $termGradePoints->sum();
 
-        // ── CGPA: average of all completed-term GPAs in this session ─────
-        // Each term's GPA is also filtered to registered subjects.
+        // ── CGPA: average of all completed term GPAs in the current session ──
         $termGPAs = [];
-
         for ($t = 1; $t <= $termId; $t++) {
             $termBroadsheets = Broadsheets::where('broadsheets.term_id', $t)
                 ->whereHas('broadsheetRecord', function ($q) use ($studentId, $sessionId) {
@@ -246,18 +188,8 @@ class ViewStudentReportController extends Controller
                 ->whereExists(function ($query) use ($studentId, $t, $sessionId) {
                     $query->select(DB::raw(1))
                         ->from('subject_registration_status')
-                        ->join(
-                            'subjectclass',
-                            'subjectclass.id',
-                            '=',
-                            'subject_registration_status.subjectclassid'
-                        )
-                        ->join(
-                            'broadsheet_records as br_inner',
-                            'br_inner.subject_id',
-                            '=',
-                            'subjectclass.subjectid'
-                        )
+                        ->join('subjectclass', 'subjectclass.id', '=', 'subject_registration_status.subjectclassid')
+                        ->join('broadsheet_records as br_inner', 'br_inner.subject_id', '=', 'subjectclass.subjectid')
                         ->whereColumn('br_inner.id', 'broadsheets.broadsheet_record_id')
                         ->where('subject_registration_status.studentid', $studentId)
                         ->where('subject_registration_status.termid', $t)
@@ -268,7 +200,6 @@ class ViewStudentReportController extends Controller
             if ($termBroadsheets->isNotEmpty()) {
                 $termGradePointsPast = $termBroadsheets->map(fn ($b) => $this->getGradePoint($b->total));
                 $termGPA             = $termGradePointsPast->avg() ?? 0.0;
-
                 if ($termGPA > 0) {
                     $termGPAs[] = $termGPA;
                 }
@@ -288,14 +219,13 @@ class ViewStudentReportController extends Controller
         ];
 
         Log::info('GPA/CGPA computation completed (registered subjects only)', $result);
-
         return $result;
     }
 
-    /**
-     * Helper method to calculate positions with tie handling.
-     * Returns RAW NUMERIC positions (not formatted with suffixes).
-     */
+    // =========================================================================
+    // POSITION HELPERS
+    // =========================================================================
+
     protected function calculatePositionsRaw($sortedRecords, $field)
     {
         $positionMap  = [];
@@ -306,7 +236,6 @@ class ViewStudentReportController extends Controller
         foreach ($sortedRecords as $record) {
             $rank++;
             $currentValue = $record->$field;
-
             if ($lastValue !== null && $currentValue == $lastValue) {
                 $positionMap[$record->id] = $lastPosition;
             } else {
@@ -315,13 +244,22 @@ class ViewStudentReportController extends Controller
                 $positionMap[$record->id] = $lastPosition;
             }
         }
-
         return $positionMap;
     }
 
+    // =========================================================================
+    // CLASS POSITIONS AND AVERAGES — REGISTERED SUBJECTS ONLY
+    // =========================================================================
+
     /**
-     * Calculate class positions, averages, and grades for all subjects.
-     * Stores RAW NUMERIC positions in database (1, 2, 3, 89, etc.)
+     * Calculate positions, averages, and grades for all subjects in a class.
+     *
+     * KEY FIX: the broadsheet query now contains a whereExists sub-query that
+     * gates each row through subject_registration_status. This means:
+     *   - Students NOT registered for a subject are excluded from that
+     *     subject's average and position ranking.
+     *   - Unregistered subject placeholder rows (total = 0) can no longer
+     *     drag down class averages or inflate position counts.
      */
     protected function calculateClassPositionsAndAverages($schoolclassid, $sessionid, $termid)
     {
@@ -331,9 +269,10 @@ class ViewStudentReportController extends Controller
             'schoolclassid' => $schoolclassid,
             'sessionid'     => $sessionid,
             'termid'        => $termid,
+            'cache_key'     => $cacheKey,
         ]);
 
-        \Illuminate\Support\Facades\Cache::forget($cacheKey);
+        Cache::forget($cacheKey);
 
         $schoolclass = Schoolclass::with(['classcategories', 'arms'])->where('id', $schoolclassid)->first(['id', 'schoolclass', 'arm']);
         if (!$schoolclass) {
@@ -345,11 +284,11 @@ class ViewStudentReportController extends Controller
         $classIds  = Schoolclass::where('schoolclass', $className)->pluck('id')->toArray();
 
         if (empty($classIds)) {
-            Log::error('No schoolclass IDs found', compact('className', 'schoolclassid'));
+            Log::error('No schoolclass IDs found for class name', compact('className', 'schoolclassid'));
             return false;
         }
 
-        $students = \App\Models\Studentclass::whereIn('schoolclassid', $classIds)
+        $students = Studentclass::whereIn('schoolclassid', $classIds)
             ->where('sessionid', $sessionid)
             ->pluck('studentId')
             ->toArray();
@@ -363,43 +302,21 @@ class ViewStudentReportController extends Controller
 
         $success = DB::transaction(function () use ($schoolclassid, $sessionid, $termid, $className, $classIds, $students, $armId) {
 
-            // ── CORE FIX: add whereExists to exclude unregistered students
-            // from each subject's broadsheet rows.
-            //
-            // A broadsheet_records row is created for every subject the
-            // class offers when a student is first registered for ANY subject
-            // in that class. Previously that meant a student registered for
-            // only 8 of 12 class subjects still appeared (with total=0) in
-            // all 12 subject broadsheets, pulling class averages down and
-            // inflating the position count.
-            //
-            // The whereExists sub-query confirms that for this specific
-            // student + subject_id + term + session, a
-            // subject_registration_status row exists, i.e. the student was
-            // explicitly registered for that subject.
-            // ──────────────────────────────────────────────────────────────
+            // ── CORE FIX: only include broadsheet rows where the student is
+            // actually registered for that subject in this term/session.
+            // Previously every broadsheet_records row was included regardless
+            // of registration, causing F9 grades and zero scores from
+            // unregistered students to corrupt averages and positions.
             $broadsheets = Broadsheets::whereIn('broadsheet_records.student_id', $students)
                 ->where('broadsheets.term_id', $termid)
                 ->where('broadsheet_records.session_id', $sessionid)
                 ->whereIn('broadsheet_records.schoolclass_id', $classIds)
-                // Only include rows where the student is registered for this subject
                 ->whereExists(function ($query) use ($termid, $sessionid) {
                     $query->select(DB::raw(1))
                         ->from('subject_registration_status')
-                        ->join(
-                            'subjectclass',
-                            'subjectclass.id',
-                            '=',
-                            'subject_registration_status.subjectclassid'
-                        )
-                        ->whereColumn(
-                            'subjectclass.subjectid',
-                            'broadsheet_records.subject_id'
-                        )
-                        ->whereColumn(
-                            'subject_registration_status.studentid',
-                            'broadsheet_records.student_id'
-                        )
+                        ->join('subjectclass', 'subjectclass.id', '=', 'subject_registration_status.subjectclassid')
+                        ->whereColumn('subjectclass.subjectid', 'broadsheet_records.subject_id')
+                        ->whereColumn('subject_registration_status.studentid', 'broadsheet_records.student_id')
                         ->where('subject_registration_status.termid', $termid)
                         ->where('subject_registration_status.sessionid', $sessionid);
                 })
@@ -428,7 +345,7 @@ class ViewStudentReportController extends Controller
                 ->get();
 
             if ($broadsheets->isEmpty()) {
-                Log::warning('No broadsheet records found for class (after registration filter)', compact('className', 'classIds', 'sessionid', 'termid'));
+                Log::warning('No broadsheet records found (after registration filter)', compact('className', 'classIds', 'sessionid', 'termid'));
                 return false;
             }
 
@@ -442,7 +359,7 @@ class ViewStudentReportController extends Controller
                 $sortedByCum     = $validRecordsCum->sortByDesc('cum')->values();
                 $positionMapCum  = $this->calculatePositionsRaw($sortedByCum, 'cum');
 
-                // 2. CLASS POSITION (TOTAL) — all arms, ranked by total
+                // 2. CLASS POSITION (TOTAL) — all arms, ranked by raw total
                 $validRecordsTotal = $subjectRecords->filter(fn ($r) => $r->total != 0 && $r->total !== null);
                 $sortedByTotal     = $validRecordsTotal->sortByDesc('total')->values();
                 $positionMapTotal  = $this->calculatePositionsRaw($sortedByTotal, 'total');
@@ -505,8 +422,8 @@ class ViewStudentReportController extends Controller
 
                 Log::info('Subject processing completed', [
                     'subject_name'    => $subjectName,
-                    'updates_applied' => $updatesCount,
                     'registered_rows' => $subjectRecords->count(),
+                    'updates_applied' => $updatesCount,
                     'class_avg'       => $classAvg,
                 ]);
             }
@@ -515,16 +432,16 @@ class ViewStudentReportController extends Controller
         });
 
         if ($success) {
-            \Illuminate\Support\Facades\Cache::put($cacheKey, true, now()->addHours(1));
+            Cache::put($cacheKey, true, now()->addHours(1));
         }
 
         return $success;
     }
 
-    /**
-     * Fetch attendance summary for a student in a given class/term/session.
-     * Returns a structured array (never null — always has defaults).
-     */
+    // =========================================================================
+    // ATTENDANCE SUMMARY
+    // =========================================================================
+
     protected function getAttendanceSummary($studentId, $schoolclassId, $termId, $sessionId): array
     {
         try {
@@ -536,14 +453,14 @@ class ViewStudentReportController extends Controller
 
             if ($record) {
                 return [
-                    'total_school_days'    => $record->total_school_days    ?? 0,
-                    'days_present'         => $record->days_present         ?? 0,
-                    'days_absent'          => $record->days_absent          ?? 0,
-                    'days_sick_leave'      => $record->days_sick_leave      ?? 0,
-                    'days_excused'         => $record->days_excused         ?? 0,
-                    'days_late'            => $record->days_late            ?? 0,
-                    'attendance_percentage'=> $record->attendance_percentage ?? 0.0,
-                    'found'                => true,
+                    'total_school_days'     => $record->total_school_days    ?? 0,
+                    'days_present'          => $record->days_present         ?? 0,
+                    'days_absent'           => $record->days_absent          ?? 0,
+                    'days_sick_leave'       => $record->days_sick_leave      ?? 0,
+                    'days_excused'          => $record->days_excused         ?? 0,
+                    'days_late'             => $record->days_late            ?? 0,
+                    'attendance_percentage' => $record->attendance_percentage ?? 0.0,
+                    'found'                 => true,
                 ];
             }
         } catch (\Exception $e) {
@@ -556,7 +473,6 @@ class ViewStudentReportController extends Controller
             ]);
         }
 
-        // Safe defaults when no record found
         return [
             'total_school_days'     => 0,
             'days_present'          => 0,
@@ -569,10 +485,22 @@ class ViewStudentReportController extends Controller
         ];
     }
 
+    // =========================================================================
+    // GET STUDENT RESULT DATA — REGISTERED SUBJECTS ONLY
+    // =========================================================================
+
     /**
-     * Get complete student result data — includes all 4 subject position columns + attendance.
+     * Get complete student result data.
+     *
+     * KEY FIX: the scores query is now filtered through
+     * subject_registration_status so that only subjects the student is
+     * actually registered for appear. This fixes:
+     *   - F9 grades appearing for unregistered subjects
+     *   - Obtainable being inflated (e.g. 1200 instead of 800)
+     *   - % obtained being artificially low
+     *   - GPA being dragged down by zero-score placeholders
      */
-     private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
+    private function getStudentResultData($id, $schoolclassid, $sessionid, $termid)
     {
         try {
             Log::channel('pdf')->info('========== START getStudentResultData ==========', [
@@ -616,7 +544,6 @@ class ViewStudentReportController extends Controller
 
             if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
                 $categoryIds = $schoolclass->classcategories->pluck('id');
-
                 try {
                     if (class_exists(\App\Models\Assessment::class)) {
                         $assessments = \App\Models\Assessment::whereIn('classcategory_id', $categoryIds)
@@ -629,33 +556,19 @@ class ViewStudentReportController extends Controller
                 }
             }
 
-            // ─────────────────────────────────────────────────────────────
-            // CORE FIX: filter scores to ONLY subjects the student is
-            // actually registered for via subject_registration_status.
-            //
-            // Previously this query fetched ALL broadsheet_records rows
-            // for the student in this class/session/term, which included
-            // subjects not registered for the student (showing F9 and
-            // inflating the obtainable total).
-            // ─────────────────────────────────────────────────────────────
+            // ── CORE FIX: gate scores to registered subjects only ─────────
+            // Previously fetched ALL broadsheet_records for the student in
+            // this class/session/term — including subjects not registered —
+            // causing F9 placeholders and inflating obtainable totals.
             $scores = Broadsheets::where('broadsheet_records.student_id', $id)
                 ->where('broadsheets.term_id', $termid)
                 ->where('broadsheet_records.session_id', $sessionid)
                 ->where('broadsheet_records.schoolclass_id', $schoolclassid)
-                // Gate to registered subjects only
                 ->whereExists(function ($query) use ($id, $termid, $sessionid) {
                     $query->select(DB::raw(1))
                         ->from('subject_registration_status')
-                        ->join(
-                            'subjectclass',
-                            'subjectclass.id',
-                            '=',
-                            'subject_registration_status.subjectclassid'
-                        )
-                        ->whereColumn(
-                            'subjectclass.subjectid',
-                            'broadsheet_records.subject_id'
-                        )
+                        ->join('subjectclass', 'subjectclass.id', '=', 'subject_registration_status.subjectclassid')
+                        ->whereColumn('subjectclass.subjectid', 'broadsheet_records.subject_id')
                         ->where('subject_registration_status.studentid', $id)
                         ->where('subject_registration_status.termid', $termid)
                         ->where('subject_registration_status.sessionid', $sessionid);
@@ -681,7 +594,7 @@ class ViewStudentReportController extends Controller
                     'broadsheets.vettedstatus',
                 ])->get();
 
-            // Add formatted positions and assessment scores to each score row
+            // Add formatted positions and per-row assessment scores
             foreach ($scores as $score) {
                 $score->position_formatted         = $score->position         ? $this->formatOrdinal($score->position)         : '-';
                 $score->position_total_formatted   = $score->position_total   ? $this->formatOrdinal($score->position_total)   : '-';
@@ -718,12 +631,9 @@ class ViewStudentReportController extends Controller
                 }
             }
 
-            // ─────────────────────────────────────────────────────────────
-            // Totals summary — now accurate because $scores only contains
-            // subjects the student is actually registered for.
-            // obtained   = sum of the student's actual scores
-            // obtainable = 100 × number of REGISTERED subjects (not all class subjects)
-            // ─────────────────────────────────────────────────────────────
+            // ── Totals summary ────────────────────────────────────────────
+            // Now accurate: $scores only contains registered subjects, so
+            // obtainable = 100 × registered subject count (not class total).
             $totalObtained   = 0;
             $totalObtainable = 0;
 
@@ -746,7 +656,7 @@ class ViewStudentReportController extends Controller
                 'percentage' => $totalPercentage,
             ];
 
-            // GPA / CGPA
+            // GPA / CGPA (also registered-only via updated helper)
             $gpaData = [];
             if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
                 try {
@@ -867,13 +777,13 @@ class ViewStudentReportController extends Controller
             Log::channel('pdf')->info('========== END getStudentResultData ==========', [
                 'student_id'          => $id,
                 'registered_subjects' => $scores ? $scores->count() : 0,
-                'obtainable'          => $totalObtainable,
                 'obtained'            => round($totalObtained, 1),
+                'obtainable'          => $totalObtainable,
             ]);
 
             return $result;
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             Log::channel('pdf')->error('========== ERROR in getStudentResultData ==========', [
                 'student_id'    => $id,
                 'error_message' => $e->getMessage(),
@@ -884,9 +794,10 @@ class ViewStudentReportController extends Controller
         }
     }
 
-    /**
-     * Get column options for PDF generation — includes all 4 position columns + attendance.
-     */
+    // =========================================================================
+    // COLUMN OPTIONS
+    // =========================================================================
+
     public function getColumnOptions(Request $request)
     {
         $schoolclassid = $request->input('schoolclassid');
@@ -925,15 +836,15 @@ class ViewStudentReportController extends Controller
             ],
             'assessments' => [],
             'scores' => [
-                'total'            => ['label' => 'Total',                       'default' => true],
-                'bf'               => ['label' => 'BF',                          'default' => true],
-                'cum'              => ['label' => 'Cum',                         'default' => true],
-                'grade'            => ['label' => 'Grade',                       'default' => true],
-                'position'         => ['label' => 'Class Pos (Cum) — All Arms',  'default' => true],
-                'position_total'   => ['label' => 'Class Pos (Total) — All Arms','default' => true],
-                'arm_position'     => ['label' => 'Arm Pos (Total) — This Arm',  'default' => true],
-                'arm_position_cum' => ['label' => 'Arm Pos (Cum) — This Arm',    'default' => true],
-                'class_average'    => ['label' => 'Class Avg',                   'default' => true],
+                'total'            => ['label' => 'Total',                        'default' => true],
+                'bf'               => ['label' => 'BF',                           'default' => true],
+                'cum'              => ['label' => 'Cum',                          'default' => true],
+                'grade'            => ['label' => 'Grade',                        'default' => true],
+                'position'         => ['label' => 'Class Pos (Cum) — All Arms',   'default' => true],
+                'position_total'   => ['label' => 'Class Pos (Total) — All Arms', 'default' => true],
+                'arm_position'     => ['label' => 'Arm Pos (Total) — This Arm',   'default' => true],
+                'arm_position_cum' => ['label' => 'Arm Pos (Cum) — This Arm',     'default' => true],
+                'class_average'    => ['label' => 'Class Avg',                    'default' => true],
             ],
             'gpa_metrics' => [
                 'num_subjects'       => ['label' => 'Num Subjects', 'default' => true],
@@ -943,15 +854,14 @@ class ViewStudentReportController extends Controller
                 'gpa_grade'          => ['label' => 'GPA Grade',     'default' => true],
                 'cgpa'               => ['label' => 'CGPA',          'default' => true],
             ],
-            // ── Attendance columns ──────────────────────────────────────
             'attendance' => [
-                'attendance_days_present'    => ['label' => 'Days Present',    'default' => true],
-                'attendance_days_absent'     => ['label' => 'Days Absent',     'default' => true],
-                'attendance_days_late'       => ['label' => 'Days Late',       'default' => false],
-                'attendance_sick_leave'      => ['label' => 'Sick Leave',      'default' => false],
-                'attendance_excused'         => ['label' => 'Excused',         'default' => false],
-                'attendance_total_days'      => ['label' => 'Total School Days','default' => true],
-                'attendance_percentage'      => ['label' => 'Attendance %',    'default' => true],
+                'attendance_days_present' => ['label' => 'Days Present',     'default' => true],
+                'attendance_days_absent'  => ['label' => 'Days Absent',      'default' => true],
+                'attendance_days_late'    => ['label' => 'Days Late',        'default' => false],
+                'attendance_sick_leave'   => ['label' => 'Sick Leave',       'default' => false],
+                'attendance_excused'      => ['label' => 'Excused',          'default' => false],
+                'attendance_total_days'   => ['label' => 'Total School Days','default' => true],
+                'attendance_percentage'   => ['label' => 'Attendance %',     'default' => true],
             ],
             'other' => [
                 'compulsory_flag' => ['label' => 'Compulsory',    'default' => false],
@@ -979,9 +889,10 @@ class ViewStudentReportController extends Controller
         ]);
     }
 
-    /**
-     * Calculate grade preview for AJAX requests
-     */
+    // =========================================================================
+    // GRADE PREVIEW
+    // =========================================================================
+
     public function calculateGradePreview(Request $request)
     {
         $request->validate([
@@ -990,13 +901,13 @@ class ViewStudentReportController extends Controller
         ]);
 
         $grade = $this->calculateGrade($request->total);
-
         return response()->json(['grade' => $grade]);
     }
 
-    /**
-     * Display student result view
-     */
+    // =========================================================================
+    // STUDENT RESULT VIEWS
+    // =========================================================================
+
     public function studentresult($id, $schoolclassid, $sessionid, $termid)
     {
         $pagetitle         = "Student Personality Profile";
@@ -1007,13 +918,9 @@ class ViewStudentReportController extends Controller
         }
 
         $data = $this->getStudentResultData($id, $schoolclassid, $sessionid, $termid);
-
         return view('studentreports.studentresult')->with($data)->with('pagetitle', $pagetitle);
     }
 
-    /**
-     * Display student mock result
-     */
     public function studentmockresult($id, $schoolclassid, $sessionid, $termid)
     {
         $pagetitle         = "Student Mock Result";
@@ -1024,13 +931,13 @@ class ViewStudentReportController extends Controller
         }
 
         $data = $this->getStudentResultData($id, $schoolclassid, $sessionid, $termid);
-
         return view('studentreports.studentmockresult')->with($data)->with('pagetitle', $pagetitle);
     }
 
-    /**
-     * Display class broadsheet
-     */
+    // =========================================================================
+    // CLASS BROADSHEET
+    // =========================================================================
+
     public function classBroadsheet($schoolclassid, $sessionid, $termid): View
     {
         $class     = Schoolclass::findOrFail($schoolclassid);
@@ -1046,9 +953,10 @@ class ViewStudentReportController extends Controller
         ]);
     }
 
-    /**
-     * Get registered classes
-     */
+    // =========================================================================
+    // REGISTERED CLASSES
+    // =========================================================================
+
     public function registeredClasses(Request $request)
     {
         $classId   = $request->query('class_id');
@@ -1077,9 +985,10 @@ class ViewStudentReportController extends Controller
         return response()->json(['success' => true, 'data' => $classes]);
     }
 
-    /**
-     * Export single student result as PDF
-     */
+    // =========================================================================
+    // PDF EXPORTS
+    // =========================================================================
+
     public function exportStudentResultPdf($id, $schoolclassid, $sessionid, $termid)
     {
         try {
@@ -1133,14 +1042,10 @@ class ViewStudentReportController extends Controller
                 'error_file'    => $e->getFile(),
                 'error_line'    => $e->getLine(),
             ]);
-
             return back()->with('error', 'Failed to generate PDF: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Export class results as PDF
-     */
     public function exportClassResultsPdf(Request $request)
     {
         try {
@@ -1174,14 +1079,10 @@ class ViewStudentReportController extends Controller
             $processedCount = 0;
             $failedCount    = 0;
 
-            foreach ($studentIds as $index => $studentId) {
+            foreach ($studentIds as $studentId) {
                 $studentData = $this->getStudentResultData($studentId, $schoolclassid, $sessionid, $termid);
 
-                if (
-                    !empty($studentData) &&
-                    !empty($studentData['students']) &&
-                    $studentData['students']->isNotEmpty()
-                ) {
+                if (!empty($studentData) && !empty($studentData['students']) && $studentData['students']->isNotEmpty()) {
                     $studentData['selected_columns'] = $selectedColumns;
                     $allStudentData[]                = $studentData;
                     $processedCount++;
@@ -1193,10 +1094,7 @@ class ViewStudentReportController extends Controller
 
             if (empty($allStudentData)) {
                 $this->debugStudentQuery($studentIds, $schoolclassid, $sessionid, $termid);
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Failed to process student data.',
-                ], 500);
+                return response()->json(['success' => false, 'message' => 'Failed to process student data.'], 500);
             }
 
             $this->fixImagePaths($allStudentData);
@@ -1264,7 +1162,6 @@ class ViewStudentReportController extends Controller
                 'error_file'    => $e->getFile(),
                 'error_line'    => $e->getLine(),
             ]);
-
             return response()->json([
                 'success'    => false,
                 'message'    => 'Failed to generate PDF: ' . $e->getMessage(),
@@ -1479,6 +1376,68 @@ class ViewStudentReportController extends Controller
     }
 
     // =========================================================================
+    // MOCK SCORES FOR DRAWER — REGISTERED SUBJECTS ONLY
+    // =========================================================================
+
+    private function fetchMockScoresForDrawer($studentId, $schoolclassId, $sessionId, $termId): array
+    {
+        try {
+            $rows = BroadsheetsMock::where('broadsheet_records_mock.student_id', $studentId)
+                ->where('broadsheetmock.term_id', $termId)
+                ->where('broadsheet_records_mock.session_id', $sessionId)
+                ->where('broadsheet_records_mock.schoolclass_id', $schoolclassId)
+                ->whereExists(function ($query) use ($studentId, $termId, $sessionId) {
+                    $query->select(DB::raw(1))
+                        ->from('subject_registration_status')
+                        ->join('subjectclass', 'subjectclass.id', '=', 'subject_registration_status.subjectclassid')
+                        ->join('broadsheet_records_mock as brm_inner', 'brm_inner.subject_id', '=', 'subjectclass.subjectid')
+                        ->whereColumn('brm_inner.id', 'broadsheetmock.broadsheet_records_mock_id')
+                        ->where('subject_registration_status.studentid', $studentId)
+                        ->where('subject_registration_status.termid', $termId)
+                        ->where('subject_registration_status.sessionid', $sessionId);
+                })
+                ->join('broadsheet_records_mock', 'broadsheet_records_mock.id', '=', 'broadsheetmock.broadsheet_records_mock_id')
+                ->join('subject', 'subject.id', '=', 'broadsheet_records_mock.subject_id')
+                ->orderBy('subject.subject')
+                ->select([
+                    'subject.subject as subject_name',
+                    'subject.subject_code',
+                    'broadsheetmock.exam',
+                    'broadsheetmock.total',
+                    'broadsheetmock.grade',
+                    'broadsheetmock.remark',
+                    'broadsheetmock.subject_position_class as position',
+                    'broadsheetmock.avg as class_average',
+                    'broadsheetmock.cmin',
+                    'broadsheetmock.cmax',
+                ])
+                ->get();
+
+            return $rows->map(function ($r) {
+                return [
+                    'subject_name'  => $r->subject_name,
+                    'subject_code'  => $r->subject_code,
+                    'exam'          => $r->exam  !== null ? (float) $r->exam  : null,
+                    'total'         => $r->total !== null ? (float) $r->total : null,
+                    'grade'         => $r->grade,
+                    'remark'        => $r->remark,
+                    'position'      => $r->position,
+                    'class_average' => $r->class_average !== null ? (float) $r->class_average : null,
+                    'cmin'          => $r->cmin !== null ? (float) $r->cmin : null,
+                    'cmax'          => $r->cmax !== null ? (float) $r->cmax : null,
+                ];
+            })->values()->toArray();
+
+        } catch (\Exception $e) {
+            Log::error('fetchMockScoresForDrawer error', [
+                'student_id' => $studentId,
+                'error'      => $e->getMessage(),
+            ]);
+            return [];
+        }
+    }
+
+    // =========================================================================
     // INDEX
     // =========================================================================
 
@@ -1542,86 +1501,10 @@ class ViewStudentReportController extends Controller
         return view('studentreports.index', compact('allstudents', 'schoolsessions', 'schoolclasses', 'pagetitle'));
     }
 
-    /**
-     * Fetch mock scores for the drawer — mirrors the query in
-     * ViewStudentMockReportController::getStudentMockResultData() but returns
-     * a plain serialisable array ready for JSON.
-     */
-  private function fetchMockScoresForDrawer($studentId, $schoolclassId, $sessionId, $termId): array
-    {
-        try {
-            $rows = BroadsheetsMock::where('broadsheet_records_mock.student_id', $studentId)
-                ->where('broadsheetmock.term_id', $termId)
-                ->where('broadsheet_records_mock.session_id', $sessionId)
-                ->where('broadsheet_records_mock.schoolclass_id', $schoolclassId)
-                // Only registered subjects
-                ->whereExists(function ($query) use ($studentId, $termId, $sessionId) {
-                    $query->select(DB::raw(1))
-                        ->from('subject_registration_status')
-                        ->join(
-                            'subjectclass',
-                            'subjectclass.id',
-                            '=',
-                            'subject_registration_status.subjectclassid'
-                        )
-                        ->join(
-                            'broadsheet_records_mock as brm_inner',
-                            'brm_inner.subject_id',
-                            '=',
-                            'subjectclass.subjectid'
-                        )
-                        ->whereColumn('brm_inner.id', 'broadsheetmock.broadsheet_records_mock_id')
-                        ->where('subject_registration_status.studentid', $studentId)
-                        ->where('subject_registration_status.termid', $termId)
-                        ->where('subject_registration_status.sessionid', $sessionId);
-                })
-                ->join('broadsheet_records_mock', 'broadsheet_records_mock.id', '=', 'broadsheetmock.broadsheet_records_mock_id')
-                ->join('subject', 'subject.id', '=', 'broadsheet_records_mock.subject_id')
-                ->orderBy('subject.subject')
-                ->select([
-                    'subject.subject as subject_name',
-                    'subject.subject_code',
-                    'broadsheetmock.exam',
-                    'broadsheetmock.total',
-                    'broadsheetmock.grade',
-                    'broadsheetmock.remark',
-                    'broadsheetmock.subject_position_class as position',
-                    'broadsheetmock.avg as class_average',
-                    'broadsheetmock.cmin',
-                    'broadsheetmock.cmax',
-                ])
-                ->get();
+    // =========================================================================
+    // DRAWER DATA — REGISTERED SUBJECTS ONLY
+    // =========================================================================
 
-            return $rows->map(function ($r) {
-                return [
-                    'subject_name'  => $r->subject_name,
-                    'subject_code'  => $r->subject_code,
-                    'exam'          => $r->exam  !== null ? (float) $r->exam  : null,
-                    'total'         => $r->total !== null ? (float) $r->total : null,
-                    'grade'         => $r->grade,
-                    'remark'        => $r->remark,
-                    'position'      => $r->position,
-                    'class_average' => $r->class_average !== null ? (float) $r->class_average : null,
-                    'cmin'          => $r->cmin !== null ? (float) $r->cmin : null,
-                    'cmax'          => $r->cmax !== null ? (float) $r->cmax : null,
-                ];
-            })->values()->toArray();
-
-        } catch (\Exception $e) {
-            Log::error('fetchMockScoresForDrawer error', [
-                'student_id' => $studentId,
-                'error'      => $e->getMessage(),
-            ]);
-            return [];
-        }
-    }
-
-
-    /**
-     * Drawer data endpoint — returns full student result data (including dynamic
-     * assessments) plus personality profile, attendance, picture URL.
-     * Called by the profile drawer via AJAX.
-     */
     public function drawerData($studentId, $schoolclassId, $sessionId, $termId)
     {
         try {
@@ -1632,14 +1515,12 @@ class ViewStudentReportController extends Controller
                 return response()->json(['success' => false, 'message' => 'Invalid parameters'], 400);
             }
 
-            // ── 1. Full result data (scores + dynamic assessments + attendance) ──
             $resultData = $this->getStudentResultData($studentId, $schoolclassId, $sessionId, $termId);
 
             if (empty($resultData)) {
                 return response()->json(['success' => false, 'message' => 'No data found'], 404);
             }
 
-            // ── 2. Personality profile ──────────────────────────────────────────
             $profile = null;
             try {
                 $profile = Studentpersonalityprofile::where('studentid', $studentId)
@@ -1651,10 +1532,9 @@ class ViewStudentReportController extends Controller
                 Log::error('drawerData: error fetching personality profile', ['error' => $e->getMessage()]);
             }
 
-            // ── 3. Student basics ───────────────────────────────────────────────
-            $student   = $resultData['students']->first();
-            $schoolclass = $resultData['schoolclass'];
-            $schoolterm  = $resultData['schoolterm'];
+            $student       = $resultData['students']->first();
+            $schoolclass   = $resultData['schoolclass'];
+            $schoolterm    = $resultData['schoolterm'];
             $schoolsession = $resultData['schoolsession'];
 
             $fullName = trim(
@@ -1663,7 +1543,6 @@ class ViewStudentReportController extends Controller
                 ($student->othername ?? '')
             );
 
-            // ── 4. Serialise assessments metadata ───────────────────────────────
             $assessmentsMeta = ($resultData['assessments'] ?? collect())->map(function ($a) {
                 return [
                     'id'        => $a->id,
@@ -1672,9 +1551,7 @@ class ViewStudentReportController extends Controller
                 ];
             })->values()->toArray();
 
-            // ── 5. Serialise scores with dynamic assessment_scores ───────────────
             $scores = ($resultData['scores'] ?? collect())->map(function ($score) {
-                // assessment_scores is already a collection on the score object
                 $assessmentScores = [];
                 if (isset($score->assessment_scores)) {
                     foreach ($score->assessment_scores as $as) {
@@ -1694,9 +1571,9 @@ class ViewStudentReportController extends Controller
                     'cum'               => $score->cum   !== null ? (float) $score->cum   : null,
                     'grade'             => $score->grade,
                     'remark'            => $score->remark,
-                    'position'          => $score->position_formatted     ?? ($score->position     ? $this->formatOrdinal($score->position)     : '-'),
-                    'position_total'    => $score->position_total_formatted ?? ($score->position_total ? $this->formatOrdinal($score->position_total) : '-'),
-                    'arm_position'      => $score->arm_position_formatted  ?? ($score->arm_position  ? $this->formatOrdinal($score->arm_position)  : '-'),
+                    'position'          => $score->position_formatted     ?? ($score->position         ? $this->formatOrdinal($score->position)         : '-'),
+                    'position_total'    => $score->position_total_formatted ?? ($score->position_total  ? $this->formatOrdinal($score->position_total)   : '-'),
+                    'arm_position'      => $score->arm_position_formatted   ?? ($score->arm_position    ? $this->formatOrdinal($score->arm_position)     : '-'),
                     'arm_position_cum'  => $score->arm_position_cum_formatted ?? ($score->arm_position_cum ? $this->formatOrdinal($score->arm_position_cum) : '-'),
                     'class_average'     => $score->class_average !== null ? (float) $score->class_average : null,
                     'is_compulsory'     => $score->is_compulsory ?? false,
@@ -1704,51 +1581,36 @@ class ViewStudentReportController extends Controller
                 ];
             })->values()->toArray();
 
-            // ── 6. Picture URL ──────────────────────────────────────────────────
             $pictureUrl = null;
             if ($student && $student->picture) {
                 $pictureUrl = asset('storage/student_avatars/' . basename($student->picture));
             }
 
-            // ── 7. Attendance ───────────────────────────────────────────────────
             $attendance = $resultData['attendance_summary'] ?? [];
             if ($schoolterm) {
                 $attendance['term_name'] = $schoolterm->term ?? null;
             }
 
-            // ── 8. Build response ───────────────────────────────────────────────
             return response()->json([
-                'success'       => true,
-                'student_name'  => $fullName,
-                'admissionno'   => $student->admissionNo ?? '—',
-                'gender'        => $student->gender      ?? '—',
-                'schoolclass'   => trim(($schoolclass->schoolclass ?? '') . ' ' . ($schoolclass->arms->arm ?? '')),
-                'term'          => $schoolterm->term      ?? '—',
-                'session'       => $schoolsession->session ?? '—',
-                'studentid'     => $studentId,
-                'schoolclassid' => $schoolclassId,
-                'termid'        => $termId,
-                'sessionid'     => $sessionId,
-                'picture_url'   => $pictureUrl,
-
-                // Dynamic assessments metadata (name + max_score per column)
-                'assessments'   => $assessmentsMeta,
-
-                // Scores with per-row assessment_scores keyed by assessment_id
-                'scores'        => $scores,
-
-                // Mock scores — queried from BroadsheetsMock
-                'mock_scores'   => $this->fetchMockScoresForDrawer($studentId, $schoolclassId, $sessionId, $termId),
-
-                // Personality profile
-                'profile'       => $profile ? $profile->toArray() : null,
-
-                // Attendance
-                'attendance'    => $attendance,
-
-                // GPA / totals
-                'gpa_data'      => $resultData['gpa_data']      ?? [],
-                'totals_summary'=> $resultData['totals_summary'] ?? [],
+                'success'        => true,
+                'student_name'   => $fullName,
+                'admissionno'    => $student->admissionNo ?? '—',
+                'gender'         => $student->gender      ?? '—',
+                'schoolclass'    => trim(($schoolclass->schoolclass ?? '') . ' ' . ($schoolclass->arms->arm ?? '')),
+                'term'           => $schoolterm->term       ?? '—',
+                'session'        => $schoolsession->session ?? '—',
+                'studentid'      => $studentId,
+                'schoolclassid'  => $schoolclassId,
+                'termid'         => $termId,
+                'sessionid'      => $sessionId,
+                'picture_url'    => $pictureUrl,
+                'assessments'    => $assessmentsMeta,
+                'scores'         => $scores,
+                'mock_scores'    => $this->fetchMockScoresForDrawer($studentId, $schoolclassId, $sessionId, $termId),
+                'profile'        => $profile ? $profile->toArray() : null,
+                'attendance'     => $attendance,
+                'gpa_data'       => $resultData['gpa_data']       ?? [],
+                'totals_summary' => $resultData['totals_summary']  ?? [],
             ]);
 
         } catch (\Exception $e) {
@@ -1757,14 +1619,14 @@ class ViewStudentReportController extends Controller
                 'error'      => $e->getMessage(),
                 'line'       => $e->getLine(),
             ]);
-
             return response()->json(['success' => false, 'message' => 'Server error: ' . $e->getMessage()], 500);
         }
     }
 
-    /**
-     * Test PDF generation endpoint
-     */
+    // =========================================================================
+    // TEST PDF
+    // =========================================================================
+
     public function testPdfGeneration(Request $request)
     {
         try {
@@ -1779,12 +1641,12 @@ class ViewStudentReportController extends Controller
             $studentData = $this->getStudentResultData($testStudentId, $testClassId, $testSessionId, 3);
 
             return response()->json([
-                'success'        => !empty($studentData),
-                'has_students'   => isset($studentData['students']) && !$studentData['students']->isEmpty(),
-                'has_scores'     => isset($studentData['scores'])   && !$studentData['scores']->isEmpty(),
-                'scores_count'   => $studentData['scores']->count() ?? 0,
-                'totals_summary' => $studentData['totals_summary'] ?? [],
-                'attendance'     => $studentData['attendance_summary'] ?? [],
+                'success'                => !empty($studentData),
+                'has_students'           => isset($studentData['students']) && !$studentData['students']->isEmpty(),
+                'has_scores'             => isset($studentData['scores'])   && !$studentData['scores']->isEmpty(),
+                'registered_subjects'    => $studentData['scores']->count() ?? 0,
+                'totals_summary'         => $studentData['totals_summary'] ?? [],
+                'attendance'             => $studentData['attendance_summary'] ?? [],
                 'position_columns_check' => $studentData['scores'] && $studentData['scores']->isNotEmpty()
                     ? [
                         'position'         => $studentData['scores']->first()->position ?? 'NOT FOUND',
