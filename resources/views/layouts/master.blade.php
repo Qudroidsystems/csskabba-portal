@@ -408,6 +408,7 @@
     @if (Route::is('promotions.*')) @include('layouts.pages-assets.css.promotions-list-css') @endif
     @if (Route::is('attendance.*')) @include('layouts.pages-assets.css.attendance-list-css') @endif
     @if (Route::is('transcript.*')) @include('layouts.pages-assets.css.attendance-list-css') @endif
+    @if (Route::is('admin.score-entry.*')) @include('layouts.pages-assets.css.adminscoreentry-list-css') @endif
 
     {{-- Finance Module CSS --}}
     @if (Route::is('admin.scholarship.*') || Route::is('admin.discount.*') || Route::is('sibling.*') ||
@@ -777,11 +778,11 @@
                         @endif
 
                         {{-- CLASSES & RECORDS --}}
-                        @if(auth()->user()->can('View my-class') || auth()->user()->can('View my-subject') || auth()->user()->can('View my-subject-vettings') || auth()->user()->can('View my-mock-subject-vettings') || auth()->user()->can('View myresult-room') || auth()->user()->can('View student-report') || auth()->user()->can('View student-mock-report') || auth()->user()->can('View my-principals-comment'))
+                        @if(auth()->user()->can('View my-class') || auth()->user()->can('View my-subject') || auth()->user()->can('View my-subject-vettings') || auth()->user()->can('View my-mock-subject-vettings') || auth()->user()->can('View myresult-room') || auth()->user()->can('View student-report') || auth()->user()->can('View student-mock-report') || auth()->user()->can('View my-principals-comment')||auth()->user()->can('View admin-score-entry'))
                             <li class="menu-title"><i class="ph-folder-open"></i> <span data-key="t-apps">CLASSES & RECORDS</span></li>
                         @endif
 
-                        @if(auth()->user()->can('View my-class') || auth()->user()->can('View my-subject') || auth()->user()->can('View my-subject-vettings') || auth()->user()->can('View my-mock-subject-vettings')|| auth()->user()->can('View my-principals-comment'))
+                        @if(auth()->user()->can('View my-class') || auth()->user()->can('View my-subject') || auth()->user()->can('View my-subject-vettings') || auth()->user()->can('View my-mock-subject-vettings')|| auth()->user()->can('View my-principals-comment')||auth()->user()->can('View admin-score-entry'))
                             <li class="nav-item">
                                 <a href="#sidebarClasses" class="nav-link menu-link collapsed" data-bs-toggle="collapse" role="button" aria-expanded="false" aria-controls="sidebarClasses">
                                     <i class="ph-folder-open"></i> <span data-key="t-ecommerce">Classes & Subjects</span>
@@ -802,6 +803,15 @@
                                         @endcan
                                         @can('View my-principals-comment')
                                             <li class="nav-item"><a href="{{ route('myprincipalscomment.index') }}" class="nav-link" data-key="t-products">Principal's Comment</a></li>
+                                        @endcan
+                                        {{-- Option 1: Add under CLASSES & RECORDS section --}}
+                                        @can('View admin-score-entry')
+                                            <li class="menu-title"><i class="ri-more-fill"></i> <span data-key="t-apps">ADMIN TOOLS</span></li>
+                                            <li class="nav-item">
+                                                <a href="{{ route('admin.score-entry.index') }}" class="nav-link">
+                                                    <i class="ri-admin-line"></i> <span data-key="t-admin-score-entry">Admin Score Entry</span>
+                                                </a>
+                                            </li>
                                         @endcan
                                     </ul>
                                 </div>
@@ -1814,6 +1824,7 @@
     @if (Route::is('promotions.*')) @include('layouts.pages-assets.js.promotions-list-js') @endif
     @if (Route::is('attendance.*')) @include('layouts.pages-assets.js.attendance-list-js') @endif
     @if (Route::is('transcript.*')) @include('layouts.pages-assets.js.attendance-list-js') @endif
+    @if (Route::is('admin.score-entry.*')) @include('layouts.pages-assets.js.adminscoreentry-list-js') @endif
 
     {{-- Finance Module JS --}}
     @if (Route::is('admin.scholarship.*') || Route::is('admin.discount.*') || Route::is('sibling.*') ||

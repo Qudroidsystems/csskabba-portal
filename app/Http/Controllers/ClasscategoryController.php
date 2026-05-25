@@ -21,7 +21,7 @@ class ClasscategoryController extends Controller
 
     public function index(Request $request)
     {
-        Log::info('Index Class Category Request:', $request->all());
+        // Log::info('Index Class Category Request:', $request->all());
         $pagetitle = "Class Category Management";
         $query = Classcategory::with('assessments.subAssessments');
 
@@ -45,7 +45,7 @@ class ClasscategoryController extends Controller
 
     public function store(Request $request)
     {
-        Log::info('Store Class Category Request:', $request->all());
+        // Log::info('Store Class Category Request:', $request->all());
 
         $request->validate([
             'category' => 'required|string|max:255|unique:classcategories,category',
@@ -102,7 +102,7 @@ class ClasscategoryController extends Controller
 
     public function update(Request $request, $id)
     {
-        Log::info('Update Class Category Request:', ['id' => $id, 'data' => $request->all()]);
+        // Log::info('Update Class Category Request:', ['id' => $id, 'data' => $request->all()]);
 
         $request->validate([
             'category' => "required|string|max:255|unique:classcategories,category,{$id}",
@@ -164,18 +164,18 @@ class ClasscategoryController extends Controller
 
     public function destroy($id)
     {
-        Log::info('Delete Class Category Request:', ['id' => $id]);
+        // Log::info('Delete Class Category Request:', ['id' => $id]);
         try {
             $category = Classcategory::findOrFail($id);
             $category->delete(); // Assessments and sub-assessments are automatically deleted via cascade
-            Log::info('Class Category Deleted:', ['id' => $id]);
+            // Log::info('Class Category Deleted:', ['id' => $id]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Class category and its assessment deleted successfully'
             ]);
         } catch (\Exception $e) {
-            Log::error('Error deleting class category:', ['error' => $e->getMessage()]);
+            // Log::error('Error deleting class category:', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to delete class category'
@@ -185,20 +185,20 @@ class ClasscategoryController extends Controller
 
     public function deleteclasscategory(Request $request)
     {
-        Log::info('Delete Class Category AJAX Request:', $request->all());
+        // Log::info('Delete Class Category AJAX Request:', $request->all());
         $request->validate(['classcategoryid' => 'required|exists:classcategories,id']);
-        
+
         try {
             $category = Classcategory::findOrFail($request->classcategoryid);
             $category->delete(); // Assessments and sub-assessments are automatically deleted via cascade
-            Log::info('Class Category Deleted via AJAX:', ['id' => $request->classcategoryid]);
+            // Log::info('Class Category Deleted via AJAX:', ['id' => $request->classcategoryid]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'Class category and its assessment deleted successfully'
             ]);
         } catch (\Exception $e) {
-            Log::error('Error deleting class category via AJAX:', ['error' => $e->getMessage()]);
+            // Log::error('Error deleting class category via AJAX:', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to delete class category'
@@ -208,7 +208,7 @@ class ClasscategoryController extends Controller
 
     public function updateclasscategory(Request $request)
     {
-        Log::info('Update Class Category AJAX Request:', $request->all());
+        // Log::info('Update Class Category AJAX Request:', $request->all());
 
         $request->validate([
             'id' => 'required|exists:classcategories,id',
@@ -253,7 +253,7 @@ class ClasscategoryController extends Controller
             }
 
             DB::commit();
-            Log::info('Class Category Updated via AJAX:', $category->toArray());
+            // Log::info('Class Category Updated via AJAX:', $category->toArray());
 
             return response()->json([
                 'success' => true,
@@ -261,7 +261,7 @@ class ClasscategoryController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error updating class category via AJAX:', ['error' => $e->getMessage()]);
+            // Log::error('Error updating class category via AJAX:', ['error' => $e->getMessage()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to update class category: ' . $e->getMessage()

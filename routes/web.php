@@ -1,6 +1,7 @@
 <?php
 
 use \App\Http\Controllers\SchoolInformationController;
+use App\Http\Controllers\Admin\AdminScoreEntryController;
 use App\Http\Controllers\Admin\DiscountController;
 use App\Http\Controllers\Admin\PaymentGatewayController;
 use App\Http\Controllers\Admin\ScholarshipController;
@@ -1426,6 +1427,32 @@ Route::prefix('reports/financial')->name('reports.financial.')->group(function (
         Route::post('/search',         [TranscriptController::class, 'searchStudents'])->name('search');
         Route::post('/preview',        [TranscriptController::class, 'preview'])->name('preview');
         Route::post('/pdf',            [TranscriptController::class, 'exportPdf'])->name('pdf');
+    });
+
+
+    // Admin Score Entry Routes
+    Route::prefix('admin')->name('admin.')->group(function () {
+        Route::prefix('score-entry')->name('score-entry.')->group(function () {
+            // Main listing
+            Route::get('/', [AdminScoreEntryController::class, 'index'])->name('index');
+
+            // Scoresheet views
+            Route::get('/scoresheet/{subjectclassId}/{teacherId}/{termId}/{sessionId}/{type?}',
+                [AdminScoreEntryController::class, 'showScoresheet'])->name('scoresheet');
+
+            // AJAX endpoints
+            Route::post('/single-update', [AdminScoreEntryController::class, 'singleUpdate'])->name('single-update');
+            Route::post('/mock-single-update', [AdminScoreEntryController::class, 'mockSingleUpdate'])->name('mock-single-update');
+            Route::post('/bulk-update', [AdminScoreEntryController::class, 'bulkUpdate'])->name('bulk-update');
+            Route::post('/mock-bulk-update', [AdminScoreEntryController::class, 'mockBulkUpdate'])->name('mock-bulk-update');
+            Route::delete('/destroy', [AdminScoreEntryController::class, 'destroy'])->name('destroy');
+            Route::get('/results', [AdminScoreEntryController::class, 'results'])->name('results');
+
+            // Downloads
+            Route::get('/download-marks-sheet', [AdminScoreEntryController::class, 'downloadMarksSheet'])->name('download-marks-sheet');
+            Route::get('/export', [AdminScoreEntryController::class, 'export'])->name('export');
+            Route::post('/import', [AdminScoreEntryController::class, 'import'])->name('import');
+        });
     });
 
 });
