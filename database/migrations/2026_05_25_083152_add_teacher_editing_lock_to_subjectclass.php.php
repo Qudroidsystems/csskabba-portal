@@ -23,26 +23,29 @@ return new class extends Migration
         });
 
         // Add foreign key if it doesn't exist
-        Schema::table('subjectclass', function (Blueprint $table) {
-            $foreignKeys = collect(Schema::getConnection()->getDoctrineSchemaManager()->listTableForeignKeys('subjectclass'));
-            $hasForeignKey = $foreignKeys->contains(function($fk) {
-                return $fk->getLocalColumns() === ['teacher_editing_disabled_by'];
+        try {
+            Schema::table('subjectclass', function (Blueprint $table) {
+                if (Schema::hasColumn('subjectclass', 'teacher_editing_disabled_by')) {
+                    $table->foreign('teacher_editing_disabled_by')
+                        ->references('id')
+                        ->on('users')
+                        ->onDelete('set null');
+                }
             });
-
-            if (!$hasForeignKey && Schema::hasColumn('subjectclass', 'teacher_editing_disabled_by')) {
-                $table->foreign('teacher_editing_disabled_by')
-                    ->references('id')
-                    ->on('users')
-                    ->onDelete('set null');
-            }
-        });
+        } catch (\Exception $e) {
+            // Foreign key might already exist
+        }
     }
 
     public function down()
     {
         Schema::table('subjectclass', function (Blueprint $table) {
             // Drop foreign key first
-            $table->dropForeign(['teacher_editing_disabled_by']);
+            try {
+                $table->dropForeign(['teacher_editing_disabled_by']);
+            } catch (\Exception $e) {
+                // Foreign key might not exist
+            }
 
             // Drop columns
             $table->dropColumn([

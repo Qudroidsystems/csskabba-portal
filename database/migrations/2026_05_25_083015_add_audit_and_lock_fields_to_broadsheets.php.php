@@ -42,58 +42,91 @@ return new class extends Migration
             }
         });
 
-        // Add foreign keys
-        Schema::table('broadsheets', function (Blueprint $table) {
-            $foreignKeys = collect(Schema::getConnection()->getDoctrineSchemaManager()->listTableForeignKeys('broadsheets'));
-
-            $hasEnteredByFk = $foreignKeys->contains(function($fk) {
-                return $fk->getLocalColumns() === ['entered_by'];
+        // Add foreign keys - simple approach without Doctrine
+        try {
+            Schema::table('broadsheets', function (Blueprint $table) {
+                // Only add foreign keys if the columns exist
+                if (Schema::hasColumn('broadsheets', 'entered_by') && !$this->foreignKeyExists('broadsheets', 'entered_by')) {
+                    $table->foreign('entered_by')->references('id')->on('users')->onDelete('set null');
+                }
+                if (Schema::hasColumn('broadsheets', 'last_modified_by') && !$this->foreignKeyExists('broadsheets', 'last_modified_by')) {
+                    $table->foreign('last_modified_by')->references('id')->on('users')->onDelete('set null');
+                }
+                if (Schema::hasColumn('broadsheets', 'locked_by') && !$this->foreignKeyExists('broadsheets', 'locked_by')) {
+                    $table->foreign('locked_by')->references('id')->on('users')->onDelete('set null');
+                }
             });
-            if (!$hasEnteredByFk && Schema::hasColumn('broadsheets', 'entered_by')) {
-                $table->foreign('entered_by')->references('id')->on('users')->onDelete('set null');
-            }
-
-            $hasModifiedByFk = $foreignKeys->contains(function($fk) {
-                return $fk->getLocalColumns() === ['last_modified_by'];
-            });
-            if (!$hasModifiedByFk && Schema::hasColumn('broadsheets', 'last_modified_by')) {
-                $table->foreign('last_modified_by')->references('id')->on('users')->onDelete('set null');
-            }
-
-            $hasLockedByFk = $foreignKeys->contains(function($fk) {
-                return $fk->getLocalColumns() === ['locked_by'];
-            });
-            if (!$hasLockedByFk && Schema::hasColumn('broadsheets', 'locked_by')) {
-                $table->foreign('locked_by')->references('id')->on('users')->onDelete('set null');
-            }
-        });
+        } catch (\Exception $e) {
+            // Foreign keys might already exist, continue
+        }
 
         // Add indexes for performance
-        Schema::table('broadsheets', function (Blueprint $table) {
+        try {
             if (!Schema::hasIndex('broadsheets', 'broadsheets_lock_index')) {
-                $table->index(['is_locked', 'term_id', 'session_id'], 'broadsheets_lock_index');
+                Schema::table('broadsheets', function (Blueprint $table) {
+                    $table->index(['is_locked'], 'broadsheets_lock_index');
+                });
             }
             if (!Schema::hasIndex('broadsheets', 'broadsheets_entered_at_index')) {
-                $table->index('entered_at', 'broadsheets_entered_at_index');
+                Schema::table('broadsheets', function (Blueprint $table) {
+                    $table->index('entered_at', 'broadsheets_entered_at_index');
+                });
             }
             if (!Schema::hasIndex('broadsheets', 'broadsheets_modified_at_index')) {
-                $table->index('last_modified_at', 'broadsheets_modified_at_index');
+                Schema::table('broadsheets', function (Blueprint $table) {
+                    $table->index('last_modified_at', 'broadsheets_modified_at_index');
+                });
             }
-        });
+        } catch (\Exception $e) {
+            // Indexes might already exist
+        }
+    }
+
+    /**
+     * Check if a foreign key exists on a table
+     */
+    private function foreignKeyExists($table, $column)
+    {
+        try {
+            $conn = Schema::getConnection();
+            $databaseName = $conn->getDatabaseName();
+            $tableName = $conn->getTablePrefix() . $table;
+
+            $result = $conn->select("
+                SELECT CONSTRAINT_NAME
+                FROM information_schema.KEY_COLUMN_USAGE
+                WHERE TABLE_SCHEMA = ?
+                AND TABLE_NAME = ?
+                AND COLUMN_NAME = ?
+                AND REFERENCED_TABLE_NAME IS NOT NULL
+            ", [$databaseName, $tableName, $column]);
+
+            return !empty($result);
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 
     public function down()
     {
         Schema::table('broadsheets', function (Blueprint $table) {
             // Drop foreign keys
-            $table->dropForeign(['entered_by']);
-            $table->dropForeign(['last_modified_by']);
-            $table->dropForeign(['locked_by']);
+            try {
+                $table->dropForeign(['entered_by']);
+                $table->dropForeign(['last_modified_by']);
+                $table->dropForeign(['locked_by']);
+            } catch (\Exception $e) {
+                // Foreign keys might not exist
+            }
 
             // Drop indexes
-            $table->dropIndex('broadsheets_lock_index');
-            $table->dropIndex('broadsheets_entered_at_index');
-            $table->dropIndex('broadsheets_modified_at_index');
+            try {
+                $table->dropIndex('broadsheets_lock_index');
+                $table->dropIndex('broadsheets_entered_at_index');
+                $table->dropIndex('broadsheets_modified_at_index');
+            } catch (\Exception $e) {
+                // Indexes might not exist
+            }
 
             // Drop columns
             $table->dropColumn([

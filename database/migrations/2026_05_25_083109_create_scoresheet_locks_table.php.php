@@ -20,15 +20,29 @@ return new class extends Migration
                 $table->boolean('is_active')->default(true);
                 $table->text('reason')->nullable();
                 $table->timestamps();
+            });
+        }
 
+        // Add foreign keys separately
+        Schema::table('scoresheet_locks', function (Blueprint $table) {
+            try {
                 $table->foreign('subjectclass_id')->references('id')->on('subjectclass')->onDelete('cascade');
                 $table->foreign('term_id')->references('id')->on('schoolterm')->onDelete('cascade');
                 $table->foreign('session_id')->references('id')->on('schoolsession')->onDelete('cascade');
                 $table->foreign('locked_by')->references('id')->on('users')->onDelete('cascade');
+            } catch (\Exception $e) {
+                // Foreign keys might already exist
+            }
+        });
 
+        // Add unique constraint
+        try {
+            Schema::table('scoresheet_locks', function (Blueprint $table) {
                 $table->unique(['subjectclass_id', 'term_id', 'session_id'], 'unique_scoresheet_lock');
                 $table->index('is_active');
             });
+        } catch (\Exception $e) {
+            // Constraints might already exist
         }
     }
 
