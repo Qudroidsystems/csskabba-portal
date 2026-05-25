@@ -130,7 +130,7 @@ class AdminScoreEntryController extends Controller
         return view('admin.score-entry.lock-management', compact('pagetitle'));
     }
 
-  public function getScoresheetsList(Request $request)
+public function getScoresheetsList(Request $request)
 {
     try {
         $query = DB::table('subjectclass')
@@ -216,39 +216,43 @@ class AdminScoreEntryController extends Controller
                     $query->where('subjectclass.teacher_editing_enabled', false);
                     break;
             }
-        } // <-- this closes the if($request->filled('status')) block
+        }
 
+        // === FIXED: Always execute the query here ===
         $results = $query->orderBy('users.name')
-                         ->orderBy('subject.subject')
-                         ->get();
+                        ->orderBy('subject.subject')
+                        ->get();
 
-        // Always load filters regardless of whether there are results
-        $terms    = Schoolterm::select('id', 'term')->get();
+        // Get filters data
+        $terms = Schoolterm::select('id', 'term')->get();
         $sessions = Schoolsession::select('id', 'session')->orderBy('id', 'desc')->get();
-        $classes  = DB::table('schoolclass')
-                      ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-                      ->select('schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm')
-                      ->get();
+        $classes = DB::table('schoolclass')
+                    ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+                    ->select('schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm')
+                    ->get();
 
         return response()->json([
             'success' => true,
-            'data'    => $results,
+            'data' => $results,
             'filters' => [
-                'terms'    => $terms,
+                'terms' => $terms,
                 'sessions' => $sessions,
-                'classes'  => $classes->map(function($cls) {
+                'classes' => $classes->map(function($cls) {
                     return (object)[
-                        'id'         => $cls->id,
+                        'id' => $cls->id,
                         'schoolclass' => $cls->schoolclass,
-                        'arm'        => $cls->arm ? (object)['arm' => $cls->arm] : null,
+                        'arm' => $cls->arm ? (object)['arm' => $cls->arm] : null
                     ];
                 }),
-            ],
+            ]
         ]);
 
     } catch (\Exception $e) {
         Log::error('Get scoresheets list error: ' . $e->getMessage());
-        return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
+        return response()->json([
+            'success' => false,
+            'message' => $e->getMessage()
+        ], 500);
     }
 }
 
