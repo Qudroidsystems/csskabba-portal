@@ -145,7 +145,28 @@ body{font-family:var(--rol-font);}
 .user-card-sel .ucs-check { flex-shrink:0; }
 .user-card-sel .ucs-check input { width:16px; height:16px; accent-color:var(--rol-accent); cursor:pointer; }
 
-/* ── Modal ───────────────────────────────────────── */
+/* ── Modal - Improved Scrolling ───────────────────────────────────────── */
+.rol-modal .modal-dialog-scrollable .modal-content {
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.rol-modal .modal-dialog-scrollable .modal-header {
+    flex-shrink: 0;
+}
+
+.rol-modal .modal-dialog-scrollable .modal-body {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 200px;
+    max-height: calc(85vh - 130px);
+}
+
+.rol-modal .modal-dialog-scrollable .modal-footer {
+    flex-shrink: 0;
+}
+
 .rol-modal .modal-content {
     border:none; border-radius:18px; overflow:hidden;
     box-shadow:0 24px 64px rgba(15,23,42,.2);
@@ -167,13 +188,35 @@ body{font-family:var(--rol-font);}
 
 /* ── Permission table (edit modal) ──────────────── */
 .perm-table { width:100%; border-collapse:separate; border-spacing:0; }
-.perm-table thead th { background:var(--rol-primary); color:#fff; padding:10px 14px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; }
+.perm-table thead th {
+    background:var(--rol-primary); color:#fff; padding:10px 14px;
+    font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
 .perm-table thead th:first-child { border-radius:8px 0 0 0; }
 .perm-table thead th:last-child  { border-radius:0 8px 0 0; }
 .perm-table tbody tr:hover td { background:#f5f3ff; }
 .perm-table tbody td { padding:8px 14px; border-bottom:1px solid #f1f5f9; font-size:13px; vertical-align:middle; }
 .perm-table .perm-group { font-weight:700; color:var(--rol-primary); font-size:12.5px; }
 .perm-check { accent-color:var(--rol-accent); width:15px; height:15px; cursor:pointer; }
+
+/* Responsive table handling */
+@media (max-width: 768px) {
+    .perm-table {
+        min-width: 600px;
+    }
+    .perm-table .perm-group {
+        position: sticky;
+        left: 0;
+        background: #fff;
+        z-index: 5;
+    }
+    .perm-table tr:hover .perm-group {
+        background: #f5f3ff;
+    }
+}
 
 /* ── Nav tabs ────────────────────────────────────── */
 .rol-nav-tabs { border-bottom:2px solid var(--rol-border); margin-bottom:16px; display:flex; gap:4px; }
@@ -219,6 +262,16 @@ body{font-family:var(--rol-font);}
 
 /* ── Info banner ─────────────────────────────────── */
 .rol-info-banner { background:#eff6ff; border:1px solid #bfdbfe; border-radius:9px; padding:10px 14px; font-size:12.5px; color:#1d4ed8; margin-bottom:14px; }
+
+/* Sticky permission header */
+.permission-section-header {
+    position: sticky;
+    top: 0;
+    background: #fff;
+    z-index: 10;
+    padding: 8px 0 12px 0;
+    margin-top: -8px;
+}
 </style>
 
 <div class="main-content">
@@ -539,7 +592,7 @@ body{font-family:var(--rol-font);}
         </div>
     </div>
 
-    {{-- ════ EDIT ROLE MODAL ════ --}}
+    {{-- ════ EDIT ROLE MODAL (IMPROVED SCROLLABLE) ════ --}}
     <div class="modal fade rol-modal" id="editRoleModalgrid" tabindex="-1" data-bs-backdrop="static">
         <div class="modal-dialog modal-xl modal-dialog-scrollable">
             <div class="modal-content">
@@ -570,6 +623,15 @@ body{font-family:var(--rol-font);}
                                 </select>
                             </div>
                         </div>
+
+                        {{-- Sticky header for permissions section --}}
+                        <div class="permission-section-header">
+                            <label class="rol-form-label mb-2">Permissions Assignment</label>
+                            <div style="background:#f0f4ff;border:1px solid #c7d2fe;border-radius:9px;padding:8px 12px;font-size:12px;color:#3730a3;margin-bottom:12px;">
+                                <i class="bi bi-info-circle-fill me-1"></i> Check/uncheck permissions to assign them to this role.
+                            </div>
+                        </div>
+
                         <div class="table-responsive">
                             <table class="perm-table">
                                 <thead>
@@ -577,7 +639,7 @@ body{font-family:var(--rol-font);}
                                         <th>Module</th>
                                         <th colspan="8">
                                             <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:11px;font-weight:700;">
-                                                <input type="checkbox" class="perm-check" id="kt_roles_select_all">
+                                                <input type="checkbox" class="perm-check" id="kt_roles_select_all_edit">
                                                 Select All
                                             </label>
                                         </th>
@@ -818,21 +880,21 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // ── Edit role permissions select-all ──────────────────────────
-    const selectAll = document.getElementById('kt_roles_select_all');
-    const permBoxes = document.querySelectorAll('#editRoleModalgrid input[name="permission[]"]');
-    if (selectAll && permBoxes.length) {
-        selectAll.addEventListener('change', function() {
-            permBoxes.forEach(c=>c.checked=this.checked);
+    // ── Edit role permissions select-all (UPDATED ID) ──────────────────────────
+    const selectAllEdit = document.getElementById('kt_roles_select_all_edit');
+    const permBoxesEdit = document.querySelectorAll('#editRoleModalgrid input[name="permission[]"]');
+    if (selectAllEdit && permBoxesEdit.length) {
+        selectAllEdit.addEventListener('change', function() {
+            permBoxesEdit.forEach(c=>c.checked=this.checked);
         });
-        function syncAll() {
-            const all  = Array.from(permBoxes).every(c=>c.checked);
-            const some = Array.from(permBoxes).some(c=>c.checked);
-            selectAll.checked       = all;
-            selectAll.indeterminate = some && !all;
+        function syncAllEdit() {
+            const all  = Array.from(permBoxesEdit).every(c=>c.checked);
+            const some = Array.from(permBoxesEdit).some(c=>c.checked);
+            selectAllEdit.checked       = all;
+            selectAllEdit.indeterminate = some && !all;
         }
-        permBoxes.forEach(c=>c.addEventListener('change',syncAll));
-        syncAll();
+        permBoxesEdit.forEach(c=>c.addEventListener('change',syncAllEdit));
+        syncAllEdit();
     }
 
     bindTableEvents();
