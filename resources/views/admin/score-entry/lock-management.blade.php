@@ -1,163 +1,59 @@
 @extends('layouts.master')
 
 @section('content')
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
 <style>
-/* Lock Management Styles - Consistent with Admin Panel */
-.lock-management-wrapper {
-    padding: 1.5rem;
+:root {
+    --lm-primary:  #1e3a5f;
+    --lm-accent:   #2563eb;
+    --lm-success:  #16a34a;
+    --lm-warning:  #d97706;
+    --lm-danger:   #dc2626;
+    --lm-muted:    #6b7280;
+    --lm-border:   #e2e8f0;
+    --lm-bg:       #f8fafc;
+    --lm-radius:   12px;
+    --lm-shadow:   0 2px 8px rgba(0,0,0,.08);
 }
 
-/* Header Section */
-.lock-header {
-    background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #7c3aed 100%);
-    border-radius: 12px;
+.lm-hero {
+    background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 60%, #4f46e5 100%);
+    border-radius: var(--lm-radius);
     padding: 28px 32px;
     margin-bottom: 24px;
-    color: white;
+    position: relative;
+    overflow: hidden;
 }
-
-.lock-header h2 {
-    font-size: 24px;
-    font-weight: 600;
-    margin-bottom: 8px;
+.lm-hero::before {
+    content: '';
+    position: absolute; top: -60px; right: -60px;
+    width: 220px; height: 220px;
+    background: rgba(255,255,255,.06);
+    border-radius: 50%;
 }
-
-.lock-header p {
-    opacity: 0.9;
-    margin-bottom: 0;
-}
-
-.lock-header-actions {
-    margin-top: 20px;
-    display: flex;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.btn-back {
-    background: rgba(255,255,255,0.2);
-    border: 1px solid rgba(255,255,255,0.3);
-    color: white;
-    padding: 8px 20px;
-    border-radius: 8px;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.2s;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.btn-back:hover {
-    background: rgba(255,255,255,0.3);
-    color: white;
-    transform: translateY(-2px);
-}
-
-/* Stats Cards */
-.stats-dashboard {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 20px;
-    margin-bottom: 28px;
-}
+.lm-hero h1 { font-size: 22px; font-weight: 700; color: #fff; margin: 0 0 6px; position: relative; }
+.lm-hero p  { font-size: 13px; color: rgba(255,255,255,.75); margin: 0; position: relative; }
 
 .stat-card {
     background: #fff;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
-    overflow: hidden;
-    transition: all 0.3s ease;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border: 1px solid var(--lm-border);
+    border-radius: var(--lm-radius);
+    padding: 18px 20px;
+    transition: transform .15s, box-shadow .15s;
 }
+.stat-card:hover { transform: translateY(-2px); box-shadow: var(--lm-shadow); }
+.stat-card .stat-value { font-size: 28px; font-weight: 700; color: var(--lm-primary); }
+.stat-card .stat-label { font-size: 12px; color: var(--lm-muted); margin-top: 4px; }
+.stat-card .stat-icon  { font-size: 32px; opacity: .12; float: right; margin-top: -8px; }
 
-.stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 24px rgba(0,0,0,0.1);
-}
-
-.stat-card-header {
-    padding: 16px 20px 0 20px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.stat-card-header h3 {
-    font-size: 13px;
-    font-weight: 600;
-    color: #64748b;
-    margin: 0;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.stat-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 24px;
-}
-
-.stat-card-body {
-    padding: 8px 20px 20px 20px;
-}
-
-.stat-main-value {
-    font-size: 36px;
-    font-weight: 800;
-    color: #1e293b;
-    line-height: 1.2;
-    margin-bottom: 4px;
-}
-
-.stat-trend {
-    font-size: 12px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-top: 8px;
-    padding-top: 8px;
-    border-top: 1px solid #e2e8f0;
-    color: #64748b;
-}
-
-.stat-footer {
-    background: #f8fafc;
-    padding: 12px 20px;
-    border-top: 1px solid #e2e8f0;
-    font-size: 12px;
-    color: #64748b;
-}
-
-/* Filter Card */
 .filter-card {
     background: #fff;
-    border-radius: 12px;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--lm-border);
+    border-radius: var(--lm-radius);
     padding: 20px 24px;
     margin-bottom: 24px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
-
-.filter-row {
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
-    align-items: flex-end;
-}
-
-.filter-group {
-    flex: 1;
-    min-width: 160px;
-}
-
 .filter-group label {
-    display: block;
     font-size: 12px;
     font-weight: 600;
     margin-bottom: 6px;
@@ -165,29 +61,26 @@
     text-transform: uppercase;
     letter-spacing: 0.3px;
 }
-
 .filter-group input,
 .filter-group select {
     width: 100%;
     padding: 8px 12px;
     border: 1px solid #cbd5e1;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 13px;
     transition: all 0.2s;
 }
-
 .filter-group input:focus,
 .filter-group select:focus {
     outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    border-color: var(--lm-accent);
+    box-shadow: 0 0 0 3px rgba(37,99,235,.1);
 }
 
-/* Action Bar */
 .action-bar {
     background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
+    border: 1px solid var(--lm-border);
+    border-radius: var(--lm-radius);
     padding: 16px 20px;
     margin-bottom: 24px;
     display: flex;
@@ -195,22 +88,19 @@
     flex-wrap: wrap;
     align-items: center;
 }
-
 .selected-info {
-    font-size: 14px;
-    color: #64748b;
+    font-size: 13px;
+    color: var(--lm-muted);
     margin-right: auto;
     background: #f1f5f9;
     padding: 6px 14px;
     border-radius: 20px;
 }
-
 .selected-info strong {
     color: #1e293b;
     font-weight: 700;
 }
 
-/* Buttons */
 .btn {
     padding: 8px 18px;
     border: none;
@@ -223,168 +113,84 @@
     align-items: center;
     gap: 8px;
 }
-
-.btn-sm {
-    padding: 6px 14px;
-    font-size: 12px;
-}
-
+.btn-sm { padding: 6px 14px; font-size: 12px; }
 .btn-primary { background: #2563eb; color: white; }
 .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); }
-
 .btn-success { background: #10b981; color: white; }
 .btn-success:hover { background: #059669; transform: translateY(-1px); }
-
 .btn-warning { background: #f59e0b; color: white; }
 .btn-warning:hover { background: #d97706; transform: translateY(-1px); }
-
 .btn-danger { background: #ef4444; color: white; }
 .btn-danger:hover { background: #dc2626; transform: translateY(-1px); }
-
 .btn-secondary { background: #64748b; color: white; }
 .btn-secondary:hover { background: #475569; transform: translateY(-1px); }
-
 .btn-outline { background: transparent; border: 1px solid #cbd5e1; color: #475569; }
 .btn-outline:hover { background: #f8fafc; border-color: #94a3b8; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-.btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
+.lm-table th {
+    background: var(--lm-primary);
+    color: #fff;
+    padding: 12px 16px;
+    font-weight: 600;
+    font-size: 13px;
+    white-space: nowrap;
 }
-
-/* Scoresheet Table */
-.scoresheet-card {
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    overflow: hidden;
+.lm-table td {
+    padding: 11px 16px;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--lm-border);
+    font-size: 13px;
 }
+.lm-table tr:hover td { background: #f0f9ff; }
 
-.table-header {
-    background: #f8fafc;
-    padding: 14px 20px;
-    display: grid;
-    grid-template-columns: 40px 2fr 1.5fr 1.5fr 1.5fr 1.5fr 120px;
-    gap: 16px;
-    font-weight: 700;
-    font-size: 12px;
-    text-transform: uppercase;
-    color: #64748b;
-    border-bottom: 1px solid #e2e8f0;
-}
-
-.scoresheet-row {
-    padding: 14px 20px;
-    display: grid;
-    grid-template-columns: 40px 2fr 1.5fr 1.5fr 1.5fr 1.5fr 120px;
-    gap: 16px;
-    align-items: center;
-    border-bottom: 1px solid #f1f5f9;
-    transition: all 0.2s;
-}
-
-.scoresheet-row:hover {
-    background: #f8fafc;
-}
-
-.scoresheet-row.selected {
-    background: #eff6ff;
-    border-left: 3px solid #2563eb;
-    margin-left: -3px;
-}
-
-/* Checkbox Styling */
-.checkbox-wrapper {
-    display: flex;
-    align-items: center;
-}
-
-.checkbox-custom {
-    width: 18px;
-    height: 18px;
-    cursor: pointer;
-    accent-color: #2563eb;
-}
-
-/* Status Badges */
 .status-badge {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 5px 12px;
+    padding: 4px 12px;
     border-radius: 20px;
     font-size: 12px;
     font-weight: 600;
 }
-
 .status-open { background: #d1fae5; color: #065f46; }
 .status-individual { background: #fed7aa; color: #92400e; }
 .status-global { background: #fecaca; color: #991b1b; }
 .status-disabled { background: #e2e3e5; color: #383d41; }
 
-/* Action Buttons in Row */
 .row-actions {
     display: flex;
     gap: 6px;
     flex-wrap: wrap;
 }
-
 .icon-btn {
     width: 32px;
     height: 32px;
     border-radius: 6px;
     background: transparent;
-    border: 1px solid #e2e8f0;
+    border: 1px solid var(--lm-border);
     cursor: pointer;
-    font-size: 16px;
+    font-size: 14px;
     transition: all 0.2s;
     display: inline-flex;
     align-items: center;
     justify-content: center;
 }
+.icon-btn:hover { background: #f1f5f9; transform: scale(1.05); }
 
-.icon-btn:hover {
-    background: #f1f5f9;
-    transform: scale(1.05);
+.dataTables_wrapper .dataTables_filter input {
+    border: 1.5px solid var(--lm-border);
+    border-radius: 8px;
+    padding: 7px 14px;
+    margin-left: 8px;
+    font-size: 13px;
+}
+.dataTables_wrapper .dataTables_filter input:focus {
+    border-color: var(--lm-accent);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37,99,235,.1);
 }
 
-.icon-btn.lock:hover { background: #fed7aa; border-color: #f59e0b; color: #d97706; }
-.icon-btn.unlock:hover { background: #d1fae5; border-color: #10b981; color: #059669; }
-.icon-btn.disable:hover { background: #fecaca; border-color: #ef4444; color: #dc2626; }
-.icon-btn.enable:hover { background: #d1fae5; border-color: #10b981; color: #059669; }
-.icon-btn.history:hover { background: #e0e7ff; border-color: #6366f1; color: #4f46e5; }
-
-/* Loading & Empty States */
-.loading-state, .empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: #64748b;
-}
-
-.loading-state i, .empty-state i {
-    font-size: 48px;
-    margin-bottom: 16px;
-    display: block;
-    color: #cbd5e1;
-}
-
-.empty-state h5 {
-    font-size: 18px;
-    margin-bottom: 8px;
-    color: #475569;
-}
-
-.spin {
-    animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-}
-
-/* Modal */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -398,7 +204,6 @@
     z-index: 1050;
     backdrop-filter: blur(2px);
 }
-
 .modal-container {
     background: white;
     border-radius: 16px;
@@ -408,50 +213,43 @@
     overflow: hidden;
     box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
 }
-
 .modal-header {
     padding: 20px 24px;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid var(--lm-border);
     background: #f8fafc;
 }
-
 .modal-title {
     font-size: 18px;
     font-weight: 600;
     color: #1e293b;
 }
-
 .modal-body {
     padding: 24px;
 }
-
 .modal-footer {
     padding: 16px 24px;
-    border-top: 1px solid #e2e8f0;
+    border-top: 1px solid var(--lm-border);
     display: flex;
     gap: 12px;
     justify-content: flex-end;
     background: #f8fafc;
 }
-
 .modal-textarea {
     width: 100%;
     padding: 10px 12px;
     border: 1px solid #cbd5e1;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 13px;
     resize: vertical;
     font-family: inherit;
     margin-top: 12px;
 }
-
 .modal-textarea:focus {
     outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+    border-color: var(--lm-accent);
+    box-shadow: 0 0 0 3px rgba(37,99,235,.1);
 }
 
-/* Toast Notifications */
 .toast-container {
     position: fixed;
     bottom: 24px;
@@ -461,7 +259,6 @@
     flex-direction: column;
     gap: 10px;
 }
-
 .toast {
     background: white;
     border-radius: 12px;
@@ -473,233 +270,113 @@
     animation: slideInRight 0.3s ease;
     border-left: 4px solid;
 }
-
 .toast-success { border-left-color: #10b981; }
 .toast-error { border-left-color: #ef4444; }
 .toast-info { border-left-color: #3b82f6; }
-.toast-warning { border-left-color: #f59e0b; }
 
 @keyframes slideInRight {
-    from {
-        transform: translateX(100%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0);
-        opacity: 1;
-    }
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
 }
 
-/* Responsive */
-@media (max-width: 1200px) {
-    .table-header, .scoresheet-row {
-        grid-template-columns: 40px 2fr 1.5fr 1.5fr 1.5fr 1fr 100px;
-        gap: 12px;
-    }
-}
-
-@media (max-width: 992px) {
-    .hide-tablet {
-        display: none;
-    }
-
-    .table-header, .scoresheet-row {
-        grid-template-columns: 40px 2fr 1.5fr 1fr 100px;
-    }
-}
+.spin { animation: spin 0.8s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
 @media (max-width: 768px) {
-    .lock-header {
-        padding: 20px;
-    }
-
-    .lock-header h2 {
-        font-size: 20px;
-    }
-
-    .stats-dashboard {
-        grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
-    }
-
-    .stat-main-value {
-        font-size: 28px;
-    }
-
-    .table-header, .scoresheet-row {
-        grid-template-columns: 40px 1fr;
-        gap: 10px;
-    }
-
-    .hide-mobile {
-        display: none;
-    }
-
-    .filter-group {
-        min-width: 100%;
-    }
-
-    .filter-row {
-        flex-direction: column;
-    }
+    .lm-hero { padding: 20px; }
+    .lm-hero h1 { font-size: 18px; }
+    .stat-card .stat-value { font-size: 22px; }
+    .filter-group { margin-bottom: 10px; }
+    .action-bar { flex-direction: column; align-items: stretch; }
+    .selected-info { margin-right: 0; text-align: center; }
 }
-
-/* Small text utility */
-.text-muted { color: #64748b; }
-.text-sm { font-size: 12px; }
-.font-semibold { font-weight: 600; }
 </style>
 
-<div class="lock-management-wrapper">
-    <!-- Header Section -->
-    <div class="lock-header">
-        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
-            <div>
-                <h2><i class="ri-shield-lock-line me-2"></i>Scoresheet Lock Management</h2>
-                <p>Manage locks, disable teacher editing, and control access to scoresheets across all subjects</p>
+<div class="main-content">
+<div class="page-content">
+<div class="container-fluid">
+
+    <div class="lm-hero">
+        <h1><i class="ri-shield-lock-line me-2"></i>Scoresheet Lock Management</h1>
+        <p>Manage locks, disable teacher editing, and control access to scoresheets across all subjects</p>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="ri-file-list-line"></i></div>
+                <div class="stat-value" id="statTotal">0</div>
+                <div class="stat-label">Total Scoresheets</div>
             </div>
-            <div class="lock-header-actions">
-                <a href="{{ route('admin.score-entry.index') }}" class="btn-back">
-                    <i class="ri-arrow-left-line"></i> Back to Dashboard
-                </a>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="ri-lock-unlock-line"></i></div>
+                <div class="stat-value text-success" id="statOpen">0</div>
+                <div class="stat-label">Open</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="ri-lock-line"></i></div>
+                <div class="stat-value text-warning" id="statIndividual">0</div>
+                <div class="stat-label">Individually Locked</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="ri-global-line"></i></div>
+                <div class="stat-value text-danger" id="statGlobal">0</div>
+                <div class="stat-label">Globally Locked</div>
             </div>
         </div>
     </div>
 
-    <!-- Stats Dashboard -->
-    <div class="stats-dashboard" id="statsGrid">
-        <div class="stat-card">
-            <div class="stat-card-header">
-                <h3>Total Scoresheets</h3>
-                <div class="stat-icon" style="background: #e0e7ff; color: #4f46e5;">
-                    <i class="ri-file-list-line"></i>
-                </div>
-            </div>
-            <div class="stat-card-body">
-                <div class="stat-main-value" id="statTotal">0</div>
-                <div class="stat-trend">
-                    <i class="ri-database-2-line"></i>
-                    <span>Total records in system</span>
-                </div>
-            </div>
-            <div class="stat-footer">
-                <i class="ri-time-line me-1"></i> Across all terms
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-card-header">
-                <h3>Open</h3>
-                <div class="stat-icon" style="background: #d1fae5; color: #10b981;">
-                    <i class="ri-lock-unlock-line"></i>
-                </div>
-            </div>
-            <div class="stat-card-body">
-                <div class="stat-main-value text-success" id="statOpen">0</div>
-                <div class="stat-trend">
-                    <i class="ri-checkbox-circle-line"></i>
-                    <span>Fully editable</span>
-                </div>
-            </div>
-            <div class="stat-footer">
-                <i class="ri-edit-line me-1"></i> Teachers can edit
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-card-header">
-                <h3>Individually Locked</h3>
-                <div class="stat-icon" style="background: #fed7aa; color: #f59e0b;">
-                    <i class="ri-lock-line"></i>
-                </div>
-            </div>
-            <div class="stat-card-body">
-                <div class="stat-main-value text-warning" id="statIndividual">0</div>
-                <div class="stat-trend">
-                    <i class="ri-user-settings-line"></i>
-                    <span>Per-student locks</span>
-                </div>
-            </div>
-            <div class="stat-footer">
-                <i class="ri-user-line me-1"></i> Individual student records
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-card-header">
-                <h3>Globally Locked</h3>
-                <div class="stat-icon" style="background: #fecaca; color: #ef4444;">
-                    <i class="ri-global-line"></i>
-                </div>
-            </div>
-            <div class="stat-card-body">
-                <div class="stat-main-value text-danger" id="statGlobal">0</div>
-                <div class="stat-trend">
-                    <i class="ri-shield-warning-line"></i>
-                    <span>Full subject lock</span>
-                </div>
-            </div>
-            <div class="stat-footer">
-                <i class="ri-alert-line me-1"></i> No teacher edits allowed
-            </div>
-        </div>
-
-        <div class="stat-card">
-            <div class="stat-card-header">
-                <h3>Editing Disabled</h3>
-                <div class="stat-icon" style="background: #e2e3e5; color: #6c757d;">
-                    <i class="ri-ban-line"></i>
-                </div>
-            </div>
-            <div class="stat-card-body">
-                <div class="stat-main-value text-secondary" id="statDisabled">0</div>
-                <div class="stat-trend">
-                    <i class="ri-user-forbid-line"></i>
-                    <span>Teacher editing off</span>
-                </div>
-            </div>
-            <div class="stat-footer">
-                <i class="ri-settings-4-line me-1"></i> Disabled by admin
-            </div>
-        </div>
-    </div>
-
-    <!-- Filter Section -->
     <div class="filter-card">
-        <div class="filter-row">
-            <div class="filter-group">
-                <label><i class="ri-search-line me-1"></i> Search</label>
-                <input type="text" id="searchInput" placeholder="Teacher, subject or code...">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <div class="filter-group">
+                    <label><i class="ri-search-line me-1"></i> Search</label>
+                    <input type="text" id="searchInput" class="form-control" placeholder="Teacher, subject or code...">
+                </div>
             </div>
-            <div class="filter-group">
-                <label><i class="ri-calendar-line me-1"></i> Term</label>
-                <select id="termFilter">
-                    <option value="">All Terms</option>
-                </select>
+            <div class="col-md-2">
+                <div class="filter-group">
+                    <label><i class="ri-calendar-line me-1"></i> Term</label>
+                    <select id="termFilter" class="form-select">
+                        <option value="">All Terms</option>
+                    </select>
+                </div>
             </div>
-            <div class="filter-group">
-                <label><i class="ri-calendar-event-line me-1"></i> Session</label>
-                <select id="sessionFilter">
-                    <option value="">All Sessions</option>
-                </select>
+            <div class="col-md-2">
+                <div class="filter-group">
+                    <label><i class="ri-calendar-event-line me-1"></i> Session</label>
+                    <select id="sessionFilter" class="form-select">
+                        <option value="">All Sessions</option>
+                    </select>
+                </div>
             </div>
-            <div class="filter-group">
-                <label><i class="ri-group-line me-1"></i> Class</label>
-                <select id="classFilter">
-                    <option value="">All Classes</option>
-                </select>
+            <div class="col-md-2">
+                <div class="filter-group">
+                    <label><i class="ri-group-line me-1"></i> Class</label>
+                    <select id="classFilter" class="form-select">
+                        <option value="">All Classes</option>
+                    </select>
+                </div>
             </div>
-            <div class="filter-group">
-                <label><i class="ri-shield-line me-1"></i> Status</label>
-                <select id="statusFilter">
-                    <option value="">All Statuses</option>
-                    <option value="open">Open</option>
-                    <option value="individual">Individually Locked</option>
-                    <option value="global">Globally Locked</option>
-                    <option value="disabled">Editing Disabled</option>
-                </select>
+            <div class="col-md-2">
+                <div class="filter-group">
+                    <label><i class="ri-shield-line me-1"></i> Status</label>
+                    <select id="statusFilter" class="form-select">
+                        <option value="">All Statuses</option>
+                        <option value="open">Open</option>
+                        <option value="individual">Individually Locked</option>
+                        <option value="global">Globally Locked</option>
+                        <option value="disabled">Editing Disabled</option>
+                    </select>
+                </div>
             </div>
-            <div class="filter-group" style="flex: 0.5; min-width: auto;">
+            <div class="col-md-1">
                 <button class="btn btn-primary w-100" id="applyFiltersBtn">
                     <i class="ri-filter-3-line"></i> Apply
                 </button>
@@ -707,7 +384,6 @@
         </div>
     </div>
 
-    <!-- Action Bar -->
     <div class="action-bar">
         <div class="selected-info">
             <i class="ri-checkbox-line me-1"></i>
@@ -728,32 +404,56 @@
         <button class="btn btn-outline btn-sm" id="refreshBtn">
             <i class="ri-refresh-line"></i> Refresh
         </button>
+        <a href="{{ route('admin.score-entry.index') }}" class="btn btn-outline btn-sm">
+            <i class="ri-arrow-left-line"></i> Back
+        </a>
     </div>
 
-    <!-- Scoresheet Table -->
-    <div class="scoresheet-card">
-        <div class="table-header">
-            <div class="checkbox-wrapper">
-                <input type="checkbox" class="checkbox-custom" id="selectAllCheckbox">
-            </div>
-            <div><i class="ri-user-line me-1"></i> Teacher & Subject</div>
-            <div class="hide-tablet"><i class="ri-group-line me-1"></i> Class</div>
-            <div class="hide-tablet"><i class="ri-calendar-line me-1"></i> Term</div>
-            <div class="hide-tablet"><i class="ri-calendar-event-line me-1"></i> Session</div>
-            <div><i class="ri-shield-line me-1"></i> Status</div>
-            <div><i class="ri-settings-4-line me-1"></i> Actions</div>
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3 border-bottom">
+            <h5 class="mb-0 fw-semibold" style="color:var(--lm-primary)">
+                <i class="ri-list-check me-2"></i>Scoresheets
+                <span class="badge bg-primary ms-2" id="recordCount">0</span>
+            </h5>
         </div>
-        <div id="scoresheetsList">
-            <div class="loading-state">
-                <i class="ri-loader-4-line spin"></i>
-                <p>Loading scoresheets...</p>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table lm-table w-100 mb-0" id="scoresheetsTable">
+                    <thead>
+                        <tr>
+                            <th width="30"><input type="checkbox" id="selectAllCheckbox" class="form-check-input"></th>
+                            <th>Teacher & Subject</th>
+                            <th>Class</th>
+                            <th>Term</th>
+                            <th>Session</th>
+                            <th>Status</th>
+                            <th width="150">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scoresheetsTableBody">
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-5">
+                                <i class="ri-loader-4-line spin d-block mb-2" style="font-size:2rem"></i>
+                                Loading scoresheets...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
+
+</div>
+</div>
 </div>
 
 <div id="modalContainer"></div>
 <div id="toastContainer" class="toast-container"></div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
 const routes = {
@@ -767,6 +467,7 @@ const routes = {
 
 let scoresheetsData = [];
 let selectedIds = new Set();
+let dataTable = null;
 
 document.addEventListener('DOMContentLoaded', function() {
     loadFilters();
@@ -828,7 +529,7 @@ async function loadScoresheets() {
 
         if (result.success) {
             scoresheetsData = result.data;
-            renderScoresheets();
+            renderDataTable();
             updateStats();
         } else {
             showToast(result.message || 'Failed to load scoresheets', 'error');
@@ -839,81 +540,109 @@ async function loadScoresheets() {
     }
 }
 
-function renderScoresheets() {
-    const container = document.getElementById('scoresheetsList');
+function renderDataTable() {
+    const tbody = document.getElementById('scoresheetsTableBody');
 
     if (!scoresheetsData.length) {
-        container.innerHTML = `
-            <div class="empty-state">
-                <i class="ri-inbox-line"></i>
-                <h5>No scoresheets found</h5>
-                <p class="text-muted">Try adjusting your search filters</p>
-            </div>
-        `;
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-5"><i class="ri-inbox-line d-block mb-2" style="font-size:2rem;opacity:.4"></i>No scoresheets found matching your criteria</td></tr>';
+        document.getElementById('recordCount').textContent = '0';
+        if (dataTable) {
+            dataTable.destroy();
+            dataTable = null;
+        }
         return;
     }
 
-    container.innerHTML = '';
-
+    tbody.innerHTML = '';
     scoresheetsData.forEach(sheet => {
         const status = getStatus(sheet);
-        const row = document.createElement('div');
-        row.className = `scoresheet-row ${selectedIds.has(sheet.subjectclass_id) ? 'selected' : ''}`;
+        const row = document.createElement('tr');
         row.dataset.id = sheet.subjectclass_id;
+        row.className = selectedIds.has(sheet.subjectclass_id) ? 'table-active' : '';
 
         row.innerHTML = `
-            <div class="checkbox-wrapper">
-                <input type="checkbox" class="checkbox-custom row-checkbox" data-id="${sheet.subjectclass_id}" ${selectedIds.has(sheet.subjectclass_id) ? 'checked' : ''}>
-            </div>
-            <div>
-                <div class="font-semibold">${escapeHtml(sheet.teacher_name)}</div>
-                <div class="text-sm text-muted">${escapeHtml(sheet.subject_name)} (${sheet.subject_code})</div>
-            </div>
-            <div class="hide-tablet">${escapeHtml(sheet.class_name)}</div>
-            <div class="hide-tablet">${sheet.term_name || '-'}</div>
-            <div class="hide-tablet">${sheet.session_name || '-'}</div>
-            <div>
+            <td><input type="checkbox" class="form-check-input row-checkbox" data-id="${sheet.subjectclass_id}" ${selectedIds.has(sheet.subjectclass_id) ? 'checked' : ''}></td>
+            <td>
+                <div class="fw-semibold">${escapeHtml(sheet.teacher_name)}</div>
+                <div class="text-muted small">${escapeHtml(sheet.subject_name)} (${sheet.subject_code})</div>
+                ${sheet.individually_locked_count > 0 ? `<div class="text-muted small mt-1">${sheet.individually_locked_count}/${sheet.total_students} students locked</div>` : ''}
+            </td>
+            <td>${escapeHtml(sheet.class_name)}</td>
+            <td>${sheet.term_name || '-'}</td>
+            <td>${sheet.session_name || '-'}</td>
+            <td>
                 <span class="status-badge ${status.class}">
                     <i class="${status.icon}"></i> ${status.text}
                 </span>
-                ${sheet.individually_locked_count > 0 ? `<div class="text-sm text-muted mt-1">${sheet.individually_locked_count}/${sheet.total_students} students locked</div>` : ''}
-                ${sheet.global_lock_reason ? `<div class="text-sm text-muted mt-1" title="${escapeHtml(sheet.global_lock_reason)}">${escapeHtml(sheet.global_lock_reason.substring(0, 40))}${sheet.global_lock_reason.length > 40 ? '...' : ''}</div>` : ''}
-            </div>
-            <div class="row-actions">
-                <button class="icon-btn lock" onclick="quickAction(${sheet.subjectclass_id}, 'lock_individual')" title="Lock Individual">
+                ${sheet.global_lock_reason ? `<div class="text-muted small mt-1" title="${escapeHtml(sheet.global_lock_reason)}">${escapeHtml(sheet.global_lock_reason.substring(0, 40))}${sheet.global_lock_reason.length > 40 ? '...' : ''}</div>` : ''}
+            </td>
+            <td class="row-actions">
+                <button class="icon-btn" onclick="quickAction(${sheet.subjectclass_id}, 'lock_individual')" title="Lock Individual">
                     <i class="ri-lock-line"></i>
                 </button>
-                <button class="icon-btn unlock" onclick="quickAction(${sheet.subjectclass_id}, 'unlock_individual')" title="Unlock Individual">
+                <button class="icon-btn" onclick="quickAction(${sheet.subjectclass_id}, 'unlock_individual')" title="Unlock Individual">
                     <i class="ri-lock-unlock-line"></i>
                 </button>
-                <button class="icon-btn disable" onclick="quickAction(${sheet.subjectclass_id}, 'disable_editing')" title="Disable Editing">
+                <button class="icon-btn" onclick="quickAction(${sheet.subjectclass_id}, 'disable_editing')" title="Disable Editing">
                     <i class="ri-ban-line"></i>
                 </button>
-                <button class="icon-btn enable" onclick="quickAction(${sheet.subjectclass_id}, 'enable_editing')" title="Enable Editing">
+                <button class="icon-btn" onclick="quickAction(${sheet.subjectclass_id}, 'enable_editing')" title="Enable Editing">
                     <i class="ri-check-line"></i>
                 </button>
-                <button class="icon-btn history" onclick="showAuditHistory(${sheet.subjectclass_id})" title="Audit History">
+                <button class="icon-btn" onclick="showAuditHistory(${sheet.subjectclass_id})" title="Audit History">
                     <i class="ri-history-line"></i>
                 </button>
-            </div>
+            </td>
         `;
-
-        container.appendChild(row);
+        tbody.appendChild(row);
     });
 
+    document.getElementById('recordCount').textContent = scoresheetsData.length;
+
+    // Reinitialize DataTable
+    if (dataTable) {
+        dataTable.destroy();
+    }
+
+    dataTable = $('#scoresheetsTable').DataTable({
+        pageLength: 25,
+        order: [[1, 'asc']],
+        language: {
+            search: '',
+            searchPlaceholder: 'Search...',
+            lengthMenu: 'Show _MENU_ entries',
+            info: 'Showing _START_–_END_ of _TOTAL_ scoresheets',
+            infoEmpty: 'No scoresheets found',
+            zeroRecords: 'No matching scoresheets',
+        },
+        columnDefs: [
+            { orderable: false, targets: [0, 6] }
+        ],
+        drawCallback: function() {
+            // Re-attach checkbox events after redraw
+            document.querySelectorAll('.row-checkbox').forEach(cb => {
+                cb.removeEventListener('change', handleCheckboxChange);
+                cb.addEventListener('change', handleCheckboxChange);
+            });
+        }
+    });
+
+    // Attach checkbox events
     document.querySelectorAll('.row-checkbox').forEach(cb => {
-        cb.addEventListener('change', (e) => {
-            const id = parseInt(e.target.dataset.id);
-            if (e.target.checked) {
-                selectedIds.add(id);
-            } else {
-                selectedIds.delete(id);
-            }
-            updateSelectedCount();
-            updateRowSelection(id);
-            updateSelectAllCheckbox();
-        });
+        cb.removeEventListener('change', handleCheckboxChange);
+        cb.addEventListener('change', handleCheckboxChange);
     });
+}
+
+function handleCheckboxChange(e) {
+    const id = parseInt(e.target.dataset.id);
+    if (e.target.checked) {
+        selectedIds.add(id);
+    } else {
+        selectedIds.delete(id);
+    }
+    updateSelectedCount();
+    updateSelectAllCheckbox();
 }
 
 function getStatus(sheet) {
@@ -927,7 +656,7 @@ function getStatus(sheet) {
         if (sheet.individually_locked_count === sheet.total_students) {
             return { class: 'status-individual', text: 'Fully Locked', icon: 'ri-lock-line' };
         }
-        return { class: 'status-individual', text: `Partially Locked (${sheet.individually_locked_count}/${sheet.total_students})`, icon: 'ri-lock-line' };
+        return { class: 'status-individual', text: `Partially Locked`, icon: 'ri-lock-line' };
     }
     return { class: 'status-open', text: 'Open', icon: 'ri-lock-unlock-line' };
 }
@@ -964,17 +693,6 @@ function updateSelectedCount() {
     document.getElementById('bulkEnableBtn').disabled = !hasSelection;
 }
 
-function updateRowSelection(id) {
-    const row = document.querySelector(`.scoresheet-row[data-id="${id}"]`);
-    if (row) {
-        if (selectedIds.has(id)) {
-            row.classList.add('selected');
-        } else {
-            row.classList.remove('selected');
-        }
-    }
-}
-
 function updateSelectAllCheckbox() {
     const selectAll = document.getElementById('selectAllCheckbox');
     const allIds = scoresheetsData.map(s => s.subjectclass_id);
@@ -992,7 +710,7 @@ function toggleSelectAll(e) {
             selectedIds.delete(sheet.subjectclass_id);
         }
     });
-    renderScoresheets();
+    renderDataTable();
     updateSelectedCount();
 }
 
@@ -1007,48 +725,59 @@ async function bulkAction(action) {
         disable_editing: 'Disable Teacher Editing',
         enable_editing: 'Enable Teacher Editing'
     };
-
-    const subs = {
+    const messages = {
         lock_individual: 'This will lock all student scoresheets in the selected subjects.',
         unlock_individual: 'This will unlock all student scoresheets in the selected subjects.',
         disable_editing: 'Teachers will not be able to edit ANY scores in these subjects.',
         enable_editing: 'Teachers will regain editing abilities for these subjects.'
     };
 
-    showModal(titles[action], subs[action], needsReason, async (reason) => {
-        try {
-            const response = await fetch(routes.bulkLockManagement, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify({
-                    action: action,
-                    subjectclass_ids: ids,
-                    reason: reason,
-                    term_id: document.getElementById('termFilter').value,
-                    session_id: document.getElementById('sessionFilter').value
-                })
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                showToast(result.message, 'success');
-                selectedIds.clear();
-                await loadScoresheets();
-            } else {
-                showToast(result.message || 'Action failed', 'error');
-            }
-        } catch (error) {
-            console.error('Bulk action error:', error);
-            showToast('Network error performing action', 'error');
-        }
+    const { value: reason } = await Swal.fire({
+        title: titles[action],
+        text: messages[action],
+        icon: 'question',
+        input: needsReason ? 'textarea' : null,
+        inputPlaceholder: needsReason ? 'Enter reason (optional)...' : null,
+        showCancelButton: true,
+        confirmButtonColor: action === 'disable_editing' ? '#dc2626' : '#2563eb',
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel'
     });
+
+    if (reason === undefined) return;
+
+    try {
+        const response = await fetch(routes.bulkLockManagement, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                action: action,
+                subjectclass_ids: ids,
+                reason: reason || null,
+                term_id: document.getElementById('termFilter').value,
+                session_id: document.getElementById('sessionFilter').value
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showToast(result.message, 'success');
+            selectedIds.clear();
+            await loadScoresheets();
+        } else {
+            showToast(result.message || 'Action failed', 'error');
+        }
+    } catch (error) {
+        console.error('Bulk action error:', error);
+        showToast('Network error performing action', 'error');
+    }
 }
 
-async function quickAction(id, action) {
+window.quickAction = async function(id, action) {
     const needsReason = ['lock_individual', 'disable_editing'].includes(action);
     const titles = {
         lock_individual: 'Lock Scoresheet',
@@ -1056,134 +785,97 @@ async function quickAction(id, action) {
         disable_editing: 'Disable Teacher Editing',
         enable_editing: 'Enable Teacher Editing'
     };
-
-    const subs = {
+    const messages = {
         lock_individual: 'This will lock all scores for this subject.',
         unlock_individual: 'This will unlock all scores for this subject.',
         disable_editing: 'The teacher will not be able to edit scores.',
         enable_editing: 'The teacher will regain editing abilities.'
     };
 
-    showModal(titles[action], subs[action], needsReason, async (reason) => {
-        let endpoint = '';
-        let body = {};
-
-        switch(action) {
-            case 'lock_individual':
-                endpoint = routes.lockBatch;
-                body = { subjectclass_ids: [id], reason: reason, lock_type: 'individual' };
-                break;
-            case 'unlock_individual':
-                endpoint = routes.unlockBatch;
-                body = { subjectclass_ids: [id], unlock_type: 'individual' };
-                break;
-            case 'disable_editing':
-                endpoint = routes.disableTeacherEditing;
-                body = { subjectclass_ids: [id], reason: reason };
-                break;
-            case 'enable_editing':
-                endpoint = routes.enableTeacherEditing;
-                body = { subjectclass_ids: [id] };
-                break;
-        }
-
-        try {
-            const response = await fetch(endpoint, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify(body)
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                showToast(result.message, 'success');
-                await loadScoresheets();
-            } else {
-                showToast(result.message || 'Action failed', 'error');
-            }
-        } catch (error) {
-            console.error('Quick action error:', error);
-            showToast('Network error performing action', 'error');
-        }
+    const { value: reason } = await Swal.fire({
+        title: titles[action],
+        text: messages[action],
+        icon: 'question',
+        input: needsReason ? 'textarea' : null,
+        inputPlaceholder: needsReason ? 'Enter reason (optional)...' : null,
+        showCancelButton: true,
+        confirmButtonColor: action === 'disable_editing' ? '#dc2626' : '#2563eb',
+        confirmButtonText: 'Confirm',
+        cancelButtonText: 'Cancel'
     });
-}
 
-function showAuditHistory(subjectclassId) {
+    if (reason === undefined) return;
+
+    let endpoint = '';
+    let body = {};
+
+    switch(action) {
+        case 'lock_individual':
+            endpoint = routes.lockBatch;
+            body = { subjectclass_ids: [id], reason: reason, lock_type: 'individual' };
+            break;
+        case 'unlock_individual':
+            endpoint = routes.unlockBatch;
+            body = { subjectclass_ids: [id], unlock_type: 'individual' };
+            break;
+        case 'disable_editing':
+            endpoint = routes.disableTeacherEditing;
+            body = { subjectclass_ids: [id], reason: reason };
+            break;
+        case 'enable_editing':
+            endpoint = routes.enableTeacherEditing;
+            body = { subjectclass_ids: [id] };
+            break;
+    }
+
+    try {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify(body)
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+            showToast(result.message, 'success');
+            await loadScoresheets();
+        } else {
+            showToast(result.message || 'Action failed', 'error');
+        }
+    } catch (error) {
+        console.error('Quick action error:', error);
+        showToast('Network error performing action', 'error');
+    }
+};
+
+window.showAuditHistory = function(subjectclassId) {
     const sheet = scoresheetsData.find(s => s.subjectclass_id === subjectclassId);
     if (!sheet) return;
 
-    const modalHtml = `
-        <div class="modal-overlay" onclick="closeModal(event)">
-            <div class="modal-container" onclick="event.stopPropagation()">
-                <div class="modal-header">
-                    <div class="modal-title">Audit History</div>
-                </div>
-                <div class="modal-body">
-                    <p><strong>${escapeHtml(sheet.subject_name)}</strong> - ${escapeHtml(sheet.class_name)}</p>
-                    <p><strong>Teacher:</strong> ${escapeHtml(sheet.teacher_name)}</p>
-                    <p><strong>Current Status:</strong> ${getStatus(sheet).text}</p>
-                    <hr>
-                    <p><strong>Global Lock:</strong> ${sheet.global_lock_active ? 'Active' : 'Inactive'}</p>
-                    ${sheet.global_lock_reason ? `<p><strong>Lock Reason:</strong> ${escapeHtml(sheet.global_lock_reason)}</p>` : ''}
-                    ${sheet.global_lock_by ? `<p><strong>Locked By:</strong> ${escapeHtml(sheet.global_lock_by)} at ${sheet.global_lock_at}</p>` : ''}
-                    <p><strong>Individually Locked:</strong> ${sheet.individually_locked_count} out of ${sheet.total_students} students</p>
-                    <p><strong>Teacher Editing:</strong> ${sheet.teacher_editing_enabled ? 'Enabled' : 'Disabled'}</p>
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-secondary btn-sm" onclick="closeModal()">Close</button>
-                </div>
+    Swal.fire({
+        title: 'Audit History',
+        html: `
+            <div style="text-align: left;">
+                <p><strong>${escapeHtml(sheet.subject_name)}</strong> - ${escapeHtml(sheet.class_name)}</p>
+                <p><strong>Teacher:</strong> ${escapeHtml(sheet.teacher_name)}</p>
+                <p><strong>Current Status:</strong> ${getStatus(sheet).text}</p>
+                <hr>
+                <p><strong>Global Lock:</strong> ${sheet.global_lock_active ? 'Active' : 'Inactive'}</p>
+                ${sheet.global_lock_reason ? `<p><strong>Lock Reason:</strong> ${escapeHtml(sheet.global_lock_reason)}</p>` : ''}
+                ${sheet.global_lock_by ? `<p><strong>Locked By:</strong> ${escapeHtml(sheet.global_lock_by)} at ${sheet.global_lock_at}</p>` : ''}
+                <p><strong>Individually Locked:</strong> ${sheet.individually_locked_count} out of ${sheet.total_students} students</p>
+                <p><strong>Teacher Editing:</strong> ${sheet.teacher_editing_enabled ? 'Enabled' : 'Disabled'}</p>
             </div>
-        </div>
-    `;
-
-    document.getElementById('modalContainer').innerHTML = modalHtml;
-}
-
-function showModal(title, message, needsReason, callback) {
-    const modalHtml = `
-        <div class="modal-overlay" onclick="closeModal(event)">
-            <div class="modal-container" onclick="event.stopPropagation()">
-                <div class="modal-header">
-                    <div class="modal-title">${escapeHtml(title)}</div>
-                </div>
-                <div class="modal-body">
-                    <p>${escapeHtml(message)}</p>
-                    ${needsReason ? `
-                        <label class="text-sm font-semibold text-muted">Reason (optional):</label>
-                        <textarea id="modalReason" class="modal-textarea" rows="3" placeholder="Enter reason for this action..."></textarea>
-                    ` : ''}
-                </div>
-                <div class="modal-footer">
-                    <button class="btn btn-outline btn-sm" onclick="closeModal()">Cancel</button>
-                    <button class="btn btn-primary btn-sm" onclick="confirmModalAction(${needsReason})">Confirm</button>
-                </div>
-            </div>
-        </div>
-    `;
-
-    document.getElementById('modalContainer').innerHTML = modalHtml;
-    window.modalCallback = callback;
-}
-
-function confirmModalAction(needsReason) {
-    const reason = needsReason ? document.getElementById('modalReason')?.value : null;
-    closeModal();
-    if (window.modalCallback) {
-        window.modalCallback(reason);
-    }
-}
-
-function closeModal(event) {
-    if (event && event.target !== event.currentTarget && event.target !== document.querySelector('.modal-container')) {
-        return;
-    }
-    document.getElementById('modalContainer').innerHTML = '';
-    window.modalCallback = null;
-}
+        `,
+        icon: 'info',
+        confirmButtonColor: '#2563eb',
+        confirmButtonText: 'Close'
+    });
+};
 
 function showToast(message, type = 'info') {
     const container = document.getElementById('toastContainer');
@@ -1192,14 +884,10 @@ function showToast(message, type = 'info') {
     const icon = {
         success: 'ri-checkbox-circle-fill',
         error: 'ri-error-warning-fill',
-        info: 'ri-information-fill',
-        warning: 'ri-alert-fill'
+        info: 'ri-information-fill'
     }[type] || 'ri-information-fill';
 
-    toast.innerHTML = `
-        <i class="${icon}"></i>
-        <span>${escapeHtml(message)}</span>
-    `;
+    toast.innerHTML = `<i class="${icon}"></i><span>${escapeHtml(message)}</span>`;
     container.appendChild(toast);
     setTimeout(() => toast.remove(), 5000);
 }
