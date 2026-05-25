@@ -50,6 +50,17 @@
     color: #1e3a5f;
 }
 
+.btn-hero-success {
+    background: #10b981;
+    border-color: #10b981;
+    color: white;
+}
+
+.btn-hero-success:hover {
+    background: #059669;
+    color: white;
+}
+
 .filter-card {
     background: #fff;
     border-radius: 12px;
@@ -421,8 +432,12 @@
                 <h1 class="mb-2"><i class="ri-admin-line me-2"></i>Admin Score Entry</h1>
                 <p class="mb-0">View all subject teachers and their assigned classes. Enter or edit scores on behalf of teachers.</p>
                 <p class="mt-2 mb-0"><i class="ri-shield-check-line me-1"></i> <strong>Lock Management:</strong> Lock individual scoresheets, apply global locks, or disable teacher editing entirely.</p>
+                <p class="mt-1 mb-0"><i class="ri-user-settings-line me-1"></i> <strong>Student Result Manager:</strong> Enter results per student across all subjects in one place.</p>
             </div>
             <div class="admin-hero-actions">
+                <a href="{{ route('admin.score-entry.student-result-manager') }}" class="btn-hero btn-hero-success">
+                    <i class="ri-user-settings-line"></i> Student Result Manager
+                </a>
                 <a href="{{ route('admin.score-entry.lock-management') }}" class="btn-hero btn-hero-primary">
                     <i class="ri-shield-lock-line"></i> Lock Manager
                 </a>
@@ -632,6 +647,11 @@
             <i class="ri-user-unfollow-line"></i>
             <h5>No Teacher Assignments Found</h5>
             <p class="text-muted">No teachers have been assigned to subjects for the selected term and session.</p>
+            <div class="mt-3">
+                <a href="{{ route('admin.score-entry.student-result-manager') }}" class="btn btn-success">
+                    <i class="ri-user-settings-line"></i> Go to Student Result Manager
+                </a>
+            </div>
         </div>
     @else
         <div class="empty-state">
