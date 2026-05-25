@@ -130,22 +130,30 @@ class AdminScoreEntryController extends Controller
         return view('admin.score-entry.lock-management', compact('pagetitle'));
     }
 
+<?php
+// ============================================================
+// PATCH — replace these two methods in AdminScoreEntryController
+// ============================================================
+
+// ─── 1. getScoresheetsList ────────────────────────────────────
+// Fixes:
+//  • Subquery counts used ambiguous `subjectclass_id` — now fully qualified
+//  • groupBy included nullable scoresheet_locks columns → MySQL strict mode
+//    error; we now use a LEFT JOIN but pull lock data via a separate scalar
+//    subquery so groupBy stays tight
+//  • Staff-id is irrelevant for the lock-management listing
+
 public function getScoresheetsList(Request $request)
 {
     try {
         $query = DB::table('subjectclass')
             ->join('subjectteacher', 'subjectteacher.id', '=', 'subjectclass.subjectteacherid')
-            ->join('users', 'users.id', '=', 'subjectteacher.staffid')
-            ->join('subject', 'subject.id', '=', 'subjectteacher.subjectid')
-            ->join('schoolclass', 'schoolclass.id', '=', 'subjectclass.schoolclassid')
-            ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-            ->leftJoin('schoolterm', 'schoolterm.id', '=', 'subjectteacher.termid')
+            ->join('users',          'users.id',          '=', 'subjectteacher.staffid')
+            ->join('subject',        'subject.id',        '=', 'subjectteacher.subjectid')
+            ->join('schoolclass',    'schoolclass.id',    '=', 'subjectclass.schoolclassid')
+            ->leftJoin('schoolarm',  'schoolarm.id',      '=', 'schoolclass.arm')
+            ->leftJoin('schoolterm', 'schoolterm.id',     '=', 'subjectteacher.termid')
             ->leftJoin('schoolsession', 'schoolsession.id', '=', 'subjectteacher.sessionid')
-            ->leftJoin('scoresheet_locks', function($join) {
-                $join->on('scoresheet_locks.subjectclass_id', '=', 'subjectclass.id')
-                     ->on('scoresheet_locks.term_id', '=', 'subjectteacher.termid')
-                     ->on('scoresheet_locks.session_id', '=', 'subjectteacher.sessionid');
-            })
             ->select([
                 'subjectclass.id as subjectclass_id',
                 'users.id as teacher_id',
@@ -159,29 +167,71 @@ public function getScoresheetsList(Request $request)
                 'schoolterm.term as term_name',
                 'schoolsession.session as session_name',
                 'subjectclass.teacher_editing_enabled',
-                'scoresheet_locks.is_active as global_lock_active',
-                'scoresheet_locks.reason as global_lock_reason',
-                'scoresheet_locks.locked_by as global_lock_by',
-                'scoresheet_locks.locked_at as global_lock_at',
-                DB::raw('(SELECT COUNT(*) FROM broadsheets WHERE subjectclass_id = subjectclass.id AND is_locked = 1) as individually_locked_count'),
-                DB::raw('(SELECT COUNT(*) FROM broadsheets WHERE subjectclass_id = subjectclass.id) as total_students'),
-            ])
-            ->groupBy(
-                'subjectclass.id', 'users.id', 'users.name', 'subject.subject',
-                'subject.subject_code', 'schoolclass.id', 'class_name',
-                'subjectteacher.termid', 'subjectteacher.sessionid',
-                'schoolterm.term', 'schoolsession.session',
-                'subjectclass.teacher_editing_enabled',
-                'scoresheet_locks.is_active', 'scoresheet_locks.reason',
-                'scoresheet_locks.locked_by', 'scoresheet_locks.locked_at'
-            );
 
-        // Apply filters
+                // Global lock — scalar sub-query keeps groupBy clean
+                DB::raw("(
+                    SELECT sl.is_active
+                    FROM scoresheet_locks sl
+                    WHERE sl.subjectclass_id = subjectclass.id
+                      AND sl.term_id    = subjectteacher.termid
+                      AND sl.session_id = subjectteacher.sessionid
+                      AND sl.is_active  = 1
+                    LIMIT 1
+                ) as global_lock_active"),
+
+                DB::raw("(
+                    SELECT sl.reason
+                    FROM scoresheet_locks sl
+                    WHERE sl.subjectclass_id = subjectclass.id
+                      AND sl.term_id    = subjectteacher.termid
+                      AND sl.session_id = subjectteacher.sessionid
+                      AND sl.is_active  = 1
+                    LIMIT 1
+                ) as global_lock_reason"),
+
+                DB::raw("(
+                    SELECT u2.name
+                    FROM scoresheet_locks sl
+                    LEFT JOIN users u2 ON u2.id = sl.locked_by
+                    WHERE sl.subjectclass_id = subjectclass.id
+                      AND sl.term_id    = subjectteacher.termid
+                      AND sl.session_id = subjectteacher.sessionid
+                      AND sl.is_active  = 1
+                    LIMIT 1
+                ) as global_lock_by"),
+
+                DB::raw("(
+                    SELECT sl.locked_at
+                    FROM scoresheet_locks sl
+                    WHERE sl.subjectclass_id = subjectclass.id
+                      AND sl.term_id    = subjectteacher.termid
+                      AND sl.session_id = subjectteacher.sessionid
+                      AND sl.is_active  = 1
+                    LIMIT 1
+                ) as global_lock_at"),
+
+                // Individually-locked student count
+                DB::raw("(
+                    SELECT COUNT(*)
+                    FROM broadsheets b
+                    WHERE b.subjectclass_id = subjectclass.id
+                      AND b.is_locked = 1
+                ) as individually_locked_count"),
+
+                // Total students
+                DB::raw("(
+                    SELECT COUNT(*)
+                    FROM broadsheets b
+                    WHERE b.subjectclass_id = subjectclass.id
+                ) as total_students"),
+            ]);
+
+        // ── Filters ──────────────────────────────────────────────
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('users.name', 'LIKE', "%{$search}%")
-                  ->orWhere('subject.subject', 'LIKE', "%{$search}%")
+            $query->where(function ($q) use ($search) {
+                $q->where('users.name',          'LIKE', "%{$search}%")
+                  ->orWhere('subject.subject',   'LIKE', "%{$search}%")
                   ->orWhere('subject.subject_code', 'LIKE', "%{$search}%");
             });
         }
@@ -201,61 +251,95 @@ public function getScoresheetsList(Request $request)
         if ($request->filled('status')) {
             switch ($request->status) {
                 case 'open':
-                    $query->where('subjectclass.teacher_editing_enabled', true)
-                          ->whereNull('scoresheet_locks.is_active')
-                          ->whereRaw('(SELECT COUNT(*) FROM broadsheets WHERE subjectclass_id = subjectclass.id AND is_locked = 1) = 0');
+                    $query->where('subjectclass.teacher_editing_enabled', 1)
+                          ->whereRaw("(
+                              SELECT COUNT(*) FROM scoresheet_locks sl
+                              WHERE sl.subjectclass_id = subjectclass.id
+                                AND sl.term_id    = subjectteacher.termid
+                                AND sl.session_id = subjectteacher.sessionid
+                                AND sl.is_active  = 1
+                          ) = 0")
+                          ->whereRaw("(
+                              SELECT COUNT(*) FROM broadsheets b
+                              WHERE b.subjectclass_id = subjectclass.id AND b.is_locked = 1
+                          ) = 0");
                     break;
+
                 case 'individual':
-                    $query->whereRaw('(SELECT COUNT(*) FROM broadsheets WHERE subjectclass_id = subjectclass.id AND is_locked = 1) > 0')
-                          ->whereNull('scoresheet_locks.is_active');
+                    $query->whereRaw("(
+                              SELECT COUNT(*) FROM broadsheets b
+                              WHERE b.subjectclass_id = subjectclass.id AND b.is_locked = 1
+                          ) > 0")
+                          ->whereRaw("(
+                              SELECT COUNT(*) FROM scoresheet_locks sl
+                              WHERE sl.subjectclass_id = subjectclass.id
+                                AND sl.term_id    = subjectteacher.termid
+                                AND sl.session_id = subjectteacher.sessionid
+                                AND sl.is_active  = 1
+                          ) = 0");
                     break;
+
                 case 'global':
-                    $query->where('scoresheet_locks.is_active', true);
+                    $query->whereRaw("(
+                              SELECT COUNT(*) FROM scoresheet_locks sl
+                              WHERE sl.subjectclass_id = subjectclass.id
+                                AND sl.term_id    = subjectteacher.termid
+                                AND sl.session_id = subjectteacher.sessionid
+                                AND sl.is_active  = 1
+                          ) > 0");
                     break;
+
                 case 'disabled':
-                    $query->where('subjectclass.teacher_editing_enabled', false);
+                    $query->where('subjectclass.teacher_editing_enabled', 0);
                     break;
             }
         }
 
-        // === FIXED: Always execute the query here ===
-        $results = $query->orderBy('users.name')
-                        ->orderBy('subject.subject')
-                        ->get();
+        $results = $query
+            ->groupBy(
+                'subjectclass.id',
+                'users.id', 'users.name',
+                'subject.subject', 'subject.subject_code',
+                'schoolclass.id', 'schoolclass.schoolclass',
+                'schoolarm.arm',
+                'subjectteacher.termid', 'subjectteacher.sessionid',
+                'schoolterm.term', 'schoolsession.session',
+                'subjectclass.teacher_editing_enabled'
+            )
+            ->orderBy('users.name')
+            ->orderBy('subject.subject')
+            ->get();
 
-        // Get filters data
-        $terms = Schoolterm::select('id', 'term')->get();
+        // ── Filter drop-down data ─────────────────────────────────
+        $terms    = Schoolterm::select('id', 'term')->get();
         $sessions = Schoolsession::select('id', 'session')->orderBy('id', 'desc')->get();
-        $classes = DB::table('schoolclass')
-                    ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
-                    ->select('schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm')
-                    ->get();
+        $classes  = DB::table('schoolclass')
+                        ->leftJoin('schoolarm', 'schoolarm.id', '=', 'schoolclass.arm')
+                        ->select('schoolclass.id', 'schoolclass.schoolclass', 'schoolarm.arm')
+                        ->get();
 
         return response()->json([
             'success' => true,
-            'data' => $results,
+            'data'    => $results,
             'filters' => [
-                'terms' => $terms,
+                'terms'    => $terms,
                 'sessions' => $sessions,
-                'classes' => $classes->map(function($cls) {
-                    return (object)[
-                        'id' => $cls->id,
-                        'schoolclass' => $cls->schoolclass,
-                        'arm' => $cls->arm ? (object)['arm' => $cls->arm] : null
-                    ];
-                }),
-            ]
+                'classes'  => $classes->map(fn ($cls) => (object)[
+                    'id'         => $cls->id,
+                    'schoolclass'=> $cls->schoolclass,
+                    'arm'        => $cls->arm ? (object)['arm' => $cls->arm] : null,
+                ]),
+            ],
         ]);
 
     } catch (\Exception $e) {
         Log::error('Get scoresheets list error: ' . $e->getMessage());
         return response()->json([
             'success' => false,
-            'message' => $e->getMessage()
+            'message' => $e->getMessage(),
         ], 500);
     }
 }
-
 
 
     public function bulkLockManagement(Request $request)

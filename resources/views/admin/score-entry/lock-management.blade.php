@@ -59,6 +59,7 @@
     color: #475569;
     text-transform: uppercase;
     letter-spacing: 0.3px;
+    display: block;
 }
 .filter-group input,
 .filter-group select {
@@ -95,10 +96,7 @@
     padding: 6px 14px;
     border-radius: 20px;
 }
-.selected-info strong {
-    color: #1e293b;
-    font-weight: 700;
-}
+.selected-info strong { color: #1e293b; font-weight: 700; }
 
 .btn {
     padding: 8px 18px;
@@ -111,21 +109,22 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    text-decoration: none;
 }
 .btn-sm { padding: 6px 14px; font-size: 12px; }
-.btn-primary { background: #2563eb; color: white; }
-.btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); }
-.btn-success { background: #10b981; color: white; }
-.btn-success:hover { background: #059669; transform: translateY(-1px); }
-.btn-warning { background: #f59e0b; color: white; }
-.btn-warning:hover { background: #d97706; transform: translateY(-1px); }
-.btn-danger { background: #ef4444; color: white; }
-.btn-danger:hover { background: #dc2626; transform: translateY(-1px); }
+.btn-primary   { background: #2563eb; color: white; }
+.btn-primary:hover   { background: #1d4ed8; transform: translateY(-1px); color: white; }
+.btn-success   { background: #10b981; color: white; }
+.btn-success:hover   { background: #059669; transform: translateY(-1px); }
+.btn-warning   { background: #f59e0b; color: white; }
+.btn-warning:hover   { background: #d97706; transform: translateY(-1px); }
+.btn-danger    { background: #ef4444; color: white; }
+.btn-danger:hover    { background: #dc2626; transform: translateY(-1px); }
 .btn-secondary { background: #64748b; color: white; }
 .btn-secondary:hover { background: #475569; transform: translateY(-1px); }
-.btn-outline { background: transparent; border: 1px solid #cbd5e1; color: #475569; }
-.btn-outline:hover { background: #f8fafc; border-color: #94a3b8; }
-.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.btn-outline   { background: transparent; border: 1px solid #cbd5e1; color: #475569; }
+.btn-outline:hover   { background: #f8fafc; border-color: #94a3b8; color: #475569; }
+.btn:disabled  { opacity: 0.5; cursor: not-allowed; transform: none !important; }
 
 .status-badge {
     display: inline-flex;
@@ -136,19 +135,14 @@
     font-size: 12px;
     font-weight: 600;
 }
-.status-open { background: #d1fae5; color: #065f46; }
+.status-open       { background: #d1fae5; color: #065f46; }
 .status-individual { background: #fed7aa; color: #92400e; }
-.status-global { background: #fecaca; color: #991b1b; }
-.status-disabled { background: #e2e3e5; color: #383d41; }
+.status-global     { background: #fecaca; color: #991b1b; }
+.status-disabled   { background: #e2e3e5; color: #383d41; }
 
-.row-actions {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-}
+.row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .icon-btn {
-    width: 32px;
-    height: 32px;
+    width: 32px; height: 32px;
     border-radius: 6px;
     background: transparent;
     border: 1px solid var(--lm-border);
@@ -192,32 +186,28 @@
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
 .toast-container {
-    position: fixed;
-    bottom: 24px;
-    right: 24px;
+    position: fixed; bottom: 24px; right: 24px;
     z-index: 1100;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
+    display: flex; flex-direction: column; gap: 10px;
 }
 .toast {
     background: white;
     border-radius: 12px;
     padding: 12px 20px;
     box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    display: flex; align-items: center; gap: 12px;
     animation: slideInRight 0.3s ease;
     border-left: 4px solid;
+    min-width: 260px;
+    max-width: 420px;
 }
 .toast-success { border-left-color: #10b981; }
-.toast-error { border-left-color: #ef4444; }
-.toast-info { border-left-color: #3b82f6; }
+.toast-error   { border-left-color: #ef4444; }
+.toast-info    { border-left-color: #3b82f6; }
 
 @keyframes slideInRight {
     from { transform: translateX(100%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+    to   { transform: translateX(0);    opacity: 1; }
 }
 
 @media (max-width: 768px) {
@@ -234,78 +224,89 @@
 <div class="page-content">
 <div class="container-fluid">
 
+    {{-- Hero --}}
     <div class="lm-hero">
         <h1><i class="ri-shield-lock-line me-2"></i>Scoresheet Lock Management</h1>
-        <p>Manage locks, disable teacher editing, and control access to scoresheets across all subjects</p>
+        <p>Manage locks, disable teacher editing, and control access to scoresheets across all subjects.</p>
     </div>
 
+    {{-- Stats — 4 cards (statTotal, statOpen, statIndividual, statGlobal, statDisabled) --}}
     <div class="row g-3 mb-4">
-        <div class="col-md-3">
+        <div class="col-md-3 col-6">
             <div class="stat-card">
                 <div class="stat-icon"><i class="ri-file-list-line"></i></div>
                 <div class="stat-value" id="statTotal">0</div>
                 <div class="stat-label">Total Scoresheets</div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-3 col-6">
             <div class="stat-card">
                 <div class="stat-icon"><i class="ri-lock-unlock-line"></i></div>
                 <div class="stat-value text-success" id="statOpen">0</div>
                 <div class="stat-label">Open</div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-3 col-6">
             <div class="stat-card">
                 <div class="stat-icon"><i class="ri-lock-line"></i></div>
                 <div class="stat-value text-warning" id="statIndividual">0</div>
                 <div class="stat-label">Individually Locked</div>
             </div>
         </div>
-        <div class="col-md-3">
+        {{-- This card was missing — it was referenced in JS as statGlobal --}}
+        <div class="col-md-3 col-6">
             <div class="stat-card">
                 <div class="stat-icon"><i class="ri-global-line"></i></div>
-                <div class="stat-value text-danger" id="statDisabled">0</div>
+                <div class="stat-value text-danger" id="statGlobal">0</div>
+                <div class="stat-label">Globally Locked</div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="ri-ban-line"></i></div>
+                <div class="stat-value text-secondary" id="statDisabled">0</div>
                 <div class="stat-label">Editing Disabled</div>
             </div>
         </div>
     </div>
 
+    {{-- Filters --}}
     <div class="filter-card">
         <div class="row g-3 align-items-end">
             <div class="col-md-3">
                 <div class="filter-group">
-                    <label><i class="ri-search-line me-1"></i> Search</label>
-                    <input type="text" id="searchInput" class="form-control" placeholder="Teacher, subject or code...">
+                    <label><i class="ri-search-line me-1"></i>Search</label>
+                    <input type="text" id="searchInput" placeholder="Teacher, subject or code...">
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="filter-group">
-                    <label><i class="ri-calendar-line me-1"></i> Term</label>
-                    <select id="termFilter" class="form-select">
+                    <label><i class="ri-calendar-line me-1"></i>Term</label>
+                    <select id="termFilter">
                         <option value="">All Terms</option>
                     </select>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="filter-group">
-                    <label><i class="ri-calendar-event-line me-1"></i> Session</label>
-                    <select id="sessionFilter" class="form-select">
+                    <label><i class="ri-calendar-event-line me-1"></i>Session</label>
+                    <select id="sessionFilter">
                         <option value="">All Sessions</option>
                     </select>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="filter-group">
-                    <label><i class="ri-group-line me-1"></i> Class</label>
-                    <select id="classFilter" class="form-select">
+                    <label><i class="ri-group-line me-1"></i>Class</label>
+                    <select id="classFilter">
                         <option value="">All Classes</option>
                     </select>
                 </div>
             </div>
             <div class="col-md-2">
                 <div class="filter-group">
-                    <label><i class="ri-shield-line me-1"></i> Status</label>
-                    <select id="statusFilter" class="form-select">
+                    <label><i class="ri-shield-line me-1"></i>Status</label>
+                    <select id="statusFilter">
                         <option value="">All Statuses</option>
                         <option value="open">Open</option>
                         <option value="individual">Individually Locked</option>
@@ -322,56 +323,48 @@
         </div>
     </div>
 
+    {{-- Action bar --}}
     <div class="action-bar">
         <div class="selected-info">
             <i class="ri-checkbox-line me-1"></i>
             <strong id="selectedCount">0</strong> scoresheet(s) selected
         </div>
-        <button class="btn btn-warning btn-sm" id="bulkLockBtn" disabled>
-            <i class="ri-lock-line"></i> Lock Selected
-        </button>
-        <button class="btn btn-success btn-sm" id="bulkUnlockBtn" disabled>
-            <i class="ri-lock-unlock-line"></i> Unlock Selected
-        </button>
-        <button class="btn btn-danger btn-sm" id="bulkDisableBtn" disabled>
-            <i class="ri-ban-line"></i> Disable Editing
-        </button>
-        <button class="btn btn-secondary btn-sm" id="bulkEnableBtn" disabled>
-            <i class="ri-check-line"></i> Enable Editing
-        </button>
-        <button class="btn btn-outline btn-sm" id="refreshBtn">
-            <i class="ri-refresh-line"></i> Refresh
-        </button>
+        <button class="btn btn-warning  btn-sm" id="bulkLockBtn"    disabled><i class="ri-lock-line"></i>         Lock Selected</button>
+        <button class="btn btn-success  btn-sm" id="bulkUnlockBtn"  disabled><i class="ri-lock-unlock-line"></i>  Unlock Selected</button>
+        <button class="btn btn-danger   btn-sm" id="bulkDisableBtn" disabled><i class="ri-ban-line"></i>          Disable Editing</button>
+        <button class="btn btn-secondary btn-sm" id="bulkEnableBtn" disabled><i class="ri-check-line"></i>        Enable Editing</button>
+        <button class="btn btn-outline   btn-sm" id="refreshBtn">  <i class="ri-refresh-line"></i>               Refresh</button>
         <a href="{{ route('admin.score-entry.index') }}" class="btn btn-outline btn-sm">
             <i class="ri-arrow-left-line"></i> Back
         </a>
     </div>
 
+    {{-- Table --}}
     <div class="table-card">
-        <div class="card-header">
+        <div class="card-header d-flex align-items-center justify-content-between">
             <h5 class="mb-0 fw-semibold" style="color:var(--lm-primary)">
                 <i class="ri-list-check me-2"></i>Scoresheets
-                <span class="badge bg-primary ms-2" id="recordCount">0</span>
             </h5>
+            <span class="badge bg-primary" id="recordCount">0</span>
         </div>
         <div class="table-responsive">
             <table class="table mb-0" id="scoresheetsTable">
                 <thead>
                     <tr>
                         <th width="30"><input type="checkbox" id="selectAllCheckbox" class="form-check-input"></th>
-                        <th>Teacher & Subject</th>
+                        <th>Teacher &amp; Subject</th>
                         <th>Class</th>
                         <th>Term</th>
                         <th>Session</th>
                         <th>Status</th>
-                        <th width="180">Actions</th>
+                        <th width="190">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="scoresheetsTableBody">
                     <tr>
                         <td colspan="7" class="text-center text-muted py-5">
                             <i class="ri-loader-4-line spin d-block mb-2" style="font-size:2rem"></i>
-                            Loading scoresheets...
+                            Loading scoresheets…
                         </td>
                     </tr>
                 </tbody>
@@ -387,103 +380,108 @@
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-const routes = {
-    scoresheetsList: '{{ route("admin.score-entry.scoresheets-list") }}',
-    bulkLockManagement: '{{ route("admin.score-entry.bulk-lock-management") }}',
-    lockBatch: '{{ route("admin.score-entry.lock-batch") }}',
-    unlockBatch: '{{ route("admin.score-entry.unlock-batch") }}',
-    disableTeacherEditing: '{{ route("admin.score-entry.disable-teacher-editing") }}',
+const ROUTES = {
+    scoresheetsList:      '{{ route("admin.score-entry.scoresheets-list") }}',
+    bulkLockManagement:   '{{ route("admin.score-entry.bulk-lock-management") }}',
+    lockBatch:            '{{ route("admin.score-entry.lock-batch") }}',
+    unlockBatch:          '{{ route("admin.score-entry.unlock-batch") }}',
+    disableTeacherEditing:'{{ route("admin.score-entry.disable-teacher-editing") }}',
     enableTeacherEditing: '{{ route("admin.score-entry.enable-teacher-editing") }}',
 };
+const CSRF = '{{ csrf_token() }}';
 
 let scoresheetsData = [];
-let selectedIds = new Set();
+let selectedIds     = new Set();
+let filtersLoaded   = false;
 
-document.addEventListener('DOMContentLoaded', function() {
-    loadFilters();
-    loadScoresheets();
+// ── Boot ──────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    loadData(true);   // first call: also populate filter dropdowns
 
-    document.getElementById('applyFiltersBtn').addEventListener('click', loadScoresheets);
-    document.getElementById('refreshBtn').addEventListener('click', loadScoresheets);
-    document.getElementById('bulkLockBtn').addEventListener('click', () => bulkAction('lock_individual'));
-    document.getElementById('bulkUnlockBtn').addEventListener('click', () => bulkAction('unlock_individual'));
+    document.getElementById('applyFiltersBtn').addEventListener('click', () => loadData(false));
+    document.getElementById('refreshBtn').addEventListener('click',       () => loadData(false));
+    document.getElementById('bulkLockBtn').addEventListener('click',    () => bulkAction('lock_individual'));
+    document.getElementById('bulkUnlockBtn').addEventListener('click',  () => bulkAction('unlock_individual'));
     document.getElementById('bulkDisableBtn').addEventListener('click', () => bulkAction('disable_editing'));
-    document.getElementById('bulkEnableBtn').addEventListener('click', () => bulkAction('enable_editing'));
+    document.getElementById('bulkEnableBtn').addEventListener('click',  () => bulkAction('enable_editing'));
     document.getElementById('selectAllCheckbox').addEventListener('change', toggleSelectAll);
 });
 
-async function loadFilters() {
-    try {
-        const response = await fetch(routes.scoresheetsList);
-        const result = await response.json();
+// ── Data loading ─────────────────────────────────────────────
+async function loadData(populateFilters) {
+    showTableLoading();
 
-        if (result.success && result.filters) {
-            const termSelect = document.getElementById('termFilter');
-            const sessionSelect = document.getElementById('sessionFilter');
-            const classSelect = document.getElementById('classFilter');
-
-            termSelect.innerHTML = '<option value="">All Terms</option>';
-            result.filters.terms.forEach(term => {
-                termSelect.innerHTML += `<option value="${term.id}">${escapeHtml(term.term)}</option>`;
-            });
-
-            sessionSelect.innerHTML = '<option value="">All Sessions</option>';
-            result.filters.sessions.forEach(session => {
-                sessionSelect.innerHTML += `<option value="${session.id}">${escapeHtml(session.session)}</option>`;
-            });
-
-            classSelect.innerHTML = '<option value="">All Classes</option>';
-            result.filters.classes.forEach(cls => {
-                const armName = cls.arm?.arm || '';
-                classSelect.innerHTML += `<option value="${cls.id}">${escapeHtml(cls.schoolclass)} ${escapeHtml(armName)}</option>`;
-            });
-        } else {
-            console.error('Failed to load filters:', result);
-            showToast(result.message || 'Failed to load filters', 'error');
-        }
-    } catch (error) {
-        console.error('Error loading filters:', error);
-        showToast('Failed to load filters', 'error');
-    }
-}
-
-async function loadScoresheets() {
     const params = new URLSearchParams({
-        search: document.getElementById('searchInput').value,
-        term_id: document.getElementById('termFilter').value,
+        search:     document.getElementById('searchInput').value,
+        term_id:    document.getElementById('termFilter').value,
         session_id: document.getElementById('sessionFilter').value,
-        class_id: document.getElementById('classFilter').value,
-        status: document.getElementById('statusFilter').value
+        class_id:   document.getElementById('classFilter').value,
+        status:     document.getElementById('statusFilter').value,
     });
 
     try {
-        const response = await fetch(`${routes.scoresheetsList}?${params}`);
-        const result = await response.json();
+        const res    = await fetch(`${ROUTES.scoresheetsList}?${params}`);
+        const result = await res.json();
 
-        if (result.success) {
-            scoresheetsData = result.data || [];
-            renderTable();
-            updateStats();
-            document.getElementById('recordCount').textContent = scoresheetsData.length;
-        } else {
-            showToast(result.message || 'Failed to load scoresheets', 'error');
-            document.getElementById('scoresheetsTableBody').innerHTML = `
-                <tr><td colspan="7" class="text-center text-muted py-5">
-                    <i class="ri-error-warning-line d-block mb-2" style="font-size:2rem"></i>
-                    ${escapeHtml(result.message || 'Failed to load scoresheets')}
-                </td></tr>
-            `;
+        if (!result.success) {
+            showTableError(result.message || 'Failed to load scoresheets.');
+            showToast(result.message || 'Failed to load scoresheets.', 'error');
+            return;
         }
-    } catch (error) {
-        console.error('Error loading scoresheets:', error);
-        showToast('Network error loading scoresheets', 'error');
-        document.getElementById('scoresheetsTableBody').innerHTML = `
-            <tr><td colspan="7" class="text-center text-muted py-5">
-                <i class="ri-wifi-off-line d-block mb-2" style="font-size:2rem"></i>
-                Network error. Please check your connection.
-            </td></tr>
-        `;
+
+        scoresheetsData = result.data || [];
+
+        if (populateFilters && result.filters && !filtersLoaded) {
+            populateFilterDropdowns(result.filters);
+            filtersLoaded = true;
+        }
+
+        renderTable();
+        updateStats();
+        document.getElementById('recordCount').textContent = scoresheetsData.length;
+
+    } catch (err) {
+        console.error('loadData error:', err);
+        showTableError('Network error. Please check your connection.');
+        showToast('Network error loading scoresheets.', 'error');
     }
+}
+
+function populateFilterDropdowns(filters) {
+    const termSel    = document.getElementById('termFilter');
+    const sessionSel = document.getElementById('sessionFilter');
+    const classSel   = document.getElementById('classFilter');
+
+    (filters.terms || []).forEach(t => {
+        termSel.insertAdjacentHTML('beforeend',
+            `<option value="${t.id}">${escHtml(t.term)}</option>`);
+    });
+    (filters.sessions || []).forEach(s => {
+        sessionSel.insertAdjacentHTML('beforeend',
+            `<option value="${s.id}">${escHtml(s.session)}</option>`);
+    });
+    (filters.classes || []).forEach(c => {
+        const arm = c.arm?.arm || '';
+        classSel.insertAdjacentHTML('beforeend',
+            `<option value="${c.id}">${escHtml(c.schoolclass)} ${escHtml(arm)}</option>`);
+    });
+}
+
+// ── Table rendering ───────────────────────────────────────────
+function showTableLoading() {
+    document.getElementById('scoresheetsTableBody').innerHTML = `
+        <tr><td colspan="7" class="text-center text-muted py-5">
+            <i class="ri-loader-4-line spin d-block mb-2" style="font-size:2rem"></i>
+            Loading scoresheets…
+        </td></tr>`;
+}
+
+function showTableError(msg) {
+    document.getElementById('scoresheetsTableBody').innerHTML = `
+        <tr><td colspan="7" class="text-center text-muted py-5">
+            <i class="ri-error-warning-line d-block mb-2" style="font-size:2rem;color:#ef4444"></i>
+            ${escHtml(msg)}
+        </td></tr>`;
 }
 
 function renderTable() {
@@ -493,333 +491,304 @@ function renderTable() {
         tbody.innerHTML = `
             <tr><td colspan="7" class="text-center text-muted py-5">
                 <i class="ri-inbox-line d-block mb-2" style="font-size:2rem;opacity:.4"></i>
-                No scoresheets found matching your criteria
-            </td></tr>
-        `;
+                No scoresheets found matching your criteria.
+            </td></tr>`;
         return;
     }
 
     tbody.innerHTML = '';
     scoresheetsData.forEach(sheet => {
         const status = getStatus(sheet);
-        const row = document.createElement('tr');
-        row.dataset.id = sheet.subjectclass_id;
-        if (selectedIds.has(sheet.subjectclass_id)) {
-            row.classList.add('table-active');
-        }
+        const isSelected = selectedIds.has(sheet.subjectclass_id);
 
-        row.innerHTML = `
-            <td><input type="checkbox" class="form-check-input row-checkbox" data-id="${sheet.subjectclass_id}" ${selectedIds.has(sheet.subjectclass_id) ? 'checked' : ''}></td>
+        const tr = document.createElement('tr');
+        if (isSelected) tr.classList.add('table-active');
+        tr.dataset.id = sheet.subjectclass_id;
+
+        tr.innerHTML = `
             <td>
-                <div class="fw-semibold">${escapeHtml(sheet.teacher_name)}</div>
-                <div class="text-muted small">${escapeHtml(sheet.subject_name)} (${sheet.subject_code})</div>
-                ${sheet.individually_locked_count > 0 ? `<div class="text-muted small mt-1">📌 ${sheet.individually_locked_count}/${sheet.total_students} students locked</div>` : ''}
+                <input type="checkbox" class="form-check-input row-checkbox"
+                    data-id="${sheet.subjectclass_id}" ${isSelected ? 'checked' : ''}>
             </td>
-            <td>${escapeHtml(sheet.class_name)}</td>
-            <td>${sheet.term_name || '-'}</td>
-            <td>${sheet.session_name || '-'}</td>
             <td>
-                <span class="status-badge ${status.class}">
+                <div class="fw-semibold">${escHtml(sheet.teacher_name)}</div>
+                <div class="text-muted small">${escHtml(sheet.subject_name)} (${escHtml(sheet.subject_code)})</div>
+                ${sheet.individually_locked_count > 0
+                    ? `<div class="text-muted small mt-1">
+                            📌 ${sheet.individually_locked_count} / ${sheet.total_students} students locked
+                       </div>`
+                    : ''}
+            </td>
+            <td>${escHtml(sheet.class_name)}</td>
+            <td>${escHtml(sheet.term_name    || '—')}</td>
+            <td>${escHtml(sheet.session_name || '—')}</td>
+            <td>
+                <span class="status-badge ${status.cls}">
                     <i class="${status.icon}"></i> ${status.text}
                 </span>
-                ${sheet.global_lock_reason ? `<div class="text-muted small mt-1" title="${escapeHtml(sheet.global_lock_reason)}">${escapeHtml(sheet.global_lock_reason.substring(0, 40))}${sheet.global_lock_reason.length > 40 ? '...' : ''}</div>` : ''}
+                ${sheet.global_lock_reason
+                    ? `<div class="text-muted small mt-1"
+                            title="${escHtml(sheet.global_lock_reason)}">
+                            ${escHtml(sheet.global_lock_reason.substring(0, 40))}${sheet.global_lock_reason.length > 40 ? '…' : ''}
+                       </div>`
+                    : ''}
             </td>
-            <td class="row-actions">
-                <button class="icon-btn" onclick="quickAction(${sheet.subjectclass_id}, 'lock_individual')" title="Lock Individual">
-                    <i class="ri-lock-line"></i>
-                </button>
-                <button class="icon-btn" onclick="quickAction(${sheet.subjectclass_id}, 'unlock_individual')" title="Unlock Individual">
-                    <i class="ri-lock-unlock-line"></i>
-                </button>
-                <button class="icon-btn" onclick="quickAction(${sheet.subjectclass_id}, 'disable_editing')" title="Disable Editing">
-                    <i class="ri-ban-line"></i>
-                </button>
-                <button class="icon-btn" onclick="quickAction(${sheet.subjectclass_id}, 'enable_editing')" title="Enable Editing">
-                    <i class="ri-check-line"></i>
-                </button>
-                <button class="icon-btn" onclick="showAuditHistory(${sheet.subjectclass_id})" title="Audit History">
-                    <i class="ri-history-line"></i>
-                </button>
-            </td>
-        `;
-        tbody.appendChild(row);
+            <td>
+                <div class="row-actions">
+                    <button class="icon-btn"
+                        onclick="quickAction(${sheet.subjectclass_id}, 'lock_individual')"
+                        title="Lock individual scores">
+                        <i class="ri-lock-line"></i>
+                    </button>
+                    <button class="icon-btn"
+                        onclick="quickAction(${sheet.subjectclass_id}, 'unlock_individual')"
+                        title="Unlock individual scores">
+                        <i class="ri-lock-unlock-line"></i>
+                    </button>
+                    <button class="icon-btn"
+                        onclick="quickAction(${sheet.subjectclass_id}, 'disable_editing')"
+                        title="Disable teacher editing">
+                        <i class="ri-ban-line"></i>
+                    </button>
+                    <button class="icon-btn"
+                        onclick="quickAction(${sheet.subjectclass_id}, 'enable_editing')"
+                        title="Enable teacher editing">
+                        <i class="ri-check-line"></i>
+                    </button>
+                    <button class="icon-btn"
+                        onclick="showAuditInfo(${sheet.subjectclass_id})"
+                        title="View info">
+                        <i class="ri-history-line"></i>
+                    </button>
+                </div>
+            </td>`;
+
+        tbody.appendChild(tr);
     });
 
-    // Attach checkbox events
+    // Checkbox event delegation
     document.querySelectorAll('.row-checkbox').forEach(cb => {
-        cb.addEventListener('change', function(e) {
+        cb.addEventListener('change', function () {
             const id = parseInt(this.dataset.id);
             if (this.checked) {
                 selectedIds.add(id);
+                this.closest('tr').classList.add('table-active');
             } else {
                 selectedIds.delete(id);
+                this.closest('tr').classList.remove('table-active');
             }
             updateSelectedCount();
-            updateSelectAllCheckbox();
-
-            // Update row styling
-            const row = this.closest('tr');
-            if (this.checked) {
-                row.classList.add('table-active');
-            } else {
-                row.classList.remove('table-active');
-            }
+            updateSelectAllState();
         });
     });
 }
 
+// ── Status helper ─────────────────────────────────────────────
 function getStatus(sheet) {
     if (!sheet.teacher_editing_enabled) {
-        return { class: 'status-disabled', text: 'Editing Disabled', icon: 'ri-ban-line' };
+        return { cls: 'status-disabled',  text: 'Editing Disabled',  icon: 'ri-ban-line' };
     }
     if (sheet.global_lock_active) {
-        return { class: 'status-global', text: 'Globally Locked', icon: 'ri-global-line' };
+        return { cls: 'status-global',    text: 'Globally Locked',   icon: 'ri-global-line' };
     }
-    if (sheet.individually_locked_count > 0) {
-        if (sheet.individually_locked_count === sheet.total_students) {
-            return { class: 'status-individual', text: 'Fully Locked', icon: 'ri-lock-line' };
-        }
-        return { class: 'status-individual', text: 'Partially Locked', icon: 'ri-lock-line' };
+    const locked = parseInt(sheet.individually_locked_count || 0);
+    const total  = parseInt(sheet.total_students || 0);
+    if (locked > 0) {
+        return {
+            cls:  'status-individual',
+            text: locked === total ? 'Fully Locked' : 'Partially Locked',
+            icon: 'ri-lock-line',
+        };
     }
-    return { class: 'status-open', text: 'Open', icon: 'ri-lock-unlock-line' };
+    return { cls: 'status-open', text: 'Open', icon: 'ri-lock-unlock-line' };
 }
 
+// ── Stats ─────────────────────────────────────────────────────
 function updateStats() {
-    let total = scoresheetsData.length;
     let open = 0, individual = 0, global = 0, disabled = 0;
 
     scoresheetsData.forEach(sheet => {
-        if (!sheet.teacher_editing_enabled) {
-            disabled++;
-        } else if (sheet.global_lock_active) {
-            global++;
-        } else if (sheet.individually_locked_count > 0) {
-            individual++;
-        } else {
-            open++;
-        }
+        if (!sheet.teacher_editing_enabled)   { disabled++; }
+        else if (sheet.global_lock_active)    { global++; }
+        else if (sheet.individually_locked_count > 0) { individual++; }
+        else { open++; }
     });
 
-    document.getElementById('statTotal').textContent = total;
-    document.getElementById('statOpen').textContent = open;
+    document.getElementById('statTotal').textContent      = scoresheetsData.length;
+    document.getElementById('statOpen').textContent       = open;
     document.getElementById('statIndividual').textContent = individual;
-    document.getElementById('statGlobal').textContent = global;
-    document.getElementById('statDisabled').textContent = disabled;
+    document.getElementById('statGlobal').textContent     = global;    // ← was missing element
+    document.getElementById('statDisabled').textContent   = disabled;
 }
 
+// ── Selection helpers ─────────────────────────────────────────
 function updateSelectedCount() {
     document.getElementById('selectedCount').textContent = selectedIds.size;
-    const hasSelection = selectedIds.size > 0;
-    document.getElementById('bulkLockBtn').disabled = !hasSelection;
-    document.getElementById('bulkUnlockBtn').disabled = !hasSelection;
-    document.getElementById('bulkDisableBtn').disabled = !hasSelection;
-    document.getElementById('bulkEnableBtn').disabled = !hasSelection;
+    const has = selectedIds.size > 0;
+    ['bulkLockBtn','bulkUnlockBtn','bulkDisableBtn','bulkEnableBtn']
+        .forEach(id => document.getElementById(id).disabled = !has);
 }
 
-function updateSelectAllCheckbox() {
-    const selectAll = document.getElementById('selectAllCheckbox');
+function updateSelectAllState() {
     const allIds = scoresheetsData.map(s => s.subjectclass_id);
-    const selectedAll = allIds.length > 0 && allIds.every(id => selectedIds.has(id));
-    selectAll.checked = selectedAll;
-    selectAll.indeterminate = !selectedAll && allIds.some(id => selectedIds.has(id));
+    const cb     = document.getElementById('selectAllCheckbox');
+    const selAll = allIds.length > 0 && allIds.every(id => selectedIds.has(id));
+    cb.checked       = selAll;
+    cb.indeterminate = !selAll && allIds.some(id => selectedIds.has(id));
 }
 
 function toggleSelectAll(e) {
     const checked = e.target.checked;
     scoresheetsData.forEach(sheet => {
-        if (checked) {
-            selectedIds.add(sheet.subjectclass_id);
-        } else {
-            selectedIds.delete(sheet.subjectclass_id);
-        }
+        if (checked) selectedIds.add(sheet.subjectclass_id);
+        else         selectedIds.delete(sheet.subjectclass_id);
     });
     renderTable();
     updateSelectedCount();
 }
 
+// ── Bulk action ───────────────────────────────────────────────
 async function bulkAction(action) {
     const ids = Array.from(selectedIds);
     if (!ids.length) return;
 
-    const needsReason = ['lock_individual', 'disable_editing'].includes(action);
-    const titles = {
-        lock_individual: 'Lock Selected Scoresheets',
-        unlock_individual: 'Unlock Selected Scoresheets',
-        disable_editing: 'Disable Teacher Editing',
-        enable_editing: 'Enable Teacher Editing'
+    const META = {
+        lock_individual:  { title: 'Lock Selected Scoresheets',     msg: 'This will lock all student scoresheets in the selected subjects.',          needsReason: true,  confirmColor: '#f59e0b' },
+        unlock_individual:{ title: 'Unlock Selected Scoresheets',   msg: 'This will unlock all student scoresheets in the selected subjects.',        needsReason: false, confirmColor: '#10b981' },
+        disable_editing:  { title: 'Disable Teacher Editing',       msg: 'Teachers will not be able to edit ANY scores in these subjects.',           needsReason: true,  confirmColor: '#ef4444' },
+        enable_editing:   { title: 'Enable Teacher Editing',        msg: 'Teachers will regain editing abilities for these subjects.',                needsReason: false, confirmColor: '#10b981' },
     };
-    const messages = {
-        lock_individual: 'This will lock all student scoresheets in the selected subjects.',
-        unlock_individual: 'This will unlock all student scoresheets in the selected subjects.',
-        disable_editing: 'Teachers will not be able to edit ANY scores in these subjects.',
-        enable_editing: 'Teachers will regain editing abilities for these subjects.'
-    };
+    const m = META[action];
 
-    const { value: reason } = await Swal.fire({
-        title: titles[action],
-        text: messages[action],
-        icon: 'question',
-        input: needsReason ? 'textarea' : null,
-        inputPlaceholder: needsReason ? 'Enter reason (optional)...' : null,
+    const { value: reason, isDismissed } = await Swal.fire({
+        title: m.title, text: m.msg, icon: 'question',
+        input: m.needsReason ? 'textarea' : undefined,
+        inputPlaceholder: 'Enter reason (optional)…',
         showCancelButton: true,
-        confirmButtonColor: action === 'disable_editing' ? '#dc2626' : '#2563eb',
+        confirmButtonColor: m.confirmColor,
         confirmButtonText: 'Confirm',
-        cancelButtonText: 'Cancel'
     });
+    if (isDismissed) return;
 
-    if (reason === undefined) return;
+    await sendBulkRequest(ROUTES.bulkLockManagement, {
+        action,
+        subjectclass_ids: ids,
+        reason:     reason || null,
+        term_id:    document.getElementById('termFilter').value    || null,
+        session_id: document.getElementById('sessionFilter').value || null,
+    });
+}
 
+// ── Quick single-row action ───────────────────────────────────
+window.quickAction = async function (id, action) {
+    const META = {
+        lock_individual:  { title: 'Lock Scoresheet',         msg: 'This will lock all scores for this subject.',           needsReason: true,  confirmColor: '#f59e0b' },
+        unlock_individual:{ title: 'Unlock Scoresheet',       msg: 'This will unlock all scores for this subject.',         needsReason: false, confirmColor: '#10b981' },
+        disable_editing:  { title: 'Disable Teacher Editing', msg: 'The teacher will not be able to edit scores.',          needsReason: true,  confirmColor: '#ef4444' },
+        enable_editing:   { title: 'Enable Teacher Editing',  msg: 'The teacher will regain editing abilities.',            needsReason: false, confirmColor: '#10b981' },
+    };
+    const m = META[action];
+
+    const { value: reason, isDismissed } = await Swal.fire({
+        title: m.title, text: m.msg, icon: 'question',
+        input: m.needsReason ? 'textarea' : undefined,
+        inputPlaceholder: 'Enter reason (optional)…',
+        showCancelButton: true,
+        confirmButtonColor: m.confirmColor,
+        confirmButtonText: 'Confirm',
+    });
+    if (isDismissed) return;
+
+    const endpointMap = {
+        lock_individual:   { url: ROUTES.lockBatch,             body: { subjectclass_ids: [id], reason, lock_type: 'individual' } },
+        unlock_individual: { url: ROUTES.unlockBatch,           body: { subjectclass_ids: [id], unlock_type: 'individual' } },
+        disable_editing:   { url: ROUTES.disableTeacherEditing, body: { subjectclass_ids: [id], reason } },
+        enable_editing:    { url: ROUTES.enableTeacherEditing,  body: { subjectclass_ids: [id] } },
+    };
+    const ep = endpointMap[action];
+    await postJSON(ep.url, ep.body);
+};
+
+// ── Audit info popup ──────────────────────────────────────────
+window.showAuditInfo = function (id) {
+    const sheet = scoresheetsData.find(s => s.subjectclass_id === id);
+    if (!sheet) return;
+
+    const status = getStatus(sheet);
+    Swal.fire({
+        title: 'Lock Info',
+        icon: 'info',
+        confirmButtonColor: '#2563eb',
+        confirmButtonText: 'Close',
+        html: `
+            <div style="text-align:left;font-size:13px;line-height:1.8">
+                <p><strong>${escHtml(sheet.subject_name)}</strong> — ${escHtml(sheet.class_name)}</p>
+                <p><strong>Teacher:</strong> ${escHtml(sheet.teacher_name)}</p>
+                <p><strong>Status:</strong> <span style="font-weight:600">${status.text}</span></p>
+                <hr>
+                <p><strong>Global lock:</strong> ${sheet.global_lock_active ? '<span style="color:#dc2626">Active</span>' : 'Inactive'}</p>
+                ${sheet.global_lock_reason ? `<p><strong>Reason:</strong> ${escHtml(sheet.global_lock_reason)}</p>` : ''}
+                ${sheet.global_lock_by     ? `<p><strong>Locked by:</strong> ${escHtml(sheet.global_lock_by)} at ${escHtml(sheet.global_lock_at || '')}</p>` : ''}
+                <p><strong>Individually locked:</strong> ${sheet.individually_locked_count} / ${sheet.total_students} students</p>
+                <p><strong>Teacher editing:</strong> ${sheet.teacher_editing_enabled ? '<span style="color:#16a34a">Enabled</span>' : '<span style="color:#dc2626">Disabled</span>'}</p>
+            </div>`,
+    });
+};
+
+// ── HTTP helpers ──────────────────────────────────────────────
+async function sendBulkRequest(url, body) {
     try {
-        const response = await fetch(routes.bulkLockManagement, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({
-                action: action,
-                subjectclass_ids: ids,
-                reason: reason || null,
-                term_id: document.getElementById('termFilter').value,
-                session_id: document.getElementById('sessionFilter').value
-            })
-        });
-
-        const result = await response.json();
-
+        const res    = await fetch(url, { method: 'POST', headers: jsonHeaders(), body: JSON.stringify(body) });
+        const result = await res.json();
         if (result.success) {
             showToast(result.message, 'success');
             selectedIds.clear();
-            await loadScoresheets();
+            loadData(false);
         } else {
-            showToast(result.message || 'Action failed', 'error');
+            showToast(result.message || 'Action failed.', 'error');
         }
-    } catch (error) {
-        console.error('Bulk action error:', error);
-        showToast('Network error performing action', 'error');
+    } catch (e) {
+        console.error('sendBulkRequest error:', e);
+        showToast('Network error performing action.', 'error');
     }
 }
 
-window.quickAction = async function(id, action) {
-    const needsReason = ['lock_individual', 'disable_editing'].includes(action);
-    const titles = {
-        lock_individual: 'Lock Scoresheet',
-        unlock_individual: 'Unlock Scoresheet',
-        disable_editing: 'Disable Teacher Editing',
-        enable_editing: 'Enable Teacher Editing'
-    };
-    const messages = {
-        lock_individual: 'This will lock all scores for this subject.',
-        unlock_individual: 'This will unlock all scores for this subject.',
-        disable_editing: 'The teacher will not be able to edit scores.',
-        enable_editing: 'The teacher will regain editing abilities.'
-    };
-
-    const { value: reason } = await Swal.fire({
-        title: titles[action],
-        text: messages[action],
-        icon: 'question',
-        input: needsReason ? 'textarea' : null,
-        inputPlaceholder: needsReason ? 'Enter reason (optional)...' : null,
-        showCancelButton: true,
-        confirmButtonColor: action === 'disable_editing' ? '#dc2626' : '#2563eb',
-        confirmButtonText: 'Confirm',
-        cancelButtonText: 'Cancel'
-    });
-
-    if (reason === undefined) return;
-
-    let endpoint = '';
-    let body = {};
-
-    switch(action) {
-        case 'lock_individual':
-            endpoint = routes.lockBatch;
-            body = { subjectclass_ids: [id], reason: reason, lock_type: 'individual' };
-            break;
-        case 'unlock_individual':
-            endpoint = routes.unlockBatch;
-            body = { subjectclass_ids: [id], unlock_type: 'individual' };
-            break;
-        case 'disable_editing':
-            endpoint = routes.disableTeacherEditing;
-            body = { subjectclass_ids: [id], reason: reason };
-            break;
-        case 'enable_editing':
-            endpoint = routes.enableTeacherEditing;
-            body = { subjectclass_ids: [id] };
-            break;
-    }
-
+async function postJSON(url, body) {
     try {
-        const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify(body)
-        });
-
-        const result = await response.json();
-
+        const res    = await fetch(url, { method: 'POST', headers: jsonHeaders(), body: JSON.stringify(body) });
+        const result = await res.json();
         if (result.success) {
             showToast(result.message, 'success');
-            await loadScoresheets();
+            loadData(false);
         } else {
-            showToast(result.message || 'Action failed', 'error');
+            showToast(result.message || 'Action failed.', 'error');
         }
-    } catch (error) {
-        console.error('Quick action error:', error);
-        showToast('Network error performing action', 'error');
+    } catch (e) {
+        console.error('postJSON error:', e);
+        showToast('Network error performing action.', 'error');
     }
-};
+}
 
-window.showAuditHistory = function(subjectclassId) {
-    const sheet = scoresheetsData.find(s => s.subjectclass_id === subjectclassId);
-    if (!sheet) return;
+function jsonHeaders() {
+    return { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF };
+}
 
-    Swal.fire({
-        title: 'Audit History',
-        html: `
-            <div style="text-align: left;">
-                <p><strong>${escapeHtml(sheet.subject_name)}</strong> - ${escapeHtml(sheet.class_name)}</p>
-                <p><strong>Teacher:</strong> ${escapeHtml(sheet.teacher_name)}</p>
-                <p><strong>Current Status:</strong> ${getStatus(sheet).text}</p>
-                <hr>
-                <p><strong>Global Lock:</strong> ${sheet.global_lock_active ? 'Active' : 'Inactive'}</p>
-                ${sheet.global_lock_reason ? `<p><strong>Lock Reason:</strong> ${escapeHtml(sheet.global_lock_reason)}</p>` : ''}
-                ${sheet.global_lock_by ? `<p><strong>Locked By:</strong> ${escapeHtml(sheet.global_lock_by)} at ${sheet.global_lock_at}</p>` : ''}
-                <p><strong>Individually Locked:</strong> ${sheet.individually_locked_count} out of ${sheet.total_students} students</p>
-                <p><strong>Teacher Editing:</strong> ${sheet.teacher_editing_enabled ? 'Enabled' : 'Disabled'}</p>
-            </div>
-        `,
-        icon: 'info',
-        confirmButtonColor: '#2563eb',
-        confirmButtonText: 'Close'
-    });
-};
-
+// ── Toast ─────────────────────────────────────────────────────
 function showToast(message, type = 'info') {
-    const container = document.getElementById('toastContainer');
+    const icons = { success: 'ri-checkbox-circle-fill', error: 'ri-error-warning-fill', info: 'ri-information-fill' };
     const toast = document.createElement('div');
     toast.className = `toast toast-${type}`;
-    const icon = {
-        success: 'ri-checkbox-circle-fill',
-        error: 'ri-error-warning-fill',
-        info: 'ri-information-fill'
-    }[type] || 'ri-information-fill';
-
-    toast.innerHTML = `<i class="${icon}"></i><span>${escapeHtml(message)}</span>`;
-    container.appendChild(toast);
+    toast.innerHTML = `<i class="${icons[type] || icons.info}" style="font-size:18px"></i>
+                       <span style="font-size:13px">${escHtml(message)}</span>`;
+    document.getElementById('toastContainer').appendChild(toast);
     setTimeout(() => toast.remove(), 5000);
 }
 
-function escapeHtml(text) {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
+function escHtml(text) {
+    if (text === null || text === undefined) return '';
+    const d = document.createElement('div');
+    d.textContent = String(text);
+    return d.innerHTML;
 }
 </script>
 @endsection
