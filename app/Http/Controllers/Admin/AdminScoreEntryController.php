@@ -130,18 +130,7 @@ class AdminScoreEntryController extends Controller
         return view('admin.score-entry.lock-management', compact('pagetitle'));
     }
 
-<?php
-// ============================================================
-// PATCH — replace these two methods in AdminScoreEntryController
-// ============================================================
 
-// ─── 1. getScoresheetsList ────────────────────────────────────
-// Fixes:
-//  • Subquery counts used ambiguous `subjectclass_id` — now fully qualified
-//  • groupBy included nullable scoresheet_locks columns → MySQL strict mode
-//    error; we now use a LEFT JOIN but pull lock data via a separate scalar
-//    subquery so groupBy stays tight
-//  • Staff-id is irrelevant for the lock-management listing
 
 public function getScoresheetsList(Request $request)
 {
