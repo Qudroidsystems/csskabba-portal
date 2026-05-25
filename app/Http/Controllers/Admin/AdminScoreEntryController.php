@@ -31,9 +31,9 @@ class AdminScoreEntryController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['auth']);
-        $this->middleware('permission:View admin-score-entry')->only(['index']);
-        $this->middleware('permission:Update admin-score-entry')->only(['singleUpdate', 'bulkUpdate', 'mockSingleUpdate', 'mockBulkUpdate']);
+        $this->middleware('permission:View admin-score-entry|Create admin-score-entry|Update admin-score-entry|Delete admin-score-entry')->only(['index']);
+        $this->middleware('permission:Create admin-score-entry')->only(['create', 'store']);
+        $this->middleware('permission:Update admin-score-entry')->only(['edit', 'update', 'bulkUpdate', 'singleUpdate']);
         $this->middleware('permission:Delete admin-score-entry')->only(['destroy']);
     }
 
@@ -105,11 +105,13 @@ class AdminScoreEntryController extends Controller
             ->orderBy('schoolarm.arm')
             ->get()
             ->map(function ($item) {
+                // Check if terminal scores exist
                 $item->has_terminal_scores = Broadsheets::where('subjectclass_id', $item->subjectclass_id)
                     ->where('staff_id', $item->teacher_id)
                     ->where('term_id', $item->termid)
                     ->exists();
 
+                // Check if mock scores exist
                 $item->has_mock_scores = \App\Models\BroadsheetsMock::where('subjectclass_id', $item->subjectclass_id)
                     ->where('staff_id', $item->teacher_id)
                     ->where('term_id', $item->termid)
@@ -136,15 +138,17 @@ class AdminScoreEntryController extends Controller
             return $this->showMockScoresheet($subjectclassId, $teacherId, $termId, $sessionId);
         }
 
+        // Get subjectclass details
         $subjectClass = Subjectclass::with(['subject', 'schoolclass.arm', 'schoolclass.classcategories'])
             ->findOrFail($subjectclassId);
 
         $teacher = User::findOrFail($teacherId);
         $term = Schoolterm::findOrFail($termId);
         $session = Schoolsession::findOrFail($sessionId);
-        $school = SchoolInformation::getActiveSchool();
 
+        // Get broadsheets
         $broadsheets = $this->getBroadsheets($teacherId, $termId, $sessionId, $subjectClass->schoolclass_id, $subjectclassId);
+
         $schoolclass = $subjectClass->schoolclass;
         $assessments = collect();
 
@@ -155,11 +159,13 @@ class AdminScoreEntryController extends Controller
                 ->orderBy('id')
                 ->get();
 
+            // Update metrics and positions
             $this->updateClassMetrics($subjectclassId, $teacherId, $termId, $sessionId);
             $this->computeDynamicTotals($broadsheets, $assessments, $schoolclass, $termId, $sessionId);
             $this->updateSubjectPositions($subjectclassId, $teacherId, $termId, $sessionId);
             $this->updateClassPositions($schoolclass->id, $termId, $sessionId);
 
+            // Refresh broadsheets
             $broadsheets = $this->getBroadsheets($teacherId, $termId, $sessionId, $schoolclass->id, $subjectclassId);
             $this->computeOverallGPAAndCGPA($broadsheets, $schoolclass, $termId, $sessionId);
         }
@@ -181,7 +187,7 @@ class AdminScoreEntryController extends Controller
         return view('admin.score-entry.scoresheet', compact(
             'broadsheets', 'pagetitle', 'is_senior', 'assessments',
             'subjectclassId', 'teacherId', 'termId', 'sessionId',
-            'teacher', 'subjectClass', 'term', 'session', 'schoolclass', 'school'
+            'teacher', 'subjectClass', 'term', 'session', 'schoolclass'
         ));
     }
 
@@ -194,7 +200,6 @@ class AdminScoreEntryController extends Controller
         $teacher = User::findOrFail($teacherId);
         $term = Schoolterm::findOrFail($termId);
         $session = Schoolsession::findOrFail($sessionId);
-        $school = SchoolInformation::getActiveSchool();
 
         $broadsheets = $this->getMockBroadsheets($teacherId, $termId, $sessionId, $subjectClass->schoolclass_id, $subjectclassId);
         $schoolclass = $subjectClass->schoolclass;
@@ -222,7 +227,7 @@ class AdminScoreEntryController extends Controller
         return view('admin.score-entry.mock-scoresheet', compact(
             'broadsheets', 'pagetitle', 'is_senior', 'subjectclassId',
             'teacherId', 'termId', 'sessionId', 'teacher', 'subjectClass',
-            'term', 'session', 'schoolclass', 'school'
+            'term', 'session', 'schoolclass'
         ));
     }
 
@@ -759,86 +764,6 @@ class AdminScoreEntryController extends Controller
     }
 
     /**
-     * Calculate grade preview
-     */
-    public function calculateGradePreview(Request $request)
-    {
-        $request->validate([
-            'schoolclass_id' => 'required|exists:schoolclass,id',
-            'total' => 'required|numeric|min:0|max:100',
-            'cum' => 'required|numeric|min:0|max:100',
-        ]);
-
-        $schoolclass = Schoolclass::with('classcategories')->findOrFail($request->schoolclass_id);
-        $category = $schoolclass->classcategories->first();
-
-        $totalGrade = $category ? $category->calculateGrade($request->total) : $this->getDefaultGrade($request->total);
-        $cumGrade = $category ? $category->calculateGrade($request->cum) : $this->getDefaultGrade($request->cum);
-
-        return response()->json([
-            'success' => true,
-            'total_grade' => $totalGrade,
-            'cum_grade' => $cumGrade,
-            'remark' => $this->getRemark($totalGrade),
-        ]);
-    }
-
-    /**
-     * Download scoresheet PDF
-     */
-    public function downloadScoresheetPdf(Request $request)
-    {
-        try {
-            $subjectclassid = $request->input('subjectclass_id', session('admin_score_entry_subjectclass_id'));
-            $staffid = $request->input('staff_id', session('admin_score_entry_teacher_id'));
-            $termid = $request->input('term_id', session('admin_score_entry_term_id'));
-            $sessionid = $request->input('session_id', session('admin_score_entry_session_id'));
-            $schoolclassid = $request->input('schoolclass_id');
-
-            if (!$subjectclassid || !$staffid || !$termid || !$sessionid || !$schoolclassid) {
-                return response()->json(['success' => false, 'message' => 'Missing session data.'], 400);
-            }
-
-            $broadsheets = $this->getBroadsheets($staffid, $termid, $sessionid, $schoolclassid, $subjectclassid);
-
-            if ($broadsheets->isEmpty()) {
-                return response()->json(['success' => false, 'message' => 'No students found.'], 404);
-            }
-
-            $teacher = User::find($staffid);
-            $teacherName = $teacher ? ($teacher->name ?? '') : '';
-            $school = SchoolInformation::getActiveSchool();
-
-            $schoolclass = Schoolclass::with('classcategories')->find($schoolclassid);
-            $assessments = collect();
-            if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
-                $categoryIds = $schoolclass->classcategories->pluck('id');
-                $assessments = Assessment::whereIn('classcategory_id', $categoryIds)
-                    ->with('subAssessments')
-                    ->orderBy('id')
-                    ->get();
-            }
-
-            $pdf = Pdf::loadView('admin.score-entry.scoresheet-pdf', [
-                'broadsheets' => $broadsheets,
-                'assessments' => $assessments,
-                'classInfo' => $broadsheets->first(),
-                'school' => $school,
-                'teacherName' => $teacherName,
-                'staffId' => $staffid,
-            ]);
-
-            $pdf->setPaper('a4', 'landscape');
-            $filename = 'admin-scoresheet-' . date('Y-m-d') . '.pdf';
-            return $pdf->download($filename);
-
-        } catch (\Exception $e) {
-            Log::error('Admin scoresheet PDF error: ' . $e->getMessage());
-            return response()->json(['success' => false, 'message' => 'Failed: ' . $e->getMessage()], 500);
-        }
-    }
-
-    /**
      * Download marks sheet PDF
      */
     public function downloadMarksSheet(Request $request)
@@ -852,10 +777,10 @@ class AdminScoreEntryController extends Controller
             $type = $request->input('type', session('admin_score_entry_type', 'terminal'));
 
             if ($type === 'mock') {
-                $broadsheets = $this->getMockBroadsheets($staffid, $termid, $sessionid, $schoolclassid, $subjectclassid);
-            } else {
-                $broadsheets = $this->getBroadsheets($staffid, $termid, $sessionid, $schoolclassid, $subjectclassid);
+                return $this->downloadMockMarksSheet($subjectclassid, $staffid, $termid, $sessionid, $schoolclassid);
             }
+
+            $broadsheets = $this->getBroadsheets($staffid, $termid, $sessionid, $schoolclassid, $subjectclassid);
 
             if ($broadsheets->isEmpty()) {
                 return response()->json(['success' => false, 'message' => 'No students found.'], 404);
@@ -863,35 +788,57 @@ class AdminScoreEntryController extends Controller
 
             $teacher = User::find($staffid);
             $teacherName = $teacher ? ($teacher->name ?? '') : '';
-            $school = SchoolInformation::getActiveSchool();
 
             $schoolclass = Schoolclass::with('classcategories')->find($schoolclassid);
             $assessments = collect();
             if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
                 $categoryIds = $schoolclass->classcategories->pluck('id');
-                $assessments = Assessment::whereIn('classcategory_id', $categoryIds)
-                    ->with('subAssessments')
-                    ->orderBy('id')
-                    ->get();
+                $assessments = Assessment::whereIn('classcategory_id', $categoryIds)->with('subAssessments')->orderBy('id')->get();
             }
 
+            $school = SchoolInformation::first();
             $pdf = Pdf::loadView('admin.score-entry.marksheet-pdf', [
                 'broadsheets' => $broadsheets,
                 'assessments' => $assessments,
                 'classInfo' => $broadsheets->first(),
                 'school' => $school,
                 'teacherName' => $teacherName,
-                'staffId' => $staffid,
+                'isAdminView' => true,
             ]);
-
             $pdf->setPaper('a4', 'landscape');
-            $filename = 'admin-marks-sheet-' . date('Y-m-d') . '.pdf';
-            return $pdf->download($filename);
 
+            return $pdf->download('admin-marks-sheet-' . date('Y-m-d') . '.pdf');
         } catch (\Exception $e) {
-            Log::error('Admin marks sheet PDF error: ' . $e->getMessage());
+            Log::error('Admin marks sheet download error: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => 'Failed: ' . $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * Download mock marks sheet PDF
+     */
+    protected function downloadMockMarksSheet($subjectclassid, $staffid, $termid, $sessionid, $schoolclassid)
+    {
+        $broadsheets = $this->getMockBroadsheets($staffid, $termid, $sessionid, $schoolclassid, $subjectclassid);
+
+        if ($broadsheets->isEmpty()) {
+            return response()->json(['success' => false, 'message' => 'No mock scores found.'], 404);
+        }
+
+        $teacher = User::find($staffid);
+        $teacherName = $teacher ? ($teacher->name ?? '') : '';
+
+        $school = SchoolInformation::first();
+        $pdf = Pdf::loadView('admin.score-entry.mock-marksheet-pdf', [
+            'broadsheets' => $broadsheets,
+            'classInfo' => $broadsheets->first(),
+            'school' => $school,
+            'teacherName' => $teacherName,
+            'isAdminView' => true,
+        ]);
+        $pdf->setPaper('a4', 'landscape');
+
+        return $pdf->download('admin-mock-marks-sheet-' . date('Y-m-d') . '.pdf');
     }
 
     /**
@@ -980,7 +927,7 @@ class AdminScoreEntryController extends Controller
     }
 
     // =========================================================================
-    // QUERY HELPERS
+    // QUERY HELPERS (copied/adjusted from MyScoreSheetController)
     // =========================================================================
 
     protected function getBroadsheets($staffId, $termId, $sessionId, $schoolClassId = null, $subjectClassId = null)
@@ -1108,7 +1055,7 @@ class AdminScoreEntryController extends Controller
     }
 
     // =========================================================================
-    // POSITION / METRICS HELPERS
+    // POSITION / METRICS HELPERS (simplified versions)
     // =========================================================================
 
     protected function updateClassMetrics($subjectclassid, $staffid, $termid, $sessionid)
@@ -1451,4 +1398,120 @@ class AdminScoreEntryController extends Controller
             default => 'Fail',
         };
     }
+
+    // Add these methods to your AdminScoreEntryController.php
+
+/**
+ * Download Scoresheet PDF (Student Scores Report)
+ */
+public function downloadScoresheetPdf(Request $request)
+{
+    try {
+        $subjectclassid = $request->input('subjectclass_id', session('admin_score_entry_subjectclass_id'));
+        $staffid = $request->input('staff_id', session('admin_score_entry_teacher_id'));
+        $termid = $request->input('term_id', session('admin_score_entry_term_id'));
+        $sessionid = $request->input('session_id', session('admin_score_entry_session_id'));
+        $schoolclassid = $request->input('schoolclass_id');
+
+        if (!$subjectclassid || !$staffid || !$termid || !$sessionid || !$schoolclassid) {
+            return response()->json(['success' => false, 'message' => 'Missing session data.'], 400);
+        }
+
+        $broadsheets = $this->getBroadsheets($staffid, $termid, $sessionid, $schoolclassid, $subjectclassid);
+
+        if ($broadsheets->isEmpty()) {
+            return response()->json(['success' => false, 'message' => 'No students found.'], 404);
+        }
+
+        $teacher = User::find($staffid);
+        $teacherName = $teacher ? ($teacher->name ?? '') : '';
+
+        $schoolclass = Schoolclass::with('classcategories')->find($schoolclassid);
+        $assessments = collect();
+        if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
+            $categoryIds = $schoolclass->classcategories->pluck('id');
+            $assessments = Assessment::whereIn('classcategory_id', $categoryIds)
+                ->with('subAssessments')
+                ->orderBy('id')
+                ->get();
+        }
+
+        $school = SchoolInformation::first();
+
+        $pdf = Pdf::loadView('admin.score-entry.scoresheet-pdf', [
+            'broadsheets' => $broadsheets,
+            'assessments' => $assessments,
+            'classInfo' => $broadsheets->first(),
+            'school' => $school,
+            'teacherName' => $teacherName,
+            'staffId' => $staffid,
+        ]);
+
+        $pdf->setPaper('a4', 'landscape');
+
+        $filename = 'admin-scoresheet-' . date('Y-m-d') . '.pdf';
+        return $pdf->download($filename);
+
+    } catch (\Exception $e) {
+        Log::error('Admin scoresheet PDF download error: ' . $e->getMessage());
+        return response()->json(['success' => false, 'message' => 'Failed: ' . $e->getMessage()], 500);
+    }
+}
+
+/**
+ * Download Marks Sheet PDF (Blank for printing)
+ */
+public function downloadMarksSheetPdf(Request $request)
+{
+    try {
+        $subjectclassid = $request->input('subjectclass_id', session('admin_score_entry_subjectclass_id'));
+        $staffid = $request->input('staff_id', session('admin_score_entry_teacher_id'));
+        $termid = $request->input('term_id', session('admin_score_entry_term_id'));
+        $sessionid = $request->input('session_id', session('admin_score_entry_session_id'));
+        $schoolclassid = $request->input('schoolclass_id');
+
+        if (!$subjectclassid || !$staffid || !$termid || !$sessionid || !$schoolclassid) {
+            return response()->json(['success' => false, 'message' => 'Missing session data.'], 400);
+        }
+
+        $broadsheets = $this->getBroadsheets($staffid, $termid, $sessionid, $schoolclassid, $subjectclassid);
+
+        if ($broadsheets->isEmpty()) {
+            return response()->json(['success' => false, 'message' => 'No students found.'], 404);
+        }
+
+        $teacher = User::find($staffid);
+        $teacherName = $teacher ? ($teacher->name ?? '') : '';
+
+        $schoolclass = Schoolclass::with('classcategories')->find($schoolclassid);
+        $assessments = collect();
+        if ($schoolclass && $schoolclass->classcategories->isNotEmpty()) {
+            $categoryIds = $schoolclass->classcategories->pluck('id');
+            $assessments = Assessment::whereIn('classcategory_id', $categoryIds)
+                ->with('subAssessments')
+                ->orderBy('id')
+                ->get();
+        }
+
+        $school = SchoolInformation::first();
+
+        $pdf = Pdf::loadView('admin.score-entry.marksheet-pdf', [
+            'broadsheets' => $broadsheets,
+            'assessments' => $assessments,
+            'classInfo' => $broadsheets->first(),
+            'school' => $school,
+            'teacherName' => $teacherName,
+            'staffId' => $staffid,
+        ]);
+
+        $pdf->setPaper('a4', 'landscape');
+
+        $filename = 'admin-marks-sheet-' . date('Y-m-d') . '.pdf';
+        return $pdf->download($filename);
+
+    } catch (\Exception $e) {
+        Log::error('Admin marks sheet PDF download error: ' . $e->getMessage());
+        return response()->json(['success' => false, 'message' => 'Failed: ' . $e->getMessage()], 500);
+    }
+}
 }
