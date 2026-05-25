@@ -462,23 +462,6 @@ Route::post('subjectscoresheet/grade-for-score', [MyScoreSheetController::class,
 Route::post('/studentreports/column-options', [ViewStudentReportController::class, 'getColumnOptions'])->name('studentreports.column-options');
 Route::get('/studentreport/drawer-data/{studentId}/{schoolclassId}/{sessionId}/{termId}',[ViewStudentReportController::class, 'drawerData'])->name('studentreport.drawer-data');
 
-    // // Mock Scoresheet Routes
-    // Route::get('subjectscoresheet-mock', [MyScoreSheetController::class, 'mockIndex'])->name('subjectscoresheet-mock.index');
-    // Route::get('subjectscoresheet-mock/{schoolclassid}/{subjectclassid}/{staffid}/{termid}/{sessionid}', [MyScoreSheetController::class, 'mockSubjectscoresheet'])->name('subjectscoresheet-mock.show');
-    // Route::get('subjectscoresheet-mock/export', [MyScoreSheetController::class, 'mockExport'])->name('subjectscoresheet-mock.export');
-    // Route::post('subjectscoresheet-mock/import', [MyScoreSheetController::class, 'mockImport'])->name('subjectscoresheet-mock.import');
-    // Route::get('subjectscoresheet-mock/{id}/edit', [MyScoreSheetController::class, 'mockEdit'])->name('subjectscoresheet-mock.edit');
-    // Route::put('subjectscoresheet-mock/{id}', [MyScoreSheetController::class, 'mockUpdate'])->name('subjectscoresheet-mock.update');
-    // Route::post('scoresheet-mock/destroy', [MyScoreSheetController::class, 'mockDestroy'])->name('scoresheet-mock.destroy');
-    // Route::post('scoresheet-mock/bulk-update', [MyScoreSheetController::class, 'mockBulkUpdateScores'])->name('scoresheet-mock.bulk-update');
-    // Route::get('subjectscoresheet-mock/results', [MyScoreSheetController::class, 'mockResults'])->name('subjectscoresheet-mock.results');
-    // Route::get('subjectscoresheet-mock/download-marksheet', [MyScoreSheetController::class, 'mockDownloadMarkSheet'])->name('subjectscoresheet-mock.download-marksheet');
-    // // Route::get('/job/status/{job_id}', [JobStatusController::class, 'show'])->name('job.status');
-    // Route::post('subjectscoresheet-mock/calculate-grade', [MyScoreSheetController::class, 'calculateGradeForScore'])->name('subjectscoresheet-mock.calculate-grade');
-    // Route::get('/subassessment/scoresheet/{schoolclassid}/{subjectclassid}/{staffid}/{termid}/{sessionid}/{subassessmentid}', [MyScoreSheetController::class, 'subassessmentScoresheet'])->name('subassessment.scoresheet');
-    // Route::get('/assessment/scoresheet/{schoolclassid}/{subjectclassid}/{staffid}/{termid}/{sessionid}/{assessmentid}', [MyScoreSheetController::class, 'assessmentScoresheet'])->name('assessment.scoresheet');
-    // Route::post('/subjectscoresheet/single-update', [MyScoreSheetController::class, 'singleUpdateScore'])->name('subjectscoresheet.single-update');
-    // Route::post('scoresheet-mock/single-update', [MyScoreSheetController::class, 'mockSingleUpdateScore']) ->name('scoresheet-mock.single-update');
 
 
     // Mock Scoresheet Routes - STATIC ROUTES FIRST
