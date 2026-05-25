@@ -1,352 +1,277 @@
-{{-- resources/views/admin/score-entry/scoresheet-pdf.blade.php --}}
+{{-- resources/views/admin/score-entry/marksheet-pdf.blade.php --}}
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Student Scores Sheet - Admin Generated</title>
+    <title>Student Marks Sheet - Admin Generated</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
         body {
             font-family: 'Segoe UI', Arial, sans-serif;
-            padding: 16px;
-            font-size: 10.5px;
+            padding: 18px;
+            font-size: 11px;
             background: #fff;
             color: #222;
         }
 
-        /* ── Header ─────────────────────────────────────────────── */
+        .first-page { page-break-after: avoid; }
+        .table-container { page-break-before: always; margin-top: 0; }
+
         .header {
             text-align: center;
-            padding-bottom: 12px;
-            border-bottom: 3px solid #1a3c6e;
-            margin-bottom: 12px;
+            padding-bottom: 14px;
+            border-bottom: 2px solid #1a3c6e;
+            margin-bottom: 14px;
         }
-        .school-logo  { width: 65px; height: auto; margin-bottom: 5px; }
-        .school-name  { font-size: 18px; font-weight: 700; color: #1a3c6e; text-transform: uppercase; letter-spacing: 1px; }
-        .school-detail{ font-size: 9.5px; color: #555; margin: 2px 0; }
+        .school-logo { width: 70px; height: auto; margin-bottom: 6px; }
+        .school-name { font-size: 20px; font-weight: 700; color: #1a3c6e; text-transform: uppercase; letter-spacing: 1px; }
+        .school-details { font-size: 10px; color: #555; margin: 2px 0; }
 
-        .doc-title-wrap { text-align: center; margin: 10px 0; }
         .doc-title {
-            font-size: 13px; font-weight: bold; color: #1a3c6e;
-            text-transform: uppercase; letter-spacing: 2px;
-            border: 2px solid #1a3c6e; display: inline-block;
-            padding: 4px 20px; border-radius: 4px;
+            font-size: 15px; font-weight: bold; text-align: center;
+            color: #1a3c6e; text-transform: uppercase; letter-spacing: 2px;
+            margin: 12px 0 10px; border: 2px solid #1a3c6e;
+            display: inline-block; padding: 4px 20px; border-radius: 4px;
         }
+        .doc-title-wrap { text-align: center; }
 
-        /* Admin Banner */
         .admin-banner {
             background: #fef3c7;
             border-left: 4px solid #d97706;
             padding: 6px 12px;
-            margin-bottom: 10px;
+            margin: 10px 0;
             border-radius: 4px;
             font-size: 9px;
         }
-        .admin-banner strong {
-            color: #d97706;
-        }
+        .admin-banner strong { color: #d97706; }
 
-        /* ── Info strip ─────────────────────────────────────────── */
-        .info-strip {
-            display: flex; flex-wrap: wrap;
+        .class-info {
+            display: table;
+            width: 100%;
             background: #f0f4fa;
             border: 1px solid #c5d3e8;
-            border-radius: 6px;
             padding: 8px 12px;
-            gap: 6px 24px;
-            margin-bottom: 12px;
-            font-size: 10px;
+            margin: 10px 0;
+            border-radius: 6px;
+            font-size: 10.5px;
         }
-        .info-item { white-space: nowrap; }
+        .info-row { display: table-row; }
+        .info-cell { display: table-cell; padding: 2px 12px 2px 0; }
         .info-label { font-weight: 700; color: #1a3c6e; }
 
-        /* ── Summary row ────────────────────────────────────────── */
-        .summary-row {
-            display: flex; gap: 8px; margin-bottom: 12px;
+        .instructions {
+            background: #fffbe6;
+            border-left: 4px solid #f59e0b;
+            padding: 8px 12px;
+            margin-bottom: 14px;
+            border-radius: 0 4px 4px 0;
+            font-size: 10px;
         }
-        .sum-box {
-            flex: 1; text-align: center;
-            border-radius: 6px; padding: 7px 4px;
-            border: 1px solid #ccc;
-        }
-        .sum-box .sv { font-size: 16px; font-weight: 700; }
-        .sum-box .sl { font-size: 9px; color: #555; margin-top: 2px; }
+        .instructions strong { color: #b45309; display: block; margin-bottom: 4px; font-size: 11px; }
+        .instructions ul { margin-left: 20px; }
+        .instructions li { margin-bottom: 2px; }
 
-        /* ── Table ──────────────────────────────────────────────── */
-        table.scores {
+        table.marks {
             width: 100%;
             border-collapse: collapse;
-            font-size: 10px;
-            margin-bottom: 20px;
+            font-size: 10.5px;
+            margin-bottom: 30px;
         }
-
-        .student-photo {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 1px solid #c5d3e8;
-            background: #f0f4fa;
-        }
-        .photo-cell {
-            width: 40px;
-            text-align: center;
-        }
-
-        .scores th, .scores td {
+        .marks th, .marks td {
             border: 1px solid #aab8cc;
-            padding: 4px 4px;
+            padding: 5px 4px;
             text-align: center;
             vertical-align: middle;
         }
-        .scores thead tr { background: #1a3c6e; color: #fff; }
-        .scores thead th { font-weight: 600; font-size: 9.5px; }
-        .scores tbody tr:nth-child(even) { background: #f5f8fd; }
-        .scores td.name-col { text-align: left; padding-left: 6px; min-width: 130px; }
+        .marks thead tr { background: #1a3c6e; color: #fff; }
+        .marks thead th { font-weight: 600; font-size: 10px; letter-spacing: 0.3px; }
+        .marks tbody tr:nth-child(even) { background: #f5f8fd; }
+        .marks td.name-col { text-align: left; padding-left: 7px; min-width: 140px; }
+        .marks td.score-col { min-width: 45px; }
+        .marks tfoot td { background: #e8f0fe; font-weight: 700; font-size: 10px; }
 
-        /* Grade colouring */
-        .g-A, .g-A1 { color: #166534; font-weight: 700; }
-        .g-B, .g-B2, .g-B3 { color: #1d4ed8; font-weight: 700; }
-        .g-C, .g-C4, .g-C5, .g-C6 { color: #6d28d9; font-weight: 700; }
-        .g-D, .g-D7, .g-E8 { color: #b45309; font-weight: 700; }
-        .g-F, .g-F9 { color: #dc2626; font-weight: 700; }
-
-        /* ── Grade distribution bar ─────────────────────────────── */
-        .grade-section { margin-bottom: 14px; }
-        .grade-section h4 { font-size: 10px; font-weight: 700; color: #1a3c6e; margin-bottom: 6px; }
-        .grade-row { display: flex; gap: 6px; flex-wrap: wrap; }
-        .grade-chip {
-            border-radius: 5px; padding: 4px 8px;
-            font-weight: 700; font-size: 10px;
-            border: 1px solid currentColor;
+        .footer {
+            width: 100%;
+            background: #f0f4fa;
+            border: 1px solid #c5d3e8;
+            padding: 8px 12px;
+            margin: 10px 0;
+            border-radius: 6px;
+            font-size: 10.5px;
         }
-
-        /* ── Footer / Signatures ────────────────────────────────── */
-        .sig-section {
-            display: flex; gap: 12px; margin-top: 16px;
-            border-top: 1px solid #c5d3e8; padding-top: 12px;
+        .footer-row { display: table; width: 100%; }
+        .footer-cell {
+            display: table-cell;
+            text-align: center;
+            padding: 2px 12px;
+            border-right: 1px solid #c5d3e8;
         }
-        .sig-box { flex: 1; text-align: center; }
-        .sig-title { font-weight: 700; color: #1a3c6e; font-size: 10px; margin-bottom: 20px; }
-        .sig-line { border-top: 1px solid #333; padding-top: 4px; font-size: 9px; color: #555; }
+        .footer-cell:last-child { border-right: none; }
+        .sig-line { border-top: 1px solid #333; margin-top: 30px; padding-top: 6px; font-size: 10px; font-weight: 600; }
+        .sig-title { font-weight: 700; color: #1a3c6e; margin-bottom: 5px; }
+        .sig-name { font-size: 9px; color: #555; margin-top: 5px; font-style: italic; }
 
-        /* ── Page breaks ────────────────────────────────────────── */
         @media print {
-            body { font-size: 9.5px; }
-            .page-break { page-break-before: always; }
+            body { font-size: 10px; }
+            .first-page { page-break-after: avoid; }
+            .table-container { page-break-before: always; }
         }
     </style>
 </head>
 <body>
 
-{{-- ── HEADER ─────────────────────────────────────────────────────── --}}
-<div class="header">
-    @if($school && $school->school_logo)
-        <img src="{{ public_path('storage/'.$school->school_logo) }}" alt="Logo" class="school-logo">
+{{-- FIRST PAGE: Header, School Info, and Instructions --}}
+<div class="first-page">
+
+    <div class="header">
+        @php
+            if (!isset($school)) {
+                $school = App\Models\SchoolInformation::getActiveSchool();
+            }
+        @endphp
+        @if(isset($school) && $school && $school->school_logo)
+            <img src="{{ public_path('storage/' . $school->school_logo) }}" alt="Logo" class="school-logo">
+        @endif
+        <div class="school-name">{{ isset($school) && $school ? $school->school_name : 'School Name' }}</div>
+        @if(isset($school) && $school)
+            @if($school->school_address)<div class="school-details">{{ $school->school_address }}</div>@endif
+            @if($school->school_phone)<div class="school-details">Tel: {{ $school->school_phone }}</div>@endif
+            @if($school->school_email)<div class="school-details">Email: {{ $school->school_email }}</div>@endif
+            @if($school->school_motto)<div class="school-details"><em>"{{ $school->school_motto }}"</em></div>@endif
+        @endif
+    </div>
+
+    <div class="admin-banner">
+        <strong>📋 Admin Generated Marks Sheet</strong> — This document was generated by an administrator for official use.
+    </div>
+
+    <div class="doc-title-wrap">
+        <span class="doc-title">STUDENT MARKS SHEET</span>
+    </div>
+
+    @php
+        $firstBroadSheet = $broadsheets->first();
+    @endphp
+    @if($firstBroadSheet)
+    <div class="class-info">
+        <div class="info-row">
+            <div class="info-cell"><span class="info-label">Subject:</span> {{ $firstBroadSheet->subject ?? '' }} ({{ $firstBroadSheet->subject_code ?? '' }})</div>
+            <div class="info-cell"><span class="info-label">Class:</span> {{ $firstBroadSheet->schoolclass ?? '' }} {{ $firstBroadSheet->arm ?? '' }}</div>
+            <div class="info-cell"><span class="info-label">Teacher:</span> {{ $teacherName ?? 'N/A' }} <span style="color:#d97706;">(Admin Entry)</span></div>
+            <div class="info-cell"><span class="info-label">Term:</span> {{ $firstBroadSheet->term ?? 'First Term' }}</div>
+            <div class="info-cell"><span class="info-label">Session:</span> {{ $firstBroadSheet->session ?? '2025/2026' }}</div>
+            <div class="info-cell"><span class="info-label">Date:</span> {{ date('d M Y') }}</div>
+        </div>
+    </div>
+
+    <div class="instructions">
+        <strong>📋 Instructions for Teachers:</strong>
+        <ul>
+            <li>Fill in all scores clearly. Use only blue or black ink.</li>
+            <li>Assessment columns and maximum scores are listed in the table header.</li>
+            @if($assessments->isNotEmpty())
+                <li>
+                    Max scores:
+                    @foreach($assessments as $a)
+                        <strong>{{ $a->name }}</strong> ({{ number_format($a->max_score, 2) }}){{ !$loop->last ? ', ' : '' }}
+                    @endforeach
+                    &mdash; <strong>Total</strong> ({{ number_format($assessments->sum('max_score'), 2) }})
+                </li>
+            @endif
+            <li>Sign and submit to the Academic Office after completion.</li>
+            <li><strong style="color:#d97706;">Note:</strong> This marks sheet was generated by an administrator. Please verify all entries.</li>
+        </ul>
+    </div>
     @endif
-    <div class="school-name">{{ $school->school_name ?? 'School Name' }}</div>
-    @if($school)
-        @if($school->school_address)<div class="school-detail">{{ $school->school_address }}</div>@endif
-        @if($school->school_phone)<div class="school-detail">Tel: {{ $school->school_phone }}</div>@endif
-        @if($school->school_email)<div class="school-detail">Email: {{ $school->school_email }}</div>@endif
-        @if($school->school_motto)<div class="school-detail"><em>"{{ $school->school_motto }}"</em></div>@endif
-    @endif
+
 </div>
 
-{{-- Admin Banner --}}
-<div class="admin-banner">
-    <i class="ri-shield-user-line"></i> <strong>Admin Generated Report</strong> — This scoresheet was generated by an administrator on behalf of the subject teacher.
-</div>
+{{-- SECOND PAGE AND BEYOND: Students Table and Footer --}}
+<div class="table-container">
 
-<div class="doc-title-wrap"><span class="doc-title">SUBJECT SCORES REPORT</span></div>
-
-{{-- ── INFO STRIP ─────────────────────────────────────────────────── --}}
-@if($classInfo)
-@php
-    $total    = $broadsheets->count();
-    $passed   = $broadsheets->filter(fn($b) => ($b->cum ?? 0) >= 40)->count();
-    $failed   = $total - $passed;
-    $avg      = $total > 0 ? round($broadsheets->avg('cum'), 1) : 0;
-    $highest  = $total > 0 ? round($broadsheets->max('cum'), 1) : 0;
-    $lowest   = $total > 0 ? round($broadsheets->min('cum'), 1) : 0;
-    $passRate = $total > 0 ? round($passed / $total * 100) : 0;
-
-    $gradeDist = $broadsheets->groupBy('grade')->map->count()->sortKeysDesc();
-    $gradeColorMap = [
-        'A'=>'#166534','A1'=>'#166534',
-        'B'=>'#1d4ed8','B2'=>'#1d4ed8','B3'=>'#3b82f6',
-        'C'=>'#6d28d9','C4'=>'#6d28d9','C5'=>'#8b5cf6','C6'=>'#a78bfa',
-        'D'=>'#b45309','D7'=>'#b45309','E8'=>'#d97706',
-        'F'=>'#dc2626','F9'=>'#dc2626',
-    ];
-@endphp
-<div class="info-strip">
-    <div class="info-item"><span class="info-label">Subject:</span> {{ $classInfo->subject }} ({{ $classInfo->subject_code }})</div>
-    <div class="info-item"><span class="info-label">Class:</span> {{ $classInfo->schoolclass }} {{ $classInfo->arm }}</div>
-    <div class="info-item"><span class="info-label">Teacher:</span> {{ $teacherName ?? 'N/A' }} <span style="color:#d97706;">(Entered by Admin)</span></div>
-    <div class="info-item"><span class="info-label">Term:</span> {{ $classInfo->term ?? '-' }}</div>
-    <div class="info-item"><span class="info-label">Session:</span> {{ $classInfo->session ?? '-' }}</div>
-    <div class="info-item"><span class="info-label">Date:</span> {{ date('d M Y') }}</div>
-</div>
-
-{{-- ── SUMMARY BOXES ───────────────────────────────────────────────── --}}
-<div class="summary-row">
-    <div class="sum-box" style="background:#eff6ff;border-color:#bfdbfe;">
-        <div class="sv" style="color:#1d4ed8;">{{ $total }}</div>
-        <div class="sl">Students</div>
-    </div>
-    <div class="sum-box" style="background:#f0fdf4;border-color:#bbf7d0;">
-        <div class="sv" style="color:#166534;">{{ $passed }}</div>
-        <div class="sl">Passed</div>
-    </div>
-    <div class="sum-box" style="background:#fef2f2;border-color:#fecaca;">
-        <div class="sv" style="color:#dc2626;">{{ $failed }}</div>
-        <div class="sl">Failed</div>
-    </div>
-    <div class="sum-box" style="background:#fffbeb;border-color:#fde68a;">
-        <div class="sv" style="color:#b45309;">{{ $avg }}</div>
-        <div class="sl">Average</div>
-    </div>
-    <div class="sum-box" style="background:#f5f3ff;border-color:#ddd6fe;">
-        <div class="sv" style="color:#6d28d9;">{{ $highest }}</div>
-        <div class="sl">Highest</div>
-    </div>
-    <div class="sum-box" style="background:#fef2f2;border-color:#fecaca;">
-        <div class="sv" style="color:#dc2626;">{{ $lowest }}</div>
-        <div class="sl">Lowest</div>
-    </div>
-    <div class="sum-box" style="background:#f0fdf4;border-color:#bbf7d0;">
-        <div class="sv" style="color:#166534;">{{ $passRate }}%</div>
-        <div class="sl">Pass Rate</div>
-    </div>
-</div>
-
-{{-- ── GRADE DISTRIBUTION ─────────────────────────────────────────── --}}
-@if($gradeDist->isNotEmpty())
-<div class="grade-section">
-    <h4>Grade Distribution</h4>
-    <div class="grade-row">
-        @foreach($gradeDist as $grade => $count)
-            @php $col = $gradeColorMap[$grade] ?? '#6b7280'; $pct = $total > 0 ? round($count/$total*100) : 0; @endphp
-            <div class="grade-chip" style="color:{{ $col }};background:{{ $col }}18;border-color:{{ $col }}60;">
-                {{ $grade }}: {{ $count }} ({{ $pct }}%)
-            </div>
-        @endforeach
-    </div>
-</div>
-@endif
-@endif {{-- classInfo --}}
-
-{{-- ── SCORES TABLE ───────────────────────────────────────────────── --}}
-<table class="scores">
-    <thead>
-        <tr>
-            <th style="width:26px;">S/N</th>
-            <th style="width:40px;">Photo</th>
-            <th style="min-width:70px;">Adm. No</th>
-            <th style="min-width:130px;">Student Name</th>
-            @foreach($assessments as $assessment)
-                <th>{{ $assessment->name }}<br><span style="font-weight:400;font-size:8.5px;">({{ number_format($assessment->max_score, 0) }})</span></th>
-            @endforeach
-            <th style="background:#163275;">Total<br><span style="font-weight:400;font-size:8.5px;">({{ number_format($assessments->sum('max_score'), 0) }})</span></th>
-            <th>BF</th>
-            <th>Cum</th>
-            <th>Grade</th>
-            <th>Pos</th>
-            <th>Remark</th>
-        </tr>
-    </thead>
-    <tbody>
-        @forelse($broadsheets as $idx => $student)
-            @php
-                $rowTotal = 0;
-                foreach($assessments as $a) {
-                    $so = $student->assessmentScores->where('assessment_id', $a->id)->first();
-                    $rowTotal += $so ? $so->score : 0;
-                }
-                $cum      = $student->cum ?? 0;
-                $grade    = $student->grade ?? '-';
-                $gradeClass = 'g-' . str_replace(' ', '', $grade);
-                $pos      = $student->position ?? '-';
-                $posText  = is_numeric($pos) ? $pos.(['th','st','nd','rd'][($pos%10 <= 3 && ($pos%100 < 11 || $pos%100 > 13)) ? $pos%10 : 0] ?? 'th') : $pos;
-
-                $photoPath = $student->picture ?? null;
-                $hasPhoto = $photoPath && file_exists(public_path('storage/student_avatars/' . basename($photoPath)));
-            @endphp
+    <table class="marks">
+        <thead>
             <tr>
-                <td>{{ $idx + 1 }}</td>
-                <td class="photo-cell">
-                    @if($hasPhoto)
-                        <img src="{{ public_path('storage/student_avatars/' . basename($photoPath)) }}"
-                             class="student-photo"
-                             alt="Photo">
-                    @else
-                        <img src="{{ public_path('storage/student_avatars/unnamed.jpg') }}"
-                             class="student-photo"
-                             alt="No Photo">
-                    @endif
-                </td>
-                <td>{{ $student->admissionno ?? '-' }}</td>
-                <td class="name-col"><strong>{{ $student->lname ?? '' }}</strong> {{ $student->fname ?? '' }} {{ $student->mname ?? '' }}</td>
+                <th style="width:30px;">S/N</th>
+                <th style="min-width:90px;">Adm. No</th>
+                <th style="min-width:150px;">Student Name</th>
                 @foreach($assessments as $assessment)
-                    @php $so = $student->assessmentScores->where('assessment_id', $assessment->id)->first(); @endphp
-                    <td>{{ $so ? number_format($so->score, 1) : '0.0' }}</td>
+                    <th class="score-col">
+                        {{ $assessment->name }}<br>
+                        <small style="font-weight:normal;font-size:9px;">({{ number_format($assessment->max_score, 2) }})</small>
+                    </th>
                 @endforeach
-                <td style="font-weight:700;">{{ number_format($rowTotal, 1) }}</td>
-                <td>{{ number_format($student->bf ?? 0, 1) }}</td>
-                <td style="font-weight:700;
-                    @if($cum >= 70) color:#166534; @elseif($cum >= 50) color:#1d4ed8; @elseif($cum >= 40) color:#b45309; @else color:#dc2626; @endif">
-                    {{ number_format($cum, 1) }}
-                </td>
-                <td class="{{ $gradeClass }}">{{ $grade }}</td>
-                <td>{{ $posText }}</td>
-                <td>{{ $student->remark ?? '-' }}</td>
+                <th class="score-col" style="background:#163275;">
+                    Total<br>
+                    <small style="font-weight:normal;font-size:9px;">({{ number_format($assessments->sum('max_score'), 2) }})</small>
+                </th>
             </tr>
-        @empty
+        </thead>
+        <tbody>
+            @forelse($broadsheets as $index => $student)
+                <tr>
+                    <td>{{ $index + 1 }}</td>
+                    <td>{{ $student->admissionno ?? '-' }}</td>
+                    <td class="name-col">
+                        <strong>{{ $student->lname ?? '' }}</strong>
+                        {{ $student->fname ?? '' }}
+                        {{ $student->mname ?? '' }}
+                    </td>
+                    @foreach($assessments as $assessment)
+                        <td class="score-col"></td>
+                    @endforeach
+                    <td class="score-col"></td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="{{ 3 + $assessments->count() + 1 }}" style="text-align:center;padding:12px;">
+                        No students found.
+                    </td>
+                </tr>
+            @endforelse
+        </tbody>
+        @if($broadsheets->isNotEmpty())
+        <tfoot>
             <tr>
-                <td colspan="{{ 5 + $assessments->count() + 5 }}" style="text-align:center;padding:12px;">No students found.</td>
+                <td colspan="3" style="text-align:right;font-style:italic;">
+                    Total Students: {{ $broadsheets->count() }}
+                </td>
+                @foreach($assessments as $assessment)
+                    <td></td>
+                @endforeach
+                <td></td>
             </tr>
-        @endforelse
-    </tbody>
-    @if($broadsheets->isNotEmpty())
-    <tfoot>
-        <tr style="background:#e8f0fe;font-weight:700;font-size:9.5px;">
-            <td colspan="3" style="text-align:right;font-style:italic;">
-                {{ $broadsheets->count() }} student(s) &nbsp;|&nbsp; Class Avg: {{ $avg }}
-            </td>
-            @foreach($assessments as $a)
-                @php $aSum = $broadsheets->sum(fn($b) => optional($b->assessmentScores->where('assessment_id',$a->id)->first())->score ?? 0); @endphp
-                <td>{{ number_format($aSum / max($broadsheets->count(),1), 1) }}</td>
-            @endforeach
-            <td>-</td>
-            <td>-</td>
-            <td>{{ $avg }}</td>
-            <td colspan="3">Pass: {{ $passRate }}%</td>
-        </tr>
-    </tfoot>
-    @endif
-</table>
+        </tfoot>
+        @endif
+    </table>
 
-{{-- ── SIGNATURES ─────────────────────────────────────────────────── --}}
-<div class="sig-section">
-    <div class="sig-box">
-        <div class="sig-title">Subject Teacher</div>
-        <div class="sig-line">{{ $teacherName ?? '________________________' }}</div>
-        <div class="sig-name" style="font-size:8px;color:#d97706;">(Entered by Admin)</div>
+    <div class="footer">
+        <div class="footer-row">
+            <div class="footer-cell">
+                <div class="sig-title">Subject Teacher</div>
+                <div class="sig-line"></div>
+                <div class="sig-name">Name: _________________</div>
+                <div class="sig-name" style="color:#d97706;font-size:8px;">(Admin: {{ $teacherName ?? 'Admin User' }})</div>
+            </div>
+            <div class="footer-cell">
+                <div class="sig-title">H.O.D</div>
+                <div class="sig-line"></div>
+                <div class="sig-name">Name: _________________</div>
+            </div>
+            <div class="footer-cell">
+                <div class="sig-title">Principal</div>
+                <div class="sig-line"></div>
+                <div class="sig-name">Name: _________________</div>
+            </div>
+            <div class="footer-cell">
+                <div class="sig-title">Date</div>
+                <div class="sig-line"></div>
+                <div class="sig-name">____/____/________</div>
+            </div>
+        </div>
     </div>
-    <div class="sig-box">
-        <div class="sig-title">H.O.D</div>
-        <div class="sig-line">________________________</div>
-    </div>
-    <div class="sig-box">
-        <div class="sig-title">Principal</div>
-        <div class="sig-line">________________________</div>
-    </div>
-    <div class="sig-box">
-        <div class="sig-title">Date</div>
-        <div class="sig-line">{{ date('d / m / Y') }}</div>
-    </div>
+
 </div>
 
 </body>

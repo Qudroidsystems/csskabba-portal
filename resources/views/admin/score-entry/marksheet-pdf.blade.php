@@ -15,16 +15,8 @@
             color: #222;
         }
 
-        /* First page content */
-        .first-page {
-            page-break-after: avoid;
-        }
-
-        /* Table container - forces new page */
-        .table-container {
-            page-break-before: always;
-            margin-top: 0;
-        }
+        .first-page { page-break-after: avoid; }
+        .table-container { page-break-before: always; margin-top: 0; }
 
         .header {
             text-align: center;
@@ -32,46 +24,18 @@
             border-bottom: 2px solid #1a3c6e;
             margin-bottom: 14px;
         }
-
-        .school-logo {
-            width: 70px;
-            height: auto;
-            margin-bottom: 6px;
-        }
-
-        .school-name {
-            font-size: 20px;
-            font-weight: 700;
-            color: #1a3c6e;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .school-details {
-            font-size: 10px;
-            color: #555;
-            margin: 2px 0;
-        }
+        .school-logo { width: 70px; height: auto; margin-bottom: 6px; }
+        .school-name { font-size: 20px; font-weight: 700; color: #1a3c6e; text-transform: uppercase; letter-spacing: 1px; }
+        .school-details { font-size: 10px; color: #555; margin: 2px 0; }
 
         .doc-title {
-            font-size: 15px;
-            font-weight: bold;
-            text-align: center;
-            color: #1a3c6e;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            margin: 12px 0 10px;
-            border: 2px solid #1a3c6e;
-            display: inline-block;
-            padding: 4px 20px;
-            border-radius: 4px;
+            font-size: 15px; font-weight: bold; text-align: center;
+            color: #1a3c6e; text-transform: uppercase; letter-spacing: 2px;
+            margin: 12px 0 10px; border: 2px solid #1a3c6e;
+            display: inline-block; padding: 4px 20px; border-radius: 4px;
         }
+        .doc-title-wrap { text-align: center; }
 
-        .doc-title-wrap {
-            text-align: center;
-        }
-
-        /* Admin Banner */
         .admin-banner {
             background: #fef3c7;
             border-left: 4px solid #d97706;
@@ -80,9 +44,7 @@
             border-radius: 4px;
             font-size: 9px;
         }
-        .admin-banner strong {
-            color: #d97706;
-        }
+        .admin-banner strong { color: #d97706; }
 
         .class-info {
             display: table;
@@ -94,20 +56,9 @@
             border-radius: 6px;
             font-size: 10.5px;
         }
-
-        .info-row {
-            display: table-row;
-        }
-
-        .info-cell {
-            display: table-cell;
-            padding: 2px 12px 2px 0;
-        }
-
-        .info-label {
-            font-weight: 700;
-            color: #1a3c6e;
-        }
+        .info-row { display: table-row; }
+        .info-cell { display: table-cell; padding: 2px 12px 2px 0; }
+        .info-label { font-weight: 700; color: #1a3c6e; }
 
         .instructions {
             background: #fffbe6;
@@ -117,69 +68,29 @@
             border-radius: 0 4px 4px 0;
             font-size: 10px;
         }
+        .instructions strong { color: #b45309; display: block; margin-bottom: 4px; font-size: 11px; }
+        .instructions ul { margin-left: 20px; }
+        .instructions li { margin-bottom: 2px; }
 
-        .instructions strong {
-            color: #b45309;
-            display: block;
-            margin-bottom: 4px;
-            font-size: 11px;
-        }
-
-        .instructions ul {
-            margin-left: 20px;
-        }
-
-        .instructions li {
-            margin-bottom: 2px;
-        }
-
-        /* Table Styles */
         table.marks {
             width: 100%;
             border-collapse: collapse;
             font-size: 10.5px;
             margin-bottom: 30px;
         }
-
         .marks th, .marks td {
             border: 1px solid #aab8cc;
             padding: 5px 4px;
             text-align: center;
             vertical-align: middle;
         }
+        .marks thead tr { background: #1a3c6e; color: #fff; }
+        .marks thead th { font-weight: 600; font-size: 10px; letter-spacing: 0.3px; }
+        .marks tbody tr:nth-child(even) { background: #f5f8fd; }
+        .marks td.name-col { text-align: left; padding-left: 7px; min-width: 140px; }
+        .marks td.score-col { min-width: 45px; }
+        .marks tfoot td { background: #e8f0fe; font-weight: 700; font-size: 10px; }
 
-        .marks thead tr {
-            background: #1a3c6e;
-            color: #fff;
-        }
-
-        .marks thead th {
-            font-weight: 600;
-            font-size: 10px;
-            letter-spacing: 0.3px;
-        }
-
-        .marks tbody tr:nth-child(even) {
-            background: #f5f8fd;
-        }
-
-        .marks td.name-col {
-            text-align: left;
-            padding-left: 7px;
-            min-width: 140px;
-        }
-
-        .marks td.score-col {
-            min-width: 45px;
-        }
-
-        .marks tfoot td {
-            background: #e8f0fe;
-            font-weight: 700;
-            font-size: 10px;
-        }
-
-        /* Footer Styles - Same line layout */
         .footer {
             width: 100%;
             background: #f0f4fa;
@@ -189,68 +100,22 @@
             border-radius: 6px;
             font-size: 10.5px;
         }
-
-        .footer-row {
-            display: table;
-            width: 100%;
-        }
-
+        .footer-row { display: table; width: 100%; }
         .footer-cell {
             display: table-cell;
             text-align: center;
             padding: 2px 12px;
             border-right: 1px solid #c5d3e8;
         }
+        .footer-cell:last-child { border-right: none; }
+        .sig-line { border-top: 1px solid #333; margin-top: 30px; padding-top: 6px; font-size: 10px; font-weight: 600; }
+        .sig-title { font-weight: 700; color: #1a3c6e; margin-bottom: 5px; }
+        .sig-name { font-size: 9px; color: #555; margin-top: 5px; font-style: italic; }
 
-        .footer-cell:last-child {
-            border-right: none;
-        }
-
-        .sig-line {
-            border-top: 1px solid #333;
-            margin-top: 30px;
-            padding-top: 6px;
-            font-size: 10px;
-            font-weight: 600;
-        }
-
-        .sig-title {
-            font-weight: 700;
-            color: #1a3c6e;
-            margin-bottom: 5px;
-        }
-
-        .sig-name {
-            font-size: 9px;
-            color: #555;
-            margin-top: 5px;
-            font-style: italic;
-        }
-
-        /* Page break control */
-        .page-break {
-            page-break-before: always;
-        }
-
-        /* Ensure footer stays within page */
         @media print {
-            body {
-                font-size: 10px;
-            }
-
-            .first-page {
-                page-break-after: avoid;
-            }
-
-            .table-container {
-                page-break-before: always;
-            }
-
-            .footer {
-                position: fixed;
-                bottom: 20px;
-                width: 100%;
-            }
+            body { font-size: 10px; }
+            .first-page { page-break-after: avoid; }
+            .table-container { page-break-before: always; }
         }
     </style>
 </head>
@@ -259,13 +124,17 @@
 {{-- FIRST PAGE: Header, School Info, and Instructions --}}
 <div class="first-page">
 
-    {{-- Header --}}
     <div class="header">
-        @if($school && $school->school_logo)
+        @php
+            if (!isset($school)) {
+                $school = App\Models\SchoolInformation::getActiveSchool();
+            }
+        @endphp
+        @if(isset($school) && $school && $school->school_logo)
             <img src="{{ public_path('storage/' . $school->school_logo) }}" alt="Logo" class="school-logo">
         @endif
-        <div class="school-name">{{ $school->school_name ?? 'School Name' }}</div>
-        @if($school)
+        <div class="school-name">{{ isset($school) && $school ? $school->school_name : 'School Name' }}</div>
+        @if(isset($school) && $school)
             @if($school->school_address)<div class="school-details">{{ $school->school_address }}</div>@endif
             @if($school->school_phone)<div class="school-details">Tel: {{ $school->school_phone }}</div>@endif
             @if($school->school_email)<div class="school-details">Email: {{ $school->school_email }}</div>@endif
@@ -273,23 +142,25 @@
         @endif
     </div>
 
-    {{-- Admin Banner --}}
     <div class="admin-banner">
-        <i class="ri-shield-user-line"></i> <strong>Admin Generated Marks Sheet</strong> — This document was generated by an administrator for official use.
+        <strong>📋 Admin Generated Marks Sheet</strong> — This document was generated by an administrator for official use.
     </div>
 
     <div class="doc-title-wrap">
         <span class="doc-title">STUDENT MARKS SHEET</span>
     </div>
 
-    @if($classInfo)
+    @php
+        $firstBroadSheet = $broadsheets->first();
+    @endphp
+    @if($firstBroadSheet)
     <div class="class-info">
         <div class="info-row">
-            <div class="info-cell"><span class="info-label">Subject:</span> {{ $classInfo->subject }} ({{ $classInfo->subject_code }})</div>
-            <div class="info-cell"><span class="info-label">Class:</span> {{ $classInfo->schoolclass }} {{ $classInfo->arm }}</div>
-            <div class="info-cell"><span class="info-label">Teacher:</span> {{ $teacherName ?? 'Staff ID: ' . ($staffId ?? 'N/A') }} <span style="color:#d97706;">(Admin Entry)</span></div>
-            <div class="info-cell"><span class="info-label">Term:</span> {{ $classInfo->term ?? 'First Term' }}</div>
-            <div class="info-cell"><span class="info-label">Session:</span> {{ $classInfo->session ?? '2025/2026' }}</div>
+            <div class="info-cell"><span class="info-label">Subject:</span> {{ $firstBroadSheet->subject ?? '' }} ({{ $firstBroadSheet->subject_code ?? '' }})</div>
+            <div class="info-cell"><span class="info-label">Class:</span> {{ $firstBroadSheet->schoolclass ?? '' }} {{ $firstBroadSheet->arm ?? '' }}</div>
+            <div class="info-cell"><span class="info-label">Teacher:</span> {{ $teacherName ?? 'N/A' }} <span style="color:#d97706;">(Admin Entry)</span></div>
+            <div class="info-cell"><span class="info-label">Term:</span> {{ $firstBroadSheet->term ?? 'First Term' }}</div>
+            <div class="info-cell"><span class="info-label">Session:</span> {{ $firstBroadSheet->session ?? '2025/2026' }}</div>
             <div class="info-cell"><span class="info-label">Date:</span> {{ date('d M Y') }}</div>
         </div>
     </div>
@@ -348,10 +219,8 @@
                         {{ $student->mname ?? '' }}
                     </td>
                     @foreach($assessments as $assessment)
-                        {{-- Blank cell — teacher fills in score on paper --}}
                         <td class="score-col"></td>
                     @endforeach
-                    {{-- Blank total --}}
                     <td class="score-col"></td>
                 </tr>
             @empty
@@ -377,7 +246,6 @@
         @endif
     </table>
 
-    {{-- Footer Signatures - Same line layout --}}
     <div class="footer">
         <div class="footer-row">
             <div class="footer-cell">
