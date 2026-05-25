@@ -1,7 +1,6 @@
 @extends('layouts.master')
 
 @section('content')
-<link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
 <style>
 :root {
     --lm-primary:  #1e3a5f;
@@ -128,22 +127,6 @@
 .btn-outline:hover { background: #f8fafc; border-color: #94a3b8; }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-.lm-table th {
-    background: var(--lm-primary);
-    color: #fff;
-    padding: 12px 16px;
-    font-weight: 600;
-    font-size: 13px;
-    white-space: nowrap;
-}
-.lm-table td {
-    padding: 11px 16px;
-    vertical-align: middle;
-    border-bottom: 1px solid var(--lm-border);
-    font-size: 13px;
-}
-.lm-table tr:hover td { background: #f0f9ff; }
-
 .status-badge {
     display: inline-flex;
     align-items: center;
@@ -178,77 +161,35 @@
 }
 .icon-btn:hover { background: #f1f5f9; transform: scale(1.05); }
 
-.dataTables_wrapper .dataTables_filter input {
-    border: 1.5px solid var(--lm-border);
-    border-radius: 8px;
-    padding: 7px 14px;
-    margin-left: 8px;
-    font-size: 13px;
-}
-.dataTables_wrapper .dataTables_filter input:focus {
-    border-color: var(--lm-accent);
-    outline: none;
-    box-shadow: 0 0 0 3px rgba(37,99,235,.1);
-}
-
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0,0,0,0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1050;
-    backdrop-filter: blur(2px);
-}
-.modal-container {
-    background: white;
-    border-radius: 16px;
-    max-width: 500px;
-    width: 90%;
-    max-height: 80vh;
+.table-card {
+    background: #fff;
+    border: 1px solid var(--lm-border);
+    border-radius: var(--lm-radius);
     overflow: hidden;
-    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
 }
-.modal-header {
-    padding: 20px 24px;
+.table-card .card-header {
+    background: #fff;
     border-bottom: 1px solid var(--lm-border);
-    background: #f8fafc;
+    padding: 16px 20px;
 }
-.modal-title {
-    font-size: 18px;
+.table-card th {
+    background: var(--lm-primary);
+    color: #fff;
+    padding: 12px 16px;
     font-weight: 600;
-    color: #1e293b;
-}
-.modal-body {
-    padding: 24px;
-}
-.modal-footer {
-    padding: 16px 24px;
-    border-top: 1px solid var(--lm-border);
-    display: flex;
-    gap: 12px;
-    justify-content: flex-end;
-    background: #f8fafc;
-}
-.modal-textarea {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
     font-size: 13px;
-    resize: vertical;
-    font-family: inherit;
-    margin-top: 12px;
+    white-space: nowrap;
 }
-.modal-textarea:focus {
-    outline: none;
-    border-color: var(--lm-accent);
-    box-shadow: 0 0 0 3px rgba(37,99,235,.1);
+.table-card td {
+    padding: 12px 16px;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--lm-border);
+    font-size: 13px;
 }
+.table-card tr:hover td { background: #f0f9ff; }
+
+.spin { animation: spin 0.8s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
 .toast-container {
     position: fixed;
@@ -279,16 +220,13 @@
     to { transform: translateX(0); opacity: 1; }
 }
 
-.spin { animation: spin 0.8s linear infinite; }
-@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
 @media (max-width: 768px) {
     .lm-hero { padding: 20px; }
     .lm-hero h1 { font-size: 18px; }
     .stat-card .stat-value { font-size: 22px; }
-    .filter-group { margin-bottom: 10px; }
     .action-bar { flex-direction: column; align-items: stretch; }
     .selected-info { margin-right: 0; text-align: center; }
+    .table-card { overflow-x: auto; }
 }
 </style>
 
@@ -326,8 +264,8 @@
         <div class="col-md-3">
             <div class="stat-card">
                 <div class="stat-icon"><i class="ri-global-line"></i></div>
-                <div class="stat-value text-danger" id="statGlobal">0</div>
-                <div class="stat-label">Globally Locked</div>
+                <div class="stat-value text-danger" id="statDisabled">0</div>
+                <div class="stat-label">Editing Disabled</div>
             </div>
         </div>
     </div>
@@ -409,37 +347,35 @@
         </a>
     </div>
 
-    <div class="card border-0 shadow-sm">
-        <div class="card-header bg-white py-3 border-bottom">
+    <div class="table-card">
+        <div class="card-header">
             <h5 class="mb-0 fw-semibold" style="color:var(--lm-primary)">
                 <i class="ri-list-check me-2"></i>Scoresheets
                 <span class="badge bg-primary ms-2" id="recordCount">0</span>
             </h5>
         </div>
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table lm-table w-100 mb-0" id="scoresheetsTable">
-                    <thead>
-                        <tr>
-                            <th width="30"><input type="checkbox" id="selectAllCheckbox" class="form-check-input"></th>
-                            <th>Teacher & Subject</th>
-                            <th>Class</th>
-                            <th>Term</th>
-                            <th>Session</th>
-                            <th>Status</th>
-                            <th width="150">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="scoresheetsTableBody">
-                        <tr>
-                            <td colspan="7" class="text-center text-muted py-5">
-                                <i class="ri-loader-4-line spin d-block mb-2" style="font-size:2rem"></i>
-                                Loading scoresheets...
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+        <div class="table-responsive">
+            <table class="table mb-0" id="scoresheetsTable">
+                <thead>
+                    <tr>
+                        <th width="30"><input type="checkbox" id="selectAllCheckbox" class="form-check-input"></th>
+                        <th>Teacher & Subject</th>
+                        <th>Class</th>
+                        <th>Term</th>
+                        <th>Session</th>
+                        <th>Status</th>
+                        <th width="180">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="scoresheetsTableBody">
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-5">
+                            <i class="ri-loader-4-line spin d-block mb-2" style="font-size:2rem"></i>
+                            Loading scoresheets...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 
@@ -447,14 +383,9 @@
 </div>
 </div>
 
-<div id="modalContainer"></div>
 <div id="toastContainer" class="toast-container"></div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 <script>
 const routes = {
     scoresheetsList: '{{ route("admin.score-entry.scoresheets-list") }}',
@@ -467,7 +398,6 @@ const routes = {
 
 let scoresheetsData = [];
 let selectedIds = new Set();
-let dataTable = null;
 
 document.addEventListener('DOMContentLoaded', function() {
     loadFilters();
@@ -507,6 +437,9 @@ async function loadFilters() {
                 const armName = cls.arm?.arm || '';
                 classSelect.innerHTML += `<option value="${cls.id}">${escapeHtml(cls.schoolclass)} ${escapeHtml(armName)}</option>`;
             });
+        } else {
+            console.error('Failed to load filters:', result);
+            showToast(result.message || 'Failed to load filters', 'error');
         }
     } catch (error) {
         console.error('Error loading filters:', error);
@@ -528,28 +461,41 @@ async function loadScoresheets() {
         const result = await response.json();
 
         if (result.success) {
-            scoresheetsData = result.data;
-            renderDataTable();
+            scoresheetsData = result.data || [];
+            renderTable();
             updateStats();
+            document.getElementById('recordCount').textContent = scoresheetsData.length;
         } else {
             showToast(result.message || 'Failed to load scoresheets', 'error');
+            document.getElementById('scoresheetsTableBody').innerHTML = `
+                <tr><td colspan="7" class="text-center text-muted py-5">
+                    <i class="ri-error-warning-line d-block mb-2" style="font-size:2rem"></i>
+                    ${escapeHtml(result.message || 'Failed to load scoresheets')}
+                </td></tr>
+            `;
         }
     } catch (error) {
         console.error('Error loading scoresheets:', error);
         showToast('Network error loading scoresheets', 'error');
+        document.getElementById('scoresheetsTableBody').innerHTML = `
+            <tr><td colspan="7" class="text-center text-muted py-5">
+                <i class="ri-wifi-off-line d-block mb-2" style="font-size:2rem"></i>
+                Network error. Please check your connection.
+            </td></tr>
+        `;
     }
 }
 
-function renderDataTable() {
+function renderTable() {
     const tbody = document.getElementById('scoresheetsTableBody');
 
     if (!scoresheetsData.length) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted py-5"><i class="ri-inbox-line d-block mb-2" style="font-size:2rem;opacity:.4"></i>No scoresheets found matching your criteria</td></tr>';
-        document.getElementById('recordCount').textContent = '0';
-        if (dataTable) {
-            dataTable.destroy();
-            dataTable = null;
-        }
+        tbody.innerHTML = `
+            <tr><td colspan="7" class="text-center text-muted py-5">
+                <i class="ri-inbox-line d-block mb-2" style="font-size:2rem;opacity:.4"></i>
+                No scoresheets found matching your criteria
+            </td></tr>
+        `;
         return;
     }
 
@@ -558,14 +504,16 @@ function renderDataTable() {
         const status = getStatus(sheet);
         const row = document.createElement('tr');
         row.dataset.id = sheet.subjectclass_id;
-        row.className = selectedIds.has(sheet.subjectclass_id) ? 'table-active' : '';
+        if (selectedIds.has(sheet.subjectclass_id)) {
+            row.classList.add('table-active');
+        }
 
         row.innerHTML = `
             <td><input type="checkbox" class="form-check-input row-checkbox" data-id="${sheet.subjectclass_id}" ${selectedIds.has(sheet.subjectclass_id) ? 'checked' : ''}></td>
             <td>
                 <div class="fw-semibold">${escapeHtml(sheet.teacher_name)}</div>
                 <div class="text-muted small">${escapeHtml(sheet.subject_name)} (${sheet.subject_code})</div>
-                ${sheet.individually_locked_count > 0 ? `<div class="text-muted small mt-1">${sheet.individually_locked_count}/${sheet.total_students} students locked</div>` : ''}
+                ${sheet.individually_locked_count > 0 ? `<div class="text-muted small mt-1">📌 ${sheet.individually_locked_count}/${sheet.total_students} students locked</div>` : ''}
             </td>
             <td>${escapeHtml(sheet.class_name)}</td>
             <td>${sheet.term_name || '-'}</td>
@@ -597,52 +545,27 @@ function renderDataTable() {
         tbody.appendChild(row);
     });
 
-    document.getElementById('recordCount').textContent = scoresheetsData.length;
-
-    // Reinitialize DataTable
-    if (dataTable) {
-        dataTable.destroy();
-    }
-
-    dataTable = $('#scoresheetsTable').DataTable({
-        pageLength: 25,
-        order: [[1, 'asc']],
-        language: {
-            search: '',
-            searchPlaceholder: 'Search...',
-            lengthMenu: 'Show _MENU_ entries',
-            info: 'Showing _START_–_END_ of _TOTAL_ scoresheets',
-            infoEmpty: 'No scoresheets found',
-            zeroRecords: 'No matching scoresheets',
-        },
-        columnDefs: [
-            { orderable: false, targets: [0, 6] }
-        ],
-        drawCallback: function() {
-            // Re-attach checkbox events after redraw
-            document.querySelectorAll('.row-checkbox').forEach(cb => {
-                cb.removeEventListener('change', handleCheckboxChange);
-                cb.addEventListener('change', handleCheckboxChange);
-            });
-        }
-    });
-
     // Attach checkbox events
     document.querySelectorAll('.row-checkbox').forEach(cb => {
-        cb.removeEventListener('change', handleCheckboxChange);
-        cb.addEventListener('change', handleCheckboxChange);
-    });
-}
+        cb.addEventListener('change', function(e) {
+            const id = parseInt(this.dataset.id);
+            if (this.checked) {
+                selectedIds.add(id);
+            } else {
+                selectedIds.delete(id);
+            }
+            updateSelectedCount();
+            updateSelectAllCheckbox();
 
-function handleCheckboxChange(e) {
-    const id = parseInt(e.target.dataset.id);
-    if (e.target.checked) {
-        selectedIds.add(id);
-    } else {
-        selectedIds.delete(id);
-    }
-    updateSelectedCount();
-    updateSelectAllCheckbox();
+            // Update row styling
+            const row = this.closest('tr');
+            if (this.checked) {
+                row.classList.add('table-active');
+            } else {
+                row.classList.remove('table-active');
+            }
+        });
+    });
 }
 
 function getStatus(sheet) {
@@ -656,7 +579,7 @@ function getStatus(sheet) {
         if (sheet.individually_locked_count === sheet.total_students) {
             return { class: 'status-individual', text: 'Fully Locked', icon: 'ri-lock-line' };
         }
-        return { class: 'status-individual', text: `Partially Locked`, icon: 'ri-lock-line' };
+        return { class: 'status-individual', text: 'Partially Locked', icon: 'ri-lock-line' };
     }
     return { class: 'status-open', text: 'Open', icon: 'ri-lock-unlock-line' };
 }
@@ -710,7 +633,7 @@ function toggleSelectAll(e) {
             selectedIds.delete(sheet.subjectclass_id);
         }
     });
-    renderDataTable();
+    renderTable();
     updateSelectedCount();
 }
 
